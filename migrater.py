@@ -107,8 +107,8 @@ i = 1
 for (startdate, enddate, event, site, kind, eventbrite, attendance) in old_crs.fetchall():
     event_lookup[event] = i
     try:
-        fields = (i, startdate, enddate, event, eventbrite, attendance, site_lookup[site], project_lookup[kind])
-        new_crs.execute('insert into workshops_event values(?, ?, ?, ?, ?, ?, ?, ?);', fields)
+        fields = (i, startdate, enddate, event, eventbrite, attendance, site_lookup[site], project_lookup[kind], None)
+        new_crs.execute('insert into workshops_event values(?, ?, ?, ?, ?, ?, ?, ?, ?);', fields)
     except Exception, e:
         fail('event', fields, e)
     i += 1

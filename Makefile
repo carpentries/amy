@@ -18,7 +18,7 @@ migrations :
 	python manage.py makemigrations
 	python manage.py migrate
 
-## import       : import legacy data
+## import       : import and save legacy data
 import :
 	python migrater.py ${DB_SRC} ${DB_APP}
 	sqlite3 ${DB_APP} .dump > ${DB_SQL}
