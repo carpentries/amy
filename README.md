@@ -23,7 +23,7 @@ To get started:
     python manage.py runserver
     ~~~
 
-5.  Open http://localhost:8000/workshops/ in your browser and start clicking.
+5.  Open [http://localhost:8000/workshops/](http://localhost:8000/workshops/) in your browser and start clicking.
 
 Amy's data model is mostly done.
 What it needs now is views and controllers
