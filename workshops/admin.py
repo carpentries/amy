@@ -1,3 +1,4 @@
 from django.contrib import admin
+from workshops.models import Airport
 
-# Register your models here.
+admin.site.register(Airport)
