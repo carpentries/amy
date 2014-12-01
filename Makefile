@@ -8,6 +8,7 @@ commands : Makefile
 migrations :
 	python manage.py makemigrations
 	python manage.py migrate
+	python migrater.py ~/s/admin/roster.db db.sqlite3
 
 ## clean        : clean up.
 clean :
