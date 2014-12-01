@@ -113,10 +113,11 @@ old_crs.execute('select startdate, cohort, active, venue from cohort;')
 i = 1
 cohort_lookup = {}
 for (start, name, active, venue) in old_crs.fetchall():
+    cohort_lookup[name] = i
     try:
         if venue == 'online':
             venue = None
-        qualifies = venue != 'live-01'
+        qualifies = name != 'live-01'
         fields = (i, start, name, active, venue, qualifies)
         new_crs.execute('insert into workshops_cohort values(?, ?, ?, ?, ?, ?);', fields)
     except Exception, e:
@@ -136,7 +137,7 @@ for (person, cohort, status) in old_crs.fetchall():
     else:
         complete = None
     try:
-        fields = (i, complete, cohort, person)
+        fields = (i, complete, cohort_lookup[cohort], person_lookup[person])
         new_crs.execute('insert into workshops_trainee values(?, ?, ?, ?);', fields)
     except Exception, e:
         fail('trainee', fields, e)
