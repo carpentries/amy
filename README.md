@@ -1,4 +1,4 @@
-![](amy.png)
+<img src="amy.png" />
 
 A web-based workshop administration application built using Django.
 To get started:
