@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from workshops.models import Site, Event
+from workshops.models import Site, Event, Person
 
 def index(request):
     '''Home page.'''
@@ -19,6 +19,20 @@ def site_details(request, site_domain):
     site = Site.objects.get(domain=site_domain)
     context = {'site' : site}
     return render(request, 'workshops/site.html', context)
+
+#------------------------------------------------------------
+
+def all_persons(request):
+    '''List all persons.'''
+    all_persons = Person.objects.order_by('family', 'personal')
+    context = {'all_persons' : all_persons}
+    return render(request, 'workshops/all_persons.html', context)
+
+def person_details(request, person_id):
+    '''List details of a particular person.'''
+    person = Person.objects.get(id=person_id)
+    context = {'person' : person}
+    return render(request, 'workshops/person.html', context)
 
 #------------------------------------------------------------
 
