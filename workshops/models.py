@@ -2,8 +2,9 @@ from django.db import models
 
 #------------------------------------------------------------
 
-STR_LONG    = 100         # length of long strings
 STR_SHORT   =  10         # length of short strings
+STR_MED     =  40         # length of medium strings
+STR_LONG    = 100         # length of long strings
 STR_REG_KEY =  20         # length of Eventbrite registration key
 
 #------------------------------------------------------------
@@ -44,8 +45,8 @@ class Person(models.Model):
     gender     = models.CharField(max_length=STR_SHORT, null=True)
     active     = models.NullBooleanField()
     airport    = models.ForeignKey(Airport, null=True)
-    github     = models.CharField(max_length=STR_LONG, unique=True, null=True)
-    twitter    = models.CharField(max_length=STR_LONG, unique=True, null=True)
+    github     = models.CharField(max_length=STR_MED, unique=True, null=True)
+    twitter    = models.CharField(max_length=STR_MED, unique=True, null=True)
     url        = models.CharField(max_length=STR_LONG, null=True)
 
     def __str__(self):
@@ -69,3 +70,25 @@ class Event(models.Model):
 
     def __str__(self):
         return self.slug
+
+#------------------------------------------------------------
+
+class Role(models.Model):
+    '''Enumerate roles in workshops.'''
+
+    role       = models.CharField(max_length=STR_MED)
+
+    def __str__(self):
+        return self.role
+
+#------------------------------------------------------------
+
+class Task(models.Model):
+    '''Represent who did what at events.'''
+
+    event      = models.ForeignKey(Event)
+    person     = models.ForeignKey(Person)
+    role       = models.ForeignKey(Role)
+
+    def __str__(self):
+        return '{0}/{1}={2}'.format(self.event, self.person, self.task)

@@ -1,6 +1,10 @@
 import sys
 import sqlite3
 
+def fail(table, fields, exc):
+    print >> sys.stderr, 'failing on', table, 'with', fields, 'because', str(e)
+    sys.exit(1)
+
 old_cnx = sqlite3.connect(sys.argv[1])
 old_crs = old_cnx.cursor()
 new_cnx = sqlite3.connect(sys.argv[2])
@@ -17,7 +21,7 @@ for (site, fullname, country) in old_crs.fetchall():
         fields = (i, site, fullname, country)
         new_crs.execute('insert into workshops_site values(?, ?, ?, ?);', fields)
     except Exception, e:
-        print >> sys.stderr, 'failing on site with', fields, 'because', str(e)
+        fail('site', fields, e)
     i += 1
 new_cnx.commit()
 
@@ -32,7 +36,7 @@ for (fullname, country, lat, long, iata) in old_crs.fetchall():
         fields = (i, fullname, country, lat, long, iata)
         new_crs.execute('insert into workshops_airport values(?, ?, ?, ?, ?, ?);', fields)
     except Exception, e:
-        print >> sys.stderr, 'failing on airport with', fields, 'because', str(e)
+        fail('airport', fields, e)
     i += 1
 new_cnx.commit()
 
@@ -58,19 +62,47 @@ for (person, personal, middle, family, email) in old_crs.fetchall():
         fields = (i, personal, middle, family, email, gender, active, airport, github, twitter, url)
         new_crs.execute('insert into workshops_person values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', fields)
     except Exception, e:
-        print >> sys.stderr, 'failing on person with', fields, 'because', str(e)
+        fail('person', fields, e)
     i += 1
 new_cnx.commit()
 
 # Event
 new_crs.execute('delete from workshops_event;')
 old_crs.execute('select startdate, enddate, event, site, kind, eventbrite, attendance from event;')
+event_lookup = {}
 i = 1
 for (startdate, enddate, event, site, kind, eventbrite, attendance) in old_crs.fetchall():
+    event_lookup[event] = i
     try:
         fields = (i, startdate, event, kind, eventbrite, attendance, site_lookup[site], enddate)
         new_crs.execute('insert into workshops_event values(?, ?, ?, ?, ?, ?, ?, ?);', fields)
     except Exception, e:
-        print >> sys.stderr, 'failing on event with', fields, 'because', str(e)
+        fail(event, fields, e)
+    i += 1
+new_cnx.commit()
+
+# Roles
+new_crs.execute('delete from workshops_role;')
+i = 1
+role_lookup = {}
+for role in 'helper instructor host learner tutor organizer'.split():
+    role_lookup[role] = i
+    try:
+        fields = (i, role)
+        new_crs.execute('insert into workshops_role values(?, ?);', fields)
+    except Exception, e:
+        fail('role', fields, e)
+    i += 1
+
+# Tasks
+new_crs.execute('delete from workshops_task;')
+old_crs.execute('select event, person, task from task;')
+i = 1
+for (event, person, task) in old_crs.fetchall():
+    try:
+        fields = (i, event_lookup[event], person_lookup[person], role_lookup[task])
+        new_crs.execute('insert into workshops_task values(?, ?, ?, ?);', fields)
+    except Exception, e:
+        fail('task', fields, e)
     i += 1
 new_cnx.commit()
