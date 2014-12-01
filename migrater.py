@@ -1,9 +1,25 @@
 import sys
 import sqlite3
 
+FAKE = True
+
 def fail(table, fields, exc):
+    '''Report failure.'''
     print >> sys.stderr, 'failing on', table, 'with', fields, 'because', str(e)
     sys.exit(1)
+
+def fake(i, personal, middle, family, email, gender, github, twitter, url):
+    '''Redact personal identifying information.'''
+    if not FAKE:
+        return personal, middle, family, email
+    return 'first_{0}'.format(i), \
+           'middle_{0}'.format(i), \
+           'last_{0}'.format(i), \
+           '{0}@{0}.edu'.format(i), \
+           ('M', 'F', 'O')[i % 3], \
+           'user_{0}'.format(i), \
+           '@user{0}'.format(i), \
+           'http://somewhere.org/user_{0}'.format(i)
 
 old_cnx = sqlite3.connect(sys.argv[1])
 old_crs = old_cnx.cursor()
@@ -56,6 +72,10 @@ for (person, personal, middle, family, email) in old_crs.fetchall():
         gender, active, airport, github, twitter, url = facts_lookup[person]
     else:
         gender, active, airport, github, twitter, url = None, None, None, None, None, None
+
+    personal, middle, family, email, gender, github, twitter, url = \
+        fake(i, personal, middle, family, email, gender, github, twitter, url)
+
     try:
         fields = (i, personal, middle, family, email, gender, active, airport, github, twitter, url)
         new_crs.execute('insert into workshops_person values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', fields)
