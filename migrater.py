@@ -116,9 +116,29 @@ for (start, name, active, venue) in old_crs.fetchall():
     try:
         if venue == 'online':
             venue = None
-        fields = (i, start, name, venue, active)
-        new_crs.execute('insert into workshops_cohort values(?, ?, ?, ?, ?);', fields)
+        qualifies = venue != 'live-01'
+        fields = (i, start, name, active, venue, qualifies)
+        new_crs.execute('insert into workshops_cohort values(?, ?, ?, ?, ?, ?);', fields)
     except Exception, e:
         fail('cohort', fields, e)
+    i += 1
+new_cnx.commit()
+
+# Trainees
+new_crs.execute('delete from workshops_trainee;')
+old_crs.execute('select person, cohort, status from trainee;')
+i = 1
+for (person, cohort, status) in old_crs.fetchall():
+    if status in ('complete', 'learner'):
+        complete = True
+    elif status in ('incomplete', 'withdrew'):
+        complete = False
+    else:
+        complete = None
+    try:
+        fields = (i, complete, cohort, person)
+        new_crs.execute('insert into workshops_trainee values(?, ?, ?, ?);', fields)
+    except Exception, e:
+        fail('trainee', fields, e)
     i += 1
 new_cnx.commit()
