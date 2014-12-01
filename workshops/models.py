@@ -136,3 +136,30 @@ class Qualification(models.Model):
 
     person     = models.ForeignKey(Person)
     skill      = models.ForeignKey(Skill)
+
+    def __str__(self):
+        return '{0}/{1}'.format(self.person, self.skill)
+
+#------------------------------------------------------------
+
+class Badge(models.Model):
+    '''Represent a badge we award.'''
+
+    name       = models.CharField(max_length=STR_MED)
+    title      = models.CharField(max_length=STR_MED)
+    criteria   = models.CharField(max_length=STR_LONG)
+
+    def __str__(self):
+        return self.name
+
+#------------------------------------------------------------
+
+class Award(models.Model):
+    '''Represent a particular badge earned by a person.'''
+
+    person     = models.ForeignKey(Person)
+    badge      = models.ForeignKey(Badge)
+    awarded    = models.DateField()
+
+    def __str__(self):
+        return '{0}/{1}/{2}'.format(self.person, self.badge, self.awarded)

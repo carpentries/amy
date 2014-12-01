@@ -159,7 +159,7 @@ for (skill,) in old_crs.fetchall():
     i += 1
 new_cnx.commit()
 
-# Qualifications?
+# Qualifications
 new_crs.execute('delete from workshops_qualification;')
 old_crs.execute('select person, skill from skills;')
 i = 1
@@ -171,3 +171,32 @@ for (person, skill) in old_crs.fetchall():
         fail('qualification', fields, e)
     i += 1
 new_cnx.commit()
+
+# Badges
+new_crs.execute('delete from workshops_badge;')
+old_crs.execute('select badge, title, criteria from badges;')
+i = 1
+badge_lookup = {}
+for (badge, title, criteria) in old_crs.fetchall():
+    badge_lookup[badge] = i
+    try:
+        fields = (i, badge, title, criteria)
+        new_crs.execute('insert into workshops_badge values(?, ?, ?, ?);', fields)
+    except Exception, e:
+        fail('badge', fields, e)
+    i += 1
+new_cnx.commit()
+
+# Awards
+new_crs.execute('delete from workshops_award;')
+old_crs.execute('select person, badge, awarded from awards;')
+i = 1
+for (person, badge, awarded) in old_crs.fetchall():
+    try:
+        fields = (i, awarded, badge_lookup[badge], person_lookup[person])
+        new_crs.execute('insert into workshops_award values(?, ?, ?, ?);', fields)
+    except Exception, e:
+        fail('award', fields, e)
+    i += 1
+new_cnx.commit()
+
