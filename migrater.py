@@ -101,13 +101,13 @@ for (slug, name, details) in (('SWC', 'Software Carpentry', 'General Software Ca
 
 # Event
 new_crs.execute('delete from workshops_event;')
-old_crs.execute('select startdate, enddate, event, site, kind, eventbrite, attendance from event;')
+old_crs.execute('select startdate, enddate, event, site, kind, eventbrite, attendance, url from event;')
 event_lookup = {}
 i = 1
-for (startdate, enddate, event, site, kind, eventbrite, attendance) in old_crs.fetchall():
+for (startdate, enddate, event, site, kind, eventbrite, attendance, url) in old_crs.fetchall():
     event_lookup[event] = i
     try:
-        fields = (i, startdate, enddate, event, eventbrite, attendance, site_lookup[site], project_lookup[kind], None)
+        fields = (i, startdate, enddate, event, eventbrite, attendance, site_lookup[site], project_lookup[kind], url)
         new_crs.execute('insert into workshops_event values(?, ?, ?, ?, ?, ?, ?, ?, ?);', fields)
     except Exception, e:
         fail('event', fields, e)

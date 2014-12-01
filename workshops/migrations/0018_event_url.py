@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name='event',
-            name='repo',
+            name='url',
             field=models.CharField(max_length=100, unique=True, null=True),
             preserve_default=True,
         ),

@@ -4,7 +4,7 @@
         <tr>
 	    <th>project</th>
 	    <th>slug</th>
-	    <th>repo</th>
+	    <th>url</th>
 	    <th>site</th>
 	    <th>start</th>
 	    <th>end</th>
@@ -15,7 +15,7 @@
         <tr>
 	    <td>{{ event.project }}</td>
 	    <td><a href="{% url 'event_details' event.slug %}">{{ event.slug }}</a></td>
-	    <td><a href="{{ event.repo }}">{{ event.repo }}</a></td>
+	    <td><a href="{{ event.url }}">{{ event.url }}</a></td>
 	    <td><a href="{% url 'site_details' event.site.domain %}">{{ event.site }}</a></td>
 	    <td>{{ event.start }}</td>
 	    <td>{{ event.end }}</td>

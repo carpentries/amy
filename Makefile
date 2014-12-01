@@ -28,6 +28,10 @@ database :
 	rm -f ${DB_APP}
 	sqlite3 ${DB_APP} < ${DB_SQL}
 
+## serve        : run a server
+serve :
+	python manage.py runserver
+
 ## clean        : clean up.
 clean :
 	rm -f \
