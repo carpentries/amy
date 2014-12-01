@@ -14,12 +14,34 @@ i = 1
 for (site, fullname, country) in old_crs.fetchall():
     site_lookup[site] = i
     try:
-        new_crs.execute('insert into workshops_site values(?, ?, ?, ?);', \
-                        (i, site, fullname, country))
+        fields = (i, site, fullname, country)
+        new_crs.execute('insert into workshops_site values(?, ?, ?, ?);', fields)
     except Exception, e:
-        print >> sys.stderr, 'failing on site with', (site, fullname, country), 'because', str(e)
+        print >> sys.stderr, 'failing on site with', fields, 'because', str(e)
     i += 1
 new_cnx.commit()
+
+# Airport
+new_crs.execute('delete from workshops_airport;')
+old_crs.execute('select fullname, country, latitude, longitude, iata from airport;')
+airport_lookup = {}
+i = 1
+for (fullname, country, lat, long, iata) in old_crs.fetchall():
+    airport_lookup[iata] = i
+    try:
+        fields = (i, fullname, country, lat, long, iata)
+        new_crs.execute('insert into workshops_airport values(?, ?, ?, ?, ?, ?);', fields)
+    except Exception, e:
+        print >> sys.stderr, 'failing on airport with', fields, 'because', str(e)
+    i += 1
+new_cnx.commit()
+
+# load Facts for lookup in Person
+old_crs.execute('select person, gender, active, airport, github, twitter, site from facts;')
+facts_lookup = {}
+for record in old_crs.fetchall():
+    person = record[0]
+    facts_lookup[person] = record[1:]
 
 # Person
 new_crs.execute('delete from workshops_person;')
@@ -28,11 +50,15 @@ person_lookup = {}
 i = 1
 for (person, personal, middle, family, email) in old_crs.fetchall():
     person_lookup[person] = i
+    if person in facts_lookup:
+        gender, active, airport, github, twitter, url = facts_lookup[person]
+    else:
+        gender, active, airport, github, twitter, url = None, None, None, None, None, None
     try:
-        new_crs.execute('insert into workshops_person values(?, ?, ?, ?, ?);', \
-                        (i, personal, middle, family, email))
+        fields = (i, personal, middle, family, email, gender, active, airport, github, twitter, url)
+        new_crs.execute('insert into workshops_person values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', fields)
     except Exception, e:
-        print >> sys.stderr, 'failing on person with', (person, personal, middle, family, email), 'because', str(e)
+        print >> sys.stderr, 'failing on person with', fields, 'because', str(e)
     i += 1
 new_cnx.commit()
 
@@ -42,22 +68,9 @@ old_crs.execute('select startdate, enddate, event, site, kind, eventbrite, atten
 i = 1
 for (startdate, enddate, event, site, kind, eventbrite, attendance) in old_crs.fetchall():
     try:
-        new_crs.execute('insert into workshops_event values(?, ?, ?, ?, ?, ?, ?, ?);', \
-                        (i, startdate, event, kind, eventbrite, attendance, site_lookup[site], enddate))
+        fields = (i, startdate, event, kind, eventbrite, attendance, site_lookup[site], enddate)
+        new_crs.execute('insert into workshops_event values(?, ?, ?, ?, ?, ?, ?, ?);', fields)
     except Exception, e:
-        print >> sys.stderr, 'failing on event with', (i, site, startdate, enddate, event, kind, eventbrite, attendance), 'because', str(e)
-    i += 1
-new_cnx.commit()
-
-# Airport
-new_crs.execute('delete from workshops_airport;')
-old_crs.execute('select fullname, country, latitude, longitude, iata from airport;')
-i = 1
-for (fullname, country, lat, long, iata) in old_crs.fetchall():
-    try:
-        new_crs.execute('insert into workshops_airport values(?, ?, ?, ?, ?, ?);', \
-                        (i, fullname, country, lat, long, iata))
-    except Exception, e:
-        print >> sys.stderr, 'failing on airport with', (i, fullname, country, lat, long, iata), 'because', str(e)
+        print >> sys.stderr, 'failing on event with', fields, 'because', str(e)
     i += 1
 new_cnx.commit()

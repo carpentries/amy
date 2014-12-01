@@ -4,7 +4,7 @@ from django.db import models
 
 STR_LONG    = 100         # length of long strings
 STR_SHORT   =  10         # length of short strings
-STR_REG_KEY = 20          # length of Eventbrite registration key
+STR_REG_KEY =  20         # length of Eventbrite registration key
 
 #------------------------------------------------------------
 
@@ -20,6 +20,20 @@ class Site(models.Model):
 
 #------------------------------------------------------------
 
+class Airport(models.Model):
+    '''Represent an airport (used to locate instructors).'''
+
+    iata      = models.CharField(max_length=STR_SHORT, unique=True)
+    fullname  = models.CharField(max_length=STR_LONG, unique=True)
+    country   = models.CharField(max_length=STR_LONG)
+    latitude  = models.FloatField()
+    longitude = models.FloatField()
+
+    def __str__(self):
+        return self.iata
+
+#------------------------------------------------------------
+
 class Person(models.Model):
     '''Represent a single person.'''
 
@@ -27,6 +41,12 @@ class Person(models.Model):
     middle     = models.CharField(max_length=STR_LONG, null=True)
     family     = models.CharField(max_length=STR_LONG)
     email      = models.CharField(max_length=STR_LONG, unique=True, null=True)
+    gender     = models.CharField(max_length=STR_SHORT, null=True)
+    active     = models.NullBooleanField()
+    airport    = models.ForeignKey(Airport, null=True)
+    github     = models.CharField(max_length=STR_LONG, unique=True, null=True)
+    twitter    = models.CharField(max_length=STR_LONG, unique=True, null=True)
+    url        = models.CharField(max_length=STR_LONG, null=True)
 
     def __str__(self):
         middle = ''
@@ -49,17 +69,3 @@ class Event(models.Model):
 
     def __str__(self):
         return self.slug
-
-#------------------------------------------------------------
-
-class Airport(models.Model):
-    '''Represent an airport (used to locate instructors).'''
-
-    iata      = models.CharField(max_length=STR_SHORT, unique=True)
-    fullname  = models.CharField(max_length=STR_LONG, unique=True)
-    country   = models.CharField(max_length=STR_LONG)
-    latitude  = models.FloatField()
-    longitude = models.FloatField()
-
-    def __str__(self):
-        return self.iata
