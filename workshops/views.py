@@ -1,11 +1,12 @@
 from django.shortcuts import render
-from django.http import HttpResponse
-from workshops.models import Site
+from workshops.models import Site, Event
 
 def index(request):
     '''Home page.'''
     context = {}
     return render(request, 'workshops/index.html', context)
+
+#------------------------------------------------------------
 
 def all_sites(request):
     '''List all sites.'''
@@ -18,4 +19,18 @@ def site_details(request, site_domain):
     site = Site.objects.get(domain=site_domain)
     context = {'site' : site}
     return render(request, 'workshops/site.html', context)
+
+#------------------------------------------------------------
+
+def all_events(request):
+    '''List all events.'''
+    all_events = Event.objects.order_by('slug')
+    context = {'all_events' : all_events}
+    return render(request, 'workshops/all_events.html', context)
+
+def event_details(request, event_slug):
+    '''List details of a particular event.'''
+    event = Event.objects.get(slug=event_slug)
+    context = {'event' : event}
+    return render(request, 'workshops/event.html', context)
 

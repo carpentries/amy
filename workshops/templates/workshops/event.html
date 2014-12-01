@@ -1,0 +1,9 @@
+<p>site: <a href="{% url 'site_details' event.site.domain %}">{{ event.site }}</a></p>
+<p>project: <a href="FIXME">{{ event.project }}</a></p>
+<p>start date: {{ event.start }}</p>
+<p>end date: {{ event.end }}</p>
+<p>slug: {{ event.slug }}</p>
+<p>Eventbrite key: {{ event.reg_key }}</p>
+<p>attendance: {{ event.attendance }}</p>
+<p>... <a href="{% url 'all_events' %}">all events</a></p>
+<p>... <a href="{% url 'index' %}">index</a></p>
