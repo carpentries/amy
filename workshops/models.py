@@ -92,3 +92,16 @@ class Task(models.Model):
 
     def __str__(self):
         return '{0}/{1}={2}'.format(self.event, self.person, self.task)
+
+#------------------------------------------------------------
+
+class Cohort(models.Model):
+    '''Represent a training cohort.'''
+
+    start      = models.DateField()
+    name       = models.CharField(max_length=STR_MED)
+    active     = models.BooleanField(default=True)
+    venue      = models.ForeignKey(Site, null=True) # null for online
+
+    def __str__(self):
+        return self.name

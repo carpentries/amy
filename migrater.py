@@ -106,3 +106,19 @@ for (event, person, task) in old_crs.fetchall():
         fail('task', fields, e)
     i += 1
 new_cnx.commit()
+
+# Cohorts
+new_crs.execute('delete from workshops_cohort;')
+old_crs.execute('select startdate, cohort, active, venue from cohort;')
+i = 1
+cohort_lookup = {}
+for (start, name, active, venue) in old_crs.fetchall():
+    try:
+        if venue == 'online':
+            venue = None
+        fields = (i, start, name, venue, active)
+        new_crs.execute('insert into workshops_cohort values(?, ?, ?, ?, ?);', fields)
+    except Exception, e:
+        fail('cohort', fields, e)
+    i += 1
+new_cnx.commit()
