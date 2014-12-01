@@ -1,0 +1,9 @@
+{% if all_sites %}
+    <ul>
+    {% for site in all_sites %}
+        <li><a href="site/{{ site.domain }}/">{{ site.fullname }}</a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No sites.</p>
+{% endif %}

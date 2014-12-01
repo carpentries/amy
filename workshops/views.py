@@ -1,14 +1,21 @@
 from django.shortcuts import render
 from django.http import HttpResponse
+from workshops.models import Site
 
 def index(request):
     '''Home page.'''
-    return HttpResponse('Home page rendered')
+    context = {}
+    return render(request, 'workshops/index.html', context)
 
 def all_sites(request):
     '''List all sites.'''
-    return HttpResponse('All sites rendered')
+    all_sites = Site.objects.order_by('domain')
+    context = {'all_sites' : all_sites}
+    return render(request, 'workshops/all_sites.html', context)
 
 def site_details(request, site_domain):
     '''List details of a particular site.'''
-    return HttpResponse('Site details for {0}'.format(site_domain))
+    site = Site.objects.get(domain=site_domain)
+    context = {'site' : site}
+    return render(request, 'workshops/site.html', context)
+
