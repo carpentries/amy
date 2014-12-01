@@ -143,3 +143,31 @@ for (person, cohort, status) in old_crs.fetchall():
         fail('trainee', fields, e)
     i += 1
 new_cnx.commit()
+
+# Skills
+new_crs.execute('delete from workshops_skill;')
+old_crs.execute('select distinct skill from skills;')
+i = 1
+skill_lookup = {}
+for (skill,) in old_crs.fetchall():
+    skill_lookup[skill] = i
+    try:
+        fields = (i, skill)
+        new_crs.execute('insert into workshops_skill values(?, ?);', fields)
+    except Exception, e:
+        fail('skill', fields, e)
+    i += 1
+new_cnx.commit()
+
+# Qualifications?
+new_crs.execute('delete from workshops_qualification;')
+old_crs.execute('select person, skill from skills;')
+i = 1
+for (person, skill) in old_crs.fetchall():
+    try:
+        fields = (i, person_lookup[person], skill_lookup[skill])
+        new_crs.execute('insert into workshops_qualification values(?, ?, ?);', fields)
+    except Exception, e:
+        fail('qualification', fields, e)
+    i += 1
+new_cnx.commit()

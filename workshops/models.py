@@ -76,10 +76,10 @@ class Event(models.Model):
 class Role(models.Model):
     '''Enumerate roles in workshops.'''
 
-    role       = models.CharField(max_length=STR_MED)
+    name       = models.CharField(max_length=STR_MED)
 
     def __str__(self):
-        return self.role
+        return self.name
 
 #------------------------------------------------------------
 
@@ -118,3 +118,21 @@ class Trainee(models.Model):
 
     def __str__(self):
         return '{0}/{1}={2}'.format(self.person, self.cohort, self.complete)
+
+#------------------------------------------------------------
+
+class Skill(models.Model):
+    '''Represent a skill someone might teach.'''
+
+    name       = models.CharField(max_length=STR_MED)
+
+    def __str__(self):
+        return self.name
+
+#------------------------------------------------------------
+
+class Qualification(models.Model):
+    '''What is someone qualified to teach?'''
+
+    person     = models.ForeignKey(Person)
+    skill      = models.ForeignKey(Skill)
