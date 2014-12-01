@@ -1,4 +1,4 @@
-<img src="amy.png" />
+<img src="https://raw.githubusercontent.com/gvwilson/amy/master/logo.png" />
 
 A web-based workshop administration application built using Django.
 To get started:
