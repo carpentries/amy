@@ -23,7 +23,6 @@ for (site, fullname, country) in old_crs.fetchall():
     except Exception, e:
         fail('site', fields, e)
     i += 1
-new_cnx.commit()
 
 # Airport
 new_crs.execute('delete from workshops_airport;')
@@ -38,7 +37,6 @@ for (fullname, country, lat, long, iata) in old_crs.fetchall():
     except Exception, e:
         fail('airport', fields, e)
     i += 1
-new_cnx.commit()
 
 # load Facts for lookup in Person
 old_crs.execute('select person, gender, active, airport, github, twitter, site from facts;')
@@ -64,7 +62,22 @@ for (person, personal, middle, family, email) in old_crs.fetchall():
     except Exception, e:
         fail('person', fields, e)
     i += 1
-new_cnx.commit()
+
+# Project (kinds of event)
+new_crs.execute('delete from workshops_project;')
+i = 1
+project_lookup = {}
+for (slug, name, details) in (('SWC', 'Software Carpentry', 'General Software Carpentry workshop'),
+                              ('DC',  'Data Carpentry', 'General Data Carpentry workshop'),
+                              ('LC',  'Library Carpentry', 'Workshop for librarians'),
+                              ('WiSE', 'Women in Science & Engineering', 'Women-only events')):
+    project_lookup[slug] = i
+    try:
+        fields = (i, slug, name, details)
+        new_crs.execute('insert into workshops_project values(?, ?, ?, ?);', fields)
+    except Exception, e:
+        fail('project', fields, e)
+    i += 1
 
 # Event
 new_crs.execute('delete from workshops_event;')
@@ -74,12 +87,11 @@ i = 1
 for (startdate, enddate, event, site, kind, eventbrite, attendance) in old_crs.fetchall():
     event_lookup[event] = i
     try:
-        fields = (i, startdate, event, kind, eventbrite, attendance, site_lookup[site], enddate)
+        fields = (i, startdate, enddate, event, eventbrite, attendance, site_lookup[site], project_lookup[kind])
         new_crs.execute('insert into workshops_event values(?, ?, ?, ?, ?, ?, ?, ?);', fields)
     except Exception, e:
-        fail(event, fields, e)
+        fail('event', fields, e)
     i += 1
-new_cnx.commit()
 
 # Roles
 new_crs.execute('delete from workshops_role;')
@@ -105,7 +117,6 @@ for (event, person, task) in old_crs.fetchall():
     except Exception, e:
         fail('task', fields, e)
     i += 1
-new_cnx.commit()
 
 # Cohorts
 new_crs.execute('delete from workshops_cohort;')
@@ -123,7 +134,6 @@ for (start, name, active, venue) in old_crs.fetchall():
     except Exception, e:
         fail('cohort', fields, e)
     i += 1
-new_cnx.commit()
 
 # Trainees
 new_crs.execute('delete from workshops_trainee;')
@@ -142,7 +152,6 @@ for (person, cohort, status) in old_crs.fetchall():
     except Exception, e:
         fail('trainee', fields, e)
     i += 1
-new_cnx.commit()
 
 # Skills
 new_crs.execute('delete from workshops_skill;')
@@ -157,7 +166,6 @@ for (skill,) in old_crs.fetchall():
     except Exception, e:
         fail('skill', fields, e)
     i += 1
-new_cnx.commit()
 
 # Qualifications
 new_crs.execute('delete from workshops_qualification;')
@@ -170,7 +178,6 @@ for (person, skill) in old_crs.fetchall():
     except Exception, e:
         fail('qualification', fields, e)
     i += 1
-new_cnx.commit()
 
 # Badges
 new_crs.execute('delete from workshops_badge;')
@@ -185,7 +192,6 @@ for (badge, title, criteria) in old_crs.fetchall():
     except Exception, e:
         fail('badge', fields, e)
     i += 1
-new_cnx.commit()
 
 # Awards
 new_crs.execute('delete from workshops_award;')
@@ -198,5 +204,7 @@ for (person, badge, awarded) in old_crs.fetchall():
     except Exception, e:
         fail('award', fields, e)
     i += 1
+
+# Finish
 new_cnx.commit()
 

@@ -57,14 +57,26 @@ class Person(models.Model):
 
 #------------------------------------------------------------
 
+class Project(models.Model):
+    '''Keep track of the kinds of project we support.'''
+
+    slug       = models.CharField(max_length=STR_SHORT, unique=True)
+    name       = models.CharField(max_length=STR_MED, unique=True)
+    details    = models.CharField(max_length=STR_LONG)
+
+    def __str__(self):
+        return self.slug
+
+#------------------------------------------------------------
+
 class Event(models.Model):
     '''Represent a single event.'''
 
     site       = models.ForeignKey(Site)
+    project    = models.ForeignKey(Project)
     start      = models.DateField()
     end        = models.DateField(null=True)
     slug       = models.CharField(max_length=STR_LONG, unique=True)
-    kind       = models.CharField(max_length=STR_SHORT)
     reg_key    = models.CharField(max_length=STR_REG_KEY, null=True)
     attendance = models.IntegerField(null=True)
 
