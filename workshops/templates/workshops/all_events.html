@@ -1,3 +1,5 @@
+{% extends "workshops/_page.html" %}
+{% block content %}
 {% if all_events %}
     <table>
         <tr>
@@ -27,3 +29,4 @@
     <p>No events.</p>
 {% endif %}
 <p>... <a href="{% url 'index' %}">index</a></p>
+{% endblock %}

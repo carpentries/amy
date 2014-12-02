@@ -1,6 +1,8 @@
-<p>Home page</p>
+{% extends "workshops/_page.html" %}
+{% block content %}
 <ul>
   <li><a href="{% url 'all_sites' %}">sites</a></li>
   <li><a href="{% url 'all_events' %}">events</a></li>
   <li><a href="{% url 'all_persons' %}">persons</a></li>
 </ul>
+{% endblock %}

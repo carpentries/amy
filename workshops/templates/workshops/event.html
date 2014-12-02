@@ -1,3 +1,5 @@
+{% extends "workshops/_page.html" %}
+{% block content %}
 <p>project: <a href="FIXME">{{ event.project }}</a></p>
 <p>slug: {{ event.slug }}</p>
 <p>url: <a href="{{ event.site }}">{{ event.url }}</a></p>
@@ -8,3 +10,4 @@
 <p>attendance: {{ event.attendance }}</p>
 <p>... <a href="{% url 'all_events' %}">all events</a></p>
 <p>... <a href="{% url 'index' %}">index</a></p>
+{% endblock %}

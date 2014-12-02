@@ -1,3 +1,5 @@
+{% extends "workshops/_page.html" %}
+{% block content %}
 {% if all_sites %}
     <ul>
     {% for site in all_sites %}
@@ -8,3 +10,4 @@
     <p>No sites.</p>
 {% endif %}
 <p>... <a href="{% url 'index' %}">index</a></p>
+{% endblock %}

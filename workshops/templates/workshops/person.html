@@ -1,3 +1,5 @@
+{% extends "workshops/_page.html" %}
+{% block content %}
 <p>personal: {{ person.personal }}</p>
 <p>middle: {{ person.middle }}</p>
 <p>family: {{ person.family }}</p>
@@ -10,3 +12,4 @@
 <p>url: {{ person.url }}</p>
 <p>... <a href="{% url 'all_persons' %}">all persons</a></p>
 <p>... <a href="{% url 'index' %}">index</a></p>
+{% endblock %}
