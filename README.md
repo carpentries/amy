@@ -36,12 +36,12 @@ or contact [Greg Wilson](gvwilson@software-carpentry.org).
 
 Pages for Admin Tool
 
-A.  Landing page
+*  Landing page
     *   List of provisional upcoming events (that need instructors)
     *   List of confirmed upcoming events
     *   Navigation links for other pages
 
-B.  Site Index
+*  Site Index
     *   Table showing:
         *   Domain name (link to domain)
         *   Site name (link to Site Details for that site)
@@ -49,7 +49,7 @@ B.  Site Index
         *   Number of future events
     *   Link to Add Site Form
 
-C.  Site Details
+*  Site Details
     *   Summary (domain name, site name)
     *   Lat/long
         *   Problematic: some sites don't have one, and others may have many
@@ -59,12 +59,12 @@ C.  Site Details
     *   Wiki page for notes about site
         *   Contact person, location, etc., can change from workshop to workshop, so use a free-form wiki page
 
-D.  Add Site Form
+*  Add Site Form
     *   Domain name
     *   Site name
     *   ...submission sends to Site Details page for site
 
-E.  Event Index
+*  Event Index
     *   Table showing:
         *   Site name (link to Site Details page)
         *   Event slug (link to Event Details page)
@@ -72,7 +72,7 @@ E.  Event Index
     *   Paginated
     *   Link to Add Event Form
 
-F.  Event Details
+*  Event Details
     *   Site name (link to Site Details page)
     *   Slug
     *   GitHub website repository URL (editable)
@@ -92,7 +92,7 @@ F.  Event Details
     *   Buttons to create pre- and post-assessment forms and checklist (if they don't exist)
     *   Note: we'll no longer try to track restricted vs. unrestricted enrolment (since there are too many variations)
 
-G.  Add Event Form
+*  Add Event Form
     *   Site name (link to Site Details page)
     *   Slug (editable right up until the moment we commit to dates)
     *   GitHub website repository URL (editable)
@@ -111,7 +111,7 @@ G.  Add Event Form
     *   ...submission sends to Event Details page for event
     *   ...and creates slug@software-carpentry.org email address (?)
 
-H.  Person Index
+*  Person Index
     *   Table showing:
         *   Personal name (editable)
         *   Middle name (editable)
@@ -125,7 +125,7 @@ H.  Person Index
     *   Link to Add Person Form
     *   Link to Upload Person Form
 
-I.  Add Person Form
+*  Add Person Form
     *   Table allowing entry of:
         *   Personal name (editable)
         *   Middle name (editable)
@@ -137,14 +137,14 @@ I.  Add Person Form
     *   Submit button
     *   ...submission returns to Add Person Form with message about people added
 
-J.  Upload Person Form
+*  Upload Person Form
     *   Text box to enter CSV data
     *   Choose File button to select CSV file
     *   Pulldown to select Event (optional)
     *   ...submission creates populated Add Person Form
     *   ...if Event selected, all Roles in Add Person Form initialized to "learner"
 
-K.  Person Details
+*  Person Details
     *   Personal name (editable)
     *   Middle name (editable)
     *   Family name (editable)
@@ -168,7 +168,7 @@ K.  Person Details
     *   Submit button
     *   ...submission returns to Person Details page
 
-L.  Cohort Index
+*  Cohort Index
     *   Table showing:
         *   Cohort name
         *   Start date
@@ -179,7 +179,7 @@ L.  Cohort Index
         *   Link to Cohort Details page
     *   Link to Add Cohort Form
 
-M.  Cohort Details
+*  Cohort Details
     *   Cohort name
     *   Start date
     *   End date
@@ -191,7 +191,7 @@ M.  Cohort Details
         *   Trainee status (pulldown)
     *   Add trainees (multi-select pulldown)
 
-N.  Badge Index
+*  Badge Index
     *   Table showing:
         *   Badge name (editable)
         *   Badge title (editable)
@@ -201,7 +201,7 @@ N.  Badge Index
     *   Submit button
     *   ...submission returns to Badge Index
 
-O.  Badge Details
+*  Badge Details
     *   Badge name (link to Badge Index page)
     *   Table showing:
         *   Recipient (link to Person Details page)
@@ -210,7 +210,7 @@ O.  Badge Details
     *   Submit button
     *   ...submission returns to Badge Details
 
-P.  Airport Index
+*  Airport Index
     *   Table showing:
         *   IATA code
         *   Airport name (editable)
@@ -221,5 +221,5 @@ P.  Airport Index
     *   (Optional) some way to show instructors within XXX km of that location
     *   ...submission returns to Airport Index page
 
-Z.  Admin
+*  Admin
     *   Add accounts, password re-set, etc.
