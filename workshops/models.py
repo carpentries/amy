@@ -74,12 +74,14 @@ class Event(models.Model):
 
     site       = models.ForeignKey(Site)
     project    = models.ForeignKey(Project)
+    organizer  = models.ForeignKey(Site, related_name='organizer', null=True)
     start      = models.DateField()
     end        = models.DateField(null=True)
     slug       = models.CharField(max_length=STR_LONG, unique=True)
     url        = models.CharField(max_length=STR_LONG, unique=True, null=True)
     reg_key    = models.CharField(max_length=STR_REG_KEY, null=True)
     attendance = models.IntegerField(null=True)
+    admin_fee  = models.DecimalField(max_digits=6, decimal_places=2)
 
     def __str__(self):
         return self.slug
