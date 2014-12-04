@@ -1,4 +1,3 @@
-<img src="https://raw.githubusercontent.com/gvwilson/amy/master/software-carpentry-banner.png" />
 <img src="https://raw.githubusercontent.com/gvwilson/amy/master/amy-logo.png" />
 
 [Software Carpentry](http://software-carpentry.org) is now running three events a week,
