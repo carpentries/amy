@@ -1,6 +1,19 @@
-<img src="https://raw.githubusercontent.com/gvwilson/amy/master/logo.png" />
+<img src="https://raw.githubusercontent.com/gvwilson/amy/master/software-carpentry-banner.png" />
+<img src="https://raw.githubusercontent.com/gvwilson/amy/master/amy-logo.png" />
 
-A web-based workshop administration application built using Django.
+[Software Carpentry](http://software-carpentry.org) is now running three events a week,
+and that number could double by the end of 2015 ---
+*if* we can
+[streamline setup and organization](http://software-carpentry.org/blog/2014/12/plans-for-2015-workshop-organization.html).
+The goal of this project is to build
+a web-based workshop administration application using Django.
+It is not intended to be visible to the general public,
+but rather to be used by administrators to keep track of
+what workshops are being arranged,
+when they're supposed to occur,
+who's teaching what,
+and so on.
+
 To get started:
 
 1.  Install Django and its dependencies.
