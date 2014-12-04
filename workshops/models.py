@@ -74,6 +74,7 @@ class Event(models.Model):
 
     site       = models.ForeignKey(Site)
     project    = models.ForeignKey(Project)
+    organizer  = models.ForeignKey(Site, related_name='organizer', null=True)
     start      = models.DateField()
     end        = models.DateField(null=True)
     slug       = models.CharField(max_length=STR_LONG, unique=True)
