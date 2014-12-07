@@ -105,7 +105,7 @@ class TestEvent(TestCase):
         past_events = Event.objects.past_events()
 
         # We made 7 past events
-        assert len(past_events) == 7
+        assert len(past_events) == 8
 
         # They should all start with past
         assert all([e.slug[:4] == 'past' for e in past_events])
