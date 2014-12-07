@@ -1,0 +1,104 @@
+[
+{
+    "fields": {
+        "domain": "example.com",
+        "fullname": "Example Site"
+    },
+    "model": "workshops.site",
+    "pk": 1
+},
+{
+    "fields": {
+        "details": "Just an example project",
+        "slug": "Example",
+        "name": "Example project"
+    },
+    "model": "workshops.project",
+    "pk": 1
+},
+{
+    "fields": {
+        "slug": "past_1",
+        "start": "2013-12-04",
+        "site": 1,
+        "project": 1,
+        "admin_fee": "0"
+    },
+    "model": "workshops.event"
+},
+{
+    "fields": {
+        "slug": "past_2",
+        "start": "2013-12-05",
+        "site": 1,
+        "project": 1,
+        "admin_fee": "0"
+    },
+    "model": "workshops.event"
+},
+{
+    "fields": {
+        "slug": "past_with_end",
+        "start": "2013-12-04",
+        "end": "2013-12-06",
+        "site": 1,
+        "project": 1,
+        "admin_fee": "0"
+    },
+    "model": "workshops.event"
+},
+{
+    "fields": {
+        "slug": "currently_running",
+        "start": "2013-12-06",
+        "end": "2013-12-08",
+        "site": 1,
+        "project": 1,
+        "admin_fee": "0"
+    },
+    "model": "workshops.event"
+},
+{
+    "fields": {
+        "slug": "started_today",
+        "start": "2013-12-07",
+        "end": "2013-12-09",
+        "site": 1,
+        "project": 1,
+        "admin_fee": "0"
+    },
+    "model": "workshops.event"
+},
+{
+    "fields": {
+        "slug": "ends_today",
+        "start": "2013-12-05",
+        "end": "2013-12-07",
+        "site": 1,
+        "project": 1,
+        "admin_fee": "0"
+    },
+    "model": "workshops.event"
+},
+{
+    "fields": {
+        "slug": "upcoming_1",
+        "start": "2013-12-09",
+        "site": 1,
+        "project": 1,
+        "admin_fee": "0"
+    },
+    "model": "workshops.event"
+},
+{
+    "fields": {
+        "slug": "upcoming_with_end",
+        "start": "2013-12-21",
+        "end": "2013-12-23",
+        "site": 1,
+        "project": 1,
+        "admin_fee": "0"
+    },
+    "model": "workshops.event"
+}
+]
