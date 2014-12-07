@@ -11,6 +11,11 @@ class FakeDate(date):
     def today(cls):
         return cls(2013, 12, 7)
 
+# We have to patch datetime.date.today so that all the test
+# fixture events have the right timing relative to today's
+# date - e.g. the "starts_today" event has a hard coded start
+# (2013/12/07), so we need to make sure django thinks today
+# is December 7th 2013
 @patch('workshops.models.datetime.date', FakeDate)
 class TestEvent(TestCase):
     "Tests for the event model and it's manager"

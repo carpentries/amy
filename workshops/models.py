@@ -1,5 +1,7 @@
 from django.db import models
 import datetime
+from django.core.urlresolvers import reverse
+
 
 #------------------------------------------------------------
 
@@ -136,6 +138,10 @@ class Event(models.Model):
 
     def __str__(self):
         return self.slug
+
+    def get_absolute_url(self):
+        return reverse('event_details', args=[str(self.slug)])
+
 
 #------------------------------------------------------------
 
