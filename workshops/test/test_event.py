@@ -1,26 +1,70 @@
 from django.test import TestCase
-from ..models import Event
-from mock import patch
-from datetime import date
+from ..models import Event, Site, Project
+from datetime import datetime, timedelta
 
-class FakeDate(date):
-    "A fake replacement for date that can be mocked for testing."
-    pass
-
-    @classmethod
-    def today(cls):
-        return cls(2013, 12, 7)
-
-# We have to patch datetime.date.today so that all the test
-# fixture events have the right timing relative to today's
-# date - e.g. the "starts_today" event has a hard coded start
-# (2013/12/07), so we need to make sure django thinks today
-# is December 7th 2013
-@patch('workshops.models.datetime.date', FakeDate)
 class TestEvent(TestCase):
     "Tests for the event model and it's manager"
 
-    fixtures = ['event_test']
+    def setUp(self):
+
+        # Create a test site
+        test_site = Site.objects.create(domain='example.com',
+                 fullname='Test Site')
+
+        # Create a test project
+        test_project = Project.objects.create(slug='test',
+                       name='Test Project',
+                       details='my test project')
+
+        # Create one new event for each day in the next 10 days
+        for t in range(1,11):
+            event_start = datetime.now() + timedelta(days=t)
+            Event.objects.create(start=event_start,
+                                 slug='upcoming_{0}'.format(t),
+                                 site=test_site,
+                                 project=test_project,
+                                 admin_fee=100)
+
+        # Create one new event for each day from 10 days ago to
+        # 3 days ago
+        for t in range(3,11):
+            event_start = datetime.now() + timedelta(days=-t)
+            Event.objects.create(start=event_start,
+                                 slug='past_{0}'.format(t),
+                                 site=test_site,
+                                 project=test_project,
+                                 admin_fee=100)
+
+        # Create an event that started yesterday and ends
+        # tomorrow
+        event_start = datetime.now() + timedelta(days=-1)
+        event_end = datetime.now() + timedelta(days=1)
+        Event.objects.create(start=event_start,
+              end=event_end,
+              slug='ends_tomorrow',
+              site=test_site,
+              project=test_project,
+              admin_fee=100)
+
+        # Create an event that ends today
+        event_start = datetime.now() + timedelta(days=-1)
+        event_end = datetime.now()
+        Event.objects.create(start=event_start,
+              end=event_end,
+              slug='ends_today',
+              site=test_site,
+              project=test_project,
+              admin_fee=100)
+
+        # Create an event that starts today
+        event_start = datetime.now()
+        event_end = datetime.now() + timedelta(days=1)
+        Event.objects.create(start=event_start,
+              end=event_end,
+              slug='starts_today',
+              site=test_site,
+              project=test_project,
+              admin_fee=100)
 
     def test_get_future_events(self):
         """Test that the events manager can find upcoming events"""
@@ -28,7 +72,7 @@ class TestEvent(TestCase):
         upcoming_events = Event.objects.upcoming_events()
 
         # There are 2 upcoming events
-        assert len(upcoming_events) == 2
+        assert len(upcoming_events) == 10
 
         # They should all start with upcoming
         assert all([e.slug[:8] == 'upcoming' for e in upcoming_events])
@@ -40,7 +84,7 @@ class TestEvent(TestCase):
         past_events = Event.objects.past_events()
 
         # There are 3 past events
-        assert len(past_events) == 3
+        assert len(past_events) == 8
 
         # They should all start with past
         assert all([e.slug[:4] == 'past' for e in past_events])
@@ -57,8 +101,8 @@ class TestEvent(TestCase):
 
         event_slugs = [e.slug for e in ongoing_events]
 
-        correct_slugs = ['started_today',
-                         'currently_running',
+        correct_slugs = ['starts_today',
+                         'ends_tomorrow',
                          'ends_today',]
 
         self.assertItemsEqual(event_slugs, correct_slugs)

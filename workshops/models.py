@@ -72,7 +72,10 @@ class Project(models.Model):
 
 #------------------------------------------------------------
 
-class EventManager(models.Manager):
+# In order to make our custom filters chainable, we have to
+# define them on the QuerySet, not the Manager - see
+# http://www.dabapps.com/blog/higher-level-query-api-django-orm/
+class EventQuerySet(models.query.QuerySet):
     """Handles finding past, ongoing and upcoming events"""
 
     def past_events(self):
@@ -118,6 +121,27 @@ class EventManager(models.Manager):
         queryset = queryset.filter(end__gte=datetime.date.today())
 
         return queryset
+
+
+class EventManager(models.Manager):
+    """A custom manager which is essentially a proxy for EventQuerySet"""
+
+    # Attach our custom query set to the manager
+    def get_queryset(self):
+        return EventQuerySet(self.model, using=self._db)
+
+    # Proxy methods so we can call our custom filters from the manager
+    # without explicitly creating an EventQuerySet first - see
+    # reference above
+
+    def past_events(self):
+        return self.get_queryset().past_events()
+
+    def ongoing_events(self):
+        return self.get_queryset().ongoing_events()
+
+    def upcoming_events(self):
+        return self.get_queryset().upcoming_events()
 
 class Event(models.Model):
     '''Represent a single event.'''
