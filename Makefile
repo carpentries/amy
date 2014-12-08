@@ -13,6 +13,10 @@ all : commands
 commands : Makefile
 	@sed -n 's/^## //p' $<
 
+## test         : run all tests.
+test :
+	python manage.py test
+
 ## migrations   : create/apply migrations
 migrations :
 	python manage.py makemigrations
