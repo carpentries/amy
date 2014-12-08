@@ -1,4 +1,7 @@
 from django.db import models
+import datetime
+from django.core.urlresolvers import reverse
+
 
 #------------------------------------------------------------
 
@@ -69,6 +72,77 @@ class Project(models.Model):
 
 #------------------------------------------------------------
 
+# In order to make our custom filters chainable, we have to
+# define them on the QuerySet, not the Manager - see
+# http://www.dabapps.com/blog/higher-level-query-api-django-orm/
+class EventQuerySet(models.query.QuerySet):
+    """Handles finding past, ongoing and upcoming events"""
+
+    def past_events(self):
+        """Return a queryset for all past events.
+
+        Past events are those which started before today, and
+        which either ended before today or whose end is NULL
+        """
+
+        # All events that started before today
+        queryset = self.filter(start__lt=datetime.date.today())
+
+        # Of those events, only those that also ended before today
+        # or where the end date is NULL
+        ended_before_today = models.Q(end__lt=datetime.date.today())
+        end_is_null = models.Q(end__isnull=True)
+
+        queryset = queryset.filter(ended_before_today | end_is_null)
+
+        return queryset
+
+    def upcoming_events(self):
+        """Return a queryset for all upcoming events.
+
+        Upcoming events are those which start after today.
+        """
+
+        # All events that start after today
+        queryset = self.filter(start__gt=datetime.date.today())
+
+        return queryset
+
+    def ongoing_events(self):
+        """Return a queryset for all ongoing events.
+
+        Ongoing events are those which start after today.
+        """
+
+        # All events that start before or on today
+        queryset = self.filter(start__lte=datetime.date.today())
+
+        # Of those, only the ones that finish after or on today
+        queryset = queryset.filter(end__gte=datetime.date.today())
+
+        return queryset
+
+
+class EventManager(models.Manager):
+    """A custom manager which is essentially a proxy for EventQuerySet"""
+
+    # Attach our custom query set to the manager
+    def get_queryset(self):
+        return EventQuerySet(self.model, using=self._db)
+
+    # Proxy methods so we can call our custom filters from the manager
+    # without explicitly creating an EventQuerySet first - see
+    # reference above
+
+    def past_events(self):
+        return self.get_queryset().past_events()
+
+    def ongoing_events(self):
+        return self.get_queryset().ongoing_events()
+
+    def upcoming_events(self):
+        return self.get_queryset().upcoming_events()
+
 class Event(models.Model):
     '''Represent a single event.'''
 
@@ -83,8 +157,15 @@ class Event(models.Model):
     attendance = models.IntegerField(null=True)
     admin_fee  = models.DecimalField(max_digits=6, decimal_places=2)
 
+    # Set the custom manager
+    objects = EventManager()
+
     def __str__(self):
         return self.slug
+
+    def get_absolute_url(self):
+        return reverse('event_details', args=[str(self.slug)])
+
 
 #------------------------------------------------------------
 

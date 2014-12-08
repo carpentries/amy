@@ -5,4 +5,15 @@
   <li><a href="{% url 'all_events' %}">events</a></li>
   <li><a href="{% url 'all_persons' %}">persons</a></li>
 </ul>
+
+<div class="upcoming-events">
+    <h3>Upcoming Events:</h3>
+
+    <div class="event-list">
+        {% for event in upcoming_events %}
+        <p><a href="{{ event.get_absolute_url }}">{{ event.slug }}</a></p>
+        {% endfor %}
+    </div>
+</div>
+
 {% endblock %}

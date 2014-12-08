@@ -3,7 +3,9 @@ from workshops.models import Site, Event, Person
 
 def index(request):
     '''Home page.'''
-    context = {'title' : 'Home Page'}
+    upcoming_events = Event.objects.upcoming_events()
+    context = {'title' : 'Home Page',
+               'upcoming_events' : upcoming_events}
     return render(request, 'workshops/index.html', context)
 
 #------------------------------------------------------------
