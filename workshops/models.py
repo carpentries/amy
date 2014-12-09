@@ -22,6 +22,9 @@ class Site(models.Model):
     def __str__(self):
         return self.domain
 
+    def get_absolute_url(self):
+        return reverse('site_details', args=[str(self.domain)])
+
 #------------------------------------------------------------
 
 class Airport(models.Model):

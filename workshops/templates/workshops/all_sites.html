@@ -9,5 +9,6 @@
 {% else %}
     <p>No sites.</p>
 {% endif %}
+<p class="add-new"><a href="{% url 'site_add' %}">Add a new site</a></p>
 <p>... <a href="{% url 'index' %}">index</a></p>
 {% endblock %}
