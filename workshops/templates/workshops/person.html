@@ -1,15 +1,17 @@
 {% extends "workshops/_page.html" %}
 {% block content %}
-<p>personal: {{ person.personal }}</p>
-<p>middle: {{ person.middle }}</p>
-<p>family: {{ person.family }}</p>
-<p>email: {{ person.email }}</p>
-<p>gender: {{ person.gender }}</p>
-<p>active: {{ person.active }}</p>
-<p>airport: {{ person.airport }}</p>
-<p>github: {{ person.github }}</p>
-<p>twitter: {{ person.twitter }}</p>
-<p>url: {{ person.url }}</p>
+<table class="table table-striped">
+  <tr><td>personal:</td><td>{{ person.personal }}</td></tr>
+  <tr><td>middle:</td><td>{{ person.middle }}</td></tr>
+  <tr><td>family:</td><td>{{ person.family }}</td></tr>
+  <tr><td>email:</td><td>{{ person.email }}</td></tr>
+  <tr><td>gender:</td><td>{{ person.gender }}</td></tr>
+  <tr><td>active:</td><td>{{ person.active }}</td></tr>
+  <tr><td>airport:</td><td>{{ person.airport }}</td></tr>
+  <tr><td>github:</td><td>{{ person.github }}</td></tr>
+  <tr><td>twitter:</td><td>{{ person.twitter }}</td></tr>
+  <tr><td>url:</td><td>{{ person.url }}</td></tr>
+</table>
 <p>... <a href="{% url 'all_persons' %}">all persons</a></p>
 <p>... <a href="{% url 'index' %}">index</a></p>
 {% endblock %}
