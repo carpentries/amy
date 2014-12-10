@@ -9,5 +9,8 @@
 {% else %}
     <p>No sites.</p>
 {% endif %}
+{% if user_can_add %}
+<div class="add-site-link"><p><a href="{% url 'admin:workshops_site_add' %}">Add a new site</a></p></div>
+{% endif %}
 <p>... <a href="{% url 'index' %}">index</a></p>
 {% endblock %}

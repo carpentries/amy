@@ -13,8 +13,10 @@ def index(request):
 def all_sites(request):
     '''List all sites.'''
     all_sites = Site.objects.order_by('domain')
+    user_can_add = request.user.has_perm('workshops.add_site')
     context = {'title' : 'All Sites',
-               'all_sites' : all_sites}
+               'all_sites' : all_sites,
+               'user_can_add' : user_can_add}
     return render(request, 'workshops/all_sites.html', context)
 
 def site_details(request, site_domain):
