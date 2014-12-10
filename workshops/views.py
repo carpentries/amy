@@ -1,5 +1,7 @@
 from django.shortcuts import render
 from workshops.models import Site, Event, Person
+from django.views.generic.edit import CreateView, UpdateView
+from django.shortcuts import get_object_or_404
 
 def index(request):
     '''Home page.'''
@@ -25,6 +27,16 @@ def site_details(request, site_domain):
     context = {'title' : 'Site {0}'.format(site),
                'site' : site}
     return render(request, 'workshops/site.html', context)
+
+class SiteCreate(CreateView):
+    model = Site
+    fields = ['domain', 'fullname', 'country']
+
+class SiteUpdate(UpdateView):
+    model = Site
+    fields = ['domain', 'fullname', 'country']
+    slug_field = 'domain'
+    slug_url_kwarg = 'site_domain'
 
 #------------------------------------------------------------
 
