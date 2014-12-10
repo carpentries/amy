@@ -1,0 +1,17 @@
+{% extends "workshops/_page.html" %}
+{% block content %}
+{% if all_cohorts %}
+    <table>
+    {% for cohort in all_cohorts %}
+        <tr>
+	  <td><a href="{% url 'cohort_details' cohort.name %}">{{ cohort.name }}</a></td>
+	  <td>{{ cohort.start }}</td>
+	</tr>
+    {% endfor %}
+    </table>
+{% else %}
+    <p>No cohorts.</p>
+{% endif %}
+<p class="add-new"><a href="{% url 'cohort_add' %}">Add a new cohort</a></p>
+<p>... <a href="{% url 'index' %}">index</a></p>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "workshops/_page.html" %}
+{% block content %}
+
+<p>name: {{ cohort.name }}</p>
+<p>start: {{ cohort.start }}</p>
+<p>active: {{ cohort.active }}</p>
+<p>venue: {{ cohort.venue }}</p>
+<p>qualifies: {{ cohort.qualifies }}</p>
+
+<p class="edit-object"><a href="{% url 'cohort_edit' cohort.name %}">Edit this cohort</a></p>
+<p>... <a href="{% url 'all_cohorts' %}">all cohorts</a></p>
+<p>... <a href="{% url 'index' %}">index</a></p>
+{% endblock %}
