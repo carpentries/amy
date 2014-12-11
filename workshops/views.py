@@ -1,7 +1,9 @@
 from django.shortcuts import render
-from workshops.models import Site, Event, Person, Cohort
+from workshops.models import Site, Airport, Event, Person, Cohort
 from django.views.generic.edit import CreateView, UpdateView
 from django.shortcuts import get_object_or_404
+
+#------------------------------------------------------------
 
 def index(request):
     '''Home page.'''
@@ -11,6 +13,8 @@ def index(request):
     return render(request, 'workshops/index.html', context)
 
 #------------------------------------------------------------
+
+SITE_FIELDS = ['domain', 'fullname', 'country']
 
 def all_sites(request):
     '''List all sites.'''
@@ -30,13 +34,43 @@ def site_details(request, site_domain):
 
 class SiteCreate(CreateView):
     model = Site
-    fields = ['domain', 'fullname', 'country']
+    fields = SITE_FIELDS
 
 class SiteUpdate(UpdateView):
     model = Site
-    fields = ['domain', 'fullname', 'country']
+    fields = SITE_FIELDS
     slug_field = 'domain'
     slug_url_kwarg = 'site_domain'
+
+#------------------------------------------------------------
+
+AIRPORT_FIELDS = ['iata', 'fullname', 'country', 'latitude', 'longitude']
+
+def all_airports(request):
+    '''List all airports.'''
+    all_airports = Airport.objects.order_by('iata')
+    user_can_add = request.user.has_perm('edit')
+    context = {'title' : 'All Airports',
+               'all_airports' : all_airports,
+               'user_can_add' : user_can_add}
+    return render(request, 'workshops/all_airports.html', context)
+
+def airport_details(request, airport_iata):
+    '''List details of a particular airport.'''
+    airport = Airport.objects.get(iata=airport_iata)
+    context = {'title' : 'Airport {0}'.format(airport),
+               'airport' : airport}
+    return render(request, 'workshops/airport.html', context)
+
+class AirportCreate(CreateView):
+    model = Airport
+    fields = AIRPORT_FIELDS
+
+class AirportUpdate(UpdateView):
+    model = Airport
+    fields = AIRPORT_FIELDS
+    slug_field = 'iata'
+    slug_url_kwarg = 'airport_iata'
 
 #------------------------------------------------------------
 
@@ -72,6 +106,8 @@ def event_details(request, event_slug):
 
 #------------------------------------------------------------
 
+COHORT_FIELDS = ['name', 'start', 'active', 'venue', 'qualifies']
+
 def all_cohorts(request):
     '''List all cohorts.'''
     all_cohorts = Cohort.objects.order_by('start')
@@ -90,11 +126,11 @@ def cohort_details(request, cohort_name):
 
 class CohortCreate(CreateView):
     model = Cohort
-    fields = ['name', 'start', 'active', 'venue', 'qualifies']
+    fields = COHORT_FIELDS
 
 class CohortUpdate(UpdateView):
     model = Cohort
-    fields = ['name', 'start', 'active', 'venue', 'qualifies']
+    fields = COHORT_FIELDS
     slug_field = 'name'
     slug_url_kwarg = 'cohort_name'
 
