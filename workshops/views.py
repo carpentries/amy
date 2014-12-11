@@ -131,8 +131,7 @@ class TaskCreate(CreateView):
 class TaskUpdate(UpdateView):
     model = Task
     fields = TASK_FIELDS
-    slug_field = 'event'
-    slug_url_kwarg = ('event_slug', 'person_id', 'role_name')
+    pk_url_kwarg = 'task_id'
 
 #------------------------------------------------------------
 
