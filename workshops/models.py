@@ -192,6 +192,9 @@ class Task(models.Model):
     def __str__(self):
         return '{0}/{1}={2}'.format(self.event, self.person, self.task)
 
+    def get_absolute_url(self):
+        return reverse('task_details', args=[str(self.event), str(self.person), str(self.role)])
+
 #------------------------------------------------------------
 
 class Cohort(models.Model):
