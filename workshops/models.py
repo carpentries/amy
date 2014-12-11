@@ -39,6 +39,9 @@ class Airport(models.Model):
     def __str__(self):
         return self.iata
 
+    def get_absolute_url(self):
+        return reverse('airport_details', args=[str(self.iata)])
+
 #------------------------------------------------------------
 
 class Person(models.Model):

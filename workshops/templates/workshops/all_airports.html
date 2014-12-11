@@ -1,0 +1,25 @@
+{% extends "workshops/_page.html" %}
+{% block content %}
+{% if all_airports %}
+    <table class="table table-striped">
+        <tr>
+	    <th>IATA</th>
+	    <th>full name</th>
+	    <th>latitude</th>
+	    <th>longitude</th>
+	</tr>
+    {% for airport in all_airports %}
+        <tr>
+            <td>{{ airport.iata }}</td>
+            <td><a href="{% url 'airport_details' airport.iata %}">{{ airport.fullname }}</a></td>
+            <td>{{ airport.latitude }}</td>
+            <td>{{ airport.longitude }}</td>
+	</tr>
+    {% endfor %}
+    </table>
+{% else %}
+    <p>No airports.</p>
+{% endif %}
+<p class="add-new"><a href="{% url 'airport_add' %}">Add a new airport</a></p>
+<p>... <a href="{% url 'index' %}">index</a></p>
+{% endblock %}
