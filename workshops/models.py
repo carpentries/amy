@@ -206,6 +206,9 @@ class Cohort(models.Model):
     def __str__(self):
         return self.name
 
+    def get_absolute_url(self):
+        return reverse('cohort_details', args=[str(self.name)])
+
 #------------------------------------------------------------
 
 class Trainee(models.Model):

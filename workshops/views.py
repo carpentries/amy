@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from workshops.models import Site, Event, Person
+from workshops.models import Site, Event, Person, Cohort
 from django.views.generic.edit import CreateView, UpdateView
 from django.shortcuts import get_object_or_404
 
@@ -69,3 +69,32 @@ def event_details(request, event_slug):
     context = {'title' : 'Event {0}'.format(event),
                'event' : event}
     return render(request, 'workshops/event.html', context)
+
+#------------------------------------------------------------
+
+def all_cohorts(request):
+    '''List all cohorts.'''
+    all_cohorts = Cohort.objects.order_by('start')
+    user_can_add = request.user.has_perm('edit')
+    context = {'title' : 'All Cohorts',
+               'all_cohorts' : all_cohorts,
+               'user_can_add' : user_can_add}
+    return render(request, 'workshops/all_cohorts.html', context)
+
+def cohort_details(request, cohort_name):
+    '''List details of a particular cohort.'''
+    cohort = Cohort.objects.get(name=cohort_name)
+    context = {'title' : 'Cohort {0}'.format(cohort),
+               'cohort' : cohort}
+    return render(request, 'workshops/cohort.html', context)
+
+class CohortCreate(CreateView):
+    model = Cohort
+    fields = ['name', 'start', 'active', 'venue', 'qualifies']
+
+class CohortUpdate(UpdateView):
+    model = Cohort
+    fields = ['name', 'start', 'active', 'venue', 'qualifies']
+    slug_field = 'name'
+    slug_url_kwarg = 'cohort_name'
+
