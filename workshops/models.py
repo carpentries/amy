@@ -193,7 +193,7 @@ class Task(models.Model):
     role       = models.ForeignKey(Role)
 
     def __str__(self):
-        return '{0}/{1}={2}'.format(self.event, self.person, self.task)
+        return '{0}/{1}={2}'.format(self.event, self.person, self.role)
 
     def get_absolute_url(self):
         return reverse('task_details', args=[str(self.event), str(self.person), str(self.role)])

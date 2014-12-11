@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from workshops.models import Site, Airport, Event, Person, Cohort
+from workshops.models import Site, Airport, Event, Person, Task, Cohort
 from django.views.generic.edit import CreateView, UpdateView
 from django.shortcuts import get_object_or_404
 
@@ -103,6 +103,36 @@ def event_details(request, event_slug):
     context = {'title' : 'Event {0}'.format(event),
                'event' : event}
     return render(request, 'workshops/event.html', context)
+
+#------------------------------------------------------------
+
+TASK_FIELDS = ['event', 'person', 'role']
+
+def all_tasks(request):
+    '''List all tasks.'''
+    all_tasks = Task.objects.order_by('event', 'person', 'role')
+    user_can_add = request.user.has_perm('edit')
+    context = {'title' : 'All Tasks',
+               'all_tasks' : all_tasks,
+               'user_can_add' : user_can_add}
+    return render(request, 'workshops/all_tasks.html', context)
+
+def task_details(request, event_slug, person_id, role_name):
+    '''List details of a particular task.'''
+    task = Task.objects.get(event__slug=event_slug, person__id=person_id, role__name=role_name)
+    context = {'title' : 'Task {0}'.format(task),
+               'task' : task}
+    return render(request, 'workshops/task.html', context)
+
+class TaskCreate(CreateView):
+    model = Task
+    fields = TASK_FIELDS
+
+class TaskUpdate(UpdateView):
+    model = Task
+    fields = TASK_FIELDS
+    slug_field = 'event'
+    slug_url_kwarg = ('event_slug', 'person_id', 'role_name')
 
 #------------------------------------------------------------
 
