@@ -15,7 +15,7 @@ def index(request):
 def all_sites(request):
     '''List all sites.'''
     all_sites = Site.objects.order_by('domain')
-    user_can_add = request.user.has_perm('workshops.add_site')
+    user_can_add = request.user.has_perm('edit')
     context = {'title' : 'All Sites',
                'all_sites' : all_sites,
                'user_can_add' : user_can_add}
