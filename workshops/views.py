@@ -133,6 +133,18 @@ class TaskUpdate(UpdateView):
     fields = TASK_FIELDS
     pk_url_kwarg = 'task_id'
 
+    def get_object(self):
+        """ 
+        Returns the object the view is displaying.
+        """
+
+        event_slug = self.kwargs.get('event_slug', None)
+        person_id = self.kwargs.get('person_id', None)
+        role_name = self.kwargs.get('role_name', None)
+
+        return get_object_or_404(Task, event__slug=event_slug, person__id=person_id, role__name=role_name)
+ 
+
 #------------------------------------------------------------
 
 COHORT_FIELDS = ['name', 'start', 'active', 'venue', 'qualifies']

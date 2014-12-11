@@ -27,7 +27,7 @@ urlpatterns = [
 
     url(r'^tasks/?$', views.all_tasks, name='all_tasks'),
     url(r'^task/(?P<event_slug>[\w\.-]+)/(?P<person_id>[\w\.-]+)/(?P<role_name>[\w\.-]+)/?$', views.task_details, name='task_details'),
-    url(r'^task/(?P<task_id>[\w\.-]+)/edit$', TaskUpdate.as_view(), name='task_edit'),
+    url(r'^task/(?P<event_slug>[\w\.-]+)/(?P<person_id>[\w\.-]+)/(?P<role_name>[\w\.-]+)/edit$', TaskUpdate.as_view(), name='task_edit'),
     url(r'^tasks/add/$', TaskCreate.as_view(), name='task_add'),
 
     url(r'^cohorts/?$', views.all_cohorts, name='all_cohorts'),
