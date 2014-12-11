@@ -196,7 +196,7 @@ class Task(models.Model):
         return '{0}/{1}={2}'.format(self.event, self.person, self.role)
 
     def get_absolute_url(self):
-        return reverse('task_details', args=[str(self.event), str(self.person), str(self.role)])
+        return reverse('task_details', kwargs={'event_slug':str(self.event), 'person_id':self.person.pk, 'role_name':str(self.role)})
 
 #------------------------------------------------------------
 
