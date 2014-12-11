@@ -75,7 +75,7 @@ def event_details(request, event_slug):
 def all_cohorts(request):
     '''List all cohorts.'''
     all_cohorts = Cohort.objects.order_by('start')
-    user_can_add = request.user.has_perm('workshops.add_cohort')
+    user_can_add = request.user.has_perm('edit')
     context = {'title' : 'All Cohorts',
                'all_cohorts' : all_cohorts,
                'user_can_add' : user_can_add}
