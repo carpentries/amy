@@ -1,11 +1,14 @@
 {% extends "workshops/_page.html" %}
 {% block content %}
 {% if all_sites %}
-    <ul>
+    <table class="table table-striped">
     {% for site in all_sites %}
-        <li><a href="{% url 'site_details' site.domain %}">{{ site.fullname }}</a></li>
+        <tr>
+            <td><a href="{% url 'site_details' site.domain %}">{{ site.fullname }}</a></td>
+            <td><a href="http://{{ site.domain }}">{{ site.domain }}</a></td>
+	</tr>
     {% endfor %}
-    </ul>
+    </table>
 {% else %}
     <p>No sites.</p>
 {% endif %}

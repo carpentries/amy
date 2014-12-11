@@ -8,12 +8,10 @@
 
 <div class="upcoming-events">
     <h3>Upcoming Events:</h3>
-
-    <div class="event-list">
+    <ul class="event-list">
         {% for event in upcoming_events %}
-        <p><a href="{{ event.get_absolute_url }}">{{ event.slug }}</a></p>
+        <li><a href="{{ event.get_absolute_url }}">{{ event.slug }}</a></li>
         {% endfor %}
-    </div>
+    </ul>
 </div>
-
 {% endblock %}
