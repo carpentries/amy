@@ -4,7 +4,7 @@ from datetime import datetime
 from ..models import Task, Event, Role, Person, Project, Site
 
 class TestTask(TestCase):
-    "Tests for the task model, it's manager and views"
+    "Tests for the task model, its manager and views"
 
     def setUp(self):
 
@@ -60,10 +60,7 @@ class TestTask(TestCase):
         self.fixtures['test_task_1'] = test_task_1
         self.fixtures['test_task_2'] = test_task_2
 
-    def test_task_has_detail_view(self):
-        """Test that the detail view for a task is reachable
-        by specifying the event, person and role.
-        """
+    def test_task_detail_view_reachable_from_event_person_and_role_of_task(self):
 
         correct_task = self.fixtures['test_task_1']
 
@@ -74,10 +71,9 @@ class TestTask(TestCase):
         response = self.client.get(reverse('task_details',
                                    kwargs=url_kwargs))
 
-        # Check whether the view has the right task associated
         assert response.context['task'].pk == correct_task.pk
 
-    def test_task_has_edit_view(self):
+    def test_task_edit_view_reachable_from_event_person_and_role_of_task(self):
         """Test that the edit view for a task is reachable
         by specifying the event, person and role.
         """
@@ -91,5 +87,4 @@ class TestTask(TestCase):
         response = self.client.get(reverse('task_edit',
                                    kwargs=url_kwargs))
 
-        # Check whether the view has the right task associated
         assert response.context['task'].pk == correct_task.pk
