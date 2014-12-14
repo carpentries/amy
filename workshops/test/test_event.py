@@ -132,8 +132,7 @@ class TestEventViews(TestCase):
                                  project=test_project,
                                  admin_fee=0)
 
-    def test_events_paginated(self):
-        """Test that the events view is paginated"""
+    def test_events_view_paginated(self):
 
         events_url = reverse('all_events') 
         events_url += '?items_per_page=10'
@@ -144,8 +143,7 @@ class TestEventViews(TestCase):
 
         assert len(view_events) == 10
 
-    def test_no_pagination(self):
-        """Test that we can get all events if we want"""
+    def test_can_request_all_events(self):
 
         events_url = reverse('all_events') 
         events_url += '?items_per_page=all'
@@ -157,8 +155,7 @@ class TestEventViews(TestCase):
 
         self.assertItemsEqual(view_events, all_events)
 
-    def test_invalid_items_per_page(self):
-        """Test we can handle requests for an invalid no of items"""
+    def test_invalid_items_per_page_gives_default_pagination(self):
 
         events_url = reverse('all_events') 
         events_url += '?items_per_page=not_an_integer'
@@ -169,10 +166,7 @@ class TestEventViews(TestCase):
 
         assert len(view_events) < 50
 
-    def test_invalid_page_no(self):
-        """Test we can handle requests for an invalid page number,
-        such requests should just give us the first page
-        """
+    def test_non_integer_page_no_returns_first_page(self):
 
         events_url = reverse('all_events')
         events_url += '?items_per_page=10&page=not_an_integer'
@@ -187,10 +181,7 @@ class TestEventViews(TestCase):
         # This should be the first page
         assert view_events.number == 1
 
-    def test_page_no_too_large(self):
-        """Test we can handle requests with a page number that's too large
-        such requests should just give us the last page
-        """
+    def test_page_no_too_large_returns_last_page(self):
 
         events_url = reverse('all_events')
         events_url += '?items_per_page=10&page=999'
@@ -204,4 +195,3 @@ class TestEventViews(TestCase):
 
         # This should be the first page
         assert view_events.number == 5
-
