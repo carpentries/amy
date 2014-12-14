@@ -1,0 +1,25 @@
+{% extends "workshops/_page.html" %}
+{% block content %}
+{% if all_tasks %}
+    <table class="table table-striped">
+        <tr>
+	    <th>event</th>
+	    <th>person</th>
+	    <th>role</th>
+	    <td></td>
+	</tr>
+    {% for task in all_tasks %}
+        <tr>
+            <td>{{ task.event }}</td>
+            <td>{{ task.person }}</a></td>
+            <td>{{ task.role }}</a></td>
+	    <td><a href="{% url 'task_details' task.event.slug task.person.id task.role.name %}">...</a></td>
+	</tr>
+    {% endfor %}
+    </table>
+{% else %}
+    <p>No tasks.</p>
+{% endif %}
+<p class="add-new"><a href="{% url 'task_add' %}">Add a new task</a></p>
+<p>... <a href="{% url 'index' %}">index</a></p>
+{% endblock %}

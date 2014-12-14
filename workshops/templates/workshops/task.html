@@ -1,0 +1,13 @@
+{% extends "workshops/_page.html" %}
+{% block content %}
+
+<table class="table table-striped">
+  <tr><td>event:</td><td>{{ task.event }}</td></tr>
+  <tr><td>person:</td><td>{{ task.person }}</td></tr>
+  <tr><td>role:</td><td>{{ task.role }}</td></tr>
+</table>
+
+<p class="edit-object"><a href="{% url 'task_edit' task.event.slug task.person.id task.role.name %}">Edit this task</a></p>
+<p>... <a href="{% url 'all_tasks' %}">all tasks</a></p>
+<p>... <a href="{% url 'index' %}">index</a></p>
+{% endblock %}

@@ -39,6 +39,9 @@ class Airport(models.Model):
     def __str__(self):
         return self.iata
 
+    def get_absolute_url(self):
+        return reverse('airport_details', args=[str(self.iata)])
+
 #------------------------------------------------------------
 
 class Person(models.Model):
@@ -190,7 +193,12 @@ class Task(models.Model):
     role       = models.ForeignKey(Role)
 
     def __str__(self):
-        return '{0}/{1}={2}'.format(self.event, self.person, self.task)
+        return '{0}/{1}={2}'.format(self.event, self.person, self.role)
+
+    def get_absolute_url(self):
+        return reverse('task_details', kwargs={'event_slug':str(self.event),
+                                               'person_id':self.person.pk,
+                                               'role_name':str(self.role)})
 
 #------------------------------------------------------------
 

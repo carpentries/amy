@@ -1,0 +1,13 @@
+{% extends "workshops/_page.html" %}
+{% block content %}
+
+<form action="" method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Submit" />
+</form>
+
+<p>... <a href="{% url 'all_airports' %}">all airports</a></p>
+<p>... <a href="{% url 'index' %}">index</a></p>
+{% endblock %}
+
