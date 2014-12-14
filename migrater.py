@@ -12,14 +12,15 @@ def fake(i, personal, middle, family, email, gender, github, twitter, url):
     '''Redact personal identifying information.'''
     if not FAKE:
         return personal, middle, family, email
-    return 'first_{0}'.format(i), \
-           'middle_{0}'.format(i), \
-           'last_{0}'.format(i), \
-           '{0}@{0}.edu'.format(i), \
+    where = 'I{0}.edu'.format(i)
+    return 'F{0}'.format(i), \
+           'M{0}'.format(i), \
+           'L{0}'.format(i), \
+           '{0}@{1}'.format(i, where), \
            ('M', 'F', 'O')[i % 3], \
-           'user_{0}'.format(i), \
-           '@user{0}'.format(i), \
-           'http://somewhere.org/user_{0}'.format(i)
+           'U_{0}'.format(i), \
+           '@U{0}'.format(i), \
+           'http://{0}/U_{1}'.format(where, i)
 
 old_cnx = sqlite3.connect(sys.argv[1])
 old_crs = old_cnx.cursor()
