@@ -163,6 +163,7 @@ class Event(models.Model):
     reg_key    = models.CharField(max_length=STR_REG_KEY, null=True)
     attendance = models.IntegerField(null=True)
     admin_fee  = models.DecimalField(max_digits=6, decimal_places=2)
+    notes      = models.TextField(null=True)
 
     # Set the custom manager
     objects = EventManager()

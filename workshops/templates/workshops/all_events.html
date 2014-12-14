@@ -11,6 +11,7 @@
 	    <th>end</th>
 	    <th>Eventbrite</th>
 	    <th>attendance</th>
+        <th>notes</th>
 	</tr>
     {% for event in all_events %}
         <tr>
@@ -22,6 +23,7 @@
 	    <td>{{ event.end }}</td>
 	    <td>{{ event.reg_key }}</td>
 	    <td>{{ event.attendance }}</td>
+        <td>{{ event.notes | truncatechars:10 }}</td>
 	</tr>
     {% endfor %}
     </table>
