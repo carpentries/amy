@@ -14,7 +14,7 @@ def index(request):
 
 #------------------------------------------------------------
 
-SITE_FIELDS = ['domain', 'fullname', 'country']
+SITE_FIELDS = ['domain', 'fullname', 'country', 'notes']
 
 def all_sites(request):
     '''List all sites.'''
@@ -134,7 +134,7 @@ class TaskUpdate(UpdateView):
     pk_url_kwarg = 'task_id'
 
     def get_object(self):
-        """ 
+        """
         Returns the object the view is displaying.
         """
 
@@ -143,7 +143,7 @@ class TaskUpdate(UpdateView):
         role_name = self.kwargs.get('role_name', None)
 
         return get_object_or_404(Task, event__slug=event_slug, person__id=person_id, role__name=role_name)
- 
+
 
 #------------------------------------------------------------
 

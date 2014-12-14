@@ -18,6 +18,7 @@ class Site(models.Model):
     domain     = models.CharField(max_length=STR_LONG, unique=True)
     fullname   = models.CharField(max_length=STR_LONG, unique=True)
     country    = models.CharField(max_length=STR_LONG, null=True)
+    notes      = models.TextField(null=True)
 
     def __str__(self):
         return self.domain
