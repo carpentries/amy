@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.core.urlresolvers import reverse
 from ..models import Event, Site, Project
 from datetime import datetime, timedelta
 
@@ -106,3 +107,101 @@ class TestEvent(TestCase):
                          'ends_today',]
 
         self.assertItemsEqual(event_slugs, correct_slugs)
+
+
+class TestEventViews(TestCase):
+    "Tests for the event views"
+
+    def setUp(self):
+
+        # Create a test site
+        test_site = Site.objects.create(domain='example.com',
+                 fullname='Test Site')
+
+        # Create a test project
+        test_project = Project.objects.create(slug='test',
+                       name='Test Project',
+                       details='my test project')
+
+        # Create fifty new events
+        for i in range(50):
+            event_start = datetime.now()
+            Event.objects.create(start=event_start,
+                                 slug='test_event_{0}'.format(i),
+                                 site=test_site,
+                                 project=test_project,
+                                 admin_fee=0)
+
+    def test_events_paginated(self):
+        """Test that the events view is paginated"""
+
+        events_url = reverse('all_events') 
+        events_url += '?items_per_page=10'
+        response = self.client.get(events_url)
+
+        # We asked for max 10 events, make sure we got them
+        view_events = response.context['all_events']
+
+        assert len(view_events) == 10
+
+    def test_no_pagination(self):
+        """Test that we can get all events if we want"""
+
+        events_url = reverse('all_events') 
+        events_url += '?items_per_page=all'
+        response = self.client.get(events_url)
+
+        # We asked for all events, make sure we got them
+        view_events = response.context['all_events']
+        all_events = list(Event.objects.all())
+
+        self.assertItemsEqual(view_events, all_events)
+
+    def test_invalid_items_per_page(self):
+        """Test we can handle requests for an invalid no of items"""
+
+        events_url = reverse('all_events') 
+        events_url += '?items_per_page=not_an_integer'
+        response = self.client.get(events_url)
+
+        # View should be paginated by default, so we shouldn't get all events
+        view_events = response.context['all_events']
+
+        assert len(view_events) < 50
+
+    def test_invalid_page_no(self):
+        """Test we can handle requests for an invalid page number,
+        such requests should just give us the first page
+        """
+
+        events_url = reverse('all_events')
+        events_url += '?items_per_page=10&page=not_an_integer'
+        response = self.client.get(events_url)
+
+        # Get the events for this page
+        view_events = response.context['all_events']
+
+        # They should still be paginated
+        assert len(view_events) == 10
+
+        # This should be the first page
+        assert view_events.number == 1
+
+    def test_page_no_too_large(self):
+        """Test we can handle requests with a page number that's too large
+        such requests should just give us the last page
+        """
+
+        events_url = reverse('all_events')
+        events_url += '?items_per_page=10&page=999'
+        response = self.client.get(events_url)
+
+        # Get the events for this page
+        view_events = response.context['all_events']
+
+        # They should still be paginated
+        assert len(view_events) == 10
+
+        # This should be the first page
+        assert view_events.number == 5
+
