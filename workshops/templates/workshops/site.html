@@ -1,4 +1,12 @@
 {% extends "workshops/_page.html" %}
+
+{% load breadcrumbs %}
+{% block breadcrumbs %}
+    {% breadcrumb_url 'Index' 'index'  %}
+    {% breadcrumb_url 'All sites' 'all_sites' %}
+    {% breadcrumb_active site.domain  %}
+{% endblock %}
+
 {% block content %}
 
 <table class="table table-striped">
@@ -8,6 +16,4 @@
 </table>
 
 <p class="edit-object"><a href="{% url 'site_edit' site.domain %}">Edit this site</a></p>
-<p>... <a href="{% url 'all_sites' %}">all sites</a></p>
-<p>... <a href="{% url 'index' %}">index</a></p>
 {% endblock %}
