@@ -59,7 +59,10 @@ class Person(models.Model):
         middle = ''
         if self.middle is not None:
             middle = ' {0}'.format(self.middle)
-        return '{0}{1} {2} <{3}>'.format(self.personal, middle, self.family, self.email)
+        email = ''
+        if self.email is not None:
+            email = ' {0}'.format(self.email)
+        return '{0}{1} {2} <{3}>'.format(self.personal, middle, self.family, email)
 
 #------------------------------------------------------------
 
