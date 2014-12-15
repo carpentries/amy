@@ -59,7 +59,10 @@ please fork this repository and send a pull request,
 or contact [Greg Wilson](gvwilson@software-carpentry.org).
 
 Note:
-please concentrate initially on features marked `essential` in the issue tracker
+if you are new to the project,
+anything at all is welcome as a way of familiarizing yourself with the code.
+After that,
+please concentrate on features marked `essential` in the issue tracker
 so that we can get this into service in January 2015.
 Better layout,
 incremental page updates via AJAX,
