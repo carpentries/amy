@@ -2,6 +2,7 @@ from django.shortcuts import render
 from workshops.models import Site, Airport, Event, Person, Task, Cohort
 from django.views.generic.edit import CreateView, UpdateView
 from django.shortcuts import get_object_or_404
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 #------------------------------------------------------------
 
@@ -92,9 +93,44 @@ def person_details(request, person_id):
 
 def all_events(request):
     '''List all events.'''
+
+    EVENTS_PER_PAGE = 25
+
     all_events = Event.objects.order_by('slug')
+
+    # Get the number of items requested per page, default to 25
+    # This is important for unit testing, we need to be
+    # able to specify how many items to expect
+    items = request.GET.get('items_per_page', EVENTS_PER_PAGE)
+
+    # Only paginate if the number of items is not 'all'
+    if not items == 'all':
+
+        # If items is not an integer, set it to the default
+        try:
+            items = int(items)
+        except ValueError:
+            items = EVENTS_PER_PAGE
+
+        events_paginator = Paginator(all_events, items)
+
+        # Get the page number requested, if any
+        page = request.GET.get('page')
+
+        try:
+            events = events_paginator.page(page)
+        except PageNotAnInteger:
+            # If page is not an integer, deliver first page.
+            events = events_paginator.page(1)
+        except EmptyPage:
+            # If page is out of range (e.g. 9999), deliver last page of results.
+            events = events_paginator.page(events_paginator.num_pages)
+    else:
+        events = all_events
+
     context = {'title' : 'All Events',
-               'all_events' : all_events}
+               'all_events' : events}
+
     return render(request, 'workshops/all_events.html', context)
 
 def event_details(request, event_slug):
