@@ -47,9 +47,7 @@ class Airport(models.Model):
 class Person(models.Model):
     '''Represent a single person.'''
 
-    personal   = models.CharField(max_length=STR_LONG)
-    middle     = models.CharField(max_length=STR_LONG, null=True)
-    family     = models.CharField(max_length=STR_LONG)
+    name       = models.CharField(max_length=STR_LONG)
     email      = models.CharField(max_length=STR_LONG, unique=True, null=True)
     gender     = models.CharField(max_length=STR_SHORT, null=True)
     active     = models.NullBooleanField()
@@ -59,10 +57,7 @@ class Person(models.Model):
     url        = models.CharField(max_length=STR_LONG, null=True)
 
     def __str__(self):
-        middle = ''
-        if self.middle is not None:
-            middle = ' {0}'.format(self.middle)
-        return '{0}{1} {2} <{3}>'.format(self.personal, middle, self.family, self.email)
+        return '{0} <{3}>'.format(self.name, self.email)
 
 #------------------------------------------------------------
 
