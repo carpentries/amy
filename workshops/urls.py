@@ -19,7 +19,7 @@ urlpatterns = [
     url(r'^airport/(?P<airport_iata>[\w\.-]+)/edit$', AirportUpdate.as_view(), name='airport_edit'),
     url(r'^airports/add/$', AirportCreate.as_view(), name='airport_add'),
 
-    url(r'^persons/?$', views.all_persons, name='all_persons'),
+    url(r'^people/?$', views.all_people, name='all_people'),
     url(r'^person/(?P<person_id>[\w\.-]+)/?$', views.person_details, name='person_details'),
 
     url(r'^events/?$', views.all_events, name='all_events'),
