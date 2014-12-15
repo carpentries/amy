@@ -6,6 +6,10 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 #------------------------------------------------------------
 
+ITEMS_PER_PAGE = 25
+
+#------------------------------------------------------------
+
 def index(request):
     '''Home page.'''
     upcoming_events = Event.objects.upcoming_events()
@@ -94,14 +98,12 @@ def person_details(request, person_id):
 def all_events(request):
     '''List all events.'''
 
-    EVENTS_PER_PAGE = 25
-
     all_events = Event.objects.order_by('slug')
 
     # Get the number of items requested per page, default to 25
     # This is important for unit testing, we need to be
     # able to specify how many items to expect
-    items = request.GET.get('items_per_page', EVENTS_PER_PAGE)
+    items = request.GET.get('items_per_page', ITEMS_PER_PAGE)
 
     # Only paginate if the number of items is not 'all'
     if not items == 'all':
@@ -110,7 +112,7 @@ def all_events(request):
         try:
             items = int(items)
         except ValueError:
-            items = EVENTS_PER_PAGE
+            items = ITEMS_PER_PAGE
 
         events_paginator = Paginator(all_events, items)
 
