@@ -1,4 +1,12 @@
 {% extends "workshops/_page.html" %}
+
+{% load breadcrumbs %}
+{% block breadcrumbs %}
+    {% breadcrumb_url 'Index' 'index'  %}
+    {% breadcrumb_url 'All events' 'all_events' %}
+    {% breadcrumb_active event.slug  %}
+{% endblock %}
+
 {% block content %}
 <table class="table table-striped">
   <tr><td>project:</td><td><a href="FIXME">{{ event.project }}</a></td></tr>
@@ -10,6 +18,4 @@
   <tr><td>Eventbrite key:</td><td>{{ event.reg_key }}</td></tr>
   <tr><td>attendance:</td><td>{{ event.attendance }}</td></tr>
 </table>
-<p>... <a href="{% url 'all_events' %}">all events</a></p>
-<p>... <a href="{% url 'index' %}">index</a></p>
 {% endblock %}

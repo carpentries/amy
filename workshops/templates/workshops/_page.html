@@ -9,6 +9,7 @@
   <body>
     <div class="container">
       <h1>{{ title }}</h1>
+      <ol class="breadcrumb">{% block breadcrumbs %}{% endblock %}</ol>
       {% block content %}{% endblock %}
     </div>
   </body>

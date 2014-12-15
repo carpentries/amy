@@ -1,4 +1,16 @@
 {% extends "workshops/_page.html" %}
+
+{% load breadcrumbs %}
+{% block breadcrumbs %}
+    {% breadcrumb_url 'Index' 'index'  %}
+    {% breadcrumb_url 'All cohorts' 'all_cohorts' %}
+    {% if object %}
+        {% breadcrumb_active 'Edit cohort'  %}
+    {% else %}
+        {% breadcrumb_active 'New cohort'  %}
+    {% endif %}
+{% endblock %}
+
 {% block content %}
 
 <form action="" method="post">
@@ -7,7 +19,5 @@
     <input type="submit" value="Submit" />
 </form>
 
-<p>... <a href="{% url 'all_cohorts' %}">all cohorts</a></p>
-<p>... <a href="{% url 'index' %}">index</a></p>
 {% endblock %}
 

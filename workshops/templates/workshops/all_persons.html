@@ -1,4 +1,11 @@
 {% extends "workshops/_page.html" %}
+
+{% load breadcrumbs %}
+{% block breadcrumbs %}
+    {% breadcrumb_url 'Index' 'index'  %}
+    {% breadcrumb_active 'All persons'  %}
+{% endblock %}
+
 {% block content %}
 {% if all_persons %}
     <table class="table table-striped">
@@ -22,5 +29,4 @@
 {% else %}
     <p>No persons.</p>
 {% endif %}
-<p>... <a href="{% url 'index' %}">index</a></p>
 {% endblock %}
