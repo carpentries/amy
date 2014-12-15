@@ -1,6 +1,6 @@
 {% extends "workshops/_page.html" %}
 {% block content %}
-{% if all_persons %}
+{% if all_people %}
     <table class="table table-striped">
         <tr>
 	    <th>personal</th>
@@ -9,7 +9,7 @@
 	    <th>email</th>
 	    <th></th>
 	</tr>
-    {% for person in all_persons %}
+    {% for person in all_people %}
         <tr>
 	    <td>{{ person.personal }}</td>
 	    <td>{{ person.middle }}</td>
@@ -20,7 +20,7 @@
     {% endfor %}
     </table>
 {% else %}
-    <p>No persons.</p>
+    <p>No people.</p>
 {% endif %}
 <p>... <a href="{% url 'index' %}">index</a></p>
 {% endblock %}

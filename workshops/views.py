@@ -75,12 +75,12 @@ class AirportUpdate(UpdateView):
 
 #------------------------------------------------------------
 
-def all_persons(request):
-    '''List all persons.'''
-    all_persons = Person.objects.order_by('family', 'personal')
+def all_people(request):
+    '''List all people.'''
+    all_people = Person.objects.order_by('family', 'personal')
     context = {'title' : 'All Persons',
-               'all_persons' : all_persons}
-    return render(request, 'workshops/all_persons.html', context)
+               'all_people' : all_people}
+    return render(request, 'workshops/all_people.html', context)
 
 def person_details(request, person_id):
     '''List details of a particular person.'''
