@@ -5,6 +5,7 @@
   <tr><td>full name:</td><td>{{ site.fullname }}</td></tr>
   <tr><td>domain:</td><td><a href="http://{{ site.domain }}">{{ site.domain }}</a></td></tr>
   <tr><td>country:</td><td>{{ site.country }}</td></tr>
+  <tr><td>notes:</td><td>{{ site.notes }}</td></tr>
 </table>
 
 <p class="edit-object"><a href="{% url 'site_edit' site.domain %}">Edit this site</a></p>
