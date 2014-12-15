@@ -6,6 +6,7 @@ from django.views.generic.edit import CreateView, UpdateView
 
 from workshops.models import Site, Airport, Event, Person, Task, Cohort
 from workshops.forms import InstructorMatchForm
+from workshops.util import earth_distance
 
 #------------------------------------------------------------
 
@@ -221,9 +222,13 @@ def match(request):
     if request.method == 'POST':
         form = InstructorMatchForm(request.POST)
         if form.is_valid():
-            # process the data in form.cleaned_data as required
-            # ...
-            # redirect to a new URL:
+            loc = (float(form.cleaned_data['latitude']),
+                   float(form.cleaned_data['longitude']))
+            persons = Person.objects.all()
+            persons = [(earth_distance(loc, (p__airport.latitude, p__airport.longitude)), p)
+                       for p in persons]
+            persons.sort()
+            persons = persons[:10]
             return HttpResponseRedirect(reverse('match'))
 
     # if a GET (or any other method) we'll create a blank form
