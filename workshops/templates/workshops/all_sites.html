@@ -3,14 +3,16 @@
 {% if all_sites %}
     <table class="table table-striped">
         <tr>
-	    <th>full name</th>
-	    <th>domain</th>
-	</tr>
+            <th>full name</th>
+            <th>domain</th>
+            <th>notes</th>
+        </tr>
     {% for site in all_sites %}
         <tr>
             <td><a href="{% url 'site_details' site.domain %}">{{ site.fullname }}</a></td>
             <td><a href="http://{{ site.domain }}">{{ site.domain }}</a></td>
-	</tr>
+            <td>{{ site.notes|truncatechars:40 }}</td>
+        </tr>
     {% endfor %}
     </table>
 {% else %}
