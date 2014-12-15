@@ -17,17 +17,27 @@ To get started:
 
 1.  Install Django and its dependencies.
 
-2.  Create an empty database by running:
+2.  Setup your local database.  There are two ways you can do this.
 
-    ~~~
-    make migrations
-    ~~~
+    1. If you have access to the secret data:
 
-3.  Fill that database by running:
+        1. Create an empty database by running:
 
-    ~~~
-    make import
-    ~~~
+           ~~~
+           make migrations
+           ~~~
+
+        2. Fill that database by running:
+
+           ~~~
+           make import
+           ~~~
+
+    2. Otherwise setup the redacted data with:
+
+       ~~~
+       make database
+       ~~~
 
 4.  Start a local Django development server by running:
 
