@@ -1,8 +1,11 @@
-from django.shortcuts import render
-from workshops.models import Site, Airport, Event, Person, Task, Cohort
-from django.views.generic.edit import CreateView, UpdateView
-from django.shortcuts import get_object_or_404
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.core.urlresolvers import reverse
+from django.http import HttpResponseRedirect
+from django.shortcuts import render, get_object_or_404
+from django.views.generic.edit import CreateView, UpdateView
+
+from workshops.models import Site, Airport, Event, Person, Task, Cohort
+from workshops.forms import InstructorMatchForm
 
 #------------------------------------------------------------
 
@@ -182,7 +185,6 @@ class TaskUpdate(UpdateView):
 
         return get_object_or_404(Task, event__slug=event_slug, person__id=person_id, role__name=role_name)
  
-
 #------------------------------------------------------------
 
 COHORT_FIELDS = ['name', 'start', 'active', 'venue', 'qualifies']
@@ -213,3 +215,19 @@ class CohortUpdate(UpdateView):
     slug_field = 'name'
     slug_url_kwarg = 'cohort_name'
 
+#------------------------------------------------------------
+
+def match(request):
+    if request.method == 'POST':
+        form = InstructorMatchForm(request.POST)
+        if form.is_valid():
+            # process the data in form.cleaned_data as required
+            # ...
+            # redirect to a new URL:
+            return HttpResponseRedirect(reverse('match'))
+
+    # if a GET (or any other method) we'll create a blank form
+    else:
+        form = InstructorMatchForm()
+
+    return render(request, 'workshops/match.html', {'form': form})

@@ -1,0 +1,8 @@
+{% extends "workshops/_page.html" %}
+{% block content %}
+<form action="{% url 'match' %}" method="post">
+    {% csrf_token %}
+    {{ form }}
+    <input type="submit" value="Submit" />
+</form>
+{% endblock %}
