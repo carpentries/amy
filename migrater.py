@@ -35,8 +35,8 @@ i = 1
 for (site, fullname, country) in old_crs.fetchall():
     site_lookup[site] = i
     try:
-        fields = (i, site, fullname, country)
-        new_crs.execute('insert into workshops_site values(?, ?, ?, ?);', fields)
+        fields = (i, site, fullname, country, '')
+        new_crs.execute('insert into workshops_site values(?, ?, ?, ?, ?);', fields)
     except Exception, e:
         fail('site', fields, e)
     i += 1
@@ -109,7 +109,7 @@ for (startdate, enddate, event, site, kind, eventbrite, attendance, url) in old_
     event_lookup[event] = i
     try:
         fields = (i, startdate, enddate, event, eventbrite, attendance, site_lookup[site], project_lookup[kind], url)
-        new_crs.execute('insert into workshops_event values(?, ?, ?, ?, ?, ?, ?, ?, ?, null, 0.0);', fields)
+        new_crs.execute('insert into workshops_event values(?, ?, ?, ?, ?, ?, ?, ?, ?, null, 0.0, "");', fields)
     except Exception, e:
         fail('event', fields, e)
     i += 1
