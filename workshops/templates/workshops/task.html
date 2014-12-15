@@ -1,4 +1,12 @@
 {% extends "workshops/_page.html" %}
+
+{% load breadcrumbs %}
+{% block breadcrumbs %}
+    {% breadcrumb_url 'Index' 'index'  %}
+    {% breadcrumb_url 'All tasks' 'all_tasks' %}
+    {% breadcrumb_active task  %}
+{% endblock %}
+
 {% block content %}
 
 <table class="table table-striped">
@@ -8,6 +16,4 @@
 </table>
 
 <p class="edit-object"><a href="{% url 'task_edit' task.event.slug task.person.id task.role.name %}">Edit this task</a></p>
-<p>... <a href="{% url 'all_tasks' %}">all tasks</a></p>
-<p>... <a href="{% url 'index' %}">index</a></p>
 {% endblock %}

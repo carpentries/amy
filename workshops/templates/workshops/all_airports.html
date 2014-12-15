@@ -1,4 +1,11 @@
 {% extends "workshops/_page.html" %}
+
+{% load breadcrumbs %}
+{% block breadcrumbs %}
+    {% breadcrumb_url 'Index' 'index'  %}
+    {% breadcrumb_active 'All airports'  %}
+{% endblock %}
+
 {% block content %}
 {% if all_airports %}
     <table class="table table-striped">
@@ -21,5 +28,4 @@
     <p>No airports.</p>
 {% endif %}
 <p class="add-new"><a href="{% url 'airport_add' %}">Add a new airport</a></p>
-<p>... <a href="{% url 'index' %}">index</a></p>
 {% endblock %}
