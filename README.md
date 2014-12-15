@@ -1,13 +1,17 @@
 <img src="https://raw.githubusercontent.com/gvwilson/amy/master/amy-logo.png" />
 
-[Software Carpentry](http://software-carpentry.org) is now running three events a week,
-and that number could double by the end of 2015 ---
-*if* we can
+[Software Carpentry](http://software-carpentry.org) is now running three events a week.
+That number could double by the end of 2015
+but only if we can
 [streamline setup and organization](http://software-carpentry.org/blog/2014/12/plans-for-2015-workshop-organization.html).
 The goal of this project is to build
-a web-based workshop administration application using Django.
+a web-based workshop administration application using Django to do that.
 It is not intended to be visible to the general public,
-but rather to be used by administrators to keep track of
+or even to instructors (at least initially --- we may add that later).
+Instead,
+the target audience is administrators,
+most of whom are non-programmers,
+who need to keep track of
 what workshops are being arranged,
 when they're supposed to occur,
 who's teaching what,
@@ -19,7 +23,7 @@ To get started:
 
 2.  Setup your local database.  There are two ways you can do this.
 
-    1. If you have access to the secret data:
+    1. If you have access to the legacy data:
 
         1. Create an empty database by running:
 
@@ -33,7 +37,7 @@ To get started:
            make import
            ~~~
 
-    2. Otherwise setup the redacted data with:
+    2. Otherwise set up the redacted data with:
 
        ~~~
        make database
@@ -53,6 +57,13 @@ so that workshop organizers can inspect, add, and correct data.
 If you'd like to help,
 please fork this repository and send a pull request,
 or contact [Greg Wilson](gvwilson@software-carpentry.org).
+
+Note:
+please concentrate initially on features marked `essential` in the issue tracker
+so that we can get this into service in January 2015.
+Better layout,
+incremental page updates via AJAX,
+and things like that can all be left until we have something that actually works.
 
 ----
 
