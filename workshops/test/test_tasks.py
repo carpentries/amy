@@ -23,11 +23,8 @@ class TestTask(TestCase):
                        details='my test project')
 
         # Create two test people
-        test_person_1 = Person.objects.create(personal='Test',
-                                              family='Person1')
-
-        test_person_2 = Person.objects.create(personal='Test',
-                                              family='Person2')
+        test_person_1 = Person.objects.create(name='Test Person 1')
+        test_person_2 = Person.objects.create(name='Test Person 2')
 
         # Create two test events
         test_event_1 = Event.objects.create(start=datetime.now(),
