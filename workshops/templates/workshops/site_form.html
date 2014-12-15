@@ -1,13 +1,24 @@
 {% extends "workshops/_page.html" %}
-{% block content %}
 
+{% load breadcrumbs %}
+{% block breadcrumbs %}
+    {% breadcrumb_url 'Index' 'index'  %}
+    {% breadcrumb_url 'All sites' 'all_sites' %}
+    {% if object %}
+        {% url 'site_details' object.domain as object_url %}
+        {% breadcrumb object.domain object_url %}
+        {% breadcrumb_active 'Edit site'  %}
+    {% else %}
+        {% breadcrumb_active 'New site'  %}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
 <form action="" method="post">
     {% csrf_token %}
     {{ form.as_p }}
     <input type="submit" value="Submit" />
 </form>
 
-<p>... <a href="{% url 'all_sites' %}">all sites</a></p>
-<p>... <a href="{% url 'index' %}">index</a></p>
 {% endblock %}
 

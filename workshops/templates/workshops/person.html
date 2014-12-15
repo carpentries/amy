@@ -1,4 +1,12 @@
 {% extends "workshops/_page.html" %}
+
+{% load breadcrumbs %}
+{% block breadcrumbs %}
+    {% breadcrumb_url 'Index' 'index'  %}
+    {% breadcrumb_url 'All persons' 'all_persons' %}
+    {% breadcrumb_active person  %}
+{% endblock %}
+
 {% block content %}
 <table class="table table-striped">
   <tr><td>personal:</td><td>{{ person.personal }}</td></tr>
@@ -12,6 +20,4 @@
   <tr><td>twitter:</td><td>{{ person.twitter }}</td></tr>
   <tr><td>url:</td><td>{{ person.url }}</td></tr>
 </table>
-<p>... <a href="{% url 'all_persons' %}">all persons</a></p>
-<p>... <a href="{% url 'index' %}">index</a></p>
 {% endblock %}
