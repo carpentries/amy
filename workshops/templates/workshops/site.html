@@ -5,7 +5,16 @@
   <tr><td>full name:</td><td>{{ site.fullname }}</td></tr>
   <tr><td>domain:</td><td><a href="http://{{ site.domain }}">{{ site.domain }}</a></td></tr>
   <tr><td>country:</td><td>{{ site.country }}</td></tr>
+  <tr><td>notes:</td><td>{{ site.notes }}</td></tr>
 </table>
+{% if site.notes %}
+<p>Notes:</p>
+<pre>
+{{ site.notes }}
+</pre>
+{% else %}
+<p>No notes.</p>
+{% endif %}
 
 <p class="edit-object"><a href="{% url 'site_edit' site.domain %}">Edit this site</a></p>
 <p>... <a href="{% url 'all_sites' %}">all sites</a></p>

@@ -18,6 +18,7 @@ class Site(models.Model):
     domain     = models.CharField(max_length=STR_LONG, unique=True)
     fullname   = models.CharField(max_length=STR_LONG, unique=True)
     country    = models.CharField(max_length=STR_LONG, null=True)
+    notes      = models.TextField(default="")
 
     def __str__(self):
         return self.domain
@@ -162,6 +163,7 @@ class Event(models.Model):
     reg_key    = models.CharField(max_length=STR_REG_KEY, null=True)
     attendance = models.IntegerField(null=True)
     admin_fee  = models.DecimalField(max_digits=6, decimal_places=2)
+    notes      = models.TextField(default="")
 
     # Set the custom manager
     objects = EventManager()
