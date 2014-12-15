@@ -5,6 +5,8 @@
     {% breadcrumb_url 'Index' 'index'  %}
     {% breadcrumb_url 'All sites' 'all_sites' %}
     {% if object %}
+        {% url 'site_details' object.domain as object_url %}
+        {% breadcrumb object.domain object_url %}
         {% breadcrumb_active 'Edit site'  %}
     {% else %}
         {% breadcrumb_active 'New site'  %}

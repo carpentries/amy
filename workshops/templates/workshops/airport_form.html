@@ -5,6 +5,8 @@
     {% breadcrumb_url 'Index' 'index'  %}
     {% breadcrumb_url 'All airports' 'all_airports' %}
     {% if object %}
+        {% url 'airport_details' object.iata as object_url %}
+        {% breadcrumb object.fullname object_url %}
         {% breadcrumb_active 'Edit airport'  %}
     {% else %}
         {% breadcrumb_active 'New airport'  %}

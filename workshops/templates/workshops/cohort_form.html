@@ -5,6 +5,8 @@
     {% breadcrumb_url 'Index' 'index'  %}
     {% breadcrumb_url 'All cohorts' 'all_cohorts' %}
     {% if object %}
+        {% url 'cohort_details' object.name as object_url %}
+        {% breadcrumb object.name object_url %}
         {% breadcrumb_active 'Edit cohort'  %}
     {% else %}
         {% breadcrumb_active 'New cohort'  %}
