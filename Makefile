@@ -24,7 +24,7 @@ migrations :
 
 ## import       : import and save legacy data
 import :
-	python migrater.py ${DB_SRC} ${DB_APP}
+	python migrater.py '2015-01-01' ${DB_SRC} ${DB_APP}
 	sqlite3 ${DB_APP} .dump > ${DB_SQL}
 
 ## database     : re-make database using saved data
