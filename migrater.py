@@ -155,6 +155,8 @@ for (start, name, active, venue) in old_crs.fetchall():
         if venue == 'online':
             venue = None
         qualifies = name != 'live-01'
+        if venue is not None:
+            venue = site_lookup[venue]
         fields = (i, start, name, active, venue, qualifies)
         new_crs.execute('insert into workshops_cohort values(?, ?, ?, ?, ?, ?);', fields)
     except Exception, e:
@@ -183,7 +185,7 @@ for (person, cohort, status) in old_crs.fetchall():
         status = traineestatus_lookup['complete']
     elif status in ('incomplete', 'withdrew'):
         status = traineestatus_lookup['incomplete']
-    elif cohort_start[cohort] > TODAY:
+    elif cohort_start[cohort] >= TODAY:
         status = traineestatus_lookup['registered']
     else:
         status = traineestatus_lookup['in_progress']
