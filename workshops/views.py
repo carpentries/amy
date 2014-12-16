@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from workshops.models import Site, Airport, Event, Person, Task, Cohort
+from workshops.models import Site, Airport, Event, Person, Task, Cohort, Trainee
 from django.views.generic.edit import CreateView, UpdateView
 from django.shortcuts import get_object_or_404
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -199,8 +199,10 @@ def all_cohorts(request):
 def cohort_details(request, cohort_name):
     '''List details of a particular cohort.'''
     cohort = Cohort.objects.get(name=cohort_name)
+    trainees = Trainee.objects.filter(cohort_id=cohort.id)
     context = {'title' : 'Cohort {0}'.format(cohort),
-               'cohort' : cohort}
+               'cohort' : cohort,
+               'trainees' : trainees}
     return render(request, 'workshops/cohort.html', context)
 
 class CohortCreate(CreateView):
