@@ -5,4 +5,29 @@
     {{ form.as_table }}
     <input type="submit" value="Submit" />
 </form>
+{% if persons == None %}
+{% elif persons %}
+    <table class="table table-striped">
+        <tr>
+	    <th>airport</th>
+	    <th>personal</th>
+	    <th>middle</th>
+	    <th>family</th>
+	    <th>email</th>
+	    <th></th>
+	</tr>
+    {% for p in persons %}
+        <tr>
+	    <td><a href="{% url 'airport_details' p.airport.iata %}">{{ p.airport }}</a></td>
+	    <td>{{ p.personal }}</td>
+	    <td>{{ p.middle }}</td>
+	    <td>{{ p.family }}</td>
+	    <td>{{ p.email }}</td>
+	    <td><a href="{% url 'person_details' p.id %}">...</a></td>
+	</tr>
+    {% endfor %}
+    </table>
+{% else %}
+    <p>No matches.</p>
+{% endif %}
 {% endblock %}

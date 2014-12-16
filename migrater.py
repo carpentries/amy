@@ -76,9 +76,11 @@ for (person, personal, middle, family, email) in old_crs.fetchall():
 
     personal, middle, family, email, gender, github, twitter, url = \
         fake(i, personal, middle, family, email, gender, github, twitter, url)
+    if airport is not None:
+        airport = airport_lookup[airport]
 
     try:
-        fields = (i, personal, middle, family, email, gender, active, airport, github, twitter, url)
+        fields = (i, personal, middle, family, email, active, airport, gender, github, url, twitter)
         new_crs.execute('insert into workshops_person values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', fields)
     except Exception, e:
         fail('person', fields, e)

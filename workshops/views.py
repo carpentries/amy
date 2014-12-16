@@ -219,20 +219,24 @@ class CohortUpdate(UpdateView):
 #------------------------------------------------------------
 
 def match(request):
+    persons = None
+
     if request.method == 'POST':
         form = InstructorMatchForm(request.POST)
         if form.is_valid():
             loc = (float(form.cleaned_data['latitude']),
                    float(form.cleaned_data['longitude']))
-            persons = Person.objects.all()
-            persons = [(earth_distance(loc, (p__airport.latitude, p__airport.longitude)), p)
+            persons = Person.objects.filter(airport__isnull=False)
+            persons = [(earth_distance(loc, (p.airport.latitude, p.airport.longitude)), p)
                        for p in persons]
             persons.sort()
             persons = persons[:10]
-            return HttpResponseRedirect(reverse('match'))
+            persons = [x[1] for x in persons]
+        else:
+            pass # FIXME: error message
 
     # if a GET (or any other method) we'll create a blank form
     else:
         form = InstructorMatchForm()
 
-    return render(request, 'workshops/match.html', {'form': form})
+    return render(request, 'workshops/match.html', {'form': form, 'persons' : persons})

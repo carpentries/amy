@@ -1,3 +1,5 @@
+from math import pi, sin, cos, acos
+
 def earth_distance(pos1, pos2):
     '''Taken from http://www.johndcook.com/python_longitude_latitude.html.'''
 
