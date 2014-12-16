@@ -227,6 +227,11 @@ def match(request):
             loc = (float(form.cleaned_data['latitude']),
                    float(form.cleaned_data['longitude']))
             persons = Person.objects.filter(airport__isnull=False)
+
+            # FIXME: make a list of Skill objects here, then further refine potential
+            # people by calling:
+            # persons = persons.have_qualifications(skill_list)
+
             persons = [(earth_distance(loc, (p.airport.latitude, p.airport.longitude)), p)
                        for p in persons]
             persons.sort()
