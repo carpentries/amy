@@ -1,3 +1,4 @@
+import datetime
 import sys
 import sqlite3
 
@@ -22,12 +23,11 @@ def fake(i, personal, middle, family, email, gender, github, twitter, url):
            '@U{0}'.format(i), \
            'http://{0}/U_{1}'.format(where, i)
 
-assert len(sys.argv) == 4, 'Usage: migrater.py YYYY-MM-DD /path/to/src.db /path/to/dst.db'
-TODAY = sys.argv[1]
+assert len(sys.argv) == 3, 'Usage: migrater.py /path/to/src.db /path/to/dst.db'
 
-old_cnx = sqlite3.connect(sys.argv[2])
+old_cnx = sqlite3.connect(sys.argv[1])
 old_crs = old_cnx.cursor()
-new_cnx = sqlite3.connect(sys.argv[3])
+new_cnx = sqlite3.connect(sys.argv[2])
 new_crs = new_cnx.cursor()
 
 # Site
@@ -180,12 +180,13 @@ for traineestatus in 'registered in_progress complete incomplete'.split():
 new_crs.execute('delete from workshops_trainee;')
 old_crs.execute('select person, cohort, status from trainee;')
 i = 1
+today = datetime.date.today().isoformat()
 for (person, cohort, status) in old_crs.fetchall():
     if status in ('complete', 'learner'):
         status = traineestatus_lookup['complete']
     elif status in ('incomplete', 'withdrew'):
         status = traineestatus_lookup['incomplete']
-    elif cohort_start[cohort] >= TODAY:
+    elif cohort_start[cohort] >= today:
         status = traineestatus_lookup['registered']
     else:
         status = traineestatus_lookup['in_progress']
