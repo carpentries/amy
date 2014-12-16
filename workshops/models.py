@@ -60,7 +60,6 @@ class PersonQuerySet(models.query.QuerySet):
 
         return self
 
-
 class PersonManager(models.Manager):
     """A custom manager which is essentially a proxy for PersonQuerySet"""
 
@@ -73,7 +72,6 @@ class PersonManager(models.Manager):
 
     def have_qualifications(self, qualification_list):
         return self.get_queryset().have_qualifications(qualification_list)
-
 
 class Person(models.Model):
     '''Represent a single person.'''
