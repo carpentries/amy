@@ -4,7 +4,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.views.generic.edit import CreateView, UpdateView
 
-from workshops.models import Site, Airport, Event, Person, Task, Cohort, Skill
+from workshops.models import Site, Airport, Event, Person, Task, Cohort, Skill, Trainee
 from workshops.forms import InstructorMatchForm
 from workshops.util import earth_distance
 
@@ -23,7 +23,7 @@ def index(request):
 
 #------------------------------------------------------------
 
-SITE_FIELDS = ['domain', 'fullname', 'country']
+SITE_FIELDS = ['domain', 'fullname', 'country', 'notes']
 
 def all_sites(request):
     '''List all sites.'''
@@ -176,7 +176,7 @@ class TaskUpdate(UpdateView):
     pk_url_kwarg = 'task_id'
 
     def get_object(self):
-        """ 
+        """
         Returns the object the view is displaying.
         """
 
@@ -185,7 +185,12 @@ class TaskUpdate(UpdateView):
         role_name = self.kwargs.get('role_name', None)
 
         return get_object_or_404(Task, event__slug=event_slug, person__id=person_id, role__name=role_name)
+<<<<<<< HEAD
  
+=======
+
+
+>>>>>>> 5120b18e34075513bfd4aabf3200c3ddd7388d0a
 #------------------------------------------------------------
 
 COHORT_FIELDS = ['name', 'start', 'active', 'venue', 'qualifies']
@@ -202,8 +207,10 @@ def all_cohorts(request):
 def cohort_details(request, cohort_name):
     '''List details of a particular cohort.'''
     cohort = Cohort.objects.get(name=cohort_name)
+    trainees = Trainee.objects.filter(cohort_id=cohort.id)
     context = {'title' : 'Cohort {0}'.format(cohort),
-               'cohort' : cohort}
+               'cohort' : cohort,
+               'trainees' : trainees}
     return render(request, 'workshops/cohort.html', context)
 
 class CohortCreate(CreateView):

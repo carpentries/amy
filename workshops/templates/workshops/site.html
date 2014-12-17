@@ -1,13 +1,28 @@
 {% extends "workshops/_page.html" %}
+
+{% load breadcrumbs %}
+{% block breadcrumbs %}
+    {% breadcrumb_url 'Index' 'index'  %}
+    {% breadcrumb_url 'All sites' 'all_sites' %}
+    {% breadcrumb_active site.domain  %}
+{% endblock %}
+
 {% block content %}
 
 <table class="table table-striped">
   <tr><td>full name:</td><td>{{ site.fullname }}</td></tr>
   <tr><td>domain:</td><td><a href="http://{{ site.domain }}">{{ site.domain }}</a></td></tr>
   <tr><td>country:</td><td>{{ site.country }}</td></tr>
+  <tr><td>notes:</td><td>{{ site.notes }}</td></tr>
 </table>
+{% if site.notes %}
+<p>Notes:</p>
+<pre>
+{{ site.notes }}
+</pre>
+{% else %}
+<p>No notes.</p>
+{% endif %}
 
 <p class="edit-object"><a href="{% url 'site_edit' site.domain %}">Edit this site</a></p>
-<p>... <a href="{% url 'all_sites' %}">all sites</a></p>
-<p>... <a href="{% url 'index' %}">index</a></p>
 {% endblock %}

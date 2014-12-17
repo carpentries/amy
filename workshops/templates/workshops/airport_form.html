@@ -1,4 +1,18 @@
 {% extends "workshops/_page.html" %}
+
+{% load breadcrumbs %}
+{% block breadcrumbs %}
+    {% breadcrumb_url 'Index' 'index'  %}
+    {% breadcrumb_url 'All airports' 'all_airports' %}
+    {% if object %}
+        {% url 'airport_details' object.iata as object_url %}
+        {% breadcrumb object.fullname object_url %}
+        {% breadcrumb_active 'Edit airport'  %}
+    {% else %}
+        {% breadcrumb_active 'New airport'  %}
+    {% endif %}
+{% endblock %}
+
 {% block content %}
 
 <form action="" method="post">
@@ -7,7 +21,4 @@
     <input type="submit" value="Submit" />
 </form>
 
-<p>... <a href="{% url 'all_airports' %}">all airports</a></p>
-<p>... <a href="{% url 'index' %}">index</a></p>
 {% endblock %}
-

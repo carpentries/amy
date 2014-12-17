@@ -18,6 +18,7 @@ class Site(models.Model):
     domain     = models.CharField(max_length=STR_LONG, unique=True)
     fullname   = models.CharField(max_length=STR_LONG, unique=True)
     country    = models.CharField(max_length=STR_LONG, null=True)
+    notes      = models.TextField(default="")
 
     def __str__(self):
         return self.domain
@@ -92,7 +93,10 @@ class Person(models.Model):
         middle = ''
         if self.middle is not None:
             middle = ' {0}'.format(self.middle)
-        return '{0}{1} {2} <{3}>'.format(self.personal, middle, self.family, self.email)
+        email = ''
+        if self.email is not None:
+            email = ' <{0}>'.format(self.email)
+        return '{0}{1} {2}{3}'.format(self.personal, middle, self.family, email)
 
 #------------------------------------------------------------
 
@@ -192,6 +196,7 @@ class Event(models.Model):
     reg_key    = models.CharField(max_length=STR_REG_KEY, null=True)
     attendance = models.IntegerField(null=True)
     admin_fee  = models.DecimalField(max_digits=6, decimal_places=2)
+    notes      = models.TextField(default="")
 
     # Set the custom manager
     objects = EventManager()
@@ -201,7 +206,6 @@ class Event(models.Model):
 
     def get_absolute_url(self):
         return reverse('event_details', args=[str(self.slug)])
-
 
 #------------------------------------------------------------
 
@@ -249,15 +253,25 @@ class Cohort(models.Model):
 
 #------------------------------------------------------------
 
+class TraineeStatus(models.Model):
+    '''Enumerate states that a trainee can be in.'''
+
+    name       = models.CharField(max_length=STR_MED)
+
+    def __str__(self):
+        return self.name
+
+#------------------------------------------------------------
+
 class Trainee(models.Model):
     '''Represent someone taking the instructor training course.'''
 
     person     = models.ForeignKey(Person)
     cohort     = models.ForeignKey(Cohort)
-    complete   = models.NullBooleanField()
+    status     = models.ForeignKey(TraineeStatus)
 
     def __str__(self):
-        return '{0}/{1}={2}'.format(self.person, self.cohort, self.complete)
+        return '{0}/{1}: {2}'.format(self.person, self.cohort, self.status.name)
 
 #------------------------------------------------------------
 

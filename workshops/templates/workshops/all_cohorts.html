@@ -1,7 +1,14 @@
 {% extends "workshops/_page.html" %}
+
+{% load breadcrumbs %}
+{% block breadcrumbs %}
+    {% breadcrumb_url 'Index' 'index'  %}
+    {% breadcrumb_active 'All cohorts'  %}
+{% endblock %}
+
 {% block content %}
 {% if all_cohorts %}
-    <table>
+    <table class="table table-striped">
         <tr>
 	    <th>name</th>
 	    <th>start date</th>
@@ -17,5 +24,4 @@
     <p>No cohorts.</p>
 {% endif %}
 <p class="add-new"><a href="{% url 'cohort_add' %}">Add a new cohort</a></p>
-<p>... <a href="{% url 'index' %}">index</a></p>
 {% endblock %}
