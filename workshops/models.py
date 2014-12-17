@@ -1,7 +1,7 @@
-from django.db import models
 import datetime
+from django.db import models
 from django.core.urlresolvers import reverse
-
+from django.db.models import Q
 
 #------------------------------------------------------------
 
@@ -45,6 +45,33 @@ class Airport(models.Model):
 
 #------------------------------------------------------------
 
+# Define custom queries on the QuerySet and the Manager
+class PersonQuerySet(models.query.QuerySet):
+    """Handles finding past, ongoing and upcoming events"""
+
+    def have_skills(self, skills):
+        """Returns persons who have all the skills listed
+        in skills, which must be a list of Skill objects.
+        """
+
+        for s in skills:
+            self = self.filter(qualification__skill=s)
+
+        return self
+
+class PersonManager(models.Manager):
+    """A custom manager which is essentially a proxy for PersonQuerySet"""
+
+    # Attach our custom query set to the manager
+    def get_queryset(self):
+        return PersonQuerySet(self.model, using=self._db)
+
+    # Proxy methods so we can call our custom filters from the manager
+    # without explicitly creating an PersonQuerySet first
+
+    def have_skills(self, skills):
+        return self.get_queryset().have_skills(skills)
+
 class Person(models.Model):
     '''Represent a single person.'''
 
@@ -58,6 +85,9 @@ class Person(models.Model):
     github     = models.CharField(max_length=STR_MED, unique=True, null=True)
     twitter    = models.CharField(max_length=STR_MED, unique=True, null=True)
     url        = models.CharField(max_length=STR_LONG, null=True)
+
+    # Set the custom manager
+    objects = PersonManager()
 
     def __str__(self):
         middle = ''

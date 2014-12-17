@@ -2,7 +2,8 @@ from django.conf.urls import url
 from .views import AirportCreate, AirportUpdate, \
                    SiteCreate, SiteUpdate, \
                    TaskCreate, TaskUpdate, \
-                   CohortCreate, CohortUpdate
+                   CohortCreate, CohortUpdate, \
+                   match
 
 from workshops import views
 
@@ -34,4 +35,6 @@ urlpatterns = [
     url(r'^cohort/(?P<cohort_name>[\w\.-]+)/?$', views.cohort_details, name='cohort_details'),
     url(r'^cohort/(?P<cohort_name>[\w\.-]+)/edit$', CohortUpdate.as_view(), name='cohort_edit'),
     url(r'^cohorts/add/$', CohortCreate.as_view(), name='cohort_add'),
+
+    url(r'^match/?$', views.match, name='match'),
 ]

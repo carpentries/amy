@@ -1,8 +1,12 @@
-from django.shortcuts import render
-from workshops.models import Site, Airport, Event, Person, Task, Cohort, Trainee
-from django.views.generic.edit import CreateView, UpdateView
-from django.shortcuts import get_object_or_404
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.core.urlresolvers import reverse
+from django.http import HttpResponseRedirect
+from django.shortcuts import render, get_object_or_404
+from django.views.generic.edit import CreateView, UpdateView
+
+from workshops.models import Site, Airport, Event, Person, Task, Cohort, Skill, Trainee
+from workshops.forms import InstructorMatchForm
+from workshops.util import earth_distance
 
 #------------------------------------------------------------
 
@@ -181,8 +185,12 @@ class TaskUpdate(UpdateView):
         role_name = self.kwargs.get('role_name', None)
 
         return get_object_or_404(Task, event__slug=event_slug, person__id=person_id, role__name=role_name)
+<<<<<<< HEAD
+ 
+=======
 
 
+>>>>>>> 5120b18e34075513bfd4aabf3200c3ddd7388d0a
 #------------------------------------------------------------
 
 COHORT_FIELDS = ['name', 'start', 'active', 'venue', 'qualifies']
@@ -215,3 +223,36 @@ class CohortUpdate(UpdateView):
     slug_field = 'name'
     slug_url_kwarg = 'cohort_name'
 
+#------------------------------------------------------------
+
+def match(request):
+    persons = None
+
+    if request.method == 'POST':
+        form = InstructorMatchForm(request.POST)
+        if form.is_valid():
+
+            # Filter by skills.
+            persons = Person.objects.filter(airport__isnull=False)
+            skills = []
+            for s in Skill.objects.all():
+                if form.cleaned_data[s.name]:
+                    skills.append(s)
+            persons = persons.have_skills(skills)
+
+            # Sort by location.
+            loc = (float(form.cleaned_data['latitude']),
+                   float(form.cleaned_data['longitude']))
+            persons = [(earth_distance(loc, (p.airport.latitude, p.airport.longitude)), p)
+                       for p in persons]
+            persons.sort()
+            persons = [x[1] for x in persons[:10]]
+
+        else:
+            pass # FIXME: error message
+
+    # if a GET (or any other method) we'll create a blank form
+    else:
+        form = InstructorMatchForm()
+
+    return render(request, 'workshops/match.html', {'form': form, 'persons' : persons})
