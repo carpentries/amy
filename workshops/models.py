@@ -56,7 +56,7 @@ class PersonQuerySet(models.query.QuerySet):
         import sys
         print >> sys.stderr, 'PersonQuerySet len before filtering', len(self)
         for s in skills:
-            self = self.filter(qualification=s)
+            self = self.filter(qualification__skill=s)
             print >> sys.stderr, 'after filtering on', s, 'len is', len(self)
 
         return self

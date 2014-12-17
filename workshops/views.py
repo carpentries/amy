@@ -237,6 +237,7 @@ def match(request):
             print >> sys.stderr, 'skills:', skills
             persons = persons.have_skills(skills)
             print >> sys.stderr, len(persons), 'persons have skills required'
+            print >> sys.stderr, persons.query.sql_with_params()
 
             # Sort by location.
             loc = (float(form.cleaned_data['latitude']),
