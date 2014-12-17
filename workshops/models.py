@@ -53,9 +53,11 @@ class PersonQuerySet(models.query.QuerySet):
         in skills, which must be a list of Skill objects.
         """
 
-        # Add the skill constraints to the filter list one by one
+        import sys
+        print >> sys.stderr, 'PersonQuerySet len before filtering', len(self)
         for s in skills:
             self = self.filter(qualification=s)
+            print >> sys.stderr, 'after filtering on', s, 'len is', len(self)
 
         return self
 

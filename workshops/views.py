@@ -227,19 +227,23 @@ def match(request):
 
             # Filter by skills.
             persons = Person.objects.filter(airport__isnull=False)
-            skills = []
             import sys
-            print >> sys.stderr, 'form.cleaned_data.keys', form.cleaned_data.keys()
+            print >> sys.stderr, len(persons), 'persons pass the airport test'
+            skills = []
             for s in Skill.objects.all():
+                print >> sys.stderr, 'skill', s.name, 'cleaned_data', form.cleaned_data[s.name]
                 if form.cleaned_data[s.name]:
                     skills.append(s)
+            print >> sys.stderr, 'skills:', skills
             persons = persons.have_skills(skills)
+            print >> sys.stderr, len(persons), 'persons have skills required'
 
             # Sort by location.
             loc = (float(form.cleaned_data['latitude']),
                    float(form.cleaned_data['longitude']))
             persons = [(earth_distance(loc, (p.airport.latitude, p.airport.longitude)), p)
                        for p in persons]
+            print >> sys.stderr, 'persons[:10]', persons[:10]
             persons.sort()
             persons = [x[1] for x in persons[:10]]
 
