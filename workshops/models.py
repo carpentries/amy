@@ -177,7 +177,6 @@ class Event(models.Model):
     def get_absolute_url(self):
         return reverse('event_details', args=[str(self.slug)])
 
-
 #------------------------------------------------------------
 
 class Role(models.Model):
@@ -224,15 +223,25 @@ class Cohort(models.Model):
 
 #------------------------------------------------------------
 
+class TraineeStatus(models.Model):
+    '''Enumerate states that a trainee can be in.'''
+
+    name       = models.CharField(max_length=STR_MED)
+
+    def __str__(self):
+        return self.name
+
+#------------------------------------------------------------
+
 class Trainee(models.Model):
     '''Represent someone taking the instructor training course.'''
 
     person     = models.ForeignKey(Person)
     cohort     = models.ForeignKey(Cohort)
-    complete   = models.NullBooleanField()
+    status     = models.ForeignKey(TraineeStatus)
 
     def __str__(self):
-        return '{0}/{1}={2}'.format(self.person, self.cohort, self.complete)
+        return '{0}/{1}: {2}'.format(self.person, self.cohort, self.status.name)
 
 #------------------------------------------------------------
 

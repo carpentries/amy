@@ -1,3 +1,4 @@
+import datetime
 import sys
 import sqlite3
 
@@ -21,6 +22,8 @@ def fake(i, personal, middle, family, email, gender, github, twitter, url):
            'U_{0}'.format(i), \
            '@U{0}'.format(i), \
            'http://{0}/U_{1}'.format(where, i)
+
+assert len(sys.argv) == 3, 'Usage: migrater.py /path/to/src.db /path/to/dst.db'
 
 old_cnx = sqlite3.connect(sys.argv[1])
 old_crs = old_cnx.cursor()
@@ -144,31 +147,51 @@ new_crs.execute('delete from workshops_cohort;')
 old_crs.execute('select startdate, cohort, active, venue from cohort;')
 i = 1
 cohort_lookup = {}
+cohort_start = {}
 for (start, name, active, venue) in old_crs.fetchall():
     cohort_lookup[name] = i
+    cohort_start[name] = start
     try:
         if venue == 'online':
             venue = None
         qualifies = name != 'live-01'
+        if venue is not None:
+            venue = site_lookup[venue]
         fields = (i, start, name, active, venue, qualifies)
         new_crs.execute('insert into workshops_cohort values(?, ?, ?, ?, ?, ?);', fields)
     except Exception, e:
         fail('cohort', fields, e)
     i += 1
 
+# Trainee statuses (statii?)
+new_crs.execute('delete from workshops_traineestatus;')
+i = 1
+traineestatus_lookup = {}
+for traineestatus in 'registered in_progress complete incomplete'.split():
+    traineestatus_lookup[traineestatus] = i
+    try:
+        fields = (i, traineestatus)
+        new_crs.execute('insert into workshops_traineestatus values(?, ?);', fields)
+    except Exception, e:
+        fail('traineestatus', fields, e)
+    i += 1
+
 # Trainees
 new_crs.execute('delete from workshops_trainee;')
 old_crs.execute('select person, cohort, status from trainee;')
 i = 1
+today = datetime.date.today().isoformat()
 for (person, cohort, status) in old_crs.fetchall():
     if status in ('complete', 'learner'):
-        complete = True
+        status = traineestatus_lookup['complete']
     elif status in ('incomplete', 'withdrew'):
-        complete = False
+        status = traineestatus_lookup['incomplete']
+    elif cohort_start[cohort] >= today:
+        status = traineestatus_lookup['registered']
     else:
-        complete = None
+        status = traineestatus_lookup['in_progress']
     try:
-        fields = (i, complete, cohort_lookup[cohort], person_lookup[person])
+        fields = (i, cohort_lookup[cohort], person_lookup[person], status)
         new_crs.execute('insert into workshops_trainee values(?, ?, ?, ?);', fields)
     except Exception, e:
         fail('trainee', fields, e)
