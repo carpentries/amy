@@ -13,4 +13,4 @@ class InstructorMatchForm(forms.Form):
         super(InstructorMatchForm, self).__init__(*args, **kwargs)
         skills = Skill.objects.all()
         for s in skills:
-            self.fields[s.id] = forms.BooleanField(label=s.name, required=False)
+            self.fields[s.name] = forms.BooleanField(label=s.name, required=False)

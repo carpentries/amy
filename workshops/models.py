@@ -48,15 +48,14 @@ class Airport(models.Model):
 class PersonQuerySet(models.query.QuerySet):
     """Handles finding past, ongoing and upcoming events"""
 
-    def have_qualifications(self, qualification_list):
-        """Returns persons who have all the qualifications listed
-        in qualification_list, which must be a list of Skill objects.
+    def have_skills(self, skills):
+        """Returns persons who have all the skills listed
+        in skills, which must be a list of Skill objects.
         """
 
-        # Add the qualification constraints to the filter list one by one
-        for qual in qualification_list:
-
-            self = self.filter(qualification=qual)
+        # Add the skill constraints to the filter list one by one
+        for s in skills:
+            self = self.filter(qualification=s)
 
         return self
 
@@ -70,8 +69,8 @@ class PersonManager(models.Manager):
     # Proxy methods so we can call our custom filters from the manager
     # without explicitly creating an PersonQuerySet first
 
-    def have_qualifications(self, qualification_list):
-        return self.get_queryset().have_qualifications(qualification_list)
+    def have_skills(self, skills):
+        return self.get_queryset().have_skills(skills)
 
 class Person(models.Model):
     '''Represent a single person.'''

@@ -4,7 +4,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.views.generic.edit import CreateView, UpdateView
 
-from workshops.models import Site, Airport, Event, Person, Task, Cohort
+from workshops.models import Site, Airport, Event, Person, Task, Cohort, Skill
 from workshops.forms import InstructorMatchForm
 from workshops.util import earth_distance
 
@@ -224,19 +224,25 @@ def match(request):
     if request.method == 'POST':
         form = InstructorMatchForm(request.POST)
         if form.is_valid():
+
+            # Filter by skills.
+            persons = Person.objects.filter(airport__isnull=False)
+            skills = []
+            import sys
+            print >> sys.stderr, 'form.cleaned_data.keys', form.cleaned_data.keys()
+            for s in Skill.objects.all():
+                if form.cleaned_data[s.name]:
+                    skills.append(s)
+            persons = persons.have_skills(skills)
+
+            # Sort by location.
             loc = (float(form.cleaned_data['latitude']),
                    float(form.cleaned_data['longitude']))
-            persons = Person.objects.filter(airport__isnull=False)
-
-            # FIXME: make a list of Skill objects here, then further refine potential
-            # people by calling:
-            # persons = persons.have_qualifications(skill_list)
-
             persons = [(earth_distance(loc, (p.airport.latitude, p.airport.longitude)), p)
                        for p in persons]
             persons.sort()
-            persons = persons[:10]
-            persons = [x[1] for x in persons]
+            persons = [x[1] for x in persons[:10]]
+
         else:
             pass # FIXME: error message
 
