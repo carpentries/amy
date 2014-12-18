@@ -34,20 +34,21 @@
 	</tr>
     {% endfor %}
     </table>
-   <div class="pagination">
-    <span class="step-links">
-        {% if all_events.has_previous %}
-            <a href="?page={{ all_events.previous_page_number }}">previous</a>
-        {% endif %}
+    <div class="pagination">
+      <span class="step-links">
+         {% if all_events.has_previous %}
+             <a href="?page={{ all_events.previous_page_number }}">previous</a>
+         {% endif %}
 
-        <span class="current">
-            Page {{ all_events.number }} of {{ all_events.paginator.num_pages }}.
-        </span>
+         <span class="current">
+             Page {{ all_events.number }} of {{ all_events.paginator.num_pages }}.
+         </span>
 
-        {% if all_events.has_next %}
-            <a href="?page={{ all_events.next_page_number }}">next</a>
-        {% endif %}
-    </span> 
+         {% if all_events.has_next %}
+             <a href="?page={{ all_events.next_page_number }}">next</a>
+         {% endif %}
+      </span>
+    </div>
 {% else %}
     <p>No events.</p>
 {% endif %}

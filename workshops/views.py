@@ -30,12 +30,33 @@ SITE_FIELDS = ['domain', 'fullname', 'country', 'notes']
 
 def all_sites(request):
     '''List all sites.'''
+
     all_sites = Site.objects.order_by('domain')
-    items = request.GET.get('items_per_page', ITEMS_PER_PAGE)
+    items, page = _get_pagination_items(request)
+
+    # Show everything.
+    if items == 'all':
+        sites = all_sites
+
+    # Show selected items.
+    else:
+        sites_paginator = Paginator(all_sites, items)
+
+        # Select the sites.
+        try:
+            sites = sites_paginator.page(page)
+
+        # If page is not an integer, deliver first page.
+        except PageNotAnInteger:
+            sites = sites_paginator.page(1)
+
+        # If page is out of range, deliver last page of results.
+        except EmptyPage:
+            sites = sites_paginator.page(sites_paginator.num_pages)
 
     user_can_add = request.user.has_perm('edit')
     context = {'title' : 'All Sites',
-               'all_sites' : all_sites,
+               'all_sites' : sites,
                'user_can_add' : user_can_add}
     return render(request, 'workshops/all_sites.html', context)
 

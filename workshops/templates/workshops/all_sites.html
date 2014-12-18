@@ -22,6 +22,21 @@
         </tr>
     {% endfor %}
     </table>
+    <div class="pagination">
+      <span class="step-links">
+         {% if all_sites.has_previous %}
+             <a href="?page={{ all_sites.previous_page_number }}">previous</a>
+         {% endif %}
+
+         <span class="current">
+             Page {{ all_sites.number }} of {{ all_sites.paginator.num_pages }}.
+         </span>
+
+         {% if all_sites.has_next %}
+             <a href="?page={{ all_sites.next_page_number }}">next</a>
+         {% endif %}
+      </span>
+    </div>
 {% else %}
     <p>No sites.</p>
 {% endif %}
