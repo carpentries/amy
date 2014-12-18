@@ -269,7 +269,7 @@ def _export_instructors():
     '''Collect instructor airport locations as YAML.'''
     # Exclude airports with no instructors, and add the number of instructors per airport
     airports = Airport.objects.exclude(person=None).annotate(num_persons=Count('person'))
-    return [{'airport' : a.fullname,
+    return [{'airport' : str(a.fullname),
              'latlng' : '{0},{1}'.format(a.latitude, a.longitude),
              'count'  : a.num_persons}
             for a in airports]
@@ -282,7 +282,7 @@ def export(request, name):
     elif name == 'instructors':
         title, data = 'Instructor Locations', _export_instructors()
     else:
-        title, data = 'Error', None # FIXME
+        title, data = 'Error', None # FIXME - need an error message
     context = {'title' : title,
                'data' : data}
     return render(request, 'workshops/export.html', context)
