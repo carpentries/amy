@@ -5,6 +5,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.views.generic.edit import CreateView, UpdateView
+from django.db.models import Count
 
 from workshops.models import Site, Airport, Event, Person, Task, Cohort, Skill, Trainee, Badge
 from workshops.forms import InstructorMatchForm
@@ -266,10 +267,11 @@ def _export_badges():
 
 def _export_instructors():
     '''Collect instructor airport locations as YAML.'''
-    airports = Airport.objects.all() # FIXME: only airports with instructors, grouped so we can count
+    # Exclude airports with no instructors, and add the number of instructors per airport
+    airports = Airport.objects.exclude(person=None).annotate(num_persons=Count('person'))
     return [{'airport' : a.fullname,
              'latlng' : '{0},{1}'.format(a.latitude, a.longitude),
-             'count'  : 1} # FIXME: need to aggregate counts
+             'count'  : a.num_persons}
             for a in airports]
 
 def export(request, name):
