@@ -6,13 +6,15 @@
 
 {% block content %}
 <ul>
-  <li><a href="{% url 'all_sites' %}">sites</a></li>
-  <li><a href="{% url 'all_airports' %}">airports</a></li>
-  <li><a href="{% url 'all_events' %}">events</a></li>
-  <li><a href="{% url 'all_persons' %}">persons</a></li>
-  <li><a href="{% url 'all_tasks' %}">tasks</a></li>
-  <li><a href="{% url 'all_cohorts' %}">cohorts</a></li>
-  <li><a href="{% url 'match' %}">match</a></li>
+  <li><a href="{% url 'all_sites' %}">all sites</a></li>
+  <li><a href="{% url 'all_airports' %}">all airports</a></li>
+  <li><a href="{% url 'all_events' %}">all events</a></li>
+  <li><a href="{% url 'all_persons' %}">all persons</a></li>
+  <li><a href="{% url 'all_tasks' %}">all tasks</a></li>
+  <li><a href="{% url 'all_cohorts' %}">all cohorts</a></li>
+  <li><a href="{% url 'match' %}">match instructors</a></li>
+  <li><a href="{% url 'export' 'badges' %}">export badges</a></li>
+  <li><a href="{% url 'export' 'instructors' %}">export instructor locations</a></li>
 </ul>
 
 <div class="upcoming-events">

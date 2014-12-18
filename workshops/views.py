@@ -1,10 +1,12 @@
+import yaml
+
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.views.generic.edit import CreateView, UpdateView
 
-from workshops.models import Site, Airport, Event, Person, Task, Cohort, Skill, Trainee
+from workshops.models import Site, Airport, Event, Person, Task, Cohort, Skill, Trainee, Badge
 from workshops.forms import InstructorMatchForm
 from workshops.util import earth_distance
 
@@ -251,3 +253,34 @@ def match(request):
         form = InstructorMatchForm()
 
     return render(request, 'workshops/match.html', {'form': form, 'persons' : persons})
+
+#------------------------------------------------------------
+
+def _export_badges():
+    '''Collect badge data as YAML.'''
+    result = {}
+    for badge in Badge.objects.all():
+        persons = Person.objects.filter(award__badge_id=badge.id)
+        result[badge.name] = [{"user" : p.slug, "name" : p.fullname()} for p in persons]
+    return result
+
+def _export_instructors():
+    '''Collect instructor airport locations as YAML.'''
+    airports = Airport.objects.all() # FIXME: only airports with instructors, grouped so we can count
+    return [{'airport' : a.fullname,
+             'latlng' : '{0},{1}'.format(a.latitude, a.longitude),
+             'count'  : 1} # FIXME: need to aggregate counts
+            for a in airports]
+
+def export(request, name):
+    '''Export data as YAML for inclusion in main web site.'''
+    data = None
+    if name == 'badges':
+        title, data = 'Badges', _export_badges()
+    elif name == 'instructors':
+        title, data = 'Instructor Locations', _export_instructors()
+    else:
+        title, data = 'Error', None # FIXME
+    context = {'title' : title,
+               'data' : data}
+    return render(request, 'workshops/export.html', context)
