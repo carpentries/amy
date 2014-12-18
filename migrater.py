@@ -124,7 +124,7 @@ for (startdate, enddate, event, site, kind, eventbrite, attendance, url) in old_
 new_crs.execute('delete from workshops_role;')
 i = 1
 role_lookup = {}
-for role in 'helper instructor host learner tutor organizer'.split():
+for role in 'helper instructor host learner organizer tutor'.split():
     role_lookup[role] = i
     try:
         fields = (i, role)
