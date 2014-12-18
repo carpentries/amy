@@ -9,12 +9,13 @@ def fail(table, fields, exc):
     print >> sys.stderr, 'failing on', table, 'with', fields, 'because', str(e)
     sys.exit(1)
 
-def fake(i, personal, middle, family, email, gender, github, twitter, url):
+def fake(i, slug, personal, middle, family, email, gender, github, twitter, url):
     '''Redact personal identifying information.'''
     if not FAKE:
-        return personal, middle, family, email
+        return slug, personal, middle, family, email, gender, github, twitter, url
     where = 'I{0}.edu'.format(i)
-    return 'F{0}'.format(i), \
+    return 'S{0}'.format(i), \
+           'F{0}'.format(i), \
            'M{0}'.format(i), \
            'L{0}'.format(i), \
            '{0}@{1}'.format(i, where), \
@@ -77,14 +78,14 @@ for (person, personal, middle, family, email) in old_crs.fetchall():
     else:
         gender, active, airport, github, twitter, url = None, None, None, None, None, None
 
-    personal, middle, family, email, gender, github, twitter, url = \
-        fake(i, personal, middle, family, email, gender, github, twitter, url)
+    person, personal, middle, family, email, gender, github, twitter, url = \
+        fake(i, person, personal, middle, family, email, gender, github, twitter, url)
     if airport is not None:
         airport = airport_lookup[airport]
 
     try:
-        fields = (i, personal, middle, family, email, active, airport, gender, github, url, twitter)
-        new_crs.execute('insert into workshops_person values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', fields)
+        fields = (i, personal, middle, family, email, active, airport, gender, github, url, twitter, person)
+        new_crs.execute('insert into workshops_person values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', fields)
     except Exception, e:
         fail('person', fields, e)
     i += 1

@@ -1,0 +1,17 @@
+{% extends "workshops/_page.html" %}
+
+{% load breadcrumbs %}
+{% block breadcrumbs %}
+    {% breadcrumb_url 'Index' 'index'  %}
+    {% breadcrumb_active 'Export'  %}
+{% endblock %}
+
+{% block content %}
+{% if data %}
+<pre>
+{{ data }}
+</pre>
+{% else %}
+<p>Error: no such data.</p>
+{% endif %}
+{% endblock %}

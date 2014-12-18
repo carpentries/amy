@@ -37,4 +37,6 @@ urlpatterns = [
     url(r'^cohorts/add/$', CohortCreate.as_view(), name='cohort_add'),
 
     url(r'^match/?$', views.match, name='match'),
+
+    url(r'^export/(?P<name>[\w\.-]+)/?$', views.export, name='export'),
 ]

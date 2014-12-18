@@ -85,18 +85,22 @@ class Person(models.Model):
     github     = models.CharField(max_length=STR_MED, unique=True, null=True)
     twitter    = models.CharField(max_length=STR_MED, unique=True, null=True)
     url        = models.CharField(max_length=STR_LONG, null=True)
+    slug       = models.CharField(max_length=STR_LONG, null=True)
 
     # Set the custom manager
     objects = PersonManager()
 
-    def __str__(self):
+    def fullname(self):
         middle = ''
         if self.middle is not None:
             middle = ' {0}'.format(self.middle)
+        return '{0}{1} {2}'.format(self.personal, middle, self.family)
+
+    def __str__(self):
         email = ''
         if self.email is not None:
             email = ' <{0}>'.format(self.email)
-        return '{0}{1} {2}{3}'.format(self.personal, middle, self.family, email)
+        return '{0}{1}'.format(self.fullname(), email)
 
 #------------------------------------------------------------
 
