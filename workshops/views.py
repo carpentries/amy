@@ -30,10 +30,33 @@ SITE_FIELDS = ['domain', 'fullname', 'country', 'notes']
 
 def all_sites(request):
     '''List all sites.'''
+
     all_sites = Site.objects.order_by('domain')
+    items, page = _get_pagination_items(request)
+
+    # Show everything.
+    if items == 'all':
+        sites = all_sites
+
+    # Show selected items.
+    else:
+        sites_paginator = Paginator(all_sites, items)
+
+        # Select the sites.
+        try:
+            sites = sites_paginator.page(page)
+
+        # If page is not an integer, deliver first page.
+        except PageNotAnInteger:
+            sites = sites_paginator.page(1)
+
+        # If page is out of range, deliver last page of results.
+        except EmptyPage:
+            sites = sites_paginator.page(sites_paginator.num_pages)
+
     user_can_add = request.user.has_perm('edit')
     context = {'title' : 'All Sites',
-               'all_sites' : all_sites,
+               'all_sites' : sites,
                'user_can_add' : user_can_add}
     return render(request, 'workshops/all_sites.html', context)
 
@@ -108,36 +131,27 @@ def all_events(request):
     '''List all events.'''
 
     all_events = Event.objects.order_by('slug')
+    items, page = _get_pagination_items(request)
 
-    # Get the number of items requested per page, default to 25
-    # This is important for unit testing, we need to be
-    # able to specify how many items to expect
-    items = request.GET.get('items_per_page', ITEMS_PER_PAGE)
+    # Show everything.
+    if items == 'all':
+        events = all_events
 
-    # Only paginate if the number of items is not 'all'
-    if not items == 'all':
-
-        # If items is not an integer, set it to the default
-        try:
-            items = int(items)
-        except ValueError:
-            items = ITEMS_PER_PAGE
-
+    # Show selected items.
+    else:
         events_paginator = Paginator(all_events, items)
 
-        # Get the page number requested, if any
-        page = request.GET.get('page')
-
+        # Select the events.
         try:
             events = events_paginator.page(page)
+
+        # If page is not an integer, deliver first page.
         except PageNotAnInteger:
-            # If page is not an integer, deliver first page.
             events = events_paginator.page(1)
+
+        # If page is out of range, deliver last page of results.
         except EmptyPage:
-            # If page is out of range (e.g. 9999), deliver last page of results.
             events = events_paginator.page(events_paginator.num_pages)
-    else:
-        events = all_events
 
     context = {'title' : 'All Events',
                'all_events' : events}
@@ -288,3 +302,20 @@ def export(request, name):
     context = {'title' : title,
                'data' : data}
     return render(request, 'workshops/export.html', context)
+
+#------------------------------------------------------------
+
+def _get_pagination_items(request):
+    '''Determine how much pagination to do.'''
+
+    items = request.GET.get('items_per_page', ITEMS_PER_PAGE)
+
+    if items != 'all':
+        try:
+            items = int(items)
+        except ValueError:
+            items = ITEMS_PER_PAGE
+
+    page = request.GET.get('page')
+
+    return items, page
