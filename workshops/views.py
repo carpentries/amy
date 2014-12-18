@@ -249,7 +249,8 @@ def match(request):
         if form.is_valid():
 
             # Filter by skills.
-            persons = Person.objects.filter(airport__isnull=False)
+            persons = Person.objects.filter(airport__isnull=False, task__role__name='instructor')\
+                                    .annotate(num_taught=Count('task'))
             skills = []
             for s in Skill.objects.all():
                 if form.cleaned_data[s.name]:
@@ -266,12 +267,6 @@ def match(request):
             # Cut to number wanted.
             wanted = form.cleaned_data['wanted']
             persons = [x[1] for x in persons[:wanted]]
-
-            # FIXME: should be able to do this with aggregation
-            instructor_badge_id = Badge.objects.get(name='instructor').id
-            for p in persons:
-                awards = Award.objects.filter(person_id=p.id)
-                p.num_taught = len(awards)
 
         else:
             pass # FIXME: error message
