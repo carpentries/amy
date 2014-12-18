@@ -15,6 +15,7 @@
   <tr><td>country:</td><td>{{ site.country }}</td></tr>
   <tr><td>notes:</td><td>{{ site.notes }}</td></tr>
 </table>
+
 {% if site.notes %}
 <p>Notes:</p>
 <pre>
@@ -22,6 +23,29 @@
 </pre>
 {% else %}
 <p>No notes.</p>
+{% endif %}
+
+{% if events %}
+<table class="table table-striped">
+  <tr>
+    <th>project</th>
+    <th>start date</th>
+    <th>end date</th>
+    <th>slug</th>
+    <th>url</th>
+  </tr>
+  {% for e in events %}
+  <tr>
+    <td>{{ e.project }}</td>
+    <td>{{ e.start }}</td>
+    <td>{{ e.end }}</td>
+    <td><a href="{% url 'event_details' e.slug %}">{{ e.slug }}</a></td>
+    <td><a href="{{ e.url }}">{{ e.url }}</a></td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p>No events.</p>
 {% endif %}
 
 <p class="edit-object"><a href="{% url 'site_edit' site.domain %}">Edit this site</a></p>
