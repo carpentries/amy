@@ -40,8 +40,10 @@ def all_sites(request):
 def site_details(request, site_domain):
     '''List details of a particular site.'''
     site = Site.objects.get(domain=site_domain)
+    events = Event.objects.filter(site=site)
     context = {'title' : 'Site {0}'.format(site),
-               'site' : site}
+               'site' : site,
+               'events' : events}
     return render(request, 'workshops/site.html', context)
 
 class SiteCreate(CreateView):
