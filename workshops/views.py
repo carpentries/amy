@@ -7,7 +7,7 @@ from django.shortcuts import render, get_object_or_404
 from django.views.generic.edit import CreateView, UpdateView
 from django.db.models import Count
 
-from workshops.models import Site, Airport, Event, Person, Task, Cohort, Skill, Trainee, Badge
+from workshops.models import Site, Airport, Event, Person, Task, Cohort, Skill, Trainee, Badge, Award
 from workshops.forms import InstructorMatchForm
 from workshops.util import earth_distance
 
@@ -240,6 +240,8 @@ class CohortUpdate(UpdateView):
 #------------------------------------------------------------
 
 def match(request):
+    '''Search for instructors.'''
+
     persons = None
 
     if request.method == 'POST':
@@ -260,7 +262,16 @@ def match(request):
             persons = [(earth_distance(loc, (p.airport.latitude, p.airport.longitude)), p)
                        for p in persons]
             persons.sort()
-            persons = [x[1] for x in persons[:10]]
+
+            # Cut to number wanted.
+            wanted = form.cleaned_data['wanted']
+            persons = [x[1] for x in persons[:wanted]]
+
+            # FIXME: should be able to do this with aggregation
+            instructor_badge_id = Badge.objects.get(name='instructor').id
+            for p in persons:
+                awards = Award.objects.filter(person_id=p.id)
+                p.num_taught = len(awards)
 
         else:
             pass # FIXME: error message
@@ -269,7 +280,10 @@ def match(request):
     else:
         form = InstructorMatchForm()
 
-    return render(request, 'workshops/match.html', {'form': form, 'persons' : persons})
+    context = {'title' : 'Instructor Search',
+               'form': form,
+               'persons' : persons}
+    return render(request, 'workshops/match.html', context)
 
 #------------------------------------------------------------
 

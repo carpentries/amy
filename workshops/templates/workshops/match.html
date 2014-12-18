@@ -1,4 +1,11 @@
 {% extends "workshops/_page.html" %}
+
+{% load breadcrumbs %}
+{% block breadcrumbs %}
+    {% breadcrumb_url 'Index' 'index'  %}
+    {% breadcrumb_active 'Instructor Search'  %}
+{% endblock %}
+
 {% block content %}
 <form action="{% url 'match' %}" method="post">
     {% csrf_token %}
@@ -9,6 +16,7 @@
 {% elif persons %}
     <table class="table table-striped">
         <tr>
+	    <th>taught</th>
 	    <th>airport</th>
 	    <th>personal</th>
 	    <th>middle</th>
@@ -18,6 +26,7 @@
 	</tr>
     {% for p in persons %}
         <tr>
+	    <td>{{ p.num_taught }}</td>
 	    <td><a href="{% url 'airport_details' p.airport.iata %}">{{ p.airport }}</a></td>
 	    <td>{{ p.personal }}</td>
 	    <td>{{ p.middle }}</td>

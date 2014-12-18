@@ -5,6 +5,7 @@ from workshops.models import Skill
 class InstructorMatchForm(forms.Form):
     '''Represent instructor matching form.'''
 
+    wanted = forms.IntegerField(label='Number Wanted')
     latitude = forms.CharField(label='Latitude', max_length=8)
     longitude = forms.CharField(label='Longitude', max_length=8)
 
