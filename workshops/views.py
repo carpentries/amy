@@ -185,12 +185,7 @@ class TaskUpdate(UpdateView):
         role_name = self.kwargs.get('role_name', None)
 
         return get_object_or_404(Task, event__slug=event_slug, person__id=person_id, role__name=role_name)
-<<<<<<< HEAD
- 
-=======
 
-
->>>>>>> 5120b18e34075513bfd4aabf3200c3ddd7388d0a
 #------------------------------------------------------------
 
 COHORT_FIELDS = ['name', 'start', 'active', 'venue', 'qualifies']
