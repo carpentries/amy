@@ -7,7 +7,7 @@ from django.shortcuts import render, get_object_or_404
 from django.views.generic.edit import CreateView, UpdateView
 from django.db.models import Count
 
-from workshops.models import Site, Airport, Event, Person, Task, Cohort, Skill, Trainee, Badge
+from workshops.models import Site, Airport, Event, Person, Task, Cohort, Skill, Trainee, Badge, Award
 from workshops.forms import InstructorMatchForm
 from workshops.util import earth_distance
 
@@ -240,6 +240,8 @@ class CohortUpdate(UpdateView):
 #------------------------------------------------------------
 
 def match(request):
+    '''Search for instructors.'''
+
     persons = None
 
     if request.method == 'POST':
@@ -253,6 +255,11 @@ def match(request):
                 if form.cleaned_data[s.name]:
                     skills.append(s)
             persons = persons.have_skills(skills)
+
+            # Add metadata which we will eventually filter by
+            for person in persons:
+                person.num_taught = \
+                    person.task_set.filter(role__name='instructor').count()
 
             # Sort by location.
             loc = (float(form.cleaned_data['latitude']),
@@ -274,7 +281,10 @@ def match(request):
     else:
         form = InstructorMatchForm()
 
-    return render(request, 'workshops/match.html', {'form': form, 'persons' : persons})
+    context = {'title' : 'Instructor Search',
+               'form': form,
+               'persons' : persons}
+    return render(request, 'workshops/match.html', context)
 
 #------------------------------------------------------------
 
