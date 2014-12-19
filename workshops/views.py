@@ -258,8 +258,8 @@ def match(request):
 
             # Add metadata which we will eventually filter by
             for person in persons:
-                person.num_taught = person.task_set.filter(
-                    role__name='instructor').count()
+                person.num_taught = \
+                    person.task_set.filter(role__name='instructor').count()
 
             # Sort by location.
             loc = (float(form.cleaned_data['latitude']),
