@@ -249,13 +249,17 @@ def match(request):
         if form.is_valid():
 
             # Filter by skills.
-            persons = Person.objects.filter(airport__isnull=False, task__role__name='instructor')\
-                                    .annotate(num_taught=Count('task'))
+            persons = Person.objects.filter(airport__isnull=False)
             skills = []
             for s in Skill.objects.all():
                 if form.cleaned_data[s.name]:
                     skills.append(s)
             persons = persons.have_skills(skills)
+
+            # Add metadata which we will eventually filter by
+            for person in persons:
+                person.num_taught = person.task_set.filter(
+                    role__name='instructor').count()
 
             # Sort by location.
             loc = (float(form.cleaned_data['latitude']),
