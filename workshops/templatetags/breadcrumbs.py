@@ -1,10 +1,13 @@
+import logging
+
 from django import template
 from django.template import loader, Node, Variable
-from django.utils.encoding import smart_str, smart_unicode
+from django.utils.encoding import smart_text
 from django.template.defaulttags import url
 from django.template import VariableDoesNotExist
 
 register = template.Library()
+_LOG = logging.getLogger(__name__)
 
 
 @register.tag
@@ -82,7 +85,7 @@ class BreadcrumbNode(Node):
 
         else:
             title = title.strip("'").strip('"')
-            title = smart_unicode(title)
+            title = smart_text(title)
 
         url = None
 
@@ -91,7 +94,7 @@ class BreadcrumbNode(Node):
             try:
                 url = val.resolve(context)
             except VariableDoesNotExist:
-                print 'URL does not exist', val
+                _LOG.warning('URL does not exist {}'.format(val))
                 url = None
 
         return create_crumb(title, url)
@@ -113,7 +116,7 @@ class UrlBreadcrumbNode(Node):
                 title = ''
         else:
             title = title.strip("'").strip('"')
-            title = smart_unicode(title)
+            title = smart_text(title)
 
         url = self.url_node.render(context)
         return create_crumb(title, url)
