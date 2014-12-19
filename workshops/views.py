@@ -266,11 +266,13 @@ def match(request):
                    float(form.cleaned_data['longitude']))
             persons = [(earth_distance(loc, (p.airport.latitude, p.airport.longitude)), p)
                        for p in persons]
-            persons.sort()
-
-            # Cut to number wanted.
-            wanted = form.cleaned_data['wanted']
-            persons = [x[1] for x in persons[:wanted]]
+            persons.sort(
+                key=lambda distance_person: (
+                    distance_person[0],
+                    distance_person[1].family,
+                    distance_person[1].personal,
+                    distance_person[1].middle))
+            persons = [x[1] for x in persons[:10]]
 
         else:
             pass # FIXME: error message
