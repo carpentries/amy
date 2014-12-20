@@ -113,9 +113,34 @@ class AirportUpdate(UpdateView):
 
 def all_persons(request):
     '''List all persons.'''
+
     all_persons = Person.objects.order_by('family', 'personal')
+    items, page = _get_pagination_items(request)
+
+    # Show everything.
+    if items == 'all':
+        persons = all_persons
+
+    # Show selected items.
+    else:
+        persons_paginator = Paginator(all_persons, items)
+
+        # Select the persons.
+        try:
+            persons = persons_paginator.page(page)
+
+        # If page is not an integer, deliver first page.
+        except PageNotAnInteger:
+            persons = persons_paginator.page(1)
+
+        # If page is out of range, deliver last page of results.
+        except EmptyPage:
+            persons = persons_paginator.page(persons_paginator.num_pages)
+
+    user_can_add = request.user.has_perm('edit')
     context = {'title' : 'All Persons',
-               'all_persons' : all_persons}
+               'all_persons' : persons,
+               'user_can_add' : user_can_add}
     return render(request, 'workshops/all_persons.html', context)
 
 def person_details(request, person_id):
