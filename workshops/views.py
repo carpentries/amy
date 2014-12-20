@@ -33,27 +33,7 @@ def all_sites(request):
 
     all_sites = Site.objects.order_by('domain')
     items, page = _get_pagination_items(request)
-
-    # Show everything.
-    if items == 'all':
-        sites = all_sites
-
-    # Show selected items.
-    else:
-        sites_paginator = Paginator(all_sites, items)
-
-        # Select the sites.
-        try:
-            sites = sites_paginator.page(page)
-
-        # If page is not an integer, deliver first page.
-        except PageNotAnInteger:
-            sites = sites_paginator.page(1)
-
-        # If page is out of range, deliver last page of results.
-        except EmptyPage:
-            sites = sites_paginator.page(sites_paginator.num_pages)
-
+    sites = _select_pagination_items(all_sites, items, page)
     user_can_add = request.user.has_perm('edit')
     context = {'title' : 'All Sites',
                'all_sites' : sites,
@@ -116,31 +96,9 @@ def all_persons(request):
 
     all_persons = Person.objects.order_by('family', 'personal')
     items, page = _get_pagination_items(request)
-
-    # Show everything.
-    if items == 'all':
-        persons = all_persons
-
-    # Show selected items.
-    else:
-        persons_paginator = Paginator(all_persons, items)
-
-        # Select the persons.
-        try:
-            persons = persons_paginator.page(page)
-
-        # If page is not an integer, deliver first page.
-        except PageNotAnInteger:
-            persons = persons_paginator.page(1)
-
-        # If page is out of range, deliver last page of results.
-        except EmptyPage:
-            persons = persons_paginator.page(persons_paginator.num_pages)
-
-    user_can_add = request.user.has_perm('edit')
+    persons = _select_pagination_items(all_persons, items, page)
     context = {'title' : 'All Persons',
-               'all_persons' : persons,
-               'user_can_add' : user_can_add}
+               'all_persons' : persons}
     return render(request, 'workshops/all_persons.html', context)
 
 def person_details(request, person_id):
@@ -157,30 +115,9 @@ def all_events(request):
 
     all_events = Event.objects.order_by('slug')
     items, page = _get_pagination_items(request)
-
-    # Show everything.
-    if items == 'all':
-        events = all_events
-
-    # Show selected items.
-    else:
-        events_paginator = Paginator(all_events, items)
-
-        # Select the events.
-        try:
-            events = events_paginator.page(page)
-
-        # If page is not an integer, deliver first page.
-        except PageNotAnInteger:
-            events = events_paginator.page(1)
-
-        # If page is out of range, deliver last page of results.
-        except EmptyPage:
-            events = events_paginator.page(events_paginator.num_pages)
-
+    events = _select_pagination_items(all_events, items, page)
     context = {'title' : 'All Events',
                'all_events' : events}
-
     return render(request, 'workshops/all_events.html', context)
 
 def event_details(request, event_slug):
@@ -359,3 +296,28 @@ def _get_pagination_items(request):
     page = request.GET.get('page')
 
     return items, page
+
+def _select_pagination_items(all_objects, items, page):
+    '''Select items to display when paginating.'''
+
+    # Show everything.
+    if items == 'all':
+        result = all_objects
+
+    # Show selected items.
+    else:
+        paginator = Paginator(all_objects, items)
+
+        # Select the sites.
+        try:
+            result = paginator.page(page)
+
+        # If page is not an integer, deliver first page.
+        except PageNotAnInteger:
+            result = paginator.page(1)
+
+        # If page is out of range, deliver last page of results.
+        except EmptyPage:
+            result = paginator.page(paginator.num_pages)
+
+    return result
