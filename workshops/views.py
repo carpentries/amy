@@ -32,8 +32,7 @@ def all_sites(request):
     '''List all sites.'''
 
     all_sites = Site.objects.order_by('domain')
-    items, page = _get_pagination_items(request)
-    sites = _select_pagination_items(all_sites, items, page)
+    sites = _get_pagination_items(request, all_sites)
     user_can_add = request.user.has_perm('edit')
     context = {'title' : 'All Sites',
                'all_sites' : sites,
@@ -95,8 +94,7 @@ def all_persons(request):
     '''List all persons.'''
 
     all_persons = Person.objects.order_by('family', 'personal')
-    items, page = _get_pagination_items(request)
-    persons = _select_pagination_items(all_persons, items, page)
+    persons = _get_pagination_items(request, all_persons)
     context = {'title' : 'All Persons',
                'all_persons' : persons}
     return render(request, 'workshops/all_persons.html', context)
@@ -114,8 +112,7 @@ def all_events(request):
     '''List all events.'''
 
     all_events = Event.objects.order_by('slug')
-    items, page = _get_pagination_items(request)
-    events = _select_pagination_items(all_events, items, page)
+    events = _get_pagination_items(request, all_events)
     context = {'title' : 'All Events',
                'all_events' : events}
     return render(request, 'workshops/all_events.html', context)
@@ -282,23 +279,19 @@ def export(request, name):
 
 #------------------------------------------------------------
 
-def _get_pagination_items(request):
-    '''Determine how much pagination to do.'''
+def _get_pagination_items(request, all_objects):
+    '''Select paginated items.'''
 
+    # Get parameters.
     items = request.GET.get('items_per_page', ITEMS_PER_PAGE)
-
     if items != 'all':
         try:
             items = int(items)
         except ValueError:
             items = ITEMS_PER_PAGE
 
+    # Figure out where we are.
     page = request.GET.get('page')
-
-    return items, page
-
-def _select_pagination_items(all_objects, items, page):
-    '''Select items to display when paginating.'''
 
     # Show everything.
     if items == 'all':
