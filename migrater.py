@@ -1,13 +1,23 @@
+import logging
 import datetime
 import sys
 import sqlite3
 
+logger = logging.getLogger(__name__)
 FAKE = True
+
 
 def fail(table, fields, exc):
     '''Report failure.'''
-    print >> sys.stderr, 'failing on', table, 'with', fields, 'because', str(e)
+    logger.error("Failing on {table} with {fields} because {error}".format(
+        table=table, fields=fields, error=e))
     sys.exit(1)
+
+
+def info(table):
+    '''Report successful migration of given table.'''
+    logger.info("Successfully migrated '{table}' table".format(table=table))
+
 
 def fake(i, slug, personal, middle, family, email, gender, github, twitter, url):
     '''Redact personal identifying information.'''
@@ -45,6 +55,8 @@ for (site, fullname, country) in old_crs.fetchall():
         fail('site', fields, e)
     i += 1
 
+info('site')
+
 # Airport
 new_crs.execute('delete from workshops_airport;')
 old_crs.execute('select fullname, country, latitude, longitude, iata from airport;')
@@ -58,6 +70,8 @@ for (fullname, country, lat, long, iata) in old_crs.fetchall():
     except Exception, e:
         fail('airport', fields, e)
     i += 1
+
+info('airport')
 
 # load Facts for lookup in Person
 old_crs.execute('select person, gender, active, airport, github, twitter, site from facts;')
@@ -90,6 +104,8 @@ for (person, personal, middle, family, email) in old_crs.fetchall():
         fail('person', fields, e)
     i += 1
 
+info('person')
+
 # Project (kinds of event)
 new_crs.execute('delete from workshops_project;')
 i = 1
@@ -106,6 +122,8 @@ for (slug, name, details) in (('SWC', 'Software Carpentry', 'General Software Ca
         fail('project', fields, e)
     i += 1
 
+info('project')
+
 # Event
 new_crs.execute('delete from workshops_event;')
 old_crs.execute('select startdate, enddate, event, site, kind, eventbrite, attendance, url from event;')
@@ -120,6 +138,8 @@ for (startdate, enddate, event, site, kind, eventbrite, attendance, url) in old_
         fail('event', fields, e)
     i += 1
 
+info('event')
+
 # Roles
 new_crs.execute('delete from workshops_role;')
 i = 1
@@ -133,6 +153,8 @@ for role in 'helper instructor host learner organizer tutor'.split():
         fail('role', fields, e)
     i += 1
 
+info('roles')
+
 # Tasks
 new_crs.execute('delete from workshops_task;')
 old_crs.execute('select event, person, task from task;')
@@ -144,6 +166,8 @@ for (event, person, task) in old_crs.fetchall():
     except Exception, e:
         fail('task', fields, e)
     i += 1
+
+info('task')
 
 # Cohorts
 new_crs.execute('delete from workshops_cohort;')
@@ -166,6 +190,8 @@ for (start, name, active, venue) in old_crs.fetchall():
         fail('cohort', fields, e)
     i += 1
 
+info('cohort')
+
 # Trainee statuses (statii?)
 new_crs.execute('delete from workshops_traineestatus;')
 i = 1
@@ -178,6 +204,8 @@ for traineestatus in 'registered in_progress complete incomplete'.split():
     except Exception, e:
         fail('traineestatus', fields, e)
     i += 1
+
+info('traineestatus')
 
 # Trainees
 new_crs.execute('delete from workshops_trainee;')
@@ -200,6 +228,8 @@ for (person, cohort, status) in old_crs.fetchall():
         fail('trainee', fields, e)
     i += 1
 
+info('trainee')
+
 # Skills
 new_crs.execute('delete from workshops_skill;')
 old_crs.execute('select distinct skill from skills;')
@@ -214,6 +244,8 @@ for (skill,) in old_crs.fetchall():
         fail('skill', fields, e)
     i += 1
 
+info('skill')
+
 # Qualifications
 new_crs.execute('delete from workshops_qualification;')
 old_crs.execute('select person, skill from skills;')
@@ -225,6 +257,8 @@ for (person, skill) in old_crs.fetchall():
     except Exception, e:
         fail('qualification', fields, e)
     i += 1
+
+info('qualification')
 
 # Badges
 new_crs.execute('delete from workshops_badge;')
@@ -240,6 +274,8 @@ for (badge, title, criteria) in old_crs.fetchall():
         fail('badge', fields, e)
     i += 1
 
+info('badge')
+
 # Awards
 new_crs.execute('delete from workshops_award;')
 old_crs.execute('select person, badge, awarded from awards;')
@@ -252,6 +288,7 @@ for (person, badge, awarded) in old_crs.fetchall():
         fail('award', fields, e)
     i += 1
 
+info('award')
+
 # Finish
 new_cnx.commit()
-
