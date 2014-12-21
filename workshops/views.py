@@ -142,10 +142,12 @@ TASK_FIELDS = ['event', 'person', 'role']
 
 def all_tasks(request):
     '''List all tasks.'''
+
     all_tasks = Task.objects.order_by('event', 'person', 'role')
+    tasks = _get_pagination_items(request, all_tasks)
     user_can_add = request.user.has_perm('edit')
     context = {'title' : 'All Tasks',
-               'all_tasks' : all_tasks,
+               'all_tasks' : tasks,
                'user_can_add' : user_can_add}
     return render(request, 'workshops/all_tasks.html', context)
 

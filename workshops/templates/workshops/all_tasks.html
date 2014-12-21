@@ -24,6 +24,21 @@
 	</tr>
     {% endfor %}
     </table>
+    <div class="pagination">
+      <span class="step-links">
+         {% if all_tasks.has_previous %}
+             <a href="?page={{ all_tasks.previous_page_number }}">previous</a>
+         {% endif %}
+
+         <span class="current">
+             Page {{ all_tasks.number }} of {{ all_tasks.paginator.num_pages }}.
+         </span>
+
+         {% if all_tasks.has_next %}
+             <a href="?page={{ all_tasks.next_page_number }}">next</a>
+         {% endif %}
+      </span>
+    </div>
 {% else %}
     <p>No tasks.</p>
 {% endif %}
