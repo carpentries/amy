@@ -102,6 +102,9 @@ class Person(models.Model):
             email = ' <{0}>'.format(self.email)
         return '{0}{1}'.format(self.fullname(), email)
 
+    def get_absolute_url(self):
+        return reverse('person_details', args=[str(self.id)])
+
 #------------------------------------------------------------
 
 class Project(models.Model):

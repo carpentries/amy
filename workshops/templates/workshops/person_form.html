@@ -1,0 +1,23 @@
+{% extends "workshops/_page.html" %}
+
+{% load breadcrumbs %}
+{% block breadcrumbs %}
+    {% breadcrumb_url 'Index' 'index'  %}
+    {% breadcrumb_url 'All persons' 'all_persons' %}
+    {% if object %}
+        {% url 'person_details' object.domain as object_url %}
+        {% breadcrumb object.domain object_url %}
+        {% breadcrumb_active 'Edit person'  %}
+    {% else %}
+        {% breadcrumb_active 'New person'  %}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<form action="" method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Submit" />
+</form>
+
+{% endblock %}
