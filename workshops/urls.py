@@ -1,4 +1,4 @@
-from django.conf.urls import url
+from django.conf.urls import url, include
 from .views import AirportCreate, AirportUpdate, \
                    PersonCreate, PersonUpdate, \
                    SiteCreate, SiteUpdate, \
@@ -42,4 +42,7 @@ urlpatterns = [
     url(r'^match/?$', views.match, name='match'),
 
     url(r'^export/(?P<name>[\w\.-]+)/?$', views.export, name='export'),
+
+    url(r'^search/', include('haystack.urls')),
+
 ]

@@ -1,1 +1,4 @@
 Django>=1.7
+PyYAML>=3.11
+Whoosh>=2.6.0
+django-haystack>=2.3.1

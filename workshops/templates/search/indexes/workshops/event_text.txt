@@ -1,0 +1,4 @@
+{{object.site.fullname}}
+{{object.project.name}}
+{{object.project.details}}
+{{object.notes}}

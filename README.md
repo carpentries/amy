@@ -43,6 +43,12 @@ To get started:
        make database
        ~~~
 
+3.  [Create the search index][haystack-reindex]:
+
+    ~~~
+    python manage.py rebuild_index
+    ~~~
+
 4.  Start a local Django development server by running:
 
     ~~~
@@ -259,3 +265,5 @@ Pages for Admin Tool
 
 *  Admin
     *   Add accounts, password re-set, etc.
+
+[haystack-reindex]: http://django-haystack.readthedocs.org/en/latest/tutorial.html#reindex
