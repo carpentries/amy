@@ -20,7 +20,7 @@ ITEMS_PER_PAGE = 25
 def index(request):
     '''Home page.'''
     upcoming_events = Event.objects.upcoming_events()
-    context = {'title' : 'Home Page',
+    context = {'title' : None,
                'upcoming_events' : upcoming_events}
     return render(request, 'workshops/index.html', context)
 

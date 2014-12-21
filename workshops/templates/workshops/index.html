@@ -8,14 +8,18 @@
 {% block content %}
 <table>
   <tr>
-    <td valign="top">
+    <td valign="center">
       <img src="{% static 'amy-logo.png' %}" alt="Amy Logo" />
-      <br/>
+    </td>
+    <td valign="center">
       because setting up a workshop
       <br/>
       shouldn't have to hurt
     </td>
+  </tr>
+  <tr>
     <td valign="top">
+      <h3>Actions</h3>
       <ul>
 	<li><a href="{% url 'all_sites' %}">all sites</a></li>
 	<li><a href="{% url 'all_airports' %}">all airports</a></li>
@@ -23,24 +27,19 @@
 	<li><a href="{% url 'all_persons' %}">all persons</a></li>
 	<li><a href="{% url 'all_tasks' %}">all tasks</a></li>
 	<li><a href="{% url 'all_cohorts' %}">all cohorts</a></li>
-      </ul>
-    </td>
-    <td valign="top">
-      <ul>
 	<li><a href="{% url 'match' %}">match instructors</a></li>
 	<li><a href="{% url 'export' 'badges' %}">export badges</a></li>
 	<li><a href="{% url 'export' 'instructors' %}">export instructor locations</a></li>
       </ul>
     </td>
+    <td valign="top">
+      <h3>Upcoming Events</h3>
+      <ul class="event-list">
+	{% for event in upcoming_events %}
+	<li><a href="{{ event.get_absolute_url }}">{{ event.slug }}</a></li>
+	{% endfor %}
+      </ul>
+    </td>
   </tr>
 </table>
-
-<div class="upcoming-events">
-    <h3>Upcoming Events:</h3>
-    <ul class="event-list">
-        {% for event in upcoming_events %}
-        <li><a href="{{ event.get_absolute_url }}">{{ event.slug }}</a></li>
-        {% endfor %}
-    </ul>
-</div>
 {% endblock %}
