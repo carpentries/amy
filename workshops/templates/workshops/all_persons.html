@@ -2,7 +2,7 @@
 
 {% load breadcrumbs %}
 {% block breadcrumbs %}
-    {% breadcrumb_url 'Index' 'index'  %}
+    {% breadcrumb_url 'Amy' 'index'  %}
     {% breadcrumb_active 'All persons'  %}
 {% endblock %}
 
@@ -44,4 +44,5 @@
 {% else %}
     <p>No persons.</p>
 {% endif %}
+<p class="add-new"><a href="{% url 'person_add' %}">Add a new person</a></p>
 {% endblock %}

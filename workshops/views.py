@@ -106,6 +106,18 @@ def person_details(request, person_id):
                'person' : person}
     return render(request, 'workshops/person.html', context)
 
+
+class PersonCreate(CreateView):
+    model = Person
+    fields = '__all__'
+
+
+class PersonUpdate(UpdateView):
+    model = Person
+    fields = '__all__'
+    pk_url_kwarg = 'person_id'
+
+
 #------------------------------------------------------------
 
 def all_events(request):

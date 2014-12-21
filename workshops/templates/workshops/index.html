@@ -1,21 +1,39 @@
 {% extends "workshops/_page.html" %}
+{% load static %}
 {% load breadcrumbs %}
 {% block breadcrumbs %}
-    {% breadcrumb_active 'Index'  %}
+    {% breadcrumb_active 'Amy'  %}
 {% endblock %}
 
 {% block content %}
-<ul>
-  <li><a href="{% url 'all_sites' %}">all sites</a></li>
-  <li><a href="{% url 'all_airports' %}">all airports</a></li>
-  <li><a href="{% url 'all_events' %}">all events</a></li>
-  <li><a href="{% url 'all_persons' %}">all persons</a></li>
-  <li><a href="{% url 'all_tasks' %}">all tasks</a></li>
-  <li><a href="{% url 'all_cohorts' %}">all cohorts</a></li>
-  <li><a href="{% url 'match' %}">match instructors</a></li>
-  <li><a href="{% url 'export' 'badges' %}">export badges</a></li>
-  <li><a href="{% url 'export' 'instructors' %}">export instructor locations</a></li>
-</ul>
+<table>
+  <tr>
+    <td valign="top">
+      <img src="{% static 'amy-logo.png' %}" alt="Amy Logo" />
+      <br/>
+      because setting up a workshop
+      <br/>
+      shouldn't have to hurt
+    </td>
+    <td valign="top">
+      <ul>
+	<li><a href="{% url 'all_sites' %}">all sites</a></li>
+	<li><a href="{% url 'all_airports' %}">all airports</a></li>
+	<li><a href="{% url 'all_events' %}">all events</a></li>
+	<li><a href="{% url 'all_persons' %}">all persons</a></li>
+	<li><a href="{% url 'all_tasks' %}">all tasks</a></li>
+	<li><a href="{% url 'all_cohorts' %}">all cohorts</a></li>
+      </ul>
+    </td>
+    <td valign="top">
+      <ul>
+	<li><a href="{% url 'match' %}">match instructors</a></li>
+	<li><a href="{% url 'export' 'badges' %}">export badges</a></li>
+	<li><a href="{% url 'export' 'instructors' %}">export instructor locations</a></li>
+      </ul>
+    </td>
+  </tr>
+</table>
 
 <div class="upcoming-events">
     <h3>Upcoming Events:</h3>

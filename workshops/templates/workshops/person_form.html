@@ -2,19 +2,18 @@
 
 {% load breadcrumbs %}
 {% block breadcrumbs %}
-    {% breadcrumb_url 'Amy' 'index'  %}
-    {% breadcrumb_url 'All cohorts' 'all_cohorts' %}
+    {% breadcrumb_url 'Index' 'index'  %}
+    {% breadcrumb_url 'All persons' 'all_persons' %}
     {% if object %}
-        {% url 'cohort_details' object.name as object_url %}
-        {% breadcrumb object.name object_url %}
-        {% breadcrumb_active 'Edit cohort'  %}
+        {% url 'person_details' object.domain as object_url %}
+        {% breadcrumb object.domain object_url %}
+        {% breadcrumb_active 'Edit person'  %}
     {% else %}
-        {% breadcrumb_active 'New cohort'  %}
+        {% breadcrumb_active 'New person'  %}
     {% endif %}
 {% endblock %}
 
 {% block content %}
-
 <form action="" method="post">
     {% csrf_token %}
     {{ form.as_p }}
@@ -22,4 +21,3 @@
 </form>
 
 {% endblock %}
-
