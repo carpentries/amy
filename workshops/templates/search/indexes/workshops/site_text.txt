@@ -1,0 +1,4 @@
+{{object.domain}}
+{{object.fullname}}
+{{object.country}}
+{{object.notes}}
