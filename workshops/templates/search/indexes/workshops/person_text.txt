@@ -1,0 +1,9 @@
+{{object.personal}}
+{{object.middle}}
+{{object.family}}
+{{object.email}}
+{{object.gender}}
+{{object.github}}
+{{object.twitter}}
+{{object.url}}
+{{object.slug}}

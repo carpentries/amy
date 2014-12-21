@@ -36,8 +36,19 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'workshops'
+    'workshops',
+    'haystack'
 )
+
+
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
+        'PATH': os.path.join(os.path.dirname(__file__), 'whoosh_index'),
+    },
+}
+
+
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
