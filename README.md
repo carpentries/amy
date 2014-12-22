@@ -19,7 +19,7 @@ and so on.
 
 To get started:
 
-1.  Install Django and its dependencies.
+1.  Install Django and its dependencies. You can `pip install -r requirements.txt` if you're using virtualenv. 
 
 2.  Setup your local database.  There are two ways you can do this.
 
@@ -42,6 +42,14 @@ To get started:
        ~~~
        make database
        ~~~
+
+3.  (Optional): Install [npm](https://www.npmjs.com/) and [bower](http://bower.io/), then run:
+    
+    ~~~
+    make bower
+    ~~~
+
+    This will install a few required frontend libraries locally. This step is optional because the libraries are loaded from an external CDN by default.
 
 4.  Start a local Django development server by running:
 
