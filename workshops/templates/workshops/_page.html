@@ -1,10 +1,22 @@
+{% load static from staticfiles %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css">
-    <script src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css">
+
+    <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script>window.jQuery || document.write('<script src="{% static 'jquery.min.js' %}"><\/script>')</script>
+   
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+    <script>
+      if (typeof window.jQuery.fn.modal == 'undefined') {
+        document.write(unescape("%3Cscript src=\"{% static 'bootstrap.min.js' %}\" %3E%3C/script%3E"));
+        document.write(unescape("%3Clink rel=\"stylesheet\" href=\"{% static 'bootstrap.min.css' %}\" %3E"));
+        document.write(unescape("%3Clink rel=\"stylesheet\" href=\"{% static 'bootstrap-theme.min.css' %}\" %3E"));
+      }
+    </script>
+
     <title>Amy: {{ title }}</title>
   </head>
   <body>
