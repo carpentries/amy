@@ -21,34 +21,19 @@
         <th>middle</th>
         <th>family</th>
         <th>email</th>
-        <th>gender</th>   
-        <th>active</th>      
-        <th>airport</th>     
-        <th>github</th>      
-        <th>twitter</th>    
-        <th>url</th>       
-        <th>slug</th>  
-        <th>event slug</th>
+        <th>event</th>
         <th>role</th>
     </tr>
-    {% for person_task in people_tasks %}
+    {% for entry in persons_tasks %}
     <tr>
-        <td>{{ person_task.person.personal }}</td>
-        <td>{{ person_task.person.middle }}</td>
-        <td>{{ person_task.person.family }}</td>
-        <td>{{ person_task.person.email }}</td>
-        <td>{{ person_task.person.gender }}</td>
-        <td>{{ person_task.person.active }}</td>
-        <td>{{ person_task.person.airport }}</td>
-        <td>{{ person_task.person.github }}</td>
-        <td>{{ person_task.person.twitter }}</td>
-        <td>{{ person_task.person.url }}</td>
-        <td>{{ person_task.person.slug }}</td>
-        <td>{{ person_task.task.event.slug }}</td>
-        <td>{{ person_task.task.role.name }}</td>
+        <td>{{ entry.person.personal }}</td>
+        <td>{{ entry.person.middle }}</td>
+        <td>{{ entry.person.family }}</td>
+        <td>{{ entry.person.email }}</td>
+        <td>{{ entry.task.event.slug }}</td>
+        <td>{{ entry.task.role.name }}</td>
     </tr>
     {% endfor %}
 </table>
-
 
 {% endblock %}
