@@ -93,6 +93,9 @@ class AirportUpdate(UpdateView):
 
 #------------------------------------------------------------
 
+PERSON_UPLOAD_FIELDS = ['personal', 'middle', 'family', 'email']
+PERSON_TASK_UPLOAD_FIELDS = PERSON_UPLOAD_FIELDS + ['event', 'role']
+
 def all_persons(request):
     '''List all persons.'''
 
@@ -114,13 +117,13 @@ def person_bulk_add(request):
         form = PersonBulkAddForm(request.POST, request.FILES)
         if form.is_valid():
             try:
-                people_tasks = process_uploaded_csv(request, request.FILES['file'])
+                persons_tasks = _upload_person_task_csv(request, request.FILES['file'])
             except csv.Error as e:
                 messages.add_message(request, messages.ERROR, "Error processing uploaded .CSV file: {}".format(e))
             else:
                 context = {'title' : 'Process CSV File',
                            'form': form, 
-                           'people_tasks': people_tasks}
+                           'persons_tasks': persons_tasks}
                 return render(request, 'workshops/person_process_bulk_add.html', context)
     else:
         form = PersonBulkAddForm()
@@ -129,33 +132,29 @@ def person_bulk_add(request):
                'form': form}
     return render(request, 'workshops/person_bulk_add_form.html', context)
 
-def process_uploaded_csv(request, uploaded_file):
-    people_tasks = []
+def _upload_person_task_csv(request, uploaded_file):
+    persons_tasks = []
     reader = csv.DictReader(uploaded_file)
     for row in reader:
-        person_task = {}
-        person_dict = dict([(fieldname.name, row[fieldname.name]) for fieldname in Person._meta.local_fields if fieldname.name not in ['id', 'airport']])
-        person_task['person'] = Person(**person_dict) 
-        if row['airport'].strip() != "":
+        person_fields = dict((col, row[col].strip()) for col in PERSON_UPLOAD_FIELDS)
+        person = Person(**person_fields)
+        entry = {'person': person, 'task' : None}
+        if row['event'] and row['role']:
             try:
-                person_task['person'].airport = Airport.objects.get(iata=row['airport'].strip())
-            except Airport.DoesNotExist:
-                messages.add_message(request, messages.ERROR, "Airport with code {} doesn't exist.".format(row['airport'].strip()))
-        if row['event slug'].strip() != "" and row['role'].strip() != "":
-            try:
-                event = Event.objects.get(slug=row['event slug'].strip())
-                role = Role.objects.get(name=row['role'].strip())
-                person_task['task'] = Task(event=event, role=role)
+                event = Event.objects.get(slug=row['event'])
+                role = Role.objects.get(name=row['role'])
+                entry['task'] = Task(person=person, event=event, role=role)
             except Event.DoesNotExist:
-                messages.add_message(request, messages.ERROR, "Event with slug {} doesn't exist.".format(row['event slug'].strip()))
+                messages.add_message(request, messages.ERROR, \
+                                     'Event with slug {} does not exist.'.format(row['event']))
             except Role.DoesNotExist:
-                messages.add_message(request, messages.ERROR, "Role with name {} doesn't exist.".format(row['role'].strip())) 
+                messages.add_message(request, messages.ERROR, \
+                                     'Role with name {} does not exist.'.format(row['role'])) 
             except Role.MultipleObjectsReturned:
-                messages.add_message(request, messages.ERROR, "More than one roles with name {} exist.".format(row['role'].strip())) 
-        else:
-            person_task['task'] = None   
-        people_tasks.append(person_task)
-    return people_tasks
+                messages.add_message(request, messages.ERROR, \
+                                     'More than one role named {} exists.'.format(row['role'])) 
+        persons_tasks.append(entry)
+    return persons_tasks
 
 class PersonCreate(CreateView):
     model = Person
@@ -165,7 +164,6 @@ class PersonUpdate(UpdateView):
     model = Person
     fields = '__all__'
     pk_url_kwarg = 'person_id'
-
 
 #------------------------------------------------------------
 
