@@ -24,3 +24,14 @@ class InstructorMatchForm(forms.Form):
         skills = Skill.objects.all()
         for s in skills:
             self.fields[s.name] = forms.BooleanField(label=s.name, required=False)
+
+class PersonBulkAddForm(forms.Form):
+    '''Represent CSV upload form for bulk adding people.'''
+
+    file = forms.FileField()
+    #CHOICES = (('true', 'Yes, the first row contains headers.',), ('false', 'No.',))
+    #has_header = forms.ChoiceField(label="Does the .CSV file have a header?", required=False, choices=CHOICES)
+
+class PersonBuildAddConfirmForm(forms.Form):
+
+    load = forms.BooleanField(label="Load people?", required=True)

@@ -1,14 +1,17 @@
 import yaml
+import csv
 
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect
+
+from django.shortcuts import redirect
 from django.shortcuts import render, get_object_or_404
 from django.views.generic.edit import CreateView, UpdateView
 from django.db.models import Count
+from django.contrib import messages
 
-from workshops.models import Site, Airport, Event, Person, Task, Cohort, Skill, Trainee, Badge, Award
-from workshops.forms import InstructorMatchForm
+from workshops.models import Site, Airport, Event, Person, Task, Cohort, Skill, Trainee, Badge, Award, Role
+from workshops.forms import InstructorMatchForm, PersonBulkAddForm
 from workshops.util import earth_distance
 
 #------------------------------------------------------------
@@ -106,11 +109,57 @@ def person_details(request, person_id):
                'person' : person}
     return render(request, 'workshops/person.html', context)
 
+def person_bulk_add(request):
+    if request.method == 'POST':
+        form = PersonBulkAddForm(request.POST, request.FILES)
+        if form.is_valid():
+            try:
+                people_tasks = process_uploaded_csv(request, request.FILES['file'])
+            except csv.Error as e:
+                messages.add_message(request, messages.ERROR, "Error processing uploaded .CSV file: {}".format(e))
+            else:
+                context = {'title' : 'Process CSV File',
+                           'form': form, 
+                           'people_tasks': people_tasks}
+                return render(request, 'workshops/person_process_bulk_add.html', context)
+    else:
+        form = PersonBulkAddForm()
+
+    context = {'title' : 'Bulk Add People',
+               'form': form}
+    return render(request, 'workshops/person_bulk_add_form.html', context)
+
+def process_uploaded_csv(request, uploaded_file):
+    people_tasks = []
+    reader = csv.DictReader(uploaded_file)
+    for row in reader:
+        person_task = {}
+        person_dict = dict([(fieldname.name, row[fieldname.name]) for fieldname in Person._meta.local_fields if fieldname.name not in ['id', 'airport']])
+        person_task['person'] = Person(**person_dict) 
+        if row['airport'].strip() != "":
+            try:
+                person_task['person'].airport = Airport.objects.get(iata=row['airport'].strip())
+            except Airport.DoesNotExist:
+                messages.add_message(request, messages.ERROR, "Airport with code {} doesn't exist.".format(row['airport'].strip()))
+        if row['event slug'].strip() != "" and row['role'].strip() != "":
+            try:
+                event = Event.objects.get(slug=row['event slug'].strip())
+                role = Role.objects.get(name=row['role'].strip())
+                person_task['task'] = Task(event=event, role=role)
+            except Event.DoesNotExist:
+                messages.add_message(request, messages.ERROR, "Event with slug {} doesn't exist.".format(row['event slug'].strip()))
+            except Role.DoesNotExist:
+                messages.add_message(request, messages.ERROR, "Role with name {} doesn't exist.".format(row['role'].strip())) 
+            except Role.MultipleObjectsReturned:
+                messages.add_message(request, messages.ERROR, "More than one roles with name {} exist.".format(row['role'].strip())) 
+        else:
+            person_task['task'] = None   
+        people_tasks.append(person_task)
+    return people_tasks
 
 class PersonCreate(CreateView):
     model = Person
     fields = '__all__'
-
 
 class PersonUpdate(UpdateView):
     model = Person
