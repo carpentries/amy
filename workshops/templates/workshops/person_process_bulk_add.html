@@ -23,17 +23,31 @@
         <th>email</th>
         <th>event</th>
         <th>role</th>
+        <th>valid</th>
     </tr>
     {% for entry in persons_tasks %}
-    <tr>
+    <tr {% if not entry.valid %} class="bg-danger"{% endif %}>
         <td>{{ entry.person.personal }}</td>
         <td>{{ entry.person.middle }}</td>
         <td>{{ entry.person.family }}</td>
         <td>{{ entry.person.email }}</td>
         <td>{{ entry.task.event.slug }}</td>
         <td>{{ entry.task.role.name }}</td>
+        {% if entry.valid %}
+        <td>{{ entry.valid }}</td>
+        {% else %}
+        <td>{{ entry.valid }}, {{ entry.reason }}</td>
+        {% endif %}
+
     </tr>
     {% endfor %}
 </table>
+
+<form action="" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Import People" />
+    <a href="{% url 'person_bulk_add' %}">Cancel</a>
+</form>
 
 {% endblock %}

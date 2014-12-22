@@ -21,6 +21,7 @@
     {% csrf_token %}
     {{ form.as_p }}
     <input type="submit" value="Submit" />
+    <a href="{% url 'all_persons' %}">Cancel</a>
 </form>
 
 {% endblock %}
