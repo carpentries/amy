@@ -74,12 +74,21 @@ class PersonManager(models.Manager):
 
 class Person(models.Model):
     '''Represent a single person.'''
+    MALE = 'M'
+    FEMALE = 'F'
+    OTHER = 'O'
+    GENDER_CHOICES = (
+        (MALE, 'Male'),
+        (FEMALE, 'Female'),
+        (OTHER, 'Other'),
+        )
 
     personal   = models.CharField(max_length=STR_LONG)
     middle     = models.CharField(max_length=STR_LONG, null=True)
     family     = models.CharField(max_length=STR_LONG)
     email      = models.CharField(max_length=STR_LONG, unique=True, null=True)
-    gender     = models.CharField(max_length=STR_SHORT, null=True)
+    gender     = models.CharField(
+        max_length=1, choices=GENDER_CHOICES, null=True, blank=True)
     active     = models.NullBooleanField()
     airport    = models.ForeignKey(Airport, null=True)
     github     = models.CharField(max_length=STR_MED, unique=True, null=True)

@@ -84,7 +84,7 @@ for (person, personal, middle, family, email) in old_crs.fetchall():
         airport = airport_lookup[airport]
 
     try:
-        fields = (i, personal, middle, family, email, active, airport, gender, github, url, twitter, person)
+        fields = (i, personal, middle, family, email, active, airport, github, twitter, url, person, gender)
         new_crs.execute('insert into workshops_person values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', fields)
     except Exception, e:
         fail('person', fields, e)
