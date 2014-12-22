@@ -6,6 +6,10 @@ import sqlite3
 # stick to string name of the logger because it's better than "__main__"
 # (what __name__ defaults to)
 logger = logging.getLogger("amy-migrater")
+
+# verbosity: show all messages with severity of at least INFO
+logger.setLevel(logging.INFO)
+
 FAKE = True
 
 
