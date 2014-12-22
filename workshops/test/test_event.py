@@ -1,7 +1,9 @@
+from datetime import datetime, timedelta
+import sys
+
 from django.test import TestCase
 from django.core.urlresolvers import reverse
 from ..models import Event, Site, Project
-from datetime import datetime, timedelta
 
 class TestEvent(TestCase):
     "Tests for the event model and it's manager"
@@ -106,7 +108,10 @@ class TestEvent(TestCase):
                          'ends_tomorrow',
                          'ends_today',]
 
-        self.assertItemsEqual(event_slugs, correct_slugs)
+        if sys.version_info >= (3,):
+            self.assertCountEqual(event_slugs, correct_slugs)
+        else:
+            self.assertItemsEqual(event_slugs, correct_slugs)
 
 
 class TestEventViews(TestCase):
@@ -153,7 +158,10 @@ class TestEventViews(TestCase):
         view_events = response.context['all_events']
         all_events = list(Event.objects.all())
 
-        self.assertItemsEqual(view_events, all_events)
+        if sys.version_info >= (3,):
+            self.assertCountEqual(view_events, all_events)
+        else:
+            self.assertItemsEqual(view_events, all_events)
 
     def test_invalid_items_per_page_gives_default_pagination(self):
 
