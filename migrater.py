@@ -3,7 +3,9 @@ import datetime
 import sys
 import sqlite3
 
-logger = logging.getLogger(__name__)
+# stick to string name of the logger because it's better than "__main__"
+# (what __name__ defaults to)
+logger = logging.getLogger("amy-migrater")
 FAKE = True
 
 
