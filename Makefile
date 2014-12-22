@@ -22,6 +22,10 @@ migrations :
 	python manage.py makemigrations
 	python manage.py migrate
 
+## bower        : run the bower install command
+bower :
+	python manage.py bower install
+
 ## import       : import and save legacy data
 import :
 	python migrater.py ${DB_SRC} ${DB_APP}
