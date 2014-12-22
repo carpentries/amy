@@ -254,4 +254,3 @@ for (person, badge, awarded) in old_crs.fetchall():
 
 # Finish
 new_cnx.commit()
-
