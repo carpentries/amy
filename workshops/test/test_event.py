@@ -202,3 +202,50 @@ class TestEventViews(TestCase):
 
         # This should be the first page
         assert view_events.number == 5
+
+
+class TestEventNotes(TestCase):
+    """Make sure notes once written are saved forever!"""
+
+    def setUp(self):
+        """Prepare testing events"""
+        # a test site is required for all new events
+        self.test_site = Site.objects.create(domain='example.com',
+                                             fullname='Test Site')
+
+        # a test project is required for all new events
+        self.test_project = Project.objects.create(slug='test',
+                                                   name='Test Project',
+                                                   details='my test project')
+
+        # prepare a lifespan of all events
+        self.event_start = datetime.now() + timedelta(days=-1)
+        self.event_end = datetime.now() + timedelta(days=1)
+
+    def test_event_without_notes(self):
+        "Make sure event without notes don't have NULLed field ``notes``"
+        e = Event(start=self.event_start,
+                  end=self.event_end,
+                  slug='no_notes',
+                  site=self.test_site,
+                  project=self.test_project,
+                  admin_fee=100)
+
+        # test for field's default value (the field is not NULL)
+        self.assertEqual(e.notes, "")  # therefore the field is not NULL
+
+    def test_event_with_notes(self):
+        "Make sure event with notes are correctly stored"
+
+        notes = "This event's going to be extremely exhausting."
+
+        e = Event(start=self.event_start,
+                  end=self.event_end,
+                  slug='with_notes',
+                  site=self.test_site,
+                  project=self.test_project,
+                  admin_fee=100,
+                  notes=notes)
+
+        # make sure that notes have been saved
+        self.assertEqual(e.notes, notes)
