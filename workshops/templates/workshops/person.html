@@ -19,6 +19,7 @@
   <tr><td>github:</td><td>{{ person.github }}</td></tr>
   <tr><td>twitter:</td><td>{{ person.twitter }}</td></tr>
   <tr><td>url:</td><td>{{ person.url }}</td></tr>
+  <tr><td>badges:</td><td>{{ person.award_set.all | join:"," }}</td></tr>
 </table>
 
 <p class="edit-object"><a href="{% url 'person_edit' person.id %}">Edit this person</a></p>
