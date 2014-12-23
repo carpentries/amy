@@ -2,10 +2,13 @@ import yaml
 
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
+import django.forms
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.views.generic.edit import CreateView, UpdateView
 from django.db.models import Count
+from extra_views import CreateWithInlinesView, UpdateWithInlinesView, InlineFormSet
+from extra_views.generic import GenericInlineFormSet
 
 from workshops.models import Site, Airport, Event, Person, Task, Cohort, Skill, Trainee, Badge, Award
 from workshops.forms import InstructorMatchForm
@@ -107,15 +110,34 @@ def person_details(request, person_id):
     return render(request, 'workshops/person.html', context)
 
 
-class PersonCreate(CreateView):
+class AwardInline(InlineFormSet):
+    model = Award
+    fields = '__all__'
+    widgets = {
+        'awarded': django.forms.DateInput(
+            attrs={
+                'data-provide': 'datepicker',
+                'data-date-format': 'yyyy-mm-dd',
+            },
+        ),
+    }
+
+
+class PersonCreate(CreateWithInlinesView):
     model = Person
     fields = '__all__'
+    inlines = [
+        AwardInline,
+        ]
 
 
-class PersonUpdate(UpdateView):
+class PersonUpdate(UpdateWithInlinesView):
     model = Person
     fields = '__all__'
     pk_url_kwarg = 'person_id'
+    inlines = [
+        AwardInline,
+        ]
 
 
 #------------------------------------------------------------

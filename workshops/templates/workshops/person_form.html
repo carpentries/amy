@@ -17,6 +17,9 @@
 <form action="" method="post">
     {% csrf_token %}
     {{ form.as_p }}
+    {% for form in inlines %}
+        {{ form.as_p }}
+    {% endfor %}
     <input type="submit" value="Submit" />
 </form>
 
