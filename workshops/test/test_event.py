@@ -208,7 +208,6 @@ class TestEventNotes(TestCase):
     """Make sure notes once written are saved forever!"""
 
     def setUp(self):
-        """Prepare testing events"""
         # a test site is required for all new events
         self.test_site = Site.objects.create(domain='example.com',
                                              fullname='Test Site')
