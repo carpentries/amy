@@ -131,8 +131,10 @@ def all_events(request):
 def event_details(request, event_slug):
     '''List details of a particular event.'''
     event = Event.objects.get(slug=event_slug)
+    tasks = Task.objects.filter(event__id=event.id).order_by('role__name')
     context = {'title' : 'Event {0}'.format(event),
-               'event' : event}
+               'event' : event,
+               'tasks' : tasks}
     return render(request, 'workshops/event.html', context)
 
 #------------------------------------------------------------
