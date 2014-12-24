@@ -1,10 +1,11 @@
+import logging
+
 import yaml
 
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
 import django.forms
-from django.http import HttpResponseRedirect
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import redirect, render, get_object_or_404
 from django.views.generic.edit import CreateView, UpdateView
 from django.db.models import Count
 from extra_views import CreateWithInlinesView, UpdateWithInlinesView, InlineFormSet
@@ -16,6 +17,7 @@ from workshops.util import earth_distance
 
 #------------------------------------------------------------
 
+_LOG = logging.getLogger(__name__)
 ITEMS_PER_PAGE = 25
 
 #------------------------------------------------------------
@@ -157,6 +159,26 @@ def event_details(request, event_slug):
     context = {'title' : 'Event {0}'.format(event),
                'event' : event}
     return render(request, 'workshops/event.html', context)
+
+
+def event_award(request, event_slug):
+    '''Create awards associated with this event.'''
+    event = Event.objects.get(slug=event_slug)
+    for badge_name, role_name in [
+            ('organizer', 'organizer'),
+            ('instructor', 'instructor'),
+            ]:
+        badge = Badge.objects.get(name=badge_name)
+        for task in (
+                event.task_set
+                    .filter(role__name=role_name)
+                    .exclude(person__award__badge__name=badge_name)
+                ):
+            award = task.person.award_set.create(
+                badge=badge, awarded=event.end)
+            _LOG.info('created {} because of {}'.format(award, event))
+    return redirect(event)
+
 
 #------------------------------------------------------------
 
