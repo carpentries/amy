@@ -106,17 +106,14 @@ def person_details(request, person_id):
                'person' : person}
     return render(request, 'workshops/person.html', context)
 
-
 class PersonCreate(CreateView):
     model = Person
     fields = '__all__'
-
 
 class PersonUpdate(UpdateView):
     model = Person
     fields = '__all__'
     pk_url_kwarg = 'person_id'
-
 
 #------------------------------------------------------------
 
@@ -125,6 +122,8 @@ def all_events(request):
 
     all_events = Event.objects.order_by('slug')
     events = _get_pagination_items(request, all_events)
+    for e in events:
+        e.num_instructors = len(Task.objects.filter(event__id=e.id, role__name='instructor'))
     context = {'title' : 'All Events',
                'all_events' : events}
     return render(request, 'workshops/all_events.html', context)
