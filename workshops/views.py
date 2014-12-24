@@ -1,4 +1,5 @@
 import yaml
+import requests
 
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
@@ -10,6 +11,7 @@ from django.db.models import Count
 from workshops.models import Site, Airport, Event, Person, Task, Cohort, Skill, Trainee, Badge, Award
 from workshops.forms import InstructorMatchForm
 from workshops.util import earth_distance
+from workshops.check import check_file
 
 #------------------------------------------------------------
 
@@ -135,6 +137,27 @@ def event_details(request, event_slug):
     context = {'title' : 'Event {0}'.format(event),
                'event' : event}
     return render(request, 'workshops/event.html', context)
+
+def validate_event(request, event_slug):
+    '''Check the event's home page *or* the specified URL (for testing).'''
+    event = Event.objects.get(slug=event_slug)
+    github_url = request.GET.get('url', None) # for manual override
+    if github_url is None:
+        github_url = event.url
+    page_url = github_url.replace('github.com', 'raw.github.com') + '/gh-pages/index.html'
+    import sys
+    print >> sys.stderr, 'page_url:', page_url
+    response = requests.get(page_url)
+    if response.status_code != 200:
+        error_messages = ['Request for {0} returned status code {1}'.format(url, response.status_code)]
+    else:
+        valid, error_messages = check_file(page_url, response.text)
+    print >> sys.stderr, 'error_messages:', error_messages
+    context = {'title' : 'Validate Event {0}'.format(event),
+               'event' : event,
+               'page' : page_url,
+               'error_messages' : error_messages}
+    return render(request, 'workshops/validate_event.html', context)
 
 #------------------------------------------------------------
 
