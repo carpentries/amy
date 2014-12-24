@@ -27,6 +27,12 @@
 {% else %}
 <p>No notes.</p>
 {% endif %}
+
+<form action="{% url 'event_award' event.slug %}" method="post">
+  {% csrf_token %}
+  <input type="submit" value="Assign awards" />
+</form>
+
 <p>... <a href="{% url 'all_events' %}">all events</a></p>
 <p>... <a href="{% url 'index' %}">index</a></p>
 {% endblock %}

@@ -28,6 +28,7 @@ urlpatterns = [
 
     url(r'^events/?$', views.all_events, name='all_events'),
     url(r'^event/(?P<event_slug>[\w\.-]+)/?$', views.event_details, name='event_details'),
+    url(r'^event/(?P<event_slug>[\w\.-]+)/award$', views.event_award, name='event_award'),
 
     url(r'^tasks/?$', views.all_tasks, name='all_tasks'),
     url(r'^task/(?P<event_slug>[\w\.-]+)/(?P<person_id>[\w\.-]+)/(?P<role_name>[\w\.-]+)/?$', views.task_details, name='task_details'),
