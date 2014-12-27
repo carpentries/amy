@@ -11,26 +11,30 @@
     <table class="table table-striped">
         <tr>
 	    <th>project</th>
+	    <th>instructors</th>
 	    <th>slug</th>
 	    <th>url</th>
 	    <th>site</th>
-	    <th>start</th>
-	    <th>end</th>
+	    <th>dates</th>
 	    <th>Eventbrite</th>
 	    <th>attendance</th>
-        <th>notes</th>
 	</tr>
     {% for event in all_events %}
         <tr>
 	    <td>{{ event.project }}</td>
+	    <td {% if event.num_instructors == 0 %}class="warning"{% endif %}>{{ event.num_instructors }}</td>
 	    <td><a href="{% url 'event_details' event.slug %}">{{ event.slug }}</a></td>
-	    <td><a href="{{ event.url }}">{{ event.url }}</a></td>
+	    <td {% if not event.url %}class="warning"{% endif %}>
+	      {% if event.url %}
+	      <a href="{{ event.url }}">{{ event.url|cut:"https://github.com/" }}</a>
+	      {% else %}
+	      ---
+	      {% endif %}
+	    </td>
 	    <td><a href="{% url 'site_details' event.site.domain %}">{{ event.site }}</a></td>
-	    <td>{{ event.start }}</td>
-	    <td>{{ event.end }}</td>
+	    <td>{{ event.start }} &ndash; {{ event.end }}</td>
 	    <td>{{ event.reg_key }}</td>
 	    <td>{{ event.attendance }}</td>
-        <td>{{ event.notes | truncatechars:10 }}</td>
 	</tr>
     {% endfor %}
     </table>
