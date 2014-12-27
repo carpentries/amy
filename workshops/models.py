@@ -87,8 +87,7 @@ class Person(models.Model):
     middle     = models.CharField(max_length=STR_LONG, null=True)
     family     = models.CharField(max_length=STR_LONG)
     email      = models.CharField(max_length=STR_LONG, unique=True, null=True)
-    gender     = models.CharField(
-        max_length=1, choices=GENDER_CHOICES, null=True, blank=True)
+    gender     = models.CharField(max_length=1, choices=GENDER_CHOICES, null=True, blank=True)
     active     = models.NullBooleanField()
     airport    = models.ForeignKey(Airport, null=True)
     github     = models.CharField(max_length=STR_MED, unique=True, null=True)
