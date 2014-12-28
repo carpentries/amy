@@ -8,7 +8,7 @@ from django.views.generic.edit import CreateView, UpdateView
 from django.db.models import Count
 
 from workshops.models import Site, Airport, Event, Person, Task, Cohort, Skill, Trainee, Badge, Award
-from workshops.forms import InstructorMatchForm
+from workshops.forms import InstructorMatchForm, SearchForm
 from workshops.util import earth_distance
 
 #------------------------------------------------------------
@@ -279,6 +279,44 @@ def match(request):
                'form': form,
                'persons' : persons}
     return render(request, 'workshops/match.html', context)
+
+#------------------------------------------------------------
+
+def search(request):
+    '''Search the database by term.'''
+
+    term = ''
+    in_site_names = False
+    in_site_notes = False
+    in_event_names = False
+    in_event_notes = False
+    in_persons = False
+
+    if request.method == 'POST':
+        form = SearchForm(request.POST)
+        if form.is_valid():
+            term = form.cleaned_data['term'],
+            in_site_names = form.cleaned_data['in_site_names']
+            in_site_notes = form.cleaned_data['in_site_notes']
+            in_event_names = form.cleaned_data['in_event_names']
+            in_event_notes = form.cleaned_data['in_event_notes']
+            in_persons = form.cleaned_data['in_persons']
+        else:
+            pass # FIXME: error message
+
+    # if a GET (or any other method) we'll create a blank form
+    else:
+        form = SearchForm()
+
+    context = {'title' : 'Search',
+               'form': form,
+               'term' : term,
+               'in_site_names': in_site_names,
+               'in_site_notes': in_site_notes,
+               'in_event_names': in_event_names,
+               'in_event_notes': in_event_notes,
+               'in_persons': in_persons}
+    return render(request, 'workshops/search.html', context)
 
 #------------------------------------------------------------
 

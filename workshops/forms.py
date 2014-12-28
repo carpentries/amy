@@ -24,3 +24,25 @@ class InstructorMatchForm(forms.Form):
         skills = Skill.objects.all()
         for s in skills:
             self.fields[s.name] = forms.BooleanField(label=s.name, required=False)
+
+
+class SearchForm(forms.Form):
+    '''Represent general searching form.'''
+
+    term = forms.CharField(label='term',
+                           max_length=100)
+    in_site_names = forms.BooleanField(label='in site names',
+                                       required=False,
+                                       initial=True)
+    in_site_notes = forms.BooleanField(label='in site notes',
+                                       required=False,
+                                       initial=True)
+    in_event_names = forms.BooleanField(label='in event names',
+                                        required=False,
+                                        initial=True)
+    in_event_notes = forms.BooleanField(label='in event notes',
+                                        required=False,
+                                        initial=True)
+    in_persons = forms.BooleanField(label='in persons',
+                                    required=False,
+                                    initial=True)
