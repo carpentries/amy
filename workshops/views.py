@@ -5,7 +5,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.views.generic.edit import CreateView, UpdateView
-from django.db.models import Count
+from django.db.models import Count, Q
 
 from workshops.models import Site, Airport, Event, Person, Task, Cohort, Skill, Trainee, Badge, Award
 from workshops.forms import InstructorMatchForm, SearchForm
@@ -286,21 +286,20 @@ def search(request):
     '''Search the database by term.'''
 
     term = ''
-    in_site_names = False
-    in_site_notes = False
-    in_event_names = False
-    in_event_notes = False
-    in_persons = False
+    in_sites, sites = False, None
+    in_events, events = False, None
 
     if request.method == 'POST':
         form = SearchForm(request.POST)
         if form.is_valid():
-            term = form.cleaned_data['term'],
-            in_site_names = form.cleaned_data['in_site_names']
-            in_site_notes = form.cleaned_data['in_site_notes']
-            in_event_names = form.cleaned_data['in_event_names']
-            in_event_notes = form.cleaned_data['in_event_notes']
-            in_persons = form.cleaned_data['in_persons']
+            term = form.cleaned_data['term']
+            in_sites = form.cleaned_data['in_sites']
+            sites = Site.objects.filter(Q(domain__contains=term) | \
+                                        Q(fullname__contains=term) | \
+                                        Q(notes__contains=term))
+            in_events = form.cleaned_data['in_events']
+            events = Event.objects.filter(Q(slug__contains=term) | \
+                                          Q(notes__contains=term))
         else:
             pass # FIXME: error message
 
@@ -311,11 +310,10 @@ def search(request):
     context = {'title' : 'Search',
                'form': form,
                'term' : term,
-               'in_site_names': in_site_names,
-               'in_site_notes': in_site_notes,
-               'in_event_names': in_event_names,
-               'in_event_notes': in_event_notes,
-               'in_persons': in_persons}
+               'in_sites': in_sites,
+               'sites' : sites,
+               'in_events': in_events,
+               'events' : events}
     return render(request, 'workshops/search.html', context)
 
 #------------------------------------------------------------

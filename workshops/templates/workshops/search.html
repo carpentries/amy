@@ -14,10 +14,23 @@
     </table>
     <input type="submit" value="Submit" />
 </form>
-<p>term: {{ term }}</p>
-<p>in_site_names: {{ in_site_names }}</p>
-<p>in_site_notes: {{ in_site_notes }}</p>
-<p>in_event_names: {{ in_event_names }}</p>
-<p>in_event_notes: {{ in_event_notes }}</p>
-<p>in_persons: {{ in_persons }}</p>
+
+<h2>Sites</h2>
+{% if sites %}
+<ul>
+  {% for s in sites %}
+  <li><a href="{% url 'site_details' s.domain %}">{{ s.domain }}</a></li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+<h2>Events</h2>
+{% if events %}
+<ul>
+  {% for e in events %}
+  <li><a href="{% url 'event_details' e.slug %}">{{ e.slug }}</a></li>
+  {% endfor %}
+</ul>
+{% endif %}
+
 {% endblock %}
