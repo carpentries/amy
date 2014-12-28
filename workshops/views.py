@@ -31,6 +31,7 @@ def index(request):
 
 SITE_FIELDS = ['domain', 'fullname', 'country', 'notes']
 
+
 def all_sites(request):
     '''List all sites.'''
 
@@ -42,6 +43,7 @@ def all_sites(request):
                'user_can_add' : user_can_add}
     return render(request, 'workshops/all_sites.html', context)
 
+
 def site_details(request, site_domain):
     '''List details of a particular site.'''
     site = Site.objects.get(domain=site_domain)
@@ -51,9 +53,11 @@ def site_details(request, site_domain):
                'events' : events}
     return render(request, 'workshops/site.html', context)
 
+
 class SiteCreate(CreateView):
     model = Site
     fields = SITE_FIELDS
+
 
 class SiteUpdate(UpdateView):
     model = Site
@@ -65,6 +69,7 @@ class SiteUpdate(UpdateView):
 
 AIRPORT_FIELDS = ['iata', 'fullname', 'country', 'latitude', 'longitude']
 
+
 def all_airports(request):
     '''List all airports.'''
     all_airports = Airport.objects.order_by('iata')
@@ -74,6 +79,7 @@ def all_airports(request):
                'user_can_add' : user_can_add}
     return render(request, 'workshops/all_airports.html', context)
 
+
 def airport_details(request, airport_iata):
     '''List details of a particular airport.'''
     airport = Airport.objects.get(iata=airport_iata)
@@ -81,9 +87,11 @@ def airport_details(request, airport_iata):
                'airport' : airport}
     return render(request, 'workshops/airport.html', context)
 
+
 class AirportCreate(CreateView):
     model = Airport
     fields = AIRPORT_FIELDS
+
 
 class AirportUpdate(UpdateView):
     model = Airport
@@ -104,6 +112,7 @@ def all_persons(request):
     context = {'title' : 'All Persons',
                'all_persons' : persons}
     return render(request, 'workshops/all_persons.html', context)
+
 
 def person_details(request, person_id):
     '''List details of a particular person.'''
@@ -172,20 +181,26 @@ def all_events(request):
 
     all_events = Event.objects.order_by('slug')
     events = _get_pagination_items(request, all_events)
+    for e in events:
+        e.num_instructors = e.task_set.filter(role__name='instructor').count()
     context = {'title' : 'All Events',
                'all_events' : events}
     return render(request, 'workshops/all_events.html', context)
 
+
 def event_details(request, event_slug):
     '''List details of a particular event.'''
     event = Event.objects.get(slug=event_slug)
+    tasks = Task.objects.filter(event__id=event.id).order_by('role__name')
     context = {'title' : 'Event {0}'.format(event),
-               'event' : event}
+               'event' : event,
+               'tasks' : tasks}
     return render(request, 'workshops/event.html', context)
 
 #------------------------------------------------------------
 
 TASK_FIELDS = ['event', 'person', 'role']
+
 
 def all_tasks(request):
     '''List all tasks.'''
@@ -198,6 +213,7 @@ def all_tasks(request):
                'user_can_add' : user_can_add}
     return render(request, 'workshops/all_tasks.html', context)
 
+
 def task_details(request, event_slug, person_id, role_name):
     '''List details of a particular task.'''
     task = Task.objects.get(event__slug=event_slug, person__id=person_id, role__name=role_name)
@@ -205,9 +221,11 @@ def task_details(request, event_slug, person_id, role_name):
                'task' : task}
     return render(request, 'workshops/task.html', context)
 
+
 class TaskCreate(CreateView):
     model = Task
     fields = TASK_FIELDS
+
 
 class TaskUpdate(UpdateView):
     model = Task
@@ -229,6 +247,7 @@ class TaskUpdate(UpdateView):
 
 COHORT_FIELDS = ['name', 'start', 'active', 'venue', 'qualifies']
 
+
 def all_cohorts(request):
     '''List all cohorts.'''
     all_cohorts = Cohort.objects.order_by('start')
@@ -237,6 +256,7 @@ def all_cohorts(request):
                'all_cohorts' : all_cohorts,
                'user_can_add' : user_can_add}
     return render(request, 'workshops/all_cohorts.html', context)
+
 
 def cohort_details(request, cohort_name):
     '''List details of a particular cohort.'''
@@ -247,9 +267,11 @@ def cohort_details(request, cohort_name):
                'trainees' : trainees}
     return render(request, 'workshops/cohort.html', context)
 
+
 class CohortCreate(CreateView):
     model = Cohort
     fields = COHORT_FIELDS
+
 
 class CohortUpdate(UpdateView):
     model = Cohort
@@ -316,6 +338,7 @@ def _export_badges():
         result[badge.name] = [{"user" : p.slug, "name" : p.fullname()} for p in persons]
     return result
 
+
 def _export_instructors():
     '''Collect instructor airport locations as YAML.'''
     # Exclude airports with no instructors, and add the number of instructors per airport
@@ -324,6 +347,7 @@ def _export_instructors():
              'latlng' : '{0},{1}'.format(a.latitude, a.longitude),
              'count'  : a.num_persons}
             for a in airports]
+
 
 def export(request, name):
     '''Export data as YAML for inclusion in main web site.'''
