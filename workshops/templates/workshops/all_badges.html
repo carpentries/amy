@@ -1,0 +1,26 @@
+{% extends "workshops/_page.html" %}
+
+{% load breadcrumbs %}
+{% block breadcrumbs %}
+    {% breadcrumb_url 'Amy' 'index'  %}
+    {% breadcrumb_active 'All badges'  %}
+{% endblock %}
+
+{% block content %}
+<table class="table table-striped">
+  <tr>
+    <th>name</th>
+    <th>title</th>
+    <th>criteria</th>
+    <th>number awarded</th>
+  </tr>
+  {% for badge in all_badges %}
+  <tr>
+    <td>{{ badge.name }}</td>
+    <td>{{ badge.title }}</td>
+    <td>{{ badge.criteria }}</td>
+    <td>{{ badge.num_awarded }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

@@ -255,6 +255,21 @@ class CohortUpdate(UpdateView):
 
 #------------------------------------------------------------
 
+BADGE_FIELDS = ['name', 'title', 'criteria']
+
+
+def all_badges(request):
+    '''List all badges.'''
+
+    all_badges = Badge.objects.order_by('name')
+    for b in all_badges:
+        b.num_awarded = Award.objects.filter(badge_id=b.id).count()
+    context = {'title' : 'All Badges',
+               'all_badges' : all_badges}
+    return render(request, 'workshops/all_badges.html', context)
+
+#------------------------------------------------------------
+
 def match(request):
     '''Search for instructors.'''
 
