@@ -16,7 +16,7 @@
   </tr>
   {% for badge in all_badges %}
   <tr>
-    <td>{{ badge.name }}</td>
+    <td><a href="{% url 'badge_details' badge.name %}">{{ badge.name }}</a></td>
     <td>{{ badge.title }}</td>
     <td>{{ badge.criteria }}</td>
     <td>{{ badge.num_awarded }}</td>

@@ -255,9 +255,6 @@ class CohortUpdate(UpdateView):
 
 #------------------------------------------------------------
 
-BADGE_FIELDS = ['name', 'title', 'criteria']
-
-
 def all_badges(request):
     '''List all badges.'''
 
@@ -267,6 +264,18 @@ def all_badges(request):
     context = {'title' : 'All Badges',
                'all_badges' : all_badges}
     return render(request, 'workshops/all_badges.html', context)
+
+
+def badge_details(request, badge_name):
+    '''Show who has a particular badge.'''
+
+    badge = Badge.objects.get(name=badge_name)
+    all_awards = Award.objects.filter(badge_id=badge.id)
+    awards = _get_pagination_items(request, all_awards)
+    context = {'title' : 'Badge {0}'.format(badge.title),
+               'badge' : badge,
+               'all_awards' : awards}
+    return render(request, 'workshops/badge.html', context)
 
 #------------------------------------------------------------
 

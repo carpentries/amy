@@ -41,6 +41,7 @@ urlpatterns = [
     url(r'^cohorts/add/$', CohortCreate.as_view(), name='cohort_add'),
 
     url(r'^badges/?$', views.all_badges, name='all_badges'),
+    url(r'^badge/(?P<badge_name>[\w\.-]+)/?$', views.badge_details, name='badge_details'),
 
     url(r'^match/?$', views.match, name='match'),
 
