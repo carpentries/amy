@@ -5,7 +5,7 @@ from workshops.models import Skill
 INSTRUCTOR_SEARCH_LEN = 10   # how many instrutors to return from a search by default
 
 
-class InstructorMatchForm(forms.Form):
+class InstructorsForm(forms.Form):
     '''Represent instructor matching form.'''
 
     wanted = forms.IntegerField(label='Number Wanted',
@@ -20,7 +20,7 @@ class InstructorMatchForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         '''Build checkboxes for skills dynamically.'''
-        super(InstructorMatchForm, self).__init__(*args, **kwargs)
+        super(InstructorsForm, self).__init__(*args, **kwargs)
         skills = Skill.objects.all()
         for s in skills:
             self.fields[s.name] = forms.BooleanField(label=s.name, required=False)

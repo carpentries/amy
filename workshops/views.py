@@ -9,7 +9,7 @@ from django.views.generic.edit import CreateView, UpdateView
 from django.db.models import Count, Q
 
 from workshops.models import Site, Airport, Event, Person, Task, Cohort, Skill, Trainee, Badge, Award
-from workshops.forms import InstructorMatchForm, SearchForm
+from workshops.forms import InstructorsForm, SearchForm
 from workshops.util import earth_distance
 from workshops.check import check_file
 
@@ -281,13 +281,13 @@ def badge_details(request, badge_name):
 
 #------------------------------------------------------------
 
-def match(request):
+def instructors(request):
     '''Search for instructors.'''
 
     persons = None
 
     if request.method == 'POST':
-        form = InstructorMatchForm(request.POST)
+        form = InstructorsForm(request.POST)
         if form.is_valid():
 
             # Filter by skills.
@@ -321,12 +321,12 @@ def match(request):
 
     # if a GET (or any other method) we'll create a blank form
     else:
-        form = InstructorMatchForm()
+        form = InstructorsForm()
 
-    context = {'title' : 'Instructor Search',
+    context = {'title' : 'Find Instructors',
                'form': form,
                'persons' : persons}
-    return render(request, 'workshops/match.html', context)
+    return render(request, 'workshops/instructors.html', context)
 
 #------------------------------------------------------------
 
