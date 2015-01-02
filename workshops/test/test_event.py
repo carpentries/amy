@@ -5,6 +5,7 @@ from django.test import TestCase
 from django.core.urlresolvers import reverse
 from ..models import Event, Site, Project
 
+
 class TestEvent(TestCase):
     "Tests for the event model and it's manager"
 
@@ -12,15 +13,15 @@ class TestEvent(TestCase):
 
         # Create a test site
         test_site = Site.objects.create(domain='example.com',
-                 fullname='Test Site')
+                                        fullname='Test Site')
 
         # Create a test project
         test_project = Project.objects.create(slug='test',
-                       name='Test Project',
-                       details='my test project')
+                                              name='Test Project',
+                                              details='my test project')
 
         # Create one new event for each day in the next 10 days
-        for t in range(1,11):
+        for t in range(1, 11):
             event_start = datetime.now() + timedelta(days=t)
             Event.objects.create(start=event_start,
                                  slug='upcoming_{0}'.format(t),
@@ -30,7 +31,7 @@ class TestEvent(TestCase):
 
         # Create one new event for each day from 10 days ago to
         # 3 days ago
-        for t in range(3,11):
+        for t in range(3, 11):
             event_start = datetime.now() + timedelta(days=-t)
             Event.objects.create(start=event_start,
                                  slug='past_{0}'.format(t),
@@ -43,31 +44,31 @@ class TestEvent(TestCase):
         event_start = datetime.now() + timedelta(days=-1)
         event_end = datetime.now() + timedelta(days=1)
         Event.objects.create(start=event_start,
-              end=event_end,
-              slug='ends_tomorrow',
-              site=test_site,
-              project=test_project,
-              admin_fee=100)
+                             end=event_end,
+                             slug='ends_tomorrow',
+                             site=test_site,
+                             project=test_project,
+                             admin_fee=100)
 
         # Create an event that ends today
         event_start = datetime.now() + timedelta(days=-1)
         event_end = datetime.now()
         Event.objects.create(start=event_start,
-              end=event_end,
-              slug='ends_today',
-              site=test_site,
-              project=test_project,
-              admin_fee=100)
+                             end=event_end,
+                             slug='ends_today',
+                             site=test_site,
+                             project=test_project,
+                             admin_fee=100)
 
         # Create an event that starts today
         event_start = datetime.now()
         event_end = datetime.now() + timedelta(days=1)
         Event.objects.create(start=event_start,
-              end=event_end,
-              slug='starts_today',
-              site=test_site,
-              project=test_project,
-              admin_fee=100)
+                             end=event_end,
+                             slug='starts_today',
+                             site=test_site,
+                             project=test_project,
+                             admin_fee=100)
 
     def test_get_future_events(self):
         """Test that the events manager can find upcoming events"""
@@ -80,7 +81,6 @@ class TestEvent(TestCase):
         # They should all start with upcoming
         assert all([e.slug[:8] == 'upcoming' for e in upcoming_events])
 
-
     def test_get_past_events(self):
         """Test that the events manager can find past events"""
 
@@ -91,7 +91,6 @@ class TestEvent(TestCase):
 
         # They should all start with past
         assert all([e.slug[:4] == 'past' for e in past_events])
-
 
     def test_get_ongoing_events(self):
         """Test the events manager can find all events overlapping today.
@@ -106,7 +105,7 @@ class TestEvent(TestCase):
 
         correct_slugs = ['starts_today',
                          'ends_tomorrow',
-                         'ends_today',]
+                         'ends_today', ]
 
         if sys.version_info >= (3,):
             self.assertCountEqual(event_slugs, correct_slugs)
@@ -121,12 +120,12 @@ class TestEventViews(TestCase):
 
         # Create a test site
         test_site = Site.objects.create(domain='example.com',
-                 fullname='Test Site')
+                                        fullname='Test Site')
 
         # Create a test project
         test_project = Project.objects.create(slug='test',
-                       name='Test Project',
-                       details='my test project')
+                                              name='Test Project',
+                                              details='my test project')
 
         # Create fifty new events
         for i in range(50):
@@ -139,7 +138,7 @@ class TestEventViews(TestCase):
 
     def test_events_view_paginated(self):
 
-        events_url = reverse('all_events') 
+        events_url = reverse('all_events')
         events_url += '?items_per_page=10'
         response = self.client.get(events_url)
 
@@ -150,7 +149,7 @@ class TestEventViews(TestCase):
 
     def test_can_request_all_events(self):
 
-        events_url = reverse('all_events') 
+        events_url = reverse('all_events')
         events_url += '?items_per_page=all'
         response = self.client.get(events_url)
 
@@ -165,7 +164,7 @@ class TestEventViews(TestCase):
 
     def test_invalid_items_per_page_gives_default_pagination(self):
 
-        events_url = reverse('all_events') 
+        events_url = reverse('all_events')
         events_url += '?items_per_page=not_an_integer'
         response = self.client.get(events_url)
 
@@ -203,3 +202,49 @@ class TestEventViews(TestCase):
 
         # This should be the first page
         assert view_events.number == 5
+
+
+class TestEventNotes(TestCase):
+    """Make sure notes once written are saved forever!"""
+
+    def setUp(self):
+        # a test site is required for all new events
+        self.test_site = Site.objects.create(domain='example.com',
+                                             fullname='Test Site')
+
+        # a test project is required for all new events
+        self.test_project = Project.objects.create(slug='test',
+                                                   name='Test Project',
+                                                   details='my test project')
+
+        # prepare a lifespan of all events
+        self.event_start = datetime.now() + timedelta(days=-1)
+        self.event_end = datetime.now() + timedelta(days=1)
+
+    def test_event_without_notes(self):
+        "Make sure event without notes don't have NULLed field ``notes``"
+        e = Event(start=self.event_start,
+                  end=self.event_end,
+                  slug='no_notes',
+                  site=self.test_site,
+                  project=self.test_project,
+                  admin_fee=100)
+
+        # test for field's default value (the field is not NULL)
+        self.assertEqual(e.notes, "")  # therefore the field is not NULL
+
+    def test_event_with_notes(self):
+        "Make sure event with notes are correctly stored"
+
+        notes = "This event's going to be extremely exhausting."
+
+        e = Event(start=self.event_start,
+                  end=self.event_end,
+                  slug='with_notes',
+                  site=self.test_site,
+                  project=self.test_project,
+                  admin_fee=100,
+                  notes=notes)
+
+        # make sure that notes have been saved
+        self.assertEqual(e.notes, notes)

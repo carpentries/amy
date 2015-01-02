@@ -1,18 +1,18 @@
 import yaml
 import csv
+import requests
 
+from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
-
-from django.shortcuts import redirect
-from django.shortcuts import render, get_object_or_404
+from django.db.models import Count, Q
+from django.shortcuts import redirect, render, get_object_or_404
 from django.views.generic.edit import CreateView, UpdateView
-from django.db.models import Count
-from django.contrib import messages
 
 from workshops.models import Site, Airport, Event, Person, Task, Cohort, Skill, Trainee, Badge, Award, Role
-from workshops.forms import InstructorMatchForm, PersonBulkAddForm
+from workshops.forms import SearchForm, InstructorsForm, PersonBulkAddForm
 from workshops.util import earth_distance
+from workshops.check import check_file
 
 #------------------------------------------------------------
 
@@ -117,9 +117,14 @@ def all_persons(request):
 def person_details(request, person_id):
     '''List details of a particular person.'''
     person = Person.objects.get(id=person_id)
+    awards = Award.objects.filter(person__id=person_id)
+    tasks = Task.objects.filter(person__id=person_id)
     context = {'title' : 'Person {0}'.format(person),
-               'person' : person}
+               'person' : person,
+               'awards' : awards,
+               'tasks' : tasks}
     return render(request, 'workshops/person.html', context)
+
 
 def person_bulk_add(request):
     if request.method == 'POST':
@@ -165,14 +170,17 @@ def _upload_person_task_csv(request, uploaded_file):
         persons_tasks.append(entry)
     return persons_tasks
 
+
 class PersonCreate(CreateView):
     model = Person
     fields = '__all__'
+
 
 class PersonUpdate(UpdateView):
     model = Person
     fields = '__all__'
     pk_url_kwarg = 'person_id'
+
 
 #------------------------------------------------------------
 
@@ -196,6 +204,26 @@ def event_details(request, event_slug):
                'event' : event,
                'tasks' : tasks}
     return render(request, 'workshops/event.html', context)
+
+def validate_event(request, event_slug):
+    '''Check the event's home page *or* the specified URL (for testing).'''
+    page_url, error_messages = None, []
+    event = Event.objects.get(slug=event_slug)
+    github_url = request.GET.get('url', None) # for manual override
+    if github_url is None:
+        github_url = event.url
+    if github_url is not None:
+        page_url = github_url.replace('github.com', 'raw.githubusercontent.com').rstrip('/') + '/gh-pages/index.html'
+        response = requests.get(page_url)
+        if response.status_code != 200:
+            error_messages.append('Request for {0} returned status code {1}'.format(page_url, response.status_code))
+        else:
+            valid, error_messages = check_file(page_url, response.text)
+    context = {'title' : 'Validate Event {0}'.format(event),
+               'event' : event,
+               'page' : page_url,
+               'error_messages' : error_messages}
+    return render(request, 'workshops/validate_event.html', context)
 
 #------------------------------------------------------------
 
@@ -281,13 +309,37 @@ class CohortUpdate(UpdateView):
 
 #------------------------------------------------------------
 
-def match(request):
+def all_badges(request):
+    '''List all badges.'''
+
+    all_badges = Badge.objects.order_by('name')
+    for b in all_badges:
+        b.num_awarded = Award.objects.filter(badge_id=b.id).count()
+    context = {'title' : 'All Badges',
+               'all_badges' : all_badges}
+    return render(request, 'workshops/all_badges.html', context)
+
+
+def badge_details(request, badge_name):
+    '''Show who has a particular badge.'''
+
+    badge = Badge.objects.get(name=badge_name)
+    all_awards = Award.objects.filter(badge_id=badge.id)
+    awards = _get_pagination_items(request, all_awards)
+    context = {'title' : 'Badge {0}'.format(badge.title),
+               'badge' : badge,
+               'all_awards' : awards}
+    return render(request, 'workshops/badge.html', context)
+
+#------------------------------------------------------------
+
+def instructors(request):
     '''Search for instructors.'''
 
     persons = None
 
     if request.method == 'POST':
-        form = InstructorMatchForm(request.POST)
+        form = InstructorsForm(request.POST)
         if form.is_valid():
 
             # Filter by skills.
@@ -321,12 +373,46 @@ def match(request):
 
     # if a GET (or any other method) we'll create a blank form
     else:
-        form = InstructorMatchForm()
+        form = InstructorsForm()
 
-    context = {'title' : 'Instructor Search',
+    context = {'title' : 'Find Instructors',
                'form': form,
                'persons' : persons}
-    return render(request, 'workshops/match.html', context)
+    return render(request, 'workshops/instructors.html', context)
+
+#------------------------------------------------------------
+
+def search(request):
+    '''Search the database by term.'''
+
+    term, sites, events = '', None, None
+
+    if request.method == 'POST':
+        form = SearchForm(request.POST)
+        if form.is_valid():
+            term = form.cleaned_data['term']
+            if form.cleaned_data['in_sites']:
+                sites = Site.objects.filter(
+                    Q(domain__contains=term) |
+                    Q(fullname__contains=term) |
+                    Q(notes__contains=term))
+            if form.cleaned_data['in_events']:
+                events = Event.objects.filter(
+                    Q(slug__contains=term) |
+                    Q(notes__contains=term))
+        else:
+            pass # FIXME: error message
+
+    # if a GET (or any other method) we'll create a blank form
+    else:
+        form = SearchForm()
+
+    context = {'title' : 'Search',
+               'form': form,
+               'term' : term,
+               'sites' : sites,
+               'events' : events}
+    return render(request, 'workshops/search.html', context)
 
 #------------------------------------------------------------
 
