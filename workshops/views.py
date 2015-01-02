@@ -333,21 +333,21 @@ def match(request):
 def search(request):
     '''Search the database by term.'''
 
-    term = ''
-    in_sites, sites = False, None
-    in_events, events = False, None
+    term, sites, events = '', None, None
 
     if request.method == 'POST':
         form = SearchForm(request.POST)
         if form.is_valid():
             term = form.cleaned_data['term']
-            in_sites = form.cleaned_data['in_sites']
-            sites = Site.objects.filter(Q(domain__contains=term) | \
-                                        Q(fullname__contains=term) | \
-                                        Q(notes__contains=term))
-            in_events = form.cleaned_data['in_events']
-            events = Event.objects.filter(Q(slug__contains=term) | \
-                                          Q(notes__contains=term))
+            if form.cleaned_data['in_sites']:
+                sites = Site.objects.filter(
+                    Q(domain__contains=term) |
+                    Q(fullname__contains=term) |
+                    Q(notes__contains=term))
+            if form.cleaned_data['in_events']:
+                events = Event.objects.filter(
+                    Q(slug__contains=term) |
+                    Q(notes__contains=term))
         else:
             pass # FIXME: error message
 
@@ -358,9 +358,7 @@ def search(request):
     context = {'title' : 'Search',
                'form': form,
                'term' : term,
-               'in_sites': in_sites,
                'sites' : sites,
-               'in_events': in_events,
                'events' : events}
     return render(request, 'workshops/search.html', context)
 
