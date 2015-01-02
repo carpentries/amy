@@ -32,11 +32,6 @@ class PersonBulkAddForm(forms.Form):
     file = forms.FileField()
 
 
-class PersonBulkAddConfirmForm(forms.Form):
-    '''Confirm bulk upload of people.'''
-    load = forms.BooleanField(label="Load people?", required=True)
-
-
 class SearchForm(forms.Form):
     '''Represent general searching form.'''
 

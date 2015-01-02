@@ -138,13 +138,14 @@ def person_bulk_add(request):
                 context = {'title' : 'Process CSV File',
                            'form': form, 
                            'persons_tasks': persons_tasks}
-                return render(request, 'workshops/person_process_bulk_add.html', context)
+                return render(request, 'workshops/person_bulk_add_results.html', context)
     else:
         form = PersonBulkAddForm()
 
     context = {'title' : 'Bulk Add People',
                'form': form}
     return render(request, 'workshops/person_bulk_add_form.html', context)
+
 
 def _upload_person_task_csv(request, uploaded_file):
     persons_tasks = []
