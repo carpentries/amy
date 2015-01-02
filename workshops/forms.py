@@ -1,6 +1,6 @@
 from django import forms
 
-from workshops.models import Skill
+from workshops.models import Skill, Airport
 
 INSTRUCTOR_SEARCH_LEN = 10   # how many instrutors to return from a search by default
 
@@ -13,10 +13,16 @@ class InstructorsForm(forms.Form):
                                 min_value=1)
     latitude = forms.FloatField(label='Latitude',
                                 min_value=-90.0,
-                                max_value=90.0)
+                                max_value=90.0,
+                                required=False)
     longitude = forms.FloatField(label='Longitude',
                                  min_value=-180.0,
-                                 max_value=180.0)
+                                 max_value=180.0,
+                                 required=False)
+    airport = forms.ModelChoiceField(label='airport',
+                                     queryset=Airport.objects.all(),
+                                     to_field_name='iata',
+                                     required=False)
 
     def __init__(self, *args, **kwargs):
         '''Build checkboxes for skills dynamically.'''
@@ -25,6 +31,25 @@ class InstructorsForm(forms.Form):
         for s in skills:
             self.fields[s.name] = forms.BooleanField(label=s.name, required=False)
 
+    def get_lat_long(self):
+        '''Get validity, latitude, and longitude.'''
+
+        iata = self.cleaned_data['airport']
+        lat = self.cleaned_data['latitude']
+        long = self.cleaned_data['longitude']
+
+        # No airport, so must have latitude and longitude
+        if iata is None:
+            if (lat == None) or (long == None):
+                return False, None, None
+            return True, lat, long
+
+        # Airport, so cannot have latitude or longitude
+        else:
+            if (lat != None) or (long != None):
+                return False, None, None
+            airport = Airport.objects.get(iata=iata)
+            return True, airport.latitude, airport.longitude
 
 class SearchForm(forms.Form):
     '''Represent general searching form.'''
