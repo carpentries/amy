@@ -284,7 +284,8 @@ def badge_details(request, badge_name):
 def instructors(request):
     '''Search for instructors.'''
 
-    persons, messages = None, []
+    persons = None
+    messages = []
 
     if request.method == 'POST':
         form = InstructorsForm(request.POST)
