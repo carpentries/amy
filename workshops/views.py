@@ -17,7 +17,7 @@ from django.core.exceptions import ValidationError
 from django.contrib import messages
 
 from workshops.models import Site, Airport, Event, Person, Task, Cohort, Skill, Trainee, Badge, Award, Role
-from workshops.forms import InstructorsForm, SearchForm, PersonBulkAddForm, PersonBuildAddConfirmForm
+from workshops.forms import InstructorsForm, SearchForm, PersonBulkAddForm, PersonBulkAddConfirmForm
 from workshops.util import earth_distance
 from workshops.check import check_file
 
@@ -194,7 +194,7 @@ def person_bulk_add_confirm(request):
                 else:
                     person_task['valid'] = True
 
-            form = PersonBuildAddConfirmForm()
+            form = PersonBulkAddConfirmForm()
 
             context = {'title' : 'Process CSV File Upload',
                        'form': form, 

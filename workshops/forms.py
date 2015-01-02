@@ -30,7 +30,7 @@ class PersonBulkAddForm(forms.Form):
 
     file = forms.FileField()
 
-class PersonBuildAddConfirmForm(forms.Form):
+class PersonBulkAddConfirmForm(forms.Form):
     pass
 
 class SearchForm(forms.Form):
