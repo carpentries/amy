@@ -125,10 +125,6 @@ def person_details(request, person_id):
                'tasks' : tasks}
     return render(request, 'workshops/person.html', context)
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 7f7d9b6131850856d29c2448441861740336d8d8
 def person_bulk_add(request):
     if request.method == 'POST':
         form = PersonBulkAddForm(request.POST, request.FILES)
