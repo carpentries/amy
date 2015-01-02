@@ -1,4 +1,5 @@
 import yaml
+import requests
 
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
@@ -10,6 +11,7 @@ from django.db.models import Count, Q
 from workshops.models import Site, Airport, Event, Person, Task, Cohort, Skill, Trainee, Badge, Award
 from workshops.forms import InstructorMatchForm, SearchForm
 from workshops.util import earth_distance
+from workshops.check import check_file
 
 #------------------------------------------------------------
 
@@ -111,15 +113,17 @@ def all_persons(request):
 def person_details(request, person_id):
     '''List details of a particular person.'''
     person = Person.objects.get(id=person_id)
+    awards = Award.objects.filter(person__id=person_id)
+    tasks = Task.objects.filter(person__id=person_id)
     context = {'title' : 'Person {0}'.format(person),
-               'person' : person}
+               'person' : person,
+               'awards' : awards,
+               'tasks' : tasks}
     return render(request, 'workshops/person.html', context)
-
 
 class PersonCreate(CreateView):
     model = Person
     fields = '__all__'
-
 
 class PersonUpdate(UpdateView):
     model = Person
@@ -148,6 +152,26 @@ def event_details(request, event_slug):
                'event' : event,
                'tasks' : tasks}
     return render(request, 'workshops/event.html', context)
+
+def validate_event(request, event_slug):
+    '''Check the event's home page *or* the specified URL (for testing).'''
+    page_url, error_messages = None, []
+    event = Event.objects.get(slug=event_slug)
+    github_url = request.GET.get('url', None) # for manual override
+    if github_url is None:
+        github_url = event.url
+    if github_url is not None:
+        page_url = github_url.replace('github.com', 'raw.githubusercontent.com').rstrip('/') + '/gh-pages/index.html'
+        response = requests.get(page_url)
+        if response.status_code != 200:
+            error_messages.append('Request for {0} returned status code {1}'.format(page_url, response.status_code))
+        else:
+            valid, error_messages = check_file(page_url, response.text)
+    context = {'title' : 'Validate Event {0}'.format(event),
+               'event' : event,
+               'page' : page_url,
+               'error_messages' : error_messages}
+    return render(request, 'workshops/validate_event.html', context)
 
 #------------------------------------------------------------
 
@@ -230,6 +254,30 @@ class CohortUpdate(UpdateView):
     fields = COHORT_FIELDS
     slug_field = 'name'
     slug_url_kwarg = 'cohort_name'
+
+#------------------------------------------------------------
+
+def all_badges(request):
+    '''List all badges.'''
+
+    all_badges = Badge.objects.order_by('name')
+    for b in all_badges:
+        b.num_awarded = Award.objects.filter(badge_id=b.id).count()
+    context = {'title' : 'All Badges',
+               'all_badges' : all_badges}
+    return render(request, 'workshops/all_badges.html', context)
+
+
+def badge_details(request, badge_name):
+    '''Show who has a particular badge.'''
+
+    badge = Badge.objects.get(name=badge_name)
+    all_awards = Award.objects.filter(badge_id=badge.id)
+    awards = _get_pagination_items(request, all_awards)
+    context = {'title' : 'Badge {0}'.format(badge.title),
+               'badge' : badge,
+               'all_awards' : awards}
+    return render(request, 'workshops/badge.html', context)
 
 #------------------------------------------------------------
 

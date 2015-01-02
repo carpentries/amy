@@ -28,6 +28,7 @@ urlpatterns = [
 
     url(r'^events/?$', views.all_events, name='all_events'),
     url(r'^event/(?P<event_slug>[\w\.-]+)/?$', views.event_details, name='event_details'),
+    url(r'^event/(?P<event_slug>[\w\.-]+)/validate/?$', views.validate_event, name='validate_event'),
 
     url(r'^tasks/?$', views.all_tasks, name='all_tasks'),
     url(r'^task/(?P<event_slug>[\w\.-]+)/(?P<person_id>[\w\.-]+)/(?P<role_name>[\w\.-]+)/?$', views.task_details, name='task_details'),
@@ -38,6 +39,9 @@ urlpatterns = [
     url(r'^cohort/(?P<cohort_name>[\w\.-]+)/?$', views.cohort_details, name='cohort_details'),
     url(r'^cohort/(?P<cohort_name>[\w\.-]+)/edit$', CohortUpdate.as_view(), name='cohort_edit'),
     url(r'^cohorts/add/$', CohortCreate.as_view(), name='cohort_add'),
+
+    url(r'^badges/?$', views.all_badges, name='all_badges'),
+    url(r'^badge/(?P<badge_name>[\w\.-]+)/?$', views.badge_details, name='badge_details'),
 
     url(r'^export/(?P<name>[\w\.-]+)/?$', views.export, name='export'),
 

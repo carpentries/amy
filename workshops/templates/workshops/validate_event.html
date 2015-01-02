@@ -1,0 +1,26 @@
+{% extends "workshops/_page.html" %}
+
+{% load breadcrumbs %}
+{% block breadcrumbs %}
+    {% breadcrumb_url 'Amy' 'index'  %}
+    {% breadcrumb_url 'All events' 'all_events' %}
+    {% breadcrumb_active event.slug  %}
+{% endblock %}
+
+{% block content %}
+{% if not page %}
+<p>No valid URL in event record.</p>
+{% else %}
+  <p>Validating {{ page }}</p>
+  {% if error_messages %}
+    {% for message in error_messages %}
+    <p>{{ message }}</p>
+    {% endfor %}
+  {% else %}
+    <p>No errors</p>
+  {% endif %}
+{% endif %}
+<p>... <a href="{% url 'event_details' event.slug %}">return to event</a></p>
+<p>... <a href="{% url 'all_events' %}">all events</a></p>
+<p>... <a href="{% url 'index' %}">index</a></p>
+{% endblock %}
