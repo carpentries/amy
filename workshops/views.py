@@ -5,6 +5,7 @@ import requests
 from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
+from django.db import IntegrityError
 from django.db.models import Count, Q
 from django.shortcuts import redirect, render, get_object_or_404
 from django.views.generic.edit import CreateView, UpdateView
@@ -129,15 +130,11 @@ def person_bulk_add(request):
     if request.method == 'POST':
         form = PersonBulkAddForm(request.POST, request.FILES)
         if form.is_valid():
-            try:
-                request.session['last_person_bulk_add_file_location'] = copy_to_temp(request.FILES['file'])  
-            except Exception as e:
-                messages.add_message(request, messages.ERROR, "Error creating temporary file: {}".format(e))
-            else:
-                context = {'title' : 'Process CSV File',
-                           'form': form, 
-                           'persons_tasks': persons_tasks}
-                return render(request, 'workshops/person_bulk_add_results.html', context)
+            persons_tasks = process_uploaded_csv(request, request.FILES['file'])  
+            context = {'title' : 'Process CSV File',
+                       'form': form, 
+                       'persons_tasks': persons_tasks}
+            return render(request, 'workshops/person_bulk_add_results.html', context)
     else:
         form = PersonBulkAddForm()
 
@@ -146,42 +143,40 @@ def person_bulk_add(request):
     return render(request, 'workshops/person_bulk_add_form.html', context)
 
 
-def _upload_person_task_csv(request, uploaded_file):
+def process_uploaded_csv(request, uploaded_file):
     persons_tasks = []
-    with open(uploaded_file_location, 'rb') as uploaded_file:
-        reader = csv.DictReader(uploaded_file)
-        for row in reader:
-            person_fields = dict((col, row[col].strip()) for col in PERSON_UPLOAD_FIELDS)
-            person = Person(**person_fields)
-            if save:
-                try:
-                    person.save()
-                except IntegrityError as e:
-                    messages.add_message(request, messages.ERROR, \
-                                         'Could not save person {}, {}.'.format(person, e))
-                    continue
-            entry = {'person': person, 'task' : None}
-            if row.get('event', False) and row.get('role', False):
-                try:
-                    event = Event.objects.get(slug=row['event'])
-                    role = Role.objects.get(name=row['role'])
-                    task = Task(person=person, event=event, role=role)
-                    if save:
-                        task.save()                 
-                    entry['task'] = task
-                except Event.DoesNotExist:
-                    messages.add_message(request, messages.ERROR, \
-                                         'Event with slug {} does not exist.'.format(row['event']))
-                except Role.DoesNotExist:
-                    messages.add_message(request, messages.ERROR, \
-                                         'Role with name {} does not exist.'.format(row['role'])) 
-                except Role.MultipleObjectsReturned:
-                    messages.add_message(request, messages.ERROR, \
-                                         'More than one role named {} exists.'.format(row['role'])) 
-                except IntegrityError as e:
-                         messages.add_message(request, messages.ERROR, \
-                                         'Could not save task {}, {}.'.format(task, e))
-            persons_tasks.append(entry)
+    reader = csv.DictReader(uploaded_file)
+    for row in reader:
+        person_fields = dict((col, row[col].strip()) for col in PERSON_UPLOAD_FIELDS)
+        person = Person(**person_fields)
+        try:
+            person.save()
+        except IntegrityError as e:
+            messages.add_message(request, messages.ERROR, \
+                                 'Could not save person {}, {}.'.format(person, e))
+            continue
+        entry = {'person': person, 'task' : None}
+        if row.get('event', False) and row.get('role', False):
+            try:
+                event = Event.objects.get(slug=row['event'])
+                role = Role.objects.get(name=row['role'])
+                task = Task(person=person, event=event, role=role)
+                if save:
+                    task.save()                 
+                entry['task'] = task
+            except Event.DoesNotExist:
+                messages.add_message(request, messages.ERROR, \
+                                     'Event with slug {} does not exist.'.format(row['event']))
+            except Role.DoesNotExist:
+                messages.add_message(request, messages.ERROR, \
+                                     'Role with name {} does not exist.'.format(row['role'])) 
+            except Role.MultipleObjectsReturned:
+                messages.add_message(request, messages.ERROR, \
+                                     'More than one role named {} exists.'.format(row['role'])) 
+            except IntegrityError as e:
+                messages.add_message(request, messages.ERROR, \
+                                     'Could not save task {}, {}.'.format(task, e))
+        persons_tasks.append(entry)
     
     return persons_tasks
 

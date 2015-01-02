@@ -23,22 +23,15 @@
         <th>email</th>
         <th>event</th>
         <th>role</th>
-        <th>valid</th>
     </tr>
     {% for entry in persons_tasks %}
-    <tr {% if not entry.valid %} class="bg-danger"{% endif %}>
+    <tr>
         <td>{{ entry.person.personal }}</td>
         <td>{{ entry.person.middle }}</td>
         <td>{{ entry.person.family }}</td>
         <td>{{ entry.person.email }}</td>
         <td>{{ entry.task.event.slug }}</td>
-        <td>{{ entry.task.role.name }}</td>
-        {% if entry.valid %}
-        <td>{{ entry.valid }}</td>
-        {% else %}
-        <td>{{ entry.valid }}, {{ entry.reason }}</td>
-        {% endif %}
-
+        <td>{{ entry.task.role.name }}</td> 
     </tr>
     {% endfor %}
 </table>
