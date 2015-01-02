@@ -2,6 +2,7 @@ import yaml
 import csv
 import tempfile
 import os
+import requests
 
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
@@ -9,15 +10,16 @@ from django.core.urlresolvers import reverse
 from django.shortcuts import redirect
 from django.shortcuts import render, get_object_or_404
 from django.views.generic.edit import CreateView, UpdateView
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.db import IntegrityError
 from django.core.exceptions import ValidationError
 
 from django.contrib import messages
 
 from workshops.models import Site, Airport, Event, Person, Task, Cohort, Skill, Trainee, Badge, Award, Role
-from workshops.forms import InstructorMatchForm, PersonBulkAddForm, PersonBuildAddConfirmForm
+from workshops.forms import InstructorsForm, SearchForm, PersonBulkAddForm, PersonBuildAddConfirmForm
 from workshops.util import earth_distance
+from workshops.check import check_file
 
 #------------------------------------------------------------
 
@@ -36,6 +38,7 @@ def index(request):
 
 SITE_FIELDS = ['domain', 'fullname', 'country', 'notes']
 
+
 def all_sites(request):
     '''List all sites.'''
 
@@ -47,6 +50,7 @@ def all_sites(request):
                'user_can_add' : user_can_add}
     return render(request, 'workshops/all_sites.html', context)
 
+
 def site_details(request, site_domain):
     '''List details of a particular site.'''
     site = Site.objects.get(domain=site_domain)
@@ -56,9 +60,11 @@ def site_details(request, site_domain):
                'events' : events}
     return render(request, 'workshops/site.html', context)
 
+
 class SiteCreate(CreateView):
     model = Site
     fields = SITE_FIELDS
+
 
 class SiteUpdate(UpdateView):
     model = Site
@@ -70,6 +76,7 @@ class SiteUpdate(UpdateView):
 
 AIRPORT_FIELDS = ['iata', 'fullname', 'country', 'latitude', 'longitude']
 
+
 def all_airports(request):
     '''List all airports.'''
     all_airports = Airport.objects.order_by('iata')
@@ -79,6 +86,7 @@ def all_airports(request):
                'user_can_add' : user_can_add}
     return render(request, 'workshops/all_airports.html', context)
 
+
 def airport_details(request, airport_iata):
     '''List details of a particular airport.'''
     airport = Airport.objects.get(iata=airport_iata)
@@ -86,9 +94,11 @@ def airport_details(request, airport_iata):
                'airport' : airport}
     return render(request, 'workshops/airport.html', context)
 
+
 class AirportCreate(CreateView):
     model = Airport
     fields = AIRPORT_FIELDS
+
 
 class AirportUpdate(UpdateView):
     model = Airport
@@ -110,11 +120,16 @@ def all_persons(request):
                'all_persons' : persons}
     return render(request, 'workshops/all_persons.html', context)
 
+
 def person_details(request, person_id):
     '''List details of a particular person.'''
     person = Person.objects.get(id=person_id)
+    awards = Award.objects.filter(person__id=person_id)
+    tasks = Task.objects.filter(person__id=person_id)
     context = {'title' : 'Person {0}'.format(person),
-               'person' : person}
+               'person' : person,
+               'awards' : awards,
+               'tasks' : tasks}
     return render(request, 'workshops/person.html', context)
 
 def person_bulk_add(request):
@@ -252,20 +267,46 @@ def all_events(request):
 
     all_events = Event.objects.order_by('slug')
     events = _get_pagination_items(request, all_events)
+    for e in events:
+        e.num_instructors = e.task_set.filter(role__name='instructor').count()
     context = {'title' : 'All Events',
                'all_events' : events}
     return render(request, 'workshops/all_events.html', context)
 
+
 def event_details(request, event_slug):
     '''List details of a particular event.'''
     event = Event.objects.get(slug=event_slug)
+    tasks = Task.objects.filter(event__id=event.id).order_by('role__name')
     context = {'title' : 'Event {0}'.format(event),
-               'event' : event}
+               'event' : event,
+               'tasks' : tasks}
     return render(request, 'workshops/event.html', context)
+
+def validate_event(request, event_slug):
+    '''Check the event's home page *or* the specified URL (for testing).'''
+    page_url, error_messages = None, []
+    event = Event.objects.get(slug=event_slug)
+    github_url = request.GET.get('url', None) # for manual override
+    if github_url is None:
+        github_url = event.url
+    if github_url is not None:
+        page_url = github_url.replace('github.com', 'raw.githubusercontent.com').rstrip('/') + '/gh-pages/index.html'
+        response = requests.get(page_url)
+        if response.status_code != 200:
+            error_messages.append('Request for {0} returned status code {1}'.format(page_url, response.status_code))
+        else:
+            valid, error_messages = check_file(page_url, response.text)
+    context = {'title' : 'Validate Event {0}'.format(event),
+               'event' : event,
+               'page' : page_url,
+               'error_messages' : error_messages}
+    return render(request, 'workshops/validate_event.html', context)
 
 #------------------------------------------------------------
 
 TASK_FIELDS = ['event', 'person', 'role']
+
 
 def all_tasks(request):
     '''List all tasks.'''
@@ -278,6 +319,7 @@ def all_tasks(request):
                'user_can_add' : user_can_add}
     return render(request, 'workshops/all_tasks.html', context)
 
+
 def task_details(request, event_slug, person_id, role_name):
     '''List details of a particular task.'''
     task = Task.objects.get(event__slug=event_slug, person__id=person_id, role__name=role_name)
@@ -285,9 +327,11 @@ def task_details(request, event_slug, person_id, role_name):
                'task' : task}
     return render(request, 'workshops/task.html', context)
 
+
 class TaskCreate(CreateView):
     model = Task
     fields = TASK_FIELDS
+
 
 class TaskUpdate(UpdateView):
     model = Task
@@ -309,6 +353,7 @@ class TaskUpdate(UpdateView):
 
 COHORT_FIELDS = ['name', 'start', 'active', 'venue', 'qualifies']
 
+
 def all_cohorts(request):
     '''List all cohorts.'''
     all_cohorts = Cohort.objects.order_by('start')
@@ -317,6 +362,7 @@ def all_cohorts(request):
                'all_cohorts' : all_cohorts,
                'user_can_add' : user_can_add}
     return render(request, 'workshops/all_cohorts.html', context)
+
 
 def cohort_details(request, cohort_name):
     '''List details of a particular cohort.'''
@@ -327,9 +373,11 @@ def cohort_details(request, cohort_name):
                'trainees' : trainees}
     return render(request, 'workshops/cohort.html', context)
 
+
 class CohortCreate(CreateView):
     model = Cohort
     fields = COHORT_FIELDS
+
 
 class CohortUpdate(UpdateView):
     model = Cohort
@@ -339,13 +387,37 @@ class CohortUpdate(UpdateView):
 
 #------------------------------------------------------------
 
-def match(request):
+def all_badges(request):
+    '''List all badges.'''
+
+    all_badges = Badge.objects.order_by('name')
+    for b in all_badges:
+        b.num_awarded = Award.objects.filter(badge_id=b.id).count()
+    context = {'title' : 'All Badges',
+               'all_badges' : all_badges}
+    return render(request, 'workshops/all_badges.html', context)
+
+
+def badge_details(request, badge_name):
+    '''Show who has a particular badge.'''
+
+    badge = Badge.objects.get(name=badge_name)
+    all_awards = Award.objects.filter(badge_id=badge.id)
+    awards = _get_pagination_items(request, all_awards)
+    context = {'title' : 'Badge {0}'.format(badge.title),
+               'badge' : badge,
+               'all_awards' : awards}
+    return render(request, 'workshops/badge.html', context)
+
+#------------------------------------------------------------
+
+def instructors(request):
     '''Search for instructors.'''
 
     persons = None
 
     if request.method == 'POST':
-        form = InstructorMatchForm(request.POST)
+        form = InstructorsForm(request.POST)
         if form.is_valid():
 
             # Filter by skills.
@@ -379,12 +451,46 @@ def match(request):
 
     # if a GET (or any other method) we'll create a blank form
     else:
-        form = InstructorMatchForm()
+        form = InstructorsForm()
 
-    context = {'title' : 'Instructor Search',
+    context = {'title' : 'Find Instructors',
                'form': form,
                'persons' : persons}
-    return render(request, 'workshops/match.html', context)
+    return render(request, 'workshops/instructors.html', context)
+
+#------------------------------------------------------------
+
+def search(request):
+    '''Search the database by term.'''
+
+    term, sites, events = '', None, None
+
+    if request.method == 'POST':
+        form = SearchForm(request.POST)
+        if form.is_valid():
+            term = form.cleaned_data['term']
+            if form.cleaned_data['in_sites']:
+                sites = Site.objects.filter(
+                    Q(domain__contains=term) |
+                    Q(fullname__contains=term) |
+                    Q(notes__contains=term))
+            if form.cleaned_data['in_events']:
+                events = Event.objects.filter(
+                    Q(slug__contains=term) |
+                    Q(notes__contains=term))
+        else:
+            pass # FIXME: error message
+
+    # if a GET (or any other method) we'll create a blank form
+    else:
+        form = SearchForm()
+
+    context = {'title' : 'Search',
+               'form': form,
+               'term' : term,
+               'sites' : sites,
+               'events' : events}
+    return render(request, 'workshops/search.html', context)
 
 #------------------------------------------------------------
 
@@ -396,6 +502,7 @@ def _export_badges():
         result[badge.name] = [{"user" : p.slug, "name" : p.fullname()} for p in persons]
     return result
 
+
 def _export_instructors():
     '''Collect instructor airport locations as YAML.'''
     # Exclude airports with no instructors, and add the number of instructors per airport
@@ -404,6 +511,7 @@ def _export_instructors():
              'latlng' : '{0},{1}'.format(a.latitude, a.longitude),
              'count'  : a.num_persons}
             for a in airports]
+
 
 def export(request, name):
     '''Export data as YAML for inclusion in main web site.'''

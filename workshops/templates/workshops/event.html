@@ -19,6 +19,22 @@
   <tr><td>attendance:</td><td>{{ event.attendance }}</td></tr>
   <tr><td>notes:</td><td>{{ event.notes }}</td></tr>
 </table>
+{% if tasks %}
+<table class="table table-striped">
+  <tr>
+    <th>person</th>
+    <th>role</th>
+  </tr>
+  {% for t in tasks %}
+  <tr>
+    <td><a href="{% url 'person_details' t.person.id %}">{{ t.person }}</a></td>
+    <td>{{ t.role.name }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p>No tasks.</p>
+{% endif %}
 {% if event.notes %}
 <p>Notes:</p>
 <pre>
@@ -27,6 +43,7 @@
 {% else %}
 <p>No notes.</p>
 {% endif %}
+<p>... <a href="{% url 'validate_event' event.slug %}">validate event</a></p>
 <p>... <a href="{% url 'all_events' %}">all events</a></p>
 <p>... <a href="{% url 'index' %}">index</a></p>
 {% endblock %}
