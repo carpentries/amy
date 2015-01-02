@@ -6,10 +6,10 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.views.generic.edit import CreateView, UpdateView
-from django.db.models import Count
+from django.db.models import Count, Q
 
 from workshops.models import Site, Airport, Event, Person, Task, Cohort, Skill, Trainee, Badge, Award
-from workshops.forms import InstructorMatchForm
+from workshops.forms import InstructorsForm, SearchForm
 from workshops.util import earth_distance
 from workshops.check import check_file
 
@@ -281,13 +281,13 @@ def badge_details(request, badge_name):
 
 #------------------------------------------------------------
 
-def match(request):
+def instructors(request):
     '''Search for instructors.'''
 
     persons = None
 
     if request.method == 'POST':
-        form = InstructorMatchForm(request.POST)
+        form = InstructorsForm(request.POST)
         if form.is_valid():
 
             # Filter by skills.
@@ -321,12 +321,46 @@ def match(request):
 
     # if a GET (or any other method) we'll create a blank form
     else:
-        form = InstructorMatchForm()
+        form = InstructorsForm()
 
-    context = {'title' : 'Instructor Search',
+    context = {'title' : 'Find Instructors',
                'form': form,
                'persons' : persons}
-    return render(request, 'workshops/match.html', context)
+    return render(request, 'workshops/instructors.html', context)
+
+#------------------------------------------------------------
+
+def search(request):
+    '''Search the database by term.'''
+
+    term, sites, events = '', None, None
+
+    if request.method == 'POST':
+        form = SearchForm(request.POST)
+        if form.is_valid():
+            term = form.cleaned_data['term']
+            if form.cleaned_data['in_sites']:
+                sites = Site.objects.filter(
+                    Q(domain__contains=term) |
+                    Q(fullname__contains=term) |
+                    Q(notes__contains=term))
+            if form.cleaned_data['in_events']:
+                events = Event.objects.filter(
+                    Q(slug__contains=term) |
+                    Q(notes__contains=term))
+        else:
+            pass # FIXME: error message
+
+    # if a GET (or any other method) we'll create a blank form
+    else:
+        form = SearchForm()
+
+    context = {'title' : 'Search',
+               'form': form,
+               'term' : term,
+               'sites' : sites,
+               'events' : events}
+    return render(request, 'workshops/search.html', context)
 
 #------------------------------------------------------------
 
