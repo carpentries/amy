@@ -25,13 +25,12 @@ class InstructorsForm(forms.Form):
         for s in skills:
             self.fields[s.name] = forms.BooleanField(label=s.name, required=False)
 
+
 class PersonBulkAddForm(forms.Form):
     '''Represent CSV upload form for bulk adding people.'''
 
     file = forms.FileField()
 
-class PersonBulkAddConfirmForm(forms.Form):
-    pass
 
 class SearchForm(forms.Form):
     '''Represent general searching form.'''
