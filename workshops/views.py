@@ -161,8 +161,7 @@ def process_uploaded_csv(request, uploaded_file):
                 event = Event.objects.get(slug=row['event'])
                 role = Role.objects.get(name=row['role'])
                 task = Task(person=person, event=event, role=role)
-                if save:
-                    task.save()                 
+                task.save()                 
                 entry['task'] = task
             except Event.DoesNotExist:
                 messages.add_message(request, messages.ERROR, \
