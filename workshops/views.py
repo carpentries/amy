@@ -285,9 +285,11 @@ def instructors(request):
     '''Search for instructors.'''
 
     persons = None
+
     if request.method == 'POST':
         form = InstructorsForm(request.POST)
         if form.is_valid():
+
             # Filter by skills.
             persons = Person.objects.filter(airport__isnull=False)
             skills = []
