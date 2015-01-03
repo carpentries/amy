@@ -304,8 +304,8 @@ def instructors(request):
                     person.task_set.filter(role__name='instructor').count()
 
             # Sort by location.
-            loc = (float(form.cleaned_data['latitude']),
-                   float(form.cleaned_data['longitude']))
+            loc = (form.cleaned_data['latitude'],
+                   form.cleaned_data['longitude'])
             persons = [(earth_distance(loc, (p.airport.latitude, p.airport.longitude)), p)
                        for p in persons]
             persons.sort(
@@ -315,9 +315,6 @@ def instructors(request):
                     distance_person[1].personal,
                     distance_person[1].middle))
             persons = [x[1] for x in persons[:10]]
-
-        else:
-            pass # FIXME: error message
 
     # if a GET (or any other method) we'll create a blank form
     else:
