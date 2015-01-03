@@ -40,13 +40,13 @@ class InstructorsForm(forms.Form):
 
         # No airport, so must have latitude and longitude
         if iata is None:
-            if (lat is None) or (long is None):
+            if lat is None or long is None:
                 return False, None, None
             return True, lat, long
 
         # Airport, so cannot have latitude or longitude
         else:
-            if (lat is not None) or (long is not None):
+            if lat is not None or long is not None:
                 return False, None, None
             airport = Airport.objects.get(iata=iata)
             return True, airport.latitude, airport.longitude
