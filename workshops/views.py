@@ -320,8 +320,7 @@ def instructors(request):
 
     context = {'title' : 'Find Instructors',
                'form': form,
-               'persons' : persons,
-               }
+               'persons' : persons}
     return render(request, 'workshops/instructors.html', context)
 
 #------------------------------------------------------------
