@@ -7,11 +7,6 @@
 {% endblock %}
 
 {% block content %}
-{% if messages %}
-  {% for message in messages %}
-  <p><strong>Error: {{message}}</strong></p>
-  {% endfor %}
-{% endif %}
 <form action="{% url 'instructors' %}" method="post">
     {% csrf_token %}
     <table class="table table-striped">

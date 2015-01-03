@@ -31,25 +31,27 @@ class InstructorsForm(forms.Form):
         for s in skills:
             self.fields[s.name] = forms.BooleanField(label=s.name, required=False)
 
-    def get_lat_long(self):
-        '''Get validity, latitude, and longitude.'''
+    def clean(self):
+        cleaned_data = super(InstructorsForm, self).clean()
+        iata = cleaned_data.get('airport')
+        lat = cleaned_data.get('latitude')
+        long = cleaned_data.get('longitude')
 
-        iata = self.cleaned_data['airport']
-        lat = self.cleaned_data['latitude']
-        long = self.cleaned_data['longitude']
-
-        # No airport, so must have latitude and longitude
         if iata is None:
             if lat is None or long is None:
-                return False, None, None
-            return True, lat, long
-
-        # Airport, so cannot have latitude or longitude
+                raise forms.ValidationError(
+                    'Must specify either an airport code or a '
+                    'latitude/longitude')
         else:
             if lat is not None or long is not None:
-                return False, None, None
+                raise forms.ValidationError(
+                    'Cannot specify both an airport code and a '
+                    'latitude/longitude. Pick one or the other')
             airport = Airport.objects.get(iata=iata)
-            return True, airport.latitude, airport.longitude
+            cleaned_data['latitude'] = airport.latitude
+            cleaned_data['longitude'] = airport.longitude
+        return cleaned_data
+
 
 class SearchForm(forms.Form):
     '''Represent general searching form.'''
