@@ -53,6 +53,12 @@ class InstructorsForm(forms.Form):
         return cleaned_data
 
 
+class PersonBulkAddForm(forms.Form):
+    '''Represent CSV upload form for bulk adding people.'''
+
+    file = forms.FileField()
+
+
 class SearchForm(forms.Form):
     '''Represent general searching form.'''
 

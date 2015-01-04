@@ -7,6 +7,13 @@
 {% endblock %}
 
 {% block content %}
+{% if messages %}
+<ul class="messages">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
 {% if all_persons %}
     <table class="table table-striped">
         <tr>
@@ -45,4 +52,5 @@
     <p>No persons.</p>
 {% endif %}
 <p class="add-new"><a href="{% url 'person_add' %}">Add a new person</a></p>
+<p class="add-new"><a href="{% url 'person_bulk_add' %}">Add many people from a .CSV file</a></p>
 {% endblock %}

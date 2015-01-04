@@ -18,6 +18,7 @@ urlpatterns = [
     url(r'^person/(?P<person_id>[\w\.-]+)/?$', views.person_details, name='person_details'),
     url(r'^person/(?P<person_id>[\w\.-]+)/edit$', views.PersonUpdate.as_view(), name='person_edit'),
     url(r'^persons/add/$', views.PersonCreate.as_view(), name='person_add'),
+    url(r'^persons/bulkadd/$',views.person_bulk_add, name='person_bulk_add'),
 
     url(r'^events/?$', views.all_events, name='all_events'),
     url(r'^event/(?P<event_slug>[\w\.-]+)/?$', views.event_details, name='event_details'),

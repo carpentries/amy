@@ -1,0 +1,27 @@
+{% extends "workshops/_page.html" %}
+
+{% load breadcrumbs %}
+{% block breadcrumbs %}
+    {% breadcrumb_url 'Index' 'index'  %}
+    {% breadcrumb_url 'All persons' 'all_persons' %}
+    {% breadcrumb_active 'Bulk Add People'  %}
+{% endblock %}
+
+{% block content %}
+{% if messages %}
+<ul class="messages">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+{% load staticfiles %}
+<p><a href="{% static "BulkPersonAddTemplate.csv" %}">BulkPersonAddTemplate.csv</a> is a blank template of a well-formed .CSV file.</p>
+<form action="" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Submit" />
+    <a href="{% url 'all_persons' %}">Cancel</a>
+</form>
+
+{% endblock %}
