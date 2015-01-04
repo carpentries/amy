@@ -1,3 +1,4 @@
+import re
 import yaml
 import requests
 
@@ -132,6 +133,24 @@ class PersonUpdate(UpdateView):
 
 #------------------------------------------------------------
 
+def _select_event(event_ident):
+    '''
+    Select event that matches given identifier.
+
+    If the event identifier is purely numeric, it's an ID (and
+    probably indicates a pending event whose details are still being
+    negotiated).  If it contains dashes, it's probably a
+    YYYY-MM-DD-site slug, and indicates an event whose dates are firm.
+    The real indicator is the 'published' flag.
+    '''
+
+    if re.match(r'^\d+$', event_ident):
+        return Event.objects.get(id=event_ident)
+    elif re.match(r'^\d{4}-\d{2}-\d{2}-.+$', event_ident):
+        return Event.objects.get(slug=event_ident)
+    else:
+        pass # FIXME: error (unrecognizable ident)
+
 def all_events(request):
     '''List all events.'''
 
@@ -144,19 +163,20 @@ def all_events(request):
     return render(request, 'workshops/all_events.html', context)
 
 
-def event_details(request, event_slug):
+def event_details(request, event_ident):
     '''List details of a particular event.'''
-    event = Event.objects.get(slug=event_slug)
+
+    event = _select_event(event_ident)
     tasks = Task.objects.filter(event__id=event.id).order_by('role__name')
     context = {'title' : 'Event {0}'.format(event),
                'event' : event,
                'tasks' : tasks}
     return render(request, 'workshops/event.html', context)
 
-def validate_event(request, event_slug):
+def validate_event(request, event_ident):
     '''Check the event's home page *or* the specified URL (for testing).'''
     page_url, error_messages = None, []
-    event = Event.objects.get(slug=event_slug)
+    event = _select_event(event_ident)
     github_url = request.GET.get('url', None) # for manual override
     if github_url is None:
         github_url = event.url
