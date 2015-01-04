@@ -224,6 +224,22 @@ class Event(models.Model):
 
 #------------------------------------------------------------
 
+class Pending(models.Model):
+    '''Information about events being negotiated (dates etc. not yet known).'''
+
+    site       = models.ForeignKey(Site)
+    project    = models.ForeignKey(Project)
+    organizer  = models.ForeignKey(Site, related_name='pending_organizer', null=True)
+    notes      = models.TextField(default="")
+
+    def __str__(self):
+        return '#{0}@{1}'.format(self.id, self.site.domain)
+
+    def get_absolute_url(self):
+        return reverse('pending_details', args=[self.id])
+
+#------------------------------------------------------------
+
 class Role(models.Model):
     '''Enumerate roles in workshops.'''
 

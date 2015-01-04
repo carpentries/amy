@@ -18,12 +18,13 @@
     </td>
   </tr>
   <tr>
-    <td valign="top">
+    <td valign="top" width="30%">
       <h3>Actions</h3>
       <ul>
 	<li><a href="{% url 'all_sites' %}">all sites</a></li>
 	<li><a href="{% url 'all_airports' %}">all airports</a></li>
 	<li><a href="{% url 'all_events' %}">all events</a></li>
+	<li><a href="{% url 'all_pending' %}">all pending</a></li>
 	<li><a href="{% url 'all_persons' %}">all persons</a></li>
 	<li><a href="{% url 'all_tasks' %}">all tasks</a></li>
 	<li><a href="{% url 'all_cohorts' %}">all cohorts</a></li>
@@ -34,11 +35,19 @@
 	<li><a href="{% url 'export' 'instructors' %}">export instructors</a></li>
       </ul>
     </td>
-    <td valign="top">
-      <h3>Upcoming Events</h3>
+    <td valign="top" width="35%">
+      <h3>Upcoming</h3>
       <ul class="event-list">
 	{% for event in upcoming_events %}
 	<li><a href="{{ event.get_absolute_url }}">{{ event.slug }}</a></li>
+	{% endfor %}
+      </ul>
+    </td>
+    <td valign="top" width="35%">
+      <h3>Pending</h3>
+      <ul class="event-list">
+	{% for p in pending %}
+	<li><a href="{% url 'pending_details' p.id %}">{{ p.site }}</a></li>
 	{% endfor %}
       </ul>
     </td>

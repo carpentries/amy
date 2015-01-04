@@ -3,15 +3,27 @@ import requests
 
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
+from django.db.models import Count, Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.views.generic.edit import CreateView, UpdateView
-from django.db.models import Count, Q
 
-from workshops.models import Site, Airport, Event, Person, Task, Cohort, Skill, Trainee, Badge, Award
+from workshops.check import check_file
 from workshops.forms import InstructorsForm, SearchForm
 from workshops.util import earth_distance
-from workshops.check import check_file
+
+from workshops.models import \
+    Airport, \
+    Award, \
+    Badge, \
+    Cohort, \
+    Event, \
+    Pending, \
+    Person, \
+    Site, \
+    Skill, \
+    Task, \
+    Trainee
 
 #------------------------------------------------------------
 
@@ -22,8 +34,10 @@ ITEMS_PER_PAGE = 25
 def index(request):
     '''Home page.'''
     upcoming_events = Event.objects.upcoming_events()
+    pending = Pending.objects.all()
     context = {'title' : None,
-               'upcoming_events' : upcoming_events}
+               'upcoming_events' : upcoming_events,
+               'pending' : pending}
     return render(request, 'workshops/index.html', context)
 
 #------------------------------------------------------------
@@ -172,6 +186,36 @@ def validate_event(request, event_slug):
                'page' : page_url,
                'error_messages' : error_messages}
     return render(request, 'workshops/validate_event.html', context)
+
+#------------------------------------------------------------
+
+def all_pending(request):
+    '''List all events under negotiation.'''
+
+    all_pending = Pending.objects.all()
+    pending = _get_pagination_items(request, all_pending)
+    context = {'title' : 'Pending',
+               'all_pending' : pending}
+    return render(request, 'workshops/all_pending.html', context)
+
+
+def pending_details(request, pending_id):
+    '''Show details of event under negotiation.'''
+    pending = Pending.objects.get(id=pending_id)
+    context = {'title' : 'Pending',
+               'pending' : pending}
+    return render(request, 'workshops/pending.html', context)
+
+
+class PendingCreate(CreateView):
+    model = Pending
+    fields = '__all__'
+
+
+class PendingUpdate(UpdateView):
+    model = Pending
+    fields = '__all__'
+    pk_url_kwarg = 'pending_id'
 
 #------------------------------------------------------------
 

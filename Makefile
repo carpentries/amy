@@ -40,6 +40,10 @@ import :
 	python migrater.py ${SRC_DB} ${APP_DB}
 	${QUERY} .dump > ${APP_SQL}
 
+## fake         : add some fake entries for testing (after import)
+fake :
+	${QUERY} < fake.sql
+
 ## database     : re-make database using saved data
 database :
 	rm -f ${APP_DB}

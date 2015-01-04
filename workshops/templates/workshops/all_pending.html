@@ -1,0 +1,46 @@
+{% extends "workshops/_page.html" %}
+
+{% load breadcrumbs %}
+{% block breadcrumbs %}
+    {% breadcrumb_url 'Amy' 'index'  %}
+    {% breadcrumb_active 'All Pending'  %}
+{% endblock %}
+
+{% block content %}
+{% if all_pending %}
+    <table class="table table-striped">
+        <tr>
+	    <th>project</th>
+	    <th>organizer</th>
+	    <th>site</th>
+	    <th></th>
+	</tr>
+    {% for pending in all_pending %}
+        <tr>
+	    <td>{{ pending.project }}</td>
+	    <td><a href="{% url 'site_details' pending.organizer.domain %}">{{ pending.organizer.domain }}</a></td>
+	    <td><a href="{% url 'site_details' pending.site.domain %}">{{ pending.site }}</a></td>
+	    <td><a href="{% url 'pending_details' pending.id %}">...</a></td>
+	</tr>
+    {% endfor %}
+    </table>
+    <div class="pagination">
+      <span class="step-links">
+         {% if all_pending.has_previous %}
+             <a href="?page={{ all_pending.previous_page_number }}">previous</a>
+         {% endif %}
+
+         <span class="current">
+             Page {{ all_pending.number }} of {{ all_pending.paginator.num_pages }}.
+         </span>
+
+         {% if all_pending.has_next %}
+             <a href="?page={{ all_pending.next_page_number }}">next</a>
+         {% endif %}
+      </span>
+    </div>
+{% else %}
+    <p>No events.</p>
+{% endif %}
+<p class="add-new"><a href="{% url 'pending_add' %}">Add a new pending event</a></p>
+{% endblock %}

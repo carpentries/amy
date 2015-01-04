@@ -23,6 +23,11 @@ urlpatterns = [
     url(r'^event/(?P<event_slug>[\w\.-]+)/?$', views.event_details, name='event_details'),
     url(r'^event/(?P<event_slug>[\w\.-]+)/validate/?$', views.validate_event, name='validate_event'),
 
+    url(r'^pendings/?$', views.all_pending, name='all_pending'),
+    url(r'^pending/(?P<pending_id>\d+)/?$', views.pending_details, name='pending_details'),
+    url(r'^pending/(?P<pending_id>\d+)/edit$', views.PendingUpdate.as_view(), name='pending_edit'),
+    url(r'^pending/add/$', views.PendingCreate.as_view(), name='pending_add'),
+
     url(r'^tasks/?$', views.all_tasks, name='all_tasks'),
     url(r'^task/(?P<event_slug>[\w\.-]+)/(?P<person_id>[\w\.-]+)/(?P<role_name>[\w\.-]+)/?$', views.task_details, name='task_details'),
     url(r'^task/(?P<event_slug>[\w\.-]+)/(?P<person_id>[\w\.-]+)/(?P<role_name>[\w\.-]+)/edit$', views.TaskUpdate.as_view(), name='task_edit'),
