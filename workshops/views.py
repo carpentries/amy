@@ -199,7 +199,7 @@ class EventCreate(CreateView):
 class EventUpdate(UpdateView):
     model = Event
     fields = '__all__'
-    pk_url_kwarg = 'event_id'
+    pk_url_kwarg = 'event_ident'
 
 #------------------------------------------------------------
 
