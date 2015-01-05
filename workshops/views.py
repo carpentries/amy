@@ -4,15 +4,26 @@ import requests
 
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
+from django.db.models import Count, Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.views.generic.edit import CreateView, UpdateView
-from django.db.models import Count, Q
 
-from workshops.models import Site, Airport, Event, Person, Task, Cohort, Skill, Trainee, Badge, Award
+from workshops.check import check_file
 from workshops.forms import InstructorsForm, SearchForm
 from workshops.util import earth_distance
-from workshops.check import check_file
+
+from workshops.models import \
+    Airport, \
+    Award, \
+    Badge, \
+    Cohort, \
+    Event, \
+    Person, \
+    Site, \
+    Skill, \
+    Task, \
+    Trainee
 
 #------------------------------------------------------------
 
@@ -133,24 +144,6 @@ class PersonUpdate(UpdateView):
 
 #------------------------------------------------------------
 
-def _select_event(event_ident):
-    '''
-    Select event that matches given identifier.
-
-    If the event identifier is purely numeric, it's an ID (and
-    probably indicates a pending event whose details are still being
-    negotiated).  If it contains dashes, it's probably a
-    YYYY-MM-DD-site slug, and indicates an event whose dates are firm.
-    The real indicator is the 'published' flag.
-    '''
-
-    if re.match(r'^\d+$', event_ident):
-        return Event.objects.get(id=event_ident)
-    elif re.match(r'^\d{4}-\d{2}-\d{2}-.+$', event_ident):
-        return Event.objects.get(slug=event_ident)
-    else:
-        pass # FIXME: error (unrecognizable ident)
-
 def all_events(request):
     '''List all events.'''
 
@@ -166,7 +159,7 @@ def all_events(request):
 def event_details(request, event_ident):
     '''List details of a particular event.'''
 
-    event = _select_event(event_ident)
+    event = Event.get_by_ident(event_ident)
     tasks = Task.objects.filter(event__id=event.id).order_by('role__name')
     context = {'title' : 'Event {0}'.format(event),
                'event' : event,
@@ -176,7 +169,7 @@ def event_details(request, event_ident):
 def validate_event(request, event_ident):
     '''Check the event's home page *or* the specified URL (for testing).'''
     page_url, error_messages = None, []
-    event = _select_event(event_ident)
+    event = Event.get_by_ident(event_ident)
     github_url = request.GET.get('url', None) # for manual override
     if github_url is None:
         github_url = event.url

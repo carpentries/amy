@@ -1,6 +1,9 @@
 import datetime
-from django.db import models
+import re
+
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
+from django.db import models
 from django.db.models import Q
 
 #------------------------------------------------------------
@@ -222,6 +225,26 @@ class Event(models.Model):
 
     def get_absolute_url(self):
         return reverse('event_details', args=[str(self.slug)])
+
+    @staticmethod
+    def get_by_ident(ident):
+        '''
+        Select event that matches given identifier.
+
+        If the event identifier is purely numeric, it's an ID (and
+        probably indicates a pending event whose details are still being
+        negotiated).  If it contains dashes, it's probably a
+        YYYY-MM-DD-site slug, and indicates an event whose dates are firm.
+        The real indicator is the 'published' flag.
+        '''
+
+        if re.match(r'^\d+$', ident):
+            return Event.objects.get(id=ident)
+
+        if re.match(r'^\d{4}-\d{2}-\d{2}-.+$', ident):
+            return Event.objects.get(slug=ident)
+
+        raise ObjectDoesNotExist(ident)
 
 #------------------------------------------------------------
 
