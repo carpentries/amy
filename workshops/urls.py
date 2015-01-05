@@ -21,6 +21,8 @@ urlpatterns = [
 
     url(r'^events/?$', views.all_events, name='all_events'),
     url(r'^event/(?P<event_ident>[\w\.-]+)/?$', views.event_details, name='event_details'),
+    url(r'^event/(?P<event_ident>[\w\.-]+)/edit$', views.EventUpdate.as_view(), name='event_edit'),
+    url(r'^events/add/$', views.EventCreate.as_view(), name='event_add'),
     url(r'^event/(?P<event_ident>[\w\.-]+)/validate/?$', views.validate_event, name='validate_event'),
 
     url(r'^tasks/?$', views.all_tasks, name='all_tasks'),

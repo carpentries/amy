@@ -44,6 +44,7 @@
 {% else %}
 <p>No notes.</p>
 {% endif %}
+<p class="edit-object"><a href="{% url 'event_edit' event.id %}">Edit this event</a></p>
 <p>... <a href="{% url 'validate_event' event.slug %}">validate event</a></p>
 <p>... <a href="{% url 'all_events' %}">all events</a></p>
 <p>... <a href="{% url 'index' %}">index</a></p>

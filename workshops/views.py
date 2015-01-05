@@ -188,6 +188,17 @@ def validate_event(request, event_ident):
                'error_messages' : error_messages}
     return render(request, 'workshops/validate_event.html', context)
 
+
+class EventCreate(CreateView):
+    model = Event
+    fields = '__all__'
+
+
+class EventUpdate(UpdateView):
+    model = Site
+    fields = '__all__'
+    pk_url_kwarg = 'event_id'
+
 #------------------------------------------------------------
 
 TASK_FIELDS = ['event', 'person', 'role']
