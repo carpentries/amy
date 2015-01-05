@@ -10,6 +10,7 @@
 {% if all_events %}
     <table class="table table-striped">
         <tr>
+	    <th>ID</th>
 	    <th>published</th>
 	    <th>project</th>
 	    <th>instructors</th>
@@ -22,10 +23,21 @@
 	</tr>
     {% for event in all_events %}
         <tr>
+	    <td>{{ event.id }}</td>
 	    <td>{{ event.published }}</td>
 	    <td>{{ event.project }}</td>
-	    <td {% if event.num_instructors == 0 %}class="warning"{% endif %}>{{ event.num_instructors }}</td>
-	    <td><a href="{% url 'event_details' event.slug %}">{{ event.slug }}</a></td>
+	    <td {% if event.num_instructors == 0 %}class="warning"{% endif %}>
+	      {{ event.num_instructors }}
+	    </td>
+	    <td {% if not event.slug %}class="warning"{% endif %}>
+	      {% if not event.slug %}
+	        ---
+	      {% else %}
+	        <a href="{% url 'event_details' event.slug %}">
+		  {{ event.slug }}
+	        </a>
+	      {% endif %}
+	    </td>
 	    <td {% if not event.url %}class="warning"{% endif %}>
 	      {% if event.url %}
 	      <a href="{{ event.url }}">{{ event.url|cut:"https://github.com/" }}</a>

@@ -18,7 +18,7 @@
     </td>
   </tr>
   <tr>
-    <td valign="top">
+    <td valign="top" width="30%">
       <h3>Actions</h3>
       <ul>
 	<li><a href="{% url 'all_sites' %}">all sites</a></li>
@@ -34,11 +34,19 @@
 	<li><a href="{% url 'export' 'instructors' %}">export instructors</a></li>
       </ul>
     </td>
-    <td valign="top">
+    <td valign="top" width="35%">
       <h3>Upcoming Events</h3>
       <ul class="event-list">
 	{% for event in upcoming_events %}
 	<li><a href="{{ event.get_absolute_url }}">{{ event.slug }}</a></li>
+	{% endfor %}
+      </ul>
+    </td>
+    <td valign="top" width="35%">
+      <h3>Unpublished Events</h3>
+      <ul class="event-list">
+	{% for event in unpublished_events %}
+	<li><a href="{{ event.get_absolute_url }}">{{ event.id }}</a></li>
 	{% endfor %}
       </ul>
     </td>

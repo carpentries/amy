@@ -34,8 +34,10 @@ ITEMS_PER_PAGE = 25
 def index(request):
     '''Home page.'''
     upcoming_events = Event.objects.upcoming_events()
+    unpublished_events = Event.objects.unpublished_events()
     context = {'title' : None,
-               'upcoming_events' : upcoming_events}
+               'upcoming_events' : upcoming_events,
+               'unpublished_events' : unpublished_events}
     return render(request, 'workshops/index.html', context)
 
 #------------------------------------------------------------
@@ -147,7 +149,7 @@ class PersonUpdate(UpdateView):
 def all_events(request):
     '''List all events.'''
 
-    all_events = Event.objects.order_by('slug')
+    all_events = Event.objects.order_by('id')
     events = _get_pagination_items(request, all_events)
     for e in events:
         e.num_instructors = e.task_set.filter(role__name='instructor').count()
