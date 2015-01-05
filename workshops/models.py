@@ -201,6 +201,7 @@ class EventManager(models.Manager):
 class Event(models.Model):
     '''Represent a single event.'''
 
+    published  = models.BooleanField(default=False)
     site       = models.ForeignKey(Site)
     project    = models.ForeignKey(Project)
     organizer  = models.ForeignKey(Site, related_name='organizer', null=True)

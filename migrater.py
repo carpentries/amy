@@ -1,28 +1,21 @@
-import logging
 import datetime
-import sys
+import logging
 import sqlite3
+import sys
 
-# stick to string name of the logger because it's better than "__main__"
-# (what __name__ defaults to)
-logger = logging.getLogger("amy-migrater")
-
-# verbosity: show all messages with severity of at least INFO
-logger.setLevel(logging.INFO)
-
+# Faking data?
 FAKE = True
-
 
 def fail(table, fields, exc):
     '''Report failure.'''
-    logger.error("Failing on {table} with {fields} because {error}".format(
-        table=table, fields=fields, error=e))
+    logging.error("Failing on {table} with {fields} because {error}".format(
+            table=table, fields=fields, error=e))
     sys.exit(1)
 
 
 def info(table):
     '''Report successful migration of given table.'''
-    logger.info("Successfully migrated '{table}' table".format(table=table))
+    logging.info("Successfully migrated '{table}' table".format(table=table))
 
 
 def fake(i, slug, personal, middle, family, email, gender, github, twitter, url):
@@ -139,7 +132,7 @@ for (startdate, enddate, event, site, kind, eventbrite, attendance, url) in old_
     event_lookup[event] = i
     try:
         fields = (i, startdate, enddate, event, eventbrite, attendance, site_lookup[site], project_lookup[kind], url)
-        new_crs.execute('insert into workshops_event values(?, ?, ?, ?, ?, ?, ?, ?, ?, null, 0.0, "");', fields)
+        new_crs.execute('insert into workshops_event values(?, ?, ?, ?, ?, ?, ?, ?, ?, null, 0.0, "", 1);', fields)
     except Exception, e:
         fail('event', fields, e)
     i += 1
