@@ -18,7 +18,6 @@
   <tr><td>end date: </td><td>{{ event.end }}</td></tr>
   <tr><td>Eventbrite key:</td><td>{{ event.reg_key }}</td></tr>
   <tr><td>attendance:</td><td>{{ event.attendance }}</td></tr>
-  <tr><td>notes:</td><td>{{ event.notes }}</td></tr>
 </table>
 {% if tasks %}
 <table class="table table-striped">
@@ -45,7 +44,11 @@
 <p>No notes.</p>
 {% endif %}
 <p class="edit-object"><a href="{% url 'event_edit' event.id %}">Edit this event</a></p>
-<p>... <a href="{% url 'validate_event' event.id %}">validate event</a></p>
+{% if event.url %}
+<p>... <a href="{% url 'validate_event' event.slug %}">validate event</a></p>
+{% else %}
+<p>cannot validate event without URL</p>
+{% endif %}
 <p>... <a href="{% url 'all_events' %}">all events</a></p>
 <p>... <a href="{% url 'index' %}">index</a></p>
 {% endblock %}
