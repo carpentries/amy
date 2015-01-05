@@ -10,8 +10,8 @@ urlpatterns = [
     url(r'^sites/add/$', views.SiteCreate.as_view(), name='site_add'),
 
     url(r'^airports/?$', views.all_airports, name='all_airports'),
-    url(r'^airport/(?P<airport_iata>[\w\.-]+)/?$', views.airport_details, name='airport_details'),
-    url(r'^airport/(?P<airport_iata>[\w\.-]+)/edit$', views.AirportUpdate.as_view(), name='airport_edit'),
+    url(r'^airport/(?P<airport_iata>\w+)/?$', views.airport_details, name='airport_details'),
+    url(r'^airport/(?P<airport_iata>\w+)/edit$', views.AirportUpdate.as_view(), name='airport_edit'),
     url(r'^airports/add/$', views.AirportCreate.as_view(), name='airport_add'),
 
     url(r'^persons/?$', views.all_persons, name='all_persons'),
@@ -20,19 +20,19 @@ urlpatterns = [
     url(r'^persons/add/$', views.PersonCreate.as_view(), name='person_add'),
 
     url(r'^events/?$', views.all_events, name='all_events'),
-    url(r'^event/(?P<event_ident>[\w\.-]+)/?$', views.event_details, name='event_details'),
-    url(r'^event/(?P<event_ident>[\w\.-]+)/edit$', views.EventUpdate.as_view(), name='event_edit'),
+    url(r'^event/(?P<event_ident>[\w-]+)/?$', views.event_details, name='event_details'),
+    url(r'^event/(?P<event_ident>[\w-]+)/edit$', views.EventUpdate.as_view(), name='event_edit'),
     url(r'^events/add/$', views.EventCreate.as_view(), name='event_add'),
-    url(r'^event/(?P<event_ident>[\w\.-]+)/validate/?$', views.validate_event, name='validate_event'),
+    url(r'^event/(?P<event_ident>[\w-]+)/validate/?$', views.validate_event, name='validate_event'),
 
     url(r'^tasks/?$', views.all_tasks, name='all_tasks'),
-    url(r'^task/(?P<event_slug>[\w\.-]+)/(?P<person_id>[\w\.-]+)/(?P<role_name>[\w\.-]+)/?$', views.task_details, name='task_details'),
-    url(r'^task/(?P<event_slug>[\w\.-]+)/(?P<person_id>[\w\.-]+)/(?P<role_name>[\w\.-]+)/edit$', views.TaskUpdate.as_view(), name='task_edit'),
+    url(r'^task/(?P<event_slug>[\w-]+)/(?P<person_id>[\w\.-]+)/(?P<role_name>[\w-]+)/?$', views.task_details, name='task_details'),
+    url(r'^task/(?P<event_slug>[\w-]+)/(?P<person_id>[\w\.-]+)/(?P<role_name>[\w-]+)/edit$', views.TaskUpdate.as_view(), name='task_edit'),
     url(r'^tasks/add/$', views.TaskCreate.as_view(), name='task_add'),
 
     url(r'^cohorts/?$', views.all_cohorts, name='all_cohorts'),
-    url(r'^cohort/(?P<cohort_name>[\w\.-]+)/?$', views.cohort_details, name='cohort_details'),
-    url(r'^cohort/(?P<cohort_name>[\w\.-]+)/edit$', views.CohortUpdate.as_view(), name='cohort_edit'),
+    url(r'^cohort/(?P<cohort_name>[\w-]+)/?$', views.cohort_details, name='cohort_details'),
+    url(r'^cohort/(?P<cohort_name>[\w-]+)/edit$', views.CohortUpdate.as_view(), name='cohort_edit'),
     url(r'^cohorts/add/$', views.CohortCreate.as_view(), name='cohort_add'),
 
     url(r'^badges/?$', views.all_badges, name='all_badges'),

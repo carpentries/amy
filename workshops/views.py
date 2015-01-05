@@ -135,9 +135,11 @@ def person_details(request, person_id):
                'tasks' : tasks}
     return render(request, 'workshops/person.html', context)
 
+
 class PersonCreate(CreateView):
     model = Person
     fields = '__all__'
+
 
 class PersonUpdate(UpdateView):
     model = Person
@@ -195,7 +197,7 @@ class EventCreate(CreateView):
 
 
 class EventUpdate(UpdateView):
-    model = Site
+    model = Event
     fields = '__all__'
     pk_url_kwarg = 'event_id'
 
