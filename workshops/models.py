@@ -222,7 +222,7 @@ class Event(models.Model):
     url        = models.CharField(max_length=STR_LONG, unique=True, null=True, blank=True)
     reg_key    = models.CharField(max_length=STR_REG_KEY, null=True, blank=True)
     attendance = models.IntegerField(null=True, blank=True)
-    admin_fee  = models.DecimalField(max_digits=6, decimal_places=2)
+    admin_fee  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
     notes      = models.TextField(default="", blank=True)
 
     # Set the custom manager
