@@ -1,17 +1,29 @@
+import re
 import yaml
 import requests
 
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
+from django.db.models import Count, Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.views.generic.edit import CreateView, UpdateView
-from django.db.models import Count, Q
 
-from workshops.models import Site, Airport, Event, Person, Task, Cohort, Skill, Trainee, Badge, Award
+from workshops.check import check_file
 from workshops.forms import InstructorsForm, SearchForm
 from workshops.util import earth_distance
-from workshops.check import check_file
+
+from workshops.models import \
+    Airport, \
+    Award, \
+    Badge, \
+    Cohort, \
+    Event, \
+    Person, \
+    Site, \
+    Skill, \
+    Task, \
+    Trainee
 
 #------------------------------------------------------------
 
@@ -22,8 +34,10 @@ ITEMS_PER_PAGE = 25
 def index(request):
     '''Home page.'''
     upcoming_events = Event.objects.upcoming_events()
+    unpublished_events = Event.objects.unpublished_events()
     context = {'title' : None,
-               'upcoming_events' : upcoming_events}
+               'upcoming_events' : upcoming_events,
+               'unpublished_events' : unpublished_events}
     return render(request, 'workshops/index.html', context)
 
 #------------------------------------------------------------
@@ -121,9 +135,11 @@ def person_details(request, person_id):
                'tasks' : tasks}
     return render(request, 'workshops/person.html', context)
 
+
 class PersonCreate(CreateView):
     model = Person
     fields = '__all__'
+
 
 class PersonUpdate(UpdateView):
     model = Person
@@ -135,7 +151,7 @@ class PersonUpdate(UpdateView):
 def all_events(request):
     '''List all events.'''
 
-    all_events = Event.objects.order_by('slug')
+    all_events = Event.objects.order_by('id')
     events = _get_pagination_items(request, all_events)
     for e in events:
         e.num_instructors = e.task_set.filter(role__name='instructor').count()
@@ -144,19 +160,20 @@ def all_events(request):
     return render(request, 'workshops/all_events.html', context)
 
 
-def event_details(request, event_slug):
+def event_details(request, event_ident):
     '''List details of a particular event.'''
-    event = Event.objects.get(slug=event_slug)
+
+    event = Event.get_by_ident(event_ident)
     tasks = Task.objects.filter(event__id=event.id).order_by('role__name')
     context = {'title' : 'Event {0}'.format(event),
                'event' : event,
                'tasks' : tasks}
     return render(request, 'workshops/event.html', context)
 
-def validate_event(request, event_slug):
+def validate_event(request, event_ident):
     '''Check the event's home page *or* the specified URL (for testing).'''
     page_url, error_messages = None, []
-    event = Event.objects.get(slug=event_slug)
+    event = Event.get_by_ident(event_ident)
     github_url = request.GET.get('url', None) # for manual override
     if github_url is None:
         github_url = event.url
@@ -172,6 +189,17 @@ def validate_event(request, event_slug):
                'page' : page_url,
                'error_messages' : error_messages}
     return render(request, 'workshops/validate_event.html', context)
+
+
+class EventCreate(CreateView):
+    model = Event
+    fields = '__all__'
+
+
+class EventUpdate(UpdateView):
+    model = Event
+    fields = '__all__'
+    pk_url_kwarg = 'event_ident'
 
 #------------------------------------------------------------
 

@@ -1,28 +1,21 @@
-import logging
 import datetime
-import sys
+import logging
 import sqlite3
+import sys
 
-# stick to string name of the logger because it's better than "__main__"
-# (what __name__ defaults to)
-logger = logging.getLogger("amy-migrater")
-
-# verbosity: show all messages with severity of at least INFO
-logger.setLevel(logging.INFO)
-
+# Faking data?
 FAKE = True
-
 
 def fail(table, fields, exc):
     '''Report failure.'''
-    logger.error("Failing on {table} with {fields} because {error}".format(
-        table=table, fields=fields, error=e))
+    logging.error("Failing on {table} with {fields} because {error}".format(
+            table=table, fields=fields, error=e))
     sys.exit(1)
 
 
 def info(table):
     '''Report successful migration of given table.'''
-    logger.info("Successfully migrated '{table}' table".format(table=table))
+    logging.info("Successfully migrated '{table}' table".format(table=table))
 
 
 def fake(i, slug, personal, middle, family, email, gender, github, twitter, url):
@@ -138,13 +131,32 @@ i = 1
 for (startdate, enddate, event, site, kind, eventbrite, attendance, url) in old_crs.fetchall():
     event_lookup[event] = i
     try:
-        fields = (i, startdate, enddate, event, eventbrite, attendance, site_lookup[site], project_lookup[kind], url)
-        new_crs.execute('insert into workshops_event values(?, ?, ?, ?, ?, ?, ?, ?, ?, null, 0.0, "");', fields)
+        fields = (i, startdate, enddate, eventbrite, attendance, site_lookup[site], project_lookup[kind], url, None, 0.0, "", True, event)
+        new_crs.execute('insert into workshops_event values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', fields)
     except Exception, e:
         fail('event', fields, e)
     i += 1
 
 info('event')
+
+# Add some unpublished events for testing purposes.
+new_crs.execute('select * from workshops_event where (id>=?) and (id<=?);', ((i-10), (i-5)))
+records = new_crs.fetchall()
+for r in records:
+    try:
+        r = list(r)
+        r[0] = i # new ID
+        r[1] = None # no start date
+        r[2] = None # no end date
+        r[3] = None # no registration key
+        r[4] = None # no attendance
+        r[7] = None # no URL
+        r[11] = False # not published - this is the whole point of these entries
+        r[12] = None # no slug
+        new_crs.execute('insert into workshops_event values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', r)
+    except Exception, e:
+        fail('event', fields, e)
+    i += 1
 
 # Roles
 new_crs.execute('delete from workshops_role;')

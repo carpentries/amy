@@ -1,6 +1,9 @@
 import datetime
-from django.db import models
+import re
+
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
+from django.db import models
 from django.db.models import Q
 
 #------------------------------------------------------------
@@ -47,12 +50,12 @@ class Airport(models.Model):
 
 # Define custom queries on the QuerySet and the Manager
 class PersonQuerySet(models.query.QuerySet):
-    """Handles finding past, ongoing and upcoming events"""
+    '''Handles finding past, ongoing and upcoming events'''
 
     def have_skills(self, skills):
-        """Returns persons who have all the skills listed
+        '''Returns persons who have all the skills listed
         in skills, which must be a list of Skill objects.
-        """
+        '''
 
         for s in skills:
             self = self.filter(qualification__skill=s)
@@ -60,7 +63,7 @@ class PersonQuerySet(models.query.QuerySet):
         return self
 
 class PersonManager(models.Manager):
-    """A custom manager which is essentially a proxy for PersonQuerySet"""
+    '''A custom manager which is essentially a proxy for PersonQuerySet'''
 
     # Attach our custom query set to the manager
     def get_queryset(self):
@@ -131,14 +134,14 @@ class Project(models.Model):
 # define them on the QuerySet, not the Manager - see
 # http://www.dabapps.com/blog/higher-level-query-api-django-orm/
 class EventQuerySet(models.query.QuerySet):
-    """Handles finding past, ongoing and upcoming events"""
+    '''Handles finding past, ongoing and upcoming events'''
 
     def past_events(self):
-        """Return a queryset for all past events.
+        '''Return a queryset for all past events.
 
         Past events are those which started before today, and
         which either ended before today or whose end is NULL
-        """
+        '''
 
         # All events that started before today
         queryset = self.filter(start__lt=datetime.date.today())
@@ -153,10 +156,10 @@ class EventQuerySet(models.query.QuerySet):
         return queryset
 
     def upcoming_events(self):
-        """Return a queryset for all upcoming events.
+        '''Return a queryset for all upcoming events.
 
         Upcoming events are those which start after today.
-        """
+        '''
 
         # All events that start after today
         queryset = self.filter(start__gt=datetime.date.today())
@@ -164,10 +167,10 @@ class EventQuerySet(models.query.QuerySet):
         return queryset
 
     def ongoing_events(self):
-        """Return a queryset for all ongoing events.
+        '''Return a queryset for all ongoing events.
 
         Ongoing events are those which start after today.
-        """
+        '''
 
         # All events that start before or on today
         queryset = self.filter(start__lte=datetime.date.today())
@@ -177,9 +180,14 @@ class EventQuerySet(models.query.QuerySet):
 
         return queryset
 
+    def unpublished_events(self):
+        '''Return a queryset for events that are not yet published.'''
+
+        return self.filter(published=False)
+
 
 class EventManager(models.Manager):
-    """A custom manager which is essentially a proxy for EventQuerySet"""
+    '''A custom manager which is essentially a proxy for EventQuerySet'''
 
     # Attach our custom query set to the manager
     def get_queryset(self):
@@ -198,29 +206,58 @@ class EventManager(models.Manager):
     def upcoming_events(self):
         return self.get_queryset().upcoming_events()
 
+    def unpublished_events(self):
+        return self.get_queryset().unpublished_events()
+
 class Event(models.Model):
     '''Represent a single event.'''
 
+    published  = models.BooleanField(default=False)
     site       = models.ForeignKey(Site)
     project    = models.ForeignKey(Project)
-    organizer  = models.ForeignKey(Site, related_name='organizer', null=True)
-    start      = models.DateField()
-    end        = models.DateField(null=True)
-    slug       = models.CharField(max_length=STR_LONG, unique=True)
-    url        = models.CharField(max_length=STR_LONG, unique=True, null=True)
-    reg_key    = models.CharField(max_length=STR_REG_KEY, null=True)
-    attendance = models.IntegerField(null=True)
-    admin_fee  = models.DecimalField(max_digits=6, decimal_places=2)
-    notes      = models.TextField(default="")
+    organizer  = models.ForeignKey(Site, related_name='organizer', null=True, blank=True)
+    start      = models.DateField(null=True, blank=True)
+    end        = models.DateField(null=True, blank=True)
+    slug       = models.CharField(max_length=STR_LONG, null=True, blank=True)
+    url        = models.CharField(max_length=STR_LONG, unique=True, null=True, blank=True)
+    reg_key    = models.CharField(max_length=STR_REG_KEY, null=True, blank=True)
+    attendance = models.IntegerField(null=True, blank=True)
+    admin_fee  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    notes      = models.TextField(default="", blank=True)
 
     # Set the custom manager
     objects = EventManager()
 
     def __str__(self):
-        return self.slug
+        return self.get_ident()
 
     def get_absolute_url(self):
-        return reverse('event_details', args=[str(self.slug)])
+        return reverse('event_details', args=[self.get_ident()])
+
+    def get_ident(self):
+        if self.slug:
+            return str(self.slug)
+        return str(self.id)
+
+    @staticmethod
+    def get_by_ident(ident):
+        '''
+        Select event that matches given identifier.
+
+        If the event identifier is purely numeric, it's an ID (and
+        probably indicates a pending event whose details are still being
+        negotiated).  If it contains dashes, it's probably a
+        YYYY-MM-DD-site slug, and indicates an event whose dates are firm.
+        The real indicator is the 'published' flag.
+        '''
+
+        if re.match(r'^\d+$', ident):
+            return Event.objects.get(id=ident)
+
+        if re.match(r'^\d{4}-\d{2}-\d{2}-.+$', ident):
+            return Event.objects.get(slug=ident)
+
+        raise ObjectDoesNotExist(ident)
 
 #------------------------------------------------------------
 
