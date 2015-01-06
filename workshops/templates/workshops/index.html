@@ -48,9 +48,11 @@
 	{% for event in unpublished_events %}
 	<tr>
 	  <td>
-	    <a href="{{ event.get_absolute_url }}">{{ event.id }}</a>
-	    {% if event.site %}@ {{ event.site.domain }}{% endif %}
-	    {% if event.slug %}: {{ event.slug }}{% endif %}
+	    <a href="{{ event.get_absolute_url }}">
+	      {{ event.id }}
+	      {% if event.site %}@ {{ event.site.domain }}{% endif %}
+	      {% if event.slug %}: {{ event.slug }}{% endif %}
+	    </a>
 	  </td>
 	</tr>
 	{% endfor %}
