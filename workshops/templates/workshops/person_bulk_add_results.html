@@ -1,0 +1,39 @@
+{% extends "workshops/_page.html" %}
+
+{% load breadcrumbs %}
+{% block breadcrumbs %}
+    {% breadcrumb_url 'Index' 'index'  %}
+    {% breadcrumb_url 'All persons' 'all_persons' %}
+    {% breadcrumb_active 'Process CSV File'  %}
+{% endblock %}
+
+{% block content %}
+{% if messages %}
+<ul class="messages">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+<table class="table table-striped">
+    <tr>
+        <th>personal</th>
+        <th>middle</th>
+        <th>family</th>
+        <th>email</th>
+        <th>event</th>
+        <th>role</th>
+    </tr>
+    {% for entry in persons_tasks %}
+    <tr>
+        <td>{{ entry.person.personal }}</td>
+        <td>{{ entry.person.middle }}</td>
+        <td>{{ entry.person.family }}</td>
+        <td>{{ entry.person.email }}</td>
+        <td>{{ entry.task.event.slug }}</td>
+        <td>{{ entry.task.role.name }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% endblock %}
