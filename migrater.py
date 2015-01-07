@@ -131,7 +131,7 @@ i = 1
 for (startdate, enddate, event, site, kind, eventbrite, attendance, url) in old_crs.fetchall():
     event_lookup[event] = i
     try:
-        fields = (i, startdate, enddate, eventbrite, attendance, site_lookup[site], project_lookup[kind], url, None, 0.0, "", True, event)
+        fields = (i, startdate, enddate, event, eventbrite, attendance, site_lookup[site], project_lookup[kind], url, None, '', True, 0.0)
         new_crs.execute('insert into workshops_event values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', fields)
     except Exception, e:
         fail('event', fields, e)
@@ -145,14 +145,19 @@ records = new_crs.fetchall()
 for r in records:
     try:
         r = list(r)
-        r[0] = i # new ID
+        r[0] = i # move on to next record
         r[1] = None # no start date
-        r[2] = None # no end date
-        r[3] = None # no registration key
-        r[4] = None # no attendance
-        r[7] = None # no URL
-        r[11] = False # not published - this is the whole point of these entries
-        r[12] = None # no slug
+        r[2] = None # so no end date
+        r[3] = None # which means no slug
+        r[4] = None # no Eventbrite
+        r[5] = None # and no attendance
+        # r[6] # unchanged: site
+        # r[7] # unchanged: project
+        r[8] = None # no URL
+        # r[9] # unchanged: organizer (which will be NULL)
+        r[10] = 'negotiating\nsome\ndates' # notes
+        r[11] = False # unpublished (the whole point)
+        # r[12] # unchanged: no fee
         new_crs.execute('insert into workshops_event values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', r)
     except Exception, e:
         fail('event', fields, e)
