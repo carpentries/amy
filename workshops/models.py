@@ -87,16 +87,16 @@ class Person(models.Model):
         )
 
     personal   = models.CharField(max_length=STR_LONG)
-    middle     = models.CharField(max_length=STR_LONG, null=True)
+    middle     = models.CharField(max_length=STR_LONG, null=True, blank=True)
     family     = models.CharField(max_length=STR_LONG)
-    email      = models.CharField(max_length=STR_LONG, unique=True, null=True)
+    email      = models.CharField(max_length=STR_LONG, unique=True, null=True, blank=True)
     gender     = models.CharField(max_length=1, choices=GENDER_CHOICES, null=True, blank=True)
     active     = models.NullBooleanField()
-    airport    = models.ForeignKey(Airport, null=True)
-    github     = models.CharField(max_length=STR_MED, unique=True, null=True)
-    twitter    = models.CharField(max_length=STR_MED, unique=True, null=True)
-    url        = models.CharField(max_length=STR_LONG, null=True)
-    slug       = models.CharField(max_length=STR_LONG, null=True)
+    airport    = models.ForeignKey(Airport, null=True, blank=True)
+    github     = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True)
+    twitter    = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True)
+    url        = models.CharField(max_length=STR_LONG, null=True, blank=True)
+    slug       = models.CharField(max_length=STR_LONG, null=True, blank=True)
 
     # Set the custom manager
     objects = PersonManager()
