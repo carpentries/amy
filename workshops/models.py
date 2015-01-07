@@ -77,14 +77,12 @@ class PersonManager(models.Manager):
 
 class Person(models.Model):
     '''Represent a single person.'''
-    MALE = 'M'
-    FEMALE = 'F'
-    OTHER = 'O'
+
     GENDER_CHOICES = (
-        (MALE, 'Male'),
-        (FEMALE, 'Female'),
-        (OTHER, 'Other'),
-        )
+        ('M', 'Male'),
+        ('F', 'Female'),
+        ('O', 'Other'),
+    )
 
     personal   = models.CharField(max_length=STR_LONG)
     middle     = models.CharField(max_length=STR_LONG, null=True)
