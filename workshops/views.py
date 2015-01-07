@@ -149,6 +149,13 @@ def person_bulk_add(request):
             except csv.Error as e:
                 messages.add_message(request, messages.ERROR, "Error processing uploaded .CSV file: {}".format(e))
             else:
+                import sys
+                for entry in persons_tasks:
+                    print >> sys.stderr, 'saving person', entry['person']
+                    entry['person'].save(force_insert=True)
+                    if entry['task']:
+                        print >> sys.stderr, 'saving task', entry['task']
+                        entry['task'].save(force_insert=True)
                 context = {'title' : 'Process CSV File',
                            'form': form, 
                            'persons_tasks': persons_tasks}
@@ -168,7 +175,7 @@ def _upload_person_task_csv(request, uploaded_file):
         person_fields = dict((col, row[col].strip()) for col in PERSON_UPLOAD_FIELDS)
         person = Person(**person_fields)
         entry = {'person': person, 'task' : None}
-        if row['event'] and row['role']:
+        if row.get('event', None) and row.get('role', None):
             try:
                 event = Event.objects.get(slug=row['event'])
                 role = Role.objects.get(name=row['role'])
@@ -182,6 +189,8 @@ def _upload_person_task_csv(request, uploaded_file):
             except Role.MultipleObjectsReturned:
                 messages.add_message(request, messages.ERROR, \
                                      'More than one role named {} exists.'.format(row['role'])) 
+        import sys
+        print >> sys.stderr, 'entry', entry
         persons_tasks.append(entry)
     return persons_tasks
 
