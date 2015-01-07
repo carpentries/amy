@@ -1,3 +1,4 @@
+import re
 import yaml
 import csv
 import requests
@@ -12,7 +13,18 @@ from django.views.generic.edit import CreateView, UpdateView
 from workshops.models import Site, Airport, Event, Person, Task, Cohort, Skill, Trainee, Badge, Award, Role
 from workshops.forms import SearchForm, InstructorsForm, PersonBulkAddForm
 from workshops.util import earth_distance
-from workshops.check import check_file
+
+from workshops.models import \
+    Airport, \
+    Award, \
+    Badge, \
+    Cohort, \
+    Event, \
+    Person, \
+    Site, \
+    Skill, \
+    Task, \
+    Trainee
 
 #------------------------------------------------------------
 
@@ -23,8 +35,10 @@ ITEMS_PER_PAGE = 25
 def index(request):
     '''Home page.'''
     upcoming_events = Event.objects.upcoming_events()
+    unpublished_events = Event.objects.unpublished_events()
     context = {'title' : None,
-               'upcoming_events' : upcoming_events}
+               'upcoming_events' : upcoming_events,
+               'unpublished_events' : unpublished_events}
     return render(request, 'workshops/index.html', context)
 
 #------------------------------------------------------------
@@ -188,7 +202,7 @@ class PersonUpdate(UpdateView):
 def all_events(request):
     '''List all events.'''
 
-    all_events = Event.objects.order_by('slug')
+    all_events = Event.objects.order_by('id')
     events = _get_pagination_items(request, all_events)
     for e in events:
         e.num_instructors = e.task_set.filter(role__name='instructor').count()
@@ -197,19 +211,20 @@ def all_events(request):
     return render(request, 'workshops/all_events.html', context)
 
 
-def event_details(request, event_slug):
+def event_details(request, event_ident):
     '''List details of a particular event.'''
-    event = Event.objects.get(slug=event_slug)
+
+    event = Event.get_by_ident(event_ident)
     tasks = Task.objects.filter(event__id=event.id).order_by('role__name')
     context = {'title' : 'Event {0}'.format(event),
                'event' : event,
                'tasks' : tasks}
     return render(request, 'workshops/event.html', context)
 
-def validate_event(request, event_slug):
+def validate_event(request, event_ident):
     '''Check the event's home page *or* the specified URL (for testing).'''
     page_url, error_messages = None, []
-    event = Event.objects.get(slug=event_slug)
+    event = Event.get_by_ident(event_ident)
     github_url = request.GET.get('url', None) # for manual override
     if github_url is None:
         github_url = event.url
@@ -225,6 +240,17 @@ def validate_event(request, event_slug):
                'page' : page_url,
                'error_messages' : error_messages}
     return render(request, 'workshops/validate_event.html', context)
+
+
+class EventCreate(CreateView):
+    model = Event
+    fields = '__all__'
+
+
+class EventUpdate(UpdateView):
+    model = Event
+    fields = '__all__'
+    pk_url_kwarg = 'event_ident'
 
 #------------------------------------------------------------
 
@@ -357,8 +383,8 @@ def instructors(request):
                     person.task_set.filter(role__name='instructor').count()
 
             # Sort by location.
-            loc = (float(form.cleaned_data['latitude']),
-                   float(form.cleaned_data['longitude']))
+            loc = (form.cleaned_data['latitude'],
+                   form.cleaned_data['longitude'])
             persons = [(earth_distance(loc, (p.airport.latitude, p.airport.longitude)), p)
                        for p in persons]
             persons.sort(
@@ -368,9 +394,6 @@ def instructors(request):
                     distance_person[1].personal,
                     distance_person[1].middle))
             persons = [x[1] for x in persons[:10]]
-
-        else:
-            pass # FIXME: error message
 
     # if a GET (or any other method) we'll create a blank form
     else:
@@ -386,7 +409,7 @@ def instructors(request):
 def search(request):
     '''Search the database by term.'''
 
-    term, sites, events = '', None, None
+    term, sites, events, persons = '', None, None, None
 
     if request.method == 'POST':
         form = SearchForm(request.POST)
@@ -401,6 +424,12 @@ def search(request):
                 events = Event.objects.filter(
                     Q(slug__contains=term) |
                     Q(notes__contains=term))
+            if form.cleaned_data['in_persons']:
+                persons = Person.objects.filter(
+                    Q(personal__contains=term) |
+                    Q(family__contains=term) |
+                    Q(email__contains=term) |
+                    Q(github__contains=term))
         else:
             pass # FIXME: error message
 
@@ -412,7 +441,8 @@ def search(request):
                'form': form,
                'term' : term,
                'sites' : sites,
-               'events' : events}
+               'events' : events,
+               'persons' : persons}
     return render(request, 'workshops/search.html', context)
 
 #------------------------------------------------------------
