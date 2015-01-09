@@ -149,13 +149,11 @@ def person_bulk_add(request):
             except csv.Error as e:
                 messages.add_message(request, messages.ERROR, "Error processing uploaded .CSV file: {}".format(e))
             else:
-                import sys
                 for entry in persons_tasks:
-                    print >> sys.stderr, 'saving person', entry['person']
-                    entry['person'].save(force_insert=True)
+                    entry['person'].save()
                     if entry['task']:
-                        print >> sys.stderr, 'saving task', entry['task']
-                        entry['task'].save(force_insert=True)
+                        entry['task'].person = entry['person'] # Because Django's ORM doesn't do this automatically.
+                        entry['task'].save()
                 context = {'title' : 'Process CSV File',
                            'form': form, 
                            'persons_tasks': persons_tasks}
@@ -180,6 +178,7 @@ def _upload_person_task_csv(request, uploaded_file):
                 event = Event.objects.get(slug=row['event'])
                 role = Role.objects.get(name=row['role'])
                 entry['task'] = Task(person=person, event=event, role=role)
+                import sys
             except Event.DoesNotExist:
                 messages.add_message(request, messages.ERROR, \
                                      'Event with slug {} does not exist.'.format(row['event']))
@@ -189,8 +188,6 @@ def _upload_person_task_csv(request, uploaded_file):
             except Role.MultipleObjectsReturned:
                 messages.add_message(request, messages.ERROR, \
                                      'More than one role named {} exists.'.format(row['role'])) 
-        import sys
-        print >> sys.stderr, 'entry', entry
         persons_tasks.append(entry)
     return persons_tasks
 
