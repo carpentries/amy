@@ -296,6 +296,7 @@ for (start, name, active, venue) in old_crs.fetchall():
         venue = site_lookup['online']
         end = select_one(old_crs, "select max(awards.awarded) from awards join trainee on awards.person=trainee.person where awards.badge='instructor' and trainee.cohort='{0}' and awards.person not in (select distinct awards.person from awards join trainee join cohort on awards.person=trainee.person and trainee.cohort=cohort.cohort where awards.badge='instructor' and cohort.startdate>'{1}');".format(name, start), None)
         slug = mangle_name(name)
+        event_lookup[slug] = event_id
         if slug == '2014-04-14-ttt-pycon':
             end = start
         reg_key = None
@@ -384,6 +385,40 @@ for (person, badge, awarded) in old_crs.fetchall():
     i += 1
 
 info('award')
+
+trainer_stuff =  [
+    ['2012-08-26-ttt-online', ['wilson.g']],
+    ['2012-10-11-ttt-online', ['wilson.g']],
+    ['2013-01-06-ttt-online', ['wilson.g']],
+    ['2013-03-12-ttt-online', ['wilson.g']],
+    ['2013-05-12-ttt-online', ['wilson.g']],
+    ['2013-08-12-ttt-online', ['wilson.g']],
+    ['2013-09-30-ttt-online', ['wilson.g']],
+    ['2014-01-16-ttt-online', ['wilson.g']],
+    ['2014-04-14-ttt-pycon', ['wilson.g']],
+    ['2014-04-24-ttt-online', ['wilson.g']],
+    ['2014-04-28-ttt-mozilla', ['wilson.g']],
+    ['2014-06-05-ttt-online', ['wilson.g']],
+    ['2014-06-11-ttt-online', ['wilson.g']],
+    ['2014-09-10-ttt-online', ['wilson.g']],
+    ['2014-09-22-ttt-uva', ['wilson.g', 'mills.b']],
+    ['2014-10-22-ttt-tgac', ['wilson.g', 'mills.b', 'pawlik.a']],
+    ['2014-11-12-ttt-washington', ['wilson.g', 'mills.b']],
+    ['2015-01-06-ttt-ucdavis', ['wilson.g', 'mills.b', 'teal.t', 'pawlik.a']],
+    ['2015-02-01-ttt-online', ['wilson.g']],
+    ['2015-04-xx-ttt-nih', ['wilson.g']],
+    ['2015-05-01-ttt-online', ['wilson.g']],
+    ['2015-09-01-ttt-online', ['wilson.g']]
+]
+instructor = select_one(new_crs, "select id from workshops_role where name='instructor';")
+for (slug, all_persons) in trainer_stuff:
+    for person in all_persons:
+        try:
+            fields = (task_id, event_lookup[slug], person_lookup[person], instructor)
+            new_crs.execute('insert into workshops_task values(?, ?, ?, ?);', fields)
+        except Exception, e:
+            fail('training instructors', fields, e)
+        task_id += 1
 
 #------------------------------------------------------------
 # Wrap up.
