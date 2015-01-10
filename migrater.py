@@ -265,6 +265,10 @@ info('award')
 
 #------------------------------------------------------------
 
+def mangle_name(name):
+    year, month, day, tag = name.split('-')
+    return '-'.join([year, month, day, 'ttt', tag])
+
 # Turn training cohorts into events.
 old_crs.execute('select startdate, cohort, active, venue from cohort;')
 cohort_lookup = {}
@@ -274,8 +278,10 @@ for (start, name, active, venue) in old_crs.fetchall():
     cohort_start[name] = start
     try:
         venue = site_lookup['online']
-        end = select_one(old_crs, "select max(awards.awarded) from awards join trainee on awards.person=trainee.person where awards.badge='instructor' and trainee.cohort='{0}';".format(name), None)
-        slug = name + '-ttt'
+        end = select_one(old_crs, "select max(awards.awarded) from awards join trainee on awards.person=trainee.person where awards.badge='instructor' and trainee.cohort='{0}' and awards.person not in (select distinct awards.person from awards join trainee join cohort on awards.person=trainee.person and trainee.cohort=cohort.cohort where awards.badge='instructor' and cohort.startdate>'{1}');".format(name, start), None)
+        slug = mangle_name(name)
+        if slug == '2014-04-14-ttt-pycon':
+            end = start
         reg_key = None
         attendance = select_one(old_crs, "select count(*) from trainee where cohort='{0}';".format(name))
         project_id = project_lookup['SWC']
@@ -285,6 +291,7 @@ for (start, name, active, venue) in old_crs.fetchall():
         published = True
         admin_fee = None
         fields = (event_id, start, end, slug, reg_key, attendance, venue, project_id, url, organizer_id, notes, published, admin_fee)
+        print >> sys.stderr, 'cohort', fields
         new_crs.execute('insert into workshops_event values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', fields)
     except Exception, e:
         fail('cohort', fields, e)
