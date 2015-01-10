@@ -46,6 +46,14 @@ def select_one(cursor, query, default='NO DEFAULT'):
         return default
     assert False, 'select_one could not find exactly one record for "{0}"'.format(query)
 
+def select_least(cursor, query):
+    cursor.execute(query)
+    results = cursor.fetchall()
+    if not results:
+        return None
+    results.sort()
+    return results[0][1]
+
 #------------------------------------------------------------
 # Setup.
 #------------------------------------------------------------
@@ -270,50 +278,6 @@ for (person, skill) in old_crs.fetchall():
 info('qualification')
 
 #------------------------------------------------------------
-# Badges and awards.
-#------------------------------------------------------------
-
-def get_badge_event(person, badge, awarded):
-    return None
-
-# Badges
-badge_stuff = (
-    ('creator',    'Creator',    'Creating learning materials and other content'),
-    ('instructor', 'Instructor', 'Teaching at workshops or online'),
-    ('member',     'Member',     'Software Carpentry Foundation member'),
-    ('organizer',  'Organizer',  'Organizing workshops and learning groups')
-)
-
-old_crs.execute('select badge, title, criteria from badges;')
-i = 1
-badge_lookup = {}
-for (badge, title, criteria) in badge_stuff:
-    try:
-        badge_lookup[badge] = i
-        fields = (i, badge, title, criteria)
-        new_crs.execute('insert into workshops_badge values(?, ?, ?, ?);', fields)
-    except Exception, e:
-        fail('badge', fields, e)
-    i += 1
-    
-info('badge')
-
-# Awards
-new_crs.execute('delete from workshops_award;')
-old_crs.execute('select person, badge, awarded from awards;')
-i = 1
-for (person, badge, awarded) in old_crs.fetchall():
-    try:
-        event = get_badge_event(person, badge, awarded)
-        fields = (i, awarded, badge_lookup[badge], person_lookup[person], event)
-        new_crs.execute('insert into workshops_award values(?, ?, ?, ?, ?);', fields)
-    except Exception, e:
-        fail('award', fields, e)
-    i += 1
-
-info('award')
-
-#------------------------------------------------------------
 # Instructor training (turned into events and tasks).
 #------------------------------------------------------------
 
@@ -362,6 +326,64 @@ for (person, cohort, status) in old_crs.fetchall():
     task_id += 1
 
 info('trainee')
+
+#------------------------------------------------------------
+# Badges and awards.
+#------------------------------------------------------------
+
+def get_badge_event(cursor, person, badge, lookups):
+
+    # Creator and member are simply awarded.
+    if badge in ('creator', 'member'):
+        return None
+
+    # First event for which this person was an organizer.
+    if badge == 'organizer':
+        key = select_least(cursor, "select event.startdate, event.event from event join task on event.event=task.event where task.task='organizer' and task.person='{0}';".format(person))
+        return lookups[badge].get(key, None)
+
+    if badge == 'instructor':
+        key = select_least(cursor, "select cohort.startdate, cohort.cohort from cohort join trainee on cohort.cohort=trainee.cohort where trainee.person='{0}';".format(person))
+        return lookups[badge].get(key, None)
+
+    assert False, 'unknown badge type "{0}"'.format(badge)
+
+# Badges
+badge_stuff = (
+    ('creator',    'Creator',    'Creating learning materials and other content'),
+    ('instructor', 'Instructor', 'Teaching at workshops or online'),
+    ('member',     'Member',     'Software Carpentry Foundation member'),
+    ('organizer',  'Organizer',  'Organizing workshops and learning groups')
+)
+
+old_crs.execute('select badge, title, criteria from badges;')
+i = 1
+badge_lookup = {}
+for (badge, title, criteria) in badge_stuff:
+    try:
+        badge_lookup[badge] = i
+        fields = (i, badge, title, criteria)
+        new_crs.execute('insert into workshops_badge values(?, ?, ?, ?);', fields)
+    except Exception, e:
+        fail('badge', fields, e)
+    i += 1
+    
+info('badge')
+
+# Awards
+new_crs.execute('delete from workshops_award;')
+old_crs.execute('select person, badge, awarded from awards;')
+i = 1
+for (person, badge, awarded) in old_crs.fetchall():
+    try:
+        event = get_badge_event(old_crs, person, badge, {'organizer' : event_lookup, 'instructor' : cohort_lookup})
+        fields = (i, awarded, badge_lookup[badge], person_lookup[person], event)
+        new_crs.execute('insert into workshops_award values(?, ?, ?, ?, ?);', fields)
+    except Exception, e:
+        fail('award', fields, e)
+    i += 1
+
+info('award')
 
 #------------------------------------------------------------
 # Wrap up.
