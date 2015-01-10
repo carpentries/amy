@@ -192,14 +192,14 @@ info('roles')
 # Tasks
 new_crs.execute('delete from workshops_task;')
 old_crs.execute('select event, person, task from task;')
-i = 1
+task_id = 1
 for (event, person, task) in old_crs.fetchall():
     try:
-        fields = (i, event_lookup[event], person_lookup[person], role_lookup[task])
+        fields = (task_id, event_lookup[event], person_lookup[person], role_lookup[task])
         new_crs.execute('insert into workshops_task values(?, ?, ?, ?);', fields)
     except Exception, e:
         fail('task', fields, e)
-    i += 1
+    task_id += 1
 
 info('task')
 
@@ -291,13 +291,25 @@ for (start, name, active, venue) in old_crs.fetchall():
         published = True
         admin_fee = None
         fields = (event_id, start, end, slug, reg_key, attendance, venue, project_id, url, organizer_id, notes, published, admin_fee)
-        print >> sys.stderr, 'cohort', fields
         new_crs.execute('insert into workshops_event values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', fields)
     except Exception, e:
         fail('cohort', fields, e)
     event_id += 1
 
 info('cohort')
+
+# Turning trainees into tasks.
+old_crs.execute('select person, cohort, status from trainee;')
+learner = select_one(new_crs, "select id from workshops_role where name='learner';")
+for (person, cohort, status) in old_crs.fetchall():
+    try:
+        fields = (task_id, cohort_lookup[cohort], person_lookup[person], learner)
+        new_crs.execute('insert into workshops_task values(?, ?, ?, ?);', fields)
+    except Exception, e:
+        fail('trainee', fields, e)
+    task_id += 1
+
+info('trainee')
 
 # Commit all changes.
 new_cnx.commit()
