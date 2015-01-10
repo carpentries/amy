@@ -8,24 +8,30 @@
 
 {% block content %}
 {% if all_airports %}
-    <table class="table table-striped">
-        <tr>
-	    <th>IATA</th>
-	    <th>full name</th>
-	    <th>latitude</th>
-	    <th>longitude</th>
-	</tr>
-    {% for airport in all_airports %}
-        <tr>
-            <td>{{ airport.iata }}</td>
-            <td><a href="{% url 'airport_details' airport.iata %}">{{ airport.fullname }}</a></td>
-            <td>{{ airport.latitude }}</td>
-            <td>{{ airport.longitude }}</td>
-	</tr>
-    {% endfor %}
-    </table>
+
+<table id="sortable_table">
+  <thead>
+    <tr>
+      <th>IATA</th>
+      <th>full name</th>
+      <th>latitude</th>
+      <th>longitude</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for airport in all_airports %}
+    <tr>
+      <td>{{ airport.iata }}</td>
+      <td><a href="{% url 'airport_details' airport.iata %}">{{ airport.fullname }}</a></td>
+      <td>{{ airport.latitude }}</td>
+      <td>{{ airport.longitude }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
 {% else %}
-    <p>No airports.</p>
+  <p>No airports.</p>
 {% endif %}
+
 <p class="add-new"><a href="{% url 'airport_add' %}">Add a new airport</a></p>
 {% endblock %}
