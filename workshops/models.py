@@ -328,6 +328,7 @@ class Award(models.Model):
     person     = models.ForeignKey(Person)
     badge      = models.ForeignKey(Badge)
     awarded    = models.DateField()
+    event      = models.ForeignKey(Event, null=True, blank=True)
 
     def __str__(self):
-        return '{0}/{1}/{2}'.format(self.person, self.badge, self.awarded)
+        return '{0}/{1}/{2}/{3}'.format(self.person, self.badge, self.awarded, self.event)

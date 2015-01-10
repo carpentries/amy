@@ -255,8 +255,8 @@ old_crs.execute('select person, badge, awarded from awards;')
 i = 1
 for (person, badge, awarded) in old_crs.fetchall():
     try:
-        fields = (i, awarded, badge_lookup[badge], person_lookup[person])
-        new_crs.execute('insert into workshops_award values(?, ?, ?, ?);', fields)
+        fields = (i, awarded, badge_lookup[badge], person_lookup[person], None)
+        new_crs.execute('insert into workshops_award values(?, ?, ?, ?, ?);', fields)
     except Exception, e:
         fail('award', fields, e)
     i += 1
