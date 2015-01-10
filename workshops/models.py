@@ -289,45 +289,6 @@ class Task(models.Model):
 
 #------------------------------------------------------------
 
-class Cohort(models.Model):
-    '''Represent a training cohort.'''
-
-    start      = models.DateField()
-    name       = models.CharField(max_length=STR_MED)
-    active     = models.BooleanField(default=True)
-    venue      = models.ForeignKey(Site, null=True) # null for online
-    qualifies  = models.BooleanField(default=True)
-
-    def __str__(self):
-        return self.name
-
-    def get_absolute_url(self):
-        return reverse('cohort_details', args=[str(self.name)])
-
-#------------------------------------------------------------
-
-class TraineeStatus(models.Model):
-    '''Enumerate states that a trainee can be in.'''
-
-    name       = models.CharField(max_length=STR_MED)
-
-    def __str__(self):
-        return self.name
-
-#------------------------------------------------------------
-
-class Trainee(models.Model):
-    '''Represent someone taking the instructor training course.'''
-
-    person     = models.ForeignKey(Person)
-    cohort     = models.ForeignKey(Cohort)
-    status     = models.ForeignKey(TraineeStatus)
-
-    def __str__(self):
-        return '{0}/{1}: {2}'.format(self.person, self.cohort, self.status.name)
-
-#------------------------------------------------------------
-
 class Skill(models.Model):
     '''Represent a skill someone might teach.'''
 

@@ -17,13 +17,11 @@ from workshops.models import \
     Airport, \
     Award, \
     Badge, \
-    Cohort, \
     Event, \
     Person, \
     Site, \
     Skill, \
-    Task, \
-    Trainee
+    Task
 
 #------------------------------------------------------------
 
@@ -246,42 +244,6 @@ class TaskUpdate(UpdateView):
         role_name = self.kwargs.get('role_name', None)
 
         return get_object_or_404(Task, event__slug=event_slug, person__id=person_id, role__name=role_name)
-
-#------------------------------------------------------------
-
-COHORT_FIELDS = ['name', 'start', 'active', 'venue', 'qualifies']
-
-
-def all_cohorts(request):
-    '''List all cohorts.'''
-    all_cohorts = Cohort.objects.order_by('start')
-    user_can_add = request.user.has_perm('edit')
-    context = {'title' : 'All Cohorts',
-               'all_cohorts' : all_cohorts,
-               'user_can_add' : user_can_add}
-    return render(request, 'workshops/all_cohorts.html', context)
-
-
-def cohort_details(request, cohort_name):
-    '''List details of a particular cohort.'''
-    cohort = Cohort.objects.get(name=cohort_name)
-    trainees = Trainee.objects.filter(cohort_id=cohort.id)
-    context = {'title' : 'Cohort {0}'.format(cohort),
-               'cohort' : cohort,
-               'trainees' : trainees}
-    return render(request, 'workshops/cohort.html', context)
-
-
-class CohortCreate(CreateView):
-    model = Cohort
-    fields = COHORT_FIELDS
-
-
-class CohortUpdate(UpdateView):
-    model = Cohort
-    fields = COHORT_FIELDS
-    slug_field = 'name'
-    slug_url_kwarg = 'cohort_name'
 
 #------------------------------------------------------------
 
