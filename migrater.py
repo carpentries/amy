@@ -6,6 +6,10 @@ import sys
 # Faking data?
 FAKE = True
 
+#------------------------------------------------------------
+# Utilities.
+#------------------------------------------------------------
+
 def fail(table, fields, exc):
     '''Report failure.'''
     logging.error("Failing on {table} with {fields} because {error}".format(
@@ -42,12 +46,20 @@ def select_one(cursor, query, default='NO DEFAULT'):
         return default
     assert False, 'select_one could not find exactly one record for "{0}"'.format(query)
 
+#------------------------------------------------------------
+# Setup.
+#------------------------------------------------------------
+
 assert len(sys.argv) == 3, 'Usage: migrater.py /path/to/src.db /path/to/dst.db'
 
 old_cnx = sqlite3.connect(sys.argv[1])
 old_crs = old_cnx.cursor()
 new_cnx = sqlite3.connect(sys.argv[2])
 new_crs = new_cnx.cursor()
+
+#------------------------------------------------------------
+# Sites.
+#------------------------------------------------------------
 
 # Site
 new_crs.execute('delete from workshops_site;')
@@ -65,6 +77,10 @@ for (site, fullname, country) in old_crs.fetchall():
 
 info('site')
 
+#------------------------------------------------------------
+# Airports.
+#------------------------------------------------------------
+
 # Airport
 new_crs.execute('delete from workshops_airport;')
 old_crs.execute('select fullname, country, latitude, longitude, iata from airport;')
@@ -80,6 +96,10 @@ for (fullname, country, lat, long, iata) in old_crs.fetchall():
     i += 1
 
 info('airport')
+
+#------------------------------------------------------------
+# Persons.
+#------------------------------------------------------------
 
 # load Facts for lookup in Person
 old_crs.execute('select person, gender, active, airport, github, twitter, site from facts;')
@@ -114,6 +134,10 @@ for (person, personal, middle, family, email) in old_crs.fetchall():
 
 info('person')
 
+#------------------------------------------------------------
+# Projects (kinds of events).
+#------------------------------------------------------------
+
 # Project (kinds of event)
 new_crs.execute('delete from workshops_project;')
 i = 1
@@ -131,6 +155,10 @@ for (slug, name, details) in (('SWC', 'Software Carpentry', 'General Software Ca
     i += 1
 
 info('project')
+
+#------------------------------------------------------------
+# Events.
+#------------------------------------------------------------
 
 # Event
 new_crs.execute('delete from workshops_event;')
@@ -174,6 +202,10 @@ for r in records:
 
 info('unpublished events')
 
+#------------------------------------------------------------
+# Tasks.
+#------------------------------------------------------------
+
 # Roles
 new_crs.execute('delete from workshops_role;')
 i = 1
@@ -202,6 +234,10 @@ for (event, person, task) in old_crs.fetchall():
     task_id += 1
 
 info('task')
+
+#------------------------------------------------------------
+# Instructor qualifications.
+#------------------------------------------------------------
 
 # Skills
 new_crs.execute('delete from workshops_skill;')
@@ -233,20 +269,33 @@ for (person, skill) in old_crs.fetchall():
 
 info('qualification')
 
+#------------------------------------------------------------
+# Badges and awards.
+#------------------------------------------------------------
+
+def get_badge_event(person, badge, awarded):
+    return None
+
 # Badges
-new_crs.execute('delete from workshops_badge;')
+badge_stuff = (
+    ('creator',    'Creator',    'Creating learning materials and other content'),
+    ('instructor', 'Instructor', 'Teaching at workshops or online'),
+    ('member',     'Member',     'Software Carpentry Foundation member'),
+    ('organizer',  'Organizer',  'Organizing workshops and learning groups')
+)
+
 old_crs.execute('select badge, title, criteria from badges;')
 i = 1
 badge_lookup = {}
-for (badge, title, criteria) in old_crs.fetchall():
-    badge_lookup[badge] = i
+for (badge, title, criteria) in badge_stuff:
     try:
+        badge_lookup[badge] = i
         fields = (i, badge, title, criteria)
         new_crs.execute('insert into workshops_badge values(?, ?, ?, ?);', fields)
     except Exception, e:
         fail('badge', fields, e)
     i += 1
-
+    
 info('badge')
 
 # Awards
@@ -255,7 +304,8 @@ old_crs.execute('select person, badge, awarded from awards;')
 i = 1
 for (person, badge, awarded) in old_crs.fetchall():
     try:
-        fields = (i, awarded, badge_lookup[badge], person_lookup[person], None)
+        event = get_badge_event(person, badge, awarded)
+        fields = (i, awarded, badge_lookup[badge], person_lookup[person], event)
         new_crs.execute('insert into workshops_award values(?, ?, ?, ?, ?);', fields)
     except Exception, e:
         fail('award', fields, e)
@@ -263,6 +313,8 @@ for (person, badge, awarded) in old_crs.fetchall():
 
 info('award')
 
+#------------------------------------------------------------
+# Instructor training (turned into events and tasks).
 #------------------------------------------------------------
 
 def mangle_name(name):
@@ -310,6 +362,10 @@ for (person, cohort, status) in old_crs.fetchall():
     task_id += 1
 
 info('trainee')
+
+#------------------------------------------------------------
+# Wrap up.
+#------------------------------------------------------------
 
 # Commit all changes.
 new_cnx.commit()
