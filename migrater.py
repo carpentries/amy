@@ -14,7 +14,7 @@ def fail(table, fields, exc):
 
 
 def info(table):
-    '''Report successful migration of given table.'''
+    '''Report successful migration of given table, and commit.'''
     logging.info("Successfully migrated '{table}' table".format(table=table))
 
 
@@ -32,6 +32,15 @@ def fake(i, slug, personal, middle, family, email, gender, github, twitter, url)
            'U_{0}'.format(i), \
            '@U{0}'.format(i), \
            'http://{0}/U_{1}'.format(where, i)
+
+def select_one(cursor, query, default='NO DEFAULT'):
+    cursor.execute(query)
+    result = cursor.fetchall()
+    if result and (len(result) == 1):
+        return result[0][0]
+    if default != 'NO DEFAULT':
+        return default
+    assert False, 'select_one could not find exactly one record for "{0}"'.format(query)
 
 assert len(sys.argv) == 3, 'Usage: migrater.py /path/to/src.db /path/to/dst.db'
 
@@ -127,25 +136,25 @@ info('project')
 new_crs.execute('delete from workshops_event;')
 old_crs.execute('select startdate, enddate, event, site, kind, eventbrite, attendance, url from event;')
 event_lookup = {}
-i = 1
+event_id = 1
 for (startdate, enddate, event, site, kind, eventbrite, attendance, url) in old_crs.fetchall():
     event_lookup[event] = i
     try:
-        fields = (i, startdate, enddate, event, eventbrite, attendance, site_lookup[site], project_lookup[kind], url, None, '', True, 0.0)
+        fields = (event_id, startdate, enddate, event, eventbrite, attendance, site_lookup[site], project_lookup[kind], url, None, '', True, 0.0)
         new_crs.execute('insert into workshops_event values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', fields)
     except Exception, e:
         fail('event', fields, e)
-    i += 1
+    event_id += 1
 
 info('event')
 
 # Add some unpublished events for testing purposes.
-new_crs.execute('select * from workshops_event where (id>=?) and (id<=?);', ((i-10), (i-5)))
+new_crs.execute('select * from workshops_event where (id>=?) and (id<?);', ((event_id-10), (event_id-5)))
 records = new_crs.fetchall()
 for r in records:
     try:
         r = list(r)
-        r[0] = i # move on to next record
+        r[0] = event_id # move on to next record
         r[1] = None # no start date
         r[2] = None # so no end date
         r[3] = None # which means no slug
@@ -161,7 +170,9 @@ for r in records:
         new_crs.execute('insert into workshops_event values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', r)
     except Exception, e:
         fail('event', fields, e)
-    i += 1
+    event_id += 1
+
+info('unpublished events')
 
 # Roles
 new_crs.execute('delete from workshops_role;')
@@ -252,5 +263,34 @@ for (person, badge, awarded) in old_crs.fetchall():
 
 info('award')
 
-# Finish
+#------------------------------------------------------------
+
+# Turn training cohorts into events.
+old_crs.execute('select startdate, cohort, active, venue from cohort;')
+cohort_lookup = {}
+cohort_start = {}
+for (start, name, active, venue) in old_crs.fetchall():
+    cohort_lookup[name] = event_id
+    cohort_start[name] = start
+    try:
+        venue = site_lookup['online']
+        end = select_one(old_crs, "select max(awards.awarded) from awards join trainee on awards.person=trainee.person where awards.badge='instructor' and trainee.cohort='{0}';".format(name), None)
+        slug = name + '-ttt'
+        reg_key = None
+        attendance = select_one(old_crs, "select count(*) from trainee where cohort='{0}';".format(name))
+        project_id = project_lookup['SWC']
+        url = None # FIXME
+        organizer_id = site_lookup['software-carpentry.org']
+        notes = ""
+        published = True
+        admin_fee = None
+        fields = (event_id, start, end, slug, reg_key, attendance, venue, project_id, url, organizer_id, notes, published, admin_fee)
+        new_crs.execute('insert into workshops_event values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', fields)
+    except Exception, e:
+        fail('cohort', fields, e)
+    event_id += 1
+
+info('cohort')
+
+# Commit all changes.
 new_cnx.commit()
