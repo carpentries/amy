@@ -1,16 +1,17 @@
 import re
 import yaml
+import csv
 import requests
 
+from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
 from django.db.models import Count, Q
-from django.http import HttpResponseRedirect
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import redirect, render, get_object_or_404
 from django.views.generic.edit import CreateView, UpdateView
 
-from workshops.check import check_file
-from workshops.forms import InstructorsForm, SearchForm
+from workshops.models import Site, Airport, Event, Person, Task, Cohort, Skill, Trainee, Badge, Award, Role
+from workshops.forms import SearchForm, InstructorsForm, PersonBulkAddForm
 from workshops.util import earth_distance
 
 from workshops.models import \
@@ -114,6 +115,9 @@ class AirportUpdate(UpdateView):
 
 #------------------------------------------------------------
 
+PERSON_UPLOAD_FIELDS = ['personal', 'middle', 'family', 'email']
+PERSON_TASK_UPLOAD_FIELDS = PERSON_UPLOAD_FIELDS + ['event', 'role']
+
 def all_persons(request):
     '''List all persons.'''
 
@@ -136,6 +140,58 @@ def person_details(request, person_id):
     return render(request, 'workshops/person.html', context)
 
 
+def person_bulk_add(request):
+    if request.method == 'POST':
+        form = PersonBulkAddForm(request.POST, request.FILES)
+        if form.is_valid():
+            try:
+                persons_tasks = _upload_person_task_csv(request, request.FILES['file'])
+            except csv.Error as e:
+                messages.add_message(request, messages.ERROR, "Error processing uploaded .CSV file: {}".format(e))
+            else:
+                for entry in persons_tasks:
+                    entry['person'].save()
+                    if entry['task']:
+                        entry['task'].person = entry['person'] # Because Django's ORM doesn't do this automatically.
+                        entry['task'].save()
+                context = {'title' : 'Process CSV File',
+                           'form': form, 
+                           'persons_tasks': persons_tasks}
+                return render(request, 'workshops/person_bulk_add_results.html', context)
+    else:
+        form = PersonBulkAddForm()
+
+    context = {'title' : 'Bulk Add People',
+               'form': form}
+    return render(request, 'workshops/person_bulk_add_form.html', context)
+
+
+def _upload_person_task_csv(request, uploaded_file):
+    persons_tasks = []
+    reader = csv.DictReader(uploaded_file)
+    for row in reader:
+        person_fields = dict((col, row[col].strip()) for col in PERSON_UPLOAD_FIELDS)
+        person = Person(**person_fields)
+        entry = {'person': person, 'task' : None}
+        if row.get('event', None) and row.get('role', None):
+            try:
+                event = Event.objects.get(slug=row['event'])
+                role = Role.objects.get(name=row['role'])
+                entry['task'] = Task(person=person, event=event, role=role)
+                import sys
+            except Event.DoesNotExist:
+                messages.add_message(request, messages.ERROR, \
+                                     'Event with slug {} does not exist.'.format(row['event']))
+            except Role.DoesNotExist:
+                messages.add_message(request, messages.ERROR, \
+                                     'Role with name {} does not exist.'.format(row['role'])) 
+            except Role.MultipleObjectsReturned:
+                messages.add_message(request, messages.ERROR, \
+                                     'More than one role named {} exists.'.format(row['role'])) 
+        persons_tasks.append(entry)
+    return persons_tasks
+
+
 class PersonCreate(CreateView):
     model = Person
     fields = '__all__'
@@ -145,6 +201,7 @@ class PersonUpdate(UpdateView):
     model = Person
     fields = '__all__'
     pk_url_kwarg = 'person_id'
+
 
 #------------------------------------------------------------
 
@@ -358,7 +415,7 @@ def instructors(request):
 def search(request):
     '''Search the database by term.'''
 
-    term, sites, events = '', None, None
+    term, sites, events, persons = '', None, None, None
 
     if request.method == 'POST':
         form = SearchForm(request.POST)
@@ -373,6 +430,12 @@ def search(request):
                 events = Event.objects.filter(
                     Q(slug__contains=term) |
                     Q(notes__contains=term))
+            if form.cleaned_data['in_persons']:
+                persons = Person.objects.filter(
+                    Q(personal__contains=term) |
+                    Q(family__contains=term) |
+                    Q(email__contains=term) |
+                    Q(github__contains=term))
         else:
             pass # FIXME: error message
 
@@ -384,7 +447,8 @@ def search(request):
                'form': form,
                'term' : term,
                'sites' : sites,
-               'events' : events}
+               'events' : events,
+               'persons' : persons}
     return render(request, 'workshops/search.html', context)
 
 #------------------------------------------------------------

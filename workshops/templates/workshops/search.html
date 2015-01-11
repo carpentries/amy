@@ -33,4 +33,13 @@
 </ul>
 {% endif %}
 
+<h2>Persons</h2>
+{% if persons %}
+<ul>
+  {% for p in persons %}
+  <li><a href="{% url 'person_details' p.id %}">{{ p }}</a></li>
+  {% endfor %}
+</ul>
+{% endif %}
+
 {% endblock %}
