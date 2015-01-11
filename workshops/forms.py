@@ -64,3 +64,6 @@ class SearchForm(forms.Form):
     in_events = forms.BooleanField(label='in events',
                                    required=False,
                                    initial=True)
+    in_persons = forms.BooleanField(label='in persons',
+                                    required=False,
+                                    initial=True)

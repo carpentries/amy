@@ -358,7 +358,7 @@ def instructors(request):
 def search(request):
     '''Search the database by term.'''
 
-    term, sites, events = '', None, None
+    term, sites, events, persons = '', None, None, None
 
     if request.method == 'POST':
         form = SearchForm(request.POST)
@@ -373,6 +373,11 @@ def search(request):
                 events = Event.objects.filter(
                     Q(slug__contains=term) |
                     Q(notes__contains=term))
+            if form.cleaned_data['in_persons']:
+                persons = Person.objects.filter(
+                    Q(slug__contains=term) |
+                    Q(personal__contains=term) |
+                    Q(family__contains=term))
         else:
             pass # FIXME: error message
 
@@ -384,7 +389,8 @@ def search(request):
                'form': form,
                'term' : term,
                'sites' : sites,
-               'events' : events}
+               'events' : events,
+               'persons' : persons}
     return render(request, 'workshops/search.html', context)
 
 #------------------------------------------------------------
