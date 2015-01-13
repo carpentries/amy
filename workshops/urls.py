@@ -44,4 +44,6 @@ urlpatterns = [
     url(r'^search/?$', views.search, name='search'),
 
     url(r'^export/(?P<name>[\w\.-]+)/?$', views.export, name='export'),
+
+    url(r'^stats/(?P<name>[\w\.-]+)/?$', views.stats, name='stats'),
 ]

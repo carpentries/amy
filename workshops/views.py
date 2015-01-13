@@ -487,6 +487,14 @@ def export(request, name):
 
 #------------------------------------------------------------
 
+def stats(request, name):
+    '''Display statistics.'''
+    context = {'title' : name,
+               'chart_url' : reverse('chart', args=[name])
+    return render(request, 'workshops/stats.html', context)
+
+#------------------------------------------------------------
+
 def _get_pagination_items(request, all_objects):
     '''Select paginated items.'''
 

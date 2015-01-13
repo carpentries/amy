@@ -1,0 +1,13 @@
+{% extends "workshops/_page.html" %}
+
+{% load breadcrumbs %}
+{% block breadcrumbs %}
+    {% breadcrumb_url 'Amy' 'index'  %}
+    {% breadcrumb_active 'Stats'  %}
+{% endblock %}
+
+{% block content %}
+<p>
+  <img src="{{chart_url}}" alt="{{title}}" />
+</p>
+{% endblock %}
