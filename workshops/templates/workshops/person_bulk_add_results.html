@@ -15,6 +15,11 @@
     {% endfor %}
 </ul>
 {% endif %}
+
+<!--<div class="alert alert-info" role="alert">
+<strong>Hint:</strong> you can edit values by double-clicking in the table cells
+</div>-->
+
 <table class="table table-striped">
     <tr>
         <th>personal</th>
@@ -57,6 +62,7 @@
     {% endcomment %}
     <input type="submit" name="confirm" value="Confirm and save" class="btn btn-success">
     <input type="submit" name="cancel" value="No, cancel" class="btn btn-default">
+    <input type="submit" name="verify" value="Verify" class="btn btn-default pull-right">
     {% csrf_token %}
 </form>
 

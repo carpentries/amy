@@ -179,9 +179,22 @@ def person_bulk_add_confirmation(request):
         raise Http404
 
     if request.method == 'POST':
-        # check if user wants to save or cancel
+        # check if user wants to verify or save, or cancel
 
-        if (request.POST.get('confirm', None) and
+        if request.POST.get('verify', None):
+            # if there's "verify" in POST, then do only verification
+            any_errors = _verify_upload_person_task(persons_tasks)
+            if any_errors:
+                messages.add_message(request, messages.ERROR,
+                                     "Please make sure to fix all errors "
+                                     "listed below.")
+
+            context = {'title': 'Confirm uploaded data',
+                       'persons_tasks': persons_tasks}
+            return render(request, 'workshops/person_bulk_add_results.html',
+                          context)
+
+        elif (request.POST.get('confirm', None) and
                 not request.POST.get('cancel', None)):
             # there must be "confirm" and no "cancel" in POST in order to save
 
@@ -209,7 +222,7 @@ def person_bulk_add_confirmation(request):
                 messages.add_message(request, messages.ERROR,
                                      "Error saving data to the database: {}. "
                                      "Please make sure to fix all errors "
-                                     "below.".format(e))
+                                     "listed below.".format(e))
                 context = {'title': 'Confirm uploaded data',
                            'persons_tasks': persons_tasks}
                 return render(request,
@@ -265,6 +278,8 @@ def _verify_upload_person_task(data):
     here don't need to be returned via ``return`` statement.
     """
 
+    errors_occur = False
+
     for item in data:
         event, role = item.get('event', None), item.get('role', None)
         email = item['person'].get('email', None)
@@ -297,6 +312,11 @@ def _verify_upload_person_task(data):
         if errors:
             # copy the errors just to be safe
             item['errors'] = errors[:]
+            if not errors_occur:
+                errors_occur = True
+
+    # indicate there were some errors
+    return errors_occur
 
 
 class PersonCreate(CreateView):
