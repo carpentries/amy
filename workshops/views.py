@@ -188,7 +188,7 @@ def all_persons(request):
       {"title": "Middle"},
       {"title": "Last"},
       {"title": "Email"},
-      {"title": " "},
+      {"title": " ", "orderable": False},
       {"title": "HIDDEN_COL_URL", "visible": False, "searchable": False}
     ]
     user_can_add = request.user.has_perm('edit')
@@ -333,7 +333,7 @@ def all_tasks(request):
      {"title": "Event"},
      {"title": "Person"},
      {"title": "Role"},
-     {"title": " "}
+     {"title": " ", "orderable": False}
     ]
 
     user_can_add = request.user.has_perm('edit')
