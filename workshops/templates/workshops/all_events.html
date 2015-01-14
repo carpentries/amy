@@ -63,20 +63,6 @@
                "render": function ( data, type, row ) {
                   return '<a href="' + row[11] + '">' + data + '</a>'
                }
-             },
-             {
-               // The 11th column contains the URL for the event.  Hide this
-               // column from the user as it is only used to render other cols
-               "targets": 10,
-               "visible": false,
-               "searchable": false
-             },
-             {
-               // The 12th column contains the URL for the site.  Hide this
-               // column from the user as it is only used to render other cols
-               "targets": 11,
-               "visible": false,
-               "searchable": false
              }
            ],
          })

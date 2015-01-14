@@ -87,7 +87,7 @@ def all_sites(request):
       {"title": "Full name"},
       {"title": "Domain"},
       {"title": "Notes"},
-      {"title": "HIDDEN_COL_URL"},
+      {"title": "HIDDEN_COL_URL", "visible": False, "searchable": False},
     ]
     user_can_add = request.user.has_perm('edit')
     context = {'title' : 'All Sites',
@@ -140,7 +140,7 @@ def all_airports(request):
       {"title": "Country"},
       {"title": "Latitude"},
       {"title": "Longitude"},
-      {"title": "HIDDEN_COL_URL"}
+      {"title": "HIDDEN_COL_URL", "visible": False, "searchable": False}
     ]
 
     user_can_add = request.user.has_perm('edit')
@@ -189,7 +189,7 @@ def all_persons(request):
       {"title": "Last"},
       {"title": "Email"},
       {"title": " "},
-      {"title": "HIDDEN_COL_URL"}
+      {"title": "HIDDEN_COL_URL", "visible": False, "searchable": False}
     ]
     user_can_add = request.user.has_perm('edit')
     context = {'title' : 'All Persons',
@@ -264,8 +264,8 @@ def all_events(request):
         {"title": "dates"},
         {"title": "Eventbrite"},
         {"title": "attendance"},
-        {"title": "HIDDEN_URL_SITE"},
-        {"title": "HIDDEN_URL_DOMAIN"},
+        {"title": "HIDDEN_URL_SITE", "visible": False, "searchable": False},
+        {"title": "HIDDEN_URL_DOMAIN",  "visible": False, "searchable": False},
     ]
 
     context = {'title' : 'All Events',
@@ -391,7 +391,7 @@ def all_cohorts(request):
     columns= [
       {"title": "Name"},
       {"title": "Start Date"},
-      {"title": "HIDDEN_COL_URL"}
+      {"title": "HIDDEN_COL_URL", "visible": False, "searchable": False}
     ]
     user_can_add = request.user.has_perm('edit')
     context = {'title' : 'All Cohorts',
@@ -442,7 +442,7 @@ def all_badges(request):
       {"title": "Title"},
       {"title": "Criteria"},
       {"title": "Num. Awarded"},
-      {"title": "HIDDEN_COL_URL"}
+      {"title": "HIDDEN_COL_URL", "visible": False, "searchable": False}
     ]
 
     user_can_add = request.user.has_perm('edit')
