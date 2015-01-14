@@ -6,6 +6,9 @@ import requests
 from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
+from django.core.exceptions import ObjectDoesNotExist
+from django.http import Http404
+from django.db import IntegrityError, transaction
 from django.db.models import Count, Q
 from django.shortcuts import redirect, render, get_object_or_404
 from django.views.generic.edit import CreateView, UpdateView
@@ -171,12 +174,68 @@ def person_bulk_add(request):
 def person_bulk_add_confirmation(request):
     persons_tasks = request.session['bulk-add-people']
 
-    # alters persons_tasks via reference
-    _verify_upload_person_task(persons_tasks)
+    # if the session is empty, don't bother
+    if not persons_tasks:
+        raise Http404
 
-    context = {'title': 'Confirm uploaded data',
-               'persons_tasks': persons_tasks}
-    return render(request, 'workshops/person_bulk_add_results.html', context)
+    if request.method == 'POST':
+        # check if user wants to save or cancel
+
+        if (request.POST.get('confirm', None) and
+                not request.POST.get('cancel', None)):
+            # there must be "confirm" and no "cancel" in POST in order to save
+
+            # TODO: update values if user wants to change them
+            _verify_upload_person_task(persons_tasks)
+
+            try:
+                records = 0
+                with transaction.atomic():
+                    for row in persons_tasks:
+                        # create person
+                        p = Person(**row['person'])
+                        p.save()
+                        records += 1
+
+                        # create task if data supplied
+                        if row['event'] and row['role']:
+                            e = Event.objects.get(slug=row['event'])
+                            r = Role.objects.get(name=row['role'])
+                            t = Task(person=p, event=e, role=r)
+                            t.save()
+                            records += 1
+
+            except (IntegrityError, ObjectDoesNotExist) as e:
+                messages.add_message(request, messages.ERROR,
+                                     "Error saving data to the database: {}. "
+                                     "Please make sure to fix all errors "
+                                     "below.".format(e))
+                context = {'title': 'Confirm uploaded data',
+                           'persons_tasks': persons_tasks}
+                return render(request,
+                              'workshops/person_bulk_add_results.html',
+                              context)
+
+            else:
+                request.session['bulk-add-people'] = None
+                messages.add_message(request, messages.SUCCESS,
+                                     "Successfully bulk-loaded {} records."
+                                     .format(records))
+                return redirect('person_bulk_add')
+
+        else:
+            # any "cancel" or no "confirm" in POST cancels the upload
+            request.session['bulk-add-people'] = None
+            return redirect('person_bulk_add')
+
+    else:
+        # alters persons_tasks via reference
+        _verify_upload_person_task(persons_tasks)
+
+        context = {'title': 'Confirm uploaded data',
+                   'persons_tasks': persons_tasks}
+        return render(request, 'workshops/person_bulk_add_results.html',
+                      context)
 
 
 def _upload_person_task_csv(request, uploaded_file):

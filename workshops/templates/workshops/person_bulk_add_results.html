@@ -48,4 +48,16 @@
     {% endfor %}
 </table>
 
+<form method="POST">
+    {% comment %}
+    This feels a little bit like cheating, but I don't have any better idea
+    how to distinguish between confirmation and cancelation.
+    The important implication of this approach is that the fields' names must
+    stay the way they're now: "confirm" and "cancel".  Values can change.
+    {% endcomment %}
+    <input type="submit" name="confirm" value="Confirm and save" class="btn btn-success">
+    <input type="submit" name="cancel" value="No, cancel" class="btn btn-default">
+    {% csrf_token %}
+</form>
+
 {% endblock %}
