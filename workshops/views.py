@@ -267,6 +267,8 @@ def _verify_upload_person_task(data):
 
     for item in data:
         event, role = item.get('event', None), item.get('role', None)
+        email = item['person'].get('email', None)
+
         errors = []
         if event:
             try:
@@ -282,6 +284,15 @@ def _verify_upload_person_task(data):
             except Role.MultipleObjectsReturned:
                 errors.append('More than one role named {} exists.'
                               .format(role))
+
+        if email:
+            try:
+                Person.objects.get(email=email)
+                errors.append("User with email {} already exists."
+                              .format(email))
+            except Person.DoesNotExist:
+                # we want the email to be unique
+                pass
 
         if errors:
             # copy the errors just to be safe
