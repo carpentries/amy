@@ -7,40 +7,32 @@
 {% endblock %}
 
 {% block content %}
-{% if all_tasks %}
-    <table class="table table-striped">
-        <tr>
-	    <th>event</th>
-	    <th>person</th>
-	    <th>role</th>
-	    <td></td>
-	</tr>
-    {% for task in all_tasks %}
-        <tr>
-            <td>{{ task.event }}</td>
-            <td>{{ task.person }}</a></td>
-            <td>{{ task.role }}</a></td>
-	    <td><a href="{% url 'task_details' task.event.slug task.person.id task.role.name %}">...</a></td>
-	</tr>
-    {% endfor %}
-    </table>
-    <div class="pagination">
-      <span class="step-links">
-         {% if all_tasks.has_previous %}
-             <a href="?page={{ all_tasks.previous_page_number }}">previous</a>
-         {% endif %}
-
-         <span class="current">
-             Page {{ all_tasks.number }} of {{ all_tasks.paginator.num_pages }}.
-         </span>
-
-         {% if all_tasks.has_next %}
-             <a href="?page={{ all_tasks.next_page_number }}">next</a>
-         {% endif %}
-      </span>
-    </div>
-{% else %}
+  {% if data %}
+     <script type="text/javascript" class="init">
+       $(document).ready(function() {
+         $('#data_table').DataTable({
+           "data": {{data|safe}},
+           "columns": {{columns|safe}},
+           "deferRender": true,
+           "order": [[ 0, "asc" ]],
+           // Definitions of each column
+           "columnDefs": [
+             {
+               // The fourth column is a link to the task page.  Render the
+               // link and stop the column from being sortable
+               "targets": 3,
+               "sortable": false,
+               "render": function ( data, type, row ) {
+                  return '<a href="' + data + '">...</a>'
+               }
+             }
+            ],
+         })
+       })
+     </script>
+     <table id="data_table"></table>
+  {% else %}
     <p>No tasks.</p>
-{% endif %}
-<p class="add-new"><a href="{% url 'task_add' %}">Add a new task</a></p>
+  {% endif %}
+  <p class="add-new"><a href="{% url 'task_add' %}">Add a new task</a></p>
 {% endblock %}

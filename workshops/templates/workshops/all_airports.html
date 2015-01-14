@@ -7,31 +7,38 @@
 {% endblock %}
 
 {% block content %}
-{% if all_airports %}
-
-<table id="sortable_table">
-  <thead>
-    <tr>
-      <th>IATA</th>
-      <th>full name</th>
-      <th>latitude</th>
-      <th>longitude</th>
-    </tr>
-  </thead>
-  <tbody>
-  {% for airport in all_airports %}
-    <tr>
-      <td>{{ airport.iata }}</td>
-      <td><a href="{% url 'airport_details' airport.iata %}">{{ airport.fullname }}</a></td>
-      <td>{{ airport.latitude }}</td>
-      <td>{{ airport.longitude }}</td>
-    </tr>
-  {% endfor %}
-  </tbody>
-</table>
-{% else %}
-  <p>No airports.</p>
-{% endif %}
-
-<p class="add-new"><a href="{% url 'airport_add' %}">Add a new airport</a></p>
+  {% if data %}
+     <script type="text/javascript" class="init">
+       $(document).ready(function() {
+         $('#data_table').DataTable({
+           "data": {{data|safe}},
+           "columns": {{columns|safe}},
+           "deferRender": true,
+           "order": [[ 0, "asc" ]],
+           // Definitions of each column
+           "columnDefs": [
+             {
+               // The second column is airport location.  Add in a link to the
+               // airport page using the hidden fifth column
+               "targets": 1,
+               "render": function ( data, type, row ) {
+                 return '<a href="' + row[5] + '">' + data + '</a>'
+               }
+             },
+             {
+               // The 6th column is the URL of the airport page, to be used for
+               // generating the URL in the first column.  Hide it.
+               "targets": 5,
+               "visible": false,
+               "searchable": false
+             }
+           ],
+         })
+       })
+     </script>
+     <table id="data_table"></table>
+  {% else %}
+    <p>No airports.</p>
+  {% endif %}
+  <p class="add-new"><a href="{% url 'airport_add' %}">Add a new airport</a></p>
 {% endblock %}

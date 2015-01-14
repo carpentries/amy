@@ -7,68 +7,84 @@
 {% endblock %}
 
 {% block content %}
-{% if all_events %}
-    <table class="table table-striped">
-        <tr>
-	    <th>ID</th>
-	    <th>published</th>
-	    <th>project</th>
-	    <th>instructors</th>
-	    <th>slug</th>
-	    <th>url</th>
-	    <th>site</th>
-	    <th>dates</th>
-	    <th>Eventbrite</th>
-	    <th>attendance</th>
-	</tr>
-    {% for event in all_events %}
-        <tr>
-	    <td>{{ event.id }}</td>
-	    <td>{{ event.published }}</td>
-	    <td>{{ event.project }}</td>
-	    <td {% if event.num_instructors == 0 %}class="warning"{% endif %}>
-	      {{ event.num_instructors }}
-	    </td>
-	    <td {% if not event.slug %}class="warning"{% endif %}>
-	      {% if not event.slug %}
-	        ---
-	      {% else %}
-	        <a href="{% url 'event_details' event.slug %}">
-		  {{ event.slug }}
-	        </a>
-	      {% endif %}
-	    </td>
-	    <td {% if not event.url %}class="warning"{% endif %}>
-	      {% if event.url %}
-	      <a href="{{ event.url }}">{{ event.url|cut:"https://github.com/" }}</a>
-	      {% else %}
-	      ---
-	      {% endif %}
-	    </td>
-	    <td><a href="{% url 'site_details' event.site.domain %}">{{ event.site }}</a></td>
-	    <td>{{ event.start }} &ndash; {{ event.end }}</td>
-	    <td>{{ event.reg_key }}</td>
-	    <td>{{ event.attendance }}</td>
-	</tr>
-    {% endfor %}
-    </table>
-    <div class="pagination">
-      <span class="step-links">
-         {% if all_events.has_previous %}
-             <a href="?page={{ all_events.previous_page_number }}">previous</a>
-         {% endif %}
-
-         <span class="current">
-             Page {{ all_events.number }} of {{ all_events.paginator.num_pages }}.
-         </span>
-
-         {% if all_events.has_next %}
-             <a href="?page={{ all_events.next_page_number }}">next</a>
-         {% endif %}
-      </span>
-    </div>
-{% else %}
+  {% if data %}
+     <script type="text/javascript" class="init">
+       $(document).ready(function() {
+         $('#data_table').DataTable({
+           "data": {{data|safe}},
+           "columns": {{columns|safe}},
+           "deferRender": true,
+           // Sort by id, ascending
+           "order": [[ 0, "asc" ]],
+           // Definitions of each column
+           "columnDefs": [
+             {
+               // The 4th column contains the number of instructors.  If this
+               // is zero then wrap the text in a warning div
+               "targets": 3,
+               "render": function ( data, type, row ) {
+                 if (data === 0) {
+                    return '<div class="warning">' + data + '</div>'
+                 } else {
+                    return data
+                 }
+               }
+             },
+             {
+               // The fifth column contains the slug and a link to the page.
+               // Take the link from the hidden 11th column, and if there is
+               // no slug then wrap the content in a warning div
+               "targets": 4,
+               "render": function ( data, type, row ) {
+                  if (data == null) {
+                     return '<div class="warning">No slug</div>'
+                  } else {
+                     return '<a href="' + row[10] + '">' + data + '</a>'
+                 }
+               }
+             },
+             {
+               // The sixth column links to an external github URL.  If the
+               // URL is missing then highlight with a warning div
+               "targets": 5,
+               "render": function ( data, type, row ) {
+                  if (data == null) {
+                     return '<div class="warning">No URL</div>'
+                  } else {
+                     return '<a href="' + data + '">' +
+                             data.replace("https://github.com", "") + '</a>'
+                  }
+               }
+             },
+             {
+               // The seventh column gives the site.  Use the hidden 12th
+               // column to retrieve the URL.
+               "targets": 6,
+               "render": function ( data, type, row ) {
+                  return '<a href="' + row[11] + '">' + data + '</a>'
+               }
+             },
+             {
+               // The 11th column contains the URL for the event.  Hide this
+               // column from the user as it is only used to render other cols
+               "targets": 10,
+               "visible": false,
+               "searchable": false
+             },
+             {
+               // The 12th column contains the URL for the site.  Hide this
+               // column from the user as it is only used to render other cols
+               "targets": 11,
+               "visible": false,
+               "searchable": false
+             }
+           ],
+         })
+       })
+     </script>
+     <table id="data_table"></table>
+  {% else %}
     <p>No events.</p>
-{% endif %}
+  {% endif %}
 <p class="add-new"><a href="{% url 'event_add' %}">Add a new event</a></p>
 {% endblock %}
