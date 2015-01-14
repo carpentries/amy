@@ -16,44 +16,64 @@
 </ul>
 {% endif %}
 
-<!--<div class="alert alert-info" role="alert">
-<strong>Hint:</strong> you can edit values by double-clicking in the table cells
-</div>-->
-
-<table class="table table-striped">
-    <tr>
-        <th>personal</th>
-        <th>middle</th>
-        <th>family</th>
-        <th>email</th>
-        <th>event</th>
-        <th>role</th>
-        <th>errors</th>
-    </tr>
-    {% for entry in persons_tasks %}
-    <tr>
-        <td>{{ entry.person.personal }}</td>
-        <td>{{ entry.person.middle }}</td>
-        <td>{{ entry.person.family }}</td>
-        <td>{{ entry.person.email }}</td>
-        <td>{{ entry.event|default_if_none:"&mdash;" }}</td>
-        <td>{{ entry.role|default_if_none:"&mdash;" }}</td>
-        <td>
-        {% if entry.errors %}
-            <ul>
-            {% for error in entry.errors %}
-                <li>{{ error }}</li>
-            {% endfor %}
-            </ul>
-        {% else %}
-            {{ entry.errors|default_if_none:"&mdash;" }}
-        {% endif %}
-        </td>
-    </tr>
-    {% endfor %}
-</table>
+<div class="alert alert-info" role="alert">
+<strong>Hint:</strong> you can edit values by double-clicking in the table cells.  To accept the change, press <kbd><kbd>enter</kbd></kbd>.  To cancel, press <kbd><kbd>escape</kbd></kbd>.
+</div>
 
 <form method="POST">
+    <table class="table table-striped" id="bulk-add-results">
+        <tr>
+            <th>personal</th>
+            <th>middle</th>
+            <th>family</th>
+            <th>email</th>
+            <th>event</th>
+            <th>role</th>
+            <th>errors</th>
+        </tr>
+        {% for entry in persons_tasks %}
+        <tr>
+        {% with i=forloop.counter0 %}
+            <td class="editable">
+                <span>{{ entry.person.personal }}</span>
+                <input type="text" name="personal" value="{{ entry.person.personal }}" class="hidden">
+            </td>
+            <td class="editable">
+                <span>{{ entry.person.middle }}</span>
+                <input type="text" name="middle" value="{{ entry.person.middle }}" class="hidden">
+            </td>
+            <td class="editable">
+                <span>{{ entry.person.family }}</span>
+                <input type="text" name="family" value="{{ entry.person.family }}" class="hidden">
+            </td>
+            <td class="editable">
+                <span>{{ entry.person.email }}</span>
+                <input type="text" name="email" value="{{ entry.person.email }}" class="hidden">
+            </td>
+            <td class="editable">
+                <span>{{ entry.event|default_if_none:"&mdash;" }}</span>
+                <input type="text" name="event" value="{{ entry.event|default_if_none:"" }}" class="hidden">
+            </td>
+            <td class="editable">
+                <span>{{ entry.role|default_if_none:"&mdash;" }}</span>
+                <input type="text" name="role" value="{{ entry.role|default_if_none:"" }}" class="hidden">
+                </td>
+            <td>
+            {% if entry.errors %}
+                <ul>
+                {% for error in entry.errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                {{ entry.errors|default_if_none:"&mdash;" }}
+            {% endif %}
+            </td>
+        {% endwith %}
+        </tr>
+        {% endfor %}
+    </table>
+
     {% comment %}
     This feels a little bit like cheating, but I don't have any better idea
     how to distinguish between confirmation and cancelation.
@@ -65,5 +85,42 @@
     <input type="submit" name="verify" value="Verify" class="btn btn-default pull-right">
     {% csrf_token %}
 </form>
+
+<script type="text/javascript">
+    $("table#bulk-add-results").delegate('td.editable span', 'dblclick', function(e)
+    {
+        if (e.target.tagName != "INPUT")
+        {
+            var cell = $(e.currentTarget).parent();
+            var span = $(cell).find("span");
+            var input = $(cell).find("input");
+            $(span).addClass("hidden");
+            $(input).removeClass("hidden");
+        }
+    });
+
+    $("table#bulk-add-results").delegate(':text', 'keypress', function(e) {
+        var key = e.keyCode || e.which;
+        var cell = $(e.currentTarget).parent();
+        var span = $(cell).find("span");
+        var input = $(e.currentTarget);
+
+        if (key == 13) {
+            span.html(input.val());  // save input value to the span element
+            input.addClass("hidden");
+            span.removeClass("hidden");
+            cell.addClass("warning");
+
+            return false;
+
+        } else if (key == 27) {
+            input.val(span.html());  // revert initial value
+            input.addClass("hidden");
+            span.removeClass("hidden");
+
+            return false;
+        }
+    });
+</script>
 
 {% endblock %}

@@ -172,6 +172,9 @@ def person_bulk_add(request):
 
 
 def person_bulk_add_confirmation(request):
+    """
+    This view allows for manipulating and saving session-stored upload data.
+    """
     persons_tasks = request.session['bulk-add-people']
 
     # if the session is empty, don't bother
@@ -179,6 +182,31 @@ def person_bulk_add_confirmation(request):
         raise Http404
 
     if request.method == 'POST':
+        # update values if user wants to change them
+        personals = request.POST.getlist("personal")
+        middles = request.POST.getlist("middle")
+        families = request.POST.getlist("family")
+        emails = request.POST.getlist("email")
+        events = request.POST.getlist("event")
+        roles = request.POST.getlist("role")
+        data_update = zip(personals, middles, families, emails, events, roles)
+        for k, record in enumerate(data_update):
+            personal, middle, family, email, event, role = record
+            persons_tasks[k]['person'] = {
+                'personal': personal,
+                'middle': middle,
+                'family': family,
+                'email': email
+            }
+            if event:
+                persons_tasks[k]['event'] = event
+            if role:
+                persons_tasks[k]['role'] = role
+            persons_tasks[k]['errors'] = None  # reset here
+
+        # save updated data to the session
+        request.session['bulk-add-people'] = persons_tasks
+
         # check if user wants to verify or save, or cancel
 
         if request.POST.get('verify', None):
@@ -197,9 +225,6 @@ def person_bulk_add_confirmation(request):
         elif (request.POST.get('confirm', None) and
                 not request.POST.get('cancel', None)):
             # there must be "confirm" and no "cancel" in POST in order to save
-
-            # TODO: update values if user wants to change them
-            _verify_upload_person_task(persons_tasks)
 
             try:
                 records = 0
@@ -223,6 +248,7 @@ def person_bulk_add_confirmation(request):
                                      "Error saving data to the database: {}. "
                                      "Please make sure to fix all errors "
                                      "listed below.".format(e))
+                _verify_upload_person_task(persons_tasks)
                 context = {'title': 'Confirm uploaded data',
                            'persons_tasks': persons_tasks}
                 return render(request,

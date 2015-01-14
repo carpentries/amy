@@ -3,3 +3,8 @@
 .warning {
     background-color: #F04040;
 }
+
+/* used in bulk-add confirmation page */
+table td.editable span {
+    display: block;
+}
