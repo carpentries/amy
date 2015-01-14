@@ -2,6 +2,7 @@ import re
 import yaml
 import csv
 import requests
+import json
 
 from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -26,6 +27,33 @@ from workshops.models import \
     Task, \
     Trainee
 
+'''A note on building sortable tables.  The way this works
+is that you have to build two variables, ``data`` and ``columns``.
+
+Columns is a list of dictionaries of column names, it takes the following form:
+
+```
+columns= [
+      {"title": "Col 1 title"},
+      {"title": "Col 1 title"},
+      {"title": "Col 1 title"}
+]
+``
+
+data is a list of lists, where each of the inner-lists represents a row of
+data, e.g.
+
+```
+data = [[row1col1, row1col2, row1col3],
+        [row2col1, row2col2, row2col3],
+        [row3col1, row3col2, row3col3]]
+```
+
+Pass these two variables into the template and follow one of the
+examples in all_*.html to render it out into a table using some
+Javascript config along with ``<table id="data_table"></table>``
+'''
+
 #------------------------------------------------------------
 
 ITEMS_PER_PAGE = 25
@@ -49,11 +77,23 @@ SITE_FIELDS = ['domain', 'fullname', 'country', 'notes']
 def all_sites(request):
     '''List all sites.'''
 
-    all_sites = Site.objects.order_by('domain')
-    sites = _get_pagination_items(request, all_sites)
+    all_sites = [[site.fullname, site.domain, site.notes,
+                  reverse('site_details', args=[site.domain])] for
+                  site in Site.objects.all()]
+
+    # Note that the column titled 'HIDDEN_COL_URL' is data that is passed
+    # to the table and used to build a link in another column.  This column
+    # is not displayed to the user
+    columns= [
+      {"title": "Full name"},
+      {"title": "Domain"},
+      {"title": "Notes"},
+      {"title": "HIDDEN_COL_URL", "visible": False, "searchable": False},
+    ]
     user_can_add = request.user.has_perm('edit')
     context = {'title' : 'All Sites',
-               'all_sites' : sites,
+               'data' : json.dumps(all_sites),
+               'columns' : json.dumps(columns),
                'user_can_add' : user_can_add}
     return render(request, 'workshops/all_sites.html', context)
 
@@ -86,10 +126,28 @@ AIRPORT_FIELDS = ['iata', 'fullname', 'country', 'latitude', 'longitude']
 
 def all_airports(request):
     '''List all airports.'''
-    all_airports = Airport.objects.order_by('iata')
+
+    all_aps = [[ap.iata, ap.fullname,
+                ap.country, ap.latitude, ap.longitude,
+                reverse('airport_details', args=[ap.iata])] for
+                ap in Airport.objects.all()]
+
+    # Note that the column titled 'HIDDEN_COL_URL' is data that is passed
+    # to the table and used to build a link in another column.  This column
+    # is not displayed to the user
+    columns= [
+      {"title": "IATA"},
+      {"title": "Full Name"},
+      {"title": "Country"},
+      {"title": "Latitude"},
+      {"title": "Longitude"},
+      {"title": "HIDDEN_COL_URL", "visible": False, "searchable": False}
+    ]
+
     user_can_add = request.user.has_perm('edit')
     context = {'title' : 'All Airports',
-               'all_airports' : all_airports,
+               'data' : json.dumps(all_aps),
+               'columns' : json.dumps(columns),
                'user_can_add' : user_can_add}
     return render(request, 'workshops/all_airports.html', context)
 
@@ -121,10 +179,27 @@ PERSON_TASK_UPLOAD_FIELDS = PERSON_UPLOAD_FIELDS + ['event', 'role']
 def all_persons(request):
     '''List all persons.'''
 
-    all_persons = Person.objects.order_by('family', 'personal')
-    persons = _get_pagination_items(request, all_persons)
+    all_persons = [[person.personal, person.middle,
+                    person.family, person.email, person.id,
+                    reverse('person_details', args=[person.id])] for
+                    person in Person.objects.all()]
+
+    # Note that the column titled 'HIDDEN_COL_URL' is data that is passed
+    # to the table and used to build a link in another column.  This column
+    # is not displayed to the user
+    columns= [
+      {"title": "First"},
+      {"title": "Middle"},
+      {"title": "Last"},
+      {"title": "Email"},
+      {"title": " ", "orderable": False},
+      {"title": "HIDDEN_COL_URL", "visible": False, "searchable": False}
+    ]
+    user_can_add = request.user.has_perm('edit')
     context = {'title' : 'All Persons',
-               'all_persons' : persons}
+               'data' : json.dumps(all_persons),
+               'columns' : json.dumps(columns),
+               'user_can_add' : user_can_add}
     return render(request, 'workshops/all_persons.html', context)
 
 
@@ -208,12 +283,53 @@ class PersonUpdate(UpdateView):
 def all_events(request):
     '''List all events.'''
 
-    all_events = Event.objects.order_by('id')
-    events = _get_pagination_items(request, all_events)
+    events = Event.objects.all()
+
     for e in events:
         e.num_instructors = e.task_set.filter(role__name='instructor').count()
+        try:
+            start = e.start.strftime("%D")
+        except AttributeError:
+            start = "00/00/0000"
+
+        try:
+            end = e.end.strftime("%D")
+        except AttributeError:
+            end = "00/00/0000"
+
+        e.dates = " - ".join([start, end])
+
+    all_events = [[event.id, event.published, event.project.name,
+                   event.num_instructors, event.slug, event.url,
+                   event.site.fullname, event.dates, event.reg_key,
+                   event.attendance,
+                   reverse('event_details', args=[event.slug]),
+                   reverse('site_details', args=[event.site])] for
+                  event in events]
+
+    # Note that the columns titled 'HIDDEN_COL_*' are data that is passed
+    # to the table and used to build a link in another column.  This column
+    # is not displayed to the user
+    columns= [
+        {"title": "ID"},
+        {"title": "published"},
+        {"title": "project"},
+        {"title": "instructors"},
+        {"title": "slug"},
+        {"title": "url"},
+        {"title": "site"},
+        {"title": "dates"},
+        {"title": "Eventbrite"},
+        {"title": "attendance"},
+        {"title": "HIDDEN_URL_SITE", "visible": False, "searchable": False},
+        {"title": "HIDDEN_URL_DOMAIN",  "visible": False, "searchable": False},
+    ]
+
     context = {'title' : 'All Events',
-               'all_events' : events}
+               'data': json.dumps(all_events),
+               'columns': json.dumps(columns),
+               'all_events' : all_events}
+
     return render(request, 'workshops/all_events.html', context)
 
 
@@ -262,15 +378,25 @@ class EventUpdate(UpdateView):
 
 TASK_FIELDS = ['event', 'person', 'role']
 
-
 def all_tasks(request):
     '''List all tasks.'''
 
-    all_tasks = Task.objects.order_by('event', 'person', 'role')
-    tasks = _get_pagination_items(request, all_tasks)
+    all_tasks = [[t.event.slug, t.person.fullname(), t.role.name,
+                  reverse('task_details',
+                          args=[t.event.slug, t.person.id, t.role.name])] for
+                 t in Task.objects.all()]
+
+    columns= [
+     {"title": "Event"},
+     {"title": "Person"},
+     {"title": "Role"},
+     {"title": " ", "orderable": False}
+    ]
+
     user_can_add = request.user.has_perm('edit')
     context = {'title' : 'All Tasks',
-               'all_tasks' : tasks,
+               'data' : json.dumps(all_tasks),
+               'columns': json.dumps(columns),
                'user_can_add' : user_can_add}
     return render(request, 'workshops/all_tasks.html', context)
 
@@ -311,10 +437,23 @@ COHORT_FIELDS = ['name', 'start', 'active', 'venue', 'qualifies']
 
 def all_cohorts(request):
     '''List all cohorts.'''
-    all_cohorts = Cohort.objects.order_by('start')
+
+    all_cohorts = [[cohort.name, cohort.start.strftime("%Y-%m-%d"),
+                    reverse('cohort_details', args=[cohort.name])] for
+                     cohort in Cohort.objects.all()]
+
+    # Note that the column titled 'HIDDEN_COL_URL' is data that is passed
+    # to the table and used to build a link in another column.  This column
+    # is not displayed to the user
+    columns= [
+      {"title": "Name"},
+      {"title": "Start Date"},
+      {"title": "HIDDEN_COL_URL", "visible": False, "searchable": False}
+    ]
     user_can_add = request.user.has_perm('edit')
     context = {'title' : 'All Cohorts',
-               'all_cohorts' : all_cohorts,
+               'data' : json.dumps(all_cohorts),
+               'columns' : json.dumps(columns),
                'user_can_add' : user_can_add}
     return render(request, 'workshops/all_cohorts.html', context)
 
@@ -345,11 +484,28 @@ class CohortUpdate(UpdateView):
 def all_badges(request):
     '''List all badges.'''
 
-    all_badges = Badge.objects.order_by('name')
+    all_badges = Badge.objects.all()
     for b in all_badges:
         b.num_awarded = Award.objects.filter(badge_id=b.id).count()
+
+    all_badges = [[badge.title, badge.criteria,
+                   badge.num_awarded, reverse('badge_details', args=[badge.name])] for
+                  badge in all_badges]
+
+    # Note that the column titled 'HIDDEN_COL_URL' is data that is passed
+    # to the table and used to build a link in another column.  This column
+    # is not displayed to the user
+    columns= [
+      {"title": "Title"},
+      {"title": "Criteria"},
+      {"title": "Num. Awarded"},
+      {"title": "HIDDEN_COL_URL", "visible": False, "searchable": False}
+    ]
+
+    user_can_add = request.user.has_perm('edit')
     context = {'title' : 'All Badges',
-               'all_badges' : all_badges}
+               'data' : json.dumps(all_badges),
+               'columns' : json.dumps(columns)}
     return render(request, 'workshops/all_badges.html', context)
 
 

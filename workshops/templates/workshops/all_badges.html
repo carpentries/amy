@@ -7,20 +7,31 @@
 {% endblock %}
 
 {% block content %}
-<table class="table table-striped">
-  <tr>
-    <th>name</th>
-    <th>title</th>
-    <th>criteria</th>
-    <th>number awarded</th>
-  </tr>
-  {% for badge in all_badges %}
-  <tr>
-    <td><a href="{% url 'badge_details' badge.name %}">{{ badge.name }}</a></td>
-    <td>{{ badge.title }}</td>
-    <td>{{ badge.criteria }}</td>
-    <td>{{ badge.num_awarded }}</td>
-  </tr>
-  {% endfor %}
-</table>
+  {% if data %}
+     <script type="text/javascript" class="init">
+       $(document).ready(function() {
+         $('#data_table').DataTable({
+           "data": {{data|safe}},
+           "columns": {{columns|safe}},
+           "deferRender": true,
+           // Order alphabetically by badge name
+           "order": [[ 0, "asc" ]],
+           // Definitions of each column
+           "columnDefs": [
+             {
+               // The first column is the badge name, make it into a link using
+               // the URL hidden in the fourth column
+               "targets": 0,
+               "render": function ( data, type, row ) {
+                 return '<a href="' + row[3] + '">' + data + '</a>'
+               }
+             }
+           ],
+         })
+       })
+     </script>
+     <table id="data_table"></table>
+  {% else %}
+    <p>No sites.</p>
+  {% endif %}
 {% endblock %}

@@ -7,21 +7,31 @@
 {% endblock %}
 
 {% block content %}
-{% if all_cohorts %}
-    <table class="table table-striped">
-        <tr>
-	    <th>name</th>
-	    <th>start date</th>
-	</tr>
-    {% for cohort in all_cohorts %}
-        <tr>
-	  <td><a href="{% url 'cohort_details' cohort.name %}">{{ cohort.name }}</a></td>
-	  <td>{{ cohort.start }}</td>
-	</tr>
-    {% endfor %}
-    </table>
-{% else %}
+  {% if data %}
+     <script type="text/javascript" class="init">
+       $(document).ready(function() {
+         $('#data_table').DataTable({
+           "data": {{data|safe}},
+           "columns": {{columns|safe}},
+           "deferRender": true,
+           "order": [[ 0, "asc" ]],
+           // Definitions of each column
+           "columnDefs": [
+             {
+               // The first column is the badge name, make it into a link using
+               // the URL hidden in the third column
+               "targets": 0,
+               "render": function ( data, type, row ) {
+                 return '<a href="' + row[2] + '">' + data + '</a>'
+               }
+             }
+           ],
+         })
+       })
+     </script>
+     <table id="data_table"></table>
+  {% else %}
     <p>No cohorts.</p>
-{% endif %}
-<p class="add-new"><a href="{% url 'cohort_add' %}">Add a new cohort</a></p>
+  {% endif %}
+  <p class="add-new"><a href="{% url 'cohort_add' %}">Add a new cohort</a></p>
 {% endblock %}

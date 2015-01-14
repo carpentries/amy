@@ -7,43 +7,32 @@
 {% endblock %}
 
 {% block content %}
-{% if all_persons %}
-    <table class="table table-striped">
-        <tr>
-	    <th>personal</th>
-	    <th>middle</th>
-	    <th>family</th>
-	    <th>email</th>
-	    <th></th>
-	</tr>
-    {% for person in all_persons %}
-        <tr>
-	    <td>{{ person.personal }}</td>
-	    <td>{{ person.middle }}</td>
-	    <td>{{ person.family }}</td>
-	    <td>{{ person.email }}</td>
-	    <td><a href="{% url 'person_details' person.id %}">...</a></td>
-	</tr>
-    {% endfor %}
-    </table>
-    <div class="pagination">
-      <span class="step-links">
-         {% if all_persons.has_previous %}
-             <a href="?page={{ all_persons.previous_page_number }}">previous</a>
-         {% endif %}
-
-         <span class="current">
-             Page {{ all_persons.number }} of {{ all_persons.paginator.num_pages }}.
-         </span>
-
-         {% if all_persons.has_next %}
-             <a href="?page={{ all_persons.next_page_number }}">next</a>
-         {% endif %}
-      </span>
-    </div>
-{% else %}
+  {% if data %}
+     <script type="text/javascript" class="init">
+       $(document).ready(function() {
+         $('#data_table').DataTable({
+           "data": {{data|safe}},
+           "columns": {{columns|safe}},
+           "deferRender": true,
+           "order": [[ 2, "asc" ], [0, "asc"]],
+           // Definitions of each column
+           "columnDefs": [
+             {
+               // The 4th column is a link to a person's page, use the URL hidden
+               // in the 6th column to render the link
+               "targets": 4,
+               "render": function ( data, type, row ) {
+                 return '<a href="' + row[5] + '">...</a>'
+               }
+             }
+           ],
+         })
+       })
+     </script>
+     <table id="data_table"></table>
+  {% else %}
     <p>No persons.</p>
-{% endif %}
+  {% endif %}
 <p class="add-new"><a href="{% url 'person_add' %}">Add a new person</a></p>
 <p class="add-new"><a href="{% url 'person_bulk_add' %}">Add many people from a .CSV file</a></p>
 {% endblock %}

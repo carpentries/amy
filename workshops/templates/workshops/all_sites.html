@@ -7,38 +7,38 @@
 {% endblock %}
 
 {% block content %}
-{% if all_sites %}
-    <table class="table table-striped">
-        <tr>
-            <th>full name</th>
-            <th>domain</th>
-            <th>notes</th>
-        </tr>
-    {% for site in all_sites %}
-        <tr>
-            <td><a href="{% url 'site_details' site.domain %}">{{ site.fullname }}</a></td>
-            <td><a href="http://{{ site.domain }}">{{ site.domain }}</a></td>
-            <td>{{ site.notes|truncatechars:40 }}</td>
-        </tr>
-    {% endfor %}
-    </table>
-    <div class="pagination">
-      <span class="step-links">
-         {% if all_sites.has_previous %}
-             <a href="?page={{ all_sites.previous_page_number }}">previous</a>
-         {% endif %}
-
-         <span class="current">
-             Page {{ all_sites.number }} of {{ all_sites.paginator.num_pages }}.
-         </span>
-
-         {% if all_sites.has_next %}
-             <a href="?page={{ all_sites.next_page_number }}">next</a>
-         {% endif %}
-      </span>
-    </div>
-{% else %}
+  {% if data %}
+     <script type="text/javascript" class="init">
+       $(document).ready(function() {
+         $('#data_table').DataTable({
+           "data": {{data|safe}},
+           "columns": {{columns|safe}},
+           "deferRender": true,
+           "order": [[ 0, "asc" ]],
+           // Definitions of each column
+           "columnDefs": [
+             {
+               // Replace the first column with a link to the site page
+               "targets": 0,
+               "render": function ( data, type, row ) {
+                 return '<a href="' + row[3] + '">' + data + '</a>'
+               }
+             },
+             {
+               // The second column is the domain of the site, prepend http:// and
+               // add a link
+               "targets": 1,
+               "render": function ( data, type, row ) {
+                 return '<a href="http://' + data + '">' + data + '</a>'
+               }
+             }
+           ],
+         })
+       })
+     </script>
+     <table id="data_table"></table>
+  {% else %}
     <p>No sites.</p>
-{% endif %}
-<p class="add-new"><a href="{% url 'site_add' %}">Add a new site</a></p>
+  {% endif %}
+  <p class="add-new"><a href="{% url 'site_add' %}">Add a new site</a></p>
 {% endblock %}
