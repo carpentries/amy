@@ -145,51 +145,88 @@ def person_bulk_add(request):
         form = PersonBulkAddForm(request.POST, request.FILES)
         if form.is_valid():
             try:
-                persons_tasks = _upload_person_task_csv(request, request.FILES['file'])
+                persons_tasks = _upload_person_task_csv(request,
+                                                        request.FILES['file'])
             except csv.Error as e:
-                messages.add_message(request, messages.ERROR, "Error processing uploaded .CSV file: {}".format(e))
+                messages.add_message(request, messages.ERROR,
+                                     "Error processing uploaded .CSV file: {}"
+                                     .format(e))
             else:
-                for entry in persons_tasks:
-                    entry['person'].save()
-                    if entry['task']:
-                        entry['task'].person = entry['person'] # Because Django's ORM doesn't do this automatically.
-                        entry['task'].save()
-                context = {'title' : 'Process CSV File',
-                           'form': form, 
-                           'persons_tasks': persons_tasks}
-                return render(request, 'workshops/person_bulk_add_results.html', context)
+                # instead of insta-saving, put everything into session
+                # then redirect to confirmation page which in turn saves the
+                # data
+
+                request.session['bulk-add-people'] = persons_tasks
+
+                return redirect('person_bulk_add_confirmation')
+
     else:
         form = PersonBulkAddForm()
 
-    context = {'title' : 'Bulk Add People',
+    context = {'title': 'Bulk Add People',
                'form': form}
     return render(request, 'workshops/person_bulk_add_form.html', context)
 
 
+def person_bulk_add_confirmation(request):
+    persons_tasks = request.session['bulk-add-people']
+
+    # alters persons_tasks via reference
+    _verify_upload_person_task(persons_tasks)
+
+    context = {'title': 'Confirm uploaded data',
+               'persons_tasks': persons_tasks}
+    return render(request, 'workshops/person_bulk_add_results.html', context)
+
+
 def _upload_person_task_csv(request, uploaded_file):
+    """
+    Read data from CSV and turn it into JSON-serializable list of dictionaries.
+    "Serializability" is required because we put this data into session.  See
+    https://docs.djangoproject.com/en/1.7/topics/http/sessions/ for details.
+    """
     persons_tasks = []
     reader = csv.DictReader(uploaded_file)
     for row in reader:
-        person_fields = dict((col, row[col].strip()) for col in PERSON_UPLOAD_FIELDS)
-        person = Person(**person_fields)
-        entry = {'person': person, 'task' : None}
-        if row.get('event', None) and row.get('role', None):
-            try:
-                event = Event.objects.get(slug=row['event'])
-                role = Role.objects.get(name=row['role'])
-                entry['task'] = Task(person=person, event=event, role=role)
-                import sys
-            except Event.DoesNotExist:
-                messages.add_message(request, messages.ERROR, \
-                                     'Event with slug {} does not exist.'.format(row['event']))
-            except Role.DoesNotExist:
-                messages.add_message(request, messages.ERROR, \
-                                     'Role with name {} does not exist.'.format(row['role'])) 
-            except Role.MultipleObjectsReturned:
-                messages.add_message(request, messages.ERROR, \
-                                     'More than one role named {} exists.'.format(row['role'])) 
+        person_fields = dict((col, row[col].strip())
+                             for col in PERSON_UPLOAD_FIELDS)
+        entry = {'person': person_fields, 'event': row.get('event', None),
+                 'role': row.get('role', None), 'errors': None}
         persons_tasks.append(entry)
     return persons_tasks
+
+
+def _verify_upload_person_task(data):
+    """
+    Verify that uploaded data is correct.  Show errors by populating ``errors``
+    dictionary item.
+
+    This function changes ``data`` in place; ``data`` is a list, so it's
+    passed by a reference.  This means any changes to ``data`` we make in
+    here don't need to be returned via ``return`` statement.
+    """
+
+    for item in data:
+        event, role = item.get('event', None), item.get('role', None)
+        errors = []
+        if event:
+            try:
+                Event.objects.get(slug=event)
+            except Event.DoesNotExist:
+                errors.append('Event with slug {} does not exist.'
+                              .format(event))
+        if role:
+            try:
+                Role.objects.get(name=role)
+            except Role.DoesNotExist:
+                errors.append('Role with name {} does not exist.'.format(role))
+            except Role.MultipleObjectsReturned:
+                errors.append('More than one role named {} exists.'
+                              .format(role))
+
+        if errors:
+            # copy the errors just to be safe
+            item['errors'] = errors[:]
 
 
 class PersonCreate(CreateView):

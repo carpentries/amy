@@ -23,6 +23,7 @@
         <th>email</th>
         <th>event</th>
         <th>role</th>
+        <th>errors</th>
     </tr>
     {% for entry in persons_tasks %}
     <tr>
@@ -30,8 +31,19 @@
         <td>{{ entry.person.middle }}</td>
         <td>{{ entry.person.family }}</td>
         <td>{{ entry.person.email }}</td>
-        <td>{{ entry.task.event.slug }}</td>
-        <td>{{ entry.task.role.name }}</td>
+        <td>{{ entry.event|default_if_none:"&mdash;" }}</td>
+        <td>{{ entry.role|default_if_none:"&mdash;" }}</td>
+        <td>
+        {% if entry.errors %}
+            <ul>
+            {% for error in entry.errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            {{ entry.errors|default_if_none:"&mdash;" }}
+        {% endif %}
+        </td>
     </tr>
     {% endfor %}
 </table>
