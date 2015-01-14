@@ -7,6 +7,7 @@ from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
 from django.db.models import Count, Q
+from django.http import HttpResponse
 from django.shortcuts import redirect, render, get_object_or_404
 from django.views.generic.edit import CreateView, UpdateView
 
@@ -178,7 +179,6 @@ def _upload_person_task_csv(request, uploaded_file):
                 event = Event.objects.get(slug=row['event'])
                 role = Role.objects.get(name=row['role'])
                 entry['task'] = Task(person=person, event=event, role=role)
-                import sys
             except Event.DoesNotExist:
                 messages.add_message(request, messages.ERROR, \
                                      'Event with slug {} does not exist.'.format(row['event']))
@@ -487,11 +487,49 @@ def export(request, name):
 
 #------------------------------------------------------------
 
-def stats(request, name):
-    '''Display statistics.'''
-    context = {'title' : name,
-               'chart_url' : reverse('chart', args=[name])
-    return render(request, 'workshops/stats.html', context)
+def chart(request, name):
+    '''Display a single chart showing cumulative enrollment.'''
+
+    import datetime
+    from matplotlib import pyplot
+    from matplotlib.backends.backend_agg import FigureCanvasAgg
+    from django.db import connection
+
+    if name == 'workshops':
+        query = '''select e1.start, count(e2.start)
+                   from workshops_event e1 join workshops_event e2
+                   where (e1.start||e1.slug)>=(e2.start||e2.slug)
+                   group by e1.start, e1.slug
+                   order by e1.start, e1.slug;'''
+    elif name == 'enrolment':
+        query = '''select e1.start, sum(e2.attendance)
+                   from workshops_event e1 join workshops_event e2
+                   where e1.attendance is not null and e2.attendance is not null
+                   and (e1.start||e1.slug)>=(e2.start||e2.slug)
+                   group by e1.start, e1.slug
+                   order by e1.start, e1.slug;'''
+    else:
+        assert False, 'unknown chart {0}'.format(name)
+
+    cursor = connection.cursor()
+    cursor.execute(query)
+
+    dates = []
+    counts = []
+    today = datetime.date.today()
+    for (d, c) in cursor.fetchall():
+        if (d is not None) and (d <= today):
+            dates.append(d)
+            counts.append(int(c))
+
+    fig, ax = pyplot.subplots()
+    ax.plot(dates, counts)
+    ax.grid(True)
+    fig.autofmt_xdate()
+    canvas = FigureCanvasAgg(fig)
+    response = HttpResponse(content_type='image/png')
+    canvas.print_png(response)
+    return response
 
 #------------------------------------------------------------
 

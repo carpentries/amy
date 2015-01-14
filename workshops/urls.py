@@ -45,5 +45,5 @@ urlpatterns = [
 
     url(r'^export/(?P<name>[\w\.-]+)/?$', views.export, name='export'),
 
-    url(r'^stats/(?P<name>[\w\.-]+)/?$', views.stats, name='stats'),
+    url(r'^chart/(?P<name>[\w\.-]+)/?$', views.chart, name='chart'),
 ]
