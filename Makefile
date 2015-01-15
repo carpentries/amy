@@ -55,9 +55,10 @@ serve :
 
 ## clean        : clean up.
 clean :
-	rm -f \
+	rm -rf \
 	$$(find . -name '*~' -print) \
 	$$(find . -name '*.pyc' -print) \
+	htmlerror \
 	${APP_DB}
 
 ## members      : who qualifies as a SCF member?
