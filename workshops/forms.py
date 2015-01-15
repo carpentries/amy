@@ -33,21 +33,19 @@ class InstructorsForm(forms.Form):
 
     def clean(self):
         cleaned_data = super(InstructorsForm, self).clean()
-        iata = cleaned_data.get('airport')
+        airport = cleaned_data.get('airport')
         lat = cleaned_data.get('latitude')
         long = cleaned_data.get('longitude')
 
-        if iata is None:
+        if airport is None:
             if lat is None or long is None:
                 raise forms.ValidationError(
-                    'Must specify either an airport code or a '
-                    'latitude/longitude')
+                    'Must specify either an airport code or latitude/longitude')
         else:
             if lat is not None or long is not None:
                 raise forms.ValidationError(
                     'Cannot specify both an airport code and a '
                     'latitude/longitude. Pick one or the other')
-            airport = Airport.objects.get(iata=iata)
             cleaned_data['latitude'] = airport.latitude
             cleaned_data['longitude'] = airport.longitude
         return cleaned_data
