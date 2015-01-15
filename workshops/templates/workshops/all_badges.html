@@ -1,37 +1,16 @@
-{% extends "workshops/_page.html" %}
+{% extends "workshops/_single_table_page.html" %}
 
-{% load breadcrumbs %}
-{% block breadcrumbs %}
-    {% breadcrumb_url 'Amy' 'index'  %}
-    {% breadcrumb_active 'All badges'  %}
-{% endblock %}
-
-{% block content %}
-  {% if data %}
-     <script type="text/javascript" class="init">
-       $(document).ready(function() {
-         $('#data_table').DataTable({
-           "data": {{data|safe}},
-           "columns": {{columns|safe}},
-           "deferRender": true,
-           // Order alphabetically by badge name
-           "order": [[ 0, "asc" ]],
-           // Definitions of each column
-           "columnDefs": [
-             {
-               // The first column is the badge name, make it into a link using
-               // the URL hidden in the fourth column
-               "targets": 0,
-               "render": function ( data, type, row ) {
-                 return '<a href="' + row[3] + '">' + data + '</a>'
-               }
-             }
-           ],
-         })
-       })
-     </script>
-     <table id="data_table"></table>
-  {% else %}
-    <p>No sites.</p>
-  {% endif %}
-{% endblock %}
+{% block column_definitions %}
+  "order": [[ 0, "asc" ]],
+  // Definitions of each column
+  "columnDefs": [
+    {
+      // The first column is the badge name, make it into a link using
+      // the URL hidden in the fourth column
+      "targets": 0,
+      "render": function ( data, type, row ) {
+        return '<a href="' + row[3] + '">' + data + '</a>'
+      }
+    }
+  ],
+{% endblock column_definitions %}

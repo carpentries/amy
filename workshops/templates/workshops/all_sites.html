@@ -1,44 +1,28 @@
-{% extends "workshops/_page.html" %}
+{% extends "workshops/_single_table_page.html" %}
 
-{% load breadcrumbs %}
-{% block breadcrumbs %}
-    {% breadcrumb_url 'Amy' 'index'  %}
-    {% breadcrumb_active 'All sites'  %}
-{% endblock %}
+{% block column_definitions %}
+  // Sort by the first column, ascending
+  "order": [[ 0, "asc" ]],
+  // Definitions of each column
+  "columnDefs": [
+    {
+      // Replace the first column with a link to the site page
+      "targets": 0,
+      "render": function ( data, type, row ) {
+        return '<a href="' + row[3] + '">' + data + '</a>'
+      }
+    },
+    {
+      // The second column is the domain of the site, prepend http:// and
+      // add a link
+      "targets": 1,
+      "render": function ( data, type, row ) {
+        return '<a href="http://' + data + '">' + data + '</a>'
+      }
+    }
+  ],
+{% endblock column_definitions %}
 
-{% block content %}
-  {% if data %}
-     <script type="text/javascript" class="init">
-       $(document).ready(function() {
-         $('#data_table').DataTable({
-           "data": {{data|safe}},
-           "columns": {{columns|safe}},
-           "deferRender": true,
-           "order": [[ 0, "asc" ]],
-           // Definitions of each column
-           "columnDefs": [
-             {
-               // Replace the first column with a link to the site page
-               "targets": 0,
-               "render": function ( data, type, row ) {
-                 return '<a href="' + row[3] + '">' + data + '</a>'
-               }
-             },
-             {
-               // The second column is the domain of the site, prepend http:// and
-               // add a link
-               "targets": 1,
-               "render": function ( data, type, row ) {
-                 return '<a href="http://' + data + '">' + data + '</a>'
-               }
-             }
-           ],
-         })
-       })
-     </script>
-     <table id="data_table"></table>
-  {% else %}
-    <p>No sites.</p>
-  {% endif %}
+{% block add_new_link %}
   <p class="add-new"><a href="{% url 'site_add' %}">Add a new site</a></p>
-{% endblock %}
+{% endblock add_new_link %}

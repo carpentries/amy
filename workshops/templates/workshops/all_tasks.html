@@ -1,37 +1,20 @@
-{% extends "workshops/_page.html" %}
+{% extends "workshops/_single_table_page.html" %}
 
-{% load breadcrumbs %}
-{% block breadcrumbs %}
-    {% breadcrumb_url 'Amy' 'index'  %}
-    {% breadcrumb_active 'All tasks'  %}
-{% endblock %}
+{% block column_definitions %}
+  "order": [[ 0, "asc" ]],
+  // Definitions of each column
+  "columnDefs": [
+    {
+      // The fourth column is a link to the task page.  Render the
+      // link.
+      "targets": 3,
+      "render": function ( data, type, row ) {
+         return '<a href="' + data + '">...</a>'
+      }
+    }
+   ],
+{% endblock column_definitions %}
 
-{% block content %}
-  {% if data %}
-     <script type="text/javascript" class="init">
-       $(document).ready(function() {
-         $('#data_table').DataTable({
-           "data": {{data|safe}},
-           "columns": {{columns|safe}},
-           "deferRender": true,
-           "order": [[ 0, "asc" ]],
-           // Definitions of each column
-           "columnDefs": [
-             {
-               // The fourth column is a link to the task page.  Render the
-               // link and stop the column from being sortable
-               "targets": 3,
-               "render": function ( data, type, row ) {
-                  return '<a href="' + data + '">...</a>'
-               }
-             }
-            ],
-         })
-       })
-     </script>
-     <table id="data_table"></table>
-  {% else %}
-    <p>No tasks.</p>
-  {% endif %}
+{% block add_new_link %}
   <p class="add-new"><a href="{% url 'task_add' %}">Add a new task</a></p>
-{% endblock %}
+{% endblock add_new_link %}

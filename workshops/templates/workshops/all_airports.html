@@ -1,19 +1,6 @@
-{% extends "workshops/_page.html" %}
+{% extends "workshops/_single_table_page.html" %}
 
-{% load breadcrumbs %}
-{% block breadcrumbs %}
-    {% breadcrumb_url 'Amy' 'index'  %}
-    {% breadcrumb_active 'All airports'  %}
-{% endblock %}
-
-{% block content %}
-  {% if data %}
-     <script type="text/javascript" class="init">
-       $(document).ready(function() {
-         $('#data_table').DataTable({
-           "data": {{data|safe}},
-           "columns": {{columns|safe}},
-           "deferRender": true,
+{% block column_definitions %}
            "order": [[ 0, "asc" ]],
            // Definitions of each column
            "columnDefs": [
@@ -26,12 +13,8 @@
                }
              }
            ],
-         })
-       })
-     </script>
-     <table id="data_table"></table>
-  {% else %}
-    <p>No airports.</p>
-  {% endif %}
+{% endblock column_definitions %}
+
+{% block add_new_link %}
   <p class="add-new"><a href="{% url 'airport_add' %}">Add a new airport</a></p>
-{% endblock %}
+{% endblock add_new_link %}

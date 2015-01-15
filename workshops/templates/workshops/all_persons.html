@@ -1,37 +1,20 @@
-{% extends "workshops/_page.html" %}
+{% extends "workshops/_single_table_page.html" %}
 
-{% load breadcrumbs %}
-{% block breadcrumbs %}
-    {% breadcrumb_url 'Amy' 'index'  %}
-    {% breadcrumb_active 'All persons'  %}
-{% endblock %}
+{% block column_definitions %}
+  "order": [[ 2, "asc" ], [0, "asc"]],
+  // Definitions of each column
+  "columnDefs": [
+    {
+      // The 4th column is a link to a person's page, use the URL hidden
+      // in the 6th column to render the link
+      "targets": 4,
+      "render": function ( data, type, row ) {
+        return '<a href="' + row[5] + '">...</a>'
+      }
+    }
+  ],
+{% endblock column_definitions %}
 
-{% block content %}
-  {% if data %}
-     <script type="text/javascript" class="init">
-       $(document).ready(function() {
-         $('#data_table').DataTable({
-           "data": {{data|safe}},
-           "columns": {{columns|safe}},
-           "deferRender": true,
-           "order": [[ 2, "asc" ], [0, "asc"]],
-           // Definitions of each column
-           "columnDefs": [
-             {
-               // The 4th column is a link to a person's page, use the URL hidden
-               // in the 6th column to render the link
-               "targets": 4,
-               "render": function ( data, type, row ) {
-                 return '<a href="' + row[5] + '">...</a>'
-               }
-             }
-           ],
-         })
-       })
-     </script>
-     <table id="data_table"></table>
-  {% else %}
-    <p>No persons.</p>
-  {% endif %}
-<p class="add-new"><a href="{% url 'person_add' %}">Add a new person</a></p>
+{% block add_new_link %}
+  <p class="add-new"><a href="{% url 'person_add' %}">Add a new person</a></p>
 {% endblock %}

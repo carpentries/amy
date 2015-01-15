@@ -1,0 +1,28 @@
+{% extends "workshops/_page.html" %}
+
+{% load breadcrumbs %}
+{% block breadcrumbs %}
+    {% breadcrumb_url 'Amy' 'index'  %}
+    {% breadcrumb_active 'All events'  %}
+{% endblock %}
+
+{% block content %}
+  {% if data %}
+     <script type="text/javascript" class="init">
+       $(document).ready(function() {
+         $('#data_table').DataTable({
+           "data": {{data|safe}},
+           "columns": {{columns|safe}},
+           "deferRender": true,
+           {% block column_definitions %}{% endblock column_definitions %}
+         })
+       })
+     </script>
+     <table id="data_table"></table>
+  {% else %}
+    <p>No rows.</p>
+  {% endif %}
+
+{% block add_new_link %}{% endblock add_new_link %}
+
+{% endblock content %}

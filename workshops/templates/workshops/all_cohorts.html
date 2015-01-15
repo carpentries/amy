@@ -1,37 +1,20 @@
-{% extends "workshops/_page.html" %}
+{% extends "workshops/_single_table_page.html" %}
 
-{% load breadcrumbs %}
-{% block breadcrumbs %}
-    {% breadcrumb_url 'Amy' 'index'  %}
-    {% breadcrumb_active 'All cohorts'  %}
-{% endblock %}
+{% block column_definitions %}
+  "order": [[ 0, "asc" ]],
+  // Definitions of each column
+  "columnDefs": [
+    {
+      // The first column is the badge name, make it into a link using
+      // the URL hidden in the third column
+      "targets": 0,
+      "render": function ( data, type, row ) {
+        return '<a href="' + row[2] + '">' + data + '</a>'
+      }
+    }
+  ],
+{% endblock column_definitions %}
 
-{% block content %}
-  {% if data %}
-     <script type="text/javascript" class="init">
-       $(document).ready(function() {
-         $('#data_table').DataTable({
-           "data": {{data|safe}},
-           "columns": {{columns|safe}},
-           "deferRender": true,
-           "order": [[ 0, "asc" ]],
-           // Definitions of each column
-           "columnDefs": [
-             {
-               // The first column is the badge name, make it into a link using
-               // the URL hidden in the third column
-               "targets": 0,
-               "render": function ( data, type, row ) {
-                 return '<a href="' + row[2] + '">' + data + '</a>'
-               }
-             }
-           ],
-         })
-       })
-     </script>
-     <table id="data_table"></table>
-  {% else %}
-    <p>No cohorts.</p>
-  {% endif %}
+{% block add_new_link %}
   <p class="add-new"><a href="{% url 'cohort_add' %}">Add a new cohort</a></p>
-{% endblock %}
+{% endblock add_new_link %}
