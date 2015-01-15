@@ -1,9 +1,15 @@
 import traceback
 import os
 import re
+import datetime
 import xml.etree.ElementTree as ET
 from django.test import TestCase
-from ..models import Site
+from ..models import \
+    Airport, \
+    Award, \
+    Badge, \
+    Person, \
+    Site
 
 
 TEMPLATE_STRING_IF_INVALID = 'XXX-unset-variable-XXX' # FIXME: get by importing settings
@@ -16,6 +22,9 @@ class TestBase(TestCase):
         '''Create standard objects.'''
 
         self._setUpSites()
+        self._setUpAirports()
+        self._setUpBadges()
+        self._setUpPersons()
 
     def _setUpSites(self):
         '''Set up site objects.'''
@@ -29,6 +38,45 @@ class TestBase(TestCase):
                                              fullname='Beta Site',
                                              country='Brazil',
                                              notes='Notes\nabout\nBrazil\n')
+
+    def _setUpAirports(self):
+        '''Set up airport objects.'''
+
+        self.airport_0_0 = Airport.objects.create(iata='AAA', fullname='Airport 0x0', country='Albania',
+                                                  latitude=0.0, longitude=0.0)
+        self.airport_0_50 = Airport.objects.create(iata='BBB', fullname='Airport 0x50', country='Bulgaria',
+                                                   latitude=0.0, longitude=50.0)
+        self.airport_50_100 = Airport.objects.create(iata='CCC', fullname='Airport 100x50', country='Cameroon',
+                                                     latitude=50.0, longitude=100.0)
+
+    def _setUpBadges(self):
+        '''Set up badge objects.'''
+
+        self.instructor = Badge.objects.create(name='instructor',
+                                               title='Software Carpentry Instructor',
+                                               criteria='Worked hard for this')
+
+    def _setUpPersons(self):
+        '''Set up person objects.'''
+
+        self.hermione = Person.objects.create(personal='Hermione', middle=None, family='Granger',
+                                              email='hermione@granger.co.uk', gender='F', active=True,
+                                              airport=self.airport_0_0, github='herself',
+                                              twitter='herself', url='http://hermione.org', slug='granger.h')
+
+        self.harry = Person.objects.create(personal='Harry', middle=None, family='Potter',
+                                           email='harry@hogwarts.edu', gender='M', active=True,
+                                           airport=self.airport_0_50, github='hpotter',
+                                           twitter=None, url=None, slug='potter.h')
+
+        self.ron = Person.objects.create(personal='Ron', middle=None, family='Weasley',
+                                         email='rweasley@ministry.gov.uk', gender='M', active=False,
+                                         airport=self.airport_50_100, github=None,
+                                         twitter=None, url='http://geocities.com/ron_weas', slug='weasley.ron')
+
+        self.hermione_instructor = Award.objects.create(person=self.hermione,
+                                                        badge=self.instructor,
+                                                        awarded=datetime.date(2014, 01, 01))
 
     def _parse(self, content, save_to=None):
         """

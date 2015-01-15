@@ -399,7 +399,10 @@ def instructors(request):
                     distance_person[1].family,
                     distance_person[1].personal,
                     distance_person[1].middle))
-            persons = [x[1] for x in persons[:10]]
+
+            # Return number desired.
+            wanted = form.cleaned_data['wanted']
+            persons = [x[1] for x in persons[:wanted]]
 
     # if a GET (or any other method) we'll create a blank form
     else:
