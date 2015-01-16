@@ -34,11 +34,10 @@ ITEMS_PER_PAGE = 25
 #------------------------------------------------------------
 
 
-class UpdateViewContext(UpdateView, ContextMixin):
+class UpdateViewContext(UpdateView):
     """
-    Class-based view inheriting ``UpdateView`` and ``ContextMixin``.  This
-    makes it possible to specify variables used in all AMY's update views,
-    for example: title.
+    Class-based view that extends default template context by adding proper
+    title.
     """
 
     def get_context_data(self, **kwargs):
