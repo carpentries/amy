@@ -33,6 +33,25 @@ ITEMS_PER_PAGE = 25
 
 #------------------------------------------------------------
 
+
+class UpdateViewContext(UpdateView, ContextMixin):
+    """
+    Class-based view inheriting ``UpdateView`` and ``ContextMixin``.  This
+    makes it possible to specify variables used in all AMY's update views,
+    for example: title.
+    """
+
+    def get_context_data(self, **kwargs):
+        context = super(UpdateViewContext, self).get_context_data(**kwargs)
+
+        # self.object is available in UpdateView as the object being currently
+        # edited
+        context['title'] = str(self.object)
+        return context
+
+#------------------------------------------------------------
+
+
 def index(request):
     '''Home page.'''
     upcoming_events = Event.objects.upcoming_events()
@@ -156,7 +175,7 @@ def person_bulk_add(request):
                         entry['task'].person = entry['person'] # Because Django's ORM doesn't do this automatically.
                         entry['task'].save()
                 context = {'title' : 'Process CSV File',
-                           'form': form, 
+                           'form': form,
                            'persons_tasks': persons_tasks}
                 return render(request, 'workshops/person_bulk_add_results.html', context)
     else:
@@ -185,10 +204,10 @@ def _upload_person_task_csv(request, uploaded_file):
                                      'Event with slug {} does not exist.'.format(row['event']))
             except Role.DoesNotExist:
                 messages.add_message(request, messages.ERROR, \
-                                     'Role with name {} does not exist.'.format(row['role'])) 
+                                     'Role with name {} does not exist.'.format(row['role']))
             except Role.MultipleObjectsReturned:
                 messages.add_message(request, messages.ERROR, \
-                                     'More than one role named {} exists.'.format(row['role'])) 
+                                     'More than one role named {} exists.'.format(row['role']))
         persons_tasks.append(entry)
     return persons_tasks
 
@@ -198,15 +217,11 @@ class PersonCreate(CreateView):
     fields = '__all__'
 
 
-class PersonUpdate(UpdateView, ContextMixin):
+class PersonUpdate(UpdateViewContext):
     model = Person
     fields = '__all__'
     pk_url_kwarg = 'person_id'
 
-    def get_context_data(self, **kwargs):
-        context = super(UpdateView, self).get_context_data(**kwargs)
-        context['title'] = str(self.object)  # from UpdateView
-        return context
 
 #------------------------------------------------------------
 
