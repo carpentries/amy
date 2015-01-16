@@ -6,7 +6,7 @@ import requests
 from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Model
 from django.shortcuts import redirect, render, get_object_or_404
 from django.views.generic.base import ContextMixin
 from django.views.generic.edit import CreateView, UpdateView
@@ -34,10 +34,31 @@ ITEMS_PER_PAGE = 25
 #------------------------------------------------------------
 
 
+class CreateViewContext(CreateView):
+    """
+    Class-based view for creating objects that extends default template context
+    by adding model class used in objects creation.
+    """
+
+    def get_context_data(self, **kwargs):
+        context = super(CreateViewContext, self).get_context_data(**kwargs)
+
+        # self.model is available in CreateView as the model class being
+        # used to create new model instance
+        context['model'] = self.model
+
+        if self.model and issubclass(self.model, Model):
+            context['title'] = 'New {}'.format(self.model._meta.verbose_name)
+        else:
+            context['title'] = 'New object'
+
+        return context
+
+
 class UpdateViewContext(UpdateView):
     """
-    Class-based view that extends default template context by adding proper
-    title.
+    Class-based view for updating objects that extends default template context
+    by adding proper page title.
     """
 
     def get_context_data(self, **kwargs):
@@ -211,7 +232,7 @@ def _upload_person_task_csv(request, uploaded_file):
     return persons_tasks
 
 
-class PersonCreate(CreateView):
+class PersonCreate(CreateViewContext):
     model = Person
     fields = '__all__'
 
