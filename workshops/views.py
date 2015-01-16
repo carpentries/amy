@@ -15,6 +15,8 @@ from workshops.models import Site, Airport, Event, Person, Task, Cohort, Skill, 
 from workshops.forms import SearchForm, InstructorsForm, PersonBulkAddForm
 from workshops.util import earth_distance
 
+from workshops.check import check_file
+
 from workshops.models import \
     Airport, \
     Award, \
