@@ -6,7 +6,7 @@ import requests
 from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Model
 from django.shortcuts import redirect, render, get_object_or_404
 from django.views.generic.base import ContextMixin
 from django.views.generic.edit import CreateView, UpdateView
@@ -34,15 +34,39 @@ ITEMS_PER_PAGE = 25
 #------------------------------------------------------------
 
 
-class UpdateViewContext(UpdateView, ContextMixin):
+class CreateViewContext(CreateView):
     """
-    Class-based view inheriting ``UpdateView`` and ``ContextMixin``.  This
-    makes it possible to specify variables used in all AMY's update views,
-    for example: title.
+    Class-based view for creating objects that extends default template context
+    by adding model class used in objects creation.
+    """
+
+    def get_context_data(self, **kwargs):
+        context = super(CreateViewContext, self).get_context_data(**kwargs)
+
+        # self.model is available in CreateView as the model class being
+        # used to create new model instance
+        context['model'] = self.model
+
+        if self.model and issubclass(self.model, Model):
+            context['title'] = 'New {}'.format(self.model._meta.verbose_name)
+        else:
+            context['title'] = 'New object'
+
+        return context
+
+
+class UpdateViewContext(UpdateView):
+    """
+    Class-based view for updating objects that extends default template context
+    by adding proper page title.
     """
 
     def get_context_data(self, **kwargs):
         context = super(UpdateViewContext, self).get_context_data(**kwargs)
+
+        # self.model is available in UpdateView as the model class being
+        # used to update model instance
+        context['model'] = self.model
 
         # self.object is available in UpdateView as the object being currently
         # edited
@@ -88,12 +112,12 @@ def site_details(request, site_domain):
     return render(request, 'workshops/site.html', context)
 
 
-class SiteCreate(CreateView):
+class SiteCreate(CreateViewContext):
     model = Site
     fields = SITE_FIELDS
 
 
-class SiteUpdate(UpdateView):
+class SiteUpdate(UpdateViewContext):
     model = Site
     fields = SITE_FIELDS
     slug_field = 'domain'
@@ -122,12 +146,12 @@ def airport_details(request, airport_iata):
     return render(request, 'workshops/airport.html', context)
 
 
-class AirportCreate(CreateView):
+class AirportCreate(CreateViewContext):
     model = Airport
     fields = AIRPORT_FIELDS
 
 
-class AirportUpdate(UpdateView):
+class AirportUpdate(UpdateViewContext):
     model = Airport
     fields = AIRPORT_FIELDS
     slug_field = 'iata'
@@ -212,7 +236,7 @@ def _upload_person_task_csv(request, uploaded_file):
     return persons_tasks
 
 
-class PersonCreate(CreateView):
+class PersonCreate(CreateViewContext):
     model = Person
     fields = '__all__'
 
@@ -268,12 +292,12 @@ def validate_event(request, event_ident):
     return render(request, 'workshops/validate_event.html', context)
 
 
-class EventCreate(CreateView):
+class EventCreate(CreateViewContext):
     model = Event
     fields = '__all__'
 
 
-class EventUpdate(UpdateView):
+class EventUpdate(UpdateViewContext):
     model = Event
     fields = '__all__'
     pk_url_kwarg = 'event_ident'
@@ -303,12 +327,12 @@ def task_details(request, event_slug, person_id, role_name):
     return render(request, 'workshops/task.html', context)
 
 
-class TaskCreate(CreateView):
+class TaskCreate(CreateViewContext):
     model = Task
     fields = TASK_FIELDS
 
 
-class TaskUpdate(UpdateView):
+class TaskUpdate(UpdateViewContext):
     model = Task
     fields = TASK_FIELDS
     pk_url_kwarg = 'task_id'
@@ -349,12 +373,12 @@ def cohort_details(request, cohort_name):
     return render(request, 'workshops/cohort.html', context)
 
 
-class CohortCreate(CreateView):
+class CohortCreate(CreateViewContext):
     model = Cohort
     fields = COHORT_FIELDS
 
 
-class CohortUpdate(UpdateView):
+class CohortUpdate(UpdateViewContext):
     model = Cohort
     fields = COHORT_FIELDS
     slug_field = 'name'

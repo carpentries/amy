@@ -5,8 +5,8 @@ urlpatterns = [
     url(r'^$', views.index, name='index'),
 
     url(r'^sites/?$', views.all_sites, name='all_sites'),
-    url(r'^site/(?P<site_domain>[\w\./-]+)/?$', views.site_details, name='site_details'),
-    url(r'^site/(?P<site_domain>[\w\./-]+)/edit$', views.SiteUpdate.as_view(), name='site_edit'),
+    url(r'^site/(?P<site_domain>[\w\.-]+)/?$', views.site_details, name='site_details'),
+    url(r'^site/(?P<site_domain>[\w\.-]+)/edit$', views.SiteUpdate.as_view(), name='site_edit'),
     url(r'^sites/add/$', views.SiteCreate.as_view(), name='site_add'),
 
     url(r'^airports/?$', views.all_airports, name='all_airports'),
