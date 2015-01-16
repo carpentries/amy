@@ -2,14 +2,13 @@
 
 {% load breadcrumbs %}
 {% block breadcrumbs %}
-    {% breadcrumb_url 'Amy' 'index'  %}
-    {% breadcrumb_url 'All tasks' 'all_tasks' %}
+    {% breadcrumb_main_page %}
+    {% breadcrumb_index_all_objects model %}
     {% if object %}
-        {% url 'task_details' object.event.slug object.person.id task.role.name as object_url %}
-        {% breadcrumb "Task" object_url %}
-        {% breadcrumb_active 'Edit task'  %}
+        {% breadcrumb_object object %}
+        {% breadcrumb_edit_object object %}
     {% else %}
-        {% breadcrumb_active 'New task'  %}
+        {% breadcrumb_new_object model %}
     {% endif %}
 {% endblock %}
 

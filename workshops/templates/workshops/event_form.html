@@ -2,14 +2,13 @@
 
 {% load breadcrumbs %}
 {% block breadcrumbs %}
-    {% breadcrumb_url 'Amy' 'index'  %}
-    {% breadcrumb_url 'All events' 'all_events' %}
+    {% breadcrumb_main_page %}
+    {% breadcrumb_index_all_objects model %}
     {% if object %}
-        {% url 'event_details' object.id as object_url %}
-        {% breadcrumb object.id object_url %}
-        {% breadcrumb_active 'Edit event'  %}
+        {% breadcrumb_object object %}
+        {% breadcrumb_edit_object object %}
     {% else %}
-        {% breadcrumb_active 'New event'  %}
+        {% breadcrumb_new_object model %}
     {% endif %}
 {% endblock %}
 

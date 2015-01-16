@@ -2,9 +2,9 @@
 
 {% load breadcrumbs %}
 {% block breadcrumbs %}
-    {% breadcrumb_url 'Amy' 'index'  %}
-    {% breadcrumb_url 'All badges' 'all_badges'  %}
-    {% breadcrumb_active badge.name  %}
+    {% breadcrumb_main_page %}
+    {% breadcrumb_index_all_objects badge %}
+    {% breadcrumb_active badge %}
 {% endblock %}
 
 {% block content %}

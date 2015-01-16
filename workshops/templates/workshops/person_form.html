@@ -2,14 +2,13 @@
 
 {% load breadcrumbs %}
 {% block breadcrumbs %}
-    {% breadcrumb_url 'Index' 'index'  %}
-    {% breadcrumb_url 'All persons' 'all_persons' %}
+    {% breadcrumb_main_page %}
+    {% breadcrumb_index_all_objects model %}
     {% if object %}
-        {% url 'person_details' object.domain as object_url %}
-        {% breadcrumb object.domain object_url %}
-        {% breadcrumb_active 'Edit person'  %}
+        {% breadcrumb_object object %}
+        {% breadcrumb_edit_object object %}
     {% else %}
-        {% breadcrumb_active 'New person'  %}
+        {% breadcrumb_new_object model %}
     {% endif %}
 {% endblock %}
 

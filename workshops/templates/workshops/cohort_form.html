@@ -2,14 +2,13 @@
 
 {% load breadcrumbs %}
 {% block breadcrumbs %}
-    {% breadcrumb_url 'Amy' 'index'  %}
-    {% breadcrumb_url 'All cohorts' 'all_cohorts' %}
+    {% breadcrumb_main_page %}
+    {% breadcrumb_index_all_objects model %}
     {% if object %}
-        {% url 'cohort_details' object.name as object_url %}
-        {% breadcrumb object.name object_url %}
-        {% breadcrumb_active 'Edit cohort'  %}
+        {% breadcrumb_object object %}
+        {% breadcrumb_edit_object object %}
     {% else %}
-        {% breadcrumb_active 'New cohort'  %}
+        {% breadcrumb_new_object model %}
     {% endif %}
 {% endblock %}
 
