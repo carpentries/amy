@@ -85,6 +85,7 @@ class Person(models.Model):
         (FEMALE, 'Female'),
         (OTHER, 'Other'),
         )
+    GENDER_CHOICES_DICT = dict(GENDER_CHOICES)
 
     personal   = models.CharField(max_length=STR_LONG)
     middle     = models.CharField(max_length=STR_LONG, null=True)

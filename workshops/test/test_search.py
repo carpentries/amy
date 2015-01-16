@@ -17,9 +17,7 @@ class TestSearchSite(TestBase):
     def test_search_for_site_when_site_matching_turned_off(self):
         response = self.client.post(reverse('search'),
                                     {'term' : 'Alpha'})
-        assert response.status_code == 200, \
-            'Got status code {0} for search'.format(response.status_code)
-        doc = self._parse(response.content)
+        doc = self._check_status_code_and_parse(response, 200)
         node = self._check_0(doc, ".//a[@class='searchresult']",
                              'Expected no search results')
 
@@ -27,9 +25,7 @@ class TestSearchSite(TestBase):
         response = self.client.post(reverse('search'),
                                     {'term' : 'Alpha',
                                      'in_sites' : 'on'})
-        assert response.status_code == 200, \
-            'Got status code {0} for search'.format(response.status_code)
-        doc = self._parse(response.content)
+        doc = self._check_status_code_and_parse(response, 200)
         node = self._get_1(doc, ".//a[@class='searchresult']",
                            'Expected exactly one search result')
         assert node.text=='alpha.edu', \
@@ -39,9 +35,7 @@ class TestSearchSite(TestBase):
         response = self.client.post(reverse('search'),
                                     {'term' : 'beta.com',
                                      'in_sites' : 'on'})
-        assert response.status_code == 200, \
-            'Got status code {0} for search'.format(response.status_code)
-        doc = self._parse(response.content)
+        doc = self._check_status_code_and_parse(response, 200)
         node = self._get_1(doc, ".//a[@class='searchresult']",
                            'Expected exactly one search result')
         assert node.text=='beta.com', \
@@ -51,9 +45,7 @@ class TestSearchSite(TestBase):
         response = self.client.post(reverse('search'),
                                     {'term' : 'a', # 'a' is in both 'alpha' and 'beta'
                                      'in_sites' : 'on'})
-        assert response.status_code == 200, \
-            'Got status code {0} for search'.format(response.status_code)
-        doc = self._parse(response.content)
+        doc = self._check_status_code_and_parse(response, 200)
         nodes = self._get_N(doc,  ".//a[@class='searchresult']",
                             'Expected two search results',
                             expected=2)

@@ -9,23 +9,23 @@
 
 {% block content %}
 <table class="table table-striped">
-  <tr><td>personal:</td><td>{{ person.personal }}</td></tr>
-  <tr><td>middle:</td><td>{{ person.middle }}</td></tr>
-  <tr><td>family:</td><td>{{ person.family }}</td></tr>
-  <tr><td>email:</td><td>{{ person.email }}</td></tr>
-  <tr><td>gender:</td><td>{{ person.get_gender_display }}</td></tr>
-  <tr><td>active:</td><td>{{ person.active }}</td></tr>
-  <tr><td>airport:</td><td>{{ person.airport }}</td></tr>
-  <tr><td>github:</td><td>{{ person.github }}</td></tr>
-  <tr><td>twitter:</td><td>{{ person.twitter }}</td></tr>
-  <tr><td>url:</td><td>{{ person.url }}</td></tr>
+  <tr><td>personal:</td><td id="personal">{{ person.personal }}</td></tr>
+  <tr><td>middle:</td><td id="middle">{{ person.middle }}</td></tr>
+  <tr><td>family:</td><td id="family">{{ person.family }}</td></tr>
+  <tr><td>email:</td><td id="email">{{ person.email }}</td></tr>
+  <tr><td>gender:</td><td id="gender">{{ person.get_gender_display }}</td></tr>
+  <tr><td>active:</td><td id="active">{{ person.active }}</td></tr>
+  <tr><td>airport:</td><td id="airport">{{ person.airport }}</td></tr>
+  <tr><td>github:</td><td id="github">{{ person.github }}</td></tr>
+  <tr><td>twitter:</td><td id="twitter">{{ person.twitter }}</td></tr>
+  <tr><td>url:</td><td id="url">{{ person.url }}</td></tr>
 </table>
 
 {% if awards %}
 <p>Awards</p>
 <ul>
   {% for a in awards %}
-  <li>{{ a }}</li>
+  <li class="awards_item" id="awards_{{forloop.counter0}}">{{ a }}</li>
   {% endfor %}
 </ul>
 {% else %}
@@ -36,7 +36,7 @@
 <p>Tasks</p>
 <ul>
   {% for t in tasks %}
-  <li>{{ t }}</li>
+  <li class="tasks_item" id="tasks_{{forloop.counter0}}">{{ t }}</li>
   {% endfor %}
 </ul>
 {% else %}

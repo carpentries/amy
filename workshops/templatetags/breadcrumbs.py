@@ -1,10 +1,11 @@
 import logging
 
 from django import template
-from django.template import loader, Node, Variable
-from django.utils.encoding import smart_text
-from django.template.defaulttags import url
 from django.template import VariableDoesNotExist
+from django.template import loader, Node, Variable
+from django.template.defaulttags import url
+from django.utils.encoding import smart_text
+from django.utils.html import escape
 
 register = template.Library()
 _LOG = logging.getLogger(__name__)
@@ -131,10 +132,11 @@ def create_crumb(title, url=None, active=False):
     if active:
         active_str = ' class="active"'
 
-    inner_str = "%s" % title
+    title = escape(title)
+    inner_str = title
     if url:
-        inner_str = '<a href="%s">%s</a>' % (url, title)
+        inner_str = '<a href="{0}">{1}</a>'.format(url, title)
 
-    crumb = "<li %s>%s</li>" % (active_str, inner_str)
+    crumb = "<li {0}>{1}</li>".format(active_str, inner_str)
 
     return crumb

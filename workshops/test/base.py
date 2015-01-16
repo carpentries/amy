@@ -20,6 +20,8 @@ TEMPLATE_STRING_IF_INVALID = 'XXX-unset-variable-XXX' # FIXME: get by importing 
 class TestBase(TestCase):
     '''Base class for Amy test cases.'''
 
+    ERR_DIR = 'htmlerror' # where to save error HTML files
+
     def setUp(self):
         '''Create standard objects.'''
 
@@ -122,10 +124,11 @@ class TestBase(TestCase):
         # Save the raw HTML if explicitly asked to (during debugging).
         if save_to:
             with open(save_to, 'w') as writer:
-                w.write(content)
+                writer.write(content)
 
         # Report unfilled tags.
         if TEMPLATE_STRING_IF_INVALID in content:
+            self._save_html(content)
             lines = content.split('\n')
             hits = [x for x in enumerate(lines)
                     if TEMPLATE_STRING_IF_INVALID in x[1]]
@@ -144,18 +147,7 @@ class TestBase(TestCase):
             return doc
         # ...and save in a uniquely-named file if we can't.
         except ET.ParseError, e:
-            stack = traceback.extract_stack()
-            callers = [s[2] for s in stack] # get function/method names
-            while callers and not callers[-1].startswith('test'):
-                callers.pop()
-            assert callers, 'Internal error: unable to find caller'
-            caller = callers[-1]
-            err_dir = 'htmlerror'
-            if not os.path.isdir(err_dir):
-                os.mkdir(err_dir)
-            filename = os.path.join(err_dir, '{0}.html'.format(caller))
-            with open(filename, 'w') as writer:
-                writer.write(content)
+            self._save_html(content)
             assert False, 'HTML parsing failed: {0}'.format(str(e))
 
     def _check_status_code_and_parse(self, response, expected):
@@ -181,3 +173,16 @@ class TestBase(TestCase):
         if expected is not None:
             assert len(nodes) == expected, (msg + ': expected {0}, got {1}'.format(expected, len(nodes)))
         return nodes
+
+    def _save_html(self, content):
+        stack = traceback.extract_stack()
+        callers = [s[2] for s in stack] # get function/method names
+        while callers and not callers[-1].startswith('test'):
+            callers.pop()
+        assert callers, 'Internal error: unable to find caller'
+        caller = callers[-1]
+        if not os.path.isdir(self.ERR_DIR):
+            os.mkdir(self.ERR_DIR)
+        filename = os.path.join(self.ERR_DIR, '{0}.html'.format(caller))
+        with open(filename, 'w') as writer:
+            writer.write(content)
