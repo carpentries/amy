@@ -8,6 +8,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
 from django.db.models import Count, Q
 from django.shortcuts import redirect, render, get_object_or_404
+from django.views.generic.base import ContextMixin
 from django.views.generic.edit import CreateView, UpdateView
 
 from workshops.models import Site, Airport, Event, Person, Task, Cohort, Skill, Trainee, Badge, Award, Role
@@ -197,11 +198,15 @@ class PersonCreate(CreateView):
     fields = '__all__'
 
 
-class PersonUpdate(UpdateView):
+class PersonUpdate(UpdateView, ContextMixin):
     model = Person
     fields = '__all__'
     pk_url_kwarg = 'person_id'
 
+    def get_context_data(self, **kwargs):
+        context = super(UpdateView, self).get_context_data(**kwargs)
+        context['title'] = str(self.object)  # from UpdateView
+        return context
 
 #------------------------------------------------------------
 
