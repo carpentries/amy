@@ -108,12 +108,12 @@ def site_details(request, site_domain):
     return render(request, 'workshops/site.html', context)
 
 
-class SiteCreate(CreateView):
+class SiteCreate(CreateViewContext):
     model = Site
     fields = SITE_FIELDS
 
 
-class SiteUpdate(UpdateView):
+class SiteUpdate(UpdateViewContext):
     model = Site
     fields = SITE_FIELDS
     slug_field = 'domain'
@@ -142,12 +142,12 @@ def airport_details(request, airport_iata):
     return render(request, 'workshops/airport.html', context)
 
 
-class AirportCreate(CreateView):
+class AirportCreate(CreateViewContext):
     model = Airport
     fields = AIRPORT_FIELDS
 
 
-class AirportUpdate(UpdateView):
+class AirportUpdate(UpdateViewContext):
     model = Airport
     fields = AIRPORT_FIELDS
     slug_field = 'iata'
@@ -288,12 +288,12 @@ def validate_event(request, event_ident):
     return render(request, 'workshops/validate_event.html', context)
 
 
-class EventCreate(CreateView):
+class EventCreate(CreateViewContext):
     model = Event
     fields = '__all__'
 
 
-class EventUpdate(UpdateView):
+class EventUpdate(UpdateViewContext):
     model = Event
     fields = '__all__'
     pk_url_kwarg = 'event_ident'
@@ -323,12 +323,12 @@ def task_details(request, event_slug, person_id, role_name):
     return render(request, 'workshops/task.html', context)
 
 
-class TaskCreate(CreateView):
+class TaskCreate(CreateViewContext):
     model = Task
     fields = TASK_FIELDS
 
 
-class TaskUpdate(UpdateView):
+class TaskUpdate(UpdateViewContext):
     model = Task
     fields = TASK_FIELDS
     pk_url_kwarg = 'task_id'
@@ -369,12 +369,12 @@ def cohort_details(request, cohort_name):
     return render(request, 'workshops/cohort.html', context)
 
 
-class CohortCreate(CreateView):
+class CohortCreate(CreateViewContext):
     model = Cohort
     fields = COHORT_FIELDS
 
 
-class CohortUpdate(UpdateView):
+class CohortUpdate(UpdateViewContext):
     model = Cohort
     fields = COHORT_FIELDS
     slug_field = 'name'
