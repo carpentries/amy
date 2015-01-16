@@ -64,6 +64,10 @@ class UpdateViewContext(UpdateView):
     def get_context_data(self, **kwargs):
         context = super(UpdateViewContext, self).get_context_data(**kwargs)
 
+        # self.model is available in UpdateView as the model class being
+        # used to update model instance
+        context['model'] = self.model
+
         # self.object is available in UpdateView as the object being currently
         # edited
         context['title'] = str(self.object)
