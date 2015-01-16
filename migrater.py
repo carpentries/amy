@@ -3,8 +3,13 @@ import logging
 import sqlite3
 import sys
 
-# Faking data?
+# Command-line parameters.
 FAKE = True
+assert len(sys.argv) >= 3, 'Usage: migrater.py /path/to/src.db /path/to/dst.db [fake]'
+src_path = sys.argv[1]
+dst_path = sys.argv[2]
+if (len(sys.argv) >= 4) and (sys.argv[3] == 'real'):
+    FAKE = False
 
 def fail(table, fields, exc):
     '''Report failure.'''
@@ -33,11 +38,9 @@ def fake(i, slug, personal, middle, family, email, gender, github, twitter, url)
            '@U{0}'.format(i), \
            'http://{0}/U_{1}'.format(where, i)
 
-assert len(sys.argv) == 3, 'Usage: migrater.py /path/to/src.db /path/to/dst.db'
-
-old_cnx = sqlite3.connect(sys.argv[1])
+old_cnx = sqlite3.connect(src_path)
 old_crs = old_cnx.cursor()
-new_cnx = sqlite3.connect(sys.argv[2])
+new_cnx = sqlite3.connect(dst_path)
 new_crs = new_cnx.cursor()
 
 # Site
@@ -97,7 +100,7 @@ for (person, personal, middle, family, email) in old_crs.fetchall():
         airport = airport_lookup[airport]
 
     try:
-        fields = (i, personal, middle, family, email, active, airport, github, twitter, url, person, gender)
+        fields = (i, personal, middle, family, email, airport, gender, github, twitter, url, person, active)
         new_crs.execute('insert into workshops_person values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', fields)
     except Exception, e:
         fail('person', fields, e)

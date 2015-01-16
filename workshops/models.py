@@ -41,7 +41,7 @@ class Airport(models.Model):
     longitude = models.FloatField()
 
     def __str__(self):
-        return self.iata
+        return '{0}: {1}'.format(self.iata, self.fullname)
 
     def get_absolute_url(self):
         return reverse('airport_details', args=[str(self.iata)])
