@@ -384,9 +384,9 @@ def instructors(request):
             persons = persons.have_skills(skills)
 
             # Add metadata which we will eventually filter by
-            for person in persons:
-                person.num_taught = \
-                    person.task_set.filter(role__name='instructor').count()
+            for p in persons:
+                p.num_taught = \
+                    p.task_set.filter(role__name='instructor').count()
 
             # Sort by location.
             loc = (form.cleaned_data['latitude'],

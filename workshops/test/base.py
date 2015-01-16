@@ -9,7 +9,9 @@ from ..models import \
     Award, \
     Badge, \
     Person, \
-    Site
+    Qualification, \
+    Site, \
+    Skill
 
 
 TEMPLATE_STRING_IF_INVALID = 'XXX-unset-variable-XXX' # FIXME: get by importing settings
@@ -23,8 +25,16 @@ class TestBase(TestCase):
 
         self._setUpSites()
         self._setUpAirports()
+        self._setUpSkills()
         self._setUpBadges()
-        self._setUpPersons()
+        self._setUpInstructors()
+        self._setUpNonInstructors()
+
+    def _setUpSkills(self):
+        '''Set up skill objects.'''
+
+        self.git = Skill.objects.create(name='Git')
+        self.sql = Skill.objects.create(name='SQL')
 
     def _setUpSites(self):
         '''Set up site objects.'''
@@ -58,27 +68,48 @@ class TestBase(TestCase):
                                                title='Software Carpentry Instructor',
                                                criteria='Worked hard for this')
 
-    def _setUpPersons(self):
-        '''Set up person objects.'''
+    def _setUpInstructors(self):
+        '''Set up person objects representing instructors.'''
 
         self.hermione = Person.objects.create(personal='Hermione', middle=None, family='Granger',
                                               email='hermione@granger.co.uk', gender='F', active=True,
                                               airport=self.airport_0_0, github='herself',
                                               twitter='herself', url='http://hermione.org', slug='granger.h')
+        Award.objects.create(person=self.hermione,
+                             badge=self.instructor,
+                             awarded=datetime.date(2014, 01, 01))
+        Qualification.objects.create(person=self.hermione, skill=self.git)
+        Qualification.objects.create(person=self.hermione, skill=self.sql)
 
         self.harry = Person.objects.create(personal='Harry', middle=None, family='Potter',
                                            email='harry@hogwarts.edu', gender='M', active=True,
                                            airport=self.airport_0_50, github='hpotter',
                                            twitter=None, url=None, slug='potter.h')
+        Award.objects.create(person=self.harry,
+                             badge=self.instructor,
+                             awarded=datetime.date(2014, 05, 05))
+        Qualification.objects.create(person=self.harry, skill=self.sql)
 
         self.ron = Person.objects.create(personal='Ron', middle=None, family='Weasley',
                                          email='rweasley@ministry.gov.uk', gender='M', active=False,
                                          airport=self.airport_50_100, github=None,
                                          twitter=None, url='http://geocities.com/ron_weas', slug='weasley.ron')
+        Award.objects.create(person=self.ron,
+                             badge=self.instructor,
+                             awarded=datetime.date(2014, 11, 11))
+        Qualification.objects.create(person=self.ron, skill=self.git)
 
-        self.hermione_instructor = Award.objects.create(person=self.hermione,
-                                                        badge=self.instructor,
-                                                        awarded=datetime.date(2014, 01, 01))
+    def _setUpNonInstructors(self):
+        '''Set up person objects representing non-instructors.'''
+
+        self.spiderman = Person.objects.create(personal='Peter', middle='Q.', family='Parker',
+                                               email='peter@webslinger.net', gender='O', active=True)
+
+        self.ironman = Person.objects.create(personal='Tony', middle=None, family='Stark',
+                                             email='me@stark.com', gender=None)
+
+        self.blackwidow = Person.objects.create(personal='Natasha', middle=None, family='Romanova',
+                                                email=None, gender='F', active=False)
 
     def _parse(self, content, save_to=None):
         """
