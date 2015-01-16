@@ -46,8 +46,10 @@ class TestBase(TestCase):
                                                   latitude=0.0, longitude=0.0)
         self.airport_0_50 = Airport.objects.create(iata='BBB', fullname='Airport 0x50', country='Bulgaria',
                                                    latitude=0.0, longitude=50.0)
-        self.airport_50_100 = Airport.objects.create(iata='CCC', fullname='Airport 100x50', country='Cameroon',
+        self.airport_50_100 = Airport.objects.create(iata='CCC', fullname='Airport 50x100', country='Cameroon',
                                                      latitude=50.0, longitude=100.0)
+        self.airport_55_105 = Airport.objects.create(iata='DDD', fullname='Airport 55x105', country='Cameroon',
+                                                     latitude=55.0, longitude=105.0)
 
     def _setUpBadges(self):
         '''Set up badge objects.'''
