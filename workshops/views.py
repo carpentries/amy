@@ -6,7 +6,10 @@ import requests
 from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
-from django.db.models import Count, Q, Model
+from django.core.exceptions import ObjectDoesNotExist
+from django.http import Http404
+from django.db import IntegrityError, transaction
+from django.db.models import Count, Q
 from django.shortcuts import redirect, render, get_object_or_404
 from django.views.generic.base import ContextMixin
 from django.views.generic.edit import CreateView, UpdateView
@@ -191,51 +194,200 @@ def person_bulk_add(request):
         form = PersonBulkAddForm(request.POST, request.FILES)
         if form.is_valid():
             try:
-                persons_tasks = _upload_person_task_csv(request, request.FILES['file'])
+                persons_tasks = _upload_person_task_csv(request,
+                                                        request.FILES['file'])
             except csv.Error as e:
-                messages.add_message(request, messages.ERROR, "Error processing uploaded .CSV file: {}".format(e))
+                messages.add_message(request, messages.ERROR,
+                                     "Error processing uploaded .CSV file: {}"
+                                     .format(e))
             else:
-                for entry in persons_tasks:
-                    entry['person'].save()
-                    if entry['task']:
-                        entry['task'].person = entry['person'] # Because Django's ORM doesn't do this automatically.
-                        entry['task'].save()
-                context = {'title' : 'Process CSV File',
-                           'form': form,
-                           'persons_tasks': persons_tasks}
-                return render(request, 'workshops/person_bulk_add_results.html', context)
+                # instead of insta-saving, put everything into session
+                # then redirect to confirmation page which in turn saves the
+                # data
+                request.session['bulk-add-people'] = persons_tasks
+                return redirect('person_bulk_add_confirmation')
+
     else:
         form = PersonBulkAddForm()
 
-    context = {'title' : 'Bulk Add People',
+    context = {'title': 'Bulk Add People',
                'form': form}
     return render(request, 'workshops/person_bulk_add_form.html', context)
 
 
+def person_bulk_add_confirmation(request):
+    """
+    This view allows for manipulating and saving session-stored upload data.
+    """
+    persons_tasks = request.session['bulk-add-people']
+
+    # if the session is empty, don't bother
+    if not persons_tasks:
+        raise Http404
+
+    if request.method == 'POST':
+        # update values if user wants to change them
+        personals = request.POST.getlist("personal")
+        middles = request.POST.getlist("middle")
+        families = request.POST.getlist("family")
+        emails = request.POST.getlist("email")
+        events = request.POST.getlist("event")
+        roles = request.POST.getlist("role")
+        data_update = zip(personals, middles, families, emails, events, roles)
+        for k, record in enumerate(data_update):
+            personal, middle, family, email, event, role = record
+            persons_tasks[k]['person'] = {
+                'personal': personal,
+                'middle': middle,
+                'family': family,
+                'email': email
+            }
+            if event:
+                persons_tasks[k]['event'] = event
+            if role:
+                persons_tasks[k]['role'] = role
+            persons_tasks[k]['errors'] = None  # reset here
+
+        # save updated data to the session
+        request.session['bulk-add-people'] = persons_tasks
+
+        # check if user wants to verify or save, or cancel
+
+        if request.POST.get('verify', None):
+            # if there's "verify" in POST, then do only verification
+            any_errors = _verify_upload_person_task(persons_tasks)
+            if any_errors:
+                messages.add_message(request, messages.ERROR,
+                                     "Please make sure to fix all errors "
+                                     "listed below.")
+
+            context = {'title': 'Confirm uploaded data',
+                       'persons_tasks': persons_tasks}
+            return render(request, 'workshops/person_bulk_add_results.html',
+                          context)
+
+        elif (request.POST.get('confirm', None) and
+                not request.POST.get('cancel', None)):
+            # there must be "confirm" and no "cancel" in POST in order to save
+
+            try:
+                records = 0
+                with transaction.atomic():
+                    for row in persons_tasks:
+                        # create person
+                        p = Person(**row['person'])
+                        p.save()
+                        records += 1
+
+                        # create task if data supplied
+                        if row['event'] and row['role']:
+                            e = Event.objects.get(slug=row['event'])
+                            r = Role.objects.get(name=row['role'])
+                            t = Task(person=p, event=e, role=r)
+                            t.save()
+                            records += 1
+
+            except (IntegrityError, ObjectDoesNotExist) as e:
+                messages.add_message(request, messages.ERROR,
+                                     "Error saving data to the database: {}. "
+                                     "Please make sure to fix all errors "
+                                     "listed below.".format(e))
+                _verify_upload_person_task(persons_tasks)
+                context = {'title': 'Confirm uploaded data',
+                           'persons_tasks': persons_tasks}
+                return render(request,
+                              'workshops/person_bulk_add_results.html',
+                              context)
+
+            else:
+                request.session['bulk-add-people'] = None
+                messages.add_message(request, messages.SUCCESS,
+                                     "Successfully bulk-loaded {} records."
+                                     .format(records))
+                return redirect('person_bulk_add')
+
+        else:
+            # any "cancel" or no "confirm" in POST cancels the upload
+            request.session['bulk-add-people'] = None
+            return redirect('person_bulk_add')
+
+    else:
+        # alters persons_tasks via reference
+        _verify_upload_person_task(persons_tasks)
+
+        context = {'title': 'Confirm uploaded data',
+                   'persons_tasks': persons_tasks}
+        return render(request, 'workshops/person_bulk_add_results.html',
+                      context)
+
+
 def _upload_person_task_csv(request, uploaded_file):
+    """
+    Read data from CSV and turn it into JSON-serializable list of dictionaries.
+    "Serializability" is required because we put this data into session.  See
+    https://docs.djangoproject.com/en/1.7/topics/http/sessions/ for details.
+    """
     persons_tasks = []
     reader = csv.DictReader(uploaded_file)
     for row in reader:
-        person_fields = dict((col, row[col].strip()) for col in PERSON_UPLOAD_FIELDS)
-        person = Person(**person_fields)
-        entry = {'person': person, 'task' : None}
-        if row.get('event', None) and row.get('role', None):
-            try:
-                event = Event.objects.get(slug=row['event'])
-                role = Role.objects.get(name=row['role'])
-                entry['task'] = Task(person=person, event=event, role=role)
-                import sys
-            except Event.DoesNotExist:
-                messages.add_message(request, messages.ERROR, \
-                                     'Event with slug {} does not exist.'.format(row['event']))
-            except Role.DoesNotExist:
-                messages.add_message(request, messages.ERROR, \
-                                     'Role with name {} does not exist.'.format(row['role']))
-            except Role.MultipleObjectsReturned:
-                messages.add_message(request, messages.ERROR, \
-                                     'More than one role named {} exists.'.format(row['role']))
+        person_fields = dict((col, row[col].strip())
+                             for col in PERSON_UPLOAD_FIELDS)
+        entry = {'person': person_fields, 'event': row.get('event', None),
+                 'role': row.get('role', None), 'errors': None}
         persons_tasks.append(entry)
     return persons_tasks
+
+
+def _verify_upload_person_task(data):
+    """
+    Verify that uploaded data is correct.  Show errors by populating ``errors``
+    dictionary item.
+
+    This function changes ``data`` in place; ``data`` is a list, so it's
+    passed by a reference.  This means any changes to ``data`` we make in
+    here don't need to be returned via ``return`` statement.
+    """
+
+    errors_occur = False
+
+    for item in data:
+        event, role = item.get('event', None), item.get('role', None)
+        email = item['person'].get('email', None)
+
+        errors = []
+        if event:
+            try:
+                Event.objects.get(slug=event)
+            except Event.DoesNotExist:
+                errors.append('Event with slug {} does not exist.'
+                              .format(event))
+        if role:
+            try:
+                Role.objects.get(name=role)
+            except Role.DoesNotExist:
+                errors.append('Role with name {} does not exist.'.format(role))
+            except Role.MultipleObjectsReturned:
+                errors.append('More than one role named {} exists.'
+                              .format(role))
+
+        if email:
+            try:
+                Person.objects.get(email=email)
+                errors.append("User with email {} already exists."
+                              .format(email))
+            except Person.DoesNotExist:
+                # we want the email to be unique
+                pass
+
+        if errors:
+            # copy the errors just to be safe
+            item['errors'] = errors[:]
+            if not errors_occur:
+                errors_occur = True
+
+    # indicate there were some errors
+    return errors_occur
+>>>>>>> bb0a940167c842b9ecc8ad074335a42508451451
 
 
 class PersonCreate(CreateViewContext):
