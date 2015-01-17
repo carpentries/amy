@@ -119,8 +119,8 @@ class Person(models.Model):
 
 #------------------------------------------------------------
 
-class Project(models.Model):
-    '''Keep track of the kinds of project we support.'''
+class Tag(models.Model):
+    '''Label for grouping events.'''
 
     slug       = models.CharField(max_length=STR_SHORT, unique=True)
     name       = models.CharField(max_length=STR_MED, unique=True)
@@ -215,7 +215,7 @@ class Event(models.Model):
 
     published  = models.BooleanField(default=False)
     site       = models.ForeignKey(Site)
-    project    = models.ForeignKey(Project)
+    tags       = models.ManyToManyField(Tag)
     organizer  = models.ForeignKey(Site, related_name='organizer', null=True, blank=True)
     start      = models.DateField(null=True, blank=True)
     end        = models.DateField(null=True, blank=True)

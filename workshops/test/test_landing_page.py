@@ -1,6 +1,6 @@
 from django.core.urlresolvers import reverse
 from django.test import TestCase
-from ..models import Event, Site, Project
+from ..models import Event, Site
 from datetime import datetime, timedelta
 
 class TestLandingPage(TestCase):
@@ -12,18 +12,12 @@ class TestLandingPage(TestCase):
         test_site = Site.objects.create(domain='example.com',
                  fullname='Test Site')
 
-        # Create a test project
-        test_project = Project.objects.create(slug='test',
-                       name='Test Project',
-                       details='my test project')
-
         # Create one new event for each day in the next 10 days
         for t in range(1,11):
             event_start = datetime.now() + timedelta(days=t)
             Event.objects.create(start=event_start,
                                  slug='upcoming_{0}'.format(t),
                                  site=test_site,
-                                 project=test_project,
                                  admin_fee=100)
 
         # Create one new event for each day from 10 days ago to
@@ -33,7 +27,6 @@ class TestLandingPage(TestCase):
             Event.objects.create(start=event_start,
                                  slug='past_{0}'.format(t),
                                  site=test_site,
-                                 project=test_project,
                                  admin_fee=100)
 
         # Create an event that started yesterday and ends
@@ -44,7 +37,6 @@ class TestLandingPage(TestCase):
               end=event_end,
               slug='ends_tomorrow',
               site=test_site,
-              project=test_project,
               admin_fee=100)
 
         # Create an event that ends today
@@ -54,7 +46,6 @@ class TestLandingPage(TestCase):
               end=event_end,
               slug='ends_today',
               site=test_site,
-              project=test_project,
               admin_fee=100)
 
         # Create an event that starts today
@@ -64,7 +55,6 @@ class TestLandingPage(TestCase):
               end=event_end,
               slug='starts_today',
               site=test_site,
-              project=test_project,
               admin_fee=100)
 
     def test_has_upcoming_events(self):
