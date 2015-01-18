@@ -11,23 +11,18 @@ from django.shortcuts import redirect, render, get_object_or_404
 from django.views.generic.base import ContextMixin
 from django.views.generic.edit import CreateView, UpdateView
 
-from workshops.models import Site, Airport, Event, Person, Task, Cohort, Skill, Trainee, Badge, Award, Role
-from workshops.forms import SearchForm, InstructorsForm, PersonBulkAddForm
-from workshops.util import earth_distance
-
-from workshops.check import check_file
-
 from workshops.models import \
     Airport, \
     Award, \
     Badge, \
-    Cohort, \
     Event, \
     Person, \
     Site, \
     Skill, \
-    Task, \
-    Trainee
+    Task
+from workshops.check import check_file
+from workshops.forms import SearchForm, InstructorsForm, PersonBulkAddForm
+from workshops.util import earth_distance
 
 #------------------------------------------------------------
 
@@ -350,41 +345,6 @@ class TaskUpdate(UpdateViewContext):
 
         return get_object_or_404(Task, event__slug=event_slug, person__id=person_id, role__name=role_name)
 
-#------------------------------------------------------------
-
-COHORT_FIELDS = ['name', 'start', 'active', 'venue', 'qualifies']
-
-
-def all_cohorts(request):
-    '''List all cohorts.'''
-    all_cohorts = Cohort.objects.order_by('start')
-    user_can_add = request.user.has_perm('edit')
-    context = {'title' : 'All Cohorts',
-               'all_cohorts' : all_cohorts,
-               'user_can_add' : user_can_add}
-    return render(request, 'workshops/all_cohorts.html', context)
-
-
-def cohort_details(request, cohort_name):
-    '''List details of a particular cohort.'''
-    cohort = Cohort.objects.get(name=cohort_name)
-    trainees = Trainee.objects.filter(cohort_id=cohort.id)
-    context = {'title' : 'Cohort {0}'.format(cohort),
-               'cohort' : cohort,
-               'trainees' : trainees}
-    return render(request, 'workshops/cohort.html', context)
-
-
-class CohortCreate(CreateViewContext):
-    model = Cohort
-    fields = COHORT_FIELDS
-
-
-class CohortUpdate(UpdateViewContext):
-    model = Cohort
-    fields = COHORT_FIELDS
-    slug_field = 'name'
-    slug_url_kwarg = 'cohort_name'
 
 #------------------------------------------------------------
 
