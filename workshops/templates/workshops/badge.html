@@ -13,11 +13,13 @@
     <tr>
 	<th>person</th>
 	<th>awarded</th>
+	<th>event</th>
     </tr>
     {% for a in all_awards %}
     <tr>
       <td><a href="{% url 'person_details' a.person.id %}">{{ a.person }}</a></td>
       <td>{{ a.awarded }}</td>
+      <td>{{ a.event }}</td>
     </tr>
     {% endfor %}
   </table>
