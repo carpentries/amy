@@ -36,7 +36,7 @@
 <p>Tasks</p>
 <ul>
   {% for t in tasks %}
-  <li><a href="{% url 'task_details' t.event.slug t.person.id t.role.name %}">{{ t }}</a></li>
+  <li><a href="{% url 'task_details' t.id %}">{{ t }}</a></li>
   {% endfor %}
 </ul>
 {% else %}
