@@ -78,6 +78,11 @@ class Person(AbstractBaseUser):
     username    = models.CharField(max_length=STR_MED, unique=True)
 
     USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = [
+        'personal',
+        'family',
+        'email',
+        ]
 
     def fullname(self):
         middle = ''
