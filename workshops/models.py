@@ -122,12 +122,11 @@ class Person(models.Model):
 class Tag(models.Model):
     '''Label for grouping events.'''
 
-    slug       = models.CharField(max_length=STR_SHORT, unique=True)
     name       = models.CharField(max_length=STR_MED, unique=True)
     details    = models.CharField(max_length=STR_LONG)
 
     def __str__(self):
-        return self.slug
+        return self.name
 
 #------------------------------------------------------------
 

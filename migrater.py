@@ -148,26 +148,21 @@ for (person, personal, middle, family, email) in old_crs.fetchall():
 info('person')
 
 #------------------------------------------------------------
-# Projects (kinds of events).
+# Tags for events.
 #------------------------------------------------------------
 
-# Project (kinds of event)
-new_crs.execute('delete from workshops_project;')
-i = 1
-project_lookup = {}
-for (slug, name, details) in (('SWC', 'Software Carpentry', 'General Software Carpentry workshop'),
-                              ('DC',  'Data Carpentry', 'General Data Carpentry workshop'),
-                              ('LC',  'Library Carpentry', 'Workshop for librarians'),
-                              ('WiSE', 'Women in Science & Engineering', 'Women-only events')):
-    project_lookup[slug] = i
-    try:
-        fields = (i, slug, name, details)
-        new_crs.execute('insert into workshops_project values(?, ?, ?, ?);', fields)
-    except Exception, e:
-        fail('project', fields, e)
-    i += 1
+tag_lookup = {}
+tag_id = 1
+for (name, details) in (('SWC', 'Software Carpentry Workshop'),
+                        ('DC', 'Data Carpentry Workshop'),
+                        ('LC', 'Library Carpentry Workshop'),
+                        ('WiSE', 'Women in Science and Engineering'),
+                        ('TTT', 'Train the Trainers')):
+    new_crs.execute('insert into workshops_tag values(?, ?, ?);', (tag_id, name, details))
+    tag_lookup[name] = tag_id
+    tag_id += 1
 
-info('project')
+info('tags')
 
 #------------------------------------------------------------
 # Events.
@@ -178,42 +173,55 @@ new_crs.execute('delete from workshops_event;')
 old_crs.execute('select startdate, enddate, event, site, kind, eventbrite, attendance, url from event;')
 event_lookup = {}
 event_id = 1
+event_tag_id = 1
 for (startdate, enddate, event, site, kind, eventbrite, attendance, url) in old_crs.fetchall():
     event_lookup[event] = i
     try:
-        fields = (event_id, startdate, enddate, event, eventbrite, attendance, site_lookup[site], project_lookup[kind], url, None, '', True, 0.0)
-        new_crs.execute('insert into workshops_event values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', fields)
+        fields = (event_id, startdate, enddate, event, eventbrite, attendance, site_lookup[site], url, None, 0.0, '', True)
+        new_crs.execute('insert into workshops_event values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', fields)
     except Exception, e:
         fail('event', fields, e)
+    try:
+        fields = (event_tag_id, event_id, tag_lookup[kind])
+        new_crs.execute('insert into workshops_event_tags values(?, ?, ?);', fields)
+    except Exception, e:
+        fail('event_tag', fields, e)
     event_id += 1
+    event_tag_id += 1
 
 info('event')
 
 # Add some unpublished events for testing purposes.
-new_crs.execute('select * from workshops_event where (id>=?) and (id<?);', ((event_id-10), (event_id-5)))
-records = new_crs.fetchall()
-for r in records:
-    try:
-        r = list(r)
-        r[0] = event_id # move on to next record
-        r[1] = None # no start date
-        r[2] = None # so no end date
-        r[3] = None # which means no slug
-        r[4] = None # no Eventbrite
-        r[5] = None # and no attendance
-        # r[6] # unchanged: site
-        # r[7] # unchanged: project
-        r[8] = None # no URL
-        # r[9] # unchanged: organizer (which will be NULL)
-        r[10] = 'negotiating\nsome\ndates' # notes
-        r[11] = False # unpublished (the whole point)
-        # r[12] # unchanged: no fee
-        new_crs.execute('insert into workshops_event values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', r)
-    except Exception, e:
-        fail('event', fields, e)
-    event_id += 1
+if FAKE:
+    new_crs.execute('select * from workshops_event where (id>=?) and (id<?);', ((event_id-10), (event_id-5)))
+    records = new_crs.fetchall()
+    for r in records:
+        try:
+            r = list(r)
+            r[0] = event_id # move on to next record
+            r[1] = None # no start date
+            r[2] = None # so no end date
+            r[3] = None # which means no slug
+            r[4] = None # no Eventbrite
+            r[5] = None # and no attendance
+            # r[6] # unchanged: site
+            r[7] = None # no URL
+            # r[8] # unchanged: organizer (which will be NULL)
+            r[9] = 0.0 # admin fee
+            r[10] = 'unpublished event'
+            r[11] = False # not published (the whole point)
+            new_crs.execute('insert into workshops_event values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', r)
+        except Exception, e:
+            fail('unpublished event', fields, e)
+        try:
+            fields = (event_tag_id, event_id, tag_lookup['SWC'])
+            new_crs.execute('insert into workshops_event_tags values(?, ?, ?);', fields)
+        except Exception, e:
+            fail('event_tag', fields, e)
+        event_id += 1
+        event_tag_id += 1
 
-info('unpublished events')
+    info('unpublished events')
 
 #------------------------------------------------------------
 # Tasks.
@@ -306,17 +314,22 @@ for (start, name, active, venue) in old_crs.fetchall():
             end = start
         reg_key = None
         attendance = select_one(old_crs, "select count(*) from trainee where cohort='{0}';".format(name))
-        project_id = project_lookup['SWC']
         url = None # FIXME
         organizer_id = site_lookup['software-carpentry.org']
         notes = ""
         published = True
         admin_fee = None
-        fields = (event_id, start, end, slug, reg_key, attendance, venue, project_id, url, organizer_id, notes, published, admin_fee)
-        new_crs.execute('insert into workshops_event values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', fields)
+        fields = (event_id, start, end, slug, reg_key, attendance, venue, url, organizer_id, admin_fee, notes, published)
+        new_crs.execute('insert into workshops_event values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', fields)
     except Exception, e:
         fail('cohort', fields, e)
+    try:
+        fields = (event_tag_id, event_id, tag_lookup['TTT'])
+        new_crs.execute('insert into workshops_event_tags values(?, ?, ?);', fields)
+    except Exception, e:
+        fail('event_tag for cohort', fields, e)
     event_id += 1
+    event_tag_id += 1
 
 info('cohort')
 
