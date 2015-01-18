@@ -34,6 +34,7 @@ test :
 migrations :
 	python manage.py makemigrations
 	python manage.py migrate
+	${QUERY} .schema > schema.sql
 
 ## import       : import and save legacy data
 import :

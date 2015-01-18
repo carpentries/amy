@@ -36,7 +36,7 @@
 <p>Tasks</p>
 <ul>
   {% for t in tasks %}
-  <li class="tasks_item" id="tasks_{{forloop.counter0}}">{{ t }}</li>
+  <li class="tasks_item" id="tasks_{{forloop.counter0}}"><a href="{% url 'task_details' t.event.slug t.person.id t.role.name %}">{{ t }}</a></li>
   {% endfor %}
 </ul>
 {% else %}
