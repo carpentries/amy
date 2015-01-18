@@ -7,7 +7,7 @@ class TestLocateInstructors(TestBase):
 
     def test_search_for_one_instructor_by_airport(self):
         response = self.client.post(reverse('instructors'),
-                                    {'airport' : str(self.airport_0_0),
+                                    {'airport' : self.airport_0_0.iata,
                                      'wanted' : 1})
         doc = self._check_status_code_and_parse(response, 200)
         row = self._get_1(doc, ".//tr[@class='instructor_row']",
@@ -16,7 +16,7 @@ class TestLocateInstructors(TestBase):
 
     def test_search_for_two_instructors_by_airport(self):
         response = self.client.post(reverse('instructors'),
-                                    {'airport' : str(self.airport_0_0),
+                                    {'airport' : self.airport_0_0.iata,
                                      'wanted' : 2})
         doc = self._check_status_code_and_parse(response, 200)
         rows = self._get_N(doc, ".//tr[@class='instructor_row']",
@@ -27,7 +27,7 @@ class TestLocateInstructors(TestBase):
 
     def test_search_for_one_instructor_near_airport(self):
         response = self.client.post(reverse('instructors'),
-                                    {'airport' : str(self.airport_55_105),
+                                    {'airport' : self.airport_55_105.iata,
                                      'wanted' : 1})
         doc = self._check_status_code_and_parse(response, 200)
         row = self._get_1(doc, ".//tr[@class='instructor_row']",
@@ -46,7 +46,7 @@ class TestLocateInstructors(TestBase):
 
     def test_non_instructors_not_returned_by_search(self):
         response = self.client.post(reverse('instructors'),
-                                    {'airport' : str(self.airport_0_0),
+                                    {'airport' : self.airport_0_0.iata,
                                      'wanted' : 1000})
         doc = self._check_status_code_and_parse(response, 200)
         rows = self._get_N(doc, ".//tr[@class='instructor_row']",
@@ -58,7 +58,7 @@ class TestLocateInstructors(TestBase):
 
     def test_match_instructors_on_one_skill(self):
         response = self.client.post(reverse('instructors'),
-                                    {'airport' : str(self.airport_50_100),
+                                    {'airport' : self.airport_50_100.iata,
                                      'Git' : 'on',
                                      'wanted' : 1000})
         doc = self._check_status_code_and_parse(response, 200)
@@ -68,9 +68,9 @@ class TestLocateInstructors(TestBase):
         self._check_person(rows[0], 0, 'Ron', 'Weasley')
         self._check_person(rows[1], 1, 'Hermione', 'Granger')
 
-    def test_match_instructors_on_two_skill(self):
+    def test_match_instructors_on_two_skills(self):
         response = self.client.post(reverse('instructors'),
-                                    {'airport' : str(self.airport_50_100),
+                                    {'airport' : self.airport_50_100.iata,
                                      'Git' : 'on',
                                      'SQL' : 'on',
                                      'wanted' : 1000})

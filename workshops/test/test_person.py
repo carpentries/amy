@@ -23,9 +23,12 @@ class TestPerson(TestBase):
         response = self.client.post(reverse('person_edit', args=[str(self.spiderman.id)]),
                                     {'email' : new_email})
         doc = self._check_status_code_and_parse(response, 200)
-        node = self._get_field(doc, 'email')
-        assert node.text == new_email, \
-            'Incorrect edited email: expected {0}, got {1}'.format(new_email, node.text)
+        family = self._get_field(doc, 'family')
+        assert family.text == 'Parker', \
+            'Family name altered from "Parker" to {0} by changing email address'.format(family.text)
+        email = self._get_field(doc, 'email')
+        assert email.text == new_email, \
+            'Incorrect edited email: expected {0}, got {1}'.format(new_email, email.text)
 
     def _check_person(self, doc, person):
         '''Check fields of person against document.'''
