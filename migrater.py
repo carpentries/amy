@@ -175,7 +175,7 @@ event_lookup = {}
 event_id = 1
 event_tag_id = 1
 for (startdate, enddate, event, site, kind, eventbrite, attendance, url) in old_crs.fetchall():
-    event_lookup[event] = i
+    event_lookup[event] = event_id
     try:
         fields = (event_id, startdate, enddate, event, eventbrite, attendance, site_lookup[site], url, None, 0.0, '', True)
         new_crs.execute('insert into workshops_event values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', fields)
