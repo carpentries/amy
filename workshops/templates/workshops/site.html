@@ -2,9 +2,9 @@
 
 {% load breadcrumbs %}
 {% block breadcrumbs %}
-    {% breadcrumb_url 'Amy' 'index'  %}
-    {% breadcrumb_url 'All sites' 'all_sites' %}
-    {% breadcrumb_active site.domain  %}
+    {% breadcrumb_main_page %}
+    {% breadcrumb_index_all_objects site %}
+    {% breadcrumb_active site %}
 {% endblock %}
 
 {% block content %}
@@ -27,7 +27,7 @@
 {% if events %}
 <table class="table table-striped">
   <tr>
-    <th>project</th>
+    <th>tags</th>
     <th>start date</th>
     <th>end date</th>
     <th>slug</th>
@@ -35,7 +35,7 @@
   </tr>
   {% for e in events %}
   <tr>
-    <td>{{ e.project }}</td>
+    <td>{{ e.tags.all | join:", " }}</td>
     <td>{{ e.start }}</td>
     <td>{{ e.end }}</td>
     <td><a href="{% url 'event_details' e.slug %}">{{ e.slug }}</a></td>

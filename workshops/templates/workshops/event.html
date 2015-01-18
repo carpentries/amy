@@ -2,15 +2,15 @@
 
 {% load breadcrumbs %}
 {% block breadcrumbs %}
-    {% breadcrumb_url 'Amy' 'index'  %}
-    {% breadcrumb_url 'All events' 'all_events' %}
-    {% breadcrumb_active event.slug  %}
+    {% breadcrumb_main_page %}
+    {% breadcrumb_index_all_objects event %}
+    {% breadcrumb_active event %}
 {% endblock %}
 
 {% block content %}
 <table class="table table-striped">
   <tr><td>published:</td><td>{{ event.published }}</td></tr>
-  <tr><td>project:</td><td><a href="FIXME">{{ event.project }}</a></td></tr>
+  <tr><td>tags:</td><td>{{ event.tags.all | join:", " }}</td></tr>
   <tr><td>slug:</td><td>{{ event.slug }}</td></tr>
   <tr><td>url:</td><td><a href="{{ event.site }}">{{ event.url }}</a></td></tr>
   <tr><td>site:</td><td><a href="{% url 'site_details' event.site.domain %}">{{ event.site }}</a></td></tr>

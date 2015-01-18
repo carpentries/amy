@@ -2,9 +2,9 @@
 
 {% load breadcrumbs %}
 {% block breadcrumbs %}
-    {% breadcrumb_url 'Index' 'index'  %}
+    {% breadcrumb_main_page %}
     {% breadcrumb_url 'All persons' 'all_persons' %}
-    {% breadcrumb_active 'Bulk Add People'  %}
+    {% breadcrumb_active title %}
 {% endblock %}
 
 {% block content %}

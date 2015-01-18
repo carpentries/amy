@@ -11,6 +11,10 @@ dst_path = sys.argv[2]
 if (len(sys.argv) >= 4) and (sys.argv[3] == 'real'):
     FAKE = False
 
+#------------------------------------------------------------
+# Utilities.
+#------------------------------------------------------------
+
 def fail(table, fields, exc):
     '''Report failure.'''
     logging.error("Failing on {table} with {fields} because {error}".format(
@@ -19,7 +23,7 @@ def fail(table, fields, exc):
 
 
 def info(table):
-    '''Report successful migration of given table.'''
+    '''Report successful migration of given table, and commit.'''
     logging.info("Successfully migrated '{table}' table".format(table=table))
 
 
@@ -38,10 +42,37 @@ def fake(i, slug, personal, middle, family, email, gender, github, twitter, url)
            '@U{0}'.format(i), \
            'http://{0}/U_{1}'.format(where, i)
 
-old_cnx = sqlite3.connect(src_path)
+def select_one(cursor, query, default='NO DEFAULT'):
+    cursor.execute(query)
+    result = cursor.fetchall()
+    if result and (len(result) == 1):
+        return result[0][0]
+    if default != 'NO DEFAULT':
+        return default
+    assert False, 'select_one could not find exactly one record for "{0}"'.format(query)
+
+def select_least(cursor, query):
+    cursor.execute(query)
+    results = cursor.fetchall()
+    if not results:
+        return None
+    results.sort()
+    return results[0][1]
+
+#------------------------------------------------------------
+# Setup.
+#------------------------------------------------------------
+
+assert len(sys.argv) == 3, 'Usage: migrater.py /path/to/src.db /path/to/dst.db'
+
+old_cnx = sqlite3.connect(sys.argv[1])
 old_crs = old_cnx.cursor()
 new_cnx = sqlite3.connect(dst_path)
 new_crs = new_cnx.cursor()
+
+#------------------------------------------------------------
+# Sites.
+#------------------------------------------------------------
 
 # Site
 new_crs.execute('delete from workshops_site;')
@@ -59,6 +90,10 @@ for (site, fullname, country) in old_crs.fetchall():
 
 info('site')
 
+#------------------------------------------------------------
+# Airports.
+#------------------------------------------------------------
+
 # Airport
 new_crs.execute('delete from workshops_airport;')
 old_crs.execute('select fullname, country, latitude, longitude, iata from airport;')
@@ -74,6 +109,10 @@ for (fullname, country, lat, long, iata) in old_crs.fetchall():
     i += 1
 
 info('airport')
+
+#------------------------------------------------------------
+# Persons.
+#------------------------------------------------------------
 
 # load Facts for lookup in Person
 old_crs.execute('select person, gender, active, airport, github, twitter, site from facts;')
@@ -108,63 +147,85 @@ for (person, personal, middle, family, email) in old_crs.fetchall():
 
 info('person')
 
-# Project (kinds of event)
-new_crs.execute('delete from workshops_project;')
-i = 1
-project_lookup = {}
-for (slug, name, details) in (('SWC', 'Software Carpentry', 'General Software Carpentry workshop'),
-                              ('DC',  'Data Carpentry', 'General Data Carpentry workshop'),
-                              ('LC',  'Library Carpentry', 'Workshop for librarians'),
-                              ('WiSE', 'Women in Science & Engineering', 'Women-only events')):
-    project_lookup[slug] = i
-    try:
-        fields = (i, slug, name, details)
-        new_crs.execute('insert into workshops_project values(?, ?, ?, ?);', fields)
-    except Exception, e:
-        fail('project', fields, e)
-    i += 1
+#------------------------------------------------------------
+# Tags for events.
+#------------------------------------------------------------
 
-info('project')
+tag_lookup = {}
+tag_id = 1
+for (name, details) in (('SWC', 'Software Carpentry Workshop'),
+                        ('DC', 'Data Carpentry Workshop'),
+                        ('LC', 'Library Carpentry Workshop'),
+                        ('WiSE', 'Women in Science and Engineering'),
+                        ('TTT', 'Train the Trainers')):
+    new_crs.execute('insert into workshops_tag values(?, ?, ?);', (tag_id, name, details))
+    tag_lookup[name] = tag_id
+    tag_id += 1
+
+info('tags')
+
+#------------------------------------------------------------
+# Events.
+#------------------------------------------------------------
 
 # Event
 new_crs.execute('delete from workshops_event;')
 old_crs.execute('select startdate, enddate, event, site, kind, eventbrite, attendance, url from event;')
 event_lookup = {}
-i = 1
+event_id = 1
+event_tag_id = 1
 for (startdate, enddate, event, site, kind, eventbrite, attendance, url) in old_crs.fetchall():
     event_lookup[event] = i
     try:
-        fields = (i, startdate, enddate, event, eventbrite, attendance, site_lookup[site], project_lookup[kind], url, None, '', True, 0.0)
-        new_crs.execute('insert into workshops_event values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', fields)
+        fields = (event_id, startdate, enddate, event, eventbrite, attendance, site_lookup[site], url, None, 0.0, '', True)
+        new_crs.execute('insert into workshops_event values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', fields)
     except Exception, e:
         fail('event', fields, e)
-    i += 1
+    try:
+        fields = (event_tag_id, event_id, tag_lookup[kind])
+        new_crs.execute('insert into workshops_event_tags values(?, ?, ?);', fields)
+    except Exception, e:
+        fail('event_tag', fields, e)
+    event_id += 1
+    event_tag_id += 1
 
 info('event')
 
 # Add some unpublished events for testing purposes.
-new_crs.execute('select * from workshops_event where (id>=?) and (id<=?);', ((i-10), (i-5)))
-records = new_crs.fetchall()
-for r in records:
-    try:
-        r = list(r)
-        r[0] = i # move on to next record
-        r[1] = None # no start date
-        r[2] = None # so no end date
-        r[3] = None # which means no slug
-        r[4] = None # no Eventbrite
-        r[5] = None # and no attendance
-        # r[6] # unchanged: site
-        # r[7] # unchanged: project
-        r[8] = None # no URL
-        # r[9] # unchanged: organizer (which will be NULL)
-        r[10] = 'negotiating\nsome\ndates' # notes
-        r[11] = False # unpublished (the whole point)
-        # r[12] # unchanged: no fee
-        new_crs.execute('insert into workshops_event values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', r)
-    except Exception, e:
-        fail('event', fields, e)
-    i += 1
+if FAKE:
+    new_crs.execute('select * from workshops_event where (id>=?) and (id<?);', ((event_id-10), (event_id-5)))
+    records = new_crs.fetchall()
+    for r in records:
+        try:
+            r = list(r)
+            r[0] = event_id # move on to next record
+            r[1] = None # no start date
+            r[2] = None # so no end date
+            r[3] = None # which means no slug
+            r[4] = None # no Eventbrite
+            r[5] = None # and no attendance
+            # r[6] # unchanged: site
+            r[7] = None # no URL
+            # r[8] # unchanged: organizer (which will be NULL)
+            r[9] = 0.0 # admin fee
+            r[10] = 'unpublished event'
+            r[11] = False # not published (the whole point)
+            new_crs.execute('insert into workshops_event values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', r)
+        except Exception, e:
+            fail('unpublished event', fields, e)
+        try:
+            fields = (event_tag_id, event_id, tag_lookup['SWC'])
+            new_crs.execute('insert into workshops_event_tags values(?, ?, ?);', fields)
+        except Exception, e:
+            fail('event_tag', fields, e)
+        event_id += 1
+        event_tag_id += 1
+
+    info('unpublished events')
+
+#------------------------------------------------------------
+# Tasks.
+#------------------------------------------------------------
 
 # Roles
 new_crs.execute('delete from workshops_role;')
@@ -184,77 +245,20 @@ info('roles')
 # Tasks
 new_crs.execute('delete from workshops_task;')
 old_crs.execute('select event, person, task from task;')
-i = 1
+task_id = 1
 for (event, person, task) in old_crs.fetchall():
     try:
-        fields = (i, event_lookup[event], person_lookup[person], role_lookup[task])
+        fields = (task_id, event_lookup[event], person_lookup[person], role_lookup[task])
         new_crs.execute('insert into workshops_task values(?, ?, ?, ?);', fields)
     except Exception, e:
         fail('task', fields, e)
-    i += 1
+    task_id += 1
 
 info('task')
 
-# Cohorts
-new_crs.execute('delete from workshops_cohort;')
-old_crs.execute('select startdate, cohort, active, venue from cohort;')
-i = 1
-cohort_lookup = {}
-cohort_start = {}
-for (start, name, active, venue) in old_crs.fetchall():
-    cohort_lookup[name] = i
-    cohort_start[name] = start
-    try:
-        if venue == 'online':
-            venue = None
-        qualifies = name != 'live-01'
-        if venue is not None:
-            venue = site_lookup[venue]
-        fields = (i, start, name, active, venue, qualifies)
-        new_crs.execute('insert into workshops_cohort values(?, ?, ?, ?, ?, ?);', fields)
-    except Exception, e:
-        fail('cohort', fields, e)
-    i += 1
-
-info('cohort')
-
-# Trainee statuses (statii?)
-new_crs.execute('delete from workshops_traineestatus;')
-i = 1
-traineestatus_lookup = {}
-for traineestatus in 'registered in_progress complete incomplete'.split():
-    traineestatus_lookup[traineestatus] = i
-    try:
-        fields = (i, traineestatus)
-        new_crs.execute('insert into workshops_traineestatus values(?, ?);', fields)
-    except Exception, e:
-        fail('traineestatus', fields, e)
-    i += 1
-
-info('traineestatus')
-
-# Trainees
-new_crs.execute('delete from workshops_trainee;')
-old_crs.execute('select person, cohort, status from trainee;')
-i = 1
-today = datetime.date.today().isoformat()
-for (person, cohort, status) in old_crs.fetchall():
-    if status in ('complete', 'learner'):
-        status = traineestatus_lookup['complete']
-    elif status in ('incomplete', 'withdrew'):
-        status = traineestatus_lookup['incomplete']
-    elif cohort_start[cohort] >= today:
-        status = traineestatus_lookup['registered']
-    else:
-        status = traineestatus_lookup['in_progress']
-    try:
-        fields = (i, cohort_lookup[cohort], person_lookup[person], status)
-        new_crs.execute('insert into workshops_trainee values(?, ?, ?, ?);', fields)
-    except Exception, e:
-        fail('trainee', fields, e)
-    i += 1
-
-info('trainee')
+#------------------------------------------------------------
+# Instructor qualifications.
+#------------------------------------------------------------
 
 # Skills
 new_crs.execute('delete from workshops_skill;')
@@ -286,20 +290,103 @@ for (person, skill) in old_crs.fetchall():
 
 info('qualification')
 
+#------------------------------------------------------------
+# Instructor training (turned into events and tasks).
+#------------------------------------------------------------
+
+def mangle_name(name):
+    year, month, day, tag = name.split('-')
+    return '-'.join([year, month, day, 'ttt', tag])
+
+# Turn training cohorts into events.
+old_crs.execute('select startdate, cohort, active, venue from cohort;')
+cohort_lookup = {}
+cohort_start = {}
+for (start, name, active, venue) in old_crs.fetchall():
+    cohort_lookup[name] = event_id
+    cohort_start[name] = start
+    try:
+        venue = site_lookup['online']
+        end = select_one(old_crs, "select max(awards.awarded) from awards join trainee on awards.person=trainee.person where awards.badge='instructor' and trainee.cohort='{0}' and awards.person not in (select distinct awards.person from awards join trainee join cohort on awards.person=trainee.person and trainee.cohort=cohort.cohort where awards.badge='instructor' and cohort.startdate>'{1}');".format(name, start), None)
+        slug = mangle_name(name)
+        event_lookup[slug] = event_id
+        if slug == '2014-04-14-ttt-pycon':
+            end = start
+        reg_key = None
+        attendance = select_one(old_crs, "select count(*) from trainee where cohort='{0}';".format(name))
+        url = None # FIXME
+        organizer_id = site_lookup['software-carpentry.org']
+        notes = ""
+        published = True
+        admin_fee = None
+        fields = (event_id, start, end, slug, reg_key, attendance, venue, url, organizer_id, admin_fee, notes, published)
+        new_crs.execute('insert into workshops_event values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', fields)
+    except Exception, e:
+        fail('cohort', fields, e)
+    try:
+        fields = (event_tag_id, event_id, tag_lookup['TTT'])
+        new_crs.execute('insert into workshops_event_tags values(?, ?, ?);', fields)
+    except Exception, e:
+        fail('event_tag for cohort', fields, e)
+    event_id += 1
+    event_tag_id += 1
+
+info('cohort')
+
+# Turning trainees into tasks.
+old_crs.execute('select person, cohort, status from trainee;')
+learner = select_one(new_crs, "select id from workshops_role where name='learner';")
+for (person, cohort, status) in old_crs.fetchall():
+    try:
+        fields = (task_id, cohort_lookup[cohort], person_lookup[person], learner)
+        new_crs.execute('insert into workshops_task values(?, ?, ?, ?);', fields)
+    except Exception, e:
+        fail('trainee', fields, e)
+    task_id += 1
+
+info('trainee')
+
+#------------------------------------------------------------
+# Badges and awards.
+#------------------------------------------------------------
+
+def get_badge_event(cursor, person, badge, lookups):
+
+    # Creator and member are simply awarded.
+    if badge in ('creator', 'member'):
+        return None
+
+    # First event for which this person was an organizer.
+    if badge == 'organizer':
+        key = select_least(cursor, "select event.startdate, event.event from event join task on event.event=task.event where task.task='organizer' and task.person='{0}';".format(person))
+        return lookups[badge].get(key, None)
+
+    if badge == 'instructor':
+        key = select_least(cursor, "select cohort.startdate, cohort.cohort from cohort join trainee on cohort.cohort=trainee.cohort where trainee.person='{0}';".format(person))
+        return lookups[badge].get(key, None)
+
+    assert False, 'unknown badge type "{0}"'.format(badge)
+
 # Badges
-new_crs.execute('delete from workshops_badge;')
+badge_stuff = (
+    ('creator',    'Creator',    'Creating learning materials and other content'),
+    ('instructor', 'Instructor', 'Teaching at workshops or online'),
+    ('member',     'Member',     'Software Carpentry Foundation member'),
+    ('organizer',  'Organizer',  'Organizing workshops and learning groups')
+)
+
 old_crs.execute('select badge, title, criteria from badges;')
 i = 1
 badge_lookup = {}
-for (badge, title, criteria) in old_crs.fetchall():
-    badge_lookup[badge] = i
+for (badge, title, criteria) in badge_stuff:
     try:
+        badge_lookup[badge] = i
         fields = (i, badge, title, criteria)
         new_crs.execute('insert into workshops_badge values(?, ?, ?, ?);', fields)
     except Exception, e:
         fail('badge', fields, e)
     i += 1
-
+    
 info('badge')
 
 # Awards
@@ -308,13 +395,52 @@ old_crs.execute('select person, badge, awarded from awards;')
 i = 1
 for (person, badge, awarded) in old_crs.fetchall():
     try:
-        fields = (i, awarded, badge_lookup[badge], person_lookup[person])
-        new_crs.execute('insert into workshops_award values(?, ?, ?, ?);', fields)
+        event = get_badge_event(old_crs, person, badge, {'organizer' : event_lookup, 'instructor' : cohort_lookup})
+        fields = (i, awarded, badge_lookup[badge], person_lookup[person], event)
+        new_crs.execute('insert into workshops_award values(?, ?, ?, ?, ?);', fields)
     except Exception, e:
         fail('award', fields, e)
     i += 1
 
 info('award')
 
-# Finish
+trainer_stuff =  [
+    ['2012-08-26-ttt-online', ['wilson.g']],
+    ['2012-10-11-ttt-online', ['wilson.g']],
+    ['2013-01-06-ttt-online', ['wilson.g']],
+    ['2013-03-12-ttt-online', ['wilson.g']],
+    ['2013-05-12-ttt-online', ['wilson.g']],
+    ['2013-08-12-ttt-online', ['wilson.g']],
+    ['2013-09-30-ttt-online', ['wilson.g']],
+    ['2014-01-16-ttt-online', ['wilson.g']],
+    ['2014-04-14-ttt-pycon', ['wilson.g']],
+    ['2014-04-24-ttt-online', ['wilson.g']],
+    ['2014-04-28-ttt-mozilla', ['wilson.g']],
+    ['2014-06-05-ttt-online', ['wilson.g']],
+    ['2014-06-11-ttt-online', ['wilson.g']],
+    ['2014-09-10-ttt-online', ['wilson.g']],
+    ['2014-09-22-ttt-uva', ['wilson.g', 'mills.b']],
+    ['2014-10-22-ttt-tgac', ['wilson.g', 'mills.b', 'pawlik.a']],
+    ['2014-11-12-ttt-washington', ['wilson.g', 'mills.b']],
+    ['2015-01-06-ttt-ucdavis', ['wilson.g', 'mills.b', 'teal.t', 'pawlik.a']],
+    ['2015-02-01-ttt-online', ['wilson.g']],
+    ['2015-04-xx-ttt-nih', ['wilson.g']],
+    ['2015-05-01-ttt-online', ['wilson.g']],
+    ['2015-09-01-ttt-online', ['wilson.g']]
+]
+instructor = select_one(new_crs, "select id from workshops_role where name='instructor';")
+for (slug, all_persons) in trainer_stuff:
+    for person in all_persons:
+        try:
+            fields = (task_id, event_lookup[slug], person_lookup[person], instructor)
+            new_crs.execute('insert into workshops_task values(?, ?, ?, ?);', fields)
+        except Exception, e:
+            fail('training instructors', fields, e)
+        task_id += 1
+
+#------------------------------------------------------------
+# Wrap up.
+#------------------------------------------------------------
+
+# Commit all changes.
 new_cnx.commit()

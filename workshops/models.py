@@ -120,15 +120,14 @@ class Person(models.Model):
 
 #------------------------------------------------------------
 
-class Project(models.Model):
-    '''Keep track of the kinds of project we support.'''
+class Tag(models.Model):
+    '''Label for grouping events.'''
 
-    slug       = models.CharField(max_length=STR_SHORT, unique=True)
     name       = models.CharField(max_length=STR_MED, unique=True)
     details    = models.CharField(max_length=STR_LONG)
 
     def __str__(self):
-        return self.slug
+        return self.name
 
 #------------------------------------------------------------
 
@@ -216,7 +215,7 @@ class Event(models.Model):
 
     published  = models.BooleanField(default=False)
     site       = models.ForeignKey(Site)
-    project    = models.ForeignKey(Project)
+    tags       = models.ManyToManyField(Tag)
     organizer  = models.ForeignKey(Site, related_name='organizer', null=True, blank=True)
     start      = models.DateField(null=True, blank=True)
     end        = models.DateField(null=True, blank=True)
@@ -290,45 +289,6 @@ class Task(models.Model):
 
 #------------------------------------------------------------
 
-class Cohort(models.Model):
-    '''Represent a training cohort.'''
-
-    start      = models.DateField()
-    name       = models.CharField(max_length=STR_MED)
-    active     = models.BooleanField(default=True)
-    venue      = models.ForeignKey(Site, null=True) # null for online
-    qualifies  = models.BooleanField(default=True)
-
-    def __str__(self):
-        return self.name
-
-    def get_absolute_url(self):
-        return reverse('cohort_details', args=[str(self.name)])
-
-#------------------------------------------------------------
-
-class TraineeStatus(models.Model):
-    '''Enumerate states that a trainee can be in.'''
-
-    name       = models.CharField(max_length=STR_MED)
-
-    def __str__(self):
-        return self.name
-
-#------------------------------------------------------------
-
-class Trainee(models.Model):
-    '''Represent someone taking the instructor training course.'''
-
-    person     = models.ForeignKey(Person)
-    cohort     = models.ForeignKey(Cohort)
-    status     = models.ForeignKey(TraineeStatus)
-
-    def __str__(self):
-        return '{0}/{1}: {2}'.format(self.person, self.cohort, self.status.name)
-
-#------------------------------------------------------------
-
 class Skill(models.Model):
     '''Represent a skill someone might teach.'''
 
@@ -368,6 +328,7 @@ class Award(models.Model):
     person     = models.ForeignKey(Person)
     badge      = models.ForeignKey(Badge)
     awarded    = models.DateField()
+    event      = models.ForeignKey(Event, null=True, blank=True)
 
     def __str__(self):
-        return '{0}/{1}/{2}'.format(self.person, self.badge, self.awarded)
+        return '{0}/{1}/{2}/{3}'.format(self.person, self.badge, self.awarded, self.event)

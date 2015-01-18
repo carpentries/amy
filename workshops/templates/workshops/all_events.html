@@ -2,8 +2,8 @@
 
 {% load breadcrumbs %}
 {% block breadcrumbs %}
-    {% breadcrumb_url 'Amy' 'index'  %}
-    {% breadcrumb_active 'All events'  %}
+    {% breadcrumb_main_page %}
+    {% breadcrumb_active title %}
 {% endblock %}
 
 {% block content %}
@@ -12,7 +12,7 @@
         <tr>
 	    <th>ID</th>
 	    <th>published</th>
-	    <th>project</th>
+	    <th>tags</th>
 	    <th>instructors</th>
 	    <th>slug</th>
 	    <th>url</th>
@@ -25,7 +25,7 @@
         <tr>
 	    <td>{{ event.id }}</td>
 	    <td>{{ event.published }}</td>
-	    <td>{{ event.project }}</td>
+	    <td>{{ event.tags.all | join:", " }}</td>
 	    <td {% if event.num_instructors == 0 %}class="warning"{% endif %}>
 	      {{ event.num_instructors }}
 	    </td>

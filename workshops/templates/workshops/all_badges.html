@@ -2,8 +2,8 @@
 
 {% load breadcrumbs %}
 {% block breadcrumbs %}
-    {% breadcrumb_url 'Amy' 'index'  %}
-    {% breadcrumb_active 'All badges'  %}
+    {% breadcrumb_main_page %}
+    {% breadcrumb_active title %}
 {% endblock %}
 
 {% block content %}

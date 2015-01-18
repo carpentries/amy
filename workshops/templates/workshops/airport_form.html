@@ -2,14 +2,13 @@
 
 {% load breadcrumbs %}
 {% block breadcrumbs %}
-    {% breadcrumb_url 'Amy' 'index'  %}
-    {% breadcrumb_url 'All airports' 'all_airports' %}
+    {% breadcrumb_main_page %}
+    {% breadcrumb_index_all_objects model %}
     {% if object %}
-        {% url 'airport_details' object.iata as object_url %}
-        {% breadcrumb object.fullname object_url %}
-        {% breadcrumb_active 'Edit airport'  %}
+        {% breadcrumb_object object %}
+        {% breadcrumb_edit_object object %}
     {% else %}
-        {% breadcrumb_active 'New airport'  %}
+        {% breadcrumb_new_object model %}
     {% endif %}
 {% endblock %}
 

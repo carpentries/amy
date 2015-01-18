@@ -5,8 +5,8 @@ urlpatterns = [
     url(r'^$', views.index, name='index'),
 
     url(r'^sites/?$', views.all_sites, name='all_sites'),
-    url(r'^site/(?P<site_domain>[\w\./-]+)/?$', views.site_details, name='site_details'),
-    url(r'^site/(?P<site_domain>[\w\./-]+)/edit$', views.SiteUpdate.as_view(), name='site_edit'),
+    url(r'^site/(?P<site_domain>[\w\.-]+)/?$', views.site_details, name='site_details'),
+    url(r'^site/(?P<site_domain>[\w\.-]+)/edit$', views.SiteUpdate.as_view(), name='site_edit'),
     url(r'^sites/add/$', views.SiteCreate.as_view(), name='site_add'),
 
     url(r'^airports/?$', views.all_airports, name='all_airports'),
@@ -30,11 +30,6 @@ urlpatterns = [
     url(r'^task/(?P<event_slug>[\w-]+)/(?P<person_id>[\w\.-]+)/(?P<role_name>[\w-]+)/?$', views.task_details, name='task_details'),
     url(r'^task/(?P<event_slug>[\w-]+)/(?P<person_id>[\w\.-]+)/(?P<role_name>[\w-]+)/edit$', views.TaskUpdate.as_view(), name='task_edit'),
     url(r'^tasks/add/$', views.TaskCreate.as_view(), name='task_add'),
-
-    url(r'^cohorts/?$', views.all_cohorts, name='all_cohorts'),
-    url(r'^cohort/(?P<cohort_name>[\w-]+)/?$', views.cohort_details, name='cohort_details'),
-    url(r'^cohort/(?P<cohort_name>[\w-]+)/edit$', views.CohortUpdate.as_view(), name='cohort_edit'),
-    url(r'^cohorts/add/$', views.CohortCreate.as_view(), name='cohort_add'),
 
     url(r'^badges/?$', views.all_badges, name='all_badges'),
     url(r'^badge/(?P<badge_name>[\w\.-]+)/?$', views.badge_details, name='badge_details'),

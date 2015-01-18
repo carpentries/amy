@@ -1,142 +1,126 @@
 import logging
 
 from django import template
-from django.template import VariableDoesNotExist
-from django.template import loader, Node, Variable
-from django.template.defaulttags import url
-from django.utils.encoding import smart_text
-from django.utils.html import escape
+from django.utils.encoding import force_text
+from django.core.urlresolvers import reverse
 
 register = template.Library()
 _LOG = logging.getLogger(__name__)
 
 
-@register.tag
-def breadcrumb(parser, token):
+@register.simple_tag
+def breadcrumb(title, url):
     """
-    Renders the breadcrumb.
-    Examples:
-        {% breadcrumb "Title of breadcrumb" url_var %}
-        {% breadcrumb context_var  url_var %}
-        {% breadcrumb "Just the title" %}
-        {% breadcrumb just_context_var %}
-
-    Parameters:
-    -First parameter is the title of the crumb,
-    -Second (optional) parameter is the url variable to link to, produced by
-     url tag, i.e.:
-        {% url person_detail object.id as person_url %}
-        then:
-        {% breadcrumb person.name person_url %}
-
-    @author Andriy Drozdyuk
+    Create a simple anchor with provided text and already-resolved URL.
+    Example usage:
+        {% breadcrumb "Title of breadcrumb" resolved_url %}
     """
-    return BreadcrumbNode(token.split_contents()[1:])
+    return create_crumb(title, url)
 
 
-@register.tag
-def breadcrumb_url(parser, token):
+@register.simple_tag
+def breadcrumb_url(title, url_name):
     """
-    Same as breadcrumb
-    but instead of url context variable takes in all the
-    arguments URL tag takes.
-        {% breadcrumb "Title of breadcrumb" person_detail person.id %}
-        {% breadcrumb person.name person_detail person.id %}
+    Add non-active breadcrumb with specified title.  Second argument should be
+    a string name of URL that needs to be resolved.
+    Example usage:
+        {% breadcrumb_url "Title of breadcrumb" url_name %}
     """
-
-    bits = token.split_contents()
-    if len(bits) == 2:
-        return breadcrumb(parser, token)
-
-    # Extract our extra title parameter
-    title = bits.pop(1)
-    token.contents = ' '.join(bits)
-
-    url_node = url(parser, token)
-
-    return UrlBreadcrumbNode(title, url_node)
+    url = reverse(url_name)
+    return create_crumb(title, url)
 
 
 @register.simple_tag
 def breadcrumb_active(title):
     """
-    Same as breadcrumb, but adds "active" CSS class.  Only breadcrumb title is
-    supported.
+    Add active breadcrumb, but not in an anchor.
+    Example usage:
         {% breadcrumb_active "Title of breadcrumb" %}
     """
-    return create_crumb(title, active=True)
+    return create_crumb(title, url=None, active=True)
 
 
-class BreadcrumbNode(Node):
-    def __init__(self, vars):
-        """
-        First var is title, second var is url context variable
-        """
-        self.vars = list(map(Variable, vars))
-
-    def render(self, context):
-        title = self.vars[0].var
-
-        if title.find("'") == -1 and title.find('"') == -1:
-            try:
-                val = self.vars[0]
-                title = val.resolve(context)
-            except:
-                title = ''
-
-        else:
-            title = title.strip("'").strip('"')
-            title = smart_text(title)
-
-        url = None
-
-        if len(self.vars) > 1:
-            val = self.vars[1]
-            try:
-                url = val.resolve(context)
-            except VariableDoesNotExist:
-                _LOG.warning('URL does not exist {}'.format(val))
-                url = None
-
-        return create_crumb(title, url)
+@register.simple_tag
+def breadcrumb_index_all_objects(model):
+    """
+    Add breadcrumb linking to the listing of all objects of specific type.
+    This tag accepts both models or model instances as an argument.
+    Example usage:
+        {% breadcrumb_index_all_objects model %}
+        {% breadcrumb_index_all_objects person %}
+    """
+    plural = force_text(model._meta.verbose_name_plural)
+    title = 'All {}'.format(plural)
+    url_name = 'all_{}'.format(plural)
+    url = reverse(url_name)
+    return create_crumb(title, url)
 
 
-class UrlBreadcrumbNode(Node):
-    def __init__(self, title, url_node):
-        self.title = Variable(title)
-        self.url_node = url_node
+@register.simple_tag
+def breadcrumb_edit_object(obj):
+    """
+    Add an active breadcrumb with the title "Edit MODEL_NAME".
+    This tag accepts model instance as an argument.
+    Example usage:
+        {% breadcrumb_edit_object person %}
+    """
+    singular = force_text(obj._meta.verbose_name)
+    title = 'Edit {}'.format(singular)
+    return create_crumb(title, url=None, active=True)
 
-    def render(self, context):
-        title = self.title.var
 
-        if title.find("'") == -1 and title.find('"') == -1:
-            try:
-                val = self.title
-                title = val.resolve(context)
-            except:
-                title = ''
-        else:
-            title = title.strip("'").strip('"')
-            title = smart_text(title)
+@register.simple_tag
+def breadcrumb_new_object(model):
+    """
+    Add an active breadcrumb with the title "Add new MODEL_NAME".
+    This tag accepts model class as an argument.
+    Example usage:
+        {% breadcrumb_new_object person %}
+    """
+    singular = force_text(model._meta.verbose_name)
+    title = 'Add new {}'.format(singular)
+    return create_crumb(title, url=None, active=True)
 
-        url = self.url_node.render(context)
-        return create_crumb(title, url)
+
+@register.simple_tag
+def breadcrumb_object(obj):
+    """
+    Add non-active breadcrumb with the title "Add new MODEL_NAME".
+    This tag accepts model instance as an argument.
+    Example usage:
+        {% breadcrumb_object person %}
+    """
+    title = str(obj)
+    url = obj.get_absolute_url()
+    return create_crumb(title, url, active=False)
+
+
+@register.simple_tag
+def breadcrumb_main_page():
+    """
+    Special case of ``breadcrumb_url``.  In all templates there's always a link
+    to the main page so I wanted to save everyone thinking & writing by
+    introducing this helper tag.
+    Example usage:
+        {% breadcrumb_main_page %}
+    """
+    title = 'Amy'
+    url = reverse('index')
+    return create_crumb(title, url)
 
 
 def create_crumb(title, url=None, active=False):
     """
-    Helper function
+    Helper function that creates breadcrumb.
     """
-
     active_str = ""
     if active:
         active_str = ' class="active"'
 
-    title = escape(title)
-    inner_str = title
+    inner_str = "%s" % title
     if url:
-        inner_str = '<a href="{0}">{1}</a>'.format(url, title)
+        inner_str = '<a href="%s">%s</a>' % (url, title)
 
-    crumb = "<li {0}>{1}</li>".format(active_str, inner_str)
+    crumb = "<li%s>%s</li>" % (active_str, inner_str)
 
     return crumb

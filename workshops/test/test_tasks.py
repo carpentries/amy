@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.core.urlresolvers import reverse
 from datetime import datetime
-from ..models import Task, Event, Role, Person, Project, Site
+from ..models import Task, Event, Role, Person, Site
 
 class TestTask(TestCase):
     "Tests for the task model, its manager and views"
@@ -17,11 +17,6 @@ class TestTask(TestCase):
         test_site = Site.objects.create(domain='example.com',
                  fullname='Test Site')
 
-        # Create a test project
-        test_project = Project.objects.create(slug='test',
-                       name='Test Project',
-                       details='my test project')
-
         # Create two test people
         test_person_1 = Person.objects.create(personal='Test',
                                               family='Person1')
@@ -33,13 +28,11 @@ class TestTask(TestCase):
         test_event_1 = Event.objects.create(start=datetime.now(),
                                             slug='test_event_1',
                                             site=test_site,
-                                            project=test_project,
                                             admin_fee=0)
 
         test_event_2 = Event.objects.create(start=datetime.now(),
                                             slug='test_event_2',
                                             site=test_site,
-                                            project=test_project,
                                             admin_fee=0)
 
         # Create two test roles

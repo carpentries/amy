@@ -6,31 +6,72 @@ import requests
 from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Model
 from django.shortcuts import redirect, render, get_object_or_404
+from django.views.generic.base import ContextMixin
 from django.views.generic.edit import CreateView, UpdateView
-
-from workshops.models import Site, Airport, Event, Person, Task, Cohort, Skill, Trainee, Badge, Award, Role
-from workshops.forms import SearchForm, InstructorsForm, PersonBulkAddForm
-from workshops.util import earth_distance
 
 from workshops.models import \
     Airport, \
     Award, \
     Badge, \
-    Cohort, \
     Event, \
     Person, \
     Site, \
     Skill, \
-    Task, \
-    Trainee
+    Task
+from workshops.check import check_file
+from workshops.forms import SearchForm, InstructorsForm, PersonBulkAddForm
+from workshops.util import earth_distance
 
 #------------------------------------------------------------
 
 ITEMS_PER_PAGE = 25
 
 #------------------------------------------------------------
+
+
+class CreateViewContext(CreateView):
+    """
+    Class-based view for creating objects that extends default template context
+    by adding model class used in objects creation.
+    """
+
+    def get_context_data(self, **kwargs):
+        context = super(CreateViewContext, self).get_context_data(**kwargs)
+
+        # self.model is available in CreateView as the model class being
+        # used to create new model instance
+        context['model'] = self.model
+
+        if self.model and issubclass(self.model, Model):
+            context['title'] = 'New {}'.format(self.model._meta.verbose_name)
+        else:
+            context['title'] = 'New object'
+
+        return context
+
+
+class UpdateViewContext(UpdateView):
+    """
+    Class-based view for updating objects that extends default template context
+    by adding proper page title.
+    """
+
+    def get_context_data(self, **kwargs):
+        context = super(UpdateViewContext, self).get_context_data(**kwargs)
+
+        # self.model is available in UpdateView as the model class being
+        # used to update model instance
+        context['model'] = self.model
+
+        # self.object is available in UpdateView as the object being currently
+        # edited
+        context['title'] = str(self.object)
+        return context
+
+#------------------------------------------------------------
+
 
 def index(request):
     '''Home page.'''
@@ -68,12 +109,12 @@ def site_details(request, site_domain):
     return render(request, 'workshops/site.html', context)
 
 
-class SiteCreate(CreateView):
+class SiteCreate(CreateViewContext):
     model = Site
     fields = SITE_FIELDS
 
 
-class SiteUpdate(UpdateView):
+class SiteUpdate(UpdateViewContext):
     model = Site
     fields = SITE_FIELDS
     slug_field = 'domain'
@@ -102,12 +143,12 @@ def airport_details(request, airport_iata):
     return render(request, 'workshops/airport.html', context)
 
 
-class AirportCreate(CreateView):
+class AirportCreate(CreateViewContext):
     model = Airport
     fields = AIRPORT_FIELDS
 
 
-class AirportUpdate(UpdateView):
+class AirportUpdate(UpdateViewContext):
     model = Airport
     fields = AIRPORT_FIELDS
     slug_field = 'iata'
@@ -155,7 +196,7 @@ def person_bulk_add(request):
                         entry['task'].person = entry['person'] # Because Django's ORM doesn't do this automatically.
                         entry['task'].save()
                 context = {'title' : 'Process CSV File',
-                           'form': form, 
+                           'form': form,
                            'persons_tasks': persons_tasks}
                 return render(request, 'workshops/person_bulk_add_results.html', context)
     else:
@@ -184,20 +225,20 @@ def _upload_person_task_csv(request, uploaded_file):
                                      'Event with slug {} does not exist.'.format(row['event']))
             except Role.DoesNotExist:
                 messages.add_message(request, messages.ERROR, \
-                                     'Role with name {} does not exist.'.format(row['role'])) 
+                                     'Role with name {} does not exist.'.format(row['role']))
             except Role.MultipleObjectsReturned:
                 messages.add_message(request, messages.ERROR, \
-                                     'More than one role named {} exists.'.format(row['role'])) 
+                                     'More than one role named {} exists.'.format(row['role']))
         persons_tasks.append(entry)
     return persons_tasks
 
 
-class PersonCreate(CreateView):
+class PersonCreate(CreateViewContext):
     model = Person
     fields = '__all__'
 
 
-class PersonUpdate(UpdateView):
+class PersonUpdate(UpdateViewContext):
     model = Person
     fields = '__all__'
     pk_url_kwarg = 'person_id'
@@ -248,12 +289,12 @@ def validate_event(request, event_ident):
     return render(request, 'workshops/validate_event.html', context)
 
 
-class EventCreate(CreateView):
+class EventCreate(CreateViewContext):
     model = Event
     fields = '__all__'
 
 
-class EventUpdate(UpdateView):
+class EventUpdate(UpdateViewContext):
     model = Event
     fields = '__all__'
     pk_url_kwarg = 'event_ident'
@@ -283,12 +324,12 @@ def task_details(request, event_slug, person_id, role_name):
     return render(request, 'workshops/task.html', context)
 
 
-class TaskCreate(CreateView):
+class TaskCreate(CreateViewContext):
     model = Task
     fields = TASK_FIELDS
 
 
-class TaskUpdate(UpdateView):
+class TaskUpdate(UpdateViewContext):
     model = Task
     fields = TASK_FIELDS
     pk_url_kwarg = 'task_id'
@@ -304,41 +345,6 @@ class TaskUpdate(UpdateView):
 
         return get_object_or_404(Task, event__slug=event_slug, person__id=person_id, role__name=role_name)
 
-#------------------------------------------------------------
-
-COHORT_FIELDS = ['name', 'start', 'active', 'venue', 'qualifies']
-
-
-def all_cohorts(request):
-    '''List all cohorts.'''
-    all_cohorts = Cohort.objects.order_by('start')
-    user_can_add = request.user.has_perm('edit')
-    context = {'title' : 'All Cohorts',
-               'all_cohorts' : all_cohorts,
-               'user_can_add' : user_can_add}
-    return render(request, 'workshops/all_cohorts.html', context)
-
-
-def cohort_details(request, cohort_name):
-    '''List details of a particular cohort.'''
-    cohort = Cohort.objects.get(name=cohort_name)
-    trainees = Trainee.objects.filter(cohort_id=cohort.id)
-    context = {'title' : 'Cohort {0}'.format(cohort),
-               'cohort' : cohort,
-               'trainees' : trainees}
-    return render(request, 'workshops/cohort.html', context)
-
-
-class CohortCreate(CreateView):
-    model = Cohort
-    fields = COHORT_FIELDS
-
-
-class CohortUpdate(UpdateView):
-    model = Cohort
-    fields = COHORT_FIELDS
-    slug_field = 'name'
-    slug_url_kwarg = 'cohort_name'
 
 #------------------------------------------------------------
 

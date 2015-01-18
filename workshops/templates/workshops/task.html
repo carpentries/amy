@@ -2,9 +2,9 @@
 
 {% load breadcrumbs %}
 {% block breadcrumbs %}
-    {% breadcrumb_url 'Amy' 'index'  %}
-    {% breadcrumb_url 'All tasks' 'all_tasks' %}
-    {% breadcrumb_active task  %}
+    {% breadcrumb_main_page %}
+    {% breadcrumb_index_all_objects task %}
+    {% breadcrumb_active task %}
 {% endblock %}
 
 {% block content %}
