@@ -1,6 +1,7 @@
 import datetime
 import re
 
+from django.contrib.auth.models import AbstractBaseUser
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.db import models
@@ -48,7 +49,7 @@ class Airport(models.Model):
 
 #------------------------------------------------------------
 
-class Person(models.Model):
+class Person(AbstractBaseUser):
     '''Represent a single person.'''
     MALE = 'M'
     FEMALE = 'F'
@@ -74,6 +75,9 @@ class Person(models.Model):
     twitter     = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True)
     url         = models.CharField(max_length=STR_LONG, null=True, blank=True)
     slug        = models.CharField(max_length=STR_LONG, null=True, blank=True)
+    username    = models.CharField(max_length=STR_MED, unique=True)
+
+    USERNAME_FIELD = 'username'
 
     def fullname(self):
         middle = ''
