@@ -215,11 +215,12 @@ def person_bulk_add_confirmation(request):
     """
     This view allows for manipulating and saving session-stored upload data.
     """
-    persons_tasks = request.session['bulk-add-people']
+    persons_tasks = request.session.get('bulk-add-people')
 
-    # if the session is empty, don't bother
+    # if the session is empty, add message and redirect
     if not persons_tasks:
-        raise Http404
+        messages.warning(request, "Could not locate CSV data, please try the upload again.")
+        redirect('person_bulk_add')
 
     if request.method == 'POST':
         # update values if user wants to change them
