@@ -249,7 +249,7 @@ class PersonUpdate(UpdateViewContext):
 def all_events(request):
     '''List all events.'''
 
-    all_events = Event.objects.order_by('id')
+    all_events = Event.objects.all()
     events = _get_pagination_items(request, all_events)
     for e in events:
         e.num_instructors = e.task_set.filter(role__name='instructor').count()
