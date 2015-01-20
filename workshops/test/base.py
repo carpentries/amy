@@ -79,7 +79,7 @@ class TestBase(TestCase):
                                               twitter='herself', url='http://hermione.org', slug='granger.h')
         Award.objects.create(person=self.hermione,
                              badge=self.instructor,
-                             awarded=datetime.date(2014, 01, 01))
+                             awarded=datetime.date(2014, 1, 1))
         Qualification.objects.create(person=self.hermione, skill=self.git)
         Qualification.objects.create(person=self.hermione, skill=self.sql)
 
@@ -89,7 +89,7 @@ class TestBase(TestCase):
                                            twitter=None, url=None, slug='potter.h')
         Award.objects.create(person=self.harry,
                              badge=self.instructor,
-                             awarded=datetime.date(2014, 05, 05))
+                             awarded=datetime.date(2014, 5, 5))
         Qualification.objects.create(person=self.harry, skill=self.sql)
 
         self.ron = Person.objects.create(personal='Ron', middle=None, family='Weasley',
