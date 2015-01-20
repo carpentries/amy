@@ -31,17 +31,14 @@ class TestPerson(TestBase):
             'Would be unable to tell if email had changed'
         values['email'] = new_email
 
-        # Post and check.
+        # Post changes.
         response = self.client.post(url, values)
-        doc = self._check_status_code_and_parse(response, 200)
-        import sys
-        print >> sys.stderr, response.content
-        family = self._get_field(doc, 'family name')
-        assert family.text == 'Parker', \
-            'Family name altered from "Parker" to {0} by changing email address'.format(family.text)
-        email = self._get_field(doc, 'email')
-        assert email.text == new_email, \
-            'Incorrect edited email: expected {0}, got {1}'.format(new_email, email.text)
+        doc = self._check_status_code_and_parse(response, 200, 'error messages when updating person:')
+
+        # Check database.
+        new_person = Person.objects.get(family='Parker')
+        assert new_person.email == new_email, \
+            'Incorrect edited email: got {0}, expected {1}'.format(new_person.email, new_email)
 
     def _check_person(self, doc, person):
         '''Check fields of person against document.'''

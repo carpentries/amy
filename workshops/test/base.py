@@ -2,6 +2,7 @@ import traceback
 import os
 import re
 import datetime
+import itertools
 import xml.etree.ElementTree as ET
 from django.test import TestCase
 from ..models import \
@@ -150,11 +151,14 @@ class TestBase(TestCase):
             self._save_html(content)
             assert False, 'HTML parsing failed: {0}'.format(str(e))
 
-    def _check_status_code_and_parse(self, response, expected):
+    def _check_status_code_and_parse(self, response, expected, message_if_errors=None):
         '''Check the status code, then parse if it is OK.'''
         assert response.status_code == expected, \
             'Got status code {0}, expected {1}'.format(response.status_code, expected)
-        return self._parse(response.content)
+        doc = self._parse(response.content)
+        if message_if_errors:
+            self._assert_no_errors(doc, message_if_errors)
+        return doc
 
     def _check_0(self, doc, xpath, msg):
         '''Check that there are no nodes of a particular type.'''
@@ -203,3 +207,13 @@ class TestBase(TestCase):
         filename = os.path.join(self.ERR_DIR, '{0}.html'.format(caller))
         with open(filename, 'w') as writer:
             writer.write(content)
+
+    def _assert_no_errors(self, doc, msg):
+        '''Check an HTML page to make sure there are no errors.'''
+        errors = doc.findall(".//ul[@class='errorlist']")
+        if not errors:
+            return
+        lines = [x.findall("./li") for x in errors]
+        lines = [x.text for x in list(itertools.chain(*lines))]
+        assert False, \
+            msg + '\n' + '\n'.join(lines)
