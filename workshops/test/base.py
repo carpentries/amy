@@ -4,6 +4,7 @@ import re
 import datetime
 import itertools
 import xml.etree.ElementTree as ET
+from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from ..models import \
@@ -14,9 +15,6 @@ from ..models import \
     Qualification, \
     Site, \
     Skill
-
-
-TEMPLATE_STRING_IF_INVALID = 'XXX-unset-variable-XXX' # FIXME: get by importing settings
 
 
 class TestBase(TestCase):
@@ -129,12 +127,12 @@ class TestBase(TestCase):
                 writer.write(content)
 
         # Report unfilled tags.
-        if TEMPLATE_STRING_IF_INVALID in content:
+        if settings.TEMPLATE_STRING_IF_INVALID in content:
             self._save_html(content)
             lines = content.split('\n')
             hits = [x for x in enumerate(lines)
-                    if TEMPLATE_STRING_IF_INVALID in x[1]]
-            msg = '"{0}" found in HTML page:\n'.format(TEMPLATE_STRING_IF_INVALID)
+                    if settings.TEMPLATE_STRING_IF_INVALID in x[1]]
+            msg = '"{0}" found in HTML page:\n'.format(settings.TEMPLATE_STRING_IF_INVALID)
             assert not hits, msg + '\n'.join(['{0}: "{1}"'.format(h[0], h[1].rstrip())
                                               for h in hits])
 
