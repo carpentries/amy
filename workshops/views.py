@@ -369,11 +369,11 @@ def _verify_upload_person_task(data):
 
         if email:
             try:
-                Person.objects.get(email=email)
+                Person.objects.get(email__iexact=email)
                 errors.append("User with email {} already exists."
                               .format(email))
             except Person.DoesNotExist:
-                # we want the email to be unique
+                # we want the email to be case-insensitive unique
                 pass
 
         if errors:
