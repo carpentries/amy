@@ -146,7 +146,7 @@ class TestBase(TestCase):
             doc = ET.XML(content)
             return doc
         # ...and save in a uniquely-named file if we can't.
-        except ET.ParseError, e:
+        except ET.ParseError as e:
             self._save_html(content)
             assert False, 'HTML parsing failed: {0}'.format(str(e))
 
