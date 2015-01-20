@@ -1,5 +1,5 @@
 from ..models import Site
-from base import TestBase
+from .base import TestBase
 
 
 class TestSiteNotes(TestBase):
