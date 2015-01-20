@@ -108,7 +108,7 @@ class TestBase(TestCase):
                                                email='peter@webslinger.net', gender='O', active=True)
 
         self.ironman = Person.objects.create(personal='Tony', middle=None, family='Stark',
-                                             email='me@stark.com', gender=None)
+                                             email='me@stark.com', gender=None, active=True)
 
         self.blackwidow = Person.objects.create(personal='Natasha', middle=None, family='Romanova',
                                                 email=None, gender='F', active=False)
@@ -173,6 +173,23 @@ class TestBase(TestCase):
         if expected is not None:
             assert len(nodes) == expected, (msg + ': expected {0}, got {1}'.format(expected, len(nodes)))
         return nodes
+
+    def _get_selected(self, node):
+        '''Get currently selected element from 'select' node.'''
+        selections = node.findall(".//option[@selected='selected']")
+        assert len(selections) == 1, \
+            'Either zero or multiple selections for node'
+        return selections[0].text
+
+    def _get_form_data(self, doc):
+        '''Extract form data from page.'''
+        form = self._get_1(doc, ".//form", 'expected one form in page')
+        inputs = dict([(i.attrib['name'], i.attrib.get('value', None)) for i in form.findall(".//input[@id]")])
+        selects = dict([(s.attrib['name'], self._get_selected(s)) for s in form.findall('.//select')])
+        assert not (set(inputs.keys()) & set(selects.keys())), \
+            'Some names appear in both inputs and selects: {0} vs. {1}'.format(inputs.keys(), selects.keys())
+        inputs.update(selects)
+        return inputs
 
     def _save_html(self, content):
         stack = traceback.extract_stack()

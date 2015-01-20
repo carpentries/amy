@@ -17,13 +17,26 @@ class TestPerson(TestBase):
         self._check_person(doc, self.ironman)
 
     def test_edit_person_email(self):
+        # Get initial form.
+        url = reverse('person_edit', args=[str(self.spiderman.id)])
+        response = self.client.get(url)
+        doc = self._check_status_code_and_parse(response, 200)
+        values = self._get_form_data(doc)
+
+        # Modify.
+        assert 'email' in values, \
+            'No email address in initial form'
         new_email = 'new@new.new'
         assert self.spiderman.email != new_email, \
             'Would be unable to tell if email had changed'
-        response = self.client.post(reverse('person_edit', args=[str(self.spiderman.id)]),
-                                    {'email' : new_email})
+        values['email'] = new_email
+
+        # Post and check.
+        response = self.client.post(url, values)
         doc = self._check_status_code_and_parse(response, 200)
-        family = self._get_field(doc, 'family')
+        import sys
+        print >> sys.stderr, response.content
+        family = self._get_field(doc, 'family name')
         assert family.text == 'Parker', \
             'Family name altered from "Parker" to {0} by changing email address'.format(family.text)
         email = self._get_field(doc, 'email')
