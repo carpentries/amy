@@ -151,13 +151,13 @@ class TestBase(TestCase):
             self._save_html(content)
             assert False, 'HTML parsing failed: {0}'.format(str(e))
 
-    def _check_status_code_and_parse(self, response, expected, message_if_errors=None):
+    def _check_status_code_and_parse(self, response, expected, ignore_errors=False):
         '''Check the status code, then parse if it is OK.'''
         assert response.status_code == expected, \
             'Got status code {0}, expected {1}'.format(response.status_code, expected)
         doc = self._parse(response.content)
-        if message_if_errors:
-            self._assert_no_errors(doc, message_if_errors)
+        if not ignore_errors:
+            self._assert_no_errors(doc)
         return doc
 
     def _check_0(self, doc, xpath, msg):
@@ -179,41 +179,50 @@ class TestBase(TestCase):
         return nodes
 
     def _get_selected(self, node):
-        '''Get currently selected element from 'select' node.'''
+        '''Get value of currently selected element from 'select' node.'''
         selections = node.findall(".//option[@selected='selected']")
         assert len(selections) == 1, \
-            'Either zero or multiple selections for node'
-        return selections[0].text
+            'Either zero or multiple selections for node {0}'.format(node.attrib['id'])
+        value = selections[0].attrib['value']
+        if not value:
+            return None
+        return value
 
     def _get_form_data(self, doc):
         '''Extract form data from page.'''
         form = self._get_1(doc, ".//form", 'expected one form in page')
-        inputs = dict([(i.attrib['name'], i.attrib.get('value', None)) for i in form.findall(".//input[@id]")])
+        inputs = dict([(i.attrib['name'], i.attrib.get('value', None)) for i in form.findall(".//input[@type='text']")])
+        checkboxes = dict([(c.attrib['name'], c.attrib.get('checked', None)=='checked') for c in form.findall(".//input[@type='checkbox']")])
         selects = dict([(s.attrib['name'], self._get_selected(s)) for s in form.findall('.//select')])
-        assert not (set(inputs.keys()) & set(selects.keys())), \
-            'Some names appear in both inputs and selects: {0} vs. {1}'.format(inputs.keys(), selects.keys())
+        inputs.update(checkboxes)
         inputs.update(selects)
         return inputs
 
     def _save_html(self, content):
-        stack = traceback.extract_stack()
-        callers = [s[2] for s in stack] # get function/method names
-        while callers and not callers[-1].startswith('test'):
-            callers.pop()
-        assert callers, 'Internal error: unable to find caller'
-        caller = callers[-1]
+        caller = self._get_test_name_from_stack()
         if not os.path.isdir(self.ERR_DIR):
             os.mkdir(self.ERR_DIR)
         filename = os.path.join(self.ERR_DIR, '{0}.html'.format(caller))
         with open(filename, 'w') as writer:
             writer.write(content)
 
-    def _assert_no_errors(self, doc, msg):
+    def _assert_no_errors(self, doc):
         '''Check an HTML page to make sure there are no errors.'''
         errors = doc.findall(".//ul[@class='errorlist']")
         if not errors:
             return
         lines = [x.findall("./li") for x in errors]
         lines = [x.text for x in list(itertools.chain(*lines))]
-        assert False, \
-            msg + '\n' + '\n'.join(lines)
+        caller = self._get_test_name_from_stack()
+        message = 'error messages in {0}\n'.format(caller)
+        assert False, message + '\n'.join(lines)
+
+    def _get_test_name_from_stack(self):
+        '''Walk up the stack to get the name of the calling test.'''
+        stack = traceback.extract_stack()
+        callers = [s[2] for s in stack] # get function/method names
+        while callers and not callers[-1].startswith('test'):
+            callers.pop()
+        assert callers, 'Internal error: unable to find caller'
+        caller = callers[-1]
+        return caller

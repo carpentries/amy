@@ -16,9 +16,15 @@ class TestPerson(TestBase):
         doc = self._check_status_code_and_parse(response, 200)
         self._check_person(doc, self.ironman)
 
-    def test_edit_person_email(self):
+    def test_edit_person_email_when_all_fields_set(self):
+        self._test_edit_person_email(self.ron)
+
+    def test_edit_person_email_when_airport_not_set(self):
+        self._test_edit_person_email(self.spiderman)
+
+    def _test_edit_person_email(self, person):
         # Get initial form.
-        url = reverse('person_edit', args=[str(self.spiderman.id)])
+        url = reverse('person_edit', args=[str(person.id)])
         response = self.client.get(url)
         doc = self._check_status_code_and_parse(response, 200)
         values = self._get_form_data(doc)
@@ -27,18 +33,23 @@ class TestPerson(TestBase):
         assert 'email' in values, \
             'No email address in initial form'
         new_email = 'new@new.new'
-        assert self.spiderman.email != new_email, \
+        assert person.email != new_email, \
             'Would be unable to tell if email had changed'
         values['email'] = new_email
 
         # Post changes.
         response = self.client.post(url, values)
-        doc = self._check_status_code_and_parse(response, 200, 'error messages when updating person:')
 
-        # Check database.
-        new_person = Person.objects.get(family='Parker')
-        assert new_person.email == new_email, \
-            'Incorrect edited email: got {0}, expected {1}'.format(new_person.email, new_email)
+        # Django redirects when edit works.
+        if response.status_code == 302:
+            new_person = Person.objects.get(id=person.id)
+            assert new_person.email == new_email, \
+                'Incorrect edited email: got {0}, expected {1}'.format(new_person.email, new_email)
+
+        # Report errors.
+        else:
+            doc = self._check_status_code_and_parse(response, 200)
+            assert False, 'expected 302 redirect after post'
 
     def _check_person(self, doc, person):
         '''Check fields of person against document.'''
