@@ -22,25 +22,32 @@ class TestPerson(TestBase):
     def test_edit_person_email_when_airport_not_set(self):
         self._test_edit_person_email(self.spiderman)
 
-    def _test_edit_person_email(self, person):
-        # Get initial form.
-        url = reverse('person_edit', args=[str(person.id)])
-        response = self.client.get(url)
-        doc = self._check_status_code_and_parse(response, 200)
-        values = self._get_form_data(doc)
+    def test_edit_person_empty_family_name(self):
+        url, values = self._get_initial_form('person_edit', self.ironman.id)
+        assert 'family' in values, \
+            'No family name in initial form'
 
-        # Modify.
+        values['family'] = '' # family name cannot be empty
+        response = self.client.post(url, values)
+        assert response.status_code == 200, \
+            'Expected error page with status 200, got status {0}'.format(response.status_code)
+        doc = self._parse(response.content)
+        errors = self._collect_errors(doc)
+        assert errors, \
+            'Expected error messages in response page'
+
+    def _test_edit_person_email(self, person):
+        url, values = self._get_initial_form('person_edit', person.id)
         assert 'email' in values, \
             'No email address in initial form'
+
         new_email = 'new@new.new'
         assert person.email != new_email, \
             'Would be unable to tell if email had changed'
         values['email'] = new_email
 
-        # Post changes.
-        response = self.client.post(url, values)
-
         # Django redirects when edit works.
+        response = self.client.post(url, values)
         if response.status_code == 302:
             new_person = Person.objects.get(id=person.id)
             assert new_person.email == new_email, \
@@ -48,7 +55,7 @@ class TestPerson(TestBase):
 
         # Report errors.
         else:
-            doc = self._check_status_code_and_parse(response, 200)
+            self._check_status_code_and_parse(response, 200)
             assert False, 'expected 302 redirect after post'
 
     def _check_person(self, doc, person):

@@ -4,6 +4,7 @@ import re
 import datetime
 import itertools
 import xml.etree.ElementTree as ET
+from django.core.urlresolvers import reverse
 from django.test import TestCase
 from ..models import \
     Airport, \
@@ -157,7 +158,10 @@ class TestBase(TestCase):
             'Got status code {0}, expected {1}'.format(response.status_code, expected)
         doc = self._parse(response.content)
         if not ignore_errors:
-            self._assert_no_errors(doc)
+            errors = self._collect_errors(doc)
+            if errors:
+                caller = self._get_test_name_from_stack()
+                assert False, 'error messages in {0}:\n{1}'.format(caller, errors)
         return doc
 
     def _check_0(self, doc, xpath, msg):
@@ -183,10 +187,15 @@ class TestBase(TestCase):
         selections = node.findall(".//option[@selected='selected']")
         assert len(selections) == 1, \
             'Either zero or multiple selections for node {0}'.format(node.attrib['id'])
-        value = selections[0].attrib['value']
-        if not value:
-            return None
-        return value
+        return selections[0].attrib['value']
+
+    def _get_initial_form(self, which, *args):
+        '''Get a form to start testing with.'''
+        url = reverse(which, args=[str(a) for a in args])
+        response = self.client.get(url)
+        doc = self._check_status_code_and_parse(response, 200)
+        values = self._get_form_data(doc)
+        return url, values
 
     def _get_form_data(self, doc):
         '''Extract form data from page.'''
@@ -213,16 +222,14 @@ class TestBase(TestCase):
         with open(filename, 'w') as writer:
             writer.write(content)
 
-    def _assert_no_errors(self, doc):
+    def _collect_errors(self, doc):
         '''Check an HTML page to make sure there are no errors.'''
         errors = doc.findall(".//ul[@class='errorlist']")
         if not errors:
             return
         lines = [x.findall("./li") for x in errors]
         lines = [x.text for x in list(itertools.chain(*lines))]
-        caller = self._get_test_name_from_stack()
-        message = 'error messages in {0}\n'.format(caller)
-        assert False, message + '\n'.join(lines)
+        return '\n'.join(lines)
 
     def _get_test_name_from_stack(self):
         '''Walk up the stack to get the name of the calling test.'''
