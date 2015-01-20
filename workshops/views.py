@@ -316,9 +316,9 @@ def all_tasks(request):
     return render(request, 'workshops/all_tasks.html', context)
 
 
-def task_details(request, event_slug, person_id, role_name):
+def task_details(request, task_id):
     '''List details of a particular task.'''
-    task = Task.objects.get(event__slug=event_slug, person__id=person_id, role__name=role_name)
+    task = Task.objects.get(pk=task_id)
     context = {'title' : 'Task {0}'.format(task),
                'task' : task}
     return render(request, 'workshops/task.html', context)
@@ -333,17 +333,6 @@ class TaskUpdate(UpdateViewContext):
     model = Task
     fields = TASK_FIELDS
     pk_url_kwarg = 'task_id'
-
-    def get_object(self):
-        """
-        Returns the object the view is displaying.
-        """
-
-        event_slug = self.kwargs.get('event_slug', None)
-        person_id = self.kwargs.get('person_id', None)
-        role_name = self.kwargs.get('role_name', None)
-
-        return get_object_or_404(Task, event__slug=event_slug, person__id=person_id, role__name=role_name)
 
 
 #------------------------------------------------------------

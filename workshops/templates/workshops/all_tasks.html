@@ -20,7 +20,7 @@
             <td>{{ task.event }}</td>
             <td>{{ task.person }}</a></td>
             <td>{{ task.role }}</a></td>
-	    <td><a href="{% url 'task_details' task.event.slug task.person.id task.role.name %}">...</a></td>
+	    <td><a href="{% url 'task_details' task.id %}">...</a></td>
 	</tr>
     {% endfor %}
     </table>

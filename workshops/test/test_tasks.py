@@ -73,9 +73,7 @@ class TestTask(TestCase):
 
         correct_task = self.fixtures['test_task_1']
 
-        url_kwargs = {'event_slug': correct_task.event.slug,
-                      'person_id': correct_task.person.pk,
-                      'role_name': correct_task.role.name}
+        url_kwargs = {'task_id': correct_task.id}
 
         response = self.client.get(reverse('task_edit',
                                    kwargs=url_kwargs))
