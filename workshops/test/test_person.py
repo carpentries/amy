@@ -63,7 +63,7 @@ class TestPerson(TestBase):
         fields = (('personal', person.personal),
                   ('family', person.family),
                   ('email', person.email),
-                  ('gender', Person.GENDER_CHOICES_DICT.get(person.gender, None)),
+                  ('gender', person.get_gender_display()),
                   ('active', person.active),
                   ('airport', person.airport),
                   ('github', person.github),

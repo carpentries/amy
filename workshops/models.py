@@ -85,14 +85,14 @@ class Person(models.Model):
         (FEMALE, 'Female'),
         (OTHER, 'Other'),
         )
-    GENDER_CHOICES_DICT = dict(GENDER_CHOICES)
 
     personal   = models.CharField(max_length=STR_LONG)
     middle     = models.CharField(max_length=STR_LONG, null=True, blank=True)
     family     = models.CharField(max_length=STR_LONG)
     email      = models.CharField(max_length=STR_LONG, unique=True, null=True, blank=True)
     gender     = models.CharField(max_length=1, choices=GENDER_CHOICES, null=True, blank=True)
-    active     = models.BooleanField(default=True, help_text='Are we currently allowed to contact this person?')
+    active     = models.BooleanField(default=True,
+                                     help_text='Are we currently allowed to contact this person?')
     airport    = models.ForeignKey(Airport, null=True, blank=True)
     github     = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True)
     twitter    = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True)
