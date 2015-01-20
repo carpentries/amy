@@ -191,9 +191,16 @@ class TestBase(TestCase):
     def _get_form_data(self, doc):
         '''Extract form data from page.'''
         form = self._get_1(doc, ".//form", 'expected one form in page')
-        inputs = dict([(i.attrib['name'], i.attrib.get('value', None)) for i in form.findall(".//input[@type='text']")])
-        checkboxes = dict([(c.attrib['name'], c.attrib.get('checked', None)=='checked') for c in form.findall(".//input[@type='checkbox']")])
-        selects = dict([(s.attrib['name'], self._get_selected(s)) for s in form.findall('.//select')])
+
+        inputs = dict([(i.attrib['name'], i.attrib.get('value', None))
+                       for i in form.findall(".//input[@type='text']")])
+
+        checkboxes = dict([(c.attrib['name'], c.attrib.get('checked', None)=='checked')
+                           for c in form.findall(".//input[@type='checkbox']")])
+
+        selects = dict([(s.attrib['name'], self._get_selected(s))
+                        for s in form.findall('.//select')])
+
         inputs.update(checkboxes)
         inputs.update(selects)
         return inputs
