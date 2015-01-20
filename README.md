@@ -15,7 +15,11 @@ and so on.
 
 To get started:
 
-1.  Install Django and its dependencies.
+1.  Install Django and other project dependencies.
+
+    ~~~
+    pip install -r requirements.txt
+    ~~~
 
 2.  Create an empty database by running:
 
