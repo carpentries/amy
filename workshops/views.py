@@ -20,6 +20,7 @@ from workshops.models import \
     Badge, \
     Event, \
     Person, \
+    Role, \
     Site, \
     Skill, \
     Task
@@ -382,7 +383,6 @@ def _verify_upload_person_task(data):
 
     # indicate there were some errors
     return errors_occur
->>>>>>> bb0a940167c842b9ecc8ad074335a42508451451
 
 
 class PersonCreate(CreateViewContext):
