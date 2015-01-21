@@ -524,11 +524,9 @@ def instructors(request):
 
             # Filter by skills.
             persons = Person.objects.filter(airport__isnull=False)
-            skills = []
             for s in Skill.objects.all():
                 if form.cleaned_data[s.name]:
-                    skills.append(s)
-            persons = persons.have_skills(skills)
+                    persons = persons.filter(qualification__skill=s)
 
             # Add metadata which we will eventually filter by
             for p in persons:
