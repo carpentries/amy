@@ -84,7 +84,7 @@ class Person(AbstractBaseUser):
         'email',
         ]
 
-    def fullname(self):
+    def get_full_name(self):
         middle = ''
         if self.middle is not None:
             middle = ' {0}'.format(self.middle)
@@ -94,7 +94,7 @@ class Person(AbstractBaseUser):
         email = ''
         if self.email is not None:
             email = ' <{0}>'.format(self.email)
-        return '{0}{1}'.format(self.fullname(), email)
+        return '{0}{1}'.format(self.get_full_name(), email)
 
     def get_absolute_url(self):
         return reverse('person_details', args=[str(self.id)])
