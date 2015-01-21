@@ -225,6 +225,9 @@ class Event(models.Model):
     admin_fee  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
     notes      = models.TextField(default="", blank=True)
 
+    class Meta:
+        ordering = ('-start', )
+
     # Set the custom manager
     objects = EventManager()
 
