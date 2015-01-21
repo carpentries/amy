@@ -90,6 +90,9 @@ class Person(AbstractBaseUser):
             middle = ' {0}'.format(self.middle)
         return '{0}{1} {2}'.format(self.personal, middle, self.family)
 
+    def get_short_name(self):
+        return self.personal
+
     def __str__(self):
         email = ''
         if self.email is not None:
