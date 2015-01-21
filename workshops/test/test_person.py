@@ -1,6 +1,6 @@
 from django.core.urlresolvers import reverse
 from ..models import Person
-from base import TestBase
+from .base import TestBase
 
 
 class TestPerson(TestBase):
@@ -31,7 +31,7 @@ class TestPerson(TestBase):
         response = self.client.post(url, values)
         assert response.status_code == 200, \
             'Expected error page with status 200, got status {0}'.format(response.status_code)
-        doc = self._parse(response.content)
+        doc = self._parse(response=response)
         errors = self._collect_errors(doc)
         assert errors, \
             'Expected error messages in response page'

@@ -1,6 +1,6 @@
 from django.core.urlresolvers import reverse
 from ..models import Site
-from base import TestBase
+from .base import TestBase
 
 
 class TestSearchSite(TestBase):

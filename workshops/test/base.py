@@ -1,3 +1,4 @@
+import cgi
 import traceback
 import os
 import re
@@ -79,7 +80,7 @@ class TestBase(TestCase):
                                               twitter='herself', url='http://hermione.org', slug='granger.h')
         Award.objects.create(person=self.hermione,
                              badge=self.instructor,
-                             awarded=datetime.date(2014, 01, 01))
+                             awarded=datetime.date(2014, 1, 1))
         Qualification.objects.create(person=self.hermione, skill=self.git)
         Qualification.objects.create(person=self.hermione, skill=self.sql)
 
@@ -89,7 +90,7 @@ class TestBase(TestCase):
                                            twitter=None, url=None, slug='potter.h')
         Award.objects.create(person=self.harry,
                              badge=self.instructor,
-                             awarded=datetime.date(2014, 05, 05))
+                             awarded=datetime.date(2014, 5, 5))
         Qualification.objects.create(person=self.harry, skill=self.sql)
 
         self.ron = Person.objects.create(personal='Ron', middle=None, family='Weasley',
@@ -113,7 +114,7 @@ class TestBase(TestCase):
         self.blackwidow = Person.objects.create(personal='Natasha', middle=None, family='Romanova',
                                                 email=None, gender='F', active=False)
 
-    def _parse(self, content, save_to=None):
+    def _parse(self, response, save_to=None):
         """
         Parse the HTML page returned by the server.
         Must remove the DOCTYPE to avoid confusing Python's XML parser.
@@ -121,6 +122,10 @@ class TestBase(TestCase):
         If save_to is a path, save a copy of the content to that file
         for debugging.
         """
+        _, params = cgi.parse_header(response['content-type'])
+        charset = params['charset']
+        content = response.content.decode(charset)
+
         # Save the raw HTML if explicitly asked to (during debugging).
         if save_to:
             with open(save_to, 'w') as writer:
@@ -146,7 +151,7 @@ class TestBase(TestCase):
             doc = ET.XML(content)
             return doc
         # ...and save in a uniquely-named file if we can't.
-        except ET.ParseError, e:
+        except ET.ParseError as e:
             self._save_html(content)
             assert False, 'HTML parsing failed: {0}'.format(str(e))
 
@@ -154,7 +159,7 @@ class TestBase(TestCase):
         '''Check the status code, then parse if it is OK.'''
         assert response.status_code == expected, \
             'Got status code {0}, expected {1}'.format(response.status_code, expected)
-        doc = self._parse(response.content)
+        doc = self._parse(response=response)
         if not ignore_errors:
             errors = self._collect_errors(doc)
             if errors:

@@ -1,5 +1,5 @@
 from django.core.urlresolvers import reverse
-from base import TestBase
+from .base import TestBase
 
 
 class TestLocateInstructors(TestBase):
