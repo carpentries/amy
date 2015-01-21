@@ -169,7 +169,7 @@ for (person, personal, middle, family, email) in old_crs.fetchall():
                   'github' : github,
                   'twitter' : twitter,
                   'url' : url,
-                  'active' : active}
+                  'active' : True if active else False}
         insert(new_crs, 'workshops_person', fields)
     except Exception, e:
         fail('person', fields, e)

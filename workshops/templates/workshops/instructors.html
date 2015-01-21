@@ -27,13 +27,13 @@
 	    <th></th>
 	</tr>
     {% for p in persons %}
-        <tr>
-	    <td>{{ p.num_taught }}</td>
-	    <td><a href="{% url 'airport_details' p.airport.iata %}">{{ p.airport }}</a></td>
-	    <td>{{ p.personal }}</td>
+        <tr class="instructor_row" id="instructor_{{forloop.counter0}}">
+	    <td id="instructor_num_taught_{{forloop.counter0}}">{{ p.num_taught }}</td>
+	    <td id="instructor_airport_{{forloop.counter0}}"><a href="{% url 'airport_details' p.airport.iata %}">{{ p.airport }}</a></td>
+	    <td id="instructor_personal_{{forloop.counter0}}">{{ p.personal }}</td>
 	    <td>{{ p.middle }}</td>
-	    <td>{{ p.family }}</td>
-	    <td>{{ p.email }}</td>
+	    <td id="instructor_family_{{forloop.counter0}}">{{ p.family }}</td>
+	    <td id="instructor_email_{{forloop.counter0}}">{{ p.email }}</td>
 	    <td><a href="{% url 'person_details' p.id %}">...</a></td>
 	</tr>
     {% endfor %}

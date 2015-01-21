@@ -379,9 +379,9 @@ def instructors(request):
             persons = persons.have_skills(skills)
 
             # Add metadata which we will eventually filter by
-            for person in persons:
-                person.num_taught = \
-                    person.task_set.filter(role__name='instructor').count()
+            for p in persons:
+                p.num_taught = \
+                    p.task_set.filter(role__name='instructor').count()
 
             # Sort by location.
             loc = (form.cleaned_data['latitude'],
@@ -394,7 +394,10 @@ def instructors(request):
                     distance_person[1].family,
                     distance_person[1].personal,
                     distance_person[1].middle))
-            persons = [x[1] for x in persons[:10]]
+
+            # Return number desired.
+            wanted = form.cleaned_data['wanted']
+            persons = [x[1] for x in persons[:wanted]]
 
     # if a GET (or any other method) we'll create a blank form
     else:

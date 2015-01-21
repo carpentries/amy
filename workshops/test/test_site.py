@@ -1,28 +1,19 @@
-from django.test import TestCase
 from ..models import Site
+from .base import TestBase
 
 
-class TestSiteNotes(TestCase):
-    """Make sure notes once written are saved forever!"""
+class TestSiteNotes(TestBase):
+    '''Test cases for Site notes.'''
 
-    def test_site_without_notes(self):
-        "Make sure sites without notes don't have NULLed field ``notes``"
-        s = Site(domain="example.org",
-                 fullname="Sample Example",
-                 country="US")
+    def test_fixture_notes(self):
+        assert self.site_alpha.notes == '', \
+            'Alpha Site notes should be empty'
+        assert self.site_beta.notes == 'Notes\nabout\nBrazil\n', \
+            'Beta Site notes incorrect'
 
-        # test for field's default value (the field is not NULL)
-        self.assertEqual(s.notes, "")  # therefore the field is not NULL
-
-    def test_site_with_notes(self):
-        "Make sure event with notes are correctly stored"
-
-        notes = "This site is untrusted."
-
-        s = Site(domain="example.org",
-                 fullname="Sample Example",
-                 country="US",
-                 notes=notes)
-
-        # make sure that notes have been saved
-        self.assertEqual(s.notes, notes)
+    def test_site_created_without_notes(self):
+        s = Site(domain='example.org',
+                 fullname='Sample Example',
+                 country='United-States')
+        assert s.notes == '', \
+            'Site created without notes should have empty notes'

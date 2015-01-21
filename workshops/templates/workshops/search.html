@@ -19,7 +19,7 @@
 {% if sites %}
 <ul>
   {% for s in sites %}
-  <li><a href="{% url 'site_details' s.domain %}">{{ s.domain }}</a></li>
+  <li><a class="searchresult" href="{% url 'site_details' s.domain %}">{{ s.domain }}</a></li>
   {% endfor %}
 </ul>
 {% endif %}
@@ -28,7 +28,7 @@
 {% if events %}
 <ul>
   {% for e in events %}
-  <li><a href="{% url 'event_details' e.slug %}">{{ e.slug }}</a></li>
+  <li><a class="searchresult" href="{% url 'event_details' e.slug %}">{{ e.slug }}</a></li>
   {% endfor %}
 </ul>
 {% endif %}
@@ -37,7 +37,7 @@
 {% if persons %}
 <ul>
   {% for p in persons %}
-  <li><a href="{% url 'person_details' p.id %}">{{ p }}</a></li>
+  <li><a class="searchresult" href="{% url 'person_details' p.id %}">{{ p }}</a></li>
   {% endfor %}
 </ul>
 {% endif %}
