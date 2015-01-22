@@ -39,5 +39,5 @@ CREATE TABLE "workshops_event" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
 CREATE INDEX workshops_event_9365d6e7 ON "workshops_event" ("site_id");
 CREATE INDEX workshops_event_24107bbc ON "workshops_event" ("organizer_id");
 CREATE TABLE "workshops_tag" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "name" varchar(40) NOT NULL UNIQUE, "details" varchar(100) NOT NULL);
-CREATE TABLE "workshops_person" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "personal" varchar(100) NOT NULL, "middle" varchar(100) NULL, "family" varchar(100) NOT NULL, "email" varchar(100) NULL UNIQUE, "airport_id" integer NULL REFERENCES "workshops_airport" ("id"), "gender" varchar(1) NULL, "github" varchar(40) NULL UNIQUE, "twitter" varchar(40) NULL UNIQUE, "url" varchar(100) NULL, "slug" varchar(100) NULL, "active" bool NOT NULL);
+CREATE TABLE "workshops_person" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "personal" varchar(100) NOT NULL, "middle" varchar(100) NULL, "family" varchar(100) NOT NULL, "email" varchar(100) NULL UNIQUE, "airport_id" integer NULL REFERENCES "workshops_airport" ("id"), "gender" varchar(1) NULL, "github" varchar(40) NULL UNIQUE, "twitter" varchar(40) NULL UNIQUE, "url" varchar(100) NULL, "slug" varchar(100) NULL, "may_contact" bool NOT NULL);
 CREATE INDEX workshops_person_f480dbb2 ON "workshops_person" ("airport_id");
