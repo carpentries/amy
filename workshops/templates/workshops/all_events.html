@@ -20,6 +20,8 @@
 	    <th>dates</th>
 	    <th>Eventbrite</th>
 	    <th>attendance</th>
+	    <th>admin fee</th>
+	    <th>fee paid</th>
 	</tr>
     {% for event in all_events %}
         <tr>
@@ -49,6 +51,8 @@
 	    <td>{{ event.start }} &ndash; {{ event.end }}</td>
 	    <td>{{ event.reg_key }}</td>
 	    <td>{{ event.attendance }}</td>
+	    <td>{{ event.admin_fee }}</td>
+	    <td>{{ event.fee_paid }}</td>
 	</tr>
     {% endfor %}
     </table>

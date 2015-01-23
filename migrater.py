@@ -220,6 +220,7 @@ for (startdate, enddate, event, site, kind, eventbrite, attendance, url) in old_
                   'url' : url,
                   'organizer_id' : None,
                   'admin_fee' : 0.0,
+                  'fee_paid' : None,
                   'notes' : '',
                   'published' : True}
         insert(new_crs, 'workshops_event', fields)
