@@ -150,7 +150,7 @@ for (person, personal, middle, family, email) in old_crs.fetchall():
     if person in facts_lookup:
         gender, active, airport, github, twitter, url = facts_lookup[person]
     else:
-        gender, active, airport, github, twitter, url = None, None, None, None, None, None
+        gender, active, airport, github, twitter, url = None, True, None, None, None, None
 
     person, personal, middle, family, email, gender, github, twitter, url = \
         fake(i, person, personal, middle, family, email, gender, github, twitter, url)
@@ -169,7 +169,7 @@ for (person, personal, middle, family, email) in old_crs.fetchall():
                   'github' : github,
                   'twitter' : twitter,
                   'url' : url,
-                  'active' : True if active else False}
+                  'may_contact' : True if active else False}
         insert(new_crs, 'workshops_person', fields)
     except Exception, e:
         fail('person', fields, e)

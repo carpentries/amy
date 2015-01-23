@@ -75,7 +75,7 @@ class TestBase(TestCase):
         '''Set up person objects representing instructors.'''
 
         self.hermione = Person.objects.create(personal='Hermione', middle=None, family='Granger',
-                                              email='hermione@granger.co.uk', gender='F', active=True,
+                                              email='hermione@granger.co.uk', gender='F', may_contact=True,
                                               airport=self.airport_0_0, github='herself',
                                               twitter='herself', url='http://hermione.org', slug='granger.h')
         Award.objects.create(person=self.hermione,
@@ -85,7 +85,7 @@ class TestBase(TestCase):
         Qualification.objects.create(person=self.hermione, skill=self.sql)
 
         self.harry = Person.objects.create(personal='Harry', middle=None, family='Potter',
-                                           email='harry@hogwarts.edu', gender='M', active=True,
+                                           email='harry@hogwarts.edu', gender='M', may_contact=True,
                                            airport=self.airport_0_50, github='hpotter',
                                            twitter=None, url=None, slug='potter.h')
         Award.objects.create(person=self.harry,
@@ -94,7 +94,7 @@ class TestBase(TestCase):
         Qualification.objects.create(person=self.harry, skill=self.sql)
 
         self.ron = Person.objects.create(personal='Ron', middle=None, family='Weasley',
-                                         email='rweasley@ministry.gov.uk', gender='M', active=False,
+                                         email='rweasley@ministry.gov.uk', gender='M', may_contact=False,
                                          airport=self.airport_50_100, github=None,
                                          twitter=None, url='http://geocities.com/ron_weas', slug='weasley.ron')
         Award.objects.create(person=self.ron,
@@ -106,13 +106,13 @@ class TestBase(TestCase):
         '''Set up person objects representing non-instructors.'''
 
         self.spiderman = Person.objects.create(personal='Peter', middle='Q.', family='Parker',
-                                               email='peter@webslinger.net', gender='O', active=True)
+                                               email='peter@webslinger.net', gender='O', may_contact=True)
 
         self.ironman = Person.objects.create(personal='Tony', middle=None, family='Stark',
-                                             email='me@stark.com', gender=None, active=True)
+                                             email='me@stark.com', gender=None, may_contact=True)
 
         self.blackwidow = Person.objects.create(personal='Natasha', middle=None, family='Romanova',
-                                                email=None, gender='F', active=False)
+                                                email=None, gender='F', may_contact=False)
 
     def _parse(self, response, save_to=None):
         """
