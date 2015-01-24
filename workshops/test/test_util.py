@@ -1,6 +1,7 @@
 # this probably needs refactored for py3
 from datetime import datetime
 from StringIO import StringIO
+from json import dumps
 
 from django.test import TestCase
 
@@ -40,6 +41,15 @@ class UploadPersonTaskCSVTestCase(TestCase):
         person = self.compute_from_string(csv)[0]
 
         self.assertEqual(person['person']['middle'], '')
+
+    def test_serializability_of_parsed(self):
+        csv = """personal,middle,family,email\njohn,a,doe,johndoe@email.com\n,jane,a,doe,janedoe@email.com"""
+        person_tasks = self.compute_from_string(csv)
+
+        try:
+            dumps(person_tasks)
+        except Exception:
+            self.fail('Dumping person_tasks to JSON unexpectedly failed!')
 
 
 class VerifyUploadPersonTask(TestBase):
