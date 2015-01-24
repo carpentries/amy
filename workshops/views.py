@@ -26,7 +26,7 @@ from workshops.models import \
     Task
 from workshops.check import check_file
 from workshops.forms import SearchForm, InstructorsForm, PersonBulkAddForm
-from workshops.util import earth_distance, upload_person_task_csv
+from workshops.util import earth_distance, upload_person_task_csv, verify_upload_person_task
 
 #------------------------------------------------------------
 
@@ -248,7 +248,7 @@ def person_bulk_add_confirmation(request):
 
         if request.POST.get('verify', None):
             # if there's "verify" in POST, then do only verification
-            any_errors = _verify_upload_person_task(persons_tasks)
+            any_errors = verify_upload_person_task(persons_tasks)
             if any_errors:
                 messages.add_message(request, messages.ERROR,
                                      "Please make sure to fix all errors "
@@ -313,57 +313,6 @@ def person_bulk_add_confirmation(request):
         return render(request, 'workshops/person_bulk_add_results.html',
                       context)
 
-
-
-def _verify_upload_person_task(data):
-    """
-    Verify that uploaded data is correct.  Show errors by populating ``errors``
-    dictionary item.
-
-    This function changes ``data`` in place; ``data`` is a list, so it's
-    passed by a reference.  This means any changes to ``data`` we make in
-    here don't need to be returned via ``return`` statement.
-    """
-
-    errors_occur = False
-
-    for item in data:
-        event, role = item.get('event', None), item.get('role', None)
-        email = item['person'].get('email', None)
-
-        errors = []
-        if event:
-            try:
-                Event.objects.get(slug=event)
-            except Event.DoesNotExist:
-                errors.append('Event with slug {} does not exist.'
-                              .format(event))
-        if role:
-            try:
-                Role.objects.get(name=role)
-            except Role.DoesNotExist:
-                errors.append('Role with name {} does not exist.'.format(role))
-            except Role.MultipleObjectsReturned:
-                errors.append('More than one role named {} exists.'
-                              .format(role))
-
-        if email:
-            try:
-                Person.objects.get(email__iexact=email)
-                errors.append("User with email {} already exists."
-                              .format(email))
-            except Person.DoesNotExist:
-                # we want the email to be case-insensitive unique
-                pass
-
-        if errors:
-            # copy the errors just to be safe
-            item['errors'] = errors[:]
-            if not errors_occur:
-                errors_occur = True
-
-    # indicate there were some errors
-    return errors_occur
 
 
 class PersonCreate(CreateViewContext):
