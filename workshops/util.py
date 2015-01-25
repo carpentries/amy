@@ -1,4 +1,8 @@
+import csv
 from math import pi, sin, cos, acos
+
+PERSON_UPLOAD_FIELDS = ['personal', 'middle', 'family', 'email']
+PERSON_TASK_UPLOAD_FIELDS = PERSON_UPLOAD_FIELDS + ['event', 'role']
 
 def earth_distance(pos1, pos2):
     '''Taken from http://www.johndcook.com/python_longitude_latitude.html.'''
@@ -28,3 +32,20 @@ def earth_distance(pos1, pos2):
 
     # Multiply by 6373 to get distance in km.
     return arc * 6373
+
+
+def upload_person_task_csv(uploaded_file):
+    """
+    Read data from CSV and turn it into JSON-serializable list of dictionaries.
+    "Serializability" is required because we put this data into session.  See
+    https://docs.djangoproject.com/en/1.7/topics/http/sessions/ for details.
+    """
+    persons_tasks = []
+    reader = csv.DictReader(uploaded_file)
+    for row in reader:
+        person_fields = dict((col, row[col].strip())
+                             for col in PERSON_UPLOAD_FIELDS)
+        entry = {'person': person_fields, 'event': row.get('event', None),
+                 'role': row.get('role', None), 'errors': None}
+        persons_tasks.append(entry)
+    return persons_tasks

@@ -26,7 +26,7 @@ from workshops.models import \
     Task
 from workshops.check import check_file
 from workshops.forms import SearchForm, InstructorsForm, PersonBulkAddForm
-from workshops.util import earth_distance
+from workshops.util import earth_distance, upload_person_task_csv
 
 #------------------------------------------------------------
 
@@ -160,9 +160,6 @@ class AirportUpdate(UpdateViewContext):
 
 #------------------------------------------------------------
 
-PERSON_UPLOAD_FIELDS = ['personal', 'middle', 'family', 'email']
-PERSON_TASK_UPLOAD_FIELDS = PERSON_UPLOAD_FIELDS + ['event', 'role']
-
 def all_persons(request):
     '''List all persons.'''
 
@@ -190,8 +187,7 @@ def person_bulk_add(request):
         form = PersonBulkAddForm(request.POST, request.FILES)
         if form.is_valid():
             try:
-                persons_tasks = _upload_person_task_csv(request,
-                                                        request.FILES['file'])
+                persons_tasks = upload_person_task_csv(request.FILES['file'])
             except csv.Error as e:
                 messages.add_message(request, messages.ERROR,
                                      "Error processing uploaded .CSV file: {}"
@@ -317,22 +313,6 @@ def person_bulk_add_confirmation(request):
         return render(request, 'workshops/person_bulk_add_results.html',
                       context)
 
-
-def _upload_person_task_csv(request, uploaded_file):
-    """
-    Read data from CSV and turn it into JSON-serializable list of dictionaries.
-    "Serializability" is required because we put this data into session.  See
-    https://docs.djangoproject.com/en/1.7/topics/http/sessions/ for details.
-    """
-    persons_tasks = []
-    reader = csv.DictReader(uploaded_file)
-    for row in reader:
-        person_fields = dict((col, row[col].strip())
-                             for col in PERSON_UPLOAD_FIELDS)
-        entry = {'person': person_fields, 'event': row.get('event', None),
-                 'role': row.get('role', None), 'errors': None}
-        persons_tasks.append(entry)
-    return persons_tasks
 
 
 def _verify_upload_person_task(data):
