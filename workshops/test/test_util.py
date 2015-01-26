@@ -1,8 +1,8 @@
 # this probably needs refactored for py3
 from datetime import datetime
 from StringIO import StringIO
-from json import dumps
 
+from django.contrib.sessions.serializers import JSONSerializer
 from django.test import TestCase
 
 from ..models import Site, Event, Role, Person
@@ -21,7 +21,9 @@ class UploadPersonTaskCSVTestCase(TestCase):
 
     def test_basic_parsing(self):
         ''' See views.PERSON_UPLOAD_FIELDS for field ordering '''
-        csv = """personal,middle,family,email\njohn,a,doe,johndoe@email.com\n,jane,a,doe,janedoe@email.com"""
+        csv = """personal,middle,family,email
+john,a,doe,johndoe@email.com
+jane,a,doe,janedoe@email.com"""
         person_tasks = self.compute_from_string(csv)
 
         # assert
@@ -41,12 +43,15 @@ class UploadPersonTaskCSVTestCase(TestCase):
         self.assertEqual(person['person']['middle'], '')
 
     def test_serializability_of_parsed(self):
-        csv = """personal,middle,family,email\njohn,a,doe,johndoe@email.com\n,jane,a,doe,janedoe@email.com"""
+        csv = """personal,middle,family,email
+john,a,doe,johndoe@email.com
+jane,a,doe,janedoe@email.com"""
         person_tasks = self.compute_from_string(csv)
 
         try:
-            dumps(person_tasks)
-        except Exception:
+            serializer = JSONSerializer()
+            serializer.dumps(person_tasks)
+        except TypeError:
             self.fail('Dumping person_tasks to JSON unexpectedly failed!')
 
 
