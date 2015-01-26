@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.db import IntegrityError, transaction
 from django.db.models import Count, Q, Model
 from django.shortcuts import redirect, render, get_object_or_404
@@ -26,7 +26,8 @@ from workshops.models import \
     Task
 from workshops.check import check_file
 from workshops.forms import SearchForm, InstructorsForm, PersonBulkAddForm
-from workshops.util import earth_distance, upload_person_task_csv, verify_upload_person_task
+from workshops.util import earth_distance, upload_person_task_csv,\
+    verify_upload_person_task, UnicodeWriter
 
 #------------------------------------------------------------
 
@@ -180,6 +181,19 @@ def person_details(request, person_id):
                'awards' : awards,
                'tasks' : tasks}
     return render(request, 'workshops/person.html', context)
+
+def person_bulk_add_template(request):
+    ''' Dynamically generate a CSV template that can be used to bulk-upload
+    people.
+
+    See https://docs.djangoproject.com/en/1.7/howto/outputting-csv/#using-the-python-csv-library
+    '''
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename=BulkPersonAddTemplate.csv'
+
+    writer = UnicodeWriter(response)
+    writer.writerow(Person.PERSON_TASK_UPLOAD_FIELDS)
+    return response
 
 
 def person_bulk_add(request):

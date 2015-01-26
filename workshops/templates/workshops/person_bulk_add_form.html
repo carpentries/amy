@@ -9,7 +9,7 @@
 
 {% block content %}
 {% load staticfiles %}
-<p><a href="{% static "BulkPersonAddTemplate.csv" %}">BulkPersonAddTemplate.csv</a> is a blank template of a well-formed .CSV file.</p>
+<p><a href="{% url 'person_bulk_add_template' %}">BulkPersonAddTemplate.csv</a> is a blank template of a well-formed .CSV file.</p>
 <form action="" method="post" enctype="multipart/form-data">
     {% csrf_token %}
     {{ form.as_p }}
