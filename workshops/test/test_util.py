@@ -41,6 +41,13 @@ john,,doe"""
         person_tasks, empty_fields = self.compute_from_string(bad_csv)
         self.assertTrue('email' in empty_fields)
 
+    def test_csv_with_mislabeled_field(self):
+        ''' It pays to be strict '''
+        bad_csv = """personal,middle,family,emailaddress
+john,m,doe,john@doe.com"""
+        person_tasks, empty_fields = self.compute_from_string(bad_csv)
+        self.assertTrue('email' in empty_fields)
+
     def test_empty_field(self):
         ''' Ensure we don't mis-order fields given blank data '''
         csv = """personal,middle,family,email
