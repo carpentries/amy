@@ -285,7 +285,7 @@ def person_bulk_add_confirmation(request):
                                      "Error saving data to the database: {}. "
                                      "Please make sure to fix all errors "
                                      "listed below.".format(e))
-                _verify_upload_person_task(persons_tasks)
+                verify_upload_person_task(persons_tasks)
                 context = {'title': 'Confirm uploaded data',
                            'persons_tasks': persons_tasks}
                 return render(request,
@@ -306,7 +306,7 @@ def person_bulk_add_confirmation(request):
 
     else:
         # alters persons_tasks via reference
-        _verify_upload_person_task(persons_tasks)
+        verify_upload_person_task(persons_tasks)
 
         context = {'title': 'Confirm uploaded data',
                    'persons_tasks': persons_tasks}
