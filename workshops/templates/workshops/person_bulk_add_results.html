@@ -8,14 +8,6 @@
 {% endblock %}
 
 {% block content %}
-{% if messages %}
-<ul class="messages">
-    {% for message in messages %}
-    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-    {% endfor %}
-</ul>
-{% endif %}
-
 <div class="alert alert-info" role="alert">
 <strong>Hint:</strong> you can edit values by double-clicking in the table cells.  To accept the change, press <kbd><kbd>enter</kbd></kbd>.  To cancel, press <kbd><kbd>escape</kbd></kbd>.
 </div>

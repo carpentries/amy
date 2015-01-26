@@ -8,13 +8,6 @@
 {% endblock %}
 
 {% block content %}
-{% if messages %}
-<ul class="messages">
-    {% for message in messages %}
-    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-    {% endfor %}
-</ul>
-{% endif %}
 {% load staticfiles %}
 <p><a href="{% static "BulkPersonAddTemplate.csv" %}">BulkPersonAddTemplate.csv</a> is a blank template of a well-formed .CSV file.</p>
 <form action="" method="post" enctype="multipart/form-data">
