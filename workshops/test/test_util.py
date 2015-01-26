@@ -28,12 +28,10 @@ class UploadPersonTaskCSVTestCase(TestCase):
         self.assertEqual(len(person_tasks), 2)
 
         person = person_tasks[0]
-        for key in ('person', 'role', 'event', 'errors'):
-            self.assertIn(key, person)
+        self.assertSetEqual(set(('person', 'role', 'event', 'errors')), set(person.keys()))
 
         person_dict = person['person']
-        for key in PERSON_UPLOAD_FIELDS:
-            self.assertIn(key, person_dict)
+        self.assertSetEqual(set(PERSON_UPLOAD_FIELDS), set(person_dict.keys()))
 
     def test_empty_field(self):
         ''' Ensure we don't mis-order fields given blank data '''
