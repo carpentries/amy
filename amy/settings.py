@@ -53,6 +53,14 @@ ROOT_URLCONF = 'amy.urls'
 
 WSGI_APPLICATION = 'amy.wsgi.application'
 
+from django.contrib.messages import constants as message_constants
+MESSAGE_TAGS = {
+    message_constants.INFO: 'alert-info',
+    message_constants.SUCCESS: 'alert-success',
+    message_constants.WARNING: 'alert-warning',
+    message_constants.ERROR: 'alert-danger',
+}
+
 
 # Database
 # https://docs.djangoproject.com/en/1.7/ref/settings/#databases
@@ -83,5 +91,5 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-# Warn viewers of invalid template strings                                                                                                            
+# Warn viewers of invalid template strings
 TEMPLATE_STRING_IF_INVALID = 'XXX-unset-variable-XXX'
