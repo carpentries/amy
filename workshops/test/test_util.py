@@ -6,8 +6,7 @@ from django.contrib.sessions.serializers import JSONSerializer
 from django.test import TestCase
 
 from ..models import Site, Event, Role, Person
-from ..util import PERSON_UPLOAD_FIELDS, upload_person_task_csv,\
-    verify_upload_person_task
+from ..util import upload_person_task_csv, verify_upload_person_task
 
 from .base import TestBase
 
@@ -20,11 +19,11 @@ class UploadPersonTaskCSVTestCase(TestCase):
         return upload_person_task_csv(csv_buf)
 
     def test_basic_parsing(self):
-        ''' See views.PERSON_UPLOAD_FIELDS for field ordering '''
+        ''' See Person.PERSON_UPLOAD_FIELDS for field ordering '''
         csv = """personal,middle,family,email
 john,a,doe,johndoe@email.com
 jane,a,doe,janedoe@email.com"""
-        person_tasks = self.compute_from_string(csv)
+        person_tasks, _ = self.compute_from_string(csv)
 
         # assert
         self.assertEqual(len(person_tasks), 2)
@@ -33,20 +32,28 @@ jane,a,doe,janedoe@email.com"""
         self.assertSetEqual(set(('person', 'role', 'event', 'errors')), set(person.keys()))
 
         person_dict = person['person']
-        self.assertSetEqual(set(PERSON_UPLOAD_FIELDS), set(person_dict.keys()))
+        self.assertSetEqual(set(Person.PERSON_UPLOAD_FIELDS), set(person_dict.keys()))
+
+    def test_csv_without_required_field(self):
+        ''' All fields in Person.PERSON_UPLOAD_FIELDS must be in csv '''
+        bad_csv = """personal,middle,family
+john,,doe"""
+        person_tasks, empty_fields = self.compute_from_string(bad_csv)
+        self.assertTrue('email' in empty_fields)
 
     def test_empty_field(self):
         ''' Ensure we don't mis-order fields given blank data '''
-        csv = """personal,middle,family,email\njohn,,doe,johndoe@email.com"""
-        person = self.compute_from_string(csv)[0]
-
+        csv = """personal,middle,family,email
+john,,doe,johndoe@email.com"""
+        person_tasks, _ = self.compute_from_string(csv)
+        person = person_tasks[0]
         self.assertEqual(person['person']['middle'], '')
 
     def test_serializability_of_parsed(self):
         csv = """personal,middle,family,email
 john,a,doe,johndoe@email.com
 jane,a,doe,janedoe@email.com"""
-        person_tasks = self.compute_from_string(csv)
+        person_tasks, _ = self.compute_from_string(csv)
 
         try:
             serializer = JSONSerializer()

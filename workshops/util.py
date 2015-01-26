@@ -3,8 +3,6 @@ from math import pi, sin, cos, acos
 
 from .models import Event, Role, Person
 
-PERSON_UPLOAD_FIELDS = ['personal', 'middle', 'family', 'email']
-PERSON_TASK_UPLOAD_FIELDS = PERSON_UPLOAD_FIELDS + ['event', 'role']
 
 def earth_distance(pos1, pos2):
     '''Taken from http://www.johndcook.com/python_longitude_latitude.html.'''
@@ -41,16 +39,25 @@ def upload_person_task_csv(uploaded_file):
     Read data from CSV and turn it into JSON-serializable list of dictionaries.
     "Serializability" is required because we put this data into session.  See
     https://docs.djangoproject.com/en/1.7/topics/http/sessions/ for details.
+
+    Also return a list of fields from Person.PERSON_UPLOAD_FIELDS for which
+    no data was given.
     """
     persons_tasks = []
     reader = csv.DictReader(uploaded_file)
+    empty_fields = []
     for row in reader:
-        person_fields = dict((col, row[col].strip())
-                             for col in PERSON_UPLOAD_FIELDS)
+        person_fields= {}
+        for col in Person.PERSON_UPLOAD_FIELDS:
+            try:
+                person_fields[col] = row[col].strip()
+            except KeyError:
+                if col not in empty_fields:
+                    empty_fields.append(col)
         entry = {'person': person_fields, 'event': row.get('event', None),
                  'role': row.get('role', None), 'errors': None}
         persons_tasks.append(entry)
-    return persons_tasks
+    return persons_tasks, empty_fields
 
 
 def verify_upload_person_task(data):

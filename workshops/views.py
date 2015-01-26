@@ -187,17 +187,22 @@ def person_bulk_add(request):
         form = PersonBulkAddForm(request.POST, request.FILES)
         if form.is_valid():
             try:
-                persons_tasks = upload_person_task_csv(request.FILES['file'])
+                persons_tasks, empty_fields = upload_person_task_csv(request.FILES['file'])
             except csv.Error as e:
                 messages.add_message(request, messages.ERROR,
                                      "Error processing uploaded .CSV file: {}"
                                      .format(e))
             else:
-                # instead of insta-saving, put everything into session
-                # then redirect to confirmation page which in turn saves the
-                # data
-                request.session['bulk-add-people'] = persons_tasks
-                return redirect('person_bulk_add_confirmation')
+                if empty_fields:
+                    msg_template = "The following required fields were not found in the uploaded file: {}"
+                    msg = msg_template.format(','.join(empty_fields))
+                    messages.add_message(request, messages.ERROR, msg)
+                else:
+                    # instead of insta-saving, put everything into session
+                    # then redirect to confirmation page which in turn saves the
+                    # data
+                    request.session['bulk-add-people'] = persons_tasks
+                    return redirect('person_bulk_add_confirmation')
 
     else:
         form = PersonBulkAddForm()
