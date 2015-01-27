@@ -13,6 +13,13 @@
     <div class="container">
       {% if title %}<h1>{{ title }}</h1>{% endif %}
       <ol class="breadcrumb">{% block breadcrumbs %}{% endblock %}</ol>
+      {% if messages %}
+      <ul class="messages">
+          {% for message in messages %}
+          <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+          {% endfor %}
+      </ul>
+      {% endif %}
       {% block content %}{% endblock %}
     </div>
   </body>
