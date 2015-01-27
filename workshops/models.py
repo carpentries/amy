@@ -196,6 +196,7 @@ class Event(models.Model):
     reg_key    = models.CharField(max_length=STR_REG_KEY, null=True, blank=True)
     attendance = models.IntegerField(null=True, blank=True)
     admin_fee  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    fee_paid   = models.NullBooleanField(default=False, blank=True)
     notes      = models.TextField(default="", blank=True)
 
     class Meta:
