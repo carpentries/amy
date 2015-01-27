@@ -43,12 +43,12 @@
                 <input type="text" name="email" value="{{ entry.person.email }}" class="hidden">
             </td>
             <td class="editable">
-                <span>{{ entry.event|default_if_none:"&mdash;" }}</span>
-                <input type="text" name="event" value="{{ entry.event|default_if_none:"" }}" class="hidden">
+                <span>{{ entry.event|default:"&mdash;" }}</span>
+                <input type="text" name="event" value="{{ entry.event|default:"" }}" class="hidden">
             </td>
             <td class="editable">
-                <span>{{ entry.role|default_if_none:"&mdash;" }}</span>
-                <input type="text" name="role" value="{{ entry.role|default_if_none:"" }}" class="hidden">
+                <span>{{ entry.role|default:"&mdash;" }}</span>
+                <input type="text" name="role" value="{{ entry.role|default:"" }}" class="hidden">
                 </td>
             <td>
             {% if entry.errors %}

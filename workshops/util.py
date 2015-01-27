@@ -1,3 +1,4 @@
+# coding: utf-8
 import codecs
 import cStringIO
 import csv
@@ -119,15 +120,15 @@ def verify_upload_person_task(data):
             try:
                 Event.objects.get(slug=event)
             except Event.DoesNotExist:
-                errors.append('Event with slug {} does not exist.'
+                errors.append(u'Event with slug {} does not exist.'
                               .format(event))
         if role:
             try:
                 Role.objects.get(name=role)
             except Role.DoesNotExist:
-                errors.append('Role with name {} does not exist.'.format(role))
+                errors.append(u'Role with name {} does not exist.'.format(role))
             except Role.MultipleObjectsReturned:
-                errors.append('More than one role named {} exists.'
+                errors.append(u'More than one role named {} exists.'
                               .format(role))
 
         if email:
