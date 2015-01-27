@@ -59,18 +59,21 @@ class Person(models.Model):
         (OTHER, 'Other'),
         )
 
-    personal   = models.CharField(max_length=STR_LONG)
-    middle     = models.CharField(max_length=STR_LONG, null=True, blank=True)
-    family     = models.CharField(max_length=STR_LONG)
-    email      = models.CharField(max_length=STR_LONG, unique=True, null=True, blank=True)
-    gender     = models.CharField(max_length=1, choices=GENDER_CHOICES, null=True, blank=True)
-    active     = models.BooleanField(default=True,
-                                     help_text='Are we currently allowed to contact this person?')
-    airport    = models.ForeignKey(Airport, null=True, blank=True)
-    github     = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True)
-    twitter    = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True)
-    url        = models.CharField(max_length=STR_LONG, null=True, blank=True)
-    slug       = models.CharField(max_length=STR_LONG, null=True, blank=True)
+    # These attributes should always contain field names of Person
+    PERSON_UPLOAD_FIELDS = ('personal', 'middle', 'family', 'email')
+    PERSON_TASK_UPLOAD_FIELDS = PERSON_UPLOAD_FIELDS + ('event', 'role')
+
+    personal    = models.CharField(max_length=STR_LONG)
+    middle      = models.CharField(max_length=STR_LONG, null=True, blank=True)
+    family      = models.CharField(max_length=STR_LONG)
+    email       = models.CharField(max_length=STR_LONG, unique=True, null=True, blank=True)
+    gender      = models.CharField(max_length=1, choices=GENDER_CHOICES, null=True, blank=True)
+    may_contact = models.BooleanField(default=True)
+    airport     = models.ForeignKey(Airport, null=True, blank=True)
+    github      = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True)
+    twitter     = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True)
+    url         = models.CharField(max_length=STR_LONG, null=True, blank=True)
+    slug        = models.CharField(max_length=STR_LONG, null=True, blank=True)
 
     def fullname(self):
         middle = ''
