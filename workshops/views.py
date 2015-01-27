@@ -235,7 +235,7 @@ def person_bulk_add_confirmation(request):
     # if the session is empty, add message and redirect
     if not persons_tasks:
         messages.warning(request, "Could not locate CSV data, please try the upload again.")
-        redirect('person_bulk_add')
+        return redirect('person_bulk_add')
 
     if request.method == 'POST':
         # update values if user wants to change them
@@ -254,10 +254,11 @@ def person_bulk_add_confirmation(request):
                 'family': family,
                 'email': email
             }
-            if event:
-                persons_tasks[k]['event'] = event
-            if role:
-                persons_tasks[k]['role'] = role
+            # when user wants to drop related event they will send empty string
+            # so we should unconditionally accept new value for event even if
+            # it's an empty string
+            persons_tasks[k]['event'] = event
+            persons_tasks[k]['role'] = role
             persons_tasks[k]['errors'] = None  # reset here
 
         # save updated data to the session

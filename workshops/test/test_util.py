@@ -1,9 +1,13 @@
+# coding: utf-8
 # this probably needs refactored for py3
 from datetime import datetime
 from StringIO import StringIO
+from importlib import import_module
 
+from django.conf import settings
 from django.contrib.sessions.serializers import JSONSerializer
 from django.test import TestCase
+from django.core.urlresolvers import reverse
 
 from ..models import Site, Event, Role, Person
 from ..util import upload_person_task_csv, verify_upload_person_task
@@ -69,18 +73,15 @@ jane,a,doe,janedoe@email.com"""
             self.fail('Dumping person_tasks to JSON unexpectedly failed!')
 
 
-class VerifyUploadPersonTask(TestBase):
-    ''' Scenarios to test:
-        - Everything is good
-        - no 'person' key
-        - event DNE
-        - role DNE
-        - email already exists
-    '''
+class CSVBulkUploadTestBase(TestBase):
+    """
+    Simply provide necessary setUp and make_data functions that are used in two
+    different TestCases
+    """
     def setUp(self):
-        super(VerifyUploadPersonTask, self).setUp()
+        super(CSVBulkUploadTestBase, self).setUp()
         test_site = Site.objects.create(domain='example.com',
-            fullname='Test Site')
+                                        fullname='Test Site')
 
         Role.objects.create(name='Instructor')
         Event.objects.create(start=datetime.now(),
@@ -88,19 +89,30 @@ class VerifyUploadPersonTask(TestBase):
                              slug='foobar',
                              admin_fee=100)
 
+    def make_csv_data(self):
+        """
+        Sample CSV data
+        """
+        return """personal,middle,family,email,event,role
+John,S,Doe,notin@db.com,foobar,Instructor
+"""
+
     def make_data(self):
-        # this data structure mimics what we get from upload_person_task_csv
-        return [{
-            'person': {
-                'personal': 'John',
-                'middle': 'S',
-                'family': 'Doe',
-                'email': 'notin@db.com',
-            },
-            'role': 'Instructor',
-            'event': 'foobar',
-            'errors': None,
-        }]
+        csv_str = self.make_csv_data()
+        # upload_person_task_csv gets thoroughly tested in
+        # UploadPersonTaskCSVTestCase
+        data, _ = upload_person_task_csv(StringIO(csv_str))
+        return data
+
+
+class VerifyUploadPersonTask(CSVBulkUploadTestBase):
+    ''' Scenarios to test:
+        - Everything is good
+        - no 'person' key
+        - event DNE
+        - role DNE
+        - email already exists
+    '''
 
     def test_verify_with_good_data(self):
         good_data = self.make_data()
@@ -153,3 +165,40 @@ class VerifyUploadPersonTask(TestBase):
             errors = bad_data[0]['errors']
             self.assertTrue(len(errors) == 1)
             self.assertTrue('User with email' in errors[0])
+
+
+class BulkUploadUsersViewTestCase(CSVBulkUploadTestBase):
+    def test_event_name_dropped(self):
+        """
+        Test for regression:
+        test whether event name is really getting empty when user changes it
+        from "foobar" to empty.
+        """
+        data = self.make_data()
+
+        # dirty: instead of upload a file simply save the data to the session
+        # because "self.client" is anonymous user, there are some implications,
+        # for example Django session is not available… See:
+        #   https://code.djangoproject.com/ticket/10899
+        # The solution is taken from:
+        #   http://stackoverflow.com/a/25151753
+        engine = import_module(settings.SESSION_ENGINE)
+        store = engine.SessionStore()
+        store['bulk-add-people'] = data
+        store.save()
+        self.client.cookies[settings.SESSION_COOKIE_NAME] = store.session_key
+
+        # send exactly what's in 'data', except for the 'event' field: leave
+        # this one empty
+        payload = {
+            "personal": data[0]['person']['personal'],
+            "middle": data[0]['person']['middle'],
+            "family": data[0]['person']['family'],
+            "email": data[0]['person']['email'],
+            "event": "",
+            "role": "",
+            "verify": "Verify",
+        }
+        rv = self.client.post(reverse('person_bulk_add_confirmation'), payload)
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotIn("foobar", rv.content)
