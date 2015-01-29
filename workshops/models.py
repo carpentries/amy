@@ -232,12 +232,9 @@ class Event(models.Model):
         if re.match(r'^\d+$', ident):
             return Event.objects.get(id=ident)
 
-        # match event slug in format YYYY-MM-****
+        # match event slug in format YYYY-MM-**** (ie. this works for
+        # YYYY-MMMM-DD-**** too)
         if re.match(r'^\d{4}-\d{2}-.+$', ident):
-            return Event.objects.get(slug=ident)
-
-        # match event slug in format YYYY-MM-DD-****
-        if re.match(r'^\d{4}-\d{2}-\d{2}-.+$', ident):
             return Event.objects.get(slug=ident)
 
         raise ObjectDoesNotExist(ident)
