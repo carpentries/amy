@@ -228,10 +228,13 @@ class Event(models.Model):
         The real indicator is the 'published' flag.
         '''
 
+        # match event ID
         if re.match(r'^\d+$', ident):
             return Event.objects.get(id=ident)
 
-        if re.match(r'^\d{4}-\d{2}-\d{2}-.+$', ident):
+        # match event slug in format YYYY-MM-**** (ie. this works for
+        # YYYY-MMMM-DD-**** too)
+        if re.match(r'^\d{4}-\d{2}-.+$', ident):
             return Event.objects.get(slug=ident)
 
         raise ObjectDoesNotExist(ident)
