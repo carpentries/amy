@@ -5,9 +5,11 @@ import re
 import datetime
 import itertools
 import xml.etree.ElementTree as ET
+
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.test import TestCase
+
 from ..models import \
     Airport, \
     Award, \
