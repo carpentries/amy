@@ -1,7 +1,8 @@
 import datetime
 import re
 
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+from django.contrib.auth.models import (
+    AbstractBaseUser, BaseUserManager, PermissionsMixin)
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.db import models
@@ -49,6 +50,40 @@ class Airport(models.Model):
 
 #------------------------------------------------------------
 
+class PersonManager(BaseUserManager):
+    """
+    Create users and superusers from command line.
+
+    For example:
+
+      $ python manage.py createsuperuser
+    """
+
+    def create_user(self, username, personal, family, email, password=None):
+        """
+        Create and save a normal (not-super) user.
+        """
+        user = self.model(
+            username=username, personal=personal, family=family,
+            email=self.normalize_email(email),
+            is_superuser=False)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, username, personal, family, email, password):
+        """
+        Create and save a superuser.
+        """
+        user = self.model(
+            username=username, personal=personal, family=family,
+            email=self.normalize_email(email),
+            is_superuser=True)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+
 class Person(AbstractBaseUser, PermissionsMixin):
     '''Represent a single person.'''
     MALE = 'M'
@@ -83,6 +118,8 @@ class Person(AbstractBaseUser, PermissionsMixin):
         'family',
         'email',
         ]
+
+    objects = PersonManager()
 
     def get_full_name(self):
         middle = ''
