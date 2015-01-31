@@ -1,7 +1,7 @@
 import datetime
 import re
 
-from django.contrib.auth.models import AbstractBaseUser
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.db import models
@@ -49,7 +49,7 @@ class Airport(models.Model):
 
 #------------------------------------------------------------
 
-class Person(AbstractBaseUser):
+class Person(AbstractBaseUser, PermissionsMixin):
     '''Represent a single person.'''
     MALE = 'M'
     FEMALE = 'F'
