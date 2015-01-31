@@ -74,29 +74,36 @@ class TestBase(TestCase):
     def _setUpInstructors(self):
         '''Set up person objects representing instructors.'''
 
-        self.hermione = Person.objects.create(personal='Hermione', middle=None, family='Granger',
-                                              email='hermione@granger.co.uk', gender='F', may_contact=True,
-                                              airport=self.airport_0_0, github='herself',
-                                              twitter='herself', url='http://hermione.org', slug='granger.h')
+        self.hermione = Person.objects.create(
+            personal='Hermione', middle=None, family='Granger',
+            email='hermione@granger.co.uk', gender='F', may_contact=True,
+            airport=self.airport_0_0, github='herself', twitter='herself',
+            url='http://hermione.org', slug='granger.h', username="granger.h")
+
         Award.objects.create(person=self.hermione,
                              badge=self.instructor,
                              awarded=datetime.date(2014, 1, 1))
         Qualification.objects.create(person=self.hermione, skill=self.git)
         Qualification.objects.create(person=self.hermione, skill=self.sql)
 
-        self.harry = Person.objects.create(personal='Harry', middle=None, family='Potter',
-                                           email='harry@hogwarts.edu', gender='M', may_contact=True,
-                                           airport=self.airport_0_50, github='hpotter',
-                                           twitter=None, url=None, slug='potter.h')
+        self.harry = Person.objects.create(
+            personal='Harry', middle=None, family='Potter',
+            email='harry@hogwarts.edu', gender='M', may_contact=True,
+            airport=self.airport_0_50, github='hpotter', twitter=None,
+            url=None, slug='potter.h', username="potter.h")
+
         Award.objects.create(person=self.harry,
                              badge=self.instructor,
                              awarded=datetime.date(2014, 5, 5))
         Qualification.objects.create(person=self.harry, skill=self.sql)
 
-        self.ron = Person.objects.create(personal='Ron', middle=None, family='Weasley',
-                                         email='rweasley@ministry.gov.uk', gender='M', may_contact=False,
-                                         airport=self.airport_50_100, github=None,
-                                         twitter=None, url='http://geocities.com/ron_weas', slug='weasley.ron')
+        self.ron = Person.objects.create(
+            personal='Ron', middle=None, family='Weasley',
+            email='rweasley@ministry.gov.uk', gender='M', may_contact=False,
+            airport=self.airport_50_100, github=None, twitter=None,
+            url='http://geocities.com/ron_weas', slug='weasley.ron',
+            username="weasley.ron")
+
         Award.objects.create(person=self.ron,
                              badge=self.instructor,
                              awarded=datetime.date(2014, 11, 11))
@@ -105,14 +112,18 @@ class TestBase(TestCase):
     def _setUpNonInstructors(self):
         '''Set up person objects representing non-instructors.'''
 
-        self.spiderman = Person.objects.create(personal='Peter', middle='Q.', family='Parker',
-                                               email='peter@webslinger.net', gender='O', may_contact=True)
+        self.spiderman = Person.objects.create(
+            personal='Peter', middle='Q.', family='Parker',
+            email='peter@webslinger.net', gender='O', may_contact=True,
+            username="spiderman")
 
-        self.ironman = Person.objects.create(personal='Tony', middle=None, family='Stark',
-                                             email='me@stark.com', gender=None, may_contact=True)
+        self.ironman = Person.objects.create(
+            personal='Tony', middle=None, family='Stark', email='me@stark.com',
+            gender=None, may_contact=True, username="ironman")
 
-        self.blackwidow = Person.objects.create(personal='Natasha', middle=None, family='Romanova',
-                                                email=None, gender='F', may_contact=False)
+        self.blackwidow = Person.objects.create(
+            personal='Natasha', middle=None, family='Romanova', email=None,
+            gender='F', may_contact=False, username="blackwidow")
 
     def _parse(self, response, save_to=None):
         """
