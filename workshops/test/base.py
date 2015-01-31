@@ -7,6 +7,7 @@ import itertools
 import xml.etree.ElementTree as ET
 
 from django.conf import settings
+from django.contrib.auth.models import Group, Permission
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 
@@ -34,6 +35,7 @@ class TestBase(TestCase):
         self._setUpBadges()
         self._setUpInstructors()
         self._setUpNonInstructors()
+        self._setUpPermissions()
 
     def _setUpSkills(self):
         '''Set up skill objects.'''
@@ -126,6 +128,23 @@ class TestBase(TestCase):
         self.blackwidow = Person.objects.create(
             personal='Natasha', middle=None, family='Romanova', email=None,
             gender='F', may_contact=False, username="blackwidow")
+
+    def _setUpPermissions(self):
+        '''Set up permission objects for consistent form selection.'''
+        badge_admin = Group.objects.create(name='Badge Admin')
+        badge_admin.permissions.add(*Permission.objects.filter(
+            codename__endswith='_badge'))
+        try:
+            add_badge = Permission.objects.get(codename='add_badge')
+        except:
+            print([p.codename for p in Permission.objects.all()])
+            raise
+        self.ironman.groups.add(badge_admin)
+        self.ironman.user_permissions.add(add_badge)
+        self.ron.groups.add(badge_admin)
+        self.ron.user_permissions.add(add_badge)
+        self.spiderman.groups.add(badge_admin)
+        self.spiderman.user_permissions.add(add_badge)
 
     def _parse(self, response, save_to=None):
         """
