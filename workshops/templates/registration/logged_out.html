@@ -1,0 +1,13 @@
+{% extends "registration/_page.html" %}
+
+{% load breadcrumbs %}
+{% block breadcrumbs %}
+    {% breadcrumb_main_page %}
+    {% breadcrumb_active "Logged out" %}
+{% endblock %}
+
+{% block content %}
+
+<p>Thanks for spending some quality time with Amy today.</p>
+
+{% endblock %}
