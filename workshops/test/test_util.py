@@ -1,7 +1,10 @@
 # coding: utf-8
-# this probably needs refactored for py3
+import cgi
 from datetime import datetime
-from StringIO import StringIO
+try:
+    from io import StringIO
+except ImportError:
+    from StringIO import StringIO
 from importlib import import_module
 
 from django.conf import settings
@@ -201,4 +204,7 @@ class BulkUploadUsersViewTestCase(CSVBulkUploadTestBase):
         }
         rv = self.client.post(reverse('person_bulk_add_confirmation'), payload)
         self.assertEqual(rv.status_code, 200)
-        self.assertNotIn("foobar", rv.content)
+        _, params = cgi.parse_header(rv['content-type'])
+        charset = params['charset']
+        content = rv.content.decode(charset)
+        self.assertNotIn('foobar', content)
