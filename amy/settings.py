@@ -30,13 +30,15 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = (
-    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'workshops'
+    'workshops',
+    # this should be after 'workshops' because templates in
+    # 'templates/registration/' clash
+    'django.contrib.admin',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -97,3 +99,10 @@ STATIC_URL = '/static/'
 
 # Warn viewers of invalid template strings
 TEMPLATE_STRING_IF_INVALID = 'XXX-unset-variable-XXX'
+
+# if "next" (or "?next") variable is not set when logging in, redirect to
+# workshops
+LOGIN_REDIRECT_URL = '/workshops/'
+
+# here's where @login_required redirects to:
+LOGIN_URL = '/account/login/'
