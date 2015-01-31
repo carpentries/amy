@@ -16,6 +16,8 @@ from django.db.models import Count, Q, Model
 from django.shortcuts import redirect, render, get_object_or_404
 from django.views.generic.base import ContextMixin
 from django.views.generic.edit import CreateView, UpdateView
+from django.contrib.auth.decorators import login_required
+
 
 from workshops.models import \
     Airport, \
@@ -81,13 +83,14 @@ class UpdateViewContext(UpdateView):
 #------------------------------------------------------------
 
 
+@login_required
 def index(request):
     '''Home page.'''
     upcoming_events = Event.objects.upcoming_events()
     unpublished_events = Event.objects.unpublished_events()
-    context = {'title' : None,
-               'upcoming_events' : upcoming_events,
-               'unpublished_events' : unpublished_events}
+    context = {'title': None,
+               'upcoming_events': upcoming_events,
+               'unpublished_events': unpublished_events}
     return render(request, 'workshops/index.html', context)
 
 #------------------------------------------------------------
