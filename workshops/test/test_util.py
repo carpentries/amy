@@ -1,7 +1,10 @@
 # coding: utf-8
 # this probably needs refactored for py3
 from datetime import datetime
-from StringIO import StringIO
+try:
+    from io import StringIO
+except ImportError:
+    from StringIO import StringIO
 from importlib import import_module
 
 from django.conf import settings
