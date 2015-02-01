@@ -7,11 +7,13 @@ urlpatterns = patterns('',
     # url(r'^account/', include('django.contrib.auth.urls')),
 
     # django views for authentication
-    # taken from django.contrib.auth.views.urls:
+    # taken in almost exact form from django.contrib.auth.views.urls:
     url(r'^account/login/$', 'django.contrib.auth.views.login',
-        {"extra_context": {"title": "Log in"}}, name='login'),
+        {"template_name": "account/login.html",
+         "extra_context": {"title": "Log in"}}, name='login'),
     url(r'^account/logout/$', 'django.contrib.auth.views.logout',
-        name='logout'),
+        {"template_name": "account/logged_out.html"}, name='logout'),
+
     # TODO: implement URLs below (add templates, etc.)
     # url(r'^account/password_change/$', 'django.contrib.auth.views.password_change', name='password_change'),
     # url(r'^account/password_change/done/$', 'django.contrib.auth.views.password_change_done', name='password_change_done'),
