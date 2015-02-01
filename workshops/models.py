@@ -139,6 +139,13 @@ class Person(AbstractBaseUser, PermissionsMixin):
     def get_absolute_url(self):
         return reverse('person_details', args=[str(self.id)])
 
+    @property
+    def is_staff(self):
+        """
+        Required for logging into admin panel at '/admin/'.
+        """
+        return self.is_superuser
+
 #------------------------------------------------------------
 
 class Tag(models.Model):
