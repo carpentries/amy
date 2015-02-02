@@ -1,9 +1,6 @@
 # coding: utf-8
 import codecs
-try:
-    from io import StringIO
-except ImportError:
-    from cStringIO import StringIO
+from cStringIO import StringIO
 import csv
 from math import pi, sin, cos, acos
 

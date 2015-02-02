@@ -1,10 +1,7 @@
 # coding: utf-8
 import cgi
 from datetime import datetime
-try:
-    from io import StringIO
-except ImportError:
-    from StringIO import StringIO
+from StringIO import StringIO
 from importlib import import_module
 
 from django.conf import settings
