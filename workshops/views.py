@@ -26,8 +26,8 @@ from workshops.models import \
     Task
 from workshops.check import check_file
 from workshops.forms import SearchForm, InstructorsForm, PersonBulkAddForm
-from workshops.util import earth_distance, upload_person_task_csv,\
-    verify_upload_person_task, UnicodeWriter
+from workshops.util import (earth_distance, upload_person_task_csv,
+                            verify_upload_person_task)
 
 #------------------------------------------------------------
 
@@ -191,7 +191,7 @@ def person_bulk_add_template(request):
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename=BulkPersonAddTemplate.csv'
 
-    writer = UnicodeWriter(response)
+    writer = csv.writer(response)
     writer.writerow(Person.PERSON_TASK_UPLOAD_FIELDS)
     return response
 
@@ -201,20 +201,29 @@ def person_bulk_add(request):
         form = PersonBulkAddForm(request.POST, request.FILES)
         if form.is_valid():
             try:
-                persons_tasks, empty_fields = upload_person_task_csv(request.FILES['file'])
+                # Provide encoding that we can default to when reading CSV
+                # file.  This is simply a guess and may as well not work
+                # correctly with files saved in different encodings than UTF-8.
+                persons_tasks, empty_fields = upload_person_task_csv(
+                    request.FILES['file'], encoding="utf-8")
             except csv.Error as e:
-                messages.add_message(request, messages.ERROR,
-                                     "Error processing uploaded .CSV file: {}"
-                                     .format(e))
+                messages.add_message(
+                    request, messages.ERROR,
+                    "Error processing uploaded .CSV file: {}".format(e))
+            except UnicodeDecodeError as e:
+                messages.add_message(
+                    request, messages.ERROR,
+                    "Please provide a file in UTF-8 encoding.")
             else:
                 if empty_fields:
-                    msg_template = "The following required fields were not found in the uploaded file: {}"
-                    msg = msg_template.format(','.join(empty_fields))
+                    msg_template = ("The following required fields were not"
+                                    " found in the uploaded file: {}")
+                    msg = msg_template.format(', '.join(empty_fields))
                     messages.add_message(request, messages.ERROR, msg)
                 else:
                     # instead of insta-saving, put everything into session
-                    # then redirect to confirmation page which in turn saves the
-                    # data
+                    # then redirect to confirmation page which in turn saves
+                    # the data
                     request.session['bulk-add-people'] = persons_tasks
                     return redirect('person_bulk_add_confirmation')
 
