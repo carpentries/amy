@@ -7,6 +7,7 @@ from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
+from django.conf import settings
 from django.http import Http404, HttpResponse
 from django.db import IntegrityError, transaction
 from django.db.models import Count, Q, Model
@@ -201,11 +202,13 @@ def person_bulk_add(request):
         form = PersonBulkAddForm(request.POST, request.FILES)
         if form.is_valid():
             try:
-                # Provide encoding that we can default to when reading CSV
-                # file.  This is simply a guess and may as well not work
-                # correctly with files saved in different encodings than UTF-8.
+                # Provide encoding that we can use when reading CSV file.
+                # It's probably set by the browser to indicate encoding of the
+                # file being uploaded.  However during (small) testing
+                # ``request.encoding`` turned to be ``None``.
+                # In this case we default to settings.DEFAULT_CHARSET.
                 persons_tasks, empty_fields = upload_person_task_csv(
-                    request.FILES['file'], encoding="utf-8")
+                    request.FILES['file'], encoding=request.encoding)
             except csv.Error as e:
                 messages.add_message(
                     request, messages.ERROR,
@@ -213,7 +216,8 @@ def person_bulk_add(request):
             except UnicodeDecodeError as e:
                 messages.add_message(
                     request, messages.ERROR,
-                    "Please provide a file in UTF-8 encoding.")
+                    "Please provide a file in {} encoding."
+                    .format(request.encoding or settings.DEFAULT_CHARSET))
             else:
                 if empty_fields:
                     msg_template = ("The following required fields were not"

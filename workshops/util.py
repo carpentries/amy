@@ -3,6 +3,8 @@ from math import pi, sin, cos, acos
 from io import TextIOWrapper, StringIO
 import csv
 
+from django.conf import settings
+
 from .models import Event, Role, Person
 
 
@@ -36,7 +38,7 @@ def earth_distance(pos1, pos2):
     return arc * 6373
 
 
-def upload_person_task_csv(uploaded_file, encoding="utf-8"):
+def upload_person_task_csv(uploaded_file, encoding=None):
     """
     Read data from CSV and turn it into JSON-serializable list of dictionaries.
     "Serializability" is required because we put this data into session.  See
@@ -44,8 +46,14 @@ def upload_person_task_csv(uploaded_file, encoding="utf-8"):
 
     Also return a list of fields from Person.PERSON_UPLOAD_FIELDS for which
     no data was given.
+
+    :param string encoding: encoding used to encode incoming file. Defaults to
+                            ``django.conf.settings.DEFAULT_CHARSET``
     """
     persons_tasks = []
+
+    if not encoding:
+        encoding = settings.DEFAULT_CHARSET
 
     # we provide uploaded_file as StringIO in our tests (test_util.py)
     if not issubclass(StringIO, uploaded_file.__class__):
