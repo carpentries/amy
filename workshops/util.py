@@ -1,45 +1,11 @@
 # coding: utf-8
-import codecs
-try:
-    from io import StringIO
-except ImportError:
-    from cStringIO import StringIO
-import csv
 from math import pi, sin, cos, acos
+from io import TextIOWrapper, StringIO
+import csv
+
+from django.conf import settings
 
 from .models import Event, Role, Person
-
-
-class UnicodeWriter:
-    """
-    A CSV writer which will write rows to CSV file "f",
-    which is encoded in the given encoding.
-
-    https://docs.python.org/2/library/csv.html#examples
-    """
-
-    def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds):
-        # Redirect output to a queue
-        self.queue = StringIO()
-        self.writer = csv.writer(self.queue, dialect=dialect, **kwds)
-        self.stream = f
-        self.encoder = codecs.getincrementalencoder(encoding)()
-
-    def writerow(self, row):
-        self.writer.writerow([s.encode("utf-8") for s in row])
-        # Fetch UTF-8 output from the queue ...
-        data = self.queue.getvalue()
-        data = data.decode("utf-8")
-        # ... and reencode it into the target encoding
-        data = self.encoder.encode(data)
-        # write to the target stream
-        self.stream.write(data)
-        # empty queue
-        self.queue.truncate(0)
-
-    def writerows(self, rows):
-        for row in rows:
-            self.writerow(row)
 
 
 def earth_distance(pos1, pos2):
@@ -72,7 +38,7 @@ def earth_distance(pos1, pos2):
     return arc * 6373
 
 
-def upload_person_task_csv(uploaded_file):
+def upload_person_task_csv(uploaded_file, encoding=None):
     """
     Read data from CSV and turn it into JSON-serializable list of dictionaries.
     "Serializability" is required because we put this data into session.  See
@@ -80,12 +46,26 @@ def upload_person_task_csv(uploaded_file):
 
     Also return a list of fields from Person.PERSON_UPLOAD_FIELDS for which
     no data was given.
+
+    :param string encoding: encoding used to encode incoming file. Defaults to
+                            ``django.conf.settings.DEFAULT_CHARSET``
     """
     persons_tasks = []
+
+    if not encoding:
+        encoding = settings.DEFAULT_CHARSET
+
+    # we provide uploaded_file as StringIO in our tests (test_util.py)
+    if not issubclass(StringIO, uploaded_file.__class__):
+        # Django provides uploaded files as byte file objects.  We need to wrap
+        # `uploaded_file` and provide it as a text file with specific encoding.
+        # This way we force users to upload UTF-8 encoded files.
+        uploaded_file = TextIOWrapper(uploaded_file.file, encoding=encoding)
+
     reader = csv.DictReader(uploaded_file)
     empty_fields = []
     for row in reader:
-        person_fields= {}
+        person_fields = {}
         for col in Person.PERSON_UPLOAD_FIELDS:
             try:
                 person_fields[col] = row[col].strip()
