@@ -35,18 +35,22 @@ def earth_distance(pos1, pos2):
     return arc * 6373
 
 
-def upload_person_task_csv(uploaded_file):
-    """
-    Read data from CSV and turn it into JSON-serializable list of dictionaries.
+def upload_person_task_csv(stream):
+    """Read people from CSV and return a JSON-serializable list of dicts.
+
+    The input `stream` should be a file-like object that returns
+    Unicode data.
+
     "Serializability" is required because we put this data into session.  See
     https://docs.djangoproject.com/en/1.7/topics/http/sessions/ for details.
 
     Also return a list of fields from Person.PERSON_UPLOAD_FIELDS for which
     no data was given.
+
     """
     persons_tasks = []
 
-    reader = csv.DictReader(uploaded_file)
+    reader = csv.DictReader(stream)
     empty_fields = []
     for row in reader:
         person_fields = {}
