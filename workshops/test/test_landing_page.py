@@ -1,9 +1,12 @@
-from django.core.urlresolvers import reverse
-from django.test import TestCase
-from ..models import Event, Site
 from datetime import datetime, timedelta
 
-class TestLandingPage(TestCase):
+from django.core.urlresolvers import reverse
+
+from ..models import Event, Site
+from .base import TestBase
+
+
+class TestLandingPage(TestBase):
     "Tests for the workshop landing page"
 
     def setUp(self):
@@ -56,6 +59,8 @@ class TestLandingPage(TestCase):
               slug='starts_today',
               site=test_site,
               admin_fee=100)
+
+        self._setUpUsersAndLogin()
 
     def test_has_upcoming_events(self):
         """Test that the landing page is passed some

@@ -89,6 +89,8 @@ class CSVBulkUploadTestBase(TestBase):
                              slug='foobar',
                              admin_fee=100)
 
+        self._setUpUsersAndLogin()
+
     def make_csv_data(self):
         """
         Sample CSV data
@@ -106,6 +108,7 @@ John,S,Doe,notin@db.com,foobar,Instructor
 
 
 class VerifyUploadPersonTask(CSVBulkUploadTestBase):
+
     ''' Scenarios to test:
         - Everything is good
         - no 'person' key
@@ -168,6 +171,7 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
 
 
 class BulkUploadUsersViewTestCase(CSVBulkUploadTestBase):
+
     def test_event_name_dropped(self):
         """
         Test for regression:
@@ -176,17 +180,10 @@ class BulkUploadUsersViewTestCase(CSVBulkUploadTestBase):
         """
         data = self.make_data()
 
-        # dirty: instead of upload a file simply save the data to the session
-        # because "self.client" is anonymous user, there are some implications,
-        # for example Django session is not available… See:
-        #   https://code.djangoproject.com/ticket/10899
-        # The solution is taken from:
-        #   http://stackoverflow.com/a/25151753
-        engine = import_module(settings.SESSION_ENGINE)
-        store = engine.SessionStore()
+        # self.client is authenticated user so we have access to the session
+        store = self.client.session
         store['bulk-add-people'] = data
         store.save()
-        self.client.cookies[settings.SESSION_COOKIE_NAME] = store.session_key
 
         # send exactly what's in 'data', except for the 'event' field: leave
         # this one empty

@@ -5,6 +5,10 @@ from .base import TestBase
 class TestLocateInstructors(TestBase):
     '''Test cases for locating instructors.'''
 
+    def setUp(self):
+        super().setUp()
+        self._setUpUsersAndLogin()
+
     def test_search_for_one_instructor_by_airport(self):
         response = self.client.post(reverse('instructors'),
                                     {'airport' : self.airport_0_0.iata,

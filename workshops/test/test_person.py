@@ -6,6 +6,10 @@ from .base import TestBase
 class TestPerson(TestBase):
     '''Test cases for persons.'''
 
+    def setUp(self):
+        super().setUp()
+        self._setUpUsersAndLogin()
+
     def test_display_person_correctly_with_all_fields(self):
         response = self.client.get(reverse('person_details', args=[str(self.hermione.id)]))
         doc = self._check_status_code_and_parse(response, 200)
