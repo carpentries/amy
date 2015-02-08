@@ -44,6 +44,7 @@ import :
 database :
 	rm -f ${APP_DB}
 	${QUERY} < ${APP_SQL}
+	python manage.py create_superuser
 
 ## schema       : display the database schema
 schema :
