@@ -98,7 +98,7 @@ for (site, fullname, country) in old_crs.fetchall():
                   'country' : country,
                   'notes' : ''}
         insert(new_crs, 'workshops_site', fields)
-    except Exception, e:
+    except Exception as e:
         fail('site', fields, e)
     i += 1
 
@@ -123,7 +123,7 @@ for (fullname, country, lat, long, iata) in old_crs.fetchall():
                   'longitude' : long,
                   'iata' : iata}
         insert(new_crs, 'workshops_airport', fields)
-    except Exception, e:
+    except Exception as e:
         fail('airport', fields, e)
     i += 1
 
@@ -171,7 +171,7 @@ for (person, personal, middle, family, email) in old_crs.fetchall():
                   'url' : url,
                   'may_contact' : True if active else False}
         insert(new_crs, 'workshops_person', fields)
-    except Exception, e:
+    except Exception as e:
         fail('person', fields, e)
     i += 1
 
@@ -224,14 +224,14 @@ for (startdate, enddate, event, site, kind, eventbrite, attendance, url) in old_
                   'notes' : '',
                   'published' : True}
         insert(new_crs, 'workshops_event', fields)
-    except Exception, e:
+    except Exception as e:
         fail('event', fields, e)
     try:
         fields = {'id' : event_tag_id,
                   'event_id' : event_id,
                   'tag_id' : tag_lookup[kind]}
         insert(new_crs, 'workshops_event_tags', fields)
-    except Exception, e:
+    except Exception as e:
         fail('event_tag', fields, e)
     event_id += 1
     event_tag_id += 1
@@ -257,14 +257,14 @@ if FAKE:
                       'notes' : 'unpublished event',
                       'published' : False}
             insert(new_crs, 'workshops_event', fields)
-        except Exception, e:
+        except Exception as e:
             fail('unpublished event', fields, e)
         try:
             fields = {'id' : event_tag_id,
                       'event_id' : event_id,
                       'tag_id' : tag_lookup['SWC']}
             insert(new_crs, 'workshops_event_tags', fields)
-        except Exception, e:
+        except Exception as e:
             fail('event_tag', fields, e)
         event_id += 1
         event_tag_id += 1
@@ -285,7 +285,7 @@ for role in 'helper instructor host learner organizer tutor'.split():
         fields = {'id' : i,
                   'name' : role}
         insert(new_crs, 'workshops_role', fields)
-    except Exception, e:
+    except Exception as e:
         fail('role', fields, e)
     i += 1
 
@@ -302,7 +302,7 @@ for (event, person, task) in old_crs.fetchall():
                   'person_id' : person_lookup[person],
                   'role_id' : role_lookup[task]}
         insert(new_crs, 'workshops_task', fields)
-    except Exception, e:
+    except Exception as e:
         fail('task', fields, e)
     task_id += 1
 
@@ -323,7 +323,7 @@ for (skill,) in old_crs.fetchall():
         fields = {'id' : i,
                   'name' : skill}
         insert(new_crs, 'workshops_skill', fields)
-    except Exception, e:
+    except Exception as e:
         fail('skill', fields, e)
     i += 1
 
@@ -339,7 +339,7 @@ for (person, skill) in old_crs.fetchall():
                   'person_id' : person_lookup[person],
                   'skill_id' : skill_lookup[skill]}
         insert(new_crs, 'workshops_qualification', fields)
-    except Exception, e:
+    except Exception as e:
         fail('qualification', fields, e)
     i += 1
 
@@ -383,14 +383,14 @@ for (start, name, active, venue) in old_crs.fetchall():
                   'published' : True}
 
         insert(new_crs, 'workshops_event', fields)
-    except Exception, e:
+    except Exception as e:
         fail('cohort', fields, e)
     try:
         fields = {'id' : event_tag_id,
                   'event_id' : event_id,
                   'tag_id' : tag_lookup['TTT']}
         insert(new_crs, 'workshops_event_tags', fields)
-    except Exception, e:
+    except Exception as e:
         fail('event_tag for cohort', fields, e)
     event_id += 1
     event_tag_id += 1
@@ -407,7 +407,7 @@ for (person, cohort, status) in old_crs.fetchall():
                   'person_id' : person_lookup[person],
                   'role_id' : learner}
         insert(new_crs, 'workshops_task', fields)
-    except Exception, e:
+    except Exception as e:
         fail('trainee', fields, e)
     task_id += 1
 
@@ -453,7 +453,7 @@ for (badge, title, criteria) in badge_stuff:
                   'title' : title,
                   'criteria' : criteria}
         insert(new_crs, 'workshops_badge', fields)
-    except Exception, e:
+    except Exception as e:
         fail('badge', fields, e)
     i += 1
     
@@ -472,7 +472,7 @@ for (person, badge, awarded) in old_crs.fetchall():
                   'person_id' : person_lookup[person],
                   'event_id' : event}
         insert(new_crs, 'workshops_award', fields)
-    except Exception, e:
+    except Exception as e:
         fail('award', fields, e)
     i += 1
 
@@ -511,7 +511,7 @@ for (slug, all_persons) in trainer_stuff:
                       'person_id' : person_lookup[person],
                       'role_id' : instructor}
             insert(new_crs, 'workshops_task', fields)
-        except Exception, e:
+        except Exception as e:
             fail('training instructors', fields, e)
         task_id += 1
 
