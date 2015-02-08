@@ -1,6 +1,8 @@
+import csv
+import io
 import re
 import yaml
-import csv
+
 import requests
 
 from django.contrib import messages
@@ -201,14 +203,10 @@ def person_bulk_add(request):
     if request.method == 'POST':
         form = PersonBulkAddForm(request.POST, request.FILES)
         if form.is_valid():
+            charset = request.FILES['file'].charset or settings.DEFAULT_CHARSET
+            stream = io.TextIOWrapper(request.FILES['file'].file, charset)
             try:
-                # Provide encoding that we can use when reading CSV file.
-                # It's probably set by the browser to indicate encoding of the
-                # file being uploaded.  However during (small) testing
-                # ``request.encoding`` turned to be ``None``.
-                # In this case we default to settings.DEFAULT_CHARSET.
-                persons_tasks, empty_fields = upload_person_task_csv(
-                    request.FILES['file'], encoding=request.encoding)
+                persons_tasks, empty_fields = upload_person_task_csv(stream)
             except csv.Error as e:
                 messages.add_message(
                     request, messages.ERROR,
@@ -217,7 +215,7 @@ def person_bulk_add(request):
                 messages.add_message(
                     request, messages.ERROR,
                     "Please provide a file in {} encoding."
-                    .format(request.encoding or settings.DEFAULT_CHARSET))
+                    .format(charset))
             else:
                 if empty_fields:
                     msg_template = ("The following required fields were not"
@@ -234,8 +232,11 @@ def person_bulk_add(request):
     else:
         form = PersonBulkAddForm()
 
-    context = {'title': 'Bulk Add People',
-               'form': form}
+    context = {
+        'title': 'Bulk Add People',
+        'form': form,
+        'charset': settings.DEFAULT_CHARSET,
+    }
     return render(request, 'workshops/person_bulk_add_form.html', context)
 
 
