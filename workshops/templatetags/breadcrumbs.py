@@ -38,7 +38,7 @@ def breadcrumb_active(title):
     Example usage:
         {% breadcrumb_active "Title of breadcrumb" %}
     '''
-    return create_crumb(title, url=None, active=True)
+    return create_crumb(str(title), url=None, active=True)
 
 
 @register.simple_tag

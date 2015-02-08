@@ -145,6 +145,7 @@ new_crs.execute('delete from workshops_person;')
 old_crs.execute('select person, personal, middle, family, email from person;')
 person_lookup = {}
 i = 1
+now = datetime.datetime.now()
 for (person, personal, middle, family, email) in old_crs.fetchall():
     person_lookup[person] = i
     if person in facts_lookup:
@@ -169,7 +170,11 @@ for (person, personal, middle, family, email) in old_crs.fetchall():
                   'github' : github,
                   'twitter' : twitter,
                   'url' : url,
-                  'may_contact' : True if active else False}
+                  'may_contact' : True if active else False,
+                  'password' : '',
+                  'last_login' : now,
+                  'is_superuser' : False,
+                  'username' : person}
         insert(new_crs, 'workshops_person', fields)
     except Exception as e:
         fail('person', fields, e)

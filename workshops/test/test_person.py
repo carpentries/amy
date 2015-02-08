@@ -64,7 +64,7 @@ class TestPerson(TestBase):
                   ('family', person.family),
                   ('email', person.email),
                   ('gender', person.get_gender_display()),
-                  ('may_contact', person.may_contact),
+                  ('may_contact', 'yes' if person.may_contact else 'no'),
                   ('airport', person.airport),
                   ('github', person.github),
                   ('twitter', person.twitter),

@@ -3,6 +3,7 @@ from django.core.urlresolvers import reverse
 from datetime import datetime
 from ..models import Task, Event, Role, Person, Site
 
+
 class TestTask(TestCase):
     "Tests for the task model, its manager and views"
 
@@ -10,13 +11,15 @@ class TestTask(TestCase):
         self.fixtures = {}
 
         test_site = Site.objects.create(domain='example.com',
-                 fullname='Test Site')
+                                        fullname='Test Site')
 
         test_person_1 = Person.objects.create(personal='Test',
-                                              family='Person1')
+                                              family='Person1',
+                                              username="person1")
 
         test_person_2 = Person.objects.create(personal='Test',
-                                              family='Person2')
+                                              family='Person2',
+                                              username="person2")
 
         test_event_1 = Event.objects.create(start=datetime.now(),
                                             slug='test_event_1',

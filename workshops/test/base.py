@@ -5,9 +5,12 @@ import re
 import datetime
 import itertools
 import xml.etree.ElementTree as ET
+
 from django.conf import settings
+from django.contrib.auth.models import Group, Permission
 from django.core.urlresolvers import reverse
 from django.test import TestCase
+
 from ..models import \
     Airport, \
     Award, \
@@ -32,6 +35,7 @@ class TestBase(TestCase):
         self._setUpBadges()
         self._setUpInstructors()
         self._setUpNonInstructors()
+        self._setUpPermissions()
 
     def _setUpSkills(self):
         '''Set up skill objects.'''
@@ -74,29 +78,36 @@ class TestBase(TestCase):
     def _setUpInstructors(self):
         '''Set up person objects representing instructors.'''
 
-        self.hermione = Person.objects.create(personal='Hermione', middle=None, family='Granger',
-                                              email='hermione@granger.co.uk', gender='F', may_contact=True,
-                                              airport=self.airport_0_0, github='herself',
-                                              twitter='herself', url='http://hermione.org', slug='granger.h')
+        self.hermione = Person.objects.create(
+            personal='Hermione', middle=None, family='Granger',
+            email='hermione@granger.co.uk', gender='F', may_contact=True,
+            airport=self.airport_0_0, github='herself', twitter='herself',
+            url='http://hermione.org', slug='granger.h', username="granger.h")
+
         Award.objects.create(person=self.hermione,
                              badge=self.instructor,
                              awarded=datetime.date(2014, 1, 1))
         Qualification.objects.create(person=self.hermione, skill=self.git)
         Qualification.objects.create(person=self.hermione, skill=self.sql)
 
-        self.harry = Person.objects.create(personal='Harry', middle=None, family='Potter',
-                                           email='harry@hogwarts.edu', gender='M', may_contact=True,
-                                           airport=self.airport_0_50, github='hpotter',
-                                           twitter=None, url=None, slug='potter.h')
+        self.harry = Person.objects.create(
+            personal='Harry', middle=None, family='Potter',
+            email='harry@hogwarts.edu', gender='M', may_contact=True,
+            airport=self.airport_0_50, github='hpotter', twitter=None,
+            url=None, slug='potter.h', username="potter.h")
+
         Award.objects.create(person=self.harry,
                              badge=self.instructor,
                              awarded=datetime.date(2014, 5, 5))
         Qualification.objects.create(person=self.harry, skill=self.sql)
 
-        self.ron = Person.objects.create(personal='Ron', middle=None, family='Weasley',
-                                         email='rweasley@ministry.gov.uk', gender='M', may_contact=False,
-                                         airport=self.airport_50_100, github=None,
-                                         twitter=None, url='http://geocities.com/ron_weas', slug='weasley.ron')
+        self.ron = Person.objects.create(
+            personal='Ron', middle=None, family='Weasley',
+            email='rweasley@ministry.gov.uk', gender='M', may_contact=False,
+            airport=self.airport_50_100, github=None, twitter=None,
+            url='http://geocities.com/ron_weas', slug='weasley.ron',
+            username="weasley.ron")
+
         Award.objects.create(person=self.ron,
                              badge=self.instructor,
                              awarded=datetime.date(2014, 11, 11))
@@ -105,14 +116,35 @@ class TestBase(TestCase):
     def _setUpNonInstructors(self):
         '''Set up person objects representing non-instructors.'''
 
-        self.spiderman = Person.objects.create(personal='Peter', middle='Q.', family='Parker',
-                                               email='peter@webslinger.net', gender='O', may_contact=True)
+        self.spiderman = Person.objects.create(
+            personal='Peter', middle='Q.', family='Parker',
+            email='peter@webslinger.net', gender='O', may_contact=True,
+            username="spiderman")
 
-        self.ironman = Person.objects.create(personal='Tony', middle=None, family='Stark',
-                                             email='me@stark.com', gender=None, may_contact=True)
+        self.ironman = Person.objects.create(
+            personal='Tony', middle=None, family='Stark', email='me@stark.com',
+            gender=None, may_contact=True, username="ironman")
 
-        self.blackwidow = Person.objects.create(personal='Natasha', middle=None, family='Romanova',
-                                                email=None, gender='F', may_contact=False)
+        self.blackwidow = Person.objects.create(
+            personal='Natasha', middle=None, family='Romanova', email=None,
+            gender='F', may_contact=False, username="blackwidow")
+
+    def _setUpPermissions(self):
+        '''Set up permission objects for consistent form selection.'''
+        badge_admin = Group.objects.create(name='Badge Admin')
+        badge_admin.permissions.add(*Permission.objects.filter(
+            codename__endswith='_badge'))
+        try:
+            add_badge = Permission.objects.get(codename='add_badge')
+        except:
+            print([p.codename for p in Permission.objects.all()])
+            raise
+        self.ironman.groups.add(badge_admin)
+        self.ironman.user_permissions.add(add_badge)
+        self.ron.groups.add(badge_admin)
+        self.ron.user_permissions.add(add_badge)
+        self.spiderman.groups.add(badge_admin)
+        self.spiderman.user_permissions.add(add_badge)
 
     def _parse(self, response, save_to=None):
         """
