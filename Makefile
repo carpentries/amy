@@ -45,6 +45,10 @@ database :
 	rm -f ${APP_DB}
 	${QUERY} < ${APP_SQL}
 
+## schema       : display the database schema
+schema :
+	${QUERY} .schema
+
 ## notes        : load old notes
 notes :
 	python notes-importer.py ${APP_DB} ${SRC_EVENTS} ${SRC_SITES}

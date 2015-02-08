@@ -1,6 +1,8 @@
 import datetime
 import re
 
+from django.contrib.auth.models import (
+    AbstractBaseUser, BaseUserManager, PermissionsMixin)
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.db import models
@@ -48,7 +50,41 @@ class Airport(models.Model):
 
 #------------------------------------------------------------
 
-class Person(models.Model):
+class PersonManager(BaseUserManager):
+    """
+    Create users and superusers from command line.
+
+    For example:
+
+      $ python manage.py createsuperuser
+    """
+
+    def create_user(self, username, personal, family, email, password=None):
+        """
+        Create and save a normal (not-super) user.
+        """
+        user = self.model(
+            username=username, personal=personal, family=family,
+            email=self.normalize_email(email),
+            is_superuser=False)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, username, personal, family, email, password):
+        """
+        Create and save a superuser.
+        """
+        user = self.model(
+            username=username, personal=personal, family=family,
+            email=self.normalize_email(email),
+            is_superuser=True)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+
+class Person(AbstractBaseUser, PermissionsMixin):
     '''Represent a single person.'''
     MALE = 'M'
     FEMALE = 'F'
@@ -74,21 +110,41 @@ class Person(models.Model):
     twitter     = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True)
     url         = models.CharField(max_length=STR_LONG, null=True, blank=True)
     slug        = models.CharField(max_length=STR_LONG, null=True, blank=True)
+    username    = models.CharField(max_length=STR_MED, unique=True)
 
-    def fullname(self):
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = [
+        'personal',
+        'family',
+        'email',
+        ]
+
+    objects = PersonManager()
+
+    def get_full_name(self):
         middle = ''
         if self.middle is not None:
             middle = ' {0}'.format(self.middle)
         return '{0}{1} {2}'.format(self.personal, middle, self.family)
 
+    def get_short_name(self):
+        return self.personal
+
     def __str__(self):
         email = ''
         if self.email is not None:
             email = ' <{0}>'.format(self.email)
-        return '{0}{1}'.format(self.fullname(), email)
+        return '{0}{1}'.format(self.get_full_name(), email)
 
     def get_absolute_url(self):
         return reverse('person_details', args=[str(self.id)])
+
+    @property
+    def is_staff(self):
+        """
+        Required for logging into admin panel at '/admin/'.
+        """
+        return self.is_superuser
 
 #------------------------------------------------------------
 
