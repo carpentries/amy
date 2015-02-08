@@ -6,6 +6,10 @@ from .base import TestBase
 class TestPerson(TestBase):
     '''Test cases for persons.'''
 
+    def setUp(self):
+        super().setUp()
+        self._setUpUsersAndLogin()
+
     def test_display_person_correctly_with_all_fields(self):
         response = self.client.get(reverse('person_details', args=[str(self.hermione.id)]))
         doc = self._check_status_code_and_parse(response, 200)
@@ -71,8 +75,17 @@ class TestPerson(TestBase):
                   ('url', person.url))
         for (key, value) in fields:
             node = self._get_field(doc, key)
-            assert node.text == str(value), \
-                'Mis-match in {0}: expected {1}/{2}, got {3}'.format(key, value, type(value), node.text)
+
+            if isinstance(value, bool):
+                # bool is a special case because we can show it as either
+                # "True" or "yes" (alternatively "False" or "no")
+                assert node.text in (str(value), "yes" if value else "no"), \
+                    'Mis-match in {0}: expected boolean value, got {1}' \
+                    .format(key, node.text)
+            else:
+                assert node.text == str(value), \
+                    'Mis-match in {0}: expected {1}/{2}, got {3}' \
+                    .format(key, value, type(value), node.text)
 
     def _get_field(self, doc, key):
         '''Get field from person display.'''

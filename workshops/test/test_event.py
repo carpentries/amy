@@ -4,12 +4,14 @@ import sys
 from django.test import TestCase
 from django.core.urlresolvers import reverse
 from ..models import Event, Site
+from .base import TestBase
 
 
-class TestEvent(TestCase):
+class TestEvent(TestBase):
     "Tests for the event model and it's manager"
 
     def setUp(self):
+        self._setUpUsersAndLogin()
 
         # Create a test site
         test_site = Site.objects.create(domain='example.com',
@@ -103,10 +105,11 @@ class TestEvent(TestCase):
             self.assertItemsEqual(event_slugs, correct_slugs)
 
 
-class TestEventViews(TestCase):
+class TestEventViews(TestBase):
     "Tests for the event views"
 
     def setUp(self):
+        self._setUpUsersAndLogin()
 
         # Create a test site
         test_site = Site.objects.create(domain='example.com',
@@ -188,10 +191,12 @@ class TestEventViews(TestCase):
         assert view_events.number == 5
 
 
-class TestEventNotes(TestCase):
+class TestEventNotes(TestBase):
     """Make sure notes once written are saved forever!"""
 
     def setUp(self):
+        self._setUpUsersAndLogin()
+
         # a test site is required for all new events
         self.test_site = Site.objects.create(domain='example.com',
                                              fullname='Test Site')

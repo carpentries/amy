@@ -16,6 +16,8 @@ from django.db.models import Count, Q, Model
 from django.shortcuts import redirect, render, get_object_or_404
 from django.views.generic.base import ContextMixin
 from django.views.generic.edit import CreateView, UpdateView
+from django.contrib.auth.decorators import login_required
+
 
 from workshops.models import \
     Airport, \
@@ -78,16 +80,32 @@ class UpdateViewContext(UpdateView):
         context['title'] = str(self.object)
         return context
 
+
+class LoginRequiredMixin(object):
+    """
+    Define @login_required-based mixin for class-based views that should allow
+    only logged-in users.
+
+    Based on Django docs:
+    https://docs.djangoproject.com/en/1.8/topics/class-based-views/intro/#mixins-that-wrap-as-view
+    """
+
+    @classmethod
+    def as_view(cls, **kwargs):
+        view = super(LoginRequiredMixin, cls).as_view(**kwargs)
+        return login_required(view)
+
 #------------------------------------------------------------
 
 
+@login_required
 def index(request):
     '''Home page.'''
     upcoming_events = Event.objects.upcoming_events()
     unpublished_events = Event.objects.unpublished_events()
-    context = {'title' : None,
-               'upcoming_events' : upcoming_events,
-               'unpublished_events' : unpublished_events}
+    context = {'title': None,
+               'upcoming_events': upcoming_events,
+               'unpublished_events': unpublished_events}
     return render(request, 'workshops/index.html', context)
 
 #------------------------------------------------------------
@@ -95,6 +113,7 @@ def index(request):
 SITE_FIELDS = ['domain', 'fullname', 'country', 'notes']
 
 
+@login_required
 def all_sites(request):
     '''List all sites.'''
 
@@ -107,6 +126,7 @@ def all_sites(request):
     return render(request, 'workshops/all_sites.html', context)
 
 
+@login_required
 def site_details(request, site_domain):
     '''List details of a particular site.'''
     site = Site.objects.get(domain=site_domain)
@@ -117,12 +137,12 @@ def site_details(request, site_domain):
     return render(request, 'workshops/site.html', context)
 
 
-class SiteCreate(CreateViewContext):
+class SiteCreate(LoginRequiredMixin, CreateViewContext):
     model = Site
     fields = SITE_FIELDS
 
 
-class SiteUpdate(UpdateViewContext):
+class SiteUpdate(LoginRequiredMixin, UpdateViewContext):
     model = Site
     fields = SITE_FIELDS
     slug_field = 'domain'
@@ -133,6 +153,7 @@ class SiteUpdate(UpdateViewContext):
 AIRPORT_FIELDS = ['iata', 'fullname', 'country', 'latitude', 'longitude']
 
 
+@login_required
 def all_airports(request):
     '''List all airports.'''
     all_airports = Airport.objects.order_by('iata')
@@ -143,6 +164,7 @@ def all_airports(request):
     return render(request, 'workshops/all_airports.html', context)
 
 
+@login_required
 def airport_details(request, airport_iata):
     '''List details of a particular airport.'''
     airport = Airport.objects.get(iata=airport_iata)
@@ -151,12 +173,12 @@ def airport_details(request, airport_iata):
     return render(request, 'workshops/airport.html', context)
 
 
-class AirportCreate(CreateViewContext):
+class AirportCreate(LoginRequiredMixin, CreateViewContext):
     model = Airport
     fields = AIRPORT_FIELDS
 
 
-class AirportUpdate(UpdateViewContext):
+class AirportUpdate(LoginRequiredMixin, UpdateViewContext):
     model = Airport
     fields = AIRPORT_FIELDS
     slug_field = 'iata'
@@ -164,6 +186,8 @@ class AirportUpdate(UpdateViewContext):
 
 #------------------------------------------------------------
 
+
+@login_required
 def all_persons(request):
     '''List all persons.'''
 
@@ -174,6 +198,7 @@ def all_persons(request):
     return render(request, 'workshops/all_persons.html', context)
 
 
+@login_required
 def person_details(request, person_id):
     '''List details of a particular person.'''
     person = Person.objects.get(id=person_id)
@@ -185,6 +210,8 @@ def person_details(request, person_id):
                'tasks' : tasks}
     return render(request, 'workshops/person.html', context)
 
+
+@login_required
 def person_bulk_add_template(request):
     ''' Dynamically generate a CSV template that can be used to bulk-upload
     people.
@@ -199,6 +226,7 @@ def person_bulk_add_template(request):
     return response
 
 
+@login_required
 def person_bulk_add(request):
     if request.method == 'POST':
         form = PersonBulkAddForm(request.POST, request.FILES)
@@ -240,6 +268,7 @@ def person_bulk_add(request):
     return render(request, 'workshops/person_bulk_add_form.html', context)
 
 
+@login_required
 def person_bulk_add_confirmation(request):
     """
     This view allows for manipulating and saving session-stored upload data.
@@ -349,12 +378,12 @@ def person_bulk_add_confirmation(request):
 
 
 
-class PersonCreate(CreateViewContext):
+class PersonCreate(LoginRequiredMixin, CreateViewContext):
     model = Person
     fields = '__all__'
 
 
-class PersonUpdate(UpdateViewContext):
+class PersonUpdate(LoginRequiredMixin, UpdateViewContext):
     model = Person
     fields = '__all__'
     pk_url_kwarg = 'person_id'
@@ -362,6 +391,7 @@ class PersonUpdate(UpdateViewContext):
 
 #------------------------------------------------------------
 
+@login_required
 def all_events(request):
     '''List all events.'''
 
@@ -374,6 +404,7 @@ def all_events(request):
     return render(request, 'workshops/all_events.html', context)
 
 
+@login_required
 def event_details(request, event_ident):
     '''List details of a particular event.'''
 
@@ -384,6 +415,8 @@ def event_details(request, event_ident):
                'tasks' : tasks}
     return render(request, 'workshops/event.html', context)
 
+
+@login_required
 def validate_event(request, event_ident):
     '''Check the event's home page *or* the specified URL (for testing).'''
     page_url, error_messages = None, []
@@ -405,12 +438,12 @@ def validate_event(request, event_ident):
     return render(request, 'workshops/validate_event.html', context)
 
 
-class EventCreate(CreateViewContext):
+class EventCreate(LoginRequiredMixin, CreateViewContext):
     model = Event
     fields = '__all__'
 
 
-class EventUpdate(UpdateViewContext):
+class EventUpdate(LoginRequiredMixin, UpdateViewContext):
     model = Event
     fields = '__all__'
     pk_url_kwarg = 'event_ident'
@@ -420,6 +453,7 @@ class EventUpdate(UpdateViewContext):
 TASK_FIELDS = ['event', 'person', 'role']
 
 
+@login_required
 def all_tasks(request):
     '''List all tasks.'''
 
@@ -432,6 +466,7 @@ def all_tasks(request):
     return render(request, 'workshops/all_tasks.html', context)
 
 
+@login_required
 def task_details(request, task_id):
     '''List details of a particular task.'''
     task = Task.objects.get(pk=task_id)
@@ -440,12 +475,12 @@ def task_details(request, task_id):
     return render(request, 'workshops/task.html', context)
 
 
-class TaskCreate(CreateViewContext):
+class TaskCreate(LoginRequiredMixin, CreateViewContext):
     model = Task
     fields = TASK_FIELDS
 
 
-class TaskUpdate(UpdateViewContext):
+class TaskUpdate(LoginRequiredMixin, UpdateViewContext):
     model = Task
     fields = TASK_FIELDS
     pk_url_kwarg = 'task_id'
@@ -453,6 +488,7 @@ class TaskUpdate(UpdateViewContext):
 
 #------------------------------------------------------------
 
+@login_required
 def all_badges(request):
     '''List all badges.'''
 
@@ -464,6 +500,7 @@ def all_badges(request):
     return render(request, 'workshops/all_badges.html', context)
 
 
+@login_required
 def badge_details(request, badge_name):
     '''Show who has a particular badge.'''
 
@@ -477,6 +514,8 @@ def badge_details(request, badge_name):
 
 #------------------------------------------------------------
 
+
+@login_required
 def instructors(request):
     '''Search for instructors.'''
 
@@ -524,6 +563,8 @@ def instructors(request):
 
 #------------------------------------------------------------
 
+
+@login_required
 def search(request):
     '''Search the database by term.'''
 
@@ -584,6 +625,7 @@ def _export_instructors():
             for a in airports]
 
 
+@login_required
 def export(request, name):
     '''Export data as YAML for inclusion in main web site.'''
     data = None

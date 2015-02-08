@@ -1,10 +1,10 @@
-from django.test import TestCase
 from django.core.urlresolvers import reverse
 from datetime import datetime
 from ..models import Task, Event, Role, Person, Site
+from .base import TestBase
 
 
-class TestTask(TestCase):
+class TestTask(TestBase):
     "Tests for the task model, its manager and views"
 
     def setUp(self):
@@ -44,6 +44,8 @@ class TestTask(TestCase):
 
         self.fixtures['test_task_1'] = test_task_1
         self.fixtures['test_task_2'] = test_task_2
+
+        self._setUpUsersAndLogin()
 
     def test_task_detail_view_reachable_from_event_person_and_role_of_task(self):
 

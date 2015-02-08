@@ -1,0 +1,30 @@
+{% extends "account/_page.html" %}
+
+{% load breadcrumbs %}
+{% block breadcrumbs %}
+    {% breadcrumb_main_page %}
+    {% breadcrumb_active "Log in" %}
+{% endblock %}
+
+{% block content %}
+
+{% if form.errors %}
+  <div class="alert alert-danger" role="alert"><strong>Error:</strong>
+  Your username and password didn't match.</div>
+{% endif %}
+
+<form method="post" action="{% url 'django.contrib.auth.views.login' %}">
+{% csrf_token %}
+  <div class="form-group">
+    {{ form.username.label_tag }}
+    {{ form.username }}
+  </div>
+  <div class="form-group">
+    {{ form.password.label_tag }}
+    {{ form.password }}
+  </div>
+  <input type="hidden" name="next" value="{{ next }}" />
+  <input type="submit" class="btn btn-default" value="Log in">
+</form>
+
+{% endblock %}

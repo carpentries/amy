@@ -129,6 +129,21 @@ class TestBase(TestCase):
             personal='Natasha', middle=None, family='Romanova', email=None,
             gender='F', may_contact=False, username="blackwidow")
 
+    def _setUpUsersAndLogin(self):
+        """Set up one account for administrator that can log into the website.
+
+        Log this user in.
+        """
+        password = "admin"
+        self.admin = Person.objects.create_superuser(
+                username="admin", personal="Super", family="User",
+                email="sudo@example.org", password=password)
+
+        # log user in
+        # this user will be authenticated for all self.client requests
+        return self.client.login(username=self.admin.username,
+                                 password=password)
+
     def _setUpPermissions(self):
         '''Set up permission objects for consistent form selection.'''
         badge_admin = Group.objects.create(name='Badge Admin')

@@ -6,6 +6,10 @@ from .base import TestBase
 class TestSearchSite(TestBase):
     '''Test cases for searching on Site.'''
 
+    def setUp(self):
+        super().setUp()
+        self._setUpUsersAndLogin()
+
     def test_search_for_site_with_no_matches(self):
         response = self.client.post(reverse('search'),
                                     {'term' : 'non.existent',
