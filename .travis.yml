@@ -1,0 +1,10 @@
+language: python
+python:
+  - 3.4
+install:
+  - pip install -r requirements.txt
+  - pip install coveralls
+script:
+  coverage run --source=amy,workshops manage.py test
+after_success:
+  coveralls
