@@ -4,3 +4,4 @@ htmlerror
 db.sqlite3
 *.sublime-project
 *.sublime-workspace
+venv
