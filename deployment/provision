@@ -29,7 +29,7 @@ sudo pip install virtualenvwrapper
 echo Setting up nginx proxying to amy
 cat <<EOF > amy.conf
 upstream amy_site {
-    server 127.0.0.1:8000
+    server 127.0.0.1:8000;
 }
 server {
     listen 80;
@@ -38,11 +38,11 @@ server {
 
     location / {
         proxy_pass_header Server;
-        proxy_set_header Host $http_host;
+        proxy_set_header Host \$http_host;
         proxy_redirect off;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Scheme $scheme;
-        proxy_set_header X-Forwarded_for $proxy_add_x_forwarded_for;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Scheme \$scheme;
+        proxy_set_header X-Forwarded_for \$proxy_add_x_forwarded_for;
         proxy_connect_timeout 10;
         proxy_read_timeout 10;
         proxy_pass http://amy_site;
