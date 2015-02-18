@@ -2,5 +2,7 @@ htmlerror
 *~
 *.pyc
 db.sqlite3
-*.sublime-project
-*.sublime-workspace
+
+# coverage reports
+.coverage
+htmlcov
