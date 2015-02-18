@@ -3,7 +3,7 @@ import sys
 
 from django.test import TestCase
 from django.core.urlresolvers import reverse
-from ..models import Event, Site
+from ..models import Event, Site, Tag
 from .base import TestBase
 
 
@@ -115,6 +115,9 @@ class TestEventViews(TestBase):
         test_site = Site.objects.create(domain='example.com',
                                         fullname='Test Site')
 
+        # Create a test tag
+        test_tag = Tag.objects.create(name='Test Tag', details='For testing')
+
         # Create fifty new events
         for i in range(50):
             event_start = datetime.now()
@@ -189,6 +192,32 @@ class TestEventViews(TestBase):
 
         # This should be the first page
         assert view_events.number == 5
+
+    def test_add_minimal_event(self):
+        site = Site.objects.get(fullname='Test Site')
+        tag = Tag.objects.get(name='Test Tag')
+        response = self.client.post(
+            reverse('event_add'),
+            {
+                'published': False,
+                'site': site.id,
+                'tags': [tag.id],
+            })
+        if response.status_code == 302:
+            url = response['location']
+            event_id = int(url.rsplit('/', 1)[1])
+            event = Event.objects.get(id=event_id)
+            assert event.published is False, (
+                'New event has wrong published status: {} != {}'.format(
+                    event.published, False))
+            assert event.site == site, (
+                'New event has wrong site: {} != {}'.format(event.site, site))
+            tags = list(event.tags.all())
+            assert tags == [tag], (
+                'New event has wrong tags: {} != {}'.format(tags, [tag]))
+        else:
+            self._check_status_code_and_parse(response, 200)
+            assert False, 'expected 302 redirect after post'
 
 
 class TestEventNotes(TestBase):
