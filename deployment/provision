@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+
+set -e
+
+cd
+
+echo Installing system packages
+sudo apt-get update -y
+sudo apt-get upgrade -y
+sudo apt-get install -y \
+    python-software-properties \
+    build-essential \
+    python-dev \
+    python-pip \
+    nginx \
+    git \
+    supervisor \
+    tmux \
+    htop \
+    tig \
+    ack-grep
+
+echo Installing global python packages
+sudo pip install -U pip
+sudo pip install wheel
+sudo pip install virtualenv
+sudo pip install virtualenvwrapper
+
+echo Setting up nginx proxying to amy
+cat <<EOF > amy.conf
+upstream amy_site {
+    server 127.0.0.1:8000;
+}
+server {
+    listen 80;
+    server_name localhost;
+    root /var/www;
+
+    location / {
+        proxy_pass_header Server;
+        proxy_set_header Host \$http_host;
+        proxy_redirect off;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Scheme \$scheme;
+        proxy_set_header X-Forwarded_for \$proxy_add_x_forwarded_for;
+        proxy_connect_timeout 10;
+        proxy_read_timeout 10;
+        proxy_pass http://amy_site;
+    }
+
+    # what to serve if upstream is not available or crashes
+    error_page 500 502 503 504 /media/50x.html;
+}
+EOF
+sudo mv amy.conf /etc/nginx/sites-available/amy.conf
+sudo rm -f /etc/nginx/sites-enabled/amy.conf
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo ln -s /etc/nginx/sites-available/amy.conf /etc/nginx/sites-enabled/amy.conf
+sudo service nginx restart
+
+echo Creating user to run amy
+echo This is not idempotent. if we want idempotence we can do everything another way
+sudo adduser --disabled-password --gecos "" amy

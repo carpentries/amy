@@ -1,3 +1,8 @@
+# Virtual environment
+AMY ?= .
+VIRTUALENV = $(AMY)/venv
+ACTIVATE=. $(VIRTUALENV)/bin/activate
+
 # Where original data lives.
 SRC_DIR = ~/s/admin
 
@@ -28,16 +33,16 @@ commands : Makefile
 
 ## test         : run all tests.
 test :
-	python manage.py test
+	$(ACTIVATE) && python manage.py test
 
 ## migrations   : create/apply migrations
 migrations :
-	python manage.py makemigrations
-	python manage.py migrate
+	$(ACTIVATE) && python manage.py makemigrations
+	$(ACTIVATE) && python manage.py migrate
 
 ## import       : import and save legacy data
 import :
-	python migrater.py ${SRC_DB} ${APP_DB}
+	$(ACTIVATE) && python migrater.py ${SRC_DB} ${APP_DB}
 	${QUERY} .dump > ${APP_SQL}
 
 ## database     : re-make database using saved data
@@ -55,11 +60,14 @@ schema :
 
 ## notes        : load old notes
 notes :
-	python notes-importer.py ${APP_DB} ${SRC_EVENTS} ${SRC_SITES}
+	$(ACTIVATE) && python notes-importer.py ${APP_DB} ${SRC_EVENTS} ${SRC_SITES}
 
 ## serve        : run a server
-serve :
-	python manage.py runserver
+serve : $(VIRTUALENV) migrations
+	$(ACTIVATE) && python manage.py runserver
+$(VIRTUALENV) :
+	virtualenv $(VIRTUALENV)
+	$(ACTIVATE) && pip install -r $(AMY)/requirements.txt
 
 ## clean        : clean up.
 clean :
