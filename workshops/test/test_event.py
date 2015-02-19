@@ -219,6 +219,26 @@ class TestEventViews(TestBase):
             self._check_status_code_and_parse(response, 200)
             assert False, 'expected 302 redirect after post'
 
+    def test_add_two_minimal_events(self):
+        site = Site.objects.get(fullname='Test Site')
+        tag = Tag.objects.get(name='Test Tag')
+        url = reverse('event_add')
+        data = {
+                'published': False,
+                'site': site.id,
+                'tags': [tag.id],
+            }
+        response = self.client.post(url, data)
+        assert response.status_code == 302, (
+            'expected 302 redirect after first post, got {}'.format(
+            response.status_code))
+        response = self.client.post(url, data)
+        if response.status_code != 302:
+            self._check_status_code_and_parse(response, 200)
+            assert response.status_code == 302, (
+                'expected 302 redirect after second post, got {}'.format(
+                    response.status_code))
+
 
 class TestEventNotes(TestBase):
     """Make sure notes once written are saved forever!"""
