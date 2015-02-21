@@ -295,6 +295,11 @@ class Event(models.Model):
 
         raise ObjectDoesNotExist(ident)
 
+    def save(self, *args, **kwargs):
+        self.url = self.url or None
+        super(Event, self).save(*args, **kwargs)
+
+
 #------------------------------------------------------------
 
 class Role(models.Model):
