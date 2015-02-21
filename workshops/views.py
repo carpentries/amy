@@ -187,6 +187,13 @@ class AirportUpdate(LoginRequiredMixin, UpdateViewContext):
 #------------------------------------------------------------
 
 
+PERSON_FIELDS = [
+        field.name for field in Person._meta.fields
+    ] + [
+        'user_permissions',
+    ]
+
+
 @login_required
 def all_persons(request):
     '''List all persons.'''
@@ -380,12 +387,12 @@ def person_bulk_add_confirmation(request):
 
 class PersonCreate(LoginRequiredMixin, CreateViewContext):
     model = Person
-    fields = '__all__'
+    fields = PERSON_FIELDS
 
 
 class PersonUpdate(LoginRequiredMixin, UpdateViewContext):
     model = Person
-    fields = '__all__'
+    fields = PERSON_FIELDS
     pk_url_kwarg = 'person_id'
 
 
