@@ -2,7 +2,10 @@
 from math import pi, sin, cos, acos
 import csv
 
-from .models import Event, Role, Person
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import IntegrityError, transaction
+
+from .models import Event, Role, Person, Task
 
 
 def earth_distance(pos1, pos2):
@@ -119,3 +122,28 @@ def verify_upload_person_task(data):
 
     # indicate there were some errors
     return errors_occur
+
+def create_uploaded_persons_tasks(persons_tasks):
+    """
+    Create persons and tasks from upload data.
+    """
+    persons_created = []
+    tasks_created = []
+    with transaction.atomic():
+        for row in persons_tasks:
+            try:
+                p = Person(**row['person'])
+                p.save()
+                persons_created.append(p)
+                if row['event'] and row['role']:
+                    e = Event.objects.get(slug=row['event'])
+                    r = Role.objects.get(name=row['role'])
+                    t = Task(person=p, event=e, role=r)
+                    t.save()
+                    tasks_created.append(t)
+            except IntegrityError as e:
+                raise IntegrityError('{0} (for {1})'.format(str(e), row))
+            except ObjectDoesNotExist as e:
+                raise ObjectDoesNotExist('{0} (for {1})'.format(str(e), row))
+
+    return persons_created, tasks_created

@@ -1,5 +1,10 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError
-from workshops.util import upload_person_task_csv
+from django.db import IntegrityError
+from workshops.util import \
+    upload_person_task_csv, \
+    verify_upload_person_task, \
+    create_uploaded_persons_tasks
 
 class Command(BaseCommand):
     args = 'filename'
@@ -19,3 +24,17 @@ class Command(BaseCommand):
         if empty_fields:
             missing = ', '.join(empty_fields)
             raise CommandError('Missing field(s) in {0}: {1}'.format(filename, missing))
+
+        errors = verify_upload_person_task(persons_tasks)
+        if errors:
+            raise CommandError('Errors in upload:\n{0}'.format('\n'.join(errors)))
+
+        try:
+            persons, tasks = create_uploaded_persons_tasks(persons_tasks)
+        except (IntegrityError, ObjectDoesNotExist) as e:
+            raise CommandError('Failed to create persons/tasks: {0}'.format(str(e)))
+
+        for p in persons:
+            print(p)
+        for t in tasks:
+            print(t)

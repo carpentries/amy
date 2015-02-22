@@ -31,8 +31,10 @@ from workshops.models import \
     Task
 from workshops.check import check_file
 from workshops.forms import SearchForm, InstructorsForm, PersonBulkAddForm
-from workshops.util import (earth_distance, upload_person_task_csv,
-                            verify_upload_person_task)
+from workshops.util import earth_distance, \
+                           upload_person_task_csv, \
+                           verify_upload_person_task, \
+                           create_uploaded_persons_tasks
 
 #------------------------------------------------------------
 
@@ -329,27 +331,12 @@ def person_bulk_add_confirmation(request):
             return render(request, 'workshops/person_bulk_add_results.html',
                           context)
 
+        # there must be "confirm" and no "cancel" in POST in order to save
         elif (request.POST.get('confirm', None) and
-                not request.POST.get('cancel', None)):
-            # there must be "confirm" and no "cancel" in POST in order to save
-
+              not request.POST.get('cancel', None)):
             try:
-                records = 0
-                with transaction.atomic():
-                    for row in persons_tasks:
-                        # create person
-                        p = Person(**row['person'])
-                        p.save()
-                        records += 1
-
-                        # create task if data supplied
-                        if row['event'] and row['role']:
-                            e = Event.objects.get(slug=row['event'])
-                            r = Role.objects.get(name=row['role'])
-                            t = Task(person=p, event=e, role=r)
-                            t.save()
-                            records += 1
-
+                persons_created, tasks_created = \
+                    create_uploaded_persons_tasks(persons_tasks)
             except (IntegrityError, ObjectDoesNotExist) as e:
                 messages.add_message(request, messages.ERROR,
                                      "Error saving data to the database: {}. "
@@ -365,8 +352,8 @@ def person_bulk_add_confirmation(request):
             else:
                 request.session['bulk-add-people'] = None
                 messages.add_message(request, messages.SUCCESS,
-                                     "Successfully bulk-loaded {} records."
-                                     .format(records))
+                                     "Successfully uploaded {0} persons and {1} tasks."
+                                     .format(len(persons_created), len(tasks_created)))
                 return redirect('person_bulk_add')
 
         else:
