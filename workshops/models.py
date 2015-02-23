@@ -135,7 +135,7 @@ class Person(AbstractBaseUser, PermissionsMixin):
         email = ''
         if self.email is not None:
             email = ' <{0}>'.format(self.email)
-        return '{0}{1}'.format(self.get_full_name(), email)
+        return '{0}:{1}{2}'.format(self.username, self.get_full_name(), email)
 
     def get_absolute_url(self):
         return reverse('person_details', args=[str(self.id)])

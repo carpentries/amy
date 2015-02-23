@@ -11,6 +11,7 @@ from .models import Event, Role, Person, Task
 class InternalError(Exception):
     pass
 
+
 def earth_distance(pos1, pos2):
     '''Taken from http://www.johndcook.com/python_longitude_latitude.html.'''
 
@@ -125,6 +126,7 @@ def verify_upload_person_task(data):
 
     return errors_occur
 
+
 def create_uploaded_persons_tasks(data):
     """
     Create persons and tasks from upload data.
@@ -139,7 +141,9 @@ def create_uploaded_persons_tasks(data):
     with transaction.atomic():
         for row in data:
             try:
-                p = Person(**dict([(key, row[key]) for key in Person.PERSON_UPLOAD_FIELDS]))
+                fields = dict([(key, row[key]) for key in Person.PERSON_UPLOAD_FIELDS])
+                fields['username'] = create_username(row['personal'], row['family'])
+                p = Person(**fields)
                 p.save()
                 persons_created.append(p)
 
@@ -157,3 +161,34 @@ def create_uploaded_persons_tasks(data):
                 raise ObjectDoesNotExist('{0} (for {1})'.format(str(e), row))
 
     return persons_created, tasks_created
+
+
+def create_username(personal, family):
+    '''Generate unique username.'''
+    stem = normalize_name(family) + '.' + normalize_name(personal)
+    counter = None
+    while True:
+        try:
+            if counter is None:
+                username = stem
+                counter = 1
+            else:
+                counter += 1
+                username = '{0}.{1}'.format(stem, counter)
+            Person.objects.get(username=username)
+        except ObjectDoesNotExist:
+            break
+
+    if any([ord(c) >=128 for c in username]):
+        raise InternalError('Normalized username still contains non-normal characters "{0}"'
+                            .format(username))
+
+    return username
+
+
+def normalize_name(name):
+    '''Get rid of spaces, funky characters, etc.'''
+    name = name.strip()
+    for (accented, flat) in [(' ', '-')]:
+        name = name.replace(accented, flat)
+    return name
