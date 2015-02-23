@@ -8,6 +8,9 @@ from django.db import IntegrityError, transaction
 from .models import Event, Role, Person, Task
 
 
+class InternalError(Exception):
+    pass
+
 def earth_distance(pos1, pos2):
     '''Taken from http://www.johndcook.com/python_longitude_latitude.html.'''
 
@@ -49,100 +52,107 @@ def upload_person_task_csv(stream):
 
     Also return a list of fields from Person.PERSON_UPLOAD_FIELDS for which
     no data was given.
-
     """
-    persons_tasks = []
 
+    result = []
     reader = csv.DictReader(stream)
-    empty_fields = []
+    empty_fields = set()
+
     for row in reader:
-        person_fields = {}
+        entry = {}
         for col in Person.PERSON_UPLOAD_FIELDS:
-            try:
-                person_fields[col] = row[col].strip()
-            except KeyError:
-                if col not in empty_fields:
-                    empty_fields.append(col)
-        entry = {'person': person_fields, 'event': row.get('event', None),
-                 'role': row.get('role', None), 'errors': None}
-        persons_tasks.append(entry)
-    return persons_tasks, empty_fields
+            if col in row:
+                entry[col] = row[col].strip()
+            else:
+                entry[col] = None
+                empty_fields.add(col)
+
+        for col in Person.PERSON_TASK_EXTRA_FIELDS:
+            entry[col] = row.get(col, None)
+        entry['errors'] = None
+
+        result.append(entry)
+
+    return result, list(empty_fields)
 
 
 def verify_upload_person_task(data):
     """
     Verify that uploaded data is correct.  Show errors by populating ``errors``
-    dictionary item.
-
-    This function changes ``data`` in place; ``data`` is a list, so it's
-    passed by a reference.  This means any changes to ``data`` we make in
-    here don't need to be returned via ``return`` statement.
+    dictionary item.  This function changes ``data`` in place.
     """
 
     errors_occur = False
-
     for item in data:
         errors = []
-        event, role = item.get('event', None), item.get('role', None)
-        try:
-            email = item['person'].get('email', None)
-        except KeyError:
-            email = None
-            errors.append("'person' key not in item")
 
+        event = item.get('event', None)
         if event:
             try:
                 Event.objects.get(slug=event)
             except Event.DoesNotExist:
-                errors.append(u'Event with slug {} does not exist.'
+                errors.append(u'Event with slug {0} does not exist.'
                               .format(event))
+
+        role = item.get('role', None)
         if role:
             try:
                 Role.objects.get(name=role)
             except Role.DoesNotExist:
-                errors.append(u'Role with name {} does not exist.'.format(role))
+                errors.append(u'Role with name {0} does not exist.'
+                              .format(role))
             except Role.MultipleObjectsReturned:
-                errors.append(u'More than one role named {} exists.'
+                errors.append(u'More than one role named {0} exists.'
                               .format(role))
 
+        email = item.get('email', None)
         if email:
             try:
                 Person.objects.get(email__iexact=email)
-                errors.append("User with email {} already exists."
+                errors.append('User with email {0} already exists.'
                               .format(email))
             except Person.DoesNotExist:
                 # we want the email to be case-insensitive unique
                 pass
 
-        if errors:
-            # copy the errors just to be safe
-            item['errors'] = errors[:]
-            if not errors_occur:
-                errors_occur = True
+        if (event and not role) or (role and not event):
+            errors.append('Must have both or either of event ({0}) and role ({1})'
+                          .format(event, role))
 
-    # indicate there were some errors
+        if errors:
+            errors_occur = True
+            item['errors'] = errors
+
     return errors_occur
 
-def create_uploaded_persons_tasks(persons_tasks):
+def create_uploaded_persons_tasks(data):
     """
     Create persons and tasks from upload data.
     """
+
+    # Quick sanity check.
+    if any([row.get('errors') for row in data]):
+        raise InternalError('Uploaded data contains errors, cancelling upload')
+
     persons_created = []
     tasks_created = []
     with transaction.atomic():
-        for row in persons_tasks:
+        for row in data:
             try:
-                p = Person(**row['person'])
+                p = Person(**dict([(key, row[key]) for key in Person.PERSON_UPLOAD_FIELDS]))
                 p.save()
                 persons_created.append(p)
+
                 if row['event'] and row['role']:
                     e = Event.objects.get(slug=row['event'])
                     r = Role.objects.get(name=row['role'])
                     t = Task(person=p, event=e, role=r)
                     t.save()
                     tasks_created.append(t)
+
             except IntegrityError as e:
                 raise IntegrityError('{0} (for {1})'.format(str(e), row))
+
             except ObjectDoesNotExist as e:
                 raise ObjectDoesNotExist('{0} (for {1})'.format(str(e), row))
 

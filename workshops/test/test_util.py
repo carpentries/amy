@@ -19,7 +19,7 @@ class UploadPersonTaskCSVTestCase(TestCase):
     def compute_from_string(self, csv_str):
         ''' wrap up buffering the raw string & parsing '''
         csv_buf = StringIO(csv_str)
-        # compute & return
+        # compute and return
         return upload_person_task_csv(csv_buf)
 
     def test_basic_parsing(self):
@@ -33,10 +33,7 @@ jane,a,doe,janedoe@email.com"""
         self.assertEqual(len(person_tasks), 2)
 
         person = person_tasks[0]
-        self.assertSetEqual(set(('person', 'role', 'event', 'errors')), set(person.keys()))
-
-        person_dict = person['person']
-        self.assertSetEqual(set(Person.PERSON_UPLOAD_FIELDS), set(person_dict.keys()))
+        self.assertTrue(set(person.keys()).issuperset(set(Person.PERSON_UPLOAD_FIELDS)))
 
     def test_csv_without_required_field(self):
         ''' All fields in Person.PERSON_UPLOAD_FIELDS must be in csv '''
@@ -58,7 +55,7 @@ john,m,doe,john@doe.com"""
 john,,doe,johndoe@email.com"""
         person_tasks, _ = self.compute_from_string(csv)
         person = person_tasks[0]
-        self.assertEqual(person['person']['middle'], '')
+        self.assertEqual(person['middle'], '')
 
     def test_serializability_of_parsed(self):
         csv = """personal,middle,family,email
@@ -124,17 +121,6 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
         # make sure 'errors' wasn't set
         self.assertIsNone(good_data[0]['errors'])
 
-    def test_verify_data_has_no_person_key(self):
-        bad_data = self.make_data()
-        del bad_data[0]['person']
-        has_errors = verify_upload_person_task(bad_data)
-        self.assertTrue(has_errors)
-
-        errors = bad_data[0]['errors']
-        # 1 error, 'person' in it
-        self.assertTrue(len(errors) == 1)
-        self.assertTrue('person' in errors[0])
-
     def test_verify_event_dne(self):
         bad_data = self.make_data()
         bad_data[0]['event'] = 'dne'
@@ -160,7 +146,7 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
         bad_data = self.make_data()
         # test both matching and case-insensitive matching
         for email in ('harry@hogwarts.edu', 'HARRY@hogwarts.edu'):
-            bad_data[0]['person']['email'] = 'harry@hogwarts.edu'
+            bad_data[0]['email'] = 'harry@hogwarts.edu'
 
             has_errors = verify_upload_person_task(bad_data)
             self.assertTrue(has_errors)
@@ -188,10 +174,10 @@ class BulkUploadUsersViewTestCase(CSVBulkUploadTestBase):
         # send exactly what's in 'data', except for the 'event' field: leave
         # this one empty
         payload = {
-            "personal": data[0]['person']['personal'],
-            "middle": data[0]['person']['middle'],
-            "family": data[0]['person']['family'],
-            "email": data[0]['person']['email'],
+            "personal": data[0]['personal'],
+            "middle": data[0]['middle'],
+            "family": data[0]['family'],
+            "email": data[0]['email'],
             "event": "",
             "role": "",
             "verify": "Verify",

@@ -97,7 +97,8 @@ class Person(AbstractBaseUser, PermissionsMixin):
 
     # These attributes should always contain field names of Person
     PERSON_UPLOAD_FIELDS = ('personal', 'middle', 'family', 'email')
-    PERSON_TASK_UPLOAD_FIELDS = PERSON_UPLOAD_FIELDS + ('event', 'role')
+    PERSON_TASK_EXTRA_FIELDS = ('event', 'role')
+    PERSON_TASK_UPLOAD_FIELDS = PERSON_UPLOAD_FIELDS + PERSON_TASK_EXTRA_FIELDS
 
     personal    = models.CharField(max_length=STR_LONG)
     middle      = models.CharField(max_length=STR_LONG, null=True, blank=True)
