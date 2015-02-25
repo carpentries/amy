@@ -300,7 +300,7 @@ def person_bulk_add_confirmation(request):
         data_update = zip(personals, middles, families, emails, events, roles)
         for k, record in enumerate(data_update):
             personal, middle, family, email, event, role = record
-            persons_tasks[k]['person'] = {
+            persons_tasks[k] = {
                 'personal': personal,
                 'middle': middle,
                 'family': family,

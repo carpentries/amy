@@ -27,20 +27,20 @@
         <tr>
         {% with i=forloop.counter0 %}
             <td class="editable">
-                <span>{{ entry.person.personal }}</span>
-                <input type="text" name="personal" value="{{ entry.person.personal }}" class="hidden">
+                <span>{{ entry.personal }}</span>
+                <input type="text" name="personal" value="{{ entry.personal }}" class="hidden">
             </td>
             <td class="editable">
-                <span>{{ entry.person.middle }}</span>
-                <input type="text" name="middle" value="{{ entry.person.middle }}" class="hidden">
+                <span>{{ entry.middle }}</span>
+                <input type="text" name="middle" value="{{ entry.middle }}" class="hidden">
             </td>
             <td class="editable">
-                <span>{{ entry.person.family }}</span>
-                <input type="text" name="family" value="{{ entry.person.family }}" class="hidden">
+                <span>{{ entry.family }}</span>
+                <input type="text" name="family" value="{{ entry.family }}" class="hidden">
             </td>
             <td class="editable">
-                <span>{{ entry.person.email }}</span>
-                <input type="text" name="email" value="{{ entry.person.email }}" class="hidden">
+                <span>{{ entry.email }}</span>
+                <input type="text" name="email" value="{{ entry.email }}" class="hidden">
             </td>
             <td class="editable">
                 <span>{{ entry.event|default:"&mdash;" }}</span>
