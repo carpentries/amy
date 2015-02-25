@@ -131,7 +131,7 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
         self.assertTrue(len(errors) == 1)
         self.assertTrue('Event with slug' in errors[0])
 
-    def test_very_role_dne(self):
+    def test_verify_role_dne(self):
         bad_data = self.make_data()
         bad_data[0]['role'] = 'foobar'
 
@@ -142,18 +142,42 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
         self.assertTrue(len(errors) == 1)
         self.assertTrue('Role with name' in errors[0])
 
-    def test_verify_email_exists(self):
+    def test_verify_email_caseinsensitive_matches(self):
         bad_data = self.make_data()
         # test both matching and case-insensitive matching
         for email in ('harry@hogwarts.edu', 'HARRY@hogwarts.edu'):
-            bad_data[0]['email'] = 'harry@hogwarts.edu'
+            bad_data[0]['email'] = email
+            bad_data[0]['personal'] = 'Harry'
+            bad_data[0]['middle'] = None
+            bad_data[0]['family'] = 'Potter'
 
             has_errors = verify_upload_person_task(bad_data)
-            self.assertTrue(has_errors)
+            self.assertFalse(has_errors)
 
-            errors = bad_data[0]['errors']
-            self.assertTrue(len(errors) == 1)
-            self.assertTrue('User with email' in errors[0])
+    def test_verify_name_matching_existing_user(self):
+        bad_data = self.make_data()
+        bad_data[0]['email'] = 'harry@hogwarts.edu'
+        has_errors = verify_upload_person_task(bad_data)
+        self.assertTrue(has_errors)
+        errors = bad_data[0]['errors']
+        self.assertEqual(len(errors), 1)
+        self.assertTrue("Personal, middle or family name of existing user"
+                        " don't match" in errors[0])
+
+    def test_verify_existing_user_has_workshop_role_provided(self):
+        bad_data = [dict(), ]
+        bad_data[0]['email'] = 'harry@hogwarts.edu'
+        bad_data[0]['personal'] = 'Harry'
+        bad_data[0]['middle'] = None
+        bad_data[0]['family'] = 'Potter'
+        bad_data[0]['event'] = ''
+        bad_data[0]['role'] = ''
+        has_errors = verify_upload_person_task(bad_data)
+        self.assertTrue(has_errors)
+        errors = bad_data[0]['errors']
+        self.assertEqual(len(errors), 1)
+        self.assertTrue("User exists but no event and role to assign"
+                        in errors[0])
 
 
 class BulkUploadUsersViewTestCase(CSVBulkUploadTestBase):
