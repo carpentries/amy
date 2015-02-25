@@ -106,19 +106,47 @@ def verify_upload_person_task(data):
                 errors.append(u'More than one role named {0} exists.'
                               .format(role))
 
+        # check if the user exists, and if so: check if existing user's
+        # personal and family names are the same as uploaded
         email = item.get('email', None)
+        personal = item.get('personal', None)
+        middle = item.get('middle', None)
+        family = item.get('family', None)
         if email:
+            # we don't have to check if the user exists in the database
+            # but we should check if, in case the email matches, family and
+            # personal names match, too
+
+            person_exists = False
             try:
-                Person.objects.get(email__iexact=email)
-                errors.append('User with email {0} already exists.'
-                              .format(email))
+                p = Person.objects.get(email__iexact=email)
+
+                assert p.personal == personal
+                assert p.middle == middle
+                assert p.family == family
+
             except Person.DoesNotExist:
-                # we want the email to be case-insensitive unique
+                # in this case we need to add the user
                 pass
 
+            except AssertionError:
+                errors.append(
+                    "Personal, middle or family name of existing user don't"
+                    " match: {0} vs {1}, {2} vs {3}, {4} vs {5}"
+                    .format(personal, p.personal, middle, p.middle, family,
+                            p.family)
+                )
+
+            else:
+                person_exists = True
+
+        if person_exists and not any([event, role]):
+            errors.append("User exists but no event and role to assign the"
+                          " user to was provided")
+
         if (event and not role) or (role and not event):
-            errors.append('Must have both or either of event ({0}) and role ({1})'
-                          .format(event, role))
+            errors.append("Must have both or either of event ({0}) and role"
+                          " ({1})".format(event, role))
 
         if errors:
             errors_occur = True
@@ -141,11 +169,23 @@ def create_uploaded_persons_tasks(data):
     with transaction.atomic():
         for row in data:
             try:
-                fields = dict([(key, row[key]) for key in Person.PERSON_UPLOAD_FIELDS])
-                fields['username'] = create_username(row['personal'], row['family'])
-                p = Person(**fields)
-                p.save()
-                persons_created.append(p)
+                fields = {key: row[key] for key in Person.PERSON_UPLOAD_FIELDS}
+                fields['username'] = create_username(row['personal'],
+                                                     row['family'])
+                if fields['email']:
+                    # we should use existing Person or create one
+                    p, created = Person.objects.get_or_create(
+                        email=fields['email'], defaults=fields
+                    )
+
+                    if created:
+                        persons_created.append(p)
+
+                else:
+                    # we should create a new Person without any email provided
+                    p = Person(**fields)
+                    p.save()
+                    persons_created.append(p)
 
                 if row['event'] and row['role']:
                     e = Event.objects.get(slug=row['event'])
@@ -179,9 +219,9 @@ def create_username(personal, family):
         except ObjectDoesNotExist:
             break
 
-    if any([ord(c) >=128 for c in username]):
-        raise InternalError('Normalized username still contains non-normal characters "{0}"'
-                            .format(username))
+    if any([ord(c) >= 128 for c in username]):
+        raise InternalError('Normalized username still contains non-normal '
+                            'characters "{0}"'.format(username))
 
     return username
 
@@ -191,4 +231,8 @@ def normalize_name(name):
     name = name.strip()
     for (accented, flat) in [(' ', '-')]:
         name = name.replace(accented, flat)
-    return name
+
+    # We should use lower-cased username, because it directly corresponds to
+    # some files Software Carpentry stores about some people - and, as we know,
+    # some filesystems are not case-sensitive.
+    return name.lower()
