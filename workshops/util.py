@@ -231,4 +231,8 @@ def normalize_name(name):
     name = name.strip()
     for (accented, flat) in [(' ', '-')]:
         name = name.replace(accented, flat)
-    return name
+
+    # We should use lower-cased username, because it directly corresponds to
+    # some files Software Carpentry stores about some people - and, as we know,
+    # some filesystems are not case-sensitive.
+    return name.lower()
