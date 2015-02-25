@@ -22,7 +22,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = json.loads(os.environ.get('DEBUG', 'true'))
 # For deployment in production: 
-# DEBUG=true SECRET_KEY="..." ./manage.py runserver ...
+# DEBUG=false SECRET_KEY="..." ./manage.py runserver ...
 
 if DEBUG:
   SECRET_KEY = '3l$35+@a%g!(^y^98oi%ei+%+yvtl3y0k^_7-fmx2oj09-ac5@'
