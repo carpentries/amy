@@ -147,6 +147,13 @@ class Person(AbstractBaseUser, PermissionsMixin):
         """
         return self.is_superuser
 
+    def save(self, *args, **kwargs):
+        # save empty string as NULL to the database - otherwise there are
+        # issues with UNIQUE constraint failing
+        self.email = self.email or None
+        super().save(*args, **kwargs)
+
+
 #------------------------------------------------------------
 
 class Tag(models.Model):
