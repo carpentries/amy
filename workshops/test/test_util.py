@@ -121,9 +121,9 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
         # make sure 'errors' wasn't set
         self.assertIsNone(good_data[0]['errors'])
 
-    def test_verify_event_dne(self):
+    def test_verify_event_doesnt_exist(self):
         bad_data = self.make_data()
-        bad_data[0]['event'] = 'dne'
+        bad_data[0]['event'] = 'no-such-event'
         has_errors = verify_upload_person_task(bad_data)
         self.assertTrue(has_errors)
 
@@ -131,7 +131,7 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
         self.assertTrue(len(errors) == 1)
         self.assertTrue('Event with slug' in errors[0])
 
-    def test_verify_role_dne(self):
+    def test_verify_role_doesnt_exist(self):
         bad_data = self.make_data()
         bad_data[0]['role'] = 'foobar'
 
@@ -165,13 +165,16 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
                         " don't match" in errors[0])
 
     def test_verify_existing_user_has_workshop_role_provided(self):
-        bad_data = [dict(), ]
-        bad_data[0]['email'] = 'harry@hogwarts.edu'
-        bad_data[0]['personal'] = 'Harry'
-        bad_data[0]['middle'] = None
-        bad_data[0]['family'] = 'Potter'
-        bad_data[0]['event'] = ''
-        bad_data[0]['role'] = ''
+        bad_data = [
+            {
+                'email': 'harry@hogwarts.edu',
+                'personal': 'Harry',
+                'middle': None,
+                'family': 'Potter',
+                'event': '',
+                'role': '',
+            }
+        ]
         has_errors = verify_upload_person_task(bad_data)
         self.assertTrue(has_errors)
         errors = bad_data[0]['errors']
