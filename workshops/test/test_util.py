@@ -9,7 +9,7 @@ from django.contrib.sessions.serializers import JSONSerializer
 from django.test import TestCase
 from django.core.urlresolvers import reverse
 
-from ..models import Site, Event, Role, Person
+from ..models import Site, Event, Role, Person, Task
 from ..util import upload_person_task_csv, verify_upload_person_task
 
 from .base import TestBase
@@ -185,6 +185,10 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
 
 class BulkUploadUsersViewTestCase(CSVBulkUploadTestBase):
 
+    def setUp(self):
+        super().setUp()
+        Role.objects.create(name='Helper')
+
     def test_event_name_dropped(self):
         """
         Test for regression:
@@ -215,3 +219,50 @@ class BulkUploadUsersViewTestCase(CSVBulkUploadTestBase):
         charset = params['charset']
         content = rv.content.decode(charset)
         self.assertNotIn('foobar', content)
+
+    def test_upload_existing_user(self):
+        """
+        Check if uploading existing users ends up with them having new role
+        assigned.
+
+        This is a special case of upload feature: if user uploads a person that
+        already exists we should only assign new role and event to that person.
+        """
+        csv = """personal,middle,family,email,event,role
+Harry,,Potter,harry@hogwarts.edu,foobar,Helper
+"""
+        data, _ = upload_person_task_csv(StringIO(csv))
+
+        # self.client is authenticated user so we have access to the session
+        store = self.client.session
+        store['bulk-add-people'] = data
+        store.save()
+
+        # send exactly what's in 'data'
+        payload = {
+            "personal": data[0]['personal'],
+            "middle": data[0]['middle'],
+            "family": data[0]['family'],
+            "email": data[0]['email'],
+            "event": data[0]['event'],
+            "role": data[0]['role'],
+            "confirm": "Confirm",
+        }
+
+        people_pre = set(Person.objects.all())
+        tasks_pre = set(Task.objects.filter(person=self.harry,
+                                            event__slug="foobar"))
+
+        rv = self.client.post(reverse('person_bulk_add_confirmation'), payload,
+                              follow=True)
+        self.assertEqual(rv.status_code, 200)
+
+        people_post = set(Person.objects.all())
+        tasks_post = set(Task.objects.filter(person=self.harry,
+                                             event__slug="foobar"))
+
+        # make sure no-one new was added
+        self.assertSetEqual(people_pre, people_post)
+
+        # make sure that Harry was assigned a new role
+        self.assertNotEqual(tasks_pre, tasks_post)
