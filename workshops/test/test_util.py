@@ -266,3 +266,42 @@ Harry,,Potter,harry@hogwarts.edu,foobar,Helper
 
         # make sure that Harry was assigned a new role
         self.assertNotEqual(tasks_pre, tasks_post)
+
+    def test_upload_existing_user_existing_task(self):
+        """
+        Check if uploading existing user and assigning existing task to that
+        user fails.
+        """
+        foobar = Event.objects.get(slug="foobar")
+        instructor = Role.objects.get(name="Instructor")
+        Task.objects.create(person=self.harry, event=foobar, role=instructor)
+
+        csv = """personal,middle,family,email,event,role
+Harry,,Potter,harry@hogwarts.edu,foobar,Instructor
+"""
+        data, _ = upload_person_task_csv(StringIO(csv))
+
+        # self.client is authenticated user so we have access to the session
+        store = self.client.session
+        store['bulk-add-people'] = data
+        store.save()
+
+        # send exactly what's in 'data'
+        payload = {
+            "personal": data[0]['personal'],
+            "middle": data[0]['middle'],
+            "family": data[0]['family'],
+            "email": data[0]['email'],
+            "event": data[0]['event'],
+            "role": data[0]['role'],
+            "confirm": "Confirm",
+        }
+
+        tasks_pre = set(Task.objects.filter(person=self.harry,
+                                            event__slug="foobar"))
+        rv = self.client.post(reverse('person_bulk_add_confirmation'), payload,
+                              follow=True)
+        tasks_post = set(Task.objects.filter(person=self.harry,
+                                             event__slug="foobar"))
+        self.assertEqual(tasks_pre, tasks_post)
+        self.assertEqual(rv.status_code, 400)
