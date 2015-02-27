@@ -112,6 +112,7 @@ def verify_upload_person_task(data):
         personal = item.get('personal', None)
         middle = item.get('middle', None)
         family = item.get('family', None)
+        person = None
         if email:
             # we don't have to check if the user exists in the database
             # but we should check if, in case the email matches, family and
@@ -119,11 +120,11 @@ def verify_upload_person_task(data):
 
             person_exists = False
             try:
-                p = Person.objects.get(email__iexact=email)
+                person = Person.objects.get(email__iexact=email)
 
-                assert p.personal == personal
-                assert p.middle == middle
-                assert p.family == family
+                assert person.personal == personal
+                assert person.middle == middle
+                assert person.family == family
 
             except Person.DoesNotExist:
                 # in this case we need to add the user
@@ -133,8 +134,8 @@ def verify_upload_person_task(data):
                 errors.append(
                     "Personal, middle or family name of existing user don't"
                     " match: {0} vs {1}, {2} vs {3}, {4} vs {5}"
-                    .format(personal, p.personal, middle, p.middle, family,
-                            p.family)
+                    .format(personal, person.personal, middle, person.middle,
+                            family, person.family)
                 )
 
             else:
@@ -143,6 +144,16 @@ def verify_upload_person_task(data):
         if person_exists and not any([event, role]):
             errors.append("User exists but no event and role to assign the"
                           " user to was provided")
+        else:
+            # check for duplicate Task
+            try:
+                Task.objects.get(event__slug=event, role__name=role,
+                                 person=person)
+            except Task.DoesNotExist:
+                pass
+            else:
+                errors.append("Existing person {2} already has role {0} in "
+                              "event {1}".format(role, event, person))
 
         if (event and not role) or (role and not event):
             errors.append("Must have both or either of event ({0}) and role"

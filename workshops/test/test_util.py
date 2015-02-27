@@ -305,3 +305,9 @@ Harry,,Potter,harry@hogwarts.edu,foobar,Instructor
                                              event__slug="foobar"))
         self.assertEqual(tasks_pre, tasks_post)
         self.assertEqual(rv.status_code, 400)
+
+        # we need to decode rv.content, because it's bytes, not str
+        _, params = cgi.parse_header(rv['content-type'])
+        charset = params['charset']
+        content = rv.content.decode(charset)
+        self.assertIn('already has role', content)
