@@ -327,6 +327,9 @@ class Task(models.Model):
     person     = models.ForeignKey(Person)
     role       = models.ForeignKey(Role)
 
+    class Meta:
+        unique_together = ("event", "person", "role")
+
     def __str__(self):
         return '{0}/{1}={2}'.format(self.event, self.person, self.role)
 
