@@ -118,7 +118,6 @@ def verify_upload_person_task(data):
             # but we should check if, in case the email matches, family and
             # personal names match, too
 
-            person_exists = False
             try:
                 person = Person.objects.get(email__iexact=email)
 
@@ -138,22 +137,21 @@ def verify_upload_person_task(data):
                             family, person.family)
                 )
 
-            else:
-                person_exists = True
+        if person:
+            if not any([event, role]):
+                errors.append("User exists but no event and role to assign"
+                              " the user to was provided")
 
-        if person_exists and not any([event, role]):
-            errors.append("User exists but no event and role to assign the"
-                          " user to was provided")
-        else:
-            # check for duplicate Task
-            try:
-                Task.objects.get(event__slug=event, role__name=role,
-                                 person=person)
-            except Task.DoesNotExist:
-                pass
             else:
-                errors.append("Existing person {2} already has role {0} in "
-                              "event {1}".format(role, event, person))
+                # check for duplicate Task
+                try:
+                    Task.objects.get(event__slug=event, role__name=role,
+                                     person=person)
+                except Task.DoesNotExist:
+                    pass
+                else:
+                    errors.append("Existing person {2} already has role {0}"
+                                  " in event {1}".format(role, event, person))
 
         if (event and not role) or (role and not event):
             errors.append("Must have both or either of event ({0}) and role"
