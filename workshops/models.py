@@ -150,6 +150,8 @@ class Person(AbstractBaseUser, PermissionsMixin):
     def save(self, *args, **kwargs):
         # save empty string as NULL to the database - otherwise there are
         # issues with UNIQUE constraint failing
+        self.middle = self.middle or None
+        self.family = self.family or ''
         self.email = self.email or None
         super().save(*args, **kwargs)
 
