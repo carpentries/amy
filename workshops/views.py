@@ -302,9 +302,9 @@ def person_bulk_add_confirmation(request):
             personal, middle, family, email, event, role = record
             # "field or None" converts empty strings to None values
             persons_tasks[k] = {
-                'personal': personal or None,
+                'personal': personal,
                 'middle': middle or None,
-                'family': family or None,
+                'family': family,
                 'email': email or None
             }
             # when user wants to drop related event they will send empty string
