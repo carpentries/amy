@@ -8,28 +8,26 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.7/ref/settings/
 """
 
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+import sys
 import os
-import json
 
+# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
-
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = json.loads(os.environ.get('DEBUG', 'true'))
-# For deployment in production: 
-# DEBUG=false SECRET_KEY="..." ./manage.py runserver ...
-
+# Manage the secret key.
+# 1. if AMY_DEBUG is set, use AMY_SECRET_KEY if available, or fall back to saved "secret" key
+# 2. if AMY_DEBUG is not set, must  have AMY_SECRET_KEY
+DEBUG = os.environ.get('AMY_DEBUG', None)
+AMY_SECRET_KEY = os.environ.get('AMY_SECRET_KEY', None)
 if DEBUG:
-  SECRET_KEY = '3l$35+@a%g!(^y^98oi%ei+%+yvtl3y0k^_7-fmx2oj09-ac5@'
+    if AMY_SECRET_KEY:
+        SECRET_KEY = AMY_SECRET_KEY
+    else:
+        SECRET_KEY = '3l$35+@a%g!(^y^98oi%ei+%+yvtl3y0k^_7-fmx2oj09-ac5@'
 else:
-  SECRET_KEY = None
-SECRET_KEY = os.environ.get('SECRET_KEY', SECRET_KEY)
-
+    SECRET_KEY = AMY_SECRET_KEY
+assert SECRET_KEY, 'Cannot figure out SECRET_KEY'
 
 
 TEMPLATE_DEBUG = True
