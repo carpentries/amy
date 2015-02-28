@@ -150,6 +150,7 @@ class Person(AbstractBaseUser, PermissionsMixin):
     def save(self, *args, **kwargs):
         # save empty string as NULL to the database - otherwise there are
         # issues with UNIQUE constraint failing
+        self.middle = self.middle or None
         self.email = self.email or None
         super().save(*args, **kwargs)
 
@@ -326,6 +327,9 @@ class Task(models.Model):
     event      = models.ForeignKey(Event)
     person     = models.ForeignKey(Person)
     role       = models.ForeignKey(Role)
+
+    class Meta:
+        unique_together = ("event", "person", "role")
 
     def __str__(self):
         return '{0}/{1}={2}'.format(self.event, self.person, self.role)

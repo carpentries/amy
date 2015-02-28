@@ -300,11 +300,12 @@ def person_bulk_add_confirmation(request):
         data_update = zip(personals, middles, families, emails, events, roles)
         for k, record in enumerate(data_update):
             personal, middle, family, email, event, role = record
+            # "field or None" converts empty strings to None values
             persons_tasks[k] = {
-                'personal': personal,
-                'middle': middle,
-                'family': family,
-                'email': email
+                'personal': personal or None,
+                'middle': middle or None,
+                'family': family or None,
+                'email': email or None
             }
             # when user wants to drop related event they will send empty string
             # so we should unconditionally accept new value for event even if
@@ -350,7 +351,7 @@ def person_bulk_add_confirmation(request):
                            'persons_tasks': persons_tasks}
                 return render(request,
                               'workshops/person_bulk_add_results.html',
-                              context)
+                              context, status=400)
 
             else:
                 request.session['bulk-add-people'] = None
