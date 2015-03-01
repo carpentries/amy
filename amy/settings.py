@@ -10,7 +10,6 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
-import json
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
@@ -20,7 +19,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = json.loads(os.environ.get('DEBUG', 'true'))
+DEBUG = os.environ.get('DEBUG', 'true')
 # For deployment in production: 
 # DEBUG=false SECRET_KEY="..." ./manage.py runserver ...
 
@@ -29,7 +28,6 @@ if DEBUG:
 else:
   SECRET_KEY = None
 SECRET_KEY = os.environ.get('SECRET_KEY', SECRET_KEY)
-
 
 
 TEMPLATE_DEBUG = True
