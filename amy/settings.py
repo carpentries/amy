@@ -34,7 +34,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', SECRET_KEY)
 
 TEMPLATE_DEBUG = True
 
-ALLOWED_HOSTS = [ '.software-carpentry.org' ]
+ALLOWED_HOSTS = [ os.environ.get('HOSTNAME', '*') ]
 
 
 # Application definition
