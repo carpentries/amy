@@ -19,17 +19,16 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
 
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = json.loads(os.environ.get('DEBUG', 'true'))
-# For deployment in production: 
-# DEBUG=false SECRET_KEY="..." ./manage.py runserver ...
+# SECURITY WARNING: don't run with DEBUG turned on in production!
+DEBUG = json.loads(os.environ.get('AMY_DEBUG', 'true'))
+# For deployment in production:
+# AMY_DEBUG=false AMY_SECRET_KEY="..." ./manage.py runserver ...
 
 if DEBUG:
-  SECRET_KEY = '3l$35+@a%g!(^y^98oi%ei+%+yvtl3y0k^_7-fmx2oj09-ac5@'
+    SECRET_KEY = '3l$35+@a%g!(^y^98oi%ei+%+yvtl3y0k^_7-fmx2oj09-ac5@'
 else:
-  SECRET_KEY = None
-SECRET_KEY = os.environ.get('SECRET_KEY', SECRET_KEY)
-
+    SECRET_KEY = None
+SECRET_KEY = os.environ.get('AMY_SECRET_KEY', SECRET_KEY)
 
 
 TEMPLATE_DEBUG = True
