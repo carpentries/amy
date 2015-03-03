@@ -82,7 +82,7 @@ class TestBase(TestCase):
             personal='Hermione', middle=None, family='Granger',
             email='hermione@granger.co.uk', gender='F', may_contact=True,
             airport=self.airport_0_0, github='herself', twitter='herself',
-            url='http://hermione.org', slug='granger.h', username="granger.h")
+            url='http://hermione.org', username="granger.h")
 
         Award.objects.create(person=self.hermione,
                              badge=self.instructor,
@@ -94,7 +94,7 @@ class TestBase(TestCase):
             personal='Harry', middle=None, family='Potter',
             email='harry@hogwarts.edu', gender='M', may_contact=True,
             airport=self.airport_0_50, github='hpotter', twitter=None,
-            url=None, slug='potter.h', username="potter.h")
+            url=None, username="potter.h")
 
         Award.objects.create(person=self.harry,
                              badge=self.instructor,
@@ -105,8 +105,7 @@ class TestBase(TestCase):
             personal='Ron', middle=None, family='Weasley',
             email='rweasley@ministry.gov.uk', gender='M', may_contact=False,
             airport=self.airport_50_100, github=None, twitter=None,
-            url='http://geocities.com/ron_weas', slug='weasley.ron',
-            username="weasley.ron")
+            url='http://geocities.com/ron_weas', username="weasley.ron")
 
         Award.objects.create(person=self.ron,
                              badge=self.instructor,

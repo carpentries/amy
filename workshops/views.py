@@ -618,7 +618,9 @@ def _export_badges():
     result = {}
     for badge in Badge.objects.all():
         persons = Person.objects.filter(award__badge_id=badge.id)
-        result[badge.name] = [{"user" : p.slug, "name" : p.get_full_name()} for p in persons]
+        result[badge.name] = [
+            {"user": p.username, "name": p.get_full_name()} for p in persons
+        ]
     return result
 
 
