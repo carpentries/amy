@@ -10,21 +10,30 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+import json
+
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '3l$35+@a%g!(^y^98oi%ei+%+yvtl3y0k^_7-fmx2oj09-ac5@'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# SECURITY WARNING: don't run with DEBUG turned on in production!
+DEBUG = json.loads(os.environ.get('AMY_DEBUG', 'true'))
+# For deployment in production:
+# AMY_DEBUG=false AMY_SECRET_KEY="..." ./manage.py runserver ...
+
+if DEBUG:
+    SECRET_KEY = '3l$35+@a%g!(^y^98oi%ei+%+yvtl3y0k^_7-fmx2oj09-ac5@'
+else:
+    SECRET_KEY = None
+SECRET_KEY = os.environ.get('AMY_SECRET_KEY', SECRET_KEY)
+
 
 TEMPLATE_DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [ os.environ.get('HOSTNAME', '*') ]
 
 
 # Application definition
