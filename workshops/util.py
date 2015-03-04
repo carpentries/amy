@@ -2,7 +2,14 @@
 from math import pi, sin, cos, acos
 import csv
 
-from .models import Event, Role, Person
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import IntegrityError, transaction
+
+from .models import Event, Role, Person, Task
+
+
+class InternalError(Exception):
+    pass
 
 
 def earth_distance(pos1, pos2):
@@ -46,76 +53,195 @@ def upload_person_task_csv(stream):
 
     Also return a list of fields from Person.PERSON_UPLOAD_FIELDS for which
     no data was given.
-
     """
-    persons_tasks = []
 
+    result = []
     reader = csv.DictReader(stream)
-    empty_fields = []
+    empty_fields = set()
+
     for row in reader:
-        person_fields = {}
+        entry = {}
         for col in Person.PERSON_UPLOAD_FIELDS:
-            try:
-                person_fields[col] = row[col].strip()
-            except KeyError:
-                if col not in empty_fields:
-                    empty_fields.append(col)
-        entry = {'person': person_fields, 'event': row.get('event', None),
-                 'role': row.get('role', None), 'errors': None}
-        persons_tasks.append(entry)
-    return persons_tasks, empty_fields
+            if col in row:
+                entry[col] = row[col].strip()
+            else:
+                entry[col] = None
+                empty_fields.add(col)
+
+        for col in Person.PERSON_TASK_EXTRA_FIELDS:
+            entry[col] = row.get(col, None)
+        entry['errors'] = None
+
+        result.append(entry)
+
+    return result, list(empty_fields)
 
 
 def verify_upload_person_task(data):
     """
     Verify that uploaded data is correct.  Show errors by populating ``errors``
-    dictionary item.
-
-    This function changes ``data`` in place; ``data`` is a list, so it's
-    passed by a reference.  This means any changes to ``data`` we make in
-    here don't need to be returned via ``return`` statement.
+    dictionary item.  This function changes ``data`` in place.
     """
 
     errors_occur = False
-
     for item in data:
         errors = []
-        event, role = item.get('event', None), item.get('role', None)
-        try:
-            email = item['person'].get('email', None)
-        except KeyError:
-            email = None
-            errors.append("'person' key not in item")
 
+        event = item.get('event', None)
         if event:
             try:
                 Event.objects.get(slug=event)
             except Event.DoesNotExist:
-                errors.append(u'Event with slug {} does not exist.'
+                errors.append(u'Event with slug {0} does not exist.'
                               .format(event))
+
+        role = item.get('role', None)
         if role:
             try:
                 Role.objects.get(name=role)
             except Role.DoesNotExist:
-                errors.append(u'Role with name {} does not exist.'.format(role))
+                errors.append(u'Role with name {0} does not exist.'
+                              .format(role))
             except Role.MultipleObjectsReturned:
-                errors.append(u'More than one role named {} exists.'
+                errors.append(u'More than one role named {0} exists.'
                               .format(role))
 
+        # check if the user exists, and if so: check if existing user's
+        # personal and family names are the same as uploaded
+        email = item.get('email', None)
+        personal = item.get('personal', None)
+        middle = item.get('middle', None)
+        family = item.get('family', None)
+        person = None
         if email:
+            # we don't have to check if the user exists in the database
+            # but we should check if, in case the email matches, family and
+            # personal names match, too
+
             try:
-                Person.objects.get(email__iexact=email)
-                errors.append("User with email {} already exists."
-                              .format(email))
+                person = Person.objects.get(email__iexact=email)
+
+                assert person.personal == personal
+                assert person.middle == middle
+                assert person.family == family
+
             except Person.DoesNotExist:
-                # we want the email to be case-insensitive unique
+                # in this case we need to add the user
                 pass
 
-        if errors:
-            # copy the errors just to be safe
-            item['errors'] = errors[:]
-            if not errors_occur:
-                errors_occur = True
+            except AssertionError:
+                errors.append(
+                    "Personal, middle or family name of existing user don't"
+                    " match: {0} vs {1}, {2} vs {3}, {4} vs {5}"
+                    .format(personal, person.personal, middle, person.middle,
+                            family, person.family)
+                )
 
-    # indicate there were some errors
+        if person:
+            if not any([event, role]):
+                errors.append("User exists but no event and role to assign"
+                              " the user to was provided")
+
+            else:
+                # check for duplicate Task
+                try:
+                    Task.objects.get(event__slug=event, role__name=role,
+                                     person=person)
+                except Task.DoesNotExist:
+                    pass
+                else:
+                    errors.append("Existing person {2} already has role {0}"
+                                  " in event {1}".format(role, event, person))
+
+        if (event and not role) or (role and not event):
+            errors.append("Must have both or either of event ({0}) and role"
+                          " ({1})".format(event, role))
+
+        if errors:
+            errors_occur = True
+            item['errors'] = errors
+
     return errors_occur
+
+
+def create_uploaded_persons_tasks(data):
+    """
+    Create persons and tasks from upload data.
+    """
+
+    # Quick sanity check.
+    if any([row.get('errors') for row in data]):
+        raise InternalError('Uploaded data contains errors, cancelling upload')
+
+    persons_created = []
+    tasks_created = []
+    with transaction.atomic():
+        for row in data:
+            try:
+                fields = {key: row[key] for key in Person.PERSON_UPLOAD_FIELDS}
+                fields['username'] = create_username(row['personal'],
+                                                     row['family'])
+                if fields['email']:
+                    # we should use existing Person or create one
+                    p, created = Person.objects.get_or_create(
+                        email=fields['email'], defaults=fields
+                    )
+
+                    if created:
+                        persons_created.append(p)
+
+                else:
+                    # we should create a new Person without any email provided
+                    p = Person(**fields)
+                    p.save()
+                    persons_created.append(p)
+
+                if row['event'] and row['role']:
+                    e = Event.objects.get(slug=row['event'])
+                    r = Role.objects.get(name=row['role'])
+                    t = Task(person=p, event=e, role=r)
+                    t.save()
+                    tasks_created.append(t)
+
+            except IntegrityError as e:
+                raise IntegrityError('{0} (for {1})'.format(str(e), row))
+
+            except ObjectDoesNotExist as e:
+                raise ObjectDoesNotExist('{0} (for {1})'.format(str(e), row))
+
+    return persons_created, tasks_created
+
+
+def create_username(personal, family):
+    '''Generate unique username.'''
+    stem = normalize_name(family) + '.' + normalize_name(personal)
+    counter = None
+    while True:
+        try:
+            if counter is None:
+                username = stem
+                counter = 1
+            else:
+                counter += 1
+                username = '{0}.{1}'.format(stem, counter)
+            Person.objects.get(username=username)
+        except ObjectDoesNotExist:
+            break
+
+    if any([ord(c) >= 128 for c in username]):
+        raise InternalError('Normalized username still contains non-normal '
+                            'characters "{0}"'.format(username))
+
+    return username
+
+
+def normalize_name(name):
+    '''Get rid of spaces, funky characters, etc.'''
+    name = name.strip()
+    for (accented, flat) in [(' ', '-')]:
+        name = name.replace(accented, flat)
+
+    # We should use lower-cased username, because it directly corresponds to
+    # some files Software Carpentry stores about some people - and, as we know,
+    # some filesystems are not case-sensitive.
+    return name.lower()

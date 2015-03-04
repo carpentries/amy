@@ -9,7 +9,7 @@ from django.contrib.sessions.serializers import JSONSerializer
 from django.test import TestCase
 from django.core.urlresolvers import reverse
 
-from ..models import Site, Event, Role, Person
+from ..models import Site, Event, Role, Person, Task
 from ..util import upload_person_task_csv, verify_upload_person_task
 
 from .base import TestBase
@@ -19,7 +19,7 @@ class UploadPersonTaskCSVTestCase(TestCase):
     def compute_from_string(self, csv_str):
         ''' wrap up buffering the raw string & parsing '''
         csv_buf = StringIO(csv_str)
-        # compute & return
+        # compute and return
         return upload_person_task_csv(csv_buf)
 
     def test_basic_parsing(self):
@@ -33,10 +33,7 @@ jane,a,doe,janedoe@email.com"""
         self.assertEqual(len(person_tasks), 2)
 
         person = person_tasks[0]
-        self.assertSetEqual(set(('person', 'role', 'event', 'errors')), set(person.keys()))
-
-        person_dict = person['person']
-        self.assertSetEqual(set(Person.PERSON_UPLOAD_FIELDS), set(person_dict.keys()))
+        self.assertTrue(set(person.keys()).issuperset(set(Person.PERSON_UPLOAD_FIELDS)))
 
     def test_csv_without_required_field(self):
         ''' All fields in Person.PERSON_UPLOAD_FIELDS must be in csv '''
@@ -58,7 +55,7 @@ john,m,doe,john@doe.com"""
 john,,doe,johndoe@email.com"""
         person_tasks, _ = self.compute_from_string(csv)
         person = person_tasks[0]
-        self.assertEqual(person['person']['middle'], '')
+        self.assertEqual(person['middle'], '')
 
     def test_serializability_of_parsed(self):
         csv = """personal,middle,family,email
@@ -124,20 +121,9 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
         # make sure 'errors' wasn't set
         self.assertIsNone(good_data[0]['errors'])
 
-    def test_verify_data_has_no_person_key(self):
+    def test_verify_event_doesnt_exist(self):
         bad_data = self.make_data()
-        del bad_data[0]['person']
-        has_errors = verify_upload_person_task(bad_data)
-        self.assertTrue(has_errors)
-
-        errors = bad_data[0]['errors']
-        # 1 error, 'person' in it
-        self.assertTrue(len(errors) == 1)
-        self.assertTrue('person' in errors[0])
-
-    def test_verify_event_dne(self):
-        bad_data = self.make_data()
-        bad_data[0]['event'] = 'dne'
+        bad_data[0]['event'] = 'no-such-event'
         has_errors = verify_upload_person_task(bad_data)
         self.assertTrue(has_errors)
 
@@ -145,7 +131,7 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
         self.assertTrue(len(errors) == 1)
         self.assertTrue('Event with slug' in errors[0])
 
-    def test_very_role_dne(self):
+    def test_verify_role_doesnt_exist(self):
         bad_data = self.make_data()
         bad_data[0]['role'] = 'foobar'
 
@@ -156,21 +142,52 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
         self.assertTrue(len(errors) == 1)
         self.assertTrue('Role with name' in errors[0])
 
-    def test_verify_email_exists(self):
+    def test_verify_email_caseinsensitive_matches(self):
         bad_data = self.make_data()
         # test both matching and case-insensitive matching
         for email in ('harry@hogwarts.edu', 'HARRY@hogwarts.edu'):
-            bad_data[0]['person']['email'] = 'harry@hogwarts.edu'
+            bad_data[0]['email'] = email
+            bad_data[0]['personal'] = 'Harry'
+            bad_data[0]['middle'] = None
+            bad_data[0]['family'] = 'Potter'
 
             has_errors = verify_upload_person_task(bad_data)
-            self.assertTrue(has_errors)
+            self.assertFalse(has_errors)
 
-            errors = bad_data[0]['errors']
-            self.assertTrue(len(errors) == 1)
-            self.assertTrue('User with email' in errors[0])
+    def test_verify_name_matching_existing_user(self):
+        bad_data = self.make_data()
+        bad_data[0]['email'] = 'harry@hogwarts.edu'
+        has_errors = verify_upload_person_task(bad_data)
+        self.assertTrue(has_errors)
+        errors = bad_data[0]['errors']
+        self.assertEqual(len(errors), 1)
+        self.assertTrue("Personal, middle or family name of existing user"
+                        " don't match" in errors[0])
+
+    def test_verify_existing_user_has_workshop_role_provided(self):
+        bad_data = [
+            {
+                'email': 'harry@hogwarts.edu',
+                'personal': 'Harry',
+                'middle': None,
+                'family': 'Potter',
+                'event': '',
+                'role': '',
+            }
+        ]
+        has_errors = verify_upload_person_task(bad_data)
+        self.assertTrue(has_errors)
+        errors = bad_data[0]['errors']
+        self.assertEqual(len(errors), 1)
+        self.assertTrue("User exists but no event and role to assign"
+                        in errors[0])
 
 
 class BulkUploadUsersViewTestCase(CSVBulkUploadTestBase):
+
+    def setUp(self):
+        super().setUp()
+        Role.objects.create(name='Helper')
 
     def test_event_name_dropped(self):
         """
@@ -188,10 +205,10 @@ class BulkUploadUsersViewTestCase(CSVBulkUploadTestBase):
         # send exactly what's in 'data', except for the 'event' field: leave
         # this one empty
         payload = {
-            "personal": data[0]['person']['personal'],
-            "middle": data[0]['person']['middle'],
-            "family": data[0]['person']['family'],
-            "email": data[0]['person']['email'],
+            "personal": data[0]['personal'],
+            "middle": data[0]['middle'],
+            "family": data[0]['family'],
+            "email": data[0]['email'],
             "event": "",
             "role": "",
             "verify": "Verify",
@@ -202,3 +219,95 @@ class BulkUploadUsersViewTestCase(CSVBulkUploadTestBase):
         charset = params['charset']
         content = rv.content.decode(charset)
         self.assertNotIn('foobar', content)
+
+    def test_upload_existing_user(self):
+        """
+        Check if uploading existing users ends up with them having new role
+        assigned.
+
+        This is a special case of upload feature: if user uploads a person that
+        already exists we should only assign new role and event to that person.
+        """
+        csv = """personal,middle,family,email,event,role
+Harry,,Potter,harry@hogwarts.edu,foobar,Helper
+"""
+        data, _ = upload_person_task_csv(StringIO(csv))
+
+        # self.client is authenticated user so we have access to the session
+        store = self.client.session
+        store['bulk-add-people'] = data
+        store.save()
+
+        # send exactly what's in 'data'
+        payload = {
+            "personal": data[0]['personal'],
+            "middle": data[0]['middle'],
+            "family": data[0]['family'],
+            "email": data[0]['email'],
+            "event": data[0]['event'],
+            "role": data[0]['role'],
+            "confirm": "Confirm",
+        }
+
+        people_pre = set(Person.objects.all())
+        tasks_pre = set(Task.objects.filter(person=self.harry,
+                                            event__slug="foobar"))
+
+        rv = self.client.post(reverse('person_bulk_add_confirmation'), payload,
+                              follow=True)
+        self.assertEqual(rv.status_code, 200)
+
+        people_post = set(Person.objects.all())
+        tasks_post = set(Task.objects.filter(person=self.harry,
+                                             event__slug="foobar"))
+
+        # make sure no-one new was added
+        self.assertSetEqual(people_pre, people_post)
+
+        # make sure that Harry was assigned a new role
+        self.assertNotEqual(tasks_pre, tasks_post)
+
+    def test_upload_existing_user_existing_task(self):
+        """
+        Check if uploading existing user and assigning existing task to that
+        user fails.
+        """
+        foobar = Event.objects.get(slug="foobar")
+        instructor = Role.objects.get(name="Instructor")
+        Task.objects.create(person=self.harry, event=foobar, role=instructor)
+
+        csv = """personal,middle,family,email,event,role
+Harry,,Potter,harry@hogwarts.edu,foobar,Instructor
+"""
+        data, _ = upload_person_task_csv(StringIO(csv))
+
+        # self.client is authenticated user so we have access to the session
+        store = self.client.session
+        store['bulk-add-people'] = data
+        store.save()
+
+        # send exactly what's in 'data'
+        payload = {
+            "personal": data[0]['personal'],
+            "middle": data[0]['middle'],
+            "family": data[0]['family'],
+            "email": data[0]['email'],
+            "event": data[0]['event'],
+            "role": data[0]['role'],
+            "confirm": "Confirm",
+        }
+
+        tasks_pre = set(Task.objects.filter(person=self.harry,
+                                            event__slug="foobar"))
+        rv = self.client.post(reverse('person_bulk_add_confirmation'), payload,
+                              follow=True)
+        tasks_post = set(Task.objects.filter(person=self.harry,
+                                             event__slug="foobar"))
+        self.assertEqual(tasks_pre, tasks_post)
+        self.assertEqual(rv.status_code, 400)
+
+        # we need to decode rv.content, because it's bytes, not str
+        _, params = cgi.parse_header(rv['content-type'])
+        charset = params['charset']
+        content = rv.content.decode(charset)
+        self.assertIn('already has role', content)

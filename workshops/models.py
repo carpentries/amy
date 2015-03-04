@@ -97,7 +97,8 @@ class Person(AbstractBaseUser, PermissionsMixin):
 
     # These attributes should always contain field names of Person
     PERSON_UPLOAD_FIELDS = ('personal', 'middle', 'family', 'email')
-    PERSON_TASK_UPLOAD_FIELDS = PERSON_UPLOAD_FIELDS + ('event', 'role')
+    PERSON_TASK_EXTRA_FIELDS = ('event', 'role')
+    PERSON_TASK_UPLOAD_FIELDS = PERSON_UPLOAD_FIELDS + PERSON_TASK_EXTRA_FIELDS
 
     personal    = models.CharField(max_length=STR_LONG)
     middle      = models.CharField(max_length=STR_LONG, null=True, blank=True)
@@ -133,7 +134,7 @@ class Person(AbstractBaseUser, PermissionsMixin):
         email = ''
         if self.email is not None:
             email = ' <{0}>'.format(self.email)
-        return '{0}{1}'.format(self.get_full_name(), email)
+        return '{0}:{1}{2}'.format(self.username, self.get_full_name(), email)
 
     def get_absolute_url(self):
         return reverse('person_details', args=[str(self.id)])
@@ -144,6 +145,14 @@ class Person(AbstractBaseUser, PermissionsMixin):
         Required for logging into admin panel at '/admin/'.
         """
         return self.is_superuser
+
+    def save(self, *args, **kwargs):
+        # save empty string as NULL to the database - otherwise there are
+        # issues with UNIQUE constraint failing
+        self.middle = self.middle or None
+        self.email = self.email or None
+        super().save(*args, **kwargs)
+
 
 #------------------------------------------------------------
 
@@ -317,6 +326,9 @@ class Task(models.Model):
     event      = models.ForeignKey(Event)
     person     = models.ForeignKey(Person)
     role       = models.ForeignKey(Role)
+
+    class Meta:
+        unique_together = ("event", "person", "role")
 
     def __str__(self):
         return '{0}/{1}={2}'.format(self.event, self.person, self.role)

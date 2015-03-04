@@ -31,8 +31,10 @@ from workshops.models import \
     Task
 from workshops.check import check_file
 from workshops.forms import SearchForm, InstructorsForm, PersonBulkAddForm
-from workshops.util import (earth_distance, upload_person_task_csv,
-                            verify_upload_person_task)
+from workshops.util import (
+    earth_distance, upload_person_task_csv,  verify_upload_person_task,
+    create_uploaded_persons_tasks, InternalError
+)
 
 #------------------------------------------------------------
 
@@ -298,11 +300,12 @@ def person_bulk_add_confirmation(request):
         data_update = zip(personals, middles, families, emails, events, roles)
         for k, record in enumerate(data_update):
             personal, middle, family, email, event, role = record
-            persons_tasks[k]['person'] = {
+            # "field or None" converts empty strings to None values
+            persons_tasks[k] = {
                 'personal': personal,
-                'middle': middle,
+                'middle': middle or None,
                 'family': family,
-                'email': email
+                'email': email or None
             }
             # when user wants to drop related event they will send empty string
             # so we should unconditionally accept new value for event even if
@@ -329,28 +332,16 @@ def person_bulk_add_confirmation(request):
             return render(request, 'workshops/person_bulk_add_results.html',
                           context)
 
+        # there must be "confirm" and no "cancel" in POST in order to save
         elif (request.POST.get('confirm', None) and
-                not request.POST.get('cancel', None)):
-            # there must be "confirm" and no "cancel" in POST in order to save
-
+              not request.POST.get('cancel', None)):
             try:
-                records = 0
-                with transaction.atomic():
-                    for row in persons_tasks:
-                        # create person
-                        p = Person(**row['person'])
-                        p.save()
-                        records += 1
-
-                        # create task if data supplied
-                        if row['event'] and row['role']:
-                            e = Event.objects.get(slug=row['event'])
-                            r = Role.objects.get(name=row['role'])
-                            t = Task(person=p, event=e, role=r)
-                            t.save()
-                            records += 1
-
-            except (IntegrityError, ObjectDoesNotExist) as e:
+                # verification now makes something more than database
+                # constraints so we should call it first
+                verify_upload_person_task(persons_tasks)
+                persons_created, tasks_created = \
+                    create_uploaded_persons_tasks(persons_tasks)
+            except (IntegrityError, ObjectDoesNotExist, InternalError) as e:
                 messages.add_message(request, messages.ERROR,
                                      "Error saving data to the database: {}. "
                                      "Please make sure to fix all errors "
@@ -360,13 +351,13 @@ def person_bulk_add_confirmation(request):
                            'persons_tasks': persons_tasks}
                 return render(request,
                               'workshops/person_bulk_add_results.html',
-                              context)
+                              context, status=400)
 
             else:
                 request.session['bulk-add-people'] = None
                 messages.add_message(request, messages.SUCCESS,
-                                     "Successfully bulk-loaded {} records."
-                                     .format(records))
+                                     "Successfully uploaded {0} persons and {1} tasks."
+                                     .format(len(persons_created), len(tasks_created)))
                 return redirect('person_bulk_add')
 
         else:
