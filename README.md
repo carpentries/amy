@@ -1,4 +1,4 @@
-<img src="https://raw.githubusercontent.com/gvwilson/amy/master/amy-logo.png" />
+![](workshops/static/amy-logo.png)
 
 [Software Carpentry](http://software-carpentry.org) is now running three events a week.
 That number could double by the end of 2015
@@ -21,6 +21,10 @@ To get started:
 
 1.  Install Django and its dependencies.
 
+    ~~~
+    $ sudo python -m pip install -r requirements.txt
+    ~~~
+
 2.  Setup your local database.  There are two ways you can do this.
 
     1. If you have access to the legacy data:
@@ -28,28 +32,36 @@ To get started:
         1. Create an empty database by running:
 
            ~~~
-           make migrations
+           $ make migrations
            ~~~
 
         2. Fill that database by running:
 
            ~~~
-           make import
+           $ make import
            ~~~
 
     2. Otherwise set up the redacted data with:
 
        ~~~
-       make database
+       $ make database
        ~~~
+
+3.  Create a administrator account.
+
+    ~~~
+    $ python manage.py createsuperuser
+    ~~~
 
 4.  Start a local Django development server by running:
 
     ~~~
-    python manage.py runserver
+    $ python manage.py runserver
     ~~~
 
 5.  Open [http://localhost:8000/workshops/](http://localhost:8000/workshops/) in your browser and start clicking.
+
+    Use the administrator account that you created.
 
 **Note**: please [check with us](mailto:gvwilson@software-carpentry.org)
 or open a [discussion issue](https://github.com/swcarpentry/amy/labels/discussion)
