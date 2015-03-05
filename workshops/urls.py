@@ -40,5 +40,7 @@ urlpatterns = [
 
     url(r'^search/?$', views.search, name='search'),
 
+    url(r'^debrief/?$', views.debrief, name='debrief'),
+
     url(r'^export/(?P<name>[\w\.-]+)/?$', views.export, name='export'),
 ]
