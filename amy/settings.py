@@ -33,7 +33,10 @@ SECRET_KEY = os.environ.get('AMY_SECRET_KEY', SECRET_KEY)
 
 TEMPLATE_DEBUG = True
 
-ALLOWED_HOSTS = [ os.environ.get('HOSTNAME', '*') ]
+ALLOWED_HOSTS = [ 
+    'software-carpentry.org',
+    'software-carpentry.org.'
+]
 
 
 # Application definition
