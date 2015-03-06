@@ -30,7 +30,7 @@
 	</tr>
     {% endfor %}
     </table>
-    <a href="mailto:{% for task in all_tasks %}{{ task.person.email }}{% if not last %},{% endif %}{% endfor %}">Send email</a>
+    <a href="mailto:{% for task in all_tasks %}{% if task.person.email %}{{ task.person.email }}{% if not last %},{% endif %}{% endif %}{% endfor %}">Send email</a>
 {% else %}
     <p>No instructors for debrief section.</p>
 {% endif %}

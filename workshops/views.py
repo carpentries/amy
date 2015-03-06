@@ -609,43 +609,26 @@ def search(request):
 def debrief(request):
     '''Show who taught between begin_date and end_date.'''
 
-    tasks_selected = []
-
     if request.method == 'POST':
         form = DebriefForm(request.POST)
         if form.is_valid():
-            begin_year, begin_month, begin_day = form.cleaned_data['begin_date'].split("-")
-            end_year, end_month, end_day = form.cleaned_data['end_date'].split("-")
-            begin_date = datetime.date(int(begin_year),
-                                       int(begin_month),
-                                       int(begin_day))
-            end_date = datetime.date(int(end_year),
-                                       int(end_month),
-                                       int(end_day))
-
-            all_tasks = Task.objects.order_by('event', 'person', 'role')
-
-            for task in all_tasks:
-                if (task.event.start is None or task.event.end is None):
-                    continue
-
-                begin_delta = task.event.end - begin_date
-                end_delta = end_date - task.event.end
-
-                if (begin_delta.days > 0
-                        and end_delta.days > 0
-                        and task.role.name == "instructor"):
-                    tasks_selected.append(task)
+            tasks = Task.objects.filter(
+                    event__end__gte=form.cleaned_data['begin_date'],
+                    event__start__lte=form.cleaned_data['end_date'],
+                    role__name='instructor',
+                    person__may_contact=True,
+                    ).order_by('event', 'person', 'role')
         else:
             pass # FIXME: error message
 
     # if a GET (or any other method) we'll create a blank form
     else:
         form = DebriefForm()
+        tasks = None
 
     context = {'title' : 'Debrief',
                'form' : form,
-               'all_tasks' : tasks_selected}
+               'all_tasks' : tasks}
     return render(request, 'workshops/debrief.html', context)
 
 #------------------------------------------------------------
