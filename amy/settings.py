@@ -33,7 +33,7 @@ SECRET_KEY = os.environ.get('AMY_SECRET_KEY', SECRET_KEY)
 
 TEMPLATE_DEBUG = True
 
-ALLOWED_HOSTS = [ 
+ALLOWED_HOSTS = [
     'software-carpentry.org',
     'software-carpentry.org.'
 ]
@@ -62,6 +62,19 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
+
+# WARNING: in Django 1.8 processors get moved from ``django.core`` to
+#          ``django.template``.
+TEMPLATE_CONTEXT_PROCESSORS = [
+    "django.contrib.auth.context_processors.auth",
+    "django.core.context_processors.debug",
+    "django.core.context_processors.i18n",
+    "django.core.context_processors.media",
+    "django.core.context_processors.static",
+    "django.core.context_processors.tz",
+    "django.core.context_processors.request",
+    "django.contrib.messages.context_processors.messages"
+]
 
 ROOT_URLCONF = 'amy.urls'
 
