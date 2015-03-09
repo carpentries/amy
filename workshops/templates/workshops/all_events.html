@@ -7,6 +7,7 @@
 {% endblock %}
 
 {% block content %}
+    <p><a href="{% url 'event_add' %}" class="btn btn-primary">Add a new event</a></p>
 {% if all_events %}
     <table class="table table-striped">
         <tr>
@@ -71,8 +72,8 @@
          {% endif %}
       </span>
     </div>
+    <p><a href="{% url 'event_add' %}" class="btn btn-primary">Add a new event</a></p>
 {% else %}
     <p>No events.</p>
 {% endif %}
-<p class="add-new"><a href="{% url 'event_add' %}">Add a new event</a></p>
 {% endblock %}

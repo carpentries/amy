@@ -7,6 +7,7 @@
 {% endblock %}
 
 {% block content %}
+    <p><a href="{% url 'site_add' %}" class="btn btn-primary">Add a new site</a></p>
 {% if all_sites %}
     <table class="table table-striped">
         <tr>
@@ -37,8 +38,8 @@
          {% endif %}
       </span>
     </div>
+    <p><a href="{% url 'site_add' %}" class="btn btn-primary">Add a new site</a></p>
 {% else %}
     <p>No sites.</p>
 {% endif %}
-<p class="add-new"><a href="{% url 'site_add' %}">Add a new site</a></p>
 {% endblock %}
