@@ -1,4 +1,5 @@
 import csv
+import datetime
 import io
 import re
 import yaml
@@ -30,7 +31,7 @@ from workshops.models import \
     Skill, \
     Task
 from workshops.check import check_file
-from workshops.forms import SearchForm, InstructorsForm, PersonBulkAddForm
+from workshops.forms import SearchForm, DebriefForm, InstructorsForm, PersonBulkAddForm
 from workshops.util import (
     earth_distance, upload_person_task_csv,  verify_upload_person_task,
     create_uploaded_persons_tasks, InternalError
@@ -601,6 +602,34 @@ def search(request):
                'events' : events,
                'persons' : persons}
     return render(request, 'workshops/search.html', context)
+
+#------------------------------------------------------------
+
+@login_required
+def debrief(request):
+    '''Show who taught between begin_date and end_date.'''
+
+    if request.method == 'POST':
+        form = DebriefForm(request.POST)
+        if form.is_valid():
+            tasks = Task.objects.filter(
+                    event__end__gte=form.cleaned_data['begin_date'],
+                    event__start__lte=form.cleaned_data['end_date'],
+                    role__name='instructor',
+                    person__may_contact=True,
+                    ).order_by('event', 'person', 'role')
+        else:
+            pass # FIXME: error message
+
+    # if a GET (or any other method) we'll create a blank form
+    else:
+        form = DebriefForm()
+        tasks = None
+
+    context = {'title' : 'Debrief',
+               'form' : form,
+               'all_tasks' : tasks}
+    return render(request, 'workshops/debrief.html', context)
 
 #------------------------------------------------------------
 

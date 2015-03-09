@@ -71,3 +71,11 @@ class SearchForm(forms.Form):
     in_persons = forms.BooleanField(label='in persons',
                                     required=False,
                                     initial=True)
+
+class DebriefForm(forms.Form):
+    '''Represent general debrief form.'''
+
+    begin_date = forms.CharField(label='Begin date as YYYY-MM-DD',
+                           max_length=10)
+    end_date = forms.CharField(label='End date as YYYY-MD-DD',
+                           max_length=10)
