@@ -20,8 +20,23 @@
           <ul class="nav navbar-nav">
             {% navbar_element "Dashboard" "index" %}
             {% navbar_element "Events" "all_events" %}
-            {% navbar_element "Persons" "all_persons" %}
             {% navbar_element "Sites" "all_sites" %}
+            {% navbar_element "Persons" "all_persons" %}
+            {% navbar_element "Tasks" "all_tasks" %}
+            {% navbar_element "Badges" "all_badges" %}
+            {% navbar_element "Airports" "all_airports" %}
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Utilities <span class="caret"></span></a>
+              <ul class="dropdown-menu" role="menu">
+                {% navbar_element "Bulk add persons" "person_bulk_add" %}
+                {% navbar_element "Find instructors" "instructors" %}
+                {% url "export" name="badges" as export_badges_url %}
+                {% url "export" name="instructors" as export_instructors_url %}
+                {% navbar_element_url "Export badges" export_badges_url %}
+                {% navbar_element_url "Export instructors" export_instructors_url %}
+                {% navbar_element "Search" "search" %}
+              </ul>
+            </li>
           </ul>
           <form class="navbar-form navbar-left" role="search" method="post" action="{% url "search" %}">
             {% csrf_token %}

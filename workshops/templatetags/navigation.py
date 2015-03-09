@@ -8,10 +8,20 @@ register = template.Library()
 def navbar_element(context, title, url_name):
     """
     Insert Bootstrap's `<li><a>...</a></li>` with specific classes and
-    accessibility elements.
+    accessibility elements.  This tag takes a URL name (with no arguments) that
+    is later reversed into proper URL.
+    """
+    url = reverse(url_name)
+    return navbar_element_url(context, title, url)
+
+
+@register.simple_tag(takes_context=True)
+def navbar_element_url(context, title, url):
+    """
+    Insert Bootstrap's `<li><a>...</a></li>` with specific classes and
+    accessibility elements.  This tag takes a pre-made URL as an argument.
     """
     request = context['request']
-    url = reverse(url_name)
 
     active = ""
     screen_reader = ""
