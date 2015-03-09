@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 import os
 import json
 
+from django.conf import global_settings
+
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 
@@ -65,16 +67,9 @@ MIDDLEWARE_CLASSES = (
 
 # WARNING: in Django 1.8 processors get moved from ``django.core`` to
 #          ``django.template``.
-TEMPLATE_CONTEXT_PROCESSORS = [
-    "django.contrib.auth.context_processors.auth",
-    "django.core.context_processors.debug",
-    "django.core.context_processors.i18n",
-    "django.core.context_processors.media",
-    "django.core.context_processors.static",
-    "django.core.context_processors.tz",
+TEMPLATE_CONTEXT_PROCESSORS = global_settings.TEMPLATE_CONTEXT_PROCESSORS + (
     "django.core.context_processors.request",
-    "django.contrib.messages.context_processors.messages"
-]
+)
 
 ROOT_URLCONF = 'amy.urls'
 
