@@ -270,7 +270,7 @@ Harry,,Potter,harry@hogwarts.edu,foobar,Helper
     def test_upload_existing_user_existing_task(self):
         """
         Check if uploading existing user and assigning existing task to that
-        user fails.
+        user is silent (ie. no Task nor Person is being created).
         """
         foobar = Event.objects.get(slug="foobar")
         instructor = Role.objects.get(name="Instructor")
@@ -299,15 +299,14 @@ Harry,,Potter,harry@hogwarts.edu,foobar,Instructor
 
         tasks_pre = set(Task.objects.filter(person=self.harry,
                                             event__slug="foobar"))
+        users_pre = set(Person.objects.all())
+
         rv = self.client.post(reverse('person_bulk_add_confirmation'), payload,
                               follow=True)
+
         tasks_post = set(Task.objects.filter(person=self.harry,
                                              event__slug="foobar"))
+        users_post = set(Person.objects.all())
         self.assertEqual(tasks_pre, tasks_post)
-        self.assertEqual(rv.status_code, 400)
-
-        # we need to decode rv.content, because it's bytes, not str
-        _, params = cgi.parse_header(rv['content-type'])
-        charset = params['charset']
-        content = rv.content.decode(charset)
-        self.assertIn('already has role', content)
+        self.assertEqual(users_pre, users_post)
+        self.assertEqual(rv.status_code, 200)
