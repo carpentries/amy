@@ -70,6 +70,47 @@ jane,a,doe,janedoe@email.com"""
             self.fail('Dumping person_tasks to JSON unexpectedly failed!')
 
 
+    def test_no_new_column_added(self):
+        ''' Ensure more number of fields are not added by increasing the number of columns'''
+        csv = """personal,middle,family,email,event,role,phone_no
+john,a,doe,johndoe@email.com,2015-09-01-ttt-online,learner,9991239011
+jane,a,doe,janedoe@email.com,2015-09-01-ttt-online,learner,9991239021"""
+        person_tasks, _ = self.compute_from_string(csv)
+        person = person_tasks[0]
+        self.assertTrue('phone_no' not in person)
+
+    def test_number_of_columns(self):
+        ''' Ensure number of columns remains same in case of empty fields or extra fields '''
+
+        csv = """personal,middle,family,email,event,role,phone_no
+john,a,doe,johndoe@email.com,2015-09-01-ttt-online,learner,9991239011"""
+        person_tasks, _ = self.compute_from_string(csv)
+        person = person_tasks[0]
+        self.assertEqual(len(person),7)
+
+        csv = """personal,middle,family,email,role
+john,a,doe,johndoe@email.com,learner"""
+        person_tasks, _ = self.compute_from_string(csv)
+        person = person_tasks[0]
+        self.assertEqual(len(person),7)
+        self.assertEqual(person['event'],None)
+
+        csv = """personal,middle,family,email
+john,a,doe,johndoe@email.com"""
+        person_tasks, _ = self.compute_from_string(csv)
+        person = person_tasks[0]
+        self.assertEqual(len(person),7)
+        self.assertEqual(person['event'],None)
+        self.assertEqual(person['role'],None)
+
+        csv = """personal,family,email
+john,,doe,johndoe@email.com"""
+        person_tasks, _ = self.compute_from_string(csv)
+        person = person_tasks[0]
+        self.assertEqual(len(person),7)
+
+
+
 class CSVBulkUploadTestBase(TestBase):
     """
     Simply provide necessary setUp and make_data functions that are used in two
@@ -181,7 +222,6 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
         self.assertEqual(len(errors), 1)
         self.assertTrue("User exists but no event and role to assign"
                         in errors[0])
-
 
 class BulkUploadUsersViewTestCase(CSVBulkUploadTestBase):
 
@@ -297,6 +337,8 @@ Harry,,Potter,harry@hogwarts.edu,foobar,Instructor
             "confirm": "Confirm",
         }
 
+
+
         tasks_pre = set(Task.objects.filter(person=self.harry,
                                             event__slug="foobar"))
         rv = self.client.post(reverse('person_bulk_add_confirmation'), payload,
@@ -311,3 +353,114 @@ Harry,,Potter,harry@hogwarts.edu,foobar,Instructor
         charset = params['charset']
         content = rv.content.decode(charset)
         self.assertIn('already has role', content)
+    
+    def test_upload_existing_user_new_task_casesensitive_email(self):
+        """
+        Check if uploading existing user with case sensitive email and assigning new task to that
+        user does not create a new user.
+        """
+        foobar = Event.objects.get(slug="foobar")
+        instructor = Role.objects.get(name="Instructor")
+        Task.objects.create(person=self.harry, event=foobar, role=instructor)
+        
+        test_site = Site.objects.get(fullname='Test Site')
+        Event.objects.create(start=datetime.now(),
+                             site=test_site,
+                             slug='newbar',
+                             admin_fee=200)
+
+        
+        csv = """personal,middle,family,email,event,role
+Harry,,Potter,harry@hogwarts.edu,newbar,Instructor
+"""
+        data, _ = upload_person_task_csv(StringIO(csv))
+
+        # self.client is authenticated user so we have access to the session
+        store = self.client.session
+        store['bulk-add-people'] = data
+        store.save()
+
+        # send exactly what's in 'data'
+        payload = {
+            "personal": data[0]['personal'],
+            "middle": data[0]['middle'],
+            "family": data[0]['family'],
+            "email": data[0]['email'],
+            "event": data[0]['event'],
+            "role": data[0]['role'],
+            "confirm": "Confirm",
+        }
+
+        people_pre = set(Person.objects.all())
+        tasks_pre = set(Task.objects.filter(person=self.harry,role__name="Instructor"))
+        
+        rv = self.client.post(reverse('person_bulk_add_confirmation'), payload,
+                              follow=True)
+        
+        tasks_post = set(Task.objects.filter(person=self.harry,
+                                             role__name="Instructor"))
+        people_post = set(Person.objects.all())
+        
+        self.assertEqual(rv.status_code, 200)
+        
+        #make sure no new people added
+        self.assertEqual(people_pre, people_post)
+        #make sure a new task is added
+        self.assertNotEqual(tasks_pre, tasks_post)
+
+
+    def test_upload_existing_user_new_task_case_insensitive_email(self):
+        """
+        Check if uploading existing user with case sensitive email and assigning new task to that
+        user does not create a new user.
+        """
+
+        foobar = Event.objects.get(slug="foobar")
+        instructor = Role.objects.get(name="Instructor")
+        Task.objects.create(person=self.harry, event=foobar, role=instructor)
+        
+
+        test_site = Site.objects.get(fullname='Test Site')
+        Event.objects.create(start=datetime.now(),
+                             site=test_site,
+                             slug='newbar',
+                             admin_fee=200)
+
+
+        csv = """personal,middle,family,email,event,role
+Harry,,Potter,Harry@hogwarts.edu,newbar,Instructor
+"""
+        data, _ = upload_person_task_csv(StringIO(csv))
+
+        # self.client is authenticated user so we have access to the session
+        store = self.client.session
+        store['bulk-add-people'] = data
+        store.save()
+
+        # send exactly what's in 'data'
+        payload = {
+            "personal": data[0]['personal'],
+            "middle": data[0]['middle'],
+            "family": data[0]['family'],
+            "email": data[0]['email'],
+            "event": data[0]['event'],
+            "role": data[0]['role'],
+            "confirm": "Confirm",
+        }
+
+        people_pre = set(Person.objects.all())
+        tasks_pre = set(Task.objects.filter(person=self.harry,role__name="Instructor"))
+        
+        rv = self.client.post(reverse('person_bulk_add_confirmation'), payload,
+                              follow=True)
+        
+        tasks_post = set(Task.objects.filter(person=self.harry,
+                                             role__name="Instructor"))
+        people_post = set(Person.objects.all())
+        
+        self.assertEqual(rv.status_code, 200)
+        
+        #make sure no new people added
+        self.assertEqual(people_pre, people_post)
+        #make sure a new task is added
+        self.assertNotEqual(tasks_pre, tasks_post)
