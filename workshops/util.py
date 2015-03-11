@@ -88,6 +88,7 @@ def verify_upload_person_task(data):
         errors = []
 
         event = item.get('event', None)
+
         if event:
             try:
                 Event.objects.get(slug=event)
@@ -150,6 +151,7 @@ def verify_upload_person_task(data):
                 except Task.DoesNotExist:
                     pass
                 else:
+
                     errors.append("Existing person {2} already has role {0}"
                                   " in event {1}".format(role, event, person))
 
@@ -184,7 +186,7 @@ def create_uploaded_persons_tasks(data):
                 if fields['email']:
                     # we should use existing Person or create one
                     p, created = Person.objects.get_or_create(
-                        email=fields['email'], defaults=fields
+                        email__iexact=fields['email'], defaults=fields
                     )
 
                     if created:
