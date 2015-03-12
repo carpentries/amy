@@ -88,7 +88,6 @@ def verify_upload_person_task(data):
         errors = []
 
         event = item.get('event', None)
-
         if event:
             try:
                 Event.objects.get(slug=event)
@@ -151,7 +150,6 @@ def verify_upload_person_task(data):
                 except Task.DoesNotExist:
                     pass
                 else:
-
                     errors.append("Existing person {2} already has role {0}"
                                   " in event {1}".format(role, event, person))
 
