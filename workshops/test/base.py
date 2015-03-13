@@ -190,7 +190,7 @@ class TestBase(TestCase):
                     if settings.TEMPLATE_STRING_IF_INVALID in x[1]]
             msg = '"{0}" found in HTML page:\n'.format(settings.TEMPLATE_STRING_IF_INVALID)
             assert not hits, msg + '\n'.join(['{0}: "{1}"'.format(h[0], h[1].rstrip())
-                                                for h in hits])
+                                              for h in hits])
 
         # Make the content safe to parse.
         content = re.sub('<!DOCTYPE [^>]*>', '', content)
