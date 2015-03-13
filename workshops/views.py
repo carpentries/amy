@@ -34,7 +34,7 @@ from workshops.check import check_file
 from workshops.forms import SearchForm, DebriefForm, InstructorsForm, PersonBulkAddForm
 from workshops.util import (
     earth_distance, upload_person_task_csv,  verify_upload_person_task,
-    create_uploaded_persons_tasks, InternalError
+    create_uploaded_persons_tasks, merge_model_objects, InternalError
 )
 
 #------------------------------------------------------------
@@ -375,6 +375,61 @@ def person_bulk_add_confirmation(request):
         return render(request, 'workshops/person_bulk_add_results.html',
                       context)
 
+@login_required
+def person_find_duplicates(request):
+    if request.method == 'GET':
+        dupes_personal = Person.objects.values('personal').annotate(Count('personal')).order_by().filter(personal__count__gt=1)
+        dupes_family = Person.objects.values('family').annotate(Count('family')).order_by().filter(family__count__gt=1)
+        # Identical personal name and family name
+        dupes = Person.objects.filter(personal__in=[item['personal'] for item in dupes_personal]).filter(family__in=[item['family'] for item in dupes_family]).order_by('personal','family')
+        groups = {}
+        for person in dupes:
+            key = person.get_first_last()
+            if key not in groups:
+                groups[key] = []
+            groups[key].append(person)
+        context = {'title' : 'Possible Duplicate Person Entries',
+                   'groups' : groups,
+                   'button' : 'Merge',
+                   'button_style' : 'primary'}
+        return render(request, 'workshops/dupes.html', context)
+    elif request.method == 'POST':
+        if 'Confirm' not in request.POST.keys():
+            post_array = [x for x in request.POST.keys() if x.isdigit()]
+            selected_dupes = Person.objects.filter(id__in=post_array).order_by('personal','family')
+            groups = {}
+            for person in selected_dupes:
+                key = person.get_first_last()
+                if key not in groups:
+                    groups[key] = []
+                groups[key].append(person)
+            groups = {k:v for (k,v) in groups.items() if len(v)>1}
+            if not groups:
+                messages.error(request, 'You must select at least two duplicate entries')
+                return redirect('person_find_duplicates')
+            context = {'title': 'Confirm Merge',
+                    'groups' : groups,
+                    'button' : 'Confirm',
+                    'button_style' : 'success'}
+            return render(request, 'workshops/dupes.html', context)
+        else:
+            post_array = [x for x in request.POST.keys() if x.isdigit()]
+            selected_dupes = Person.objects.filter(id__in=post_array).order_by('personal','family')
+            groups = {}
+            for person in selected_dupes:
+                key = person.get_first_last()
+                if key not in groups:
+                    groups[key] = []
+                groups[key].append(person)
+            groups = {k:v for (k,v) in groups.items() if len(v)>1}
+            for key,group in groups.items():
+                try:
+                    merge_model_objects(group[0],group[1:])
+                except TypeError as e:
+                    messages.error(request, 'Merge failed, nothing was changed: {}'.format(e))
+                    return redirect('person_find_duplicates')
+            messages.success(request, 'Merge success')
+            return redirect('person_find_duplicates')
 
 
 class PersonCreate(LoginRequiredMixin, CreateViewContext):

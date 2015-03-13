@@ -126,6 +126,9 @@ class Person(AbstractBaseUser, PermissionsMixin):
         if self.middle is not None:
             middle = ' {0}'.format(self.middle)
         return '{0}{1} {2}'.format(self.personal, middle, self.family)
+    
+    def get_first_last(self):
+        return '{0}_{1}'.format(self.personal, self.family)
 
     def get_short_name(self):
         return self.personal

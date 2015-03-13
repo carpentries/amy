@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block content %}
-    <p><a href="{% url 'person_add' %}" class="btn btn-primary">Add a new person</a> <a href="{% url 'person_bulk_add' %}" class="btn btn-default">Add many people</a></p>
+    <p><a href="{% url 'person_add' %}" class="btn btn-primary">Add a new person</a> <a href="{% url 'person_bulk_add' %}" class="btn btn-default">Add many people</a> <a href="{% url 'person_find_duplicates' %}" class="btn btn-default">Find possible duplicate entries</a></p>
 {% if all_persons %}
     <table class="table table-striped">
         <tr>
@@ -42,7 +42,7 @@
          {% endif %}
       </span>
     </div>
-    <p><a href="{% url 'person_add' %}" class="btn btn-primary">Add a new person</a> <a href="{% url 'person_bulk_add' %}" class="btn btn-default">Add many people</a></p>
+    <p><a href="{% url 'person_add' %}" class="btn btn-primary">Add a new person</a> <a href="{% url 'person_bulk_add' %}" class="btn btn-default">Add many people</a> <a href="{% url 'person_find_duplicates' %}" class="btn btn-default">Find possible duplicate entries</a></p>
 {% else %}
     <p>No persons.</p>
 {% endif %}

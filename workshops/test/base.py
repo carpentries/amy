@@ -119,6 +119,11 @@ class TestBase(TestCase):
             personal='Peter', middle='Q.', family='Parker',
             email='peter@webslinger.net', gender='O', may_contact=True,
             username="spiderman")
+        
+        self.benreilly = Person.objects.create(
+            personal='Peter', middle='', family='Parker',
+            email='ben@webslinger.net', gender='O', may_contact=True,
+            username='benreilly', airport=self.airport_0_0)
 
         self.ironman = Person.objects.create(
             personal='Tony', middle=None, family='Stark', email='me@stark.com',
@@ -185,7 +190,7 @@ class TestBase(TestCase):
                     if settings.TEMPLATE_STRING_IF_INVALID in x[1]]
             msg = '"{0}" found in HTML page:\n'.format(settings.TEMPLATE_STRING_IF_INVALID)
             assert not hits, msg + '\n'.join(['{0}: "{1}"'.format(h[0], h[1].rstrip())
-                                              for h in hits])
+                                                for h in hits])
 
         # Make the content safe to parse.
         content = re.sub('<!DOCTYPE [^>]*>', '', content)
@@ -252,6 +257,9 @@ class TestBase(TestCase):
 
         inputs = dict([(i.attrib['name'], i.attrib.get('value', None))
                        for i in form.findall(".//input[@type='text']")])
+        
+        hidden = dict([(i.attrib['name'], i.attrib.get('value', None))
+                       for i in form.findall(".//input[@type='hidden']")])
 
         checkboxes = dict([(c.attrib['name'], c.attrib.get('checked', None)=='checked')
                            for c in form.findall(".//input[@type='checkbox']")])
@@ -259,6 +267,7 @@ class TestBase(TestCase):
         selects = dict([(s.attrib['name'], self._get_selected(s))
                         for s in form.findall('.//select')])
 
+        inputs.update(hidden)
         inputs.update(checkboxes)
         inputs.update(selects)
         return inputs

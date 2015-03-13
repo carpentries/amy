@@ -21,6 +21,7 @@ urlpatterns = [
     url(r'^persons/bulkadd/$',views.person_bulk_add, name='person_bulk_add'),
     url(r'^persons/bulkadd/template',views.person_bulk_add_template, name='person_bulk_add_template'),
     url(r'^persons/bulkadd/confirm$',views.person_bulk_add_confirmation, name='person_bulk_add_confirmation'),
+    url(r'^persons/find_duplicates',views.person_find_duplicates, name='person_find_duplicates'),
 
     url(r'^events/?$', views.all_events, name='all_events'),
     url(r'^event/(?P<event_ident>[\w-]+)/?$', views.event_details, name='event_details'),

@@ -1,3 +1,4 @@
+import cgi
 from django.core.urlresolvers import reverse
 from ..models import Person
 from .base import TestBase
@@ -39,6 +40,34 @@ class TestPerson(TestBase):
         errors = self._collect_errors(doc)
         assert errors, \
             'Expected error messages in response page'
+        
+    def test_merge_duplicate_persons(self):
+        assert self.spiderman.airport == None
+        assert self.benreilly.airport == self.airport_0_0
+        url, values = self._get_initial_form('person_find_duplicates')
+        assert len(values)>0
+        values['4'] = 'on'
+        values['5'] = 'on'
+        response = self.client.post(url,values)
+        doc = self._check_status_code_and_parse(response,200)
+        values = self._get_form_data(doc)
+        assert 'Confirm' in values
+        response = self.client.post(url, values, follow=True) # Confirm, following redirect
+        _, params = cgi.parse_header(response['content-type'])
+        charset = params['charset']
+        content = response.content.decode(charset)
+        assert 'Merge success' in content
+        spiderman = Person.objects.get(username="spiderman")
+        assert spiderman.airport == self.airport_0_0 # Check benreilly's airport was merged in
+        
+    def test_merge_fails_when_fields_not_set(self):
+        url, values = self._get_initial_form('person_find_duplicates')
+        assert len(values)>0
+        response = self.client.post(url,{'Merge':'yes'},follow=True)
+        _, params = cgi.parse_header(response['content-type'])
+        charset = params['charset']
+        content = response.content.decode(charset)
+        assert 'You must select at least two duplicate entries' in content
 
     def _test_edit_person_email(self, person):
         url, values = self._get_initial_form('person_edit', person.id)

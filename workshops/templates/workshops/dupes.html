@@ -1,0 +1,67 @@
+{% extends "workshops/_page.html" %}
+
+{% load breadcrumbs %}
+{% block breadcrumbs %}
+    {% breadcrumb_main_page %}
+    {% breadcrumb_active title %}
+{% endblock %}
+
+{% block content %}
+{% if groups %}
+  <script type="text/javascript">
+    $(document).ready(function() {
+        $('.select_all').click(function(event) {
+            var check = this.checked;
+            $('.' + this.id).each(function() {
+                this.checked = check;
+            });
+        });
+    });
+  </script>
+  <form method='POST' action="">
+    {% csrf_token %}
+    <table class="table table-striped">
+        <tr>
+            <th></th>
+            <th>personal</th>
+            <th>middle</th>
+            <th>family</th>
+            <th>email</th>
+            <th></th>
+        </tr>
+    {% for key,group in groups.items %}
+        <tr style='border-bottom:2px solid black;'>
+            {% if button != "Confirm" %}
+            <td><input id="{{ key }}" type='checkbox' name="{{ key }}" class='select_all'/></td>
+            {% endif %}
+            <td colspan="6"></td>
+        </tr>
+        {% for person in group %}
+            <tr>
+                <td>{% if button != "Confirm" %}
+                        <input id="{{ key }}_{{ person.id }}" name="{{ person.id }}" type='checkbox' class='{{ key }}'/>
+                    {% else %}
+                        <input id="{{ key }}_{{ person.id }}" name="{{ person.id }}" type='hidden' class='{{ key }}' value='on'/>
+                    {% endif %}
+                </td>
+                <td>{{ person.personal }}</td>
+                <td>{{ person.middle }}</td>
+                <td>{{ person.family }}</td>
+                <td>{{ person.email }}</td>
+                <td><a href="{% url 'person_details' person.id %}">...</a></td>
+            </tr>
+         {% endfor %}
+        <tr style='border-top:2px solid black;'>
+            <td colspan="6"></td>
+        </tr>
+    {% endfor %}
+    </table>
+    <p class="merge">
+        <input type='hidden' name="{{ button }}" value="yes"/>
+        <button type='submit' class='btn btn-{{ button_style }}'>{{ button }}</button>
+     </p>
+  </form>
+{% else %}
+    <p>No duplicate records found.</p>
+{% endif %}
+{% endblock %}
