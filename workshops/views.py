@@ -429,7 +429,7 @@ def validate_event(request, event_ident):
         if response.status_code != 200:
             error_messages.append('Request for {0} returned status code {1}'.format(page_url, response.status_code))
         else:
-            valid, error_messages = check_file(page_url, response.text)
+            error_messages = check_file(page_url, response.text)
     context = {'title' : 'Validate Event {0}'.format(event),
                'event' : event,
                'page' : page_url,
