@@ -1,22 +1,8 @@
 #!/usr/bin/env python
 
 '''Check that index.html is valid and print out warnings and errors
-when the header is malformed.
-
-Checks for:
-1.  There should be the right number of categories
-2.  Categories are allowed to appear only once
-3.  Contact email should be valid (letters + @ + letters + . + letters)
-4.  Address and venue should be non-empty
-5.  Latitute/longitude should be 2 floating point numbers separated by comma
-6.  Start date should be a valid date; if end date is present, it should be valid as well
-7.  Human date should have three-letter month and four-letter year
-8.  Human time should have 'am' or 'pm' or both
-9.  Country should be a recognized hyphenated country name from the embedded list
-10. Instructor and helper lists should be valid lists
-11. Template header should not exist
-12. Layout should be 'workshop'
-13. Root must be '.'
+when the header is malformed.  See the docstrings on the checking
+functions for a summary of the checks.
 '''
 
 from __future__ import print_function
@@ -24,9 +10,13 @@ import sys
 import os
 import re
 import logging
-
 import yaml
 from collections import Counter
+
+try:  # Hack to make codebase compatible with python 2 and 3
+    basestring
+except NameError:
+    basestring = str
 
 __version__ = '0.6'
 
@@ -123,6 +113,25 @@ COUNTRIES = [
     'Zimbabwe'
 ]
 
+LANGUAGES = [
+    'aa', 'ab', 'ae', 'af', 'ak', 'am', 'an', 'ar', 'as', 'av', 'ay', 'az',
+    'ba', 'be', 'bg', 'bh', 'bi', 'bm', 'bn', 'bo', 'br', 'bs', 'ca', 'ce',
+    'ch', 'co', 'cr', 'cs', 'cu', 'cv', 'cy', 'da', 'de', 'dv', 'dz', 'ee',
+    'el', 'en', 'eo', 'es', 'et', 'eu', 'fa', 'ff', 'fi', 'fj', 'fo', 'fr',
+    'fy', 'ga', 'gd', 'gl', 'gn', 'gu', 'gv', 'ha', 'he', 'hi', 'ho', 'hr',
+    'ht', 'hu', 'hy', 'hz', 'ia', 'id', 'ie', 'ig', 'ii', 'ik', 'io', 'is',
+    'it', 'iu', 'ja', 'jv', 'ka', 'kg', 'ki', 'kj', 'kk', 'kl', 'km', 'kn',
+    'ko', 'kr', 'ks', 'ku', 'kv', 'kw', 'ky', 'la', 'lb', 'lg', 'li', 'ln',
+    'lo', 'lt', 'lu', 'lv', 'mg', 'mh', 'mi', 'mk', 'ml', 'mn', 'mr', 'ms',
+    'mt', 'my', 'na', 'nb', 'nd', 'ne', 'ng', 'nl', 'nn', 'no', 'nr', 'nv',
+    'ny', 'oc', 'oj', 'om', 'or', 'os', 'pa', 'pi', 'pl', 'ps', 'pt', 'qu',
+    'rm', 'rn', 'ro', 'ru', 'rw', 'sa', 'sc', 'sd', 'se', 'sg', 'si', 'sk',
+    'sl', 'sm', 'sn', 'so', 'sq', 'sr', 'ss', 'st', 'su', 'sv', 'sw', 'ta',
+    'te', 'tg', 'th', 'ti', 'tk', 'tl', 'tn', 'to', 'tr', 'ts', 'tt', 'tw',
+    'ty', 'ug', 'uk', 'ur', 'uz', 've', 'vi', 'vo', 'wa', 'wo', 'xh', 'yi',
+    'yo', 'za', 'zh', 'zu'
+]
+
 
 def add_error(msg, errors):
     """Add error to the list of errors."""
@@ -147,27 +156,42 @@ def look_for_fixme(func):
 
 @look_for_fixme
 def check_layout(layout):
-    '''Checks whether layout equals "workshop".'''
+    '''"layout" in YAML header must be "workshop".'''
+
     return layout == 'workshop'
 
 
 @look_for_fixme
 def check_root(root):
-    '''Checks root - can only be "."'''
+    '''"root" (the path from this page to the root directory) must be "."'''
+
     return root == '.'
 
 
 @look_for_fixme
 def check_country(country):
-    '''A valid country is in the list of recognized countries.'''
+    '''"country" must be a hyphenated full country name from the list
+    embedded in this script.'''
+
     return country in COUNTRIES
 
 
 @look_for_fixme
+def check_language(language):
+    '''"language" must be one of the two-letter ISO 639-1 language codes
+    embedded in this script.'''
+
+    return language in LANGUAGES
+
+
+@look_for_fixme
 def check_humandate(date):
-    '''A valid human date starts with a three-letter month and ends with
-    four-letter year. For example: "Feb 18-20, 2525" or "Feb 18 and
-    20, 2014".'''
+    '''"humandate" must be a human-readable date with a 3-letter month and
+    4-digit year.  Examples include "Feb 18-20, 2025" and "Feb 18 and
+    20, 2025".  It may be in languages other than English, but the
+    month name should be kept short to aid formatting of the main
+    Software Carpentry web site.'''
+
     if "," not in date:
         return False
 
@@ -193,12 +217,16 @@ def check_humandate(date):
 
 @look_for_fixme
 def check_humantime(time):
-    '''A valid humantime contains at least one number'''
+    '''"humantime" is a human-readable start and end time for the workshop,
+    such as "09:00 - 16:00".'''
+
     return bool(re.match(HUMANTIME_PATTERN, time.replace(" ", "")))
 
 
 def check_date(this_date):
-    '''A valid date is YEAR-MONTH-DAY, example: 2014-06-30'''
+    '''"startdate" and "enddate" are machine-readable start and end dates for
+    the workshop, and must be in YYYY-MM-DD format, e.g., "2015-07-01".'''
+
     from datetime import date
     # yaml automatically loads valid dates as datetime.date
     return isinstance(this_date, date)
@@ -206,7 +234,9 @@ def check_date(this_date):
 
 @look_for_fixme
 def check_latitude_longitude(latlng):
-    '''A valid latitude/longitude listing is two floats, separated by comma'''
+    '''"latlng" must be a valid latitude and longitude represented as two
+    floating-point numbers separated by a comma.'''
+
     try:
         lat, lng = latlng.split(',')
         lat = float(lat)
@@ -217,29 +247,36 @@ def check_latitude_longitude(latlng):
 
 
 def check_instructors(instructors):
-    '''Checks whether instructor list is of format:
-    ['First name', 'Second name', ...']'''
+    '''"instructor" must be a non-empty comma-separated list of quoted names,
+    e.g. ['First name', 'Second name', ...'].  Do not use "TBD" or other
+    placeholders.'''
+
     # yaml automatically loads list-like strings as lists
     return isinstance(instructors, list) and len(instructors) > 0
 
 
 def check_helpers(helpers):
-    '''Checks whether helpers list is of format:
-    ['First name', 'Second name', ...']'''
+    '''"helper" must be a comma-separated list of quoted names,
+    e.g. ['First name', 'Second name', ...'].  The list may be empty.  Do
+    not use "TBD" or other placeholders.'''
+
     # yaml automatically loads list-like strings as lists
     return isinstance(helpers, list) and len(helpers) >= 0
 
 
 @look_for_fixme
 def check_email(email):
-    '''A valid email has letters, then an @, followed by letters, followed by
-    a dot, followed by letters.'''
+    '''"contact" must be a valid email address consisting of characters, a
+    @, and more characters.  It should not be the default contact
+    email address "admin@software-carpentry.org".'''
+
     return bool(re.match(EMAIL_PATTERN, email)) and \
            (email != DEFAULT_CONTACT_EMAIL)
 
 
 def check_eventbrite(eventbrite):
-    '''A valid EventBrite key is 9 or more digits.'''
+    '''"eventbrite" (the Eventbrite registration key) must be 9 or more digits.'''
+
     if isinstance(eventbrite, int):
         return True
     else:
@@ -248,13 +285,16 @@ def check_eventbrite(eventbrite):
 
 @look_for_fixme
 def check_etherpad(etherpad):
-    '''A valid Etherpad URL is just a URL.'''
+    '''"etherpad" must be a valid URL.'''
+
     return bool(re.match(URL_PATTERN, etherpad))
 
 
 @look_for_fixme
 def check_pass(value):
-    '''A test that always passes, used for things like addresses.'''
+    '''This test always passes (it is used for "checking" things like
+    addresses, for which no sensible validation is feasible).'''
+
     return True
 
 
@@ -264,6 +304,9 @@ HANDLERS = {
     'country':    (True, check_country,
                    'country invalid: must use full hyphenated name from: ' +
                    ' '.join(COUNTRIES)),
+
+    'language' :  (False,  check_language,
+                   'language invalid: must be a ISO 639-1 code'),
 
     'humandate':  (True, check_humandate,
                    'humandate invalid. Please use three-letter months like ' +
@@ -314,6 +357,16 @@ def check_validity(data, function, errors, error_msg):
     return valid
 
 
+def check_blank_lines(raw_data, errors, error_msg):
+    '''Check for blank line in category headers.'''
+    lines = [x.strip() for x in raw_data.split('\n')]
+    if '' in lines:
+        add_error(error_msg, errors)
+        add_suberror('{0} blank lines found in header'.format(lines.count('')), errors)
+        return False
+    return True
+
+
 def check_categories(left, right, errors, error_msg):
     '''Report set difference of categories.'''
     result = left - right
@@ -324,82 +377,57 @@ def check_categories(left, right, errors, error_msg):
     return True
 
 
-def check_repeated_categories(seen_categories, errors, error_msg):
-    '''Check for categories appearing two or more times.'''
-    category_counts = Counter(seen_categories)
-    double_categories = [category for category in category_counts
-                         if category_counts[category] > 1]
+def get_header(text):
+    '''Extract YAML header from raw data, returning (None, None) if no
+    valid header found and (raw, parsed) if header found.'''
 
-    if double_categories:
-        add_error(error_msg, errors)
-        msg = '"{0}" appears more than once'.format(double_categories)
-        add_suberror(msg, errors)
-        return False
+    # YAML header must be right at the start of the file.
+    if not text.startswith('---'):
+        return None, None
 
-    return True
+    # YAML header must start and end with '---'
+    pieces = text.split('---')
+    if len(pieces) < 2:
+        return None, None
 
-
-def get_header(lines):
-    '''Parses list of lines, returning just the header.'''
-    # We stop the header once we see the second '---'
-    delimiters = 0
-    header = []
-    categories = []
-    for line in lines:
-        line = line.rstrip()
-        if line == '---':
-            delimiters += 1
-            if delimiters == 2:
-                break
-        else:
-            # Work around PyYAML Ticket #114
-            if not line.startswith('#'):
-                header.append(line)
-                categories.append(line.split(":")[0].strip())
-
-    valid = (delimiters == 2)
-    return valid, yaml.load("\n".join(header)), categories
+    # Return raw text and YAML-ized form.
+    raw = pieces[1].strip()
+    return raw, yaml.load(raw)
 
 
 def check_file(filename, data):
     '''Get header from index.html, call all other functions and check file
-    for validity. Return True when 'index.html' has no problems and
-    False when there are problems.'''
+    for validity. Return list of errors (empty when no errors).'''
+
     errors = []
-
-    lines = data.split('\n')
-    valid, header_data, seen_categories = get_header(lines)
-
-    if not valid:
-        msg = ('Cannot find header in given file "{0}". Please ' +
-               'check path, is this the bc index.html?'.format(filename))
+    raw, header = get_header(data)
+    if header is None:
+        msg = ('Cannot find YAML header in given file "{0}".'.format(filename))
         add_error(msg, errors)
-        return False, errors
+        return errors
+
+    # Do we have any blank lines in the header?
+    is_valid = check_blank_lines(raw, errors,
+                                 'There are blank lines in the header')
 
     # Look through all header entries.  If the category is in the input
     # file and is either required or we have actual data (as opposed to
     # a commented-out entry), we check it.  If it *isn't* in the header
     # but is required, report an error.
-    is_valid = True
     for category in HANDLERS:
         required, handler_function, error_message = HANDLERS[category]
-        if category in header_data:
-            if required or header_data[category]:
-                is_valid &= check_validity(header_data[category],
+        if category in header:
+            if required or header[category]:
+                is_valid &= check_validity(header[category],
                                            handler_function, errors,
                                            error_message)
         elif required:
             msg = 'index file is missing mandatory key "{0}"'.format(category)
             add_error(msg, errors)
-            is_valid &= False
-
-    # Do we have double categories?
-    is_valid &= check_repeated_categories(
-        seen_categories, errors,
-        'There are categories appearing twice or more')
+            is_valid = False
 
     # Check whether we have missing or too many categories
-    seen_categories = set(seen_categories)
+    seen_categories = set(header.keys())
 
     is_valid &= check_categories(REQUIRED, seen_categories, errors,
                                  'There are missing categories')
@@ -407,7 +435,7 @@ def check_file(filename, data):
     is_valid &= check_categories(seen_categories, REQUIRED.union(OPTIONAL),
                                  errors, 'There are superfluous categories')
 
-    return is_valid, errors
+    return errors
 
 
 def main():
@@ -429,15 +457,16 @@ def main():
 
     with open(filename) as reader:
         data = reader.read()
-        is_valid, errors = check_file(filename, data)
+        errors = check_file(filename, data)
 
-    if is_valid:
-        logger.info('Everything seems to be in order')
-        sys.exit(0)
-    else:
+    if errors:
         for m in errors:
             logger.error(m)
         sys.exit(1)
+    else:
+        logger.info('Everything seems to be in order')
+        sys.exit(0)
+
 
 if __name__ == '__main__':
     main()
