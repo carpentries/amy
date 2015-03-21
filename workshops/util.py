@@ -62,9 +62,12 @@ def upload_person_task_csv(stream):
     for row in reader:
         entry = {}
         for col in Person.PERSON_UPLOAD_FIELDS:
-            if col in row:
+            try:
                 entry[col] = row[col].strip()
-            else:
+            except (KeyError, IndexError, AttributeError):
+                # either `col` is not in `entry`, or not in `row`, or
+                # `.strip()` doesn't work (e.g. `row[col]` gives `None` instead
+                # of string)
                 entry[col] = None
                 empty_fields.add(col)
 

@@ -69,6 +69,16 @@ jane,a,doe,janedoe@email.com"""
         except TypeError:
             self.fail('Dumping person_tasks to JSON unexpectedly failed!')
 
+    def test_malformed_CSV_with_proper_header_row(self):
+        csv = """personal,middle,family,email
+This is a malformed CSV
+        """
+        person_tasks, empty_fields = self.compute_from_string(csv)
+        self.assertEqual(person_tasks[0]["personal"],
+                         "This is a malformed CSV")
+        self.assertEqual(set(empty_fields),
+                         set(["middle", "family", "email"]))
+
 
 class CSVBulkUploadTestBase(TestBase):
     """
