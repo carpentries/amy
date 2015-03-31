@@ -18,6 +18,7 @@ from django.shortcuts import redirect, render, get_object_or_404
 from django.views.generic.base import ContextMixin
 from django.views.generic.edit import CreateView, UpdateView
 from django.contrib.auth.decorators import login_required
+from django.forms.models import modelformset_factory, inlineformset_factory
 
 
 from workshops.models import \
@@ -441,11 +442,33 @@ class EventCreate(LoginRequiredMixin, CreateViewContext):
     model = Event
     fields = '__all__'
 
+@login_required
+def event_edit(request, event_ident):
+    event_form_factory = modelformset_factory(Event, fields='__all__', extra=0)
+    task_form_factory = inlineformset_factory(Event, Task, fields='__all__', extra=1, can_delete=False)
 
-class EventUpdate(LoginRequiredMixin, UpdateViewContext):
-    model = Event
-    fields = '__all__'
-    pk_url_kwarg = 'event_ident'
+    event = Event.get_by_ident(event_ident)
+    tasks = Task.objects.filter(event__id=event.id).order_by('role__name')
+
+    if request.method == 'POST':
+        event_form = event_form_factory(request.POST, prefix='event')
+        task_form = task_form_factory(request.POST, instance=event, prefix='task')
+        if event_form.is_valid() and task_form.is_valid():
+            event_form.save()
+            task_form.save()
+            return redirect(event)
+        else:
+            for key,val in event_form.errors[0].items():
+                messages.error(request, '{0}: {1}'.format(key,val))
+            for key,val in task_form.errors[0].items():
+                messages.error(request, '{0}: {1}'.format(key,val))
+    event_form = event_form_factory(queryset=Event.objects.filter(id=event.id), prefix='event')
+    task_form = task_form_factory(prefix='task')
+    context = {'title': 'Edit Event {0}'.format(event.get_ident()),
+               'event_form': event_form.as_p(),
+               'tasks' : tasks,
+               'task_form': task_form.as_table()}
+    return render(request, 'workshops/event_form.html', context)
 
 #------------------------------------------------------------
 
@@ -472,6 +495,13 @@ def task_details(request, task_id):
     context = {'title' : 'Task {0}'.format(task),
                'task' : task}
     return render(request, 'workshops/task.html', context)
+
+
+@login_required
+def task_delete(request, task_id):
+    t = Task.objects.get(pk=task_id)
+    t.delete()
+    return redirect(t.event)
 
 
 class TaskCreate(LoginRequiredMixin, CreateViewContext):
