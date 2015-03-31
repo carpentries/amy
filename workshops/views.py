@@ -18,6 +18,7 @@ from django.shortcuts import redirect, render, get_object_or_404
 from django.views.generic.base import ContextMixin
 from django.views.generic.edit import CreateView, UpdateView
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_http_methods
 
 
 from workshops.models import \
@@ -376,6 +377,7 @@ def person_bulk_add_confirmation(request):
                       context)
 
 @login_required
+@require_http_methods(["GET", "POST"])
 def person_find_duplicates(request):
     if request.method == 'GET':
         dupes_personal = Person.objects.values('personal') \
