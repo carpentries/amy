@@ -43,7 +43,7 @@ class TestPerson(TestBase):
         
     def test_merge_duplicate_persons(self):
         assert self.spiderman.airport == None
-        assert self.benreilly.airport == self.airport_0_0
+        assert self.benreilly.github == 'benreilly'
         url, values = self._get_initial_form('person_find_duplicates')
         assert len(values)>0
         values['4'] = 'on'
@@ -58,7 +58,7 @@ class TestPerson(TestBase):
         content = response.content.decode(charset)
         assert 'Merge success' in content
         spiderman = Person.objects.get(username="spiderman")
-        assert spiderman.airport == self.airport_0_0 # Check benreilly's airport was merged in
+        assert spiderman.github == 'benreilly' # Check benreilly's github was merged in
         
     def test_merge_fails_when_fields_not_set(self):
         url, values = self._get_initial_form('person_find_duplicates')

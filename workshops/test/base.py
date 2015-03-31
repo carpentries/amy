@@ -123,7 +123,7 @@ class TestBase(TestCase):
         self.benreilly = Person.objects.create(
             personal='Peter', middle='', family='Parker',
             email='ben@webslinger.net', gender='O', may_contact=True,
-            username='benreilly', airport=self.airport_0_0)
+            username='benreilly', github='benreilly')
 
         self.ironman = Person.objects.create(
             personal='Tony', middle=None, family='Stark', email='me@stark.com',
