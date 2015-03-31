@@ -234,9 +234,12 @@ class TestBase(TestCase):
     def _get_selected(self, node):
         '''Get value of currently selected element from 'select' node.'''
         selections = node.findall(".//option[@selected='selected']")
-        assert len(selections) == 1, \
-            'Either zero or multiple selections for node {0}'.format(node.attrib['id'])
-        return selections[0].attrib['value']
+        if (len(selections) == 0):
+            return ""
+        if (len(selections) == 1):
+            return selections[0].attrib['value']
+        else:
+            return ",".join([x.attrib['value'] for x in selections])
 
     def _get_initial_form(self, which, *args):
         '''Get a form to start testing with.'''
