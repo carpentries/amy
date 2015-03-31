@@ -255,6 +255,9 @@ class TestBase(TestCase):
 
         inputs = dict([(i.attrib['name'], i.attrib.get('value', None))
                        for i in form.findall(".//input[@type='text']")])
+        
+        hidden = dict([(i.attrib['name'], i.attrib.get('value', None))
+                       for i in form.findall(".//input[@type='hidden']")])
 
         checkboxes = dict([(c.attrib['name'], c.attrib.get('checked', None)=='checked')
                            for c in form.findall(".//input[@type='checkbox']")])
@@ -262,6 +265,7 @@ class TestBase(TestCase):
         selects = dict([(s.attrib['name'], self._get_selected(s))
                         for s in form.findall('.//select')])
 
+        inputs.update(hidden)
         inputs.update(checkboxes)
         inputs.update(selects)
         return inputs
