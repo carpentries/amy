@@ -499,6 +499,7 @@ def task_details(request, task_id):
 
 @login_required
 def task_delete(request, task_id):
+    '''Delete a task. This is used on the event edit page'''
     t = Task.objects.get(pk=task_id)
     t.delete()
     return redirect(t.event)
