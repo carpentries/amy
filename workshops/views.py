@@ -456,7 +456,8 @@ def event_edit(request, event_ident):
         if event_form.is_valid() and task_form.is_valid():
             event_form.save()
             task_form.save()
-            return redirect(event)
+            if "submit" in request.POST:
+                return redirect(event)
         else:
             for key,val in event_form.errors[0].items():
                 messages.error(request, '{0}: {1}'.format(key,val))
