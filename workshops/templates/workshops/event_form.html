@@ -8,6 +8,12 @@
 
 {% block content %}
 
+<script type="text/javascript">
+    $(document).ready(function() {
+        $("#id_task-0-person").combobox();
+    });
+</script>
+
 <form action="" method="post">
     {% csrf_token %}
     {{ event_form }}
@@ -30,7 +36,7 @@
     <p>No tasks.</p>
     {% endif %}
     {{ task_form }}
-    <br/>
+    <br/><br/><br/>
     <input type="submit" value="Submit" />
 </form>
 
