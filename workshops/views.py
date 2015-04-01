@@ -458,13 +458,9 @@ def event_edit(request, event_ident):
             task_form.save()
             if "submit" in request.POST:
                 return redirect(event)
-        else:
-            for key,val in event_form.errors[0].items():
-                messages.error(request, '{0}: {1}'.format(key,val))
-            for key,val in task_form.errors[0].items():
-                messages.error(request, '{0}: {1}'.format(key,val))
-    event_form = event_form_factory(queryset=Event.objects.filter(id=event.id), prefix='event')
-    task_form = task_form_factory(prefix='task')
+    else:
+        event_form = event_form_factory(queryset=Event.objects.filter(id=event.id), prefix='event')
+        task_form = task_form_factory(prefix='task')
     context = {'title': 'Edit Event {0}'.format(event.get_ident()),
                'event_form': event_form.as_p(),
                'tasks' : tasks,
