@@ -64,6 +64,7 @@ class TestPerson(TestBase):
         charset = params['charset']
         content = response.content.decode(charset)
         assert 'Merge success' in content
+        assert 'No duplicate records' in content
         spiderman = Person.objects.get(username="spiderman")
         # Check benreilly's github was merged in
         assert spiderman.github == 'benreilly'
@@ -74,7 +75,7 @@ class TestPerson(TestBase):
         
     def test_merge_fails_when_fields_not_set(self):
         url, values = self._get_initial_form('person_find_duplicates')
-        assert len(values)>0
+        assert len(values) > 0
         response = self.client.post(url, {'Merge':'yes'}, follow=True)
         _, params = cgi.parse_header(response['content-type'])
         charset = params['charset']
@@ -85,9 +86,9 @@ class TestPerson(TestBase):
         self.spiderman.github = 'spiderman'
         self.spiderman.save()
         url, values = self._get_initial_form('person_find_duplicates')
-        assert len(values)>0
-        values['4'] = 'on'
-        values['5'] = 'on'
+        assert len(values) > 0
+        values[self.spiderman.id] = 'on'
+        values[self.benreilly.id] = 'on'
         response = self.client.post(url, values, follow=True)
         _, params = cgi.parse_header(response['content-type'])
         charset = params['charset']
