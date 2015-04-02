@@ -437,7 +437,17 @@ def person_find_duplicates(request):
         else:
             for key, group in groups.items():
                 try:
-                    merge_model_objects(group[0], group[1:])
+                    primary_id = int(request.POST["{0}_primary".format(key)])
+                    primary = None
+                    for person in group:
+                        if person.id == primary_id:
+                            primary = person
+                            group.remove(primary)
+                    if not primary:
+                        messages.error(request,
+                                       'Primary not valid: {0} not in group'.format(primary_id))
+                        return redirect('person_find_duplicates')
+                    merge_model_objects(primary, group)
                 except TypeError as e:
                     messages.error(request,
                                    'Merge failed, nothing was changed: {}'.format(e))

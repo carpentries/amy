@@ -52,6 +52,7 @@ class TestPerson(TestBase):
         doc = self._check_status_code_and_parse(response, 200)
         values = self._get_form_data(doc)
         assert 'Confirm' in values
+        values['Peter_Parker_primary'] = '4'
         response = self.client.post(url, values, follow=True) # Confirm, following redirect
         _, params = cgi.parse_header(response['content-type'])
         charset = params['charset']

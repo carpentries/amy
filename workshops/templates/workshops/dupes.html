@@ -22,7 +22,7 @@
     {% csrf_token %}
     <table class="table table-striped">
         <tr>
-            <th></th>
+            <th>{% if button == "Confirm" %} Primary {% endif %}</th>
             <th>personal</th>
             <th>middle</th>
             <th>family</th>
@@ -42,6 +42,7 @@
                 <td>{% if button != "Confirm" %}
                         <input id="{{ key }}_{{ person.id }}" name="{{ person.id }}" type='checkbox' class='{{ key }}'/>
                     {% else %}
+                        <input type="radio" name="{{ key }}_primary" value="{{ person.id }}" {% if forloop.first %} checked="yes" {% endif %}/>
                         <input id="{{ key }}_{{ person.id }}" name="{{ person.id }}" type='hidden' class='{{ key }}' value='on'/>
                     {% endif %}
                 </td>
