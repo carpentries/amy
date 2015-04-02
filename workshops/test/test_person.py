@@ -1,6 +1,6 @@
 import cgi
 from django.core.urlresolvers import reverse
-from ..models import Person
+from ..models import Person, Award
 from .base import TestBase
 
 
@@ -44,22 +44,33 @@ class TestPerson(TestBase):
     def test_merge_duplicate_persons(self):
         assert self.spiderman.airport == None
         assert self.benreilly.github == 'benreilly'
+        assert self.spiderman.twitter == 'spiderman'
+        assert self.benreilly.twitter == 'benreilly'
+        award = Award.objects.filter(badge=self.hero)[0]
+        assert award.person == self.benreilly
         url, values = self._get_initial_form('person_find_duplicates')
         assert len(values)>0
-        values['4'] = 'on'
-        values['5'] = 'on'
+        # Check the boxes for spiderman and ben, then submit
+        values[self.spiderman.id] = 'on'
+        values[self.benreilly.id] = 'on'
         response = self.client.post(url, values)
         doc = self._check_status_code_and_parse(response, 200)
         values = self._get_form_data(doc)
         assert 'Confirm' in values
-        values['Peter_Parker_primary'] = '4'
-        response = self.client.post(url, values, follow=True) # Confirm, following redirect
+        values['Peter_Parker_primary'] = self.spiderman.id
+         # Select spiderman as the primary, then press the confirm button
+        response = self.client.post(url, values, follow=True)
         _, params = cgi.parse_header(response['content-type'])
         charset = params['charset']
         content = response.content.decode(charset)
         assert 'Merge success' in content
         spiderman = Person.objects.get(username="spiderman")
-        assert spiderman.github == 'benreilly' # Check benreilly's github was merged in
+        # Check benreilly's github was merged in
+        assert spiderman.github == 'benreilly'
+        # Since spiderman was primary, his twitter should persist and benreilly's is discarded
+        assert spiderman.twitter == 'spiderman'
+        award = Award.objects.filter(badge=self.hero)[0]
+        assert award.person == self.spiderman
         
     def test_merge_fails_when_fields_not_set(self):
         url, values = self._get_initial_form('person_find_duplicates')

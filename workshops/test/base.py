@@ -74,6 +74,9 @@ class TestBase(TestCase):
         self.instructor = Badge.objects.create(name='instructor',
                                                title='Software Carpentry Instructor',
                                                criteria='Worked hard for this')
+        self.hero = Badge.objects.create(name='hero',
+                                         title='Defender of the innocent',
+                                         criteria='Save 50 lives')
 
     def _setUpInstructors(self):
         '''Set up person objects representing instructors.'''
@@ -118,12 +121,16 @@ class TestBase(TestCase):
         self.spiderman = Person.objects.create(
             personal='Peter', middle='Q.', family='Parker',
             email='peter@webslinger.net', gender='O', may_contact=True,
-            username="spiderman")
+            username="spiderman", twitter='spiderman')
         
         self.benreilly = Person.objects.create(
             personal='Peter', middle='', family='Parker',
             email='ben@webslinger.net', gender='O', may_contact=True,
-            username='benreilly', github='benreilly')
+            username='benreilly', github='benreilly', twitter='benreilly')
+
+        Award.objects.create(person=self.benreilly,
+                             badge=self.hero,
+                             awarded=datetime.date(2014, 1, 1))
 
         self.ironman = Person.objects.create(
             personal='Tony', middle=None, family='Stark', email='me@stark.com',
