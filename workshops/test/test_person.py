@@ -48,8 +48,8 @@ class TestPerson(TestBase):
         assert len(values)>0
         values['4'] = 'on'
         values['5'] = 'on'
-        response = self.client.post(url,values)
-        doc = self._check_status_code_and_parse(response,200)
+        response = self.client.post(url, values)
+        doc = self._check_status_code_and_parse(response, 200)
         values = self._get_form_data(doc)
         assert 'Confirm' in values
         response = self.client.post(url, values, follow=True) # Confirm, following redirect
@@ -63,11 +63,24 @@ class TestPerson(TestBase):
     def test_merge_fails_when_fields_not_set(self):
         url, values = self._get_initial_form('person_find_duplicates')
         assert len(values)>0
-        response = self.client.post(url,{'Merge':'yes'},follow=True)
+        response = self.client.post(url, {'Merge':'yes'}, follow=True)
         _, params = cgi.parse_header(response['content-type'])
         charset = params['charset']
         content = response.content.decode(charset)
         assert 'You must select at least two duplicate entries' in content
+        
+    def test_merge_fails_when_github_mismatch(self):
+        self.spiderman.github = 'spiderman'
+        self.spiderman.save()
+        url, values = self._get_initial_form('person_find_duplicates')
+        assert len(values)>0
+        values['4'] = 'on'
+        values['5'] = 'on'
+        response = self.client.post(url, values, follow=True)
+        _, params = cgi.parse_header(response['content-type'])
+        charset = params['charset']
+        content = response.content.decode(charset)
+        assert 'mismatched github' in content
 
     def _test_edit_person_email(self, person):
         url, values = self._get_initial_form('person_edit', person.id)

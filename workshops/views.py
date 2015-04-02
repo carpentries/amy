@@ -415,6 +415,15 @@ def person_find_duplicates(request):
                 groups[key] = []
             groups[key].append(person)
         groups = {k: v for (k, v) in groups.items() if len(v) > 1}
+        for key, group in groups.items():
+            for p1 in group:
+                for p2 in group:
+                    if p1!=p2 and p1.github and p2.github \
+                        and p1.github!=p2.github:
+                        messages.error(request,
+                                       'Merge failed: mismatched github accounts')
+                        return redirect('person_find_duplicates')
+
         if 'Confirm' not in request.POST.keys():
             if not groups:
                 messages.error(request,
