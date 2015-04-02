@@ -154,6 +154,8 @@ class Person(AbstractBaseUser, PermissionsMixin):
         # issues with UNIQUE constraint failing
         self.middle = self.middle or None
         self.email = self.email or None
+        self.github = self.github or None
+        self.twitter = self.twitter or None
         super().save(*args, **kwargs)
 
 
