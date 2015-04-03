@@ -7,13 +7,41 @@
 {% endblock %}
 
 {% block content %}
-<form action="{% url 'debrief' %}" method="post">
-    {% csrf_token %}
-    <table class="table table-striped">
-    {{ form.as_table }}
-    </table>
-    <input type="submit" value="Submit" />
+
+<form class="form-horizontal" action="{% url 'debrief' %}" method="post">
+  {% csrf_token %}
+  <div class="form-group {% if form.begin_date.errors or form.end_date.errors %}has-error{% endif %}">
+    <label for="" class="col-sm-2 control-label">Date range:</label>
+    <div class="col-sm-5">
+      <div class="input-group input-daterange" id="">
+        <span class="input-group-addon">From:</span>
+        <input type="text" class="form-control" name="begin_date" placeholder="yyyy-mm-dd" value="{{ form.begin_date.value }}" />
+        <span class="input-group-addon">To:</span>
+        <input type="text" class="form-control" name="end_date" placeholder="yyyy-mm-dd" value="{{ form.end_date.value }}" />
+      </div>
+      {% if form.begin_date.errors or form.end_date.errors %}
+      <span class="help-block">Please use this formatting: <code>YYYY-MM-DD</code>.</span>
+      {% endif %}
+    </div>
+  </div>
+  <div class="form-group">
+    <div class="col-sm-offset-2 col-sm-5">
+      <button type="submit" class="btn btn-default">Submit</button>
+    </div>
+  </div>
 </form>
+
+<script type="text/javascript">
+  $('.input-daterange').datepicker({
+    format: "yyyy-mm-dd",
+    weekStart: 1,
+    todayBtn: "linked",
+    clearBtn: true,
+    orientation: "top auto",
+    todayHighlight: true,
+    toggleActive: true
+  });
+</script>
 
 {% if all_tasks %}
     <table class="table table-striped">
@@ -34,4 +62,5 @@
 {% else %}
     <p>No instructors for debrief section.</p>
 {% endif %}
+
 {% endblock %}
