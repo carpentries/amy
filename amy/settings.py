@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 import os
 import json
 
+from django.conf import global_settings
+
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 
@@ -33,7 +35,7 @@ SECRET_KEY = os.environ.get('AMY_SECRET_KEY', SECRET_KEY)
 
 TEMPLATE_DEBUG = True
 
-ALLOWED_HOSTS = [ 
+ALLOWED_HOSTS = [
     'software-carpentry.org',
     'software-carpentry.org.'
 ]
@@ -61,6 +63,12 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+)
+
+# WARNING: in Django 1.8 processors get moved from ``django.core`` to
+#          ``django.template``.
+TEMPLATE_CONTEXT_PROCESSORS = global_settings.TEMPLATE_CONTEXT_PROCESSORS + (
+    "django.core.context_processors.request",
 )
 
 ROOT_URLCONF = 'amy.urls'

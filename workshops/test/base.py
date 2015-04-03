@@ -248,7 +248,14 @@ class TestBase(TestCase):
 
     def _get_form_data(self, doc):
         '''Extract form data from page.'''
-        form = self._get_1(doc, ".//form", 'expected one form in page')
+        # Now there's almost always an additional search form available on the
+        # page, so we should fetch the one that does not have role="search".
+        # We can't have such expression in ElementTree, though - 'cause it's
+        # very limited.  Instead, I added a whole bunch of `role="form"` to
+        # specific forms in create/update pages - we can match
+        # `form[@role='form']` easily.
+        form = self._get_1(doc, ".//form[@role='form']",
+                           'expected one form in page')
 
         inputs = dict([(i.attrib['name'], i.attrib.get('value', None))
                        for i in form.findall(".//input[@type='text']")])
