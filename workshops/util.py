@@ -176,7 +176,7 @@ def create_uploaded_persons_tasks(data):
                 if fields['email']:
                     # we should use existing Person or create one
                     p, created = Person.objects.get_or_create(
-                        email=fields['email'], defaults=fields
+                        email__iexact=fields['email'], defaults=fields
                     )
 
                     if created:
