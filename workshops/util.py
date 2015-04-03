@@ -62,9 +62,12 @@ def upload_person_task_csv(stream):
     for row in reader:
         entry = {}
         for col in Person.PERSON_UPLOAD_FIELDS:
-            if col in row:
+            try:
                 entry[col] = row[col].strip()
-            else:
+            except (KeyError, IndexError, AttributeError):
+                # either `col` is not in `entry`, or not in `row`, or
+                # `.strip()` doesn't work (e.g. `row[col]` gives `None` instead
+                # of string)
                 entry[col] = None
                 empty_fields.add(col)
 
@@ -139,19 +142,8 @@ def verify_upload_person_task(data):
 
         if person:
             if not any([event, role]):
-                errors.append("User exists but no event and role to assign"
+                errors.append("User exists but no event and role to assign to"
                               " the user to was provided")
-
-            else:
-                # check for duplicate Task
-                try:
-                    Task.objects.get(event__slug=event, role__name=role,
-                                     person=person)
-                except Task.DoesNotExist:
-                    pass
-                else:
-                    errors.append("Existing person {2} already has role {0}"
-                                  " in event {1}".format(role, event, person))
 
         if (event and not role) or (role and not event):
             errors.append("Must have both or either of event ({0}) and role"
@@ -199,9 +191,10 @@ def create_uploaded_persons_tasks(data):
                 if row['event'] and row['role']:
                     e = Event.objects.get(slug=row['event'])
                     r = Role.objects.get(name=row['role'])
-                    t = Task(person=p, event=e, role=r)
-                    t.save()
-                    tasks_created.append(t)
+                    t, created = Task.objects.get_or_create(person=p, event=e,
+                                                            role=r)
+                    if created:
+                        tasks_created.append(t)
 
             except IntegrityError as e:
                 raise IntegrityError('{0} (for {1})'.format(str(e), row))
