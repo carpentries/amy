@@ -28,16 +28,16 @@ commands : Makefile
 
 ## test         : run all tests.
 test :
-	python manage.py test
+	python3 manage.py test
 
 ## migrations   : create/apply migrations
 migrations :
-	python manage.py makemigrations
-	python manage.py migrate
+	python3 manage.py makemigrations
+	python3 manage.py migrate
 
 ## import       : import and save legacy data
 import :
-	python migrater.py ${SRC_DB} ${APP_DB}
+	python3 migrater.py ${SRC_DB} ${APP_DB}
 	${QUERY} .dump > ${APP_SQL}
 
 ## database     : re-make database using saved data
@@ -47,7 +47,7 @@ database :
 
 ## superuser    : make a super-user in the database
 superuser :
-	python manage.py create_superuser
+	python3 manage.py create_superuser
 
 ## schema       : display the database schema
 schema :
@@ -55,11 +55,11 @@ schema :
 
 ## notes        : load old notes
 notes :
-	python notes-importer.py ${APP_DB} ${SRC_EVENTS} ${SRC_SITES}
+	python3 notes-importer.py ${APP_DB} ${SRC_EVENTS} ${SRC_SITES}
 
 ## serve        : run a server
 serve :
-	python manage.py runserver
+	python3 manage.py runserver
 
 ## clean        : clean up.
 clean :

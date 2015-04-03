@@ -22,7 +22,7 @@ To get started:
 1.  Install Django and its dependencies.
 
     ~~~
-    $ sudo python -m pip install -r requirements.txt
+    $ sudo python3 -m pip install -r requirements.txt
     ~~~
 
 2.  Setup your local database.  There are two ways you can do this.
@@ -50,13 +50,13 @@ To get started:
 3.  Create a administrator account.
 
     ~~~
-    $ python manage.py createsuperuser
+    $ python3 manage.py createsuperuser
     ~~~
 
 4.  Start a local Django development server by running:
 
     ~~~
-    $ python manage.py runserver
+    $ python3 manage.py runserver
     ~~~
 
 5.  Open [http://localhost:8000/workshops/](http://localhost:8000/workshops/) in your browser and start clicking.
