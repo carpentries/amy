@@ -605,7 +605,6 @@ def search(request):
 
 #------------------------------------------------------------
 
-
 @login_required
 def debrief(request):
     '''Show who taught between begin_date and end_date.'''
@@ -631,8 +630,7 @@ def debrief(request):
                'all_tasks': tasks}
     return render(request, 'workshops/debrief.html', context)
 
-# ------------------------------------------------------------
-
+#------------------------------------------------------------
 
 def _export_badges():
     '''Collect badge data as YAML.'''
