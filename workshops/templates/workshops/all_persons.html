@@ -22,7 +22,7 @@
 	    <td>{{ person.personal }}</td>
 	    <td>{{ person.middle }}</td>
 	    <td>{{ person.family }}</td>
-	    <td>{{ person.email }}</td>
+	    <td>{{ person.email|default:"—" }}</td>
 	    <td><a href="{% url 'person_details' person.id %}">...</a></td>
 	</tr>
     {% endfor %}
