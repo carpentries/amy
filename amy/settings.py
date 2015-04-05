@@ -53,7 +53,10 @@ INSTALLED_APPS = (
     # this should be after 'workshops' because templates in
     # 'templates/registration/' clash
     'django.contrib.admin',
+    'crispy_forms',
 )
+
+CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',

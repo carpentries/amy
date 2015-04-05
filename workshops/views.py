@@ -33,7 +33,7 @@ from workshops.models import \
 from workshops.check import check_file
 from workshops.forms import (
     SearchForm, DebriefForm, InstructorsForm, PersonBulkAddForm, EventForm,
-    TaskForm)
+    TaskForm, bootstrap_helper)
 from workshops.util import (
     earth_distance, upload_person_task_csv,  verify_upload_person_task,
     create_uploaded_persons_tasks, InternalError
@@ -64,6 +64,7 @@ class CreateViewContext(CreateView):
         else:
             context['title'] = 'New object'
 
+        context['form_helper'] = bootstrap_helper
         return context
 
 
@@ -85,6 +86,8 @@ class UpdateViewContext(UpdateView):
         # self.object is available in UpdateView as the object being currently
         # edited
         context['title'] = str(self.object)
+
+        context['form_helper'] = bootstrap_helper
         return context
 
 
@@ -388,7 +391,10 @@ class PersonCreate(LoginRequiredMixin, CreateViewContext):
 
 class PersonUpdate(LoginRequiredMixin, UpdateViewContext):
     model = Person
-    fields = PERSON_FIELDS
+    # don't display the 'password' field, reorder fields
+    fields = ["personal", "middle", "family", "username", "may_contact",
+              "email", "gender", "airport", "github", "twitter", "url",
+              "is_superuser", "user_permissions"]
     pk_url_kwarg = 'person_id'
 
 
@@ -599,6 +605,7 @@ def instructors(request):
 
     context = {'title' : 'Find Instructors',
                'form': form,
+               'form_helper': bootstrap_helper,
                'persons' : persons}
     return render(request, 'workshops/instructors.html', context)
 
@@ -639,6 +646,7 @@ def search(request):
 
     context = {'title' : 'Search',
                'form': form,
+               'form_helper': bootstrap_helper,
                'term' : term,
                'sites' : sites,
                'events' : events,
@@ -669,6 +677,7 @@ def debrief(request):
 
     context = {'title': 'Debrief',
                'form': form,
+               'form_helper': bootstrap_helper,
                'all_tasks': tasks}
     return render(request, 'workshops/debrief.html', context)
 

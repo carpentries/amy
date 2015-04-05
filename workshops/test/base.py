@@ -246,6 +246,7 @@ class TestBase(TestCase):
         url = reverse(which, args=[str(a) for a in args])
         response = self.client.get(url)
         doc = self._check_status_code_and_parse(response, 200)
+        self._save_html(response.content.decode("utf-8"))
         values = self._get_form_data(doc)
         return url, values
 
@@ -287,12 +288,24 @@ class TestBase(TestCase):
 
     def _collect_errors(self, doc):
         '''Check an HTML page to make sure there are no errors.'''
-        errors = doc.findall(".//ul[@class='errorlist']")
+        errors = doc.findall(".//div[@class='form-group has-error']")
         if not errors:
             return
-        lines = [x.findall("./li") for x in errors]
-        lines = [x.text for x in list(itertools.chain(*lines))]
-        return '\n'.join(lines)
+
+        error_msgs = []
+        error_paths = ["./div/span[@class='help-block']/strong",
+                       "./div/p[@class='help-block'/strong"]
+        for path in error_paths:
+            try:
+                lines = [x.findall(path) for x in errors]
+                lines = [x.text for x in list(itertools.chain(*lines))]
+                error_msgs += lines
+
+            # x.findall(path) raises SyntaxError if it's unable to find `path`
+            except SyntaxError:
+                pass
+
+        return '\n'.join(error_msgs)
 
     def _get_test_name_from_stack(self):
         '''Walk up the stack to get the name of the calling test.'''
