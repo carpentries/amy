@@ -81,19 +81,6 @@ class TestPerson(TestBase):
         charset = params['charset']
         content = response.content.decode(charset)
         assert 'You must select at least two duplicate entries' in content
-        
-    def test_merge_fails_when_github_mismatch(self):
-        self.spiderman.github = 'spiderman'
-        self.spiderman.save()
-        url, values = self._get_initial_form('person_find_duplicates')
-        assert len(values) > 0
-        values[self.spiderman.id] = 'on'
-        values[self.benreilly.id] = 'on'
-        response = self.client.post(url, values, follow=True)
-        _, params = cgi.parse_header(response['content-type'])
-        charset = params['charset']
-        content = response.content.decode(charset)
-        assert 'mismatched github' in content
 
     def _test_edit_person_email(self, person):
         url, values = self._get_initial_form('person_edit', person.id)
