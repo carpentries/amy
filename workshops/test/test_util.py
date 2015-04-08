@@ -10,7 +10,7 @@ from django.test import TestCase
 from django.core.urlresolvers import reverse
 
 from ..models import Site, Event, Role, Person, Task
-from ..util import upload_person_task_csv, verify_upload_person_task
+from ..util import upload_person_task_csv, verify_upload_person_task, merge_model_objects
 
 from .base import TestBase
 
@@ -311,3 +311,60 @@ Harry,,Potter,harry@hogwarts.edu,foobar,Instructor
         charset = params['charset']
         content = rv.content.decode(charset)
         self.assertIn('already has role', content)
+
+class MergeModelObjects(TestCase):
+
+    def setUp(self):
+        self.p1 = Person.objects.create(personal='P1',
+                                        family='P1',
+                                        username='p1')
+        self.p2 = Person.objects.create(personal='P2',
+                                        family='P2',
+                                        username='p2',
+                                        github='p2')
+        test_badge = Badge.objects.create(name='b1',
+                                          title='b1',
+                                          criteria='b1')
+        for i in range(1, 11):
+            person = Person.objects.create(personal=i,
+                                           family=i,
+                                           username="mass_i".format(i))
+            Award.objects.create(person=person,
+                                 badge=test_badge,
+                                 awarded=datetime.date(2014, 11, 11))
+
+        self.e1 = Event.objects.create(slug='e1', reg_key='e1')
+        self.e2 = Event.objects.create(slug='e2', reg_key='e2')
+        test_role = Role.objects.create(name='test_role')
+        self.t1 = Tasks.objects.create(event=self.e1, person=self.p2, role=test_role)
+
+    def merge_two_people(self):
+        merged = merge_model_objects(self.p1, self.p2)
+        assert merged.github == 'p2'
+        task = Tasks.objects.get(0)
+        assert task.person == self.p1
+
+    def fail_merge_for_different_models(self):
+        assertRaises(TypeError, merge_model_objects(self.p1, self.e1))
+
+    def merge_two_events(self):
+        merged = merge_model_objects(self.e1, self.e2)
+        assert merged.reg_key == 'e1'
+        task = Tasks.objects.get(0)
+        assert task.event == merged
+
+    def merge_10_people(self):
+        people = Person.objects.filter(username__startswith='mass')
+        merged = merge_model_objects(people[0], people[1:])
+        assert merged.username == 'mass_1'
+        badges = Award.objects.filter(person=merged)
+        assert badges.count() == 10
+
+    def fail_merge_same_object(self):
+        people = Person.objects.filter(username__startswith='mass')
+        assertRaises(TypeError, merge_model_objects(self.p1, self.p1))
+        assertRaises(TypeError, merge_model_objects(people[0], people))
+        assertRaises(TypeError, merge_model_objects(people, people))
+        assertRaises(TypeError, merge_model_objects("a string", "a string"))
+        person = Person.objects.get(username='p1')
+        assert person.personal == 'p1'

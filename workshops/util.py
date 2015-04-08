@@ -261,6 +261,10 @@ def merge_model_objects(primary_object, alias_objects=[], keep_old=False):
     duplicate_user = User.objects.get(email='good_email+duplicate@example.com')
     merge_model_objects(primary_user, duplicate_user)
     """
+
+    if isinstance(primary_object, list):
+        raise TypeError('The primary object should not be a list')
+
     if not isinstance(alias_objects, list):
         alias_objects = [alias_objects]
     
@@ -275,6 +279,9 @@ def merge_model_objects(primary_object, alias_objects=[], keep_old=False):
         if not isinstance(alias_object, primary_class):
             raise TypeError('Only models of same class can be merged')
     
+    if primary_object in alias_objects:
+        raise TypeError('The primary object should not be in alias_objects')
+
     # Get a list of all GenericForeignKeys in all models
     # TODO: this is a bit of a hack, since the generics framework should provide a similar
     # method to the ForeignKey field for accessing the generic related fields.
