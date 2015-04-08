@@ -122,7 +122,7 @@ class TestEvent(TestBase):
         tag = Tag.objects.get(name='Test Tag')
         role = Role.objects.get(name='Test Role')
         url, values = self._get_initial_form('event_edit', event.id)
-        assert len(values)>0
+        assert len(values) > 0
         values['event-0-end'] = ''
         values['event-0-tags'] = tag.id
         assert "event-0-reg_key" in values, \
@@ -141,6 +141,7 @@ class TestEvent(TestBase):
         values['task-0-event'] = ''
         values['task-0-id'] = ''
         # Add superuser as a test role
+        values['add'] = 'yes'
 
         response = self.client.post(url, values, follow=True) # Submit, following redirect
         _, params = cgi.parse_header(response['content-type'])
