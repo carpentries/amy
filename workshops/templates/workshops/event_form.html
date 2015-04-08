@@ -3,7 +3,13 @@
 {% load breadcrumbs %}
 {% block breadcrumbs %}
     {% breadcrumb_main_page %}
-    {% breadcrumb_active title %}
+    {% breadcrumb_index_all_objects model %}
+    {% if object %}
+        {% breadcrumb_object object %}
+        {% breadcrumb_edit_object object %}
+    {% else %}
+        {% breadcrumb_new_object model %}
+    {% endif %}
 {% endblock %}
 
 {% block content %}
@@ -16,31 +22,8 @@
 
 <form action="" method="post" role="form">
     {% csrf_token %}
-    {{ event_form }}
-    {% if tasks %}
-    <table class="table table-striped">
-    <tr>
-        <th>person</th>
-        <th>role</th>
-        <th>actions</th>
-    </tr>
-    {% for t in tasks %}
-    <tr>
-        <td><a href="{% url 'person_details' t.person.id %}">{{ t.person }}</a></td>
-        <td>{{ t.role.name }}</td>
-        <td><a onclick='return confirm("Are you sure you wish to remove \"{{ t.person.get_full_name }}\" from {{ t.event.get_ident }}?")' href="{% url 'task_delete' t.id %}" class='btn btn-danger'>Delete</a></td>
-    </tr>
-    {% endfor %}
-    </table>
-    {% else %}
-    <p>No tasks.</p>
-    {% endif %}
-    {{ task_form }}
-    <button type="submit" class="btn btn-primary" name="add">Add</button>
-    <br/><br/><br/>
-    <button type="submit" class="btn btn-success" name="submit">Submit</button>
+    {{ form.as_p }}
+    <input type="submit" value="Submit" />
 </form>
-
-<br/><br/>
 
 {% endblock %}
