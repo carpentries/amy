@@ -609,26 +609,25 @@ def search(request):
 def debrief(request):
     '''Show who taught between begin_date and end_date.'''
 
+    tasks = None
+
     if request.method == 'POST':
         form = DebriefForm(request.POST)
         if form.is_valid():
             tasks = Task.objects.filter(
-                    event__end__gte=form.cleaned_data['begin_date'],
-                    event__start__lte=form.cleaned_data['end_date'],
-                    role__name='instructor',
-                    person__may_contact=True,
-                    ).order_by('event', 'person', 'role')
-        else:
-            pass # FIXME: error message
+                event__end__gte=form.cleaned_data['begin_date'],
+                event__start__lte=form.cleaned_data['end_date'],
+                role__name='instructor',
+                person__may_contact=True,
+            ).order_by('event', 'person', 'role')
 
-    # if a GET (or any other method) we'll create a blank form
     else:
+        # if a GET (or any other method) we'll create a blank form
         form = DebriefForm()
-        tasks = None
 
-    context = {'title' : 'Debrief',
-               'form' : form,
-               'all_tasks' : tasks}
+    context = {'title': 'Debrief',
+               'form': form,
+               'all_tasks': tasks}
     return render(request, 'workshops/debrief.html', context)
 
 #------------------------------------------------------------

@@ -31,6 +31,8 @@
                 <li class="divider"></li>
                 {% navbar_element "Bulk add persons" "person_bulk_add" %}
                 {% navbar_element "Find instructors" "instructors" %}
+                {% navbar_element "Debrief" "debrief" %}
+                <li class="divider"></li>
                 {% url "export" name="badges" as export_badges_url %}
                 {% url "export" name="instructors" as export_instructors_url %}
                 {% navbar_element_url "Export badges" export_badges_url %}
