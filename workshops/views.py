@@ -468,6 +468,7 @@ def event_edit(request, event_ident):
                                       prefix='task')
         if "save" in request.POST and event_form.is_valid():
             event_form.save()
+            return redirect(event)
         if "add" in request.POST and task_form.is_valid():
             task_form.save()
 
