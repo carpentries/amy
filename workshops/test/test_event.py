@@ -123,23 +123,23 @@ class TestEvent(TestBase):
         role = Role.objects.get(name='Test Role')
         url, values = self._get_initial_form('event_edit', event.id)
         assert len(values) > 0
-        values['event-0-end'] = ''
-        values['event-0-tags'] = tag.id
-        assert "event-0-reg_key" in values, \
+        values['event-end'] = ''
+        values['event-tags'] = tag.id
+        assert "event-reg_key" in values, \
             'No reg key in initial form'
         new_reg_key = 'test_reg_key'
         assert event.reg_key != new_reg_key, \
             'Would be unable to tell if reg_key had changed'
-        values['event-0-reg_key'] = new_reg_key
+        values['event-reg_key'] = new_reg_key
 
-        assert "task-0-person" in values, \
+        assert "task-person" in values, \
             'No person select in initial form'
 
         person = Person.objects.all()[0]
-        values['task-0-person'] = person.id
-        values['task-0-role'] = role.id
-        values['task-0-event'] = ''
-        values['task-0-id'] = ''
+        values['task-person'] = person.id
+        values['task-role'] = role.id
+        values['task-event'] = event.id
+        # values['task-id'] = ''
         # Add superuser as a test role
         values['add'] = 'yes'
 

@@ -20,7 +20,7 @@
     });
 </script>
 
-<form action="" method="post" id="event_edit_form">
+<form action="" method="post" id="event_edit_form" role="form">
     {% csrf_token %}
     {{ event_form.as_p }}
     <button type="submit" class="btn btn-success" name="save">Save</button>
