@@ -1,9 +1,10 @@
 from datetime import datetime, timedelta
 import sys
+import cgi
 
 from django.test import TestCase
 from django.core.urlresolvers import reverse
-from ..models import Event, Site, Tag
+from ..models import Event, Site, Tag, Person, Role
 from .base import TestBase
 
 
@@ -17,11 +18,18 @@ class TestEvent(TestBase):
         test_site = Site.objects.create(domain='example.com',
                                         fullname='Test Site')
 
+        # Create a test tag
+        test_tag = Tag.objects.create(name='Test Tag', details='For testing')
+
+        # Create a test roles
+        test_role = Role.objects.create(name='Test Role')
+
         # Create one new event for each day in the next 10 days
         for t in range(1, 11):
             event_start = datetime.now() + timedelta(days=t)
+            date_string = event_start.strftime('%Y-%m-%d')
             Event.objects.create(start=event_start,
-                                 slug='upcoming_{0}'.format(t),
+                                 slug='{0}-upcoming'.format(date_string),
                                  site=test_site,
                                  admin_fee=100)
 
@@ -29,8 +37,9 @@ class TestEvent(TestBase):
         # 3 days ago
         for t in range(3, 11):
             event_start = datetime.now() + timedelta(days=-t)
+            date_string = event_start.strftime('%Y-%m-%d')
             Event.objects.create(start=event_start,
-                                 slug='past_{0}'.format(t),
+                                 slug='{0}-past'.format(date_string),
                                  site=test_site,
                                  admin_fee=100)
 
@@ -71,7 +80,7 @@ class TestEvent(TestBase):
         assert len(upcoming_events) == 10
 
         # They should all start with upcoming
-        assert all([e.slug[:8] == 'upcoming' for e in upcoming_events])
+        assert all(['upcoming' in e.slug for e in upcoming_events])
 
     def test_get_past_events(self):
         """Test that the events manager can find past events"""
@@ -82,7 +91,7 @@ class TestEvent(TestBase):
         assert len(past_events) == 8
 
         # They should all start with past
-        assert all([e.slug[:4] == 'past' for e in past_events])
+        assert all(['past' in e.slug for e in past_events])
 
     def test_get_ongoing_events(self):
         """Test the events manager can find all events overlapping today.
@@ -103,6 +112,44 @@ class TestEvent(TestBase):
             self.assertCountEqual(event_slugs, correct_slugs)
         else:
             self.assertItemsEqual(event_slugs, correct_slugs)
+
+    def test_edit_event(self):
+        """ Test that an event can be edited, and that people can be
+            added from the event edit page.
+        """
+
+        event = Event.objects.all()[0]
+        tag = Tag.objects.get(name='Test Tag')
+        role = Role.objects.get(name='Test Role')
+        url, values = self._get_initial_form('event_edit', event.id)
+        assert len(values) > 0
+        values['event-end'] = ''
+        values['event-tags'] = tag.id
+        assert "event-reg_key" in values, \
+            'No reg key in initial form'
+        new_reg_key = 'test_reg_key'
+        assert event.reg_key != new_reg_key, \
+            'Would be unable to tell if reg_key had changed'
+        values['event-reg_key'] = new_reg_key
+
+        assert "task-person" in values, \
+            'No person select in initial form'
+
+        person = Person.objects.all()[0]
+        values['task-person'] = person.id
+        values['task-role'] = role.id
+        values['task-event'] = event.id
+        # values['task-id'] = ''
+        # Add superuser as a test role
+        values['add'] = 'yes'
+
+        response = self.client.post(url, values, follow=True) # Submit, following redirect
+        _, params = cgi.parse_header(response['content-type'])
+        charset = params['charset']
+        content = response.content.decode(charset)
+        assert new_reg_key in content
+        assert "/workshops/person/1" in content
+        assert "Test Role" in content
 
 
 class TestEventViews(TestBase):

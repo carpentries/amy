@@ -31,7 +31,9 @@ from workshops.models import \
     Skill, \
     Task
 from workshops.check import check_file
-from workshops.forms import SearchForm, DebriefForm, InstructorsForm, PersonBulkAddForm
+from workshops.forms import (
+    SearchForm, DebriefForm, InstructorsForm, PersonBulkAddForm, EventForm,
+    TaskForm)
 from workshops.util import (
     earth_distance, upload_person_task_csv,  verify_upload_person_task,
     create_uploaded_persons_tasks, InternalError
@@ -77,6 +79,8 @@ class UpdateViewContext(UpdateView):
         # self.model is available in UpdateView as the model class being
         # used to update model instance
         context['model'] = self.model
+
+        context['view'] = self
 
         # self.object is available in UpdateView as the object being currently
         # edited
@@ -440,12 +444,42 @@ def validate_event(request, event_ident):
 class EventCreate(LoginRequiredMixin, CreateViewContext):
     model = Event
     fields = '__all__'
+    # setting template_name to 'event_create_form.html' didn't work, but
+    # a changed suffix did!
+    template_name_suffix = '_create_form'
 
 
-class EventUpdate(LoginRequiredMixin, UpdateViewContext):
-    model = Event
-    fields = '__all__'
-    pk_url_kwarg = 'event_ident'
+@login_required
+def event_edit(request, event_ident):
+    try:
+        event = Event.get_by_ident(event_ident)
+        tasks = event.task_set.order_by('role__name')
+    except ObjectDoesNotExist:
+        raise Http404("No event found matching the query.")
+
+    if request.method == 'GET':
+        event_form = EventForm(prefix='event', instance=event)
+        task_form = TaskForm(prefix='task', initial={'event': event})
+
+    elif request.method == 'POST':
+        event_form = EventForm(request.POST, prefix='event', instance=event)
+        task_form = TaskForm(request.POST, prefix='task',
+                             initial={'event': event})
+
+        if "save" in request.POST and event_form.is_valid():
+            event_form.save()
+            return redirect(event)
+
+        if "add" in request.POST and task_form.is_valid():
+            task_form.save()
+
+    context = {'title': 'Edit Event {0}'.format(event.get_ident()),
+               'event_form': event_form,
+               'object': event,
+               'model': Event,
+               'tasks': tasks,
+               'task_form': task_form}
+    return render(request, 'workshops/event_edit_form.html', context)
 
 #------------------------------------------------------------
 
@@ -472,6 +506,14 @@ def task_details(request, task_id):
     context = {'title' : 'Task {0}'.format(task),
                'task' : task}
     return render(request, 'workshops/task.html', context)
+
+
+@login_required
+def task_delete(request, task_id):
+    '''Delete a task. This is used on the event edit page'''
+    t = Task.objects.get(pk=task_id)
+    t.delete()
+    return redirect(event_edit, t.event.id)
 
 
 class TaskCreate(LoginRequiredMixin, CreateViewContext):

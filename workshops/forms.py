@@ -1,6 +1,8 @@
 from django import forms
+from django.forms import HiddenInput
+from django.forms.models import modelform_factory
 
-from workshops.models import Skill, Airport
+from workshops.models import Skill, Airport, Event, Task
 
 INSTRUCTOR_SEARCH_LEN = 10   # how many instrutors to return from a search by default
 
@@ -83,3 +85,10 @@ class DebriefForm(forms.Form):
         label='End date as YYYY-MD-DD',
         input_formats=['%Y-%m-%d', ]
     )
+
+
+# forms below are created using a factory instead of class
+# they're used on event edit page
+EventForm = modelform_factory(Event, fields="__all__")
+TaskForm = modelform_factory(Task, fields="__all__",
+                             widgets={'event': HiddenInput})

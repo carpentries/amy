@@ -14,6 +14,12 @@
 
 {% block content %}
 
+<script type="text/javascript">
+    $(document).ready(function() {
+        $("#id_task-0-person").combobox();
+    });
+</script>
+
 <form action="" method="post" role="form">
     {% csrf_token %}
     {{ form.as_p }}

@@ -1,0 +1,51 @@
+{% extends "workshops/_page.html" %}
+
+{% load breadcrumbs %}
+{% block breadcrumbs %}
+    {% breadcrumb_main_page %}
+    {% breadcrumb_index_all_objects model %}
+    {% if object %}
+        {% breadcrumb_object object %}
+        {% breadcrumb_edit_object object %}
+    {% else %}
+        {% breadcrumb_new_object model %}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+
+<script type="text/javascript">
+    $(document).ready(function() {
+        $("#id_task-person").combobox();
+    });
+</script>
+
+<form action="" method="post" id="event_edit_form" role="form">
+    {% csrf_token %}
+    {{ event_form.as_p }}
+    <button type="submit" class="btn btn-success" name="save">Save</button>
+
+    <h2 id="associated-tasks">Associated tasks</h2>
+    {% if tasks %}
+    <table class="table table-striped">
+    <tr>
+        <th>person</th>
+        <th>role</th>
+        <th>actions</th>
+    </tr>
+    {% for t in tasks %}
+    <tr>
+        <td><a href="{% url 'person_details' t.person.id %}">{{ t.person }}</a></td>
+        <td>{{ t.role.name }}</td>
+        <td><a onclick='return confirm("Are you sure you wish to remove \"{{ t.person.get_full_name }}\" from {{ t.event.get_ident }}?")' href="{% url 'task_delete' t.id %}" class='btn btn-danger'>Delete</a></td>
+    </tr>
+    {% endfor %}
+    </table>
+    {% else %}
+    <p>No tasks.</p>
+    {% endif %}
+    {{ task_form.as_p }}
+    <button type="submit" class="btn btn-primary" name="add">Add</button>
+</form>
+
+{% endblock %}
