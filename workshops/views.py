@@ -18,7 +18,6 @@ from django.shortcuts import redirect, render, get_object_or_404
 from django.views.generic.base import ContextMixin
 from django.views.generic.edit import CreateView, UpdateView
 from django.contrib.auth.decorators import login_required
-from django.forms.models import modelformset_factory, inlineformset_factory
 
 
 from workshops.models import \
@@ -32,7 +31,9 @@ from workshops.models import \
     Skill, \
     Task
 from workshops.check import check_file
-from workshops.forms import SearchForm, DebriefForm, InstructorsForm, PersonBulkAddForm
+from workshops.forms import (
+    SearchForm, DebriefForm, InstructorsForm, PersonBulkAddForm, EventForm,
+    TaskForm)
 from workshops.util import (
     earth_distance, upload_person_task_csv,  verify_upload_person_task,
     create_uploaded_persons_tasks, InternalError
@@ -78,6 +79,8 @@ class UpdateViewContext(UpdateView):
         # self.model is available in UpdateView as the model class being
         # used to update model instance
         context['model'] = self.model
+
+        context['view'] = self
 
         # self.object is available in UpdateView as the object being currently
         # edited
@@ -442,42 +445,37 @@ class EventCreate(LoginRequiredMixin, CreateViewContext):
     model = Event
     fields = '__all__'
 
+
 @login_required
 def event_edit(request, event_ident):
-    event_form_factory = modelformset_factory(Event,
-                                              fields='__all__',
-                                              extra=0)
-    task_form_factory = inlineformset_factory(Event,
-                                              Task,
-                                              fields='__all__',
-                                              extra=1,
-                                              can_delete=False)
+    try:
+        event = Event.get_by_ident(event_ident)
+        tasks = event.task_set.order_by('role__name')
+    except ObjectDoesNotExist:
+        raise Http404("No event found matching the query.")
 
-    event = Event.get_by_ident(event_ident)
-    tasks = Task.objects.filter(event__id=event.id) \
-            .order_by('role__name')
     if request.method == 'GET':
-        event_form = event_form_factory(queryset=Event.objects.filter(id=event.id),
-                                        prefix='event')
-        task_form = task_form_factory(prefix='task')
-    
+        event_form = EventForm(prefix='event', instance=event)
+        task_form = TaskForm(prefix='task', initial={'event': event})
+
     elif request.method == 'POST':
-        event_form = event_form_factory(request.POST, prefix='event')
-        task_form = task_form_factory(request.POST,
-                                      instance=event,
-                                      prefix='task')
+        event_form = EventForm(request.POST, prefix='event', instance=event)
+        task_form = TaskForm(request.POST, prefix='task',
+                             initial={'event': event})
+
         if "save" in request.POST and event_form.is_valid():
             event_form.save()
             return redirect(event)
+
         if "add" in request.POST and task_form.is_valid():
             task_form.save()
 
     context = {'title': 'Edit Event {0}'.format(event.get_ident()),
-               'event_form': event_form.as_p(),
+               'event_form': event_form,
                'object': event,
                'model': Event,
-               'tasks' : tasks,
-               'task_form': task_form.as_table()}
+               'tasks': tasks,
+               'task_form': task_form}
     return render(request, 'workshops/event_edit_form.html', context)
 
 #------------------------------------------------------------
@@ -512,7 +510,7 @@ def task_delete(request, task_id):
     '''Delete a task. This is used on the event edit page'''
     t = Task.objects.get(pk=task_id)
     t.delete()
-    return redirect(event_edit, t.event)
+    return redirect(event_edit, t.event.id)
 
 
 class TaskCreate(LoginRequiredMixin, CreateViewContext):

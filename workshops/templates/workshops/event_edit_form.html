@@ -16,14 +16,16 @@
 
 <script type="text/javascript">
     $(document).ready(function() {
-        $("#id_task-0-person").combobox();
+        $("#id_task-person").combobox();
     });
 </script>
 
-<form action="" method="post">
+<form action="" method="post" id="event_edit_form">
     {% csrf_token %}
-    {{ event_form }}
-    <button type="submit" class="btn btn-success" name="save">Save</button><br/><br/>
+    {{ event_form.as_p }}
+    <button type="submit" class="btn btn-success" name="save">Save</button>
+
+    <h2 id="associated-tasks">Associated tasks</h2>
     {% if tasks %}
     <table class="table table-striped">
     <tr>
@@ -42,11 +44,8 @@
     {% else %}
     <p>No tasks.</p>
     {% endif %}
-    {{ task_form }}
+    {{ task_form.as_p }}
     <button type="submit" class="btn btn-primary" name="add">Add</button>
-    <br/><br/><br/>
 </form>
-
-<br/><br/>
 
 {% endblock %}
