@@ -11,7 +11,6 @@ INSTRUCTOR_SEARCH_LEN = 10   # how many instrutors to return from a search by de
 
 
 class BootstrapHelper(FormHelper):
-    attrs = {'role': 'form'}
     form_class = 'form-horizontal'
     label_class = 'col-lg-2'
     field_class = 'col-lg-8'
@@ -19,6 +18,7 @@ class BootstrapHelper(FormHelper):
     def __init__(self, form=None):
         super().__init__(form)
 
+        self.attrs['role'] = 'form'
         self.inputs.append(Submit('submit', 'Submit'))
 
 
