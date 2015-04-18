@@ -392,9 +392,9 @@ class PersonCreate(LoginRequiredMixin, CreateViewContext):
 class PersonUpdate(LoginRequiredMixin, UpdateViewContext):
     model = Person
     # don't display the 'password' field, reorder fields
-    fields = ["personal", "middle", "family", "username", "may_contact",
-              "email", "gender", "airport", "github", "twitter", "url",
-              "is_superuser", "user_permissions"]
+    fields = ['personal', 'middle', 'family', 'username', 'may_contact',
+              'email', 'gender', 'airport', 'github', 'twitter', 'url',
+              'is_superuser', 'user_permissions']
     pk_url_kwarg = 'person_id'
 
 
