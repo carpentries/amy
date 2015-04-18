@@ -9,12 +9,24 @@ from workshops.models import Skill, Airport, Event, Task
 
 INSTRUCTOR_SEARCH_LEN = 10   # how many instrutors to return from a search by default
 
-bootstrap_helper = FormHelper()
-bootstrap_helper.attrs = {"role": "form"}
-bootstrap_helper.form_class = 'form-horizontal'
-bootstrap_helper.label_class = 'col-lg-2'
-bootstrap_helper.field_class = 'col-lg-8'
-bootstrap_helper.add_input(Submit('submit', 'Submit'))
+
+class BootstrapHelper(FormHelper):
+    attrs = {'role': 'form'}
+    form_class = 'form-horizontal'
+    label_class = 'col-lg-2'
+    field_class = 'col-lg-8'
+
+    def __init__(self, form=None):
+        super().__init__(form)
+
+        self.inputs.append(Submit('submit', 'Submit'))
+
+
+class BootstrapHelperWithoutForm(BootstrapHelper):
+    form_tag = False
+
+bootstrap_helper = BootstrapHelper()
+bootstrap_helper_without_form = BootstrapHelperWithoutForm()
 
 
 class InstructorsForm(forms.Form):
