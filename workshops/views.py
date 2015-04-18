@@ -33,7 +33,7 @@ from workshops.models import \
 from workshops.check import check_file
 from workshops.forms import (
     SearchForm, DebriefForm, InstructorsForm, PersonBulkAddForm, EventForm,
-    TaskForm, bootstrap_helper)
+    TaskForm, bootstrap_helper, bootstrap_helper_without_form)
 from workshops.util import (
     earth_distance, upload_person_task_csv,  verify_upload_person_task,
     create_uploaded_persons_tasks, InternalError
@@ -472,7 +472,7 @@ def event_edit(request, event_ident):
         task_form = TaskForm(request.POST, prefix='task',
                              initial={'event': event})
 
-        if "save" in request.POST and event_form.is_valid():
+        if "submit" in request.POST and event_form.is_valid():
             event_form.save()
             return redirect(event)
 
@@ -484,7 +484,8 @@ def event_edit(request, event_ident):
                'object': event,
                'model': Event,
                'tasks': tasks,
-               'task_form': task_form}
+               'task_form': task_form,
+               'form_helper': bootstrap_helper_without_form}
     return render(request, 'workshops/event_edit_form.html', context)
 
 #------------------------------------------------------------
