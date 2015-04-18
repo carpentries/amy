@@ -12,7 +12,7 @@
 <table class="table table-striped">
   <tr><td>full name:</td><td>{{ site.fullname }}</td></tr>
   <tr><td>domain:</td><td><a href="http://{{ site.domain }}">{{ site.domain }}</a></td></tr>
-  <tr><td>country:</td><td>{{ site.country }}</td></tr>
+  <tr><td>country:</td><td>{{ site.country|default:"—" }}</td></tr>
 </table>
 
 {% if site.notes %}

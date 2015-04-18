@@ -19,7 +19,7 @@
     <tr>
       <td><a href="{% url 'person_details' a.person.id %}">{{ a.person }}</a></td>
       <td>{{ a.awarded }}</td>
-      <td>{{ a.event }}</td>
+      <td>{{ a.event|default:"—" }}</td>
     </tr>
     {% endfor %}
   </table>

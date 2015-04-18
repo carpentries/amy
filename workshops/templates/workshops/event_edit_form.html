@@ -12,6 +12,8 @@
     {% endif %}
 {% endblock %}
 
+{% load crispy_forms_tags %}
+
 {% block content %}
 
 <script type="text/javascript">
@@ -20,10 +22,8 @@
     });
 </script>
 
-<form action="" method="post" id="event_edit_form" role="form">
-    {% csrf_token %}
-    {{ event_form.as_p }}
-    <button type="submit" class="btn btn-success" name="save">Save</button>
+<form action="" method="post" id="event_task_form" role="form" class="form-horizontal">
+    {% crispy event_form form_helper %}
 
     <h2 id="associated-tasks">Associated tasks</h2>
     {% if tasks %}

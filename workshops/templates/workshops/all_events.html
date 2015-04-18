@@ -34,7 +34,7 @@
 	    </td>
 	    <td {% if not event.slug %}class="warning"{% endif %}>
 	      {% if not event.slug %}
-	        ---
+	        —
 	      {% else %}
 	        <a href="{% url 'event_details' event.slug %}">
 		  {{ event.slug }}
@@ -45,15 +45,15 @@
 	      {% if event.url %}
 	      <a href="{{ event.url }}">{{ event.url|cut:"https://github.com/" }}</a>
 	      {% else %}
-	      ---
+	      —
 	      {% endif %}
 	    </td>
 	    <td><a href="{% url 'site_details' event.site.domain %}">{{ event.site }}</a></td>
 	    <td>{{ event.start }} &ndash; {{ event.end }}</td>
-	    <td>{{ event.reg_key }}</td>
-	    <td>{{ event.attendance }}</td>
-	    <td>{{ event.admin_fee }}</td>
-	    <td>{{ event.fee_paid }}</td>
+	    <td>{{ event.reg_key|default:"—" }}</td>
+	    <td>{{ event.attendance|default_if_none:"—" }}</td>
+	    <td>{{ event.admin_fee|default_if_none:"—" }}</td>
+	    <td>{{ event.fee_paid|yesno:"yes,no,unknown" }}</td>
 	</tr>
     {% endfor %}
     </table>

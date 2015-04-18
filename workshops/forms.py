@@ -2,9 +2,31 @@ from django import forms
 from django.forms import HiddenInput
 from django.forms.models import modelform_factory
 
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Submit
+
 from workshops.models import Skill, Airport, Event, Task
 
 INSTRUCTOR_SEARCH_LEN = 10   # how many instrutors to return from a search by default
+
+
+class BootstrapHelper(FormHelper):
+    form_class = 'form-horizontal'
+    label_class = 'col-lg-2'
+    field_class = 'col-lg-8'
+
+    def __init__(self, form=None):
+        super().__init__(form)
+
+        self.attrs['role'] = 'form'
+        self.inputs.append(Submit('submit', 'Submit'))
+
+
+class BootstrapHelperWithoutForm(BootstrapHelper):
+    form_tag = False
+
+bootstrap_helper = BootstrapHelper()
+bootstrap_helper_without_form = BootstrapHelperWithoutForm()
 
 
 class InstructorsForm(forms.Form):

@@ -27,6 +27,6 @@ table td.editable span {
 }
 
 /* Padding below the event edit form */
-#event_edit_form {
+form[role="form"] {
     margin-bottom: 50px;
 }
