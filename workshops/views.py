@@ -84,7 +84,7 @@ class UpdateViewContext(UpdateView):
 
         # self.object is available in UpdateView as the object being currently
         # edited
-        context['title'] = str(self.object)
+        context['title'] = str(self.model.objects.get(pk=self.object.pk))
         return context
 
 
