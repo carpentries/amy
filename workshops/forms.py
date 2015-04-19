@@ -46,10 +46,10 @@ class InstructorsForm(forms.Form):
                                  min_value=-180.0,
                                  max_value=180.0,
                                  required=False)
-    airport = forms.ModelChoiceField(label='airport',
-                                     queryset=Airport.objects.all(),
-                                     to_field_name='iata',
-                                     required=False)
+    airport = selectable.AutoCompleteSelectField(
+                                lookup_class=lookups.AirportLookup,
+                                label='Airport',
+                                required=False)
 
     def __init__(self, *args, **kwargs):
         '''Build checkboxes for skills dynamically.'''
