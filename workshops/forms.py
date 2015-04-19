@@ -124,6 +124,13 @@ class EventForm(forms.ModelForm):
         required=True,
     )
 
+    def clean_slug(self):
+        # required for Event.get_by_ident
+        data = self.cleaned_data['slug']
+        if data and not re.match(r'^\d{4}-\d{2}-.+$', data):
+            raise forms.ValidationError("Slug must begin with YYYY-MM- syntax")
+        return data
+
     class Meta:
         model = Event
         exclude = tuple()

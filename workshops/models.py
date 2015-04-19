@@ -296,17 +296,20 @@ class Event(models.Model):
         YYYY-MM-DD-site slug, and indicates an event whose dates are firm.
         The real indicator is the 'published' flag.
         '''
+        kwargs = {}
+        try:
+            # first try to match using ID
+            kwargs["id"] = int(ident)
+        except ValueError:
+            # match event slug in format YYYY-MM-****
+            #(ie. this works for YYYY-MM-DD-**** too)
+            if re.match(r'^\d{4}-\d{2}-.+$', ident):
+                kwargs["slug"] = ident
+            else:
+                raise ObjectDoesNotExist(ident)
 
-        # match event ID
-        if re.match(r'^\d+$', ident):
-            return Event.objects.get(id=ident)
-
-        # match event slug in format YYYY-MM-**** (ie. this works for
-        # YYYY-MM-DD-**** too)
-        if re.match(r'^\d{4}-\d{2}-.+$', ident):
-            return Event.objects.get(slug=ident)
-
-        raise ObjectDoesNotExist(ident)
+        # may throw DoesNotExist exception
+        return Event.objects.get(**kwargs)
 
     def save(self, *args, **kwargs):
         self.url = self.url or None
