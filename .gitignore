@@ -6,3 +6,9 @@ db.sqlite3
 # coverage reports
 .coverage
 htmlcov
+
+# dir for collected static files
+./static
+
+# JS, CSS dependencies (installed via bower)
+bower_components
