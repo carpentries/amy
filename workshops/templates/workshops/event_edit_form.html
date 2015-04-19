@@ -51,9 +51,5 @@
 
 {% block extrajs %}
 {{event_form.media}}
-<script type="text/javascript">
-    $(document).ready(function() {
-        $("#id_task-person").combobox();
-    });
-</script>
+{{task_form.media}}
 {% endblock extrajs %}

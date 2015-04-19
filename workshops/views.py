@@ -33,7 +33,8 @@ from workshops.models import \
 from workshops.check import check_file
 from workshops.forms import (
     SearchForm, DebriefForm, InstructorsForm, PersonBulkAddForm, EventForm,
-    TaskForm, bootstrap_helper, bootstrap_helper_without_form)
+    TaskForm, bootstrap_helper, bootstrap_helper_without_form,
+    PersonForm, TaskFullForm)
 from workshops.util import (
     earth_distance, upload_person_task_csv,  verify_upload_person_task,
     create_uploaded_persons_tasks, InternalError
@@ -391,10 +392,7 @@ class PersonCreate(LoginRequiredMixin, CreateViewContext):
 
 class PersonUpdate(LoginRequiredMixin, UpdateViewContext):
     model = Person
-    # don't display the 'password' field, reorder fields
-    fields = ['personal', 'middle', 'family', 'username', 'may_contact',
-              'email', 'gender', 'airport', 'github', 'twitter', 'url',
-              'is_superuser', 'user_permissions']
+    form_class = PersonForm
     pk_url_kwarg = 'person_id'
 
 
@@ -465,12 +463,11 @@ def event_edit(request, event_ident):
 
     if request.method == 'GET':
         event_form = EventForm(prefix='event', instance=event)
-        task_form = TaskForm(prefix='task', initial={'event': event})
+        task_form = TaskForm(prefix='task', event=event)
 
     elif request.method == 'POST':
         event_form = EventForm(request.POST, prefix='event', instance=event)
-        task_form = TaskForm(request.POST, prefix='task',
-                             initial={'event': event})
+        task_form = TaskForm(request.POST, prefix='task', event=event)
 
         if "submit" in request.POST and event_form.is_valid():
             event_form.save()
@@ -530,7 +527,7 @@ class TaskCreate(LoginRequiredMixin, CreateViewContext):
 
 class TaskUpdate(LoginRequiredMixin, UpdateViewContext):
     model = Task
-    fields = TASK_FIELDS
+    form_class = TaskFullForm
     pk_url_kwarg = 'task_id'
 
 

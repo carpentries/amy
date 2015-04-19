@@ -1,5 +1,11 @@
 {% extends "workshops/_page.html" %}
 
+{% load selectable_tags %}
+
+{% block extrastyle %}
+  {% include_ui_theme %}
+{% endblock %}
+
 {% load breadcrumbs %}
 {% block breadcrumbs %}
     {% breadcrumb_main_page %}
@@ -17,3 +23,7 @@
 {% block content %}
 {% crispy form form_helper %}
 {% endblock %}
+
+{% block extrajs %}
+{{ form.media }}
+{% endblock extrajs %}

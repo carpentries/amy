@@ -1,10 +1,12 @@
+import re
+
 from django import forms
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from selectable import forms as selectable
 
-from workshops.models import Skill, Airport, Event, Task
+from workshops.models import Skill, Airport, Event, Task, Person
 from . import lookups
 
 
@@ -138,6 +140,49 @@ class EventForm(forms.ModelForm):
 
 class TaskForm(forms.ModelForm):
 
+    person = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.PersonLookup,
+        label='Person',
+        required=True,
+    )
+
+    def __init__(self, *args, **kwargs):
+        event = kwargs.pop('event', None)
+        super(TaskForm, self).__init__(*args, **kwargs)
+        if event:
+            self.instance.event = event
+
     class Meta:
         model = Task
         exclude = ('event', )
+
+
+class TaskFullForm(TaskForm):
+
+    event = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.EventLookup,
+        label='Event',
+        required=True,
+    )
+
+    class Meta:
+        model = Task
+        exclude = tuple()
+
+
+class PersonForm(forms.ModelForm):
+
+    airport = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.AirportLookup,
+        label='Airport',
+        required=False,
+    )
+
+    class Meta:
+        model = Person
+        # don't display the 'password' field, reorder fields
+        fields = ['personal', 'middle', 'family', 'username', 'may_contact',
+                  'email', 'gender', 'airport', 'github', 'twitter', 'url',
+                  'is_superuser', 'user_permissions']
+
+
