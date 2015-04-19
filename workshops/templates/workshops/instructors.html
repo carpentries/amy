@@ -1,12 +1,19 @@
 {% extends "workshops/_page.html" %}
 
+{% load crispy_forms_tags %}
+{% load selectable_tags %}
+
+{% block extrastyle %}
+  {% include_ui_theme %}
+{% endblock %}
+
+
 {% load breadcrumbs %}
 {% block breadcrumbs %}
     {% breadcrumb_main_page %}
     {% breadcrumb_active title %}
 {% endblock %}
 
-{% load crispy_forms_tags %}
 {% block content %}
     {% crispy form form_helper %}
 {% if persons == None %}
@@ -37,3 +44,7 @@
     <p>No matches.</p>
 {% endif %}
 {% endblock %}
+
+{% block extrajs %}
+{{ form.media }}
+{% endblock extrajs %}

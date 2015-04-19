@@ -35,21 +35,24 @@ bootstrap_helper_without_form = BootstrapHelperWithoutForm()
 class InstructorsForm(forms.Form):
     '''Represent instructor matching form.'''
 
-    wanted = forms.IntegerField(label='Number Wanted',
-                                initial=INSTRUCTOR_SEARCH_LEN,
-                                min_value=1)
-    latitude = forms.FloatField(label='Latitude',
-                                min_value=-90.0,
-                                max_value=90.0,
-                                required=False)
-    longitude = forms.FloatField(label='Longitude',
-                                 min_value=-180.0,
-                                 max_value=180.0,
-                                 required=False)
-    airport = forms.ModelChoiceField(label='airport',
-                                     queryset=Airport.objects.all(),
-                                     to_field_name='iata',
-                                     required=False)
+    wanted = forms.IntegerField(
+        label='Number Wanted',
+        initial=INSTRUCTOR_SEARCH_LEN,
+        min_value=1)
+    latitude = forms.FloatField(
+        label='Latitude',
+        min_value=-90.0,
+        max_value=90.0,
+        required=False)
+    longitude = forms.FloatField(
+        label='Longitude',
+        min_value=-180.0,
+        max_value=180.0,
+        required=False)
+    airport = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.AirportLookup,
+        label='Airport',
+        required=False)
 
     def __init__(self, *args, **kwargs):
         '''Build checkboxes for skills dynamically.'''
