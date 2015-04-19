@@ -519,9 +519,6 @@ def event_delete(request, event_ident):
 
 #------------------------------------------------------------
 
-TASK_FIELDS = ['event', 'person', 'role']
-
-
 @login_required
 def all_tasks(request):
     '''List all tasks.'''
@@ -555,7 +552,7 @@ def task_delete(request, task_id):
 
 class TaskCreate(LoginRequiredMixin, CreateViewContext):
     model = Task
-    fields = TASK_FIELDS
+    form_class = TaskFullForm
     template_name = 'workshops/generic_form.html'
 
 
