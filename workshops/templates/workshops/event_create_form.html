@@ -25,4 +25,9 @@
 
 {% block extrajs %}
 {{ form.media }}
+<script type="text/javascript">
+$(document).ready(function(){
+    $('#id_start,#id_end').datepicker();
+});
+</script>
 {% endblock extrajs %}
