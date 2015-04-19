@@ -1,11 +1,12 @@
 from django import forms
-from django.forms import HiddenInput
-from django.forms.models import modelform_factory
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
+from selectable import forms as selectable
 
 from workshops.models import Skill, Airport, Event, Task
+from . import lookups
+
 
 INSTRUCTOR_SEARCH_LEN = 10   # how many instrutors to return from a search by default
 
@@ -109,8 +110,27 @@ class DebriefForm(forms.Form):
     )
 
 
-# forms below are created using a factory instead of class
-# they're used on event edit page
-EventForm = modelform_factory(Event, fields="__all__")
-TaskForm = modelform_factory(Task, fields="__all__",
-                             widgets={'event': HiddenInput})
+class EventForm(forms.ModelForm):
+
+    site = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.SiteLookup,
+        label='Site',
+        required=True,
+    )
+
+    organizer = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.SiteLookup,
+        label='Organizer',
+        required=True,
+    )
+
+    class Meta:
+        model = Event
+        exclude = tuple()
+
+
+class TaskForm(forms.ModelForm):
+
+    class Meta:
+        model = Task
+        exclude = ('event', )

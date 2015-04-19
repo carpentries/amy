@@ -449,7 +449,7 @@ def validate_event(request, event_ident):
 
 class EventCreate(LoginRequiredMixin, CreateViewContext):
     model = Event
-    fields = '__all__'
+    form_class  = EventForm
     # setting template_name to 'event_create_form.html' didn't work, but
     # a changed suffix did!
     template_name_suffix = '_create_form'
