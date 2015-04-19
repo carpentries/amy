@@ -124,6 +124,19 @@ class EventForm(forms.ModelForm):
         required=True,
     )
 
+    def clean_slug(self):
+        # Ensure slug is not an integer value for Event.get_by_ident
+        data = self.cleaned_data['slug']
+
+        try:
+            int(data)
+        except ValueError:
+            pass
+        else:
+            raise forms.ValidationError("Slug must not be an integer-value.")
+
+        return data
+
     class Meta:
         model = Event
         fields = '__all__'
