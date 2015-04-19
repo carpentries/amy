@@ -11,7 +11,10 @@ class EventLookup(ModelLookup):
 
 class SiteLookup(ModelLookup):
     model = models.Site
-    search_fields = ('domain__icontains', )
+    search_fields = (
+        'domain__icontains',
+        'fullname__icontains'
+    )
 
 
 class PersonLookup(ModelLookup):
