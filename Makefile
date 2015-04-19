@@ -57,8 +57,13 @@ schema :
 notes :
 	python3 notes-importer.py ${APP_DB} ${SRC_EVENTS} ${SRC_SITES}
 
+## bower_components	: install front-end dependencies using Bower
+bower_components : bower.json
+	bower install
+	touch bower_components
+
 ## serve        : run a server
-serve :
+serve : bower_components
 	python3 manage.py runserver
 
 ## clean        : clean up.
@@ -67,6 +72,7 @@ clean :
 	$$(find . -name '*~' -print) \
 	$$(find . -name '*.pyc' -print) \
 	htmlerror \
+	bower_components \
 	${APP_DB}
 
 ## members      : who qualifies as a SCF member?
