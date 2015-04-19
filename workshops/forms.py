@@ -4,7 +4,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from selectable import forms as selectable
 
-from workshops.models import Skill, Airport, Event, Task
+from workshops.models import Skill, Airport, Event, Task, Person
 from workshops import lookups
 
 
@@ -143,6 +143,18 @@ class EventForm(forms.ModelForm):
 
 
 class TaskForm(forms.ModelForm):
+
+    person = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.PersonLookup,
+        label='Person',
+        required=True,
+    )
+
+    def __init__(self, *args, **kwargs):
+        event = kwargs.pop('event', None)
+        super().__init__(*args, **kwargs)
+        if event:
+            self.instance.event = event
 
     class Meta:
         model = Task
