@@ -27,12 +27,12 @@ def info(table):
     logging.info("Successfully migrated '{table}' table".format(table=table))
 
 
-def fake(i, slug, personal, middle, family, email, gender, github, twitter, url):
+def fake(i, person, personal, middle, family, email, gender, github, twitter, url):
     '''Redact personal identifying information.'''
     if not FAKE:
-        return slug, personal, middle, family, email, gender, github, twitter, url
+        return person, personal, middle, family, email, gender, github, twitter, url
     where = 'I{0}.edu'.format(i)
-    return 'S{0}'.format(i), \
+    return 'P{0}'.format(i), \
            'F{0}'.format(i), \
            'M{0}'.format(i), \
            'L{0}'.format(i), \
@@ -160,7 +160,6 @@ for (person, personal, middle, family, email) in old_crs.fetchall():
 
     try:
         fields = {'id' : i,
-                  'slug' : person,
                   'personal' : personal,
                   'middle' : middle,
                   'family' : family,
@@ -503,7 +502,7 @@ trainer_stuff =  [
     ['2014-11-12-ttt-washington', ['wilson.g', 'mills.b']],
     ['2015-01-06-ttt-ucdavis', ['wilson.g', 'mills.b', 'teal.t', 'pawlik.a']],
     ['2015-02-01-ttt-online', ['wilson.g']],
-    ['2015-04-xx-ttt-nih', ['wilson.g']],
+    ['2015-04-08-ttt-nih', ['wilson.g']],
     ['2015-05-01-ttt-online', ['wilson.g']],
     ['2015-09-01-ttt-online', ['wilson.g']]
 ]
