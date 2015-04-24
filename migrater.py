@@ -72,9 +72,7 @@ def insert(cursor, table, fields):
 # Setup.
 #------------------------------------------------------------
 
-assert len(sys.argv) == 3, 'Usage: migrater.py /path/to/src.db /path/to/dst.db'
-
-old_cnx = sqlite3.connect(sys.argv[1])
+old_cnx = sqlite3.connect(src_path)
 old_crs = old_cnx.cursor()
 new_cnx = sqlite3.connect(dst_path)
 new_crs = new_cnx.cursor()

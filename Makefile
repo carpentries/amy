@@ -40,6 +40,10 @@ import :
 	python3 migrater.py ${SRC_DB} ${APP_DB}
 	${QUERY} .dump > ${APP_SQL}
 
+## import-real  : import real legacy data
+import-real :
+	python3 migrater.py ${SRC_DB} ${APP_DB} real
+
 ## database     : re-make database using saved data
 database :
 	rm -f ${APP_DB}
