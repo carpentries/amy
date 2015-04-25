@@ -1,4 +1,5 @@
 Django>=1.7
-PyYAML
+PyYAML==3.11
 requests>=2.0
 django-crispy-forms>=1.4.0
+django-selectable==0.9.0

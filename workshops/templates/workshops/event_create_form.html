@@ -1,5 +1,12 @@
 {% extends "workshops/_page.html" %}
 
+{% load crispy_forms_tags %}
+{% load selectable_tags %}
+
+{% block extrastyle %}
+  {% include_ui_theme %}
+{% endblock %}
+
 {% load breadcrumbs %}
 {% block breadcrumbs %}
     {% breadcrumb_main_page %}
@@ -12,8 +19,15 @@
     {% endif %}
 {% endblock %}
 
-{% load crispy_forms_tags %}
-
 {% block content %}
 {% crispy form form_helper %}
 {% endblock %}
+
+{% block extrajs %}
+{{ form.media }}
+<script type="text/javascript">
+$(document).ready(function(){
+    $('#id_start,#id_end').datepicker();
+});
+</script>
+{% endblock extrajs %}

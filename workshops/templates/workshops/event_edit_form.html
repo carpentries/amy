@@ -1,5 +1,12 @@
 {% extends "workshops/_page.html" %}
 
+{% load crispy_forms_tags %}
+{% load selectable_tags %}
+
+{% block extrastyle %}
+  {% include_ui_theme %}
+{% endblock %}
+
 {% load breadcrumbs %}
 {% block breadcrumbs %}
     {% breadcrumb_main_page %}
@@ -12,16 +19,7 @@
     {% endif %}
 {% endblock %}
 
-{% load crispy_forms_tags %}
-
 {% block content %}
-
-<script type="text/javascript">
-    $(document).ready(function() {
-        $("#id_task-person").combobox();
-    });
-</script>
-
 <form action="" method="post" id="event_task_form" role="form" class="form-horizontal">
     {% crispy event_form form_helper %}
 
@@ -49,3 +47,14 @@
 </form>
 
 {% endblock %}
+
+
+{% block extrajs %}
+{{event_form.media}}
+{{task_form.media}}
+<script type="text/javascript">
+$(document).ready(function(){
+    $('#id_event-start,#id_event-end').datepicker();
+});
+</script>
+{% endblock extrajs %}

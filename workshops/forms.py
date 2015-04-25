@@ -1,11 +1,14 @@
+import re
+
 from django import forms
-from django.forms import HiddenInput
-from django.forms.models import modelform_factory
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
+from selectable import forms as selectable
 
-from workshops.models import Skill, Airport, Event, Task
+from workshops.models import Skill, Airport, Event, Task, Person
+from . import lookups
+
 
 INSTRUCTOR_SEARCH_LEN = 10   # how many instrutors to return from a search by default
 
@@ -32,21 +35,24 @@ bootstrap_helper_without_form = BootstrapHelperWithoutForm()
 class InstructorsForm(forms.Form):
     '''Represent instructor matching form.'''
 
-    wanted = forms.IntegerField(label='Number Wanted',
-                                initial=INSTRUCTOR_SEARCH_LEN,
-                                min_value=1)
-    latitude = forms.FloatField(label='Latitude',
-                                min_value=-90.0,
-                                max_value=90.0,
-                                required=False)
-    longitude = forms.FloatField(label='Longitude',
-                                 min_value=-180.0,
-                                 max_value=180.0,
-                                 required=False)
-    airport = forms.ModelChoiceField(label='airport',
-                                     queryset=Airport.objects.all(),
-                                     to_field_name='iata',
-                                     required=False)
+    wanted = forms.IntegerField(
+        label='Number Wanted',
+        initial=INSTRUCTOR_SEARCH_LEN,
+        min_value=1)
+    latitude = forms.FloatField(
+        label='Latitude',
+        min_value=-90.0,
+        max_value=90.0,
+        required=False)
+    longitude = forms.FloatField(
+        label='Longitude',
+        min_value=-180.0,
+        max_value=180.0,
+        required=False)
+    airport = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.AirportLookup,
+        label='Airport',
+        required=False)
 
     def __init__(self, *args, **kwargs):
         '''Build checkboxes for skills dynamically.'''
@@ -109,8 +115,77 @@ class DebriefForm(forms.Form):
     )
 
 
-# forms below are created using a factory instead of class
-# they're used on event edit page
-EventForm = modelform_factory(Event, fields="__all__")
-TaskForm = modelform_factory(Task, fields="__all__",
-                             widgets={'event': HiddenInput})
+class EventForm(forms.ModelForm):
+
+    site = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.SiteLookup,
+        label='Site',
+        required=True,
+    )
+
+    organizer = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.SiteLookup,
+        label='Organizer',
+        required=True,
+    )
+
+    def clean_slug(self):
+        # required for Event.get_by_ident
+        data = self.cleaned_data['slug']
+        if data and not re.match(r'^\d{4}-\d{2}-.+$', data):
+            raise forms.ValidationError("Slug must begin with YYYY-MM- syntax")
+        return data
+
+    class Meta:
+        model = Event
+        exclude = tuple()
+
+
+class TaskForm(forms.ModelForm):
+
+    person = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.PersonLookup,
+        label='Person',
+        required=True,
+    )
+
+    def __init__(self, *args, **kwargs):
+        event = kwargs.pop('event', None)
+        super(TaskForm, self).__init__(*args, **kwargs)
+        if event:
+            self.instance.event = event
+
+    class Meta:
+        model = Task
+        exclude = ('event', )
+
+
+class TaskFullForm(TaskForm):
+
+    event = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.EventLookup,
+        label='Event',
+        required=True,
+    )
+
+    class Meta:
+        model = Task
+        exclude = tuple()
+
+
+class PersonForm(forms.ModelForm):
+
+    airport = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.AirportLookup,
+        label='Airport',
+        required=False,
+    )
+
+    class Meta:
+        model = Person
+        # don't display the 'password' field, reorder fields
+        fields = ['personal', 'middle', 'family', 'username', 'may_contact',
+                  'email', 'gender', 'airport', 'github', 'twitter', 'url',
+                  'is_superuser', 'user_permissions']
+
+
