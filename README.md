@@ -25,7 +25,13 @@ To get started:
     $ sudo python3 -m pip install -r requirements.txt
     ~~~
 
-2.  Setup your local database.  There are two ways you can do this.
+2. Install [Bower](http://bower.io/) - the tool that manages Amy's JavaScript and CSS dependencies:
+
+    ~~~
+    $ npm install -g bower
+    ~~~
+
+3.  Setup your local database.  There are two ways you can do this.
 
     1. If you have access to the legacy data:
 
@@ -47,19 +53,19 @@ To get started:
        $ make database
        ~~~
 
-3.  Create a administrator account.
+4.  Create a administrator account.
 
     ~~~
     $ python3 manage.py createsuperuser
     ~~~
 
-4.  Start a local Django development server by running:
+5.  Start a local Django development server by running (this also installs front-end dependencies for Amy):
 
     ~~~
-    $ python3 manage.py runserver
+    $ make serve
     ~~~
 
-5.  Open [http://localhost:8000/workshops/](http://localhost:8000/workshops/) in your browser and start clicking.
+6.  Open [http://localhost:8000/workshops/](http://localhost:8000/workshops/) in your browser and start clicking.
 
     Use the administrator account that you created.
 
