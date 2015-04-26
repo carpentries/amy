@@ -37,7 +37,9 @@ TEMPLATE_DEBUG = True
 
 ALLOWED_HOSTS = [
     'software-carpentry.org',
-    'software-carpentry.org.'
+    'software-carpentry.org.',
+    'amy.software-carpentry.org',
+    'amy.software-carpentry.org.'
 ]
 
 
