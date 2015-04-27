@@ -114,3 +114,4 @@ class DebriefForm(forms.Form):
 EventForm = modelform_factory(Event, fields="__all__")
 TaskForm = modelform_factory(Task, fields="__all__",
                              widgets={'event': HiddenInput})
+

@@ -297,24 +297,13 @@ class Event(models.Model):
     def get_by_ident(ident):
         '''
         Select event that matches given identifier.
-
-        If the event identifier is purely numeric, it's an ID (and
-        probably indicates a pending event whose details are still being
-        negotiated).  If it contains dashes, it's probably a
-        YYYY-MM-DD-site slug, and indicates an event whose dates are firm.
-        The real indicator is the 'published' flag.
+        If ident is an int, search for matching primary-key;
+        otherwise get matching slug. May throw DoesNotExist error.
         '''
-
-        # match event ID
-        if re.match(r'^\d+$', ident):
-            return Event.objects.get(id=ident)
-
-        # match event slug in format YYYY-MM-**** (ie. this works for
-        # YYYY-MM-DD-**** too)
-        if re.match(r'^\d{4}-\d{2}-.+$', ident):
+        try:
+            return Event.objects.get(pk=int(ident))
+        except ValueError:
             return Event.objects.get(slug=ident)
-
-        raise ObjectDoesNotExist(ident)
 
     def save(self, *args, **kwargs):
         self.url = self.url or None
