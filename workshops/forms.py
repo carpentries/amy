@@ -127,10 +127,15 @@ class EventForm(forms.ModelForm):
     )
 
     def clean_slug(self):
-        # required for Event.get_by_ident
+        # Ensure slug is not an integer value for Event.get_by_ident
         data = self.cleaned_data['slug']
-        if data and not re.match(r'^\d{4}-\d{2}-.+$', data):
-            raise forms.ValidationError("Slug must begin with YYYY-MM- syntax")
+
+        try:
+            nonInt = int(data)
+            raise forms.ValidationError("Slug must not be an integer-value.")
+        except ValueError:
+            pass
+
         return data
 
     class Meta:
