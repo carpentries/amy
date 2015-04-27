@@ -7,7 +7,7 @@ from crispy_forms.layout import Submit
 from selectable import forms as selectable
 
 from workshops.models import Skill, Airport, Event, Task, Person
-from . import lookups
+from workshops import lookups
 
 
 INSTRUCTOR_SEARCH_LEN = 10   # how many instrutors to return from a search by default

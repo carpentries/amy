@@ -1,7 +1,7 @@
 from selectable.base import ModelLookup
 from selectable.registry import registry
 
-from . import models
+from workshops import models
 
 
 class EventLookup(ModelLookup):

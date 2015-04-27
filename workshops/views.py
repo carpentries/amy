@@ -32,9 +32,9 @@ from workshops.models import \
     Task
 from workshops.check import check_file
 from workshops.forms import (
-    SearchForm, DebriefForm, InstructorsForm, PersonBulkAddForm, EventForm,
-    TaskForm, bootstrap_helper, bootstrap_helper_without_form,
-    PersonForm, TaskFullForm)
+    SearchForm, DebriefForm, InstructorsForm, PersonForm, PersonBulkAddForm,
+    EventForm, TaskForm, TaskFullForm, bootstrap_helper,
+    bootstrap_helper_without_form)
 from workshops.util import (
     earth_distance, upload_person_task_csv,  verify_upload_person_task,
     create_uploaded_persons_tasks, InternalError
