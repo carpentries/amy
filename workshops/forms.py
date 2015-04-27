@@ -1,16 +1,19 @@
-import re
-
 from django import forms
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from selectable import forms as selectable
 
-from workshops.models import Skill, Airport, Event, Task, Person
+from workshops.models import Skill, Event, Task, Person
 from workshops import lookups
 
 
 INSTRUCTOR_SEARCH_LEN = 10   # how many instrutors to return from a search by default
+
+AUTOCOMPLETE_HELP_TEXT = """Autocomplete field; type characters to view available options,
+                            then select desired item from list."""
+
+DATE_HELP_TEXT = "Select date using widget, or enter in MM/DD/YYYY format."
 
 
 class BootstrapHelper(FormHelper):
@@ -47,9 +50,10 @@ class InstructorsForm(forms.Form):
                                  max_value=180.0,
                                  required=False)
     airport = selectable.AutoCompleteSelectField(
-                                lookup_class=lookups.AirportLookup,
-                                label='Airport',
-                                required=False)
+                lookup_class=lookups.AirportLookup,
+                label='Airport',
+                required=False,
+                help_text=AUTOCOMPLETE_HELP_TEXT)
 
     def __init__(self, *args, **kwargs):
         '''Build checkboxes for skills dynamically.'''
@@ -118,13 +122,20 @@ class EventForm(forms.ModelForm):
         lookup_class=lookups.SiteLookup,
         label='Site',
         required=True,
+        help_text=AUTOCOMPLETE_HELP_TEXT
     )
 
     organizer = selectable.AutoCompleteSelectField(
         lookup_class=lookups.SiteLookup,
         label='Organizer',
         required=True,
+        help_text=AUTOCOMPLETE_HELP_TEXT
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['start'].help_text = DATE_HELP_TEXT
+        self.fields['end'].help_text = DATE_HELP_TEXT
 
     def clean_slug(self):
         # Ensure slug is not an integer value for Event.get_by_ident
@@ -149,6 +160,7 @@ class TaskForm(forms.ModelForm):
         lookup_class=lookups.PersonLookup,
         label='Person',
         required=True,
+        help_text=AUTOCOMPLETE_HELP_TEXT
     )
 
     def __init__(self, *args, **kwargs):
@@ -168,6 +180,7 @@ class TaskFullForm(TaskForm):
         lookup_class=lookups.EventLookup,
         label='Event',
         required=True,
+        help_text=AUTOCOMPLETE_HELP_TEXT
     )
 
     class Meta:
@@ -181,6 +194,7 @@ class PersonForm(forms.ModelForm):
         lookup_class=lookups.AirportLookup,
         label='Airport',
         required=False,
+        help_text=AUTOCOMPLETE_HELP_TEXT
     )
 
     class Meta:
