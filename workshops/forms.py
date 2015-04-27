@@ -135,7 +135,7 @@ class EventForm(forms.ModelForm):
 
     class Meta:
         model = Event
-        exclude = tuple()
+        fields = '__all__'
 
 
 class TaskForm(forms.ModelForm):
@@ -148,7 +148,7 @@ class TaskForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         event = kwargs.pop('event', None)
-        super(TaskForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if event:
             self.instance.event = event
 
@@ -167,7 +167,7 @@ class TaskFullForm(TaskForm):
 
     class Meta:
         model = Task
-        exclude = tuple()
+        fields = '__all__'
 
 
 class PersonForm(forms.ModelForm):
