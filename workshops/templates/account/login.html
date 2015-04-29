@@ -1,5 +1,4 @@
 {% extends "account/_page.html" %}
-{% load static %}
 {% load breadcrumbs %}
 {% block breadcrumbs %}
     {% breadcrumb_main_page %}
@@ -7,18 +6,7 @@
 {% endblock %}
 
 {% block content %}
-<table>
-  <tr>
-    <td valign="center">
-      <img src="{% static 'amy-logo.png' %}" alt="Amy Logo" />
-    </td>
-    <td valign="center">
-      because setting up a workshop
-      <br/>
-      shouldn't have to hurt
-    </td>
-  </tr>
-</table>
+{% include "amy-logo.html" %}
 
 {% if form.errors %}
   <div class="alert alert-danger" role="alert"><strong>Error:</strong>
