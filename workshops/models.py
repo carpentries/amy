@@ -233,7 +233,8 @@ class EventManager(models.Manager):
 
     # Attach our custom query set to the manager
     def get_queryset(self):
-        return EventQuerySet(self.model, using=self._db)
+        """Fetch only existing events (ie. not deleted)."""
+        return EventQuerySet(self.model, using=self._db).filter(deleted=False)
 
     # Proxy methods so we can call our custom filters from the manager
     # without explicitly creating an EventQuerySet first - see
@@ -267,6 +268,7 @@ class Event(models.Model):
     admin_fee  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
     fee_paid   = models.NullBooleanField(default=False, blank=True)
     notes      = models.TextField(default="", blank=True)
+    deleted = models.BooleanField(default=False)
 
     class Meta:
         ordering = ('-start', )
@@ -325,12 +327,21 @@ class Role(models.Model):
 
 #------------------------------------------------------------
 
+
+class TaskManager(models.Manager):
+    def get_queryset(self):
+        """Fetch only existing tasks (ie. not deleted)."""
+        return super().get_queryset().filter(deleted=False)
+
 class Task(models.Model):
     '''Represent who did what at events.'''
 
     event      = models.ForeignKey(Event)
     person     = models.ForeignKey(Person)
     role       = models.ForeignKey(Role)
+    deleted = models.BooleanField(default=False)
+
+    objects = TaskManager()
 
     class Meta:
         unique_together = ("event", "person", "role")
