@@ -1,5 +1,4 @@
 {% extends "account/_page.html" %}
-
 {% load breadcrumbs %}
 {% block breadcrumbs %}
     {% breadcrumb_main_page %}
@@ -7,6 +6,7 @@
 {% endblock %}
 
 {% block content %}
+{% include "amy-logo.html" %}
 
 {% if form.errors %}
   <div class="alert alert-danger" role="alert"><strong>Error:</strong>
