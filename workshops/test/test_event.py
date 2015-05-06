@@ -9,7 +9,7 @@ from .base import TestBase
 
 
 class TestEvent(TestBase):
-    "Tests for the event model and it's manager"
+    "Tests for the event model and its manager."
 
     def setUp(self):
         self._setUpUsersAndLogin()
@@ -21,17 +21,20 @@ class TestEvent(TestBase):
         # Create a test tag
         test_tag = Tag.objects.create(name='Test Tag', details='For testing')
 
-        # Create a test roles
+        # Create a test role
         test_role = Role.objects.create(name='Test Role')
 
         # Create one new event for each day in the next 10 days
+        self.num_unpaid_events = 0
         for t in range(1, 11):
             event_start = datetime.now() + timedelta(days=t)
             date_string = event_start.strftime('%Y-%m-%d')
             Event.objects.create(start=event_start,
                                  slug='{0}-upcoming'.format(date_string),
                                  site=test_site,
-                                 admin_fee=100)
+                                 admin_fee=100,
+                                 fee_paid=False)
+            self.num_unpaid_events += 1
 
         # Create one new event for each day from 10 days ago to
         # 3 days ago
@@ -41,28 +44,32 @@ class TestEvent(TestBase):
             Event.objects.create(start=event_start,
                                  slug='{0}-past'.format(date_string),
                                  site=test_site,
-                                 admin_fee=100)
+                                 admin_fee=100,
+                                 fee_paid=True)
 
-        # Create an event that started yesterday and ends
-        # tomorrow
+        # Create an event that started yesterday and ends tomorrow
+        # with no fee, and without specifying whether the fee has been
+        # paid
         event_start = datetime.now() + timedelta(days=-1)
         event_end = datetime.now() + timedelta(days=1)
         Event.objects.create(start=event_start,
                              end=event_end,
                              slug='ends_tomorrow',
                              site=test_site,
-                             admin_fee=100)
+                             admin_fee=0)
 
-        # Create an event that ends today
+        # Create an event that ends today with no fee, and without
+        # specifying whether the fee has been paid
         event_start = datetime.now() + timedelta(days=-1)
         event_end = datetime.now()
         Event.objects.create(start=event_start,
                              end=event_end,
                              slug='ends_today',
                              site=test_site,
-                             admin_fee=100)
+                             admin_fee=0)
 
-        # Create an event that starts today
+        # Create an event that starts today with a fee, and without
+        # specifying whether the fee has been paid
         event_start = datetime.now()
         event_end = datetime.now() + timedelta(days=1)
         Event.objects.create(start=event_start,
@@ -70,6 +77,18 @@ class TestEvent(TestBase):
                              slug='starts_today',
                              site=test_site,
                              admin_fee=100)
+        self.num_unpaid_events += 1
+
+    def test_get_unpaid_events(self):
+        """Test that the events manager can find events that owe money"""
+
+        unpaid_events = Event.objects.unpaid_events()
+
+        # There should be as many as there are strictly future events.
+        assert len(unpaid_events) == self.num_unpaid_events
+
+        # Check that events with a fee of zero are not in the list of unpaid events.
+        assert not any([x for x in unpaid_events if x.admin_fee == 0])
 
     def test_get_future_events(self):
         """Test that the events manager can find upcoming events"""
