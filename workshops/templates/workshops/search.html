@@ -29,7 +29,7 @@
       {% if events %}
       <ul>
 	{% for e in events %}
-	<li><a class="searchresult" href="{% url 'event_details' e.slug %}">{{ e.slug }}</a></li>
+	<li><a class="searchresult" href="{% url 'event_details' e.get_ident %}">{{ e.get_ident }}</a></li>
 	{% endfor %}
       </ul>
       {% endif %}
