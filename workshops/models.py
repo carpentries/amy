@@ -227,6 +227,11 @@ class EventQuerySet(models.query.QuerySet):
 
         return self.filter(published=False)
 
+    def unpaid_events(self):
+        '''Return a queryset for events that owe money.'''
+
+        # All events that have an admin fee but are not marked as paid.
+        return self.filter(admin_fee__gt=0).exclude(fee_paid=True)
 
 class EventManager(models.Manager):
     '''A custom manager which is essentially a proxy for EventQuerySet'''
@@ -250,6 +255,9 @@ class EventManager(models.Manager):
 
     def unpublished_events(self):
         return self.get_queryset().unpublished_events()
+
+    def unpaid_events(self):
+        return self.get_queryset().unpaid_events()
 
 class Event(models.Model):
     '''Represent a single event.'''

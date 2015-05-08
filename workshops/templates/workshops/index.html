@@ -8,7 +8,7 @@
 {% include "amy-logo.html" %}
 
 <div class="row">
-  <div class="col-xs-6">
+  <div class="col-xs-4">
     <h3>Upcoming events</h3>
     <table class="table table-striped">
     {% for event in upcoming_events %}
@@ -18,7 +18,7 @@
     {% endfor %}
     </table>
   </div>
-  <div class="col-xs-6">
+  <div class="col-xs-4">
     <h3>Unpublished events</h3>
     <table class="table table-striped">
     {% for event in unpublished_events %}
@@ -30,6 +30,16 @@
           {% if event.slug %}: {{ event.slug }}{% endif %}
         </a>
       </td>
+    </tr>
+    {% endfor %}
+    </table>
+  </div>
+  <div class="col-xs-4">
+    <h3>Unpaid events</h3>
+    <table class="table table-striped">
+    {% for event in unpaid_events %}
+    <tr>
+      <td><a href="{{ event.get_absolute_url }}">{{ event.slug }}</a></td>
     </tr>
     {% endfor %}
     </table>
