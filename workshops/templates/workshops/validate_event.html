@@ -20,7 +20,7 @@
     <p>No errors</p>
   {% endif %}
 {% endif %}
-<p>... <a href="{% url 'event_details' event.slug %}">return to event</a></p>
+<p>... <a href="{% url 'event_details' event.get_ident %}">return to event</a></p>
 <p>... <a href="{% url 'all_events' %}">all events</a></p>
 <p>... <a href="{% url 'index' %}">index</a></p>
 {% endblock %}

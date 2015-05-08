@@ -36,8 +36,8 @@
 	      {% if not event.slug %}
 	        —
 	      {% else %}
-	        <a href="{% url 'event_details' event.slug %}">
-		  {{ event.slug }}
+	        <a href="{% url 'event_details' event.get_ident %}">
+		  {{ event.get_ident }}
 	        </a>
 	      {% endif %}
 	    </td>
