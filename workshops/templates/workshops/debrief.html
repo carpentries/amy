@@ -12,15 +12,12 @@
 {% crispy form form_helper %}
 
 <script type="text/javascript">
-  $('.input-daterange').datepicker({
-    format: "yyyy-mm-dd",
-    weekStart: 1,
-    todayBtn: "linked",
-    clearBtn: true,
-    orientation: "top auto",
-    todayHighlight: true,
-    toggleActive: true
-  });
+    $(document).ready(function() {
+        $("#id_begin_date, #id_end_date").datepicker({
+            format: "yyyy-mm-dd",
+            todayHighlight: true
+        });
+    });
 </script>
 
 {% if all_tasks %}
