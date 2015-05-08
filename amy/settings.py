@@ -12,8 +12,6 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 import os
 import json
 
-from django.conf import global_settings
-
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 
@@ -33,7 +31,31 @@ else:
 SECRET_KEY = os.environ.get('AMY_SECRET_KEY', SECRET_KEY)
 
 
-TEMPLATE_DEBUG = True
+# New template settings (for Django >= 1.8)
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'debug': DEBUG,
+
+            # default processors + a request processor
+            'context_processors': [
+                'django.contrib.auth.context_processors.auth',
+                'django.template.context_processors.debug',
+                'django.template.context_processors.i18n',
+                'django.template.context_processors.media',
+                'django.template.context_processors.static',
+                'django.template.context_processors.tz',
+                'django.contrib.messages.context_processors.messages',
+                'django.core.context_processors.request',
+            ],
+
+            # Warn viewers of invalid template strings
+            'string_if_invalid': 'XXX-unset-variable-XXX',
+        }
+    }
+]
 
 ALLOWED_HOSTS = [
     'software-carpentry.org',
@@ -68,12 +90,6 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-)
-
-# WARNING: in Django 1.8 processors get moved from ``django.core`` to
-#          ``django.template``.
-TEMPLATE_CONTEXT_PROCESSORS = global_settings.TEMPLATE_CONTEXT_PROCESSORS + (
-    "django.core.context_processors.request",
 )
 
 ROOT_URLCONF = 'amy.urls'
@@ -125,9 +141,6 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'bower_components'),
 )
-
-# Warn viewers of invalid template strings
-TEMPLATE_STRING_IF_INVALID = 'XXX-unset-variable-XXX'
 
 # if "next" (or "?next") variable is not set when logging in, redirect to
 # workshops

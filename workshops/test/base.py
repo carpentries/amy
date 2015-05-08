@@ -178,12 +178,13 @@ class TestBase(TestCase):
                 writer.write(content)
 
         # Report unfilled tags.
-        if settings.TEMPLATE_STRING_IF_INVALID in content:
+        STRING_IF_INVALID = \
+            settings.TEMPLATES[0]['OPTIONS']['string_if_invalid']
+        if STRING_IF_INVALID in content:
             self._save_html(content)
             lines = content.split('\n')
-            hits = [x for x in enumerate(lines)
-                    if settings.TEMPLATE_STRING_IF_INVALID in x[1]]
-            msg = '"{0}" found in HTML page:\n'.format(settings.TEMPLATE_STRING_IF_INVALID)
+            hits = [x for x in enumerate(lines) if STRING_IF_INVALID in x[1]]
+            msg = '"{0}" found in HTML page:\n'.format(STRING_IF_INVALID)
             assert not hits, msg + '\n'.join(['{0}: "{1}"'.format(h[0], h[1].rstrip())
                                               for h in hits])
 
@@ -263,7 +264,7 @@ class TestBase(TestCase):
 
         inputs = dict([(i.attrib['name'], i.attrib.get('value', None))
                        for i in form.findall(".//input[@type='text']")])
-        
+
         hidden = dict([(i.attrib['name'], i.attrib.get('value', None))
                        for i in form.findall(".//input[@type='hidden']")])
 
