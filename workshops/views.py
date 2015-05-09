@@ -490,6 +490,23 @@ def event_edit(request, event_ident):
                'form_helper': bootstrap_helper_without_form}
     return render(request, 'workshops/event_edit_form.html', context)
 
+
+@login_required
+def event_delete(request, event_ident):
+    """Mark event as deleted.
+
+    Additionally mark tasks pointing at that event as deleted, too."""
+    try:
+        event = Event.get_by_ident(event_ident)
+        tasks = event.task_set
+    except ObjectDoesNotExist:
+        raise Http404("No event found matching the query.")
+
+    tasks.update(deleted=True)
+    event.deleted = True
+    event.save()
+    return redirect(reverse('all_events'))
+
 #------------------------------------------------------------
 
 TASK_FIELDS = ['event', 'person', 'role']
@@ -521,7 +538,8 @@ def task_details(request, task_id):
 def task_delete(request, task_id):
     '''Delete a task. This is used on the event edit page'''
     t = Task.objects.get(pk=task_id)
-    t.delete()
+    t.deleted = True
+    t.save()
     return redirect(event_edit, t.event.id)
 
 
