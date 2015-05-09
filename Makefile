@@ -1,3 +1,6 @@
+# How to run Python.
+PYTHON = python3
+
 # Where original data lives.
 SRC_DIR = ~/s/admin
 
@@ -28,21 +31,21 @@ commands : Makefile
 
 ## test         : run all tests.
 test :
-	python3 manage.py test
+	${PYTHON} manage.py test
 
 ## migrations   : create/apply migrations
 migrations :
-	python3 manage.py makemigrations
-	python3 manage.py migrate
+	${PYTHON} manage.py makemigrations
+	${PYTHON} manage.py migrate
 
 ## import       : import and save legacy data
 import :
-	python3 migrater.py ${SRC_DB} ${APP_DB}
+	${PYTHON} migrater.py ${SRC_DB} ${APP_DB}
 	${QUERY} .dump > ${APP_SQL}
 
 ## import-real  : import real legacy data
 import-real :
-	python3 migrater.py ${SRC_DB} ${APP_DB} real
+	${PYTHON} migrater.py ${SRC_DB} ${APP_DB} real
 
 ## database     : re-make database using saved data
 database :
@@ -51,7 +54,15 @@ database :
 
 ## superuser    : make a super-user in the database
 superuser :
-	python3 manage.py create_superuser
+	@${PYTHON} manage.py create_superuser
+
+## airports     : display YAML for airports
+airports :
+	@${PYTHON} manage.py export_airports
+
+## badges       : display YAML for badges
+badges :
+	@${PYTHON} manage.py export_badges
 
 ## schema       : display the database schema
 schema :
@@ -59,7 +70,7 @@ schema :
 
 ## notes        : load old notes
 notes :
-	python3 notes-importer.py ${APP_DB} ${SRC_EVENTS} ${SRC_SITES}
+	${PYTHON} notes-importer.py ${APP_DB} ${SRC_EVENTS} ${SRC_SITES}
 
 ## bower_components	: install front-end dependencies using Bower
 bower_components : bower.json
@@ -68,7 +79,7 @@ bower_components : bower.json
 
 ## serve        : run a server
 serve : bower_components
-	python3 manage.py runserver
+	${PYTHON} manage.py runserver
 
 ## clean        : clean up.
 clean :

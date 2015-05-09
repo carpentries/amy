@@ -2,7 +2,6 @@ import csv
 import datetime
 import io
 import re
-import yaml
 
 import requests
 
@@ -717,11 +716,17 @@ def _export_badges():
 
 def _export_instructors():
     '''Collect instructor airport locations as YAML.'''
-    # Exclude airports with no instructors, and add the number of instructors per airport
-    airports = Airport.objects.exclude(person=None).annotate(num_persons=Count('person'))
+
+    # Get all the people associated with an airport.
+    def _get_people(airport):
+        return [[p.username, p.get_full_name()]
+                for p in Person.objects.filter(airport=airport)]
+
+    # Exclude airports with no instructors, then create a list of dicts.
+    airports = Airport.objects.exclude(person=None)
     return [{'airport' : str(a.fullname),
              'latlng' : '{0},{1}'.format(a.latitude, a.longitude),
-             'count'  : a.num_persons}
+             'who'  : _get_people(a)}
             for a in airports]
 
 
