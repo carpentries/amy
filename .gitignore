@@ -8,7 +8,7 @@ db.sqlite3
 htmlcov
 
 # dir for collected static files
-./static
+static/*
 
 # JS, CSS dependencies (installed via bower)
 bower_components
