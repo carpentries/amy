@@ -720,7 +720,7 @@ def _export_instructors():
     # Get all the people associated with an airport.
     def _get_people(airport):
         return [[p.username, p.get_full_name()]
-                for p in Person.objects.filter(airport=airport)]
+                for p in airport.person_set.all()]
 
     # Exclude airports with no instructors, then create a list of dicts.
     airports = Airport.objects.exclude(person=None)
