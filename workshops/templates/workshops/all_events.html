@@ -29,9 +29,9 @@
 	    <td>{{ event.id }}</td>
 	    <td>{{ event.published }}</td>
 	    <td>{{ event.tags.all | join:", " }}</td>
-	    <td {% if event.num_instructors == 0 %}class="warning"{% endif %}>
-	      {{ event.num_instructors }}
-	    </td>
+        {% with num_instructors=event.task_set.instructors.count %}
+        <td {% if num_instructors == 0 %}class="warning"{% endif %}>{{ num_instructors }}</td>
+        {% endwith %}
 	    <td {% if not event.slug %}class="warning"{% endif %}>
 	      {% if not event.slug %}
 	        —

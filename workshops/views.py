@@ -113,8 +113,6 @@ def index(request):
     upcoming_events = Event.objects.upcoming_events()
     unpublished_events = Event.objects.unpublished_events()
     unpaid_events = Event.objects.unpaid_events()
-    for e in unpublished_events:
-        e.num_instructors = e.task_set.filter(role__name='instructor').count()
     context = {'title': None,
                'upcoming_events': upcoming_events,
                'unpaid_events': unpaid_events,
@@ -409,8 +407,6 @@ def all_events(request):
 
     all_events = Event.objects.all()
     events = _get_pagination_items(request, all_events)
-    for e in events:
-        e.num_instructors = e.task_set.filter(role__name='instructor').count()
     context = {'title' : 'All Events',
                'all_events' : events}
     return render(request, 'workshops/all_events.html', context)
@@ -602,8 +598,7 @@ def instructors(request):
 
             # Add metadata which we will eventually filter by
             for p in persons:
-                p.num_taught = \
-                    p.task_set.filter(role__name='instructor').count()
+                p.num_taught = p.task_set.instructors().count()
 
             # Sort by location.
             loc = (form.cleaned_data['latitude'],
