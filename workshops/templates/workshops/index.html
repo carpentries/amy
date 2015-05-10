@@ -18,6 +18,16 @@
     {% endfor %}
     </table>
   </div>
+  <div class="col-xs-3">
+    <h3>Unpaid</h3>
+    <table class="table table-striped">
+    {% for event in unpaid_events %}
+    <tr>
+      <td><a href="{{ event.get_absolute_url }}">{{ event.slug }}</a></td>
+    </tr>
+    {% endfor %}
+    </table>
+  </div>
   <div class="col-xs-6">
     <h3>Unpublished</h3>
     <table class="table table-striped">
@@ -30,12 +40,12 @@
       </tr>
       {% for event in unpublished_events %}
       <tr>
-        <td>
+        <td {% if event.num_instructors == 0 %}class="warning"{% endif %}>
           {{ event.num_instructors }}
         </td>
-	<td>
-	  {% if event.start %}&#10004;{% endif %}
-	</td>
+        <td>
+          {% if event.start %}&#10004;{% endif %}
+        </td>
         <td>
           <a href="{{ event.get_absolute_url }}">
             {{ event.id }}
@@ -46,21 +56,17 @@
             {{ event.site }}
           </a>
         </td>
-        <td>
-          {% if event.slug %}{{ event.slug }}{% endif %}
+        <td {% if not event.slug %}class="warning"{% endif %}>
+          {% if not event.slug %}
+          —
+          {% else %}
+          <a href="{% url 'event_details' event.get_ident %}">
+            {{ event.get_ident }}
+          </a>
+          {% endif %}
         </td>
       </tr>
       {% endfor %}
-    </table>
-  </div>
-  <div class="col-xs-3">
-    <h3>Unpaid</h3>
-    <table class="table table-striped">
-    {% for event in unpaid_events %}
-    <tr>
-      <td><a href="{{ event.get_absolute_url }}">{{ event.slug }}</a></td>
-    </tr>
-    {% endfor %}
     </table>
   </div>
 </div>

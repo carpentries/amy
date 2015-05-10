@@ -114,10 +114,12 @@ def index(request):
     upcoming_events = Event.objects.upcoming_events()
     unpublished_events = Event.objects.unpublished_events()
     unpaid_events = Event.objects.unpaid_events()
+    for e in unpublished_events:
+        e.num_instructors = e.task_set.filter(role__name='instructor').count()
     context = {'title': None,
                'upcoming_events': upcoming_events,
-               'unpublished_events': unpublished_events,
-               'unpaid_events': unpaid_events}
+               'unpaid_events': unpaid_events,
+               'unpublished_events': unpublished_events}
     return render(request, 'workshops/index.html', context)
 
 #------------------------------------------------------------
