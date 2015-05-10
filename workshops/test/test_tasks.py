@@ -1,7 +1,10 @@
-from django.core.urlresolvers import reverse
+from itertools import product
 from datetime import datetime
-from ..models import Task, Event, Role, Person, Site
+
+from django.core.urlresolvers import reverse
+
 from .base import TestBase
+from ..models import Task, Event, Role, Person, Site
 
 
 class TestTask(TestBase):
@@ -31,6 +34,20 @@ class TestTask(TestBase):
                                             site=test_site,
                                             admin_fee=0)
 
+        test_event_3 = Event.objects.create(start=datetime.now(),
+                                            slug='test_event_3',
+                                            site=test_site,
+                                            admin_fee=0)
+
+        instructor_role = Role.objects.create(name="instructor")
+        learner_role = Role.objects.create(name="learner")
+        helper_role = Role.objects.create(name="helper")
+        roles = [instructor_role, learner_role, helper_role]
+        people = [test_person_1, test_person_2]
+
+        for role, person in product(roles, people):
+            Task.objects.create(person=person, role=role, event=test_event_3)
+
         test_role_1 = Role.objects.create(name='test_role_1')
         test_role_2 = Role.objects.create(name='test_role_2')
 
@@ -59,3 +76,13 @@ class TestTask(TestBase):
         response = self.client.get(reverse('task_edit',
                                    kwargs=url_kwargs))
         assert response.context['task'].pk == correct_task.pk
+
+    def test_task_manager_roles_lookup(self):
+        """Test TaskManager methods for looking up roles by names."""
+        event = Event.objects.get(slug='test_event_3')
+        instructors = event.task_set.instructors()
+        learners = event.task_set.learners()
+        helpers = event.task_set.helpers()
+        tasks = event.task_set.all()
+
+        assert set(tasks) == set(instructors) | set(learners) | set(helpers)
