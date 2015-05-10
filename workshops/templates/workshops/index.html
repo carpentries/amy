@@ -13,7 +13,7 @@
     <table class="table table-striped">
     {% for event in upcoming_events %}
     <tr>
-      <td><a href="{{ event.get_absolute_url }}">{{ event.slug }}</a></td>
+      <td><a href="{{ event.get_absolute_url }}">{{ event.get_ident }}</a></td>
     </tr>
     {% endfor %}
     </table>
@@ -23,7 +23,7 @@
     <table class="table table-striped">
     {% for event in unpaid_events %}
     <tr>
-      <td><a href="{{ event.get_absolute_url }}">{{ event.slug }}</a></td>
+      <td><a href="{{ event.get_absolute_url }}">{{ event.get_ident }}</a></td>
     </tr>
     {% endfor %}
     </table>
