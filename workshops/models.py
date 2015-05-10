@@ -330,6 +330,19 @@ class TaskManager(models.Manager):
         """Fetch only existing tasks (ie. not deleted)."""
         return super().get_queryset().filter(deleted=False)
 
+    def instructors(self):
+        """Fetch tasks with role 'instructor'."""
+        return self.get_queryset().filter(role__name="instructor")
+
+    def learners(self):
+        """Fetch tasks with role 'learner'."""
+        return self.get_queryset().filter(role__name="learner")
+
+    def helpers(self):
+        """Fetch tasks with role 'helper'."""
+        return self.get_queryset().filter(role__name="helper")
+
+
 class Task(models.Model):
     '''Represent who did what at events.'''
 
