@@ -48,7 +48,7 @@
 <p class="edit-object"><a href="{% url 'event_edit' event.id %}">Edit this event</a></p>
 <p class="delete-object"><a href="{% url 'event_delete' event.id %}" onclick='return confirm("Are you sure you wish to remove \"{{ event }}\"?")'>Delete this event</a></p>
 {% if event.url %}
-<p>... <a href="{% url 'validate_event' event.slug %}">validate event</a></p>
+<p>... <a href="{% url 'validate_event' event.get_ident %}">validate event</a></p>
 {% else %}
 <p>cannot validate event without URL</p>
 {% endif %}

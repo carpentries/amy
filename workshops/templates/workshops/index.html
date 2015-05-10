@@ -8,40 +8,65 @@
 {% include "amy-logo.html" %}
 
 <div class="row">
-  <div class="col-xs-4">
-    <h3>Upcoming events</h3>
+  <div class="col-xs-3">
+    <h3>Upcoming</h3>
     <table class="table table-striped">
     {% for event in upcoming_events %}
     <tr>
-      <td><a href="{{ event.get_absolute_url }}">{{ event.slug }}</a></td>
+      <td><a href="{{ event.get_absolute_url }}">{{ event.get_ident }}</a></td>
     </tr>
     {% endfor %}
     </table>
   </div>
-  <div class="col-xs-4">
-    <h3>Unpublished events</h3>
-    <table class="table table-striped">
-    {% for event in unpublished_events %}
-    <tr>
-      <td>
-        <a href="{{ event.get_absolute_url }}">
-          {{ event.id }}
-          {% if event.site %}@ {{ event.site.domain }}{% endif %}
-          {% if event.slug %}: {{ event.slug }}{% endif %}
-        </a>
-      </td>
-    </tr>
-    {% endfor %}
-    </table>
-  </div>
-  <div class="col-xs-4">
-    <h3>Unpaid events</h3>
+  <div class="col-xs-3">
+    <h3>Unpaid</h3>
     <table class="table table-striped">
     {% for event in unpaid_events %}
     <tr>
-      <td><a href="{{ event.get_absolute_url }}">{{ event.slug }}</a></td>
+      <td><a href="{{ event.get_absolute_url }}">{{ event.get_ident }}</a></td>
     </tr>
     {% endfor %}
+    </table>
+  </div>
+  <div class="col-xs-6">
+    <h3>Unpublished</h3>
+    <table class="table table-striped">
+      <tr>
+        <th>#I</th>
+        <th>dates</th>
+        <th>ID</th>
+        <th>domain</th>
+        <th>slug</th>
+      </tr>
+      {% for event in unpublished_events %}
+      <tr>
+        <td {% if event.num_instructors == 0 %}class="warning"{% endif %}>
+          {{ event.num_instructors }}
+        </td>
+        <td>
+          {% if event.start %}✓{% endif %}
+        </td>
+        <td>
+          <a href="{{ event.get_absolute_url }}">
+            {{ event.id }}
+          </a>
+        </td>
+        <td>
+          <a href="{% url 'site_details' event.site.domain %}">
+            {{ event.site }}
+          </a>
+        </td>
+        <td {% if not event.slug %}class="warning"{% endif %}>
+          {% if not event.slug %}
+          —
+          {% else %}
+          <a href="{% url 'event_details' event.get_ident %}">
+            {{ event.get_ident }}
+          </a>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
     </table>
   </div>
 </div>
