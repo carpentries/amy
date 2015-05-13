@@ -1,5 +1,7 @@
 ![](workshops/static/amy-logo.png)
 
+![](https://travis-ci.org/swcarpentry/amy.svg?branch=master)
+
 [Software Carpentry](http://software-carpentry.org) is running three events
 a week.  The number could double by the end of 2015, but only if we can
 [streamline setup and organization](http://software-carpentry.org/blog/2014/12/plans-for-2015-workshop-organization.html).
