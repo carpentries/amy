@@ -4,11 +4,9 @@
 a week.  The number could double by the end of 2015, but only if we can
 [streamline setup and organization](http://software-carpentry.org/blog/2014/12/plans-for-2015-workshop-organization.html).
 The goal of this project is to build a web-based workshop administration
-application using Django to do that.  It is not intended to be visible to the
+application using Django.  It is not intended to be visible to the
 general public, or even to instructors (at least initially — we may add that
-later).
-
-Instead, the target audience is administrators, most of whon are
+later).  Instead, the target audience is administrators, most of whon are
 non-programmers, who need to keep track of what workshops are being arranged,
 when they're supposed to occur, who's teaching what, and so on.
 
@@ -21,13 +19,13 @@ when they're supposed to occur, who's teaching what, and so on.
     $ cd amy
     ~~~
 
-2. Install Django and its dependencies:
+2. Install Django and other dependencies:
 
     ~~~
-    $ sudo python3 -m pip install -r requirements.txt
+    $ python3 -m pip install --user -r requirements.txt
     ~~~
 
-    If you're experienced Python programmer, feel free to create a Python3-compatible virtualenv for Amy and install dependencies from `requirements.txt`.
+    If you're experienced Python programmer, feel free to create a Python3-compatible [virtualenv](https://virtualenv.pypa.io/en/latest/userguide.html) for Amy and install dependencies from `requirements.txt`.
 
 3. Install [Bower](http://bower.io/) — the tool that manages Amy's JavaScript and CSS dependencies:
 
@@ -36,6 +34,8 @@ when they're supposed to occur, who's teaching what, and so on.
     ~~~
 
     You may need some additional dependencies to install [Bower](http://bower.io/), such as [NodeJS](https://nodejs.org/) and [npm](https://www.npmjs.com/).
+
+    **Note**: if you don't want to use `sudo`, you can install `bower` locally. You'll need to set up your `$PATH` correctly, though. Look [here](https://docs.npmjs.com/getting-started/fixing-npm-permissions#option-2-change-npm-s-default-directory-to-another-directory) for details.
 
 4. Setup your local database.  There are two ways you can do this:
 
@@ -102,9 +102,10 @@ when they're supposed to occur, who's teaching what, and so on.
 2. Update dependencies:
 
     ~~~
-    $ sudo python3 -m pip install --upgrade -r requirements.txt
-    $ bower update
+    $ python3 -m pip install --user --upgrade -r requirements.txt
     ~~~
+
+    **Note**: front-end dependencies will be updated as soon as you run `make serve`.
 
 3. (Optional) use newer development-ready database:
 
@@ -118,7 +119,11 @@ when they're supposed to occur, who's teaching what, and so on.
     $ python3 manage.py migrate
     ~~~~
 
-4. Enjoy your new version of Amy.
+4. Enjoy your new version of Amy:
+
+    ~~~
+    $ make serve
+    ~~~
 
 # Contact
 
