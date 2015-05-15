@@ -30,3 +30,8 @@ table td.editable span {
 form[role="form"] {
     margin-bottom: 50px;
 }
+
+.footer {
+    margin-top: 1em;
+    background-color: #F5F5F5;
+}
