@@ -32,6 +32,15 @@
       <div class="footer">
         Powered by <a href="https://github.com/swcarpentry/amy">Amy</a>
         version {{workshops_version}}
+        {% if workshops_git_hash %}
+          (<a href="https://github.com/swcarpentry/amy/commit/{{workshops_git_hash}}">{{workshops_git_short_hash}}</a>
+          {% if workshops_git_dirty %}
+            {{workshops_git_date}}
+            dirty)
+          {% else %}
+            {{workshops_git_date}})
+          {% endif %}
+        {% endif %}
       </div>
     </div>
   </body>
