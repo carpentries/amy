@@ -31,7 +31,11 @@ form[role="form"] {
     margin-bottom: 50px;
 }
 
+.footer-hr {
+    margin-top: 100px;
+}
 .footer {
-    margin-top: 1em;
-    background-color: #F5F5F5;
+    color: #767676;
+    text-align: center;
+    padding: 30px 0;
 }
