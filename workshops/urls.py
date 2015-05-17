@@ -45,4 +45,8 @@ urlpatterns = [
     url(r'^debrief/?$', views.debrief, name='debrief'),
 
     url(r'^export/(?P<name>[\w\.-]+)/?$', views.export, name='export'),
+
+    url(r'^reports/workshops_over_time/?$', views.workshops_over_time, name='workshops_over_time'),
+    url(r'^reports/learners_over_time/?$', views.learners_over_time, name='learners_over_time'),
+    url(r'^reports/instructors_over_time/?$', views.instructors_over_time, name='instructors_over_time'),
 ]

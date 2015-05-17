@@ -2,6 +2,7 @@ import csv
 import datetime
 import io
 import re
+from collections import Counter
 
 import requests
 
@@ -743,6 +744,40 @@ def export(request, name):
 
 #------------------------------------------------------------
 
+@login_required
+def workshops_over_time(request):
+    '''Export CSV of count of workshops vs. time.'''
+
+    data = Counter()
+    for e in Event.objects.past_events():
+        data[e.start.isoformat()] += 1
+    return _time_series(request, data, 'Workshop over time')
+
+
+@login_required
+def learners_over_time(request):
+    '''Export CSV of count of learners vs. time.'''
+
+    data = Counter()
+    for e in Event.objects.past_events():
+        data[e.start.isoformat()] += e.attendance \
+                                     if e.attendance is not None \
+                                     else 0
+    return _time_series(request, data, 'Learners over time')
+
+
+@login_required
+def instructors_over_time(request):
+    '''Export CSV of count of instructors vs. time.'''
+
+    badge = Badge.objects.get(name='instructor')
+    data = Counter()
+    for a in Award.objects.filter(badge=badge):
+        data[a.awarded.isoformat()] += 1
+    return _time_series(request, data, 'Instructors over time')
+
+#------------------------------------------------------------
+
 def _get_pagination_items(request, all_objects):
     '''Select paginated items.'''
 
@@ -778,3 +813,18 @@ def _get_pagination_items(request, all_objects):
             result = paginator.page(paginator.num_pages)
 
     return result
+
+
+def _time_series(request, data, title):
+    '''Prepare time-series data for display and render it.'''
+
+    data = list(data.items())
+    data.sort()
+    for i in range(1, len(data)):
+        data[i] = (data[i][0], data[i][1] + data[i-1][1])
+    data = '\n'.join(['{0},{1}'.format(*d) for d in data])
+    context = {
+        'title' : title,
+        'data' : data
+    }
+    return render(request, 'workshops/time_series.html', context)
