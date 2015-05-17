@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 import sys
 import cgi
 
@@ -13,6 +13,7 @@ class TestEvent(TestBase):
 
     def setUp(self):
         self._setUpUsersAndLogin()
+        today = date.today()
 
         # Create a test site
         test_site = Site.objects.create(domain='example.com',
@@ -24,60 +25,75 @@ class TestEvent(TestBase):
         # Create a test role
         test_role = Role.objects.create(name='Test Role')
 
-        # Create one new event for each day in the next 10 days
-        self.num_unpaid_events = 0
+        # Create one new event for each day in the next 10 days, half published.
+        published = True
         for t in range(1, 11):
-            event_start = datetime.now() + timedelta(days=t)
+            event_start = today + timedelta(days=t)
             date_string = event_start.strftime('%Y-%m-%d')
             Event.objects.create(start=event_start,
                                  slug='{0}-upcoming'.format(date_string),
                                  site=test_site,
                                  admin_fee=100,
-                                 fee_paid=False)
-            self.num_unpaid_events += 1
+                                 fee_paid=False,
+                                 published=published)
+            published = not published
 
         # Create one new event for each day from 10 days ago to
-        # 3 days ago
+        # 3 days ago, half paid, all published.
+        fee_paid = True
         for t in range(3, 11):
-            event_start = datetime.now() + timedelta(days=-t)
+            event_start = today + timedelta(days=-t)
             date_string = event_start.strftime('%Y-%m-%d')
             Event.objects.create(start=event_start,
                                  slug='{0}-past'.format(date_string),
                                  site=test_site,
                                  admin_fee=100,
-                                 fee_paid=True)
+                                 fee_paid=fee_paid,
+                                 published=True)
+            fee_paid = not fee_paid
 
         # Create an event that started yesterday and ends tomorrow
         # with no fee, and without specifying whether the fee has been
         # paid
-        event_start = datetime.now() + timedelta(days=-1)
-        event_end = datetime.now() + timedelta(days=1)
+        event_start = today + timedelta(days=-1)
+        event_end = today + timedelta(days=1)
         Event.objects.create(start=event_start,
                              end=event_end,
                              slug='ends_tomorrow',
                              site=test_site,
-                             admin_fee=0)
+                             admin_fee=0,
+                             published=True)
 
         # Create an event that ends today with no fee, and without
         # specifying whether the fee has been paid
-        event_start = datetime.now() + timedelta(days=-1)
-        event_end = datetime.now()
+        event_start = today + timedelta(days=-1)
+        event_end = today
         Event.objects.create(start=event_start,
                              end=event_end,
                              slug='ends_today',
                              site=test_site,
-                             admin_fee=0)
+                             admin_fee=0,
+                             published=True)
 
         # Create an event that starts today with a fee, and without
         # specifying whether the fee has been paid
-        event_start = datetime.now()
-        event_end = datetime.now() + timedelta(days=1)
+        event_start = today
+        event_end = today + timedelta(days=1)
         Event.objects.create(start=event_start,
                              end=event_end,
                              slug='starts_today',
                              site=test_site,
-                             admin_fee=100)
-        self.num_unpaid_events += 1
+                             admin_fee=100,
+                             published=True)
+
+        # Record some statistics about events.
+        self.num_unpaid_events = 0
+        self.num_upcoming = 0
+        for e in Event.objects.all():
+            if e.published and (e.admin_fee > 0) and (not e.fee_paid) and (e.start < today):
+                self.num_unpaid_events += 1
+            if e.published and (e.start > today):
+                self.num_upcoming += 1
 
     def test_get_unpaid_events(self):
         """Test that the events manager can find events that owe money"""
@@ -94,11 +110,7 @@ class TestEvent(TestBase):
         """Test that the events manager can find upcoming events"""
 
         upcoming_events = Event.objects.upcoming_events()
-
-        # There are 2 upcoming events
-        assert len(upcoming_events) == 10
-
-        # They should all start with upcoming
+        assert len(upcoming_events) == self.num_upcoming
         assert all(['upcoming' in e.slug for e in upcoming_events])
 
     def test_get_past_events(self):
@@ -120,9 +132,7 @@ class TestEvent(TestBase):
         """
 
         ongoing_events = Event.objects.ongoing_events()
-
         event_slugs = [e.slug for e in ongoing_events]
-
         correct_slugs = ['starts_today',
                          'ends_tomorrow',
                          'ends_today', ]
