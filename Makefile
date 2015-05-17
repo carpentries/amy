@@ -23,6 +23,8 @@ SRC_SITES = ${SRC_DIR}/bootcamp-notes/negotiating
 QUERY = sqlite3 ${APP_DB}
 QUERY_CSV = sqlite3 -csv ${APP_DB}
 
+.PHONY: workshops/git_version.py
+
 all : commands
 
 ## commands     : show all commands.
@@ -77,8 +79,21 @@ bower_components : bower.json
 	bower install
 	touch bower_components
 
+## git_version  : store details about the current commit and tree state.
+workshops/git_version.py :
+	if test -d .git; \
+	then \
+		git log -1 --date short --pretty=format:"HASH = '%H'%nSHORT_HASH = '%h'%nDATE = '%cd'%n" >$@; \
+		if (git describe --dirty | grep dirty >/dev/null); \
+		then \
+			echo 'DIRTY = True' >>$@; \
+		else \
+			echo 'DIRTY = False' >>$@; \
+		fi \
+	fi
+
 ## serve        : run a server
-serve : bower_components
+serve : bower_components workshops/git_version.py
 	${PYTHON} manage.py runserver
 
 ## clean        : clean up.
