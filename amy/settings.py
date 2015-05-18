@@ -39,7 +39,7 @@ TEMPLATES = [
         'OPTIONS': {
             'debug': DEBUG,
 
-            # default processors + a request processor
+            # default processors + a request processor + amy-version
             'context_processors': [
                 'django.contrib.auth.context_processors.auth',
                 'django.template.context_processors.debug',
@@ -49,6 +49,7 @@ TEMPLATES = [
                 'django.template.context_processors.tz',
                 'django.contrib.messages.context_processors.messages',
                 'django.core.context_processors.request',
+                'workshops.context_processors.version',
             ],
 
             # Warn viewers of invalid template strings

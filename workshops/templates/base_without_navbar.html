@@ -30,5 +30,18 @@
       {% endif %}
       {% block content %}{% endblock %}
     </div>
+    <hr class="footer-hr" />
+    <div class="container">
+      <div class="row">
+        <div class="footer">
+          Powered by <a href="https://github.com/swcarpentry/amy">Amy</a>
+          version {{workshops_version}}
+          {% if workshops_git_hash %}
+            (<a href="https://github.com/swcarpentry/amy/commit/{{workshops_git_hash}}">{{workshops_git_short_hash}}</a>
+            {{workshops_git_date}}{% if workshops_git_dirty %} dirty{% endif %})
+          {% endif %}
+        </div>
+      </div>
+    </div>
   </body>
 </html>

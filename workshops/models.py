@@ -198,14 +198,12 @@ class EventQuerySet(models.query.QuerySet):
         return queryset
 
     def upcoming_events(self):
-        '''Return a queryset for all upcoming events.
+        '''Return a queryset for all published upcoming events.
 
-        Upcoming events are those which start after today.
+        Upcoming events are those which start after today and are published.
         '''
 
-        # All events that start after today
-        queryset = self.filter(start__gt=datetime.date.today())
-
+        queryset = self.filter(start__gt=datetime.date.today()).filter(published=True)
         return queryset
 
     def ongoing_events(self):
@@ -228,10 +226,11 @@ class EventQuerySet(models.query.QuerySet):
         return self.filter(published=False)
 
     def unpaid_events(self):
-        '''Return a queryset for events that owe money.'''
+        '''Return a queryset for events that owe money.
 
-        # All events that have an admin fee but are not marked as paid.
-        return self.filter(admin_fee__gt=0).exclude(fee_paid=True)
+        These are events that have an admin fee, are not marked as paid, and have occurred.'''
+
+        return self.past_events().filter(admin_fee__gt=0).exclude(fee_paid=True)
 
 class EventManager(models.Manager):
     '''A custom manager which is essentially a proxy for EventQuerySet'''
