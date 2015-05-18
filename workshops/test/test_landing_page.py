@@ -21,7 +21,8 @@ class TestLandingPage(TestBase):
             Event.objects.create(start=event_start,
                                  slug='upcoming_{0}'.format(t),
                                  site=test_site,
-                                 admin_fee=100)
+                                 admin_fee=100,
+                                 published=True)
 
         # Create one new event for each day from 10 days ago to
         # 3 days ago
@@ -51,14 +52,15 @@ class TestLandingPage(TestBase):
               site=test_site,
               admin_fee=100)
 
-        # Create an event that starts today
+        # Create an event that starts today (doesn't count as upcoming)
         event_start = datetime.now()
         event_end = datetime.now() + timedelta(days=1)
         Event.objects.create(start=event_start,
               end=event_end,
               slug='starts_today',
               site=test_site,
-              admin_fee=100)
+              admin_fee=100,
+              published=True)
 
         self._setUpUsersAndLogin()
 
@@ -72,7 +74,7 @@ class TestLandingPage(TestBase):
         # This will fail if the context variable doesn't exist
         upcoming_events = response.context['upcoming_events']
 
-        # There are 10 upcoming events
+        # There are 10 upcoming events (the one that starts today doesn't count)
         assert len(upcoming_events) == 10
 
         # They should all start with upcoming
