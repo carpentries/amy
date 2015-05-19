@@ -81,7 +81,7 @@ bower_components : bower.json
 
 ## git_version  : store details about the current commit and tree state.
 workshops/git_version.py :
-	if test -d .git; \
+	@if test -d .git; \
 	then \
 		git log -1 --date=short --format="HASH = '%H'%nSHORT_HASH = '%h'%nDATE = '%cd'%n" >$@; \
 		if (git describe --dirty 2>/dev/null | grep dirty >/dev/null); \
