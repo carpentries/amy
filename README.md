@@ -39,23 +39,7 @@ when they're supposed to occur, who's teaching what, and so on.
 
     **Note**: if you don't want to use `sudo`, you can install `bower` locally. You'll need to set up your `$PATH` correctly, though. Look [here](https://docs.npmjs.com/getting-started/fixing-npm-permissions#option-2-change-npm-s-default-directory-to-another-directory) for details.
 
-4. Setup your local database.  There are two ways you can do this:
-
-    1. If you have access to the legacy data:
-
-        1. Create an empty database by running:
-
-            ~~~
-            $ make migrations
-            ~~~
-
-        2. Fill that database by running:
-
-            ~~~
-            $ make import
-            ~~~
-
-    2. Otherwise set up the redacted (development-ready) data with:
+4. Setup your local database wit redacted (development-ready) data with:
 
         ~~~
         $ make database
@@ -109,7 +93,7 @@ when they're supposed to occur, who's teaching what, and so on.
 
     **Note**: front-end dependencies will be updated as soon as you run `make serve`.
 
-3. (Optional) use newer development-ready database:
+3. (Optional) make the development-ready database:
 
     ~~~
     $ make database
