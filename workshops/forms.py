@@ -155,7 +155,7 @@ class EventForm(forms.ModelForm):
 
     class Meta:
         model = Event
-        fields = '__all__'
+        exclude = ('deleted', )
 
 
 class TaskForm(forms.ModelForm):
@@ -175,7 +175,7 @@ class TaskForm(forms.ModelForm):
 
     class Meta:
         model = Task
-        exclude = ('event', )
+        exclude = ('event', 'deleted')
 
 
 class TaskFullForm(TaskForm):
@@ -189,7 +189,7 @@ class TaskFullForm(TaskForm):
 
     class Meta:
         model = Task
-        fields = '__all__'
+        exclude = ('deleted', )
 
 
 class PersonForm(forms.ModelForm):
