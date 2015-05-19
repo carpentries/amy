@@ -1,0 +1,20 @@
+{% extends "workshops/_page.html" %}
+
+{% load breadcrumbs %}
+{% block breadcrumbs %}
+    {% breadcrumb_main_page %}
+    {% breadcrumb_active title %}
+{% endblock %}
+
+{% block content %}
+<h3>Workshops Missing Attendance Figures</h3>
+{% if missing_attendance %}
+<ul>
+{% for event in missing_attendance %}
+<li><a href="{{ event.get_absolute_url }}">{{ event.get_ident }}</a></li>
+{% endfor %}
+</ul>
+{% else %}
+<p>None</p>
+{% endif %}
+{% endblock %}

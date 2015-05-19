@@ -776,6 +776,16 @@ def instructors_over_time(request):
         data[a.awarded.isoformat()] += 1
     return _time_series(request, data, 'Instructors over time')
 
+
+@login_required
+def problems(request):
+    '''Display problems in the database.'''
+
+    missing_attendance = Event.objects.past_events().filter(Q(attendance=None) | Q(attendance=0))
+    context = {'title' : 'Problems',
+               'missing_attendance' : missing_attendance}
+    return render(request, 'workshops/problems.html', context)
+
 #------------------------------------------------------------
 
 def _get_pagination_items(request, all_objects):
