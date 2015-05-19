@@ -19,6 +19,9 @@ SRC_EVENTS = ${SRC_DIR}/bootcamp-notes/archive
 # Where site notes live.
 SRC_SITES = ${SRC_DIR}/bootcamp-notes/negotiating
 
+# Path to main website source directory.
+SITE_PATH = ${HOME}/s/site
+
 # Run a SQL query.
 QUERY = sqlite3 ${APP_DB}
 QUERY_CSV = sqlite3 -csv ${APP_DB}
@@ -65,6 +68,10 @@ airports :
 ## badges       : display YAML for badges
 badges :
 	@${PYTHON} manage.py export_badges
+
+## check-urls   : check workshop URLs
+check-urls :
+	@${PYTHON} manage.py check_workshop_urls ${SITE_PATH}/config/workshops.yml ${SITE_PATH}/config/archived.yml
 
 ## schema       : display the database schema
 schema :
