@@ -52,6 +52,11 @@ class TestPerson(TestBase):
             'Would be unable to tell if email had changed'
         values['email'] = new_email
 
+        if values['airport_1'] is None:
+            values['airport_1'] = ''
+        if values['airport_0'] is None:
+            values['airport_0'] = ''
+
         # Django redirects when edit works.
         response = self.client.post(url, values)
         if response.status_code == 302:
