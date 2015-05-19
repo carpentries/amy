@@ -83,8 +83,8 @@ bower_components : bower.json
 workshops/git_version.py :
 	if test -d .git; \
 	then \
-		git log -1 --date short --pretty=format:"HASH = '%H'%nSHORT_HASH = '%h'%nDATE = '%cd'%n" >$@; \
-		if (git describe --dirty | grep dirty >/dev/null); \
+		git log -1 --date=short --format="HASH = '%H'%nSHORT_HASH = '%h'%nDATE = '%cd'%n" >$@; \
+		if (git describe --dirty 2>/dev/null | grep dirty >/dev/null); \
 		then \
 			echo 'DIRTY = True' >>$@; \
 		else \
