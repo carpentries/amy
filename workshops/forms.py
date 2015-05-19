@@ -167,6 +167,7 @@ class TaskForm(forms.ModelForm):
         label='Person',
         required=True,
         help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
     )
 
     def __init__(self, *args, **kwargs):
@@ -187,6 +188,7 @@ class TaskFullForm(TaskForm):
         label='Event',
         required=True,
         help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
     )
 
     class Meta:
