@@ -126,6 +126,7 @@ class EventForm(forms.ModelForm):
         label='Site',
         required=True,
         help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
     )
 
     organizer = selectable.AutoCompleteSelectField(
@@ -133,6 +134,7 @@ class EventForm(forms.ModelForm):
         label='Organizer',
         required=True,
         help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
     )
 
     def __init__(self, *args, **kwargs):
@@ -199,6 +201,7 @@ class PersonForm(forms.ModelForm):
         label='Airport',
         required=False,
         help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
     )
 
     class Meta:
