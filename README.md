@@ -41,9 +41,9 @@ when they're supposed to occur, who's teaching what, and so on.
 
 4. Setup your local database wit redacted (development-ready) data with:
 
-        ~~~
-        $ make database
-        ~~~
+    ~~~
+    $ make database
+    ~~~
 
 5. Create an administrator account:
 

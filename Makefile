@@ -4,6 +4,9 @@ PYTHON = python3
 # Database used by this application.
 APP_DB = db.sqlite3
 
+# Saved SQL for regenerating the database.
+APP_SQL = db.sql
+
 # Run a SQL query.
 QUERY = sqlite3 ${APP_DB}
 QUERY_CSV = sqlite3 -csv ${APP_DB}
