@@ -14,7 +14,7 @@
     <script src="{% static 'bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js' %}"></script>
     <script src="{% static 'combobox.js' %}"></script>
 
-    <title>Amy: {{ title }}</title>
+    <title>Amy{% if title %}: {{ title }}{% endif %}</title>
   </head>
   <body>
     {% block navbar %}{% endblock %}
