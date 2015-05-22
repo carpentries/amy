@@ -9,6 +9,13 @@ table td.editable span {
     display: block;
 }
 
+/* move country flag in tables a few pixels up */
+.country-flag {
+    width: 16px;
+    height: 11px;
+    margin-top: -4px;
+}
+
 /* Padding below the event edit form */
 form[role="form"] {
     margin-bottom: 50px;

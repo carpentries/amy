@@ -12,7 +12,7 @@
 <table class="table table-striped">
   <tr><td>full name:</td><td>{{ airport.fullname }}</td></tr>
   <tr><td>iata:</td><td><a href="http://{{ airport.iata }}">{{ airport.iata }}</a></td></tr>
-  <tr><td>country:</td><td>{{ airport.country.name }} <img src="{{ airport.country.flag }}" alt="{{ airport.country }}" /></td></tr>
+  <tr><td>country:</td><td>{{ airport.country.name }} <img src="{{ airport.country.flag }}" alt="{{ airport.country }}" class="country-flag" /></td></tr>
   <tr><td>latitude:</td><td>{{ airport.latitude }}</td></tr>
   <tr><td>longitude:</td><td>{{ airport.longitude }}</td></tr>
 </table>
