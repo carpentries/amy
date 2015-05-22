@@ -3,3 +3,4 @@ PyYAML
 requests>=2.0
 django-crispy-forms>=1.4.0
 django-selectable>=0.9.0,<1.0
+django-countries==3.3

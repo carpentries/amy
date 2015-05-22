@@ -80,6 +80,7 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'crispy_forms',
     'selectable',
+    'django_countries',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
