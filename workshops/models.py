@@ -8,6 +8,8 @@ from django.core.urlresolvers import reverse
 from django.db import models
 from django.db.models import Q
 
+from django_countries.fields import CountryField
+
 #------------------------------------------------------------
 
 STR_SHORT   =  10         # length of short strings
@@ -22,7 +24,7 @@ class Site(models.Model):
 
     domain     = models.CharField(max_length=STR_LONG, unique=True)
     fullname   = models.CharField(max_length=STR_LONG, unique=True)
-    country    = models.CharField(max_length=STR_LONG, null=True)
+    country    = CountryField(null=True)
     notes      = models.TextField(default="", blank=True)
 
     def __str__(self):
@@ -38,7 +40,7 @@ class Airport(models.Model):
 
     iata      = models.CharField(max_length=STR_SHORT, unique=True)
     fullname  = models.CharField(max_length=STR_LONG, unique=True)
-    country   = models.CharField(max_length=STR_LONG)
+    country   = CountryField()
     latitude  = models.FloatField()
     longitude = models.FloatField()
 
