@@ -406,3 +406,6 @@ class Award(models.Model):
 
     def __str__(self):
         return '{0}/{1}/{2}/{3}'.format(self.person, self.badge, self.awarded, self.event)
+
+    def get_absolute_url(self):
+        return reverse('award_details', kwargs={'award_id': self.id})

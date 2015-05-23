@@ -559,6 +559,7 @@ class TaskUpdate(LoginRequiredMixin, UpdateViewContext):
 
 #------------------------------------------------------------
 
+
 @login_required
 def all_badges(request):
     '''List all badges.'''
@@ -574,17 +575,35 @@ def all_badges(request):
 #------------------------------------------------------------
 
 
-@login_required
-def all_awards(request, badge_name):
-    '''Show who has been awarded a particular badge.'''
+AWARD_FIELDS = ['person', 'badge', 'awarded', 'event']
 
-    badge = Badge.objects.get(name=badge_name)
-    awards = Award.objects.filter(badge_id=badge.id)
+
+@login_required
+def all_awards(request):
+    '''Show all awards of badges to anyone.'''
+
+    awards = Award.objects.order_by('badge', '-awarded', 'person', 'event')
     awards = _get_pagination_items(request, awards)
-    context = {'title' : 'Badge {0}'.format(badge.title),
-               'badge' : badge,
-               'awards' : awards}
+    user_can_add = request.user.has_perm('edit')
+    context = {'title' : 'All Awards',
+               'all_awards' : awards,
+               'user_can_add' : user_can_add}
     return render(request, 'workshops/all_awards.html', context)
+
+
+@login_required
+def award_details(request, award_id):
+    '''List details of a particular award.'''
+    award = Award.objects.get(pk=award_id)
+    context = {'title' : 'Award {0}'.format(award),
+               'award' : award}
+    return render(request, 'workshops/award.html', context)
+
+
+class AwardCreate(LoginRequiredMixin, CreateViewContext):
+    model = Award
+    fields = AWARD_FIELDS
+    template_name = 'workshops/generic_form.html'
 
 
 #------------------------------------------------------------
