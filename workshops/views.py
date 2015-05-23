@@ -151,6 +151,7 @@ def site_details(request, site_domain):
 class SiteCreate(LoginRequiredMixin, CreateViewContext):
     model = Site
     fields = SITE_FIELDS
+    template_name = 'workshops/generic_form.html'
 
 
 class SiteUpdate(LoginRequiredMixin, UpdateViewContext):
@@ -158,6 +159,7 @@ class SiteUpdate(LoginRequiredMixin, UpdateViewContext):
     fields = SITE_FIELDS
     slug_field = 'domain'
     slug_url_kwarg = 'site_domain'
+    template_name = 'workshops/generic_form.html'
 
 #------------------------------------------------------------
 
@@ -187,6 +189,7 @@ def airport_details(request, airport_iata):
 class AirportCreate(LoginRequiredMixin, CreateViewContext):
     model = Airport
     fields = AIRPORT_FIELDS
+    template_name = 'workshops/generic_form.html'
 
 
 class AirportUpdate(LoginRequiredMixin, UpdateViewContext):
@@ -194,6 +197,7 @@ class AirportUpdate(LoginRequiredMixin, UpdateViewContext):
     fields = AIRPORT_FIELDS
     slug_field = 'iata'
     slug_url_kwarg = 'airport_iata'
+    template_name = 'workshops/generic_form.html'
 
 #------------------------------------------------------------
 
@@ -388,6 +392,7 @@ def person_bulk_add_confirmation(request):
 class PersonCreate(LoginRequiredMixin, CreateViewContext):
     model = Person
     fields = PERSON_FIELDS
+    template_name = 'workshops/generic_form.html'
 
 
 class PersonUpdate(LoginRequiredMixin, UpdateViewContext):
@@ -397,6 +402,7 @@ class PersonUpdate(LoginRequiredMixin, UpdateViewContext):
               'email', 'gender', 'airport', 'github', 'twitter', 'url',
               'is_superuser', 'user_permissions']
     pk_url_kwarg = 'person_id'
+    template_name = 'workshops/generic_form.html'
 
 
 #------------------------------------------------------------
@@ -449,9 +455,7 @@ def validate_event(request, event_ident):
 class EventCreate(LoginRequiredMixin, CreateViewContext):
     model = Event
     fields = '__all__'
-    # setting template_name to 'event_create_form.html' didn't work, but
-    # a changed suffix did!
-    template_name_suffix = '_create_form'
+    template_name = 'workshops/generic_form.html'
 
 
 @login_required
@@ -543,12 +547,14 @@ def task_delete(request, task_id):
 class TaskCreate(LoginRequiredMixin, CreateViewContext):
     model = Task
     fields = TASK_FIELDS
+    template_name = 'workshops/generic_form.html'
 
 
 class TaskUpdate(LoginRequiredMixin, UpdateViewContext):
     model = Task
     fields = TASK_FIELDS
     pk_url_kwarg = 'task_id'
+    template_name = 'workshops/generic_form.html'
 
 
 #------------------------------------------------------------
