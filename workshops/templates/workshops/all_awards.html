@@ -3,36 +3,37 @@
 {% load breadcrumbs %}
 {% block breadcrumbs %}
     {% breadcrumb_main_page %}
-    {% breadcrumb_index_all_objects badge %}
-    {% breadcrumb_active badge %}
+    {% breadcrumb_active title %}
 {% endblock %}
 
 {% block content %}
-{% if awards %}
+{% if all_awards %}
   <table class="table table-striped">
     <tr>
-	<th>person</th>
-	<th>awarded</th>
-	<th>event</th>
+      <th>badge</th>
+      <th>awarded</th>
+      <th>person</th>
+      <th>event</th>
     </tr>
-    {% for a in awards %}
+    {% for a in all_awards %}
     <tr>
-      <td><a href="{% url 'person_details' a.person.id %}">{{ a.person }}</a></td>
+      <td>{{ a.badge }}</td>
       <td>{{ a.awarded }}</td>
+      <td><a href="{% url 'person_details' a.person.id %}">{{ a.person }}</a></td>
       <td>{{ a.event|default:"—" }}</td>
     </tr>
     {% endfor %}
   </table>
   <div class="pagination">
     <span class="step-links">
-      {% if awards.has_previous %}
-      <a href="?page={{ awards.previous_page_number }}">previous</a>
+      {% if all_awards.has_previous %}
+      <a href="?page={{ all_awards.previous_page_number }}">previous</a>
       {% endif %}
       <span class="current">
-        Page {{ awards.number }} of {{ awards.paginator.num_pages }}.
+        Page {{ all_awards.number }} of {{ all_awards.paginator.num_pages }}.
       </span>
-      {% if awards.has_next %}
-      <a href="?page={{ awards.next_page_number }}">next</a>
+      {% if all_awards.has_next %}
+      <a href="?page={{ all_awards.next_page_number }}">next</a>
       {% endif %}
     </span>
   </div>

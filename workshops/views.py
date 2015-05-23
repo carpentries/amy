@@ -559,6 +559,7 @@ class TaskUpdate(LoginRequiredMixin, UpdateViewContext):
 
 #------------------------------------------------------------
 
+
 @login_required
 def all_badges(request):
     '''List all badges.'''
@@ -578,16 +579,14 @@ AWARD_FIELDS = ['person', 'badge', 'awarded', 'event']
 
 
 @login_required
-def all_awards(request, badge_name):
-    '''Show everyone who has been awarded a particular badge.'''
+def all_awards(request):
+    '''Show all awards of badges to anyone.'''
 
-    badge = Badge.objects.get(name=badge_name)
-    awards = Award.objects.filter(badge_id=badge.id)
+    awards = Award.objects.order_by('badge', '-awarded', 'person', 'event')
     awards = _get_pagination_items(request, awards)
     user_can_add = request.user.has_perm('edit')
-    context = {'title' : 'Badge {0}'.format(badge.title),
-               'badge' : badge,
-               'awards' : awards,
+    context = {'title' : 'All Awards',
+               'all_awards' : awards,
                'user_can_add' : user_can_add}
     return render(request, 'workshops/all_awards.html', context)
 
