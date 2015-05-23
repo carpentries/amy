@@ -565,17 +565,21 @@ def all_badges(request):
     return render(request, 'workshops/all_badges.html', context)
 
 
+#------------------------------------------------------------
+
+
 @login_required
-def badge_details(request, badge_name):
-    '''Show who has a particular badge.'''
+def all_awards(request, badge_name):
+    '''Show who has been awarded a particular badge.'''
 
     badge = Badge.objects.get(name=badge_name)
-    all_awards = Award.objects.filter(badge_id=badge.id)
-    awards = _get_pagination_items(request, all_awards)
+    awards = Award.objects.filter(badge_id=badge.id)
+    awards = _get_pagination_items(request, awards)
     context = {'title' : 'Badge {0}'.format(badge.title),
                'badge' : badge,
-               'all_awards' : awards}
-    return render(request, 'workshops/badge.html', context)
+               'awards' : awards}
+    return render(request, 'workshops/all_awards.html', context)
+
 
 #------------------------------------------------------------
 

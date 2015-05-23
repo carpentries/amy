@@ -8,14 +8,14 @@
 {% endblock %}
 
 {% block content %}
-{% if all_awards %}
+{% if awards %}
   <table class="table table-striped">
     <tr>
 	<th>person</th>
 	<th>awarded</th>
 	<th>event</th>
     </tr>
-    {% for a in all_awards %}
+    {% for a in awards %}
     <tr>
       <td><a href="{% url 'person_details' a.person.id %}">{{ a.person }}</a></td>
       <td>{{ a.awarded }}</td>
@@ -25,14 +25,14 @@
   </table>
   <div class="pagination">
     <span class="step-links">
-      {% if all_awards.has_previous %}
-      <a href="?page={{ all_awards.previous_page_number }}">previous</a>
+      {% if awards.has_previous %}
+      <a href="?page={{ awards.previous_page_number }}">previous</a>
       {% endif %}
       <span class="current">
-        Page {{ all_awards.number }} of {{ all_awards.paginator.num_pages }}.
+        Page {{ awards.number }} of {{ awards.paginator.num_pages }}.
       </span>
-      {% if all_awards.has_next %}
-      <a href="?page={{ all_awards.next_page_number }}">next</a>
+      {% if awards.has_next %}
+      <a href="?page={{ awards.next_page_number }}">next</a>
       {% endif %}
     </span>
   </div>
