@@ -38,6 +38,7 @@ urlpatterns = [
     url(r'^badges/?$', views.all_badges, name='all_badges'),
 
     url(r'^awards/?$', views.all_awards, name='all_awards'),
+    url(r'^award/(?P<award_id>\d+)/?$', views.award_details, name='award_details'),
     url(r'^awards/add/$', views.AwardCreate.as_view(), name='award_add'),
 
     url(r'^instructors/?$', views.instructors, name='instructors'),

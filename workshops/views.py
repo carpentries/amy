@@ -591,6 +591,15 @@ def all_awards(request):
     return render(request, 'workshops/all_awards.html', context)
 
 
+@login_required
+def award_details(request, award_id):
+    '''List details of a particular award.'''
+    award = Award.objects.get(pk=award_id)
+    context = {'title' : 'Award {0}'.format(award),
+               'award' : award}
+    return render(request, 'workshops/award.html', context)
+
+
 class AwardCreate(LoginRequiredMixin, CreateViewContext):
     model = Award
     fields = AWARD_FIELDS
