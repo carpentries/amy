@@ -128,8 +128,8 @@ SITE_FIELDS = ['domain', 'fullname', 'country', 'notes']
 def all_sites(request):
     '''List all sites.'''
 
-    all_sites = Site.objects.order_by('domain')
-    sites = _get_pagination_items(request, all_sites)
+    sites = Site.objects.order_by('domain')
+    sites = _get_pagination_items(request, sites)
     user_can_add = request.user.has_perm('edit')
     context = {'title' : 'All Sites',
                'all_sites' : sites,
@@ -169,10 +169,10 @@ AIRPORT_FIELDS = ['iata', 'fullname', 'country', 'latitude', 'longitude']
 @login_required
 def all_airports(request):
     '''List all airports.'''
-    all_airports = Airport.objects.order_by('iata')
+    airports = Airport.objects.order_by('iata')
     user_can_add = request.user.has_perm('edit')
     context = {'title' : 'All Airports',
-               'all_airports' : all_airports,
+               'all_airports' : airports,
                'user_can_add' : user_can_add}
     return render(request, 'workshops/all_airports.html', context)
 
@@ -213,8 +213,8 @@ PERSON_FIELDS = [
 def all_persons(request):
     '''List all persons.'''
 
-    all_persons = Person.objects.order_by('family', 'personal')
-    persons = _get_pagination_items(request, all_persons)
+    persons = Person.objects.order_by('family', 'personal')
+    persons = _get_pagination_items(request, persons)
     context = {'title' : 'All Persons',
                'all_persons' : persons}
     return render(request, 'workshops/all_persons.html', context)
@@ -411,8 +411,8 @@ class PersonUpdate(LoginRequiredMixin, UpdateViewContext):
 def all_events(request):
     '''List all events.'''
 
-    all_events = Event.objects.all()
-    events = _get_pagination_items(request, all_events)
+    events = Event.objects.all()
+    events = _get_pagination_items(request, events)
     context = {'title' : 'All Events',
                'all_events' : events}
     return render(request, 'workshops/all_events.html', context)
@@ -517,8 +517,8 @@ TASK_FIELDS = ['event', 'person', 'role']
 def all_tasks(request):
     '''List all tasks.'''
 
-    all_tasks = Task.objects.order_by('event', 'person', 'role')
-    tasks = _get_pagination_items(request, all_tasks)
+    tasks = Task.objects.order_by('event', 'person', 'role')
+    tasks = _get_pagination_items(request, tasks)
     user_can_add = request.user.has_perm('edit')
     context = {'title' : 'All Tasks',
                'all_tasks' : tasks,
@@ -563,11 +563,11 @@ class TaskUpdate(LoginRequiredMixin, UpdateViewContext):
 def all_badges(request):
     '''List all badges.'''
 
-    all_badges = Badge.objects.order_by('name')
-    for b in all_badges:
+    badges = Badge.objects.order_by('name')
+    for b in badges:
         b.num_awarded = Award.objects.filter(badge_id=b.id).count()
     context = {'title' : 'All Badges',
-               'all_badges' : all_badges}
+               'all_badges' : badges}
     return render(request, 'workshops/all_badges.html', context)
 
 
