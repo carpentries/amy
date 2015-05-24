@@ -9,6 +9,7 @@
 
 {% block content %}
 
+<p class="edit-object"><a href="{% url 'site_edit' site.domain %}" class="btn btn-primary">Edit</a></p>
 <table class="table table-striped">
   <tr><td>full name:</td><td>{{ site.fullname }}</td></tr>
   <tr><td>domain:</td><td><a href="http://{{ site.domain }}">{{ site.domain }}</a></td></tr>
@@ -47,5 +48,5 @@
 <p>No events.</p>
 {% endif %}
 
-<p class="edit-object"><a href="{% url 'site_edit' site.domain %}">Edit this site</a></p>
+<p class="edit-object"><a href="{% url 'site_edit' site.domain %}" class="btn btn-primary">Edit</a></p>
 {% endblock %}

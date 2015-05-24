@@ -17,5 +17,5 @@
   <tr><td>longitude:</td><td>{{ airport.longitude }}</td></tr>
 </table>
 
-<p class="edit-object"><a href="{% url 'airport_edit' airport.iata %}">Edit this airport</a></p>
+<p class="edit-object"><a href="{% url 'airport_edit' airport.iata %}" class="btn btn-primary">Edit</a></p>
 {% endblock %}

@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block content %}
-    <p><a href="{% url 'airport_add' %}" class="btn btn-primary">Add a new airport</a></p>
+    <p><a href="{% url 'airport_add' %}" class="btn btn-success">New airport</a></p>
 {% if all_airports %}
     <table class="table table-striped">
         <tr>
@@ -25,7 +25,7 @@
 	</tr>
     {% endfor %}
     </table>
-    <p><a href="{% url 'airport_add' %}" class="btn btn-primary">Add a new airport</a></p>
+    <p><a href="{% url 'airport_add' %}" class="btn btn-success">New airport</a></p>
 {% else %}
     <p>No airports.</p>
 {% endif %}
