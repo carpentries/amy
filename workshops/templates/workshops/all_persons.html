@@ -7,7 +7,6 @@
 {% endblock %}
 
 {% block content %}
-    <p><a href="{% url 'person_add' %}" class="btn btn-primary">Add a new person</a> <a href="{% url 'person_bulk_add' %}" class="btn btn-default">Add many people</a></p>
 {% if all_persons %}
     <table class="table table-striped">
         <tr>
