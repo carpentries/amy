@@ -215,6 +215,13 @@ def all_persons(request):
 
     persons = Person.objects.order_by('family', 'personal')
     persons = _get_pagination_items(request, persons)
+    instructor = Badge.objects.get(name='instructor')
+    for p in persons:
+        try:
+            Award.objects.get(person__id=p.id, badge__id=instructor.id)
+            p.is_instructor = True
+        except ObjectDoesNotExist:
+            p.is_instructor = False
     context = {'title' : 'All Persons',
                'all_persons' : persons}
     return render(request, 'workshops/all_persons.html', context)
