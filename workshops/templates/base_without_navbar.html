@@ -19,7 +19,6 @@
   <body>
     {% block navbar %}{% endblock %}
     <div class="container">
-      {% if title %}<h1>{{ title }}</h1>{% endif %}
       <ol class="breadcrumb">{% block breadcrumbs %}{% endblock %}</ol>
       {% if messages %}
       <ul class="messages">
