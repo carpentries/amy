@@ -47,7 +47,7 @@ badges :
 
 ## check-urls   : check workshop URLs
 check-urls :
-	@${PYTHON} manage.py check_workshop_urls ${SITE_PATH}/config/workshops.yml ${SITE_PATH}/config/archived.yml
+	@${PYTHON} manage.py check_workshop_urls ${SITE_PATH}
 
 ## schema       : display the database schema
 schema :

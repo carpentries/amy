@@ -791,7 +791,12 @@ def instructors_over_time(request):
 def problems(request):
     '''Display problems in the database.'''
 
+    host = Role.objects.get(name='host')
+    instructor = Role.objects.get(name='instructor')
     missing_attendance = Event.objects.past_events().filter(Q(attendance=None) | Q(attendance=0))
+    for e in missing_attendance:
+        tasks = Task.objects.filter(event=e).filter(Q(role=host) | Q(role=instructor))
+        e.mailto = [t.person.email for t in tasks if t.person.email]
     context = {'title' : 'Problems',
                'missing_attendance' : missing_attendance}
     return render(request, 'workshops/problems.html', context)

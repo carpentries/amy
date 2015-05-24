@@ -8,14 +8,16 @@ from workshops.models import Event
 URL_PATTERN = re.compile(r'^https?://(.+)\.github\.io/([^/]+)/?$')
 
 class Command(BaseCommand):
-    args = '/path/to/workshops.yml /path/to/archive.yml'
+    args = '/path/to/site'
     help = 'Report inconsistencies in workshop URLs.'
 
     def handle(self, *args, **options):
-        if len(args) != 2:
-            raise CommandError('Usage: check_workshop_urls /path/to/workshops.yml /path/to/archive.yml')
+        if len(args) != 1:
+            raise CommandError('Usage: check_workshop_urls /path/to/site')
 
-        workshops_file, archive_file = args
+        path_to_site = args[0]
+        workshops_file = os.path.join(path_to_site, 'config', 'workshops.yml')
+        archive_file = os.path.join(path_to_site, 'config', 'archived.yml')
         with open(workshops_file, 'r') as reader:
             workshops = [self.normalize(x) for x in yaml.load(reader)]
         with open(archive_file, 'r') as reader:
