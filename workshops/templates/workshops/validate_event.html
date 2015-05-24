@@ -8,18 +8,20 @@
 {% endblock %}
 
 {% block content %}
-{% if not page %}
-<p>No valid URL in event record.</p>
-{% else %}
-  <p>Validating {{ page }}</p>
-  {% if error_messages %}
-    {% for message in error_messages %}
-    <p>{{ message }}</p>
-    {% endfor %}
+<div id="validation">
+  {% if not page %}
+  <p>No valid URL in event record.</p>
   {% else %}
-    <p>No errors</p>
+    <p>Validating {{ page }}</p>
+    {% if error_messages %}
+      {% for message in error_messages %}
+      <p>{{ message }}</p>
+      {% endfor %}
+    {% else %}
+      <p>No errors</p>
+    {% endif %}
   {% endif %}
-{% endif %}
+</div>
 <p>... <a href="{% url 'event_details' event.get_ident %}">return to event</a></p>
 <p>... <a href="{% url 'all_events' %}">all events</a></p>
 <p>... <a href="{% url 'index' %}">index</a></p>
