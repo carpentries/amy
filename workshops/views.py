@@ -129,8 +129,8 @@ SITE_FIELDS = ['domain', 'fullname', 'country', 'notes']
 def all_sites(request):
     '''List all sites.'''
 
-    all_sites = Site.objects.order_by('domain')
-    sites = _get_pagination_items(request, all_sites)
+    sites = Site.objects.order_by('domain')
+    sites = _get_pagination_items(request, sites)
     user_can_add = request.user.has_perm('edit')
     context = {'title' : 'All Sites',
                'all_sites' : sites,
@@ -152,6 +152,7 @@ def site_details(request, site_domain):
 class SiteCreate(LoginRequiredMixin, CreateViewContext):
     model = Site
     fields = SITE_FIELDS
+    template_name = 'workshops/generic_form.html'
 
 
 class SiteUpdate(LoginRequiredMixin, UpdateViewContext):
@@ -159,6 +160,7 @@ class SiteUpdate(LoginRequiredMixin, UpdateViewContext):
     fields = SITE_FIELDS
     slug_field = 'domain'
     slug_url_kwarg = 'site_domain'
+    template_name = 'workshops/generic_form.html'
 
 #------------------------------------------------------------
 
@@ -168,10 +170,10 @@ AIRPORT_FIELDS = ['iata', 'fullname', 'country', 'latitude', 'longitude']
 @login_required
 def all_airports(request):
     '''List all airports.'''
-    all_airports = Airport.objects.order_by('iata')
+    airports = Airport.objects.order_by('iata')
     user_can_add = request.user.has_perm('edit')
     context = {'title' : 'All Airports',
-               'all_airports' : all_airports,
+               'all_airports' : airports,
                'user_can_add' : user_can_add}
     return render(request, 'workshops/all_airports.html', context)
 
@@ -188,6 +190,7 @@ def airport_details(request, airport_iata):
 class AirportCreate(LoginRequiredMixin, CreateViewContext):
     model = Airport
     fields = AIRPORT_FIELDS
+    template_name = 'workshops/generic_form.html'
 
 
 class AirportUpdate(LoginRequiredMixin, UpdateViewContext):
@@ -195,6 +198,7 @@ class AirportUpdate(LoginRequiredMixin, UpdateViewContext):
     fields = AIRPORT_FIELDS
     slug_field = 'iata'
     slug_url_kwarg = 'airport_iata'
+    template_name = 'workshops/generic_form.html'
 
 #------------------------------------------------------------
 
@@ -210,8 +214,8 @@ PERSON_FIELDS = [
 def all_persons(request):
     '''List all persons.'''
 
-    all_persons = Person.objects.order_by('family', 'personal')
-    persons = _get_pagination_items(request, all_persons)
+    persons = Person.objects.order_by('family', 'personal')
+    persons = _get_pagination_items(request, persons)
     context = {'title' : 'All Persons',
                'all_persons' : persons}
     return render(request, 'workshops/all_persons.html', context)
@@ -389,6 +393,7 @@ def person_bulk_add_confirmation(request):
 class PersonCreate(LoginRequiredMixin, CreateViewContext):
     model = Person
     fields = PERSON_FIELDS
+    template_name = 'workshops/generic_form.html'
 
 
 class PersonUpdate(LoginRequiredMixin, UpdateViewContext):
@@ -398,6 +403,7 @@ class PersonUpdate(LoginRequiredMixin, UpdateViewContext):
               'email', 'gender', 'airport', 'github', 'twitter', 'url',
               'is_superuser', 'user_permissions']
     pk_url_kwarg = 'person_id'
+    template_name = 'workshops/generic_form.html'
 
 
 #------------------------------------------------------------
@@ -406,8 +412,8 @@ class PersonUpdate(LoginRequiredMixin, UpdateViewContext):
 def all_events(request):
     '''List all events.'''
 
-    all_events = Event.objects.all()
-    events = _get_pagination_items(request, all_events)
+    events = Event.objects.all()
+    events = _get_pagination_items(request, events)
     context = {'title' : 'All Events',
                'all_events' : events}
     return render(request, 'workshops/all_events.html', context)
@@ -450,9 +456,7 @@ def validate_event(request, event_ident):
 class EventCreate(LoginRequiredMixin, CreateViewContext):
     model = Event
     fields = '__all__'
-    # setting template_name to 'event_create_form.html' didn't work, but
-    # a changed suffix did!
-    template_name_suffix = '_create_form'
+    template_name = 'workshops/generic_form.html'
 
 
 @login_required
@@ -514,8 +518,8 @@ TASK_FIELDS = ['event', 'person', 'role']
 def all_tasks(request):
     '''List all tasks.'''
 
-    all_tasks = Task.objects.order_by('event', 'person', 'role')
-    tasks = _get_pagination_items(request, all_tasks)
+    tasks = Task.objects.order_by('event', 'person', 'role')
+    tasks = _get_pagination_items(request, tasks)
     user_can_add = request.user.has_perm('edit')
     context = {'title' : 'All Tasks',
                'all_tasks' : tasks,
@@ -544,12 +548,14 @@ def task_delete(request, task_id):
 class TaskCreate(LoginRequiredMixin, CreateViewContext):
     model = Task
     fields = TASK_FIELDS
+    template_name = 'workshops/generic_form.html'
 
 
 class TaskUpdate(LoginRequiredMixin, UpdateViewContext):
     model = Task
     fields = TASK_FIELDS
     pk_url_kwarg = 'task_id'
+    template_name = 'workshops/generic_form.html'
 
 
 #------------------------------------------------------------
@@ -558,25 +564,29 @@ class TaskUpdate(LoginRequiredMixin, UpdateViewContext):
 def all_badges(request):
     '''List all badges.'''
 
-    all_badges = Badge.objects.order_by('name')
-    for b in all_badges:
+    badges = Badge.objects.order_by('name')
+    for b in badges:
         b.num_awarded = Award.objects.filter(badge_id=b.id).count()
     context = {'title' : 'All Badges',
-               'all_badges' : all_badges}
+               'all_badges' : badges}
     return render(request, 'workshops/all_badges.html', context)
 
 
+#------------------------------------------------------------
+
+
 @login_required
-def badge_details(request, badge_name):
-    '''Show who has a particular badge.'''
+def all_awards(request, badge_name):
+    '''Show who has been awarded a particular badge.'''
 
     badge = Badge.objects.get(name=badge_name)
-    all_awards = Award.objects.filter(badge_id=badge.id)
-    awards = _get_pagination_items(request, all_awards)
+    awards = Award.objects.filter(badge_id=badge.id)
+    awards = _get_pagination_items(request, awards)
     context = {'title' : 'Badge {0}'.format(badge.title),
                'badge' : badge,
-               'all_awards' : awards}
-    return render(request, 'workshops/badge.html', context)
+               'awards' : awards}
+    return render(request, 'workshops/all_awards.html', context)
+
 
 #------------------------------------------------------------
 
