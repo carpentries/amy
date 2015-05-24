@@ -8,6 +8,7 @@
 {% endblock %}
 
 {% block content %}
+<p class="edit-object"><a href="{% url 'event_edit' event.id %}" class="btn btn-primary">Edit</a></p>
 <table class="table table-striped">
   <tr><td>published:</td><td>{{ event.published|yesno }}</td></tr>
   <tr><td>tags:</td><td>{{ event.tags.all | join:", " }}</td></tr>
@@ -45,13 +46,9 @@
 {% else %}
 <p>No notes.</p>
 {% endif %}
-<p class="edit-object"><a href="{% url 'event_edit' event.id %}">Edit this event</a></p>
-<p class="delete-object"><a href="{% url 'event_delete' event.id %}" onclick='return confirm("Are you sure you wish to remove \"{{ event }}\"?")'>Delete this event</a></p>
-{% if event.url %}
-<p>... <a href="{% url 'validate_event' event.get_ident %}">validate event</a></p>
-{% else %}
-<p>cannot validate event without URL</p>
-{% endif %}
-<p>... <a href="{% url 'all_events' %}">all events</a></p>
-<p>... <a href="{% url 'index' %}">index</a></p>
+<div class="clearfix">
+  <p class="edit-object pull-left"><a href="{% url 'event_edit' event.id %}" class="btn btn-primary">Edit</a></p>
+  <p class="delete-object pull-right"><a href="{% url 'event_delete' event.id %}" onclick='return confirm("Are you sure you wish to remove \"{{ event }}\"?")' class="btn btn-danger">Delete event</a></p>
+</div>
+
 {% endblock %}
