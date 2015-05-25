@@ -405,5 +405,8 @@ class Award(models.Model):
     awarded    = models.DateField()
     event      = models.ForeignKey(Event, null=True, blank=True)
 
+    class Meta:
+        unique_together = ("person", "badge", )
+
     def __str__(self):
         return '{0}/{1}/{2}/{3}'.format(self.person, self.badge, self.awarded, self.event)
