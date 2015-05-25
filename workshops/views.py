@@ -610,22 +610,6 @@ def badge_details(request, badge_name):
 
 
 @login_required
-def all_awards(request, badge_name):
-    '''Show who has been awarded a particular badge.'''
-
-    badge = Badge.objects.get(name=badge_name)
-    awards = Award.objects.filter(badge_id=badge.id)
-    awards = _get_pagination_items(request, awards)
-    context = {'title' : 'Badge {0}'.format(badge.title),
-               'badge' : badge,
-               'awards' : awards}
-    return render(request, 'workshops/all_awards.html', context)
-
-
-#------------------------------------------------------------
-
-
-@login_required
 def instructors(request):
     '''Search for instructors.'''
 
