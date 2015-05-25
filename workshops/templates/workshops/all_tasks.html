@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block content %}
-    <p><a href="{% url 'task_add' %}" class="btn btn-primary">Add a new task</a></p>
+    <p><a href="{% url 'task_add' %}" class="btn btn-success">New task</a></p>
 {% if all_tasks %}
     <table class="table table-striped">
         <tr>
@@ -40,7 +40,7 @@
          {% endif %}
       </span>
     </div>
-    <p><a href="{% url 'task_add' %}" class="btn btn-primary">Add a new task</a></p>
+    <p><a href="{% url 'task_add' %}" class="btn btn-success">New task</a></p>
 {% else %}
     <p>No tasks.</p>
 {% endif %}

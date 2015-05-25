@@ -15,5 +15,5 @@
   <tr><td>role:</td><td>{{ task.role }}</td></tr>
 </table>
 
-<p class="edit-object"><a href="{% url 'task_edit' task.id %}">Edit this task</a></p>
+<p class="edit-object"><a href="{% url 'task_edit' task.id %}" class="btn btn-primary">Edit</a></p>
 {% endblock %}

@@ -8,11 +8,12 @@
 {% endblock %}
 
 {% block content %}
+<p class="edit-object"><a href="{% url 'event_edit' event.id %}" class="btn btn-primary">Edit</a></p>
 <table class="table table-striped">
   <tr><td>published:</td><td>{{ event.published|yesno }}</td></tr>
   <tr><td>tags:</td><td>{{ event.tags.all | join:", " }}</td></tr>
   <tr><td>slug:</td><td>{{ event.slug|default:"—" }}</td></tr>
-  <tr><td>url:</td><td>{% if event.url %}<a href="{{ event.url }}">{{ event.url }}</a>{% else %}—{% endif %}</td></tr>
+  <tr><td>url:</td><td>{% if event.url %}<a href="{{ event.url }}">{{ event.url }}</a>{% else %}—{% endif %} {% if event.url %}<a href="{% url 'validate_event' event.get_ident %}" class="btn btn-primary btn-xs pull-right" id="validate_event">validate event</a>{% else %}<a class="btn btn-danger btn-xs pull-right" id="error_event_url" href="#" data-toggle="popover" data-trigger="focus" title="Validation error" data-content="Cannot validate an event without URL pointing to the GitHub repository, e.g.: <code>https://github.com/swcarpentry/2015-05-24-training</code>">Error</a>{% endif %}</td></tr>
   <tr><td>site:</td><td><a href="{% url 'site_details' event.site.domain %}">{{ event.site }}</a></td></tr>
   <tr><td>start date:</td><td>{{ event.start|default:"—" }}</td></tr>
   <tr><td>end date: </td><td>{{ event.end|default:"—" }}</td></tr>
@@ -21,6 +22,35 @@
   <tr><td>admin fee:</td><td>{{ event.admin_fee|default_if_none:"—" }}</td></tr>
   <tr><td>fee paid:</td><td>{{ event.fee_paid|yesno:"yes,no,unknown" }}</td></tr>
 </table>
+
+{% if event.url %}
+<!-- Validation modal -->
+<div class="modal fade" id="validation_modal" tabindex="-1" role="dialog" aria-labelledby="validation_modal_label" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="validation_modal_label">Validation</h4>
+      </div>
+      <div class="modal-body"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<script type="text/javascript">
+  $('#error_event_url').popover({placement: "left", html: true});
+  $('#validate_event').click(function() {
+    $('#validation_modal').modal();
+    return false;
+  });
+  $('#validation_modal').on('show.bs.modal', function() {
+    $('#validation_modal .modal-body').load("{% url 'validate_event' event.get_ident %} #validation")
+  });
+</script>
 {% if tasks %}
 <table class="table table-striped">
   <tr>
@@ -45,13 +75,9 @@
 {% else %}
 <p>No notes.</p>
 {% endif %}
-<p class="edit-object"><a href="{% url 'event_edit' event.id %}">Edit this event</a></p>
-<p class="delete-object"><a href="{% url 'event_delete' event.id %}" onclick='return confirm("Are you sure you wish to remove \"{{ event }}\"?")'>Delete this event</a></p>
-{% if event.url %}
-<p>... <a href="{% url 'validate_event' event.get_ident %}">validate event</a></p>
-{% else %}
-<p>cannot validate event without URL</p>
-{% endif %}
-<p>... <a href="{% url 'all_events' %}">all events</a></p>
-<p>... <a href="{% url 'index' %}">index</a></p>
+<div class="clearfix">
+  <p class="edit-object pull-left"><a href="{% url 'event_edit' event.id %}" class="btn btn-primary">Edit</a></p>
+  <p class="delete-object pull-right"><a href="{% url 'event_delete' event.id %}" onclick='return confirm("Are you sure you wish to remove \"{{ event }}\"?")' class="btn btn-danger">Delete event</a></p>
+</div>
+
 {% endblock %}
