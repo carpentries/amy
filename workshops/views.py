@@ -581,8 +581,6 @@ def badge_details(request, badge_name):
     '''List details of a particular event.'''
 
     badge = Badge.objects.get(name=badge_name)
-    awards = badge.award_set.all()
-    awards = _get_pagination_items(request, awards)
 
     initial = {
         'badge': badge,
@@ -597,6 +595,9 @@ def badge_details(request, badge_name):
 
         if form.is_valid():
             form.save()
+
+    awards = badge.award_set.all()
+    awards = _get_pagination_items(request, awards)
 
     context = {'title': 'Badge {0}'.format(badge),
                'badge': badge,
