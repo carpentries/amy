@@ -1,0 +1,65 @@
+{% extends "workshops/_page.html" %}
+
+{% load crispy_forms_tags %}
+{% load breadcrumbs %}
+
+{% block breadcrumbs %}
+    {% breadcrumb_main_page %}
+    {% breadcrumb_index_all_objects badge %}
+    {% breadcrumb_active badge %}
+{% endblock %}
+
+{% block content %}
+<table class="table table-striped">
+  <tr><td>name:</td><td>{{ badge.name|default:"—" }}</td></tr>
+  <tr><td>title:</td><td>{{ badge.title|default:"—" }}</td></tr>
+  <tr><td>criteria:</td><td>{{ badge.criteria|default:"—" }}</td></tr>
+</table>
+
+<h3>Award new</h3>
+{% crispy form form_helper %}
+
+{% if awards %}
+  <h3>Awarded:</h3>
+  <table class="table table-striped">
+    <tr>
+      <th>person</th>
+      <th>awarded</th>
+      <th>event</th>
+    </tr>
+    {% for award in awards %}
+    <tr>
+      <td><a href="{% url 'person_details' award.person.id %}">{{ award.person }}</a></td>
+      <td>{{ award.awarded }}</td>
+      <td>{% if award.event %}<a href="{% url 'event_details' award.event.get_ident %}">{{ award.event }}</a>{% else %}—{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  <div class="pagination">
+    <span class="step-links">
+      {% if awards.has_previous %}
+      <a href="?page={{ awards.previous_page_number }}">previous</a>
+      {% endif %}
+      <span class="current">
+        Page {{ awards.number }} of {{ awards.paginator.num_pages }}.
+      </span>
+      {% if awards.has_next %}
+      <a href="?page={{ awards.next_page_number }}">next</a>
+      {% endif %}
+    </span>
+  </div>
+{% else %}
+<p>None awarded.</p>
+{% endif %}
+
+{% endblock %}
+
+{% block extrajs %}
+{{ form.media }}
+<script type="text/javascript">
+  $('#id_awarded').datepicker({
+    format: "yyyy-mm-dd",
+    todayHighlight: true
+  });
+</script>
+{% endblock %}

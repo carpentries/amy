@@ -32,8 +32,9 @@ from workshops.models import \
 from workshops.check import check_file
 from workshops.forms import (
     SearchForm, DebriefForm, InstructorsForm, PersonForm, PersonBulkAddForm,
-    EventForm, TaskForm, TaskFullForm, bootstrap_helper,
-    bootstrap_helper_without_form)
+    EventForm, TaskForm, TaskFullForm, bootstrap_helper, bootstrap_helper_without_form,
+    BadgeAwardForm
+)
 from workshops.util import (
     earth_distance, upload_person_task_csv,  verify_upload_person_task,
     create_uploaded_persons_tasks, InternalError
@@ -569,12 +570,40 @@ class TaskUpdate(LoginRequiredMixin, UpdateViewContext):
 def all_badges(request):
     '''List all badges.'''
 
-    badges = Badge.objects.order_by('name')
-    for b in badges:
-        b.num_awarded = Award.objects.filter(badge_id=b.id).count()
+    badges = Badge.objects.order_by('name').annotate(num_awarded=Count('award'))
     context = {'title' : 'All Badges',
                'all_badges' : badges}
     return render(request, 'workshops/all_badges.html', context)
+
+
+@login_required
+def badge_details(request, badge_name):
+    '''List details of a particular event.'''
+
+    badge = Badge.objects.get(name=badge_name)
+    awards = badge.award_set.all()
+    awards = _get_pagination_items(request, awards)
+
+    initial = {
+        'badge': badge,
+        'awarded': datetime.date.today()
+    }
+
+    if request.method == 'GET':
+        form = BadgeAwardForm(initial=initial)
+
+    elif request.method == 'POST':
+        form = BadgeAwardForm(request.POST, initial=initial)
+
+        if form.is_valid():
+            form.save()
+
+    context = {'title': 'Badge {0}'.format(badge),
+               'badge': badge,
+               'awards': awards,
+               'form': form,
+               'form_helper': bootstrap_helper}
+    return render(request, 'workshops/badge.html', context)
 
 
 #------------------------------------------------------------
