@@ -388,7 +388,7 @@ class Qualification(models.Model):
 class Badge(models.Model):
     '''Represent a badge we award.'''
 
-    name       = models.CharField(max_length=STR_MED)
+    name       = models.CharField(max_length=STR_MED, unique=True)
     title      = models.CharField(max_length=STR_MED)
     criteria   = models.CharField(max_length=STR_LONG)
 
