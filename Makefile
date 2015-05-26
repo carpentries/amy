@@ -67,6 +67,10 @@ workshops/git_version.py :
 		fi \
 	fi
 
+## all-activity : report all instructor activity
+all-activity :
+	@${PYTHON} manage.py report_all_instructor_activity
+
 ## serve        : run a server
 serve : bower_components workshops/git_version.py
 	${PYTHON} manage.py runserver
