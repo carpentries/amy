@@ -216,6 +216,13 @@ def all_persons(request):
 
     persons = Person.objects.order_by('family', 'personal')
     persons = _get_pagination_items(request, persons)
+    instructor = Badge.objects.get(name='instructor')
+    for p in persons:
+        try:
+            Award.objects.get(person__id=p.id, badge__id=instructor.id)
+            p.is_instructor = True
+        except ObjectDoesNotExist:
+            p.is_instructor = False
     context = {'title' : 'All Persons',
                'all_persons' : persons}
     return render(request, 'workshops/all_persons.html', context)
@@ -441,11 +448,16 @@ def validate_event(request, event_ident):
         github_url = event.url
     if github_url is not None:
         page_url = github_url.replace('github.com', 'raw.githubusercontent.com').rstrip('/') + '/gh-pages/index.html'
-        response = requests.get(page_url)
-        if response.status_code != 200:
-            error_messages.append('Request for {0} returned status code {1}'.format(page_url, response.status_code))
-        else:
-            error_messages = check_file(page_url, response.text)
+
+        try:
+            response = requests.get(page_url)
+
+            if response.status_code != 200:
+                error_messages.append('Request for {0} returned status code {1}'.format(page_url, response.status_code))
+            else:
+                error_messages = check_file(page_url, response.text)
+        except requests.ConnectionError:
+            error_messages = ["Network connection error.", ]
     context = {'title' : 'Validate Event {0}'.format(event),
                'event' : event,
                'page' : page_url,

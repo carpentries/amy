@@ -8,19 +8,22 @@
 {% endblock %}
 
 {% block content %}
-{% if not page %}
-<p>No valid URL in event record.</p>
-{% else %}
-  <p>Validating {{ page }}</p>
-  {% if error_messages %}
-    {% for message in error_messages %}
-    <p>{{ message }}</p>
-    {% endfor %}
+<div id="validation">
+  {% if not page %}
+  <p>No valid URL in event record.</p>
   {% else %}
-    <p>No errors</p>
+    {% if error_messages %}
+      <div class="alert alert-danger" role="alert"><strong>Errors found!</strong> Fix errors below:</div>
+      <ul>
+        {% for message in error_messages %}
+        <li>{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="alert alert-success" role="alert"><strong>Everythings fine</strong> No errors found.</div>
+    {% endif %}
+    <p>Validated file: <a href="{{ page }}">{{ page }}</a></p>
   {% endif %}
-{% endif %}
-<p>... <a href="{% url 'event_details' event.get_ident %}">return to event</a></p>
-<p>... <a href="{% url 'all_events' %}">all events</a></p>
-<p>... <a href="{% url 'index' %}">index</a></p>
+</div>
+<p><a href="{% url 'event_details' event.get_ident %}" class="btn btn-primary">return to event</a></p>
 {% endblock %}
