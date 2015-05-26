@@ -468,7 +468,7 @@ def validate_event(request, event_ident):
 
 class EventCreate(LoginRequiredMixin, CreateViewContext):
     model = Event
-    fields = '__all__'
+    form_class = EventForm
     template_name = 'workshops/generic_form.html'
 
 
