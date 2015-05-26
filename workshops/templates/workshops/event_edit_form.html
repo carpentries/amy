@@ -17,16 +17,6 @@
 
 {% block content %}
 
-<script type="text/javascript">
-    $(document).ready(function() {
-        $("#id_task-person").combobox();
-        $("#id_event-start, #id_event-end").datepicker({
-            format: "yyyy-mm-dd",
-            todayHighlight: true
-        });
-    });
-</script>
-
 <form action="" method="post" id="event_task_form" role="form" class="form-horizontal">
     {% crispy event_form form_helper %}
 
@@ -54,3 +44,16 @@
 </form>
 
 {% endblock %}
+
+{% block extrajs %}
+{{event_form.media}}
+<script type="text/javascript">
+    $(document).ready(function() {
+        $("#id_task-person").combobox();
+        $("#id_event-start, #id_event-end").datepicker({
+            format: "yyyy-mm-dd",
+            todayHighlight: true
+        });
+    });
+</script>
+{% endblock extrajs %}
