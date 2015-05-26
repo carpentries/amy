@@ -1,12 +1,14 @@
 {% extends "workshops/_page.html" %}
 
 {% load breadcrumbs %}
+{% load crispy_forms_tags %}
+{% load selectable_tags %}
+
 {% block breadcrumbs %}
     {% breadcrumb_main_page %}
     {% breadcrumb_active title %}
 {% endblock %}
 
-{% load crispy_forms_tags %}
 {% block content %}
     {% crispy form form_helper %}
 {% if persons == None %}
