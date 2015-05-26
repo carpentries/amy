@@ -49,6 +49,10 @@ badges :
 check-urls :
 	@${PYTHON} manage.py check_workshop_urls ${SITE_PATH}
 
+## check-badges : check that all badges have been awarded
+check-badges :
+	@${PYTHON} manage.py check_badges ${SITE_PATH}
+
 ## schema       : display the database schema
 schema :
 	${QUERY} .schema
