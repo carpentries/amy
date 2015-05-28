@@ -39,7 +39,7 @@ when they're supposed to occur, who's teaching what, and so on.
 
     **Note**: if you don't want to use `sudo`, you can install `bower` locally. You'll need to set up your `$PATH` correctly, though. Look [here](https://docs.npmjs.com/getting-started/fixing-npm-permissions#option-2-change-npm-s-default-directory-to-another-directory) for details.
 
-4. Setup your local database wit redacted (development-ready) data with:
+4. Setup your local database with redacted (development-ready) data with:
 
     ~~~
     $ make database
