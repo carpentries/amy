@@ -26,8 +26,10 @@ Instances of abusive, harassing, or otherwise unacceptable behavior
 may be reported by opening an issue or contacting one or more of the
 project maintainers.
 
-This Code of Conduct is adapted from the
+This Code of Conduct is a copy of [Software Carpentry's code of
+conduct][swc-coc], which is is adapted from the
 [Contributor Covenant][covenant-site], version 1.0.0, available at
 <http://contributor-covenant.org/version/1/0/0/>.
 
 [covenant-site]: http:contributor-covenant.org
+[swc-coc]: http://software-carpentry.org/conduct.html
