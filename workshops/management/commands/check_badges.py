@@ -5,6 +5,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError
 from workshops.models import Badge, Award
 
+SKIP_DIRS = ['class']
+
 class Command(BaseCommand):
     args = '/path/to/site'
     help = 'Report inconsistencies in badges.'
@@ -17,7 +19,7 @@ class Command(BaseCommand):
         badge_dir = os.path.join(path_to_site, 'badges')
         for entry in os.listdir(badge_dir):
             entry_path = os.path.join(badge_dir, entry)
-            if os.path.isdir(entry_path):
+            if os.path.isdir(entry_path) and entry not in SKIP_DIRS:
                 self.check_badges(entry, entry_path)
 
     def check_badges(self, badge_name, badge_path):
