@@ -20,7 +20,7 @@
   <tr><td>Eventbrite key:</td><td>{{ event.reg_key|default:"—" }}</td></tr>
   <tr><td>attendance:</td><td>{{ event.attendance|default_if_none:"—" }}</td></tr>
   <tr><td>admin fee:</td><td>{{ event.admin_fee|default_if_none:"—" }}</td></tr>
-  <tr><td>fee paid:</td><td>{{ event.fee_paid|yesno:"yes,no,unknown" }}</td></tr>
+  <tr><td>invoiced:</td><td>{{ event.invoiced|yesno:"yes,no,unknown" }}</td></tr>
 </table>
 
 {% if event.url %}

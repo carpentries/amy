@@ -22,7 +22,7 @@
 	    <th>Eventbrite</th>
 	    <th>attendance</th>
 	    <th>admin fee</th>
-	    <th>fee paid</th>
+	    <th>invoiced</th>
 	</tr>
     {% for event in all_events %}
         <tr>
@@ -53,7 +53,7 @@
 	    <td>{{ event.reg_key|default:"—" }}</td>
 	    <td>{{ event.attendance|default_if_none:"—" }}</td>
 	    <td>{{ event.admin_fee|default_if_none:"—" }}</td>
-	    <td>{{ event.fee_paid|yesno:"yes,no,unknown" }}</td>
+	    <td>{{ event.invoiced|yesno:"yes,no,unknown" }}</td>
 	</tr>
     {% endfor %}
     </table>

@@ -112,10 +112,10 @@ def index(request):
     '''Home page.'''
     upcoming_events = Event.objects.upcoming_events()
     unpublished_events = Event.objects.unpublished_events()
-    unpaid_events = Event.objects.unpaid_events()
+    uninvoiced_events = Event.objects.uninvoiced_events()
     context = {'title': None,
                'upcoming_events': upcoming_events,
-               'unpaid_events': unpaid_events,
+               'uninvoiced_events': uninvoiced_events,
                'unpublished_events': unpublished_events}
     return render(request, 'workshops/index.html', context)
 
