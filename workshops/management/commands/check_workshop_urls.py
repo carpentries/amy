@@ -38,12 +38,12 @@ class Command(BaseCommand):
             try:
                 Event.objects.get(url=u)
             except ObjectDoesNotExist:
-                print('Configuration URL "{0}" not in database'.format(u))
+                print('"{0}" in configuration but not in database'.format(u))
 
         urls = set(urls)
         for e in Event.objects.all():
             if e.url and (e.url not in urls):
-                print('Database URL "{0}" not in configuration'.format(e.url))
+                print('"{0}" in database but not in configuration'.format(e.url))
 
     def normalize(self, url):
         m = URL_PATTERN.match(url)
