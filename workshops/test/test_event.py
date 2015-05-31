@@ -160,15 +160,13 @@ class TestEvent(TestBase):
         assert event.reg_key != new_reg_key, \
             'Would be unable to tell if reg_key had changed'
         values['event-reg_key'] = new_reg_key
-
-        assert "task-person" in values, \
+        assert "task-person_0" in values, \
             'No person select in initial form'
 
         person = Person.objects.all()[0]
-        values['task-person'] = person.id
+        values['task-person_1'] = person.id
         values['task-role'] = role.id
-        values['task-event'] = event.id
-        # values['task-id'] = ''
+
         # Add superuser as a test role
         values['add'] = 'yes'
 
@@ -278,6 +276,7 @@ class TestEventViews(TestBase):
                 'published': False,
                 'site': site.id,
                 'tags': [tag.id],
+                'organizer': site.id,
             })
         if response.status_code == 302:
             url = response['location']
@@ -303,6 +302,7 @@ class TestEventViews(TestBase):
                 'published': False,
                 'site': site.id,
                 'tags': [tag.id],
+                'organizer': site.id,
             }
         response = self.client.post(url, data)
         assert response.status_code == 302, (

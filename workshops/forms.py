@@ -1,13 +1,21 @@
 from django import forms
-from django.forms import HiddenInput
-from django.forms.models import modelform_factory
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
+from selectable import forms as selectable
 
-from workshops.models import Skill, Airport, Event, Task
+from workshops.models import Skill, Event, Task, Person
+from workshops import lookups
+
 
 INSTRUCTOR_SEARCH_LEN = 10   # how many instrutors to return from a search by default
+
+AUTOCOMPLETE_HELP_TEXT = (
+    "Autocomplete field; type characters to view available options, "
+    "then select desired item from list."
+)
+
+DATE_HELP_TEXT = "Select date using widget, or enter in YYYY-MM-DD format."
 
 
 class BootstrapHelper(FormHelper):
@@ -43,10 +51,12 @@ class InstructorsForm(forms.Form):
                                  min_value=-180.0,
                                  max_value=180.0,
                                  required=False)
-    airport = forms.ModelChoiceField(label='airport',
-                                     queryset=Airport.objects.all(),
-                                     to_field_name='iata',
-                                     required=False)
+    airport = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.AirportLookup,
+        label='Airport',
+        required=False,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+    )
 
     def __init__(self, *args, **kwargs):
         '''Build checkboxes for skills dynamically.'''
@@ -109,9 +119,99 @@ class DebriefForm(forms.Form):
     )
 
 
-# forms below are created using a factory instead of class
-# they're used on event edit page
-EventForm = modelform_factory(Event, fields="__all__")
-TaskForm = modelform_factory(Task, fields="__all__",
-                             widgets={'event': HiddenInput})
+class EventForm(forms.ModelForm):
+
+    site = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.SiteLookup,
+        label='Site',
+        required=True,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+    organizer = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.SiteLookup,
+        label='Organizer',
+        required=True,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['start'].help_text = DATE_HELP_TEXT
+        self.fields['end'].help_text = DATE_HELP_TEXT
+
+    def clean_slug(self):
+        # Ensure slug is not an integer value for Event.get_by_ident
+        data = self.cleaned_data['slug']
+
+        try:
+            int(data)
+        except ValueError:
+            pass
+        else:
+            raise forms.ValidationError("Slug must not be an integer-value.")
+
+        return data
+
+    class Meta:
+        model = Event
+        exclude = ('deleted', )
+
+
+class TaskForm(forms.ModelForm):
+
+    person = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.PersonLookup,
+        label='Person',
+        required=True,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+    def __init__(self, *args, **kwargs):
+        event = kwargs.pop('event', None)
+        super().__init__(*args, **kwargs)
+        if event:
+            self.instance.event = event
+
+    class Meta:
+        model = Task
+        exclude = ('event', 'deleted')
+
+
+class TaskFullForm(TaskForm):
+
+    event = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.EventLookup,
+        label='Event',
+        required=True,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+    class Meta:
+        model = Task
+        exclude = ('deleted', )
+
+
+class PersonForm(forms.ModelForm):
+
+    airport = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.AirportLookup,
+        label='Airport',
+        required=False,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+    class Meta:
+        model = Person
+        # don't display the 'password', 'user_permissions', 'group_permissions'
+        # fields
+        # + reorder fields
+        fields = ['personal', 'middle', 'family', 'username', 'may_contact',
+                  'email', 'gender', 'airport', 'github', 'twitter', 'url',
+                  'notes', 'is_superuser']
 
