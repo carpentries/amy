@@ -1,12 +1,13 @@
 from django import forms
+from django.forms import HiddenInput
+from django.forms.models import modelform_factory
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from selectable import forms as selectable
 
-from workshops.models import Skill, Event, Task, Person
+from workshops.models import Skill, Airport, Event, Task, Award, Person
 from workshops import lookups
-
 
 INSTRUCTOR_SEARCH_LEN = 10   # how many instrutors to return from a search by default
 
@@ -214,4 +215,28 @@ class PersonForm(forms.ModelForm):
         fields = ['personal', 'middle', 'family', 'username', 'may_contact',
                   'email', 'gender', 'airport', 'github', 'twitter', 'url',
                   'notes', 'is_superuser']
+
+
+class BadgeAwardForm(forms.ModelForm):
+
+    person = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.PersonLookup,
+        label='Person',
+        required=True,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+    event = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.EventLookup,
+        label='Event',
+        required=False,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+    class Meta:
+        model = Award
+        fields = '__all__'
+        widgets = {'badge': HiddenInput}
 

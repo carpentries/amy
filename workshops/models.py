@@ -388,7 +388,7 @@ class Qualification(models.Model):
 class Badge(models.Model):
     '''Represent a badge we award.'''
 
-    name       = models.CharField(max_length=STR_MED)
+    name       = models.CharField(max_length=STR_MED, unique=True)
     title      = models.CharField(max_length=STR_MED)
     criteria   = models.CharField(max_length=STR_LONG)
 
@@ -404,6 +404,9 @@ class Award(models.Model):
     badge      = models.ForeignKey(Badge)
     awarded    = models.DateField()
     event      = models.ForeignKey(Event, null=True, blank=True)
+
+    class Meta:
+        unique_together = ("person", "badge", )
 
     def __str__(self):
         return '{0}/{1}/{2}/{3}'.format(self.person, self.badge, self.awarded, self.event)
