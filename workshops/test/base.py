@@ -274,9 +274,13 @@ class TestBase(TestCase):
         selects = dict([(s.attrib['name'], self._get_selected(s))
                         for s in form.findall('.//select')])
 
+        textareas = dict([(t.attrib['name'], t.text)
+                          for t in form.findall(".//textarea")])
+
         inputs.update(hidden)
         inputs.update(checkboxes)
         inputs.update(selects)
+        inputs.update(textareas)
         return inputs
 
     def _save_html(self, content):

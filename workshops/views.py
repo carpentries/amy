@@ -404,10 +404,12 @@ class PersonCreate(LoginRequiredMixin, CreateViewContext):
 
 class PersonUpdate(LoginRequiredMixin, UpdateViewContext):
     model = Person
-    # don't display the 'password' field, reorder fields
+    # don't display the 'password', 'user_permissions', 'group_permissions'
+    # fields
+    # + reorder fields
     fields = ['personal', 'middle', 'family', 'username', 'may_contact',
               'email', 'gender', 'airport', 'github', 'twitter', 'url',
-              'is_superuser', 'user_permissions']
+              'notes', 'is_superuser']
     pk_url_kwarg = 'person_id'
     template_name = 'workshops/generic_form.html'
 
