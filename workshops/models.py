@@ -111,6 +111,7 @@ class Person(AbstractBaseUser, PermissionsMixin):
     twitter     = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True)
     url         = models.CharField(max_length=STR_LONG, null=True, blank=True)
     username    = models.CharField(max_length=STR_MED, unique=True)
+    notes = models.TextField(default="", blank=True)
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = [
