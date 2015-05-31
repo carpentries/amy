@@ -407,7 +407,7 @@ class PersonUpdate(LoginRequiredMixin, UpdateViewContext):
     # don't display the 'password' field, reorder fields
     fields = ['personal', 'middle', 'family', 'username', 'may_contact',
               'email', 'gender', 'airport', 'github', 'twitter', 'url',
-              'is_superuser', 'user_permissions']
+              'notes', 'is_superuser', 'user_permissions']
     pk_url_kwarg = 'person_id'
     template_name = 'workshops/generic_form.html'
 
