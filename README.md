@@ -51,7 +51,7 @@ before starting work on new features.
     locally. You'll need to set up your `$PATH` correctly, though. Look
     [here][fixing-npm-permissions] for details.
 
-4.  Set up your local database wit redacted (development-ready) data with:
+4.  Set up your local database with redacted (development-ready) data with:
 
     ~~~
     $ make database
