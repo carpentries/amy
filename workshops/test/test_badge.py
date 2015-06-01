@@ -36,8 +36,6 @@ class TestBadge(TestBase):
         """Ensure we can add awards from badge details page."""
         url, values = self._get_initial_form('badge_details',
                                              self.instructor.name)
-        print(values)
-        print(url)
         values['person_1'] = self.spiderman.id
 
         # to override django-selectable behavior
