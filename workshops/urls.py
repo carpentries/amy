@@ -36,8 +36,7 @@ urlpatterns = [
     url(r'^tasks/add/$', views.TaskCreate.as_view(), name='task_add'),
 
     url(r'^badges/?$', views.all_badges, name='all_badges'),
-
-    url(r'^awards/(?P<badge_name>[\w\.-]+)/?$', views.all_awards, name='all_awards'),
+    url(r'^badge/(?P<badge_name>[\w\.=-]+)/?$', views.badge_details, name='badge_details'),
 
     url(r'^instructors/?$', views.instructors, name='instructors'),
 

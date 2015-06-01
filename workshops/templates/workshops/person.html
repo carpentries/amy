@@ -22,6 +22,15 @@
   <tr><td>url:</td><td id="url">{{ person.url|default:"—" }}</td></tr>
 </table>
 
+{% if person.notes %}
+<p>Notes:</p>
+<pre>
+{{ person.notes }}
+</pre>
+{% else %}
+<p>No notes.</p>
+{% endif %}
+
 {% if awards %}
 <p>Awards</p>
 <ul>

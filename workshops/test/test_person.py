@@ -1,3 +1,5 @@
+# coding: utf-8
+
 from django.core.urlresolvers import reverse
 from ..models import Person
 from .base import TestBase
@@ -50,6 +52,11 @@ class TestPerson(TestBase):
             'Would be unable to tell if email had changed'
         values['email'] = new_email
 
+        if values['airport_1'] is None:
+            values['airport_1'] = ''
+        if values['airport_0'] is None:
+            values['airport_0'] = ''
+
         # Django redirects when edit works.
         response = self.client.post(url, values)
         if response.status_code == 302:
@@ -97,3 +104,46 @@ class TestPerson(TestBase):
         '''Get field from person display.'''
         xpath = ".//td[@id='{0}']".format(key)
         return self._get_1(doc, xpath, key)
+
+    def test_display_person_without_notes(self):
+        response = self.client.get(reverse('person_details',
+                                           args=[str(self.ironman.id)]))
+        assert response.status_code == 200
+
+        content = response.content.decode('utf-8')
+        assert "No notes" in content
+
+    def test_display_person_with_notes(self):
+        note = 'This person has some serious records'
+        p = Person.objects.create(personal='P1', family='P1',
+                                  email='p1@p1.net',
+                                  notes=note)
+
+        response = self.client.get(reverse('person_details',
+                                           args=[str(p.id)]))
+
+        assert response.status_code == 200
+
+        content = response.content.decode('utf-8')
+        assert "No notes" not in content
+        assert note in content
+
+    def test_edit_person_notes(self):
+        url, values = self._get_initial_form('person_edit', self.hermione.id)
+
+        assert 'notes' in values, 'Notes not present in initial form'
+
+        note = 'Hermione is a very good student.'
+        values['notes'] = note
+
+        # Django redirects when edit works.
+        response = self.client.post(url, values)
+        if response.status_code == 302:
+            new_person = Person.objects.get(id=self.hermione.id)
+            assert new_person.notes == note, \
+                'Incorrect edited notes: got {0}, expected {1}'.format(new_person.notes, note)
+
+        # Report errors.
+        else:
+            self._check_status_code_and_parse(response, 200)
+            assert False, 'expected 302 redirect after post'

@@ -78,6 +78,9 @@
     {% csrf_token %}
 </form>
 
+{% endblock %}
+
+{% block extrajs %}
 <script type="text/javascript">
     $("table#bulk-add-results").delegate('td.editable span', 'dblclick', function(e)
     {
@@ -114,5 +117,4 @@
         }
     });
 </script>
-
 {% endblock %}

@@ -11,15 +11,6 @@
 {% block content %}
 {% crispy form form_helper %}
 
-<script type="text/javascript">
-    $(document).ready(function() {
-        $("#id_begin_date, #id_end_date").datepicker({
-            format: "yyyy-mm-dd",
-            todayHighlight: true
-        });
-    });
-</script>
-
 {% if all_tasks %}
     <table class="table table-striped">
         <tr>
@@ -39,4 +30,15 @@
 {% else %}
     <p>No instructors for debrief section.</p>
 {% endif %}
+{% endblock %}
+
+{% block extrajs %}
+<script type="text/javascript">
+    $(document).ready(function() {
+        $("#id_begin_date, #id_end_date").datepicker({
+            format: "yyyy-mm-dd",
+            todayHighlight: true
+        });
+    });
+</script>
 {% endblock %}

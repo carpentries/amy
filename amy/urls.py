@@ -23,4 +23,6 @@ urlpatterns = patterns('',
     #     'django.contrib.auth.views.password_reset_confirm',
     #     name='password_reset_confirm'),
     # url(r'^account/reset/done/$', 'django.contrib.auth.views.password_reset_complete', name='password_reset_complete'),
+
+    url(r'^selectable/', include('selectable.urls')),
 )

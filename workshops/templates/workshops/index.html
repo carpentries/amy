@@ -19,9 +19,9 @@
     </table>
   </div>
   <div class="col-xs-3">
-    <h3>Unpaid</h3>
+    <h3>Uninvoiced</h3>
     <table class="table table-striped">
-    {% for event in unpaid_events %}
+    {% for event in uninvoiced_events %}
     <tr>
       <td><a href="{{ event.get_absolute_url }}">{{ event.get_ident }}</a></td>
     </tr>

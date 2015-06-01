@@ -111,6 +111,7 @@ class Person(AbstractBaseUser, PermissionsMixin):
     twitter     = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True)
     url         = models.CharField(max_length=STR_LONG, null=True, blank=True)
     username    = models.CharField(max_length=STR_MED, unique=True)
+    notes = models.TextField(default="", blank=True)
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = [
@@ -225,12 +226,12 @@ class EventQuerySet(models.query.QuerySet):
 
         return self.filter(published=False)
 
-    def unpaid_events(self):
-        '''Return a queryset for events that owe money.
+    def uninvoiced_events(self):
+        '''Return a queryset for events that have not yet been invoiced.
 
-        These are events that have an admin fee, are not marked as paid, and have occurred.'''
+        These are events that have an admin fee, are not marked as invoiced, and have occurred.'''
 
-        return self.past_events().filter(admin_fee__gt=0).exclude(fee_paid=True)
+        return self.past_events().filter(admin_fee__gt=0).exclude(invoiced=True)
 
 class EventManager(models.Manager):
     '''A custom manager which is essentially a proxy for EventQuerySet'''
@@ -256,8 +257,8 @@ class EventManager(models.Manager):
     def unpublished_events(self):
         return self.get_queryset().unpublished_events()
 
-    def unpaid_events(self):
-        return self.get_queryset().unpaid_events()
+    def uninvoiced_events(self):
+        return self.get_queryset().uninvoiced_events()
 
 class Event(models.Model):
     '''Represent a single event.'''
@@ -273,7 +274,7 @@ class Event(models.Model):
     reg_key    = models.CharField(max_length=STR_REG_KEY, null=True, blank=True)
     attendance = models.IntegerField(null=True, blank=True)
     admin_fee  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
-    fee_paid   = models.NullBooleanField(default=False, blank=True)
+    invoiced   = models.NullBooleanField(default=False, blank=True)
     notes      = models.TextField(default="", blank=True)
     deleted = models.BooleanField(default=False)
 
@@ -387,7 +388,7 @@ class Qualification(models.Model):
 class Badge(models.Model):
     '''Represent a badge we award.'''
 
-    name       = models.CharField(max_length=STR_MED)
+    name       = models.CharField(max_length=STR_MED, unique=True)
     title      = models.CharField(max_length=STR_MED)
     criteria   = models.CharField(max_length=STR_LONG)
 
@@ -403,6 +404,9 @@ class Award(models.Model):
     badge      = models.ForeignKey(Badge)
     awarded    = models.DateField()
     event      = models.ForeignKey(Event, null=True, blank=True)
+
+    class Meta:
+        unique_together = ("person", "badge", )
 
     def __str__(self):
         return '{0}/{1}/{2}/{3}'.format(self.person, self.badge, self.awarded, self.event)
