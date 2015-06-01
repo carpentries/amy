@@ -79,6 +79,10 @@ workshops/git_version.py :
 all-activity :
 	@${PYTHON} manage.py report_all_instructor_activity
 
+## invoicing    : report financial activity related to invoicing
+invoicing :
+	@${PYTHON} manage.py report_invoicing
+
 ## serve        : run a server
 serve : bower_components workshops/git_version.py
 	${PYTHON} manage.py runserver
