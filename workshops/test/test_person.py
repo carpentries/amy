@@ -96,6 +96,10 @@ class TestPerson(TestBase):
                     'Mis-match in {0}: expected boolean value, got {1}' \
                     .format(key, node.text)
             else:
+                if node.text is None:
+                    # emails, URLs and some FKs are usually urlized, so we need
+                    # to go deeper: to the first child of current node
+                    node = node[0]
                 assert node.text == str(value), \
                     'Mis-match in {0}: expected {1}/{2}, got {3}' \
                     .format(key, value, type(value), node.text)
