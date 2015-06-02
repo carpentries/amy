@@ -18,7 +18,7 @@
 	</tr>
     {% for task in all_tasks %}
         <tr>
-            <td>{{ task.event }}</td>
+            <td><a href="{{ task.event.get_absolute_url }}">{{ task.event }}</a></td>
             <td>{{ task.person }}</a></td>
             <td>{{ task.role }}</a></td>
 	    <td><a href="{% url 'task_details' task.id %}">...</a></td>
