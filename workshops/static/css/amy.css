@@ -9,26 +9,23 @@ table td.editable span {
     display: block;
 }
 
-/* Combobox with look-up */
-.custom-combobox {
-    position: relative;
-    display: inline-block;
-}
-.custom-combobox-toggle {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    margin-left: -1px;
-    padding: 0;
-}
-.custom-combobox-input {
-    margin: 0;
-    padding: 5px 10px;
+/* move country flag in tables a few pixels up */
+.country-flag {
+    width: 16px;
+    height: 11px;
+    margin-top: -4px;
 }
 
 /* Padding below the event edit form */
 form[role="form"] {
     margin-bottom: 50px;
+}
+
+/* make space on the right of combobox element for a "dropdown button" */
+input.autocomboboxwidget {
+    /*width: 90%;*/
+    display: inline-block;
+    margin-right: -38px !important;
 }
 
 .footer-hr {

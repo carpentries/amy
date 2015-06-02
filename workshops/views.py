@@ -32,8 +32,10 @@ from workshops.models import \
     Task
 from workshops.check import check_file
 from workshops.forms import (
-    SearchForm, DebriefForm, InstructorsForm, PersonBulkAddForm, EventForm,
-    TaskForm, bootstrap_helper, bootstrap_helper_without_form)
+    SearchForm, DebriefForm, InstructorsForm, PersonForm, PersonBulkAddForm,
+    EventForm, TaskForm, TaskFullForm, bootstrap_helper, bootstrap_helper_without_form,
+    BadgeAwardForm
+)
 from workshops.util import (
     earth_distance, upload_person_task_csv,  verify_upload_person_task,
     create_uploaded_persons_tasks, InternalError
@@ -113,10 +115,10 @@ def index(request):
     '''Home page.'''
     upcoming_events = Event.objects.upcoming_events()
     unpublished_events = Event.objects.unpublished_events()
-    unpaid_events = Event.objects.unpaid_events()
+    uninvoiced_events = Event.objects.uninvoiced_events()
     context = {'title': None,
                'upcoming_events': upcoming_events,
-               'unpaid_events': unpaid_events,
+               'uninvoiced_events': uninvoiced_events,
                'unpublished_events': unpublished_events}
     return render(request, 'workshops/index.html', context)
 
@@ -405,10 +407,7 @@ class PersonCreate(LoginRequiredMixin, CreateViewContext):
 
 class PersonUpdate(LoginRequiredMixin, UpdateViewContext):
     model = Person
-    # don't display the 'password' field, reorder fields
-    fields = ['personal', 'middle', 'family', 'username', 'may_contact',
-              'email', 'gender', 'airport', 'github', 'twitter', 'url',
-              'is_superuser', 'user_permissions']
+    form_class = PersonForm
     pk_url_kwarg = 'person_id'
     template_name = 'workshops/generic_form.html'
 
@@ -467,7 +466,7 @@ def validate_event(request, event_ident):
 
 class EventCreate(LoginRequiredMixin, CreateViewContext):
     model = Event
-    fields = '__all__'
+    form_class = EventForm
     template_name = 'workshops/generic_form.html'
 
 
@@ -481,12 +480,11 @@ def event_edit(request, event_ident):
 
     if request.method == 'GET':
         event_form = EventForm(prefix='event', instance=event)
-        task_form = TaskForm(prefix='task', initial={'event': event})
+        task_form = TaskForm(prefix='task', event=event)
 
     elif request.method == 'POST':
         event_form = EventForm(request.POST, prefix='event', instance=event)
-        task_form = TaskForm(request.POST, prefix='task',
-                             initial={'event': event})
+        task_form = TaskForm(request.POST, prefix='task', event=event)
 
         if "submit" in request.POST and event_form.is_valid():
             event_form.save()
@@ -523,9 +521,6 @@ def event_delete(request, event_ident):
 
 #------------------------------------------------------------
 
-TASK_FIELDS = ['event', 'person', 'role']
-
-
 @login_required
 def all_tasks(request):
     '''List all tasks.'''
@@ -559,13 +554,13 @@ def task_delete(request, task_id):
 
 class TaskCreate(LoginRequiredMixin, CreateViewContext):
     model = Task
-    fields = TASK_FIELDS
+    form_class = TaskFullForm
     template_name = 'workshops/generic_form.html'
 
 
 class TaskUpdate(LoginRequiredMixin, UpdateViewContext):
     model = Task
-    fields = TASK_FIELDS
+    form_class = TaskFullForm
     pk_url_kwarg = 'task_id'
     template_name = 'workshops/generic_form.html'
 
@@ -576,28 +571,41 @@ class TaskUpdate(LoginRequiredMixin, UpdateViewContext):
 def all_badges(request):
     '''List all badges.'''
 
-    badges = Badge.objects.order_by('name')
-    for b in badges:
-        b.num_awarded = Award.objects.filter(badge_id=b.id).count()
+    badges = Badge.objects.order_by('name').annotate(num_awarded=Count('award'))
     context = {'title' : 'All Badges',
                'all_badges' : badges}
     return render(request, 'workshops/all_badges.html', context)
 
 
-#------------------------------------------------------------
-
-
 @login_required
-def all_awards(request, badge_name):
-    '''Show who has been awarded a particular badge.'''
+def badge_details(request, badge_name):
+    '''List details of a particular event.'''
 
     badge = Badge.objects.get(name=badge_name)
-    awards = Award.objects.filter(badge_id=badge.id)
+
+    initial = {
+        'badge': badge,
+        'awarded': datetime.date.today()
+    }
+
+    if request.method == 'GET':
+        form = BadgeAwardForm(initial=initial)
+
+    elif request.method == 'POST':
+        form = BadgeAwardForm(request.POST, initial=initial)
+
+        if form.is_valid():
+            form.save()
+
+    awards = badge.award_set.all()
     awards = _get_pagination_items(request, awards)
-    context = {'title' : 'Badge {0}'.format(badge.title),
-               'badge' : badge,
-               'awards' : awards}
-    return render(request, 'workshops/all_awards.html', context)
+
+    context = {'title': 'Badge {0}'.format(badge),
+               'badge': badge,
+               'awards': awards,
+               'form': form,
+               'form_helper': bootstrap_helper}
+    return render(request, 'workshops/badge.html', context)
 
 
 #------------------------------------------------------------

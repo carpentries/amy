@@ -34,13 +34,13 @@ class TestEvent(TestBase):
                                  slug='{0}-upcoming'.format(date_string),
                                  site=test_site,
                                  admin_fee=100,
-                                 fee_paid=False,
+                                 invoiced=False,
                                  published=published)
             published = not published
 
         # Create one new event for each day from 10 days ago to
-        # 3 days ago, half paid, all published.
-        fee_paid = True
+        # 3 days ago, half invoiced, all published.
+        invoiced = True
         for t in range(3, 11):
             event_start = today + timedelta(days=-t)
             date_string = event_start.strftime('%Y-%m-%d')
@@ -48,13 +48,13 @@ class TestEvent(TestBase):
                                  slug='{0}-past'.format(date_string),
                                  site=test_site,
                                  admin_fee=100,
-                                 fee_paid=fee_paid,
+                                 invoiced=invoiced,
                                  published=True)
-            fee_paid = not fee_paid
+            invoiced = not invoiced
 
         # Create an event that started yesterday and ends tomorrow
-        # with no fee, and without specifying whether the fee has been
-        # paid
+        # with no fee, and without specifying whether they've been
+        # invoiced.
         event_start = today + timedelta(days=-1)
         event_end = today + timedelta(days=1)
         Event.objects.create(start=event_start,
@@ -65,7 +65,7 @@ class TestEvent(TestBase):
                              published=True)
 
         # Create an event that ends today with no fee, and without
-        # specifying whether the fee has been paid
+        # specifying whether the fee has been invoiced.
         event_start = today + timedelta(days=-1)
         event_end = today
         Event.objects.create(start=event_start,
@@ -76,7 +76,7 @@ class TestEvent(TestBase):
                              published=True)
 
         # Create an event that starts today with a fee, and without
-        # specifying whether the fee has been paid
+        # specifying whether the fee has been invoiced.
         event_start = today
         event_end = today + timedelta(days=1)
         Event.objects.create(start=event_start,
@@ -87,24 +87,24 @@ class TestEvent(TestBase):
                              published=True)
 
         # Record some statistics about events.
-        self.num_unpaid_events = 0
+        self.num_uninvoiced_events = 0
         self.num_upcoming = 0
         for e in Event.objects.all():
-            if e.published and (e.admin_fee > 0) and (not e.fee_paid) and (e.start < today):
-                self.num_unpaid_events += 1
+            if e.published and (e.admin_fee > 0) and (not e.invoiced) and (e.start < today):
+                self.num_uninvoiced_events += 1
             if e.published and (e.start > today):
                 self.num_upcoming += 1
 
-    def test_get_unpaid_events(self):
+    def test_get_uninvoiced_events(self):
         """Test that the events manager can find events that owe money"""
 
-        unpaid_events = Event.objects.unpaid_events()
+        uninvoiced_events = Event.objects.uninvoiced_events()
 
         # There should be as many as there are strictly future events.
-        assert len(unpaid_events) == self.num_unpaid_events
+        assert len(uninvoiced_events) == self.num_uninvoiced_events
 
-        # Check that events with a fee of zero are not in the list of unpaid events.
-        assert not any([x for x in unpaid_events if x.admin_fee == 0])
+        # Check that events with a fee of zero are not in the list of uninvoiced events.
+        assert not any([x for x in uninvoiced_events if x.admin_fee == 0])
 
     def test_get_future_events(self):
         """Test that the events manager can find upcoming events"""
@@ -160,15 +160,13 @@ class TestEvent(TestBase):
         assert event.reg_key != new_reg_key, \
             'Would be unable to tell if reg_key had changed'
         values['event-reg_key'] = new_reg_key
-
-        assert "task-person" in values, \
+        assert "task-person_0" in values, \
             'No person select in initial form'
 
         person = Person.objects.all()[0]
-        values['task-person'] = person.id
+        values['task-person_1'] = person.id
         values['task-role'] = role.id
-        values['task-event'] = event.id
-        # values['task-id'] = ''
+
         # Add superuser as a test role
         values['add'] = 'yes'
 
@@ -278,6 +276,7 @@ class TestEventViews(TestBase):
                 'published': False,
                 'site': site.id,
                 'tags': [tag.id],
+                'organizer': site.id,
             })
         if response.status_code == 302:
             url = response['location']
@@ -303,6 +302,7 @@ class TestEventViews(TestBase):
                 'published': False,
                 'site': site.id,
                 'tags': [tag.id],
+                'organizer': site.id,
             }
         response = self.client.post(url, data)
         assert response.status_code == 302, (

@@ -20,7 +20,7 @@
   <tr><td>Eventbrite key:</td><td>{{ event.reg_key|default:"—" }}</td></tr>
   <tr><td>attendance:</td><td>{{ event.attendance|default_if_none:"—" }}</td></tr>
   <tr><td>admin fee:</td><td>{{ event.admin_fee|default_if_none:"—" }}</td></tr>
-  <tr><td>fee paid:</td><td>{{ event.fee_paid|yesno:"yes,no,unknown" }}</td></tr>
+  <tr><td>invoiced:</td><td>{{ event.invoiced|yesno:"yes,no,unknown" }}</td></tr>
 </table>
 
 {% if event.url %}
@@ -41,16 +41,6 @@
 </div>
 {% endif %}
 
-<script type="text/javascript">
-  $('#error_event_url').popover({placement: "left", html: true});
-  $('#validate_event').click(function() {
-    $('#validation_modal').modal();
-    return false;
-  });
-  $('#validation_modal').on('show.bs.modal', function() {
-    $('#validation_modal .modal-body').load("{% url 'validate_event' event.get_ident %} #validation")
-  });
-</script>
 {% if tasks %}
 <table class="table table-striped">
   <tr>
@@ -80,4 +70,17 @@
   <p class="delete-object pull-right"><a href="{% url 'event_delete' event.id %}" onclick='return confirm("Are you sure you wish to remove \"{{ event }}\"?")' class="btn btn-danger">Delete event</a></p>
 </div>
 
+{% endblock %}
+
+{% block extrajs %}
+<script type="text/javascript">
+  $('#error_event_url').popover({placement: "left", html: true});
+  $('#validate_event').click(function() {
+    $('#validation_modal').modal();
+    return false;
+  });
+  $('#validation_modal').on('show.bs.modal', function() {
+    $('#validation_modal .modal-body').load("{% url 'validate_event' event.get_ident %} #validation")
+  });
+</script>
 {% endblock %}
