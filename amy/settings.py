@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 import os
 import json
 
+from django.utils.translation import ugettext_lazy as _
+
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 
@@ -80,6 +82,7 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'crispy_forms',
     'selectable',
+    'django_countries',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
@@ -150,3 +153,8 @@ LOGIN_REDIRECT_URL = '/workshops/'
 
 # here's where @login_required redirects to:
 LOGIN_URL = '/account/login/'
+
+# explicitely add European Union as a country
+COUNTRIES_OVERRIDE = {
+    'EU': _('European Union'),
+}
