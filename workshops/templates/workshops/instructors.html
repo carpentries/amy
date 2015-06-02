@@ -17,21 +17,13 @@
         <tr>
     	    <th>taught</th>
     	    <th>airport</th>
-    	    <th>personal</th>
-    	    <th>middle</th>
-    	    <th>family</th>
-    	    <th>email</th>
-    	    <th></th>
+    	    <th>person</th>
     	</tr>
     {% for p in persons %}
         <tr class="instructor_row" id="instructor_{{forloop.counter0}}">
     	    <td id="instructor_num_taught_{{forloop.counter0}}">{{ p.num_taught }}</td>
     	    <td id="instructor_airport_{{forloop.counter0}}"><a href="{% url 'airport_details' p.airport.iata %}">{{ p.airport }}</a></td>
-    	    <td id="instructor_personal_{{forloop.counter0}}">{{ p.personal }}</td>
-    	    <td>{{ p.middle }}</td>
-    	    <td id="instructor_family_{{forloop.counter0}}">{{ p.family }}</td>
-    	    <td id="instructor_email_{{forloop.counter0}}">{{ p.email }}</td>
-    	    <td><a href="{% url 'person_details' p.id %}">...</a></td>
+    	    <td id="instructor_personal_{{forloop.counter0}}"><a href="{{ p.get_absolute_url }}">{{ p.get_full_name }}</a>{% if p.email and p.may_contact %} &lt;{{ p.email|urlize }}&gt;{% endif %}</td>
     	</tr>
     {% endfor %}
     </table>
