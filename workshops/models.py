@@ -208,8 +208,8 @@ class EventQuerySet(models.query.QuerySet):
         '''
 
         queryset = self.filter(start__gt=datetime.date.today())\
-                        .filter(published=True)\
-                        .order_by('start')
+                       .filter(published=True)\
+                       .order_by('start')
         return queryset
 
     def ongoing_events(self):
