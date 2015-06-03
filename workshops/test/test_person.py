@@ -1,6 +1,8 @@
 # coding: utf-8
 
 from django.core.urlresolvers import reverse
+from django.contrib.auth.models import Permission, Group
+
 from ..models import Person
 from .base import TestBase
 
@@ -147,3 +149,38 @@ class TestPerson(TestBase):
         else:
             self._check_status_code_and_parse(response, 200)
             assert False, 'expected 302 redirect after post'
+
+    def test_edit_person_permissions(self):
+        "Make sure we can set up user permissions correctly."
+
+        # make sure Hermione does not have any perms, nor groups
+        assert not self.hermione.is_superuser
+        assert self.hermione.user_permissions.count() == 0
+        assert self.hermione.groups.count() == 0
+
+        user_permissions = Permission.objects \
+            .filter(content_type__app_label='admin')
+        user_permissions_ids = user_permissions.values_list('id', flat=True) \
+            .order_by('id')
+
+        groups = Group.objects.all()
+        groups_ids = groups.values_list('id', flat=True).order_by('id')
+
+        data = {
+            'is_superuser': True,
+            'user_permissions': user_permissions_ids,
+            'groups': groups_ids,
+        }
+
+        response = self.client.post(
+            reverse('person_permissions', args=[self.hermione.id]),
+            data,
+        )
+
+        assert response.status_code == 302
+
+        self.hermione.refresh_from_db()
+        assert self.hermione.is_superuser
+        assert \
+            set(self.hermione.user_permissions.all()) == set(user_permissions)
+        assert set(self.hermione.groups.all()) == set(groups)
