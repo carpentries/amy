@@ -231,9 +231,12 @@ class EventQuerySet(models.query.QuerySet):
     def uninvoiced_events(self):
         '''Return a queryset for events that have not yet been invoiced.
 
-        These are events that have an admin fee, are not marked as invoiced, and have occurred.'''
+        These are events that have an admin fee, are not marked as invoiced, and have occurred.
+        Events are sorted oldest first.'''
 
-        return self.past_events().filter(admin_fee__gt=0).exclude(invoiced=True)
+        return self.past_events().filter(admin_fee__gt=0)\
+                   .exclude(invoiced=True)\
+                   .order_by('start')
 
 class EventManager(models.Manager):
     '''A custom manager which is essentially a proxy for EventQuerySet'''
