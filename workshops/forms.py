@@ -209,12 +209,12 @@ class PersonForm(forms.ModelForm):
 
     class Meta:
         model = Person
-        # don't display the 'password', 'user_permissions', 'group_permissions'
-        # fields
+        # don't display the 'password', 'user_permissions',
+        # 'groups' or 'is_superuser' fields
         # + reorder fields
         fields = ['personal', 'middle', 'family', 'username', 'may_contact',
                   'email', 'gender', 'airport', 'github', 'twitter', 'url',
-                  'notes', 'is_superuser']
+                  'notes', ]
 
 
 class BadgeAwardForm(forms.ModelForm):
