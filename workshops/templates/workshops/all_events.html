@@ -19,7 +19,6 @@
 	    <th>url</th>
 	    <th>site</th>
 	    <th>dates</th>
-	    <th>Eventbrite</th>
 	    <th>attendance</th>
 	    <th>admin fee</th>
 	    <th>invoiced</th>
@@ -50,7 +49,6 @@
 	    </td>
 	    <td><a href="{% url 'site_details' event.site.domain %}">{{ event.site }}</a></td>
 	    <td>{{ event.start }} &ndash; {{ event.end }}</td>
-	    <td>{{ event.reg_key|default:"—" }}</td>
 	    <td>{{ event.attendance|default_if_none:"—" }}</td>
 	    <td>{{ event.admin_fee|default_if_none:"—" }}</td>
 	    <td>{{ event.invoiced|yesno:"yes,no,unknown" }}</td>
