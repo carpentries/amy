@@ -4,6 +4,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db.models import Q
 from workshops.models import Award, Badge, Person, Qualification, Role, Task
 
+
 class Command(BaseCommand):
     args = ''
     help = 'Report all instructor activity.'
@@ -24,27 +25,31 @@ class Command(BaseCommand):
             if not person.email:
                 continue
             tasks = Task.objects.filter(person=person)\
-                                .filter(Q(role=self.instructor_role) | Q(role=self.helper_role))
-            tasks = [{'slug' : t.event.slug,
-                      'start' : t.event.start,
-                      'role' : t.role.name,
-                      'others' : self.others(t.event, person)}
+                                .filter(Q(role=self.instructor_role) |
+                                        Q(role=self.helper_role))
+            tasks = [{'slug': t.event.slug,
+                      'start': t.event.start,
+                      'role': t.role.name,
+                      'others': self.others(t.event, person)}
                      for t in tasks]
             can_teach = self.qualifications(person)
-            record = {'name' : person.get_full_name(),
-                      'email' : person.email,
-                      'airport' : person.airport.iata if person.airport else None,
-                      'github' : person.github,
-                      'twitter' : person.twitter,
-                      'can_teach' : can_teach,
-                      'became_instructor' : award.awarded,
-                      'tasks' : tasks}
+            record = {'name': person.get_full_name(),
+                      'email': person.email,
+                      'airport': person.airport.iata
+                                 if person.airport
+                                 else None,
+                      'github': person.github,
+                      'twitter': person.twitter,
+                      'can_teach': can_teach,
+                      'became_instructor': award.awarded,
+                      'tasks': tasks}
             result.append(record)
         yaml.dump(result, stream=sys.stdout)
 
     def others(self, event, person):
         tasks = Task.objects.filter(event=event)\
-                            .filter(Q(role=self.instructor_role) | Q(role=self.helper_role))\
+                            .filter(Q(role=self.instructor_role) |
+                                    Q(role=self.helper_role))\
                             .exclude(person=person)
         return [t.person.get_full_name() for t in tasks]
 

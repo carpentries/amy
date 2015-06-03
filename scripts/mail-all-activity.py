@@ -8,23 +8,36 @@ import yaml
 
 USAGE = 'Usage: mail-all-activity [-r|--real] [filename]'
 
+SUBJECT = 'Checking your Software Carpentry information'
+
 BODY = '''We would like to bring our records up to date, and would be grateful
-if you could check the information below and send us corrections or additions.
+if you could check the information below and send us corrections or additions
+by filling in the form at:
+
+    https://docs.google.com/forms/d/1NA2z3mXnrz4ZfEV02rk6vwdK4M180_sYpVjUQBt-yMc/viewform
+
+If the topics you're comfortable teaching aren't listed, or are incorrect,
+please also fill in the form.  And if you would rather not receive mail from
+us in future, please reply to this message and we'll remove you from our
+list.
 
 name: {name}
 preferred email: {email}
 became instructor: {became_instructor}
 {optional}
-{skills}
+{can_teach}
 {tasks}'''
 
 
-def main(prog_name, args):
+def main(argv):
     '''Main driver.'''
 
-    # Default is dummy run - only actually send mail if told to.
+    # Setup.
+    prog_name, args = argv[0], argv[1:]
     sender = display
-    if args[0] in ('-r', '--real'):
+
+    # Default is dummy run - only actually send mail if told to.
+    if args and (args[0] in ('-r', '--real')):
         sender = send
         args = args[1:]
 
@@ -51,23 +64,19 @@ def make_message(record):
 
     assert 'optional' not in record, \
            'Keyword "optional" should not be a key in records'
-    assert 'skills' not in record, \
-           'Keyword "skills" should not be a key in records'
 
     address = record['email']
-
-    subject = 'Checking your Software Carpentry information'
 
     record['optional'] = ''
     for key in ('airport', 'twitter', 'github'):
         record['optional'] += format_optional(record, key)
 
-    record['skills'] = format_skills(record['can_teach'])
+    record['can_teach'] = format_can_teach(record['can_teach'])
 
     record['tasks'] = format_tasks(record['tasks'])
 
     body = BODY.format(**record)
-    return address, subject, body
+    return address, SUBJECT, body
 
 
 def format_optional(record, key):
@@ -79,11 +88,11 @@ def format_optional(record, key):
         return 'Your {0} is unknown\n'.format(key)
 
 
-def format_skills(skills):
+def format_can_teach(can_teach):
     '''Format zero or more skills for inclusion in the message body.'''
 
-    if skills:
-        return 'You can teach: {0}\n'.format(', '.join(skills))
+    if can_teach:
+        return 'You can teach: {0}\n'.format(', '.join(can_teach))
     else:
         return ''
 
@@ -120,4 +129,4 @@ def fail(msg):
 
 
 if __name__ == '__main__':
-    main(sys.argv[0], sys.argv[1:])
+    main(sys.argv)
