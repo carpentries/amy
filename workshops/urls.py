@@ -18,6 +18,7 @@ urlpatterns = [
     url(r'^person/(?P<person_id>[\w\.-]+)/?$', views.person_details, name='person_details'),
     url(r'^person/(?P<person_id>[\w\.-]+)/edit$', views.PersonUpdate.as_view(), name='person_edit'),
     url(r'^person/(?P<person_id>[\w\.-]+)/permissions$', views.PersonPermissions.as_view(), name='person_permissions'),
+    url(r'^person/(?P<person_id>[\w\.-]+)/password$', views.person_password, name='person_password'),
     url(r'^persons/add/$', views.PersonCreate.as_view(), name='person_add'),
     url(r'^persons/bulkadd/$',views.person_bulk_add, name='person_bulk_add'),
     url(r'^persons/bulkadd/template',views.person_bulk_add_template, name='person_bulk_add_template'),
