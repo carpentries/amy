@@ -217,6 +217,17 @@ class PersonForm(forms.ModelForm):
                   'notes', ]
 
 
+class PersonPermissionsForm(forms.ModelForm):
+    class Meta:
+        model = Person
+        # only display 'user_permissions', 'groups' and `is_superuser` fields
+        fields = [
+            'is_superuser',
+            'user_permissions',
+            'groups',
+        ]
+
+
 class BadgeAwardForm(forms.ModelForm):
 
     person = selectable.AutoCompleteSelectField(

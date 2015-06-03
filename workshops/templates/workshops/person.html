@@ -10,6 +10,7 @@
 {% block content %}
 <p class="edit-object">
   <a href="{% url 'person_edit' person.id %}" class="btn btn-primary">Edit</a>
+  <a href="{% url 'person_permissions' person.id %}" class="btn btn-default pull-right">Change permissions</a>
 </p>
 <table class="table table-striped">
   <tr><td>personal:</td><td id="personal">{{ person.personal|default:"—" }}</td></tr>
@@ -57,5 +58,6 @@
 
 <p class="edit-object">
   <a href="{% url 'person_edit' person.id %}" class="btn btn-primary">Edit</a>
+  <a href="{% url 'person_permissions' person.id %}" class="btn btn-default pull-right">Change permissions</a>
 </p>
 {% endblock %}
