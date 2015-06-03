@@ -8,7 +8,9 @@
 {% endblock %}
 
 {% block content %}
-<p class="edit-object"><a href="{% url 'person_edit' person.id %}" class="btn btn-primary">Edit</a></p>
+<p class="edit-object">
+  <a href="{% url 'person_edit' person.id %}" class="btn btn-primary">Edit</a>
+</p>
 <table class="table table-striped">
   <tr><td>personal:</td><td id="personal">{{ person.personal|default:"—" }}</td></tr>
   <tr><td>middle:</td><td id="middle">{{ person.middle|default:"—" }}</td></tr>
@@ -53,5 +55,7 @@
 <p>No tasks.</p>
 {% endif %}
 
-<p class="edit-object"><a href="{% url 'person_edit' person.id %}" class="btn btn-primary">Edit</a></p>
+<p class="edit-object">
+  <a href="{% url 'person_edit' person.id %}" class="btn btn-primary">Edit</a>
+</p>
 {% endblock %}
