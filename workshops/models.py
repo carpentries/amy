@@ -204,9 +204,12 @@ class EventQuerySet(models.query.QuerySet):
         '''Return a queryset for all published upcoming events.
 
         Upcoming events are those which start after today and are published.
+        Events are ordered by date, soonest first.
         '''
 
-        queryset = self.filter(start__gt=datetime.date.today()).filter(published=True)
+        queryset = self.filter(start__gt=datetime.date.today())\
+                       .filter(published=True)\
+                       .order_by('start')
         return queryset
 
     def ongoing_events(self):
