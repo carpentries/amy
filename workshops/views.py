@@ -400,7 +400,7 @@ def person_bulk_add_confirmation(request):
 
 class PersonCreate(LoginRequiredMixin, CreateViewContext):
     model = Person
-    fields = PERSON_FIELDS
+    form_class = PersonForm
     template_name = 'workshops/generic_form.html'
 
 
