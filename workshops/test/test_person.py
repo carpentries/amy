@@ -184,3 +184,119 @@ class TestPerson(TestBase):
         assert \
             set(self.hermione.user_permissions.all()) == set(user_permissions)
         assert set(self.hermione.groups.all()) == set(groups)
+
+
+class TestPersonPassword(TestBase):
+    """Separate tests for testing password setting.
+
+    They need to be in separate class that doesn't call
+    self._setUpUsersAndLogin().
+    """
+
+    def setUp(self):
+        # create a superuser
+        self.admin = Person.objects.create_superuser(
+            username='admin', personal='Super', family='User',
+            email='sudo@example.org', password='admin',
+        )
+
+        # create a normal user
+        self.user = Person.objects.create_user(
+            username='user', personal='Typical', family='User',
+            email='undo@example.org', password='user',
+        )
+
+    def test_edit_password_by_superuser(self):
+        self.client.login(username='admin', password='admin')
+        user = self.admin
+        url, form = self._get_initial_form('person_password', user.pk)
+
+        # check that correct form is rendered
+        assert 'old_password' not in form
+        assert 'new_password1' in form
+        assert 'new_password2' in form
+
+        # try incorrect form data first
+        new_password = 'new_password'
+        data = {
+            'new_password1': new_password,
+            'new_password2': 'asdf',
+        }
+        rv = self.client.post(url, data)
+        assert rv.status_code != 302
+
+        # update password
+        data['new_password2'] = new_password
+        rv = self.client.post(url, data)
+        assert rv.status_code == 302
+
+        # make sure password was updated
+        user.refresh_from_db()
+        assert user.check_password(new_password) is True
+
+    def test_edit_other_user_password_by_superuser(self):
+        self.client.login(username='admin', password='admin')
+        user = self.user
+        url, form = self._get_initial_form('person_password', user.pk)
+
+        # check that correct form is rendered
+        assert 'old_password' not in form
+        assert 'new_password1' in form
+        assert 'new_password2' in form
+
+        # try incorrect form data first
+        new_password = 'new_password'
+        data = {
+            'new_password1': new_password,
+            'new_password2': 'asdf',
+        }
+        rv = self.client.post(url, data)
+        assert rv.status_code != 302
+
+        # update password
+        data['new_password2'] = new_password
+        rv = self.client.post(url, data)
+        assert rv.status_code == 302
+
+        # make sure password was updated
+        user.refresh_from_db()
+        assert user.check_password(new_password) is True
+
+    def test_edit_password_by_normal_user(self):
+        self.client.login(username='user', password='user')
+        user = self.user
+        url, form = self._get_initial_form('person_password', user.pk)
+
+        # check that correct form is rendered
+        assert 'old_password' in form
+        assert 'new_password1' in form
+        assert 'new_password2' in form
+
+        # try incorrect form data first
+        new_password = 'new_password'
+        data = {
+            'old_password': 'asdf',
+            'new_password1': new_password,
+            'new_password2': 'asdf',
+        }
+        rv = self.client.post(url, data)
+        assert rv.status_code != 302
+
+        data['old_password'] = 'user'
+        rv = self.client.post(url, data)
+        assert rv.status_code != 302
+
+        # update password
+        data['new_password2'] = new_password
+        rv = self.client.post(url, data)
+        assert rv.status_code == 302
+
+        # make sure password was updated
+        user.refresh_from_db()
+        assert user.check_password(new_password) is True
+
+    def test_edit_other_user_password_by_normal_user(self):
+        self.client.login(username='user', password='user')
+        user = self.admin
+        rv = self.client.get(reverse('person_password', args=[user.pk]))
+        assert rv.status_code == 403
