@@ -31,11 +31,12 @@ class TestPerson(TestBase):
         self._test_edit_person_email(self.spiderman)
 
     def test_edit_person_empty_family_name(self):
-        url, values = self._get_initial_form('person_edit', self.ironman.id)
-        assert 'family' in values, \
+        url, values = self._get_initial_form_index(0, 'person_edit',
+                                                   self.ironman.id)
+        assert 'person-family' in values, \
             'No family name in initial form'
 
-        values['family'] = '' # family name cannot be empty
+        values['person-family'] = '' # family name cannot be empty
         response = self.client.post(url, values)
         assert response.status_code == 200, \
             'Expected error page with status 200, got status {0}'.format(response.status_code)
@@ -45,19 +46,19 @@ class TestPerson(TestBase):
             'Expected error messages in response page'
 
     def _test_edit_person_email(self, person):
-        url, values = self._get_initial_form('person_edit', person.id)
-        assert 'email' in values, \
+        url, values = self._get_initial_form_index(0, 'person_edit', person.id)
+        assert 'person-email' in values, \
             'No email address in initial form'
 
         new_email = 'new@new.new'
         assert person.email != new_email, \
             'Would be unable to tell if email had changed'
-        values['email'] = new_email
+        values['person-email'] = new_email
 
-        if values['airport_1'] is None:
-            values['airport_1'] = ''
-        if values['airport_0'] is None:
-            values['airport_0'] = ''
+        if values['person-airport_1'] is None:
+            values['person-airport_1'] = ''
+        if values['person-airport_0'] is None:
+            values['person-airport_0'] = ''
 
         # Django redirects when edit works.
         response = self.client.post(url, values)
@@ -135,12 +136,13 @@ class TestPerson(TestBase):
         assert note in content
 
     def test_edit_person_notes(self):
-        url, values = self._get_initial_form('person_edit', self.hermione.id)
+        url, values = self._get_initial_form_index(0, 'person_edit',
+                                                   self.hermione.id)
 
-        assert 'notes' in values, 'Notes not present in initial form'
+        assert 'person-notes' in values, 'Notes not present in initial form'
 
         note = 'Hermione is a very good student.'
-        values['notes'] = note
+        values['person-notes'] = note
 
         # Django redirects when edit works.
         response = self.client.post(url, values)
