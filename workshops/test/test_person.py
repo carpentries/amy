@@ -156,6 +156,26 @@ class TestPerson(TestBase):
             self._check_status_code_and_parse(response, 200)
             assert False, 'expected 302 redirect after post'
 
+    def test_person_award_badge(self):
+        # make sure person has no awards
+        assert not self.spiderman.award_set.all()
+
+        # add new award
+        url, values = self._get_initial_form_index(1, 'person_edit',
+                                                   self.spiderman.id)
+        assert 'award-badge' in values
+
+        values['award-badge'] = self.instructor.pk
+        values['award-event_1'] = ''
+        rv = self.client.post(url, data=values)
+        assert rv.status_code == 302, \
+            'After awarding a badge we should be redirected to the same page, got {} instead'.format(rv.status_code)
+        # we actually can't test if it redirects to the same url…
+
+        # make sure the award was recorded in the database
+        self.spiderman.refresh_from_db()
+        assert self.instructor == self.spiderman.award_set.all()[0].badge
+
     def test_edit_person_permissions(self):
         "Make sure we can set up user permissions correctly."
 
