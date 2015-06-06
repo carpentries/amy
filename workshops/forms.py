@@ -133,7 +133,7 @@ class EventForm(forms.ModelForm):
     organizer = selectable.AutoCompleteSelectField(
         lookup_class=lookups.SiteLookup,
         label='Organizer',
-        required=True,
+        required=False,
         help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
