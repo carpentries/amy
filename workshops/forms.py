@@ -1,6 +1,6 @@
 from django import forms
 from django.forms import HiddenInput
-from django.forms.models import modelform_factory
+from django.forms import formset_factory
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
@@ -251,3 +251,18 @@ class BadgeAwardForm(forms.ModelForm):
         fields = '__all__'
         widgets = {'badge': HiddenInput}
 
+
+class PersonAwardForm(forms.ModelForm):
+
+    event = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.EventLookup,
+        label='Event',
+        required=False,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+    class Meta:
+        model = Award
+        fields = '__all__'
+        widgets = {'person': HiddenInput}
