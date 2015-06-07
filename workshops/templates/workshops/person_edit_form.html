@@ -1,0 +1,60 @@
+{% extends "workshops/_page.html" %}
+
+{% load breadcrumbs %}
+{% load crispy_forms_tags %}
+{% load selectable_tags %}
+
+{% block breadcrumbs %}
+    {% breadcrumb_main_page %}
+    {% breadcrumb_index_all_objects model %}
+    {% if object %}
+        {% breadcrumb_object object %}
+        {% breadcrumb_edit_object object %}
+    {% else %}
+        {% breadcrumb_new_object model %}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    {% crispy person_form form_helper %}
+
+    <h2 id="awards">Awards</h2>
+    {% if awards %}
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>badge</th>
+                <th>awarded</th>
+                <th>event</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for award in awards %}
+            <tr>
+                <td><a href="{{ award.badge.get_absolute_url }}">{{ award.badge.title }}</a></td>
+                <td>{{ award.awarded }}</td>
+                <td>{% if award.event %}<a href="{{ award.event.get_absolute_url }}">{{ award.event }}</a>{% else %}—{% endif %}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No awards</p>
+    {% endif %}
+    <h3>Add awards</h3>
+
+    {% crispy award_form form_helper %}
+{% endblock %}
+
+{% block extrajs %}
+{{ person_form.media }}
+{{ award_form.media }}
+<script type="text/javascript">
+    $(document).ready(function() {
+        $("#id_award-awarded").datepicker({
+            format: "yyyy-mm-dd",
+            todayHighlight: true
+        });
+    });
+</script>
+{% endblock extrajs %}

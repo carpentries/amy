@@ -34,8 +34,9 @@ from workshops.models import \
 from workshops.check import check_file
 from workshops.forms import (
     SearchForm, DebriefForm, InstructorsForm, PersonForm, PersonBulkAddForm,
-    EventForm, TaskForm, TaskFullForm, bootstrap_helper, bootstrap_helper_without_form,
-    BadgeAwardForm, PersonPermissionsForm
+    EventForm, TaskForm, TaskFullForm, bootstrap_helper,
+    bootstrap_helper_without_form, BadgeAwardForm, PersonAwardForm,
+    PersonPermissionsForm
 )
 from workshops.util import (
     earth_distance, upload_person_task_csv,  verify_upload_person_task,
@@ -399,18 +400,53 @@ def person_bulk_add_confirmation(request):
                       context)
 
 
-
 class PersonCreate(LoginRequiredMixin, CreateViewContext):
     model = Person
     form_class = PersonForm
     template_name = 'workshops/generic_form.html'
 
 
-class PersonUpdate(LoginRequiredMixin, UpdateViewContext):
-    model = Person
-    form_class = PersonForm
-    pk_url_kwarg = 'person_id'
-    template_name = 'workshops/generic_form.html'
+@login_required
+def person_edit(request, person_id):
+    try:
+        person = Person.objects.get(pk=person_id)
+        awards = person.award_set.order_by('badge__name')
+    except ObjectDoesNotExist:
+        raise Http404("No person found matching the query.")
+
+    person_form = PersonForm(prefix='person', instance=person)
+    award_form = PersonAwardForm(prefix='award', initial={
+        'awarded': datetime.date.today(),
+        'person': person,
+    })
+
+    if request.method == 'POST':
+        # check which form was submitted
+        if 'award-badge' in request.POST:
+            award_form = PersonAwardForm(request.POST, prefix='award')
+
+            if award_form.is_valid():
+                award_form.save()
+
+                # to reset the form values
+                return redirect(request.path)
+
+        else:
+            person_form = PersonForm(request.POST, prefix='person',
+                                     instance=person)
+            if person_form.is_valid():
+                person_form.save()
+                return redirect(person)
+
+    # two separate forms on one page
+    context = {'title': 'Edit Person {0}'.format(str(person)),
+               'person_form': person_form,
+               'object': person,
+               'model': Person,
+               'awards': awards,
+               'award_form': award_form,
+               'form_helper': bootstrap_helper}
+    return render(request, 'workshops/person_edit_form.html', context)
 
 
 class PersonPermissions(LoginRequiredMixin, UpdateViewContext):

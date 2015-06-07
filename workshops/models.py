@@ -401,7 +401,10 @@ class Badge(models.Model):
     criteria   = models.CharField(max_length=STR_LONG)
 
     def __str__(self):
-        return self.name
+        return self.title
+
+    def get_absolute_url(self):
+        return reverse('badge_details', args=[self.name])
 
 #------------------------------------------------------------
 

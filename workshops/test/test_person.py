@@ -31,11 +31,12 @@ class TestPerson(TestBase):
         self._test_edit_person_email(self.spiderman)
 
     def test_edit_person_empty_family_name(self):
-        url, values = self._get_initial_form('person_edit', self.ironman.id)
-        assert 'family' in values, \
+        url, values = self._get_initial_form_index(0, 'person_edit',
+                                                   self.ironman.id)
+        assert 'person-family' in values, \
             'No family name in initial form'
 
-        values['family'] = '' # family name cannot be empty
+        values['person-family'] = '' # family name cannot be empty
         response = self.client.post(url, values)
         assert response.status_code == 200, \
             'Expected error page with status 200, got status {0}'.format(response.status_code)
@@ -45,19 +46,19 @@ class TestPerson(TestBase):
             'Expected error messages in response page'
 
     def _test_edit_person_email(self, person):
-        url, values = self._get_initial_form('person_edit', person.id)
-        assert 'email' in values, \
+        url, values = self._get_initial_form_index(0, 'person_edit', person.id)
+        assert 'person-email' in values, \
             'No email address in initial form'
 
         new_email = 'new@new.new'
         assert person.email != new_email, \
             'Would be unable to tell if email had changed'
-        values['email'] = new_email
+        values['person-email'] = new_email
 
-        if values['airport_1'] is None:
-            values['airport_1'] = ''
-        if values['airport_0'] is None:
-            values['airport_0'] = ''
+        if values['person-airport_1'] is None:
+            values['person-airport_1'] = ''
+        if values['person-airport_0'] is None:
+            values['person-airport_0'] = ''
 
         # Django redirects when edit works.
         response = self.client.post(url, values)
@@ -135,12 +136,13 @@ class TestPerson(TestBase):
         assert note in content
 
     def test_edit_person_notes(self):
-        url, values = self._get_initial_form('person_edit', self.hermione.id)
+        url, values = self._get_initial_form_index(0, 'person_edit',
+                                                   self.hermione.id)
 
-        assert 'notes' in values, 'Notes not present in initial form'
+        assert 'person-notes' in values, 'Notes not present in initial form'
 
         note = 'Hermione is a very good student.'
-        values['notes'] = note
+        values['person-notes'] = note
 
         # Django redirects when edit works.
         response = self.client.post(url, values)
@@ -153,6 +155,26 @@ class TestPerson(TestBase):
         else:
             self._check_status_code_and_parse(response, 200)
             assert False, 'expected 302 redirect after post'
+
+    def test_person_award_badge(self):
+        # make sure person has no awards
+        assert not self.spiderman.award_set.all()
+
+        # add new award
+        url, values = self._get_initial_form_index(1, 'person_edit',
+                                                   self.spiderman.id)
+        assert 'award-badge' in values
+
+        values['award-badge'] = self.instructor.pk
+        values['award-event_1'] = ''
+        rv = self.client.post(url, data=values)
+        assert rv.status_code == 302, \
+            'After awarding a badge we should be redirected to the same page, got {} instead'.format(rv.status_code)
+        # we actually can't test if it redirects to the same url…
+
+        # make sure the award was recorded in the database
+        self.spiderman.refresh_from_db()
+        assert self.instructor == self.spiderman.award_set.all()[0].badge
 
     def test_edit_person_permissions(self):
         "Make sure we can set up user permissions correctly."
