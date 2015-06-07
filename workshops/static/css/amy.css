@@ -21,6 +21,11 @@ form[role="form"] {
     margin-bottom: 50px;
 }
 
+/* Padding around horizontal list of skills in find_instructor form */
+.form-inline > * {
+   margin:10px 5px;
+}
+
 /* make space on the right of combobox element for a "dropdown button" */
 input.autocomboboxwidget {
     /*width: 90%;*/

@@ -3,7 +3,8 @@ from django.forms import HiddenInput
 from django.forms.models import modelform_factory
 
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit
+from crispy_forms.layout import Layout, Div, HTML, Submit
+from crispy_forms.bootstrap import FormActions
 from selectable import forms as selectable
 
 from workshops.models import Skill, Airport, Event, Task, Award, Person
@@ -56,15 +57,43 @@ class InstructorsForm(forms.Form):
         lookup_class=lookups.AirportLookup,
         label='Airport',
         required=False,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget(
+            lookup_class=lookups.AirportLookup,
+        ),
     )
 
     def __init__(self, *args, **kwargs):
         '''Build checkboxes for skills dynamically.'''
         super(InstructorsForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.form_class = 'form-inline'
+        self.helper.layout = Layout(
+            'wanted',
+            Div(
+                Div(
+                    'latitude',
+                    'longitude',
+                    css_class='col-sm-6'
+                ),
+                Div(
+                    HTML('<br><strong>OR</strong>'),
+                    css_class='col-sm-2',
+                ),
+                Div(
+                    'airport',
+                    css_class='col-sm-4'
+                ),
+                css_class='row panel panel-default panel-body',
+            ),
+            HTML('<label class="control-label">Skills</label>'),
+            FormActions(
+                Submit('submit', 'Submit'),
+            ),
+        )
         skills = Skill.objects.all()
         for s in skills:
             self.fields[s.name] = forms.BooleanField(label=s.name, required=False)
+            self.helper.layout.insert(3, s.name)
 
     def clean(self):
         cleaned_data = super(InstructorsForm, self).clean()
