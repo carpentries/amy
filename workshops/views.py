@@ -6,9 +6,11 @@ import re
 import requests
 
 from django.contrib import messages
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.forms import SetPasswordForm, PasswordChangeForm
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.conf import settings
 from django.http import Http404, HttpResponse
 from django.db import IntegrityError, transaction
@@ -33,7 +35,7 @@ from workshops.check import check_file
 from workshops.forms import (
     SearchForm, DebriefForm, InstructorsForm, PersonForm, PersonBulkAddForm,
     EventForm, TaskForm, TaskFullForm, bootstrap_helper, bootstrap_helper_without_form,
-    BadgeAwardForm
+    BadgeAwardForm, PersonPermissionsForm
 )
 from workshops.util import (
     earth_distance, upload_person_task_csv,  verify_upload_person_task,
@@ -400,7 +402,7 @@ def person_bulk_add_confirmation(request):
 
 class PersonCreate(LoginRequiredMixin, CreateViewContext):
     model = Person
-    fields = PERSON_FIELDS
+    form_class = PersonForm
     template_name = 'workshops/generic_form.html'
 
 
@@ -409,6 +411,44 @@ class PersonUpdate(LoginRequiredMixin, UpdateViewContext):
     form_class = PersonForm
     pk_url_kwarg = 'person_id'
     template_name = 'workshops/generic_form.html'
+
+
+class PersonPermissions(LoginRequiredMixin, UpdateViewContext):
+    model = Person
+    form_class = PersonPermissionsForm
+    pk_url_kwarg = 'person_id'
+    template_name = 'workshops/generic_form.html'
+
+
+@login_required
+def person_password(request, person_id):
+    user = get_object_or_404(Person, pk=person_id)
+
+    Form = PasswordChangeForm
+    if request.user.is_superuser:
+        Form = SetPasswordForm
+    elif request.user.pk != user.pk:
+        # non-superuser can only change their own password, not someone else's
+        raise PermissionDenied
+
+    if request.method == 'POST':
+        form = Form(user, request.POST)
+        if form.is_valid():
+            form.save()  # saves the password for the user
+
+            update_session_auth_hash(request, form.user)
+
+            return redirect(reverse('person_details', args=[user.id]))
+    else:
+        form = Form(user)
+
+    return render(request, 'workshops/generic_form.html', {
+        'form': form,
+        'model': Person,
+        'object': user,
+        'form_helper': bootstrap_helper,
+        'title': 'Change password',
+    })
 
 
 #------------------------------------------------------------

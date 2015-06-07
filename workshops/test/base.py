@@ -265,6 +265,9 @@ class TestBase(TestCase):
         inputs = dict([(i.attrib['name'], i.attrib.get('value', None))
                        for i in form.findall(".//input[@type='text']")])
 
+        passwords = dict([(i.attrib['name'], i.attrib.get('value', None))
+                          for i in form.findall(".//input[@type='password']")])
+
         hidden = dict([(i.attrib['name'], i.attrib.get('value', None))
                        for i in form.findall(".//input[@type='hidden']")])
 
@@ -277,6 +280,7 @@ class TestBase(TestCase):
         textareas = dict([(t.attrib['name'], t.text)
                           for t in form.findall(".//textarea")])
 
+        inputs.update(passwords)
         inputs.update(hidden)
         inputs.update(checkboxes)
         inputs.update(selects)

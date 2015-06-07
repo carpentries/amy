@@ -8,7 +8,13 @@
 {% endblock %}
 
 {% block content %}
-<p class="edit-object"><a href="{% url 'person_edit' person.id %}" class="btn btn-primary">Edit</a></p>
+<div class="edit-object">
+  <a href="{% url 'person_edit' person.id %}" class="btn btn-primary">Edit</a>
+  <div class="btn-group pull-right" role="group">
+    <a href="{% url 'person_permissions' person.id %}" class="btn btn-default">Change permissions</a>
+    <a href="{% url 'person_password' person.id %}" class="btn btn-default">Change password</a>
+  </div>
+</div>
 <table class="table table-striped">
   <tr><td>personal:</td><td id="personal">{{ person.personal|default:"—" }}</td></tr>
   <tr><td>middle:</td><td id="middle">{{ person.middle|default:"—" }}</td></tr>
@@ -53,5 +59,11 @@
 <p>No tasks.</p>
 {% endif %}
 
-<p class="edit-object"><a href="{% url 'person_edit' person.id %}" class="btn btn-primary">Edit</a></p>
+<div class="edit-object">
+  <a href="{% url 'person_edit' person.id %}" class="btn btn-primary">Edit</a>
+  <div class="btn-group pull-right" role="group">
+    <a href="{% url 'person_permissions' person.id %}" class="btn btn-default">Change permissions</a>
+    <a href="{% url 'person_password' person.id %}" class="btn btn-default">Change password</a>
+  </div>
+</div>
 {% endblock %}
