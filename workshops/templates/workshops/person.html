@@ -1,12 +1,5 @@
 {% extends "workshops/_page.html" %}
 
-{% load breadcrumbs %}
-{% block breadcrumbs %}
-    {% breadcrumb_main_page %}
-    {% breadcrumb_index_all_objects person %}
-    {% breadcrumb_active person %}
-{% endblock %}
-
 {% block content %}
 <div class="edit-object">
   <a href="{% url 'person_edit' person.id %}" class="btn btn-primary">Edit</a>

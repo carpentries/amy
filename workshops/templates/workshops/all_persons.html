@@ -1,11 +1,5 @@
 {% extends "workshops/_page.html" %}
 
-{% load breadcrumbs %}
-{% block breadcrumbs %}
-    {% breadcrumb_main_page %}
-    {% breadcrumb_active title %}
-{% endblock %}
-
 {% block content %}
     <p><a href="{% url 'person_add' %}" class="btn btn-success">New person</a></p>
 {% if all_persons %}
