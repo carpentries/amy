@@ -728,7 +728,6 @@ def instructors(request):
 
     context = {'title' : 'Find Instructors',
                'form': form,
-               'form_helper': bootstrap_helper,
                'persons' : persons}
     return render(request, 'workshops/instructors.html', context)
 
