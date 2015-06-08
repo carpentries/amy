@@ -150,7 +150,7 @@ class TestEvent(TestBase):
         event = Event.objects.all()[0]
         tag = Tag.objects.get(name='Test Tag')
         role = Role.objects.get(name='Test Role')
-        url, values = self._get_initial_form('event_edit', event.id)
+        url, values = self._get_initial_form_index(0, 'event_edit', event.id)
         assert len(values) > 0
         values['event-end'] = ''
         values['event-tags'] = tag.id
@@ -160,6 +160,11 @@ class TestEvent(TestBase):
         assert event.reg_key != new_reg_key, \
             'Would be unable to tell if reg_key had changed'
         values['event-reg_key'] = new_reg_key
+        response = self.client.post(url, values, follow=True)
+        content = response.content.decode('utf-8')
+        assert new_reg_key in content
+
+        url, values = self._get_initial_form_index(1, 'event_edit', event.id)
         assert "task-person_0" in values, \
             'No person select in initial form'
 
@@ -167,14 +172,8 @@ class TestEvent(TestBase):
         values['task-person_1'] = person.id
         values['task-role'] = role.id
 
-        # Add superuser as a test role
-        values['add'] = 'yes'
-
-        response = self.client.post(url, values, follow=True) # Submit, following redirect
-        _, params = cgi.parse_header(response['content-type'])
-        charset = params['charset']
-        content = response.content.decode(charset)
-        assert new_reg_key in content
+        response = self.client.post(url, values, follow=True)
+        content = response.content.decode('utf-8')
         assert "/workshops/person/1" in content
         assert "Test Role" in content
 
