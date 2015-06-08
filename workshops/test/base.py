@@ -22,7 +22,7 @@ from ..models import \
 
 
 class TestBase(TestCase):
-    '''Base class for Amy test cases.'''
+    '''Base class for AMY test cases.'''
 
     ERR_DIR = 'htmlerror' # where to save error HTML files
 

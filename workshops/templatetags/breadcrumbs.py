@@ -105,7 +105,7 @@ def breadcrumb_main_page():
     Example usage:
         {% breadcrumb_main_page %}
     '''
-    title = 'Amy'
+    title = 'AMY'
     url = reverse('index')
     return create_crumb(title, url)
 
