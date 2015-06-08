@@ -1,14 +1,17 @@
 from selectable.base import ModelLookup
 from selectable.registry import registry
+from selectable.decorators import login_required
 
 from workshops import models
 
 
+@login_required
 class EventLookup(ModelLookup):
     model = models.Event
     search_fields = ('slug__icontains', )
 
 
+@login_required
 class SiteLookup(ModelLookup):
     model = models.Site
     search_fields = (
@@ -17,6 +20,7 @@ class SiteLookup(ModelLookup):
     )
 
 
+@login_required
 class PersonLookup(ModelLookup):
     model = models.Person
     search_fields = (
@@ -27,6 +31,7 @@ class PersonLookup(ModelLookup):
     )
 
 
+@login_required
 class AirportLookup(ModelLookup):
     model = models.Airport
     search_fields = (
