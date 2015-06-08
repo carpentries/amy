@@ -36,7 +36,7 @@ from workshops.check import check_file
 from workshops.forms import (
     SearchForm, DebriefForm, InstructorsForm, PersonForm, PersonBulkAddForm,
     EventForm, TaskForm, TaskFullForm, bootstrap_helper,
-    bootstrap_helper_without_form, BadgeAwardForm, PersonAwardForm,
+    bootstrap_helper_with_add, BadgeAwardForm, PersonAwardForm,
     PersonPermissionsForm
 )
 from workshops.util import (
@@ -472,7 +472,9 @@ def person_edit(request, person_id):
                'model': Person,
                'awards': awards,
                'award_form': award_form,
-               'form_helper': bootstrap_helper}
+               'form_helper': bootstrap_helper,
+               'form_helper_with_add': bootstrap_helper_with_add,
+               }
     return render(request, 'workshops/person_edit_form.html', context)
 
 
@@ -637,7 +639,9 @@ def event_edit(request, event_ident):
                'model': Event,
                'tasks': tasks,
                'task_form': task_form,
-               'form_helper': bootstrap_helper}
+               'form_helper': bootstrap_helper,
+               'form_helper_with_add': bootstrap_helper_with_add,
+               }
     return render(request, 'workshops/event_edit_form.html', context)
 
 

@@ -19,6 +19,7 @@
     {% crispy event_form form_helper %}
 
     <h2 id="associated-tasks">Associated tasks</h2>
+    {% crispy task_form form_helper_with_add %}
     {% if tasks %}
     <table class="table table-striped">
     <tr>
@@ -37,9 +38,6 @@
     {% else %}
     <p>No tasks.</p>
     {% endif %}
-    <h3>Add tasks</h3>
-    {% crispy task_form form_helper %}
-</form>
 
 {% endblock %}
 

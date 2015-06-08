@@ -19,6 +19,7 @@
     {% crispy person_form form_helper %}
 
     <h2 id="awards">Awards</h2>
+    {% crispy award_form form_helper_with_add %}
     {% if awards %}
     <table class="table table-striped">
         <thead>
@@ -41,9 +42,6 @@
     {% else %}
     <p>No awards</p>
     {% endif %}
-    <h3>Add awards</h3>
-
-    {% crispy award_form form_helper %}
 {% endblock %}
 
 {% block extrajs %}
