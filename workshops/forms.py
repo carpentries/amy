@@ -200,15 +200,10 @@ class TaskForm(forms.ModelForm):
         widget=selectable.AutoComboboxSelectWidget,
     )
 
-    def __init__(self, *args, **kwargs):
-        event = kwargs.pop('event', None)
-        super().__init__(*args, **kwargs)
-        if event:
-            self.instance.event = event
-
     class Meta:
         model = Task
-        exclude = ('event', 'deleted')
+        exclude = ('deleted', )
+        widgets = {'event': HiddenInput}
 
 
 class TaskFullForm(TaskForm):

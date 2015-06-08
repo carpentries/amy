@@ -16,8 +16,6 @@
 {% endblock %}
 
 {% block content %}
-
-<form action="" method="post" id="event_task_form" role="form" class="form-horizontal">
     {% crispy event_form form_helper %}
 
     <h2 id="associated-tasks">Associated tasks</h2>
@@ -39,8 +37,8 @@
     {% else %}
     <p>No tasks.</p>
     {% endif %}
-    {{ task_form.as_p }}
-    <button type="submit" class="btn btn-primary" name="add">Add</button>
+    <h3>Add tasks</h3>
+    {% crispy task_form form_helper %}
 </form>
 
 {% endblock %}
