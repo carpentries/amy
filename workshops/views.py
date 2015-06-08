@@ -219,13 +219,6 @@ class AirportUpdate(LoginRequiredMixin, UpdateViewContext):
 #------------------------------------------------------------
 
 
-PERSON_FIELDS = [
-        field.name for field in Person._meta.fields
-    ] + [
-        'user_permissions',
-    ]
-
-
 @login_required
 def all_persons(request):
     '''List all persons.'''
