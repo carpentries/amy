@@ -6,6 +6,7 @@ import re
 import requests
 
 from django.contrib import messages
+from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import SetPasswordForm, PasswordChangeForm
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -35,7 +36,7 @@ from workshops.check import check_file
 from workshops.forms import (
     SearchForm, DebriefForm, InstructorsForm, PersonForm, PersonBulkAddForm,
     EventForm, TaskForm, TaskFullForm, bootstrap_helper,
-    bootstrap_helper_without_form, BadgeAwardForm, PersonAwardForm,
+    bootstrap_helper_with_add, BadgeAwardForm, PersonAwardForm,
     PersonPermissionsForm
 )
 from workshops.util import (
@@ -50,11 +51,12 @@ ITEMS_PER_PAGE = 25
 #------------------------------------------------------------
 
 
-class CreateViewContext(CreateView):
+class CreateViewContext(SuccessMessageMixin, CreateView):
     """
     Class-based view for creating objects that extends default template context
     by adding model class used in objects creation.
     """
+    success_message = '{name} was created successfully.'
 
     def get_context_data(self, **kwargs):
         context = super(CreateViewContext, self).get_context_data(**kwargs)
@@ -71,12 +73,17 @@ class CreateViewContext(CreateView):
         context['form_helper'] = bootstrap_helper
         return context
 
+    def get_success_message(self, cleaned_data):
+        "Format self.success_message, used by messages framework from Django."
+        return self.success_message.format(cleaned_data, name=str(self.object))
 
-class UpdateViewContext(UpdateView):
+
+class UpdateViewContext(SuccessMessageMixin, UpdateView):
     """
     Class-based view for updating objects that extends default template context
     by adding proper page title.
     """
+    success_message = '{name} was updated successfully.'
 
     def get_context_data(self, **kwargs):
         context = super(UpdateViewContext, self).get_context_data(**kwargs)
@@ -93,6 +100,11 @@ class UpdateViewContext(UpdateView):
 
         context['form_helper'] = bootstrap_helper
         return context
+
+    def get_success_message(self, cleaned_data):
+        "Format self.success_message, used by messages framework from Django."
+        return self.success_message.format(cleaned_data, name=str(self.object))
+
 
 
 class LoginRequiredMixin(object):
@@ -205,13 +217,6 @@ class AirportUpdate(LoginRequiredMixin, UpdateViewContext):
     template_name = 'workshops/generic_form.html'
 
 #------------------------------------------------------------
-
-
-PERSON_FIELDS = [
-        field.name for field in Person._meta.fields
-    ] + [
-        'user_permissions',
-    ]
 
 
 @login_required
@@ -426,17 +431,39 @@ def person_edit(request, person_id):
             award_form = PersonAwardForm(request.POST, prefix='award')
 
             if award_form.is_valid():
-                award_form.save()
+                award = award_form.save()
+
+                messages.success(
+                    request,
+                    '{person} was awarded {badge} badge.'.format(
+                        person=str(person),
+                        badge=award.badge.title,
+                    ),
+                )
 
                 # to reset the form values
                 return redirect(request.path)
+
+            else:
+                messages.error(request, 'Fix errors below.')
 
         else:
             person_form = PersonForm(request.POST, prefix='person',
                                      instance=person)
             if person_form.is_valid():
-                person_form.save()
+                person = person_form.save()
+
+                messages.success(
+                    request,
+                    '{name} was updated successfully.'.format(
+                        name=str(person),
+                    ),
+                )
+
                 return redirect(person)
+
+            else:
+                messages.error(request, 'Fix errors below.')
 
     # two separate forms on one page
     context = {'title': 'Edit Person {0}'.format(str(person)),
@@ -445,7 +472,9 @@ def person_edit(request, person_id):
                'model': Person,
                'awards': awards,
                'award_form': award_form,
-               'form_helper': bootstrap_helper}
+               'form_helper': bootstrap_helper,
+               'form_helper_with_add': bootstrap_helper_with_add,
+               }
     return render(request, 'workshops/person_edit_form.html', context)
 
 
@@ -474,7 +503,12 @@ def person_password(request, person_id):
 
             update_session_auth_hash(request, form.user)
 
+            messages.success(request, 'Password was changed successfully.')
+
             return redirect(reverse('person_details', args=[user.id]))
+
+        else:
+            messages.error(request, 'Fix errors below.')
     else:
         form = Form(user)
 
@@ -553,20 +587,51 @@ def event_edit(request, event_ident):
     except ObjectDoesNotExist:
         raise Http404("No event found matching the query.")
 
-    if request.method == 'GET':
-        event_form = EventForm(prefix='event', instance=event)
-        task_form = TaskForm(prefix='task', event=event)
+    event_form = EventForm(prefix='event', instance=event)
+    task_form = TaskForm(prefix='task', initial={
+        'event': event,
+    })
 
-    elif request.method == 'POST':
-        event_form = EventForm(request.POST, prefix='event', instance=event)
-        task_form = TaskForm(request.POST, prefix='task', event=event)
+    if request.method == 'POST':
+        # check which form was submitted
+        if "task-role" in request.POST:
+            task_form = TaskForm(request.POST, prefix='task')
 
-        if "submit" in request.POST and event_form.is_valid():
-            event_form.save()
-            return redirect(event)
+            if task_form.is_valid():
+                task = task_form.save()
 
-        if "add" in request.POST and task_form.is_valid():
-            task_form.save()
+                messages.success(
+                    request,
+                    '{event} was added a new task "{task}".'.format(
+                        event=str(event),
+                        task=str(task),
+                    ),
+                )
+
+                # to reset the form values
+                return redirect(request.path)
+
+            else:
+                messages.error(request, 'Fix errors below.')
+
+        else:
+            event_form = EventForm(request.POST, prefix='event',
+                                   instance=event)
+            if event_form.is_valid():
+                event = event_form.save()
+
+                messages.success(
+                    request,
+                    '{name} was updated successfully.'.format(
+                        name=str(event),
+                    ),
+                )
+
+                return redirect(event)
+
+            else:
+                messages.error(request, 'Fix errors below.')
+
 
     context = {'title': 'Edit Event {0}'.format(event.get_ident()),
                'event_form': event_form,
@@ -574,7 +639,9 @@ def event_edit(request, event_ident):
                'model': Event,
                'tasks': tasks,
                'task_form': task_form,
-               'form_helper': bootstrap_helper_without_form}
+               'form_helper': bootstrap_helper,
+               'form_helper_with_add': bootstrap_helper_with_add,
+               }
     return render(request, 'workshops/event_edit_form.html', context)
 
 
@@ -592,6 +659,7 @@ def event_delete(request, event_ident):
     tasks.update(deleted=True)
     event.deleted = True
     event.save()
+    messages.success(request, 'Event was deleted successfully.')
     return redirect(reverse('all_events'))
 
 #------------------------------------------------------------
@@ -624,6 +692,7 @@ def task_delete(request, task_id):
     t = Task.objects.get(pk=task_id)
     t.deleted = True
     t.save()
+    messages.success(request, 'Task was deleted successfully.')
     return redirect(event_edit, t.event.id)
 
 

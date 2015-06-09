@@ -4,11 +4,10 @@
 {% load selectable_tags %}
 
 {% block content %}
-
-<form action="" method="post" id="event_task_form" role="form" class="form-horizontal">
     {% crispy event_form form_helper %}
 
     <h2 id="associated-tasks">Associated tasks</h2>
+    {% crispy task_form form_helper_with_add %}
     {% if tasks %}
     <table class="table table-striped">
     <tr>
@@ -27,9 +26,6 @@
     {% else %}
     <p>No tasks.</p>
     {% endif %}
-    {{ task_form.as_p }}
-    <button type="submit" class="btn btn-primary" name="add">Add</button>
-</form>
 
 {% endblock %}
 

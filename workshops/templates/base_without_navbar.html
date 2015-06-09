@@ -20,13 +20,19 @@
     {% block navbar %}{% endblock %}
     <div class="container">
       {% if title %}<h1>{{ title }}</h1>{% endif %}
-      {% if messages %}
-      <ul class="messages">
-          {% for message in messages %}
-          <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-          {% endfor %}
-      </ul>
-      {% endif %}
+      {% for message in messages %}
+      <div class="alert {{ message.tags }}">
+        {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span><span class="sr-only">Error:</span>
+        {% elif message.level == DEFAULT_MESSAGE_LEVELS.WARNING %}
+        <span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span><span class="sr-only">Warning:</span>
+        {% elif message.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+        <span class="glyphicon glyphicon-ok-sign" aria-hidden="true"></span><span class="sr-only">Success:</span>
+        {% endif %}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
+        {{ message }}
+      </div>
+      {% endfor %}
       {% block content %}{% endblock %}
     </div>
     <hr class="footer-hr" />

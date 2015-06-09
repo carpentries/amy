@@ -32,11 +32,14 @@ class BootstrapHelper(FormHelper):
         self.inputs.append(Submit('submit', 'Submit'))
 
 
-class BootstrapHelperWithoutForm(BootstrapHelper):
-    form_tag = False
+class BootstrapHelperWithAdd(BootstrapHelper):
+    def __init__(self, form=None):
+        super().__init__(form)
+
+        self.inputs[-1] = Submit('submit', 'Add')
 
 bootstrap_helper = BootstrapHelper()
-bootstrap_helper_without_form = BootstrapHelperWithoutForm()
+bootstrap_helper_with_add = BootstrapHelperWithAdd()
 
 
 class InstructorsForm(forms.Form):
@@ -200,15 +203,10 @@ class TaskForm(forms.ModelForm):
         widget=selectable.AutoComboboxSelectWidget,
     )
 
-    def __init__(self, *args, **kwargs):
-        event = kwargs.pop('event', None)
-        super().__init__(*args, **kwargs)
-        if event:
-            self.instance.event = event
-
     class Meta:
         model = Task
-        exclude = ('event', 'deleted')
+        exclude = ('deleted', )
+        widgets = {'event': HiddenInput}
 
 
 class TaskFullForm(TaskForm):
