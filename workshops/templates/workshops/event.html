@@ -1,12 +1,5 @@
 {% extends "workshops/_page.html" %}
 
-{% load breadcrumbs %}
-{% block breadcrumbs %}
-    {% breadcrumb_main_page %}
-    {% breadcrumb_index_all_objects event %}
-    {% breadcrumb_active event %}
-{% endblock %}
-
 {% block content %}
 <p class="edit-object"><a href="{% url 'event_edit' event.id %}" class="btn btn-primary">Edit</a></p>
 <table class="table table-striped">
