@@ -242,16 +242,23 @@ class TestBase(TestCase):
         else:
             return ",".join([x.attrib['value'] for x in selections])
 
-    def _get_initial_form(self, which, *args):
-        '''Get a form to start testing with.'''
-        url = reverse(which, args=[str(a) for a in args])
+    def _get_initial_form_index(self, form_index, url, *args):
+        '''Get a form to start testing with.
+
+        If form_index is None, only 1 form is expected. Otherwise,
+        forms[form_index] is returned from all matching forms.'''
+        url = reverse(url, args=[str(a) for a in args])
         response = self.client.get(url)
         doc = self._check_status_code_and_parse(response, 200)
         self._save_html(response.content.decode("utf-8"))
-        values = self._get_form_data(doc)
+        values = self._get_form_data(doc, form_index)
         return url, values
 
-    def _get_form_data(self, doc):
+    def _get_initial_form(self, url, *args):
+        '''Get first and only form on the page.'''
+        return self._get_initial_form_index(None, url, *args)
+
+    def _get_form_data(self, doc, which_form=None):
         '''Extract form data from page.'''
         # Now there's almost always an additional search form available on the
         # page, so we should fetch the one that does not have role="search".
@@ -259,11 +266,21 @@ class TestBase(TestCase):
         # very limited.  Instead, I added a whole bunch of `role="form"` to
         # specific forms in create/update pages - we can match
         # `form[@role='form']` easily.
-        form = self._get_1(doc, ".//form[@role='form']",
-                           'expected one form in page')
+        if which_form is not None:
+            # some pages have two forms that match this query, so we need to
+            # specify which one do we use
+            forms = self._get_N(doc, ".//form[@role='form']",
+                                'expected multiple forms in page')
+            form = forms[which_form]
+        else:
+            form = self._get_1(doc, ".//form[@role='form']",
+                               'expected one form in page')
 
         inputs = dict([(i.attrib['name'], i.attrib.get('value', None))
                        for i in form.findall(".//input[@type='text']")])
+
+        passwords = dict([(i.attrib['name'], i.attrib.get('value', None))
+                          for i in form.findall(".//input[@type='password']")])
 
         hidden = dict([(i.attrib['name'], i.attrib.get('value', None))
                        for i in form.findall(".//input[@type='hidden']")])
@@ -277,6 +294,7 @@ class TestBase(TestCase):
         textareas = dict([(t.attrib['name'], t.text)
                           for t in form.findall(".//textarea")])
 
+        inputs.update(passwords)
         inputs.update(hidden)
         inputs.update(checkboxes)
         inputs.update(selects)

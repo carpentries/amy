@@ -1,12 +1,5 @@
 {% extends "workshops/_page.html" %}
 
-{% load breadcrumbs %}
-{% block breadcrumbs %}
-    {% breadcrumb_main_page %}
-    {% breadcrumb_url 'All persons' 'all_persons' %}
-    {% breadcrumb_active title %}
-{% endblock %}
-
 {% block content %}
 <div class="alert alert-info" role="alert">
 <strong>Hint:</strong> you can edit values by double-clicking in the table cells.  To accept the change, press <kbd><kbd>enter</kbd></kbd>.  To cancel, press <kbd><kbd>escape</kbd></kbd>.

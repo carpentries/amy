@@ -1,11 +1,5 @@
 {% extends "workshops/_page.html" %}
 
-{% load breadcrumbs %}
-{% block breadcrumbs %}
-    {% breadcrumb_main_page %}
-    {% breadcrumb_active title %}
-{% endblock %}
-
 {% block content %}
     <p><a href="{% url 'task_add' %}" class="btn btn-success">New task</a></p>
 {% if all_tasks %}
@@ -18,9 +12,9 @@
 	</tr>
     {% for task in all_tasks %}
         <tr>
-            <td>{{ task.event }}</td>
-            <td>{{ task.person }}</a></td>
-            <td>{{ task.role }}</a></td>
+            <td><a href="{{ task.event.get_absolute_url }}">{{ task.event }}</a></td>
+            <td><a href="{{ task.person.get_absolute_url }}">{{ task.person.get_full_name }}</a>{% if task.person.email and task.person.may_contact %} &lt;{{ task.person.email|urlize }}&gt;{% endif %}</td>
+            <td>{{ task.role }}</td>
 	    <td><a href="{% url 'task_details' task.id %}">...</a></td>
 	</tr>
     {% endfor %}

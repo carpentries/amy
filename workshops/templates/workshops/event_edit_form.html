@@ -1,26 +1,13 @@
 {% extends "workshops/_page.html" %}
 
-{% load breadcrumbs %}
 {% load crispy_forms_tags %}
 {% load selectable_tags %}
 
-{% block breadcrumbs %}
-    {% breadcrumb_main_page %}
-    {% breadcrumb_index_all_objects model %}
-    {% if object %}
-        {% breadcrumb_object object %}
-        {% breadcrumb_edit_object object %}
-    {% else %}
-        {% breadcrumb_new_object model %}
-    {% endif %}
-{% endblock %}
-
 {% block content %}
-
-<form action="" method="post" id="event_task_form" role="form" class="form-horizontal">
     {% crispy event_form form_helper %}
 
     <h2 id="associated-tasks">Associated tasks</h2>
+    {% crispy task_form form_helper_with_add %}
     {% if tasks %}
     <table class="table table-striped">
     <tr>
@@ -30,7 +17,7 @@
     </tr>
     {% for t in tasks %}
     <tr>
-        <td><a href="{% url 'person_details' t.person.id %}">{{ t.person }}</a></td>
+        <td><a href="{{ t.person.get_absolute_url }}">{{ t.person.get_full_name }}</a>{% if t.person.email and t.person.may_contact %} &lt;{{ t.person.email|urlize }}&gt;{% endif %}</td>
         <td>{{ t.role.name }}</td>
         <td><a onclick='return confirm("Are you sure you wish to remove \"{{ t.person.get_full_name }}\" from {{ t.event.get_ident }}?")' href="{% url 'task_delete' t.id %}" class='btn btn-danger'>Delete</a></td>
     </tr>
@@ -39,9 +26,6 @@
     {% else %}
     <p>No tasks.</p>
     {% endif %}
-    {{ task_form.as_p }}
-    <button type="submit" class="btn btn-primary" name="add">Add</button>
-</form>
 
 {% endblock %}
 

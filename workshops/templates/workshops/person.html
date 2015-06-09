@@ -1,25 +1,24 @@
 {% extends "workshops/_page.html" %}
 
-{% load breadcrumbs %}
-{% block breadcrumbs %}
-    {% breadcrumb_main_page %}
-    {% breadcrumb_index_all_objects person %}
-    {% breadcrumb_active person %}
-{% endblock %}
-
 {% block content %}
-<p class="edit-object"><a href="{% url 'person_edit' person.id %}" class="btn btn-primary">Edit</a></p>
+<div class="edit-object">
+  <a href="{% url 'person_edit' person.id %}" class="btn btn-primary">Edit</a>
+  <div class="btn-group pull-right" role="group">
+    <a href="{% url 'person_permissions' person.id %}" class="btn btn-default">Change permissions</a>
+    <a href="{% url 'person_password' person.id %}" class="btn btn-default">Change password</a>
+  </div>
+</div>
 <table class="table table-striped">
   <tr><td>personal:</td><td id="personal">{{ person.personal|default:"—" }}</td></tr>
   <tr><td>middle:</td><td id="middle">{{ person.middle|default:"—" }}</td></tr>
   <tr><td>family:</td><td id="family">{{ person.family|default:"—" }}</td></tr>
-  <tr><td>email:</td><td id="email">{{ person.email|default:"—" }}</td></tr>
+  <tr><td>email:</td><td id="email">{% if person.email %}{{ person.email|urlize }}{% else %}-{% endif %}</td></tr>
   <tr><td>gender:</td><td id="gender">{{ person.get_gender_display|default:"—" }}</td></tr>
   <tr><td>may contact:</td><td id="may_contact">{{ person.may_contact|yesno }}</td></tr>
-  <tr><td>airport:</td><td id="airport">{{ person.airport|default:"—" }}</td></tr>
-  <tr><td>github:</td><td id="github">{{ person.github|default:"—" }}</td></tr>
-  <tr><td>twitter:</td><td id="twitter">{{ person.twitter|default:"—" }}</td></tr>
-  <tr><td>url:</td><td id="url">{{ person.url|default:"—" }}</td></tr>
+  <tr><td>airport:</td><td id="airport">{% if person.airport %}<a href="{{ person.airport.get_absolute_url }}">{{ person.airport }}</a>{% else %}—{% endif %}</td></tr>
+  <tr><td>github:</td><td id="github">{% if person.github %}<a href="https://github.com/{{ person.github }}">{{ person.github }}</a>{% else %}—{% endif %}</td></tr>
+  <tr><td>twitter:</td><td id="twitter">{% if person.twitter %}<a href="https://twitter.com/{{ person.twitter }}">{{ person.twitter }}</a>{% else %}—{% endif %}</td></tr>
+  <tr><td>url:</td><td id="url">{{ person.url|default:""|urlize|default:"—" }}</td></tr>
 </table>
 
 {% if person.notes %}
@@ -53,5 +52,11 @@
 <p>No tasks.</p>
 {% endif %}
 
-<p class="edit-object"><a href="{% url 'person_edit' person.id %}" class="btn btn-primary">Edit</a></p>
+<div class="edit-object">
+  <a href="{% url 'person_edit' person.id %}" class="btn btn-primary">Edit</a>
+  <div class="btn-group pull-right" role="group">
+    <a href="{% url 'person_permissions' person.id %}" class="btn btn-default">Change permissions</a>
+    <a href="{% url 'person_password' person.id %}" class="btn btn-default">Change password</a>
+  </div>
+</div>
 {% endblock %}

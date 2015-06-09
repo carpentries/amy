@@ -204,9 +204,12 @@ class EventQuerySet(models.query.QuerySet):
         '''Return a queryset for all published upcoming events.
 
         Upcoming events are those which start after today and are published.
+        Events are ordered by date, soonest first.
         '''
 
-        queryset = self.filter(start__gt=datetime.date.today()).filter(published=True)
+        queryset = self.filter(start__gt=datetime.date.today())\
+                       .filter(published=True)\
+                       .order_by('start')
         return queryset
 
     def ongoing_events(self):
@@ -231,9 +234,12 @@ class EventQuerySet(models.query.QuerySet):
     def uninvoiced_events(self):
         '''Return a queryset for events that have not yet been invoiced.
 
-        These are events that have an admin fee, are not marked as invoiced, and have occurred.'''
+        These are events that have an admin fee, are not marked as invoiced, and have occurred.
+        Events are sorted oldest first.'''
 
-        return self.past_events().filter(admin_fee__gt=0).exclude(invoiced=True)
+        return self.past_events().filter(admin_fee__gt=0)\
+                   .exclude(invoiced=True)\
+                   .order_by('start')
 
 class EventManager(models.Manager):
     '''A custom manager which is essentially a proxy for EventQuerySet'''
@@ -395,7 +401,10 @@ class Badge(models.Model):
     criteria   = models.CharField(max_length=STR_LONG)
 
     def __str__(self):
-        return self.name
+        return self.title
+
+    def get_absolute_url(self):
+        return reverse('badge_details', args=[self.name])
 
 #------------------------------------------------------------
 

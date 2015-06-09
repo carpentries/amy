@@ -15,6 +15,8 @@ If you would like to know what we need help with, please see the
 *   New functionality should be accompanied by unit tests where feasible.
 *   All dates should be formatted as YYYY-MM-DD.
 
+The Amy logo was made using the Bradley Hand font from LibreOffice.
+
 [conduct]: CONDUCT.md
 [issues]: https://github.com/swcarpentry/amy/issues
 [license]: LICENSE.md

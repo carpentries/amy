@@ -1,12 +1,5 @@
 {% extends "workshops/_page.html" %}
 
-{% load breadcrumbs %}
-{% block breadcrumbs %}
-    {% breadcrumb_main_page %}
-    {% breadcrumb_index_all_objects site %}
-    {% breadcrumb_active site %}
-{% endblock %}
-
 {% block content %}
 
 <p class="edit-object"><a href="{% url 'site_edit' site.domain %}" class="btn btn-primary">Edit</a></p>

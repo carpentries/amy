@@ -1,12 +1,5 @@
 {% extends "workshops/_page.html" %}
 
-{% load breadcrumbs %}
-{% block breadcrumbs %}
-    {% breadcrumb_main_page %}
-    {% breadcrumb_index_all_objects event %}
-    {% breadcrumb_active event %}
-{% endblock %}
-
 {% block content %}
 <p class="edit-object"><a href="{% url 'event_edit' event.id %}" class="btn btn-primary">Edit</a></p>
 <table class="table table-striped">
@@ -49,7 +42,7 @@
   </tr>
   {% for t in tasks %}
   <tr>
-    <td><a href="{% url 'person_details' t.person.id %}">{{ t.person }}</a></td>
+    <td><a href="{{ t.person.get_absolute_url }}">{{ t.person.get_full_name }}</a>{% if t.person.email and t.person.may_contact %} &lt;{{ t.person.email|urlize }}&gt;{% endif %}</td>
     <td>{{ t.role.name }}</td>
   </tr>
   {% endfor %}

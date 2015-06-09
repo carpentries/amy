@@ -1,13 +1,6 @@
 {% extends "workshops/_page.html" %}
 
 {% load crispy_forms_tags %}
-{% load breadcrumbs %}
-
-{% block breadcrumbs %}
-    {% breadcrumb_main_page %}
-    {% breadcrumb_index_all_objects badge %}
-    {% breadcrumb_active badge %}
-{% endblock %}
 
 {% block content %}
 <table class="table table-striped">
@@ -29,7 +22,7 @@
     </tr>
     {% for award in awards %}
     <tr>
-      <td><a href="{% url 'person_details' award.person.id %}">{{ award.person }}</a></td>
+      <td><a href="{{ award.person.get_absolute_url }}">{{ award.person.get_full_name }}</a>{% if award.person.email and award.person.may_contact %} &lt;{{ award.person.email|urlize }}&gt;{% endif %}</td>
       <td>{{ award.awarded }}</td>
       <td>{% if award.event %}<a href="{% url 'event_details' award.event.get_ident %}">{{ award.event }}</a>{% else %}—{% endif %}</td>
     </tr>
