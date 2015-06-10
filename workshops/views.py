@@ -920,10 +920,10 @@ def export(request, name):
 def workshops_over_time(request):
     '''Export CSV of count of workshops vs. time.'''
 
-    data = dict(Event.objects.past_events().\
-                    values_list('start').\
-                    annotate(Count('id')).\
-                    order_by('start'))
+    data = dict(Event.objects
+                     .past_events()
+                     .values_list('start')
+                     .annotate(Count('id')))
     return _time_series(request, data, 'Workshop over time')
 
 
@@ -931,10 +931,10 @@ def workshops_over_time(request):
 def learners_over_time(request):
     '''Export CSV of count of learners vs. time.'''
 
-    data = dict(Event.objects.past_events().\
-                    values_list('start').\
-                    annotate(Sum('attendance')).\
-                    order_by('start'))
+    data = dict(Event.objects
+                     .past_events()
+                     .values_list('start')
+                     .annotate(Sum('attendance')))
     return _time_series(request, data, 'Learners over time')
 
 
@@ -943,8 +943,9 @@ def instructors_over_time(request):
     '''Export CSV of count of instructors vs. time.'''
 
     badge = Badge.objects.get(name='instructor')
-    data = dict(badge.award_set.values_list('awarded').\
-                    annotate(Count('person__id')))
+    data = dict(badge.award_set
+                     .values_list('awarded')
+                     .annotate(Count('person__id')))
     return _time_series(request, data, 'Instructors over time')
 
 

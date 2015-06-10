@@ -1,4 +1,3 @@
-import sys
 import datetime
 from django.core.management.base import BaseCommand, CommandError
 from workshops.models import Award, Badge, Event, Tag, Task

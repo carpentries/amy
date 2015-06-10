@@ -1,6 +1,5 @@
 import sys
 import os
-import glob
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError
 from workshops.models import Badge, Award
