@@ -1,0 +1,9 @@
+{% extends "workshops/_page.html" %}
+
+{% block content %}
+{% if data %}
+<pre>{{data}}</pre>
+{% else %}
+<p>Error: no such data.</p>
+{% endif %}
+{% endblock %}

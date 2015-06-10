@@ -1,6 +1,9 @@
 # How to run Python.
 PYTHON = python3
 
+# How to run the management tool.
+MANAGE = ${PYTHON} manage.py
+
 # Database used by this application.
 APP_DB = db.sqlite3
 
@@ -10,6 +13,9 @@ APP_SQL = db.sql
 # Run a SQL query.
 QUERY = sqlite3 ${APP_DB}
 QUERY_CSV = sqlite3 -csv ${APP_DB}
+
+# Error messages.
+E_SITE_PATH = "error: must set SITE_PATH before running command"
 
 .PHONY: workshops/git_version.py
 
@@ -21,12 +27,12 @@ commands : Makefile
 
 ## test         : run all tests.
 test :
-	${PYTHON} manage.py test
+	${MANAGE} test
 
 ## migrations   : create/apply migrations
 migrations :
-	${PYTHON} manage.py makemigrations
-	${PYTHON} manage.py migrate
+	${MANAGE} makemigrations
+	${MANAGE} migrate
 
 ## database     : re-make database using saved data
 database :
@@ -35,15 +41,23 @@ database :
 
 ## superuser    : make a super-user in the database
 superuser :
-	@${PYTHON} manage.py create_superuser
+	@${MANAGE} create_superuser
 
 ## airports     : display YAML for airports
 airports :
-	@${PYTHON} manage.py export_airports
+	@${MANAGE} export_airports
 
 ## badges       : display YAML for badges
 badges :
-	@${PYTHON} manage.py export_badges
+	@${MANAGE} export_badges
+
+## check-urls   : check workshop URLs (must set SITE_PATH to run)
+check-urls :
+	@if [ -z "${SITE_PATH}" ]; then echo ${E_SITE_PATH}; else ${MANAGE} check_workshop_urls ${SITE_PATH}; fi
+
+## check-badges : check that all badges have been awarded (must set SITE_PATH to run)
+check-badges :
+	@if [ -z "${SITE_PATH}" ]; then echo ${E_SITE_PATH}; else ${MANAGE} check_badges ${SITE_PATH}; fi
 
 ## schema       : display the database schema
 schema :
@@ -67,9 +81,21 @@ workshops/git_version.py :
 		fi \
 	fi
 
+## all-activity : report all instructor activity
+all-activity :
+	@${MANAGE} report_all_instructor_activity
+
+## invoicing    : report financial activity related to invoicing
+invoicing :
+	@${MANAGE} report_invoicing
+
+## incomplete   : report instructors who started training in the past year but haven't completed
+incomplete :
+	@${MANAGE} report_incomplete_instructors
+
 ## serve        : run a server
 serve : bower_components workshops/git_version.py
-	${PYTHON} manage.py runserver
+	${MANAGE} runserver
 
 ## clean        : clean up.
 clean :
