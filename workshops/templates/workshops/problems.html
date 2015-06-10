@@ -1,17 +1,19 @@
 {% extends "workshops/_page.html" %}
 
-{% load breadcrumbs %}
-{% block breadcrumbs %}
-    {% breadcrumb_main_page %}
-    {% breadcrumb_active title %}
-{% endblock %}
-
 {% block content %}
 <h3>Workshops Missing Attendance Figures</h3>
 {% if missing_attendance %}
 <ul>
 {% for event in missing_attendance %}
-<li>{% if event.mailto %}<a href="mailto:{% for m in event.mailto %}{{ m }}{% if not forloop.last %},{% endif %}{% endfor %}?subject=attendance%20figures%20for%20{{event}}&body=Hi,%0D%0ACan%20you%20please%20send%20us%20an%20attendance%20list%20(or%20even%20just%20a%20head%20count)%20for%20the%20{{event}}%20workshop?%0D%0AThanks,%0D%0ASoftware%20Carpentry">{% endif %}{{ event.get_ident }}{% if event.mailto %}</a>{% endif %}</li>
+<li>
+  {% if event.mailto %}
+    <a href="mailto:{% for m in event.mailto %}{{ m }}{% if not forloop.last %},{% endif %}{% endfor %}?subject={{subject | urlencode}}{{event}}&body={{body_pre | urlencode}}{{event}}{{body_post | urlencode}}">
+  {% endif %}
+    {{ event.get_ident }}
+  {% if event.mailto %}
+    </a>
+  {% endif %}
+</li>
 {% endfor %}
 </ul>
 {% else %}

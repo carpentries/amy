@@ -2,8 +2,6 @@ import csv
 import datetime
 import io
 import re
-from collections import Counter
-
 import requests
 
 from django.contrib import messages
@@ -16,7 +14,7 @@ from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.conf import settings
 from django.http import Http404, HttpResponse
 from django.db import IntegrityError, transaction
-from django.db.models import Count, Q, Model
+from django.db.models import Count, Sum, Q, Model
 from django.shortcuts import redirect, render, get_object_or_404
 from django.views.generic.base import ContextMixin
 from django.views.generic.edit import CreateView, UpdateView
@@ -922,9 +920,10 @@ def export(request, name):
 def workshops_over_time(request):
     '''Export CSV of count of workshops vs. time.'''
 
-    data = Counter()
-    for e in Event.objects.past_events():
-        data[e.start.isoformat()] += 1
+    data = dict(Event.objects.past_events().\
+                    values_list('start').\
+                    annotate(Count('id')).\
+                    order_by('start'))
     return _time_series(request, data, 'Workshop over time')
 
 
@@ -932,11 +931,10 @@ def workshops_over_time(request):
 def learners_over_time(request):
     '''Export CSV of count of learners vs. time.'''
 
-    data = Counter()
-    for e in Event.objects.past_events():
-        data[e.start.isoformat()] += e.attendance \
-                                     if e.attendance is not None \
-                                     else 0
+    data = dict(Event.objects.past_events().\
+                    values_list('start').\
+                    annotate(Sum('attendance')).\
+                    order_by('start'))
     return _time_series(request, data, 'Learners over time')
 
 
@@ -945,9 +943,8 @@ def instructors_over_time(request):
     '''Export CSV of count of instructors vs. time.'''
 
     badge = Badge.objects.get(name='instructor')
-    data = Counter()
-    for a in Award.objects.filter(badge=badge):
-        data[a.awarded.isoformat()] += 1
+    data = dict(badge.award_set.values_list('awarded').\
+                    annotate(Count('person__id')))
     return _time_series(request, data, 'Instructors over time')
 
 
@@ -955,14 +952,23 @@ def instructors_over_time(request):
 def problems(request):
     '''Display problems in the database.'''
 
+    subject = 'attendance figures for '
+    body_pre = 'Hi,\nCan you please send us an attendance list (or even just a head count) for the '
+    body_post = ' workshop?\nThanks,\nSoftware Carpentry'
+
     host = Role.objects.get(name='host')
     instructor = Role.objects.get(name='instructor')
-    missing_attendance = Event.objects.past_events().filter(Q(attendance=None) | Q(attendance=0))
+    missing_attendance = Event.objects.past_events().\
+        filter(Q(attendance=None) | Q(attendance=0))
     for e in missing_attendance:
-        tasks = Task.objects.filter(event=e).filter(Q(role=host) | Q(role=instructor))
+        tasks = Task.objects.filter(event=e).\
+            filter(Q(role=host) | Q(role=instructor))
         e.mailto = [t.person.email for t in tasks if t.person.email]
-    context = {'title' : 'Problems',
-               'missing_attendance' : missing_attendance}
+    context = {'title': 'Problems',
+               'missing_attendance': missing_attendance,
+               'subject': subject,
+               'body_pre': body_pre,
+               'body_post': body_post}
     return render(request, 'workshops/problems.html', context)
 
 #------------------------------------------------------------
@@ -1007,13 +1013,19 @@ def _get_pagination_items(request, all_objects):
 def _time_series(request, data, title):
     '''Prepare time-series data for display and render it.'''
 
+    # Make sure addition will work.
+    for key in data:
+        if data[key] is None:
+            data[key] = 0
+
+    # Create running total.
     data = list(data.items())
     data.sort()
     for i in range(1, len(data)):
         data[i] = (data[i][0], data[i][1] + data[i-1][1])
+
+    # Textualize and display.
     data = '\n'.join(['{0},{1}'.format(*d) for d in data])
-    context = {
-        'title' : title,
-        'data' : data
-    }
+    context = {'title': title,
+               'data': data}
     return render(request, 'workshops/time_series.html', context)

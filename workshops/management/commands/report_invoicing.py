@@ -3,6 +3,7 @@ import csv
 from django.core.management.base import BaseCommand, CommandError
 from workshops.models import Event
 
+
 class Command(BaseCommand):
     args = ''
     help = 'Report all financial activity related to invoicing.'
@@ -15,7 +16,7 @@ class Command(BaseCommand):
 
         records = [['event', 'fee', 'paid']]
         for e in events:
-            records.append([e.slug, e.admin_fee, e.fee_paid])
+            records.append([e.slug, e.admin_fee, e.invoiced])
 
         writer = csv.writer(sys.stdout)
         writer.writerows(records)

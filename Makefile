@@ -14,6 +14,9 @@ APP_SQL = db.sql
 QUERY = sqlite3 ${APP_DB}
 QUERY_CSV = sqlite3 -csv ${APP_DB}
 
+# Error messages.
+E_SITE_PATH = "error: must set SITE_PATH before running command"
+
 .PHONY: workshops/git_version.py
 
 all : commands
@@ -48,13 +51,13 @@ airports :
 badges :
 	@${MANAGE} export_badges
 
-## check-urls   : check workshop URLs
+## check-urls   : check workshop URLs (must set SITE_PATH to run)
 check-urls :
-	@${MANAGE} check_workshop_urls ${SITE_PATH}
+	@if [ -z "${SITE_PATH}" ]; then echo ${E_SITE_PATH}; else ${MANAGE} check_workshop_urls ${SITE_PATH}; fi
 
-## check-badges : check that all badges have been awarded
+## check-badges : check that all badges have been awarded (must set SITE_PATH to run)
 check-badges :
-	@${MANAGE} check_badges ${SITE_PATH}
+	@if [ -z "${SITE_PATH}" ]; then echo ${E_SITE_PATH}; else ${MANAGE} check_badges ${SITE_PATH}; fi
 
 ## schema       : display the database schema
 schema :
