@@ -108,7 +108,7 @@ class Person(AbstractBaseUser, PermissionsMixin):
     email       = models.CharField(max_length=STR_LONG, unique=True, null=True, blank=True)
     gender      = models.CharField(max_length=1, choices=GENDER_CHOICES, null=True, blank=True)
     may_contact = models.BooleanField(default=True)
-    airport     = models.ForeignKey(Airport, null=True, blank=True)
+    airport     = models.ForeignKey(Airport, null=True, blank=True, on_delete=models.PROTECT)
     github      = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True)
     twitter     = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True)
     url         = models.CharField(max_length=STR_LONG, null=True, blank=True)
@@ -272,9 +272,10 @@ class Event(models.Model):
     '''Represent a single event.'''
 
     published  = models.BooleanField(default=False)
-    site       = models.ForeignKey(Site)
+    site       = models.ForeignKey(Site, on_delete=models.PROTECT)
     tags       = models.ManyToManyField(Tag)
-    organizer  = models.ForeignKey(Site, related_name='organizer', null=True, blank=True)
+    organizer  = models.ForeignKey(Site, related_name='organizer', null=True,
+                                   blank=True, on_delete=models.PROTECT)
     start      = models.DateField(null=True, blank=True)
     end        = models.DateField(null=True, blank=True)
     slug       = models.CharField(max_length=STR_LONG, null=True, blank=True)
