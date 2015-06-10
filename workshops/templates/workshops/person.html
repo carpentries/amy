@@ -57,6 +57,7 @@
   <div class="btn-group pull-right" role="group">
     <a href="{% url 'person_permissions' person.id %}" class="btn btn-default">Change permissions</a>
     <a href="{% url 'person_password' person.id %}" class="btn btn-default">Change password</a>
+    <a href="{% url 'person_delete' person.id %}" onclick='return confirm("Are you sure you wish to remove \"{{ person }}\"?")' class="btn btn-danger">Delete person</a>
   </div>
 </div>
 {% endblock %}

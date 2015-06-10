@@ -10,5 +10,8 @@
   <tr><td>longitude:</td><td>{{ airport.longitude }}</td></tr>
 </table>
 
-<p class="edit-object"><a href="{% url 'airport_edit' airport.iata %}" class="btn btn-primary">Edit</a></p>
+<div class="clearfix">
+  <p class="edit-object pull-left"><a href="{% url 'airport_edit' airport.iata %}" class=" btn btn-primary">Edit</a></p>
+  <p class="delete-object pull-right"><a href="{% url 'airport_delete' airport.iata %}" onclick='return confirm("Are you sure you wish to remove \"{{ airport }}\"?")' class="btn btn-danger">Delete airport</a></p>
+</div>
 {% endblock %}
