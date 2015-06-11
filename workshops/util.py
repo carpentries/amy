@@ -123,22 +123,19 @@ def verify_upload_person_task(data):
 
             try:
                 person = Person.objects.get(email__iexact=email)
-
-                assert person.personal == personal
-                assert person.middle == middle
-                assert person.family == family
+                for (which, actual, uploaded) in (
+                    ('personal', person.personal, personal),
+                    ('middle', person.middle, middle),
+                    ('family', person.family, family)):
+                    if (actual == uploaded) or ((actual is None) and (uploaded == '')):
+                        pass
+                    else:
+                        errors.append('{0}: database "{1}" vs uploaded "{2}"'
+                                      .format(which, actual, uploaded))
 
             except Person.DoesNotExist:
                 # in this case we need to add the user
                 pass
-
-            except AssertionError:
-                errors.append(
-                    "Personal, middle or family name of existing user don't"
-                    " match: {0} vs {1}, {2} vs {3}, {4} vs {5}"
-                    .format(personal, person.personal, middle, person.middle,
-                            family, person.family)
-                )
 
         if person:
             if not any([event, role]):
@@ -146,8 +143,8 @@ def verify_upload_person_task(data):
                               " the user to was provided")
 
         if (event and not role) or (role and not event):
-            errors.append("Must have both or either of event ({0}) and role"
-                          " ({1})".format(event, role))
+            errors.append("Must have both/either event ({0}) and role ({1})"
+                          .format(event, role))
 
         if errors:
             errors_occur = True

@@ -170,9 +170,10 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
         has_errors = verify_upload_person_task(bad_data)
         self.assertTrue(has_errors)
         errors = bad_data[0]['errors']
-        self.assertEqual(len(errors), 1)
-        self.assertTrue("Personal, middle or family name of existing user"
-                        " don't match" in errors[0])
+        self.assertEqual(len(errors), 3)
+        self.assertTrue('personal' in errors[0])
+        self.assertTrue('middle' in errors[1])
+        self.assertTrue('family' in errors[2])
 
     def test_verify_existing_user_has_workshop_role_provided(self):
         bad_data = [

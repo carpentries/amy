@@ -50,8 +50,6 @@
                     <li>{{ error }}</li>
                 {% endfor %}
                 </ul>
-            {% else %}
-                {{ entry.errors|default_if_none:"&mdash;" }}
             {% endif %}
             </td>
         {% endwith %}
