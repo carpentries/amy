@@ -7,7 +7,7 @@
 <div class="container">
   <div class="row">
 
-    <div class="col-sm-4">
+    <div class="col-sm-3">
       <h2>Sites</h2>
       {% if sites %}
       <ul>
@@ -18,7 +18,7 @@
       {% endif %}
     </div>
 
-    <div class="col-sm-4">
+    <div class="col-sm-3">
       <h2>Events</h2>
       {% if events %}
       <ul>
@@ -29,12 +29,23 @@
       {% endif %}
     </div>
 
-    <div class="col-sm-4">
+    <div class="col-sm-3">
       <h2>Persons</h2>
       {% if persons %}
       <ul>
 	{% for p in persons %}
 	<li><a class="searchresult" href="{% url 'person_details' p.id %}">{{ p }}</a></li>
+	{% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+
+    <div class="col-sm-3">
+      <h2>Airports</h2>
+      {% if airports %}
+      <ul>
+	{% for a in airports %}
+	<li><a class="searchresult" href="{% url 'airport_details' a.iata %}">{{ a }}</a></li>
 	{% endfor %}
       </ul>
       {% endif %}

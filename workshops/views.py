@@ -806,7 +806,7 @@ def instructors(request):
 def search(request):
     '''Search the database by term.'''
 
-    term, sites, events, persons = '', None, None, None
+    term, sites, events, persons, airports = '', None, None, None, None
 
     if request.method == 'POST':
         form = SearchForm(request.POST)
@@ -827,6 +827,10 @@ def search(request):
                     Q(family__contains=term) |
                     Q(email__contains=term) |
                     Q(github__contains=term))
+            if form.cleaned_data['in_airports']:
+                airports = Airport.objects.filter(
+                    Q(iata__contains=term) |
+                    Q(fullname__contains=term))
         else:
             pass # FIXME: error message
 
@@ -840,7 +844,8 @@ def search(request):
                'term' : term,
                'sites' : sites,
                'events' : events,
-               'persons' : persons}
+               'persons' : persons,
+               'airports' : airports}
     return render(request, 'workshops/search.html', context)
 
 #------------------------------------------------------------

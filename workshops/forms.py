@@ -138,6 +138,9 @@ class SearchForm(forms.Form):
     in_persons = forms.BooleanField(label='in persons',
                                     required=False,
                                     initial=True)
+    in_airports = forms.BooleanField(label='in airports',
+                                     required=False,
+                                     initial=True)
 
 
 class DebriefForm(forms.Form):
