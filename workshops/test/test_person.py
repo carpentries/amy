@@ -3,7 +3,7 @@
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import Permission, Group
 
-from ..models import Person
+from ..models import Person, Task, Qualification, Award, Role, Event
 from .base import TestBase
 
 
@@ -210,6 +210,39 @@ class TestPerson(TestBase):
         assert \
             set(self.hermione.user_permissions.all()) == set(user_permissions)
         assert set(self.hermione.groups.all()) == set(groups)
+
+    def test_delete_person(self):
+        """Make sure deleted person is longer accessible.
+
+        Additionally check on_delete behavior for Task, Qualification, and
+        Award."""
+        role = Role.objects.create(name='instructor')
+        event = Event.objects.create(slug='test-event', site=self.site_alpha)
+        people = [self.hermione, self.harry, self.ron]
+
+        for person in people:
+            # folks don't have any tasks by default, so let's add one
+            person.task_set.create(event=event, role=role)
+
+            awards = person.award_set.all()
+            qualifications = person.qualification_set.all()
+            tasks = person.task_set.all()
+
+            rv = self.client.get(reverse('person_delete', args=[person.pk, ]))
+            assert rv.status_code == 302
+
+            with self.assertRaises(Person.DoesNotExist):
+                Person.objects.get(pk=person.pk)
+
+            for award in awards:
+                with self.assertRaises(Award.DoesNotExist):
+                    Award.objects.get(pk=award.pk)
+            for qualification in qualifications:
+                with self.assertRaises(Qualification.DoesNotExist):
+                    Qualification.objects.get(pk=qualification.pk)
+            for task in tasks:
+                with self.assertRaises(Task.DoesNotExist):
+                    Task.objects.get(pk=task.pk)
 
 
 class TestPersonPassword(TestBase):
