@@ -211,7 +211,7 @@ class TaskForm(forms.ModelForm):
 
     class Meta:
         model = Task
-        exclude = ('deleted', )
+        fields = '__all__'
         widgets = {'event': HiddenInput}
 
 
@@ -227,7 +227,7 @@ class TaskFullForm(TaskForm):
 
     class Meta:
         model = Task
-        exclude = ('deleted', )
+        fields = '__all__'
 
 
 class PersonForm(forms.ModelForm):

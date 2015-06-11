@@ -685,19 +685,17 @@ def event_edit(request, event_ident):
 
 @login_required
 def event_delete(request, event_ident):
-    """Mark event as deleted.
-
-    Additionally mark tasks pointing at that event as deleted, too."""
+    """Delete event, its tasks and related awards."""
     try:
         event = Event.get_by_ident(event_ident)
-        tasks = event.task_set
     except ObjectDoesNotExist:
         raise Http404("No event found matching the query.")
 
-    tasks.update(deleted=True)
-    event.deleted = True
-    event.save()
-    messages.success(request, 'Event was deleted successfully.')
+    event.delete()
+
+    messages.success(request,
+                     'Event, its tasks and related awards were deleted '
+                     'successfully.')
     return redirect(reverse('all_events'))
 
 #------------------------------------------------------------
@@ -727,9 +725,9 @@ def task_details(request, task_id):
 @login_required
 def task_delete(request, task_id):
     '''Delete a task. This is used on the event edit page'''
-    t = Task.objects.get(pk=task_id)
-    t.deleted = True
-    t.save()
+    t = get_object_or_404(Task, pk=task_id)
+    t.delete()
+
     messages.success(request, 'Task was deleted successfully.')
     return redirect(event_edit, t.event.id)
 
