@@ -79,7 +79,6 @@ INSTALLED_APPS = (
     'workshops',
     # this should be after 'workshops' because templates in
     # 'templates/registration/' clash
-    'django.contrib.admin',
     'crispy_forms',
     'selectable',
     'django_countries',
