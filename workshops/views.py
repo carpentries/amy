@@ -26,10 +26,10 @@ from workshops.models import \
     Award, \
     Badge, \
     Event, \
+    Lesson, \
     Person, \
     Role, \
     Site, \
-    Skill, \
     Task
 from workshops.check import check_file
 from workshops.forms import (
@@ -764,11 +764,11 @@ def instructors(request):
         form = InstructorsForm(request.POST)
         if form.is_valid():
 
-            # Filter by skills.
+            # Filter by qualifications.
             persons = Person.objects.filter(airport__isnull=False)
-            for s in Skill.objects.all():
-                if form.cleaned_data[s.name]:
-                    persons = persons.filter(qualification__skill=s)
+            for les in Lesson.objects.all():
+                if form.cleaned_data[les.name]:
+                    persons = persons.filter(qualification__lesson=les)
 
             # Add metadata which we will eventually filter by
             for p in persons:
