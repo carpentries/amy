@@ -10,58 +10,7 @@ class TestLandingPage(TestBase):
     "Tests for the workshop landing page"
 
     def setUp(self):
-
-        # Create a test site
-        test_site = Site.objects.create(domain='example.com',
-                 fullname='Test Site')
-
-        # Create one new event for each day in the next 10 days
-        for t in range(1,11):
-            event_start = datetime.now() + timedelta(days=t)
-            Event.objects.create(start=event_start,
-                                 slug='upcoming_{0}'.format(t),
-                                 site=test_site,
-                                 admin_fee=100,
-                                 published=True)
-
-        # Create one new event for each day from 10 days ago to
-        # 3 days ago
-        for t in range(3,11):
-            event_start = datetime.now() + timedelta(days=-t)
-            Event.objects.create(start=event_start,
-                                 slug='past_{0}'.format(t),
-                                 site=test_site,
-                                 admin_fee=100)
-
-        # Create an event that started yesterday and ends
-        # tomorrow
-        event_start = datetime.now() + timedelta(days=-1)
-        event_end = datetime.now() + timedelta(days=1)
-        Event.objects.create(start=event_start,
-              end=event_end,
-              slug='ends_tomorrow',
-              site=test_site,
-              admin_fee=100)
-
-        # Create an event that ends today
-        event_start = datetime.now() + timedelta(days=-1)
-        event_end = datetime.now()
-        Event.objects.create(start=event_start,
-              end=event_end,
-              slug='ends_today',
-              site=test_site,
-              admin_fee=100)
-
-        # Create an event that starts today (doesn't count as upcoming)
-        event_start = datetime.now()
-        event_end = datetime.now() + timedelta(days=1)
-        Event.objects.create(start=event_start,
-              end=event_end,
-              slug='starts_today',
-              site=test_site,
-              admin_fee=100,
-              published=True)
-
+        self._setUpEvents()
         self._setUpUsersAndLogin()
 
     def test_has_upcoming_events(self):
@@ -74,8 +23,8 @@ class TestLandingPage(TestBase):
         # This will fail if the context variable doesn't exist
         upcoming_events = response.context['upcoming_events']
 
-        # There are 10 upcoming events (the one that starts today doesn't count)
-        assert len(upcoming_events) == 10
+        # Count published upcoming events.
+        assert len(upcoming_events) == self.num_upcoming
 
-        # They should all start with upcoming
-        assert all([e.slug[:8] == 'upcoming' for e in upcoming_events])
+        # They should all be labeled 'upcoming'.
+        assert all([('upcoming' in e.slug) for e in upcoming_events])
