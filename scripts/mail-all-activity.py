@@ -3,9 +3,8 @@
 '''Mail people to check their activity based on YAML dump of Amy database.'''
 
 import sys
+import os
 import yaml
-import smtplib
-from email.mime.text import MIMEText
 
 
 USAGE = 'Usage: mail-all-activity [-r|--real] [filename]'
@@ -35,36 +34,30 @@ def main(argv):
 
     # Setup.
     sender = display
-    connection = None
     prog_name, args = argv[0], argv[1:]
 
     # Default is dummy run - only actually send mail if told to.
     if args and (args[0] in ('-r', '--real')):
-        connection = smtplib.SMTP('mail.third-bit.com', 587)
         sender = send
         args = args[1:]
 
     # If no filename provided, use stdin.
     if len(args) == 0:
-        process(sender, connection, sys.stdin)
+        process(sender, sys.stdin)
     elif len(args) == 1:
         with open(args[0], 'r') as reader:
-            process(sender, connection, reader)
+            process(sender, reader)
     else:
         fail(USAGE)
 
-    # Close SMTP connection.
-    if connection is not None:
-        connection.quit()
 
-
-def process(sender, connection, reader):
+def process(sender, reader):
     '''Process the YAML data loaded through reader.'''
 
     info = yaml.load(reader)
     for record in info:
         address, subject, body = make_message(record)
-        sender(connection, address, subject, body)
+        sender(address, subject, body)
 
 
 def make_message(record):
@@ -113,7 +106,7 @@ def format_task(task):
         ', '.join(task['others']))
 
 
-def display(connection, address, subject, body):
+def display(address, subject, body):
     '''Display a message that is not being sent.'''
 
     print('To:', address)
@@ -122,14 +115,14 @@ def display(connection, address, subject, body):
     print()
 
 
-def send(connection, address, subject, body):
+def send(address, subject, body):
     '''Send email.'''
 
-    message = MIMEText(body)
-    message['Subject'] = subject
-    message['From'] = 'admin@software-carpentry.org'
-    message['To'] = address
-    connection.sendmail(message['From'], [message['To']], message.as_string())
+    sender = 'admin@software-carpentry.org'
+    command = 'mail -s "{0}" -r {1} {2}'.format(subject, sender, address)
+    writer = os.popen(command, 'w')
+    writer.write(body)
+    writer.close()
     print(address, file=sys.stderr)
 
 def fail(msg):
