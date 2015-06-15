@@ -531,7 +531,8 @@ def person_merge(request):
         pass # FIXME
 
     context = {'title': 'Merge Persons',
-               'person_merge_form': person_merge_form}
+               'person_merge_form': person_merge_form,
+               'form_helper': bootstrap_helper}
     return render(request, 'workshops/person_merge_form.html', context)
 
 #------------------------------------------------------------
