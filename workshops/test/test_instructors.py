@@ -63,7 +63,7 @@ class TestLocateInstructors(TestBase):
     def test_match_instructors_on_one_skill(self):
         response = self.client.post(reverse('instructors'),
                                     {'airport' : self.airport_50_100.id,
-                                     'Git' : 'on',
+                                     'swc/git' : 'on',
                                      'wanted' : 1000})
         assert response.status_code == 200
         content = response.content.decode('utf-8')
@@ -74,8 +74,8 @@ class TestLocateInstructors(TestBase):
     def test_match_instructors_on_two_skills(self):
         response = self.client.post(reverse('instructors'),
                                     {'airport' : self.airport_50_100.id,
-                                     'Git' : 'on',
-                                     'SQL' : 'on',
+                                     'swc/git' : 'on',
+                                     'dc/sql' : 'on',
                                      'wanted' : 1000})
         assert response.status_code == 200
         content = response.content.decode('utf-8')
