@@ -820,7 +820,9 @@ def search(request):
             if form.cleaned_data['in_events']:
                 events = Event.objects.filter(
                     Q(slug__contains=term) |
-                    Q(notes__contains=term))
+                    Q(notes__contains=term) |
+                    Q(site__domain__contains=term) |
+                    Q(site__fullname__contains=term))
             if form.cleaned_data['in_persons']:
                 persons = Person.objects.filter(
                     Q(personal__contains=term) |
