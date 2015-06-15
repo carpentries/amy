@@ -36,7 +36,7 @@ from workshops.forms import (
     SearchForm, DebriefForm, InstructorsForm, PersonForm, PersonBulkAddForm,
     EventForm, TaskForm, TaskFullForm, bootstrap_helper,
     bootstrap_helper_with_add, BadgeAwardForm, PersonAwardForm,
-    PersonPermissionsForm
+    PersonPermissionsForm, PersonMergeForm
 )
 from workshops.util import (
     earth_distance, upload_person_task_csv,  verify_upload_person_task,
@@ -520,6 +520,19 @@ def person_password(request, person_id):
         'title': 'Change password',
     })
 
+
+@login_required
+def person_merge(request):
+    '''Merge information from one Person into another (in case of duplicates).'''
+
+    person_merge_form = PersonMergeForm()
+
+    if request.method == 'POST':
+        pass # FIXME
+
+    context = {'title': 'Merge Persons',
+               'person_merge_form': person_merge_form}
+    return render(request, 'workshops/person_merge_form.html', context)
 
 #------------------------------------------------------------
 
