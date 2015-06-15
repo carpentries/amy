@@ -186,6 +186,7 @@ AIRPORT_FIELDS = ['iata', 'fullname', 'country', 'latitude', 'longitude']
 def all_airports(request):
     '''List all airports.'''
     airports = Airport.objects.order_by('iata')
+    airports = _get_pagination_items(request, airports)
     user_can_add = request.user.has_perm('edit')
     context = {'title' : 'All Airports',
                'all_airports' : airports,
