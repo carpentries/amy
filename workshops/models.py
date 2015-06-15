@@ -280,7 +280,21 @@ class Event(models.Model):
     slug       = models.CharField(max_length=STR_LONG, null=True, blank=True)
     url        = models.CharField(max_length=STR_LONG, unique=True, null=True, blank=True)
     reg_key    = models.CharField(max_length=STR_REG_KEY, null=True, blank=True)
-    attendance = models.IntegerField(null=True, blank=True)
+    attendance = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text="Number of people who appeared on the workshop",
+    )
+    slots = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text="Number of available seats",
+    )
+    applicants = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text="Number of people who applied for the workshop",
+    )
     admin_fee  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
     invoiced   = models.NullBooleanField(default=False, blank=True)
     notes      = models.TextField(default="", blank=True)

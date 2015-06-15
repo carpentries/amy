@@ -12,6 +12,8 @@
   <tr><td>end date: </td><td>{{ event.end|default:"—" }}</td></tr>
   <tr><td>Eventbrite key:</td><td>{{ event.reg_key|default:"—" }}</td></tr>
   <tr><td>attendance:</td><td>{{ event.attendance|default_if_none:"—" }}</td></tr>
+  <tr><td>slots:</td><td>{{ event.slots|default_if_none:"—" }}</td></tr>
+  <tr><td>applicants:</td><td>{{ event.applicants|default_if_none:"—" }}</td></tr>
   <tr><td>admin fee:</td><td>{{ event.admin_fee|default_if_none:"—" }}</td></tr>
   <tr><td>invoiced:</td><td>{{ event.invoiced|yesno:"yes,no,unknown" }}</td></tr>
 </table>
