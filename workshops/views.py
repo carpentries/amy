@@ -568,7 +568,10 @@ def person_password(request, person_id):
 @login_required
 def all_events(request):
     '''List all events.'''
-    filter = EventFilter(request.GET, queryset=Event.objects.all())
+    filter = EventFilter(
+        request.GET,
+        queryset=Event.objects.all().prefetch_related('site', 'tags'),
+    )
     events = _get_pagination_items(request, filter)
     context = {'title' : 'All Events',
                'all_events' : events,
