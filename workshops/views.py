@@ -348,7 +348,6 @@ def person_bulk_add_confirmation(request):
         request.session['bulk-add-people'] = persons_tasks
 
         # check if user wants to verify or save, or cancel
-
         if request.POST.get('verify', None):
             # if there's "verify" in POST, then do only verification
             any_errors = verify_upload_person_task(persons_tasks)
@@ -525,15 +524,62 @@ def person_password(request, person_id):
 def person_merge(request):
     '''Merge information from one Person into another (in case of duplicates).'''
 
-    person_merge_form = PersonMergeForm()
-
     if request.method == 'POST':
-        pass # FIXME
+        form = PersonMergeForm(request.POST)
+        if form.is_valid():
+            # FIXME: what should be serialized?
+            request.session['person_from'] = form.fields['person_from']
+            request.session['person_to'] = form.fields['person_to']
+            return redirect('person_merge_confirmation')
+        else:
+            messages.error(request, 'Fix errors below.')
+    else:
+        form = PersonMergeForm()
 
     context = {'title': 'Merge Persons',
-               'person_merge_form': person_merge_form,
+               'person_merge_form': form,
                'form_helper': bootstrap_helper}
     return render(request, 'workshops/person_merge_form.html', context)
+
+
+@login_required
+def person_merge_confirmation(request):
+    '''Show what the merge will do and get confirmation.'''
+
+    person_from = request.session.get('person_from')
+    import sys
+    print('person_from', person_from, file=sys.stderr)
+    person_to = request.session.get('person_to')
+    print('person_to', person_to, file=sys.stderr)
+
+    # If values not present, add message and try again.
+    if (not person_from) or (not person_to):
+        messages.warning(request, 'Must set both persons.')
+        return redirect('person_merge')
+
+    # Must not be the same person.
+    if person_from == person_to:
+        messages.warning(request, 'Cannot merge a person with themselves.')
+        return redirect('person_merge')
+
+    if request.method == 'POST':
+        if (request.POST.get('confirm', None) and not request.POST.get('cancel', None)):
+            messages.add_message('Merging {0} into {1}'.format(person_from, person_to))
+            context = {'title': 'Confirm merge',
+                       'person_from': person_from,
+                       'person_to': person_to}
+            return redirect('person_merge')
+        else:
+            # any "cancel" or no "confirm" in POST cancels the upload
+            request.session['person_from'] = None
+            request.session['person_to'] = None
+            return redirect('person_merge')
+
+    else:
+        context = {'title': 'Confirm merge',
+                   'person_from': person_from,
+                   'person_to': person_to}
+        return render(request, 'workshops/person_merge_results.html', context)
 
 #------------------------------------------------------------
 
