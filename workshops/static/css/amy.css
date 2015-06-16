@@ -70,10 +70,10 @@ pre {
 }
 
 .main {
-    padding: 20px 40px;
+    padding: 0 40px;
 }
 
 /* navbar fixed to the top takes some space */
 body {
-    padding-top: 50px;
+    padding-top: 60px;
 }
