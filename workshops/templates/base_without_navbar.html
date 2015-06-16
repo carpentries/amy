@@ -18,8 +18,8 @@
   </head>
   <body>
     {% block navbar %}{% endblock %}
-    <div class="container">
-      {% if title %}<h1>{{ title }}</h1>{% endif %}
+    <div class="container{% block fluid2 %}{% endblock %}">
+      {% block title %}{% if title %}<h1>{{ title }}</h1>{% endif %}{% endblock %}
       {% for message in messages %}
       <div class="alert {{ message.tags }}">
         {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
@@ -36,9 +36,9 @@
       {% block content %}{% endblock %}
     </div>
     <hr class="footer-hr" />
-    <div class="container">
+    <div class="container{% block fluid3 %}{% endblock %}">
       <div class="row">
-        <div class="footer">
+        <div class="col-sm-12 footer">
           Powered by <a href="https://github.com/swcarpentry/amy">Amy</a>
           version {{workshops_version}}
           {% if workshops_git_hash %}

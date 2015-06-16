@@ -54,3 +54,26 @@ input.autocomboboxwidget {
 pre {
     white-space: pre-wrap;
 }
+
+.sidebar {
+    position: fixed;
+    top: 51px;
+    bottom: 0px;
+    left: 0px;
+    z-index: 1000;
+    display: block;
+    padding: 20px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    background-color: #F5F5F5;
+    border-right: 1px solid #EEE;
+}
+
+.main {
+    padding: 20px 40px;
+}
+
+/* navbar fixed to the top takes some space */
+body {
+    padding-top: 50px;
+}
