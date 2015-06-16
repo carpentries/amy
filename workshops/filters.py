@@ -1,7 +1,6 @@
 import django_filters
-from django_countries.widgets import CountrySelectWidget
 
-from workshops.models import Event, Site, Person, Airport
+from workshops.models import Event, Site, Person, Task, Airport
 
 
 class EventFilter(django_filters.FilterSet):
@@ -49,3 +48,34 @@ class PersonFilter(django_filters.FilterSet):
         elif order_value == '-lastname':
             return ['-family', '-middle', '-personal']
         return super().get_order_by(order_value)
+
+
+class TaskFilter(django_filters.FilterSet):
+    class Meta:
+        model = Task
+        fields = [
+            'event',
+            # can't filter on person because person's name contains 3 fields:
+            # person.personal, person.middle, person.family
+            # 'person',
+            'role',
+        ]
+        order_by = [
+            ['event__slug', 'Event'],
+            ['-event__slug', 'Event (descending)'],
+            ['person__family', 'Person'],
+            ['-person__family', 'Person (descending)'],
+            ['role', 'Role'],
+            ['-role', 'Role (descending)'],
+        ]
+
+
+class AirportFilter(django_filters.FilterSet):
+    fullname = django_filters.CharFilter(lookup_type='icontains')
+
+    class Meta:
+        model = Airport
+        fields = [
+            'fullname',
+        ]
+        order_by = ["iata", "-iata", "fullname", "-fullname"]
