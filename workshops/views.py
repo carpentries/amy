@@ -254,7 +254,8 @@ def all_persons(request):
 
     filter = PersonFilter(
         request.GET,
-        queryset=Person.objects.all().prefetch_related('badges')
+        queryset=Person.objects.all().defer('notes')  # notes are too large
+                                     .prefetch_related('badges')
     )
     persons = _get_pagination_items(request, filter)
     instructor = Badge.objects.get(name='instructor')
@@ -570,7 +571,8 @@ def all_events(request):
     '''List all events.'''
     filter = EventFilter(
         request.GET,
-        queryset=Event.objects.all().prefetch_related('site', 'tags'),
+        queryset=Event.objects.all().defer('notes')  # notes are too large
+                                    .prefetch_related('site', 'tags'),
     )
     events = _get_pagination_items(request, filter)
     context = {'title' : 'All Events',
