@@ -258,6 +258,25 @@ class PersonPermissionsForm(forms.ModelForm):
         ]
 
 
+class PersonMergeForm(forms.Form):
+
+    person_from = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.PersonLookup,
+        label='Person From',
+        required=True,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+    person_to = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.PersonLookup,
+        label='Person To',
+        required=True,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+
 class BadgeAwardForm(forms.ModelForm):
 
     person = selectable.AutoCompleteSelectField(
