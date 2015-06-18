@@ -45,3 +45,8 @@ input.autocomboboxwidget {
 .edit-object {
     margin: 0px 0px 10px;
 }
+
+/* event, site and person notes are displayed in <pre> */
+pre {
+    white-space: pre-wrap;
+}
