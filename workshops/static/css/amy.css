@@ -9,6 +9,10 @@ table td.editable span {
     display: block;
 }
 
+table .additional-links {
+    width: 70px;
+}
+
 /* move country flag in tables a few pixels up */
 .country-flag {
     width: 16px;
@@ -44,4 +48,9 @@ input.autocomboboxwidget {
 
 .edit-object {
     margin: 0px 0px 10px;
+}
+
+/* event, site and person notes are displayed in <pre> */
+pre {
+    white-space: pre-wrap;
 }
