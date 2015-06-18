@@ -838,8 +838,6 @@ def search(request):
                     Q(iata__contains=term) |
                     Q(fullname__contains=term)) \
                     .order_by('iata')
-        else:
-            pass # FIXME: error message
 
     # if a GET (or any other method) we'll create a blank form
     else:
