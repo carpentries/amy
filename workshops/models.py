@@ -232,7 +232,7 @@ class EventQuerySet(models.query.QuerySet):
 
         Events are ordered by slug and then by serial number.'''
 
-        future_without_url = (Q(start__gte=datetime.date.today()) & Q(url__isnull=True))
+        future_without_url =Q(start__gte=datetime.date.today(), url__isnull=True)
         unknown_start = Q(start__isnull=True)
         return self.filter(future_without_url | unknown_start)\
                    .order_by('slug', 'id')
@@ -283,7 +283,8 @@ class Event(models.Model):
     start      = models.DateField(null=True, blank=True)
     end        = models.DateField(null=True, blank=True)
     slug       = models.CharField(max_length=STR_LONG, null=True, blank=True)
-    url        = models.CharField(max_length=STR_LONG, unique=True, null=True, blank=True)
+    url        = models.CharField(max_length=STR_LONG, unique=True, null=True, blank=True,
+                                  help_text='Setting this "publishes" the event.')
     reg_key    = models.CharField(max_length=STR_REG_KEY, null=True, blank=True)
     attendance = models.IntegerField(null=True, blank=True)
     admin_fee  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)

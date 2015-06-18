@@ -1,6 +1,6 @@
 import cgi
 import traceback
-from datetime import date, timedelta
+import datetime
 import os
 import re
 import itertools
@@ -87,7 +87,7 @@ class TestBase(TestCase):
 
         Award.objects.create(person=self.hermione,
                              badge=self.instructor,
-                             awarded=date(2014, 1, 1))
+                             awarded=datetime.date(2014, 1, 1))
         Qualification.objects.create(person=self.hermione, skill=self.git)
         Qualification.objects.create(person=self.hermione, skill=self.sql)
 
@@ -99,7 +99,7 @@ class TestBase(TestCase):
 
         Award.objects.create(person=self.harry,
                              badge=self.instructor,
-                             awarded=date(2014, 5, 5))
+                             awarded=datetime.date(2014, 5, 5))
         Qualification.objects.create(person=self.harry, skill=self.sql)
 
         self.ron = Person.objects.create(
@@ -110,7 +110,7 @@ class TestBase(TestCase):
 
         Award.objects.create(person=self.ron,
                              badge=self.instructor,
-                             awarded=date(2014, 11, 11))
+                             awarded=datetime.date(2014, 11, 11))
         Qualification.objects.create(person=self.ron, skill=self.git)
 
     def _setUpNonInstructors(self):
@@ -164,7 +164,7 @@ class TestBase(TestCase):
     def _setUpEvents(self):
         '''Set up a bunch of events and record some statistics.'''
 
-        today = date.today()
+        today = datetime.date.today()
 
         # Create a test site
         test_site = Site.objects.create(domain='example.com',
@@ -174,7 +174,7 @@ class TestBase(TestCase):
         # half with URLs.
         add_url = True
         for t in range(1, 11):
-            event_start = today + timedelta(days=t)
+            event_start = today + datetime.timedelta(days=t)
             date_string = event_start.strftime('%Y-%m-%d')
             slug = '{0}-upcoming'.format(date_string)
             if add_url:
@@ -193,7 +193,7 @@ class TestBase(TestCase):
         # 3 days ago, half invoiced
         invoiced = True
         for t in range(3, 11):
-            event_start = today + timedelta(days=-t)
+            event_start = today + datetime.timedelta(days=-t)
             date_string = event_start.strftime('%Y-%m-%d')
             Event.objects.create(start=event_start,
                                  slug='{0}-past'.format(date_string),
@@ -205,8 +205,8 @@ class TestBase(TestCase):
         # Create an event that started yesterday and ends tomorrow
         # with no fee, and without specifying whether they've been
         # invoiced.
-        event_start = today + timedelta(days=-1)
-        event_end = today + timedelta(days=1)
+        event_start = today + datetime.timedelta(days=-1)
+        event_end = today + datetime.timedelta(days=1)
         Event.objects.create(start=event_start,
                              end=event_end,
                              slug='ends_tomorrow',
@@ -215,7 +215,7 @@ class TestBase(TestCase):
 
         # Create an event that ends today with no fee, and without
         # specifying whether the fee has been invoiced.
-        event_start = today + timedelta(days=-1)
+        event_start = today + datetime.timedelta(days=-1)
         event_end = today
         Event.objects.create(start=event_start,
                              end=event_end,
@@ -226,7 +226,7 @@ class TestBase(TestCase):
         # Create an event that starts today with a fee, and without
         # specifying whether the fee has been invoiced.
         event_start = today
-        event_end = today + timedelta(days=1)
+        event_end = today + datetime.timedelta(days=1)
         Event.objects.create(start=event_start,
                              end=event_end,
                              slug='starts_today',
