@@ -817,23 +817,27 @@ def search(request):
                 sites = Site.objects.filter(
                     Q(domain__contains=term) |
                     Q(fullname__contains=term) |
-                    Q(notes__contains=term))
+                    Q(notes__contains=term)) \
+                    .order_by('fullname')
             if form.cleaned_data['in_events']:
                 events = Event.objects.filter(
                     Q(slug__contains=term) |
                     Q(notes__contains=term) |
                     Q(site__domain__contains=term) |
-                    Q(site__fullname__contains=term))
+                    Q(site__fullname__contains=term)) \
+                    .order_by('-slug')
             if form.cleaned_data['in_persons']:
                 persons = Person.objects.filter(
                     Q(personal__contains=term) |
                     Q(family__contains=term) |
                     Q(email__contains=term) |
-                    Q(github__contains=term))
+                    Q(github__contains=term)) \
+                    .order_by('family')
             if form.cleaned_data['in_airports']:
                 airports = Airport.objects.filter(
                     Q(iata__contains=term) |
-                    Q(fullname__contains=term))
+                    Q(fullname__contains=term)) \
+                    .order_by('iata')
         else:
             pass # FIXME: error message
 
