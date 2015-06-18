@@ -5,16 +5,22 @@
 {% if all_persons %}
     <table class="table table-striped">
       <tr>
-    <th width="50">Instructor?</th>
-    <th>Name</th>
-    <th>Email</th>
+        <th width="50">Instructor?</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th class="additional-links"></th>
       </tr>
     {% for person in all_persons %}
-        <tr>
-      <td class="text-center">{% if person.is_instructor %}✓{% endif %}</td>
-	  <td><a href="{% url 'person_details' person.id %}">{{ person.get_full_name }}</a></td>
-      <td>{% if person.email %}<a href="mailto:{{ person.email }}">{{ person.email }}</a>{% else %}—{% endif %}</td>
-	</tr>
+      <tr>
+        <td class="text-center">{% if person.is_instructor %}✓{% endif %}</td>
+        <td><a href="{% url 'person_details' person.id %}">{{ person.get_full_name }}</a></td>
+        <td>{% if person.email %}<a href="mailto:{{ person.email }}">{{ person.email }}</a>{% else %}—{% endif %}</td>
+        <td>
+          <a href="{% url 'person_details' person.pk %}" title="View {{ person.get_full_name }}"><span class="glyphicon glyphicon-option-horizontal"></span></a>
+          &nbsp;
+          <a href="{% url 'person_edit' person.pk %}" title="Edit {{ person.get_full_name }}"><span class="glyphicon glyphicon-pencil"></span></a>
+        </td>
+      </tr>
     {% endfor %}
     </table>
     <div class="pagination">
