@@ -186,6 +186,7 @@ AIRPORT_FIELDS = ['iata', 'fullname', 'country', 'latitude', 'longitude']
 def all_airports(request):
     '''List all airports.'''
     airports = Airport.objects.order_by('iata')
+    airports = _get_pagination_items(request, airports)
     user_can_add = request.user.has_perm('edit')
     context = {'title' : 'All Airports',
                'all_airports' : airports,
@@ -820,7 +821,9 @@ def search(request):
             if form.cleaned_data['in_events']:
                 events = Event.objects.filter(
                     Q(slug__contains=term) |
-                    Q(notes__contains=term))
+                    Q(notes__contains=term) |
+                    Q(site__domain__contains=term) |
+                    Q(site__fullname__contains=term))
             if form.cleaned_data['in_persons']:
                 persons = Person.objects.filter(
                     Q(personal__contains=term) |
@@ -856,12 +859,16 @@ def debrief(request):
 
     tasks = None
 
+    start_date = end_date = None
+
     if request.method == 'POST':
         form = DebriefForm(request.POST)
         if form.is_valid():
+            start_date = form.cleaned_data['begin_date']
+            end_date = form.cleaned_data['end_date']
             tasks = Task.objects.filter(
-                event__end__gte=form.cleaned_data['begin_date'],
-                event__start__lte=form.cleaned_data['end_date'],
+                event__start__gte=start_date,
+                event__end__lte=end_date,
                 role__name='instructor',
                 person__may_contact=True,
             ).order_by('event', 'person', 'role')
@@ -873,7 +880,9 @@ def debrief(request):
     context = {'title': 'Debrief',
                'form': form,
                'form_helper': bootstrap_helper,
-               'all_tasks': tasks}
+               'all_tasks': tasks,
+               'start_date': start_date,
+               'end_date': end_date}
     return render(request, 'workshops/debrief.html', context)
 
 #------------------------------------------------------------

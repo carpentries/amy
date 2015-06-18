@@ -6,6 +6,7 @@
 {% crispy form form_helper %}
 
 {% if all_tasks %}
+<h3>Events happening between {{ start_date }} and {{ end_date }}</h3>
     <table class="table table-striped">
         <tr>
 	    <th>event</th>
