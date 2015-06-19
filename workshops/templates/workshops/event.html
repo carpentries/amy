@@ -5,7 +5,6 @@
 {% block content %}
 <p class="edit-object"><a href="{% url 'event_edit' event.id %}" class="btn btn-primary">Edit</a></p>
 <table class="table table-striped">
-  <tr><td>published:</td><td>{{ event.published|yesno }}</td></tr>
   <tr><td>slug:</td><td>{{ event.slug|default:"—" }}</td></tr>
   <tr><td>start date:</td><td>{{ event.start|default:"—" }}</td></tr>
   <tr><td>end date: </td><td>{{ event.end|default:"—" }}</td></tr>

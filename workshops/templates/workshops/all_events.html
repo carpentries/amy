@@ -14,7 +14,6 @@
     <table class="table table-striped">
       <tr>
         <th>ID</th>
-        <th>published</th>
         <th>tags</th>
         <th>instructors</th>
         <th>slug</th>
@@ -29,7 +28,6 @@
     {% for event in all_events %}
       <tr>
         <td>{{ event.id }}</td>
-        <td>{{ event.published }}</td>
         <td>{{ event.tags.all | join:", " }}</td>
         {% with num_instructors=event.task_set.instructors.count %}
         <td {% if num_instructors == 0 %}class="warning"{% endif %}>{{ num_instructors }}</td>
