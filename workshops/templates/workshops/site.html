@@ -41,5 +41,8 @@
 <p>No events.</p>
 {% endif %}
 
-<p class="edit-object"><a href="{% url 'site_edit' site.domain %}" class="btn btn-primary">Edit</a></p>
+<div class="clearfix">
+  <p class="edit-object pull-left"><a href="{% url 'site_edit' site.domain %}" class="btn btn-primary">Edit</a></p>
+  <p class="delete-object pull-right"><a href="{% url 'site_delete' site.domain %}" onclick='return confirm("Are you sure you wish to remove \"{{ site }}\"?")' class="btn btn-danger">Delete site</a></p>
+</div>
 {% endblock %}
