@@ -12,13 +12,12 @@ WEBSITE_REGEXP = re.compile(
 WEBSITE_SCHEMA = 'http://{name}.github.io/{repo}/'
 
 
-@register.assignment_tag(takes_context=True)
-def format_link_to_repository(context, link):
+@register.assignment_tag
+def format_link_to_repository(link):
     """
     Use: {% format_link_to_repository event.url as repo_link %}
     Then: {{ repo_link|urlize|default_if_none:"—" }}
     """
-    print(context['request'])
     if not link:
         return link
     elif REPO_REGEXP.match(link):
