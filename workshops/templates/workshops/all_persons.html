@@ -1,6 +1,12 @@
-{% extends "workshops/_page.html" %}
+{% extends "workshops/_page_fluid.html" %}
 
-{% block content %}
+{% load crispy_forms_tags %}
+{% block sidebar %}
+    <h3>Filter</h3>
+    {% crispy filter.form form_helper %}
+{% endblock %}
+
+{% block content-fluid %}
     <p><a href="{% url 'person_add' %}" class="btn btn-success">New person</a></p>
 {% if all_persons %}
     <table class="table table-striped">
@@ -12,7 +18,7 @@
       </tr>
     {% for person in all_persons %}
       <tr>
-        <td class="text-center">{% if person.is_instructor %}✓{% endif %}</td>
+        <td class="text-center">{% if instructor in person.badges.all %}✓{% endif %}</td>
         <td><a href="{% url 'person_details' person.id %}">{{ person.get_full_name }}</a></td>
         <td>{% if person.email %}<a href="mailto:{{ person.email }}">{{ person.email }}</a>{% else %}—{% endif %}</td>
         <td>

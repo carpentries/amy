@@ -36,11 +36,15 @@ from workshops.forms import (
     SearchForm, DebriefForm, InstructorsForm, PersonForm, PersonBulkAddForm,
     EventForm, TaskForm, TaskFullForm, bootstrap_helper,
     bootstrap_helper_with_add, BadgeAwardForm, PersonAwardForm,
-    PersonPermissionsForm
+    PersonPermissionsForm, bootstrap_helper_filter
 )
 from workshops.util import (
     earth_distance, upload_person_task_csv,  verify_upload_person_task,
     create_uploaded_persons_tasks, InternalError
+)
+
+from workshops.filters import (
+    EventFilter, SiteFilter, PersonFilter, TaskFilter, AirportFilter
 )
 
 #------------------------------------------------------------
@@ -144,12 +148,12 @@ SITE_FIELDS = ['domain', 'fullname', 'country', 'notes']
 def all_sites(request):
     '''List all sites.'''
 
-    sites = Site.objects.order_by('domain')
-    sites = _get_pagination_items(request, sites)
-    user_can_add = request.user.has_perm('edit')
+    filter = SiteFilter(request.GET, queryset=Site.objects.all())
+    sites = _get_pagination_items(request, filter)
     context = {'title' : 'All Sites',
                'all_sites' : sites,
-               'user_can_add' : user_can_add}
+               'filter': filter,
+               'form_helper': bootstrap_helper_filter}
     return render(request, 'workshops/all_sites.html', context)
 
 
@@ -198,12 +202,12 @@ AIRPORT_FIELDS = ['iata', 'fullname', 'country', 'latitude', 'longitude']
 @login_required
 def all_airports(request):
     '''List all airports.'''
-    airports = Airport.objects.order_by('iata')
-    airports = _get_pagination_items(request, airports)
-    user_can_add = request.user.has_perm('edit')
+    filter = AirportFilter(request.GET, queryset=Airport.objects.all())
+    airports = _get_pagination_items(request, filter)
     context = {'title' : 'All Airports',
                'all_airports' : airports,
-               'user_can_add' : user_can_add}
+               'filter': filter,
+               'form_helper': bootstrap_helper_filter}
     return render(request, 'workshops/all_airports.html', context)
 
 
@@ -248,17 +252,18 @@ def airport_delete(request, airport_iata):
 def all_persons(request):
     '''List all persons.'''
 
-    persons = Person.objects.order_by('family', 'personal')
-    persons = _get_pagination_items(request, persons)
+    filter = PersonFilter(
+        request.GET,
+        queryset=Person.objects.all().defer('notes')  # notes are too large
+                                     .prefetch_related('badges')
+    )
+    persons = _get_pagination_items(request, filter)
     instructor = Badge.objects.get(name='instructor')
-    for p in persons:
-        try:
-            Award.objects.get(person__id=p.id, badge__id=instructor.id)
-            p.is_instructor = True
-        except ObjectDoesNotExist:
-            p.is_instructor = False
     context = {'title' : 'All Persons',
-               'all_persons' : persons}
+               'all_persons' : persons,
+               'instructor': instructor,
+               'filter': filter,
+               'form_helper': bootstrap_helper_filter}
     return render(request, 'workshops/all_persons.html', context)
 
 
@@ -564,11 +569,16 @@ def person_password(request, person_id):
 @login_required
 def all_events(request):
     '''List all events.'''
-
-    events = Event.objects.all()
-    events = _get_pagination_items(request, events)
+    filter = EventFilter(
+        request.GET,
+        queryset=Event.objects.all().defer('notes')  # notes are too large
+                                    .prefetch_related('site', 'tags'),
+    )
+    events = _get_pagination_items(request, filter)
     context = {'title' : 'All Events',
-               'all_events' : events}
+               'all_events' : events,
+               'filter': filter,
+               'form_helper': bootstrap_helper_filter}
     return render(request, 'workshops/all_events.html', context)
 
 
@@ -704,12 +714,16 @@ def event_delete(request, event_ident):
 def all_tasks(request):
     '''List all tasks.'''
 
-    tasks = Task.objects.order_by('event', 'person', 'role')
-    tasks = _get_pagination_items(request, tasks)
-    user_can_add = request.user.has_perm('edit')
+    filter = TaskFilter(
+        request.GET,
+        queryset=Task.objects.all().select_related('event', 'person', 'role')
+                                   .defer('person__notes', 'event__notes')
+    )
+    tasks = _get_pagination_items(request, filter)
     context = {'title' : 'All Tasks',
                'all_tasks' : tasks,
-               'user_can_add' : user_can_add}
+               'filter': filter,
+               'form_helper': bootstrap_helper_filter}
     return render(request, 'workshops/all_tasks.html', context)
 
 
