@@ -61,10 +61,7 @@ TEMPLATES = [
 ]
 
 ALLOWED_HOSTS = [
-    'software-carpentry.org',
-    'software-carpentry.org.',
-    'amy.software-carpentry.org',
-    'amy.software-carpentry.org.'
+    os.environ.get('AMY_HOSTNAME', ''),
 ]
 
 
