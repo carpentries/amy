@@ -278,7 +278,7 @@ class EventManager(models.Manager):
 class Event(models.Model):
     '''Represent a single event.'''
 
-    site       = models.ForeignKey(Site)
+    site       = models.ForeignKey(Site, on_delete=models.PROTECT)
     tags       = models.ManyToManyField(Tag)
     organizer  = models.ForeignKey(Site, related_name='organizer', null=True,
                                    blank=True, on_delete=models.PROTECT)
