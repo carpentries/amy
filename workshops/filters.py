@@ -13,7 +13,7 @@ class EventFilter(django_filters.FilterSet):
             'organizer',
             'invoiced',
         ]
-        order_by = ['slug', '-slug', 'start', '-start', 'end', '-end']
+        order_by = ['-slug', 'slug', 'start', '-start', 'end', '-end']
 
 
 class SiteFilter(django_filters.FilterSet):
