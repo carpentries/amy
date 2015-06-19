@@ -1050,29 +1050,27 @@ def _get_pagination_items(request, all_objects):
             items = int(items)
         except ValueError:
             items = ITEMS_PER_PAGE
+    else:
+        # Show everything.
+        items = all_objects.count()
 
     # Figure out where we are.
     page = request.GET.get('page')
 
-    # Show everything.
-    if items == 'all':
-        result = all_objects
-
     # Show selected items.
-    else:
-        paginator = Paginator(all_objects, items)
+    paginator = Paginator(all_objects, items)
 
-        # Select the sites.
-        try:
-            result = paginator.page(page)
+    # Select the sites.
+    try:
+        result = paginator.page(page)
 
-        # If page is not an integer, deliver first page.
-        except PageNotAnInteger:
-            result = paginator.page(1)
+    # If page is not an integer, deliver first page.
+    except PageNotAnInteger:
+        result = paginator.page(1)
 
-        # If page is out of range, deliver last page of results.
-        except EmptyPage:
-            result = paginator.page(paginator.num_pages)
+    # If page is out of range, deliver last page of results.
+    except EmptyPage:
+        result = paginator.page(paginator.num_pages)
 
     return result
 

@@ -1,6 +1,8 @@
 {% extends "workshops/_page_fluid.html" %}
 
 {% load crispy_forms_tags %}
+{% load pagination %}
+
 {% block sidebar %}
     <h3>Filter</h3>
     {% crispy filter.form form_helper %}
@@ -29,21 +31,7 @@
       </tr>
     {% endfor %}
     </table>
-    <div class="pagination">
-      <span class="step-links">
-         {% if all_persons.has_previous %}
-             <a href="?page={{ all_persons.previous_page_number }}">previous</a>
-         {% endif %}
-
-         <span class="current">
-             Page {{ all_persons.number }} of {{ all_persons.paginator.num_pages }}.
-         </span>
-
-         {% if all_persons.has_next %}
-             <a href="?page={{ all_persons.next_page_number }}">next</a>
-         {% endif %}
-      </span>
-    </div>
+    {% pagination all_persons %}
     <p><a href="{% url 'person_add' %}" class="btn btn-success">New person</a></p>
 {% else %}
     <p>No persons.</p>
