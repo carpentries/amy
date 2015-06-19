@@ -184,7 +184,7 @@ class EventQuerySet(models.query.QuerySet):
     '''Handles finding past, ongoing and upcoming events'''
 
     def past_events(self):
-        '''Return a queryset for all past events.
+        '''Return past events.
 
         Past events are those which started before today, and
         which either ended before today or whose end is NULL
@@ -203,19 +203,20 @@ class EventQuerySet(models.query.QuerySet):
         return queryset
 
     def upcoming_events(self):
-        '''Return a queryset for all published upcoming events.
+        '''Return published upcoming events.
 
-        Upcoming events are those which start after today and are published.
-        Events are ordered by date, soonest first.
+        Upcoming events are those which start after today.  Published
+        events are those which have a URL. Events are ordered by date,
+        soonest first.
         '''
 
         queryset = self.filter(start__gt=datetime.date.today())\
-                       .filter(published=True)\
+                       .filter(url__isnull=False)\
                        .order_by('start')
         return queryset
 
     def ongoing_events(self):
-        '''Return a queryset for all ongoing events.
+        '''Return ongoing events.
 
         Ongoing events are those which start after today.
         '''
@@ -229,9 +230,14 @@ class EventQuerySet(models.query.QuerySet):
         return queryset
 
     def unpublished_events(self):
-        '''Return a queryset for events that are not yet published.'''
+        '''Return events without URLs that are upcoming or have unknown starts.
 
-        return self.filter(published=False)
+        Events are ordered by slug and then by serial number.'''
+
+        future_without_url = Q(start__gte=datetime.date.today(), url__isnull=True)
+        unknown_start = Q(start__isnull=True)
+        return self.filter(future_without_url | unknown_start)\
+                   .order_by('slug', 'id')
 
     def uninvoiced_events(self):
         '''Return a queryset for events that have not yet been invoiced.
@@ -272,15 +278,16 @@ class EventManager(models.Manager):
 class Event(models.Model):
     '''Represent a single event.'''
 
-    published  = models.BooleanField(default=False)
     site       = models.ForeignKey(Site, on_delete=models.PROTECT)
     tags       = models.ManyToManyField(Tag)
     organizer  = models.ForeignKey(Site, related_name='organizer', null=True,
                                    blank=True, on_delete=models.PROTECT)
-    start      = models.DateField(null=True, blank=True)
+    start      = models.DateField(null=True, blank=True,
+                                  help_text='Setting this and url "publishes" the event.')
     end        = models.DateField(null=True, blank=True)
     slug       = models.CharField(max_length=STR_LONG, null=True, blank=True)
-    url        = models.CharField(max_length=STR_LONG, unique=True, null=True, blank=True)
+    url        = models.CharField(max_length=STR_LONG, unique=True, null=True, blank=True,
+                                  help_text='Setting this and startdate "publishes" the event.')
     reg_key    = models.CharField(max_length=STR_REG_KEY, null=True, blank=True)
     attendance = models.IntegerField(null=True, blank=True)
     admin_fee  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)

@@ -1,8 +1,8 @@
 import cgi
 import traceback
+import datetime
 import os
 import re
-import datetime
 import itertools
 import xml.etree.ElementTree as ET
 
@@ -15,6 +15,7 @@ from ..models import \
     Airport, \
     Award, \
     Badge, \
+    Event, \
     Person, \
     Qualification, \
     Site, \
@@ -159,6 +160,88 @@ class TestBase(TestCase):
         self.ron.user_permissions.add(add_badge)
         self.spiderman.groups.add(badge_admin)
         self.spiderman.user_permissions.add(add_badge)
+
+    def _setUpEvents(self):
+        '''Set up a bunch of events and record some statistics.'''
+
+        today = datetime.date.today()
+
+        # Create a test site
+        test_site = Site.objects.create(domain='example.com',
+                                        fullname='Test Site')
+
+        # Create one new event for each day in the next 10 days,
+        # half with URLs.
+        add_url = True
+        for t in range(1, 11):
+            event_start = today + datetime.timedelta(days=t)
+            date_string = event_start.strftime('%Y-%m-%d')
+            slug = '{0}-upcoming'.format(date_string)
+            if add_url:
+                url = 'http://' + ('{0}'.format(t) * 20)
+            else:
+                url = None
+            add_url = not add_url
+            e = Event.objects.create(start=event_start,
+                                     slug=slug,
+                                     site=test_site,
+                                     admin_fee=100,
+                                     invoiced=False,
+                                     url=url)
+
+        # Create one new event for each day from 10 days ago to
+        # 3 days ago, half invoiced
+        invoiced = True
+        for t in range(3, 11):
+            event_start = today + datetime.timedelta(days=-t)
+            date_string = event_start.strftime('%Y-%m-%d')
+            Event.objects.create(start=event_start,
+                                 slug='{0}-past'.format(date_string),
+                                 site=test_site,
+                                 admin_fee=100,
+                                 invoiced=invoiced)
+            invoiced = not invoiced
+
+        # Create an event that started yesterday and ends tomorrow
+        # with no fee, and without specifying whether they've been
+        # invoiced.
+        event_start = today + datetime.timedelta(days=-1)
+        event_end = today + datetime.timedelta(days=1)
+        Event.objects.create(start=event_start,
+                             end=event_end,
+                             slug='ends_tomorrow',
+                             site=test_site,
+                             admin_fee=0)
+
+        # Create an event that ends today with no fee, and without
+        # specifying whether the fee has been invoiced.
+        event_start = today + datetime.timedelta(days=-1)
+        event_end = today
+        Event.objects.create(start=event_start,
+                             end=event_end,
+                             slug='ends_today',
+                             site=test_site,
+                             admin_fee=0)
+
+        # Create an event that starts today with a fee, and without
+        # specifying whether the fee has been invoiced.
+        event_start = today
+        event_end = today + datetime.timedelta(days=1)
+        Event.objects.create(start=event_start,
+                             end=event_end,
+                             slug='starts_today',
+                             site=test_site,
+                             admin_fee=100)
+
+        # Record some statistics about events.
+        self.num_uninvoiced_events = 0
+        self.num_upcoming = 0
+        for e in Event.objects.all():
+            if (e.admin_fee > 0) and (not e.invoiced) and (e.start < today):
+                self.num_uninvoiced_events += 1
+            if e.url and (e.start > today):
+                self.num_upcoming += 1
+
 
     def _parse(self, response, save_to=None):
         """
