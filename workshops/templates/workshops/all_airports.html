@@ -19,6 +19,21 @@
 	</tr>
     {% endfor %}
     </table>
+    <div class="pagination">
+      <span class="step-links">
+         {% if all_airports.has_previous %}
+             <a href="?page={{ all_airports.previous_page_number }}">previous</a>
+         {% endif %}
+
+         <span class="current">
+             Page {{ all_airports.number }} of {{ all_airports.paginator.num_pages }}.
+         </span>
+
+         {% if all_airports.has_next %}
+             <a href="?page={{ all_airports.next_page_number }}">next</a>
+         {% endif %}
+      </span>
+    </div>
     <p><a href="{% url 'airport_add' %}" class="btn btn-success">New airport</a></p>
 {% else %}
     <p>No airports.</p>

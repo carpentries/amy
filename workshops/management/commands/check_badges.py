@@ -2,7 +2,7 @@ import sys
 import os
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError
-from workshops.models import Badge, Award
+from workshops.models import Award, Badge, Person
 
 
 SKIP_DIRS = ['class']
@@ -37,4 +37,8 @@ class Command(BaseCommand):
         if items:
             print('{0} {1}'.format(badge_name, title))
             for i in sorted(list(items)):
-                print(' ', i)
+                try:
+                    p = Person.objects.get(username=i)
+                    print(' {0}: {1}'.format(i, p))
+                except ObjectDoesNotExist:
+                    print(' {0}'.format(i))
