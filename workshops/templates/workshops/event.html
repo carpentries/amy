@@ -4,12 +4,13 @@
 <p class="edit-object"><a href="{% url 'event_edit' event.id %}" class="btn btn-primary">Edit</a></p>
 <table class="table table-striped">
   <tr><td>published:</td><td>{{ event.published|yesno }}</td></tr>
-  <tr><td>tags:</td><td>{{ event.tags.all | join:", " }}</td></tr>
   <tr><td>slug:</td><td>{{ event.slug|default:"—" }}</td></tr>
-  <tr><td>url:</td><td>{% if event.url %}<a href="{{ event.url }}">{{ event.url }}</a>{% else %}—{% endif %} {% if event.url %}<a href="{% url 'validate_event' event.get_ident %}" class="btn btn-primary btn-xs pull-right" id="validate_event">validate event</a>{% else %}<a class="btn btn-danger btn-xs pull-right" id="error_event_url" href="#" data-toggle="popover" data-trigger="focus" title="Validation error" data-content="Cannot validate an event without URL pointing to the GitHub repository, e.g.: <code>https://github.com/swcarpentry/2015-05-24-training</code>">Error</a>{% endif %}</td></tr>
-  <tr><td>site:</td><td><a href="{% url 'site_details' event.site.domain %}">{{ event.site }}</a></td></tr>
   <tr><td>start date:</td><td>{{ event.start|default:"—" }}</td></tr>
   <tr><td>end date: </td><td>{{ event.end|default:"—" }}</td></tr>
+  <tr><td>site:</td><td><a href="{% url 'site_details' event.site.domain %}">{{ event.site }}</a></td></tr>
+  <tr><td>organizer:</td><td>{% if event.organizer %}<a href="{{ event.organizer.get_absolute_url }}">{{ event.organizer }}</a>{% else %}—{% endif %}</td></tr>
+  <tr><td>tags:</td><td>{{ event.tags.all | join:", " }}</td></tr>
+  <tr><td>url:</td><td>{% if event.url %}<a href="{{ event.url }}">{{ event.url }}</a>{% else %}—{% endif %} {% if event.url %}<a href="{% url 'validate_event' event.get_ident %}" class="btn btn-primary btn-xs pull-right" id="validate_event">validate event</a>{% else %}<a class="btn btn-danger btn-xs pull-right" id="error_event_url" href="#" data-toggle="popover" data-trigger="focus" title="Validation error" data-content="Cannot validate an event without URL pointing to the GitHub repository, e.g.: <code>https://github.com/swcarpentry/2015-05-24-training</code>">Error</a>{% endif %}</td></tr>
   <tr><td>Eventbrite key:</td><td>{{ event.reg_key|default:"—" }}</td></tr>
   <tr><td>attendance:</td><td>{{ event.attendance|default_if_none:"—" }}</td></tr>
   <tr><td>admin fee:</td><td>{{ event.admin_fee|default_if_none:"—" }}</td></tr>

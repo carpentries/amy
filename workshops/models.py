@@ -24,7 +24,7 @@ class Site(models.Model):
 
     domain     = models.CharField(max_length=STR_LONG, unique=True)
     fullname   = models.CharField(max_length=STR_LONG, unique=True)
-    country    = CountryField(null=True)
+    country    = CountryField(null=True, blank=True)
     notes      = models.TextField(default="", blank=True)
 
     def __str__(self):
@@ -108,12 +108,14 @@ class Person(AbstractBaseUser, PermissionsMixin):
     email       = models.CharField(max_length=STR_LONG, unique=True, null=True, blank=True)
     gender      = models.CharField(max_length=1, choices=GENDER_CHOICES, null=True, blank=True)
     may_contact = models.BooleanField(default=True)
-    airport     = models.ForeignKey(Airport, null=True, blank=True)
+    airport     = models.ForeignKey(Airport, null=True, blank=True, on_delete=models.PROTECT)
     github      = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True)
     twitter     = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True)
     url         = models.CharField(max_length=STR_LONG, null=True, blank=True)
     username    = models.CharField(max_length=STR_MED, unique=True)
     notes = models.TextField(default="", blank=True)
+
+    badges = models.ManyToManyField("Badge", through="Award")
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = [
@@ -250,10 +252,9 @@ class EventQuerySet(models.query.QuerySet):
 class EventManager(models.Manager):
     '''A custom manager which is essentially a proxy for EventQuerySet'''
 
-    # Attach our custom query set to the manager
     def get_queryset(self):
-        """Fetch only existing events (ie. not deleted)."""
-        return EventQuerySet(self.model, using=self._db).filter(deleted=False)
+        """Attach our custom query set to the manager."""
+        return EventQuerySet(self.model, using=self._db)
 
     # Proxy methods so we can call our custom filters from the manager
     # without explicitly creating an EventQuerySet first - see
@@ -279,7 +280,8 @@ class Event(models.Model):
 
     site       = models.ForeignKey(Site)
     tags       = models.ManyToManyField(Tag)
-    organizer  = models.ForeignKey(Site, related_name='organizer', null=True, blank=True)
+    organizer  = models.ForeignKey(Site, related_name='organizer', null=True,
+                                   blank=True, on_delete=models.PROTECT)
     start      = models.DateField(null=True, blank=True,
                                   help_text='Setting this and url "publishes" the event.')
     end        = models.DateField(null=True, blank=True)
@@ -291,7 +293,6 @@ class Event(models.Model):
     admin_fee  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
     invoiced   = models.NullBooleanField(default=False, blank=True)
     notes      = models.TextField(default="", blank=True)
-    deleted = models.BooleanField(default=False)
 
     class Meta:
         ordering = ('-start', )
@@ -341,10 +342,6 @@ class Role(models.Model):
 
 
 class TaskManager(models.Manager):
-    def get_queryset(self):
-        """Fetch only existing tasks (ie. not deleted)."""
-        return super().get_queryset().filter(deleted=False)
-
     def instructors(self):
         """Fetch tasks with role 'instructor'."""
         return self.get_queryset().filter(role__name="instructor")
@@ -364,7 +361,6 @@ class Task(models.Model):
     event      = models.ForeignKey(Event)
     person     = models.ForeignKey(Person)
     role       = models.ForeignKey(Role)
-    deleted = models.BooleanField(default=False)
 
     objects = TaskManager()
 

@@ -14,7 +14,7 @@ from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.conf import settings
 from django.http import Http404, HttpResponse
 from django.db import IntegrityError, transaction
-from django.db.models import Count, Sum, Q, Model
+from django.db.models import Count, Sum, Q, Model, ProtectedError
 from django.shortcuts import redirect, render, get_object_or_404
 from django.views.generic.base import ContextMixin
 from django.views.generic.edit import CreateView, UpdateView
@@ -36,11 +36,15 @@ from workshops.forms import (
     SearchForm, DebriefForm, InstructorsForm, PersonForm, PersonBulkAddForm,
     EventForm, TaskForm, TaskFullForm, bootstrap_helper,
     bootstrap_helper_with_add, BadgeAwardForm, PersonAwardForm,
-    PersonPermissionsForm
+    PersonPermissionsForm, bootstrap_helper_filter
 )
 from workshops.util import (
     earth_distance, upload_person_task_csv,  verify_upload_person_task,
     create_uploaded_persons_tasks, InternalError
+)
+
+from workshops.filters import (
+    EventFilter, SiteFilter, PersonFilter, TaskFilter, AirportFilter
 )
 
 #------------------------------------------------------------
@@ -144,12 +148,12 @@ SITE_FIELDS = ['domain', 'fullname', 'country', 'notes']
 def all_sites(request):
     '''List all sites.'''
 
-    sites = Site.objects.order_by('domain')
-    sites = _get_pagination_items(request, sites)
-    user_can_add = request.user.has_perm('edit')
+    filter = SiteFilter(request.GET, queryset=Site.objects.all())
+    sites = _get_pagination_items(request, filter)
     context = {'title' : 'All Sites',
                'all_sites' : sites,
-               'user_can_add' : user_can_add}
+               'filter': filter,
+               'form_helper': bootstrap_helper_filter}
     return render(request, 'workshops/all_sites.html', context)
 
 
@@ -177,6 +181,19 @@ class SiteUpdate(LoginRequiredMixin, UpdateViewContext):
     slug_url_kwarg = 'site_domain'
     template_name = 'workshops/generic_form.html'
 
+
+@login_required
+def site_delete(request, site_domain):
+    """Delete specific site."""
+    try:
+        site = get_object_or_404(Site, domain=site_domain)
+        site.delete()
+        messages.success(request, 'Site was deleted successfully.')
+        return redirect(reverse('all_sites'))
+    except ProtectedError:
+        return _failed_to_delete(request, site)
+
+
 #------------------------------------------------------------
 
 AIRPORT_FIELDS = ['iata', 'fullname', 'country', 'latitude', 'longitude']
@@ -185,12 +202,12 @@ AIRPORT_FIELDS = ['iata', 'fullname', 'country', 'latitude', 'longitude']
 @login_required
 def all_airports(request):
     '''List all airports.'''
-    airports = Airport.objects.order_by('iata')
-    airports = _get_pagination_items(request, airports)
-    user_can_add = request.user.has_perm('edit')
+    filter = AirportFilter(request.GET, queryset=Airport.objects.all())
+    airports = _get_pagination_items(request, filter)
     context = {'title' : 'All Airports',
                'all_airports' : airports,
-               'user_can_add' : user_can_add}
+               'filter': filter,
+               'form_helper': bootstrap_helper_filter}
     return render(request, 'workshops/all_airports.html', context)
 
 
@@ -216,6 +233,18 @@ class AirportUpdate(LoginRequiredMixin, UpdateViewContext):
     slug_url_kwarg = 'airport_iata'
     template_name = 'workshops/generic_form.html'
 
+
+@login_required
+def airport_delete(request, airport_iata):
+    """Delete specific airport."""
+    try:
+        airport = get_object_or_404(Airport, iata=airport_iata)
+        airport.delete()
+        messages.success(request, 'Airport was deleted successfully.')
+        return redirect(reverse('all_airports'))
+    except ProtectedError:
+        return _failed_to_delete(request, airport)
+
 #------------------------------------------------------------
 
 
@@ -223,17 +252,18 @@ class AirportUpdate(LoginRequiredMixin, UpdateViewContext):
 def all_persons(request):
     '''List all persons.'''
 
-    persons = Person.objects.order_by('family', 'personal')
-    persons = _get_pagination_items(request, persons)
+    filter = PersonFilter(
+        request.GET,
+        queryset=Person.objects.all().defer('notes')  # notes are too large
+                                     .prefetch_related('badges')
+    )
+    persons = _get_pagination_items(request, filter)
     instructor = Badge.objects.get(name='instructor')
-    for p in persons:
-        try:
-            Award.objects.get(person__id=p.id, badge__id=instructor.id)
-            p.is_instructor = True
-        except ObjectDoesNotExist:
-            p.is_instructor = False
     context = {'title' : 'All Persons',
-               'all_persons' : persons}
+               'all_persons' : persons,
+               'instructor': instructor,
+               'filter': filter,
+               'form_helper': bootstrap_helper_filter}
     return render(request, 'workshops/all_persons.html', context)
 
 
@@ -478,6 +508,19 @@ def person_edit(request, person_id):
     return render(request, 'workshops/person_edit_form.html', context)
 
 
+@login_required
+def person_delete(request, person_id):
+    """Delete specific person."""
+    try:
+        person = get_object_or_404(Person, pk=person_id)
+        person.delete()
+
+        messages.success(request, 'Person was deleted successfully.')
+        return redirect(reverse('all_persons'))
+    except ProtectedError:
+        return _failed_to_delete(request, person)
+
+
 class PersonPermissions(LoginRequiredMixin, UpdateViewContext):
     model = Person
     form_class = PersonPermissionsForm
@@ -526,11 +569,16 @@ def person_password(request, person_id):
 @login_required
 def all_events(request):
     '''List all events.'''
-
-    events = Event.objects.all()
-    events = _get_pagination_items(request, events)
+    filter = EventFilter(
+        request.GET,
+        queryset=Event.objects.all().defer('notes')  # notes are too large
+                                    .prefetch_related('site', 'tags'),
+    )
+    events = _get_pagination_items(request, filter)
     context = {'title' : 'All Events',
-               'all_events' : events}
+               'all_events' : events,
+               'filter': filter,
+               'form_helper': bootstrap_helper_filter}
     return render(request, 'workshops/all_events.html', context)
 
 
@@ -647,19 +695,17 @@ def event_edit(request, event_ident):
 
 @login_required
 def event_delete(request, event_ident):
-    """Mark event as deleted.
-
-    Additionally mark tasks pointing at that event as deleted, too."""
+    """Delete event, its tasks and related awards."""
     try:
         event = Event.get_by_ident(event_ident)
-        tasks = event.task_set
     except ObjectDoesNotExist:
         raise Http404("No event found matching the query.")
 
-    tasks.update(deleted=True)
-    event.deleted = True
-    event.save()
-    messages.success(request, 'Event was deleted successfully.')
+    event.delete()
+
+    messages.success(request,
+                     'Event, its tasks and related awards were deleted '
+                     'successfully.')
     return redirect(reverse('all_events'))
 
 #------------------------------------------------------------
@@ -668,12 +714,16 @@ def event_delete(request, event_ident):
 def all_tasks(request):
     '''List all tasks.'''
 
-    tasks = Task.objects.order_by('event', 'person', 'role')
-    tasks = _get_pagination_items(request, tasks)
-    user_can_add = request.user.has_perm('edit')
+    filter = TaskFilter(
+        request.GET,
+        queryset=Task.objects.all().select_related('event', 'person', 'role')
+                                   .defer('person__notes', 'event__notes')
+    )
+    tasks = _get_pagination_items(request, filter)
     context = {'title' : 'All Tasks',
                'all_tasks' : tasks,
-               'user_can_add' : user_can_add}
+               'filter': filter,
+               'form_helper': bootstrap_helper_filter}
     return render(request, 'workshops/all_tasks.html', context)
 
 
@@ -689,9 +739,9 @@ def task_details(request, task_id):
 @login_required
 def task_delete(request, task_id):
     '''Delete a task. This is used on the event edit page'''
-    t = Task.objects.get(pk=task_id)
-    t.deleted = True
-    t.save()
+    t = get_object_or_404(Task, pk=task_id)
+    t.delete()
+
     messages.success(request, 'Task was deleted successfully.')
     return redirect(event_edit, t.event.id)
 
@@ -817,25 +867,27 @@ def search(request):
                 sites = Site.objects.filter(
                     Q(domain__contains=term) |
                     Q(fullname__contains=term) |
-                    Q(notes__contains=term))
+                    Q(notes__contains=term)) \
+                    .order_by('fullname')
             if form.cleaned_data['in_events']:
                 events = Event.objects.filter(
                     Q(slug__contains=term) |
                     Q(notes__contains=term) |
                     Q(site__domain__contains=term) |
-                    Q(site__fullname__contains=term))
+                    Q(site__fullname__contains=term)) \
+                    .order_by('-slug')
             if form.cleaned_data['in_persons']:
                 persons = Person.objects.filter(
                     Q(personal__contains=term) |
                     Q(family__contains=term) |
                     Q(email__contains=term) |
-                    Q(github__contains=term))
+                    Q(github__contains=term)) \
+                    .order_by('family')
             if form.cleaned_data['in_airports']:
                 airports = Airport.objects.filter(
                     Q(iata__contains=term) |
-                    Q(fullname__contains=term))
-        else:
-            pass # FIXME: error message
+                    Q(fullname__contains=term)) \
+                    .order_by('iata')
 
     # if a GET (or any other method) we'll create a blank form
     else:
@@ -998,29 +1050,27 @@ def _get_pagination_items(request, all_objects):
             items = int(items)
         except ValueError:
             items = ITEMS_PER_PAGE
+    else:
+        # Show everything.
+        items = all_objects.count()
 
     # Figure out where we are.
     page = request.GET.get('page')
 
-    # Show everything.
-    if items == 'all':
-        result = all_objects
-
     # Show selected items.
-    else:
-        paginator = Paginator(all_objects, items)
+    paginator = Paginator(all_objects, items)
 
-        # Select the sites.
-        try:
-            result = paginator.page(page)
+    # Select the sites.
+    try:
+        result = paginator.page(page)
 
-        # If page is not an integer, deliver first page.
-        except PageNotAnInteger:
-            result = paginator.page(1)
+    # If page is not an integer, deliver first page.
+    except PageNotAnInteger:
+        result = paginator.page(1)
 
-        # If page is out of range, deliver last page of results.
-        except EmptyPage:
-            result = paginator.page(paginator.num_pages)
+    # If page is out of range, deliver last page of results.
+    except EmptyPage:
+        result = paginator.page(paginator.num_pages)
 
     return result
 
@@ -1044,3 +1094,29 @@ def _time_series(request, data, title):
     context = {'title': title,
                'data': data}
     return render(request, 'workshops/time_series.html', context)
+
+
+def _failed_to_delete(request, object, back=None):
+    context = {
+        'title': 'Failed to delete',
+        'back': back or object.get_absolute_url,
+        'object': object,
+        'refs': dict(),
+    }
+
+    # all reverse FK fields in the object model
+    fields = [
+        f for f in object._meta.get_fields()
+        if (f.one_to_many or f.one_to_one or f.many_to_many) and f.auto_created
+    ]
+    # find out their real names to access with getattr(object, field_name)
+    field_names = [f.related_name or f.name + "_set" for f in fields]
+
+    for field_name in field_names:
+        try:
+            context['refs'][field_name] = getattr(object, field_name)
+        except AttributeError:
+            # fail silently if we cannot get some object.field_name
+            pass
+
+    return render(request, 'workshops/failed_to_delete.html', context)

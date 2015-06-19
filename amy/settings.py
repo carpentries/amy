@@ -82,6 +82,7 @@ INSTALLED_APPS = (
     'crispy_forms',
     'selectable',
     'django_countries',
+    'django_filters',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3'

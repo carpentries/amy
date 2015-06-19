@@ -86,3 +86,12 @@ class TestTask(TestBase):
         tasks = event.task_set.all()
 
         assert set(tasks) == set(instructors) | set(learners) | set(helpers)
+
+    def test_delete_task(self):
+        """Make sure deleted task is longer accessible."""
+        for task in Task.objects.all():
+            rv = self.client.get(reverse('task_delete', args=[task.pk, ]))
+            assert rv.status_code == 302
+
+            with self.assertRaises(Task.DoesNotExist):
+                Task.objects.get(pk=task.pk)

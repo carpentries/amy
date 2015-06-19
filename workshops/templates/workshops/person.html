@@ -19,6 +19,7 @@
   <tr><td>github:</td><td id="github">{% if person.github %}<a href="https://github.com/{{ person.github }}">{{ person.github }}</a>{% else %}—{% endif %}</td></tr>
   <tr><td>twitter:</td><td id="twitter">{% if person.twitter %}<a href="https://twitter.com/{{ person.twitter }}">{{ person.twitter }}</a>{% else %}—{% endif %}</td></tr>
   <tr><td>url:</td><td id="url">{{ person.url|default:""|urlize|default:"—" }}</td></tr>
+  <tr><td>badges:</td><td id="badges">{{ person.badges.all|join:", " }}</td></tr>
 </table>
 
 {% if person.notes %}
@@ -57,6 +58,7 @@
   <div class="btn-group pull-right" role="group">
     <a href="{% url 'person_permissions' person.id %}" class="btn btn-default">Change permissions</a>
     <a href="{% url 'person_password' person.id %}" class="btn btn-default">Change password</a>
+    <a href="{% url 'person_delete' person.id %}" onclick='return confirm("Are you sure you wish to remove \"{{ person }}\"?")' class="btn btn-danger">Delete person</a>
   </div>
 </div>
 {% endblock %}

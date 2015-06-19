@@ -4,7 +4,7 @@ import cgi
 
 from django.test import TestCase
 from django.core.urlresolvers import reverse
-from ..models import Event, Site, Tag, Person, Role
+from ..models import Event, Site, Tag, Person, Role, Task
 from .base import TestBase
 
 
@@ -12,6 +12,7 @@ class TestEvent(TestBase):
     "Tests for the event model and its manager."
 
     def setUp(self):
+        self._setUpNonInstructors()
         self._setUpUsersAndLogin()
 
         # Create a test tag
@@ -104,6 +105,29 @@ class TestEvent(TestBase):
         content = response.content.decode('utf-8')
         assert "/workshops/person/1" in content
         assert "Test Role" in content
+
+    def test_delete_event(self):
+        """Make sure deleted event and its tasks are no longer accessible."""
+        event = Event.objects.get(slug="starts_today")
+        role1 = Role.objects.create(name='NonInstructor')
+        t1 = Task.objects.create(event=event, person=self.spiderman,
+                                 role=role1)
+        t2 = Task.objects.create(event=event, person=self.ironman,
+                                 role=role1)
+        t3 = Task.objects.create(event=event, person=self.blackwidow,
+                                 role=role1)
+        event.task_set = [t1, t2, t3]
+        event.save()
+
+        rv = self.client.get(reverse('event_delete', args=[event.pk, ]))
+        assert rv.status_code == 302
+
+        with self.assertRaises(Event.DoesNotExist):
+            Event.objects.get(slug="starts_today")
+
+        for t in [t1, t2, t3]:
+            with self.assertRaises(Task.DoesNotExist):
+                Task.objects.get(pk=t.pk)
 
 
 class TestEventViews(TestBase):

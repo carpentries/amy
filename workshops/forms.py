@@ -38,8 +38,19 @@ class BootstrapHelperWithAdd(BootstrapHelper):
 
         self.inputs[-1] = Submit('submit', 'Add')
 
+
+class BootstrapHelperFilter(FormHelper):
+    form_method = 'get'
+
+    def __init__(self, form=None):
+        super().__init__(form)
+        self.attrs['role'] = 'form'
+        self.inputs.append(Submit('', 'Submit'))
+
+
 bootstrap_helper = BootstrapHelper()
 bootstrap_helper_with_add = BootstrapHelperWithAdd()
+bootstrap_helper_filter = BootstrapHelperFilter()
 
 
 class InstructorsForm(forms.Form):
@@ -193,7 +204,10 @@ class EventForm(forms.ModelForm):
 
     class Meta:
         model = Event
-        exclude = ('deleted', )
+        # reorder fields, don't display 'deleted' field
+        fields = ('published', 'slug', 'start', 'end', 'site', 'organizer',
+                  'tags', 'url', 'reg_key', 'admin_fee', 'invoiced',
+                  'attendance', 'notes')
 
 
 class TaskForm(forms.ModelForm):
@@ -208,7 +222,7 @@ class TaskForm(forms.ModelForm):
 
     class Meta:
         model = Task
-        exclude = ('deleted', )
+        fields = '__all__'
         widgets = {'event': HiddenInput}
 
 
@@ -224,7 +238,7 @@ class TaskFullForm(TaskForm):
 
     class Meta:
         model = Task
-        exclude = ('deleted', )
+        fields = '__all__'
 
 
 class PersonForm(forms.ModelForm):
