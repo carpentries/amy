@@ -15,8 +15,14 @@
          {% else %}
            <li>
          {% endif %}
-         <a href="?page={{ i }}">{{ i }}</a>
-       </li>
+
+         {% if current_query.urlencode != '' %}
+           <a href="?page={{ i }}&{{ current_query.urlencode }}">{{ i }}</a>
+         {% else %}
+           <a href="?page={{ i }}">{{ i }}</a>
+         {% endif %}
+
+           </li>
        {% endif %}
      {% endfor %}
 
