@@ -1,15 +1,32 @@
-<div class="pagination">
-  <span class="step-links">
+<nav>
+  <ul class="pagination">
      {% if objects.has_previous %}
-         <a href="?{{ prev_query.urlencode }}">previous</a>
+       <li>
+         <a href="?{{ prev_query.urlencode }}" aria-label="Previous">
+           <span aria-hidden="true">&laquo;</span>
+         </a>
+       </li>
      {% endif %}
 
-     <span class="current">
-         Page {{ objects.number }} of {{ objects.paginator.num_pages }}.
-     </span>
+     {% for i in objects.paginator.page_range %}
+       {% if i > objects.number|add:"-10" and i < objects.number|add:"11" %}
+         {% if objects.number == i %}
+           <li class="active">
+         {% else %}
+           <li>
+         {% endif %}
+         <a href="?page={{ i }}">{{ i }}</a>
+       </li>
+       {% endif %}
+     {% endfor %}
 
      {% if objects.has_next %}
-         <a href="?{{ next_query.urlencode }}">next</a>
+       <li>
+         <a href="?{{ next_query.urlencode }}" aria-label="Next">
+           <span aria-label="true">&raquo;</span>
+         </a>
+       </li>
+
      {% endif %}
-  </span>
-</div>
+  </ul>
+</nav>
