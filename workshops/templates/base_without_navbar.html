@@ -21,16 +21,20 @@
     <div class="container{% block fluid2 %}{% endblock %}">
       {% block title %}{% if title %}<h1>{{ title }}</h1>{% endif %}{% endblock %}
       {% for message in messages %}
-      <div class="alert {{ message.tags }}">
-        {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
-        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span><span class="sr-only">Error:</span>
-        {% elif message.level == DEFAULT_MESSAGE_LEVELS.WARNING %}
-        <span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span><span class="sr-only">Warning:</span>
-        {% elif message.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
-        <span class="glyphicon glyphicon-ok-sign" aria-hidden="true"></span><span class="sr-only">Success:</span>
-        {% endif %}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
-        {{ message }}
+      <div class="row">
+        <div class="{% block fluid-messages %}col-sm-12{% endblock %}">
+          <div class="alert {{ message.tags }}">
+            {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span><span class="sr-only">Error:</span>
+            {% elif message.level == DEFAULT_MESSAGE_LEVELS.WARNING %}
+            <span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span><span class="sr-only">Warning:</span>
+            {% elif message.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+            <span class="glyphicon glyphicon-ok-sign" aria-hidden="true"></span><span class="sr-only">Success:</span>
+            {% endif %}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
+            {{ message }}
+          </div>
+        </div>
       </div>
       {% endfor %}
       {% block content %}{% endblock %}
