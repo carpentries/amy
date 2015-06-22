@@ -4,17 +4,17 @@ from __future__ import unicode_literals
 from django.db import models, migrations
 
 TRANSLATE_NAMES = {
-    'Git': ['swc/git-novice'],
-    'Make': [],
-    'Matlab': ['swc/matlab-novice-inflammation'],
-    'Mercurial': ['swc/hg-novice'],
-    'Python': ['swc/python-novice-inflammation', 'dc/python-ecology'],
-    'R': ['swc/r-novice-inflammation', 'dc/r-ecology'],
-    'Regexp': [],
-    'SQL': ['swc/sql-novice-survey', 'dc/sql-ecology'],
-    'Subversion': [],
-    'Unix': ['swc/shell-novice', 'dc/shell-ecology'],
-    None: ['dc/excel-ecology']
+    'Git': ['swc/git'],
+    'Make': ['swc/make'],
+    'Matlab': ['swc/matlab'],
+    'Mercurial': ['swc/hg'],
+    'Python': ['swc/python', 'dc/python'],
+    'R': ['swc/r', 'dc/r'],
+    'Regexp': ['swc/regexp'],
+    'SQL': ['swc/sql', 'dc/sql'],
+    'Subversion': ['swc/svn'],
+    'Unix': ['swc/shell', 'dc/shell'],
+    None: ['dc/excel']
 }
 
 EXTRA_LEGACY_NAMES = ['MATLAB']
