@@ -6,6 +6,7 @@ import sys
 import csv
 import re
 import getopt
+import yaml
 
 TXLATE_HEADERS = {
     'Timestamp': 'timestamp',
@@ -148,8 +149,7 @@ def txlate_list(settings, name, raw):
 def display(settings, data):
     '''Show data as text.'''
 
-    for record in data:
-        print(record)
+    yaml.dump(data, stream=sys.stdout, indent=2)
 
 
 if __name__ == '__main__':
