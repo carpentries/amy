@@ -61,10 +61,7 @@ TEMPLATES = [
 ]
 
 ALLOWED_HOSTS = [
-    'software-carpentry.org',
-    'software-carpentry.org.',
     'amy.software-carpentry.org',
-    'amy.software-carpentry.org.'
 ]
 
 
@@ -82,6 +79,7 @@ INSTALLED_APPS = (
     'crispy_forms',
     'selectable',
     'django_countries',
+    'django_filters',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3'

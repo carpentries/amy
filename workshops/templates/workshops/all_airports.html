@@ -1,39 +1,39 @@
-{% extends "workshops/_page.html" %}
+{% extends "workshops/_page_fluid.html" %}
 
-{% block content %}
+{% load crispy_forms_tags %}
+{% load pagination %}
+
+{% block sidebar %}
+    <h3>Filter</h3>
+    {% crispy filter.form form_helper %}
+{% endblock %}
+
+{% block content-fluid %}
     <p><a href="{% url 'airport_add' %}" class="btn btn-success">New airport</a></p>
 {% if all_airports %}
     <table class="table table-striped">
         <tr>
-	    <th>IATA</th>
-	    <th>full name</th>
-	    <th>latitude</th>
-	    <th>longitude</th>
-	</tr>
+            <th>IATA</th>
+            <th>full name</th>
+            <th>latitude</th>
+            <th>longitude</th>
+            <th class="additional-links"></th>
+        </tr>
     {% for airport in all_airports %}
         <tr>
             <td>{{ airport.iata }}</td>
             <td><a href="{% url 'airport_details' airport.iata %}">{{ airport.fullname }}</a></td>
             <td>{{ airport.latitude }}</td>
             <td>{{ airport.longitude }}</td>
-	</tr>
+            <td>
+                <a href="{% url 'airport_details' airport.iata %}" title="View {{ airport }}"><span class="glyphicon glyphicon-option-horizontal"></span></a>
+                &nbsp;
+                <a href="{% url 'airport_edit' airport.iata %}" title="Edit {{ airport }}"><span class="glyphicon glyphicon-pencil"></span></a>
+            </td>
+        </tr>
     {% endfor %}
     </table>
-    <div class="pagination">
-      <span class="step-links">
-         {% if all_airports.has_previous %}
-             <a href="?page={{ all_airports.previous_page_number }}">previous</a>
-         {% endif %}
-
-         <span class="current">
-             Page {{ all_airports.number }} of {{ all_airports.paginator.num_pages }}.
-         </span>
-
-         {% if all_airports.has_next %}
-             <a href="?page={{ all_airports.next_page_number }}">next</a>
-         {% endif %}
-      </span>
-    </div>
+    {% pagination all_airports %}
     <p><a href="{% url 'airport_add' %}" class="btn btn-success">New airport</a></p>
 {% else %}
     <p>No airports.</p>

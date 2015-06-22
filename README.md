@@ -56,14 +56,20 @@ before starting work on new features.
     ~~~
     $ make database
     ~~~
+    
+5.  Update the models in your local database:
 
-5.  Create an administrator account:
+    ~~~
+    $ make migrations
+    ~~~
+
+6.  Create an administrator account:
 
     ~~~
     $ python3 manage.py createsuperuser
     ~~~
 
-6.  Start a local Django development server by running:
+7.  Start a local Django development server by running:
 
     ~~~
     $ make serve
@@ -71,7 +77,7 @@ before starting work on new features.
 
     **Note**:  this also installs front-end dependencies for Amy, such as jQuery or Bootstrap.
 
-7.  Open <http://localhost:8000/workshops/> in your browser and start clicking.
+8.  Open <http://localhost:8000/workshops/> in your browser and start clicking.
 
     Use the administrator account that you created.
 

@@ -1,6 +1,7 @@
 {% extends "workshops/_page.html" %}
 
 {% load crispy_forms_tags %}
+{% load pagination %}
 
 {% block content %}
 <table class="table table-striped">
@@ -28,19 +29,7 @@
     </tr>
     {% endfor %}
   </table>
-  <div class="pagination">
-    <span class="step-links">
-      {% if awards.has_previous %}
-      <a href="?page={{ awards.previous_page_number }}">previous</a>
-      {% endif %}
-      <span class="current">
-        Page {{ awards.number }} of {{ awards.paginator.num_pages }}.
-      </span>
-      {% if awards.has_next %}
-      <a href="?page={{ awards.next_page_number }}">next</a>
-      {% endif %}
-    </span>
-  </div>
+  {% pagination awards %}
 {% else %}
 <p>None awarded.</p>
 {% endif %}

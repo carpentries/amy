@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block fluid1 %}-fluid{% endblock %}
+{% block fluid2 %}-fluid{% endblock %}
+{% block fluid3 %}-fluid{% endblock %}
+{% block fluid-messages %}col-sm-10 col-sm-offset-2{% endblock %}
+
+{% block title %}{% endblock %}
+{% block content %}
+  <div class="row">
+    <div class="col-sm-2 col-md-2 sidebar">
+    {% block sidebar %}{% endblock %}
+    </div>
+    <div class="col-sm-10 col-md-10 col-sm-offset-2 col-md-offset-2 main">
+    {% if title %}<h1>{{ title }}</h1>{% endif %}
+    {% block content-fluid %}{% endblock %}
+    </div>
+  </div>
+{% endblock %}

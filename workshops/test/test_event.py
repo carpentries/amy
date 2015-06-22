@@ -1,10 +1,10 @@
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 import sys
 import cgi
 
 from django.test import TestCase
 from django.core.urlresolvers import reverse
-from ..models import Event, Site, Tag, Person, Role
+from ..models import Event, Site, Tag, Person, Role, Task
 from .base import TestBase
 
 
@@ -12,12 +12,8 @@ class TestEvent(TestBase):
     "Tests for the event model and its manager."
 
     def setUp(self):
+        self._setUpNonInstructors()
         self._setUpUsersAndLogin()
-        today = date.today()
-
-        # Create a test site
-        test_site = Site.objects.create(domain='example.com',
-                                        fullname='Test Site')
 
         # Create a test tag
         test_tag = Tag.objects.create(name='Test Tag', details='For testing')
@@ -25,75 +21,8 @@ class TestEvent(TestBase):
         # Create a test role
         test_role = Role.objects.create(name='Test Role')
 
-        # Create one new event for each day in the next 10 days, half published.
-        published = True
-        for t in range(1, 11):
-            event_start = today + timedelta(days=t)
-            date_string = event_start.strftime('%Y-%m-%d')
-            Event.objects.create(start=event_start,
-                                 slug='{0}-upcoming'.format(date_string),
-                                 site=test_site,
-                                 admin_fee=100,
-                                 invoiced=False,
-                                 published=published)
-            published = not published
-
-        # Create one new event for each day from 10 days ago to
-        # 3 days ago, half invoiced, all published.
-        invoiced = True
-        for t in range(3, 11):
-            event_start = today + timedelta(days=-t)
-            date_string = event_start.strftime('%Y-%m-%d')
-            Event.objects.create(start=event_start,
-                                 slug='{0}-past'.format(date_string),
-                                 site=test_site,
-                                 admin_fee=100,
-                                 invoiced=invoiced,
-                                 published=True)
-            invoiced = not invoiced
-
-        # Create an event that started yesterday and ends tomorrow
-        # with no fee, and without specifying whether they've been
-        # invoiced.
-        event_start = today + timedelta(days=-1)
-        event_end = today + timedelta(days=1)
-        Event.objects.create(start=event_start,
-                             end=event_end,
-                             slug='ends_tomorrow',
-                             site=test_site,
-                             admin_fee=0,
-                             published=True)
-
-        # Create an event that ends today with no fee, and without
-        # specifying whether the fee has been invoiced.
-        event_start = today + timedelta(days=-1)
-        event_end = today
-        Event.objects.create(start=event_start,
-                             end=event_end,
-                             slug='ends_today',
-                             site=test_site,
-                             admin_fee=0,
-                             published=True)
-
-        # Create an event that starts today with a fee, and without
-        # specifying whether the fee has been invoiced.
-        event_start = today
-        event_end = today + timedelta(days=1)
-        Event.objects.create(start=event_start,
-                             end=event_end,
-                             slug='starts_today',
-                             site=test_site,
-                             admin_fee=100,
-                             published=True)
-
-        # Record some statistics about events.
-        self.num_uninvoiced_events = 0
-        self.num_upcoming = 0
-        for e in Event.objects.all():
-            if e.published and (e.admin_fee > 0) and (not e.invoiced) and (e.start < today):
-                self.num_uninvoiced_events += 1
-            if e.published and (e.start > today):
-                self.num_upcoming += 1
+        # Set up generic events.
+        self._setUpEvents()
 
     def test_get_uninvoiced_events(self):
         """Test that the events manager can find events that owe money"""
@@ -176,6 +105,29 @@ class TestEvent(TestBase):
         content = response.content.decode('utf-8')
         assert "/workshops/person/1" in content
         assert "Test Role" in content
+
+    def test_delete_event(self):
+        """Make sure deleted event and its tasks are no longer accessible."""
+        event = Event.objects.get(slug="starts_today")
+        role1 = Role.objects.create(name='NonInstructor')
+        t1 = Task.objects.create(event=event, person=self.spiderman,
+                                 role=role1)
+        t2 = Task.objects.create(event=event, person=self.ironman,
+                                 role=role1)
+        t3 = Task.objects.create(event=event, person=self.blackwidow,
+                                 role=role1)
+        event.task_set = [t1, t2, t3]
+        event.save()
+
+        rv = self.client.get(reverse('event_delete', args=[event.pk, ]))
+        assert rv.status_code == 302
+
+        with self.assertRaises(Event.DoesNotExist):
+            Event.objects.get(slug="starts_today")
+
+        for t in [t1, t2, t3]:
+            with self.assertRaises(Task.DoesNotExist):
+                Task.objects.get(pk=t.pk)
 
 
 class TestEventViews(TestBase):
@@ -272,7 +224,6 @@ class TestEventViews(TestBase):
         response = self.client.post(
             reverse('event_add'),
             {
-                'published': False,
                 'site': site.id,
                 'tags': [tag.id],
                 'organizer': site.id,
@@ -281,9 +232,6 @@ class TestEventViews(TestBase):
             url = response['location']
             event_id = int(url.rsplit('/', 1)[1])
             event = Event.objects.get(id=event_id)
-            assert event.published is False, (
-                'New event has wrong published status: {} != {}'.format(
-                    event.published, False))
             assert event.site == site, (
                 'New event has wrong site: {} != {}'.format(event.site, site))
             tags = list(event.tags.all())
@@ -298,7 +246,6 @@ class TestEventViews(TestBase):
         tag = Tag.objects.get(name='Test Tag')
         url = reverse('event_add')
         data = {
-                'published': False,
                 'site': site.id,
                 'tags': [tag.id],
                 'organizer': site.id,

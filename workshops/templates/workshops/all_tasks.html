@@ -1,39 +1,37 @@
-{% extends "workshops/_page.html" %}
+{% extends "workshops/_page_fluid.html" %}
 
-{% block content %}
+{% load crispy_forms_tags %}
+{% load pagination %}
+
+{% block sidebar %}
+    <h3>Filter</h3>
+    {% crispy filter.form form_helper %}
+{% endblock %}
+
+{% block content-fluid %}
     <p><a href="{% url 'task_add' %}" class="btn btn-success">New task</a></p>
 {% if all_tasks %}
     <table class="table table-striped">
         <tr>
-	    <th>event</th>
-	    <th>person</th>
-	    <th>role</th>
-	    <td></td>
-	</tr>
+            <th>event</th>
+            <th>person</th>
+            <th>role</th>
+            <th class="additional-links"></th>
+        </tr>
     {% for task in all_tasks %}
         <tr>
             <td><a href="{{ task.event.get_absolute_url }}">{{ task.event }}</a></td>
             <td><a href="{{ task.person.get_absolute_url }}">{{ task.person.get_full_name }}</a>{% if task.person.email and task.person.may_contact %} &lt;{{ task.person.email|urlize }}&gt;{% endif %}</td>
             <td>{{ task.role }}</td>
-	    <td><a href="{% url 'task_details' task.id %}">...</a></td>
-	</tr>
+            <td>
+                <a href="{% url 'task_details' task.id %}" title="View {{ task }}"><span class="glyphicon glyphicon-option-horizontal"></span></a>
+                &nbsp;
+                <a href="{% url 'task_edit' task.id %}" title="Edit {{ task }}"><span class="glyphicon glyphicon-pencil"></span></a>
+            </td>
+        </tr>
     {% endfor %}
     </table>
-    <div class="pagination">
-      <span class="step-links">
-         {% if all_tasks.has_previous %}
-             <a href="?page={{ all_tasks.previous_page_number }}">previous</a>
-         {% endif %}
-
-         <span class="current">
-             Page {{ all_tasks.number }} of {{ all_tasks.paginator.num_pages }}.
-         </span>
-
-         {% if all_tasks.has_next %}
-             <a href="?page={{ all_tasks.next_page_number }}">next</a>
-         {% endif %}
-      </span>
-    </div>
+    {% pagination all_tasks %}
     <p><a href="{% url 'task_add' %}" class="btn btn-success">New task</a></p>
 {% else %}
     <p>No tasks.</p>
