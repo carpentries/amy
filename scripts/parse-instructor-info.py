@@ -43,6 +43,12 @@ TXLATE_LESSON = [
         ('Databases and SQL', 'datacarpentry', 'sql-ecology', 'dc/sql'),
         ('Cloud Computing', 'datacarpentry', 'cloud-genomics', 'dc/cloud')
     ]
+] + [
+    (re.compile(r'The Shell for Ecologists'), 'dc/shell'),
+    (re.compile(r'Python for Ecologists'), 'dc/python'),
+    (re.compile(r'SQL for Ecologists'), 'dc/sql'),
+    (re.compile(r'regular expression', re.IGNORECASE), 'swc/regexp'),
+    (re.compile(r'make', re.IGNORECASE), 'swc/make')
 ]
 
 LIST_FIELDS = ('software-carpentry', 'data-carpentry')
