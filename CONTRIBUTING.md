@@ -1,4 +1,4 @@
-Amy is an open source project, and we welcome contributions of all
+AMY is an open source project, and we welcome contributions of all
 kinds.  By contributing, you are agreeing that Software Carpentry may
 redistribute your work under [this license][license].  You also agree
 to abide by our [contributor code of conduct][conduct].
@@ -15,7 +15,7 @@ If you would like to know what we need help with, please see the
 *   New functionality should be accompanied by unit tests where feasible.
 *   All dates should be formatted as YYYY-MM-DD.
 
-The Amy logo was made using the Bradley Hand font from LibreOffice.
+The AMY logo was made using the Bradley Hand font from LibreOffice.
 
 [conduct]: CONDUCT.md
 [issues]: https://github.com/swcarpentry/amy/issues

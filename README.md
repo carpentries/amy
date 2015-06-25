@@ -2,13 +2,13 @@
 
 ![](https://travis-ci.org/swcarpentry/amy.svg?branch=master)
 
-Amy is a web-based workshop administration application for [Software
+AMY is a web-based workshop administration application for [Software
 Carpentry][swc] and related projects.  Its target audience is workshop
 coordinators, most of whon are non-programmers, who need to keep track
 of what workshops are being arranged, when they're supposed to occur,
 who's teaching what, and so on.
 
-Amy is built using [Django][django], with a bit of Javascript and
+AMY is built using [Django][django], with a bit of Javascript and
 other things thrown in.  If you would like to help, please read:
 
 *   the setup instructions below,
@@ -36,10 +36,10 @@ before starting work on new features.
     ~~~
 
     If you're experienced Python programmer, feel free to create a
-    Python3-compatible [virtualenv][virtualenv] for Amy and install
+    Python3-compatible [virtualenv][virtualenv] for AMY and install
     dependencies from `requirements.txt`.
 
-3.  Install [Bower][bower], the tool that manages Amy's JavaScript and CSS dependencies:
+3.  Install [Bower][bower], the tool that manages AMY's JavaScript and CSS dependencies:
 
     ~~~
     $ sudo npm install -g bower
@@ -75,7 +75,7 @@ before starting work on new features.
     $ make serve
     ~~~
 
-    **Note**:  this also installs front-end dependencies for Amy, such as jQuery or Bootstrap.
+    **Note**:  this also installs front-end dependencies for AMY, such as jQuery or Bootstrap.
 
 8.  Open <http://localhost:8000/workshops/> in your browser and start clicking.
 
@@ -123,7 +123,7 @@ before starting work on new features.
     $ python3 manage.py migrate
     ~~~~
 
-4.  Enjoy your new version of Amy:
+4.  Enjoy your new version of AMY:
 
     ~~~
     $ make serve

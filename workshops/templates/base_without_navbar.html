@@ -14,7 +14,7 @@
     <script src="{% static 'jquery-ui/jquery-ui.min.js' %}"></script>
     <script src="{% static 'bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js' %}"></script>
 
-    <title>Amy{% if title %}: {{ title }}{% endif %}</title>
+    <title>AMY{% if title %}: {{ title }}{% endif %}</title>
   </head>
   <body>
     {% block navbar %}{% endblock %}
@@ -43,7 +43,7 @@
     <div class="container{% block fluid3 %}{% endblock %}">
       <div class="row">
         <div class="col-sm-12 footer">
-          Powered by <a href="https://github.com/swcarpentry/amy">Amy</a>
+          Powered by <a href="https://github.com/swcarpentry/amy">AMY</a>
           version {{workshops_version}}
           {% if workshops_git_hash %}
             (<a href="https://github.com/swcarpentry/amy/commit/{{workshops_git_hash}}">{{workshops_git_short_hash}}</a>
