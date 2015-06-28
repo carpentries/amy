@@ -41,8 +41,10 @@ class TestBase(TestCase):
     def _setUpLessons(self):
         '''Set up lesson objects.'''
 
-        self.git = Lesson.objects.create(name='swc/git')
-        self.sql = Lesson.objects.create(name='dc/sql')
+        # we have some lessons in the database because of the migration
+        # '0012_auto_20150612_0807.py'
+        self.git, _ = Lesson.objects.get_or_create(name='swc/git')
+        self.sql, _ = Lesson.objects.get_or_create(name='dc/sql')
 
     def _setUpSites(self):
         '''Set up site objects.'''
