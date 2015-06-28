@@ -375,8 +375,8 @@ class Task(models.Model):
 
 #------------------------------------------------------------
 
-class Skill(models.Model):
-    '''Represent a skill someone might teach.'''
+class Lesson(models.Model):
+    '''Represent a lesson someone might teach.'''
 
     name       = models.CharField(max_length=STR_MED)
 
@@ -389,10 +389,10 @@ class Qualification(models.Model):
     '''What is someone qualified to teach?'''
 
     person     = models.ForeignKey(Person)
-    skill      = models.ForeignKey(Skill)
+    lesson     = models.ForeignKey(Lesson)
 
     def __str__(self):
-        return '{0}/{1}'.format(self.person, self.skill)
+        return '{0}/{1}'.format(self.person, self.lesson)
 
 #------------------------------------------------------------
 

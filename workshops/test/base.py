@@ -15,11 +15,11 @@ from ..models import \
     Airport, \
     Award, \
     Badge, \
+    Lesson, \
     Event, \
     Person, \
     Qualification, \
-    Site, \
-    Skill
+    Site
 
 
 class TestBase(TestCase):
@@ -32,17 +32,17 @@ class TestBase(TestCase):
 
         self._setUpSites()
         self._setUpAirports()
-        self._setUpSkills()
+        self._setUpLessons()
         self._setUpBadges()
         self._setUpInstructors()
         self._setUpNonInstructors()
         self._setUpPermissions()
 
-    def _setUpSkills(self):
-        '''Set up skill objects.'''
+    def _setUpLessons(self):
+        '''Set up lesson objects.'''
 
-        self.git = Skill.objects.create(name='Git')
-        self.sql = Skill.objects.create(name='SQL')
+        self.git = Lesson.objects.create(name='swc/git')
+        self.sql = Lesson.objects.create(name='dc/sql')
 
     def _setUpSites(self):
         '''Set up site objects.'''
@@ -88,8 +88,8 @@ class TestBase(TestCase):
         Award.objects.create(person=self.hermione,
                              badge=self.instructor,
                              awarded=datetime.date(2014, 1, 1))
-        Qualification.objects.create(person=self.hermione, skill=self.git)
-        Qualification.objects.create(person=self.hermione, skill=self.sql)
+        Qualification.objects.create(person=self.hermione, lesson=self.git)
+        Qualification.objects.create(person=self.hermione, lesson=self.sql)
 
         self.harry = Person.objects.create(
             personal='Harry', middle=None, family='Potter',
@@ -100,7 +100,7 @@ class TestBase(TestCase):
         Award.objects.create(person=self.harry,
                              badge=self.instructor,
                              awarded=datetime.date(2014, 5, 5))
-        Qualification.objects.create(person=self.harry, skill=self.sql)
+        Qualification.objects.create(person=self.harry, lesson=self.sql)
 
         self.ron = Person.objects.create(
             personal='Ron', middle=None, family='Weasley',
@@ -111,7 +111,7 @@ class TestBase(TestCase):
         Award.objects.create(person=self.ron,
                              badge=self.instructor,
                              awarded=datetime.date(2014, 11, 11))
-        Qualification.objects.create(person=self.ron, skill=self.git)
+        Qualification.objects.create(person=self.ron, lesson=self.git)
 
     def _setUpNonInstructors(self):
         '''Set up person objects representing non-instructors.'''
