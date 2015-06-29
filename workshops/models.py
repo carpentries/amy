@@ -117,6 +117,7 @@ class Person(AbstractBaseUser, PermissionsMixin):
 
     badges = models.ManyToManyField("Badge", through="Award")
     lessons = models.ManyToManyField("Lesson", through="Qualification")
+    domains = models.ManyToManyField("KnowledgeDomain")
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = [
@@ -425,3 +426,11 @@ class Award(models.Model):
 
     def __str__(self):
         return '{0}/{1}/{2}/{3}'.format(self.person, self.badge, self.awarded, self.event)
+
+
+class KnowledgeDomain(models.Model):
+    """Represent a knowledge domain a person is engaged in."""
+    name = models.CharField(max_length=STR_LONG)
+
+    def __str__(self):
+        return self.name
