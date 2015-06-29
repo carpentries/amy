@@ -20,7 +20,6 @@
   <tr><td>github:</td><td id="github">{% if person.github %}<a href="https://github.com/{{ person.github }}">{{ person.github }}</a>{% else %}—{% endif %}</td></tr>
   <tr><td>twitter:</td><td id="twitter">{% if person.twitter %}<a href="https://twitter.com/{{ person.twitter }}">{{ person.twitter }}</a>{% else %}—{% endif %}</td></tr>
   <tr><td>url:</td><td id="url">{{ person.url|default:""|urlize|default:"—" }}</td></tr>
-  <tr><td>badges:</td><td id="badges">{{ person.badges.all|join:", " }}</td></tr>
 </table>
 
 {% if person.notes %}
