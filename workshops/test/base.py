@@ -321,11 +321,11 @@ class TestBase(TestCase):
         '''Get value of currently selected element from 'select' node.'''
         selections = node.findall(".//option[@selected='selected']")
         if (len(selections) == 0):
-            return ""
+            return []
         if (len(selections) == 1):
             return selections[0].attrib['value']
         else:
-            return ",".join([x.attrib['value'] for x in selections])
+            return [x.attrib['value'] for x in selections]
 
     def _get_initial_form_index(self, form_index, url, *args):
         '''Get a form to start testing with.
