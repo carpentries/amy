@@ -116,6 +116,7 @@ class Person(AbstractBaseUser, PermissionsMixin):
     notes = models.TextField(default="", blank=True)
 
     badges = models.ManyToManyField("Badge", through="Award")
+    lessons = models.ManyToManyField("Lesson", through="Qualification")
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = [
