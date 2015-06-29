@@ -251,6 +251,9 @@ class PersonForm(forms.ModelForm):
         widget=selectable.AutoComboboxSelectWidget,
     )
 
+    lessons = forms.ModelMultipleChoiceField(required=False,
+                                             queryset=Lesson.objects.all())
+
     class Meta:
         model = Person
         # don't display the 'password', 'user_permissions',
@@ -258,7 +261,7 @@ class PersonForm(forms.ModelForm):
         # + reorder fields
         fields = ['username', 'personal', 'middle', 'family', 'may_contact',
                   'email', 'gender', 'airport', 'github', 'twitter', 'url',
-                  'notes', ]
+                  'notes', 'lessons', ]
 
 
 class PersonPermissionsForm(forms.ModelForm):

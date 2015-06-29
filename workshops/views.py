@@ -26,6 +26,7 @@ from workshops.models import \
     Award, \
     Badge, \
     Event, \
+    Qualification, \
     Lesson, \
     Person, \
     Role, \
@@ -481,6 +482,18 @@ def person_edit(request, person_id):
             person_form = PersonForm(request.POST, prefix='person',
                                      instance=person)
             if person_form.is_valid():
+                lessons = person_form.cleaned_data['lessons']
+
+                # remove existing Qualifications for user
+                Qualification.objects.filter(person=person).delete()
+
+                # add new Qualifications
+                for lesson in lessons:
+                    Qualification.objects.create(person=person, lesson=lesson)
+
+                # don't save related lessons
+                del person_form.cleaned_data['lessons']
+
                 person = person_form.save()
 
                 messages.success(
