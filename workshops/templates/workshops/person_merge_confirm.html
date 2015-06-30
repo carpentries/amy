@@ -105,6 +105,23 @@
       </ul>
     </td>
   </tr>
+  <tr>
+    <th>qualifications:</th>
+    <td class="{% success_if_any_content person_from.qualification_set.count %}">
+      <ul>
+        {% for q in person_from.qualification_set.all %}
+        <li>{{ q }}</li>
+        {% endfor %}
+      </ul>
+    </td>
+    <td>
+      <ul>
+        {% for q in person_to.qualification_set.all %}
+        <li>{{ q }}</li>
+        {% endfor %}
+      </ul>
+    </td>
+  </tr>
 </table>
 
 <h4>Legend</h4>
