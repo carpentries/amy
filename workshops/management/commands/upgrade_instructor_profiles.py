@@ -92,39 +92,53 @@ class Command(BaseCommand):
         reader = csv.DictReader(csv_file)
         for record in reader:
             yield self.translate(record)
+        return
 
     def translate(self, record):
         '''Translate single record into dictionary.'''
         # translate human-readable field names to normalized database-ready
         # field names
         new_record = dict()
-        for old_field, new_field in TXLATE_HEADERS.items():
-            new_record[new_field] = record[old_field]
+        try:
+            for old_field, new_field in TXLATE_HEADERS.items():
+                new_record[new_field] = record[old_field]
 
-        # normalize gender
-        G = new_record['gender']
-        if G == 'Male':
-            new_record['gender'] = Person.MALE
-        elif G == 'Female':
-            new_record['gender'] = Person.FEMALE
+            # normalize gender
+            new_record['gender'] = self.translate_gender(new_record['gender'])
+
+            # normalize airport (just use first 3 letters of the input, all
+            # upper-case)
+            new_record['airport'] = new_record['airport'][0:3].upper()
+
+            # turn string of domains into a list of domains
+            new_record['domains'] = self.translate_domains(
+                new_record['domains']
+            )
+
+            # translate human-readable lessons to normalized lesson names that
+            # we keep in AMY
+            new_record['teaching'] = list()
+            for name in LIST_FIELDS:
+                new_record['teaching'] += self.translate_lessons(
+                    new_record[name]
+                )
+                del new_record[name]
+        except KeyError:
+            # probably some fields are missing in the CSV
+            pass
+        finally:
+            return new_record
+
+    def translate_gender(self, gender):
+        """Return database-ready gender."""
+        if not gender:
+            return None
+        elif gender == 'Male':
+            return Person.MALE
+        elif gender == 'Female':
+            return Person.FEMALE
         else:
-            new_record['gender'] = Person.OTHER
-
-        # normalize airport (just use first 3 letters of the input, all
-        # upper-case)
-        new_record['airport'] = new_record['airport'][0:3].upper()
-
-        # turn string of domains into a list of domains
-        new_record['domains'] = self.translate_domains(new_record['domains'])
-
-        # translate human-readable lessons to normalized lesson names that we
-        # keep in AMY
-        new_record['teaching'] = list()
-        for name in LIST_FIELDS:
-            new_record['teaching'] += self.translate_lessons(name,
-                                                             new_record[name])
-            del new_record[name]
-        return new_record
+            return Person.OTHER
 
     def translate_domains(self, domains):
         """Extract areas of expertise AKA knowledge domains from the entry."""
@@ -139,7 +153,7 @@ class Command(BaseCommand):
         domains = [domain.rstrip(', ') for domain in domains]
         return domains
 
-    def translate_lessons(self, name, raw):
+    def translate_lessons(self, raw):
         """Convert descriptive lesson names into short slugs we keep in AMY."""
         if not raw:
             return []
@@ -161,82 +175,85 @@ class Command(BaseCommand):
         Check existence of corresponding database objects (ie. users, lessons,
         airports).
         Check correctness of data (no missing fields, etc.)"""
-        correct = True
-        reasons = list()
+        try:
+            correct = True
+            reasons = list()
 
-        # check if all required fields are present
-        left = set(entry.keys()) - set(['teaching'])
-        right = set(TXLATE_HEADERS.values()) - set(LIST_FIELDS)
-        if not left == right:
-            correct = False
-            reasons.append('Missing fields: {0}'.format(list(right - left)))
+            # check if all required fields are present
+            left = set(entry.keys()) - set(['teaching'])
+            right = set(TXLATE_HEADERS.values()) - set(LIST_FIELDS)
+            if not left == right:
+                correct = False
+                reasons.append('Missing fields: {0}'
+                               .format(list(right - left)))
 
-        # check if all required fields aren't empty
-        for field in Person.REQUIRED_FIELDS:
-            try:
+            # check if all required fields aren't empty
+            for field in Person.REQUIRED_FIELDS:
                 if not entry[field]:
                     correct = False
                     reasons.append('Required field "{0}" is empty'
                                    .format(field))
-            except KeyError:
-                correct = False
-                reasons.append('Required field "{0}" not present'
-                               .format(field))
 
-        # check if user exists (match by email)
-        person = None
-        try:
-            person = Person.objects.get(email=entry['email'])
-        except Person.DoesNotExist:
+            # check if user exists (match by email)
+            person = None
             try:
-                person = Person.objects.get(personal=entry['personal'],
-                                            family=entry['family'])
-            except Person.MultipleObjectsReturned:
-                correct = False
-                reasons.append('There are multiple users with this name '
-                               '("{0} {1}")'
-                               .format(entry['personal'], entry['family']))
+                person = Person.objects.get(email=entry['email'])
             except Person.DoesNotExist:
+                try:
+                    person = Person.objects.get(personal=entry['personal'],
+                                                family=entry['family'])
+                except Person.MultipleObjectsReturned:
+                    correct = False
+                    reasons.append('There are multiple users with this name '
+                                   '("{0} {1}")'
+                                   .format(entry['personal'], entry['family']))
+                except Person.DoesNotExist:
+                    correct = False
+                    reasons.append('User with either this email ("{0}") or '
+                                   'this name ("{1} {2}") does not exist'
+                                   .format(entry['email'], entry['personal'],
+                                           entry['family']))
+
+            # check if the person really is an instructor
+            instructor_badge = Badge.objects.get(name='instructor')
+            if person and instructor_badge not in person.badges.all():
                 correct = False
-                reasons.append('User with either this email ("{0}") or this'
-                               ' name ("{1} {2}") does not exist'
-                               .format(entry['email'], entry['personal'],
-                                       entry['family']))
+                reasons.append('This person does not have an instructor badge')
 
-        # check if the person really is an instructor
-        instructor_badge = Badge.objects.get(name='instructor')
-        if person and instructor_badge not in person.badges.all():
-            correct = False
-            reasons.append('This person does not have an instructor badge')
+            # cache airport IATA codes
+            if 'airports' not in self._cache:
+                self._cache['airports'] = Airport.objects.values_list(
+                    'iata', flat=True,
+                )
 
-        # cache airport IATA codes
-        if 'airports' not in self._cache:
-            self._cache['airports'] = Airport.objects.values_list('iata',
-                                                                  flat=True)
-
-        # check if airport exists
-        if entry['airport'] not in self._cache['airports']:
-            correct = False
-            reasons.append('Airport with this IATA code "{0}" does not exist'
-                           .format(entry['airport']))
-
-        # Don't check if domains exist.
-        # There are occasions when instructors add domains we don't have in
-        # the database.  This should be no-op.
-
-        # cache lesson names
-        if 'lessons' not in self._cache:
-            self._cache['lessons'] = Lesson.objects.values_list('name',
-                                                                flat=True)
-
-        # check if lessons exist
-        for lesson in entry['teaching']:
-            if lesson not in self._cache['lessons']:
+            # check if airport exists
+            if entry['airport'] not in self._cache['airports']:
                 correct = False
-                reasons.append('Lesson "{0}" does not exist'
-                               .format(lesson))
+                reasons.append('Airport with this IATA code "{0}" does not '
+                               'exist'.format(entry['airport']))
 
-        return correct, reasons
+            # Don't check if domains exist.
+            # There are occasions when instructors add domains we don't have in
+            # the database.  This should be no-op.
+
+            # cache lesson names
+            if 'lessons' not in self._cache:
+                self._cache['lessons'] = Lesson.objects.values_list('name',
+                                                                    flat=True)
+
+            # check if lessons exist
+            for lesson in entry['teaching']:
+                if lesson not in self._cache['lessons']:
+                    correct = False
+                    reasons.append('Lesson "{0}" does not exist'
+                                   .format(lesson))
+
+            return correct, reasons
+
+        except KeyError as e:
+            correct = False
+            reasons.append("Missing fields: {}".format(e))
+            return correct, reasons
 
     def update(self, entry):
         """Update instructor profile in the database."""
