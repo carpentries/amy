@@ -618,6 +618,11 @@ def person_merge_confirmation(request):
         return redirect('person_merge')
 
     if "confirmed" in request.GET:
+        person_from.award_set.all().update(person=person_to)
+        person_from.task_set.all().update(person=person_to)
+        person_from.qualification_set.all().update(person=person_to)
+        person_from.delete()
+
         messages.success(request,
                          'Merging {0} into {1}'.format(person_from,
                                                        person_to))
