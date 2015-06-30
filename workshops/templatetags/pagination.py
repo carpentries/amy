@@ -4,15 +4,13 @@ register = template.Library()
 
 @register.inclusion_tag('pagination.html', takes_context=True)
 def pagination(context, objects):
-    previous = context['request'].GET.copy()
-    next = context['request'].GET.copy()
-    current = context['request'].GET.copy()
-    if 'page' in current:
-        del current['page']
+    # needed in set_page_query that's only called from 'pagination.html'
+    request = context['request']
+    return {'objects': objects, 'request': request}
 
-    if objects.has_previous():
-        previous['page'] = objects.previous_page_number()
-    if objects.has_next():
-        next['page'] = objects.next_page_number()
-    return {'objects': objects, 'prev_query': previous, 'next_query': next,
-            'current_query': current}
+
+@register.simple_tag(takes_context=True)
+def set_page_query(context, page):
+    query = context['request'].GET.copy()
+    query['page'] = page
+    return query.urlencode()

@@ -8,7 +8,7 @@ from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import SetPasswordForm, PasswordChangeForm
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.core.paginator import EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.conf import settings
@@ -40,7 +40,7 @@ from workshops.forms import (
 )
 from workshops.util import (
     earth_distance, upload_person_task_csv,  verify_upload_person_task,
-    create_uploaded_persons_tasks, InternalError
+    create_uploaded_persons_tasks, InternalError, Paginator
 )
 
 from workshops.filters import (
