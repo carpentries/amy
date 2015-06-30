@@ -6,8 +6,13 @@ register = template.Library()
 def pagination(context, objects):
     previous = context['request'].GET.copy()
     next = context['request'].GET.copy()
+    current = context['request'].GET.copy()
+    if 'page' in current:
+        del current['page']
+
     if objects.has_previous():
         previous['page'] = objects.previous_page_number()
     if objects.has_next():
         next['page'] = objects.next_page_number()
-    return {'objects': objects, 'prev_query': previous, 'next_query': next}
+    return {'objects': objects, 'prev_query': previous, 'next_query': next,
+            'current_query': current}
