@@ -129,7 +129,7 @@ class LoginRequiredMixin(object):
 
 
 @login_required
-def index(request):
+def dashboard(request):
     '''Home page.'''
     upcoming_events = Event.objects.upcoming_events()
     unpublished_events = Event.objects.unpublished_events()
@@ -138,7 +138,7 @@ def index(request):
                'upcoming_events': upcoming_events,
                'uninvoiced_events': uninvoiced_events,
                'unpublished_events': unpublished_events}
-    return render(request, 'workshops/index.html', context)
+    return render(request, 'workshops/dashboard.html', context)
 
 #------------------------------------------------------------
 
