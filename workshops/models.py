@@ -9,6 +9,7 @@ from django.db import models
 from django.db.models import Q
 
 from django_countries.fields import CountryField
+import reversion
 
 #------------------------------------------------------------
 
@@ -86,6 +87,7 @@ class PersonManager(BaseUserManager):
         return user
 
 
+@reversion.register
 class Person(AbstractBaseUser, PermissionsMixin):
     '''Represent a single person.'''
     MALE = 'M'
@@ -277,6 +279,8 @@ class EventManager(models.Manager):
     def uninvoiced_events(self):
         return self.get_queryset().uninvoiced_events()
 
+
+@reversion.register
 class Event(models.Model):
     '''Represent a single event.'''
 
