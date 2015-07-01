@@ -80,6 +80,7 @@ INSTALLED_APPS = (
     'selectable',
     'django_countries',
     'django_filters',
+    'reversion',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
