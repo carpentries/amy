@@ -1,0 +1,57 @@
+{% extends "workshops/object_diff.html" %}
+
+{% load diff %}
+
+{% block title %}<h1>Person {{ object }}</h1>{% endblock %}
+{% block difftable %}
+<table class="table table-striped">
+  <tr>
+    <th>username:</th>
+    <td>{% semantic_diff previous_version current_version 'username' %}</td>
+  </tr>
+  <tr>
+    <th>personal:</th>
+    <td>{% semantic_diff previous_version current_version 'personal' %}</td>
+  </tr>
+  <tr>
+    <th>middle:</th>
+    <td>{% semantic_diff previous_version current_version 'middle' %}</td>
+  </tr>
+  <tr>
+    <th>family:</th>
+    <td>{% semantic_diff previous_version current_version 'family' %}</td>
+  </tr>
+  <tr>
+    <th>email:</th>
+    <td>{% semantic_diff previous_version current_version 'email' %}</td>
+  </tr>
+  <tr>
+    <th>gender:</th>
+    <td>{% semantic_diff previous_version current_version 'gender' %}</td>
+  </tr>
+  <tr>
+    <th>may contact:</th>
+    <td>{% semantic_diff previous_version current_version 'may_contact' %}</td>
+  </tr>
+  <tr>
+    <th>airport:</th>
+    <td>{% semantic_diff previous_version current_version 'airport' %}</td>
+  </tr>
+  <tr>
+    <th>github:</th>
+    <td>{% semantic_diff previous_version current_version 'github' %}</td>
+  </tr>
+  <tr>
+    <th>twitter:</th>
+    <td>{% semantic_diff previous_version current_version 'twitter' %}</td>
+  </tr>
+  <tr>
+    <th>url:</th>
+    <td>{% semantic_diff previous_version current_version 'url' %}</td>
+  </tr>
+  <tr>
+    <th>notes:</th>
+    <td>{% semantic_diff previous_version current_version 'notes' %}</td>
+  </tr>
+</table>
+{% endblock %}

@@ -57,4 +57,6 @@ urlpatterns = [
     url(r'^reports/learners_over_time/?$', views.learners_over_time, name='learners_over_time'),
     url(r'^reports/instructors_over_time/?$', views.instructors_over_time, name='instructors_over_time'),
     url(r'^reports/problems/?$', views.problems, name='problems'),
+
+    url(r'^revision/(?P<revision_id>[\d]+)/?$', views.object_changes, name='object_changes'),
 ]
