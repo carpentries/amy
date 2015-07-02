@@ -1,0 +1,10 @@
+{% extends "workshops/_page_fluid.html" %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-sm-12 col-md-12 main">
+    {% if title %}<h1>{{ title }}</h1>{% endif %}
+    {% block content-fluid %}{% endblock %}
+    </div>
+  </div>
+{% endblock %}

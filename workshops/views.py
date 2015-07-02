@@ -20,6 +20,7 @@ from django.views.generic.base import ContextMixin
 from django.views.generic.edit import CreateView, UpdateView
 from django.contrib.auth.decorators import login_required
 
+from reversion.models import Revision
 
 from workshops.models import \
     Airport, \
@@ -134,10 +135,14 @@ def dashboard(request):
     upcoming_events = Event.objects.upcoming_events()
     unpublished_events = Event.objects.unpublished_events()
     uninvoiced_events = Event.objects.uninvoiced_events()
+    recently_changed = Revision.objects.all().select_related('user') \
+                                       .prefetch_related('version_set') \
+                                       .order_by('-date_created')[:50]
     context = {'title': None,
                'upcoming_events': upcoming_events,
                'uninvoiced_events': uninvoiced_events,
-               'unpublished_events': unpublished_events}
+               'unpublished_events': unpublished_events,
+               'recently_changed': recently_changed}
     return render(request, 'workshops/dashboard.html', context)
 
 #------------------------------------------------------------
