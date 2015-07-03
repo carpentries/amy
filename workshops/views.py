@@ -20,6 +20,8 @@ from django.views.generic.base import ContextMixin
 from django.views.generic.edit import CreateView, UpdateView
 from django.contrib.auth.decorators import login_required
 
+from reversion import get_for_object
+from reversion.models import Revision
 
 from workshops.models import \
     Airport, \
@@ -129,16 +131,20 @@ class LoginRequiredMixin(object):
 
 
 @login_required
-def index(request):
+def dashboard(request):
     '''Home page.'''
     upcoming_events = Event.objects.upcoming_events()
     unpublished_events = Event.objects.unpublished_events()
     uninvoiced_events = Event.objects.uninvoiced_events()
+    recently_changed = Revision.objects.all().select_related('user') \
+                                       .prefetch_related('version_set') \
+                                       .order_by('-date_created')[:50]
     context = {'title': None,
                'upcoming_events': upcoming_events,
                'uninvoiced_events': uninvoiced_events,
-               'unpublished_events': unpublished_events}
-    return render(request, 'workshops/index.html', context)
+               'unpublished_events': unpublished_events,
+               'recently_changed': recently_changed}
+    return render(request, 'workshops/dashboard.html', context)
 
 #------------------------------------------------------------
 
@@ -1105,6 +1111,46 @@ def problems(request):
     return render(request, 'workshops/problems.html', context)
 
 #------------------------------------------------------------
+
+
+@login_required
+def object_changes(request, revision_id):
+    revision = Revision.objects.get(pk=revision_id)
+
+    # we assume there's only one version per revision
+    current_version = revision.version_set.all()[0]
+    obj = current_version.object
+
+    try:
+        previous_version = get_for_object(obj) \
+                                .filter(pk__lt=current_version.pk)[0]
+        obj_prev = previous_version.object
+    except IndexError:
+        # first revision for an object
+        previous_version = current_version
+        obj_prev = obj
+
+    context = {
+        'object_prev': obj_prev,
+        'object': obj,
+        'previous_version': previous_version,
+        'current_version': current_version,
+        'revision': revision,
+        'title': str(obj),
+    }
+    if obj.__class__ == Person:
+        return render(request, 'workshops/person_diff.html', context)
+    elif obj.__class__ == Event:
+        return render(request, 'workshops/event_diff.html', context)
+    else:
+        context['verbose_name'] = obj._meta.verbose_name
+        context['fields'] = [
+            f for f in obj._meta.get_fields()
+            if f.concrete and not f.is_relation
+        ]
+        return render(request, 'workshops/object_diff.html', context)
+
+# ------------------------------------------------------------
 
 def _get_pagination_items(request, all_objects):
     '''Select paginated items.'''

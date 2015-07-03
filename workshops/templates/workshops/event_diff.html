@@ -1,0 +1,49 @@
+{% extends "workshops/object_diff.html" %}
+
+{% load diff %}
+
+{% block title %}<h1>Event {{ object }}</h1>{% endblock %}
+{% block difftable %}
+<table class="table table-striped">
+  <tr>
+    <th>slug:</th>
+    <td>{% semantic_diff previous_version current_version 'slug' %}</td>
+  </tr>
+  <tr>
+    <th>start date:</th>
+    <td>{% semantic_diff previous_version current_version 'start' %}</td>
+  </tr>
+  <tr>
+    <th>end date:</th>
+    <td>{% semantic_diff previous_version current_version 'end' %}</td>
+  </tr>
+  <tr>
+    <th>site:</th>
+    <td>{% semantic_diff previous_version current_version 'site' %}</td>
+  </tr>
+  <tr>
+    <th>organizer:</th>
+    <td>{% semantic_diff previous_version current_version 'organizer' %}</td>
+  </tr>
+  <tr>
+    <th>url:</th>
+    <td>{% semantic_diff previous_version current_version 'url' %}</td>
+  </tr>
+  <tr>
+    <th>eventbrite key:</th>
+    <td>{% semantic_diff previous_version current_version 'reg_key' %}</td>
+  </tr>
+  <tr>
+    <th>attendance:</th>
+    <td>{% semantic_diff previous_version current_version 'attendance' %}</td>
+  </tr>
+  <tr>
+    <th>admin fee:</th>
+    <td>{% semantic_diff previous_version current_version 'admin_fee' %}</td>
+  </tr>
+  <tr>
+    <th>invoiced:</th>
+    <td>{% semantic_diff previous_version current_version 'invoiced' %}</td>
+  </tr>
+</table>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "workshops/_page.html" %}
+
+{% load diff %}
+
+{% block title %}<h1>{{ verbose_name}} {{ object }}</h1>{% endblock %}
+{% block content %}
+<p>
+  <a href="{{ object.get_absolute_url }}" class="btn btn-primary">View newest</a>
+</p>
+<p>Changed on {{ revision.date_created|date:'M j, P' }} by {{ revision.user|default:'Unknown user' }}.</p>
+{% block difftable %}
+<table class="table table-striped">
+  {% for field in fields %}
+    {% if field.name != 'id' %}
+  <tr>
+    <th>{{ field.verbose_name }}:</th>
+    <td>{% semantic_diff previous_version current_version field.name %}</td>
+  </tr>
+    {% endif %}
+  {% endfor %}
+</table>
+{% endblock %}
+{% endblock %}

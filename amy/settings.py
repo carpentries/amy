@@ -80,11 +80,13 @@ INSTALLED_APPS = (
     'selectable',
     'django_countries',
     'django_filters',
+    'reversion',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
 MIDDLEWARE_CLASSES = (
+    'reversion.middleware.RevisionMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',

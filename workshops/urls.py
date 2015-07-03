@@ -2,7 +2,7 @@ from django.conf.urls import url
 from workshops import views
 
 urlpatterns = [
-    url(r'^$', views.index, name='index'),
+    url(r'^$', views.dashboard, name='dashboard'),
 
     url(r'^sites/?$', views.all_sites, name='all_sites'),
     url(r'^site/(?P<site_domain>[\w\.-]+)/?$', views.site_details, name='site_details'),
@@ -57,4 +57,6 @@ urlpatterns = [
     url(r'^reports/learners_over_time/?$', views.learners_over_time, name='learners_over_time'),
     url(r'^reports/instructors_over_time/?$', views.instructors_over_time, name='instructors_over_time'),
     url(r'^reports/problems/?$', views.problems, name='problems'),
+
+    url(r'^revision/(?P<revision_id>[\d]+)/?$', views.object_changes, name='object_changes'),
 ]

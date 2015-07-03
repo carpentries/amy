@@ -18,7 +18,7 @@ class TestLandingPage(TestBase):
         upcoming_events in the context.
         """
 
-        response = self.client.get(reverse('index'))
+        response = self.client.get(reverse('dashboard'))
 
         # This will fail if the context variable doesn't exist
         upcoming_events = response.context['upcoming_events']
