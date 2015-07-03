@@ -41,7 +41,7 @@ from workshops.forms import (
 )
 from workshops.util import (
     earth_distance, upload_person_task_csv,  verify_upload_person_task,
-    create_uploaded_persons_tasks, InternalError, Paginator
+    create_uploaded_persons_tasks, InternalError, Paginator, merge_persons
 )
 
 from workshops.filters import (
@@ -618,11 +618,7 @@ def person_merge_confirmation(request):
         return redirect('person_merge')
 
     if "confirmed" in request.GET:
-        person_from.award_set.all().update(person=person_to)
-        person_from.task_set.all().update(person=person_to)
-        person_from.qualification_set.all().update(person=person_to)
-        person_from.delete()
-
+        merge_persons(person_from, person_to)
         messages.success(request,
                          'Merging {0} into {1}'.format(person_from,
                                                        person_to))
