@@ -244,6 +244,18 @@ class TestPerson(TestBase):
                 with self.assertRaises(Task.DoesNotExist):
                     Task.objects.get(pk=task.pk)
 
+    def test_editing_qualifications(self):
+        """Make sure we can edit user lessons without any issues."""
+        assert set(self.hermione.lessons.all()) == set([self.git, self.sql])
+
+        url, values = self._get_initial_form_index(0, 'person_edit',
+                                                   self.hermione.id)
+        values['person-lessons'] = [self.git.pk]
+
+        response = self.client.post(url, values)
+        assert response.status_code == 302
+        assert set(self.hermione.lessons.all()) == set([self.git, ])
+
 
 class TestPersonPassword(TestBase):
     """Separate tests for testing password setting.

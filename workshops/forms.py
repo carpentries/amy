@@ -7,7 +7,9 @@ from crispy_forms.layout import Layout, Div, HTML, Submit
 from crispy_forms.bootstrap import FormActions
 from selectable import forms as selectable
 
-from workshops.models import Skill, Airport, Event, Task, Award, Person
+from workshops.models import (
+    Award, Event, Lesson, Person, Task, KnowledgeDomain,
+)
 from workshops import lookups
 
 INSTRUCTOR_SEARCH_LEN = 10   # how many instrutors to return from a search by default
@@ -77,7 +79,7 @@ class InstructorsForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        '''Build checkboxes for skills dynamically.'''
+        '''Build checkboxes for qualifications dynamically.'''
         super(InstructorsForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.helper.form_class = 'form-inline'
@@ -99,15 +101,15 @@ class InstructorsForm(forms.Form):
                 ),
                 css_class='row panel panel-default panel-body',
             ),
-            HTML('<label class="control-label">Skills</label>'),
+            HTML('<label class="control-label">Lessons</label>'),
             FormActions(
                 Submit('submit', 'Submit'),
             ),
         )
-        skills = Skill.objects.all()
-        for s in skills:
-            self.fields[s.name] = forms.BooleanField(label=s.name, required=False)
-            self.helper.layout.insert(3, s.name)
+        lessons = Lesson.objects.all()
+        for les in lessons:
+            self.fields[les.name] = forms.BooleanField(label=les.name, required=False)
+            self.helper.layout.insert(3, les.name)
 
     def clean(self):
         cleaned_data = super(InstructorsForm, self).clean()
@@ -251,6 +253,13 @@ class PersonForm(forms.ModelForm):
         widget=selectable.AutoComboboxSelectWidget,
     )
 
+    lessons = forms.ModelMultipleChoiceField(required=False,
+                                             queryset=Lesson.objects.all())
+
+    domains = forms.ModelMultipleChoiceField(
+        required=False, queryset=KnowledgeDomain.objects.all()
+    )
+
     class Meta:
         model = Person
         # don't display the 'password', 'user_permissions',
@@ -258,7 +267,7 @@ class PersonForm(forms.ModelForm):
         # + reorder fields
         fields = ['username', 'personal', 'middle', 'family', 'may_contact',
                   'email', 'gender', 'airport', 'github', 'twitter', 'url',
-                  'notes', ]
+                  'notes', 'lessons', 'domains']
 
 
 class PersonPermissionsForm(forms.ModelForm):

@@ -26,10 +26,11 @@ from workshops.models import \
     Award, \
     Badge, \
     Event, \
+    Qualification, \
+    Lesson, \
     Person, \
     Role, \
     Site, \
-    Skill, \
     Task
 from workshops.check import check_file
 from workshops.forms import (
@@ -481,6 +482,18 @@ def person_edit(request, person_id):
             person_form = PersonForm(request.POST, prefix='person',
                                      instance=person)
             if person_form.is_valid():
+                lessons = person_form.cleaned_data['lessons']
+
+                # remove existing Qualifications for user
+                Qualification.objects.filter(person=person).delete()
+
+                # add new Qualifications
+                for lesson in lessons:
+                    Qualification.objects.create(person=person, lesson=lesson)
+
+                # don't save related lessons
+                del person_form.cleaned_data['lessons']
+
                 person = person_form.save()
 
                 messages.success(
@@ -815,11 +828,11 @@ def instructors(request):
         form = InstructorsForm(request.POST)
         if form.is_valid():
 
-            # Filter by skills.
+            # Filter by qualifications.
             persons = Person.objects.filter(airport__isnull=False)
-            for s in Skill.objects.all():
-                if form.cleaned_data[s.name]:
-                    persons = persons.filter(qualification__skill=s)
+            for les in Lesson.objects.all():
+                if form.cleaned_data[les.name]:
+                    persons = persons.filter(qualification__lesson=les)
 
             # Add metadata which we will eventually filter by
             for p in persons:

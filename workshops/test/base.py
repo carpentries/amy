@@ -16,10 +16,10 @@ from ..models import \
     Award, \
     Badge, \
     Event, \
+    Lesson, \
     Person, \
     Qualification, \
-    Site, \
-    Skill
+    Site
 
 
 class TestBase(TestCase):
@@ -32,17 +32,19 @@ class TestBase(TestCase):
 
         self._setUpSites()
         self._setUpAirports()
-        self._setUpSkills()
+        self._setUpLessons()
         self._setUpBadges()
         self._setUpInstructors()
         self._setUpNonInstructors()
         self._setUpPermissions()
 
-    def _setUpSkills(self):
-        '''Set up skill objects.'''
+    def _setUpLessons(self):
+        '''Set up lesson objects.'''
 
-        self.git = Skill.objects.create(name='Git')
-        self.sql = Skill.objects.create(name='SQL')
+        # we have some lessons in the database because of the migration
+        # '0012_auto_20150612_0807.py'
+        self.git, _ = Lesson.objects.get_or_create(name='swc/git')
+        self.sql, _ = Lesson.objects.get_or_create(name='dc/sql')
 
     def _setUpSites(self):
         '''Set up site objects.'''
@@ -88,8 +90,8 @@ class TestBase(TestCase):
         Award.objects.create(person=self.hermione,
                              badge=self.instructor,
                              awarded=datetime.date(2014, 1, 1))
-        Qualification.objects.create(person=self.hermione, skill=self.git)
-        Qualification.objects.create(person=self.hermione, skill=self.sql)
+        Qualification.objects.create(person=self.hermione, lesson=self.git)
+        Qualification.objects.create(person=self.hermione, lesson=self.sql)
 
         self.harry = Person.objects.create(
             personal='Harry', middle=None, family='Potter',
@@ -100,7 +102,7 @@ class TestBase(TestCase):
         Award.objects.create(person=self.harry,
                              badge=self.instructor,
                              awarded=datetime.date(2014, 5, 5))
-        Qualification.objects.create(person=self.harry, skill=self.sql)
+        Qualification.objects.create(person=self.harry, lesson=self.sql)
 
         self.ron = Person.objects.create(
             personal='Ron', middle=None, family='Weasley',
@@ -111,7 +113,7 @@ class TestBase(TestCase):
         Award.objects.create(person=self.ron,
                              badge=self.instructor,
                              awarded=datetime.date(2014, 11, 11))
-        Qualification.objects.create(person=self.ron, skill=self.git)
+        Qualification.objects.create(person=self.ron, lesson=self.git)
 
     def _setUpNonInstructors(self):
         '''Set up person objects representing non-instructors.'''
@@ -319,11 +321,11 @@ class TestBase(TestCase):
         '''Get value of currently selected element from 'select' node.'''
         selections = node.findall(".//option[@selected='selected']")
         if (len(selections) == 0):
-            return ""
+            return []
         if (len(selections) == 1):
             return selections[0].attrib['value']
         else:
-            return ",".join([x.attrib['value'] for x in selections])
+            return [x.attrib['value'] for x in selections]
 
     def _get_initial_form_index(self, form_index, url, *args):
         '''Get a form to start testing with.

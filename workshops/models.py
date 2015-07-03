@@ -116,6 +116,8 @@ class Person(AbstractBaseUser, PermissionsMixin):
     notes = models.TextField(default="", blank=True)
 
     badges = models.ManyToManyField("Badge", through="Award")
+    lessons = models.ManyToManyField("Lesson", through="Qualification")
+    domains = models.ManyToManyField("KnowledgeDomain")
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = [
@@ -375,8 +377,8 @@ class Task(models.Model):
 
 #------------------------------------------------------------
 
-class Skill(models.Model):
-    '''Represent a skill someone might teach.'''
+class Lesson(models.Model):
+    '''Represent a lesson someone might teach.'''
 
     name       = models.CharField(max_length=STR_MED)
 
@@ -389,10 +391,10 @@ class Qualification(models.Model):
     '''What is someone qualified to teach?'''
 
     person     = models.ForeignKey(Person)
-    skill      = models.ForeignKey(Skill)
+    lesson     = models.ForeignKey(Lesson)
 
     def __str__(self):
-        return '{0}/{1}'.format(self.person, self.skill)
+        return '{0}/{1}'.format(self.person, self.lesson)
 
 #------------------------------------------------------------
 
@@ -424,3 +426,11 @@ class Award(models.Model):
 
     def __str__(self):
         return '{0}/{1}/{2}/{3}'.format(self.person, self.badge, self.awarded, self.event)
+
+
+class KnowledgeDomain(models.Model):
+    """Represent a knowledge domain a person is engaged in."""
+    name = models.CharField(max_length=STR_LONG)
+
+    def __str__(self):
+        return self.name
