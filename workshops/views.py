@@ -37,11 +37,11 @@ from workshops.forms import (
     SearchForm, DebriefForm, InstructorsForm, PersonForm, PersonBulkAddForm,
     EventForm, TaskForm, TaskFullForm, bootstrap_helper,
     bootstrap_helper_with_add, BadgeAwardForm, PersonAwardForm,
-    PersonPermissionsForm, bootstrap_helper_filter
+    PersonPermissionsForm, bootstrap_helper_filter, PersonMergeForm,
 )
 from workshops.util import (
     earth_distance, upload_person_task_csv,  verify_upload_person_task,
-    create_uploaded_persons_tasks, InternalError, Paginator
+    create_uploaded_persons_tasks, InternalError, Paginator, merge_persons
 )
 
 from workshops.filters import (
@@ -379,7 +379,6 @@ def person_bulk_add_confirmation(request):
         request.session['bulk-add-people'] = persons_tasks
 
         # check if user wants to verify or save, or cancel
-
         if request.POST.get('verify', None):
             # if there's "verify" in POST, then do only verification
             any_errors = verify_upload_person_task(persons_tasks)
@@ -576,6 +575,60 @@ def person_password(request, person_id):
         'title': 'Change password',
     })
 
+
+@login_required
+def person_merge(request):
+    'Merge information from one Person into another (in case of duplicates).'
+
+    if request.method == 'POST':
+        form = PersonMergeForm(request.POST)
+        if form.is_valid():
+            request.session['person_from'] = form.cleaned_data['person_from'] \
+                                                 .pk
+            request.session['person_to'] = form.cleaned_data['person_to'].pk
+            return redirect('person_merge_confirmation')
+        else:
+            messages.error(request, 'Fix errors below.')
+    else:
+        if 'person_from' in request.session:
+            del request.session['person_from']
+        if 'person_to' in request.session:
+            del request.session['person_to']
+        form = PersonMergeForm()
+
+    context = {'title': 'Merge Persons',
+               'person_merge_form': form,
+               'form_helper': bootstrap_helper}
+    return render(request, 'workshops/person_merge_form.html', context)
+
+
+@login_required
+def person_merge_confirmation(request):
+    '''Show what the merge will do and get confirmation.'''
+    person_from = get_object_or_404(Person,
+                                    pk=request.session.get('person_from'))
+    person_to = get_object_or_404(Person,
+                                  pk=request.session.get('person_to'))
+
+    # Must not be the same person.
+    if person_from == person_to:
+        del request.session['person_from']
+        del request.session['person_to']
+        messages.warning(request, 'Cannot merge a person with themselves.')
+        return redirect('person_merge')
+
+    if "confirmed" in request.GET:
+        merge_persons(person_from, person_to)
+        messages.success(request,
+                         'Merging {0} into {1}'.format(person_from,
+                                                       person_to))
+        return redirect('person_merge')
+
+    else:
+        context = {'title': 'Confirm merge',
+                   'person_from': person_from,
+                   'person_to': person_to}
+        return render(request, 'workshops/person_merge_confirm.html', context)
 
 #------------------------------------------------------------
 

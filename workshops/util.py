@@ -6,7 +6,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError, transaction
 from django.core.paginator import Paginator as DjangoPaginator
 
-from .models import Event, Role, Person, Task
+from .models import Event, Role, Person, Task, Award
 
 
 class InternalError(Exception):
@@ -288,3 +288,30 @@ class Paginator(DjangoPaginator):
             pagination = sorted(L_s | M_s | R_s)
 
         return pagination
+
+
+def merge_persons(person_from, person_to):
+    for award in person_from.award_set.all():
+        try:
+            award.person = person_to
+            award.save()
+        except IntegrityError:
+            # unique constraints fail (probably)
+            pass
+
+    for task in person_from.task_set.all():
+        try:
+            task.person = person_to
+            task.save()
+        except IntegrityError:
+            # unique constraints fail (probably)
+            pass
+
+    # update only unique lessons
+    person_from.qualification_set.exclude(lesson__in=person_to.lessons.all()) \
+                                 .update(person=person_to)
+
+    person_to.domains.add(*person_from.domains.all())
+
+    # removes tasks, awards, qualifications in a cascading way
+    person_from.delete()

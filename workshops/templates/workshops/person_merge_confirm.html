@@ -1,0 +1,137 @@
+{% extends "workshops/_page.html" %}
+
+{% load merging_utils %}
+{% block content %}
+<table class="table table-bordered">
+  <tr>
+    <td width="10%"></td>
+    <td width="45%"><strong>Person from</strong> <br/> <span class="text-muted">This person won't exist after the merge</span></td>
+    <td width="45%">
+      <strong>Person to</strong>
+      <p class="text-muted">This person should be kept in the database. Notes, tasks and awards from the person on the left will be merged with this persons notes, tasks and awards.</p>
+    </td>
+  </tr>
+  <tr>
+    <th>username:</th>
+    <td class="{% warn_if_different person_from.username person_to.username %}">{{ person_from.username|default:"—" }}</td>
+    <td>{{ person_to.username|default:"—" }}</td>
+  </tr>
+  <tr>
+    <th>personal:</th>
+    <td class="{% warn_if_different person_from.personal person_to.personal %}">{{ person_from.personal|default:"—" }}</td>
+    <td>{{ person_to.personal|default:"—" }}</td>
+  </tr>
+  <tr>
+    <th>middle:</th>
+    <td class="{% warn_if_different person_from.middle person_to.middle %}">{{ person_from.middle|default:"—" }}</td>
+    <td>{{ person_to.middle|default:"—" }}</td>
+  </tr>
+  <tr>
+    <th>family:</th>
+    <td class="{% warn_if_different person_from.family person_to.family %}">{{ person_from.family|default:"—" }}</td>
+    <td>{{ person_to.family|default:"—" }}</td>
+  </tr>
+  <tr>
+    <th>email:</th>
+    <td class="{% warn_if_different person_from.email person_to.email %}">{{ person_from.email|urlize|default_if_none:"—" }}</td>
+    <td>{{ person_to.email|urlize|default_if_none:"—" }}</td>
+  </tr>
+  <tr>
+    <th>gender:</th>
+    <td class="{% warn_if_different person_from.gender person_to.gender %}">{{ person_from.get_gender_display|default:"—" }}</td>
+    <td>{{ person_to.get_gender_display|default:"—" }}</td>
+  </tr>
+  <tr>
+    <th>may contact:</th>
+    <td class="{% warn_if_different person_from.may_contact person_to.may_contact %}">{{ person_from.may_contact|yesno }}</td>
+    <td>{{ person_to.may_contact|yesno }}</td>
+  </tr>
+  <tr>
+    <th>airport:</th>
+    <td class="{% warn_if_different person_from.airport.pk person_to.airport.pk %}">{% if person_from.airport %}<a href="{{ person_from.airport.get_absolute_url }}">{{ person_from.airport }}</a>{% else %}—{% endif %}</td>
+    <td>{% if person_to.airport %}<a href="{{ person_to.airport.get_absolute_url }}">{{ person_to.airport }}</a>{% else %}—{% endif %}</td>
+  </tr>
+  <tr>
+    <th>github:</th>
+    <td class="{% warn_if_different person_from.github person_to.github %}">{% if person_from.github %}<a href="https://github.com/{{ person_from.github }}">{{ person_from.github }}</a>{% else %}—{% endif %}</td>
+    <td>{% if person_to.github %}<a href="https://github.com/{{ person_to.github }}">{{ person_to.github }}</a>{% else %}—{% endif %}</td>
+  </tr>
+  <tr>
+    <th>twitter:</th>
+    <td class="{% warn_if_different person_from.twitter person_to.twitter %}">{% if person_from.twitter %}<a href="https://twitter.com/{{ person_from.twitter }}">{{ person_from.twitter }}</a>{% else %}—{% endif %}</td>
+    <td>{% if person_to.twitter %}<a href="https://twitter.com/{{ person_to.twitter }}">{{ person_to.twitter }}</a>{% else %}—{% endif %}</td>
+  </tr>
+  <tr>
+    <th>url:</th>
+    <td class="{% warn_if_different person_from.url person_to.url %}">{{ person_from.url|urlize|default_if_none:"—" }}</td>
+    <td>{{ person_to.url|urlize|default_if_none:"—" }}</td>
+  </tr>
+  <tr>
+    <th>notes:</th>
+    <td class="{% success_if_any_content person_from.notes %}">{% if person_from.notes %}<pre>{{ person_from.notes }}</pre>{% endif %}</td>
+    <td>{% if person_to.notes %}<pre>{{ person_to.notes }}</pre>{% endif %}</td>
+  </tr>
+  <tr>
+    <th>awards:</th>
+    <td class="{% success_if_any_content person_from.award_set.count %}">
+      <ul>
+        {% for a in person_from.award_set.all %}
+        <li>{{ a }}</li>
+        {% endfor %}
+      </ul>
+    </td>
+    <td>
+      <ul>
+        {% for a in person_to.award_set.all %}
+        <li>{{ a }}</li>
+        {% endfor %}
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <th>tasks:</th>
+    <td class="{% success_if_any_content person_from.task_set.count %}">
+      <ul>
+        {% for t in person_from.task_set.all %}
+        <li>{{ t }}</li>
+        {% endfor %}
+      </ul>
+    </td>
+    <td>
+      <ul>
+        {% for t in person_to.task_set.all %}
+        <li>{{ t }}</li>
+        {% endfor %}
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <th>qualifications:</th>
+    <td class="{% success_if_any_content person_from.qualification_set.count %}">
+      <ul>
+        {% for q in person_from.qualification_set.all %}
+        <li>{{ q }}</li>
+        {% endfor %}
+      </ul>
+    </td>
+    <td>
+      <ul>
+        {% for q in person_to.qualification_set.all %}
+        <li>{{ q }}</li>
+        {% endfor %}
+      </ul>
+    </td>
+  </tr>
+</table>
+
+<h4>Legend</h4>
+<p><span class="bg-danger">This content will be lost.</span></p>
+<p><span class="bg-success">This content will merged with other person's content.</span></p>
+
+<div class="edit-object">
+  <div class="btn-group pull-right" role="group">
+    <a href="{% url 'person_merge' %}" class="btn btn-primary">Cancel</a>
+    <a href="{% url 'person_merge_confirmation' %}?confirmed=1" onclick='return confirm("Are you sure you wish to merge \"{{ person_from }}\" into \"{{ person_to }}\"?")' class="btn btn-danger">Merge these people</a>
+  </div>
+</div>
+{% endblock %}
