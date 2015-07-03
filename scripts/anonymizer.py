@@ -139,6 +139,9 @@ def event_slug(cursor, i):
 @tuplify
 def url(cursor, i):
     '''Generate something that looks like a URL.'''
+    _url = get_one(cursor, 'select url from workshops_event where id=?;', i)
+    if not _url:
+        return
     return 'http://{0}.{1}/{2}-{3}'.format(*[randword(2, 10) for x in range(4)])
 
 @tuplify
@@ -180,6 +183,11 @@ def email(cursor, i):
         return None
     return '{0}@{1}.{2}'.format(*[randword(2, 8) for x in range(3)])
 
+
+@tuplify
+def empty_string(cursor, i):
+    return ''
+
 #------------------------------------------------------------
 
 def main():
@@ -210,6 +218,7 @@ def main():
     change(cur, 'workshops_person', 'twitter', monicker)
     change(cur, 'workshops_person', 'url', url)
     change(cur, 'workshops_person', 'username', monicker)
+    change(cur, 'workshops_person', 'password', empty_string)
 
     change(cur, 'workshops_event', ('start', 'end'), dates)
     change(cur, 'workshops_event', 'slug', event_slug)
@@ -217,9 +226,16 @@ def main():
     change(cur, 'workshops_event', 'reg_key', event_reg_key)
     change(cur, 'workshops_event', 'notes', lorem_ipsum)
 
+    # we can't store historical changes!
+    cur.execute('delete from reversion_version;')
+    cur.execute('delete from reversion_revision;')
+
     cnx.commit()
     cur.close()
     cnx.close()
 
 if __name__ == '__main__':
     main()
+    # we need to populate reversion_* tables so that no-one needs to do that
+    # upon every `make database` call
+    print("REMEMBER! to run `./manage.py createinitialrevisions` on the new database NOW")
