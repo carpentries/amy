@@ -3,8 +3,8 @@
 {% block content %}
 
 <table class="table table-striped">
-  <tr><td>event:</td><td>{{ task.event }}</td></tr>
-  <tr><td>person:</td><td>{{ task.person }}</td></tr>
+  <tr><td>event:</td><td><a href="{{ task.event.get_absolute_url }}">{{ task.event }}</a></td></tr>
+  <tr><td>person:</td><td><a href="{{ task.person.get_absolute_url }}">{{ task.person }}</a></td></tr>
   <tr><td>role:</td><td>{{ task.role }}</td></tr>
 </table>
 
