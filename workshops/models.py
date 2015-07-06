@@ -39,8 +39,9 @@ class Site(models.Model):
 class Airport(models.Model):
     '''Represent an airport (used to locate instructors).'''
 
-    iata      = models.CharField(max_length=STR_SHORT, unique=True)
-    fullname  = models.CharField(max_length=STR_LONG, unique=True)
+    iata = models.CharField(max_length=STR_SHORT, unique=True, verbose_name="IATA code",
+                            help_text='<a href="https://www.world-airport-codes.com/">Look up code</a>')
+    fullname  = models.CharField(max_length=STR_LONG, unique=True, verbose_name="Airport name")
     country   = CountryField()
     latitude  = models.FloatField()
     longitude = models.FloatField()
