@@ -809,13 +809,16 @@ def task_details(request, task_id):
 
 
 @login_required
-def task_delete(request, task_id):
+def task_delete(request, task_id, event_ident=None):
     '''Delete a task. This is used on the event edit page'''
     t = get_object_or_404(Task, pk=task_id)
     t.delete()
 
     messages.success(request, 'Task was deleted successfully.')
-    return redirect(event_edit, t.event.id)
+
+    if event_ident:
+        return redirect(event_edit, event_ident)
+    return redirect(all_tasks)
 
 
 class TaskCreate(LoginRequiredMixin, CreateViewContext):

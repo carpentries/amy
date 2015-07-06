@@ -3,7 +3,7 @@
 {% load links %}
 
 {% block content %}
-<p class="edit-object"><a href="{% url 'event_edit' event.id %}" class="btn btn-primary">Edit</a></p>
+<p class="edit-object"><a href="{% url 'event_edit' event.get_ident %}" class="btn btn-primary">Edit</a></p>
 <table class="table table-striped">
   <tr><td>slug:</td><td>{{ event.slug|default:"—" }}</td></tr>
   <tr><td>start date:</td><td>{{ event.start|default:"—" }}</td></tr>
@@ -64,8 +64,8 @@
 <p>No notes.</p>
 {% endif %}
 <div class="clearfix">
-  <p class="edit-object pull-left"><a href="{% url 'event_edit' event.id %}" class="btn btn-primary">Edit</a></p>
-  <p class="delete-object pull-right"><a href="{% url 'event_delete' event.id %}" onclick='return confirm("Are you sure you wish to remove \"{{ event }}\"?")' class="btn btn-danger">Delete event</a></p>
+  <p class="edit-object pull-left"><a href="{% url 'event_edit' event.get_ident %}" class="btn btn-primary">Edit</a></p>
+  <p class="delete-object pull-right"><a href="{% url 'event_delete' event.get_ident %}" onclick='return confirm("Are you sure you wish to remove \"{{ event }}\"?")' class="btn btn-danger">Delete event</a></p>
 </div>
 
 {% endblock %}

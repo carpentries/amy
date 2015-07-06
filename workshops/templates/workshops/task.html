@@ -8,5 +8,8 @@
   <tr><td>role:</td><td>{{ task.role }}</td></tr>
 </table>
 
-<p class="edit-object"><a href="{% url 'task_edit' task.id %}" class="btn btn-primary">Edit</a></p>
+<div class="clearfix">
+  <p class="edit-object pull-left"><a href="{% url 'task_edit' task.id %}" class="btn btn-primary">Edit</a></p>
+  <p class="delete-object pull-right"><a href="{% url 'task_delete' task.id %}" onclick='return confirm("Are you sure you wish to remove \"{{ task }}\"?")' class="btn btn-danger">Delete task</a></p>
+</div>
 {% endblock %}
