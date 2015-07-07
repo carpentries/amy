@@ -62,7 +62,7 @@ class TestUpgradeInstructorProfile(TestBase):
                 'https://github.com/datacarpentry/sql-ecology/blob/gh-pages/'
                 'sql.md)',
                 [
-                    'dc/spreadsheets', 'dc/r', 'dc/sql',
+                    'dc/spreadsheet', 'dc/r', 'dc/sql',
                 ]
             ),
             (

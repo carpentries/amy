@@ -41,7 +41,7 @@ TXLATE_LESSON = [
         ('Programming with MATLAB', 'swcarpentry',
          'matlab-novice-inflammation', 'swc/matlab'),
         ('Data Organization in Spreadsheets', 'datacarpentry', 'excel-ecology',
-         'dc/spreadsheets'),
+         'dc/spreadsheet'),
         ('The Unix Shell', 'datacarpentry', 'shell-ecology', 'dc/shell'),
         ('Data Analysis and Visualization in R', 'datacarpentry', 'R-ecology',
          'dc/r'),
