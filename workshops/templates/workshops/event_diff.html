@@ -26,6 +26,10 @@
     <td>{% semantic_diff previous_version current_version 'organizer' %}</td>
   </tr>
   <tr>
+    <th>tags:</th>
+    <td>{% semantic_diff previous_version current_version 'tags' %}</td>
+  </tr>
+  <tr>
     <th>url:</th>
     <td>{% semantic_diff previous_version current_version 'url' %}</td>
   </tr>
@@ -34,16 +38,20 @@
     <td>{% semantic_diff previous_version current_version 'reg_key' %}</td>
   </tr>
   <tr>
-    <th>attendance:</th>
-    <td>{% semantic_diff previous_version current_version 'attendance' %}</td>
-  </tr>
-  <tr>
     <th>admin fee:</th>
     <td>{% semantic_diff previous_version current_version 'admin_fee' %}</td>
   </tr>
   <tr>
     <th>invoiced:</th>
     <td>{% semantic_diff previous_version current_version 'invoiced' %}</td>
+  </tr>
+  <tr>
+    <th>attendance:</th>
+    <td>{% semantic_diff previous_version current_version 'attendance' %}</td>
+  </tr>
+  <tr>
+    <th>notes:</th>
+    <td>{% semantic_diff previous_version current_version 'notes' %}</td>
   </tr>
 </table>
 {% endblock %}
