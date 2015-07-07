@@ -2,6 +2,9 @@
 
 These commands are run via `./manage.py command`."""
 
+from django.core.management import call_command
+from django.utils.six import StringIO
+
 from workshops.management.commands.upgrade_instructor_profiles import Command
 from workshops.models import Person
 
@@ -41,6 +44,13 @@ class TestUpgradeInstructorProfile(TestBase):
         "Make sure translating lessons from string to list works as expected."
         TEST = [
             (
+                'Git (e.g., http://swcarpentry.github.io/git-novice), Make,'
+                ' nltk',
+                [
+                    'swc/git', 'swc/make', 'nltk',
+                ]
+            ),
+            (
                 'The Unix Shell (e.g., http://swcarpentry.github.io/shell-'
                 'novice), Git (e.g., http://swcarpentry.github.io/git-novice),'
                 ' Mercurial (e.g., http://swcarpentry.github.io/hg-novice), '
@@ -62,7 +72,7 @@ class TestUpgradeInstructorProfile(TestBase):
                 'https://github.com/datacarpentry/sql-ecology/blob/gh-pages/'
                 'sql.md)',
                 [
-                    'dc/spreadsheets', 'dc/r', 'dc/sql',
+                    'dc/spreadsheet', 'dc/r', 'dc/sql',
                 ]
             ),
             (
@@ -132,9 +142,9 @@ class TestUpgradeInstructorProfile(TestBase):
 
         # check missing fields
         entry = {}
-        correct, reasons = self.cmd.check_entry(entry)
+        correct, errors, warnings = self.cmd.check_entry(entry)
         assert not correct
-        assert "Missing fields" in reasons[0]
+        assert "Missing fields" in errors[0]
 
         # check empty required fields
         entry = {
@@ -143,10 +153,10 @@ class TestUpgradeInstructorProfile(TestBase):
             'gender': '', 'domains': '', 'teaching': '', 'orcid': '',
             'affiliation': '', 'position': '',
         }
-        correct, reasons = self.cmd.check_entry(entry)
+        correct, errors, warnings = self.cmd.check_entry(entry)
         assert not correct
-        assert "Missing fields" not in reasons[0]
-        assert "Required field" in reasons[0] and "is empty" in reasons[0]
+        assert "Missing fields" not in errors[0]
+        assert "Required field" in errors[0] and "is empty" in errors[0]
 
         # check matching person by email
         entry = {
@@ -156,7 +166,7 @@ class TestUpgradeInstructorProfile(TestBase):
             'gender': '', 'domains': '', 'teaching': '', 'orcid': '',
             'affiliation': '', 'position': '',
         }
-        correct, reasons = self.cmd.check_entry(entry)
+        correct, errors, warnings = self.cmd.check_entry(entry)
         assert correct
 
         # check matching person by name
@@ -167,7 +177,7 @@ class TestUpgradeInstructorProfile(TestBase):
             'gender': '', 'domains': '', 'teaching': '', 'orcid': '',
             'affiliation': '', 'position': '',
         }
-        correct, reasons = self.cmd.check_entry(entry)
+        correct, errors, warnings = self.cmd.check_entry(entry)
         assert correct
 
         # check matching >=2 persons by name
@@ -182,9 +192,9 @@ class TestUpgradeInstructorProfile(TestBase):
             'gender': '', 'domains': '', 'teaching': '', 'orcid': '',
             'affiliation': '', 'position': '',
         }
-        correct, reasons = self.cmd.check_entry(entry)
+        correct, errors, warnings = self.cmd.check_entry(entry)
         assert not correct
-        assert 'There are multiple users with this name' in reasons[0]
+        assert 'There are multiple users with this name' in errors[0]
 
         # check non-existing person
         entry = {
@@ -194,11 +204,11 @@ class TestUpgradeInstructorProfile(TestBase):
             'gender': '', 'domains': '', 'teaching': '', 'orcid': '',
             'affiliation': '', 'position': '',
         }
-        correct, reasons = self.cmd.check_entry(entry)
+        correct, errors, warnings = self.cmd.check_entry(entry)
         assert not correct
-        assert 'User with either this email' in reasons[0]
-        assert 'or this name' in reasons[0]
-        assert 'does not exist' in reasons[0]
+        assert 'User with either this email' in errors[0]
+        assert 'or this name' in errors[0]
+        assert 'does not exist' in errors[0]
 
         # check non-instructor person
         entry = {
@@ -208,9 +218,9 @@ class TestUpgradeInstructorProfile(TestBase):
             'gender': '', 'domains': '', 'teaching': '', 'orcid': '',
             'affiliation': '', 'position': '',
         }
-        correct, reasons = self.cmd.check_entry(entry)
-        assert not correct
-        assert 'This person does not have an instructor badge' in reasons[0]
+        correct, errors, warnings = self.cmd.check_entry(entry)
+        assert correct  # we want people even though they aren't instructors
+        assert 'This person does not have an instructor badge' in warnings[0]
 
         # check non-existing airport
         entry = {
@@ -220,10 +230,9 @@ class TestUpgradeInstructorProfile(TestBase):
             'gender': '', 'domains': '', 'teaching': '', 'orcid': '',
             'affiliation': '', 'position': '',
         }
-        correct, reasons = self.cmd.check_entry(entry)
+        correct, errors, warnings = self.cmd.check_entry(entry)
         assert not correct
-        assert 'Airport with this IATA code' in reasons[0]
-        assert 'does not exist' in reasons[0]
+        assert 'Airport "ABC" does not exist' in errors[0]
 
         # check presence of lessons
         entry = {
@@ -234,13 +243,13 @@ class TestUpgradeInstructorProfile(TestBase):
             'orcid': '',
             'affiliation': '', 'position': '',
         }
-        correct, reasons = self.cmd.check_entry(entry)
+        correct, errors, warnings = self.cmd.check_entry(entry)
         assert not correct
-        reasons = "".join(reasons)
-        assert 'Lesson' in reasons
-        assert 'asd/python' in reasons
-        assert 'does not exist' in reasons
-        assert 'swc/git' not in reasons
+        errors = "".join(errors)
+        assert 'Lesson' in errors
+        assert 'asd/python' in errors
+        assert 'does not exist' in errors
+        assert 'swc/git' not in errors
 
         # check correct entry
         correct_entry = {
@@ -259,9 +268,9 @@ class TestUpgradeInstructorProfile(TestBase):
             'affiliation': 'Hogwart CO.',
             'position': 'undergraduate'
         }
-        correct, reasons = self.cmd.check_entry(correct_entry)
+        correct, errors, warnings = self.cmd.check_entry(correct_entry)
         assert correct
-        assert reasons == []
+        assert errors == []
 
     def test_update(self):
         """Make sure entries are indeed updated."""
@@ -284,7 +293,7 @@ class TestUpgradeInstructorProfile(TestBase):
             'affiliation': 'Hogwart CO.',
             'position': 'undergraduate'
         }
-        correct, reasons = self.cmd.check_entry(correct_entry)
+        correct, errors, warnings = self.cmd.check_entry(correct_entry)
         assert correct
         self.cmd.update(correct_entry)
 
@@ -312,9 +321,77 @@ class TestUpgradeInstructorProfile(TestBase):
                 # 1 entry.
                 correct = False
                 for entry in self.cmd.process(f):
-                    correct, _ = self.cmd.check_entry(entry)
+                    correct, _, _ = self.cmd.check_entry(entry)
                 else:
                     # empty file
                     correct_list.append(correct)
 
         assert correct_list == [True, False, False], correct_list
+
+    def test_output(self):
+        """Make sure the Command works well."""
+
+        def stringify_streams(stream1, stream2):
+            stream1.seek(0)
+            stream2.seek(0)
+            return stream1.read(), stream2.read()
+
+        call_args = [
+            (
+                'workshops/test/upgrade_instructor_profiles1.csv',
+                {'force': False}
+            ),
+            (
+                'workshops/test/upgrade_instructor_profiles2.csv',
+                {'force': False}
+            ),
+            (
+                'workshops/test/upgrade_instructor_profiles3.csv',
+                {'force': False}
+            ),
+            (
+                'workshops/test/upgrade_instructor_profiles4.csv',
+                {'force': True}
+            ),
+        ]
+
+        # 1st file: all correct
+        positional, options = call_args[0]
+        stdout = StringIO()
+        stderr = StringIO()
+        call_command('upgrade_instructor_profiles', positional,
+                     stdout=stdout, stderr=stderr, **options)
+        stdout, stderr = stringify_streams(stdout, stderr)
+        assert 'ERROR' not in stderr
+        assert 'WARNING' not in stdout
+
+        # 2nd file: no input
+        positional, options = call_args[1]
+        stdout = StringIO()
+        stderr = StringIO()
+        call_command('upgrade_instructor_profiles', positional,
+                     stdout=stdout, stderr=stderr, **options)
+        stdout, stderr = stringify_streams(stdout, stderr)
+        assert 'ERROR' not in stderr
+        assert 'WARNING' not in stdout
+
+        # 3rd file: missing some fields
+        positional, options = call_args[2]
+        stdout = StringIO()
+        stderr = StringIO()
+        call_command('upgrade_instructor_profiles', positional,
+                     stdout=stdout, stderr=stderr, **options)
+        stdout, stderr = stringify_streams(stdout, stderr)
+        assert 'row 1' in stderr
+        assert 'ERROR' in stderr
+
+        # 4th file: first entry correct, second has missing lesson 'ruby'
+        positional, options = call_args[3]
+        stdout = StringIO()
+        stderr = StringIO()
+        call_command('upgrade_instructor_profiles', positional,
+                     stdout=stdout, stderr=stderr, **options)
+        stdout, stderr = stringify_streams(stdout, stderr)
+        assert 'row 2' in stderr
+        assert 'ERROR' in stderr
+        assert 'ruby' in stderr
