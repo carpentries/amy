@@ -26,7 +26,7 @@
             <td>{{ airport.latitude }}</td>
             <td>{{ airport.longitude }}</td>
             <td>
-                <a href="{% url 'airport_details' airport.iata %}" title="View {{ airport }}"><span class="glyphicon glyphicon-option-horizontal"></span></a>
+                <a href="{% url 'airport_details' airport.iata %}" title="View {{ airport }}"><span class="glyphicon glyphicon-info-sign"></span></a>
                 &nbsp;
                 <a href="{% url 'airport_edit' airport.iata %}" title="Edit {{ airport }}"><span class="glyphicon glyphicon-pencil"></span></a>
             </td>

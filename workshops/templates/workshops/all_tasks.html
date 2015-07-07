@@ -24,7 +24,7 @@
             <td><a href="{{ task.person.get_absolute_url }}">{{ task.person.get_full_name }}</a>{% if task.person.email and task.person.may_contact %} &lt;{{ task.person.email|urlize }}&gt;{% endif %}</td>
             <td>{{ task.role }}</td>
             <td>
-                <a href="{% url 'task_details' task.id %}" title="View {{ task }}"><span class="glyphicon glyphicon-option-horizontal"></span></a>
+                <a href="{% url 'task_details' task.id %}" title="View {{ task }}"><span class="glyphicon glyphicon-info-sign"></span></a>
                 &nbsp;
                 <a href="{% url 'task_edit' task.id %}" title="Edit {{ task }}"><span class="glyphicon glyphicon-pencil"></span></a>
             </td>

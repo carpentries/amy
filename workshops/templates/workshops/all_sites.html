@@ -24,7 +24,7 @@
             <td><a href="http://{{ site.domain }}">{{ site.domain }}</a></td>
             <td>{{ site.notes|truncatechars:40 }}</td>
             <td>
-                <a href="{% url 'site_details' site.domain %}" title="View {{ site.fullname }}"><span class="glyphicon glyphicon-option-horizontal"></span></a>
+                <a href="{% url 'site_details' site.domain %}" title="View {{ site.fullname }}"><span class="glyphicon glyphicon-info-sign"></span></a>
                 &nbsp;
                 <a href="{% url 'site_edit' site.domain %}" title="Edit {{ site.fullname }}"><span class="glyphicon glyphicon-pencil"></span></a>
             </td>
