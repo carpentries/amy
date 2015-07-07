@@ -21,7 +21,8 @@ TXLATE_HEADERS = {
     'Software Carpentry topics you are comfortable teaching':
         'software-carpentry',
     'ORCID ID': 'orcid',
-    'Data Carpentry lessons you are comfortable teaching': 'data-carpentry',
+    'Data Carpentry lessons you are comfortable teaching':
+        'data-carpentry',
     'Affiliation': 'affiliation',
     'What is your current occupation/career stage?': 'position'
 }

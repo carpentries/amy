@@ -432,6 +432,7 @@ class Award(models.Model):
     def __str__(self):
         return '{0}/{1}/{2}/{3}'.format(self.person, self.badge, self.awarded, self.event)
 
+#------------------------------------------------------------
 
 class KnowledgeDomain(models.Model):
     """Represent a knowledge domain a person is engaged in."""
