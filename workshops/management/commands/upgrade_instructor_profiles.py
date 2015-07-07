@@ -62,30 +62,74 @@ LIST_FIELDS = ('software-carpentry', 'data-carpentry')
 
 
 class Command(BaseCommand):
-    args = 'filename'
     help = 'Update profiles for instructors'
 
     _cache = dict()
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'filename', help='CSV file with instructor profile survey results',
+        )
+
+        parser.add_argument(
+            '--force', action='store_true', default=False,
+            help='Upgrade all correct instructor entries',
+        )
+
     def handle(self, *args, **options):
-        if len(args) != 1:
-            raise CommandError('No CSV filename specified')
+        filename = options['filename']
+        force = options['force']
 
-        filename = args[0]
-
-        invalid = list()
+        upgrade_all = True
+        upgrade_ready = list()
         with open(filename, 'r') as f:
-            for entry in self.process(f):
-                correct, reasons = self.check_entry(entry)
-                if correct:
-                    self.update(entry)
-                else:
-                    invalid.append((entry, reasons))
+            if force:
+                self.stdout.write('Upgrading all entries that are correct.')
 
-        for entry, reasons in invalid:
-            print('{0} {1} <{2}>'.format(entry['personal'], entry['family'],
-                                         entry['email']))
-            print('Reasons: \n- {0}'.format("\n- ".join(reasons)))
+            i = 1
+            for entry in self.process(f):
+                correct, errors, warnings = self.check_entry(entry)
+                if correct and force:
+                    self.update(entry)
+                elif correct and not force:
+                    upgrade_ready.append(entry)
+                elif not correct:
+                    upgrade_all = False
+
+                if errors:
+                    try:
+                        for error in errors:
+                            self.stderr.write(
+                                'ERROR: {} {} <{}> (row {}): {}'
+                                .format(
+                                    entry['personal'], entry['family'],
+                                    entry['email'], i, error
+                                )
+                            )
+                    except KeyError:
+                        self.stderr.write(
+                            'ERROR: (row {}) missing fields: '
+                            'personal/family/email'.format(i)
+                        )
+                if warnings:
+                    for warning in warnings:
+                        self.stdout.write(
+                            'WARNING: {} {} <{}> (row {}): {}'
+                            .format(
+                                entry['personal'], entry['family'],
+                                entry['email'], i, warning
+                            )
+                        )
+                i += 1
+
+        if not force:
+            if upgrade_all:
+                self.stdout.write('All entries are correct, upgrading...')
+                for entry in upgrade_ready:
+                    self.update(entry)
+            else:
+                self.stderr.write('Not all entries are correct, cannot'
+                                  ' upgrade.')
 
     def process(self, csv_file):
         '''Read data into list of dictionaries with well-defined keys.'''
@@ -106,9 +150,8 @@ class Command(BaseCommand):
             # normalize gender
             new_record['gender'] = self.translate_gender(new_record['gender'])
 
-            # normalize airport (just use first 3 letters of the input, all
-            # upper-case)
-            new_record['airport'] = new_record['airport'][0:3].upper()
+            # normalize airport (upper-case whole thing)
+            new_record['airport'] = new_record['airport'].upper()
 
             # turn string of domains into a list of domains
             new_record['domains'] = self.translate_domains(
@@ -167,6 +210,10 @@ class Command(BaseCommand):
                     break
             if found:
                 result.append(found)
+            else:
+                # in case someone adds a lesson missing in TXLATE_LESSON
+                # just add it to the result and handle error/warning later
+                result.append(f.strip().lower())
         return result
 
     def check_entry(self, entry):
@@ -177,22 +224,23 @@ class Command(BaseCommand):
         Check correctness of data (no missing fields, etc.)"""
         try:
             correct = True
-            reasons = list()
+            errors = list()
+            warnings = list()
 
             # check if all required fields are present
             left = set(entry.keys()) - set(['teaching'])
             right = set(TXLATE_HEADERS.values()) - set(LIST_FIELDS)
             if not left == right:
                 correct = False
-                reasons.append('Missing fields: {0}'
-                               .format(list(right - left)))
+                errors.append('Missing fields: {0}'
+                              .format(list(right - left)))
 
             # check if all required fields aren't empty
             for field in Person.REQUIRED_FIELDS:
                 if not entry[field]:
                     correct = False
-                    reasons.append('Required field "{0}" is empty'
-                                   .format(field))
+                    errors.append('Required field "{0}" is empty'
+                                  .format(field))
 
             # check if user exists (match by email)
             person = None
@@ -204,21 +252,23 @@ class Command(BaseCommand):
                                                 family=entry['family'])
                 except Person.MultipleObjectsReturned:
                     correct = False
-                    reasons.append('There are multiple users with this name '
-                                   '("{0} {1}")'
-                                   .format(entry['personal'], entry['family']))
+                    errors.append('There are multiple users with this name '
+                                  '("{0} {1}")'
+                                  .format(entry['personal'], entry['family']))
                 except Person.DoesNotExist:
                     correct = False
-                    reasons.append('User with either this email ("{0}") or '
-                                   'this name ("{1} {2}") does not exist'
-                                   .format(entry['email'], entry['personal'],
-                                           entry['family']))
+                    errors.append('User with either this email ("{0}") or '
+                                  'this name ("{1} {2}") does not exist'
+                                  .format(entry['email'], entry['personal'],
+                                          entry['family']))
 
             # check if the person really is an instructor
             instructor_badge = Badge.objects.get(name='instructor')
             if person and instructor_badge not in person.badges.all():
-                correct = False
-                reasons.append('This person does not have an instructor badge')
+                # it's not an error, because we want to have that person in the
+                # database even though they aren't certified instructor
+                warnings.append('This person does not have an instructor'
+                                ' badge')
 
             # cache airport IATA codes
             if 'airports' not in self._cache:
@@ -229,12 +279,24 @@ class Command(BaseCommand):
             # check if airport exists
             if entry['airport'] not in self._cache['airports']:
                 correct = False
-                reasons.append('Airport with this IATA code "{0}" does not '
-                               'exist'.format(entry['airport']))
+                errors.append('Airport "{0}" does not exist'
+                              .format(entry['airport']))
 
             # Don't check if domains exist.
             # There are occasions when instructors add domains we don't have in
             # the database.  This should be no-op.
+
+            # cache domains
+            if 'domains' not in self._cache:
+                self._cache['domains'] = KnowledgeDomain.objects \
+                                                        .values_list('name',
+                                                                     flat=True)
+
+            # show domains not in our database, but don't error-out
+            for domain in entry['domains']:
+                if domain not in self._cache['domains']:
+                    warnings.append('Domain "{0}" does not exist'
+                                    .format(domain))
 
             # cache lesson names
             if 'lessons' not in self._cache:
@@ -245,15 +307,15 @@ class Command(BaseCommand):
             for lesson in entry['teaching']:
                 if lesson not in self._cache['lessons']:
                     correct = False
-                    reasons.append('Lesson "{0}" does not exist'
-                                   .format(lesson))
+                    errors.append('Lesson "{0}" does not exist'
+                                  .format(lesson))
 
-            return correct, reasons
+            return correct, errors, warnings
 
         except KeyError as e:
             correct = False
-            reasons.append("Missing fields: {}".format(e))
-            return correct, reasons
+            errors.append("Missing fields: {}".format(e))
+            return correct, errors, warnings
 
     def update(self, entry):
         """Update instructor profile in the database."""
