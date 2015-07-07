@@ -3,7 +3,7 @@
 {% load links %}
 
 {% block content %}
-<p class="edit-object"><a href="{% url 'event_edit' event.id %}" class="btn btn-primary">Edit</a></p>
+<p class="edit-object"><a href="{% url 'event_edit' event.get_ident %}" class="btn btn-primary">Edit</a></p>
 <table class="table table-striped">
   <tr><td>slug:</td><td>{{ event.slug|default:"—" }}</td></tr>
   <tr><td>start date:</td><td>{{ event.start|default:"—" }}</td></tr>
@@ -15,7 +15,7 @@
   {% format_link_to_website event.url as website_link %}
   <tr><td>Website URL:</td><td>{{ website_link|default:"—"|urlize }}</td></tr>
   <tr><td>Repository URL:</td><td>{{ repo_link|default:"—"|urlize }} {% if repo_link %}<a href="{% url 'validate_event' event.get_ident %}" class="btn btn-primary btn-xs pull-right" id="validate_event">validate event</a>{% else %}<a class="btn btn-danger btn-xs pull-right" id="error_event_url" href="#" data-toggle="popover" data-trigger="focus" title="Validation error" data-content="Cannot validate an event without URL pointing to the GitHub repository, e.g.: <code>https://github.com/swcarpentry/2015-05-24-training</code>">Error</a>{% endif %}</td></tr>
-  <tr><td>Eventbrite key:</td><td>{{ event.reg_key|default:"—" }}</td></tr>
+  <tr><td>Eventbrite key:</td><td>{% if event.reg_key %}<a href="https://www.eventbrite.com/myevent?eid={{ event.reg_key }}" title="Go to Eventbrite's page for this event">{{ event.reg_key }}</a>{% else %}—{% endif %}</td></tr>
   <tr><td>attendance:</td><td>{{ event.attendance|default_if_none:"—" }}</td></tr>
   <tr><td>admin fee:</td><td>{{ event.admin_fee|default_if_none:"—" }}</td></tr>
   <tr><td>invoiced:</td><td>{{ event.invoiced|yesno:"yes,no,unknown" }}</td></tr>
@@ -64,8 +64,8 @@
 <p>No notes.</p>
 {% endif %}
 <div class="clearfix">
-  <p class="edit-object pull-left"><a href="{% url 'event_edit' event.id %}" class="btn btn-primary">Edit</a></p>
-  <p class="delete-object pull-right"><a href="{% url 'event_delete' event.id %}" onclick='return confirm("Are you sure you wish to remove \"{{ event }}\"?")' class="btn btn-danger">Delete event</a></p>
+  <p class="edit-object pull-left"><a href="{% url 'event_edit' event.get_ident %}" class="btn btn-primary">Edit</a></p>
+  <p class="delete-object pull-right"><a href="{% url 'event_delete' event.get_ident %}" onclick='return confirm("Are you sure you wish to remove \"{{ event }}\"?")' class="btn btn-danger">Delete event</a></p>
 </div>
 
 {% endblock %}

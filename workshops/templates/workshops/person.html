@@ -46,7 +46,9 @@
 <p>Tasks</p>
 <ul>
   {% for t in tasks %}
-  <li class="tasks_item" id="tasks_{{forloop.counter0}}"><a href="{% url 'task_details' t.id %}">{{ t }}</a></li>
+  <li>
+    {{ t.role }} during <a href="{{ t.event.get_absolute_url }}">{{ t.event.get_ident }}</a> (<a href="{{ t.get_absolute_url }}">show task</a>)
+  </li>
   {% endfor %}
 </ul>
 {% else %}

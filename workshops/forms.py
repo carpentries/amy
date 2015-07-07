@@ -211,6 +211,11 @@ class EventForm(forms.ModelForm):
                   'tags', 'url', 'reg_key', 'admin_fee', 'invoiced',
                   'attendance', 'notes')
 
+    class Media:
+        # thanks to this, {{ form.media }} in the template will generate
+        # a <link href=""> (for CSS files) or <script src=""> (for JS files)
+        js = ('calendar_popup.js', )
+
 
 class TaskForm(forms.ModelForm):
 

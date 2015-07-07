@@ -54,7 +54,7 @@
         <td>{{ event.admin_fee|default_if_none:"—" }}</td>
         <td>{{ event.invoiced|yesno:"yes,no,unknown" }}</td>
         <td>
-          <a href="{% url 'event_details' event.get_ident %}" title="View {{ event.get_ident }}"><span class="glyphicon glyphicon-option-horizontal"></span></a>
+          <a href="{% url 'event_details' event.get_ident %}" title="View {{ event.get_ident }}"><span class="glyphicon glyphicon-info-sign"></span></a>
           &nbsp;
           <a href="{% url 'event_edit' event.get_ident %}" title="Edit {{ event.get_ident }}"><span class="glyphicon glyphicon-pencil"></span></a>
         </td>
