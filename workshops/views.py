@@ -278,12 +278,18 @@ def all_persons(request):
 def person_details(request, person_id):
     '''List details of a particular person.'''
     person = Person.objects.get(id=person_id)
-    awards = Award.objects.filter(person__id=person_id)
-    tasks = Task.objects.filter(person__id=person_id)
-    context = {'title' : 'Person {0}'.format(person),
-               'person' : person,
-               'awards' : awards,
-               'tasks' : tasks}
+    awards = person.award_set.all()
+    tasks = person.task_set.all()
+    lessons = person.lessons.all()
+    domains = person.domains.all()
+    context = {
+        'title': 'Person {0}'.format(person),
+        'person': person,
+        'awards': awards,
+        'tasks': tasks,
+        'lessons': lessons,
+        'domains': domains,
+    }
     return render(request, 'workshops/person.html', context)
 
 

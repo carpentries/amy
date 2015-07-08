@@ -31,29 +31,57 @@
 <p>No notes.</p>
 {% endif %}
 
-{% if awards %}
-<p>Awards</p>
-<ul>
-  {% for a in awards %}
-  <li class="awards_item" id="awards_{{forloop.counter0}}">{{ a }}</li>
-  {% endfor %}
-</ul>
-{% else %}
-<p>No awards.</p>
-{% endif %}
+<div class="row">
+  <div class="col-sm-6">
+    {% if awards %}
+    <h5>Awards:</h5>
+    <ul>
+      {% for a in awards %}
+      <li>awarded a(n) <a href="{{ a.badge.get_absolute_url }}">{{ a.badge }}</a> badge on {{ a.awarded }}{% if a.event %} for <a href="{{ a.event.get_absolute_url }}">{{ a.event }}</a>{% endif %}</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <h5>No awards.</h5>
+    {% endif %}
 
-{% if tasks %}
-<p>Tasks</p>
-<ul>
-  {% for t in tasks %}
-  <li>
-    {{ t.role }} during <a href="{{ t.event.get_absolute_url }}">{{ t.event.get_ident }}</a> (<a href="{{ t.get_absolute_url }}">show task</a>)
-  </li>
-  {% endfor %}
-</ul>
-{% else %}
-<p>No tasks.</p>
-{% endif %}
+    {% if tasks %}
+    <h5>Tasks:</h5>
+    <ul>
+      {% for t in tasks %}
+      <li>
+        {{ t.role }} during <a href="{{ t.event.get_absolute_url }}">{{ t.event.get_ident }}</a> (<a href="{{ t.get_absolute_url }}">show task</a>)
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <h5>No tasks.</h5>
+    {% endif %}
+  </div>
+
+  <div class="col-sm-6">
+    {% if domains %}
+    <h5>Knowledge domains:</h5>
+    <ul>
+      {% for d in domains %}
+      <li>{{ d }}</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <h5>No knowledge domains.</h5>
+    {% endif %}
+
+    {% if lessons %}
+    <h5>Lessons:</h5>
+    <ul>
+      {% for l in lessons %}
+      <li>{{ l }}</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <h5>No lessons.</h5>
+    {% endif %}
+  </div>
+</div>
 
 <div class="edit-object">
   <a href="{% url 'person_edit' person.id %}" class="btn btn-primary">Edit</a>
