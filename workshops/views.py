@@ -14,7 +14,8 @@ from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.conf import settings
 from django.http import Http404, HttpResponse
 from django.db import IntegrityError, transaction
-from django.db.models import Count, Sum, Q, Model, ProtectedError
+from django.db.models import Count, Sum, Q, F, Model, ProtectedError
+from django.db.models import Case, When, Value, IntegerField
 from django.shortcuts import redirect, render, get_object_or_404
 from django.views.generic.base import ContextMixin
 from django.views.generic.edit import CreateView, UpdateView
@@ -42,7 +43,7 @@ from workshops.forms import (
     PersonPermissionsForm, bootstrap_helper_filter, PersonMergeForm,
 )
 from workshops.util import (
-    earth_distance, upload_person_task_csv,  verify_upload_person_task,
+    upload_person_task_csv,  verify_upload_person_task,
     create_uploaded_persons_tasks, InternalError, Paginator, merge_persons
 )
 
@@ -883,46 +884,70 @@ def badge_details(request, badge_name):
 @login_required
 def instructors(request):
     '''Search for instructors.'''
+    instructor_badge = Badge.objects.get(name='instructor')
+    instructors = instructor_badge.person_set.filter(airport__isnull=False) \
+                                  .select_related('airport') \
+                                  .prefetch_related('lessons')
+    instructors = instructors.annotate(
+        num_taught=Count(
+            Case(
+                When(
+                    task__role__name='instructor',
+                    then=Value(1)
+                ),
+                output_field=IntegerField()
+            )
+        )
+    )
+    form = InstructorsForm()
 
-    persons = None
+    lessons = list()
 
-    if request.method == 'POST':
-        form = InstructorsForm(request.POST)
+    if 'submit' in request.GET:
+        form = InstructorsForm(request.GET)
         if form.is_valid():
+            data = form.cleaned_data
 
-            # Filter by qualifications.
-            persons = Person.objects.filter(airport__isnull=False)
-            for les in Lesson.objects.all():
-                if form.cleaned_data[les.name]:
-                    persons = persons.filter(qualification__lesson=les)
+            if data['lessons']:
+                lessons = data['lessons']
+                # this has to be in a loop to match a *subset* of lessons,
+                # not any lesson within the list (as it would be with
+                # `.filter(lessons_in=lessons)`)
+                for lesson in lessons:
+                    instructors = instructors.filter(
+                        qualification__lesson=lesson
+                    )
 
-            # Add metadata which we will eventually filter by
-            for p in persons:
-                p.num_taught = p.task_set.instructors().count()
+            if data['airport']:
+                x = data['airport'].latitude
+                y = data['airport'].longitude
+                # using Euclidean distance just because it's faster and easier
+                complex_F = ((F('airport__latitude') - x) ** 2
+                             + (F('airport__longitude') - y) ** 2)
+                instructors = instructors.annotate(distance=complex_F) \
+                                         .order_by('distance', 'family')
 
-            # Sort by location.
-            loc = (form.cleaned_data['latitude'],
-                   form.cleaned_data['longitude'])
-            persons = [(earth_distance(loc, (p.airport.latitude, p.airport.longitude)), p)
-                       for p in persons]
-            persons.sort(
-                key=lambda distance_person: (
-                    distance_person[0],
-                    distance_person[1].family,
-                    distance_person[1].personal,
-                    distance_person[1].middle))
+            if data['latitude'] and data['longitude']:
+                x = data['latitude']
+                y = data['longitude']
+                # using Euclidean distance just because it's faster and easier
+                complex_F = ((F('airport__latitude') - x) ** 2
+                             + (F('airport__longitude') - y) ** 2)
+                instructors = instructors.annotate(distance=complex_F) \
+                                         .order_by('distance', 'family')
 
-            # Return number desired.
-            wanted = form.cleaned_data['wanted']
-            persons = [x[1] for x in persons[:wanted]]
+            if data['country']:
+                instructors = instructors.filter(
+                    airport__country=data['country']
+                ).order_by('family')
 
-    # if a GET (or any other method) we'll create a blank form
-    else:
-        form = InstructorsForm()
-
-    context = {'title' : 'Find Instructors',
-               'form': form,
-               'persons' : persons}
+    instructors = _get_pagination_items(request, instructors)
+    context = {
+        'title': 'Find Instructors',
+        'form': form,
+        'persons': instructors,
+        'lessons': lessons,
+    }
     return render(request, 'workshops/instructors.html', context)
 
 #------------------------------------------------------------
