@@ -1,10 +1,10 @@
 from django import forms
-from django.forms import HiddenInput
-from django.forms import formset_factory
+from django.forms import HiddenInput, CheckboxSelectMultiple
 
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Div, HTML, Submit
+from crispy_forms.layout import Layout, Div, HTML, Submit, Field
 from crispy_forms.bootstrap import FormActions
+from django_countries.fields import CountryField
 from selectable import forms as selectable
 
 from workshops.models import (
@@ -12,7 +12,7 @@ from workshops.models import (
 )
 from workshops import lookups
 
-INSTRUCTOR_SEARCH_LEN = 10   # how many instrutors to return from a search by default
+INSTRUCTORS_NUM = 10  # how many instrutors to return from a search by default
 
 AUTOCOMPLETE_HELP_TEXT = (
     "Autocomplete field; type characters to view available options, "
@@ -58,9 +58,6 @@ bootstrap_helper_filter = BootstrapHelperFilter()
 class InstructorsForm(forms.Form):
     '''Represent instructor matching form.'''
 
-    wanted = forms.IntegerField(label='Number Wanted',
-                                initial=INSTRUCTOR_SEARCH_LEN,
-                                min_value=1)
     latitude = forms.FloatField(label='Latitude',
                                 min_value=-90.0,
                                 max_value=90.0,
@@ -78,56 +75,64 @@ class InstructorsForm(forms.Form):
         ),
     )
 
+    country = CountryField().formfield(required=False)
+
+    lessons = forms.ModelMultipleChoiceField(queryset=Lesson.objects.all(),
+                                             widget=CheckboxSelectMultiple(),
+                                             required=False)
+
     def __init__(self, *args, **kwargs):
         '''Build checkboxes for qualifications dynamically.'''
         super(InstructorsForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper(self)
         self.helper.form_class = 'form-inline'
+        self.helper.form_method = 'get'
         self.helper.layout = Layout(
-            'wanted',
             Div(
                 Div(
                     'latitude',
                     'longitude',
-                    css_class='col-sm-6'
+                    css_class='panel-body'
                 ),
-                Div(
-                    HTML('<br><strong>OR</strong>'),
-                    css_class='col-sm-2',
-                ),
+                css_class='panel panel-default ',
+            ),
+            HTML('<p>OR</p>'),
+            Div(
                 Div(
                     'airport',
-                    css_class='col-sm-4'
+                    css_class='panel-body'
                 ),
-                css_class='row panel panel-default panel-body',
+                css_class='panel panel-default ',
             ),
-            HTML('<label class="control-label">Lessons</label>'),
+            HTML('<p>OR</p>'),
+            Div(
+                Div(
+                    # 100% width instead of Bootstrap's default "auto" makes
+                    # the input narrower (because in "auto" some long country
+                    # name expands the input too much)
+                    Field('country', style='width: 100%'),
+                    css_class='panel-body'
+                ),
+                css_class='panel panel-default ',
+            ),
+            'lessons',
             FormActions(
                 Submit('submit', 'Submit'),
             ),
         )
-        lessons = Lesson.objects.all()
-        for les in lessons:
-            self.fields[les.name] = forms.BooleanField(label=les.name, required=False)
-            self.helper.layout.insert(3, les.name)
 
     def clean(self):
         cleaned_data = super(InstructorsForm, self).clean()
         airport = cleaned_data.get('airport')
         lat = cleaned_data.get('latitude')
         long = cleaned_data.get('longitude')
+        country = cleaned_data.get('country')
 
-        if airport is None:
-            if lat is None or long is None:
-                raise forms.ValidationError(
-                    'Must specify either an airport code or latitude/longitude')
-        else:
-            if lat is not None or long is not None:
-                raise forms.ValidationError(
-                    'Cannot specify both an airport code and a '
-                    'latitude/longitude. Pick one or the other')
-            cleaned_data['latitude'] = airport.latitude
-            cleaned_data['longitude'] = airport.longitude
+        sum = bool(airport) + bool(lat and long) + bool(country)
+        # user can specify only one: either airport, or lat&long, or country
+        if sum != 1:
+            raise forms.ValidationError('Must specify an airport, or latitude'
+                                        ' and longitude, or a country.')
         return cleaned_data
 
 
