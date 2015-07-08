@@ -23,8 +23,9 @@ AIRPORTS = [
 def add_bunch_of_new_airports(apps, schema_editor):
     Airport = apps.get_model('workshops', 'Airport')
     for iata, fullname, country, latitude, longitude in AIRPORTS:
-        Airport.objects.create(iata=iata, fullname=fullname, country=country,
-                               latitude=latitude, longitude=longitude)
+        Airport.objects.get_or_create(iata=iata, fullname=fullname,
+                                      country=country, latitude=latitude,
+                                      longitude=longitude)
 
 
 class Migration(migrations.Migration):
