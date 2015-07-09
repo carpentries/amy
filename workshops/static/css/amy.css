@@ -77,3 +77,9 @@ pre {
 body {
     padding-top: 60px;
 }
+
+/* when using nav-tab (http://getbootstrap.com/javascript/#tabs) move the
+   crispy form down a few notches */
+div[role="tabpanel"] form {
+    padding-top: 10px;
+}

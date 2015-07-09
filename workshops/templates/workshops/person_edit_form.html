@@ -4,43 +4,68 @@
 {% load selectable_tags %}
 
 {% block content %}
-    {% crispy person_form form_helper %}
+<div>
+  <ul class="nav nav-tabs" role="tablist">
+    <li role="presentation" class="active"><a href="#person" aria-controls="person" role="tab" data-toggle="tab">Person</a></li>
+    <li role="presentation"><a href="#awards" aria-controls="awards" role="tab" data-toggle="tab">Awards</a></li>
+    <li role="presentation"><a href="#tasks" aria-controls="tasks" role="tab" data-toggle="tab">Tasks</a></li>
+  </ul>
+</div>
 
-    <h2 id="awards">Awards</h2>
+<div class="tab-content">
+  <div role="tabpanel" class="tab-pane active" id="person">
+    {% crispy person_form form_helper %}
+  </div>
+  <div role="tabpanel" class="tab-pane" id="awards">
     {% crispy award_form form_helper_with_add %}
     {% if awards %}
     <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>badge</th>
-                <th>awarded</th>
-                <th>event</th>
-            </tr>
-        </thead>
-        <tbody>
+      <thead>
+        <tr>
+          <th>badge</th>
+          <th>awarded</th>
+          <th>event</th>
+        </tr>
+      </thead>
+      <tbody>
         {% for award in awards %}
-            <tr>
-                <td><a href="{{ award.badge.get_absolute_url }}">{{ award.badge.title }}</a></td>
-                <td>{{ award.awarded }}</td>
-                <td>{% if award.event %}<a href="{{ award.event.get_absolute_url }}">{{ award.event }}</a>{% else %}—{% endif %}</td>
-            </tr>
+        <tr>
+          <td><a href="{{ award.badge.get_absolute_url }}">{{ award.badge.title }}</a></td>
+          <td>{{ award.awarded }}</td>
+          <td>{% if award.event %}<a href="{{ award.event.get_absolute_url }}">{{ award.event }}</a>{% else %}—{% endif %}</td>
+        </tr>
         {% endfor %}
-        </tbody>
+      </tbody>
     </table>
     {% else %}
     <p>No awards</p>
     {% endif %}
+  </div>
+  <div role="tabpanel" class="tab-pane" id="tasks">
+    {% crispy task_form form_helper_with_add %}
+    {% if tasks %}
+    <ul>
+      {% for task in tasks %}
+      <li>{{ task.role.name }} during <a href="{{ task.event.get_absolute_url }}">{{ task.event }}</a> (<a href="{{ task.get_absolute_url }}">show task</a>)</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p>No tasks.</p>
+    {% endif %}
+  </div>
+</div>
 {% endblock %}
 
 {% block extrajs %}
 {{ person_form.media }}
 {{ award_form.media }}
+{{ task_form.media }}
 <script type="text/javascript">
-    $(document).ready(function() {
-        $("#id_award-awarded").datepicker({
-            format: "yyyy-mm-dd",
-            todayHighlight: true
-        });
+  $(document).ready(function() {
+    $("#id_award-awarded").datepicker({
+      format: "yyyy-mm-dd",
+      todayHighlight: true
     });
+  });
 </script>
 {% endblock extrajs %}
