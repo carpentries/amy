@@ -107,10 +107,7 @@ class InstructorsForm(forms.Form):
             HTML('<p>OR</p>'),
             Div(
                 Div(
-                    # 100% width instead of Bootstrap's default "auto" makes
-                    # the input narrower (because in "auto" some long country
-                    # name expands the input too much)
-                    Field('country', style='width: 100%'),
+                    'country',
                     css_class='panel-body'
                 ),
                 css_class='panel panel-default ',

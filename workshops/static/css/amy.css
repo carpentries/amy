@@ -69,6 +69,16 @@ pre {
     border-right: 1px solid #EEE;
 }
 
+
+/* 100% width instead of Bootstrap's default "auto" makes
+   the input narrower (because in "auto" some long country
+   name expands the input too much) */
+.sidebar .controls input[type="number"],
+.sidebar .controls input[type="text"],
+.sidebar .controls select {
+    width: 100%;
+}
+
 .main {
     padding: 0 40px;
 }
