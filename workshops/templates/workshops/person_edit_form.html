@@ -66,6 +66,13 @@
       format: "yyyy-mm-dd",
       todayHighlight: true
     });
+
+    // change tabs if django messages indicates so
+    ['awards', 'tasks'].forEach(function(label) {
+      if ($(".alert").hasClass(label)) {
+        $('ul[role="tablist"] a[href="#' + label + '"]').tab('show');
+      }
+    });
   });
 </script>
 {% endblock extrajs %}

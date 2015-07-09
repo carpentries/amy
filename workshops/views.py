@@ -478,13 +478,15 @@ def person_edit(request, person_id):
                         person=str(person),
                         badge=award.badge.title,
                     ),
+                    extra_tags='awards',
                 )
 
                 # to reset the form values
                 return redirect(request.path)
 
             else:
-                messages.error(request, 'Fix errors in the award form.')
+                messages.error(request, 'Fix errors in the award form.',
+                               extra_tags='awards')
 
         elif 'task-role' in request.POST:
             task_form = PersonTaskForm(request.POST, prefix='task')
@@ -500,13 +502,15 @@ def person_edit(request, person_id):
                         role=task.role.name,
                         event=task.event.slug,
                     ),
+                    extra_tags='tasks',
                 )
 
                 # to reset the form values
                 return redirect(request.path)
 
             else:
-                messages.error(request, 'Fix errors in the task form.')
+                messages.error(request, 'Fix errors in the task form.',
+                               extra_tags='tasks')
 
         else:
             person_form = PersonForm(request.POST, prefix='person',
