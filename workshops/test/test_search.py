@@ -28,22 +28,22 @@ class TestSearchSite(TestBase):
     def test_search_for_site_by_partial_name(self):
         response = self.client.post(reverse('search'),
                                     {'term' : 'Alpha',
-                                     'in_sites' : 'on'})
-        doc = self._check_status_code_and_parse(response, 200)
-        node = self._get_1(doc, ".//a[@class='searchresult']",
-                           'Expected exactly one search result')
-        assert node.text=='alpha.edu', \
-            'Wrong name "{0}" in search result'.format(node.text)
+                                     'in_sites' : 'on'},
+                                    follow=True)
+        assert response.status_code == 200
+        content = response.content.decode('utf-8')
+        # no way for us to check the url…
+        assert str(self.site_alpha) in content
 
     def test_search_for_site_by_full_domain(self):
         response = self.client.post(reverse('search'),
                                     {'term' : 'beta.com',
-                                     'in_sites' : 'on'})
-        doc = self._check_status_code_and_parse(response, 200)
-        node = self._get_1(doc, ".//a[@class='searchresult']",
-                           'Expected exactly one search result')
-        assert node.text=='beta.com', \
-            'Wrong name "{0}" in search result'.format(node.text)
+                                     'in_sites' : 'on'},
+                                    follow=True)
+        assert response.status_code == 200
+        content = response.content.decode('utf-8')
+        # no way for us to check the url…
+        assert str(self.site_beta) in content
 
     def test_search_for_site_with_multiple_matches(self):
         response = self.client.post(reverse('search'),
