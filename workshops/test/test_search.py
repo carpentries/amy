@@ -1,5 +1,5 @@
 from django.core.urlresolvers import reverse
-from ..models import Site
+from ..models import Site, Person
 from .base import TestBase
 
 
@@ -55,4 +55,24 @@ class TestSearchSite(TestBase):
                             expected=2)
         texts = set([n.text for n in nodes])
         assert texts == {'alpha.edu', 'beta.com'}, \
+            'Wrong names {0} in search result'.format(texts)
+
+    def test_search_for_people_by_personal_family_names(self):
+        """Test if searching for two words yields people correctly."""
+        # let's add Hermione Granger to some site's notes
+        # this is required because of redirection if only 1 person matches
+        self.site_alpha.notes = 'Hermione Granger'
+        self.site_alpha.save()
+
+        response = self.client.post(reverse('search'), {
+            'term': 'Hermione Granger',
+            'in_sites': 'on',
+            'in_persons': 'on',
+        })
+        doc = self._check_status_code_and_parse(response, 200)
+        nodes = self._get_N(doc, ".//a[@class='searchresult']",
+                            'Expected two search results',
+                            expected=2)
+        texts = set([n.text for n in nodes])
+        assert texts == {str(self.site_alpha), str(self.hermione)}, \
             'Wrong names {0} in search result'.format(texts)
