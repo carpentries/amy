@@ -969,6 +969,8 @@ def search(request):
         form = SearchForm(request.POST)
         if form.is_valid():
             term = form.cleaned_data['term']
+            tokens = re.split('\s+', term)
+
             if form.cleaned_data['in_sites']:
                 sites = Site.objects.filter(
                     Q(domain__contains=term) |
@@ -983,12 +985,23 @@ def search(request):
                     Q(site__fullname__contains=term)) \
                     .order_by('-slug')
             if form.cleaned_data['in_persons']:
-                persons = Person.objects.filter(
-                    Q(personal__contains=term) |
-                    Q(family__contains=term) |
-                    Q(email__contains=term) |
-                    Q(github__contains=term)) \
-                    .order_by('family')
+                # if user searches for two words, assume they mean a person
+                # name
+                if len(tokens) == 2:
+                    name1, name2 = tokens
+                    complex_q = (
+                        Q(personal__contains=name1) & Q(family__contains=name2)
+                    ) | (
+                        Q(personal__contains=name2) & Q(family__contains=name1)
+                    ) | Q(email__contains=term) | Q(github__contains=term)
+                    persons = Person.objects.filter(complex_q)
+                else:
+                    persons = Person.objects.filter(
+                        Q(personal__contains=term) |
+                        Q(family__contains=term) |
+                        Q(email__contains=term) |
+                        Q(github__contains=term)) \
+                        .order_by('family')
             if form.cleaned_data['in_airports']:
                 airports = Airport.objects.filter(
                     Q(iata__contains=term) |
