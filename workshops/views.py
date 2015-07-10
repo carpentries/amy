@@ -41,6 +41,7 @@ from workshops.forms import (
     EventForm, TaskForm, TaskFullForm, bootstrap_helper,
     bootstrap_helper_with_add, BadgeAwardForm, PersonAwardForm,
     PersonPermissionsForm, bootstrap_helper_filter, PersonMergeForm,
+    PersonTaskForm,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
@@ -459,6 +460,7 @@ def person_edit(request, person_id):
     try:
         person = Person.objects.get(pk=person_id)
         awards = person.award_set.order_by('badge__name')
+        tasks = person.task_set.order_by('-event__slug')
     except ObjectDoesNotExist:
         raise Http404("No person found matching the query.")
 
@@ -467,6 +469,7 @@ def person_edit(request, person_id):
         'awarded': datetime.date.today(),
         'person': person,
     })
+    task_form = PersonTaskForm(prefix='task', initial={'person': person})
 
     if request.method == 'POST':
         # check which form was submitted
@@ -482,13 +485,39 @@ def person_edit(request, person_id):
                         person=str(person),
                         badge=award.badge.title,
                     ),
+                    extra_tags='awards',
                 )
 
                 # to reset the form values
                 return redirect(request.path)
 
             else:
-                messages.error(request, 'Fix errors below.')
+                messages.error(request, 'Fix errors in the award form.',
+                               extra_tags='awards')
+
+        elif 'task-role' in request.POST:
+            task_form = PersonTaskForm(request.POST, prefix='task')
+
+            if task_form.is_valid():
+                task = task_form.save()
+
+                messages.success(
+                    request,
+                    '{person} was added a role {role} during {event} event.'
+                    .format(
+                        person=str(person),
+                        role=task.role.name,
+                        event=task.event.slug,
+                    ),
+                    extra_tags='tasks',
+                )
+
+                # to reset the form values
+                return redirect(request.path)
+
+            else:
+                messages.error(request, 'Fix errors in the task form.',
+                               extra_tags='tasks')
 
         else:
             person_form = PersonForm(request.POST, prefix='person',
@@ -527,6 +556,8 @@ def person_edit(request, person_id):
                'model': Person,
                'awards': awards,
                'award_form': award_form,
+               'tasks': tasks,
+               'task_form': task_form,
                'form_helper': bootstrap_helper,
                'form_helper_with_add': bootstrap_helper_with_add,
                }

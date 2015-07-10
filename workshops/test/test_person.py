@@ -184,6 +184,30 @@ class TestPerson(TestBase):
         self.spiderman.refresh_from_db()
         assert self.instructor == self.spiderman.award_set.all()[0].badge
 
+    def test_person_add_task(self):
+        self._setUpEvents()  # set up some events for us
+
+        # make sure person has no tasks
+        assert not self.spiderman.task_set.all()
+
+        # add new task
+        url, values = self._get_initial_form_index(2, 'person_edit',
+                                                   self.spiderman.id)
+        assert 'task-role' in values
+
+        role = Role.objects.create(name='test_role')
+        values['task-event_1'] = Event.objects.all()[0].pk
+        values['task-role'] = role.pk
+        rv = self.client.post(url, data=values)
+        assert rv.status_code == 302, \
+            'After adding a task we should be redirected to the same page, ' \
+            'got {} instead'.format(rv.status_code)
+        # we actually can't test if it redirects to the same url…
+
+        # make sure the task was recorded in the database
+        self.spiderman.refresh_from_db()
+        assert role == self.spiderman.task_set.all()[0].role
+
     def test_edit_person_permissions(self):
         "Make sure we can set up user permissions correctly."
 

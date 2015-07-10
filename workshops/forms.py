@@ -345,3 +345,19 @@ class PersonAwardForm(forms.ModelForm):
         model = Award
         fields = '__all__'
         widgets = {'person': HiddenInput}
+
+
+class PersonTaskForm(forms.ModelForm):
+
+    event = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.EventLookup,
+        label='Event',
+        required=True,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+    class Meta:
+        model = Task
+        fields = '__all__'
+        widgets = {'person': HiddenInput}
