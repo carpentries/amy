@@ -395,7 +395,7 @@ def parse_tags_from_event_index(orig_url):
     _, headers = get_header(response.text)
 
     # put instructors, helpers and venue into notes
-    notes = """VENUE: {venue}
+    notes = """VENUE: {venue}, {address}, {country}
 
 INSTRUCTORS: {instructors}
 
@@ -403,6 +403,8 @@ HELPERS: {helpers}
 
 CONTACT: {contact}""".format(
         venue=headers.get('venue', ''),
+        address=headers.get('address', ''),
+        country=headers.get('country', ''),
         instructors=", ".join(headers.get('instructor', '')),
         helpers=", ".join(headers.get('helper', '')),
         contact=headers.get('contact', ''),
@@ -410,9 +412,9 @@ CONTACT: {contact}""".format(
 
     return {
         'slug': slug,
-        'start': headers.get('startdate'),
-        'end': headers.get('enddate'),
+        'start': headers.get('startdate', ''),
+        'end': headers.get('enddate', ''),
         'url': orig_url,
-        'reg_key': headers.get('eventbrite'),
+        'reg_key': headers.get('eventbrite', ''),
         'notes': notes,
     }

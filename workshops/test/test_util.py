@@ -382,7 +382,7 @@ eventbrite: 10000000
 ---
 """
         url = 'http://test.github.io/2015-07-13-test/'
-        notes = """VENUE: Euphoric State University
+        notes = """VENUE: Euphoric State University, Highway to Heaven 42, Academipolis, USA
 
 INSTRUCTORS: Hermione Granger, Harry Potter, Ron Weasley
 
@@ -396,6 +396,35 @@ CONTACT: hermione@granger.co.uk, rweasley@ministry.gov.uk"""
             'end': date(2015, 7, 14),
             'url': url,
             'reg_key': 1e7,
+            'notes': notes,
+        }
+
+        self.assertEqual(parse_tags_from_event_index(url), expected)
+
+    @patch.object(requests, 'get')
+    def test_parsing_malformed_file(self, mock_get):
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.text = """---
+venues: Euphoric State University
+addresses: Highway to Heaven 42, Academipolis
+countries: USA
+startdates: 2015-07-13
+enddates: 2015-07-14
+instructors: ["Hermione Granger", "Harry Potter", "Ron Weasley",]
+helpers: ["Peter Parker", "Tony Stark", "Natasha Romanova",]
+contacts: hermione@granger.co.uk, rweasley@ministry.gov.uk
+eventbrites: 10000000
+---
+"""
+        url = 'http://test.github.io/2015-07-13-test/'
+        notes = "VENUE: , , \n\nINSTRUCTORS: \n\nHELPERS: \n\nCONTACT: "
+
+        expected = {
+            'slug': '2015-07-13-test',
+            'start': '',
+            'end': '',
+            'url': url,
+            'reg_key': '',
             'notes': notes,
         }
 
