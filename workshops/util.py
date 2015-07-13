@@ -1,6 +1,7 @@
 # coding: utf-8
-from math import pi, sin, cos, acos
 import csv
+from math import pi, sin, cos, acos
+import re
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError, transaction
@@ -339,3 +340,48 @@ def merge_persons(person_from, person_to):
 
     # removes tasks, awards, qualifications in a cascading way
     person_from.delete()
+
+
+class WrongEventURL(Exception):
+    pass
+
+
+def normalize_event_index_url(url):
+    """From any event URL, make one URL to the raw content.
+
+    For example:
+
+    * http://user.github.io/SLUG/
+    * http://user.github.io/SLUG/index.html
+    * https://github.com/user/SLUG/
+    * https://github.com/user/SLUG/blob/gh-pages/index.html
+    * https://raw.githubusercontent.com/user/SLUG/gh-pages/index.html
+
+    …will become:
+    https://raw.githubusercontent.com/user/SLUG/gh-pages/index.html
+    """
+    template = ('https://raw.githubusercontent.com/{username}/{slug}'
+                '/gh-pages/index.html')
+    FMT = [
+        r'http://(?P<name>\w+)\.github\.io/(?P<repo>[^/]+)',
+        r'http://(?P<name>\w+)\.github\.io/(?P<repo>[^/]+)/index\.html',
+        r'https://github\.com/(?P<name>\w+)/(?P<repo>[^/]+)',
+        (r'https://github\.com/(?P<name>\w+)/(?P<repo>[^/]+)/'
+         r'blob/gh-pages/index\.html'),
+        (r'https://raw.githubusercontent.com/(?P<name>[^/]+)/(?P<repo>\S+)'
+         r'/gh-pages/index.html'),
+    ]
+    for format in FMT:
+        results = re.findall(format, url)
+        if results:
+            username, repository = results[0]
+            # caution: if groups in URL change order, then the formatting
+            # below will be broken, because it relies on re.findall() output,
+            # which is a tuple (:sad:)
+            return template.format(username=username, slug=repository)
+
+    raise WrongEventURL("This event URL is incorrect: {0}".format(url))
+
+
+def parse_tags_from_event_index(url):
+    pass

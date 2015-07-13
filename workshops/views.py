@@ -46,7 +46,8 @@ from workshops.forms import (
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
-    create_uploaded_persons_tasks, InternalError, Paginator, merge_persons
+    create_uploaded_persons_tasks, InternalError, Paginator, merge_persons,
+    normalize_event_index_url, WrongEventURL
 )
 
 from workshops.filters import (
@@ -710,21 +711,24 @@ def validate_event(request, event_ident):
     '''Check the event's home page *or* the specified URL (for testing).'''
     page_url, error_messages = None, []
     event = Event.get_by_ident(event_ident)
-    github_url = request.GET.get('url', None) # for manual override
+    github_url = request.GET.get('url', None)  # for manual override
     if github_url is None:
         github_url = event.url
-    if github_url is not None:
-        page_url = github_url.replace('github.com', 'raw.githubusercontent.com').rstrip('/') + '/gh-pages/index.html'
 
-        try:
-            response = requests.get(page_url)
+    try:
+        page_url = normalize_event_index_url(github_url)
+        response = requests.get(page_url)
 
-            if response.status_code != 200:
-                error_messages.append('Request for {0} returned status code {1}'.format(page_url, response.status_code))
-            else:
-                error_messages = check_file(page_url, response.text)
-        except requests.ConnectionError:
-            error_messages = ["Network connection error.", ]
+        if response.status_code != 200:
+            error_messages.append('Request for {0} returned status code {1}'
+                                  .format(page_url, response.status_code))
+        else:
+            error_messages = check_file(page_url, response.text)
+    except WrongEventURL:
+        error_messages = ["This is not a proper event URL.", ]
+    except requests.ConnectionError:
+        error_messages = ["Network connection error.", ]
+
     context = {'title' : 'Validate Event {0}'.format(event),
                'event' : event,
                'page' : page_url,

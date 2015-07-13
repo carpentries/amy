@@ -10,7 +10,11 @@ from django.test import TestCase
 from django.core.urlresolvers import reverse
 
 from ..models import Site, Event, Role, Person, Task
-from ..util import upload_person_task_csv, verify_upload_person_task
+from ..util import (
+    upload_person_task_csv,
+    verify_upload_person_task,
+    normalize_event_index_url
+)
 
 from .base import TestBase
 
@@ -321,3 +325,23 @@ Harry,,Potter,harry@hogwarts.edu,foobar,Instructor
         self.assertEqual(tasks_pre, tasks_post)
         self.assertEqual(users_pre, users_post)
         self.assertEqual(rv.status_code, 200)
+
+
+class TestEventURLNormalization(TestCase):
+    def setUp(self):
+        self.test_cases = [
+            'http://username.github.io/2015-07-13-City/',
+            'http://username.github.io/2015-07-13-City',
+            'http://username.github.io/2015-07-13-City/index.html',
+            'https://github.com/username/2015-07-13-City/',
+            'https://github.com/username/2015-07-13-City',
+            ('https://github.com/username/2015-07-13-City/blob/'
+             'gh-pages/index.html'),
+        ]
+
+        self.output = ('https://raw.githubusercontent.com/username/'
+                       '2015-07-13-City/gh-pages/index.html')
+
+    def test_normalization(self):
+        for url in self.test_cases:
+            assert normalize_event_index_url(url) == self.output
