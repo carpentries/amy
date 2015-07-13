@@ -37,6 +37,12 @@ def earth_distance(pos1, pos2):
     # cosine( arc length ) = sin phi sin phi' cos(theta-theta') + cos phi cos phi'
     # distance = rho * arc length
     c = sin(phi1) * sin(phi2) * cos(theta1 - theta2) + cos(phi1) * cos(phi2)
+
+    # due to round-off errors, sometimes c may be out of range
+    if c > 1:
+        c = 1
+    if c < -1:
+        c = -1
     arc = acos(c)
 
     # Multiply by 6373 to get distance in km.
