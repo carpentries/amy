@@ -6,8 +6,10 @@ import re
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError, transaction
 from django.core.paginator import Paginator as DjangoPaginator
+import requests
 
-from .models import Event, Role, Person, Task, Award
+from workshops.check import get_header
+from workshops.models import Event, Role, Person, Task, Award
 
 
 class InternalError(Exception):
@@ -374,14 +376,43 @@ def normalize_event_index_url(url):
     for format in FMT:
         results = re.findall(format, url)
         if results:
-            username, repository = results[0]
+            username, slug = results[0]
             # caution: if groups in URL change order, then the formatting
             # below will be broken, because it relies on re.findall() output,
             # which is a tuple (:sad:)
-            return template.format(username=username, slug=repository)
+            return template.format(username=username, slug=slug), slug
 
     raise WrongEventURL("This event URL is incorrect: {0}".format(url))
 
 
-def parse_tags_from_event_index(url):
-    pass
+def parse_tags_from_event_index(orig_url):
+    url, slug = normalize_event_index_url(orig_url)
+    response = requests.get(url)
+
+    # will throw requests.exceptions.HTTPError if status is not OK
+    response.raise_for_status()
+
+    _, headers = get_header(response.text)
+
+    # put instructors, helpers and venue into notes
+    notes = """VENUE: {venue}
+
+INSTRUCTORS: {instructors}
+
+HELPERS: {helpers}
+
+CONTACT: {contact}""".format(
+        venue=headers.get('venue', ''),
+        instructors=", ".join(headers.get('instructor', '')),
+        helpers=", ".join(headers.get('helper', '')),
+        contact=headers.get('contact', ''),
+    )
+
+    return {
+        'slug': slug,
+        'start': headers.get('startdate'),
+        'end': headers.get('enddate'),
+        'url': orig_url,
+        'reg_key': headers.get('eventbrite'),
+        'notes': notes,
+    }

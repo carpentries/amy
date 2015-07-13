@@ -716,7 +716,7 @@ def validate_event(request, event_ident):
         github_url = event.url
 
     try:
-        page_url = normalize_event_index_url(github_url)
+        page_url, _ = normalize_event_index_url(github_url)
         response = requests.get(page_url)
 
         if response.status_code != 200:
