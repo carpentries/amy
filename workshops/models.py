@@ -292,7 +292,7 @@ class Event(models.Model):
     start      = models.DateField(null=True, blank=True,
                                   help_text='Setting this and url "publishes" the event.')
     end        = models.DateField(null=True, blank=True)
-    slug       = models.CharField(max_length=STR_LONG, null=True, blank=True)
+    slug       = models.CharField(max_length=STR_LONG, null=True, blank=True, unique=True)
     url        = models.CharField(max_length=STR_LONG, unique=True, null=True, blank=True,
                                   help_text='Setting this and startdate "publishes" the event.')
     reg_key    = models.CharField(max_length=STR_REG_KEY, null=True, blank=True, verbose_name="Eventbrite key")
@@ -331,6 +331,7 @@ class Event(models.Model):
             return Event.objects.get(slug=ident)
 
     def save(self, *args, **kwargs):
+        self.slug = self.slug or None
         self.url = self.url or None
         super(Event, self).save(*args, **kwargs)
 
