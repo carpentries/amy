@@ -137,18 +137,19 @@ class TestEventViews(TestBase):
         self._setUpUsersAndLogin()
 
         # Create a test site
-        test_site = Site.objects.create(domain='example.com',
-                                        fullname='Test Site')
+        self.test_site = Site.objects.create(domain='example.com',
+                                             fullname='Test Site')
 
         # Create a test tag
-        test_tag = Tag.objects.create(name='Test Tag', details='For testing')
+        self.test_tag = Tag.objects.create(name='Test Tag',
+                                           details='For testing')
 
         # Create fifty new events
         for i in range(50):
             event_start = datetime.now()
             Event.objects.create(start=event_start,
                                  slug='test_event_{0}'.format(i),
-                                 site=test_site,
+                                 site=self.test_site,
                                  admin_fee=0)
 
     def test_events_view_paginated(self):
@@ -220,12 +221,11 @@ class TestEventViews(TestBase):
 
     def test_add_minimal_event(self):
         site = Site.objects.get(fullname='Test Site')
-        tag = Tag.objects.get(name='Test Tag')
         response = self.client.post(
             reverse('event_add'),
             {
                 'site': site.id,
-                'tags': [tag.id],
+                'tags': [self.test_tag.id],
                 'organizer': site.id,
             })
         if response.status_code == 302:
@@ -235,19 +235,19 @@ class TestEventViews(TestBase):
             assert event.site == site, (
                 'New event has wrong site: {} != {}'.format(event.site, site))
             tags = list(event.tags.all())
-            assert tags == [tag], (
-                'New event has wrong tags: {} != {}'.format(tags, [tag]))
+            assert tags == [self.test_tag], (
+                'New event has wrong tags: {} != {}'.format(tags,
+                                                            [self.test_tag]))
         else:
             self._check_status_code_and_parse(response, 200)
             assert False, 'expected 302 redirect after post'
 
     def test_add_two_minimal_events(self):
         site = Site.objects.get(fullname='Test Site')
-        tag = Tag.objects.get(name='Test Tag')
         url = reverse('event_add')
         data = {
                 'site': site.id,
-                'tags': [tag.id],
+                'tags': [self.test_tag.id],
                 'organizer': site.id,
             }
         response = self.client.post(url, data)
@@ -260,6 +260,40 @@ class TestEventViews(TestBase):
             assert response.status_code == 302, (
                 'expected 302 redirect after second post, got {}'.format(
                     response.status_code))
+
+    def test_unique_slug(self):
+        """Ensure events with the same slugs are prohibited.
+
+        This is a regression test for
+        https://github.com/swcarpentry/amy/issues/427"""
+        data = {
+            'site': self.test_site.id,
+            'tags': [self.test_tag.id],
+            'slug': 'testing-unique-slug',
+        }
+        response = self.client.post(reverse('event_add'), data)
+        assert response.status_code == 302
+
+        response = self.client.post(reverse('event_add'), data)
+        with self.assertRaises(AssertionError):
+            self._check_status_code_and_parse(response, 200)
+
+    def test_unique_empty_slug(self):
+        """Ensure events with no slugs are saved to the DB.
+
+        This is a regression test introduces with one change from
+        https://github.com/swcarpentry/amy/issues/427
+        (saving empty slug strings to the DB should result in NULL values)."""
+        data = {
+            'site': self.test_site.id,
+            'tags': [self.test_tag.id],
+            'slug': '',
+        }
+        response = self.client.post(reverse('event_add'), data)
+        assert response.status_code == 302
+
+        response = self.client.post(reverse('event_add'), data)
+        assert response.status_code == 302
 
 
 class TestEventNotes(TestBase):
