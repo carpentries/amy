@@ -15,6 +15,7 @@
             <th>event</th>
             <th>role</th>
             <th>errors</th>
+            <th>info</th>
         </tr>
         {% for entry in persons_tasks %}
         <tr>
@@ -43,11 +44,20 @@
                 <span>{{ entry.role|default:"&mdash;" }}</span>
                 <input type="text" name="role" value="{{ entry.role|default:"" }}" class="hidden">
                 </td>
-            <td>
+            <td class="text-danger">
             {% if entry.errors %}
                 <ul>
                 {% for error in entry.errors %}
                     <li>{{ error }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+            </td>
+            <td>
+            {% if entry.info %}
+                <ul>
+                {% for info in entry.info %}
+                    <li>{{ info }}</li>
                 {% endfor %}
                 </ul>
             {% endif %}
