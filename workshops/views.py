@@ -1000,12 +1000,17 @@ def search(request):
         form = SearchForm(request.POST)
         if form.is_valid():
             term = form.cleaned_data['term']
+            tokens = re.split('\s+', term)
+            results = list()
+
             if form.cleaned_data['in_sites']:
                 sites = Site.objects.filter(
                     Q(domain__contains=term) |
                     Q(fullname__contains=term) |
                     Q(notes__contains=term)) \
                     .order_by('fullname')
+                results += list(sites)
+
             if form.cleaned_data['in_events']:
                 events = Event.objects.filter(
                     Q(slug__contains=term) |
@@ -1013,18 +1018,38 @@ def search(request):
                     Q(site__domain__contains=term) |
                     Q(site__fullname__contains=term)) \
                     .order_by('-slug')
+                results += list(events)
+
             if form.cleaned_data['in_persons']:
-                persons = Person.objects.filter(
-                    Q(personal__contains=term) |
-                    Q(family__contains=term) |
-                    Q(email__contains=term) |
-                    Q(github__contains=term)) \
-                    .order_by('family')
+                # if user searches for two words, assume they mean a person
+                # name
+                if len(tokens) == 2:
+                    name1, name2 = tokens
+                    complex_q = (
+                        Q(personal__contains=name1) & Q(family__contains=name2)
+                    ) | (
+                        Q(personal__contains=name2) & Q(family__contains=name1)
+                    ) | Q(email__contains=term) | Q(github__contains=term)
+                    persons = Person.objects.filter(complex_q)
+                else:
+                    persons = Person.objects.filter(
+                        Q(personal__contains=term) |
+                        Q(family__contains=term) |
+                        Q(email__contains=term) |
+                        Q(github__contains=term)) \
+                        .order_by('family')
+                results += list(persons)
+
             if form.cleaned_data['in_airports']:
                 airports = Airport.objects.filter(
                     Q(iata__contains=term) |
                     Q(fullname__contains=term)) \
                     .order_by('iata')
+                results += list(airports)
+
+            # only 1 record found? Let's move to it immediately
+            if len(results) == 1:
+                return redirect(results[0].get_absolute_url())
 
     # if a GET (or any other method) we'll create a blank form
     else:
