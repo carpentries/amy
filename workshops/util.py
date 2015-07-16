@@ -96,19 +96,22 @@ def verify_upload_person_task(data):
     errors_occur = False
     for item in data:
         errors = []
+        info = []
 
         event = item.get('event', None)
+        existing_event = None
         if event:
             try:
-                Event.objects.get(slug=event)
+                existing_event = Event.objects.get(slug=event)
             except Event.DoesNotExist:
                 errors.append(u'Event with slug {0} does not exist.'
                               .format(event))
 
         role = item.get('role', None)
+        existing_role = None
         if role:
             try:
-                Role.objects.get(name=role)
+                existing_role = Role.objects.get(name=role)
             except Role.DoesNotExist:
                 errors.append(u'Role with name {0} does not exist.'
                               .format(role))
@@ -142,7 +145,19 @@ def verify_upload_person_task(data):
 
             except Person.DoesNotExist:
                 # in this case we need to add the user
-                pass
+                info.append('Person and task will be created.')
+
+            else:
+                if existing_event and person and existing_role:
+                    # person, their role and a corresponding event exist, so
+                    # let's check if the task exists
+                    try:
+                        Task.objects.get(event=existing_event, person=person,
+                                         role=existing_role)
+                    except Task.DoesNotExist:
+                        info.append('Task will be created')
+                    else:
+                        info.append('Task already exists')
 
         if person:
             if not any([event, role]):
@@ -150,12 +165,15 @@ def verify_upload_person_task(data):
                               " the user to was provided")
 
         if (event and not role) or (role and not event):
-            errors.append("Must have both/either event ({0}) and role ({1})"
+            errors.append("Must have both: event ({0}) and role ({1})"
                           .format(event, role))
 
         if errors:
             errors_occur = True
             item['errors'] = errors
+
+        if info:
+            item['info'] = info
 
     return errors_occur
 
