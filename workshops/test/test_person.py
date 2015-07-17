@@ -425,8 +425,8 @@ class TestPersonMerge(TestBase):
         self.badge1 = Badge.objects.create(name='Badge1')
         self.badge2 = Badge.objects.create(name='Badge2')
 
-        self.lesson1 = Lesson.objects.get(name='swc/python')
-        self.lesson2 = Lesson.objects.get(name='dc/spreadsheets')
+        self.lesson1 = Lesson.objects.get(name='dc/spreadsheets')
+        self.lesson2 = Lesson.objects.get(name='swc/python')
 
         self.domain1 = KnowledgeDomain.objects.get(pk=1)  # space sciences
         self.domain2 = KnowledgeDomain.objects.get(pk=2)  # geo* sciences
