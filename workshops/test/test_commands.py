@@ -299,7 +299,33 @@ class TestUpgradeInstructorProfile(TestBase):
 
         self.hermione.refresh_from_db()
         assert self.hermione.github == 'hermionegranger'
+        assert self.hermione.affiliation == 'Hogwart CO.'
         assert self.hermione.lessons.all().count() == 0
+
+    def test_update_no_affiliation(self):
+        """Ensure no affiliation yields correct empty string after update."""
+        correct_entry = {
+            'timestamp': '5/26/2015 22:31:50',
+            'personal': 'Hermione',
+            'family': 'Granger',
+            'email': 'hermione@granger.co.uk',
+            'airport': 'AAA',
+            'github': 'hermionegranger',
+            'twitter': 'hermionegranger',
+            'url': 'http://hermione.granger.co.uk/',
+            'gender': "O",
+            'domains': [],
+            'teaching': [],
+            'orcid': '000011112222',
+            'affiliation': '',
+            'position': 'undergraduate'
+        }
+        correct, errors, warnings = self.cmd.check_entry(correct_entry)
+        assert correct
+        self.cmd.update(correct_entry)
+
+        self.hermione.refresh_from_db()
+        assert self.hermione.affiliation == ''
 
     def test_process(self):
         """Make sure the Command works well with CSVs (even ill-formatted)."""

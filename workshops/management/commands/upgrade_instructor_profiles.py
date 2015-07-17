@@ -328,7 +328,7 @@ class Command(BaseCommand):
 
         # update personal details
         fields = ['personal', 'family', 'email', 'gender', 'github', 'twitter',
-                  'url']
+                  'url', 'affiliation']
         for field in fields:
             setattr(person, field, entry[field])
 
