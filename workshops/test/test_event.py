@@ -1,10 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import sys
 import cgi
 
 from django.test import TestCase
 from django.core.urlresolvers import reverse
-from ..models import Event, Site, Tag, Person, Role, Task
+from ..models import (Event, Site, Tag, Person, Role, Task, Award, Badge)
 from .base import TestBase
 
 
@@ -128,6 +128,35 @@ class TestEvent(TestBase):
         for t in [t1, t2, t3]:
             with self.assertRaises(Task.DoesNotExist):
                 Task.objects.get(pk=t.pk)
+
+    def test_delete_event_with_tasks_and_awards(self):
+        """Ensure we cannot delete an event with related tasks and awards.
+
+        Deletion is prevented via Award.event's on_delete=PROTECT."""
+        event = Event.objects.get(slug="starts_today")
+        role = Role.objects.create(name='NonInstructor')
+        badge = Badge.objects.create(name='noninstructor',
+                                     title='Non-instructor',
+                                     criteria='')
+        task = Task.objects.create(event=event, person=self.spiderman,
+                                   role=role)
+        award = Award.objects.create(person=self.spiderman,
+                                     badge=badge,
+                                     awarded=date.today(),
+                                     event=event)
+
+        rv = self.client.get(reverse('event_delete', args=[event.pk, ]))
+        assert rv.status_code == 200
+
+        content = rv.content.decode('utf-8')
+        assert "Failed to delete" in content
+        assert "awards" in content
+
+        # make sure these objects were not deleted
+        Event.objects.get(pk=event.pk)
+        Badge.objects.get(pk=badge.pk)
+        Task.objects.get(pk=task.pk)
+        Award.objects.get(pk=award.pk)
 
 
 class TestEventViews(TestBase):

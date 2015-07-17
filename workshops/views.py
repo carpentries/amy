@@ -1,3 +1,4 @@
+from collections import defaultdict
 import csv
 import datetime
 import io
@@ -199,8 +200,8 @@ def site_delete(request, site_domain):
         site.delete()
         messages.success(request, 'Site was deleted successfully.')
         return redirect(reverse('all_sites'))
-    except ProtectedError:
-        return _failed_to_delete(request, site)
+    except ProtectedError as e:
+        return _failed_to_delete(request, site, e.protected_objects)
 
 
 #------------------------------------------------------------
@@ -251,8 +252,8 @@ def airport_delete(request, airport_iata):
         airport.delete()
         messages.success(request, 'Airport was deleted successfully.')
         return redirect(reverse('all_airports'))
-    except ProtectedError:
-        return _failed_to_delete(request, airport)
+    except ProtectedError as e:
+        return _failed_to_delete(request, airport, e.protected_objects)
 
 #------------------------------------------------------------
 
@@ -573,8 +574,8 @@ def person_delete(request, person_id):
 
         messages.success(request, 'Person was deleted successfully.')
         return redirect(reverse('all_persons'))
-    except ProtectedError:
-        return _failed_to_delete(request, person)
+    except ProtectedError as e:
+        return _failed_to_delete(request, person, e.protected_objects)
 
 
 class PersonPermissions(LoginRequiredMixin, UpdateViewContext):
@@ -808,15 +809,15 @@ def event_delete(request, event_ident):
     """Delete event, its tasks and related awards."""
     try:
         event = Event.get_by_ident(event_ident)
+        event.delete()
+
+        messages.success(request,
+                         'Event and its tasks were deleted successfully.')
+        return redirect(reverse('all_events'))
     except ObjectDoesNotExist:
         raise Http404("No event found matching the query.")
-
-    event.delete()
-
-    messages.success(request,
-                     'Event, its tasks and related awards were deleted '
-                     'successfully.')
-    return redirect(reverse('all_events'))
+    except ProtectedError as e:
+        return _failed_to_delete(request, event, e.protected_objects)
 
 #------------------------------------------------------------
 
@@ -1298,27 +1299,20 @@ def _time_series(request, data, title):
     return render(request, 'workshops/time_series.html', context)
 
 
-def _failed_to_delete(request, object, back=None):
+def _failed_to_delete(request, object, protected_objects, back=None):
     context = {
         'title': 'Failed to delete',
         'back': back or object.get_absolute_url,
         'object': object,
-        'refs': dict(),
+        'refs': defaultdict(list),
     }
 
-    # all reverse FK fields in the object model
-    fields = [
-        f for f in object._meta.get_fields()
-        if (f.one_to_many or f.one_to_one or f.many_to_many) and f.auto_created
-    ]
-    # find out their real names to access with getattr(object, field_name)
-    field_names = [f.related_name or f.name + "_set" for f in fields]
+    for obj in protected_objects:
+        # e.g. for model Award its plural name is 'awards'
+        name = str(obj.__class__._meta.verbose_name_plural)
+        context['refs'][name].append(obj)
 
-    for field_name in field_names:
-        try:
-            context['refs'][field_name] = getattr(object, field_name)
-        except AttributeError:
-            # fail silently if we cannot get some object.field_name
-            pass
+    # this trick enables looping through defaultdict instance
+    context['refs'].default_factory = None
 
     return render(request, 'workshops/failed_to_delete.html', context)
