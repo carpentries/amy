@@ -425,7 +425,8 @@ class Award(models.Model):
     person     = models.ForeignKey(Person)
     badge      = models.ForeignKey(Badge)
     awarded    = models.DateField()
-    event      = models.ForeignKey(Event, null=True, blank=True)
+    event      = models.ForeignKey(Event, null=True, blank=True,
+                                   on_delete=models.PROTECT)
 
     class Meta:
         unique_together = ("person", "badge", )
