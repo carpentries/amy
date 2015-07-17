@@ -1,23 +1,27 @@
 {% extends "workshops/_page.html" %}
 
 {% block content %}
-<p>{{ object }} can't be deleted, because it's referenced by:</p>
+<p>
+    {% if object.get_absolute_url %}
+    <a href="{{ object.get_absolute_url }}">{{ object }}</a>
+    {% else %}
+    {{ object }}
+    {% endif %}
+    can't be deleted, because it's referenced by:</p>
 
 <dl>
 {% for key, items in refs.items %}
-    {% if items.count %}
-        <dt>{{ key }}:</dt>
+    <dt>{{ key }}:</dt>
 
-        {% for item in items.all %}
-        <dd>
-            {% if item.get_absolute_url %}
-            <a href="{{ item.get_absolute_url }}">{{ item }}</a>
-            {% else %}
-            {{ item }}
-            {% endif %}
-        </dd>
-        {% endfor %}
-    {% endif %}
+    {% for item in items %}
+    <dd>
+        {% if item.get_absolute_url %}
+        <a href="{{ item.get_absolute_url }}">{{ item }}</a>
+        {% else %}
+        {{ item }}
+        {% endif %}
+    </dd>
+    {% endfor %}
 {% endfor %}
 </dl>
 
