@@ -11,13 +11,18 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import SetPasswordForm, PasswordChangeForm
 from django.core.paginator import EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
-from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.core.exceptions import (
+    ObjectDoesNotExist,
+    PermissionDenied,
+    SuspiciousOperation,
+)
 from django.conf import settings
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.db import IntegrityError, transaction
 from django.db.models import Count, Sum, Q, F, Model, ProtectedError
 from django.db.models import Case, When, Value, IntegerField
 from django.shortcuts import redirect, render, get_object_or_404
+from django.views.decorators.http import require_POST
 from django.views.generic.base import ContextMixin
 from django.views.generic.edit import CreateView, UpdateView
 from django.contrib.auth.decorators import login_required
@@ -46,7 +51,8 @@ from workshops.forms import (
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
-    create_uploaded_persons_tasks, InternalError, Paginator, merge_persons
+    create_uploaded_persons_tasks, InternalError, Paginator, merge_persons,
+    normalize_event_index_url, WrongEventURL, parse_tags_from_event_index
 )
 
 from workshops.filters import (
@@ -710,21 +716,24 @@ def validate_event(request, event_ident):
     '''Check the event's home page *or* the specified URL (for testing).'''
     page_url, error_messages = None, []
     event = Event.get_by_ident(event_ident)
-    github_url = request.GET.get('url', None) # for manual override
+    github_url = request.GET.get('url', None)  # for manual override
     if github_url is None:
         github_url = event.url
-    if github_url is not None:
-        page_url = github_url.replace('github.com', 'raw.githubusercontent.com').rstrip('/') + '/gh-pages/index.html'
 
-        try:
-            response = requests.get(page_url)
+    try:
+        page_url, _ = normalize_event_index_url(github_url)
+        response = requests.get(page_url)
 
-            if response.status_code != 200:
-                error_messages.append('Request for {0} returned status code {1}'.format(page_url, response.status_code))
-            else:
-                error_messages = check_file(page_url, response.text)
-        except requests.ConnectionError:
-            error_messages = ["Network connection error.", ]
+        if response.status_code != 200:
+            error_messages.append('Request for {0} returned status code {1}'
+                                  .format(page_url, response.status_code))
+        else:
+            error_messages = check_file(page_url, response.text)
+    except WrongEventURL:
+        error_messages = ["This is not a proper event URL.", ]
+    except requests.ConnectionError:
+        error_messages = ["Network connection error.", ]
+
     context = {'title' : 'Validate Event {0}'.format(event),
                'event' : event,
                'page' : page_url,
@@ -735,7 +744,7 @@ def validate_event(request, event_ident):
 class EventCreate(LoginRequiredMixin, CreateViewContext):
     model = Event
     form_class = EventForm
-    template_name = 'workshops/generic_form.html'
+    template_name = 'workshops/event_create_form.html'
 
 
 @login_required
@@ -818,6 +827,21 @@ def event_delete(request, event_ident):
         raise Http404("No event found matching the query.")
     except ProtectedError as e:
         return _failed_to_delete(request, event, e.protected_objects)
+
+
+@login_required
+@require_POST
+def event_import(request):
+    """Read tags from remote URL and return them as JSON.
+
+    This is used to read tags from workshop index page and then fill up fields
+    on event_create form."""
+    try:
+        url = request.POST['url']
+        translated_data = parse_tags_from_event_index(url)
+        return JsonResponse(translated_data)
+    except (KeyError, WrongEventURL):
+        raise SuspiciousOperation('Missing or wrong `url` POST parameter.')
 
 #------------------------------------------------------------
 

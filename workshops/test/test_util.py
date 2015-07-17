@@ -1,16 +1,23 @@
 # coding: utf-8
 import cgi
-from datetime import datetime
+from datetime import datetime, date
 from io import StringIO
 from importlib import import_module
+from unittest.mock import patch
 
 from django.conf import settings
 from django.contrib.sessions.serializers import JSONSerializer
 from django.test import TestCase
 from django.core.urlresolvers import reverse
+import requests
 
 from ..models import Site, Event, Role, Person, Task
-from ..util import upload_person_task_csv, verify_upload_person_task
+from ..util import (
+    upload_person_task_csv,
+    verify_upload_person_task,
+    normalize_event_index_url,
+    parse_tags_from_event_index,
+)
 
 from .base import TestBase
 
@@ -321,3 +328,106 @@ Harry,,Potter,harry@hogwarts.edu,foobar,Instructor
         self.assertEqual(tasks_pre, tasks_post)
         self.assertEqual(users_pre, users_post)
         self.assertEqual(rv.status_code, 200)
+
+
+class TestEventURLNormalization(TestCase):
+    def setUp(self):
+        self.test_cases = [
+            'http://user-name.github.io/2015-07-13-City/',
+            'https://user-name.github.io/2015-07-13-City/',
+            'http://user-name.github.io/2015-07-13-City',
+            'https://user-name.github.io/2015-07-13-City',
+            'http://user-name.github.io/2015-07-13-City/index.html',
+            'https://github.com/user-name/2015-07-13-City/',
+            'https://github.com/user-name/2015-07-13-City',
+            ('https://github.com/user-name/2015-07-13-City/blob/'
+             'gh-pages/index.html'),
+        ]
+
+        self.output = ('https://raw.githubusercontent.com/user-name/'
+                       '2015-07-13-City/gh-pages/index.html')
+
+    def test_normalization(self):
+        for url in self.test_cases:
+            assert normalize_event_index_url(url)[0] == self.output
+
+
+class TestParsingEventHeaders(TestCase):
+
+    # Response.status_code apparently doesn't exist by default
+    @patch.object(requests.models.Response, 'status_code', 404, create=True)
+    def test_wrong_url(self):
+        with self.assertRaises(requests.exceptions.HTTPError):
+            url = 'http://test.github.io/2015-07-13-test/'
+            parse_tags_from_event_index(url)
+
+    @patch.object(requests, 'get')
+    def test_parsing_event_index(self, mock_get):
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.text = """---
+layout: workshop
+root: .
+venue: Euphoric State University
+address: Highway to Heaven 42, Academipolis
+country: USA
+language: us
+latlng: 36.998977, -109.045173
+humandate: Jul 13-14, 2015
+humantime: 9:00 - 17:00
+startdate: 2015-07-13
+enddate: 2015-07-14
+instructor: ["Hermione Granger", "Harry Potter", "Ron Weasley",]
+helper: ["Peter Parker", "Tony Stark", "Natasha Romanova",]
+contact: hermione@granger.co.uk, rweasley@ministry.gov.uk
+etherpad:
+eventbrite: 10000000
+---
+"""
+        url = 'http://test.github.io/2015-07-13-test/'
+        notes = """VENUE: Euphoric State University, Highway to Heaven 42, Academipolis, USA
+
+INSTRUCTORS: Hermione Granger, Harry Potter, Ron Weasley
+
+HELPERS: Peter Parker, Tony Stark, Natasha Romanova
+
+CONTACT: hermione@granger.co.uk, rweasley@ministry.gov.uk"""
+
+        expected = {
+            'slug': '2015-07-13-test',
+            'start': date(2015, 7, 13),
+            'end': date(2015, 7, 14),
+            'url': url,
+            'reg_key': 1e7,
+            'notes': notes,
+        }
+
+        self.assertEqual(parse_tags_from_event_index(url), expected)
+
+    @patch.object(requests, 'get')
+    def test_parsing_malformed_file(self, mock_get):
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.text = """---
+venues: Euphoric State University
+addresses: Highway to Heaven 42, Academipolis
+countries: USA
+startdates: 2015-07-13
+enddates: 2015-07-14
+instructors: ["Hermione Granger", "Harry Potter", "Ron Weasley",]
+helpers: ["Peter Parker", "Tony Stark", "Natasha Romanova",]
+contacts: hermione@granger.co.uk, rweasley@ministry.gov.uk
+eventbrites: 10000000
+---
+"""
+        url = 'http://test.github.io/2015-07-13-test/'
+        notes = "VENUE: , , \n\nINSTRUCTORS: \n\nHELPERS: \n\nCONTACT: "
+
+        expected = {
+            'slug': '2015-07-13-test',
+            'start': '',
+            'end': '',
+            'url': url,
+            'reg_key': '',
+            'notes': notes,
+        }
+
+        self.assertEqual(parse_tags_from_event_index(url), expected)

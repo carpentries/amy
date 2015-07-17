@@ -1,0 +1,72 @@
+{% extends "workshops/_page.html" %}
+
+{% load crispy_forms_tags %}
+{% load selectable_tags %}
+
+{% block content %}
+<button type="button" class="btn btn-default" id="import_url_button">Import from URL</button>
+{% crispy form form_helper %}
+
+<!-- Event import URL modal -->
+<div class="modal fade" id="import_url_modal" tabindex="-1" role="dialog" aria-labelledby="import_url_modal_label" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="import_url_modal_label">Import event data from URL</h4>
+      </div>
+      <div class="modal-body">
+        <form id="import_url_form">
+          {% csrf_token %}
+          <div class="form-group">
+            <label for="event_import_url" class="control-label">Event URL:</label>
+            <input type="url" id="event_import_url" name="url" required class="form-control" />
+            <p class="help-block">Either URL to the event's website or to it's repository <code>index.html</code> will work.</p>
+          </div>
+          <button type="submit" class="btn btn-primary" data-loading-text="Loading..." autocomplete="off">Import</button>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+{{ form.media }}
+<script type="text/javascript">
+  $('#import_url_button').click(function() {
+    $('#import_url_modal').modal();
+  });
+  $('#import_url_form').submit(function(e) {
+    e.preventDefault();
+
+    // indicate loading data
+    var btn = $(this).find('button[type=submit]');
+    btn.attr('disabled', true);
+
+    // load data from URL
+    $.post("{% url 'event_import' %}", $(this).find(":input"), function(data) {
+      $("#event_import_url").parent().removeClass('has-error');
+      $('#import_url_modal').modal('hide');
+
+      $("#id_slug").val(data.slug);
+      $("#id_start").val(data.start);
+      $("#id_end").val(data.end);
+      $("#id_reg_key").val(data.reg_key);
+      $("#id_url").val(data.url);
+      $("#id_notes").val(data.notes);
+    })
+    .fail(function(data) {
+      // something went wrong, let's indicate it
+      $("#event_import_url").parent().addClass('has-error');
+    })
+    .always(function(data) {
+      // let's always reenable the form's submit when the request finishes
+      btn.attr('disabled', false);
+    });
+  });
+</script>
+{% endblock extrajs %}
