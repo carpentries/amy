@@ -5,7 +5,10 @@ These commands are run via `./manage.py command`."""
 from django.core.management import call_command
 from django.utils.six import StringIO
 
-from workshops.management.commands.upgrade_instructor_profiles import Command
+from workshops.management.commands.upgrade_instructor_profiles import (
+    Command,
+    ALL_FIELDS
+)
 from workshops.models import Person
 
 from .base import TestBase
@@ -274,6 +277,8 @@ class TestUpgradeInstructorProfile(TestBase):
 
     def test_update(self):
         """Make sure entries are indeed updated."""
+        allowed_fields = ALL_FIELDS
+
         assert self.hermione.github != 'hermionegranger'
         assert self.hermione.lessons.all().count() != 0
 
@@ -295,11 +300,68 @@ class TestUpgradeInstructorProfile(TestBase):
         }
         correct, errors, warnings = self.cmd.check_entry(correct_entry)
         assert correct
-        self.cmd.update(correct_entry)
+        self.cmd.update(correct_entry, allowed_fields=allowed_fields)
 
         self.hermione.refresh_from_db()
         assert self.hermione.github == 'hermionegranger'
+        assert self.hermione.affiliation == 'Hogwart CO.'
         assert self.hermione.lessons.all().count() == 0
+
+    def test_update_no_affiliation(self):
+        """Ensure no affiliation yields correct empty string after update."""
+        allowed_fields = ALL_FIELDS
+
+        correct_entry = {
+            'timestamp': '5/26/2015 22:31:50',
+            'personal': 'Hermione',
+            'family': 'Granger',
+            'email': 'hermione@granger.co.uk',
+            'airport': 'AAA',
+            'github': 'hermionegranger',
+            'twitter': 'hermionegranger',
+            'url': 'http://hermione.granger.co.uk/',
+            'gender': "O",
+            'domains': [],
+            'teaching': [],
+            'orcid': '000011112222',
+            'affiliation': '',
+            'position': 'undergraduate'
+        }
+        correct, errors, warnings = self.cmd.check_entry(correct_entry)
+        assert correct
+        self.cmd.update(correct_entry, allowed_fields=allowed_fields)
+
+        self.hermione.refresh_from_db()
+        assert self.hermione.affiliation == ''
+
+    def test_update_subset_of_fields(self):
+        """We can update specific fields."""
+        allowed_fields = ['family', 'affiliation']
+
+        correct_entry = {
+            'timestamp': '5/26/2015 22:31:50',
+            'personal': 'Hermione-the-Conjurer',
+            'family': 'Grangerdaughter',
+            'email': 'hermione@granger.co.uk',
+            'airport': 'AAA',
+            'github': 'hermionegranger',
+            'twitter': 'hermionegranger',
+            'url': 'http://hermione.granger.co.uk/',
+            'gender': "O",
+            'domains': [],
+            'teaching': [],
+            'orcid': '000011112222',
+            'affiliation': 'Hogwart The School of Wizardry',
+            'position': 'undergraduate'
+        }
+        correct, errors, warnings = self.cmd.check_entry(correct_entry)
+        assert correct
+        self.cmd.update(correct_entry, allowed_fields=allowed_fields)
+
+        self.hermione.refresh_from_db()
+        assert self.hermione.affiliation == 'Hogwart The School of Wizardry'
+        assert self.hermione.personal == 'Hermione'
+        assert self.hermione.family == 'Grangerdaughter'
 
     def test_process(self):
         """Make sure the Command works well with CSVs (even ill-formatted)."""

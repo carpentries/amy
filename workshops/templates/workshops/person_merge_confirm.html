@@ -32,6 +32,11 @@
     <td>{{ person_to.family|default:"—" }}</td>
   </tr>
   <tr>
+    <th>may contact:</th>
+    <td class="{% warn_if_different person_from.may_contact person_to.may_contact %}">{{ person_from.may_contact|yesno }}</td>
+    <td>{{ person_to.may_contact|yesno }}</td>
+  </tr>
+  <tr>
     <th>email:</th>
     <td class="{% warn_if_different person_from.email person_to.email %}">{{ person_from.email|urlize|default_if_none:"—" }}</td>
     <td>{{ person_to.email|urlize|default_if_none:"—" }}</td>
@@ -42,14 +47,14 @@
     <td>{{ person_to.get_gender_display|default:"—" }}</td>
   </tr>
   <tr>
-    <th>may contact:</th>
-    <td class="{% warn_if_different person_from.may_contact person_to.may_contact %}">{{ person_from.may_contact|yesno }}</td>
-    <td>{{ person_to.may_contact|yesno }}</td>
-  </tr>
-  <tr>
     <th>airport:</th>
     <td class="{% warn_if_different person_from.airport.pk person_to.airport.pk %}">{% if person_from.airport %}<a href="{{ person_from.airport.get_absolute_url }}">{{ person_from.airport }}</a>{% else %}—{% endif %}</td>
     <td>{% if person_to.airport %}<a href="{{ person_to.airport.get_absolute_url }}">{{ person_to.airport }}</a>{% else %}—{% endif %}</td>
+  </tr>
+  <tr>
+    <th>affiliation:</th>
+    <td class="{% warn_if_different person_from.affiliation person_to.affiliation %}">{{ person_from.affiliation|default:"—" }}</td>
+    <td>{{ person_to.affiliation|default:"—" }}</td>
   </tr>
   <tr>
     <th>github:</th>

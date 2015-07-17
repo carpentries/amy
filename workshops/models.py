@@ -117,6 +117,7 @@ class Person(AbstractBaseUser, PermissionsMixin):
     url         = models.CharField(max_length=STR_LONG, null=True, blank=True)
     username    = models.CharField(max_length=STR_MED, unique=True)
     notes = models.TextField(default="", blank=True)
+    affiliation = models.CharField(max_length=STR_LONG, default='', blank=True)
 
     badges = models.ManyToManyField("Badge", through="Award")
     lessons = models.ManyToManyField("Lesson", through="Qualification")
