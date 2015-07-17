@@ -365,10 +365,10 @@ def normalize_event_index_url(url):
     template = ('https://raw.githubusercontent.com/{username}/{slug}'
                 '/gh-pages/index.html')
     FMT = [
-        r'http://(?P<name>\w+)\.github\.io/(?P<repo>[^/]+)',
-        r'http://(?P<name>\w+)\.github\.io/(?P<repo>[^/]+)/index\.html',
-        r'https://github\.com/(?P<name>\w+)/(?P<repo>[^/]+)',
-        (r'https://github\.com/(?P<name>\w+)/(?P<repo>[^/]+)/'
+        r'https?://(?P<name>[^\.]+)\.github\.io/(?P<repo>[^/]+)',
+        r'https?://(?P<name>[^\.]+)\.github\.io/(?P<repo>[^/]+)/index\.html',
+        r'https://github\.com/(?P<name>[^/]+)/(?P<repo>[^/]+)',
+        (r'https://github\.com/(?P<name>[^/]+)/(?P<repo>[^/]+)/'
          r'blob/gh-pages/index\.html'),
         (r'https://raw.githubusercontent.com/(?P<name>[^/]+)/(?P<repo>\S+)'
          r'/gh-pages/index.html'),

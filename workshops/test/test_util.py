@@ -333,16 +333,18 @@ Harry,,Potter,harry@hogwarts.edu,foobar,Instructor
 class TestEventURLNormalization(TestCase):
     def setUp(self):
         self.test_cases = [
-            'http://username.github.io/2015-07-13-City/',
-            'http://username.github.io/2015-07-13-City',
-            'http://username.github.io/2015-07-13-City/index.html',
-            'https://github.com/username/2015-07-13-City/',
-            'https://github.com/username/2015-07-13-City',
-            ('https://github.com/username/2015-07-13-City/blob/'
+            'http://user-name.github.io/2015-07-13-City/',
+            'https://user-name.github.io/2015-07-13-City/',
+            'http://user-name.github.io/2015-07-13-City',
+            'https://user-name.github.io/2015-07-13-City',
+            'http://user-name.github.io/2015-07-13-City/index.html',
+            'https://github.com/user-name/2015-07-13-City/',
+            'https://github.com/user-name/2015-07-13-City',
+            ('https://github.com/user-name/2015-07-13-City/blob/'
              'gh-pages/index.html'),
         ]
 
-        self.output = ('https://raw.githubusercontent.com/username/'
+        self.output = ('https://raw.githubusercontent.com/user-name/'
                        '2015-07-13-City/gh-pages/index.html')
 
     def test_normalization(self):
