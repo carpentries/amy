@@ -17,6 +17,7 @@
         <th>airport</th>
         <th style="width: 150px">country</th>
         <th>lessons</th>
+        <th>affiliation</th>
       </tr>
     {% for p in persons %}
       <tr>
@@ -29,6 +30,7 @@
           {% if lesson in lessons %}<strong>{{ lesson }}</strong>{% else %}{{ lesson }}{% endif %}{% if not forloop.last%}, {% endif %}
         {% endfor %}
         </td>
+        <td>{{ p.affiliation|default:"—" }}</td>
       </tr>
     {% endfor %}
     </table>

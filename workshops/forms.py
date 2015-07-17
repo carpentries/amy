@@ -273,8 +273,8 @@ class PersonForm(forms.ModelForm):
         # 'groups' or 'is_superuser' fields
         # + reorder fields
         fields = ['username', 'personal', 'middle', 'family', 'may_contact',
-                  'email', 'gender', 'airport', 'github', 'twitter', 'url',
-                  'notes', 'lessons', 'domains']
+                  'email', 'gender', 'airport', 'affiliation', 'github',
+                  'twitter', 'url', 'notes', 'lessons', 'domains']
 
 
 class PersonPermissionsForm(forms.ModelForm):
