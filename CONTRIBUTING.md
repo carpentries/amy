@@ -8,6 +8,9 @@ If you would like to know what we need help with, please see the
 
 ## Coding Guidelines
 
+*   Please base your work from `develop` branch, not `master`! `develop`
+    contains latest work that will later become a new release, while `master`
+    contains latest stable release.
 *   All new code must be [PEP8 compatible][pep8], but legacy code should
     not be modified unless its meaning is being changed.
 *   Contributors are strongly encouraged to write docstrings that conform
