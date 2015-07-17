@@ -61,6 +61,11 @@ TXLATE_LESSON = [
 
 LIST_FIELDS = ('software-carpentry', 'data-carpentry')
 
+ALL_FIELDS = list(TXLATE_HEADERS.values())
+for field in LIST_FIELDS:
+    ALL_FIELDS.remove(field)
+ALL_FIELDS.append('teaching')
+
 
 class Command(BaseCommand):
     help = 'Update profiles for instructors'
@@ -73,6 +78,13 @@ class Command(BaseCommand):
         )
 
         parser.add_argument(
+            '--fields', action='store', default=None,
+            help='Comma-separated list of fields used in the upgrade. Use all'
+                 ' fields when this is omitted. Available fields: '
+                 + ', '.join(ALL_FIELDS),
+        )
+
+        parser.add_argument(
             '--force', action='store_true', default=False,
             help='Upgrade all correct instructor entries',
         )
@@ -80,6 +92,20 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         filename = options['filename']
         force = options['force']
+
+        # get fields for the upgrade
+        try:
+            fields = options['fields'].split(',')
+
+            # check if all these fields are available
+            try:
+                for field in fields:
+                    ALL_FIELDS.index(field)
+            except ValueError:
+                raise CommandError('Illegal field name "{}"!'.format(field))
+
+        except AttributeError:
+            fields = ALL_FIELDS
 
         upgrade_all = True
         upgrade_ready = list()
@@ -127,7 +153,7 @@ class Command(BaseCommand):
             if upgrade_all:
                 self.stdout.write('All entries are correct, upgrading...')
                 for entry in upgrade_ready:
-                    self.update(entry)
+                    self.update(entry, allowed_fields=fields)
             else:
                 self.stderr.write('Not all entries are correct, cannot'
                                   ' upgrade.')
@@ -318,7 +344,7 @@ class Command(BaseCommand):
             errors.append("Missing fields: {}".format(e))
             return correct, errors, warnings
 
-    def update(self, entry):
+    def update(self, entry, allowed_fields=list()):
         """Update instructor profile in the database."""
         try:
             person = Person.objects.get(email=entry['email'])
@@ -330,20 +356,24 @@ class Command(BaseCommand):
         fields = ['personal', 'family', 'email', 'gender', 'github', 'twitter',
                   'url', 'affiliation']
         for field in fields:
-            setattr(person, field, entry[field])
+            if field in allowed_fields:
+                setattr(person, field, entry[field])
 
         # update related fields
-        person.airport = Airport.objects.get(iata=entry['airport'])
+        if 'airport' in allowed_fields:
+            person.airport = Airport.objects.get(iata=entry['airport'])
 
-        person.domains = KnowledgeDomain.objects.filter(
-            name__in=entry['domains']
-        )
+        if 'domains' in allowed_fields:
+            person.domains = KnowledgeDomain.objects.filter(
+                name__in=entry['domains']
+            )
 
         person.save()
 
-        # The easiest syntax person.lessons = [] doesn't work because we're
-        # using intermediate M2M model Qualifications
-        Qualification.objects.filter(person=person).delete()
-        lessons = Lesson.objects.filter(name__in=entry['teaching'])
-        for lesson in lessons:
-            Qualification.objects.create(person=person, lesson=lesson)
+        if 'teaching' in allowed_fields:
+            # The easiest syntax person.lessons = [] doesn't work because we're
+            # using intermediate M2M model Qualifications
+            Qualification.objects.filter(person=person).delete()
+            lessons = Lesson.objects.filter(name__in=entry['teaching'])
+            for lesson in lessons:
+                Qualification.objects.create(person=person, lesson=lesson)
