@@ -23,6 +23,24 @@ STR_REG_KEY =  20         # length of Eventbrite registration key
 class Site(models.Model):
     '''Represent a site where workshops are hosted.'''
 
+    name      = models.CharField(max_length=STR_LONG, unique=True)
+    latitude  = models.FloatField()
+    longitude = models.FloatField()
+    country   = models.CharField(max_length=STR_LONG, null=True, blank=True)
+    airport   = models.ForeignKey(Airport, null=True, blank=True)
+    notes     = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
+    def get_absolute_url(self):
+        return reverse('site_details', args=[str(self.id)])
+
+#------------------------------------------------------------
+
+class Host(models.Model):
+    '''A hosting organization.'''
+
     domain     = models.CharField(max_length=STR_LONG, unique=True)
     fullname   = models.CharField(max_length=STR_LONG, unique=True)
     country    = CountryField(null=True, blank=True)
@@ -32,7 +50,7 @@ class Site(models.Model):
         return self.domain
 
     def get_absolute_url(self):
-        return reverse('site_details', args=[str(self.domain)])
+        return reverse('host_details', args=[str(self.domain)])
 
 #------------------------------------------------------------
 
@@ -335,6 +353,18 @@ class Event(models.Model):
         self.slug = self.slug or None
         self.url = self.url or None
         super(Event, self).save(*args, **kwargs)
+
+
+#------------------------------------------------------------
+
+class EventHost(models.Model):
+    '''Associate a host with an event.
+
+    With optional notes explaining the host's contribution.
+    '''
+    event = models.ForeignKey(Event)
+    host  = models.ForeignKey(Host)
+    notes = models.TextField(null=True, blank=True)
 
 
 #------------------------------------------------------------
