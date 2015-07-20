@@ -361,6 +361,67 @@ class TestEventViews(TestBase):
         response = self.client.post(reverse('event_add'), data)
         assert response.status_code == 302
 
+    def test_negative_admin_fee_attendance(self):
+        """Ensure we disallow negative admin fee or attendance.
+
+        This is a regression test for
+        https://github.com/swcarpentry/amy/issues/435."""
+        data = {
+            'site': self.test_site.id,
+            'tags': [self.test_tag.id],
+            'slug': 'test-event',
+            'admin_fee': -1200,
+        }
+        S = "Ensure this value is greater than or equal to 0"
+        response = self.client.post(reverse('event_add'), data)
+        assert response.status_code == 200
+        content = response.content.decode('utf-8')
+        assert content.count(S) == 1
+
+        data = {
+            'site': self.test_site.id,
+            'tags': [self.test_tag.id],
+            'slug': 'test-event',
+            'admin_fee': -1200,
+            'attendance': -36,
+        }
+        response = self.client.post(reverse('event_add'), data)
+        assert response.status_code == 200
+        content = response.content.decode('utf-8')
+        assert content.count(S) == 2
+
+        data = {
+            'site': self.test_site.id,
+            'tags': [self.test_tag.id],
+            'slug': 'test-event',
+            'attendance': -36,
+        }
+        S = "Ensure this value is greater than or equal to 0"
+        response = self.client.post(reverse('event_add'), data)
+        assert response.status_code == 200
+        content = response.content.decode('utf-8')
+        assert content.count(S) == 1
+
+        data = {
+            'site': self.test_site.id,
+            'tags': [self.test_tag.id],
+            'slug': 'test-event',
+            'admin_fee': 0,
+            'attendance': 0,
+        }
+        response = self.client.post(reverse('event_add'), data)
+        assert response.status_code == 302
+
+        data = {
+            'site': self.test_site.id,
+            'tags': [self.test_tag.id],
+            'slug': 'test-event2',
+            'admin_fee': 1200,
+            'attendance': 36,
+        }
+        response = self.client.post(reverse('event_add'), data)
+        assert response.status_code == 302
+
 
 class TestEventNotes(TestBase):
     """Make sure notes once written are saved forever!"""
