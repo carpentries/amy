@@ -324,6 +324,43 @@ class TestEventViews(TestBase):
         response = self.client.post(reverse('event_add'), data)
         assert response.status_code == 302
 
+    def test_start_date_gte_end_date(self):
+        """Ensure event's start date is earlier than it's end date.
+
+        This is a regression test for
+        https://github.com/swcarpentry/amy/issues/436"""
+        data = {
+            'site': self.test_site.id,
+            'tags': [self.test_tag.id],
+            'slug': 'test-event',
+            'start': date(2015, 7, 20),
+            'end': date(2015, 7, 19),
+        }
+        response = self.client.post(reverse('event_add'), data)
+        assert response.status_code == 200
+        content = response.content.decode('utf-8')
+        assert 'Must not be earlier than start date' in content
+
+        data = {
+            'site': self.test_site.id,
+            'tags': [self.test_tag.id],
+            'slug': 'test-event',
+            'start': date(2015, 7, 20),
+            'end': date(2015, 7, 20),
+        }
+        response = self.client.post(reverse('event_add'), data)
+        assert response.status_code == 302
+
+        data = {
+            'site': self.test_site.id,
+            'tags': [self.test_tag.id],
+            'slug': 'test-event2',
+            'start': date(2015, 7, 20),
+            'end': date(2015, 7, 21),
+        }
+        response = self.client.post(reverse('event_add'), data)
+        assert response.status_code == 302
+
 
 class TestEventNotes(TestBase):
     """Make sure notes once written are saved forever!"""

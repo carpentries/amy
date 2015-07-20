@@ -206,6 +206,15 @@ class EventForm(forms.ModelForm):
 
         return data
 
+    def clean_end(self):
+        """Ensure end >= start."""
+        start = self.cleaned_data['start']
+        end = self.cleaned_data['end']
+
+        if start and end and end < start:
+            raise forms.ValidationError('Must not be earlier than start date.')
+        return end
+
     class Meta:
         model = Event
         # reorder fields, don't display 'deleted' field
