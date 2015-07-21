@@ -176,15 +176,15 @@ class EventForm(forms.ModelForm):
         lookup_class=lookups.HostLookup,
         label='Host',
         required=True,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
+        help_text=Event._meta.get_field('host').help_text,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
-    organizer = selectable.AutoCompleteSelectField(
+    administrator = selectable.AutoCompleteSelectField(
         lookup_class=lookups.HostLookup,
-        label='Organizer',
+        label='Administrator',
         required=False,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
+        help_text=Event._meta.get_field('administrator').help_text,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -218,7 +218,7 @@ class EventForm(forms.ModelForm):
     class Meta:
         model = Event
         # reorder fields, don't display 'deleted' field
-        fields = ('slug', 'start', 'end', 'host', 'organizer',
+        fields = ('slug', 'start', 'end', 'host', 'administrator',
                   'tags', 'url', 'reg_key', 'admin_fee', 'invoiced',
                   'attendance', 'notes')
 

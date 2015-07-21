@@ -31,7 +31,7 @@ class TestHost(TestBase):
 
         Additionally check on_delete behavior for Event."""
         Event.objects.create(host=self.host_alpha,
-                             organizer=self.host_beta,
+                             administrator=self.host_beta,
                              slug='test-event')
 
         for host_domain in [self.host_alpha.domain, self.host_beta.domain]:

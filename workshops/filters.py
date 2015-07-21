@@ -9,7 +9,7 @@ class EventFilter(django_filters.FilterSet):
         fields = [
             'tags',
             'host',
-            'organizer',
+            'administrator',
             'invoiced',
         ]
         order_by = ['-slug', 'slug', 'start', '-start', 'end', '-end']

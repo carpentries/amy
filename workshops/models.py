@@ -287,10 +287,15 @@ class EventManager(models.Manager):
 class Event(models.Model):
     '''Represent a single event.'''
 
-    host       = models.ForeignKey(Host, on_delete=models.PROTECT)
+    host = models.ForeignKey(Host, on_delete=models.PROTECT,
+                             help_text='Organization hosting the event.')
     tags       = models.ManyToManyField(Tag)
-    organizer  = models.ForeignKey(Host, related_name='organizer', null=True,
-                                   blank=True, on_delete=models.PROTECT)
+    administrator = models.ForeignKey(
+        Host, related_name='administrator', null=True, blank=True,
+        on_delete=models.PROTECT,
+        help_text='Organization responsible for administrative work. Leave '
+        'blank if self-organized.'
+    )
     start      = models.DateField(null=True, blank=True,
                                   help_text='Setting this and url "publishes" the event.')
     end        = models.DateField(null=True, blank=True)

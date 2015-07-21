@@ -9,7 +9,7 @@
   <tr><td>start date:</td><td>{{ event.start|default:"—" }}</td></tr>
   <tr><td>end date: </td><td>{{ event.end|default:"—" }}</td></tr>
   <tr><td>host:</td><td><a href="{% url 'host_details' event.host.domain %}">{{ event.host }}</a></td></tr>
-  <tr><td>organizer:</td><td>{% if event.organizer %}<a href="{{ event.organizer.get_absolute_url }}">{{ event.organizer }}</a>{% else %}—{% endif %}</td></tr>
+  <tr><td>administrator:</td><td>{% if event.administrator %}<a href="{{ event.administrator.get_absolute_url }}">{{ event.administrator }}</a>{% else %}—{% endif %}</td></tr>
   <tr><td>tags:</td><td>{{ event.tags.all | join:", " }}</td></tr>
   {% format_link_to_repository event.url as repo_link %}
   {% format_link_to_website event.url as website_link %}

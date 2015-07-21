@@ -255,7 +255,7 @@ class TestEventViews(TestBase):
             {
                 'host': host.id,
                 'tags': [self.test_tag.id],
-                'organizer': host.id,
+                'administrator': host.id,
             })
         if response.status_code == 302:
             url = response['location']
@@ -277,7 +277,7 @@ class TestEventViews(TestBase):
         data = {
                 'host': host.id,
                 'tags': [self.test_tag.id],
-                'organizer': host.id,
+                'administrator': host.id,
             }
         response = self.client.post(url, data)
         assert response.status_code == 302, (
