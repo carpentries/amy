@@ -11,7 +11,7 @@ from django.test import TestCase
 from django.core.urlresolvers import reverse
 import requests
 
-from ..models import Site, Event, Role, Person, Task
+from ..models import Host, Event, Role, Person, Task
 from ..util import (
     upload_person_task_csv,
     verify_upload_person_task,
@@ -94,12 +94,12 @@ class CSVBulkUploadTestBase(TestBase):
     """
     def setUp(self):
         super(CSVBulkUploadTestBase, self).setUp()
-        test_site = Site.objects.create(domain='example.com',
-                                        fullname='Test Site')
+        test_host = Host.objects.create(domain='example.com',
+                                        fullname='Test Host')
 
         Role.objects.create(name='Instructor')
         Event.objects.create(start=datetime.now(),
-                             site=test_site,
+                             host=test_host,
                              slug='foobar',
                              admin_fee=100)
 

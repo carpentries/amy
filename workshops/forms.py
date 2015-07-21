@@ -144,7 +144,7 @@ class SearchForm(forms.Form):
 
     term = forms.CharField(label='term',
                            max_length=100)
-    in_sites = forms.BooleanField(label='in sites',
+    in_hosts = forms.BooleanField(label='in hosts',
                                   required=False,
                                   initial=True)
     in_events = forms.BooleanField(label='in events',
@@ -172,16 +172,16 @@ class DebriefForm(forms.Form):
 
 class EventForm(forms.ModelForm):
 
-    site = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.SiteLookup,
-        label='Site',
+    host = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.HostLookup,
+        label='Host',
         required=True,
         help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
     organizer = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.SiteLookup,
+        lookup_class=lookups.HostLookup,
         label='Organizer',
         required=False,
         help_text=AUTOCOMPLETE_HELP_TEXT,
@@ -218,7 +218,7 @@ class EventForm(forms.ModelForm):
     class Meta:
         model = Event
         # reorder fields, don't display 'deleted' field
-        fields = ('slug', 'start', 'end', 'site', 'organizer',
+        fields = ('slug', 'start', 'end', 'host', 'organizer',
                   'tags', 'url', 'reg_key', 'admin_fee', 'invoiced',
                   'attendance', 'notes')
 

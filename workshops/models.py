@@ -21,8 +21,8 @@ STR_REG_KEY =  20         # length of Eventbrite registration key
 
 #------------------------------------------------------------
 
-class Site(models.Model):
-    '''Represent a site where workshops are hosted.'''
+class Host(models.Model):
+    '''Represent a workshop's host.'''
 
     domain     = models.CharField(max_length=STR_LONG, unique=True)
     fullname   = models.CharField(max_length=STR_LONG, unique=True)
@@ -33,7 +33,7 @@ class Site(models.Model):
         return self.domain
 
     def get_absolute_url(self):
-        return reverse('site_details', args=[str(self.domain)])
+        return reverse('host_details', args=[str(self.domain)])
 
 #------------------------------------------------------------
 
@@ -287,9 +287,9 @@ class EventManager(models.Manager):
 class Event(models.Model):
     '''Represent a single event.'''
 
-    site       = models.ForeignKey(Site, on_delete=models.PROTECT)
+    host       = models.ForeignKey(Host, on_delete=models.PROTECT)
     tags       = models.ManyToManyField(Tag)
-    organizer  = models.ForeignKey(Site, related_name='organizer', null=True,
+    organizer  = models.ForeignKey(Host, related_name='organizer', null=True,
                                    blank=True, on_delete=models.PROTECT)
     start      = models.DateField(null=True, blank=True,
                                   help_text='Setting this and url "publishes" the event.')

@@ -1,6 +1,6 @@
 import django_filters
 
-from workshops.models import Event, Site, Person, Task, Airport
+from workshops.models import Event, Host, Person, Task, Airport
 
 
 class EventFilter(django_filters.FilterSet):
@@ -8,20 +8,20 @@ class EventFilter(django_filters.FilterSet):
         model = Event
         fields = [
             'tags',
-            'site',
+            'host',
             'organizer',
             'invoiced',
         ]
         order_by = ['-slug', 'slug', 'start', '-start', 'end', '-end']
 
 
-class SiteFilter(django_filters.FilterSet):
+class HostFilter(django_filters.FilterSet):
     # it's tricky to properly filter by countries from django-countries, so
     # only allow filtering by 2-char names from DB
     country = django_filters.AllValuesFilter()
 
     class Meta:
-        model = Site
+        model = Host
         fields = [
             'country',
         ]
