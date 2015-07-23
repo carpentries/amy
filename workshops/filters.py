@@ -3,7 +3,27 @@ import django_filters
 from workshops.models import Event, Host, Person, Task, Airport
 
 
+class ForeignKeyAllValuesFilter(django_filters.ChoiceFilter):
+    def __init__(self, model, *args, **kwargs):
+        self.lookup_model = model
+        super().__init__(*args, **kwargs)
+
+    @property
+    def field(self):
+        name = self.name
+        model = self.lookup_model
+
+        qs1 = self.model._default_manager.distinct()
+        qs1 = qs1.order_by(name).values_list(name, flat=True)
+        qs2 = model.objects.filter(pk__in=qs1)
+        self.extra['choices'] = [(o.pk, str(o)) for o in qs2]
+        self.extra['choices'].insert(0, (None, '---------'))
+        return super().field
+
+
 class EventFilter(django_filters.FilterSet):
+    administrator = ForeignKeyAllValuesFilter(Host)
+
     class Meta:
         model = Event
         fields = [
