@@ -394,16 +394,19 @@ def parse_tags_from_event_index(orig_url):
 
     _, headers = get_header(response.text)
 
+    try:
+        latitude, longitude = headers.get('latlng', '').split(',')
+    except ValueError:
+        latitude, longitude = '', ''
+
     # put instructors, helpers and venue into notes
-    notes = """VENUE: {venue}, {address}, {country}
+    notes = """COUNTRY: {country}
 
 INSTRUCTORS: {instructors}
 
 HELPERS: {helpers}
 
 CONTACT: {contact}""".format(
-        venue=headers.get('venue', ''),
-        address=headers.get('address', ''),
         country=headers.get('country', ''),
         instructors=", ".join(headers.get('instructor', '')),
         helpers=", ".join(headers.get('helper', '')),
@@ -417,4 +420,11 @@ CONTACT: {contact}""".format(
         'url': orig_url,
         'reg_key': headers.get('eventbrite', ''),
         'notes': notes,
+        'venue': headers.get('venue', ''),
+        'address': headers.get('address', ''),
+        # countries aren't written in a standard way, so we can't auto-select
+        # them
+        'country': headers.get('country', ''),
+        'latitude': latitude,
+        'longitude': longitude,
     }
