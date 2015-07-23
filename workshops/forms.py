@@ -26,6 +26,7 @@ class BootstrapHelper(FormHelper):
     form_class = 'form-horizontal'
     label_class = 'col-lg-2'
     field_class = 'col-lg-8'
+    html5_required = True
 
     def __init__(self, form=None):
         super().__init__(form)
@@ -188,10 +189,29 @@ class EventForm(forms.ModelForm):
         widget=selectable.AutoComboboxSelectWidget,
     )
 
+    country = CountryField().formfield(
+        required=False,
+        help_text=Event._meta.get_field('country').help_text,
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['start'].help_text = DATE_HELP_TEXT
         self.fields['end'].help_text = DATE_HELP_TEXT
+
+        self.helper = BootstrapHelper(self)
+
+        idx_start = self.helper['country'].slice[0][0][0]
+        idx_end = self.helper['longitude'].slice[0][0][0]
+        # wrap all venue fields within <div class='panel-body'>
+        self.helper[idx_start:idx_end + 1] \
+            .wrap_together(Div, css_class='panel-body')
+        # wrap <div class='panel-body'> within <div class='panel panel-…'>
+        self.helper[idx_start].wrap_together(Div,
+                                             css_class='panel panel-default')
+        # add <div class='panel-heading'>Venue details</div> inside "div.panel"
+        self.helper.layout[idx_start].insert(0, Div(HTML('Venue details'),
+                                                    css_class='panel-heading'))
 
     def clean_slug(self):
         # Ensure slug is not an integer value for Event.get_by_ident
@@ -220,7 +240,10 @@ class EventForm(forms.ModelForm):
         # reorder fields, don't display 'deleted' field
         fields = ('slug', 'start', 'end', 'host', 'administrator',
                   'tags', 'url', 'reg_key', 'admin_fee', 'invoiced',
-                  'attendance', 'notes')
+                  'attendance', 'notes',
+                  'country', 'venue', 'address', 'latitude', 'longitude')
+        # WARNING: don't change put any fields between 'country' and
+        #          'longitude' that don't relate to the venue of the event
 
     class Media:
         # thanks to this, {{ form.media }} in the template will generate
