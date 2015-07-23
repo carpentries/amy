@@ -210,7 +210,7 @@ class EventForm(forms.ModelForm):
         self.helper[idx_start].wrap_together(Div,
                                              css_class='panel panel-default')
         # add <div class='panel-heading'>Venue details</div> inside "div.panel"
-        self.helper.layout[idx_start].insert(0, Div(HTML('Venue details'),
+        self.helper.layout[idx_start].insert(0, Div(HTML('Location details'),
                                                     css_class='panel-heading'))
 
     def clean_slug(self):
