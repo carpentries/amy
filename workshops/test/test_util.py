@@ -384,13 +384,13 @@ eventbrite: 10000000
 ---
 """
         url = 'http://test.github.io/2015-07-13-test/'
-        notes = """VENUE: Euphoric State University, Highway to Heaven 42, Academipolis, USA
-
-INSTRUCTORS: Hermione Granger, Harry Potter, Ron Weasley
+        notes = """INSTRUCTORS: Hermione Granger, Harry Potter, Ron Weasley
 
 HELPERS: Peter Parker, Tony Stark, Natasha Romanova
 
-CONTACT: hermione@granger.co.uk, rweasley@ministry.gov.uk"""
+CONTACT: hermione@granger.co.uk, rweasley@ministry.gov.uk
+
+COUNTRY: USA"""
 
         expected = {
             'slug': '2015-07-13-test',
@@ -399,6 +399,11 @@ CONTACT: hermione@granger.co.uk, rweasley@ministry.gov.uk"""
             'url': url,
             'reg_key': 1e7,
             'notes': notes,
+            'venue': 'Euphoric State University',
+            'address': 'Highway to Heaven 42, Academipolis',
+            'country': 'USA',
+            'latitude': '36.998977',
+            'longitude': '-109.045173',
         }
 
         self.assertEqual(parse_tags_from_event_index(url), expected)
@@ -419,7 +424,7 @@ eventbrites: 10000000
 ---
 """
         url = 'http://test.github.io/2015-07-13-test/'
-        notes = "VENUE: , , \n\nINSTRUCTORS: \n\nHELPERS: \n\nCONTACT: "
+        notes = "INSTRUCTORS: \n\nHELPERS: \n\nCONTACT: \n\nCOUNTRY: "
 
         expected = {
             'slug': '2015-07-13-test',
@@ -428,6 +433,11 @@ eventbrites: 10000000
             'url': url,
             'reg_key': '',
             'notes': notes,
+            'venue': '',
+            'address': '',
+            'country': '',
+            'latitude': '',
+            'longitude': '',
         }
 
         self.assertEqual(parse_tags_from_event_index(url), expected)

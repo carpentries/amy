@@ -396,17 +396,19 @@ def parse_tags_from_event_index(orig_url):
 
     try:
         latitude, longitude = headers.get('latlng', '').split(',')
+        latitude = latitude.strip()
+        longitude = longitude.strip()
     except ValueError:
         latitude, longitude = '', ''
 
     # put instructors, helpers and venue into notes
-    notes = """COUNTRY: {country}
-
-INSTRUCTORS: {instructors}
+    notes = """INSTRUCTORS: {instructors}
 
 HELPERS: {helpers}
 
-CONTACT: {contact}""".format(
+CONTACT: {contact}
+
+COUNTRY: {country}""".format(
         country=headers.get('country', ''),
         instructors=", ".join(headers.get('instructor', '')),
         helpers=", ".join(headers.get('helper', '')),
