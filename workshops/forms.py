@@ -194,6 +194,9 @@ class EventForm(forms.ModelForm):
         help_text=Event._meta.get_field('country').help_text,
     )
 
+    admin_fee = forms.DecimalField(min_value=0, decimal_places=2,
+                                   required=False)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['start'].help_text = DATE_HELP_TEXT
