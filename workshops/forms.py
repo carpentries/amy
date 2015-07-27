@@ -240,7 +240,7 @@ class EventForm(forms.ModelForm):
         # reorder fields, don't display 'deleted' field
         fields = ('slug', 'start', 'end', 'host', 'administrator',
                   'tags', 'url', 'reg_key', 'admin_fee', 'invoiced',
-                  'attendance', 'notes',
+                  'attendance', 'contact', 'notes',
                   'country', 'venue', 'address', 'latitude', 'longitude')
         # WARNING: don't change put any fields between 'country' and
         #          'longitude' that don't relate to the venue of the event

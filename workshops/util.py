@@ -406,13 +406,10 @@ def parse_tags_from_event_index(orig_url):
 
 HELPERS: {helpers}
 
-CONTACT: {contact}
-
 COUNTRY: {country}""".format(
         country=headers.get('country', ''),
         instructors=", ".join(headers.get('instructor', '')),
         helpers=", ".join(headers.get('helper', '')),
-        contact=headers.get('contact', ''),
     )
 
     return {
@@ -421,6 +418,7 @@ COUNTRY: {country}""".format(
         'end': headers.get('enddate', ''),
         'url': orig_url,
         'reg_key': headers.get('eventbrite', ''),
+        'contact': headers.get('contact', ''),
         'notes': notes,
         'venue': headers.get('venue', ''),
         'address': headers.get('address', ''),

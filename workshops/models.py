@@ -307,6 +307,7 @@ class Event(models.Model):
     admin_fee  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)])
     invoiced   = models.NullBooleanField(default=False, blank=True)
     notes      = models.TextField(default="", blank=True)
+    contact = models.CharField(max_length=STR_LONG, default="", blank=True)
     country = CountryField(null=True, blank=True)
     venue = models.CharField(max_length=STR_LONG, default='', blank=True)
     address = models.CharField(max_length=STR_LONG, default='', blank=True)

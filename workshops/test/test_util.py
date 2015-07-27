@@ -388,8 +388,6 @@ eventbrite: 10000000
 
 HELPERS: Peter Parker, Tony Stark, Natasha Romanova
 
-CONTACT: hermione@granger.co.uk, rweasley@ministry.gov.uk
-
 COUNTRY: USA"""
 
         expected = {
@@ -398,6 +396,7 @@ COUNTRY: USA"""
             'end': date(2015, 7, 14),
             'url': url,
             'reg_key': 1e7,
+            'contact': 'hermione@granger.co.uk, rweasley@ministry.gov.uk',
             'notes': notes,
             'venue': 'Euphoric State University',
             'address': 'Highway to Heaven 42, Academipolis',
@@ -424,7 +423,7 @@ eventbrites: 10000000
 ---
 """
         url = 'http://test.github.io/2015-07-13-test/'
-        notes = "INSTRUCTORS: \n\nHELPERS: \n\nCONTACT: \n\nCOUNTRY: "
+        notes = "INSTRUCTORS: \n\nHELPERS: \n\nCOUNTRY: "
 
         expected = {
             'slug': '2015-07-13-test',
@@ -432,6 +431,7 @@ eventbrites: 10000000
             'end': '',
             'url': url,
             'reg_key': '',
+            'contact': '',
             'notes': notes,
             'venue': '',
             'address': '',
