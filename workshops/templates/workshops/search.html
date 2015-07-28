@@ -8,11 +8,11 @@
   <div class="row">
 
     <div class="col-sm-3">
-      <h2>Sites</h2>
-      {% if sites %}
+      <h2>Hosts</h2>
+      {% if hosts %}
       <ul>
-	{% for s in sites %}
-	<li><a class="searchresult" href="{% url 'site_details' s.domain %}">{{ s.domain }}</a></li>
+	{% for host in hosts %}
+	<li><a class="searchresult" href="{% url 'host_details' host.domain %}">{{ host.domain }}</a></li>
 	{% endfor %}
       </ul>
       {% endif %}

@@ -26,6 +26,7 @@ class BootstrapHelper(FormHelper):
     form_class = 'form-horizontal'
     label_class = 'col-lg-2'
     field_class = 'col-lg-8'
+    html5_required = True
 
     def __init__(self, form=None):
         super().__init__(form)
@@ -144,7 +145,7 @@ class SearchForm(forms.Form):
 
     term = forms.CharField(label='term',
                            max_length=100)
-    in_sites = forms.BooleanField(label='in sites',
+    in_hosts = forms.BooleanField(label='in hosts',
                                   required=False,
                                   initial=True)
     in_events = forms.BooleanField(label='in events',
@@ -172,26 +173,48 @@ class DebriefForm(forms.Form):
 
 class EventForm(forms.ModelForm):
 
-    site = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.SiteLookup,
-        label='Site',
+    host = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.HostLookup,
+        label='Host',
         required=True,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
+        help_text=Event._meta.get_field('host').help_text,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
-    organizer = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.SiteLookup,
-        label='Organizer',
+    administrator = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.HostLookup,
+        label='Administrator',
         required=False,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
+        help_text=Event._meta.get_field('administrator').help_text,
         widget=selectable.AutoComboboxSelectWidget,
     )
+
+    country = CountryField().formfield(
+        required=False,
+        help_text=Event._meta.get_field('country').help_text,
+    )
+
+    admin_fee = forms.DecimalField(min_value=0, decimal_places=2,
+                                   required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['start'].help_text = DATE_HELP_TEXT
         self.fields['end'].help_text = DATE_HELP_TEXT
+
+        self.helper = BootstrapHelper(self)
+
+        idx_start = self.helper['country'].slice[0][0][0]
+        idx_end = self.helper['longitude'].slice[0][0][0]
+        # wrap all venue fields within <div class='panel-body'>
+        self.helper[idx_start:idx_end + 1] \
+            .wrap_together(Div, css_class='panel-body')
+        # wrap <div class='panel-body'> within <div class='panel panel-…'>
+        self.helper[idx_start].wrap_together(Div,
+                                             css_class='panel panel-default')
+        # add <div class='panel-heading'>Venue details</div> inside "div.panel"
+        self.helper.layout[idx_start].insert(0, Div(HTML('Location details'),
+                                                    css_class='panel-heading'))
 
     def clean_slug(self):
         # Ensure slug is not an integer value for Event.get_by_ident
@@ -218,9 +241,12 @@ class EventForm(forms.ModelForm):
     class Meta:
         model = Event
         # reorder fields, don't display 'deleted' field
-        fields = ('slug', 'start', 'end', 'site', 'organizer',
+        fields = ('slug', 'start', 'end', 'host', 'administrator',
                   'tags', 'url', 'reg_key', 'admin_fee', 'invoiced',
-                  'attendance', 'notes')
+                  'attendance', 'contact', 'notes',
+                  'country', 'venue', 'address', 'latitude', 'longitude')
+        # WARNING: don't change put any fields between 'country' and
+        #          'longitude' that don't relate to the venue of the event
 
     class Media:
         # thanks to this, {{ form.media }} in the template will generate

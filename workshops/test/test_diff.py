@@ -9,10 +9,10 @@ from .base import TestBase
 class TestRevisions(TestBase):
     def setUp(self):
         self._setUpUsersAndLogin()
-        self._setUpSites()
+        self._setUpHosts()
 
         with create_revision():
-            self.event = Event.objects.create(site=self.site_alpha,
+            self.event = Event.objects.create(host=self.host_alpha,
                                               slug='event')
 
         with create_revision():

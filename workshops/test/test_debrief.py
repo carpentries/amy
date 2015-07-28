@@ -18,21 +18,21 @@ class TestDebrief(TestBase):
 
         # set up some testing Events
         self.e1 = Event.objects.create(
-            site=self.site_alpha,
+            host=self.host_alpha,
             slug="in-range",
             start=self.today,
             end=self.tomorrow,
         )
 
         self.e2 = Event.objects.create(
-            site=self.site_alpha,
+            host=self.host_alpha,
             slug="out-of-range1",
             start=self.yesterday,
             end=self.tomorrow,
         )
 
         self.e3 = Event.objects.create(
-            site=self.site_alpha,
+            host=self.host_alpha,
             slug="out-of-range2",
             start=self.today,
             end=self.after_tomorrow,

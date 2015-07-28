@@ -5,7 +5,7 @@
 
 {% block content %}
 <button type="button" class="btn btn-default" id="import_url_button">Import from URL</button>
-{% crispy form form_helper %}
+{% crispy form %}
 
 <!-- Event import URL modal -->
 <div class="modal fade" id="import_url_modal" tabindex="-1" role="dialog" aria-labelledby="import_url_modal_label" aria-hidden="true">
@@ -57,7 +57,12 @@
       $("#id_end").val(data.end);
       $("#id_reg_key").val(data.reg_key);
       $("#id_url").val(data.url);
+      $("#id_contact").val(data.contact);
       $("#id_notes").val(data.notes);
+      $('#id_venue').val(data.venue);
+      $('#id_address').val(data.address);
+      $('#id_latitude').val(data.latitude);
+      $('#id_longitude').val(data.longitude);
     })
     .fail(function(data) {
       // something went wrong, let's indicate it

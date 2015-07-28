@@ -9,7 +9,7 @@ from django.test import TransactionTestCase
 
 from ..models import (
     Person, Task, Qualification, Award, Role, Event, KnowledgeDomain, Badge,
-    Lesson, Site
+    Lesson, Host
 )
 from ..util import merge_persons
 from .base import TestBase
@@ -249,7 +249,7 @@ class TestPerson(TestBase):
         Additionally check on_delete behavior for Task, Qualification, and
         Award."""
         role = Role.objects.create(name='instructor')
-        event = Event.objects.create(slug='test-event', site=self.site_alpha)
+        event = Event.objects.create(slug='test-event', host=self.host_alpha)
         people = [self.hermione, self.harry, self.ron]
 
         for person in people:
@@ -431,8 +431,8 @@ class TestPersonMerge(TestBase):
         self.domain1 = KnowledgeDomain.objects.get(pk=1)  # space sciences
         self.domain2 = KnowledgeDomain.objects.get(pk=2)  # geo* sciences
 
-        self.event1 = Event.objects.create(slug='event1', site=self.site_alpha)
-        self.event2 = Event.objects.create(slug='event2', site=self.site_beta)
+        self.event1 = Event.objects.create(slug='event1', host=self.host_alpha)
+        self.event2 = Event.objects.create(slug='event2', host=self.host_beta)
 
     def test_nonexisting_persons(self):
         """Make sure we handle wrong user input correctly."""
@@ -576,11 +576,11 @@ class TestPersonMergeNonTransactional(TransactionTestCase):
                                              family='Person2',
                                              username='tp2')
 
-        self.site_alpha = Site.objects.create(domain='alpha.edu',
-                                              fullname='Alpha Site')
+        self.host_alpha = Host.objects.create(domain='alpha.edu',
+                                              fullname='Alpha Host')
 
-        self.site_beta = Site.objects.create(domain='beta.com',
-                                             fullname='Beta Site')
+        self.host_beta = Host.objects.create(domain='beta.com',
+                                             fullname='Beta Host')
 
         self.role1 = Role.objects.create(name='Role1')
         self.role2 = Role.objects.create(name='Role2')
@@ -591,8 +591,8 @@ class TestPersonMergeNonTransactional(TransactionTestCase):
 
         self.domain1 = KnowledgeDomain.objects.get(pk=1)  # space sciences
 
-        self.event1 = Event.objects.create(slug='event1', site=self.site_alpha)
-        self.event2 = Event.objects.create(slug='event2', site=self.site_beta)
+        self.event1 = Event.objects.create(slug='event1', host=self.host_alpha)
+        self.event2 = Event.objects.create(slug='event2', host=self.host_beta)
 
         # assign
         self.person1.award_set.create(badge=self.badge1,

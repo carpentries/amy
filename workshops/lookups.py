@@ -12,8 +12,8 @@ class EventLookup(ModelLookup):
 
 
 @login_required
-class SiteLookup(ModelLookup):
-    model = models.Site
+class HostLookup(ModelLookup):
+    model = models.Host
     search_fields = (
         'domain__icontains',
         'fullname__icontains'
@@ -41,6 +41,6 @@ class AirportLookup(ModelLookup):
 
 
 registry.register(EventLookup)
-registry.register(SiteLookup)
+registry.register(HostLookup)
 registry.register(PersonLookup)
 registry.register(AirportLookup)

@@ -52,8 +52,8 @@
               </a>
             </td>
             <td>
-              <a href="{% url 'site_details' event.site.domain %}">
-                {{ event.site }}
+              <a href="{% url 'host_details' event.host.domain %}">
+                {{ event.host }}
               </a>
             </td>
             <td {% if not event.slug %}class="warning"{% endif %}>

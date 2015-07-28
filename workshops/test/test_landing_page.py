@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 from django.core.urlresolvers import reverse
 
-from ..models import Event, Site
+from ..models import Event, Host
 from .base import TestBase
 
 
