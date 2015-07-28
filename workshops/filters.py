@@ -21,8 +21,35 @@ class ForeignKeyAllValuesFilter(django_filters.ChoiceFilter):
         return super().field
 
 
+class EventStateFilter(django_filters.ChoiceFilter):
+    def filter(self, qs, value):
+        if isinstance(value, django_filters.fields.Lookup):
+            value = value.value
+
+        # no filtering
+        if value in ([], (), {}, None, '', 'all'):
+            return qs
+
+        # no need to check if value exists in self.extra['choices'] because
+        # validation is done by django_filters
+        try:
+            return getattr(qs, "{}_events".format(value))()
+        except AttributeError:
+            return qs
+
+
 class EventFilter(django_filters.FilterSet):
     administrator = ForeignKeyAllValuesFilter(Host)
+
+    STATUS_CHOICES = [
+        ('', 'All'),
+        ('past', 'Past'),
+        ('ongoing', 'Ongoing'),
+        ('upcoming', 'Upcoming'),
+        ('unpublished', 'Unpublished'),
+        ('uninvoiced', 'Uninvoiced'),
+    ]
+    status = EventStateFilter(choices=STATUS_CHOICES)
 
     class Meta:
         model = Event
