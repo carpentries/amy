@@ -1,6 +1,22 @@
 import django_filters
+from django_countries import Countries
 
 from workshops.models import Event, Host, Person, Task, Airport
+
+
+class AllCountriesFilter(django_filters.ChoiceFilter):
+    @property
+    def field(self):
+        qs = self.model._default_manager.distinct()
+        qs = qs.order_by(self.name).values_list(self.name, flat=True)
+
+        choices = [o for o in qs if o]
+        countries = Countries()
+        countries.only = choices
+
+        self.extra['choices'] = list(countries)
+        self.extra['choices'].insert(0, (None, '---------'))
+        return super().field
 
 
 class ForeignKeyAllValuesFilter(django_filters.ChoiceFilter):
@@ -64,9 +80,7 @@ class EventFilter(django_filters.FilterSet):
 
 
 class HostFilter(django_filters.FilterSet):
-    # it's tricky to properly filter by countries from django-countries, so
-    # only allow filtering by 2-char names from DB
-    country = django_filters.AllValuesFilter()
+    country = AllCountriesFilter()
 
     class Meta:
         model = Host
