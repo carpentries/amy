@@ -23,7 +23,7 @@
   <tr><td rowspan="4">location details:</td><td>Country:</td><td>{{ event.country|default:"—" }}</td></tr>
   <tr><td>Venue:</td><td>{{ event.venue|default:"—" }}</td></tr>
   <tr><td>Address:</td><td>{{ event.address|default:"—" }}</td></tr>
-  <tr><td>Lat/long:</td><td>{{ event.latitude|default:"—" }} / {{ event.longitude|default:"—" }}</td></tr>
+  <tr><td>Lat/long:</td><td>{{ event.latitude|default:"—" }} / {{ event.longitude|default:"—" }} {% if event.latitude and event.longitude %}<a href="{% url 'instructors' %}?latitude={{ event.latitude }}&amp;longitude={{ event.longitude }}&amp;submit=Submit" class="btn btn-primary btn-xs pull-right" id="find_closest_instructors">find closest instructors</a>{% else %}<a class="btn btn-danger btn-xs pull-right" id="error_closest_instructors" href="#" data-toggle="popover" data-trigger="focus" title="Search error" data-content="Cannot search for closest instructors without latitude and longitude of event's location.">Error</a>{% endif %}</td></tr>
 </table>
 
 {% if event.url %}
@@ -78,6 +78,7 @@
 {% block extrajs %}
 <script type="text/javascript">
   $('#error_event_url').popover({placement: "left", html: true});
+  $('#error_closest_instructors').popover({placement: "left", html: true});
   $('#validate_event').click(function() {
     $('#validation_modal').modal();
     return false;
