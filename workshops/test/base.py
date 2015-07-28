@@ -62,14 +62,24 @@ class TestBase(TestCase):
     def _setUpAirports(self):
         '''Set up airport objects.'''
 
-        self.airport_0_0 = Airport.objects.create(iata='AAA', fullname='Airport 0x0', country='Albania',
-                                                  latitude=0.0, longitude=0.0)
-        self.airport_0_50 = Airport.objects.create(iata='BBB', fullname='Airport 0x50', country='Bulgaria',
-                                                   latitude=0.0, longitude=50.0)
-        self.airport_50_100 = Airport.objects.create(iata='CCC', fullname='Airport 50x100', country='Cameroon',
-                                                     latitude=50.0, longitude=100.0)
-        self.airport_55_105 = Airport.objects.create(iata='DDD', fullname='Airport 55x105', country='Cameroon',
-                                                     latitude=55.0, longitude=105.0)
+        self.airport_0_0 = Airport.objects.create(
+            iata='AAA', fullname='Airport 0x0', country='AL',  # AL for Albania
+            latitude=0.0, longitude=0.0,
+        )
+        self.airport_0_50 = Airport.objects.create(
+            iata='BBB', fullname='Airport 0x50',
+            country='BG',  # BG for Bulgaria
+            latitude=0.0, longitude=50.0,
+        )
+        self.airport_50_100 = Airport.objects.create(
+            iata='CCC', fullname='Airport 50x100',
+            country='CM',  # CM for Cameroon
+            latitude=50.0, longitude=100.0,
+        )
+        self.airport_55_105 = Airport.objects.create(
+            iata='DDD', fullname='Airport 55x105',
+            country='CM',
+            latitude=55.0, longitude=105.0)
 
     def _setUpBadges(self):
         '''Set up badge objects.'''
