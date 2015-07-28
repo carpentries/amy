@@ -39,6 +39,7 @@ class EventStateFilter(django_filters.ChoiceFilter):
 
 
 class EventFilter(django_filters.FilterSet):
+    host = ForeignKeyAllValuesFilter(Host)
     administrator = ForeignKeyAllValuesFilter(Host)
 
     STATUS_CHOICES = [
