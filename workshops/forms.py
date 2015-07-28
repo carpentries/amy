@@ -83,6 +83,9 @@ class InstructorsForm(forms.Form):
                                              widget=CheckboxSelectMultiple(),
                                              required=False)
 
+    GENDER_CHOICES = ((None, '---------'), ) + Person.GENDER_CHOICES
+    gender = forms.ChoiceField(choices=GENDER_CHOICES, required=False)
+
     def __init__(self, *args, **kwargs):
         '''Build form layout dynamically.'''
         super(InstructorsForm, self).__init__(*args, **kwargs)
@@ -125,6 +128,7 @@ class InstructorsForm(forms.Form):
                 ),
                 css_class='panel panel-default ',
             ),
+            'gender',
             'lessons',
             FormActions(
                 Submit('submit', 'Submit'),
