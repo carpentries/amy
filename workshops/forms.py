@@ -4,11 +4,12 @@ from django.forms import HiddenInput, CheckboxSelectMultiple
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Div, HTML, Submit, Field
 from crispy_forms.bootstrap import FormActions
+from django_countries import Countries
 from django_countries.fields import CountryField
 from selectable import forms as selectable
 
 from workshops.models import (
-    Award, Event, Lesson, Person, Task, KnowledgeDomain,
+    Award, Event, Lesson, Person, Task, KnowledgeDomain, Airport,
 )
 from workshops import lookups
 
@@ -76,15 +77,26 @@ class InstructorsForm(forms.Form):
         ),
     )
 
-    country = CountryField().formfield(required=False)
+    country = forms.MultipleChoiceField(choices=[])
 
     lessons = forms.ModelMultipleChoiceField(queryset=Lesson.objects.all(),
                                              widget=CheckboxSelectMultiple(),
                                              required=False)
 
     def __init__(self, *args, **kwargs):
-        '''Build checkboxes for qualifications dynamically.'''
+        '''Build form layout dynamically.'''
         super(InstructorsForm, self).__init__(*args, **kwargs)
+
+        # dynamically build choices for country field
+        only = Airport.objects.distinct().values_list('country', flat=True)
+        only = [c for c in only if c]
+        countries = Countries()
+        countries.only = only
+
+        choices = list(countries)
+        self.fields['country'] = forms.MultipleChoiceField(choices=choices,
+                                                           required=False)
+
         self.helper = FormHelper(self)
         self.helper.form_class = 'form-inline'
         self.helper.form_method = 'get'
