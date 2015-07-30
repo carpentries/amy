@@ -35,6 +35,9 @@ class Host(models.Model):
     def get_absolute_url(self):
         return reverse('host_details', args=[str(self.domain)])
 
+    class Meta:
+        ordering = ('domain', )
+
 #------------------------------------------------------------
 
 class Airport(models.Model):

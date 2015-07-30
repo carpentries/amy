@@ -1000,8 +1000,11 @@ def instructors(request):
 
             if data['country']:
                 instructors = instructors.filter(
-                    airport__country=data['country']
+                    airport__country__in=data['country']
                 ).order_by('family')
+
+            if data['gender']:
+                instructors = instructors.filter(gender=data['gender'])
 
     instructors = _get_pagination_items(request, instructors)
     context = {

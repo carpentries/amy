@@ -1,6 +1,22 @@
 import django_filters
+from django_countries import Countries
 
 from workshops.models import Event, Host, Person, Task, Airport
+
+
+class AllCountriesFilter(django_filters.ChoiceFilter):
+    @property
+    def field(self):
+        qs = self.model._default_manager.distinct()
+        qs = qs.order_by(self.name).values_list(self.name, flat=True)
+
+        choices = [o for o in qs if o]
+        countries = Countries()
+        countries.only = choices
+
+        self.extra['choices'] = list(countries)
+        self.extra['choices'].insert(0, (None, '---------'))
+        return super().field
 
 
 class ForeignKeyAllValuesFilter(django_filters.ChoiceFilter):
@@ -21,8 +37,36 @@ class ForeignKeyAllValuesFilter(django_filters.ChoiceFilter):
         return super().field
 
 
+class EventStateFilter(django_filters.ChoiceFilter):
+    def filter(self, qs, value):
+        if isinstance(value, django_filters.fields.Lookup):
+            value = value.value
+
+        # no filtering
+        if value in ([], (), {}, None, '', 'all'):
+            return qs
+
+        # no need to check if value exists in self.extra['choices'] because
+        # validation is done by django_filters
+        try:
+            return getattr(qs, "{}_events".format(value))()
+        except AttributeError:
+            return qs
+
+
 class EventFilter(django_filters.FilterSet):
+    host = ForeignKeyAllValuesFilter(Host)
     administrator = ForeignKeyAllValuesFilter(Host)
+
+    STATUS_CHOICES = [
+        ('', 'All'),
+        ('past', 'Past'),
+        ('ongoing', 'Ongoing'),
+        ('upcoming', 'Upcoming'),
+        ('unpublished', 'Unpublished'),
+        ('uninvoiced', 'Uninvoiced'),
+    ]
+    status = EventStateFilter(choices=STATUS_CHOICES)
 
     class Meta:
         model = Event
@@ -36,9 +80,7 @@ class EventFilter(django_filters.FilterSet):
 
 
 class HostFilter(django_filters.FilterSet):
-    # it's tricky to properly filter by countries from django-countries, so
-    # only allow filtering by 2-char names from DB
-    country = django_filters.AllValuesFilter()
+    country = AllCountriesFilter()
 
     class Meta:
         model = Host

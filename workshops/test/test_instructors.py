@@ -46,16 +46,44 @@ class TestLocateInstructors(TestBase):
         assert "Ron Weasley" not in content
 
     def test_match_by_country(self):
-        # set up country for an airport, 'cause it doesn't have one
-        self.airport_0_0.country = 'GB'
-        self.airport_0_0.save()
-
         response = self.client.get(
             reverse('instructors'),
-            {'country': 'GB', 'submit': 'Submit'}
+            {'country': ['AL'], 'submit': 'Submit'}
         )
         assert response.status_code == 200
         content = response.content.decode('utf-8')
         assert "Hermione Granger" in content
         assert "Harry Potter" not in content
         assert "Ron Weasley" not in content
+
+    def test_match_by_multiple_countries(self):
+        response = self.client.get(
+            reverse('instructors'),
+            {'country': ['AL', 'BG'], 'submit': 'Submit'}
+        )
+        assert response.status_code == 200
+        content = response.content.decode('utf-8')
+        assert "Hermione Granger" in content
+        assert "Harry Potter" in content
+        assert "Ron Weasley" not in content
+
+    def test_match_gender(self):
+        response = self.client.get(
+            reverse('instructors'),
+            {'latitude': 1, 'longitude': 1, 'gender': 'F', 'submit': 'Submit'}
+        )
+        assert response.status_code == 200
+        content = response.content.decode('utf-8')
+        assert "Hermione Granger" in content
+        assert "Harry Potter" not in content
+        assert "Ron Weasley" not in content
+
+        response = self.client.get(
+            reverse('instructors'),
+            {'latitude': 1, 'longitude': 1, 'gender': 'M', 'submit': 'Submit'}
+        )
+        assert response.status_code == 200
+        content = response.content.decode('utf-8')
+        assert "Hermione Granger" not in content
+        assert "Harry Potter" in content
+        assert "Ron Weasley" in content
