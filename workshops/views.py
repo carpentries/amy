@@ -39,7 +39,7 @@ from workshops.models import \
     Lesson, \
     Person, \
     Role, \
-    Site, \
+    Host, \
     Task
 from workshops.check import check_file
 from workshops.forms import (
@@ -56,7 +56,7 @@ from workshops.util import (
 )
 
 from workshops.filters import (
-    EventFilter, SiteFilter, PersonFilter, TaskFilter, AirportFilter
+    EventFilter, HostFilter, PersonFilter, TaskFilter, AirportFilter
 )
 
 #------------------------------------------------------------
@@ -157,57 +157,57 @@ def dashboard(request):
 
 #------------------------------------------------------------
 
-SITE_FIELDS = ['domain', 'fullname', 'country', 'notes']
+HOST_FIELDS = ['domain', 'fullname', 'country', 'notes']
 
 
 @login_required
-def all_sites(request):
-    '''List all sites.'''
+def all_hosts(request):
+    '''List all hosts.'''
 
-    filter = SiteFilter(request.GET, queryset=Site.objects.all())
-    sites = _get_pagination_items(request, filter)
-    context = {'title' : 'All Sites',
-               'all_sites' : sites,
+    filter = HostFilter(request.GET, queryset=Host.objects.all())
+    hosts = _get_pagination_items(request, filter)
+    context = {'title' : 'All Hosts',
+               'all_hosts' : hosts,
                'filter': filter,
                'form_helper': bootstrap_helper_filter}
-    return render(request, 'workshops/all_sites.html', context)
+    return render(request, 'workshops/all_hosts.html', context)
 
 
 @login_required
-def site_details(request, site_domain):
-    '''List details of a particular site.'''
-    site = Site.objects.get(domain=site_domain)
-    events = Event.objects.filter(site=site)
-    context = {'title' : 'Site {0}'.format(site),
-               'site' : site,
+def host_details(request, host_domain):
+    '''List details of a particular host.'''
+    host = Host.objects.get(domain=host_domain)
+    events = Event.objects.filter(host=host)
+    context = {'title' : 'Host {0}'.format(host),
+               'host' : host,
                'events' : events}
-    return render(request, 'workshops/site.html', context)
+    return render(request, 'workshops/host.html', context)
 
 
-class SiteCreate(LoginRequiredMixin, CreateViewContext):
-    model = Site
-    fields = SITE_FIELDS
+class HostCreate(LoginRequiredMixin, CreateViewContext):
+    model = Host
+    fields = HOST_FIELDS
     template_name = 'workshops/generic_form.html'
 
 
-class SiteUpdate(LoginRequiredMixin, UpdateViewContext):
-    model = Site
-    fields = SITE_FIELDS
+class HostUpdate(LoginRequiredMixin, UpdateViewContext):
+    model = Host
+    fields = HOST_FIELDS
     slug_field = 'domain'
-    slug_url_kwarg = 'site_domain'
+    slug_url_kwarg = 'host_domain'
     template_name = 'workshops/generic_form.html'
 
 
 @login_required
-def site_delete(request, site_domain):
-    """Delete specific site."""
+def host_delete(request, host_domain):
+    """Delete specific host."""
     try:
-        site = get_object_or_404(Site, domain=site_domain)
-        site.delete()
-        messages.success(request, 'Site was deleted successfully.')
-        return redirect(reverse('all_sites'))
+        host = get_object_or_404(Host, domain=host_domain)
+        host.delete()
+        messages.success(request, 'Host was deleted successfully.')
+        return redirect(reverse('all_hosts'))
     except ProtectedError as e:
-        return _failed_to_delete(request, site, e.protected_objects)
+        return _failed_to_delete(request, host, e.protected_objects)
 
 
 #------------------------------------------------------------
@@ -689,7 +689,7 @@ def all_events(request):
     filter = EventFilter(
         request.GET,
         queryset=Event.objects.all().defer('notes')  # notes are too large
-                                    .prefetch_related('site', 'tags'),
+                                    .prefetch_related('host', 'tags'),
     )
     events = _get_pagination_items(request, filter)
     context = {'title' : 'All Events',
@@ -1000,8 +1000,11 @@ def instructors(request):
 
             if data['country']:
                 instructors = instructors.filter(
-                    airport__country=data['country']
+                    airport__country__in=data['country']
                 ).order_by('family')
+
+            if data['gender']:
+                instructors = instructors.filter(gender=data['gender'])
 
     instructors = _get_pagination_items(request, instructors)
     context = {
@@ -1019,7 +1022,7 @@ def instructors(request):
 def search(request):
     '''Search the database by term.'''
 
-    term, sites, events, persons, airports = '', None, None, None, None
+    term, hosts, events, persons, airports = '', None, None, None, None
 
     if request.method == 'POST':
         form = SearchForm(request.POST)
@@ -1028,20 +1031,20 @@ def search(request):
             tokens = re.split('\s+', term)
             results = list()
 
-            if form.cleaned_data['in_sites']:
-                sites = Site.objects.filter(
+            if form.cleaned_data['in_hosts']:
+                hosts = Host.objects.filter(
                     Q(domain__contains=term) |
                     Q(fullname__contains=term) |
                     Q(notes__contains=term)) \
                     .order_by('fullname')
-                results += list(sites)
+                results += list(hosts)
 
             if form.cleaned_data['in_events']:
                 events = Event.objects.filter(
                     Q(slug__contains=term) |
                     Q(notes__contains=term) |
-                    Q(site__domain__contains=term) |
-                    Q(site__fullname__contains=term)) \
+                    Q(host__domain__contains=term) |
+                    Q(host__fullname__contains=term)) \
                     .order_by('-slug')
                 results += list(events)
 
@@ -1084,7 +1087,7 @@ def search(request):
                'form': form,
                'form_helper': bootstrap_helper,
                'term' : term,
-               'sites' : sites,
+               'hosts' : hosts,
                'events' : events,
                'persons' : persons,
                'airports' : airports}
@@ -1287,7 +1290,7 @@ def _get_pagination_items(request, all_objects):
     # Show selected items.
     paginator = Paginator(all_objects, items)
 
-    # Select the sites.
+    # Select the pages.
     try:
         result = paginator.page(page)
 

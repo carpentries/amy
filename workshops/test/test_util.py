@@ -11,7 +11,7 @@ from django.test import TestCase
 from django.core.urlresolvers import reverse
 import requests
 
-from ..models import Site, Event, Role, Person, Task
+from ..models import Host, Event, Role, Person, Task
 from ..util import (
     upload_person_task_csv,
     verify_upload_person_task,
@@ -94,12 +94,12 @@ class CSVBulkUploadTestBase(TestBase):
     """
     def setUp(self):
         super(CSVBulkUploadTestBase, self).setUp()
-        test_site = Site.objects.create(domain='example.com',
-                                        fullname='Test Site')
+        test_host = Host.objects.create(domain='example.com',
+                                        fullname='Test Host')
 
         Role.objects.create(name='Instructor')
         Event.objects.create(start=datetime.now(),
-                             site=test_site,
+                             host=test_host,
                              slug='foobar',
                              admin_fee=100)
 
@@ -384,13 +384,11 @@ eventbrite: 10000000
 ---
 """
         url = 'http://test.github.io/2015-07-13-test/'
-        notes = """VENUE: Euphoric State University, Highway to Heaven 42, Academipolis, USA
-
-INSTRUCTORS: Hermione Granger, Harry Potter, Ron Weasley
+        notes = """INSTRUCTORS: Hermione Granger, Harry Potter, Ron Weasley
 
 HELPERS: Peter Parker, Tony Stark, Natasha Romanova
 
-CONTACT: hermione@granger.co.uk, rweasley@ministry.gov.uk"""
+COUNTRY: USA"""
 
         expected = {
             'slug': '2015-07-13-test',
@@ -398,7 +396,13 @@ CONTACT: hermione@granger.co.uk, rweasley@ministry.gov.uk"""
             'end': date(2015, 7, 14),
             'url': url,
             'reg_key': 1e7,
+            'contact': 'hermione@granger.co.uk, rweasley@ministry.gov.uk',
             'notes': notes,
+            'venue': 'Euphoric State University',
+            'address': 'Highway to Heaven 42, Academipolis',
+            'country': 'USA',
+            'latitude': '36.998977',
+            'longitude': '-109.045173',
         }
 
         self.assertEqual(parse_tags_from_event_index(url), expected)
@@ -419,7 +423,7 @@ eventbrites: 10000000
 ---
 """
         url = 'http://test.github.io/2015-07-13-test/'
-        notes = "VENUE: , , \n\nINSTRUCTORS: \n\nHELPERS: \n\nCONTACT: "
+        notes = "INSTRUCTORS: \n\nHELPERS: \n\nCOUNTRY: "
 
         expected = {
             'slug': '2015-07-13-test',
@@ -427,7 +431,13 @@ eventbrites: 10000000
             'end': '',
             'url': url,
             'reg_key': '',
+            'contact': '',
             'notes': notes,
+            'venue': '',
+            'address': '',
+            'country': '',
+            'latitude': '',
+            'longitude': '',
         }
 
         self.assertEqual(parse_tags_from_event_index(url), expected)

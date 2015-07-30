@@ -1,0 +1,48 @@
+{% extends "workshops/_page.html" %}
+
+{% block content %}
+
+<p class="edit-object"><a href="{% url 'host_edit' host.domain %}" class="btn btn-primary">Edit</a></p>
+<table class="table table-striped">
+  <tr><td>full name:</td><td>{{ host.fullname }}</td></tr>
+  <tr><td>domain:</td><td><a href="http://{{ host.domain }}">{{ host.domain }}</a></td></tr>
+  <tr><td>country:</td><td>{{ host.country.name|default:"—" }} <img src="{{ host.country.flag }}" alt="{{ host.country }}" class="country-flag" /></td></tr>
+</table>
+
+{% if host.notes %}
+<p>Notes:</p>
+<pre>
+{{ host.notes }}
+</pre>
+{% else %}
+<p>No notes.</p>
+{% endif %}
+
+{% if events %}
+<table class="table table-striped">
+  <tr>
+    <th>tags</th>
+    <th>start date</th>
+    <th>end date</th>
+    <th>slug</th>
+    <th>url</th>
+  </tr>
+  {% for e in events %}
+  <tr>
+    <td>{{ e.tags.all | join:", " }}</td>
+    <td>{{ e.start }}</td>
+    <td>{{ e.end }}</td>
+    <td><a href="{% url 'event_details' e.get_ident %}">{{ e.get_ident }}</a></td>
+    <td><a href="{{ e.url }}">{{ e.url }}</a></td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p>No events.</p>
+{% endif %}
+
+<div class="clearfix">
+  <p class="edit-object pull-left"><a href="{% url 'host_edit' host.domain %}" class="btn btn-primary">Edit</a></p>
+  <p class="delete-object pull-right"><a href="{% url 'host_delete' host.domain %}" onclick='return confirm("Are you sure you wish to remove \"{{ host }}\"?")' class="btn btn-danger">Delete host</a></p>
+</div>
+{% endblock %}

@@ -4,11 +4,11 @@ from workshops import views
 urlpatterns = [
     url(r'^$', views.dashboard, name='dashboard'),
 
-    url(r'^sites/?$', views.all_sites, name='all_sites'),
-    url(r'^site/(?P<site_domain>[\w\.-]+)/?$', views.site_details, name='site_details'),
-    url(r'^site/(?P<site_domain>[\w\.-]+)/edit$', views.SiteUpdate.as_view(), name='site_edit'),
-    url(r'^site/(?P<site_domain>[\w\.-]+)/delete$', views.site_delete, name='site_delete'),
-    url(r'^sites/add/$', views.SiteCreate.as_view(), name='site_add'),
+    url(r'^hosts/?$', views.all_hosts, name='all_hosts'),
+    url(r'^host/(?P<host_domain>[\w\.-]+)/?$', views.host_details, name='host_details'),
+    url(r'^host/(?P<host_domain>[\w\.-]+)/edit$', views.HostUpdate.as_view(), name='host_edit'),
+    url(r'^host/(?P<host_domain>[\w\.-]+)/delete$', views.host_delete, name='host_delete'),
+    url(r'^hosts/add/$', views.HostCreate.as_view(), name='host_add'),
 
     url(r'^airports/?$', views.all_airports, name='all_airports'),
     url(r'^airport/(?P<airport_iata>\w+)/?$', views.airport_details, name='airport_details'),

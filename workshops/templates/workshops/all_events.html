@@ -18,7 +18,7 @@
         <th>instructors</th>
         <th>slug</th>
         <th>url</th>
-        <th>site</th>
+        <th>host</th>
         <th>dates</th>
         <th>attendance</th>
         <th>admin fee</th>
@@ -48,7 +48,7 @@
           —
           {% endif %}
         </td>
-        <td><a href="{% url 'site_details' event.site.domain %}">{{ event.site }}</a></td>
+        <td><a href="{% url 'host_details' event.host.domain %}">{{ event.host }}</a></td>
         <td>{{ event.start }} &ndash; {{ event.end }}</td>
         <td>{{ event.attendance|default_if_none:"—" }}</td>
         <td>{{ event.admin_fee|default_if_none:"—" }}</td>

@@ -4,7 +4,7 @@ import cgi
 
 from django.test import TestCase
 from django.core.urlresolvers import reverse
-from ..models import (Event, Site, Tag, Person, Role, Task, Award, Badge)
+from ..models import (Event, Host, Tag, Person, Role, Task, Award, Badge)
 from .base import TestBase
 
 
@@ -165,9 +165,9 @@ class TestEventViews(TestBase):
     def setUp(self):
         self._setUpUsersAndLogin()
 
-        # Create a test site
-        self.test_site = Site.objects.create(domain='example.com',
-                                             fullname='Test Site')
+        # Create a test host
+        self.test_host = Host.objects.create(domain='example.com',
+                                             fullname='Test Host')
 
         # Create a test tag
         self.test_tag = Tag.objects.create(name='Test Tag',
@@ -178,7 +178,7 @@ class TestEventViews(TestBase):
             event_start = datetime.now()
             Event.objects.create(start=event_start,
                                  slug='test_event_{0}'.format(i),
-                                 site=self.test_site,
+                                 host=self.test_host,
                                  admin_fee=0)
 
     def test_events_view_paginated(self):
@@ -249,20 +249,20 @@ class TestEventViews(TestBase):
         assert view_events.number == 5
 
     def test_add_minimal_event(self):
-        site = Site.objects.get(fullname='Test Site')
+        host = Host.objects.get(fullname='Test Host')
         response = self.client.post(
             reverse('event_add'),
             {
-                'site': site.id,
+                'host': host.id,
                 'tags': [self.test_tag.id],
-                'organizer': site.id,
+                'administrator': host.id,
             })
         if response.status_code == 302:
             url = response['location']
             event_id = int(url.rsplit('/', 1)[1])
             event = Event.objects.get(id=event_id)
-            assert event.site == site, (
-                'New event has wrong site: {} != {}'.format(event.site, site))
+            assert event.host == host, (
+                'New event has wrong host: {} != {}'.format(event.host, host))
             tags = list(event.tags.all())
             assert tags == [self.test_tag], (
                 'New event has wrong tags: {} != {}'.format(tags,
@@ -272,12 +272,12 @@ class TestEventViews(TestBase):
             assert False, 'expected 302 redirect after post'
 
     def test_add_two_minimal_events(self):
-        site = Site.objects.get(fullname='Test Site')
+        host = Host.objects.get(fullname='Test Host')
         url = reverse('event_add')
         data = {
-                'site': site.id,
+                'host': host.id,
                 'tags': [self.test_tag.id],
-                'organizer': site.id,
+                'administrator': host.id,
             }
         response = self.client.post(url, data)
         assert response.status_code == 302, (
@@ -296,7 +296,7 @@ class TestEventViews(TestBase):
         This is a regression test for
         https://github.com/swcarpentry/amy/issues/427"""
         data = {
-            'site': self.test_site.id,
+            'host': self.test_host.id,
             'tags': [self.test_tag.id],
             'slug': 'testing-unique-slug',
         }
@@ -314,13 +314,111 @@ class TestEventViews(TestBase):
         https://github.com/swcarpentry/amy/issues/427
         (saving empty slug strings to the DB should result in NULL values)."""
         data = {
-            'site': self.test_site.id,
+            'host': self.test_host.id,
             'tags': [self.test_tag.id],
             'slug': '',
         }
         response = self.client.post(reverse('event_add'), data)
         assert response.status_code == 302
 
+        response = self.client.post(reverse('event_add'), data)
+        assert response.status_code == 302
+
+    def test_start_date_gte_end_date(self):
+        """Ensure event's start date is earlier than it's end date.
+
+        This is a regression test for
+        https://github.com/swcarpentry/amy/issues/436"""
+        data = {
+            'host': self.test_host.id,
+            'tags': [self.test_tag.id],
+            'slug': 'test-event',
+            'start': date(2015, 7, 20),
+            'end': date(2015, 7, 19),
+        }
+        response = self.client.post(reverse('event_add'), data)
+        assert response.status_code == 200
+        content = response.content.decode('utf-8')
+        assert 'Must not be earlier than start date' in content
+
+        data = {
+            'host': self.test_host.id,
+            'tags': [self.test_tag.id],
+            'slug': 'test-event',
+            'start': date(2015, 7, 20),
+            'end': date(2015, 7, 20),
+        }
+        response = self.client.post(reverse('event_add'), data)
+        assert response.status_code == 302
+
+        data = {
+            'host': self.test_host.id,
+            'tags': [self.test_tag.id],
+            'slug': 'test-event2',
+            'start': date(2015, 7, 20),
+            'end': date(2015, 7, 21),
+        }
+        response = self.client.post(reverse('event_add'), data)
+        assert response.status_code == 302
+
+    def test_negative_admin_fee_attendance(self):
+        """Ensure we disallow negative admin fee or attendance.
+
+        This is a regression test for
+        https://github.com/swcarpentry/amy/issues/435."""
+        data = {
+            'host': self.test_host.id,
+            'tags': [self.test_tag.id],
+            'slug': 'test-event',
+            'admin_fee': -1200,
+        }
+        S = "Ensure this value is greater than or equal to 0"
+        response = self.client.post(reverse('event_add'), data)
+        assert response.status_code == 200
+        content = response.content.decode('utf-8')
+        assert content.count(S) == 1
+
+        data = {
+            'host': self.test_host.id,
+            'tags': [self.test_tag.id],
+            'slug': 'test-event',
+            'admin_fee': -1200,
+            'attendance': -36,
+        }
+        response = self.client.post(reverse('event_add'), data)
+        assert response.status_code == 200
+        content = response.content.decode('utf-8')
+        assert content.count(S) == 2
+
+        data = {
+            'host': self.test_host.id,
+            'tags': [self.test_tag.id],
+            'slug': 'test-event',
+            'attendance': -36,
+        }
+        S = "Ensure this value is greater than or equal to 0"
+        response = self.client.post(reverse('event_add'), data)
+        assert response.status_code == 200
+        content = response.content.decode('utf-8')
+        assert content.count(S) == 1
+
+        data = {
+            'host': self.test_host.id,
+            'tags': [self.test_tag.id],
+            'slug': 'test-event',
+            'admin_fee': 0,
+            'attendance': 0,
+        }
+        response = self.client.post(reverse('event_add'), data)
+        assert response.status_code == 302
+
+        data = {
+            'host': self.test_host.id,
+            'tags': [self.test_tag.id],
+            'slug': 'test-event2',
+            'admin_fee': 1200,
+            'attendance': 36,
+        }
         response = self.client.post(reverse('event_add'), data)
         assert response.status_code == 302
 
@@ -331,9 +429,9 @@ class TestEventNotes(TestBase):
     def setUp(self):
         self._setUpUsersAndLogin()
 
-        # a test site is required for all new events
-        self.test_site = Site.objects.create(domain='example.com',
-                                             fullname='Test Site')
+        # a test host is required for all new events
+        self.test_host = Host.objects.create(domain='example.com',
+                                             fullname='Test Host')
 
         # prepare a lifespan of all events
         self.event_start = datetime.now() + timedelta(days=-1)
@@ -344,7 +442,7 @@ class TestEventNotes(TestBase):
         e = Event(start=self.event_start,
                   end=self.event_end,
                   slug='no_notes',
-                  site=self.test_site,
+                  host=self.test_host,
                   admin_fee=100)
 
         # test for field's default value (the field is not NULL)
@@ -358,7 +456,7 @@ class TestEventNotes(TestBase):
         e = Event(start=self.event_start,
                   end=self.event_end,
                   slug='with_notes',
-                  site=self.test_site,
+                  host=self.test_host,
                   admin_fee=100,
                   notes=notes)
 

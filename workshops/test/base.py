@@ -19,7 +19,7 @@ from ..models import \
     Lesson, \
     Person, \
     Qualification, \
-    Site
+    Host
 
 
 class TestBase(TestCase):
@@ -30,7 +30,7 @@ class TestBase(TestCase):
     def setUp(self):
         '''Create standard objects.'''
 
-        self._setUpSites()
+        self._setUpHosts()
         self._setUpAirports()
         self._setUpLessons()
         self._setUpBadges()
@@ -46,30 +46,40 @@ class TestBase(TestCase):
         self.git, _ = Lesson.objects.get_or_create(name='swc/git')
         self.sql, _ = Lesson.objects.get_or_create(name='dc/sql')
 
-    def _setUpSites(self):
-        '''Set up site objects.'''
+    def _setUpHosts(self):
+        '''Set up host objects.'''
 
-        self.site_alpha = Site.objects.create(domain='alpha.edu',
-                                              fullname='Alpha Site',
+        self.host_alpha = Host.objects.create(domain='alpha.edu',
+                                              fullname='Alpha Host',
                                               country='Azerbaijan',
                                               notes='')
 
-        self.site_beta = Site.objects.create(domain='beta.com',
-                                             fullname='Beta Site',
+        self.host_beta = Host.objects.create(domain='beta.com',
+                                             fullname='Beta Host',
                                              country='Brazil',
                                              notes='Notes\nabout\nBrazil\n')
 
     def _setUpAirports(self):
         '''Set up airport objects.'''
 
-        self.airport_0_0 = Airport.objects.create(iata='AAA', fullname='Airport 0x0', country='Albania',
-                                                  latitude=0.0, longitude=0.0)
-        self.airport_0_50 = Airport.objects.create(iata='BBB', fullname='Airport 0x50', country='Bulgaria',
-                                                   latitude=0.0, longitude=50.0)
-        self.airport_50_100 = Airport.objects.create(iata='CCC', fullname='Airport 50x100', country='Cameroon',
-                                                     latitude=50.0, longitude=100.0)
-        self.airport_55_105 = Airport.objects.create(iata='DDD', fullname='Airport 55x105', country='Cameroon',
-                                                     latitude=55.0, longitude=105.0)
+        self.airport_0_0 = Airport.objects.create(
+            iata='AAA', fullname='Airport 0x0', country='AL',  # AL for Albania
+            latitude=0.0, longitude=0.0,
+        )
+        self.airport_0_50 = Airport.objects.create(
+            iata='BBB', fullname='Airport 0x50',
+            country='BG',  # BG for Bulgaria
+            latitude=0.0, longitude=50.0,
+        )
+        self.airport_50_100 = Airport.objects.create(
+            iata='CCC', fullname='Airport 50x100',
+            country='CM',  # CM for Cameroon
+            latitude=50.0, longitude=100.0,
+        )
+        self.airport_55_105 = Airport.objects.create(
+            iata='DDD', fullname='Airport 55x105',
+            country='CM',
+            latitude=55.0, longitude=105.0)
 
     def _setUpBadges(self):
         '''Set up badge objects.'''
@@ -168,9 +178,9 @@ class TestBase(TestCase):
 
         today = datetime.date.today()
 
-        # Create a test site
-        test_site = Site.objects.create(domain='example.com',
-                                        fullname='Test Site')
+        # Create a test host
+        test_host = Host.objects.create(domain='example.com',
+                                        fullname='Test Host')
 
         # Create one new event for each day in the next 10 days,
         # half with URLs.
@@ -186,7 +196,7 @@ class TestBase(TestCase):
             add_url = not add_url
             e = Event.objects.create(start=event_start,
                                      slug=slug,
-                                     site=test_site,
+                                     host=test_host,
                                      admin_fee=100,
                                      invoiced=False,
                                      url=url)
@@ -199,7 +209,7 @@ class TestBase(TestCase):
             date_string = event_start.strftime('%Y-%m-%d')
             Event.objects.create(start=event_start,
                                  slug='{0}-past'.format(date_string),
-                                 site=test_site,
+                                 host=test_host,
                                  admin_fee=100,
                                  invoiced=invoiced)
             invoiced = not invoiced
@@ -212,7 +222,7 @@ class TestBase(TestCase):
         Event.objects.create(start=event_start,
                              end=event_end,
                              slug='ends_tomorrow',
-                             site=test_site,
+                             host=test_host,
                              admin_fee=0)
 
         # Create an event that ends today with no fee, and without
@@ -222,7 +232,7 @@ class TestBase(TestCase):
         Event.objects.create(start=event_start,
                              end=event_end,
                              slug='ends_today',
-                             site=test_site,
+                             host=test_host,
                              admin_fee=0)
 
         # Create an event that starts today with a fee, and without
@@ -232,7 +242,7 @@ class TestBase(TestCase):
         Event.objects.create(start=event_start,
                              end=event_end,
                              slug='starts_today',
-                             site=test_site,
+                             host=test_host,
                              admin_fee=100)
 
         # Record some statistics about events.
