@@ -408,8 +408,8 @@ HELPERS: {helpers}
 
 COUNTRY: {country}""".format(
         country=headers.get('country', ''),
-        instructors=", ".join(headers.get('instructor', '')),
-        helpers=", ".join(headers.get('helper', '')),
+        instructors=", ".join(headers.get('instructor') or []),
+        helpers=", ".join(headers.get('helper') or []),
     )
 
     return {
