@@ -353,6 +353,7 @@ class TestEventURLNormalization(TestCase):
 
 
 class TestParsingEventHeaders(TestCase):
+    maxDiff = None  # enable long diff in output
 
     # Response.status_code apparently doesn't exist by default
     @patch.object(requests.models.Response, 'status_code', 404, create=True)
@@ -438,6 +439,46 @@ eventbrites: 10000000
             'country': '',
             'latitude': '',
             'longitude': '',
+        }
+
+        self.assertEqual(parse_tags_from_event_index(url), expected)
+
+    @patch.object(requests, 'get')
+    def test_parsing_empty_list_values(self, mock_get):
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.text = """---
+venue: Euphoric State University
+address: Highway to Heaven 42, Academipolis
+country: USA
+language: us
+latlng: 36.998977, -109.045173
+humandate: Jul 13-14, 2015
+humantime: 9:00 - 17:00
+startdate: 2015-07-13
+enddate: 2015-07-14
+instructor:  # instructors
+helper:  # helpers
+contact: hermione@granger.co.uk, rweasley@ministry.gov.uk
+etherpad:
+eventbrite: 10000000
+---
+"""
+        url = 'http://test.github.io/2015-07-13-test/'
+        notes = """INSTRUCTORS: \n\nHELPERS: \n\nCOUNTRY: USA"""
+
+        expected = {
+            'slug': '2015-07-13-test',
+            'start': date(2015, 7, 13),
+            'end': date(2015, 7, 14),
+            'url': url,
+            'reg_key': 1e7,
+            'contact': 'hermione@granger.co.uk, rweasley@ministry.gov.uk',
+            'notes': notes,
+            'venue': 'Euphoric State University',
+            'address': 'Highway to Heaven 42, Academipolis',
+            'country': 'USA',
+            'latitude': '36.998977',
+            'longitude': '-109.045173',
         }
 
         self.assertEqual(parse_tags_from_event_index(url), expected)
