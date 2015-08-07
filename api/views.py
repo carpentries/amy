@@ -14,9 +14,9 @@ from .serializers import (
 class ApiRoot(APIView):
     def get(self, request, format=None):
         return Response({
-            'export-badges': reverse('export-badges', request=request,
+            'export-badges': reverse('api:export-badges', request=request,
                                      format=format),
-            'export-instructors': reverse('export-instructors',
+            'export-instructors': reverse('api:export-instructors',
                                           request=request, format=format)
         })
 
