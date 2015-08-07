@@ -26,5 +26,5 @@ urlpatterns = patterns('',
     url(r'^selectable/', include('selectable.urls')),
 
     # REST API v1
-    url(r'^api/v1/', include('api.urls')),
+    url(r'^api/v1/', include('api.urls', namespace='api')),
 )
