@@ -24,4 +24,7 @@ urlpatterns = patterns('',
     # url(r'^account/reset/done/$', 'django.contrib.auth.views.password_reset_complete', name='password_reset_complete'),
 
     url(r'^selectable/', include('selectable.urls')),
+
+    # REST API v1
+    url(r'^api/v1/', include('api.urls', namespace='api')),
 )

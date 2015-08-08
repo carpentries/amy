@@ -34,8 +34,8 @@
                 {% navbar_element "Find instructors" "instructors" %}
                 {% navbar_element "Debrief" "debrief" %}
                 <li class="divider"></li>
-                {% url "export" name="badges" as export_badges_url %}
-                {% url "export" name="instructors" as export_instructors_url %}
+                {% url "export_badges" as export_badges_url %}
+                {% url "export_instructors" as export_instructors_url %}
                 {% navbar_element_url "Export badges" export_badges_url %}
                 {% navbar_element_url "Export instructors" export_instructors_url %}
                 {% navbar_element "Search" "search" %}
