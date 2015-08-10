@@ -27,8 +27,12 @@ class Command(BaseCommand):
             help='Overwrite values in non-empty fields [default: skip]',
         )
 
-    def compare_and_update(self, event, workshop, overwrite=False):
+    def compare_and_update(self, event, workshop, overwrite=False,
+                           verbosity=1):
         fields = workshop._fields
+
+        updated = []
+        Updated = namedtuple('Updated', 'field old_val new_val')
 
         for field in fields:
             L = getattr(event, field)
@@ -39,11 +43,24 @@ class Command(BaseCommand):
                     # overwrite existing value OR there's a new value (R) and
                     # previous value is empty
                     setattr(event, field, R)
+
+                    updated.append(Updated(field, L, R))
+        if verbosity > 1 and updated:
+            fields = [
+                '{field} ("{old_val}" -> "{new_val}")'.format(**f._asdict())
+                for f in updated
+            ]
+            self.stdout.write('Updating fields in {slug}: {fields}'
+                              .format(slug=workshop.slug, fields=fields))
+
         event.save()
+        if verbosity > 2:
+            self.stdout.write('Saved {slug}'.format(slug=workshop.slug))
 
     def handle(self, *args, **options):
         filename = options['filename']
         overwrite = options['overwrite']
+        verbosity = options['verbosity']
 
         with open(filename, 'r') as f:
             data = load(f, Loader=Loader)
@@ -74,7 +91,8 @@ class Command(BaseCommand):
                 country_repl = self.TRANSLATE_COUNTRY.get(workshop.country)
                 if country_repl:
                     workshop = workshop._replace(country=country_repl)
-                self.compare_and_update(event, workshop, overwrite)
+                self.compare_and_update(event, workshop, overwrite=overwrite,
+                                        verbosity=verbosity)
             except Event.DoesNotExist:
                 self.stderr.write('Historical event {} does not exist in the'
                                   ' database'.format(workshop.slug))
