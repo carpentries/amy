@@ -57,7 +57,10 @@ class Command(BaseCommand):
         data = [
             Workshop(
                 slug=D.get('slug'), contact=D.get('contact'),
-                country=D.get('country', '').upper(),
+                # `D.get('sth') or ''` is a trick to always get string, even
+                # if `D['sth'] == None`
+                # (this cannot be done with `D.get('sth', '')`)
+                country=(D.get('country') or '').upper(),
                 venue=D.get('venue'), address=D.get('address'),
                 latitude=(D.get('latlng') or ',').split(',')[0],
                 longitude=(D.get('latlng') or ',').split(',')[1],
