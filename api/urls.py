@@ -11,6 +11,15 @@ urlpatterns = [
     url('^export/instructors/$',
         views.ExportInstructorLocationsView.as_view(),
         name='export-instructors'),
+    url('^events/past/$',
+        views.PastEvents.as_view(),
+        name='events-past'),
+    url('^events/ongoing/$',
+        views.OngoingEvents.as_view(),
+        name='events-ongoing'),
+    url('^events/upcoming/$',
+        views.UpcomingEvents.as_view(),
+        name='events-upcoming'),
 ]
 
 # for login-logout functionality

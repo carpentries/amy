@@ -1,13 +1,15 @@
+from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
+from rest_framework.views import APIView
 
-from workshops.models import Badge, Airport
+from workshops.models import Badge, Airport, Event
 
 from .serializers import (
     ExportBadgesSerializer,
     ExportInstructorLocationsSerializer,
+    EventSerializer,
 )
 
 
@@ -17,7 +19,13 @@ class ApiRoot(APIView):
             'export-badges': reverse('api:export-badges', request=request,
                                      format=format),
             'export-instructors': reverse('api:export-instructors',
-                                          request=request, format=format)
+                                          request=request, format=format),
+            'events-past': reverse('api:events-past',
+                                   request=request, format=format),
+            'events-ongoing': reverse('api:events-ongoing',
+                                      request=request, format=format),
+            'events-upcoming': reverse('api:events-upcoming',
+                                       request=request, format=format),
         })
 
 
@@ -41,3 +49,20 @@ class ExportInstructorLocationsView(APIView):
                                   .prefetch_related('person_set')
         serializer = ExportInstructorLocationsSerializer(airports, many=True)
         return Response(serializer.data)
+
+
+class ListEvents(ListAPIView):
+    serializer_class = EventSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly, )
+
+
+class PastEvents(ListEvents):
+    queryset = Event.objects.past_events()
+
+
+class OngoingEvents(ListEvents):
+    queryset = Event.objects.ongoing_events()
+
+
+class UpcomingEvents(ListEvents):
+    queryset = Event.objects.upcoming_events()
