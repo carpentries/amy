@@ -35,22 +35,25 @@ class EventSerializer(serializers.ModelSerializer):
 
     def get_humandate(self, obj):
         """Render start and end dates as human-readable short date."""
-        start = obj.start
-        end = obj.end
-        if start and not end:
-            return '{:%b %d, %Y}-???'.format(start)
-        elif end and not start:
-            return '???-{:%b %d, %Y}'.format(end)
-        elif not end and not start:
+        return EventSerializer.human_readable_date(obj.start, obj.end)
+
+    @staticmethod
+    def human_readable_date(date1, date2):
+        """Render start and end dates as human-readable short date."""
+        if date1 and not date2:
+            return '{:%b %d, %Y}-???'.format(date1)
+        elif date2 and not date1:
+            return '???-{:%b %d, %Y}'.format(date2)
+        elif not date2 and not date1:
             return '???-???'
 
-        if start.year == end.year:
-            if start.month == end.month:
-                return '{:%b %d}-{:%d, %Y}'.format(start, end)
+        if date1.year == date2.year:
+            if date1.month == date2.month:
+                return '{:%b %d}-{:%d, %Y}'.format(date1, date2)
             else:
-                return '{:%b %d}-{:%b %d, %Y}'.format(start, end)
+                return '{:%b %d}-{:%b %d, %Y}'.format(date1, date2)
         else:
-            return '{:%b %d, %Y}-{:%b %d, %Y}'.format(start, end)
+            return '{:%b %d, %Y}-{:%b %d, %Y}'.format(date1, date2)
 
     class Meta:
         model = Event
