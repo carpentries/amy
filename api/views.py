@@ -51,18 +51,26 @@ class ExportInstructorLocationsView(APIView):
         return Response(serializer.data)
 
 
-class ListEvents(ListAPIView):
+class ListEvents(APIView):
+    # I wanted to use ListAPIView, but it had problems with the way we test
+    # this code...
     serializer_class = EventSerializer
     permission_classes = (IsAuthenticatedOrReadOnly, )
+    queryset = None  # override this in the subclass
+
+    def get(self, request, format=None):
+        objects = self.queryset.all()
+        serializer = self.serializer_class(objects, many=True)
+        return Response(serializer.data)
 
 
 class PastEvents(ListEvents):
-    queryset = Event.objects.past_events()
+    queryset = Event.objects.past_events().order_by('-start')
 
 
 class OngoingEvents(ListEvents):
-    queryset = Event.objects.ongoing_events()
+    queryset = Event.objects.ongoing_events().order_by('end')
 
 
 class UpcomingEvents(ListEvents):
-    queryset = Event.objects.upcoming_events()
+    queryset = Event.objects.upcoming_events().order_by('start')
