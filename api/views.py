@@ -1,3 +1,4 @@
+from django.db.models import Q
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
@@ -20,12 +21,8 @@ class ApiRoot(APIView):
                                      format=format),
             'export-instructors': reverse('api:export-instructors',
                                           request=request, format=format),
-            'events-past': reverse('api:events-past',
-                                   request=request, format=format),
-            'events-ongoing': reverse('api:events-ongoing',
-                                      request=request, format=format),
-            'events-upcoming': reverse('api:events-upcoming',
-                                       request=request, format=format),
+            'events-published': reverse('api:events-published',
+                                        request=request, format=format),
         })
 
 
@@ -64,13 +61,8 @@ class ListEvents(APIView):
         return Response(serializer.data)
 
 
-class PastEvents(ListEvents):
-    queryset = Event.objects.past_events().order_by('-start')
-
-
-class OngoingEvents(ListEvents):
-    queryset = Event.objects.ongoing_events().order_by('end')
-
-
-class UpcomingEvents(ListEvents):
-    queryset = Event.objects.upcoming_events().order_by('start')
+class PublishedEvents(ListEvents):
+    # only events that have both a starting date and a URL
+    queryset = Event.objects.exclude(
+        Q(start__isnull=True) | Q(url__isnull=True)
+    ).order_by('-start')
