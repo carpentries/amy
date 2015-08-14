@@ -1,11 +1,12 @@
 {% extends "workshops/_page.html" %}
 
 {% block content %}
-{% if data %}
-<pre>
-{{ data }}
-</pre>
-{% else %}
-<p>Error: no such data.</p>
-{% endif %}
+<p>
+  {% if json_link %}
+  <a href="{{ json_link }}" class="btn btn-primary btn-lg">Download JSON</a>
+  {% endif %}
+  {% if yaml_link %}
+  <a href="{{ yaml_link }}" class="btn btn-primary btn-lg">Download YAML</a>
+  {% endif %}
+</p>
 {% endblock %}

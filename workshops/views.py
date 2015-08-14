@@ -1129,45 +1129,29 @@ def debrief(request):
 
 #------------------------------------------------------------
 
-def _export_badges():
-    '''Collect badge data as YAML.'''
-    result = {}
-    for badge in Badge.objects.all():
-        persons = Person.objects.filter(award__badge_id=badge.id)
-        result[badge.name] = [
-            {"user": p.username, "name": p.get_full_name()} for p in persons
-        ]
-    return result
-
-
-def _export_instructors():
-    '''Collect instructor airport locations as YAML.'''
-
-    # Get all the people associated with an airport.
-    def _get_people(airport):
-        return [[p.username, p.get_full_name()]
-                for p in airport.person_set.all()]
-
-    # Exclude airports with no instructors, then create a list of dicts.
-    airports = Airport.objects.exclude(person=None)
-    return [{'airport' : str(a.fullname),
-             'latlng' : '{0},{1}'.format(a.latitude, a.longitude),
-             'who'  : _get_people(a)}
-            for a in airports]
+@login_required
+def export_badges(request):
+    title = 'Badges'
+    json_link = reverse('api:export-badges', kwargs={'format': 'json'})
+    yaml_link = reverse('api:export-badges', kwargs={'format': 'yaml'})
+    context = {
+        'title': title,
+        'json_link': json_link,
+        'yaml_link': yaml_link,
+    }
+    return render(request, 'workshops/export.html', context)
 
 
 @login_required
-def export(request, name):
-    '''Export data as YAML for inclusion in main web site.'''
-    data = None
-    if name == 'badges':
-        title, data = 'Badges', _export_badges()
-    elif name == 'instructors':
-        title, data = 'Instructor Locations', _export_instructors()
-    else:
-        title, data = 'Error', None # FIXME - need an error message
-    context = {'title' : title,
-               'data' : data}
+def export_instructors(request):
+    title = 'Instructor Locations'
+    json_link = reverse('api:export-instructors', kwargs={'format': 'json'})
+    yaml_link = reverse('api:export-instructors', kwargs={'format': 'yaml'})
+    context = {
+        'title': title,
+        'json_link': json_link,
+        'yaml_link': yaml_link,
+    }
     return render(request, 'workshops/export.html', context)
 
 #------------------------------------------------------------
