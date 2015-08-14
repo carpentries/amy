@@ -18,6 +18,7 @@ from workshops.models import (
 class TestListingPastEvents(APITestCase):
     view = PublishedEvents
     url = 'api:events-published'
+    maxDiff = None
 
     def setUp(self):
         past = datetime.date(1993, 8, 30)
@@ -71,8 +72,8 @@ class TestListingPastEvents(APITestCase):
         self.expecting = [
             {
                 'slug': 'event3',
-                'start': '2030-03-23',
-                'end': '2030-03-27',
+                'start': self.event3.start,
+                'end': self.event3.end,
                 'humandate': 'Mar 23-27, 2030',
                 'latitude': 3,
                 'longitude': -2,
@@ -84,8 +85,8 @@ class TestListingPastEvents(APITestCase):
             },
             {
                 'slug': 'event2',
-                'start': '{:%Y-%m-%d}'.format(self.event2.start),
-                'end': '{:%Y-%m-%d}'.format(self.event2.end),
+                'start': self.event2.start,
+                'end': self.event2.end,
                 'humandate': EventSerializer.human_readable_date(
                     self.event2.start, self.event2.end
                 ),
@@ -99,8 +100,8 @@ class TestListingPastEvents(APITestCase):
             },
             {
                 'slug': 'event1',
-                'start': '1993-08-28',
-                'end': '1993-08-29',
+                'start': self.event1.start,
+                'end': self.event1.end,
                 'humandate': 'Aug 28-29, 1993',
                 'latitude': 3,
                 'longitude': -2,
@@ -119,6 +120,12 @@ class TestListingPastEvents(APITestCase):
         self.assertEqual(response.data, self.expecting)
 
     def test_view(self):
+        # turn dates into strings for the sake of this test
+        for i, event in enumerate(self.expecting):
+            for date in ['start', 'end']:
+                self.expecting[i][date] = '{:%Y-%m-%d}' \
+                                          .format(self.expecting[i][date])
+
         # test only JSON output
         url = reverse(self.url)
         response = self.client.get(url, format='json')

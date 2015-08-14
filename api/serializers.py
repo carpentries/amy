@@ -32,6 +32,8 @@ class ExportInstructorLocationsSerializer(serializers.ModelSerializer):
 class EventSerializer(serializers.ModelSerializer):
     humandate = serializers.SerializerMethodField()
     country = serializers.CharField()
+    start = serializers.DateField(format=None)
+    end = serializers.DateField(format=None)
 
     def get_humandate(self, obj):
         """Render start and end dates as human-readable short date."""
