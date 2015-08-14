@@ -50,7 +50,9 @@ class ExportInstructorLocationsView(APIView):
 
 class ListEvents(APIView):
     # I wanted to use ListAPIView, but it had problems with the way we test
-    # this code...
+    # this code... Basically ListAPIView uses pagination, and pagination
+    # requires existing Request object - something we're faking in part of the
+    # tests (request = None).
     serializer_class = EventSerializer
     permission_classes = (IsAuthenticatedOrReadOnly, )
     queryset = None  # override this in the subclass
