@@ -11,6 +11,9 @@ urlpatterns = [
     url('^export/instructors/$',
         views.ExportInstructorLocationsView.as_view(),
         name='export-instructors'),
+    url('^events/published/$',
+        views.PublishedEvents.as_view(),
+        name='events-published'),
 ]
 
 # for login-logout functionality
