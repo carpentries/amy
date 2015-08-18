@@ -170,7 +170,7 @@ class TestEvent(TestBase):
             'https://user-name.github.com/repo-name/',
             'https://user-name.github.io/repo-name/',
         ]
-        REPO = 'https://github.com/user-name/repo-name/'
+        REPO = 'https://github.com/user-name/repo-name'
         for index, link in enumerate(links):
             event = Event.objects.create(
                 slug='e{}'.format(index),
@@ -182,10 +182,12 @@ class TestEvent(TestBase):
     def test_website_url(self):
         test_host = Host.objects.all()[0]
         links = [
+            'http://github.com/user-name/repo-name',
+            'http://github.com/user-name/repo-name/',
             'https://github.com/user-name/repo-name',
             'https://github.com/user-name/repo-name/',
         ]
-        WEBSITE = 'https://user-name.github.io/repo-name/'
+        WEBSITE = 'https://user-name.github.io/repo-name'
         for index, link in enumerate(links):
             event = Event.objects.create(
                 slug='e{}'.format(index),
