@@ -317,12 +317,12 @@ class Event(models.Model):
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
 
-    REPO_REGEX = re.compile(r'https://github\.com/(?P<name>[^/]+)/'
+    REPO_REGEX = re.compile(r'https?://github\.com/(?P<name>[^/]+)/'
                             r'(?P<repo>[^/]+)/?')
-    REPO_SCHEMA = 'https://github.com/{name}/{repo}/'
-    WEBSITE_REGEX = re.compile(r'(http|https)://(?P<name>[^.]+)\.github\.'
+    REPO_FORMAT = 'https://github.com/{name}/{repo}'
+    WEBSITE_REGEX = re.compile(r'https?://(?P<name>[^.]+)\.github\.'
                                r'(io|com)/(?P<repo>[^/]+)/?')
-    WEBSITE_SCHEMA = 'https://{name}.github.io/{repo}/'
+    WEBSITE_FORMAT = 'https://{name}.github.io/{repo}'
 
     class Meta:
         ordering = ('-start', )
@@ -339,28 +339,32 @@ class Event(models.Model):
     def get_repository_url(self):
         """Return self.url formatted as it was repository URL.
 
-        Repository URL is: https://github.com/user/repository/
+        Repository URL is as specified in REPO_FORMAT.
         If it doesn't match, the original URL is returned."""
         try:
             mo = self.WEBSITE_REGEX.match(self.url)
-            return self.REPO_SCHEMA.format(**mo.groupdict())
-        except (TypeError, AttributeError, KeyError):
+            if not mo:
+                return self.url
+
+            return self.REPO_FORMAT.format(**mo.groupdict())
+        except (TypeError, KeyError):
             # TypeError: self.url is None
-            # AttributeError: mo is None (ie. it didn't match)
             # KeyError: mo.groupdict doesn't supply required names to format
             return self.url
 
     def get_website_url(self):
         """Return self.url formatted as it was website URL.
 
-        Website URL is: https://user.github.io/repository/
+        Website URL is as specified in WEBSITE_FORMAT.
         If it doesn't match, the original URL is returned."""
         try:
             mo = self.REPO_REGEX.match(self.url)
-            return self.WEBSITE_SCHEMA.format(**mo.groupdict())
-        except (TypeError, AttributeError, KeyError):
+            if not mo:
+                return self.url
+
+            return self.WEBSITE_FORMAT.format(**mo.groupdict())
+        except (TypeError, KeyError):
             # TypeError: self.url is None
-            # AttributeError: mo is None (ie. it didn't match)
             # KeyError: mo.groupdict doesn't supply required names to format
             return self.url
 
