@@ -4,10 +4,10 @@ from django import template
 
 register = template.Library()
 
-REPO_REGEXP = re.compile(r'https://github\.com/(?P<name>\w+)/(?P<repo>\S+)/?')
+REPO_REGEXP = re.compile(r'https://github\.com/(?P<name>\S+)/(?P<repo>\S+)/?')
 REPO_SCHEMA = 'https://github.com/{name}/{repo}/'
 WEBSITE_REGEXP = re.compile(
-    r'http://(?P<name>\w+)\.github\.(io|com)/(?P<repo>\S+)/?'
+    r'http://(?P<name>\S+)\.github\.(io|com)/(?P<repo>\S+)/?'
 )
 WEBSITE_SCHEMA = 'http://{name}.github.io/{repo}/'
 
