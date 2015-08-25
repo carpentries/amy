@@ -624,9 +624,14 @@ class PersonPermissions(LoginRequiredMixin, PermissionRequiredMixin,
 
 
 @login_required
-@permission_required('workshops.change_person', raise_exception=True)
 def person_password(request, person_id):
     user = get_object_or_404(Person, pk=person_id)
+
+    # Either the user requests change of their own password, or someone with
+    # permission for changing person does.
+    if not ((request.user == user) or
+            (request.user.has_perm('workshops.change_person'))):
+        raise PermissionDenied
 
     Form = PasswordChangeForm
     if request.user.is_superuser:
