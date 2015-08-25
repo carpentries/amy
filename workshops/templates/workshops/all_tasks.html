@@ -9,7 +9,9 @@
 {% endblock %}
 
 {% block content-fluid %}
+    {% if perms.workshops.add_task %}
     <p><a href="{% url 'task_add' %}" class="btn btn-success">New task</a></p>
+    {% endif %}
 {% if all_tasks %}
     <table class="table table-striped">
         <tr>
@@ -26,13 +28,17 @@
             <td>
                 <a href="{% url 'task_details' task.id %}" title="View {{ task }}"><span class="glyphicon glyphicon-info-sign"></span></a>
                 &nbsp;
+                {% if perms.workshops.change_task %}
                 <a href="{% url 'task_edit' task.id %}" title="Edit {{ task }}"><span class="glyphicon glyphicon-pencil"></span></a>
+                {% endif %}
             </td>
         </tr>
     {% endfor %}
     </table>
     {% pagination all_tasks %}
+    {% if perms.workshops.add_task %}
     <p><a href="{% url 'task_add' %}" class="btn btn-success">New task</a></p>
+    {% endif %}
 {% else %}
     <p>No tasks.</p>
 {% endif %}

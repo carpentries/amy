@@ -29,8 +29,12 @@
                 {% navbar_element "Badges" "all_badges" %}
                 {% navbar_element "Airports" "all_airports" %}
                 <li class="divider"></li>
+                {% if perms.workshops.add_person %}
                 {% navbar_element "Bulk add persons" "person_bulk_add" %}
+                {% endif %}
+                {% if perms.workshops.add_person and perms.workshops.delete_person %}
                 {% navbar_element "Merge persons" "person_merge" %}
+                {% endif %}
                 {% navbar_element "Find instructors" "instructors" %}
                 {% navbar_element "Debrief" "debrief" %}
                 <li class="divider"></li>
@@ -64,17 +68,29 @@
           </form>
 
           <ul class="nav navbar-nav navbar-right">
+            {% if perms.workshops.add_event or perms.workshops.add_host or perms.workshops.add_person or perms.workshops.add_airport %}
             <li class="dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> <span class="caret"></span></a>
               <ul class="dropdown-menu" role="menu">
+                {% if perms.workshops.add_event %}
                 {% navbar_element "New event" "event_add" %}
+                {% endif %}
+                {% if perms.workshops.add_host %}
                 {% navbar_element "New host" "host_add" %}
+                {% endif %}
+                {% if perms.workshops.add_person %}
                 {% navbar_element "New person" "person_add" %}
+                {% endif %}
+                {% if perms.workshops.add_airport %}
                 {% navbar_element "New airport" "airport_add" %}
+                {% endif %}
                 <li class="divider"></li>
+                {% if perms.workshops.add_person %}
                 {% navbar_element "Bulk add people" "person_bulk_add" %}
+                {% endif %}
               </ul>
             </li>
+            {% endif %}
             <li class="dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Hi, {{ user.get_short_name }} <span class="caret"></span></a>
               <ul class="dropdown-menu" role="menu">

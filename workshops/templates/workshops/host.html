@@ -2,7 +2,9 @@
 
 {% block content %}
 
-<p class="edit-object"><a href="{% url 'host_edit' host.domain %}" class="btn btn-primary">Edit</a></p>
+<p class="edit-object">
+  {% if perms.workshops.change_host %}<a href="{% url 'host_edit' host.domain %}" class="btn btn-primary">Edit</a>{% endif %}
+</p>
 <table class="table table-striped">
   <tr><td>full name:</td><td>{{ host.fullname }}</td></tr>
   <tr><td>domain:</td><td><a href="http://{{ host.domain }}">{{ host.domain }}</a></td></tr>
@@ -42,7 +44,11 @@
 {% endif %}
 
 <div class="clearfix">
-  <p class="edit-object pull-left"><a href="{% url 'host_edit' host.domain %}" class="btn btn-primary">Edit</a></p>
-  <p class="delete-object pull-right"><a href="{% url 'host_delete' host.domain %}" onclick='return confirm("Are you sure you wish to remove \"{{ host }}\"?")' class="btn btn-danger">Delete host</a></p>
+  <p class="edit-object pull-left">
+    {% if perms.workshops.change_host %}<a href="{% url 'host_edit' host.domain %}" class="btn btn-primary">Edit</a>{% endif %}
+  </p>
+  <p class="delete-object pull-right">
+    {% if perms.workshops.delete_host %}<a href="{% url 'host_delete' host.domain %}" onclick='return confirm("Are you sure you wish to remove \"{{ host }}\"?")' class="btn btn-danger">Delete host</a>{% endif %}
+  </p>
 </div>
 {% endblock %}

@@ -9,7 +9,9 @@
 {% endblock %}
 
 {% block content-fluid %}
+    {% if perms.workshops.add_airport %}
     <p><a href="{% url 'airport_add' %}" class="btn btn-success">New airport</a></p>
+    {% endif %}
 {% if all_airports %}
     <table class="table table-striped">
         <tr>
@@ -28,13 +30,17 @@
             <td>
                 <a href="{% url 'airport_details' airport.iata %}" title="View {{ airport }}"><span class="glyphicon glyphicon-info-sign"></span></a>
                 &nbsp;
+                {% if perms.workshops.change_airport %}
                 <a href="{% url 'airport_edit' airport.iata %}" title="Edit {{ airport }}"><span class="glyphicon glyphicon-pencil"></span></a>
+                {% endif %}
             </td>
         </tr>
     {% endfor %}
     </table>
     {% pagination all_airports %}
+    {% if perms.workshops.add_airport %}
     <p><a href="{% url 'airport_add' %}" class="btn btn-success">New airport</a></p>
+    {% endif %}
 {% else %}
     <p>No airports.</p>
 {% endif %}
