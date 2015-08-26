@@ -196,6 +196,17 @@ class TestEvent(TestBase):
             )
             assert event.get_website_url() == WEBSITE
 
+    def test_wrong_repository_website_urls(self):
+        test_host = Host.objects.all()[0]
+        link = 'http://en.wikipedia.org/'
+        event = Event.objects.create(
+            slug='test-event',
+            host=test_host,
+            url=link
+        )
+        assert event.get_repository_url() == link
+        assert event.get_website_url() == link
+
 
 class TestEventViews(TestBase):
     "Tests for the event views"
