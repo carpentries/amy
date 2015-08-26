@@ -11,6 +11,7 @@ from selectable import forms as selectable
 
 from workshops.models import (
     Award, Event, Lesson, Person, Task, KnowledgeDomain, Airport, Host,
+    EventRequest,
 )
 from workshops import lookups
 
@@ -429,3 +430,14 @@ class HostForm(forms.ModelForm):
     class Meta:
         model = Host
         fields = ['domain', 'fullname', 'country', 'notes']
+
+
+class EventRequestForm(forms.ModelForm):
+    class Meta:
+        model = EventRequest
+        exclude = ('active', )
+        widgets = {
+            'attendee_domains': forms.CheckboxSelectMultiple(),
+            'approx_attendees': forms.RadioSelect(),
+            'admin_fee_payment': forms.RadioSelect(),
+        }

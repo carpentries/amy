@@ -62,4 +62,6 @@ urlpatterns = [
     url(r'^reports/problems/?$', views.problems, name='problems'),
 
     url(r'^revision/(?P<revision_id>[\d]+)/?$', views.object_changes, name='object_changes'),
+
+    url(r'^request/$', views.EventRequestCreate.as_view(), name='workshop_request'),
 ]

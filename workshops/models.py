@@ -405,6 +405,84 @@ class Event(models.Model):
         super(Event, self).save(*args, **kwargs)
 
 
+class EventRequest(models.Model):
+    active = models.BooleanField(default=True)
+    name = models.CharField(max_length=STR_MED)
+    email = models.EmailField()
+    affiliation = models.CharField(max_length=STR_LONG,
+                                   help_text='University or Company')
+    location = models.CharField(max_length=STR_LONG,
+                                help_text='City, Province or State, Country')
+    preferred_date = models.CharField(
+        max_length=STR_LONG,
+        help_text='Please indicate when you would like to run the workshop. '
+        'A range of a few weeks is most helpful, although we will try and '
+        'accommodate requests to run workshops alongside conferences, etc.',
+        verbose_name='Preferred workshop date',
+    )
+
+    ATTENDEES_NUMBER_CHOICES = (
+        ('20-40', '20-40 (one room, two instructors)'),
+        ('40-80', '40-80 (two rooms, four instructors)'),
+        ('80-120', '80-120 (three rooms, six instructors)'),
+    )
+    approx_attendees = models.CharField(
+        max_length=STR_SHORT,
+        choices=ATTENDEES_NUMBER_CHOICES,
+        help_text='This number doesn\'t need to be precise, but will help us '
+        'decide how many instructors your workshop will need.',
+        verbose_name='Approximate number of Attendees',
+        blank=False,
+        default='20-40',
+    )
+
+    attendee_domains = models.ManyToManyField(
+        'KnowledgeDomain',
+        help_text='The attendees\' academic field(s) of study, if known.',
+        verbose_name='Attendee Field(s)',
+        blank=True,
+    )
+    # ??? academic levels
+    # ??? computer experience levels
+    cover_travel_accomodation = models.BooleanField(
+        default=False,
+        verbose_name='My institution will cover instructors\' travel and '
+        'accommodation costs.',
+    )
+    understand_admin_fee = models.BooleanField(
+        default=False,
+        verbose_name='I understand the Software Carpentry Foundation\'s '
+        'administrative fee.',
+    )
+
+    ADMIN_FEE_PAYMENT_CHOICES = (
+        ('NP1', 'Non-profit: full fee for first workshop/year (US$1250)'),
+        ('NP2', 'Non-profit: reduced fee for subsequent workshop/year '
+                '(US$750)'),
+        ('FP1', 'For-profit: full fee for first workshop/year (US$5000)'),
+        ('FP2', 'For profit: reduced fee for subsequent workshop/year '
+                '(US$3000)'),
+        ('partner', 'No fee (my organization is a Partner or Affiliate)'),
+        ('self-organized', 'No fee (self-organized workshop)'),
+        ('waiver', 'Waiver requested (please give details in '
+                   '"Anything else")'),
+    )
+    admin_fee_payment = models.CharField(
+        max_length=STR_SHORT,
+        choices=ADMIN_FEE_PAYMENT_CHOICES,
+        verbose_name='Which of the following applies to your payment for the '
+        'administrative fee?',
+        blank=False,
+        default='NP1',
+    )
+    comment = models.TextField(
+        help_text='What else do you want us to know about your workshop? About'
+        ' your attendees? About you?',
+        verbose_name='Anything else?',
+        blank=True,
+    )
+
+
 #------------------------------------------------------------
 
 class Role(models.Model):

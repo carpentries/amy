@@ -40,14 +40,15 @@ from workshops.models import \
     Person, \
     Role, \
     Host, \
-    Task
+    Task, \
+    EventRequest
 from workshops.check import check_file
 from workshops.forms import (
     SearchForm, DebriefForm, InstructorsForm, PersonForm, PersonBulkAddForm,
     EventForm, TaskForm, TaskFullForm, bootstrap_helper,
     bootstrap_helper_with_add, BadgeAwardForm, PersonAwardForm,
     PersonPermissionsForm, bootstrap_helper_filter, PersonMergeForm,
-    PersonTaskForm, HostForm,
+    PersonTaskForm, HostForm, EventRequestForm,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
@@ -1404,3 +1405,15 @@ def _failed_to_delete(request, object, protected_objects, back=None):
     context['refs'].default_factory = None
 
     return render(request, 'workshops/failed_to_delete.html', context)
+
+
+class EventRequestCreate(CreateViewContext):
+    model = EventRequest
+    form_class = EventRequestForm
+    # fields = '__all__'
+    template_name = 'workshops/workshop_request.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Request a Workshop'
+        return context
