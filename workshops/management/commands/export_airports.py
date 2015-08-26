@@ -1,10 +1,14 @@
 import yaml
-from django.core.management.base import BaseCommand, CommandError
-from workshops.views import _export_instructors
+
+from django.core.management.base import BaseCommand
+from api.views import ExportInstructorLocationsView
+
 
 class Command(BaseCommand):
     args = 'no arguments'
     help = 'Display YAML for airports.'
 
     def handle(self, *args, **options):
-        print(yaml.dump(_export_instructors()).rstrip())
+        view = ExportInstructorLocationsView()
+        response = view.get(None, format='yaml')
+        print(yaml.dump(response.data))
