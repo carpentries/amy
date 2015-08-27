@@ -407,6 +407,7 @@ class Event(models.Model):
 
 class EventRequest(models.Model):
     active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     name = models.CharField(max_length=STR_MED)
     email = models.EmailField()
     affiliation = models.CharField(max_length=STR_LONG,
@@ -442,8 +443,24 @@ class EventRequest(models.Model):
         verbose_name='Attendee Field(s)',
         blank=True,
     )
-    # ??? academic levels
-    # ??? computer experience levels
+    attendee_domains_other = models.CharField(
+        max_length=STR_LONG, blank=True, default="",
+        help_text='If none of the fields above works for you.',
+        verbose_name='Other field',
+    )
+    attendee_academic_levels = models.ManyToManyField(
+        'AcademicLevel',
+        help_text='If you know the academic level(s) of your attendees, '
+        'indicate them here.',
+        verbose_name='Attendees\' Academic Level',
+    )
+    attendee_computing_levels = models.ManyToManyField(
+        'ComputingExperienceLevel',
+        help_text='Indicate the attendees\' level of computing experience, if '
+        'known. We will ask attendees to fill in a skills survey before the '
+        'workshop, so this answer can be an approximation.',
+        verbose_name='Attendees\' level of computing experience',
+    )
     cover_travel_accomodation = models.BooleanField(
         default=False,
         verbose_name='My institution will cover instructors\' travel and '
@@ -468,7 +485,7 @@ class EventRequest(models.Model):
                    '"Anything else")'),
     )
     admin_fee_payment = models.CharField(
-        max_length=STR_SHORT,
+        max_length=STR_MED,
         choices=ADMIN_FEE_PAYMENT_CHOICES,
         verbose_name='Which of the following applies to your payment for the '
         'administrative fee?',
@@ -481,6 +498,16 @@ class EventRequest(models.Model):
         verbose_name='Anything else?',
         blank=True,
     )
+
+
+class AcademicLevel(models.Model):
+    name = models.CharField(max_length=STR_MED, null=False, blank=False)
+
+
+class ComputingExperienceLevel(models.Model):
+    # it's a long field because we need to store reasoning too, for example:
+    # "Novice (uses a spreadsheet for data analysis rather than writing code)"
+    name = models.CharField(max_length=255, null=False, blank=False)
 
 
 #------------------------------------------------------------
