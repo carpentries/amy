@@ -1410,7 +1410,6 @@ def _failed_to_delete(request, object, protected_objects, back=None):
 class EventRequestCreate(CreateViewContext):
     model = EventRequest
     form_class = EventRequestForm
-    # fields = '__all__'
     template_name = 'workshops/workshop_request.html'
 
     def get_context_data(self, **kwargs):

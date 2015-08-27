@@ -503,11 +503,17 @@ class EventRequest(models.Model):
 class AcademicLevel(models.Model):
     name = models.CharField(max_length=STR_MED, null=False, blank=False)
 
+    def __str__(self):
+        return self.name
+
 
 class ComputingExperienceLevel(models.Model):
     # it's a long field because we need to store reasoning too, for example:
     # "Novice (uses a spreadsheet for data analysis rather than writing code)"
     name = models.CharField(max_length=255, null=False, blank=False)
+
+    def __str__(self):
+        return self.name
 
 
 #------------------------------------------------------------

@@ -435,9 +435,11 @@ class HostForm(forms.ModelForm):
 class EventRequestForm(forms.ModelForm):
     class Meta:
         model = EventRequest
-        exclude = ('active', )
+        exclude = ('active', 'created_at')
         widgets = {
             'attendee_domains': forms.CheckboxSelectMultiple(),
+            'attendee_academic_levels': forms.CheckboxSelectMultiple(),
+            'attendee_computing_levels': forms.CheckboxSelectMultiple(),
             'approx_attendees': forms.RadioSelect(),
             'admin_fee_payment': forms.RadioSelect(),
         }
