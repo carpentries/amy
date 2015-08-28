@@ -1407,12 +1407,29 @@ def _failed_to_delete(request, object, protected_objects, back=None):
     return render(request, 'workshops/failed_to_delete.html', context)
 
 
-class EventRequestCreate(CreateViewContext):
-    model = EventRequest
-    form_class = EventRequestForm
-    template_name = 'workshops/workshop_request.html'
+def eventrequest_create(request):
+    form = EventRequestForm()
+    form_helper = bootstrap_helper
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'Request a Workshop'
-        return context
+    if request.method == 'POST':
+        form = EventRequestForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+
+            # TODO: email notification?
+
+            context = {
+                'title': 'Thank you for requesting a workshop',
+            }
+            return render(request, 'workshops/workshop_request_confirm.html',
+                          context)
+        else:
+            messages.error(request, 'Fix errors below.')
+
+    context = {
+        'title': 'Request a Workshop',
+        'form': form,
+        'form_helper': form_helper,
+    }
+    return render(request, 'workshops/workshop_request.html', context)
