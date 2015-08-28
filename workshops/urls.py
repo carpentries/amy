@@ -63,5 +63,8 @@ urlpatterns = [
 
     url(r'^revision/(?P<revision_id>[\d]+)/?$', views.object_changes, name='object_changes'),
 
+    url(r'^requests/$', views.AllEventRequests.as_view(), name='all_eventrequests'),
+    url(r'^request/(?P<request_id>\d+)/?$', views.EventRequestDetails.as_view(), name='eventrequest_details'),
+    url(r'^request/(?P<request_id>\d+)/discard/?$', views.eventrequest_discard, name='eventrequest_discard'),
     url(r'^request/$', views.eventrequest_create, name='workshop_request'),
 ]

@@ -499,6 +499,14 @@ class EventRequest(models.Model):
         blank=True,
     )
 
+    def get_absolute_url(self):
+        return reverse('eventrequest_details', args=[self.pk])
+
+    def __str__(self):
+        return "{name} (from {affiliation})".format(
+            name=self.name, affiliation=self.affiliation,
+        )
+
 
 class AcademicLevel(models.Model):
     name = models.CharField(max_length=STR_MED, null=False, blank=False)

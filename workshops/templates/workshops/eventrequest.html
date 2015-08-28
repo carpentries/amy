@@ -1,0 +1,61 @@
+{% extends "workshops/_page.html" %}
+
+{% block content %}
+<table class="table table-striped">
+  <tbody>
+    <tr><th>Person:</th>
+        <td>{{ object.name }} &lt;{{ object.email|urlize }}&gt;</td></tr>
+    <tr><th>Affiliation:</th>
+        <td>{{ object.affiliation }}</td></tr>
+    <tr><th>Location:</th>
+        <td>{{ object.location }}</td></tr>
+    <tr><th>Preferred date:</th>
+        <td>{{ object.preferred_date }}</td></tr>
+    <tr><th>Approx. number of attendees:</th>
+        <td>{{ object.get_approx_attendees_display }}</td></tr>
+    <tr><th>Attendees' fields:</th>
+        <td>
+          <ul>
+            {% for domain in object.attendee_domains.all %}
+            <li>{{ domain }}</li>
+            {% endfor %}
+            {% if object.attendee_domains_other %}
+            <li>{{ object.attendee_domains_other }}</li>
+            {% endif %}
+          </ul>
+        </td>
+    </tr>
+    <tr><th>Attendees' academic level:</th>
+        <td>
+          <ul>
+            {% for level in object.attendee_academic_levels.all %}
+            <li>{{ level }}</li>
+            {% endfor %}
+          </ul>
+        </td>
+    </tr>
+    <tr><th>Attendees' level of computing experience:</th>
+        <td>
+          <ul>
+            {% for level in object.attendee_computing_levels.all %}
+            <li>{{ level }}</li>
+            {% endfor %}
+          </ul>
+        </td>
+    </tr>
+    <tr><th>Travel and accomodation costs covered by institution:</th>
+        <td>{{ object.cover_travel_accomodation|yesno }}</td></tr>
+    <tr><th>Administrative fee understanding:</th>
+        <td>{{ object.understand_admin_fee|yesno }}</td></tr>
+    <tr><th>Administrative fee payment option:</th>
+        <td>{{ object.get_admin_fee_payment_display }}</td></tr>
+    <tr><th>Comment:</th>
+        <td>{{ object.comment|default:"—"|linebreaks }}</td></tr>
+  </tbody>
+</table>
+
+<div class="clearfix">
+  <p class="edit-object pull-left"><a href="#" class="btn btn-success">Accept</a></p>
+  <p class="delete-object pull-right"><a href="{% url 'eventrequest_discard' object.pk %}" onclick='return confirm("Are you sure you wish to discard \"{{ object }}\"?")' class="btn btn-danger">Discard request</a></p>
+</div>
+{% endblock %}

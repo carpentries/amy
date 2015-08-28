@@ -18,11 +18,12 @@ from django.core.exceptions import (
 )
 from django.conf import settings
 from django.http import Http404, HttpResponse, JsonResponse
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError
 from django.db.models import Count, Sum, Q, F, Model, ProtectedError
 from django.db.models import Case, When, Value, IntegerField
 from django.shortcuts import redirect, render, get_object_or_404
 from django.views.decorators.http import require_POST
+from django.views.generic import ListView, DetailView
 from django.views.generic.base import ContextMixin
 from django.views.generic.edit import CreateView, UpdateView, ModelFormMixin
 from django.contrib.auth.decorators import login_required, permission_required
@@ -30,18 +31,19 @@ from django.contrib.auth.decorators import login_required, permission_required
 from reversion import get_for_object
 from reversion.models import Revision
 
-from workshops.models import \
-    Airport, \
-    Award, \
-    Badge, \
-    Event, \
-    Qualification, \
-    Lesson, \
-    Person, \
-    Role, \
-    Host, \
-    Task, \
-    EventRequest
+from workshops.models import (
+    Airport,
+    Award,
+    Badge,
+    Event,
+    Qualification,
+    Lesson,
+    Person,
+    Role,
+    Host,
+    Task,
+    EventRequest,
+)
 from workshops.check import check_file
 from workshops.forms import (
     SearchForm, DebriefForm, InstructorsForm, PersonForm, PersonBulkAddForm,
@@ -1433,3 +1435,42 @@ def eventrequest_create(request):
         'form_helper': form_helper,
     }
     return render(request, 'workshops/workshop_request.html', context)
+
+
+class AllEventRequests(LoginRequiredMixin, ListView):
+    queryset = EventRequest.objects.filter(active=True).order_by('-created_at')
+    context_object_name = 'requests'
+    template_name = 'workshops/all_eventrequests.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Workshop requests'
+        return context
+
+
+class EventRequestDetails(LoginRequiredMixin, DetailView):
+    queryset = EventRequest.objects.filter(active=True)
+    context_object_name = 'object'
+    template_name = 'workshops/eventrequest.html'
+    pk_url_kwarg = 'request_id'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Workshop request #{}'.format(self.get_object().pk)
+        return context
+
+
+@login_required
+def eventrequest_discard(request, request_id):
+    """Discard EventRequest, ie. set it to inactive."""
+    try:
+        eventrequest = get_object_or_404(EventRequest, active=True,
+                                         pk=request_id)
+        eventrequest.active = False
+        eventrequest.save()
+
+        messages.success(request,
+                         'Workshop request was discarded successfully.')
+        return redirect(reverse('all_eventrequests'))
+    except ObjectDoesNotExist:
+        raise Http404("No workshop request found matching the query.")

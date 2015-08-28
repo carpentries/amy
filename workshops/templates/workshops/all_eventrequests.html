@@ -1,0 +1,30 @@
+{% extends "workshops/_page.html" %}
+
+{% block content %}
+  {% if requests %}
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>person</th>
+        <th>affiliation</th>
+        <th>preferred date</th>
+        <th>comment</th>
+        <th class="additional-links"></th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for req in requests %}
+      <tr>
+        <td>{{ req.name }} &lt;{{ req.email|urlize }}&gt;</td>
+        <td>{{ req.affiliation }}</td>
+        <td>{{ req.preferred_date }}</td>
+        <td>{{ req.comment|truncatewords:5|default:"—" }}</td>
+        <td><a href="{{ req.get_absolute_url }}"><span class="glyphicon glyphicon-info-sign"></span></a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No new workshop requests.</p>
+  {% endif %}
+{% endblock %}
