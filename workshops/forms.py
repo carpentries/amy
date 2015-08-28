@@ -2,6 +2,7 @@ from django import forms
 from django.core.validators import RegexValidator
 from django.forms import HiddenInput, CheckboxSelectMultiple
 
+from captcha.fields import ReCaptchaField
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Div, HTML, Submit, Field
 from crispy_forms.bootstrap import FormActions
@@ -433,6 +434,8 @@ class HostForm(forms.ModelForm):
 
 
 class EventRequestForm(forms.ModelForm):
+    captcha = ReCaptchaField()
+
     class Meta:
         model = EventRequest
         exclude = ('active', 'created_at')

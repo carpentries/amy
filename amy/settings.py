@@ -32,6 +32,20 @@ else:
     SECRET_KEY = None
 SECRET_KEY = os.environ.get('AMY_SECRET_KEY', SECRET_KEY)
 
+# be sure to put these values in your envvars, even for development
+RECAPTCHA_PUBLIC_KEY = os.environ.get('AMY_RECAPTCHA_PUBLIC_KEY', None)
+RECAPTCHA_PRIVATE_KEY = os.environ.get('AMY_RECAPTCHA_PRIVATE_KEY', None)
+RECAPTCHA_USE_SSL = True
+NOCAPTCHA = True  # nicer input
+
+if DEBUG:
+    # 'PASSED' in the form will always pass the RECAPTCHA test
+    NOCAPTCHA = False  # uglier input, but possible to manually enter 'PASSED'
+    os.environ['RECAPTCHA_TESTING'] = 'True'
+else:
+    # ensure the keys are present on production
+    assert RECAPTCHA_PUBLIC_KEY, 'RECAPTCHA site key not present'
+    assert RECAPTCHA_PRIVATE_KEY, 'RECAPTCHA secure key not present'
 
 # New template settings (for Django >= 1.8)
 TEMPLATES = [
@@ -84,6 +98,7 @@ INSTALLED_APPS = (
     'reversion',
     'rest_framework',
     'api',
+    'captcha',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
