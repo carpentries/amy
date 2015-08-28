@@ -1463,14 +1463,35 @@ class EventRequestDetails(LoginRequiredMixin, DetailView):
 @login_required
 def eventrequest_discard(request, request_id):
     """Discard EventRequest, ie. set it to inactive."""
-    try:
-        eventrequest = get_object_or_404(EventRequest, active=True,
-                                         pk=request_id)
-        eventrequest.active = False
-        eventrequest.save()
+    eventrequest = get_object_or_404(EventRequest, active=True, pk=request_id)
+    eventrequest.active = False
+    eventrequest.save()
 
-        messages.success(request,
-                         'Workshop request was discarded successfully.')
-        return redirect(reverse('all_eventrequests'))
-    except ObjectDoesNotExist:
-        raise Http404("No workshop request found matching the query.")
+    messages.success(request,
+                     'Workshop request was discarded successfully.')
+    return redirect(reverse('all_eventrequests'))
+
+
+@login_required
+def eventrequest_accept(request, request_id):
+    """Accept event request by creating a new event."""
+    eventrequest = get_object_or_404(EventRequest, active=True, pk=request_id)
+    form = EventForm()
+
+    if request.method == 'POST':
+        form = EventForm(request.POST)
+
+        if form.is_valid():
+            event = form.save()
+            eventrequest.active = False
+            eventrequest.save()
+            return redirect(reverse('event_details',
+                                    args=[event.get_ident()]))
+        else:
+            messages.error(request, 'Fix errors below.')
+
+    context = {
+        'object': eventrequest,
+        'form': form,
+    }
+    return render(request, 'workshops/eventrequest_accept.html', context)
