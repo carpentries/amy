@@ -174,6 +174,96 @@ class Person(AbstractBaseUser, PermissionsMixin):
         super().save(*args, **kwargs)
 
 
+class ProfileUpdateRequest(models.Model):
+    active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    personal = models.CharField(
+        max_length=STR_LONG, verbose_name='Personal (first) name',
+        blank=False)
+    family = models.CharField(
+        max_length=STR_LONG, verbose_name='Family (last) name',
+        blank=False)
+    email = models.CharField(
+        max_length=STR_LONG, verbose_name='Email address', blank=False)
+    affiliation = models.CharField(
+        max_length=STR_LONG,
+        help_text='What university, company, lab, or other organization are '
+        'you affiliated with (if any)?', blank=False)
+    airport_iata = models.CharField(
+        max_length=3, verbose_name='Nearest major airport',
+        help_text='Please use its 3-letter IATA code '
+        '(<a href="http://www.airportcodes.aero/">'
+        'http://www.airportcodes.aero/</a>) to tell us where you\'re located.',
+        blank=False, null=False)
+
+    OCCUPATION_CHOICES = (
+        (None, 'Prefer not to say'),
+        ('undergrad', 'Undergraduate student'),
+        ('grad', 'Graduate student'),
+        ('postdoc', 'Post-doctoral researcher'),
+        ('faculty', 'Faculty'),
+        ('research', 'Research staff (including research programmer)'),
+        ('support', 'Support staff (including technical support)'),
+        ('librarian', 'Librarian/archivist'),
+        ('commerce', 'Commercial software developer '),
+        ('', 'Other (enter below)'),
+    )
+    occupation = models.CharField(
+        max_length=STR_MED, choices=OCCUPATION_CHOICES,
+        verbose_name='What is your current occupation/career stage?',
+        help_text='Please choose the one that best describes you.',
+        null=True, blank=True)
+    occupation_other = models.CharField(
+        max_length=STR_LONG, verbose_name='Other occupation/career stage',
+        blank=True, default='')
+    github = models.CharField(
+        max_length=STR_LONG, verbose_name='GitHub username',
+        help_text='Please provide your username, not a numeric user ID.',
+        blank=True, default='')
+    twitter = models.CharField(
+        max_length=STR_LONG, verbose_name='Twitter username',
+        help_text='Please, do not put "@" at the beginning.',
+        blank=True, default='')
+    orcid = models.CharField(max_length=STR_LONG, verbose_name='ORCID ID',
+                             blank=True, default='')
+    website = models.CharField(max_length=STR_LONG, default='', blank=True,
+                               verbose_name='Personal website')
+
+    GENDER_CHOICES = (
+        (None, 'Prefer not to say'),
+        ('F', 'Female'),
+        ('M', 'Male'),
+        ('O', 'Other (enter below)'),
+    )
+    gender = models.CharField(max_length=1, choices=GENDER_CHOICES,
+                              null=True, blank=True)
+    gender_other = models.CharField(
+        max_length=STR_LONG, verbose_name='Other gender',
+        blank=True, default='')
+    domains = models.ManyToManyField(
+        'KnowledgeDomain', verbose_name='Areas of expertise',
+        help_text='Please check all that apply.',
+        blank=True)
+    domains_other = models.CharField(
+        max_length=255, verbose_name='Other areas of expertise',
+        blank=True, default='')
+    lessons = models.ManyToManyField(
+        'Lesson', blank=True,
+        verbose_name='Topic and lessons you\'re comfortable teaching',
+        help_text='Please mark ALL that apply.')
+    lessons_other = models.CharField(
+        max_length=255,
+        verbose_name='Other topics/lessons you\'re comfortable teaching',
+        help_text='Please include lesson URLs.',
+        blank=True, default='')
+
+    def save(self, *args, **kwargs):
+        """Try to save nullable char fields as empty strings."""
+        self.gender = self.gender or ''
+        self.occupation = self.occupation or ''
+        return super().save(*args, **kwargs)
+
+
 #------------------------------------------------------------
 
 class Tag(models.Model):
