@@ -1525,3 +1525,31 @@ def profileupdaterequest_create(request):
         'form_helper': form_helper,
     }
     return render(request, 'forms/profileupdate.html', context)
+
+
+class AllProfileUpdateRequests(LoginRequiredMixin, ListView):
+    queryset = ProfileUpdateRequest.objects.filter(active=True) \
+                .order_by('-created_at')
+    context_object_name = 'requests'
+    template_name = 'workshops/all_profileupdaterequests.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Instructor profile update requests'
+        return context
+
+
+@login_required
+def profileupdaterequest_details(request, request_id):
+    update_request = get_object_or_404(ProfileUpdateRequest, active=True,
+                                       pk=request_id)
+    person = Person.objects.get(email=update_request.email)
+    airport = Airport.objects.get(iata=update_request.airport_iata)
+    context = {
+        'title': ('Instructor profile update request #{}'
+                  .format(update_request.pk)),
+        'new': update_request,
+        'old': person,
+        'airport': airport,
+    }
+    return render(request, 'workshops/profileupdaterequest.html', context)

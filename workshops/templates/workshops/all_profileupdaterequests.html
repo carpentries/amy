@@ -1,0 +1,26 @@
+{% extends "workshops/_page.html" %}
+
+{% block content %}
+  {% if requests %}
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>person</th>
+        <th>email</th>
+        <th class="additional-links"></th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for req in requests %}
+      <tr>
+        <td>{{ req.personal }} {{ req.family }}</td>
+        <td>{{ req.email|urlize }}</td>
+        <td><a href="{{ req.get_absolute_url }}"><span class="glyphicon glyphicon-info-sign"></span></a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No new profile update requests.</p>
+  {% endif %}
+{% endblock %}

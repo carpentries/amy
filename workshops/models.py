@@ -263,6 +263,9 @@ class ProfileUpdateRequest(models.Model):
         self.occupation = self.occupation or ''
         return super().save(*args, **kwargs)
 
+    def get_absolute_url(self):
+        return reverse('profileupdaterequest_details', args=[self.pk])
+
 
 #------------------------------------------------------------
 

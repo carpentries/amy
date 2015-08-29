@@ -1,0 +1,99 @@
+{% extends "workshops/_page.html" %}
+
+{% block content %}
+<div class="alert alert-info" role="alert">
+  <p><strong>Instruction:</strong> Verify with the person from the
+  database that they updated their profile with data from the 'Update
+  request' column.</p>
+</div>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th></th>
+      <th>Update request <span class="label label-primary">New</span></th>
+      <th>Person in the database <span class="label label-primary">Old</span></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><th>Personal:</th>
+        <td>{{ new.personal }}</td>
+        <td>{{ old.personal }}</td></tr>
+    <tr><th>Family:</th>
+        <td>{{ new.family }}</td>
+        <td>{{ old.family }}</td></tr>
+    <tr><th>Email:</th>
+        <td>{{ new.email|urlize }}</td>
+        <td>{{ old.email|urlize }}</td></tr>
+    <tr><th>Affiliation:</th>
+        <td>{{ new.affiliation }}</td>
+        <td>{{ old.affiliation }}</td></tr>
+    <tr><th>Nearest major airport:</th>
+        <td><a href="{{ airport.get_absolute_url }}">{{ airport.iata }}</a> or {{ new.airport_iata }}</td>
+        <td><a href="{{ old.airport.get_absolute_url }}">{{ old.airport.iata }}</a></td></tr>
+    <tr><th>Has instructor badge:</th>
+        <td></td>
+        <td>{{ old.has_instructor_badge|yesno }}</td></tr>
+    <tr><th>GitHub username:</th>
+        <td>{{ new.github|default:"—" }}</td>
+        <td>{{ old.github|default:"—" }}</td></tr>
+    <tr><th>Twitter username:</th>
+        <td>{{ new.twitter|default:"—" }}</td>
+        <td>{{ old.twitter|default:"—" }}</td></tr>
+    <tr><th>Personal website:</th>
+        <td>{{ new.website|urlize }}</td>
+        <td>{{ old.url|urlize }}</td></tr>
+    <tr><th>Gender:</th>
+        <td>{{ new.get_gender_display }}{{ new.gender_other }}</td>
+        <td>{{ old.get_gender_display }}</td></tr>
+    <tr><th>ORCID ID:</th>
+        <td>{{ new.orcid|default:"—" }}</td>
+        <td>—</td></tr>
+    <tr><th>Occupation/Career stage:</th>
+        <td>{{ new.get_occupation_display }}{{ new.occupation_other }}</td>
+        <td>—</td></tr>
+    <tr><th>Areas of expertise:</th>
+        <td>
+          <ul>
+          {% for domain in new.domains.all %}
+            <li>{{ domain }}</li>
+          {% endfor %}
+          {% if new.domains_other %}
+            <li>{{ new.domains_other }}</li>
+          {% endif %}
+          </ul>
+        </td>
+        <td>
+          <ul>
+          {% for domain in old.domains.all %}
+            <li>{{ domain }}</li>
+          {% endfor %}
+          </ul>
+        </td>
+    </tr>
+    <tr><th>Lessons:</th>
+        <td>
+          <ul>
+          {% for lesson in new.lessons.all %}
+            <li>{{ lesson }}</li>
+          {% endfor %}
+          {% if new.lessons_other %}
+            <li>{{ new.lessons_other }}</li>
+          {% endif %}
+          </ul>
+        </td>
+        <td>
+          <ul>
+          {% for lesson in old.lessons.all %}
+            <li>{{ lesson }}</li>
+          {% endfor %}
+          </ul>
+        </td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="clearfix">
+  <p class="edit-object pull-left"><a href="#" class="btn btn-success">Update</a></p>
+  <p class="delete-object pull-right"><a href="#" onclick='return confirm("Are you sure you wish to discard \"{{ object }}\"?")' class="btn btn-danger">Discard request</a></p>
+</div>
+{% endblock %}
