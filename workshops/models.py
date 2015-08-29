@@ -428,7 +428,7 @@ class EventRequest(models.Model):
         ('80-120', '80-120 (three rooms, six instructors)'),
     )
     approx_attendees = models.CharField(
-        max_length=STR_SHORT,
+        max_length=STR_MED,
         choices=ATTENDEES_NUMBER_CHOICES,
         help_text='This number doesn\'t need to be precise, but will help us '
         'decide how many instructors your workshop will need.',
