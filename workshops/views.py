@@ -43,6 +43,7 @@ from workshops.models import (
     Host,
     Task,
     EventRequest,
+    ProfileUpdateRequest,
 )
 from workshops.check import check_file
 from workshops.forms import (
@@ -50,7 +51,7 @@ from workshops.forms import (
     EventForm, TaskForm, TaskFullForm, bootstrap_helper,
     bootstrap_helper_with_add, BadgeAwardForm, PersonAwardForm,
     PersonPermissionsForm, bootstrap_helper_filter, PersonMergeForm,
-    PersonTaskForm, HostForm, EventRequestForm,
+    PersonTaskForm, HostForm, EventRequestForm, ProfileUpdateRequestForm,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
@@ -1495,3 +1496,32 @@ def eventrequest_accept(request, request_id):
         'form': form,
     }
     return render(request, 'workshops/eventrequest_accept.html', context)
+
+
+def profileupdaterequest_create(request):
+    form = ProfileUpdateRequestForm()
+    form_helper = bootstrap_helper
+
+    if request.method == 'POST':
+        form = ProfileUpdateRequestForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+
+            # TODO: email notification?
+
+            context = {
+                'title': 'Thank you for updating your instructor\'s profile',
+            }
+            return render(request,
+                          'workshops/profileupdate_request_confirm.html',
+                          context)
+        else:
+            messages.error(request, 'Fix errors below.')
+
+    context = {
+        'title': 'Update your instructor\'s profile',
+        'form': form,
+        'form_helper': form_helper,
+    }
+    return render(request, 'workshops/profileupdate_request.html', context)

@@ -68,4 +68,6 @@ urlpatterns = [
     url(r'^request/(?P<request_id>\d+)/discard/?$', views.eventrequest_discard, name='eventrequest_discard'),
     url(r'^request/(?P<request_id>\d+)/accept/?$', views.eventrequest_accept, name='eventrequest_accept'),
     url(r'^request/$', views.eventrequest_create, name='workshop_request'),
+
+    url(r'^update_profile/$', views.profileupdaterequest_create, name='profileupdate_request'),
 ]

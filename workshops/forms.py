@@ -12,7 +12,7 @@ from selectable import forms as selectable
 
 from workshops.models import (
     Award, Event, Lesson, Person, Task, KnowledgeDomain, Airport, Host,
-    EventRequest,
+    EventRequest, ProfileUpdateRequest,
 )
 from workshops import lookups
 
@@ -445,4 +445,18 @@ class EventRequestForm(forms.ModelForm):
             'attendee_computing_levels': forms.CheckboxSelectMultiple(),
             'approx_attendees': forms.RadioSelect(),
             'admin_fee_payment': forms.RadioSelect(),
+        }
+
+
+class ProfileUpdateRequestForm(forms.ModelForm):
+    captcha = ReCaptchaField()
+
+    class Meta:
+        model = ProfileUpdateRequest
+        exclude = ('active', 'created_at')
+        widgets = {
+            'domains': forms.CheckboxSelectMultiple(),
+            'lessons': forms.CheckboxSelectMultiple(),
+            'occupation': forms.RadioSelect(),
+            'gender': forms.RadioSelect(),
         }
