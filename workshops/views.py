@@ -1425,7 +1425,7 @@ def eventrequest_create(request):
             context = {
                 'title': 'Thank you for requesting a workshop',
             }
-            return render(request, 'workshops/workshop_request_confirm.html',
+            return render(request, 'forms/workshop_request_confirm.html',
                           context)
         else:
             messages.error(request, 'Fix errors below.')
@@ -1435,7 +1435,7 @@ def eventrequest_create(request):
         'form': form,
         'form_helper': form_helper,
     }
-    return render(request, 'workshops/workshop_request.html', context)
+    return render(request, 'forms/workshop_request.html', context)
 
 
 class AllEventRequests(LoginRequiredMixin, ListView):
@@ -1514,7 +1514,7 @@ def profileupdaterequest_create(request):
                 'title': 'Thank you for updating your instructor\'s profile',
             }
             return render(request,
-                          'workshops/profileupdate_request_confirm.html',
+                          'forms/profileupdate_confirm.html',
                           context)
         else:
             messages.error(request, 'Fix errors below.')
@@ -1524,4 +1524,4 @@ def profileupdaterequest_create(request):
         'form': form,
         'form_helper': form_helper,
     }
-    return render(request, 'workshops/profileupdate_request.html', context)
+    return render(request, 'forms/profileupdate.html', context)
