@@ -158,6 +158,55 @@ class TestEvent(TestBase):
         Task.objects.get(pk=task.pk)
         Award.objects.get(pk=award.pk)
 
+    def test_repository_url(self):
+        test_host = Host.objects.all()[0]
+        links = [
+            'http://user-name.github.com/repo-name',
+            'http://user-name.github.io/repo-name',
+            'https://user-name.github.com/repo-name',
+            'https://user-name.github.io/repo-name',
+            'http://user-name.github.com/repo-name/',
+            'http://user-name.github.io/repo-name/',
+            'https://user-name.github.com/repo-name/',
+            'https://user-name.github.io/repo-name/',
+        ]
+        REPO = 'https://github.com/user-name/repo-name'
+        for index, link in enumerate(links):
+            event = Event.objects.create(
+                slug='e{}'.format(index),
+                host=test_host,
+                url=link
+            )
+            assert event.get_repository_url() == REPO
+
+    def test_website_url(self):
+        test_host = Host.objects.all()[0]
+        links = [
+            'http://github.com/user-name/repo-name',
+            'http://github.com/user-name/repo-name/',
+            'https://github.com/user-name/repo-name',
+            'https://github.com/user-name/repo-name/',
+        ]
+        WEBSITE = 'https://user-name.github.io/repo-name'
+        for index, link in enumerate(links):
+            event = Event.objects.create(
+                slug='e{}'.format(index),
+                host=test_host,
+                url=link
+            )
+            assert event.get_website_url() == WEBSITE
+
+    def test_wrong_repository_website_urls(self):
+        test_host = Host.objects.all()[0]
+        link = 'http://en.wikipedia.org/'
+        event = Event.objects.create(
+            slug='test-event',
+            host=test_host,
+            url=link
+        )
+        assert event.get_repository_url() == link
+        assert event.get_website_url() == link
+
 
 class TestEventViews(TestBase):
     "Tests for the event views"

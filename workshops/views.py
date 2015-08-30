@@ -718,7 +718,7 @@ def validate_event(request, event_ident):
     event = Event.get_by_ident(event_ident)
     github_url = request.GET.get('url', None)  # for manual override
     if github_url is None:
-        github_url = event.url
+        github_url = event.get_repository_url()
 
     try:
         page_url, _ = normalize_event_index_url(github_url)
