@@ -97,6 +97,10 @@ incomplete :
 serve : bower_components workshops/git_version.py
 	${MANAGE} runserver
 
+## pip-install  : update all requirements using pip.
+pip-install :
+	@pip install --upgrade -r requirements.txt
+
 ## clean        : clean up.
 clean :
 	rm -rf \
