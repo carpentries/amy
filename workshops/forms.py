@@ -39,6 +39,10 @@ class BootstrapHelper(FormHelper):
         self.inputs.append(Submit('submit', 'Submit'))
 
 
+class BootstrapHelperGet(BootstrapHelper):
+    form_method = 'get'
+
+
 class BootstrapHelperWithAdd(BootstrapHelper):
     def __init__(self, form=None):
         super().__init__(form)
@@ -56,6 +60,7 @@ class BootstrapHelperFilter(FormHelper):
 
 
 bootstrap_helper = BootstrapHelper()
+bootstrap_helper_get = BootstrapHelperGet()
 bootstrap_helper_with_add = BootstrapHelperWithAdd()
 bootstrap_helper_filter = BootstrapHelperFilter()
 
@@ -460,3 +465,13 @@ class ProfileUpdateRequestForm(forms.ModelForm):
             'occupation': forms.RadioSelect(),
             'gender': forms.RadioSelect(),
         }
+
+
+class PersonLookupForm(forms.Form):
+    person = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.PersonLookup,
+        label='Person',
+        required=True,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
+    )

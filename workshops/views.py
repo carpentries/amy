@@ -48,10 +48,11 @@ from workshops.models import (
 from workshops.check import check_file
 from workshops.forms import (
     SearchForm, DebriefForm, InstructorsForm, PersonForm, PersonBulkAddForm,
-    EventForm, TaskForm, TaskFullForm, bootstrap_helper,
+    EventForm, TaskForm, TaskFullForm, bootstrap_helper, bootstrap_helper_get,
     bootstrap_helper_with_add, BadgeAwardForm, PersonAwardForm,
     PersonPermissionsForm, bootstrap_helper_filter, PersonMergeForm,
     PersonTaskForm, HostForm, EventRequestForm, ProfileUpdateRequestForm,
+    PersonLookupForm,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
@@ -1543,13 +1544,58 @@ class AllProfileUpdateRequests(LoginRequiredMixin, ListView):
 def profileupdaterequest_details(request, request_id):
     update_request = get_object_or_404(ProfileUpdateRequest, active=True,
                                        pk=request_id)
-    person = Person.objects.get(email=update_request.email)
-    airport = Airport.objects.get(iata=update_request.airport_iata)
+
+    person_selected = False
+
+    # Nested lookup.
+    # First check if there's person with the same email, then maybe check if
+    # there's a person with the same first and last names.
+    try:
+        person = Person.objects.get(email=update_request.email)
+        form = None
+    except Person.DoesNotExist:
+        try:
+            person = Person.objects.get(personal=update_request.personal,
+                                        family=update_request.family)
+            form = None
+        except (Person.DoesNotExist, Person.MultipleObjectsReturned):
+            # Either none or multiple people with the same first and last
+            # names.
+            # But the user might have submitted some person by themselves. We
+            # should check that!
+            try:
+                person = Person.objects.get(pk=int(request.GET['person_1']))
+                person_selected = True
+                form = PersonLookupForm(request.GET)
+            except KeyError:
+                person = None
+                # if the form wasn't submitted, initialize it without any
+                # input data
+                form = PersonLookupForm()
+            except (ValueError, Person.DoesNotExist):
+                person = None
+
+    if person:
+        # check if the person has instructor badge
+        try:
+            Award.objects.get(badge__name='instructor', person=person)
+            person.has_instructor_badge = True
+        except Award.DoesNotExist:
+            person.has_instructor_badge = False
+
+    try:
+        airport = Airport.objects.get(iata=update_request.airport_iata)
+    except Airport.DoesNotExist:
+        airport = None
+
     context = {
         'title': ('Instructor profile update request #{}'
                   .format(update_request.pk)),
         'new': update_request,
         'old': person,
+        'person_form': form,
+        'person_selected': person_selected,
+        'form_helper': bootstrap_helper_get,
         'airport': airport,
     }
     return render(request, 'workshops/profileupdaterequest.html', context)

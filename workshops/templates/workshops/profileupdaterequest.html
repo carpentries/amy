@@ -1,11 +1,25 @@
 {% extends "workshops/_page.html" %}
 
+{% load crispy_forms_tags %}
+
 {% block content %}
 <div class="alert alert-info" role="alert">
   <p><strong>Instruction:</strong> Verify with the person from the
   database that they updated their profile with data from the 'Update
   request' column.</p>
 </div>
+{% if not old %}
+<div class="alert alert-danger" role="alert">
+  <p><strong>Error:</strong> No-one matches this email ({{ new.email }}) or name ({{ new.personal }} {{ new.family }}). Look up possible match yourself using search option and then point to that person below.</p>
+</div>
+{% crispy person_form form_helper %}
+{% endif %}
+{% if person_selected %}
+<div class="alert alert-warning" role="alert">
+  <p><strong>Re-select:</strong> You can change your selection below.</p>
+</div>
+{% crispy person_form form_helper %}
+{% endif %}
 <table class="table table-striped">
   <thead>
     <tr>
@@ -17,40 +31,44 @@
   <tbody>
     <tr><th>Personal:</th>
         <td>{{ new.personal }}</td>
-        <td>{{ old.personal }}</td></tr>
+        <td>{% if old %}{{ old.personal }}{% endif %}</td></tr>
     <tr><th>Family:</th>
         <td>{{ new.family }}</td>
-        <td>{{ old.family }}</td></tr>
+        <td>{% if old %}{{ old.family }}{% endif %}</td></tr>
     <tr><th>Email:</th>
         <td>{{ new.email|urlize }}</td>
-        <td>{{ old.email|urlize }}</td></tr>
+        <td>{% if old %}{{ old.email|urlize }}{% endif %}</td></tr>
     <tr><th>Affiliation:</th>
         <td>{{ new.affiliation }}</td>
-        <td>{{ old.affiliation }}</td></tr>
+        <td>{% if old %}{{ old.affiliation }}{% endif %}</td></tr>
     <tr><th>Nearest major airport:</th>
-        <td><a href="{{ airport.get_absolute_url }}">{{ airport.iata }}</a> or {{ new.airport_iata }}</td>
-        <td><a href="{{ old.airport.get_absolute_url }}">{{ old.airport.iata }}</a></td></tr>
+        {% if airport %}
+        <td><a href="{{ airport.get_absolute_url }}">{{ airport.iata }}</a></td>
+        {% else %}
+        <td><a href="{% url 'airport_add' %}" title="Add airport {{ new.airport_iata }}">{{ new.airport_iata }}</a> <span class="label label-danger">Missing airport</span>  (<a href="https://www.world-airport-codes.com/search/?s={{ new.airport_iata }}" target="_blank">Lookup</a>)</td>
+        {% endif %}
+        <td>{% if old %}<a href="{{ old.airport.get_absolute_url }}">{{ old.airport.iata }}</a>{% endif %}</td></tr>
     <tr><th>Has instructor badge:</th>
-        <td></td>
-        <td>{{ old.has_instructor_badge|yesno }}</td></tr>
+        <td>N/A</td>
+        <td>{% if old %}{{ old.has_instructor_badge|yesno }}{% endif %}</td></tr>
     <tr><th>GitHub username:</th>
         <td>{{ new.github|default:"—" }}</td>
-        <td>{{ old.github|default:"—" }}</td></tr>
+        <td>{% if old %}{{ old.github|default:"—" }}{% endif %}</td></tr>
     <tr><th>Twitter username:</th>
         <td>{{ new.twitter|default:"—" }}</td>
-        <td>{{ old.twitter|default:"—" }}</td></tr>
+        <td>{% if old %}{{ old.twitter|default:"—" }}{% endif %}</td></tr>
     <tr><th>Personal website:</th>
         <td>{{ new.website|urlize }}</td>
-        <td>{{ old.url|urlize }}</td></tr>
+        <td>{% if old %}{{ old.url|urlize }}{% endif %}</td></tr>
     <tr><th>Gender:</th>
         <td>{{ new.get_gender_display }}{{ new.gender_other }}</td>
-        <td>{{ old.get_gender_display }}</td></tr>
+        <td>{% if old %}{{ old.get_gender_display }}{% endif %}</td></tr>
     <tr><th>ORCID ID:</th>
         <td>{{ new.orcid|default:"—" }}</td>
-        <td>—</td></tr>
+        <td>{% if old %}—{% endif %}</td></tr>
     <tr><th>Occupation/Career stage:</th>
         <td>{{ new.get_occupation_display }}{{ new.occupation_other }}</td>
-        <td>—</td></tr>
+        <td>{% if old %}—{% endif %}</td></tr>
     <tr><th>Areas of expertise:</th>
         <td>
           <ul>
@@ -63,11 +81,13 @@
           </ul>
         </td>
         <td>
+        {% if old %}
           <ul>
           {% for domain in old.domains.all %}
             <li>{{ domain }}</li>
           {% endfor %}
           </ul>
+        {% endif %}
         </td>
     </tr>
     <tr><th>Lessons:</th>
@@ -82,11 +102,13 @@
           </ul>
         </td>
         <td>
+        {% if old %}
           <ul>
           {% for lesson in old.lessons.all %}
             <li>{{ lesson }}</li>
           {% endfor %}
           </ul>
+        {% endif %}
         </td>
     </tr>
   </tbody>
