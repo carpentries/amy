@@ -11,6 +11,8 @@
 {% block content-fluid %}
   {% if perms.workshops.add_person %}
     <p><a href="{% url 'person_add' %}" class="btn btn-success">New person</a></p>
+    {% else %}
+    <p><a href="{% url 'person_add' %}" class="btn btn-success disabled">New person</a></p>
   {% endif %}
 {% if all_persons %}
     <table class="table table-striped">
@@ -38,6 +40,8 @@
     {% pagination all_persons %}
     {% if perms.workshops.add_person %}
     <p><a href="{% url 'person_add' %}" class="btn btn-success">New person</a></p>
+    {% else %}
+    <p><a href="{% url 'person_add' %}" class="btn btn-success disabled">New person</a></p>
     {% endif %}
 {% else %}
     <p>No persons.</p>

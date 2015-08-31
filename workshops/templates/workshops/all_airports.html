@@ -11,6 +11,8 @@
 {% block content-fluid %}
     {% if perms.workshops.add_airport %}
     <p><a href="{% url 'airport_add' %}" class="btn btn-success">New airport</a></p>
+    {% else %}
+    <p><a href="{% url 'airport_add' %}" class="btn btn-success disabled">New airport</a></p>
     {% endif %}
 {% if all_airports %}
     <table class="table table-striped">
@@ -40,6 +42,8 @@
     {% pagination all_airports %}
     {% if perms.workshops.add_airport %}
     <p><a href="{% url 'airport_add' %}" class="btn btn-success">New airport</a></p>
+    {% else %}
+    <p><a href="{% url 'airport_add' %}" class="btn btn-success disabled">New airport</a></p>
     {% endif %}
 {% else %}
     <p>No airports.</p>

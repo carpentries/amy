@@ -2,13 +2,21 @@
 
 {% block content %}
 <div class="edit-object">
-  {% if perms.workshops.change_person %}<a href="{% url 'person_edit' person.id %}" class="btn btn-primary">Edit</a>{% endif %}
+  {% if perms.workshops.change_person %}
+  <a href="{% url 'person_edit' person.id %}" class="btn btn-primary">Edit</a>
+  {% else %}
+  <a href="{% url 'person_edit' person.id %}" class="btn btn-primary disabled">Edit</a>
+  {% endif %}
   <div class="btn-group pull-right" role="group">
     {% if perms.workshops.change_person %}
     <a href="{% url 'person_permissions' person.id %}" class="btn btn-default">Change permissions</a>
+    {% else %}
+    <a href="{% url 'person_permissions' person.id %}" class="btn btn-default disabled">Change permissions</a>
     {% endif %}
     {% if perms.workshops.change_person or person == request.user %}
     <a href="{% url 'person_password' person.id %}" class="btn btn-default">Change password</a>
+    {% else %}
+    <a href="{% url 'person_password' person.id %}" class="btn btn-default disabled">Change password</a>
     {% endif %}
   </div>
 </div>
@@ -89,16 +97,26 @@
 </div>
 
 <div class="edit-object">
-  {% if perms.workshops.change_person %}<a href="{% url 'person_edit' person.id %}" class="btn btn-primary">Edit</a>{% endif %}
+  {% if perms.workshops.change_person %}
+  <a href="{% url 'person_edit' person.id %}" class="btn btn-primary">Edit</a>
+  {% else %}
+  <a href="{% url 'person_edit' person.id %}" class="btn btn-primary disabled">Edit</a>
+  {% endif %}
   <div class="btn-group pull-right" role="group">
     {% if perms.workshops.change_person %}
     <a href="{% url 'person_permissions' person.id %}" class="btn btn-default">Change permissions</a>
+    {% else %}
+    <a href="{% url 'person_permissions' person.id %}" class="btn btn-default disabled">Change permissions</a>
     {% endif %}
     {% if perms.workshops.change_person or person == request.user %}
     <a href="{% url 'person_password' person.id %}" class="btn btn-default">Change password</a>
+    {% else %}
+    <a href="{% url 'person_password' person.id %}" class="btn btn-default disabled">Change password</a>
     {% endif %}
     {% if perms.workshops.delete_person %}
     <a href="{% url 'person_delete' person.id %}" onclick='return confirm("Are you sure you wish to remove \"{{ person }}\"?")' class="btn btn-danger">Delete person</a>
+    {% else %}
+    <a href="{% url 'person_delete' person.id %}" class="btn btn-danger disabled">Delete person</a>
     {% endif %}
   </div>
 </div>

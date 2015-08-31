@@ -11,6 +11,8 @@
 {% block content-fluid %}
     {% if perms.workshops.add_task %}
     <p><a href="{% url 'task_add' %}" class="btn btn-success">New task</a></p>
+    {% else %}
+    <p><a href="{% url 'task_add' %}" class="btn btn-success disabled">New task</a></p>
     {% endif %}
 {% if all_tasks %}
     <table class="table table-striped">
@@ -38,6 +40,8 @@
     {% pagination all_tasks %}
     {% if perms.workshops.add_task %}
     <p><a href="{% url 'task_add' %}" class="btn btn-success">New task</a></p>
+    {% else %}
+    <p><a href="{% url 'task_add' %}" class="btn btn-success disabled">New task</a></p>
     {% endif %}
 {% else %}
     <p>No tasks.</p>
