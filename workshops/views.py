@@ -1553,3 +1553,16 @@ def profileupdaterequest_details(request, request_id):
         'airport': airport,
     }
     return render(request, 'workshops/profileupdaterequest.html', context)
+
+
+@login_required
+def profileupdaterequest_discard(request, request_id):
+    """Discard ProfileUpdateRequest, ie. set it to inactive."""
+    profileupdate = get_object_or_404(ProfileUpdateRequest, active=True,
+                                      pk=request_id)
+    profileupdate.active = False
+    profileupdate.save()
+
+    messages.success(request,
+                     'Profile update request was discarded successfully.')
+    return redirect(reverse('all_profileupdaterequests'))

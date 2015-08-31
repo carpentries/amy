@@ -266,6 +266,12 @@ class ProfileUpdateRequest(models.Model):
     def get_absolute_url(self):
         return reverse('profileupdaterequest_details', args=[self.pk])
 
+    def __str__(self):
+        return "{personal} {family} <{email}> (from {affiliation})".format(
+            personal=self.personal, family=self.family, email=self.email,
+            affiliation=self.affiliation,
+        )
+
 
 #------------------------------------------------------------
 

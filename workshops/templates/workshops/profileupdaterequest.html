@@ -94,6 +94,6 @@
 
 <div class="clearfix">
   <p class="edit-object pull-left"><a href="#" class="btn btn-success">Update</a></p>
-  <p class="delete-object pull-right"><a href="#" onclick='return confirm("Are you sure you wish to discard \"{{ object }}\"?")' class="btn btn-danger">Discard request</a></p>
+  <p class="delete-object pull-right"><a href="{% url 'profileupdaterequest_discard' new.pk %}" onclick='return confirm("Are you sure you wish to discard \"{{ new }}\"?")' class="btn btn-danger">Discard request</a></p>
 </div>
 {% endblock %}

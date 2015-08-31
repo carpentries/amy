@@ -69,7 +69,8 @@ urlpatterns = [
     url(r'^request/(?P<request_id>\d+)/accept/?$', views.eventrequest_accept, name='eventrequest_accept'),
     url(r'^request/$', views.eventrequest_create, name='workshop_request'),
 
-    url(r'^update_profile/$', views.profileupdaterequest_create, name='profileupdate_request'),
     url(r'^profile_updates/$', views.AllProfileUpdateRequests.as_view(), name='all_profileupdaterequests'),
     url(r'^profile_update/(?P<request_id>\d+)/?$', views.profileupdaterequest_details, name='profileupdaterequest_details'),
+    url(r'^profile_update/(?P<request_id>\d+)/discard/?$', views.profileupdaterequest_discard, name='profileupdaterequest_discard'),
+    url(r'^update_profile/$', views.profileupdaterequest_create, name='profileupdate_request'),
 ]
