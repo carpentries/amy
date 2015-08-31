@@ -47,3 +47,23 @@ class TestHost(TestBase):
 
             with self.assertRaises(Host.DoesNotExist):
                 Host.objects.get(domain=host_domain)
+
+    def test_host_invalid_chars_in_domain(self):
+        """Ensure users can't put wrong characters in the host's domain field.
+
+        Invalid characters are any that match `[^\w\.-]+`, ie. domain is
+        allowed only to have alphabet-like chars, dot and dash.
+
+        The reason for only these chars lies in `workshops/urls.py`.  The regex
+        for the host_details URL has `[\w\.-]+` matching...
+        """
+        data = {
+            'domain': 'http://beta.com/',
+            'fullname': self.host_beta.fullname,
+            'country': self.host_beta.country,
+            'notes': self.host_beta.notes,
+        }
+        url = reverse('host_edit', args=[self.host_beta.domain])
+        rv = self.client.post(url, data=data)
+        # make sure we're not updating to good values
+        assert rv.status_code == 200
