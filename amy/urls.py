@@ -2,6 +2,7 @@ from django.conf.urls import patterns, include, url
 from django.contrib import admin
 
 urlpatterns = patterns('',
+    url(r'^workshops/admin/', include(admin.site.urls)),
     url(r'^workshops/', include('workshops.urls')),
     # url(r'^account/', include('django.contrib.auth.urls')),
 
