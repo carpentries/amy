@@ -17,6 +17,7 @@ from workshops.models import (
 
 class TestListingPastEvents(APITestCase):
     view = PublishedEvents
+    serializer_class = EventSerializer
     url = 'api:events-published'
     maxDiff = None
 
@@ -87,7 +88,7 @@ class TestListingPastEvents(APITestCase):
                 'slug': 'event2',
                 'start': self.event2.start,
                 'end': self.event2.end,
-                'humandate': EventSerializer.human_readable_date(
+                'humandate': self.serializer_class.human_readable_date(
                     self.event2.start, self.event2.end
                 ),
                 'latitude': 3,
@@ -114,9 +115,7 @@ class TestListingPastEvents(APITestCase):
         ]
 
     def test_serialization(self):
-        # test calling the view directly, with "fake" request object (None)
-        view = self.view()
-        response = view.get(None)
+        response = self.serializer_class(self.view().get_queryset(), many=True)
         self.assertEqual(response.data, self.expecting)
 
     def test_view(self):
