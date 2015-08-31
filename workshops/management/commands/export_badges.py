@@ -1,7 +1,6 @@
-import yaml
-
 from django.core.management.base import BaseCommand
-from api.views import ExportBadgesView
+from django.core.urlresolvers import reverse
+from rest_framework.test import APIClient
 
 
 class Command(BaseCommand):
@@ -9,6 +8,7 @@ class Command(BaseCommand):
     help = 'Display YAML for badges.'
 
     def handle(self, *args, **options):
-        view = ExportBadgesView()
-        response = view.get(None, format='yaml')
-        print(yaml.dump(response.data))
+        client = APIClient()
+        response = client.get(reverse('api:export-badges'),
+                              {'format': 'yaml'})
+        print(response.content.decode('utf-8'))

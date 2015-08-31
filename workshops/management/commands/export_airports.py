@@ -1,7 +1,6 @@
-import yaml
-
 from django.core.management.base import BaseCommand
-from api.views import ExportInstructorLocationsView
+from django.core.urlresolvers import reverse
+from rest_framework.test import APIClient
 
 
 class Command(BaseCommand):
@@ -9,6 +8,7 @@ class Command(BaseCommand):
     help = 'Display YAML for airports.'
 
     def handle(self, *args, **options):
-        view = ExportInstructorLocationsView()
-        response = view.get(None, format='yaml')
-        print(yaml.dump(response.data))
+        client = APIClient()
+        response = client.get(reverse('api:export-instructors'),
+                              {'format': 'yaml'})
+        print(response.content.decode('utf-8'))
