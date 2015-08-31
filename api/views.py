@@ -26,45 +26,31 @@ class ApiRoot(APIView):
         })
 
 
-class ExportBadgesView(APIView):
+class ExportBadgesView(ListAPIView):
     """List all badges and people who have them."""
     permission_classes = (IsAuthenticatedOrReadOnly, )
+    paginator = None  # disable pagination
 
-    def get(self, request, format=None):
-        badges = Badge.objects.prefetch_related('person_set')
-        serializer = ExportBadgesSerializer(badges, many=True)
-        return Response(serializer.data)
+    queryset = Badge.objects.prefetch_related('person_set')
+    serializer_class = ExportBadgesSerializer
 
 
-class ExportInstructorLocationsView(APIView):
+class ExportInstructorLocationsView(ListAPIView):
     """List all airports and instructors located near them."""
     permission_classes = (IsAuthenticatedOrReadOnly, )
+    paginator = None  # disable pagination
 
-    def get(self, request, format=None):
-        # TODO: return only people marked as instructors?
-        airports = Airport.objects.exclude(person=None) \
-                                  .prefetch_related('person_set')
-        serializer = ExportInstructorLocationsSerializer(airports, many=True)
-        return Response(serializer.data)
+    queryset = Airport.objects.exclude(person=None) \
+                              .prefetch_related('person_set')
+    serializer_class = ExportInstructorLocationsSerializer
 
 
-class ListEvents(APIView):
-    # I wanted to use ListAPIView, but it had problems with the way we test
-    # this code... Basically ListAPIView uses pagination, and pagination
-    # requires existing Request object - something we're faking in part of the
-    # tests (request = None).
-    serializer_class = EventSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly, )
-    queryset = None  # override this in the subclass
-
-    def get(self, request, format=None):
-        objects = self.queryset.all()
-        serializer = self.serializer_class(objects, many=True)
-        return Response(serializer.data)
-
-
-class PublishedEvents(ListEvents):
+class PublishedEvents(ListAPIView):
     # only events that have both a starting date and a URL
+    permission_classes = (IsAuthenticatedOrReadOnly, )
+    paginator = None  # disable pagination
+
+    serializer_class = EventSerializer
     queryset = Event.objects.exclude(
         Q(start__isnull=True) | Q(url__isnull=True)
     ).order_by('-start')
