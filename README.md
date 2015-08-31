@@ -103,13 +103,11 @@ before starting work on new features.
         $ git checkout tags/<tag_name>
         ~~~~
 
-2.  Update dependencies:
+2.  Update dependencies front-end and back-end dependencies:
 
     ~~~
-    $ python3 -m pip install --user --upgrade -r requirements.txt
+    $ make upgrade
     ~~~
-
-    **Note**: front-end dependencies will be updated as soon as you run `make serve`.
 
 3.  (Optional) make the development-ready database:
 
