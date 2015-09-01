@@ -47,7 +47,7 @@ from workshops.forms import (
     EventForm, TaskForm, TaskFullForm, bootstrap_helper,
     bootstrap_helper_with_add, BadgeAwardForm, PersonAwardForm,
     PersonPermissionsForm, bootstrap_helper_filter, PersonMergeForm,
-    PersonTaskForm,
+    PersonTaskForm, HostForm,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
@@ -157,8 +157,6 @@ def dashboard(request):
 
 #------------------------------------------------------------
 
-HOST_FIELDS = ['domain', 'fullname', 'country', 'notes']
-
 
 @login_required
 def all_hosts(request):
@@ -186,13 +184,13 @@ def host_details(request, host_domain):
 
 class HostCreate(LoginRequiredMixin, CreateViewContext):
     model = Host
-    fields = HOST_FIELDS
+    form_class = HostForm
     template_name = 'workshops/generic_form.html'
 
 
 class HostUpdate(LoginRequiredMixin, UpdateViewContext):
     model = Host
-    fields = HOST_FIELDS
+    form_class = HostForm
     slug_field = 'domain'
     slug_url_kwarg = 'host_domain'
     template_name = 'workshops/generic_form.html'
