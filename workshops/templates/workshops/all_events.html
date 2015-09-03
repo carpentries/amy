@@ -9,7 +9,11 @@
 {% endblock %}
 
 {% block content-fluid %}
+  {% if perms.workshops.add_event %}
     <p><a href="{% url 'event_add' %}" class="btn btn-success">New event</a></p>
+  {% else %}
+    <p><a href="{% url 'event_add' %}" class="btn btn-success disabled">New event</a></p>
+  {% endif %}
 {% if all_events %}
     <table class="table table-striped">
       <tr>
@@ -54,13 +58,19 @@
         <td>
           <a href="{% url 'event_details' event.get_ident %}" title="View {{ event.get_ident }}"><span class="glyphicon glyphicon-info-sign"></span></a>
           &nbsp;
+          {% if perms.workshops.edit_event %}
           <a href="{% url 'event_edit' event.get_ident %}" title="Edit {{ event.get_ident }}"><span class="glyphicon glyphicon-pencil"></span></a>
+          {% endif %}
         </td>
       </tr>
     {% endfor %}
     </table>
     {% pagination all_events %}
+    {% if perms.workshops.add_event %}
     <p><a href="{% url 'event_add' %}" class="btn btn-success">New event</a></p>
+    {% else %}
+    <p><a href="{% url 'event_add' %}" class="btn btn-success disabled">New event</a></p>
+    {% endif %}
 {% else %}
     <p>No events.</p>
 {% endif %}

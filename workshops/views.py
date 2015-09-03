@@ -25,7 +25,7 @@ from django.shortcuts import redirect, render, get_object_or_404
 from django.views.decorators.http import require_POST
 from django.views.generic.base import ContextMixin
 from django.views.generic.edit import CreateView, UpdateView
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 
 from reversion import get_for_object
 from reversion.models import Revision
@@ -121,7 +121,6 @@ class UpdateViewContext(SuccessMessageMixin, UpdateView):
         return self.success_message.format(cleaned_data, name=str(self.object))
 
 
-
 class LoginRequiredMixin(object):
     """
     Define @login_required-based mixin for class-based views that should allow
@@ -135,6 +134,19 @@ class LoginRequiredMixin(object):
     def as_view(cls, **kwargs):
         view = super(LoginRequiredMixin, cls).as_view(**kwargs)
         return login_required(view)
+
+
+class PermissionRequiredMixin(object):
+    """
+    Mixin for allowing only users with specific permissions to access the view.
+    """
+    perms = ''  # permission name or a list of them
+
+    @classmethod
+    def as_view(cls, **kwargs):
+        view = super().as_view(**kwargs)
+        return permission_required(cls.perms, raise_exception=True)(view)
+
 
 #------------------------------------------------------------
 
@@ -182,13 +194,17 @@ def host_details(request, host_domain):
     return render(request, 'workshops/host.html', context)
 
 
-class HostCreate(LoginRequiredMixin, CreateViewContext):
+class HostCreate(LoginRequiredMixin, PermissionRequiredMixin,
+                 CreateViewContext):
+    perms = 'workshops.add_host'
     model = Host
     form_class = HostForm
     template_name = 'workshops/generic_form.html'
 
 
-class HostUpdate(LoginRequiredMixin, UpdateViewContext):
+class HostUpdate(LoginRequiredMixin, PermissionRequiredMixin,
+                 UpdateViewContext):
+    perms = 'workshops.change_host'
     model = Host
     form_class = HostForm
     slug_field = 'domain'
@@ -197,6 +213,7 @@ class HostUpdate(LoginRequiredMixin, UpdateViewContext):
 
 
 @login_required
+@permission_required('workshops.delete_host', raise_exception=True)
 def host_delete(request, host_domain):
     """Delete specific host."""
     try:
@@ -234,13 +251,17 @@ def airport_details(request, airport_iata):
     return render(request, 'workshops/airport.html', context)
 
 
-class AirportCreate(LoginRequiredMixin, CreateViewContext):
+class AirportCreate(LoginRequiredMixin, PermissionRequiredMixin,
+                    CreateViewContext):
+    perms = 'workshops.add_airport'
     model = Airport
     fields = AIRPORT_FIELDS
     template_name = 'workshops/generic_form.html'
 
 
-class AirportUpdate(LoginRequiredMixin, UpdateViewContext):
+class AirportUpdate(LoginRequiredMixin, PermissionRequiredMixin,
+                    UpdateViewContext):
+    perms = 'workshops.change_airport'
     model = Airport
     fields = AIRPORT_FIELDS
     slug_field = 'iata'
@@ -249,6 +270,7 @@ class AirportUpdate(LoginRequiredMixin, UpdateViewContext):
 
 
 @login_required
+@permission_required('workshops.delete_airport', raise_exception=True)
 def airport_delete(request, airport_iata):
     """Delete specific airport."""
     try:
@@ -316,6 +338,7 @@ def person_bulk_add_template(request):
 
 
 @login_required
+@permission_required('workshops.add_person', raise_exception=True)
 def person_bulk_add(request):
     if request.method == 'POST':
         form = PersonBulkAddForm(request.POST, request.FILES)
@@ -358,6 +381,7 @@ def person_bulk_add(request):
 
 
 @login_required
+@permission_required('workshops.add_person', raise_exception=True)
 def person_bulk_add_confirmation(request):
     """
     This view allows for manipulating and saving session-stored upload data.
@@ -454,13 +478,18 @@ def person_bulk_add_confirmation(request):
                       context)
 
 
-class PersonCreate(LoginRequiredMixin, CreateViewContext):
+class PersonCreate(LoginRequiredMixin, PermissionRequiredMixin,
+                   CreateViewContext):
+    perms = 'workshops.add_person'
     model = Person
     form_class = PersonForm
     template_name = 'workshops/generic_form.html'
 
 
 @login_required
+@permission_required(['workshops.change_person', 'workshops.add_award',
+                      'workshops.add_task'],
+                     raise_exception=True)
 def person_edit(request, person_id):
     try:
         person = Person.objects.get(pk=person_id)
@@ -570,6 +599,7 @@ def person_edit(request, person_id):
 
 
 @login_required
+@permission_required('workshops.delete_person', raise_exception=True)
 def person_delete(request, person_id):
     """Delete specific person."""
     try:
@@ -582,7 +612,9 @@ def person_delete(request, person_id):
         return _failed_to_delete(request, person, e.protected_objects)
 
 
-class PersonPermissions(LoginRequiredMixin, UpdateViewContext):
+class PersonPermissions(LoginRequiredMixin, PermissionRequiredMixin,
+                        UpdateViewContext):
+    perms = 'workshops.change_person'
     model = Person
     form_class = PersonPermissionsForm
     pk_url_kwarg = 'person_id'
@@ -592,6 +624,12 @@ class PersonPermissions(LoginRequiredMixin, UpdateViewContext):
 @login_required
 def person_password(request, person_id):
     user = get_object_or_404(Person, pk=person_id)
+
+    # Either the user requests change of their own password, or someone with
+    # permission for changing person does.
+    if not ((request.user == user) or
+            (request.user.has_perm('workshops.change_person'))):
+        raise PermissionDenied
 
     Form = PasswordChangeForm
     if request.user.is_superuser:
@@ -626,6 +664,8 @@ def person_password(request, person_id):
 
 
 @login_required
+@permission_required(['workshops.add_person', 'workshops.delete_person'],
+                     raise_exception=True)
 def person_merge(request):
     'Merge information from one Person into another (in case of duplicates).'
 
@@ -652,6 +692,8 @@ def person_merge(request):
 
 
 @login_required
+@permission_required(['workshops.add_person', 'workshops.delete_person'],
+                     raise_exception=True)
 def person_merge_confirmation(request):
     '''Show what the merge will do and get confirmation.'''
     person_from = get_object_or_404(Person,
@@ -739,13 +781,17 @@ def validate_event(request, event_ident):
     return render(request, 'workshops/validate_event.html', context)
 
 
-class EventCreate(LoginRequiredMixin, CreateViewContext):
+class EventCreate(LoginRequiredMixin, PermissionRequiredMixin,
+                  CreateViewContext):
+    perms = 'workshops.add_event'
     model = Event
     form_class = EventForm
     template_name = 'workshops/event_create_form.html'
 
 
 @login_required
+@permission_required(['workshops.change_event', 'workshops.add_task'],
+                     raise_exception=True)
 def event_edit(request, event_ident):
     try:
         event = Event.get_by_ident(event_ident)
@@ -812,6 +858,7 @@ def event_edit(request, event_ident):
 
 
 @login_required
+@permission_required('workshops.delete_event', raise_exception=True)
 def event_delete(request, event_ident):
     """Delete event, its tasks and related awards."""
     try:
@@ -870,6 +917,7 @@ def task_details(request, task_id):
 
 
 @login_required
+@permission_required('workshops.delete_task', raise_exception=True)
 def task_delete(request, task_id, event_ident=None):
     '''Delete a task. This is used on the event edit page'''
     t = get_object_or_404(Task, pk=task_id)
@@ -882,13 +930,17 @@ def task_delete(request, task_id, event_ident=None):
     return redirect(all_tasks)
 
 
-class TaskCreate(LoginRequiredMixin, CreateViewContext):
+class TaskCreate(LoginRequiredMixin, PermissionRequiredMixin,
+                 CreateViewContext):
+    perms = 'workshops.add_task'
     model = Task
     form_class = TaskFullForm
     template_name = 'workshops/generic_form.html'
 
 
-class TaskUpdate(LoginRequiredMixin, UpdateViewContext):
+class TaskUpdate(LoginRequiredMixin, PermissionRequiredMixin,
+                 UpdateViewContext):
+    perms = 'workshops.change_task'
     model = Task
     form_class = TaskFullForm
     pk_url_kwarg = 'task_id'
@@ -924,8 +976,12 @@ def badge_details(request, badge_name):
     elif request.method == 'POST':
         form = BadgeAwardForm(request.POST, initial=initial)
 
-        if form.is_valid():
-            form.save()
+        if request.user.has_perm('workshops.add_award'):
+            if form.is_valid():
+                form.save()
+        else:
+            messages.error(request,
+                           'You don\'t have permissions to award a badge.')
 
     awards = badge.award_set.all()
     awards = _get_pagination_items(request, awards)
