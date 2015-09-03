@@ -51,8 +51,8 @@ from workshops.forms import (
     EventForm, TaskForm, TaskFullForm, bootstrap_helper, bootstrap_helper_get,
     bootstrap_helper_with_add, BadgeAwardForm, PersonAwardForm,
     PersonPermissionsForm, bootstrap_helper_filter, PersonMergeForm,
-    PersonTaskForm, HostForm, EventRequestForm, ProfileUpdateRequestForm,
-    PersonLookupForm,
+    PersonTaskForm, HostForm, SwCEventRequestForm, DCEventRequestForm,
+    ProfileUpdateRequestForm, PersonLookupForm,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
@@ -1411,15 +1411,44 @@ def _failed_to_delete(request, object, protected_objects, back=None):
     return render(request, 'workshops/failed_to_delete.html', context)
 
 
-def eventrequest_create(request):
-    """
-    Workshop request form. Accessible to all users (no login required).
-    """
-    form = EventRequestForm()
+def eventrequest_swc_create(request):
+    """Software-Carpentry workshop request form. Accessible to all users
+    (no login required)."""
+    form = SwCEventRequestForm()
     form_helper = bootstrap_helper
 
     if request.method == 'POST':
-        form = EventRequestForm(request.POST)
+        form = SwCEventRequestForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+
+            # TODO: email notification?
+
+            context = {
+                'title': 'Thank you for requesting a workshop',
+            }
+            return render(request, 'forms/workshop_request_confirm.html',
+                          context)
+        else:
+            messages.error(request, 'Fix errors below.')
+
+    context = {
+        'title': 'Request a Workshop',
+        'form': form,
+        'form_helper': form_helper,
+    }
+    return render(request, 'forms/workshop_request.html', context)
+
+
+def eventrequest_dc_create(request):
+    """Data-Carpentry workshop request form. Accessible to all users
+    (no login required)."""
+    form = DCEventRequestForm()
+    form_helper = bootstrap_helper
+
+    if request.method == 'POST':
+        form = DCEventRequestForm(request.POST)
 
         if form.is_valid():
             form.save()

@@ -438,18 +438,47 @@ class HostForm(forms.ModelForm):
         fields = ['domain', 'fullname', 'country', 'notes']
 
 
-class EventRequestForm(forms.ModelForm):
+class SwCEventRequestForm(forms.ModelForm):
     captcha = ReCaptchaField()
+    workshop_type = forms.CharField(initial='swc', widget=forms.HiddenInput())
 
     class Meta:
         model = EventRequest
-        exclude = ('active', 'created_at')
+        exclude = ('active', 'created_at', 'data_types', 'data_types_other',
+                   'attendee_data_analysis_level', 'fee_waiver_request', )
         widgets = {
+            'approx_attendees': forms.RadioSelect(),
             'attendee_domains': forms.CheckboxSelectMultiple(),
             'attendee_academic_levels': forms.CheckboxSelectMultiple(),
             'attendee_computing_levels': forms.CheckboxSelectMultiple(),
-            'approx_attendees': forms.RadioSelect(),
+            'travel_reimbursement': forms.RadioSelect(),
             'admin_fee_payment': forms.RadioSelect(),
+        }
+
+
+class DCEventRequestForm(SwCEventRequestForm):
+    workshop_type = forms.CharField(initial='dc', widget=forms.HiddenInput())
+    understand_admin_fee = forms.BooleanField(
+        initial=False,
+        label='I understand the Data Carpentry\'s administration fee.',
+        help_text='There is a per-workshop fee for Data Carpentry to cover '
+        'administrative and core development costs. The per-workshop fee is '
+        'currently $2500. We work to find local instructors when possible, but'
+        ' the host institute will also need to pay for instructors travel and'
+        ' lodging if they need to travel. Therefore overall workshop costs are'
+        ' $2500 - $6000.',
+    )
+
+    class Meta(SwCEventRequestForm.Meta):
+        exclude = ('active', 'created_at', 'admin_fee_payment',
+                   'attendee_computing_levels', )
+        widgets = {
+            'approx_attendees': forms.RadioSelect(),
+            'attendee_domains': forms.CheckboxSelectMultiple(),
+            'data_types': forms.RadioSelect(),
+            'attendee_academic_levels': forms.CheckboxSelectMultiple(),
+            'attendee_data_analysis_level': forms.CheckboxSelectMultiple(),
+            'travel_reimbursement': forms.RadioSelect(),
         }
 
 
