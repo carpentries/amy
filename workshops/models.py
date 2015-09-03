@@ -512,13 +512,31 @@ class EventRequest(models.Model):
     affiliation = models.CharField(max_length=STR_LONG,
                                    help_text='University or Company')
     location = models.CharField(max_length=STR_LONG,
-                                help_text='City, Province or State, Country')
-    preferred_date = models.CharField(
+                                help_text='City, Province or State')
+    country = CountryField()
+    conference = models.CharField(
         max_length=STR_LONG,
+        verbose_name='If the workshop is to be associated with a conference '
+                     'or meeting, which one? ',
+        blank=True, default='',
+    )
+    preferred_date = models.CharField(
+        max_length=255,
         help_text='Please indicate when you would like to run the workshop. '
-        'A range of a few weeks is most helpful, although we will try and '
-        'accommodate requests to run workshops alongside conferences, etc.',
+                  'A range of at least a month is most helpful, although if '
+                  'you have a specific date or dates you need the workshop, '
+                  'we will try to accommodate those requests.',
         verbose_name='Preferred workshop date',
+    )
+
+    WORKSHOP_TYPE_CHOICES = (
+        ('swc', 'Software-Carpentry'),
+        ('dc', 'Data-Carpentry'),
+    )
+    workshop_type = models.CharField(
+        max_length=STR_MED,
+        choices=WORKSHOP_TYPE_CHOICES,
+        blank=False, default='swc',
     )
 
     ATTENDEES_NUMBER_CHOICES = (
@@ -539,13 +557,33 @@ class EventRequest(models.Model):
     attendee_domains = models.ManyToManyField(
         'KnowledgeDomain',
         help_text='The attendees\' academic field(s) of study, if known.',
-        verbose_name='Attendee Field(s)',
+        verbose_name='Domains or topic of interest for target audience',
         blank=True,
     )
     attendee_domains_other = models.CharField(
         max_length=STR_LONG, blank=True, default="",
         help_text='If none of the fields above works for you.',
-        verbose_name='Other field',
+        verbose_name='Other domains or topics of interest',
+    )
+    DATA_TYPES_CHOICES = (
+        ('survey', 'Survey data (ecology, biodiversity, social science)'),
+        ('genomic', 'Genomic data'),
+        ('geospatial', 'Geospatial data'),
+        ('text-mining', 'Text mining'),
+        ('', 'Other (type below)'),
+    )
+    data_types = models.CharField(
+        max_length=STR_MED,
+        choices=DATA_TYPES_CHOICES,
+        verbose_name='We currently have developed or are developing workshops'
+                     ' focused on four types of data. Please let us know which'
+                     ' workshop would best suit your needs.',
+        blank=True,
+    )
+    data_types_other = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Other data domains for the workshop',
+        blank=True,
     )
     attendee_academic_levels = models.ManyToManyField(
         'AcademicLevel',
@@ -560,6 +598,12 @@ class EventRequest(models.Model):
         'workshop, so this answer can be an approximation.',
         verbose_name='Attendees\' level of computing experience',
     )
+    attendee_data_analysis_level = models.ManyToManyField(
+        'DataAnalysisLevel',
+        help_text='If you know, indicate learner\'s general level of data '
+                  'analysis experience',
+        verbose_name='Level of data analysis experience',
+    )
     cover_travel_accomodation = models.BooleanField(
         default=False,
         verbose_name='My institution will cover instructors\' travel and '
@@ -568,7 +612,35 @@ class EventRequest(models.Model):
     understand_admin_fee = models.BooleanField(
         default=False,
         verbose_name='I understand the Software Carpentry Foundation\'s '
-        'administrative fee.',
+        'administration fee.',
+        help_text='<a href="http://software-carpentry.org/blog/2015/07/changes'
+        '-to-admin-fee.html">Look up administration fees</a>',
+    )
+    fee_waiver_request = models.BooleanField(
+        help_text='Waiver\'s of the administrative fee are available on '
+        'a needs basis. If you are interested in submitting a waiver '
+        'application please indicate here.',
+        verbose_name='I would like to submit an administrative fee waiver '
+        'application',
+        default=False,
+    )
+    TRAVEL_REIMBURSEMENT_CHOICES = (
+        ('', 'Don\'t know yet.'),
+        ('book', 'Book travel through our university or program.'),
+        ('reimburse', 'Book their own travel and be reimbursed.'),
+        ('', 'Other (type below)'),
+    )
+    travel_reimbursement = models.CharField(
+        max_length=STR_MED,
+        verbose_name='For instructor travel, how will instructors be'
+                     ' reimbursed?',
+        choices=TRAVEL_REIMBURSEMENT_CHOICES,
+        null=True, blank=True, default=None,
+    )
+    travel_reimbursement_other = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Other type of reimbursement',
+        blank=True,
     )
 
     ADMIN_FEE_PAYMENT_CHOICES = (
@@ -602,8 +674,9 @@ class EventRequest(models.Model):
         return reverse('eventrequest_details', args=[self.pk])
 
     def __str__(self):
-        return "{name} (from {affiliation})".format(
+        return "{name} (from {affiliation}, {type} workshop)".format(
             name=self.name, affiliation=self.affiliation,
+            type=self.workshop_type,
         )
 
 
@@ -617,6 +690,14 @@ class AcademicLevel(models.Model):
 class ComputingExperienceLevel(models.Model):
     # it's a long field because we need to store reasoning too, for example:
     # "Novice (uses a spreadsheet for data analysis rather than writing code)"
+    name = models.CharField(max_length=255, null=False, blank=False)
+
+    def __str__(self):
+        return self.name
+
+
+class DataAnalysisLevel(models.Model):
+    # ComputingExperienceLevel's sibling
     name = models.CharField(max_length=255, null=False, blank=False)
 
     def __str__(self):
