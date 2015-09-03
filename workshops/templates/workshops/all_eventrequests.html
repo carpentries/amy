@@ -8,6 +8,7 @@
         <th>person</th>
         <th>affiliation</th>
         <th>preferred date</th>
+        <th>type</th>
         <th>comment</th>
         <th class="additional-links"></th>
       </tr>
@@ -18,6 +19,13 @@
         <td>{{ req.name }} &lt;{{ req.email|urlize }}&gt;</td>
         <td>{{ req.affiliation }}</td>
         <td>{{ req.preferred_date }}</td>
+        <td>
+        {% if req.workshop_type == 'swc' %}
+          <span class="label label-primary">SWC</span>
+        {% else %}
+          <span class="label label-default">DC</span>
+        {% endif %}
+        </td>
         <td>{{ req.comment|truncatewords:5|default:"—" }}</td>
         <td><a href="{{ req.get_absolute_url }}"><span class="glyphicon glyphicon-info-sign"></span></a></td>
       </tr>
