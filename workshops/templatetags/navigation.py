@@ -4,7 +4,15 @@ from django.core.urlresolvers import reverse
 register = template.Library()
 
 
-def make_element(title, url, active=False, disabled=False):
+def navbar_template(title, url, active=False, disabled=False):
+    """
+    Compose an HTML anchor <a href='' /> inside a list item <li>.
+
+    List item can be added one or more class attributes:
+    * active: to highlight currently visited tab
+    * disabled: to disable access, for example for users without specific
+      permissions.
+    """
     screen_reader = ''
     classes = []
 
@@ -35,7 +43,7 @@ def navbar_element(context, title, url_name):
     """
     url = reverse(url_name)
     active = context['request'].path == url
-    return make_element(title, url, active=active)
+    return navbar_template(title, url, active=active)
 
 
 @register.simple_tag(takes_context=True)
@@ -49,16 +57,15 @@ def navbar_element_permed(context, title, url_name, perms):
     """
     url = reverse(url_name)
     active = context['request'].path == url
-    disabled = True
 
     # check permissions
     perms_ctx = context['perms']
     perms = perms.split(',')
+    # True for every perm (from perms_ctx) that's granted to the user
     perms = map(lambda x: x in perms_ctx, perms)
-    if all(perms):
-        disabled = False
+    disabled = not all(perms)  # or: enabled = all(perms)
 
-    return make_element(title, url, active=active, disabled=disabled)
+    return navbar_template(title, url, active=active, disabled=disabled)
 
 
 @register.simple_tag(takes_context=True)
@@ -68,4 +75,4 @@ def navbar_element_url(context, title, url):
     accessibility elements.  This tag takes a pre-made URL as an argument.
     """
     active = context['request'].path == url
-    return make_element(title, url, active=active)
+    return navbar_template(title, url, active=active)
