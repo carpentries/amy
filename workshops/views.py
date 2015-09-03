@@ -1612,3 +1612,40 @@ def profileupdaterequest_discard(request, request_id):
     messages.success(request,
                      'Profile update request was discarded successfully.')
     return redirect(reverse('all_profileupdaterequests'))
+
+
+@login_required
+def profileupdaterequest_accept(request, request_id, person_id):
+    """Discard ProfileUpdateRequest, ie. set it to inactive."""
+    profileupdate = get_object_or_404(ProfileUpdateRequest, active=True,
+                                      pk=request_id)
+    person = get_object_or_404(Person, pk=person_id)
+    airport = get_object_or_404(Airport, iata=profileupdate.airport_iata)
+
+    person.personal = profileupdate.personal
+    person.family = profileupdate.family
+    person.email = profileupdate.email
+    person.affiliation = profileupdate.affiliation
+    person.airport = airport
+    person.github = profileupdate.github
+    person.twitter = profileupdate.twitter
+    person.url = profileupdate.website
+    person.gender = profileupdate.gender
+    person.domains = list(profileupdate.domains.all())
+
+    # erase old lessons
+    Qualification.objects.filter(person=person).delete()
+    # add new
+    Qualification.objects.bulk_create([
+        Qualification(person=person, lesson=L)
+        for L in profileupdate.lessons.all()
+    ])
+
+    person.save()
+
+    profileupdate.active = False
+    profileupdate.save()
+
+    messages.success(request,
+                     '{} was updated successfully.'.format(str(person)))
+    return redirect(reverse('all_profileupdaterequests'))

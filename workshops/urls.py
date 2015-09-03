@@ -72,5 +72,6 @@ urlpatterns = [
     url(r'^profile_updates/$', views.AllProfileUpdateRequests.as_view(), name='all_profileupdaterequests'),
     url(r'^profile_update/(?P<request_id>\d+)/?$', views.profileupdaterequest_details, name='profileupdaterequest_details'),
     url(r'^profile_update/(?P<request_id>\d+)/discard/?$', views.profileupdaterequest_discard, name='profileupdaterequest_discard'),
+    url(r'^profile_update/(?P<request_id>\d+)/accept/(?P<person_id>[\w\.-]+)/?$', views.profileupdaterequest_accept, name='profileupdaterequest_accept'),
     url(r'^update_profile/$', views.profileupdaterequest_create, name='profileupdate_request'),
 ]

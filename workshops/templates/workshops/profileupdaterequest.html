@@ -115,7 +115,13 @@
 </table>
 
 <div class="clearfix">
-  <p class="edit-object pull-left"><a href="#" class="btn btn-success">Update</a></p>
+  <p class="edit-object pull-left">
+    {% if old and airport %}
+    <a href="{% url 'profileupdaterequest_accept' new.pk old.pk %}"  onclick='return confirm("Did you verify the changes with \"{{ old }}\"? If you agree, their record will get updated.")' class="btn btn-success">Update</a>
+    {% else %}
+    <a href="#" class="btn btn-success disabled">Update</a>
+    {% endif %}
+  </p>
   <p class="delete-object pull-right"><a href="{% url 'profileupdaterequest_discard' new.pk %}" onclick='return confirm("Are you sure you wish to discard \"{{ new }}\"?")' class="btn btn-danger">Discard request</a></p>
 </div>
 {% endblock %}
