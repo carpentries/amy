@@ -1412,6 +1412,9 @@ def _failed_to_delete(request, object, protected_objects, back=None):
 
 
 def eventrequest_create(request):
+    """
+    Workshop request form. Accessible to all users (no login required).
+    """
     form = EventRequestForm()
     form_helper = bootstrap_helper
 
@@ -1463,6 +1466,7 @@ class EventRequestDetails(LoginRequiredMixin, DetailView):
 
 
 @login_required
+@permission_required('workshops.change_eventrequest', raise_exception=True)
 def eventrequest_discard(request, request_id):
     """Discard EventRequest, ie. set it to inactive."""
     eventrequest = get_object_or_404(EventRequest, active=True, pk=request_id)
@@ -1475,6 +1479,8 @@ def eventrequest_discard(request, request_id):
 
 
 @login_required
+@permission_required(['workshops.change_eventrequest', 'workshops.add_event'],
+                     raise_exception=True)
 def eventrequest_accept(request, request_id):
     """Accept event request by creating a new event."""
     eventrequest = get_object_or_404(EventRequest, active=True, pk=request_id)
@@ -1500,6 +1506,11 @@ def eventrequest_accept(request, request_id):
 
 
 def profileupdaterequest_create(request):
+    """
+    Profile update request form. Accessible to all users (no login required).
+
+    This one is used when instructors want to change their information.
+    """
     form = ProfileUpdateRequestForm()
     form_helper = bootstrap_helper
 
@@ -1602,6 +1613,8 @@ def profileupdaterequest_details(request, request_id):
 
 
 @login_required
+@permission_required('workshops.change_profileupdaterequest',
+                     raise_exception=True)
 def profileupdaterequest_discard(request, request_id):
     """Discard ProfileUpdateRequest, ie. set it to inactive."""
     profileupdate = get_object_or_404(ProfileUpdateRequest, active=True,
@@ -1615,11 +1628,22 @@ def profileupdaterequest_discard(request, request_id):
 
 
 @login_required
+@permission_required(['workshops.change_profileupdaterequest',
+                      'workshops.change_person'], raise_exception=True)
 def profileupdaterequest_accept(request, request_id, person_id):
-    """Discard ProfileUpdateRequest, ie. set it to inactive."""
+    """
+    Accept the profile update by rewriting values to selected user's profile.
+
+    IMPORTANT: we do not rewrite all of the data users input (like
+    occupation, or other gender, or other lessons).  All of it is still in
+    the database model ProfileUpdateRequest, but does not get written to the
+    Person model object.
+    """
     profileupdate = get_object_or_404(ProfileUpdateRequest, active=True,
                                       pk=request_id)
     person = get_object_or_404(Person, pk=person_id)
+    person_name = str(person)
+
     airport = get_object_or_404(Airport, iata=profileupdate.airport_iata)
 
     person.personal = profileupdate.personal
@@ -1632,6 +1656,10 @@ def profileupdaterequest_accept(request, request_id, person_id):
     person.url = profileupdate.website
     person.gender = profileupdate.gender
     person.domains = list(profileupdate.domains.all())
+
+    # Since Person.lessons uses a intermediate model Qualification, we ought to
+    # operate on Qualification objects instead of using Person.lessons as a
+    # list.
 
     # erase old lessons
     Qualification.objects.filter(person=person).delete()
@@ -1647,5 +1675,5 @@ def profileupdaterequest_accept(request, request_id, person_id):
     profileupdate.save()
 
     messages.success(request,
-                     '{} was updated successfully.'.format(str(person)))
+                     '{} was updated successfully.'.format(person_name))
     return redirect(reverse('all_profileupdaterequests'))
