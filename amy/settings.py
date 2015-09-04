@@ -47,6 +47,33 @@ else:
     assert RECAPTCHA_PUBLIC_KEY, 'RECAPTCHA site key not present'
     assert RECAPTCHA_PRIVATE_KEY, 'RECAPTCHA secure key not present'
 
+# email settings
+ADMINS = (
+    ('Piotr Banaszkiewicz', 'piotr@banaszkiewicz.org'),
+    ('Greg Wilson', 'gvwilson@software-carpentry.org'),
+)
+# "From:" for error messages sent out to ADMINS
+SERVER_EMAIL = os.environ.get('AMY_SERVER_EMAIL', 'root@localhost')
+
+# addresses to receive "New workshop request" or "New profile update request"
+# notifications
+REQUEST_NOTIFICATIONS_RECIPIENTS = (
+    'admins-all@software-carpentry.org',
+)
+EMAIL_HOST = os.environ.get('AMY_EMAIL_HOST', 'localhost')
+EMAIL_HOST_USER = os.environ.get('AMY_EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('AMY_EMAIL_HOST_PASSWORD', '')
+EMAIL_PORT = int(os.environ.get('AMY_EMAIL_PORT', 25))
+EMAIL_TIMEOUT = 10  # timeout for blocking email operations, in seconds
+
+# "From:" for NOT error messages (ie. sent to whoever we want)
+DEFAULT_FROM_EMAIL = os.environ.get('AMY_DEFAULT_FROM_EMAIL',
+                                    'webmaster@localhost')
+
+if DEBUG:
+    # outgoing mails will be stored in `django.core.mail.outbox`
+    EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
+
 # New template settings (for Django >= 1.8)
 TEMPLATES = [
     {
