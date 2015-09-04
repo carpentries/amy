@@ -16,15 +16,16 @@ from django.core.exceptions import (
     PermissionDenied,
     SuspiciousOperation,
 )
+from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 from django.http import Http404, HttpResponse, JsonResponse
 from django.db import IntegrityError
 from django.db.models import Count, Sum, Q, F, Model, ProtectedError
 from django.db.models import Case, When, Value, IntegerField
 from django.shortcuts import redirect, render, get_object_or_404
+from django.template.loader import get_template
 from django.views.decorators.http import require_POST
-from django.views.generic import ListView, DetailView
-from django.views.generic.base import ContextMixin
+from django.views.generic import ListView, DetailView, View
 from django.views.generic.edit import CreateView, UpdateView, ModelFormMixin
 from django.contrib.auth.decorators import login_required, permission_required
 
@@ -1411,19 +1412,62 @@ def _failed_to_delete(request, object, protected_objects, back=None):
     return render(request, 'workshops/failed_to_delete.html', context)
 
 
-def eventrequest_swc_create(request):
-    """Software-Carpentry workshop request form. Accessible to all users
-    (no login required)."""
-    form = SwCEventRequestForm()
+class SwCEventRequest(View):
+    form_class = SwCEventRequestForm
     form_helper = bootstrap_helper
 
-    if request.method == 'POST':
-        form = SwCEventRequestForm(request.POST)
+    def get(self, request, *args, **kwargs):
+        form = self.form_class()
+        context = {
+            'title': 'Request a Workshop',
+            'form': form,
+            'form_helper': self.form_helper,
+        }
+        return render(request, 'forms/workshop_request.html', context)
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(request.POST)
 
         if form.is_valid():
-            form.save()
+            data = form.cleaned_data
+            event_req = form.save()
 
-            # TODO: email notification?
+            # prepare email notification
+            recipients = settings.REQUEST_NOTIFICATIONS_RECIPIENTS
+            subject = ('[{tag}] New workshop request: {name} from {country}, '
+                       '{affiliation}').format(
+                tag=data['workshop_type'].upper(),
+                name=event_req.name,
+                country=event_req.country.name,
+                affiliation=event_req.affiliation,
+            )
+
+            link = event_req.get_absolute_url()
+            link_domain = settings.SITE_URL
+
+            body_txt = get_template(
+                'workshops/eventrequest_email_txt.html'
+            ).render({
+                'object': event_req,
+                'link': link,
+                'link_domain': link_domain,
+            })
+
+            body_html = get_template(
+                'workshops/eventrequest_email_html.html'
+            ).render({
+                'object': event_req,
+                'link': link,
+                'link_domain': link_domain,
+            })
+
+            reply_to = (data['email'], )
+            email = EmailMultiAlternatives(subject, body_txt, to=recipients,
+                                           reply_to=reply_to)
+            email.attach_alternative(body_html, 'text/html')
+
+            # fail loudly so that admins know if something's wrong
+            email.send(fail_silently=False)
 
             context = {
                 'title': 'Thank you for requesting a workshop',
@@ -1433,42 +1477,9 @@ def eventrequest_swc_create(request):
         else:
             messages.error(request, 'Fix errors below.')
 
-    context = {
-        'title': 'Request a Workshop',
-        'form': form,
-        'form_helper': form_helper,
-    }
-    return render(request, 'forms/workshop_request.html', context)
 
-
-def eventrequest_dc_create(request):
-    """Data-Carpentry workshop request form. Accessible to all users
-    (no login required)."""
-    form = DCEventRequestForm()
-    form_helper = bootstrap_helper
-
-    if request.method == 'POST':
-        form = DCEventRequestForm(request.POST)
-
-        if form.is_valid():
-            form.save()
-
-            # TODO: email notification?
-
-            context = {
-                'title': 'Thank you for requesting a workshop',
-            }
-            return render(request, 'forms/workshop_request_confirm.html',
-                          context)
-        else:
-            messages.error(request, 'Fix errors below.')
-
-    context = {
-        'title': 'Request a Workshop',
-        'form': form,
-        'form_helper': form_helper,
-    }
-    return render(request, 'forms/workshop_request.html', context)
+class DCEventRequest(SwCEventRequest):
+    form_class = DCEventRequestForm
 
 
 class AllEventRequests(LoginRequiredMixin, ListView):

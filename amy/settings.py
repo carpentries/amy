@@ -74,6 +74,10 @@ if DEBUG:
     # outgoing mails will be stored in `django.core.mail.outbox`
     EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
 
+SITE_URL = 'https://amy.software-carpentry.org'
+if DEBUG:
+    SITE_URL = 'http://127.0.0.1:8000'
+
 # New template settings (for Django >= 1.8)
 TEMPLATES = [
     {

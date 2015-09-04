@@ -1,0 +1,25 @@
+Submission date: {{ object.created_at }}
+Workshop type: {{ object.get_workshop_type_display }}
+Person: {{ object.name }} &lt;{{ object.email|urlize }}&gt;
+Affiliation: {{ object.affiliation }}
+Location: {{ object.location }}
+Country: {{ object.country.name }}
+Alongside of a conference: {{ object.conference|default:"—" }}
+Preferred date: {{ object.preferred_date }}
+Approx. number of attendees: {{ object.get_approx_attendees_display }}
+Attendees' fields: {% for domain in object.attendee_domains.all %}{{ domain }}, {% endfor %}{{ object.attendee_domains_other }}
+Attendees' academic level: {% for level in object.attendee_academic_levels.all %}{{ level }}{% if not forloop.last %}, {% endif %}{% endfor %}
+[SWC] Attendees' level of computing experience: {% for level in object.attendee_computing_levels.all %}{{ level }}{% if not forloop.last %}, {% endif %}{% endfor %}
+[DC] Workshop data types: {% if object.data_types %}{{ object.get_data_types_display }} {{object.data_types_other }}{% else %}{{object.data_types_other }}{% endif %}
+[DC] Attendees' level of data analysis: {% for level in object.attendee_data_analysis_level.all %}{{ level }}{% if not forloop.last %}, {% endif %}{% endfor %}
+Travel and accomodation costs covered by institution: {{ object.cover_travel_accomodation|yesno }}
+Administrative fee understanding: {{ object.understand_admin_fee|yesno }}
+[DC] Fee waiver requested: {{ object.fee_waiver_request|yesno }}
+Travel reimbursement: {% if object.travel_reimbursement %}{{ object.get_travel_reimbursement_display }} {{ object.travel_reimbursement_other }}{% else %}{{ object.travel_reimbursement_other }}{% endif %}
+[SWC] Administrative fee payment option: {{ object.get_admin_fee_payment_display }}
+Comment: {{ object.comment|default:"—" }}
+
+{% if link %}
+You can view the request here:
+{{ link_domain}}{{ link }}
+{% endif %}
