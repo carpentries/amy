@@ -51,6 +51,4 @@ class PublishedEvents(ListAPIView):
     paginator = None  # disable pagination
 
     serializer_class = EventSerializer
-    queryset = Event.objects.exclude(
-        Q(start__isnull=True) | Q(url__isnull=True)
-    ).order_by('-start')
+    queryset = Event.objects.published_events()
