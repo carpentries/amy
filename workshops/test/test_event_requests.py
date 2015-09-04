@@ -1,4 +1,5 @@
 from django.core.urlresolvers import reverse
+from django.core import mail
 from django.test import TestCase
 
 from .base import TestBase
@@ -29,7 +30,7 @@ class TestSwCEventRequestForm(TestBase):
             'recaptcha_response_field': 'PASSED',  # to auto-pass RECAPTCHA
             'name': 'Harry Potter', 'email': 'harry@potter.com',
             'affiliation': 'Hogwarts', 'location': 'United Kingdom',
-            'country': 'GB', 'preferred_date': 'soon',
+            'country': 'PL', 'preferred_date': 'soon',
             'approx_attendees': '20-40',
             'attendee_domains': [], 'attendee_domains_other': 'Nonsesology',
             'attendee_academic_levels': [1, 2],  # IDs
@@ -45,6 +46,12 @@ class TestSwCEventRequestForm(TestBase):
         assert 'Thank you for requesting a workshop' in content
         assert EventRequest.objects.all().count() == 1
         assert EventRequest.objects.all()[0].active is True
+        assert len(mail.outbox) == 1
+        msg = mail.outbox[0]
+        self.assertEqual(
+            msg.subject,
+            '[SWC] New workshop request: Harry Potter from Poland, Hogwarts'
+        )
 
 
 class TestDCEventRequestForm(TestCase):
@@ -71,7 +78,7 @@ class TestDCEventRequestForm(TestCase):
             'recaptcha_response_field': 'PASSED',  # to auto-pass RECAPTCHA
             'name': 'Harry Potter', 'email': 'harry@potter.com',
             'affiliation': 'Hogwarts', 'location': 'United Kingdom',
-            'country': 'GB', 'preferred_date': 'soon',
+            'country': 'PL', 'preferred_date': 'soon',
             'approx_attendees': '20-40',
             'attendee_domains': [], 'attendee_domains_other': 'Nonsesology',
             'data_types': 'survey', 'data_types_other': '',
@@ -88,3 +95,9 @@ class TestDCEventRequestForm(TestCase):
         assert 'Thank you for requesting a workshop' in content
         assert EventRequest.objects.all().count() == 1
         assert EventRequest.objects.all()[0].active is True
+        assert len(mail.outbox) == 1
+        msg = mail.outbox[0]
+        self.assertEqual(
+            msg.subject,
+            '[DC] New workshop request: Harry Potter from Poland, Hogwarts'
+        )
