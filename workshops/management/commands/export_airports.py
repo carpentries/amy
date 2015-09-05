@@ -1,10 +1,14 @@
-import yaml
-from django.core.management.base import BaseCommand, CommandError
-from workshops.views import _export_instructors
+from django.core.management.base import BaseCommand
+from django.core.urlresolvers import reverse
+from rest_framework.test import APIClient
+
 
 class Command(BaseCommand):
     args = 'no arguments'
     help = 'Display YAML for airports.'
 
     def handle(self, *args, **options):
-        print(yaml.dump(_export_instructors()).rstrip())
+        client = APIClient()
+        response = client.get(reverse('api:export-instructors'),
+                              {'format': 'yaml'})
+        print(response.content.decode('utf-8'))

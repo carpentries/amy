@@ -1,4 +1,5 @@
 from django import forms
+from django.core.validators import RegexValidator
 from django.forms import HiddenInput, CheckboxSelectMultiple
 
 from crispy_forms.helper import FormHelper
@@ -9,7 +10,7 @@ from django_countries.fields import CountryField
 from selectable import forms as selectable
 
 from workshops.models import (
-    Award, Event, Lesson, Person, Task, KnowledgeDomain, Airport,
+    Award, Event, Lesson, Person, Task, KnowledgeDomain, Airport, Host,
 )
 from workshops import lookups
 
@@ -412,3 +413,19 @@ class PersonTaskForm(forms.ModelForm):
         model = Task
         fields = '__all__'
         widgets = {'person': HiddenInput}
+
+
+class HostForm(forms.ModelForm):
+    domain = forms.CharField(
+        max_length=Host._meta.get_field('domain').max_length,
+        validators=[
+            RegexValidator(
+                '[^\w\.-]+', inverse_match=True,
+                message='Please enter only the domain (such as "math.esu.edu")'
+                        ' without a leading "http://" or a trailing "/".')
+        ],
+    )
+
+    class Meta:
+        model = Host
+        fields = ['domain', 'fullname', 'country', 'notes']

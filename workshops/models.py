@@ -249,6 +249,17 @@ class EventQuerySet(models.query.QuerySet):
         return self.filter(future_without_url | unknown_start)\
                    .order_by('slug', 'id')
 
+    def published_events(self):
+        '''Return events that have a start date and a URL.
+
+        Events are ordered most recent first and then by serial number.'''
+
+        queryset = self.exclude(
+            Q(start__isnull=True) | Q(url__isnull=True)
+            ).order_by('-start', 'id')
+
+        return queryset
+
     def uninvoiced_events(self):
         '''Return a queryset for events that have not yet been invoiced.
 
@@ -281,6 +292,9 @@ class EventManager(models.Manager):
 
     def unpublished_events(self):
         return self.get_queryset().unpublished_events()
+
+    def published_events(self):
+        return self.get_queryset().published_events()
 
     def uninvoiced_events(self):
         return self.get_queryset().uninvoiced_events()
@@ -317,6 +331,13 @@ class Event(models.Model):
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
 
+    REPO_REGEX = re.compile(r'https?://github\.com/(?P<name>[^/]+)/'
+                            r'(?P<repo>[^/]+)/?')
+    REPO_FORMAT = 'https://github.com/{name}/{repo}'
+    WEBSITE_REGEX = re.compile(r'https?://(?P<name>[^.]+)\.github\.'
+                               r'(io|com)/(?P<repo>[^/]+)/?')
+    WEBSITE_FORMAT = 'https://{name}.github.io/{repo}'
+
     class Meta:
         ordering = ('-start', )
 
@@ -328,6 +349,38 @@ class Event(models.Model):
 
     def get_absolute_url(self):
         return reverse('event_details', args=[self.get_ident()])
+
+    def get_repository_url(self):
+        """Return self.url formatted as it was repository URL.
+
+        Repository URL is as specified in REPO_FORMAT.
+        If it doesn't match, the original URL is returned."""
+        try:
+            mo = self.WEBSITE_REGEX.match(self.url)
+            if not mo:
+                return self.url
+
+            return self.REPO_FORMAT.format(**mo.groupdict())
+        except (TypeError, KeyError):
+            # TypeError: self.url is None
+            # KeyError: mo.groupdict doesn't supply required names to format
+            return self.url
+
+    def get_website_url(self):
+        """Return self.url formatted as it was website URL.
+
+        Website URL is as specified in WEBSITE_FORMAT.
+        If it doesn't match, the original URL is returned."""
+        try:
+            mo = self.REPO_REGEX.match(self.url)
+            if not mo:
+                return self.url
+
+            return self.WEBSITE_FORMAT.format(**mo.groupdict())
+        except (TypeError, KeyError):
+            # TypeError: self.url is None
+            # KeyError: mo.groupdict doesn't supply required names to format
+            return self.url
 
     def get_ident(self):
         if self.slug:

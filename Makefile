@@ -93,9 +93,18 @@ invoicing :
 incomplete :
 	@${MANAGE} report_incomplete_instructors
 
+## published    : report all published events
+published :
+	@${MANAGE} report_published_events
+
 ## serve        : run a server
 serve : bower_components workshops/git_version.py
 	${MANAGE} runserver
+
+## upgrade      : force package upgrade using pip
+upgrade :
+	@pip install --upgrade -r requirements.txt
+	@bower update
 
 ## clean        : clean up.
 clean :
