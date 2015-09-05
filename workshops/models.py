@@ -249,6 +249,17 @@ class EventQuerySet(models.query.QuerySet):
         return self.filter(future_without_url | unknown_start)\
                    .order_by('slug', 'id')
 
+    def published_events(self):
+        '''Return events that have a start date and a URL.
+
+        Events are ordered most recent first and then by serial number.'''
+
+        queryset = self.exclude(
+            Q(start__isnull=True) | Q(url__isnull=True)
+            ).order_by('-start', 'id')
+
+        return queryset
+
     def uninvoiced_events(self):
         '''Return a queryset for events that have not yet been invoiced.
 
@@ -281,6 +292,9 @@ class EventManager(models.Manager):
 
     def unpublished_events(self):
         return self.get_queryset().unpublished_events()
+
+    def published_events(self):
+        return self.get_queryset().published_events()
 
     def uninvoiced_events(self):
         return self.get_queryset().uninvoiced_events()
