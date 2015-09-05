@@ -252,11 +252,11 @@ class EventQuerySet(models.query.QuerySet):
     def published_events(self):
         '''Return events that have a start date and a URL.
 
-        Events are ordered by slug and then by serial number.'''
+        Events are ordered most recent first and then by serial number.'''
 
         queryset = self.exclude(
             Q(start__isnull=True) | Q(url__isnull=True)
-            ).order_by('slug', 'id')
+            ).order_by('-start', 'id')
 
         return queryset
 
