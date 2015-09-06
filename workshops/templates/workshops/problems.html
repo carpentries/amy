@@ -7,6 +7,7 @@
     <th>Event</th>
     <th>Attendance?</th>
     <th>Location?</th>
+    <th>Dates?</th>
   </tr>
   {% for event in events %}
   <tr>
@@ -17,10 +18,10 @@
       {% if not event.attendance %}
         {% if event.mailto %}
           <a href="mailto:{% for m in event.mailto %}{{ m }}{% if not forloop.last %},{% endif %}{% endfor %}?subject={{'missing attendance figures for ' | urlencode}}{{event.get_ident}}&body={{'Hi, Can you please send us attendance figures for ' | urlencode}}{{event.get_ident}}{{'?  Thanks for your help.' | urlencode}}">
-        {% endif %}
-	<span class="glyphicon glyphicon-envelope"></span>
-        {% if event.mailto %}
-          </a>
+	  <span class="glyphicon glyphicon-envelope"></span>
+	  </a>
+        {% else %}
+	  <span class="glyphicon glyphicon-asterisk"></span>
         {% endif %}
       {% endif %}
     </td>
@@ -28,10 +29,21 @@
       {% if not event.country  %}
         {% if event.mailto %}
           <a href="mailto:{% for m in event.mailto %}{{ m }}{% if not forloop.last %},{% endif %}{% endfor %}?subject={{'missing location for ' | urlencode}}{{event.get_ident}}&body={{'Hi, Can you please send us the location for ' | urlencode}}{{event.get_ident}}{{'?  Thanks for your help.' | urlencode}}">
+	  <span class="glyphicon glyphicon-envelope"></span>
+	  </a>
+        {% else %}
+	  <span class="glyphicon glyphicon-asterisk"></span>
         {% endif %}
-	<span class="glyphicon glyphicon-envelope"></span>
+      {% endif %}
+    </td>
+    <td>
+      {% if event.start and event.end and (event.start > event.end)  %}
         {% if event.mailto %}
-          </a>
+          <a href="mailto:{% for m in event.mailto %}{{ m }}{% if not forloop.last %},{% endif %}{% endfor %}?subject={{'bad dates for ' | urlencode}}{{event.get_ident}}&body={{'Hi, Can you please confirm the start and end dates for ' | urlencode}}{{event.get_ident}}{{'?  Thanks for your help.' | urlencode}}">
+	  <span class="glyphicon glyphicon-envelope"></span>
+	  </a>
+        {% else %}
+	  <span class="glyphicon glyphicon-asterisk"></span>
         {% endif %}
       {% endif %}
     </td>

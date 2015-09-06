@@ -1250,7 +1250,9 @@ def problems(request):
     host = Role.objects.get(name='host')
     instructor = Role.objects.get(name='instructor')
     events = Event.objects.past_events().\
-        filter(Q(attendance=None) | Q(attendance=0) | Q(country=None))
+        filter(Q(attendance=None) | Q(attendance=0) |
+               Q(country=None) |
+               (Q(start__isnull=False) & Q(end__isnull=False) & Q(start__gt=F('end'))))
     for e in events:
         tasks = Task.objects.filter(event=e).\
             filter(Q(role=host) | Q(role=instructor))
