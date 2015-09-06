@@ -2,6 +2,8 @@
 
 {% block content %}
 {% if events %}
+<p><span class="glyphicon glyphicon-envelope"></span> = mail instructors and host about problem</p>
+<p><span class="glyphicon glyphicon-remove"></span> = no email addresses available</p>
 <table class="table table-striped">
   <tr>
     <th>Event</th>
@@ -15,35 +17,35 @@
       <a href="{% url 'event_details' event.get_ident %}">{{ event }}</a>
     </td>
     <td>
-      {% if not event.attendance %}
-        {% if event.mailto %}
-          <a href="mailto:{% for m in event.mailto %}{{ m }}{% if not forloop.last %},{% endif %}{% endfor %}?subject={{'missing attendance figures for ' | urlencode}}{{event.get_ident}}&body={{'Hi, Can you please send us attendance figures for ' | urlencode}}{{event.get_ident}}{{'?  Thanks for your help.' | urlencode}}">
+      {% if event.missing_attendance_ %}
+        {% if event.mailto_ %}
+          <a href="mailto:{{e.mailto_}}?subject={{'missing attendance figures for ' | urlencode}}{{event.get_ident}}&body={{'Hi, Can you please send us attendance figures for ' | urlencode}}{{event.get_ident}}{{'?  Thanks for your help.' | urlencode}}">
 	  <span class="glyphicon glyphicon-envelope"></span>
 	  </a>
         {% else %}
-	  <span class="glyphicon glyphicon-asterisk"></span>
+	  <span class="glyphicon glyphicon-remove"></span>
         {% endif %}
       {% endif %}
     </td>
     <td>
-      {% if not event.country  %}
-        {% if event.mailto %}
-          <a href="mailto:{% for m in event.mailto %}{{ m }}{% if not forloop.last %},{% endif %}{% endfor %}?subject={{'missing location for ' | urlencode}}{{event.get_ident}}&body={{'Hi, Can you please send us the location for ' | urlencode}}{{event.get_ident}}{{'?  Thanks for your help.' | urlencode}}">
+      {% if event.missing_location_ %}
+        {% if event.mailto_ %}
+          <a href="mailto:{{event.mailto_}}?subject={{'missing location for ' | urlencode}}{{event.get_ident}}&body={{'Hi, Can you please send us the location for ' | urlencode}}{{event.get_ident}}{{'?  Thanks for your help.' | urlencode}}">
 	  <span class="glyphicon glyphicon-envelope"></span>
 	  </a>
         {% else %}
-	  <span class="glyphicon glyphicon-asterisk"></span>
+	  <span class="glyphicon glyphicon-remove"></span>
         {% endif %}
       {% endif %}
     </td>
     <td>
-      {% if event.start and event.end and (event.start > event.end)  %}
-        {% if event.mailto %}
-          <a href="mailto:{% for m in event.mailto %}{{ m }}{% if not forloop.last %},{% endif %}{% endfor %}?subject={{'bad dates for ' | urlencode}}{{event.get_ident}}&body={{'Hi, Can you please confirm the start and end dates for ' | urlencode}}{{event.get_ident}}{{'?  Thanks for your help.' | urlencode}}">
+      {% if event.bad_dates_ %}
+        {% if event.mailto_ %}
+          <a href="mailto:{{event.mailto_}}?subject={{'bad dates for ' | urlencode}}{{event.get_ident}}&body={{'Hi, Can you please confirm the start and end dates for ' | urlencode}}{{event.get_ident}}{{'?  Thanks for your help.' | urlencode}}">
 	  <span class="glyphicon glyphicon-envelope"></span>
 	  </a>
         {% else %}
-	  <span class="glyphicon glyphicon-asterisk"></span>
+	  <span class="glyphicon glyphicon-remove"></span>
         {% endif %}
       {% endif %}
     </td>

@@ -1252,11 +1252,14 @@ def problems(request):
     events = Event.objects.past_events().\
         filter(Q(attendance=None) | Q(attendance=0) |
                Q(country=None) |
-               (Q(start__isnull=False) & Q(end__isnull=False) & Q(start__gt=F('end'))))
+               Q(start__gt=F('end')))
     for e in events:
         tasks = Task.objects.filter(event=e).\
             filter(Q(role=host) | Q(role=instructor))
-        e.mailto = [t.person.email for t in tasks if t.person.email]
+        e.mailto_ = ','.join([t.person.email for t in tasks if t.person.email])
+        e.missing_attendance_ = (not e.attendance)
+        e.missing_location_ = (not e.country)
+        e.bad_dates_ = e.start and e.end and (e.start > e.end)
     context = {'title': 'Problems',
                'events': events}
     return render(request, 'workshops/problems.html', context)
