@@ -17,10 +17,10 @@
       {% if not event.attendance %}
         {% if event.mailto %}
           <a href="mailto:{% for m in event.mailto %}{{ m }}{% if not forloop.last %},{% endif %}{% endfor %}?subject={{'missing attendance figures for ' | urlencode}}{{event.get_ident}}&body={{'Hi, Can you please send us attendance figures for ' | urlencode}}{{event.get_ident}}{{'?  Thanks for your help.' | urlencode}}">
-        {% endif %}
-	<span class="glyphicon glyphicon-envelope"></span>
-        {% if event.mailto %}
-          </a>
+	  <span class="glyphicon glyphicon-envelope"></span>
+	  </a>
+        {% else %}
+	  <span class="glyphicon glyphicon-asterisk"></span>
         {% endif %}
       {% endif %}
     </td>
@@ -28,10 +28,10 @@
       {% if not event.country  %}
         {% if event.mailto %}
           <a href="mailto:{% for m in event.mailto %}{{ m }}{% if not forloop.last %},{% endif %}{% endfor %}?subject={{'missing location for ' | urlencode}}{{event.get_ident}}&body={{'Hi, Can you please send us the location for ' | urlencode}}{{event.get_ident}}{{'?  Thanks for your help.' | urlencode}}">
-        {% endif %}
-	<span class="glyphicon glyphicon-envelope"></span>
-        {% if event.mailto %}
-          </a>
+	  <span class="glyphicon glyphicon-envelope"></span>
+	  </a>
+        {% else %}
+	  <span class="glyphicon glyphicon-asterisk"></span>
         {% endif %}
       {% endif %}
     </td>
