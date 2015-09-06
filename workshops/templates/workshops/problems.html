@@ -19,33 +19,46 @@
     <td>
       {% if event.missing_attendance_ %}
         {% if event.mailto_ %}
-          <a href="mailto:{{e.mailto_}}?subject={{'missing attendance figures for ' | urlencode}}{{event.get_ident}}&body={{'Hi, Can you please send us attendance figures for ' | urlencode}}{{event.get_ident}}{{'?  Thanks for your help.' | urlencode}}">
-	  <span class="glyphicon glyphicon-envelope"></span>
-	  </a>
+          <a href="mailto:{{event.mailto_}}?subject={% filter urlencode %}Missing attendance figures for workshop {{event.get_ident}}{% endfilter %}&body={% filter urlencode %}Hi,
+
+Can you please send us attendance figures for workshop {{ event.get_ident }}?
+
+Thanks for your help.{% endfilter %}">
+          <span class="glyphicon glyphicon-envelope"></span>
+          </a>
         {% else %}
-	  <span class="glyphicon glyphicon-remove"></span>
+          <span class="glyphicon glyphicon-remove"></span>
         {% endif %}
       {% endif %}
     </td>
     <td>
       {% if event.missing_location_ %}
         {% if event.mailto_ %}
-          <a href="mailto:{{event.mailto_}}?subject={{'missing location for ' | urlencode}}{{event.get_ident}}&body={{'Hi, Can you please send us the location for ' | urlencode}}{{event.get_ident}}{{'?  Thanks for your help.' | urlencode}}">
-	  <span class="glyphicon glyphicon-envelope"></span>
-	  </a>
+          <a href="mailto:{{event.mailto_}}?subject={% filter urlencode %}Missing location for workshop {{event.get_ident}}{% endfilter %}&body={% filter urlencode %}Hi,
+
+Can you please send us the location where workshop {{ event.get_ident }}
+took place?
+
+Thanks for your help.{% endfilter %}">
+          <span class="glyphicon glyphicon-envelope"></span>
+          </a>
         {% else %}
-	  <span class="glyphicon glyphicon-remove"></span>
+          <span class="glyphicon glyphicon-remove"></span>
         {% endif %}
       {% endif %}
     </td>
     <td>
       {% if event.bad_dates_ %}
         {% if event.mailto_ %}
-          <a href="mailto:{{event.mailto_}}?subject={{'bad dates for ' | urlencode}}{{event.get_ident}}&body={{'Hi, Can you please confirm the start and end dates for ' | urlencode}}{{event.get_ident}}{{'?  Thanks for your help.' | urlencode}}">
-	  <span class="glyphicon glyphicon-envelope"></span>
-	  </a>
+          <a href="mailto:{{event.mailto_}}?subject={% filter urlencode %}Bad dates for workshop {{ event.get_ident }}{% endfilter %}&body={% filter urlencode %}Hi,
+
+Can you please confirm the start and end dates for the workshop {{ event.get_ident }}?
+
+Thanks for your help.{% endfilter %}">
+          <span class="glyphicon glyphicon-envelope"></span>
+          </a>
         {% else %}
-	  <span class="glyphicon glyphicon-remove"></span>
+          <span class="glyphicon glyphicon-remove"></span>
         {% endif %}
       {% endif %}
     </td>
