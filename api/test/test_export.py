@@ -98,6 +98,7 @@ class TestExportingInstructors(APITestCase):
         self.expecting = [
             {
                 'name': 'Airport1',
+                'country': 'PL',
                 'latitude': 1.0,
                 'longitude': 2.0,
                 'instructors': [
