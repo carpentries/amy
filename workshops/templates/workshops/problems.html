@@ -7,9 +7,9 @@
 <table class="table table-striped">
   <tr>
     <th>Event</th>
-    <th>Attendance?</th>
-    <th>Location?</th>
-    <th>Dates?</th>
+    <th>Attendance <a href="#" data-toggle="tooltip" title="Number of attendees is missing">[?]</a></th>
+    <th>Location <a href="#" data-toggle="tooltip" title="Venue, address or country is missing">[?]</a></th>
+    <th>Dates <a href="#" data-toggle="tooltip" title="Start date is in future of end date">[?]</a></th>
   </tr>
   {% for event in events %}
   <tr>
@@ -68,4 +68,12 @@ Thanks for your help.{% endfilter %}">
 {% else %}
 <p>None</p>
 {% endif %}
+{% endblock %}
+
+{% block extrajs %}
+<script type="text/javascript">
+$(function () {
+  $('[data-toggle="tooltip"]').tooltip()
+})
+</script>
 {% endblock %}
