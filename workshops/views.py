@@ -1251,14 +1251,14 @@ def problems(request):
     instructor = Role.objects.get(name='instructor')
     events = Event.objects.past_events().\
         filter(Q(attendance=None) | Q(attendance=0) |
-               Q(country=None) |
+               Q(country=None) | Q(venue=None) | Q(address=None) |
                Q(start__gt=F('end')))
     for e in events:
         tasks = Task.objects.filter(event=e).\
             filter(Q(role=host) | Q(role=instructor))
         e.mailto_ = ','.join([t.person.email for t in tasks if t.person.email])
         e.missing_attendance_ = (not e.attendance)
-        e.missing_location_ = (not e.country)
+        e.missing_location_ = not e.country or not e.venue or not e.address
         e.bad_dates_ = e.start and e.end and (e.start > e.end)
     context = {'title': 'Problems',
                'events': events}
