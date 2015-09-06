@@ -26,7 +26,7 @@ class ExportInstructorLocationsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Airport
-        fields = ('name', 'latitude', 'longitude', 'instructors')
+        fields = ('name', 'latitude', 'longitude', 'instructors', 'country')
 
 
 class EventSerializer(serializers.ModelSerializer):
