@@ -27,6 +27,7 @@ DATE_HELP_TEXT = "Select date using widget, or enter in YYYY-MM-DD format."
 
 
 class BootstrapHelper(FormHelper):
+    """Layout and behavior for crispy-displayed forms."""
     form_class = 'form-horizontal'
     label_class = 'col-lg-2'
     field_class = 'col-lg-8'
@@ -40,10 +41,13 @@ class BootstrapHelper(FormHelper):
 
 
 class BootstrapHelperGet(BootstrapHelper):
+    """Force form to use GET instead of default POST."""
     form_method = 'get'
 
 
 class BootstrapHelperWithAdd(BootstrapHelper):
+    """Change form's 'Submit' to 'Add'."""
+
     def __init__(self, form=None):
         super().__init__(form)
 
@@ -51,6 +55,8 @@ class BootstrapHelperWithAdd(BootstrapHelper):
 
 
 class BootstrapHelperFilter(FormHelper):
+    """A differently shaped forms (more space-efficient) for use in sidebar as
+    filter forms."""
     form_method = 'get'
 
     def __init__(self, form=None):
