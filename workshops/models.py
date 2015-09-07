@@ -577,6 +577,7 @@ class EventRequest(models.Model):
     )
 
     ATTENDEES_NUMBER_CHOICES = (
+        ('1-20', '1-20 (one room, one instructor)'),
         ('20-40', '20-40 (one room, two instructors)'),
         ('40-80', '40-80 (two rooms, four instructors)'),
         ('80-120', '80-120 (three rooms, six instructors)'),
@@ -683,14 +684,11 @@ class EventRequest(models.Model):
     )
 
     ADMIN_FEE_PAYMENT_CHOICES = (
-        ('NP1', 'Non-profit: full fee for first workshop/year (US$1250)'),
-        ('NP2', 'Non-profit: reduced fee for subsequent workshop/year '
-                '(US$750)'),
-        ('FP1', 'For-profit: full fee for first workshop/year (US$5000)'),
-        ('FP2', 'For profit: reduced fee for subsequent workshop/year '
-                '(US$3000)'),
-        ('partner', 'No fee (my organization is a Partner or Affiliate)'),
-        ('self-organized', 'No fee (self-organized workshop)'),
+        ('NP1', 'Non-profit / non-partner: US$2500'),
+        ('partner', 'Partner: US$1250'),
+        ('FP1', 'For-profit: US$10,000'),
+        ('self-organized', 'Self-organized: no fee (please let us know if you '
+                           'wish to make a donation)'),
         ('waiver', 'Waiver requested (please give details in '
                    '"Anything else")'),
     )
