@@ -6,7 +6,7 @@ from django.db import models, migrations
 
 def add_academic_levels(apps, schema_editor):
     AcademicLevel = apps.get_model('workshops', 'AcademicLevel')
-    L = [
+    names = [
         'Undergraduate or below',
         'Graduate',
         'Post-doctorate',
@@ -14,22 +14,20 @@ def add_academic_levels(apps, schema_editor):
         'Industry',
         'Don\'t know yet',
     ]
-    for name in L:
+    for name in names:
         AcademicLevel.objects.create(name=name)
 
 
 def add_comp_exp_levels(apps, schema_editor):
     ComputingExperienceLevel = apps.get_model('workshops',
                                               'ComputingExperienceLevel')
-    L = [
-        'Novice (uses a spreadsheet for data analysis rather than writing '
-            'code)',
+    names = [
+        'Novice (uses a spreadsheet for data analysis rather than writing code)',
         'Intermediate (can write a few lines of code for personal use)',
-        'Proficient (writes multi-page programs which may be shared with '
-            'others)',
+        'Proficient (writes multi-page programs which may be shared with others)',
         'Don\'t know yet',
     ]
-    for name in L:
+    for name in names:
         ComputingExperienceLevel.objects.create(name=name)
 
 
