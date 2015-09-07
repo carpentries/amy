@@ -1,13 +1,15 @@
 from django.core.urlresolvers import reverse
 from django.core import mail
-from django.test import TestCase
 
 from .base import TestBase
-from ..models import EventRequest, AcademicLevel, ComputingExperienceLevel
+from ..models import EventRequest
 from ..forms import SwCEventRequestForm, DCEventRequestForm
 
 
 class TestSwCEventRequestForm(TestBase):
+    def setUp(self):
+        self._setUpUsersAndLogin()
+
     def test_fields_presence(self):
         """Test if the form shows correct fields."""
         form = SwCEventRequestForm()
@@ -30,6 +32,9 @@ class TestSwCEventRequestForm(TestBase):
             'recaptcha_response_field': 'PASSED',  # to auto-pass RECAPTCHA
             'name': 'Harry Potter', 'email': 'harry@potter.com',
             'affiliation': 'Hogwarts', 'location': 'United Kingdom',
+            # had to use Poland since it's sooo shorter than
+            # "United Kingdom of Great Britain and Northern Ireland"
+            # and it has to be used in mail subject
             'country': 'PL', 'preferred_date': 'soon',
             'approx_attendees': '20-40',
             'attendee_domains': [], 'attendee_domains_other': 'Nonsesology',
@@ -53,8 +58,24 @@ class TestSwCEventRequestForm(TestBase):
             '[SWC] New workshop request: Harry Potter from Poland, Hogwarts'
         )
 
+    def test_request_discarded(self):
+        """Ensure the request is discarded properly."""
+        # add a minimal request
+        er = EventRequest.objects.create(
+            name='Harry Potter', email='harry@potter.com',
+            affiliation='Hogwarts', location='United Kingdom',
+            country='GB', workshop_type='swc',
+        )
+        rv = self.client.get(reverse('eventrequest_discard', args=[er.pk]))
+        assert rv.status_code == 302
+        er.refresh_from_db()
+        assert not er.active
 
-class TestDCEventRequestForm(TestCase):
+
+class TestDCEventRequestForm(TestBase):
+    def setUp(self):
+        self._setUpUsersAndLogin()
+
     def test_fields_presence(self):
         """Test if the form shows correct fields."""
         form = DCEventRequestForm()
@@ -78,6 +99,9 @@ class TestDCEventRequestForm(TestCase):
             'recaptcha_response_field': 'PASSED',  # to auto-pass RECAPTCHA
             'name': 'Harry Potter', 'email': 'harry@potter.com',
             'affiliation': 'Hogwarts', 'location': 'United Kingdom',
+            # had to use Poland since it's sooo shorter than
+            # "United Kingdom of Great Britain and Northern Ireland"
+            # and it has to be used in mail subject
             'country': 'PL', 'preferred_date': 'soon',
             'approx_attendees': '20-40',
             'attendee_domains': [], 'attendee_domains_other': 'Nonsesology',
@@ -101,3 +125,16 @@ class TestDCEventRequestForm(TestCase):
             msg.subject,
             '[DC] New workshop request: Harry Potter from Poland, Hogwarts'
         )
+
+    def test_request_discarded(self):
+        """Ensure the request is discarded properly."""
+        # add a minimal request
+        er = EventRequest.objects.create(
+            name='Harry Potter', email='harry@potter.com',
+            affiliation='Hogwarts', location='United Kingdom',
+            country='GB', workshop_type='dc',
+        )
+        rv = self.client.get(reverse('eventrequest_discard', args=[er.pk]))
+        assert rv.status_code == 302
+        er.refresh_from_db()
+        assert not er.active
