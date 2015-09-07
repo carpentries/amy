@@ -438,7 +438,7 @@ class HostForm(forms.ModelForm):
         fields = ['domain', 'fullname', 'country', 'notes']
 
 
-class SwCEventRequestForm(forms.ModelForm):
+class SWCEventRequestForm(forms.ModelForm):
     captcha = ReCaptchaField()
     workshop_type = forms.CharField(initial='swc', widget=forms.HiddenInput())
 
@@ -456,7 +456,7 @@ class SwCEventRequestForm(forms.ModelForm):
         }
 
 
-class DCEventRequestForm(SwCEventRequestForm):
+class DCEventRequestForm(SWCEventRequestForm):
     workshop_type = forms.CharField(initial='dc', widget=forms.HiddenInput())
     understand_admin_fee = forms.BooleanField(
         initial=False,
@@ -469,7 +469,7 @@ class DCEventRequestForm(SwCEventRequestForm):
         ' $2500 - $6000.',
     )
 
-    class Meta(SwCEventRequestForm.Meta):
+    class Meta(SWCEventRequestForm.Meta):
         exclude = ('active', 'created_at', 'admin_fee_payment',
                    'attendee_computing_levels', )
         widgets = {

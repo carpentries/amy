@@ -52,7 +52,7 @@ from workshops.forms import (
     EventForm, TaskForm, TaskFullForm, bootstrap_helper, bootstrap_helper_get,
     bootstrap_helper_with_add, BadgeAwardForm, PersonAwardForm,
     PersonPermissionsForm, bootstrap_helper_filter, PersonMergeForm,
-    PersonTaskForm, HostForm, SwCEventRequestForm, DCEventRequestForm,
+    PersonTaskForm, HostForm, SWCEventRequestForm, DCEventRequestForm,
     ProfileUpdateRequestForm, PersonLookupForm,
 )
 from workshops.util import (
@@ -1412,8 +1412,8 @@ def _failed_to_delete(request, object, protected_objects, back=None):
     return render(request, 'workshops/failed_to_delete.html', context)
 
 
-class SwCEventRequest(View):
-    form_class = SwCEventRequestForm
+class SWCEventRequest(View):
+    form_class = SWCEventRequestForm
     form_helper = bootstrap_helper
 
     def get(self, request, *args, **kwargs):
@@ -1478,7 +1478,7 @@ class SwCEventRequest(View):
             messages.error(request, 'Fix errors below.')
 
 
-class DCEventRequest(SwCEventRequest):
+class DCEventRequest(SWCEventRequest):
     form_class = DCEventRequestForm
 
 

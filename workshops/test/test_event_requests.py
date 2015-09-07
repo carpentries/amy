@@ -3,16 +3,16 @@ from django.core import mail
 
 from .base import TestBase
 from ..models import EventRequest
-from ..forms import SwCEventRequestForm, DCEventRequestForm
+from ..forms import SWCEventRequestForm, DCEventRequestForm
 
 
-class TestSwCEventRequestForm(TestBase):
+class TestSWCEventRequestForm(TestBase):
     def setUp(self):
         self._setUpUsersAndLogin()
 
     def test_fields_presence(self):
         """Test if the form shows correct fields."""
-        form = SwCEventRequestForm()
+        form = SWCEventRequestForm()
         fields_left = set(form.fields.keys())
         fields_right = set([
             'name', 'email', 'affiliation', 'location', 'country',
