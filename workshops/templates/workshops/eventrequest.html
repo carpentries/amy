@@ -4,7 +4,19 @@
 {% include "workshops/eventrequest_email_html.html" %}
 
 <div class="clearfix">
-  <p class="edit-object pull-left"><a href="{% url 'eventrequest_accept' object.pk %}" class="btn btn-success">Accept</a></p>
-  <p class="delete-object pull-right"><a href="{% url 'eventrequest_discard' object.pk %}" onclick='return confirm("Are you sure you wish to discard \"{{ object }}\"?")' class="btn btn-danger">Discard request</a></p>
+  <p class="edit-object pull-left">
+    {% if perms.workshops.change_eventrequest and perms.workshops.add_event %}
+    <a href="{% url 'eventrequest_accept' object.pk %}" class="btn btn-success">Accept</a>
+    {% else %}
+    <a href="#" class="btn btn-success disabled">Accept</a>
+    {% endif %}
+  </p>
+  <p class="delete-object pull-right">
+    {% if perms.workshops.change_eventrequest %}
+    <a href="{% url 'eventrequest_discard' object.pk %}" onclick='return confirm("Are you sure you wish to discard \"{{ object }}\"?")' class="btn btn-danger">Discard request</a>
+    {% else %}
+    <a href="#" class="btn btn-danger disabled">Discard request</a>
+    {% endif %}
+  </p>
 </div>
 {% endblock %}

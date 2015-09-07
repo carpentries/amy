@@ -65,10 +65,10 @@
         <td>{% if old %}{{ old.get_gender_display }}{% endif %}</td></tr>
     <tr><th>ORCID ID:</th>
         <td>{{ new.orcid|default:"—" }}</td>
-        <td>{% if old %}—{% endif %}</td></tr>
+        <td>N/A</td></tr>
     <tr><th>Occupation/Career stage:</th>
         <td>{{ new.get_occupation_display }}{{ new.occupation_other }}</td>
-        <td>{% if old %}—{% endif %}</td></tr>
+        <td>N/A</td></tr>
     <tr><th>Areas of expertise:</th>
         <td>
           <ul>
@@ -116,12 +116,18 @@
 
 <div class="clearfix">
   <p class="edit-object pull-left">
-    {% if old and airport %}
+    {% if old and airport and perms.workshops.change_profileupdaterequest and perms.workshops.change_person %}
     <a href="{% url 'profileupdaterequest_accept' new.pk old.pk %}"  onclick='return confirm("Did you verify the changes with \"{{ old }}\"? If you agree, their record will get updated.")' class="btn btn-success">Update</a>
     {% else %}
     <a href="#" class="btn btn-success disabled">Update</a>
     {% endif %}
   </p>
-  <p class="delete-object pull-right"><a href="{% url 'profileupdaterequest_discard' new.pk %}" onclick='return confirm("Are you sure you wish to discard \"{{ new }}\"?")' class="btn btn-danger">Discard request</a></p>
+  <p class="delete-object pull-right">
+    {% if perms.workshops.change_profileupdaterequest %}
+    <a href="{% url 'profileupdaterequest_discard' new.pk %}" onclick='return confirm("Are you sure you wish to discard \"{{ new }}\"?")' class="btn btn-danger">Discard request</a>
+    {% else %}
+    <a href="#" class="btn btn-danger disabled">Discard request</a>
+    {% endif %}
+  </p>
 </div>
 {% endblock %}
