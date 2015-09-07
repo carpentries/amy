@@ -1247,23 +1247,21 @@ def instructors_over_time(request):
 def problems(request):
     '''Display problems in the database.'''
 
-    subject = 'attendance figures for '
-    body_pre = 'Hi,\nCan you please send us an attendance list (or even just a head count) for the '
-    body_post = ' workshop?\nThanks,\nSoftware Carpentry'
-
     host = Role.objects.get(name='host')
     instructor = Role.objects.get(name='instructor')
-    missing_attendance = Event.objects.past_events().\
-        filter(Q(attendance=None) | Q(attendance=0))
-    for e in missing_attendance:
+    events = Event.objects.past_events().\
+        filter(Q(attendance=None) | Q(attendance=0) |
+               Q(country=None) | Q(venue=None) | Q(address=None) |
+               Q(start__gt=F('end')))
+    for e in events:
         tasks = Task.objects.filter(event=e).\
             filter(Q(role=host) | Q(role=instructor))
-        e.mailto = [t.person.email for t in tasks if t.person.email]
+        e.mailto_ = ','.join([t.person.email for t in tasks if t.person.email])
+        e.missing_attendance_ = (not e.attendance)
+        e.missing_location_ = not e.country or not e.venue or not e.address
+        e.bad_dates_ = e.start and e.end and (e.start > e.end)
     context = {'title': 'Problems',
-               'missing_attendance': missing_attendance,
-               'subject': subject,
-               'body_pre': body_pre,
-               'body_post': body_post}
+               'events': events}
     return render(request, 'workshops/problems.html', context)
 
 #------------------------------------------------------------

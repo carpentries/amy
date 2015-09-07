@@ -1,22 +1,79 @@
 {% extends "workshops/_page.html" %}
 
 {% block content %}
-<h3>Workshops Missing Attendance Figures</h3>
-{% if missing_attendance %}
-<ul>
-{% for event in missing_attendance %}
-<li>
-  {% if event.mailto %}
-    <a href="mailto:{% for m in event.mailto %}{{ m }}{% if not forloop.last %},{% endif %}{% endfor %}?subject={{subject | urlencode}}{{event}}&body={{body_pre | urlencode}}{{event}}{{body_post | urlencode}}">
-  {% endif %}
-    {{ event.get_ident }}
-  {% if event.mailto %}
-    </a>
-  {% endif %}
-</li>
-{% endfor %}
-</ul>
+{% if events %}
+<p><span class="glyphicon glyphicon-envelope"></span> = mail instructors and host about problem</p>
+<p><span class="glyphicon glyphicon-remove"></span> = no email addresses available</p>
+<table class="table table-striped">
+  <tr>
+    <th>Event</th>
+    <th>Attendance <a href="#" data-toggle="tooltip" title="Number of attendees is missing">[?]</a></th>
+    <th>Location <a href="#" data-toggle="tooltip" title="Venue, address or country is missing">[?]</a></th>
+    <th>Dates <a href="#" data-toggle="tooltip" title="Start date is in future of end date">[?]</a></th>
+  </tr>
+  {% for event in events %}
+  <tr>
+    <td>
+      <a href="{% url 'event_details' event.get_ident %}">{{ event }}</a>
+    </td>
+    <td>
+      {% if event.missing_attendance_ %}
+        {% if event.mailto_ %}
+          <a href="mailto:{{event.mailto_}}?subject={% filter urlencode %}Missing attendance figures for workshop {{event.get_ident}}{% endfilter %}&body={% filter urlencode %}Hi,
+
+Can you please send us attendance figures for workshop {{ event.get_ident }}?
+
+Thanks for your help.{% endfilter %}">
+          <span class="glyphicon glyphicon-envelope"></span>
+          </a>
+        {% else %}
+          <span class="glyphicon glyphicon-remove"></span>
+        {% endif %}
+      {% endif %}
+    </td>
+    <td>
+      {% if event.missing_location_ %}
+        {% if event.mailto_ %}
+          <a href="mailto:{{event.mailto_}}?subject={% filter urlencode %}Missing location for workshop {{event.get_ident}}{% endfilter %}&body={% filter urlencode %}Hi,
+
+Can you please send us the location where workshop {{ event.get_ident }}
+took place?
+
+Thanks for your help.{% endfilter %}">
+          <span class="glyphicon glyphicon-envelope"></span>
+          </a>
+        {% else %}
+          <span class="glyphicon glyphicon-remove"></span>
+        {% endif %}
+      {% endif %}
+    </td>
+    <td>
+      {% if event.bad_dates_ %}
+        {% if event.mailto_ %}
+          <a href="mailto:{{event.mailto_}}?subject={% filter urlencode %}Bad dates for workshop {{ event.get_ident }}{% endfilter %}&body={% filter urlencode %}Hi,
+
+Can you please confirm the start and end dates for the workshop {{ event.get_ident }}?
+
+Thanks for your help.{% endfilter %}">
+          <span class="glyphicon glyphicon-envelope"></span>
+          </a>
+        {% else %}
+          <span class="glyphicon glyphicon-remove"></span>
+        {% endif %}
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
 {% else %}
 <p>None</p>
 {% endif %}
+{% endblock %}
+
+{% block extrajs %}
+<script type="text/javascript">
+$(function () {
+  $('[data-toggle="tooltip"]').tooltip()
+})
+</script>
 {% endblock %}
