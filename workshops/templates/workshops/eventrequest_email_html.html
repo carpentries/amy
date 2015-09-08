@@ -39,8 +39,9 @@
           </ul>
         </td>
     </tr>
+    {% if object.workshop_type == 'swc' %}
     <tr>
-      <th><span class="label label-primary">[SWC]</span> Attendees' level of computing experience:</th>
+      <th>Attendees' level of computing experience:</th>
       <td>
         <ul>
           {% for level in object.attendee_computing_levels.all %}
@@ -49,16 +50,20 @@
         </ul>
       </td>
     </tr>
+    {% endif %}
+    {% if object.workshop_type == 'dc' %}
     <tr>
-      <th><span class="label label-default">[DC]</span> Workshop data types:</th>
+      <th>Workshop data types:</th>
       {% if object.data_types %}
       <td>{{ object.get_data_types_display }} {{object.data_types_other }}</td>
       {% else %}
       <td>{{object.data_types_other }}</td>
       {% endif %}
     </tr>
+    {% endif %}
+    {% if object.workshop_type == 'dc' %}
     <tr>
-      <th><span class="label label-default">[DC]</span> Attendees' level of data analysis:</th>
+      <th>Attendees' level of data analysis:</th>
       <td>
         <ul>
           {% for level in object.attendee_data_analysis_level.all %}
@@ -67,13 +72,16 @@
         </ul>
       </td>
     </tr>
+    {% endif %}
     <tr><th>Travel and accomodation costs covered by institution:</th>
         <td>{{ object.cover_travel_accomodation|yesno }}</td></tr>
     <tr><th>Administrative fee understanding:</th>
         <td>{{ object.understand_admin_fee|yesno }}</td></tr>
+    {% if object.workshop_type == 'dc' %}
     <tr>
-      <th><span class="label label-default">[DC]</span> Fee waiver requested:</th>
+      <th>Fee waiver requested:</th>
       <td>{{ object.fee_waiver_request|yesno }}</td></tr>
+    {% endif %}
     <tr>
       <th>Travel reimbursement:</th>
       {% if object.travel_reimbursement %}
@@ -82,10 +90,12 @@
       <td>{{ object.travel_reimbursement_other }}</td>
       {% endif %}
     </tr>
+    {% if object.workshop_type == 'swc' %}
     <tr>
-      <th><span class="label label-primary">[SWC]</span> Administrative fee payment option:</th>
+      <th>Administrative fee payment option:</th>
       <td>{{ object.get_admin_fee_payment_display }}</td>
     </tr>
+    {% endif %}
     <tr><th>Comment:</th>
         <td>{{ object.comment|default:"—"|linebreaks }}</td></tr>
   </tbody>
