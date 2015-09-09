@@ -24,7 +24,7 @@ from django.db.models import Case, When, Value, IntegerField
 from django.shortcuts import redirect, render, get_object_or_404
 from django.views.decorators.http import require_POST
 from django.views.generic.base import ContextMixin
-from django.views.generic.edit import CreateView, UpdateView
+from django.views.generic.edit import CreateView, UpdateView, ModelFormMixin
 from django.contrib.auth.decorators import login_required, permission_required
 
 from reversion import get_for_object
@@ -484,6 +484,31 @@ class PersonCreate(LoginRequiredMixin, PermissionRequiredMixin,
     model = Person
     form_class = PersonForm
     template_name = 'workshops/generic_form.html'
+
+    def form_valid(self, form):
+        """Person.lessons uses an intermediary model so we need to manually add
+        objects of that model.
+
+        See more here: http://stackoverflow.com/a/15745652"""
+        self.object = form.save(commit=False)  # don't save M2M fields
+
+        # Need to save that object because of commit=False previously.
+        # This doesn't save our troublesome M2M field.
+        self.object.save()
+
+        # saving intermediary M2M model: Qualification
+        for lesson in form.cleaned_data['lessons']:
+            Qualification.objects.create(lesson=lesson, person=self.object)
+
+        # Important: we need to use ModelFormMixin.form_valid() here!
+        # But by doing so we omit SuccessMessageMixin completely, so we need to
+        # simulate it.  The code below is almost identical to
+        # SuccessMessageMixin.form_valid().
+        response = super(ModelFormMixin, self).form_valid(form)
+        success_message = self.get_success_message(form.cleaned_data)
+        if success_message:
+            messages.success(self.request, success_message)
+        return response
 
 
 @login_required
