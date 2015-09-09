@@ -1,6 +1,6 @@
 {
   "name": "amy",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "homepage": "https://github.com/swcarpentry/amy",
   "authors": [
     {"name": "Greg Wilson", "email": "gvwilson@software-carpentry.org"},
