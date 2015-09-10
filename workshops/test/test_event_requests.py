@@ -16,7 +16,7 @@ class TestSWCEventRequestForm(TestBase):
         fields_left = set(form.fields.keys())
         fields_right = set([
             'name', 'email', 'affiliation', 'location', 'country',
-            'conference', 'preferred_date', 'workshop_type',
+            'conference', 'preferred_date', 'language', 'workshop_type',
             'approx_attendees', 'attendee_domains', 'attendee_domains_other',
             'attendee_academic_levels', 'attendee_computing_levels',
             'cover_travel_accomodation', 'understand_admin_fee',
@@ -82,7 +82,7 @@ class TestDCEventRequestForm(TestBase):
         fields_left = set(form.fields.keys())
         fields_right = set([
             'name', 'email', 'affiliation', 'location', 'country',
-            'conference', 'preferred_date', 'workshop_type',
+            'conference', 'preferred_date', 'language', 'workshop_type',
             'approx_attendees', 'attendee_domains', 'attendee_domains_other',
             'data_types', 'data_types_other', 'attendee_academic_levels',
             'attendee_data_analysis_level', 'cover_travel_accomodation',

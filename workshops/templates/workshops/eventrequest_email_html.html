@@ -16,6 +16,8 @@
         <td>{{ object.conference|default:"—" }}</td></tr>
     <tr><th>Preferred date:</th>
         <td>{{ object.preferred_date }}</td></tr>
+    <tr><th>Workshop language:</th>
+        <td>{{ object.language|default:"not specified" }}</td></tr>
     <tr><th>Approx. number of attendees:</th>
         <td>{{ object.get_approx_attendees_display }}</td></tr>
     <tr><th>Attendees' fields:</th>

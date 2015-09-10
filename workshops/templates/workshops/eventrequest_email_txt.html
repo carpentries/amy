@@ -6,6 +6,7 @@ Location: {{ object.location }}
 Country: {{ object.country.name }}
 Alongside of a conference: {{ object.conference|default:"—" }}
 Preferred date: {{ object.preferred_date }}
+Workshop language: {{ object.language|default:"not specified" }}
 Approx. number of attendees: {{ object.get_approx_attendees_display }}
 Attendees' fields: {% for domain in object.attendee_domains.all %}{{ domain }}, {% endfor %}{{ object.attendee_domains_other }}
 Attendees' academic level: {% for level in object.attendee_academic_levels.all %}{{ level }}{% if not forloop.last %}, {% endif %}{% endfor %}

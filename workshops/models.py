@@ -565,6 +565,12 @@ class EventRequest(models.Model):
                   'we will try to accommodate those requests.',
         verbose_name='Preferred workshop date',
     )
+    language = models.CharField(
+        max_length=STR_LONG,
+        help_text='What human language you want the workshop to be run in?',
+        verbose_name='Workshop language',
+        blank=True, default='English',
+    )
 
     WORKSHOP_TYPE_CHOICES = (
         ('swc', 'Software-Carpentry'),
