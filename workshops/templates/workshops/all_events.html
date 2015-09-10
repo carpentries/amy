@@ -26,7 +26,7 @@
         <th>dates</th>
         <th>attendance</th>
         <th>admin fee</th>
-        <th>invoiced</th>
+        <th>invoice</th>
         <th class="additional-links"></th>
       </tr>
     {% for event in all_events %}
@@ -54,7 +54,7 @@
         <td>{{ event.start }} &ndash; {{ event.end }}</td>
         <td>{{ event.attendance|default_if_none:"—" }}</td>
         <td>{{ event.admin_fee|default_if_none:"—" }}</td>
-        <td>{{ event.invoiced|yesno:"yes,no,unknown" }}</td>
+        <td>{{ event.get_invoice_status_display }}</td>
         <td>
           <a href="{% url 'event_details' event.get_ident %}" title="View {{ event.get_ident }}"><span class="glyphicon glyphicon-info-sign"></span></a>
           &nbsp;

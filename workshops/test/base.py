@@ -198,12 +198,12 @@ class TestBase(TestCase):
                                      slug=slug,
                                      host=test_host,
                                      admin_fee=100,
-                                     invoiced=False,
+                                     invoice_status='not-invoiced',
                                      url=url)
 
         # Create one new event for each day from 10 days ago to
         # 3 days ago, half invoiced
-        invoiced = True
+        invoice = itertools.cycle(['invoiced', 'not-invoiced'])
         for t in range(3, 11):
             event_start = today + datetime.timedelta(days=-t)
             date_string = event_start.strftime('%Y-%m-%d')
@@ -211,8 +211,7 @@ class TestBase(TestCase):
                                  slug='{0}-past'.format(date_string),
                                  host=test_host,
                                  admin_fee=100,
-                                 invoiced=invoiced)
-            invoiced = not invoiced
+                                 invoice_status=next(invoice))
 
         # Create an event that started yesterday and ends tomorrow
         # with no fee, and without specifying whether they've been
@@ -249,7 +248,8 @@ class TestBase(TestCase):
         self.num_uninvoiced_events = 0
         self.num_upcoming = 0
         for e in Event.objects.all():
-            if (e.admin_fee > 0) and (not e.invoiced) and (e.start < today):
+            if (e.admin_fee > 0) and (e.invoice_status == 'not-invoiced') \
+                    and (e.start < today):
                 self.num_uninvoiced_events += 1
             if e.url and (e.start > today):
                 self.num_upcoming += 1
