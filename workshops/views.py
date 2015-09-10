@@ -971,6 +971,25 @@ class TaskUpdate(LoginRequiredMixin, PermissionRequiredMixin,
     pk_url_kwarg = 'task_id'
     template_name = 'workshops/generic_form.html'
 
+#------------------------------------------------------------
+
+
+@permission_required('workshops.delete_award', raise_exception=True)
+def award_delete(request, award_id, person_id=None):
+    """Delete an award. This is used on the person edit page."""
+    award = get_object_or_404(Award, pk=award_id)
+    badge_name = award.badge.name
+    award.delete()
+
+    messages.success(request, 'Award was deleted successfully.',
+                     extra_tags='awards')
+
+    if person_id:
+        # if a second form of URL, then return back to person edit page
+        return redirect(person_edit, person_id)
+
+    return redirect(reverse(badge_details, args=[badge_name]))
+
 
 #------------------------------------------------------------
 

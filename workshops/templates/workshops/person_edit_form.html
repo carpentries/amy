@@ -25,6 +25,7 @@
           <th>badge</th>
           <th>awarded</th>
           <th>event</th>
+          <th>action</th>
         </tr>
       </thead>
       <tbody>
@@ -33,6 +34,9 @@
           <td><a href="{{ award.badge.get_absolute_url }}">{{ award.badge.title }}</a></td>
           <td>{{ award.awarded }}</td>
           <td>{% if award.event %}<a href="{{ award.event.get_absolute_url }}">{{ award.event }}</a>{% else %}—{% endif %}</td>
+          <td>
+            <a onclick='return confirm("Are you sure you wish to drop award \"{{ award.badge.title }}\" from \"{{ award.person }}\"?")' href="{% url 'award_delete' award_id=award.pk person_id=award.person.pk %}" class='btn btn-danger'>Delete</a>
+          </td>
         </tr>
         {% endfor %}
       </tbody>
