@@ -221,7 +221,7 @@ class TestBase(TestCase):
         event_end = today + datetime.timedelta(days=1)
         Event.objects.create(start=event_start,
                              end=event_end,
-                             slug='ends_tomorrow',
+                             slug='ends_tomorrow-ongoing',
                              host=test_host,
                              admin_fee=0)
 
@@ -231,7 +231,7 @@ class TestBase(TestCase):
         event_end = today
         Event.objects.create(start=event_start,
                              end=event_end,
-                             slug='ends_today',
+                             slug='ends_today-ongoing',
                              host=test_host,
                              admin_fee=0)
 
@@ -241,7 +241,7 @@ class TestBase(TestCase):
         event_end = today + datetime.timedelta(days=1)
         Event.objects.create(start=event_start,
                              end=event_end,
-                             slug='starts_today',
+                             slug='starts_today-ongoing',
                              host=test_host,
                              admin_fee=100)
 

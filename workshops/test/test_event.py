@@ -62,9 +62,9 @@ class TestEvent(TestBase):
 
         ongoing_events = Event.objects.ongoing_events()
         event_slugs = [e.slug for e in ongoing_events]
-        correct_slugs = ['starts_today',
-                         'ends_tomorrow',
-                         'ends_today', ]
+        correct_slugs = ['starts_today-ongoing',
+                         'ends_tomorrow-ongoing',
+                         'ends_today-ongoing', ]
 
         if sys.version_info >= (3,):
             self.assertCountEqual(event_slugs, correct_slugs)
@@ -108,7 +108,7 @@ class TestEvent(TestBase):
 
     def test_delete_event(self):
         """Make sure deleted event and its tasks are no longer accessible."""
-        event = Event.objects.get(slug="starts_today")
+        event = Event.objects.get(slug="starts_today-ongoing")
         role1 = Role.objects.create(name='NonInstructor')
         t1 = Task.objects.create(event=event, person=self.spiderman,
                                  role=role1)
@@ -123,7 +123,7 @@ class TestEvent(TestBase):
         assert rv.status_code == 302
 
         with self.assertRaises(Event.DoesNotExist):
-            Event.objects.get(slug="starts_today")
+            Event.objects.get(slug="starts_today-ongoing")
 
         for t in [t1, t2, t3]:
             with self.assertRaises(Task.DoesNotExist):
@@ -133,7 +133,7 @@ class TestEvent(TestBase):
         """Ensure we cannot delete an event with related tasks and awards.
 
         Deletion is prevented via Award.event's on_delete=PROTECT."""
-        event = Event.objects.get(slug="starts_today")
+        event = Event.objects.get(slug="starts_today-ongoing")
         role = Role.objects.create(name='NonInstructor')
         badge = Badge.objects.create(name='noninstructor',
                                      title='Non-instructor',
