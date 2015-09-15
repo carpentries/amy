@@ -6,7 +6,6 @@ from workshops.models import Award, Badge, Person
 
 
 class Command(BaseCommand):
-    args = '/path/to/certificates'
     help = 'Report inconsistencies in PDF certificates.'
 
     def add_arguments(self, parser):
