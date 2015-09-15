@@ -51,10 +51,6 @@ airports :
 badges :
 	@${MANAGE} export_badges
 
-## check-urls   : check workshop URLs (must set SITE_PATH to run)
-check-urls :
-	@if [ -z "${SITE_PATH}" ]; then echo ${E_SITE_PATH}; else ${MANAGE} check_workshop_urls ${SITE_PATH}; fi
-
 ## check-badges : check that all badges have been awarded (must set SITE_PATH to run)
 check-badges :
 	@if [ -z "${SITE_PATH}" ]; then echo ${E_SITE_PATH}; else ${MANAGE} check_badges ${SITE_PATH}; fi
