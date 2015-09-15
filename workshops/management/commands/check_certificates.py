@@ -9,15 +9,18 @@ class Command(BaseCommand):
     args = '/path/to/certificates'
     help = 'Report inconsistencies in PDF certificates.'
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'path', help='Path to root directory of certificates repository',
+        )
+
     def handle(self, *args, **options):
         '''Main entry point.'''
 
-        if len(args) != 1:
-            raise CommandError('Usage: check_certificates /path/to/dir')
-        path_to_root = args[0]
+        path_to_root = options['path']
 
-        awards = self.get_awards()
-        for (name, badge) in awards:
+        badges = self.get_badges()
+        for (name, badge) in badges:
             db_people = self.get_db_people(badge)
             cert_path = os.path.join(path_to_root, name)
             if not os.path.isdir(cert_path):
@@ -27,15 +30,15 @@ class Command(BaseCommand):
                 self.report_missing('database but not disk', name, db_people - file_people)
                 self.report_missing('disk but not database', name, file_people - db_people)
 
-    def get_awards(self):
-        '''Get all available awards as list of lower-case name and badge pairs.'''
+    def get_badges(self):
+        '''Get all available badges as list of lower-case name and badge pairs.'''
 
         return [(b.name.lower(), b) for b in Badge.objects.all()]
 
     def get_db_people(self, badge):
         '''Get set of usernames of all people with the given badge.'''
 
-        return set([a.person.username for a in Award.objects.filter(badge=badge)])
+        return set(Award.objects.filter(badge=badge).values_list('person__username', flat=True))
 
     def get_file_people(self, path):
         '''Get names of all people with the given certificate.'''
@@ -52,5 +55,5 @@ class Command(BaseCommand):
                 try:
                     p = Person.objects.get(username=i)
                     print(' {0}: {1}'.format(i, p))
-                except ObjectDoesNotExist:
+                except Person.DoesNotExist:
                     print(' {0}'.format(i))
