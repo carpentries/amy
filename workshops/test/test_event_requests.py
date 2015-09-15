@@ -32,10 +32,7 @@ class TestSWCEventRequestForm(TestBase):
             'recaptcha_response_field': 'PASSED',  # to auto-pass RECAPTCHA
             'name': 'Harry Potter', 'email': 'harry@potter.com',
             'affiliation': 'Hogwarts', 'location': 'United Kingdom',
-            # had to use Poland since it's sooo shorter than
-            # "United Kingdom of Great Britain and Northern Ireland"
-            # and it has to be used in mail subject
-            'country': 'PL', 'preferred_date': 'soon',
+            'country': 'GB', 'preferred_date': 'soon',
             'approx_attendees': '20-40',
             'attendee_domains': [], 'attendee_domains_other': 'Nonsesology',
             'attendee_academic_levels': [1, 2],  # IDs
@@ -55,7 +52,7 @@ class TestSWCEventRequestForm(TestBase):
         msg = mail.outbox[0]
         self.assertEqual(
             msg.subject,
-            '[SWC] New workshop request: Harry Potter from Poland, Hogwarts'
+            '[SWC] New workshop request: Hogwarts, United Kingdom'
         )
 
     def test_request_discarded(self):
@@ -99,10 +96,7 @@ class TestDCEventRequestForm(TestBase):
             'recaptcha_response_field': 'PASSED',  # to auto-pass RECAPTCHA
             'name': 'Harry Potter', 'email': 'harry@potter.com',
             'affiliation': 'Hogwarts', 'location': 'United Kingdom',
-            # had to use Poland since it's sooo shorter than
-            # "United Kingdom of Great Britain and Northern Ireland"
-            # and it has to be used in mail subject
-            'country': 'PL', 'preferred_date': 'soon',
+            'country': 'GB', 'preferred_date': 'soon',
             'approx_attendees': '20-40',
             'attendee_domains': [], 'attendee_domains_other': 'Nonsesology',
             'data_types': 'survey', 'data_types_other': '',
@@ -123,7 +117,7 @@ class TestDCEventRequestForm(TestBase):
         msg = mail.outbox[0]
         self.assertEqual(
             msg.subject,
-            '[DC] New workshop request: Harry Potter from Poland, Hogwarts'
+            '[DC] New workshop request: Hogwarts, United Kingdom'
         )
 
     def test_request_discarded(self):

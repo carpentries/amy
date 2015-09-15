@@ -1434,10 +1434,10 @@ class SWCEventRequest(View):
 
             # prepare email notification
             recipients = settings.REQUEST_NOTIFICATIONS_RECIPIENTS
-            subject = ('[{tag}] New workshop request: {name} from {country}, '
-                       '{affiliation}').format(
+            subject = (
+                '[{tag}] New workshop request: {affiliation}, {country}'
+            ).format(
                 tag=data['workshop_type'].upper(),
-                name=event_req.name,
                 country=event_req.country.name,
                 affiliation=event_req.affiliation,
             )
