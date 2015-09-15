@@ -660,7 +660,8 @@ class EventRequest(models.Model):
         verbose_name='I understand the Software Carpentry Foundation\'s '
                      'administration fee.',
         help_text='<a href="http://software-carpentry.org/blog/2015/07/changes'
-                  '-to-admin-fee.html">Look up administration fees</a>',
+                  '-to-admin-fee.html" target="_blank">Look up administration '
+                  'fees</a>.',
     )
     fee_waiver_request = models.BooleanField(
         help_text='Waiver\'s of the administrative fee are available on '
