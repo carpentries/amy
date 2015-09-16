@@ -53,7 +53,7 @@ from workshops.forms import (
     bootstrap_helper_with_add, BadgeAwardForm, PersonAwardForm,
     PersonPermissionsForm, bootstrap_helper_filter, PersonMergeForm,
     PersonTaskForm, HostForm, SWCEventRequestForm, DCEventRequestForm,
-    ProfileUpdateRequestForm, PersonLookupForm,
+    ProfileUpdateRequestForm, PersonLookupForm, bootstrap_helper_wider_labels,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
@@ -1414,7 +1414,7 @@ def _failed_to_delete(request, object, protected_objects, back=None):
 
 class SWCEventRequest(View):
     form_class = SWCEventRequestForm
-    form_helper = bootstrap_helper
+    form_helper = bootstrap_helper_wider_labels
 
     def get(self, request, *args, **kwargs):
         form = self.form_class()

@@ -65,10 +65,18 @@ class BootstrapHelperFilter(FormHelper):
         self.inputs.append(Submit('', 'Submit'))
 
 
+class BootstrapHelperWiderLabels(BootstrapHelper):
+    """SWCEventRequestForm and DCEventRequestForm have long labels, so this
+    helper is used to address that issue."""
+    label_class = 'col-lg-3'
+    field_class = 'col-lg-7'
+
+
 bootstrap_helper = BootstrapHelper()
 bootstrap_helper_get = BootstrapHelperGet()
 bootstrap_helper_with_add = BootstrapHelperWithAdd()
 bootstrap_helper_filter = BootstrapHelperFilter()
+bootstrap_helper_wider_labels = BootstrapHelperWiderLabels()
 
 
 class InstructorsForm(forms.Form):
