@@ -447,6 +447,15 @@ class HostForm(forms.ModelForm):
 class SWCEventRequestForm(forms.ModelForm):
     captcha = ReCaptchaField()
     workshop_type = forms.CharField(initial='swc', widget=forms.HiddenInput())
+    understand_admin_fee = forms.BooleanField(
+        required=True,
+        initial=False,
+        label='I understand the Software Carpentry Foundation\'s '
+              'administration fee.',
+        help_text='<a href="http://software-carpentry.org/blog/2015/07/changes'
+                  '-to-admin-fee.html" target="_blank">Look up administration '
+                  'fees</a>.',
+    )
 
     class Meta:
         model = EventRequest
@@ -465,6 +474,7 @@ class SWCEventRequestForm(forms.ModelForm):
 class DCEventRequestForm(SWCEventRequestForm):
     workshop_type = forms.CharField(initial='dc', widget=forms.HiddenInput())
     understand_admin_fee = forms.BooleanField(
+        required=True,
         initial=False,
         label='I understand the Data Carpentry\'s administration fee.',
         help_text='There is a per-workshop fee for Data Carpentry to cover '

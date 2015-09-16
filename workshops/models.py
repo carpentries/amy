@@ -657,11 +657,8 @@ class EventRequest(models.Model):
     )
     understand_admin_fee = models.BooleanField(
         default=False,
-        verbose_name='I understand the Software Carpentry Foundation\'s '
-                     'administration fee.',
-        help_text='<a href="http://software-carpentry.org/blog/2015/07/changes'
-                  '-to-admin-fee.html" target="_blank">Look up administration '
-                  'fees</a>.',
+        # verbose_name a.k.a. label and help_text were moved to the
+        # SWCEventRequestForm and DCEventRequestForm
     )
     fee_waiver_request = models.BooleanField(
         help_text='Waiver\'s of the administrative fee are available on '
