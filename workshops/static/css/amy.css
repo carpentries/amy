@@ -107,3 +107,16 @@ div[role="tabpanel"] form {
 .checkbox label, .radio label {
     padding-left: 0;
 }
+
+/* Styles for help_text in multiselect or radio fields for EventRequest
+   forms. And since help-block was always last and had a nice bottom margin,
+   now the very last radio/checkbox label should have that margin too. */
+p.help-block-no-margin {
+    display: block;
+    color: #737373;
+    margin: 7px 0px 0px;
+}
+
+label.last-field {
+    margin-bottom: 10px;
+}
