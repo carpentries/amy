@@ -293,7 +293,7 @@ class ProfileUpdateRequest(models.Model):
         'Lesson',
         verbose_name='Topic and lessons you\'re comfortable teaching',
         help_text='Please mark ALL that apply.',
-        blank=True,
+        blank=False,
     )
     lessons_other = models.CharField(
         max_length=255,
