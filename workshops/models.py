@@ -602,7 +602,7 @@ class EventRequest(models.Model):
         'KnowledgeDomain',
         help_text='The attendees\' academic field(s) of study, if known.',
         verbose_name='Domains or topic of interest for target audience',
-        blank=True,
+        blank=False,
     )
     attendee_domains_other = models.CharField(
         max_length=STR_LONG,
