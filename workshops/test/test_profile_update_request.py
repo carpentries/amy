@@ -28,8 +28,9 @@ class TestProfileUpdateRequest(TestBase):
         rv = self.client.post(reverse('profileupdate_request'), data)
         assert rv.status_code == 200
         content = rv.content.decode('utf-8')
+        assert 'Fix errors below' not in content
         assert \
-            'Thank you for updating your instructor&#39;s profile' in content
+            'Thank you for updating your instructor profile' in content
         assert ProfileUpdateRequest.objects.all().count() == 1
         assert ProfileUpdateRequest.objects.all()[0].active is True
 
