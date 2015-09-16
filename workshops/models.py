@@ -124,8 +124,16 @@ class Person(AbstractBaseUser, PermissionsMixin):
     affiliation = models.CharField(max_length=STR_LONG, default='', blank=True)
 
     badges = models.ManyToManyField("Badge", through="Award")
-    lessons = models.ManyToManyField("Lesson", through="Qualification")
-    domains = models.ManyToManyField("KnowledgeDomain")
+    lessons = models.ManyToManyField(
+        "Lesson",
+        through="Qualification",
+        blank=True,
+    )
+    domains = models.ManyToManyField(
+        "KnowledgeDomain",
+        limit_choices_to=~Q(name__startswith='Don\'t know yet'),
+        blank=True,
+    )
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = [
@@ -274,6 +282,7 @@ class ProfileUpdateRequest(models.Model):
         'KnowledgeDomain',
         verbose_name='Areas of expertise',
         help_text='Please check all that apply.',
+        limit_choices_to=~Q(name__startswith='Don\'t know yet'),
         blank=True,
     )
     domains_other = models.CharField(

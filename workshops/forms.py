@@ -333,13 +333,6 @@ class PersonForm(forms.ModelForm):
         widget=selectable.AutoComboboxSelectWidget,
     )
 
-    lessons = forms.ModelMultipleChoiceField(required=False,
-                                             queryset=Lesson.objects.all())
-
-    domains = forms.ModelMultipleChoiceField(
-        required=False, queryset=KnowledgeDomain.objects.all()
-    )
-
     class Meta:
         model = Person
         # don't display the 'password', 'user_permissions',
