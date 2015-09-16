@@ -197,8 +197,7 @@ class ProfileUpdateRequest(models.Model):
         verbose_name='Family (last) name',
         blank=False,
     )
-    email = models.CharField(
-        max_length=STR_LONG,
+    email = models.EmailField(
         verbose_name='Email address',
         blank=False,
     )
