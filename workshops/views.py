@@ -1558,7 +1558,7 @@ def profileupdaterequest_create(request):
     This one is used when instructors want to change their information.
     """
     form = ProfileUpdateRequestForm()
-    form_helper = bootstrap_helper
+    form_helper = bootstrap_helper_wider_labels
 
     if request.method == 'POST':
         form = ProfileUpdateRequestForm(request.POST)
