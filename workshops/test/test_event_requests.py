@@ -34,7 +34,8 @@ class TestSWCEventRequestForm(TestBase):
             'affiliation': 'Hogwarts', 'location': 'United Kingdom',
             'country': 'GB', 'preferred_date': 'soon',
             'approx_attendees': '20-40',
-            'attendee_domains': [], 'attendee_domains_other': 'Nonsesology',
+            'attendee_domains': [1, 2],  # IDs
+            'attendee_domains_other': 'Nonsesology',
             'attendee_academic_levels': [1, 2],  # IDs
             'attendee_computing_levels': [1, 2],  # IDs
             'cover_travel_accomodation': True,
@@ -45,6 +46,7 @@ class TestSWCEventRequestForm(TestBase):
         rv = self.client.post(reverse('swc_workshop_request'), data)
         assert rv.status_code == 200
         content = rv.content.decode('utf-8')
+        assert 'Fix errors below' not in content
         assert 'Thank you for requesting a workshop' in content
         assert EventRequest.objects.all().count() == 1
         assert EventRequest.objects.all()[0].active is True
@@ -98,7 +100,8 @@ class TestDCEventRequestForm(TestBase):
             'affiliation': 'Hogwarts', 'location': 'United Kingdom',
             'country': 'GB', 'preferred_date': 'soon',
             'approx_attendees': '20-40',
-            'attendee_domains': [], 'attendee_domains_other': 'Nonsesology',
+            'attendee_domains': [1, 2],  # IDs
+            'attendee_domains_other': 'Nonsesology',
             'data_types': 'survey', 'data_types_other': '',
             'attendee_academic_levels': [1, 2],  # IDs
             'attendee_data_analysis_level': [1, 2],  # IDs
@@ -110,6 +113,7 @@ class TestDCEventRequestForm(TestBase):
         rv = self.client.post(reverse('dc_workshop_request'), data)
         assert rv.status_code == 200
         content = rv.content.decode('utf-8')
+        assert 'Fix errors below' not in content
         assert 'Thank you for requesting a workshop' in content
         assert EventRequest.objects.all().count() == 1
         assert EventRequest.objects.all()[0].active is True
