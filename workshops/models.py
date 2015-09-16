@@ -248,7 +248,6 @@ class ProfileUpdateRequest(models.Model):
     twitter = models.CharField(
         max_length=STR_LONG,
         verbose_name='Twitter username',
-        help_text='Please, do not put "@" at the beginning.',
         blank=True, default='',
     )
     orcid = models.CharField(

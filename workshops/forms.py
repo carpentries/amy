@@ -1,3 +1,5 @@
+import re
+
 from django import forms
 from django.core.validators import RegexValidator
 from django.forms import HiddenInput, CheckboxSelectMultiple
@@ -511,6 +513,11 @@ class ProfileUpdateRequestForm(forms.ModelForm):
             'occupation': forms.RadioSelect(),
             'gender': forms.RadioSelect(),
         }
+
+    def clean_twitter(self):
+        """Remove '@'s from the beginning of the Twitter handle."""
+        twitter_handle = self.cleaned_data['twitter']
+        return re.sub('^@+', '', twitter_handle)
 
 
 class PersonLookupForm(forms.Form):
