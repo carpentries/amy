@@ -650,11 +650,6 @@ class EventRequest(models.Model):
                   'analysis experience',
         verbose_name='Level of data analysis experience',
     )
-    cover_travel_accomodation = models.BooleanField(
-        default=False,
-        verbose_name='My institution will cover instructors\' travel and '
-                     'accommodation costs.',
-    )
     understand_admin_fee = models.BooleanField(
         default=False,
         # verbose_name a.k.a. label and help_text were moved to the
@@ -667,6 +662,11 @@ class EventRequest(models.Model):
         verbose_name='I would like to submit an administrative fee waiver '
                      'application',
         default=False,
+    )
+    cover_travel_accomodation = models.BooleanField(
+        default=False,
+        verbose_name='My institution will cover instructors\' travel and '
+                     'accommodation costs.',
     )
     TRAVEL_REIMBURSEMENT_CHOICES = (
         ('', 'Don\'t know yet.'),
