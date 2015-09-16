@@ -549,7 +549,7 @@ class EventRequest(models.Model):
     affiliation = models.CharField(max_length=STR_LONG,
                                    help_text='University or Company')
     location = models.CharField(max_length=STR_LONG,
-                                help_text='City, Province or State')
+                                help_text='City, Province, or State')
     country = CountryField()
     conference = models.CharField(
         max_length=STR_LONG,
@@ -561,14 +561,14 @@ class EventRequest(models.Model):
         max_length=255,
         help_text='Please indicate when you would like to run the workshop. '
                   'A range of at least a month is most helpful, although if '
-                  'you have a specific date or dates you need the workshop, '
-                  'we will try to accommodate those requests.',
-        verbose_name='Preferred workshop date',
+                  'you have specific dates you need the workshop, we will try '
+                  'to accommodate those requests.',
+        verbose_name='Preferred workshop dates',
     )
     language = models.CharField(
         max_length=STR_LONG,
-        help_text='What human language you want the workshop to be run in?',
-        verbose_name='Workshop language',
+        verbose_name='What human language do you want the workshop to be run'
+                     ' in?',
         blank=True, default='English',
     )
 
@@ -676,14 +676,15 @@ class EventRequest(models.Model):
     )
     travel_reimbursement = models.CharField(
         max_length=STR_MED,
-        verbose_name='For instructor travel, how will instructors be'
-                     ' reimbursed?',
+        verbose_name='How will instructors\' travel and accommodations be '
+                     'managed?',
         choices=TRAVEL_REIMBURSEMENT_CHOICES,
         null=True, blank=True, default=None,
     )
     travel_reimbursement_other = models.CharField(
         max_length=STR_LONG,
-        verbose_name='Other type of reimbursement',
+        verbose_name='Other propositions for managing instructors\' travel and'
+                     ' accommodations',
         blank=True,
     )
 
