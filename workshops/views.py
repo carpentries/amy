@@ -1476,6 +1476,12 @@ class SWCEventRequest(View):
                           context)
         else:
             messages.error(request, 'Fix errors below.')
+            context = {
+                'title': 'Request a Workshop',
+                'form': form,
+                'form_helper': self.form_helper,
+            }
+            return render(request, 'forms/workshop_request.html', context)
 
 
 class DCEventRequest(SWCEventRequest):
