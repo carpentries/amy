@@ -95,14 +95,16 @@ class PersonManager(BaseUserManager):
 @reversion.register
 class Person(AbstractBaseUser, PermissionsMixin):
     '''Represent a single person.'''
+    UNDISCLOSED = 'U'
     MALE = 'M'
     FEMALE = 'F'
     OTHER = 'O'
     GENDER_CHOICES = (
+        (UNDISCLOSED, 'Prefer not to say (undisclosed)'),
         (MALE, 'Male'),
         (FEMALE, 'Female'),
         (OTHER, 'Other'),
-        )
+    )
 
     # These attributes should always contain field names of Person
     PERSON_UPLOAD_FIELDS = ('personal', 'middle', 'family', 'email')
@@ -113,7 +115,7 @@ class Person(AbstractBaseUser, PermissionsMixin):
     middle      = models.CharField(max_length=STR_LONG, null=True, blank=True)
     family      = models.CharField(max_length=STR_LONG)
     email       = models.CharField(max_length=STR_LONG, unique=True, null=True, blank=True)
-    gender      = models.CharField(max_length=1, choices=GENDER_CHOICES, null=True, blank=True)
+    gender      = models.CharField(max_length=1, choices=GENDER_CHOICES, null=False, default=UNDISCLOSED)
     may_contact = models.BooleanField(default=True)
     airport     = models.ForeignKey(Airport, null=True, blank=True, on_delete=models.PROTECT)
     github      = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True)
@@ -216,7 +218,7 @@ class ProfileUpdateRequest(models.Model):
     )
 
     OCCUPATION_CHOICES = (
-        (None, 'Prefer not to say'),
+        ('undisclosed', 'Prefer not to say'),
         ('undergrad', 'Undergraduate student'),
         ('grad', 'Graduate student'),
         ('postdoc', 'Post-doctoral researcher'),
@@ -232,7 +234,7 @@ class ProfileUpdateRequest(models.Model):
         choices=OCCUPATION_CHOICES,
         verbose_name='What is your current occupation/career stage?',
         help_text='Please choose the one that best describes you.',
-        null=True, blank=True,
+        null=False, blank=True, default='undisclosed',
     )
     occupation_other = models.CharField(
         max_length=STR_LONG,
@@ -262,15 +264,15 @@ class ProfileUpdateRequest(models.Model):
     )
 
     GENDER_CHOICES = (
-        (None, 'Prefer not to say'),
-        ('F', 'Female'),
-        ('M', 'Male'),
-        ('O', 'Other (enter below)'),
+        (Person.UNDISCLOSED, 'Prefer not to say'),
+        (Person.FEMALE, 'Female'),
+        (Person.MALE, 'Male'),
+        (Person.OTHER, 'Other (enter below)'),
     )
     gender = models.CharField(
         max_length=1,
         choices=GENDER_CHOICES,
-        null=True, blank=True,
+        null=False, blank=False, default=Person.UNDISCLOSED,
     )
     gender_other = models.CharField(
         max_length=STR_LONG,
