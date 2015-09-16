@@ -210,7 +210,7 @@ class ProfileUpdateRequest(models.Model):
         max_length=3,
         verbose_name='Nearest major airport',
         help_text='Please use its 3-letter IATA code '
-        '(<a href="http://www.airportcodes.aero/">'
+        '(<a href="http://www.airportcodes.aero/" target="_blank">'
         'http://www.airportcodes.aero/</a>) to tell us where you\'re located.',
         blank=False, null=False,
     )
