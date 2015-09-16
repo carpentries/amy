@@ -1569,7 +1569,7 @@ def profileupdaterequest_create(request):
             # TODO: email notification?
 
             context = {
-                'title': 'Thank you for updating your instructor\'s profile',
+                'title': 'Thank you for updating your instructor profile',
             }
             return render(request,
                           'forms/profileupdate_confirm.html',
@@ -1578,7 +1578,7 @@ def profileupdaterequest_create(request):
             messages.error(request, 'Fix errors below.')
 
     context = {
-        'title': 'Update your instructor\'s profile',
+        'title': 'Update your instructor profile',
         'form': form,
         'form_helper': form_helper,
     }
