@@ -1,0 +1,12 @@
+{% extends "base_without_navbar.html" %}
+
+{% load crispy_forms_tags %}
+{% load selectable_tags %}
+
+{% block content %}
+{% crispy form form_helper %}
+{% endblock %}
+
+{% block extrajs %}
+{{ form.media }}
+{% endblock extrajs %}

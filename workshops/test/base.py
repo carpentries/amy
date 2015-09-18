@@ -135,7 +135,7 @@ class TestBase(TestCase):
 
         self.ironman = Person.objects.create(
             personal='Tony', middle=None, family='Stark', email='me@stark.com',
-            gender=None, may_contact=True, username="ironman")
+            gender='M', may_contact=True, username="ironman")
 
         self.blackwidow = Person.objects.create(
             personal='Natasha', middle=None, family='Romanova', email=None,

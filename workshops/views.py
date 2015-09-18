@@ -16,38 +16,44 @@ from django.core.exceptions import (
     PermissionDenied,
     SuspiciousOperation,
 )
+from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 from django.http import Http404, HttpResponse, JsonResponse
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError
 from django.db.models import Count, Sum, Q, F, Model, ProtectedError
 from django.db.models import Case, When, Value, IntegerField
 from django.shortcuts import redirect, render, get_object_or_404
+from django.template.loader import get_template
 from django.views.decorators.http import require_POST
-from django.views.generic.base import ContextMixin
+from django.views.generic import ListView, DetailView, View
 from django.views.generic.edit import CreateView, UpdateView, ModelFormMixin
 from django.contrib.auth.decorators import login_required, permission_required
 
 from reversion import get_for_object
 from reversion.models import Revision
 
-from workshops.models import \
-    Airport, \
-    Award, \
-    Badge, \
-    Event, \
-    Qualification, \
-    Lesson, \
-    Person, \
-    Role, \
-    Host, \
-    Task
+from workshops.models import (
+    Airport,
+    Award,
+    Badge,
+    Event,
+    Qualification,
+    Lesson,
+    Person,
+    Role,
+    Host,
+    Task,
+    EventRequest,
+    ProfileUpdateRequest,
+)
 from workshops.check import check_file
 from workshops.forms import (
     SearchForm, DebriefForm, InstructorsForm, PersonForm, PersonBulkAddForm,
-    EventForm, TaskForm, TaskFullForm, bootstrap_helper,
+    EventForm, TaskForm, TaskFullForm, bootstrap_helper, bootstrap_helper_get,
     bootstrap_helper_with_add, BadgeAwardForm, PersonAwardForm,
     PersonPermissionsForm, bootstrap_helper_filter, PersonMergeForm,
-    PersonTaskForm, HostForm,
+    PersonTaskForm, HostForm, SWCEventRequestForm, DCEventRequestForm,
+    ProfileUpdateRequestForm, PersonLookupForm, bootstrap_helper_wider_labels,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
@@ -1404,3 +1410,316 @@ def _failed_to_delete(request, object, protected_objects, back=None):
     context['refs'].default_factory = None
 
     return render(request, 'workshops/failed_to_delete.html', context)
+
+
+class SWCEventRequest(View):
+    form_class = SWCEventRequestForm
+    form_helper = bootstrap_helper_wider_labels
+
+    def get(self, request, *args, **kwargs):
+        form = self.form_class()
+        context = {
+            'title': 'Request a Workshop',
+            'form': form,
+            'form_helper': self.form_helper,
+        }
+        return render(request, 'forms/workshop_request.html', context)
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(request.POST)
+
+        if form.is_valid():
+            data = form.cleaned_data
+            event_req = form.save()
+
+            # prepare email notification
+            recipients = settings.REQUEST_NOTIFICATIONS_RECIPIENTS
+            subject = (
+                '[{tag}] New workshop request: {affiliation}, {country}'
+            ).format(
+                tag=data['workshop_type'].upper(),
+                country=event_req.country.name,
+                affiliation=event_req.affiliation,
+            )
+
+            link = event_req.get_absolute_url()
+            link_domain = settings.SITE_URL
+
+            body_txt = get_template(
+                'workshops/eventrequest_email_txt.html'
+            ).render({
+                'object': event_req,
+                'link': link,
+                'link_domain': link_domain,
+            })
+
+            body_html = get_template(
+                'workshops/eventrequest_email_html.html'
+            ).render({
+                'object': event_req,
+                'link': link,
+                'link_domain': link_domain,
+            })
+
+            reply_to = (data['email'], )
+            email = EmailMultiAlternatives(subject, body_txt, to=recipients,
+                                           reply_to=reply_to)
+            email.attach_alternative(body_html, 'text/html')
+
+            # fail loudly so that admins know if something's wrong
+            email.send(fail_silently=False)
+
+            context = {
+                'title': 'Thank you for requesting a workshop',
+            }
+            return render(request, 'forms/workshop_request_confirm.html',
+                          context)
+        else:
+            messages.error(request, 'Fix errors below.')
+            context = {
+                'title': 'Request a Workshop',
+                'form': form,
+                'form_helper': self.form_helper,
+            }
+            return render(request, 'forms/workshop_request.html', context)
+
+
+class DCEventRequest(SWCEventRequest):
+    form_class = DCEventRequestForm
+
+
+class AllEventRequests(LoginRequiredMixin, ListView):
+    queryset = EventRequest.objects.filter(active=True).order_by('-created_at')
+    context_object_name = 'requests'
+    template_name = 'workshops/all_eventrequests.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Workshop requests'
+        return context
+
+
+class EventRequestDetails(LoginRequiredMixin, DetailView):
+    queryset = EventRequest.objects.filter(active=True)
+    context_object_name = 'object'
+    template_name = 'workshops/eventrequest.html'
+    pk_url_kwarg = 'request_id'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Workshop request #{}'.format(self.get_object().pk)
+        return context
+
+
+@login_required
+@permission_required('workshops.change_eventrequest', raise_exception=True)
+def eventrequest_discard(request, request_id):
+    """Discard EventRequest, ie. set it to inactive."""
+    eventrequest = get_object_or_404(EventRequest, active=True, pk=request_id)
+    eventrequest.active = False
+    eventrequest.save()
+
+    messages.success(request,
+                     'Workshop request was discarded successfully.')
+    return redirect(reverse('all_eventrequests'))
+
+
+@login_required
+@permission_required(['workshops.change_eventrequest', 'workshops.add_event'],
+                     raise_exception=True)
+def eventrequest_accept(request, request_id):
+    """Accept event request by creating a new event."""
+    eventrequest = get_object_or_404(EventRequest, active=True, pk=request_id)
+    form = EventForm()
+
+    if request.method == 'POST':
+        form = EventForm(request.POST)
+
+        if form.is_valid():
+            event = form.save()
+            eventrequest.active = False
+            eventrequest.save()
+            return redirect(reverse('event_details',
+                                    args=[event.get_ident()]))
+        else:
+            messages.error(request, 'Fix errors below.')
+
+    context = {
+        'object': eventrequest,
+        'form': form,
+    }
+    return render(request, 'workshops/eventrequest_accept.html', context)
+
+
+def profileupdaterequest_create(request):
+    """
+    Profile update request form. Accessible to all users (no login required).
+
+    This one is used when instructors want to change their information.
+    """
+    form = ProfileUpdateRequestForm()
+    form_helper = bootstrap_helper_wider_labels
+
+    if request.method == 'POST':
+        form = ProfileUpdateRequestForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+
+            # TODO: email notification?
+
+            context = {
+                'title': 'Thank you for updating your instructor profile',
+            }
+            return render(request,
+                          'forms/profileupdate_confirm.html',
+                          context)
+        else:
+            messages.error(request, 'Fix errors below.')
+
+    context = {
+        'title': 'Update your instructor profile',
+        'form': form,
+        'form_helper': form_helper,
+    }
+    return render(request, 'forms/profileupdate.html', context)
+
+
+class AllProfileUpdateRequests(LoginRequiredMixin, ListView):
+    queryset = ProfileUpdateRequest.objects.filter(active=True) \
+                .order_by('-created_at')
+    context_object_name = 'requests'
+    template_name = 'workshops/all_profileupdaterequests.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Instructor profile update requests'
+        return context
+
+
+@login_required
+def profileupdaterequest_details(request, request_id):
+    update_request = get_object_or_404(ProfileUpdateRequest, active=True,
+                                       pk=request_id)
+
+    person_selected = False
+
+    # Nested lookup.
+    # First check if there's person with the same email, then maybe check if
+    # there's a person with the same first and last names.
+    try:
+        person = Person.objects.get(email=update_request.email)
+        form = None
+    except Person.DoesNotExist:
+        try:
+            person = Person.objects.get(personal=update_request.personal,
+                                        family=update_request.family)
+            form = None
+        except (Person.DoesNotExist, Person.MultipleObjectsReturned):
+            # Either none or multiple people with the same first and last
+            # names.
+            # But the user might have submitted some person by themselves. We
+            # should check that!
+            try:
+                person = Person.objects.get(pk=int(request.GET['person_1']))
+                person_selected = True
+                form = PersonLookupForm(request.GET)
+            except KeyError:
+                person = None
+                # if the form wasn't submitted, initialize it without any
+                # input data
+                form = PersonLookupForm()
+            except (ValueError, Person.DoesNotExist):
+                person = None
+
+    if person:
+        # check if the person has instructor badge
+        try:
+            Award.objects.get(badge__name='instructor', person=person)
+            person.has_instructor_badge = True
+        except Award.DoesNotExist:
+            person.has_instructor_badge = False
+
+    try:
+        airport = Airport.objects.get(iata=update_request.airport_iata)
+    except Airport.DoesNotExist:
+        airport = None
+
+    context = {
+        'title': ('Instructor profile update request #{}'
+                  .format(update_request.pk)),
+        'new': update_request,
+        'old': person,
+        'person_form': form,
+        'person_selected': person_selected,
+        'form_helper': bootstrap_helper_get,
+        'airport': airport,
+    }
+    return render(request, 'workshops/profileupdaterequest.html', context)
+
+
+@login_required
+@permission_required('workshops.change_profileupdaterequest',
+                     raise_exception=True)
+def profileupdaterequest_discard(request, request_id):
+    """Discard ProfileUpdateRequest, ie. set it to inactive."""
+    profileupdate = get_object_or_404(ProfileUpdateRequest, active=True,
+                                      pk=request_id)
+    profileupdate.active = False
+    profileupdate.save()
+
+    messages.success(request,
+                     'Profile update request was discarded successfully.')
+    return redirect(reverse('all_profileupdaterequests'))
+
+
+@login_required
+@permission_required(['workshops.change_profileupdaterequest',
+                      'workshops.change_person'], raise_exception=True)
+def profileupdaterequest_accept(request, request_id, person_id):
+    """
+    Accept the profile update by rewriting values to selected user's profile.
+
+    IMPORTANT: we do not rewrite all of the data users input (like
+    occupation, or other gender, or other lessons).  All of it is still in
+    the database model ProfileUpdateRequest, but does not get written to the
+    Person model object.
+    """
+    profileupdate = get_object_or_404(ProfileUpdateRequest, active=True,
+                                      pk=request_id)
+    person = get_object_or_404(Person, pk=person_id)
+    person_name = str(person)
+
+    airport = get_object_or_404(Airport, iata=profileupdate.airport_iata)
+
+    person.personal = profileupdate.personal
+    person.family = profileupdate.family
+    person.email = profileupdate.email
+    person.affiliation = profileupdate.affiliation
+    person.airport = airport
+    person.github = profileupdate.github
+    person.twitter = profileupdate.twitter
+    person.url = profileupdate.website
+    person.gender = profileupdate.gender
+    person.domains = list(profileupdate.domains.all())
+
+    # Since Person.lessons uses a intermediate model Qualification, we ought to
+    # operate on Qualification objects instead of using Person.lessons as a
+    # list.
+
+    # erase old lessons
+    Qualification.objects.filter(person=person).delete()
+    # add new
+    Qualification.objects.bulk_create([
+        Qualification(person=person, lesson=L)
+        for L in profileupdate.lessons.all()
+    ])
+
+    person.save()
+
+    profileupdate.active = False
+    profileupdate.save()
+
+    messages.success(request,
+                     '{} was updated successfully.'.format(person_name))
+    return redirect(reverse('all_profileupdaterequests'))

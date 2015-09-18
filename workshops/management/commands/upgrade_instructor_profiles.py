@@ -201,8 +201,8 @@ class Command(BaseCommand):
 
     def translate_gender(self, gender):
         """Return database-ready gender."""
-        if not gender:
-            return None
+        if not gender or gender == 'Prefer not to say':
+            return Person.UNDISCLOSED
         elif gender == 'Male':
             return Person.MALE
         elif gender == 'Female':

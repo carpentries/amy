@@ -294,6 +294,7 @@ class TestPerson(TestBase):
             'username': 'test',
             'personal': 'Test',
             'family': 'Test',
+            'gender': 'U',
             'lessons': [1, 2],  # just IDs
         }
         rv = self.client.post(reverse('person_add'), data)
@@ -304,6 +305,7 @@ class TestPerson(TestBase):
             'username': 'test2',
             'personal': 'Test',
             'family': 'Test',
+            'gender': 'U',
             'lessons': [],
         }
         rv = self.client.post(reverse('person_add'), data)
@@ -316,6 +318,7 @@ class TestPerson(TestBase):
             'username': 'test',
             'personal': 'Test',
             'family': 'Test',
+            'gender': 'U',
             'lessons': [1, 2],  # just IDs
         }
         rv = self.client.post(reverse('person_add'), data, follow=True)
