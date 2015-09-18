@@ -96,9 +96,9 @@ class TestUpgradeInstructorProfile(TestBase):
         TEST = [
             ("Male", "M"),
             ("Female", "F"),
-            ("Prefer not to say", "O"),
+            ("Prefer not to say", "U"),
             ("Genderfluid", "O"),
-            ("", None),
+            ("", "U"),
         ]
         for input, expected in TEST:
             assert self.cmd.translate_gender(input) == expected
@@ -131,7 +131,7 @@ class TestUpgradeInstructorProfile(TestBase):
             'github': 'johnsmith',
             'twitter': 'johnsmith',
             'url': 'http://john.smith.com/',
-            'gender': "O",
+            'gender': "U",
             'domains': [],
             'teaching': [],
             'orcid': '000011112222',

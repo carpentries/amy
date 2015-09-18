@@ -62,4 +62,17 @@ urlpatterns = [
     url(r'^reports/problems/?$', views.problems, name='problems'),
 
     url(r'^revision/(?P<revision_id>[\d]+)/?$', views.object_changes, name='object_changes'),
+
+    url(r'^requests/$', views.AllEventRequests.as_view(), name='all_eventrequests'),
+    url(r'^request/(?P<request_id>\d+)/?$', views.EventRequestDetails.as_view(), name='eventrequest_details'),
+    url(r'^request/(?P<request_id>\d+)/discard/?$', views.eventrequest_discard, name='eventrequest_discard'),
+    url(r'^request/(?P<request_id>\d+)/accept/?$', views.eventrequest_accept, name='eventrequest_accept'),
+    url(r'^swc/request/$', views.SWCEventRequest.as_view(), name='swc_workshop_request'),
+    url(r'^dc/request/$', views.DCEventRequest.as_view(), name='dc_workshop_request'),
+
+    url(r'^profile_updates/$', views.AllProfileUpdateRequests.as_view(), name='all_profileupdaterequests'),
+    url(r'^profile_update/(?P<request_id>\d+)/?$', views.profileupdaterequest_details, name='profileupdaterequest_details'),
+    url(r'^profile_update/(?P<request_id>\d+)/discard/?$', views.profileupdaterequest_discard, name='profileupdaterequest_discard'),
+    url(r'^profile_update/(?P<request_id>\d+)/accept/(?P<person_id>[\w\.-]+)/?$', views.profileupdaterequest_accept, name='profileupdaterequest_accept'),
+    url(r'^update_profile/$', views.profileupdaterequest_create, name='profileupdate_request'),
 ]

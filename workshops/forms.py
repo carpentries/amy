@@ -1,7 +1,10 @@
+import re
+
 from django import forms
 from django.core.validators import RegexValidator
 from django.forms import HiddenInput, CheckboxSelectMultiple
 
+from captcha.fields import ReCaptchaField
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Div, HTML, Submit, Field
 from crispy_forms.bootstrap import FormActions
@@ -11,6 +14,7 @@ from selectable import forms as selectable
 
 from workshops.models import (
     Award, Event, Lesson, Person, Task, KnowledgeDomain, Airport, Host,
+    EventRequest, ProfileUpdateRequest,
 )
 from workshops import lookups
 
@@ -25,6 +29,7 @@ DATE_HELP_TEXT = "Select date using widget, or enter in YYYY-MM-DD format."
 
 
 class BootstrapHelper(FormHelper):
+    """Layout and behavior for crispy-displayed forms."""
     form_class = 'form-horizontal'
     label_class = 'col-lg-2'
     field_class = 'col-lg-8'
@@ -37,7 +42,14 @@ class BootstrapHelper(FormHelper):
         self.inputs.append(Submit('submit', 'Submit'))
 
 
+class BootstrapHelperGet(BootstrapHelper):
+    """Force form to use GET instead of default POST."""
+    form_method = 'get'
+
+
 class BootstrapHelperWithAdd(BootstrapHelper):
+    """Change form's 'Submit' to 'Add'."""
+
     def __init__(self, form=None):
         super().__init__(form)
 
@@ -45,6 +57,8 @@ class BootstrapHelperWithAdd(BootstrapHelper):
 
 
 class BootstrapHelperFilter(FormHelper):
+    """A differently shaped forms (more space-efficient) for use in sidebar as
+    filter forms."""
     form_method = 'get'
 
     def __init__(self, form=None):
@@ -53,9 +67,18 @@ class BootstrapHelperFilter(FormHelper):
         self.inputs.append(Submit('', 'Submit'))
 
 
+class BootstrapHelperWiderLabels(BootstrapHelper):
+    """SWCEventRequestForm and DCEventRequestForm have long labels, so this
+    helper is used to address that issue."""
+    label_class = 'col-lg-3'
+    field_class = 'col-lg-7'
+
+
 bootstrap_helper = BootstrapHelper()
+bootstrap_helper_get = BootstrapHelperGet()
 bootstrap_helper_with_add = BootstrapHelperWithAdd()
 bootstrap_helper_filter = BootstrapHelperFilter()
+bootstrap_helper_wider_labels = BootstrapHelperWiderLabels()
 
 
 class InstructorsForm(forms.Form):
@@ -312,13 +335,6 @@ class PersonForm(forms.ModelForm):
         widget=selectable.AutoComboboxSelectWidget,
     )
 
-    lessons = forms.ModelMultipleChoiceField(required=False,
-                                             queryset=Lesson.objects.all())
-
-    domains = forms.ModelMultipleChoiceField(
-        required=False, queryset=KnowledgeDomain.objects.all()
-    )
-
     class Meta:
         model = Person
         # don't display the 'password', 'user_permissions',
@@ -429,3 +445,86 @@ class HostForm(forms.ModelForm):
     class Meta:
         model = Host
         fields = ['domain', 'fullname', 'country', 'notes']
+
+
+class SWCEventRequestForm(forms.ModelForm):
+    captcha = ReCaptchaField()
+    workshop_type = forms.CharField(initial='swc', widget=forms.HiddenInput())
+    understand_admin_fee = forms.BooleanField(
+        required=True,
+        initial=False,
+        label='I understand the Software Carpentry Foundation\'s '
+              'administration fee.',
+        help_text='<a href="http://software-carpentry.org/blog/2015/07/changes'
+                  '-to-admin-fee.html" target="_blank">Look up administration '
+                  'fees</a>.',
+    )
+
+    class Meta:
+        model = EventRequest
+        exclude = ('active', 'created_at', 'data_types', 'data_types_other',
+                   'attendee_data_analysis_level', 'fee_waiver_request', )
+        widgets = {
+            'approx_attendees': forms.RadioSelect(),
+            'attendee_domains': forms.CheckboxSelectMultiple(),
+            'attendee_academic_levels': forms.CheckboxSelectMultiple(),
+            'attendee_computing_levels': forms.CheckboxSelectMultiple(),
+            'travel_reimbursement': forms.RadioSelect(),
+            'admin_fee_payment': forms.RadioSelect(),
+        }
+
+
+class DCEventRequestForm(SWCEventRequestForm):
+    workshop_type = forms.CharField(initial='dc', widget=forms.HiddenInput())
+    understand_admin_fee = forms.BooleanField(
+        required=True,
+        initial=False,
+        label='I understand the Data Carpentry\'s administration fee.',
+        help_text='There is a per-workshop fee for Data Carpentry to cover '
+        'administrative and core development costs. The per-workshop fee is '
+        'currently $2500. We work to find local instructors when possible, but'
+        ' the host institute will also need to pay for instructors travel and'
+        ' lodging if they need to travel. Therefore overall workshop costs are'
+        ' $2500 - $6000.',
+    )
+
+    class Meta(SWCEventRequestForm.Meta):
+        exclude = ('active', 'created_at', 'admin_fee_payment',
+                   'attendee_computing_levels', )
+        widgets = {
+            'approx_attendees': forms.RadioSelect(),
+            'attendee_domains': forms.CheckboxSelectMultiple(),
+            'data_types': forms.RadioSelect(),
+            'attendee_academic_levels': forms.CheckboxSelectMultiple(),
+            'attendee_data_analysis_level': forms.CheckboxSelectMultiple(),
+            'travel_reimbursement': forms.RadioSelect(),
+        }
+
+
+class ProfileUpdateRequestForm(forms.ModelForm):
+    captcha = ReCaptchaField()
+
+    class Meta:
+        model = ProfileUpdateRequest
+        exclude = ('active', 'created_at')
+        widgets = {
+            'domains': forms.CheckboxSelectMultiple(),
+            'lessons': forms.CheckboxSelectMultiple(),
+            'occupation': forms.RadioSelect(),
+            'gender': forms.RadioSelect(),
+        }
+
+    def clean_twitter(self):
+        """Remove '@'s from the beginning of the Twitter handle."""
+        twitter_handle = self.cleaned_data['twitter']
+        return re.sub('^@+', '', twitter_handle)
+
+
+class PersonLookupForm(forms.Form):
+    person = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.PersonLookup,
+        label='Person',
+        required=True,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
+    )

@@ -95,14 +95,16 @@ class PersonManager(BaseUserManager):
 @reversion.register
 class Person(AbstractBaseUser, PermissionsMixin):
     '''Represent a single person.'''
+    UNDISCLOSED = 'U'
     MALE = 'M'
     FEMALE = 'F'
     OTHER = 'O'
     GENDER_CHOICES = (
+        (UNDISCLOSED, 'Prefer not to say (undisclosed)'),
         (MALE, 'Male'),
         (FEMALE, 'Female'),
         (OTHER, 'Other'),
-        )
+    )
 
     # These attributes should always contain field names of Person
     PERSON_UPLOAD_FIELDS = ('personal', 'middle', 'family', 'email')
@@ -113,7 +115,7 @@ class Person(AbstractBaseUser, PermissionsMixin):
     middle      = models.CharField(max_length=STR_LONG, null=True, blank=True)
     family      = models.CharField(max_length=STR_LONG)
     email       = models.CharField(max_length=STR_LONG, unique=True, null=True, blank=True)
-    gender      = models.CharField(max_length=1, choices=GENDER_CHOICES, null=True, blank=True)
+    gender      = models.CharField(max_length=1, choices=GENDER_CHOICES, null=False, default=UNDISCLOSED)
     may_contact = models.BooleanField(default=True)
     airport     = models.ForeignKey(Airport, null=True, blank=True, on_delete=models.PROTECT)
     github      = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True)
@@ -124,8 +126,16 @@ class Person(AbstractBaseUser, PermissionsMixin):
     affiliation = models.CharField(max_length=STR_LONG, default='', blank=True)
 
     badges = models.ManyToManyField("Badge", through="Award")
-    lessons = models.ManyToManyField("Lesson", through="Qualification")
-    domains = models.ManyToManyField("KnowledgeDomain")
+    lessons = models.ManyToManyField(
+        "Lesson",
+        through="Qualification",
+        blank=True,
+    )
+    domains = models.ManyToManyField(
+        "KnowledgeDomain",
+        limit_choices_to=~Q(name__startswith='Don\'t know yet'),
+        blank=True,
+    )
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = [
@@ -172,6 +182,141 @@ class Person(AbstractBaseUser, PermissionsMixin):
         self.twitter = self.twitter or None
         self.url = self.url or None
         super().save(*args, **kwargs)
+
+
+class ProfileUpdateRequest(models.Model):
+    active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    personal = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Personal (first) name',
+        blank=False,
+    )
+    family = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Family (last) name',
+        blank=False,
+    )
+    email = models.EmailField(
+        verbose_name='Email address',
+        blank=False,
+    )
+    affiliation = models.CharField(
+        max_length=STR_LONG,
+        help_text='What university, company, lab, or other organization are '
+        'you affiliated with (if any)?',
+        blank=False,
+    )
+    airport_iata = models.CharField(
+        max_length=3,
+        verbose_name='Nearest major airport',
+        help_text='Please use its 3-letter IATA code '
+        '(<a href="http://www.airportcodes.aero/" target="_blank">'
+        'http://www.airportcodes.aero/</a>) to tell us where you\'re located.',
+        blank=False, null=False,
+    )
+
+    OCCUPATION_CHOICES = (
+        ('undisclosed', 'Prefer not to say'),
+        ('undergrad', 'Undergraduate student'),
+        ('grad', 'Graduate student'),
+        ('postdoc', 'Post-doctoral researcher'),
+        ('faculty', 'Faculty'),
+        ('research', 'Research staff (including research programmer)'),
+        ('support', 'Support staff (including technical support)'),
+        ('librarian', 'Librarian/archivist'),
+        ('commerce', 'Commercial software developer '),
+        ('', 'Other (enter below)'),
+    )
+    occupation = models.CharField(
+        max_length=STR_MED,
+        choices=OCCUPATION_CHOICES,
+        verbose_name='What is your current occupation/career stage?',
+        help_text='Please choose the one that best describes you.',
+        null=False, blank=True, default='undisclosed',
+    )
+    occupation_other = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Other occupation/career stage',
+        blank=True, default='',
+    )
+    github = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='GitHub username',
+        help_text='Please provide your username, not a numeric user ID.',
+        blank=True, default='',
+    )
+    twitter = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Twitter username',
+        blank=True, default='',
+    )
+    orcid = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='ORCID ID',
+        blank=True, default='',
+    )
+    website = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Personal website',
+        default='', blank=True,
+    )
+
+    GENDER_CHOICES = (
+        (Person.UNDISCLOSED, 'Prefer not to say'),
+        (Person.FEMALE, 'Female'),
+        (Person.MALE, 'Male'),
+        (Person.OTHER, 'Other (enter below)'),
+    )
+    gender = models.CharField(
+        max_length=1,
+        choices=GENDER_CHOICES,
+        null=False, blank=False, default=Person.UNDISCLOSED,
+    )
+    gender_other = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Other gender',
+        blank=True, default='',
+    )
+    domains = models.ManyToManyField(
+        'KnowledgeDomain',
+        verbose_name='Areas of expertise',
+        help_text='Please check all that apply.',
+        limit_choices_to=~Q(name__startswith='Don\'t know yet'),
+        blank=True,
+    )
+    domains_other = models.CharField(
+        max_length=255,
+        verbose_name='Other areas of expertise',
+        blank=True, default='',
+    )
+    lessons = models.ManyToManyField(
+        'Lesson',
+        verbose_name='Topic and lessons you\'re comfortable teaching',
+        help_text='Please mark ALL that apply.',
+        blank=False,
+    )
+    lessons_other = models.CharField(
+        max_length=255,
+        verbose_name='Other topics/lessons you\'re comfortable teaching',
+        help_text='Please include lesson URLs.',
+        blank=True, default='',
+    )
+
+    def save(self, *args, **kwargs):
+        """Save nullable char fields as empty strings."""
+        self.gender = self.gender or ''
+        self.occupation = self.occupation or ''
+        return super().save(*args, **kwargs)
+
+    def get_absolute_url(self):
+        return reverse('profileupdaterequest_details', args=[self.pk])
+
+    def __str__(self):
+        return "{personal} {family} <{email}> (from {affiliation})".format(
+            personal=self.personal, family=self.family, email=self.email,
+            affiliation=self.affiliation,
+        )
 
 
 #------------------------------------------------------------
@@ -403,6 +548,211 @@ class Event(models.Model):
         self.slug = self.slug or None
         self.url = self.url or None
         super(Event, self).save(*args, **kwargs)
+
+
+class EventRequest(models.Model):
+    active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    name = models.CharField(max_length=STR_MED)
+    email = models.EmailField()
+    affiliation = models.CharField(max_length=STR_LONG,
+                                   help_text='University or Company')
+    location = models.CharField(max_length=STR_LONG,
+                                help_text='City, Province, or State')
+    country = CountryField()
+    conference = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='If the workshop is to be associated with a conference '
+                     'or meeting, which one? ',
+        blank=True, default='',
+    )
+    preferred_date = models.CharField(
+        max_length=255,
+        help_text='Please indicate when you would like to run the workshop. '
+                  'A range of at least a month is most helpful, although if '
+                  'you have specific dates you need the workshop, we will try '
+                  'to accommodate those requests.',
+        verbose_name='Preferred workshop dates',
+    )
+    language = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='What human language do you want the workshop to be run'
+                     ' in?',
+        blank=True, default='English',
+    )
+
+    WORKSHOP_TYPE_CHOICES = (
+        ('swc', 'Software-Carpentry'),
+        ('dc', 'Data-Carpentry'),
+    )
+    workshop_type = models.CharField(
+        max_length=STR_MED,
+        choices=WORKSHOP_TYPE_CHOICES,
+        blank=False, default='swc',
+    )
+
+    ATTENDEES_NUMBER_CHOICES = (
+        ('1-20', '1-20 (one room, one instructor)'),
+        ('20-40', '20-40 (one room, two instructors)'),
+        ('40-80', '40-80 (two rooms, four instructors)'),
+        ('80-120', '80-120 (three rooms, six instructors)'),
+    )
+    approx_attendees = models.CharField(
+        max_length=STR_MED,
+        choices=ATTENDEES_NUMBER_CHOICES,
+        help_text='This number doesn\'t need to be precise, but will help us '
+                  'decide how many instructors your workshop will need.',
+        verbose_name='Approximate number of Attendees',
+        blank=False,
+        default='20-40',
+    )
+
+    attendee_domains = models.ManyToManyField(
+        'KnowledgeDomain',
+        help_text='The attendees\' academic field(s) of study, if known.',
+        verbose_name='Domains or topic of interest for target audience',
+        blank=False,
+    )
+    attendee_domains_other = models.CharField(
+        max_length=STR_LONG,
+        help_text='If none of the fields above works for you.',
+        verbose_name='Other domains or topics of interest',
+        blank=True, default="",
+    )
+    DATA_TYPES_CHOICES = (
+        ('survey', 'Survey data (ecology, biodiversity, social science)'),
+        ('genomic', 'Genomic data'),
+        ('geospatial', 'Geospatial data'),
+        ('text-mining', 'Text mining'),
+        ('', 'Other (type below)'),
+    )
+    data_types = models.CharField(
+        max_length=STR_MED,
+        choices=DATA_TYPES_CHOICES,
+        verbose_name='We currently have developed or are developing workshops'
+                     ' focused on four types of data. Please let us know which'
+                     ' workshop would best suit your needs.',
+        blank=True,
+    )
+    data_types_other = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Other data domains for the workshop',
+        blank=True,
+    )
+    attendee_academic_levels = models.ManyToManyField(
+        'AcademicLevel',
+        help_text='If you know the academic level(s) of your attendees, '
+                  'indicate them here.',
+        verbose_name='Attendees\' Academic Level',
+    )
+    attendee_computing_levels = models.ManyToManyField(
+        'ComputingExperienceLevel',
+        help_text='Indicate the attendees\' level of computing experience, if '
+                  'known. We will ask attendees to fill in a skills survey '
+                  'before the workshop, so this answer can be an '
+                  'approximation.',
+        verbose_name='Attendees\' level of computing experience',
+    )
+    attendee_data_analysis_level = models.ManyToManyField(
+        'DataAnalysisLevel',
+        help_text='If you know, indicate learner\'s general level of data '
+                  'analysis experience',
+        verbose_name='Level of data analysis experience',
+    )
+    understand_admin_fee = models.BooleanField(
+        default=False,
+        # verbose_name a.k.a. label and help_text were moved to the
+        # SWCEventRequestForm and DCEventRequestForm
+    )
+    fee_waiver_request = models.BooleanField(
+        help_text='Waiver\'s of the administrative fee are available on '
+                  'a needs basis. If you are interested in submitting a waiver'
+                  ' application please indicate here.',
+        verbose_name='I would like to submit an administrative fee waiver '
+                     'application',
+        default=False,
+    )
+    cover_travel_accomodation = models.BooleanField(
+        default=False,
+        verbose_name='My institution will cover instructors\' travel and '
+                     'accommodation costs.',
+    )
+    TRAVEL_REIMBURSEMENT_CHOICES = (
+        ('', 'Don\'t know yet.'),
+        ('book', 'Book travel through our university or program.'),
+        ('reimburse', 'Book their own travel and be reimbursed.'),
+        ('', 'Other (type below)'),
+    )
+    travel_reimbursement = models.CharField(
+        max_length=STR_MED,
+        verbose_name='How will instructors\' travel and accommodations be '
+                     'managed?',
+        choices=TRAVEL_REIMBURSEMENT_CHOICES,
+        null=True, blank=True, default=None,
+    )
+    travel_reimbursement_other = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Other propositions for managing instructors\' travel and'
+                     ' accommodations',
+        blank=True,
+    )
+
+    ADMIN_FEE_PAYMENT_CHOICES = (
+        ('NP1', 'Non-profit / non-partner: US$2500'),
+        ('partner', 'Partner: US$1250'),
+        ('FP1', 'For-profit: US$10,000'),
+        ('self-organized', 'Self-organized: no fee (please let us know if you '
+                           'wish to make a donation)'),
+        ('waiver', 'Waiver requested (please give details in '
+                   '"Anything else")'),
+    )
+    admin_fee_payment = models.CharField(
+        max_length=STR_MED,
+        choices=ADMIN_FEE_PAYMENT_CHOICES,
+        verbose_name='Which of the following applies to your payment for the '
+                     'administrative fee?',
+        blank=False,
+        default='NP1',
+    )
+    comment = models.TextField(
+        help_text='What else do you want us to know about your workshop? About'
+                  ' your attendees? About you?',
+        verbose_name='Anything else?',
+        blank=True,
+    )
+
+    def get_absolute_url(self):
+        return reverse('eventrequest_details', args=[self.pk])
+
+    def __str__(self):
+        return "{name} (from {affiliation}, {type} workshop)".format(
+            name=self.name, affiliation=self.affiliation,
+            type=self.workshop_type,
+        )
+
+
+class AcademicLevel(models.Model):
+    name = models.CharField(max_length=STR_MED, null=False, blank=False)
+
+    def __str__(self):
+        return self.name
+
+
+class ComputingExperienceLevel(models.Model):
+    # it's a long field because we need to store reasoning too, for example:
+    # "Novice (uses a spreadsheet for data analysis rather than writing code)"
+    name = models.CharField(max_length=255, null=False, blank=False)
+
+    def __str__(self):
+        return self.name
+
+
+class DataAnalysisLevel(models.Model):
+    # ComputingExperienceLevel's sibling
+    name = models.CharField(max_length=255, null=False, blank=False)
+
+    def __str__(self):
+        return self.name
 
 
 #------------------------------------------------------------
