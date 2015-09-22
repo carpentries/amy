@@ -160,14 +160,16 @@ class PermissionRequiredMixin(object):
 @login_required
 def dashboard(request):
     '''Home page.'''
-    upcoming_events = Event.objects.upcoming_events()
+    upcoming_ongoing_events = (
+        Event.objects.upcoming_events() | Event.objects.ongoing_events()
+    )
     unpublished_events = Event.objects.unpublished_events()
     uninvoiced_events = Event.objects.uninvoiced_events()
     recently_changed = Revision.objects.all().select_related('user') \
                                        .prefetch_related('version_set') \
                                        .order_by('-date_created')[:50]
     context = {'title': None,
-               'upcoming_events': upcoming_events,
+               'upcoming_ongoing_events': upcoming_ongoing_events,
                'uninvoiced_events': uninvoiced_events,
                'unpublished_events': unpublished_events,
                'recently_changed': recently_changed}
