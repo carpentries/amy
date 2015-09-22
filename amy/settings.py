@@ -107,6 +107,32 @@ TEMPLATES = [
     }
 ]
 
+LOGGING = {
+    'version': 1,  # necessary
+
+    # merge with default settings instead of overwriting
+    'disable_existing_loggers': False,
+
+    'handlers': {
+        # Handler for literally not doing anything about some errors. Only used
+        # in `django.security.DisallowedHost` logger.
+        'null': {
+            'level': 'DEBUG',
+            'class': 'logging.NullHandler',
+        },
+    },
+
+    'loggers': {
+        # Don't spam admins about suspicious requests with HTTP_HOST header
+        # set to value not in ALLOWED_HOSTS.  This is probably the case for
+        # some bots that use faked "Host: xxx" header.
+        'django.security.DisallowedHost': {
+            'handlers': ['null'],
+            'propagate': False,
+        },
+    },
+}
+
 ALLOWED_HOSTS = [
     'amy.software-carpentry.org',
 ]
