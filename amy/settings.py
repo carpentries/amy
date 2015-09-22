@@ -58,7 +58,7 @@ SERVER_EMAIL = os.environ.get('AMY_SERVER_EMAIL', 'root@localhost')
 # addresses to receive "New workshop request" or "New profile update request"
 # notifications
 REQUEST_NOTIFICATIONS_RECIPIENTS = (
-    'admin-all@software-carpentry.org',
+    'admin-all@lists.software-carpentry.org',
 )
 EMAIL_HOST = os.environ.get('AMY_EMAIL_HOST', 'localhost')
 EMAIL_HOST_USER = os.environ.get('AMY_EMAIL_HOST_USER', '')
