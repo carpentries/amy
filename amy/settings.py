@@ -206,9 +206,9 @@ LOGIN_URL = '/account/login/'
 
 # explicitely add European Union as a country
 COUNTRIES_OVERRIDE = {
-    'EU': _('European Union'),
     'GB': _('United Kingdom'),
     'US': _('United States'),
+    'W3': _('Online'),
 }
 
 # settings for REST API
