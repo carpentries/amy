@@ -1417,11 +1417,12 @@ def _failed_to_delete(request, object, protected_objects, back=None):
 class SWCEventRequest(View):
     form_class = SWCEventRequestForm
     form_helper = bootstrap_helper_wider_labels
+    page_title = 'Request a Software Carpentry Workshop'
 
     def get(self, request, *args, **kwargs):
         form = self.form_class()
         context = {
-            'title': 'Request a Workshop',
+            'title': self.page_title,
             'form': form,
             'form_helper': self.form_helper,
         }
@@ -1479,7 +1480,7 @@ class SWCEventRequest(View):
         else:
             messages.error(request, 'Fix errors below.')
             context = {
-                'title': 'Request a Workshop',
+                'title': self.page_title,
                 'form': form,
                 'form_helper': self.form_helper,
             }
@@ -1488,7 +1489,7 @@ class SWCEventRequest(View):
 
 class DCEventRequest(SWCEventRequest):
     form_class = DCEventRequestForm
-
+    page_title = 'Request a Data Carpentry Workshop'
 
 class AllEventRequests(LoginRequiredMixin, ListView):
     queryset = EventRequest.objects.filter(active=True).order_by('-created_at')
@@ -1561,6 +1562,7 @@ def profileupdaterequest_create(request):
     """
     form = ProfileUpdateRequestForm()
     form_helper = bootstrap_helper_wider_labels
+    page_title = 'Update Instructor Profile'
 
     if request.method == 'POST':
         form = ProfileUpdateRequestForm(request.POST)
@@ -1580,7 +1582,7 @@ def profileupdaterequest_create(request):
             messages.error(request, 'Fix errors below.')
 
     context = {
-        'title': 'Update your instructor profile',
+        'title': page_title,
         'form': form,
         'form_helper': form_helper,
     }
