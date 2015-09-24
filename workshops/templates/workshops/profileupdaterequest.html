@@ -1,6 +1,7 @@
 {% extends "workshops/_page.html" %}
 
 {% load crispy_forms_tags %}
+{% load links %}
 
 {% block content %}
 <div class="alert alert-info" role="alert">
@@ -58,8 +59,8 @@
         <td>{{ new.twitter|default:"—" }}</td>
         <td>{% if old %}{{ old.twitter|default:"—" }}{% endif %}</td></tr>
     <tr><th>Personal website:</th>
-        <td>{{ new.website|urlize }}</td>
-        <td>{% if old %}{{ old.url|urlize }}{% endif %}</td></tr>
+        <td>{{ new.website|urlize_newtab }}</td>
+        <td>{% if old %}{{ old.url|urlize_newtab }}{% endif %}</td></tr>
     <tr><th>Gender:</th>
         <td>{{ new.get_gender_display }}{{ new.gender_other }}</td>
         <td>{% if old %}{{ old.get_gender_display }}{% endif %}</td></tr>

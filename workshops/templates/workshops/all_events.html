@@ -47,7 +47,7 @@
         </td>
         <td {% if not event.get_repository_url %}class="warning"{% endif %}>
           {% if event.get_repository_url %}
-          <a href="{{ event.get_repository_url }}">{{ event.get_repository_url|cut:"https://github.com/" }}
+          <a href="{{ event.get_repository_url }}" target="_blank">{{ event.get_repository_url|cut:"https://github.com/" }}
           {% else %}—{% endif %}
         </td>
         <td><a href="{% url 'host_details' event.host.domain %}">{{ event.host }}</a></td>
