@@ -16,6 +16,7 @@ QUERY_CSV = sqlite3 -csv ${APP_DB}
 
 # Error messages.
 E_SITE_PATH = "error: must set SITE_PATH before running command"
+E_CERT_PATH = "error: must set CERT_PATH before running command"
 
 .PHONY: workshops/git_version.py
 
@@ -51,13 +52,13 @@ airports :
 badges :
 	@${MANAGE} export_badges
 
-## check-urls   : check workshop URLs (must set SITE_PATH to run)
-check-urls :
-	@if [ -z "${SITE_PATH}" ]; then echo ${E_SITE_PATH}; else ${MANAGE} check_workshop_urls ${SITE_PATH}; fi
-
 ## check-badges : check that all badges have been awarded (must set SITE_PATH to run)
 check-badges :
 	@if [ -z "${SITE_PATH}" ]; then echo ${E_SITE_PATH}; else ${MANAGE} check_badges ${SITE_PATH}; fi
+
+## check-certs : check that all instructor certificates have been set (must set CERT_PATH to run)
+check-certs :
+	@if [ -z "${CERT_PATH}" ]; then echo ${E_CERT_PATH}; else ${MANAGE} check_certificates ${CERT_PATH}; fi
 
 ## schema       : display the database schema
 schema :

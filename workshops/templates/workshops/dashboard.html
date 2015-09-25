@@ -7,9 +7,9 @@
   <div class="col-sm-8">
     <div class="row">
       <div class="col-xs-3">
-        <h3>Upcoming</h3>
+        <h3>Upcoming &amp; ongoing</h3>
         <table class="table table-striped">
-        {% for event in upcoming_events %}
+        {% for event in upcoming_ongoing_events %}
         <tr>
           <td><a href="{{ event.get_absolute_url }}">{{ event.get_ident }}</a></td>
         </tr>

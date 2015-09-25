@@ -160,14 +160,16 @@ class PermissionRequiredMixin(object):
 @login_required
 def dashboard(request):
     '''Home page.'''
-    upcoming_events = Event.objects.upcoming_events()
+    upcoming_ongoing_events = (
+        Event.objects.upcoming_events() | Event.objects.ongoing_events()
+    )
     unpublished_events = Event.objects.unpublished_events()
     uninvoiced_events = Event.objects.uninvoiced_events()
     recently_changed = Revision.objects.all().select_related('user') \
                                        .prefetch_related('version_set') \
                                        .order_by('-date_created')[:50]
     context = {'title': None,
-               'upcoming_events': upcoming_events,
+               'upcoming_ongoing_events': upcoming_ongoing_events,
                'uninvoiced_events': uninvoiced_events,
                'unpublished_events': unpublished_events,
                'recently_changed': recently_changed}
@@ -1415,15 +1417,18 @@ def _failed_to_delete(request, object, protected_objects, back=None):
 class SWCEventRequest(View):
     form_class = SWCEventRequestForm
     form_helper = bootstrap_helper_wider_labels
+    page_title = 'Request a Software Carpentry Workshop'
+    form_template = 'forms/workshop_swc_request.html'
+    success_template = 'forms/workshop_request_confirm.html'
 
     def get(self, request, *args, **kwargs):
         form = self.form_class()
         context = {
-            'title': 'Request a Workshop',
+            'title': self.page_title,
             'form': form,
             'form_helper': self.form_helper,
         }
-        return render(request, 'forms/workshop_request.html', context)
+        return render(request, self.form_template, context)
 
     def post(self, request, *args, **kwargs):
         form = self.form_class(request.POST)
@@ -1472,20 +1477,21 @@ class SWCEventRequest(View):
             context = {
                 'title': 'Thank you for requesting a workshop',
             }
-            return render(request, 'forms/workshop_request_confirm.html',
-                          context)
+            return render(request, self.success_template, context)
         else:
             messages.error(request, 'Fix errors below.')
             context = {
-                'title': 'Request a Workshop',
+                'title': self.page_title,
                 'form': form,
                 'form_helper': self.form_helper,
             }
-            return render(request, 'forms/workshop_request.html', context)
+            return render(request, self.form_template, context)
 
 
 class DCEventRequest(SWCEventRequest):
     form_class = DCEventRequestForm
+    page_title = 'Request a Data Carpentry Workshop'
+    form_template = 'forms/workshop_dc_request.html'
 
 
 class AllEventRequests(LoginRequiredMixin, ListView):
@@ -1559,6 +1565,7 @@ def profileupdaterequest_create(request):
     """
     form = ProfileUpdateRequestForm()
     form_helper = bootstrap_helper_wider_labels
+    page_title = 'Update Instructor Profile'
 
     if request.method == 'POST':
         form = ProfileUpdateRequestForm(request.POST)
@@ -1578,7 +1585,7 @@ def profileupdaterequest_create(request):
             messages.error(request, 'Fix errors below.')
 
     context = {
-        'title': 'Update your instructor profile',
+        'title': page_title,
         'form': form,
         'form_helper': form_helper,
     }
