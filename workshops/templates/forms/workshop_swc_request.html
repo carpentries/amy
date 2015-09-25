@@ -1,0 +1,20 @@
+{% extends "base_without_navbar.html" %}
+{% load static %}
+
+{% load crispy_forms_tags %}
+{% load selectable_tags %}
+
+{% block title %}
+{% block form_header_image %}
+<img src="{% static 'software-carpentry-banner.png' %}" alt='Software-Carpentry logo' class="workshop-form-logo" />
+{% endblock %}
+{{ block.super }}
+{% endblock %}
+
+{% block content %}
+{% crispy form form_helper %}
+{% endblock %}
+
+{% block extrajs %}
+{{ form.media }}
+{% endblock extrajs %}

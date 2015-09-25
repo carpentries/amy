@@ -1418,6 +1418,8 @@ class SWCEventRequest(View):
     form_class = SWCEventRequestForm
     form_helper = bootstrap_helper_wider_labels
     page_title = 'Request a Software Carpentry Workshop'
+    form_template = 'forms/workshop_swc_request.html'
+    success_template = 'forms/workshop_request_confirm.html'
 
     def get(self, request, *args, **kwargs):
         form = self.form_class()
@@ -1426,7 +1428,7 @@ class SWCEventRequest(View):
             'form': form,
             'form_helper': self.form_helper,
         }
-        return render(request, 'forms/workshop_request.html', context)
+        return render(request, self.form_template, context)
 
     def post(self, request, *args, **kwargs):
         form = self.form_class(request.POST)
@@ -1475,8 +1477,7 @@ class SWCEventRequest(View):
             context = {
                 'title': 'Thank you for requesting a workshop',
             }
-            return render(request, 'forms/workshop_request_confirm.html',
-                          context)
+            return render(request, self.success_template, context)
         else:
             messages.error(request, 'Fix errors below.')
             context = {
@@ -1484,12 +1485,14 @@ class SWCEventRequest(View):
                 'form': form,
                 'form_helper': self.form_helper,
             }
-            return render(request, 'forms/workshop_request.html', context)
+            return render(request, self.form_template, context)
 
 
 class DCEventRequest(SWCEventRequest):
     form_class = DCEventRequestForm
     page_title = 'Request a Data Carpentry Workshop'
+    form_template = 'forms/workshop_dc_request.html'
+
 
 class AllEventRequests(LoginRequiredMixin, ListView):
     queryset = EventRequest.objects.filter(active=True).order_by('-created_at')
