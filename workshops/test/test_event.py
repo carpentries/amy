@@ -213,6 +213,9 @@ class TestEventViews(TestBase):
 
     def setUp(self):
         self._setUpUsersAndLogin()
+        self._setUpNonInstructors()
+
+        self.learner = Role.objects.get_or_create(name='learner')[0]
 
         # Create a test host
         self.test_host = Host.objects.create(domain='example.com',
@@ -470,6 +473,25 @@ class TestEventViews(TestBase):
         }
         response = self.client.post(reverse('event_add'), data)
         assert response.status_code == 302
+
+    def test_number_of_attendees_increasing(self):
+        """Ensure event.attendance gets bigger after adding new learners."""
+        event = Event.objects.get(slug='test_event_0')
+        event.attendance = 0
+        event.save()
+
+        url, values = self._get_initial_form_index(1, 'event_edit', event.pk)
+        values['task-role'] = self.learner.pk
+        values['task-event'] = event.pk
+        values['task-person_0'] = str(self.spiderman)
+        values['task-person_1'] = self.spiderman.pk
+
+        rv = self.client.post(reverse('event_edit', args=[event.pk]), values,
+                              follow=True)
+        self._check_status_code_and_parse(rv, 200)
+
+        event.refresh_from_db()
+        assert event.attendance == 1
 
 
 class TestEventNotes(TestBase):

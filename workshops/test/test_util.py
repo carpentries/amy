@@ -98,6 +98,7 @@ class CSVBulkUploadTestBase(TestBase):
                                         fullname='Test Host')
 
         Role.objects.create(name='Instructor')
+        Role.objects.create(name='learner')
         Event.objects.create(start=datetime.now(),
                              host=test_host,
                              slug='foobar',
@@ -328,6 +329,42 @@ Harry,,Potter,harry@hogwarts.edu,foobar,Instructor
         self.assertEqual(tasks_pre, tasks_post)
         self.assertEqual(users_pre, users_post)
         self.assertEqual(rv.status_code, 200)
+
+    def test_attendance_increases(self):
+        """
+        Check if uploading tasks with role "learner" increase event's
+        attendance.
+        """
+        foobar = Event.objects.get(slug="foobar")
+        foobar.attendance = attendance = 0
+        foobar.save()
+
+        csv = """personal,middle,family,email,event,role
+Harry,,Potter,harry@hogwarts.edu,foobar,learner
+"""
+        data, _ = upload_person_task_csv(StringIO(csv))
+
+        # self.client is authenticated user so we have access to the session
+        store = self.client.session
+        store['bulk-add-people'] = data
+        store.save()
+
+        # send exactly what's in 'data'
+        payload = {
+            "personal": data[0]['personal'],
+            "middle": data[0]['middle'],
+            "family": data[0]['family'],
+            "email": data[0]['email'],
+            "event": data[0]['event'],
+            "role": data[0]['role'],
+            "confirm": "Confirm",
+        }
+
+        self.client.post(reverse('person_bulk_add_confirmation'), payload,
+                         follow=True)
+
+        foobar.refresh_from_db()
+        self.assertEqual(attendance + 1, foobar.attendance)
 
 
 class TestEventURLNormalization(TestCase):
