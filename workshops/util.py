@@ -192,6 +192,8 @@ def create_uploaded_persons_tasks(data):
 
     persons_created = []
     tasks_created = []
+    events = set()
+
     with transaction.atomic():
         for row in data:
             try:
@@ -216,6 +218,12 @@ def create_uploaded_persons_tasks(data):
                 if row['event'] and row['role']:
                     e = Event.objects.get(slug=row['event'])
                     r = Role.objects.get(name=row['role'])
+
+                    # is the number of learners attending the event changed,
+                    # we should update ``event.attendance``
+                    if row['role'] == 'learner':
+                        events.add(e)
+
                     t, created = Task.objects.get_or_create(person=p, event=e,
                                                             role=r)
                     if created:
@@ -226,6 +234,13 @@ def create_uploaded_persons_tasks(data):
 
             except ObjectDoesNotExist as e:
                 raise ObjectDoesNotExist('{0} (for {1})'.format(str(e), row))
+
+    for event in events:
+        # count attendees
+        learners = event.task_set.filter(role__name='learner').count()
+        # update attendees count if number of learner tasks > event.attendance
+        Event.objects.filter(pk=event.pk, attendance__lt=learners) \
+                     .update(attendance=learners)
 
     return persons_created, tasks_created
 

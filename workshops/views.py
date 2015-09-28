@@ -853,6 +853,12 @@ def event_edit(request, event_ident):
                     ),
                 )
 
+                # if event.attendance is lower than number of learners, then
+                # update the attendance
+                learners = event.task_set.filter(role__name='learner').count()
+                Event.objects.filter(pk=event.pk, attendance__lt=learners) \
+                             .update(attendance=learners)
+
                 # to reset the form values
                 return redirect(request.path)
 
@@ -872,11 +878,16 @@ def event_edit(request, event_ident):
                     ),
                 )
 
+                # if event.attendance is lower than number of learners, then
+                # update the attendance
+                learners = event.task_set.filter(role__name='learner').count()
+                Event.objects.filter(pk=event.pk, attendance__lt=learners) \
+                             .update(attendance=learners)
+
                 return redirect(event)
 
             else:
                 messages.error(request, 'Fix errors below.')
-
 
     context = {'title': 'Edit Event {0}'.format(event.get_ident()),
                'event_form': event_form,
