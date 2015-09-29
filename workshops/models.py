@@ -495,7 +495,8 @@ class Event(models.Model):
     def get_absolute_url(self):
         return reverse('event_details', args=[self.get_ident()])
 
-    def get_repository_url(self):
+    @property
+    def repository_url(self):
         """Return self.url formatted as it was repository URL.
 
         Repository URL is as specified in REPO_FORMAT.
@@ -511,7 +512,8 @@ class Event(models.Model):
             # KeyError: mo.groupdict doesn't supply required names to format
             return self.url
 
-    def get_website_url(self):
+    @property
+    def website_url(self):
         """Return self.url formatted as it was website URL.
 
         Website URL is as specified in WEBSITE_FORMAT.
