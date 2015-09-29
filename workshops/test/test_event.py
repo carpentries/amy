@@ -177,7 +177,7 @@ class TestEvent(TestBase):
                 host=test_host,
                 url=link
             )
-            assert event.get_repository_url() == REPO
+            assert event.repository_url == REPO
 
     def test_website_url(self):
         test_host = Host.objects.all()[0]
@@ -187,14 +187,14 @@ class TestEvent(TestBase):
             'https://github.com/user-name/repo-name',
             'https://github.com/user-name/repo-name/',
         ]
-        WEBSITE = 'https://user-name.github.io/repo-name'
+        WEBSITE = 'https://user-name.github.io/repo-name/'
         for index, link in enumerate(links):
             event = Event.objects.create(
                 slug='e{}'.format(index),
                 host=test_host,
                 url=link
             )
-            assert event.get_website_url() == WEBSITE
+            assert event.website_url == WEBSITE
 
     def test_wrong_repository_website_urls(self):
         test_host = Host.objects.all()[0]
@@ -204,8 +204,8 @@ class TestEvent(TestBase):
             host=test_host,
             url=link
         )
-        assert event.get_repository_url() == link
-        assert event.get_website_url() == link
+        assert event.repository_url == link
+        assert event.website_url == link
 
 
 class TestEventViews(TestBase):

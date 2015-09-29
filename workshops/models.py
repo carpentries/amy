@@ -481,7 +481,7 @@ class Event(models.Model):
     REPO_FORMAT = 'https://github.com/{name}/{repo}'
     WEBSITE_REGEX = re.compile(r'https?://(?P<name>[^.]+)\.github\.'
                                r'(io|com)/(?P<repo>[^/]+)/?')
-    WEBSITE_FORMAT = 'https://{name}.github.io/{repo}'
+    WEBSITE_FORMAT = 'https://{name}.github.io/{repo}/'
 
     class Meta:
         ordering = ('-start', )

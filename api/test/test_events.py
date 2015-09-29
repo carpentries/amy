@@ -34,21 +34,21 @@ class TestListingPastEvents(APITestCase):
             slug='event1', start=past - delta_2d, end=past - delta_1d,
             host=host, latitude=3, longitude=-2, venue='University',
             address='On the street', country='US', contact='sb@sth.edu',
-            url='http://url1/',
+            url='https://user.github.io/repository/',
         )
         # ongoing event
         self.event2 = Event.objects.create(
             slug='event2', start=today - delta_2d, end=today + delta_2d,
             host=host, latitude=3, longitude=-2, venue='University',
             address='On the street', country='US', contact='sb@sth.edu',
-            url='http://url2/',
+            url='https://github.com/user/repository',
         )
         # future event
         self.event3 = Event.objects.create(
             slug='event3', start=future - delta_2d, end=future + delta_2d,
             host=host, latitude=3, longitude=-2, venue='University',
             address='On the street', country='US', contact='sb@sth.edu',
-            url='http://url3/',
+            url='http://github.com/user/repository/',
         )
         # event with missing start
         self.event4 = Event.objects.create(
@@ -76,12 +76,12 @@ class TestListingPastEvents(APITestCase):
                 'start': self.event3.start,
                 'end': self.event3.end,
                 'humandate': 'Mar 23-27, 2030',
-                'latitude': 3,
-                'longitude': -2,
+                'latitude': 3.,
+                'longitude': -2.,
                 'venue': 'University',
                 'address': 'On the street',
                 'country': 'US',
-                'url': 'http://url3/',
+                'url': 'https://user.github.io/repository/',
                 'contact': 'sb@sth.edu',
             },
             {
@@ -91,12 +91,12 @@ class TestListingPastEvents(APITestCase):
                 'humandate': self.serializer_class.human_readable_date(
                     self.event2.start, self.event2.end
                 ),
-                'latitude': 3,
-                'longitude': -2,
+                'latitude': 3.,
+                'longitude': -2.,
                 'venue': 'University',
                 'address': 'On the street',
                 'country': 'US',
-                'url': 'http://url2/',
+                'url': 'https://user.github.io/repository/',
                 'contact': 'sb@sth.edu',
             },
             {
@@ -104,12 +104,12 @@ class TestListingPastEvents(APITestCase):
                 'start': self.event1.start,
                 'end': self.event1.end,
                 'humandate': 'Aug 28-29, 1993',
-                'latitude': 3,
-                'longitude': -2,
+                'latitude': 3.,
+                'longitude': -2.,
                 'venue': 'University',
                 'address': 'On the street',
                 'country': 'US',
-                'url': 'http://url1/',
+                'url': 'https://user.github.io/repository/',
                 'contact': 'sb@sth.edu',
             },
         ]
