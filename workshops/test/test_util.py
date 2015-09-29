@@ -336,7 +336,7 @@ Harry,,Potter,harry@hogwarts.edu,foobar,Instructor
         attendance.
         """
         foobar = Event.objects.get(slug="foobar")
-        assert foobar.attendance is None  # testing for None case
+        assert foobar.attendance is None
         foobar.save()
 
         csv = """personal,middle,family,email,event,role
