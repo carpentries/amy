@@ -58,7 +58,8 @@ from workshops.forms import (
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
     create_uploaded_persons_tasks, InternalError, Paginator, merge_persons,
-    normalize_event_index_url, WrongEventURL, parse_tags_from_event_index
+    normalize_event_index_url, WrongEventURL, parse_tags_from_event_index,
+    update_event_attendance_from_tasks
 )
 
 from workshops.filters import (
@@ -855,9 +856,7 @@ def event_edit(request, event_ident):
 
                 # if event.attendance is lower than number of learners, then
                 # update the attendance
-                learners = event.task_set.filter(role__name='learner').count()
-                Event.objects.filter(pk=event.pk, attendance__lt=learners) \
-                             .update(attendance=learners)
+                update_event_attendance_from_tasks(event)
 
                 # to reset the form values
                 return redirect(request.path)
@@ -880,9 +879,7 @@ def event_edit(request, event_ident):
 
                 # if event.attendance is lower than number of learners, then
                 # update the attendance
-                learners = event.task_set.filter(role__name='learner').count()
-                Event.objects.filter(pk=event.pk, attendance__lt=learners) \
-                             .update(attendance=learners)
+                update_event_attendance_from_tasks(event)
 
                 return redirect(event)
 

@@ -477,7 +477,7 @@ class TestEventViews(TestBase):
     def test_number_of_attendees_increasing(self):
         """Ensure event.attendance gets bigger after adding new learners."""
         event = Event.objects.get(slug='test_event_0')
-        event.attendance = 0
+        event.attendance = 0  # testing for numeric case
         event.save()
 
         url, values = self._get_initial_form_index(1, 'event_edit', event.pk)

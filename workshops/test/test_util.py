@@ -336,7 +336,7 @@ Harry,,Potter,harry@hogwarts.edu,foobar,Instructor
         attendance.
         """
         foobar = Event.objects.get(slug="foobar")
-        foobar.attendance = attendance = 0
+        assert foobar.attendance is None  # testing for None case
         foobar.save()
 
         csv = """personal,middle,family,email,event,role
@@ -364,7 +364,7 @@ Harry,,Potter,harry@hogwarts.edu,foobar,learner
                          follow=True)
 
         foobar.refresh_from_db()
-        self.assertEqual(attendance + 1, foobar.attendance)
+        self.assertEqual(1, foobar.attendance)
 
 
 class TestEventURLNormalization(TestCase):
