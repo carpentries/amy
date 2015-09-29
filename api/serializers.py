@@ -34,6 +34,7 @@ class EventSerializer(serializers.ModelSerializer):
     country = serializers.CharField()
     start = serializers.DateField(format=None)
     end = serializers.DateField(format=None)
+    url = serializers.URLField(source='website_url')
 
     def get_humandate(self, obj):
         """Render start and end dates as human-readable short date."""
