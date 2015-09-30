@@ -1,5 +1,6 @@
 {% extends "workshops/_page.html" %}
 
+{% load links %}
 {% load merging_utils %}
 {% block content %}
 <table class="table table-bordered">
@@ -58,18 +59,18 @@
   </tr>
   <tr>
     <th>github:</th>
-    <td class="{% warn_if_different person_from.github person_to.github %}">{% if person_from.github %}<a href="https://github.com/{{ person_from.github }}">{{ person_from.github }}</a>{% else %}—{% endif %}</td>
-    <td>{% if person_to.github %}<a href="https://github.com/{{ person_to.github }}">{{ person_to.github }}</a>{% else %}—{% endif %}</td>
+    <td class="{% warn_if_different person_from.github person_to.github %}">{% if person_from.github %}<a href="https://github.com/{{ person_from.github }}" target="_blank">{{ person_from.github }}</a>{% else %}—{% endif %}</td>
+    <td>{% if person_to.github %}<a href="https://github.com/{{ person_to.github }}" target="_blank">{{ person_to.github }}</a>{% else %}—{% endif %}</td>
   </tr>
   <tr>
     <th>twitter:</th>
-    <td class="{% warn_if_different person_from.twitter person_to.twitter %}">{% if person_from.twitter %}<a href="https://twitter.com/{{ person_from.twitter }}">{{ person_from.twitter }}</a>{% else %}—{% endif %}</td>
-    <td>{% if person_to.twitter %}<a href="https://twitter.com/{{ person_to.twitter }}">{{ person_to.twitter }}</a>{% else %}—{% endif %}</td>
+    <td class="{% warn_if_different person_from.twitter person_to.twitter %}">{% if person_from.twitter %}<a href="https://twitter.com/{{ person_from.twitter }}" target="_blank">{{ person_from.twitter }}</a>{% else %}—{% endif %}</td>
+    <td>{% if person_to.twitter %}<a href="https://twitter.com/{{ person_to.twitter }}" target="_blank">{{ person_to.twitter }}</a>{% else %}—{% endif %}</td>
   </tr>
   <tr>
     <th>url:</th>
-    <td class="{% warn_if_different person_from.url person_to.url %}">{{ person_from.url|urlize|default_if_none:"—" }}</td>
-    <td>{{ person_to.url|urlize|default_if_none:"—" }}</td>
+    <td class="{% warn_if_different person_from.url person_to.url %}">{{ person_from.url|urlize_newtab|default_if_none:"—" }}</td>
+    <td>{{ person_to.url|urlize_newtab|default_if_none:"—" }}</td>
   </tr>
   <tr>
     <th>notes:</th>
