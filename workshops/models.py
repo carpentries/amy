@@ -502,7 +502,10 @@ class Event(models.Model):
         Repository URL is as specified in REPO_FORMAT.
         If it doesn't match, the original URL is returned."""
         try:
-            mo = self.WEBSITE_REGEX.match(self.url)
+            # Try to match repo regex first. This will result in all repo URLs
+            # always formatted in the same way.
+            mo = (self.REPO_REGEX.match(self.url)
+                  or self.WEBSITE_REGEX.match(self.url))
             if not mo:
                 return self.url
 
@@ -519,7 +522,10 @@ class Event(models.Model):
         Website URL is as specified in WEBSITE_FORMAT.
         If it doesn't match, the original URL is returned."""
         try:
-            mo = self.REPO_REGEX.match(self.url)
+            # Try to match website regex first. This will result in all website
+            # URLs always formatted in the same way.
+            mo = (self.WEBSITE_REGEX.match(self.url)
+                  or self.REPO_REGEX.match(self.url))
             if not mo:
                 return self.url
 
