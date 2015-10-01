@@ -481,7 +481,7 @@ class Event(models.Model):
     REPO_FORMAT = 'https://github.com/{name}/{repo}'
     WEBSITE_REGEX = re.compile(r'https?://(?P<name>[^.]+)\.github\.'
                                r'(io|com)/(?P<repo>[^/]+)/?')
-    WEBSITE_FORMAT = 'https://{name}.github.io/{repo}'
+    WEBSITE_FORMAT = 'https://{name}.github.io/{repo}/'
 
     class Meta:
         ordering = ('-start', )
@@ -495,13 +495,17 @@ class Event(models.Model):
     def get_absolute_url(self):
         return reverse('event_details', args=[self.get_ident()])
 
-    def get_repository_url(self):
+    @property
+    def repository_url(self):
         """Return self.url formatted as it was repository URL.
 
         Repository URL is as specified in REPO_FORMAT.
         If it doesn't match, the original URL is returned."""
         try:
-            mo = self.WEBSITE_REGEX.match(self.url)
+            # Try to match repo regex first. This will result in all repo URLs
+            # always formatted in the same way.
+            mo = (self.REPO_REGEX.match(self.url)
+                  or self.WEBSITE_REGEX.match(self.url))
             if not mo:
                 return self.url
 
@@ -511,13 +515,17 @@ class Event(models.Model):
             # KeyError: mo.groupdict doesn't supply required names to format
             return self.url
 
-    def get_website_url(self):
+    @property
+    def website_url(self):
         """Return self.url formatted as it was website URL.
 
         Website URL is as specified in WEBSITE_FORMAT.
         If it doesn't match, the original URL is returned."""
         try:
-            mo = self.REPO_REGEX.match(self.url)
+            # Try to match website regex first. This will result in all website
+            # URLs always formatted in the same way.
+            mo = (self.WEBSITE_REGEX.match(self.url)
+                  or self.REPO_REGEX.match(self.url))
             if not mo:
                 return self.url
 
