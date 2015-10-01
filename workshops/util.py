@@ -5,6 +5,7 @@ import re
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError, transaction
+from django.db.models import Q
 from django.core.paginator import Paginator as DjangoPaginator
 import requests
 
@@ -192,6 +193,8 @@ def create_uploaded_persons_tasks(data):
 
     persons_created = []
     tasks_created = []
+    events = set()
+
     with transaction.atomic():
         for row in data:
             try:
@@ -216,6 +219,12 @@ def create_uploaded_persons_tasks(data):
                 if row['event'] and row['role']:
                     e = Event.objects.get(slug=row['event'])
                     r = Role.objects.get(name=row['role'])
+
+                    # is the number of learners attending the event changed,
+                    # we should update ``event.attendance``
+                    if row['role'] == 'learner':
+                        events.add(e)
+
                     t, created = Task.objects.get_or_create(person=p, event=e,
                                                             role=r)
                     if created:
@@ -226,6 +235,11 @@ def create_uploaded_persons_tasks(data):
 
             except ObjectDoesNotExist as e:
                 raise ObjectDoesNotExist('{0} (for {1})'.format(str(e), row))
+
+    for event in events:
+        # if event.attendance is lower than number of learners, then
+        # update the attendance
+        update_event_attendance_from_tasks(event)
 
     return persons_created, tasks_created
 
@@ -428,3 +442,13 @@ COUNTRY: {country}""".format(
         'latitude': latitude,
         'longitude': longitude,
     }
+
+
+def update_event_attendance_from_tasks(event):
+    """Increase event.attendance if there's more learner tasks belonging to the
+    event."""
+    learners = event.task_set.filter(role__name='learner').count()
+    Event.objects \
+        .filter(pk=event.pk) \
+        .filter(Q(attendance__lt=learners) | Q(attendance__isnull=True)) \
+        .update(attendance=learners)
