@@ -71,6 +71,10 @@ def upload_person_task_csv(stream):
     empty_fields = set()
 
     for row in reader:
+        # skip empty lines in the CSV
+        if not any(row.values()):
+            continue
+
         entry = {}
         for col in Person.PERSON_UPLOAD_FIELDS:
             try:
