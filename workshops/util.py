@@ -440,7 +440,10 @@ COUNTRY: {country}""".format(
         'slug': slug,
         'start': headers.get('startdate', ''),
         'end': headers.get('enddate', ''),
-        'url': orig_url,
+        # A neat trick to get website URL easily.  It creates an Event object
+        # (but doesn't add it to the database) and uses it's translating
+        # @property 'website_url's
+        'url': Event(url=orig_url).website_url,
         'reg_key': headers.get('eventbrite', ''),
         'contact': headers.get('contact', ''),
         'notes': notes,
