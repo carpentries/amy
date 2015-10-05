@@ -103,6 +103,7 @@
           $("#id_event-notes").val(data.notes);
           $('#id_event-venue').val(data.venue);
           $('#id_event-address').val(data.address);
+          $('#id_event-country').val(data.country);
           $('#id_event-latitude').val(data.latitude);
           $('#id_event-longitude').val(data.longitude);
           break;
@@ -137,6 +138,9 @@
           }
           if ($("#id_event-address").val() == "") {
             $("#id_event-address").val(data.address);
+          }
+          if ($("#id_event-country").val() == "") {
+            $("#id_event-country").val(data.country);
           }
           if ($("#id_event-latitude").val() == "") {
             $("#id_event-latitude").val(data.latitude);

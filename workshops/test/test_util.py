@@ -519,3 +519,43 @@ eventbrite: 10000000
         }
 
         self.assertEqual(parse_tags_from_event_index(url), expected)
+
+    @patch.object(requests, 'get')
+    def test_parsing_2letter_country(self, mock_get):
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.text = """---
+venue: Euphoric State University
+address: Highway to Heaven 42, Academipolis
+country: us
+startdate: 2015-07-13
+enddate: 2015-07-14
+instructor: ["Hermione Granger", "Harry Potter", "Ron Weasley",]
+helper: ["Peter Parker", "Tony Stark", "Natasha Romanova",]
+contact: hermione@granger.co.uk, rweasley@ministry.gov.uk
+eventbrite: 10000000
+---
+"""
+        url = 'http://test.github.io/2015-07-13-test/'
+        rv = parse_tags_from_event_index(url)
+
+        self.assertEqual(rv['country'], 'US')
+
+    @patch.object(requests, 'get')
+    def test_parsing_old_format_country(self, mock_get):
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.text = """---
+venue: Euphoric State University
+address: Highway to Heaven 42, Academipolis
+country: United-States
+startdate: 2015-07-13
+enddate: 2015-07-14
+instructor: ["Hermione Granger", "Harry Potter", "Ron Weasley",]
+helper: ["Peter Parker", "Tony Stark", "Natasha Romanova",]
+contact: hermione@granger.co.uk, rweasley@ministry.gov.uk
+eventbrite: 10000000
+---
+"""
+        url = 'http://test.github.io/2015-07-13-test/'
+        rv = parse_tags_from_event_index(url)
+
+        self.assertEqual(rv['country'], 'US')

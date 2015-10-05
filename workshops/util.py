@@ -7,6 +7,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.core.paginator import Paginator as DjangoPaginator
+from django_countries import countries
 import requests
 
 from workshops.check import get_header
@@ -413,13 +414,24 @@ def parse_tags_from_event_index(orig_url):
     except ValueError:
         latitude, longitude = '', ''
 
+    country = headers.get('country', '')
+    if len(country) == 2:
+        # special case: we're asking workshops to have country as a 2-letter
+        # code, but for now most of them use (semi-)full country names
+        country = country.upper()
+    elif len(country):
+        # probably a full-length country name
+        countries_codes = {name: code for code, name in countries}
+        country = country.replace('-', ' ')
+        country = countries_codes.get(country, country)
+
     # put instructors, helpers and venue into notes
     notes = """INSTRUCTORS: {instructors}
 
 HELPERS: {helpers}
 
 COUNTRY: {country}""".format(
-        country=headers.get('country', ''),
+        country=country,
         instructors=", ".join(headers.get('instructor') or []),
         helpers=", ".join(headers.get('helper') or []),
     )
@@ -434,9 +446,7 @@ COUNTRY: {country}""".format(
         'notes': notes,
         'venue': headers.get('venue', ''),
         'address': headers.get('address', ''),
-        # countries aren't written in a standard way, so we can't auto-select
-        # them
-        'country': headers.get('country', ''),
+        'country': country,
         'latitude': latitude,
         'longitude': longitude,
     }
