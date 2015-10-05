@@ -376,25 +376,23 @@ def normalize_event_index_url(url):
     …will become:
     https://raw.githubusercontent.com/user/SLUG/gh-pages/index.html
     """
-    template = ('https://raw.githubusercontent.com/{username}/{slug}'
+    template = ('https://raw.githubusercontent.com/{name}/{repo}'
                 '/gh-pages/index.html')
-    FMT = [
-        r'https?://(?P<name>[^\.]+)\.github\.io/(?P<repo>[^/]+)',
-        r'https?://(?P<name>[^\.]+)\.github\.io/(?P<repo>[^/]+)/index\.html',
-        r'https://github\.com/(?P<name>[^/]+)/(?P<repo>[^/]+)',
+    formats = [
+        r'https?://(?P<name>[^\.]+)\.github\.(io|com)/(?P<repo>[^/]+)/?',
+        (r'https?://(?P<name>[^\.]+)\.github\.(io|com)/(?P<repo>[^/]+)/'
+         r'index\.html'),
+        r'https://github\.com/(?P<name>[^/]+)/(?P<repo>[^/]+)/?',
         (r'https://github\.com/(?P<name>[^/]+)/(?P<repo>[^/]+)/'
          r'blob/gh-pages/index\.html'),
-        (r'https://raw.githubusercontent.com/(?P<name>[^/]+)/(?P<repo>\S+)'
+        (r'https://raw.githubusercontent.com/(?P<name>[^/]+)/(?P<repo>[^/]+)'
          r'/gh-pages/index.html'),
     ]
-    for format in FMT:
-        results = re.findall(format, url)
+    for format in formats:
+        results = re.match(format, url)
         if results:
-            username, slug = results[0]
-            # caution: if groups in URL change order, then the formatting
-            # below will be broken, because it relies on re.findall() output,
-            # which is a tuple (:sad:)
-            return template.format(username=username, slug=slug), slug
+            repo = results.groupdict()['repo']
+            return template.format(**results.groupdict()), repo
 
     raise WrongEventURL("This event URL is incorrect: {0}".format(url))
 
