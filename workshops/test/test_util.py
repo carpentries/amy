@@ -56,6 +56,15 @@ john,m,doe,john@doe.com"""
         person_tasks, empty_fields = self.compute_from_string(bad_csv)
         self.assertTrue('email' in empty_fields)
 
+    def test_csv_with_empty_lines(self):
+        csv = """personal,middle,family,emailaddress
+john,m,doe,john@doe.com
+,,,"""
+        person_tasks, empty_fields = self.compute_from_string(csv)
+        self.assertEqual(len(person_tasks), 1)
+        person = person_tasks[0]
+        self.assertEqual(person['personal'], 'john')
+
     def test_empty_field(self):
         ''' Ensure we don't mis-order fields given blank data '''
         csv = """personal,middle,family,email
