@@ -412,7 +412,7 @@ class EventQuerySet(models.query.QuerySet):
         Events are sorted oldest first.'''
 
         return self.past_events().filter(admin_fee__gt=0)\
-                   .exclude(invoiced=True)\
+                   .exclude(invoice_status='invoiced')\
                    .order_by('start')
 
 class EventManager(models.Manager):
@@ -467,7 +467,20 @@ class Event(models.Model):
     reg_key    = models.CharField(max_length=STR_REG_KEY, null=True, blank=True, verbose_name="Eventbrite key")
     attendance = models.PositiveIntegerField(null=True, blank=True)
     admin_fee  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)])
-    invoiced   = models.NullBooleanField(default=False, blank=True)
+    INVOICED_CHOICES = (
+        ('unknown', 'Unknown'),
+        ('invoiced', 'Invoiced'),
+        ('not-invoiced', 'Not invoiced'),
+        ('na-self-org', 'Not applicable because self-organized'),
+        ('na-waiver', 'Not applicable because waiver granted'),
+        ('na-other', 'Not applicable because other arrangements made'),
+    )
+    invoice_status = models.CharField(
+        max_length=STR_MED,
+        choices=INVOICED_CHOICES,
+        verbose_name='Invoice status',
+        default='unknown', blank=True,
+    )
     notes      = models.TextField(default="", blank=True)
     contact = models.CharField(max_length=255, default="", blank=True)
     country = CountryField(null=True, blank=True)

@@ -74,7 +74,7 @@ class EventFilter(django_filters.FilterSet):
             'tags',
             'host',
             'administrator',
-            'invoiced',
+            'invoice_status',
         ]
         order_by = ['-slug', 'slug', 'start', '-start', 'end', '-end']
 

@@ -16,7 +16,7 @@ class Command(BaseCommand):
 
         records = [['event', 'fee', 'paid']]
         for e in events:
-            records.append([e.slug, e.admin_fee, e.invoiced])
+            records.append([e.slug, e.admin_fee, e.invoice_status])
 
         writer = csv.writer(sys.stdout)
         writer.writerows(records)

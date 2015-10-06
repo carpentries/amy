@@ -282,7 +282,7 @@ class EventForm(forms.ModelForm):
         model = Event
         # reorder fields, don't display 'deleted' field
         fields = ('slug', 'start', 'end', 'host', 'administrator',
-                  'tags', 'url', 'reg_key', 'admin_fee', 'invoiced',
+                  'tags', 'url', 'reg_key', 'admin_fee', 'invoice_status',
                   'attendance', 'contact', 'notes',
                   'country', 'venue', 'address', 'latitude', 'longitude')
         # WARNING: don't change put any fields between 'country' and
