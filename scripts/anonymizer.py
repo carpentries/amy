@@ -147,6 +147,8 @@ def url(cursor, i):
 @tuplify
 def lorem_ipsum(cursor, i):
     '''Fill in a large text field.'''
+    if random.uniform(0.0, 1.0) < 0.05:
+        return ''
     result = '\n'.join(LOREM_IPSUM[0:random.randrange(len(LOREM_IPSUM))])
     return result
 
@@ -188,6 +190,17 @@ def email(cursor, i):
 def empty_string(cursor, i):
     return ''
 
+
+@tuplify
+def rand_latitude(cursor, i):
+    return random.uniform(-90, 90)
+
+
+@tuplify
+def rand_longitude(cursor, i):
+    return random.uniform(0, 180)
+
+
 #------------------------------------------------------------
 
 def main():
@@ -205,9 +218,9 @@ def main():
     cnx = sqlite3.connect(db_dst)
     cur = cnx.cursor()
 
-    change(cur, 'workshops_site', 'domain', domain)
-    change(cur, 'workshops_site', 'fullname', multi_word, 1.0)
-    change(cur, 'workshops_site', 'notes', lorem_ipsum)
+    change(cur, 'workshops_host', 'domain', domain)
+    change(cur, 'workshops_host', 'fullname', multi_word, 1.0)
+    change(cur, 'workshops_host', 'notes', lorem_ipsum)
 
     change(cur, 'workshops_person', 'personal', multi_word, 0.1)
     change(cur, 'workshops_person', 'middle', multi_word, 0.0, 0.9)
@@ -219,10 +232,16 @@ def main():
     change(cur, 'workshops_person', 'url', url)
     change(cur, 'workshops_person', 'username', monicker)
     change(cur, 'workshops_person', 'password', empty_string)
+    change(cur, 'workshops_person', 'affiliation', empty_string)
 
     change(cur, 'workshops_event', ('start', 'end'), dates)
     change(cur, 'workshops_event', 'slug', event_slug)
     change(cur, 'workshops_event', 'url', url)
+    change(cur, 'workshops_event', 'contact', empty_string)
+    change(cur, 'workshops_event', 'venue', empty_string)
+    change(cur, 'workshops_event', 'address', empty_string)
+    change(cur, 'workshops_event', 'latitude', rand_latitude)
+    change(cur, 'workshops_event', 'longitude', rand_longitude)
     change(cur, 'workshops_event', 'reg_key', event_reg_key)
     change(cur, 'workshops_event', 'notes', lorem_ipsum)
 
@@ -238,4 +257,6 @@ if __name__ == '__main__':
     main()
     # we need to populate reversion_* tables so that no-one needs to do that
     # upon every `make database` call
-    print("REMEMBER! to run `./manage.py createinitialrevisions` on the new database NOW")
+    print("REMEMBER! to run `./manage.py createinitialrevisions` on the new "
+          "database NOW.")
+    print("Next, run `sqlite3 SRC -cmd '.dump' > DEST.sql`")
