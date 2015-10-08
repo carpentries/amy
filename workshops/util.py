@@ -7,6 +7,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.core.paginator import Paginator as DjangoPaginator
+from django_countries import countries
 import requests
 
 from workshops.check import get_header
@@ -380,25 +381,23 @@ def normalize_event_index_url(url):
     …will become:
     https://raw.githubusercontent.com/user/SLUG/gh-pages/index.html
     """
-    template = ('https://raw.githubusercontent.com/{username}/{slug}'
+    template = ('https://raw.githubusercontent.com/{name}/{repo}'
                 '/gh-pages/index.html')
-    FMT = [
-        r'https?://(?P<name>[^\.]+)\.github\.io/(?P<repo>[^/]+)',
-        r'https?://(?P<name>[^\.]+)\.github\.io/(?P<repo>[^/]+)/index\.html',
-        r'https://github\.com/(?P<name>[^/]+)/(?P<repo>[^/]+)',
+    formats = [
+        r'https?://(?P<name>[^\.]+)\.github\.(io|com)/(?P<repo>[^/]+)/?',
+        (r'https?://(?P<name>[^\.]+)\.github\.(io|com)/(?P<repo>[^/]+)/'
+         r'index\.html'),
+        r'https://github\.com/(?P<name>[^/]+)/(?P<repo>[^/]+)/?',
         (r'https://github\.com/(?P<name>[^/]+)/(?P<repo>[^/]+)/'
          r'blob/gh-pages/index\.html'),
-        (r'https://raw.githubusercontent.com/(?P<name>[^/]+)/(?P<repo>\S+)'
+        (r'https://raw.githubusercontent.com/(?P<name>[^/]+)/(?P<repo>[^/]+)'
          r'/gh-pages/index.html'),
     ]
-    for format in FMT:
-        results = re.findall(format, url)
+    for format in formats:
+        results = re.match(format, url)
         if results:
-            username, slug = results[0]
-            # caution: if groups in URL change order, then the formatting
-            # below will be broken, because it relies on re.findall() output,
-            # which is a tuple (:sad:)
-            return template.format(username=username, slug=slug), slug
+            repo = results.groupdict()['repo']
+            return template.format(**results.groupdict()), repo
 
     raise WrongEventURL("This event URL is incorrect: {0}".format(url))
 
@@ -419,13 +418,24 @@ def parse_tags_from_event_index(orig_url):
     except ValueError:
         latitude, longitude = '', ''
 
+    country = headers.get('country', '')
+    if len(country) == 2:
+        # special case: we're asking workshops to have country as a 2-letter
+        # code, but for now most of them use (semi-)full country names
+        country = country.upper()
+    elif len(country):
+        # probably a full-length country name
+        countries_codes = {name: code for code, name in countries}
+        country = country.replace('-', ' ')
+        country = countries_codes.get(country, country)
+
     # put instructors, helpers and venue into notes
     notes = """INSTRUCTORS: {instructors}
 
 HELPERS: {helpers}
 
 COUNTRY: {country}""".format(
-        country=headers.get('country', ''),
+        country=country,
         instructors=", ".join(headers.get('instructor') or []),
         helpers=", ".join(headers.get('helper') or []),
     )
@@ -434,15 +444,16 @@ COUNTRY: {country}""".format(
         'slug': slug,
         'start': headers.get('startdate', ''),
         'end': headers.get('enddate', ''),
-        'url': orig_url,
+        # A neat trick to get website URL easily.  It creates an Event object
+        # (but doesn't add it to the database) and uses it's translating
+        # @property 'website_url's
+        'url': Event(url=orig_url).website_url,
         'reg_key': headers.get('eventbrite', ''),
         'contact': headers.get('contact', ''),
         'notes': notes,
         'venue': headers.get('venue', ''),
         'address': headers.get('address', ''),
-        # countries aren't written in a standard way, so we can't auto-select
-        # them
-        'country': headers.get('country', ''),
+        'country': country,
         'latitude': latitude,
         'longitude': longitude,
     }
