@@ -1324,6 +1324,15 @@ def workshops_with_problems(request):
                'events': events}
     return render(request, 'workshops/workshops_with_problems.html', context)
 
+
+@login_required
+def instructors_with_problems(request):
+    '''Display instructors with problems in the database.'''
+
+    context = {'title': 'Instructors with Problems'}
+    return render(request, 'workshops/instructors_with_problems.html', context)
+
+
 #------------------------------------------------------------
 
 

@@ -1,0 +1,24 @@
+{% extends "workshops/_page.html" %}
+
+{% block content %}
+{% if events %}
+<p><span class="glyphicon glyphicon-envelope"></span> = mail instructor about problem</p>
+<p><span class="glyphicon glyphicon-remove"></span> = no email address available</p>
+<table class="table table-striped">
+  <tr>
+    <th>Instructor</th>
+    <th>Location <a href="#" data-toggle="tooltip" title="Nearest airport is missing">[?]</a></th>
+  </tr>
+</table>
+{% else %}
+<p>None</p>
+{% endif %}
+{% endblock %}
+
+{% block extrajs %}
+<script type="text/javascript">
+$(function () {
+  $('[data-toggle="tooltip"]').tooltip()
+})
+</script>
+{% endblock %}
