@@ -1304,8 +1304,8 @@ def instructors_over_time(request):
 
 
 @login_required
-def problems(request):
-    '''Display problems in the database.'''
+def workshops_with_problems(request):
+    '''Display workshops with problems in the database.'''
 
     host = Role.objects.get(name='host')
     instructor = Role.objects.get(name='instructor')
@@ -1320,9 +1320,9 @@ def problems(request):
         e.missing_attendance_ = (not e.attendance)
         e.missing_location_ = not e.country or not e.venue or not e.address
         e.bad_dates_ = e.start and e.end and (e.start > e.end)
-    context = {'title': 'Problems',
+    context = {'title': 'Workshops with Problems',
                'events': events}
-    return render(request, 'workshops/problems.html', context)
+    return render(request, 'workshops/workshops_with_problems.html', context)
 
 #------------------------------------------------------------
 
