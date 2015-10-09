@@ -3,9 +3,8 @@ import re
 
 from django.contrib.auth.models import (
     AbstractBaseUser, BaseUserManager, PermissionsMixin)
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
 from django.db.models import Q
 
@@ -412,7 +411,7 @@ class EventQuerySet(models.query.QuerySet):
         Events are sorted oldest first.'''
 
         return self.past_events().filter(admin_fee__gt=0)\
-                   .exclude(invoiced=True)\
+                   .exclude(invoice_status='invoiced')\
                    .order_by('start')
 
 class EventManager(models.Manager):
@@ -449,6 +448,13 @@ class EventManager(models.Manager):
 class Event(models.Model):
     '''Represent a single event.'''
 
+    REPO_REGEX = re.compile(r'https?://github\.com/(?P<name>[^/]+)/'
+                            r'(?P<repo>[^/]+)/?')
+    REPO_FORMAT = 'https://github.com/{name}/{repo}'
+    WEBSITE_REGEX = re.compile(r'https?://(?P<name>[^.]+)\.github\.'
+                               r'(io|com)/(?P<repo>[^/]+)/?')
+    WEBSITE_FORMAT = 'https://{name}.github.io/{repo}/'
+
     host = models.ForeignKey(Host, on_delete=models.PROTECT,
                              help_text='Organization hosting the event.')
     tags       = models.ManyToManyField(Tag)
@@ -463,11 +469,26 @@ class Event(models.Model):
     end        = models.DateField(null=True, blank=True)
     slug       = models.CharField(max_length=STR_LONG, null=True, blank=True, unique=True)
     url        = models.CharField(max_length=STR_LONG, unique=True, null=True, blank=True,
-                                  help_text='Setting this and startdate "publishes" the event.')
+                                  validators=[RegexValidator(REPO_REGEX, inverse_match=True)],
+                                  help_text='Setting this and startdate "publishes" the event.<br />'
+                                            'Use link to the event\'s website.')
     reg_key    = models.CharField(max_length=STR_REG_KEY, null=True, blank=True, verbose_name="Eventbrite key")
     attendance = models.PositiveIntegerField(null=True, blank=True)
     admin_fee  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)])
-    invoiced   = models.NullBooleanField(default=False, blank=True)
+    INVOICED_CHOICES = (
+        ('unknown', 'Unknown'),
+        ('invoiced', 'Invoiced'),
+        ('not-invoiced', 'Not invoiced'),
+        ('na-self-org', 'Not applicable because self-organized'),
+        ('na-waiver', 'Not applicable because waiver granted'),
+        ('na-other', 'Not applicable because other arrangements made'),
+    )
+    invoice_status = models.CharField(
+        max_length=STR_MED,
+        choices=INVOICED_CHOICES,
+        verbose_name='Invoice status',
+        default='unknown', blank=True,
+    )
     notes      = models.TextField(default="", blank=True)
     contact = models.CharField(max_length=255, default="", blank=True)
     country = CountryField(null=True, blank=True)
@@ -475,13 +496,6 @@ class Event(models.Model):
     address = models.CharField(max_length=255, default='', blank=True)
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
-
-    REPO_REGEX = re.compile(r'https?://github\.com/(?P<name>[^/]+)/'
-                            r'(?P<repo>[^/]+)/?')
-    REPO_FORMAT = 'https://github.com/{name}/{repo}'
-    WEBSITE_REGEX = re.compile(r'https?://(?P<name>[^.]+)\.github\.'
-                               r'(io|com)/(?P<repo>[^/]+)/?')
-    WEBSITE_FORMAT = 'https://{name}.github.io/{repo}'
 
     class Meta:
         ordering = ('-start', )
@@ -495,13 +509,17 @@ class Event(models.Model):
     def get_absolute_url(self):
         return reverse('event_details', args=[self.get_ident()])
 
-    def get_repository_url(self):
+    @property
+    def repository_url(self):
         """Return self.url formatted as it was repository URL.
 
         Repository URL is as specified in REPO_FORMAT.
         If it doesn't match, the original URL is returned."""
         try:
-            mo = self.WEBSITE_REGEX.match(self.url)
+            # Try to match repo regex first. This will result in all repo URLs
+            # always formatted in the same way.
+            mo = (self.REPO_REGEX.match(self.url)
+                  or self.WEBSITE_REGEX.match(self.url))
             if not mo:
                 return self.url
 
@@ -511,13 +529,17 @@ class Event(models.Model):
             # KeyError: mo.groupdict doesn't supply required names to format
             return self.url
 
-    def get_website_url(self):
+    @property
+    def website_url(self):
         """Return self.url formatted as it was website URL.
 
         Website URL is as specified in WEBSITE_FORMAT.
         If it doesn't match, the original URL is returned."""
         try:
-            mo = self.REPO_REGEX.match(self.url)
+            # Try to match website regex first. This will result in all website
+            # URLs always formatted in the same way.
+            mo = (self.WEBSITE_REGEX.match(self.url)
+                  or self.REPO_REGEX.match(self.url))
             if not mo:
                 return self.url
 

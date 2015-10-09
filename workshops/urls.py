@@ -44,6 +44,9 @@ urlpatterns = [
     url(r'^event/(?P<event_ident>[\w-]+)/task/(?P<task_id>\d+)/delete$', views.task_delete, name='task_delete'),
     url(r'^tasks/add/$', views.TaskCreate.as_view(), name='task_add'),
 
+    url(r'^award/(?P<award_id>\d+)/delete$', views.award_delete, name='award_delete'),
+    url(r'^person/(?P<person_id>[\w\.-]+)/award/(?P<award_id>\d+)/delete$', views.award_delete, name='award_delete'),
+
     url(r'^badges/?$', views.all_badges, name='all_badges'),
     url(r'^badge/(?P<badge_name>[\w\.=-]+)/?$', views.badge_details, name='badge_details'),
 

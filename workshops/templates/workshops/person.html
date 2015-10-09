@@ -1,5 +1,7 @@
 {% extends "workshops/_page.html" %}
 
+{% load links %}
+
 {% block content %}
 <div class="edit-object">
   {% if perms.workshops.change_person %}
@@ -30,9 +32,9 @@
   <tr><td>gender:</td><td id="gender">{{ person.get_gender_display|default:"—" }}</td></tr>
   <tr><td>airport:</td><td id="airport">{% if person.airport %}<a href="{{ person.airport.get_absolute_url }}">{{ person.airport }}</a>{% else %}—{% endif %}</td></tr>
   <tr><td>affiliation:</td><td>{{ person.affiliation|default:"—" }}</td></tr>
-  <tr><td>github:</td><td id="github">{% if person.github %}<a href="https://github.com/{{ person.github }}">{{ person.github }}</a>{% else %}—{% endif %}</td></tr>
-  <tr><td>twitter:</td><td id="twitter">{% if person.twitter %}<a href="https://twitter.com/{{ person.twitter }}">{{ person.twitter }}</a>{% else %}—{% endif %}</td></tr>
-  <tr><td>url:</td><td id="url">{{ person.url|default:""|urlize|default:"—" }}</td></tr>
+  <tr><td>github:</td><td id="github">{% if person.github %}<a href="https://github.com/{{ person.github }}" target="_blank">{{ person.github }}</a>{% else %}—{% endif %}</td></tr>
+  <tr><td>twitter:</td><td id="twitter">{% if person.twitter %}<a href="https://twitter.com/{{ person.twitter }}" target="_blank">{{ person.twitter }}</a>{% else %}—{% endif %}</td></tr>
+  <tr><td>url:</td><td id="url">{{ person.url|default:""|urlize_newtab|default:"—" }}</td></tr>
 </table>
 
 {% if person.notes %}

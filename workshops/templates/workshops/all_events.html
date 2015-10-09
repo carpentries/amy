@@ -1,6 +1,7 @@
 {% extends "workshops/_page_fluid.html" %}
 
 {% load crispy_forms_tags %}
+{% load links %}
 {% load pagination %}
 
 {% block sidebar %}
@@ -26,7 +27,7 @@
         <th>dates</th>
         <th>attendance</th>
         <th>admin fee</th>
-        <th>invoiced</th>
+        <th>invoice</th>
         <th class="additional-links"></th>
       </tr>
     {% for event in all_events %}
@@ -45,16 +46,14 @@
             </a>
           {% endif %}
         </td>
-        <td {% if not event.get_repository_url %}class="warning"{% endif %}>
-          {% if event.get_repository_url %}
-          <a href="{{ event.get_repository_url }}">{{ event.get_repository_url|cut:"https://github.com/" }}
-          {% else %}—{% endif %}
+        <td {% if not event.repository_url %}class="warning"{% endif %}>
+          {{ event.repository_url|default:"—"|urlize_newtab }}
         </td>
         <td><a href="{% url 'host_details' event.host.domain %}">{{ event.host }}</a></td>
         <td>{{ event.start }} &ndash; {{ event.end }}</td>
         <td>{{ event.attendance|default_if_none:"—" }}</td>
         <td>{{ event.admin_fee|default_if_none:"—" }}</td>
-        <td>{{ event.invoiced|yesno:"yes,no,unknown" }}</td>
+        <td>{{ event.get_invoice_status_display }}</td>
         <td>
           <a href="{% url 'event_details' event.get_ident %}" title="View {{ event.get_ident }}"><span class="glyphicon glyphicon-info-sign"></span></a>
           &nbsp;

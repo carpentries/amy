@@ -58,7 +58,8 @@ from workshops.forms import (
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
     create_uploaded_persons_tasks, InternalError, Paginator, merge_persons,
-    normalize_event_index_url, WrongEventURL, parse_tags_from_event_index
+    normalize_event_index_url, WrongEventURL, parse_tags_from_event_index,
+    update_event_attendance_from_tasks
 )
 
 from workshops.filters import (
@@ -791,7 +792,7 @@ def validate_event(request, event_ident):
     event = Event.get_by_ident(event_ident)
     github_url = request.GET.get('url', None)  # for manual override
     if github_url is None:
-        github_url = event.get_repository_url()
+        github_url = event.repository_url
 
     try:
         page_url, _ = normalize_event_index_url(github_url)
@@ -853,6 +854,10 @@ def event_edit(request, event_ident):
                     ),
                 )
 
+                # if event.attendance is lower than number of learners, then
+                # update the attendance
+                update_event_attendance_from_tasks(event)
+
                 # to reset the form values
                 return redirect(request.path)
 
@@ -872,11 +877,14 @@ def event_edit(request, event_ident):
                     ),
                 )
 
+                # if event.attendance is lower than number of learners, then
+                # update the attendance
+                update_event_attendance_from_tasks(event)
+
                 return redirect(event)
 
             else:
                 messages.error(request, 'Fix errors below.')
-
 
     context = {'title': 'Edit Event {0}'.format(event.get_ident()),
                'event_form': event_form,
@@ -978,6 +986,25 @@ class TaskUpdate(LoginRequiredMixin, PermissionRequiredMixin,
     form_class = TaskFullForm
     pk_url_kwarg = 'task_id'
     template_name = 'workshops/generic_form.html'
+
+#------------------------------------------------------------
+
+
+@permission_required('workshops.delete_award', raise_exception=True)
+def award_delete(request, award_id, person_id=None):
+    """Delete an award. This is used on the person edit page."""
+    award = get_object_or_404(Award, pk=award_id)
+    badge_name = award.badge.name
+    award.delete()
+
+    messages.success(request, 'Award was deleted successfully.',
+                     extra_tags='awards')
+
+    if person_id:
+        # if a second form of URL, then return back to person edit page
+        return redirect(person_edit, person_id)
+
+    return redirect(reverse(badge_details, args=[badge_name]))
 
 
 #------------------------------------------------------------
