@@ -1522,18 +1522,27 @@ class DCEventRequest(SWCEventRequest):
 
 
 class AllEventRequests(LoginRequiredMixin, ListView):
-    queryset = EventRequest.objects.filter(active=True).order_by('-created_at')
+    active_requests = True
     context_object_name = 'requests'
     template_name = 'workshops/all_eventrequests.html'
+
+    def get_queryset(self):
+        return EventRequest.objects.filter(active=self.active_requests) \
+                                   .order_by('-created_at')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Workshop requests'
+        context['active_requests'] = self.active_requests
         return context
 
 
+class AllClosedEventRequests(AllEventRequests):
+    active_requests = False
+
+
 class EventRequestDetails(LoginRequiredMixin, DetailView):
-    queryset = EventRequest.objects.filter(active=True)
+    queryset = EventRequest.objects.all()
     context_object_name = 'object'
     template_name = 'workshops/eventrequest.html'
     pk_url_kwarg = 'request_id'
