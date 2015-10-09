@@ -136,3 +136,59 @@ class TestDCEventRequestForm(TestBase):
         assert rv.status_code == 302
         er.refresh_from_db()
         assert not er.active
+
+
+class TestEventRequestsViews(TestBase):
+    def setUp(self):
+        self._setUpUsersAndLogin()
+
+        self.er1 = EventRequest.objects.create(
+            active=True, name="Harry Potter", email="harry@potter.com",
+            affiliation="Hogwarts", location="Scotland", country="GB",
+            preferred_date="soon",
+        )
+        self.er2 = EventRequest.objects.create(
+            active=False, name="Harry Potter", email="harry@potter.com",
+            affiliation="Hogwarts", location="Scotland", country="GB",
+            preferred_date="soon",
+        )
+
+    def test_active_requests_list(self):
+        rv = self.client.get(reverse('all_eventrequests'))
+        assert self.er1 in rv.context['object_list']
+        assert self.er2 not in rv.context['object_list']
+
+    def test_inactive_requests_list(self):
+        rv = self.client.get(reverse('all_closed_eventrequests'))
+        assert self.er1 not in rv.context['object_list']
+        assert self.er2 in rv.context['object_list']
+
+    def test_active_request_view(self):
+        rv = self.client.get(reverse('eventrequest_details',
+                                     args=[self.er1.pk]))
+        assert rv.status_code == 200
+
+    def test_inactive_request_view(self):
+        rv = self.client.get(reverse('eventrequest_details',
+                                     args=[self.er2.pk]))
+        assert rv.status_code == 200
+
+    def test_active_request_accept(self):
+        rv = self.client.get(reverse('eventrequest_accept',
+                                     args=[self.er1.pk]))
+        assert rv.status_code == 200
+
+    def test_inactive_request_accept(self):
+        rv = self.client.get(reverse('eventrequest_accept',
+                                     args=[self.er2.pk]))
+        assert rv.status_code != 200
+
+    def test_active_request_discard(self):
+        rv = self.client.get(reverse('eventrequest_discard',
+                                     args=[self.er1.pk]), follow=True)
+        assert rv.status_code == 200
+
+    def test_inactive_request_discard(self):
+        rv = self.client.get(reverse('eventrequest_discard',
+                                     args=[self.er2.pk]), follow=True)
+        assert rv.status_code != 200
