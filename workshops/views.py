@@ -1629,20 +1629,29 @@ def profileupdaterequest_create(request):
 
 
 class AllProfileUpdateRequests(LoginRequiredMixin, ListView):
-    queryset = ProfileUpdateRequest.objects.filter(active=True) \
-                .order_by('-created_at')
+    active_requests = True
     context_object_name = 'requests'
     template_name = 'workshops/all_profileupdaterequests.html'
+
+    def get_queryset(self):
+        return ProfileUpdateRequest.objects \
+                                   .filter(active=self.active_requests) \
+                                   .order_by('-created_at')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Instructor profile update requests'
+        context['active_requests'] = self.active_requests
         return context
+
+
+class AllClosedProfileUpdateRequests(AllProfileUpdateRequests):
+    active_requests = False
 
 
 @login_required
 def profileupdaterequest_details(request, request_id):
-    update_request = get_object_or_404(ProfileUpdateRequest, active=True,
+    update_request = get_object_or_404(ProfileUpdateRequest,
                                        pk=request_id)
 
     person_selected = False

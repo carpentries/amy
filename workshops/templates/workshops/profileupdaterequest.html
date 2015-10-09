@@ -4,22 +4,28 @@
 {% load links %}
 
 {% block content %}
-<div class="alert alert-info" role="alert">
-  <p><strong>Instruction:</strong> Verify with the person from the
-  database that they updated their profile with data from the 'Update
-  request' column.</p>
-</div>
-{% if not old %}
-<div class="alert alert-danger" role="alert">
-  <p><strong>Error:</strong> No-one matches this email ({{ new.email }}) or name ({{ new.personal }} {{ new.family }}). Look up possible match yourself using search option and then point to that person below.</p>
-</div>
-{% crispy person_form form_helper %}
-{% endif %}
-{% if person_selected %}
-<div class="alert alert-warning" role="alert">
-  <p><strong>Re-select:</strong> You can change your selection below.</p>
-</div>
-{% crispy person_form form_helper %}
+{% if new.active %}
+  <div class="alert alert-info" role="alert">
+    <p><strong>Instruction:</strong> Verify with the person from the
+    database that they updated their profile with data from the 'Update
+    request' column.</p>
+  </div>
+  {% if not old %}
+  <div class="alert alert-danger" role="alert">
+    <p><strong>Error:</strong> No-one matches this email ({{ new.email }}) or name ({{ new.personal }} {{ new.family }}). Look up possible match yourself using search option and then point to that person below.</p>
+  </div>
+  {% crispy person_form form_helper %}
+  {% endif %}
+  {% if person_selected %}
+  <div class="alert alert-warning" role="alert">
+    <p><strong>Re-select:</strong> You can change your selection below.</p>
+  </div>
+  {% crispy person_form form_helper %}
+  {% endif %}
+{% else %}
+  <div class="alert alert-warning" role="alert">
+    <p><strong>Warning:</strong> This request was closed.</p>
+  </div>
 {% endif %}
 <table class="table table-striped">
   <thead>
@@ -48,7 +54,7 @@
         {% else %}
         <td><a href="{% url 'airport_add' %}" title="Add airport {{ new.airport_iata }}">{{ new.airport_iata }}</a> <span class="label label-danger">Missing airport</span>  (<a href="https://www.world-airport-codes.com/search/?s={{ new.airport_iata }}" target="_blank">Lookup</a>)</td>
         {% endif %}
-        <td>{% if old %}<a href="{{ old.airport.get_absolute_url }}">{{ old.airport.iata }}</a>{% endif %}</td></tr>
+        <td>{% if old and old.airport %}<a href="{{ old.airport.get_absolute_url }}">{{ old.airport.iata }}</a>{% else %}—{% endif %}</td></tr>
     <tr><th>Has instructor badge:</th>
         <td>N/A</td>
         <td>{% if old %}{{ old.has_instructor_badge|yesno }}{% endif %}</td></tr>
@@ -115,6 +121,7 @@
   </tbody>
 </table>
 
+{% if new.active %}
 <div class="clearfix">
   <p class="edit-object pull-left">
     {% if old and airport and perms.workshops.change_profileupdaterequest and perms.workshops.change_person %}
@@ -131,4 +138,5 @@
     {% endif %}
   </p>
 </div>
+{% endif %}
 {% endblock %}
