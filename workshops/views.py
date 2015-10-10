@@ -1304,8 +1304,8 @@ def instructors_over_time(request):
 
 
 @login_required
-def problems(request):
-    '''Display problems in the database.'''
+def workshop_issues(request):
+    '''Display workshops in the database whose records need attention.'''
 
     host = Role.objects.get(name='host')
     instructor = Role.objects.get(name='instructor')
@@ -1320,9 +1320,21 @@ def problems(request):
         e.missing_attendance_ = (not e.attendance)
         e.missing_location_ = not e.country or not e.venue or not e.address
         e.bad_dates_ = e.start and e.end and (e.start > e.end)
-    context = {'title': 'Problems',
+    context = {'title': 'Workshops with Issues',
                'events': events}
-    return render(request, 'workshops/problems.html', context)
+    return render(request, 'workshops/workshop_issues.html', context)
+
+
+@login_required
+def instructor_issues(request):
+    '''Display instructors in the database whose records need attention.'''
+
+    instructor_badge = Badge.objects.get(name='instructor')
+    instructors = instructor_badge.person_set.filter(airport__isnull=True)
+    context = {'title': 'Instructors with Issues',
+               'instructors' : instructors}
+    return render(request, 'workshops/instructor_issues.html', context)
+
 
 #------------------------------------------------------------
 
