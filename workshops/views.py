@@ -1332,7 +1332,7 @@ def instructor_issues(request):
     instructor_badge = Badge.objects.get(name='instructor')
     instructors = instructor_badge.person_set.filter(airport__isnull=True)
     context = {'title': 'Instructors with Issues',
-               'people' : instructors}
+               'instructors' : instructors}
     return render(request, 'workshops/instructor_issues.html', context)
 
 
