@@ -62,7 +62,8 @@ urlpatterns = [
     url(r'^reports/workshops_over_time/?$', views.workshops_over_time, name='workshops_over_time'),
     url(r'^reports/learners_over_time/?$', views.learners_over_time, name='learners_over_time'),
     url(r'^reports/instructors_over_time/?$', views.instructors_over_time, name='instructors_over_time'),
-    url(r'^reports/problems/?$', views.problems, name='problems'),
+    url(r'^reports/workshop_issues/?$', views.workshop_issues, name='workshop_issues'),
+    url(r'^reports/instructor_issues/?$', views.instructor_issues, name='instructor_issues'),
 
     url(r'^revision/(?P<revision_id>[\d]+)/?$', views.object_changes, name='object_changes'),
 

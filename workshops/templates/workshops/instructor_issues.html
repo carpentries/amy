@@ -1,0 +1,42 @@
+{% extends "workshops/_page.html" %}
+
+{% block content %}
+{% if instructors %}
+<p><span class="glyphicon glyphicon-envelope"></span> = mail instructor about problem</p>
+<p><span class="glyphicon glyphicon-remove"></span> = no email address available</p>
+<table class="table table-striped">
+  <tr>
+    <th>Instructor</th>
+    <th>Location <a href="#" data-toggle="tooltip" title="Nearest airport is missing">[?]</a></th>
+  </tr>
+  {% for person in instructors %}
+  <tr>
+    <td><a href="{% url 'person_details' person.id %}">{{ person.get_full_name }}</a></td>
+    <td>
+      {% if person.email %}
+      <a href="mailto:{{person.email}}?subject={% filter urlencode %}Missing location information{% endfilter %}&body={% filter urlencode %}Hi,
+
+We are trying to update the Software and Data Carpentry instructor database - can you please fill in https://amy.software-carpentry.org/workshops/update_profile/ to let us know where you are so that we can match you with workshops?
+
+Thanks for your help.{% endfilter %}">
+	<span class="glyphicon glyphicon-envelope"></span>
+      </a>
+      {% else %}
+      <span class="glyphicon glyphicon-remove"></span>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p>None</p>
+{% endif %}
+{% endblock %}
+
+{% block extrajs %}
+<script type="text/javascript">
+$(function () {
+  $('[data-toggle="tooltip"]').tooltip()
+})
+</script>
+{% endblock %}
