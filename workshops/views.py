@@ -1320,7 +1320,7 @@ def workshop_issues(request):
         e.missing_attendance_ = (not e.attendance)
         e.missing_location_ = not e.country or not e.venue or not e.address
         e.bad_dates_ = e.start and e.end and (e.start > e.end)
-    context = {'title': 'Workshops with Problems',
+    context = {'title': 'Workshops with Issues',
                'events': events}
     return render(request, 'workshops/workshop_issues.html', context)
 
@@ -1331,7 +1331,7 @@ def instructor_issues(request):
 
     instructor_badge = Badge.objects.get(name='instructor')
     instructors = instructor_badge.person_set.filter(airport__isnull=True)
-    context = {'title': 'Instructors with Problems',
+    context = {'title': 'Instructors with Issues',
                'people' : instructors}
     return render(request, 'workshops/instructor_issues.html', context)
 
