@@ -1,8 +1,10 @@
 {% extends "workshops/_page.html" %}
 
 {% load links %}
+{% load revisions %}
 
 {% block content %}
+{% last_modified event %}
 <p class="edit-object">
   {% if perms.workshops.change_event %}
   <a href="{% url 'event_edit' event.get_ident %}" class="btn btn-primary">Edit</a>
