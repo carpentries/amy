@@ -176,7 +176,7 @@ def dashboard(request):
 
 
 @login_required
-def event_log(request):
+def changes_log(request):
     log = Revision.objects.all().select_related('user') \
                                 .prefetch_related('version_set') \
                                 .order_by('-date_created')
@@ -184,7 +184,7 @@ def event_log(request):
     context = {
         'log': log
     }
-    return render(request, 'workshops/event_log.html', context)
+    return render(request, 'workshops/changes_log.html', context)
 
 #------------------------------------------------------------
 

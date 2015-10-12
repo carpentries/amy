@@ -4,7 +4,7 @@ from workshops import views
 urlpatterns = [
     url(r'^$', views.dashboard, name='dashboard'),
 
-    url(r'^log/$', views.event_log, name='event_log'),
+    url(r'^log/$', views.changes_log, name='changes_log'),
 
     url(r'^hosts/?$', views.all_hosts, name='all_hosts'),
     url(r'^host/(?P<host_domain>[\w\.-]+)/?$', views.host_details, name='host_details'),
