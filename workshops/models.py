@@ -20,6 +20,8 @@ STR_REG_KEY =  20         # length of Eventbrite registration key
 
 #------------------------------------------------------------
 
+
+@reversion.register
 class Host(models.Model):
     '''Represent a workshop's host.'''
 
@@ -39,6 +41,8 @@ class Host(models.Model):
 
 #------------------------------------------------------------
 
+
+@reversion.register
 class Airport(models.Model):
     '''Represent an airport (used to locate instructors).'''
 
@@ -804,6 +808,7 @@ class TaskManager(models.Manager):
         return self.get_queryset().filter(role__name="helper")
 
 
+@reversion.register
 class Task(models.Model):
     '''Represent who did what at events.'''
 
