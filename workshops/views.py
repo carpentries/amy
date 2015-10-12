@@ -174,6 +174,18 @@ def dashboard(request):
     }
     return render(request, 'workshops/dashboard.html', context)
 
+
+@login_required
+def event_log(request):
+    log = Revision.objects.all().select_related('user') \
+                                .prefetch_related('version_set') \
+                                .order_by('-date_created')
+    log = _get_pagination_items(request, log)
+    context = {
+        'log': log
+    }
+    return render(request, 'workshops/event_log.html', context)
+
 #------------------------------------------------------------
 
 

@@ -4,6 +4,8 @@ from workshops import views
 urlpatterns = [
     url(r'^$', views.dashboard, name='dashboard'),
 
+    url(r'^log/$', views.event_log, name='event_log'),
+
     url(r'^hosts/?$', views.all_hosts, name='all_hosts'),
     url(r'^host/(?P<host_domain>[\w\.-]+)/?$', views.host_details, name='host_details'),
     url(r'^host/(?P<host_domain>[\w\.-]+)/edit$', views.HostUpdate.as_view(), name='host_edit'),
