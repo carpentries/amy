@@ -22,7 +22,17 @@
   <tr><td>Website URL:</td><td colspan="2">{{ event.website_url|default:"—"|urlize_newtab }} {% if event.url %}<a href="{% url 'validate_event' event.get_ident %}" class="btn btn-primary btn-xs pull-right" id="validate_event">validate event</a>{% else %}<a class="btn btn-danger btn-xs pull-right" id="error_event_url" href="#" data-toggle="popover" data-trigger="focus" title="Validation error" data-content="Cannot validate an event without URL pointing to the GitHub repository, e.g.: <code>https://github.com/swcarpentry/2015-05-24-training</code>">Error</a>{% endif %}</td></tr>
   <tr><td>Eventbrite key:</td><td colspan="2">{% if event.reg_key %}<a href="https://www.eventbrite.com/myevent?eid={{ event.reg_key }}" title="Go to Eventbrite's page for this event" target="_blank">{{ event.reg_key }}</a>{% else %}—{% endif %}</td></tr>
   <tr><td>admin fee:</td><td colspan="2">{{ event.admin_fee|default_if_none:"—" }}</td></tr>
-  <tr><td>invoice:</td><td colspan="2">{{ event.get_invoice_status_display }}</td></tr>
+  <tr>
+    <td>invoice:</td>
+    <td colspan="2">
+      {{ event.get_invoice_status_display }}
+      {% if event.invoice_status == 'not-invoiced' %}
+      <a href="https://docs.google.com/a/banaszkiewicz.org/forms/d/1XljyEam4LERRXW0ebyh5eoZXjT1xR4bHkPxITLWiIyA/viewform?entry.823772951={{ event.venue|urlencode }}&entry.351294200=Workshop%20administrative%20fee&entry.1749215879={{ event.start|date:'Y-m-d'|urlencode }}&entry.508035854={{ event.slug|urlencode }}&entry.821460022={{ event.admin_fee|urlencode }}&entry.1316946828=US%20dollars" target="_blank" class="btn btn-primary btn-xs pull-right">Invoice</a>
+      {% else %}
+      <a href="#" class="btn btn-primary btn-xs pull-right disabled">Invoice</a>
+      {% endif %}
+    </td>
+  </tr>
   <tr><td>attendance:</td><td colspan="2">{{ event.attendance|default_if_none:"—" }}</td></tr>
   <tr><td>contact:</td><td colspan="2">{{ event.contact|default_if_none:"—"|urlize }}</td></tr>
   <tr>
