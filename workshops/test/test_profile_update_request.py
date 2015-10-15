@@ -111,3 +111,65 @@ class TestProfileUpdateRequest(TestBase):
         assert set(person.domains.all()) == \
             set(KnowledgeDomain.objects.all()[0:2])
         assert set(person.lessons.all()) == set(Lesson.objects.all()[0:2])
+
+
+class TestProfileUpdateRequestsViews(TestBase):
+    def setUp(self):
+        self._setUpAirports()
+        self._setUpLessons()
+        self._setUpBadges()
+        self._setUpInstructors()
+        self._setUpUsersAndLogin()
+
+        self.pur1 = ProfileUpdateRequest.objects.create(
+            active=True, personal="Harry", family="Potter",
+            email="harry@potter.com", airport_iata='AAA',
+            affiliation='Hogwarts',
+        )
+        self.pur2 = ProfileUpdateRequest.objects.create(
+            active=False, personal="Harry", family="Potter",
+            email="harry@potter.com", airport_iata='AAA',
+            affiliation='Hogwarts',
+        )
+
+    def test_active_requests_list(self):
+        rv = self.client.get(reverse('all_profileupdaterequests'))
+        assert self.pur1 in rv.context['object_list']
+        assert self.pur2 not in rv.context['object_list']
+
+    def test_inactive_requests_list(self):
+        rv = self.client.get(reverse('all_closed_profileupdaterequests'))
+        assert self.pur1 not in rv.context['object_list']
+        assert self.pur2 in rv.context['object_list']
+
+    def test_active_request_view(self):
+        rv = self.client.get(reverse('profileupdaterequest_details',
+                                     args=[self.pur1.pk]))
+        assert rv.status_code == 200
+
+    def test_inactive_request_view(self):
+        rv = self.client.get(reverse('profileupdaterequest_details',
+                                     args=[self.pur2.pk]))
+        assert rv.status_code == 200
+
+    def test_active_request_accept(self):
+        rv = self.client.get(reverse('profileupdaterequest_accept',
+                                     args=[self.pur1.pk, self.harry.pk]),
+                             follow=True)
+        assert rv.status_code == 200
+
+    def test_inactive_request_accept(self):
+        rv = self.client.get(reverse('profileupdaterequest_accept',
+                                     args=[self.pur2.pk, self.harry.pk]),
+                             follow=True)
+        assert rv.status_code != 200
+
+    def test_active_request_discard(self):
+        rv = self.client.get(reverse('profileupdaterequest_discard',
+                                     args=[self.pur1.pk]), follow=True)
+        assert rv.status_code == 200
+
+    def test_inactive_request_discard(self):
+        rv = self.client.get(reverse('profileupdaterequest_discard',
+                                     args=[self.pur2.pk]), follow=True)
+        assert rv.status_code != 200
