@@ -553,6 +553,11 @@ class Event(models.Model):
             # KeyError: mo.groupdict doesn't supply required names to format
             return self.url
 
+    @property
+    def uninvoiced(self):
+        """Indicate if the event has been invoiced or not."""
+        return self.invoice_status == 'not-invoiced'
+
     def get_ident(self):
         if self.slug:
             return str(self.slug)
