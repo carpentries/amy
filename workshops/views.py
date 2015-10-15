@@ -1347,9 +1347,10 @@ def instructor_issues(request):
         trainings[t.person].add(t.event)
     pending = []
     for person in trainings:
+        person.all_trainings_ = sorted(trainings[person],
+                                       key=lambda e: e.start)
         pending.append(person)
-        person.all_trainings_ = list(trainings[person])
-        pending.append(person)
+    pending.sort(key=lambda p: (p.family.lower(), p.personal.lower()))
 
     context = {'title': 'Instructors with Issues',
                'instructors' : instructors,

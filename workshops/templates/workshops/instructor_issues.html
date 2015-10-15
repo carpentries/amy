@@ -48,7 +48,7 @@ Thanks for your help.{% endfilter %}">
     <td><a href="{% url 'person_details' person.id %}">{{ person.get_full_name }}</a></td>
     <td>
       {% for e in person.all_trainings_ %}
-        <a href="{% url 'event_details' e.get_ident %}">{{ e }}</a>
+        <a href="{% url 'event_details' e.get_ident %}">{{ e }}</a>{% if not forloop.last %}, {% endif %}
       {% endfor %}
     </td>
     <td>
