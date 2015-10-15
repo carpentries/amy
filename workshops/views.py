@@ -1327,12 +1327,18 @@ def workshop_issues(request):
 
 @login_required
 def instructor_issues(request):
-    '''Display instructors in the database whose records need attention.'''
+    '''Display instructors in the database who need attention.'''
 
+    # Everyone who has a badge but needs attention.
     instructor_badge = Badge.objects.get(name='instructor')
     instructors = instructor_badge.person_set.filter(airport__isnull=True)
+
+    # Everyone who's been in instructor training but doesn't yet have a badge.
+    pending = []
+
     context = {'title': 'Instructors with Issues',
-               'instructors' : instructors}
+               'instructors' : instructors,
+               'pending' : pending}
     return render(request, 'workshops/instructor_issues.html', context)
 
 
