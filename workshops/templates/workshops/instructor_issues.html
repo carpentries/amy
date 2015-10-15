@@ -40,11 +40,17 @@ Thanks for your help.{% endfilter %}">
 <table class="table table-striped">
   <tr>
     <th>Person</th>
+    <th>Training(s)</th>
     <th>Email <a href="#" data-toggle="tooltip" title="Nearest airport is missing">[?]</a></th>
   </tr>
   {% for person in pending %}
   <tr>
     <td><a href="{% url 'person_details' person.id %}">{{ person.get_full_name }}</a></td>
+    <td>
+      {% for e in person.all_trainings_ %}
+        <a href="{% url 'event_details' e.get_ident %}">{{ e }}</a>
+      {% endfor %}
+    </td>
     <td>
       {% if person.email %}
       <a href="mailto:{{person.email}}?subject={% filter urlencode %}Finishing instructor training{% endfilter %}&body={% filter urlencode %}Hi,

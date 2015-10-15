@@ -42,6 +42,7 @@ from workshops.models import (
     Person,
     Role,
     Host,
+    Tag,
     Task,
     EventRequest,
     ProfileUpdateRequest,
@@ -1334,7 +1335,21 @@ def instructor_issues(request):
     instructors = instructor_badge.person_set.filter(airport__isnull=True)
 
     # Everyone who's been in instructor training but doesn't yet have a badge.
+    learner = Role.objects.get(name='learner')
+    ttt = Tag.objects.get(name='TTT')
+    ttt_events = Event.objects.filter(tags__in=[ttt])
+    tasks = Task.objects.filter(event__in=ttt_events, role=learner) \
+                        .exclude(person__badges__in=[instructor_badge])
+    trainings = {}
+    for t in tasks:
+        if t.person not in trainings:
+            trainings[t.person] = set()
+        trainings[t.person].add(t.event)
     pending = []
+    for person in trainings:
+        pending.append(person)
+        person.all_trainings_ = list(trainings[person])
+        pending.append(person)
 
     context = {'title': 'Instructors with Issues',
                'instructors' : instructors,
