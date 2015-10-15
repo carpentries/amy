@@ -27,7 +27,7 @@
     <td colspan="2">
       {{ event.get_invoice_status_display }}
       {% if event.uninvoiced %}
-      <a href="https://docs.google.com/a/banaszkiewicz.org/forms/d/1XljyEam4LERRXW0ebyh5eoZXjT1xR4bHkPxITLWiIyA/viewform?entry.823772951={{ event.venue|urlencode }}&entry.351294200=Workshop%20administrative%20fee&entry.1749215879={{ event.start|date:'Y-m-d'|urlencode }}&entry.508035854={{ event.slug|urlencode }}&entry.821460022={{ event.admin_fee|urlencode }}&entry.1316946828=US%20dollars" target="_blank" class="btn btn-primary btn-xs pull-right">Invoice</a>
+      <a href="{{ event.get_invoice_form_url }}" target="_blank" class="btn btn-primary btn-xs pull-right">Invoice</a>
       {% else %}
       <a href="#" class="btn btn-primary btn-xs pull-right disabled">Invoice</a>
       {% endif %}
