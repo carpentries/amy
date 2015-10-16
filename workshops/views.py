@@ -166,15 +166,25 @@ def dashboard(request):
     )
     unpublished_events = Event.objects.unpublished_events()
     uninvoiced_events = Event.objects.uninvoiced_events()
-    recently_changed = Revision.objects.all().select_related('user') \
-                                       .prefetch_related('version_set') \
-                                       .order_by('-date_created')[:50]
-    context = {'title': None,
-               'upcoming_ongoing_events': upcoming_ongoing_events,
-               'uninvoiced_events': uninvoiced_events,
-               'unpublished_events': unpublished_events,
-               'recently_changed': recently_changed}
+    context = {
+        'title': None,
+        'upcoming_ongoing_events': upcoming_ongoing_events,
+        'uninvoiced_events': uninvoiced_events,
+        'unpublished_events': unpublished_events,
+    }
     return render(request, 'workshops/dashboard.html', context)
+
+
+@login_required
+def changes_log(request):
+    log = Revision.objects.all().select_related('user') \
+                                .prefetch_related('version_set') \
+                                .order_by('-date_created')
+    log = _get_pagination_items(request, log)
+    context = {
+        'log': log
+    }
+    return render(request, 'workshops/changes_log.html', context)
 
 #------------------------------------------------------------
 
