@@ -42,6 +42,7 @@ from workshops.models import (
     Person,
     Role,
     Host,
+    Tag,
     Task,
     EventRequest,
     ProfileUpdateRequest,
@@ -1337,12 +1338,27 @@ def workshop_issues(request):
 
 @login_required
 def instructor_issues(request):
-    '''Display instructors in the database whose records need attention.'''
+    '''Display instructors in the database who need attention.'''
 
+    # Everyone who has a badge but needs attention.
     instructor_badge = Badge.objects.get(name='instructor')
     instructors = instructor_badge.person_set.filter(airport__isnull=True)
-    context = {'title': 'Instructors with Issues',
-               'instructors' : instructors}
+
+    # Everyone who's been in instructor training but doesn't yet have a badge.
+    learner = Role.objects.get(name='learner')
+    ttt = Tag.objects.get(name='TTT')
+    ttt_events = Event.objects.filter(tags__in=[ttt])
+    pending_instructors = Task.objects \
+        .filter(event__in=ttt_events, role=learner) \
+        .exclude(person__badges__in=[instructor_badge]) \
+        .order_by('person__family', 'person__personal', 'event__start') \
+        .select_related('person', 'event')
+
+    context = {
+        'title': 'Instructors with Issues',
+        'instructors': instructors,
+        'pending': pending_instructors,
+    }
     return render(request, 'workshops/instructor_issues.html', context)
 
 
