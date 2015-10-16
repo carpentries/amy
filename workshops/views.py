@@ -1338,23 +1338,17 @@ def instructor_issues(request):
     learner = Role.objects.get(name='learner')
     ttt = Tag.objects.get(name='TTT')
     ttt_events = Event.objects.filter(tags__in=[ttt])
-    tasks = Task.objects.filter(event__in=ttt_events, role=learner) \
-                        .exclude(person__badges__in=[instructor_badge])
-    trainings = {}
-    for t in tasks:
-        if t.person not in trainings:
-            trainings[t.person] = set()
-        trainings[t.person].add(t.event)
-    pending = []
-    for person in trainings:
-        person.all_trainings_ = sorted(trainings[person],
-                                       key=lambda e: e.start)
-        pending.append(person)
-    pending.sort(key=lambda p: (p.family.lower(), p.personal.lower()))
+    pending_instructors = Task.objects \
+        .filter(event__in=ttt_events, role=learner) \
+        .exclude(person__badges__in=[instructor_badge]) \
+        .order_by('person__family', 'person__personal', 'event__start') \
+        .select_related('person', 'event')
 
-    context = {'title': 'Instructors with Issues',
-               'instructors' : instructors,
-               'pending' : pending}
+    context = {
+        'title': 'Instructors with Issues',
+        'instructors': instructors,
+        'pending': pending_instructors,
+    }
     return render(request, 'workshops/instructor_issues.html', context)
 
 
