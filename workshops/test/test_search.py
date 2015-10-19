@@ -51,10 +51,10 @@ class TestSearchHost(TestBase):
                                      'in_hosts' : 'on'})
         doc = self._check_status_code_and_parse(response, 200)
         nodes = self._get_N(doc,  ".//a[@class='searchresult']",
-                            'Expected two search results',
-                            expected=2)
+                            'Expected three search results',
+                            expected=3)
         texts = set([n.text for n in nodes])
-        assert texts == {'alpha.edu', 'beta.com'}, \
+        assert texts == {'alpha.edu', '-', 'beta.com'}, \
             'Wrong names {0} in search result'.format(texts)
 
     def test_search_for_people_by_personal_family_names(self):
