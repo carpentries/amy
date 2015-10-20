@@ -1,0 +1,6 @@
+{% extends "workshops/_page.html" %}
+
+{% block content %}
+<pre>{% for i in instructors %}
+{{i.num_taught}},{{i}}{% endfor %}</pre>
+{% endblock %}
