@@ -1,6 +1,6 @@
 {% extends "workshops/_page.html" %}
 
 {% block content %}
-<pre>{% for i in instructors %}
-{{i.num_taught}},{{i}}{% endfor %}</pre>
+<pre>{% for a in awards %}
+{{a.num_taught}},{{a.person.get_full_name}},{{a.person.email}},{{a.awarded|date:"Y-m-d"}},{{a.person.gender}},{% if a.person.airport %}{{a.person.airport.country}}{% else %}-{% endif %}{% endfor %}</pre>
 {% endblock %}

@@ -1319,19 +1319,19 @@ def instructor_num_taught(request):
     '''Export CSV of how often instructors have taught.'''
 
     badge = Badge.objects.get(name='instructor')
-    instructors = badge.person_set.annotate(
+    awards = badge.award_set.annotate(
         num_taught=Count(
             Case(
                 When(
-                    task__role__name='instructor',
+                    person__task__role__name='instructor',
                     then=Value(1)
                 ),
-                output_field=IntegerField()
+            output_field=IntegerField()
             )
         )
-    ).order_by('-num_taught')
+    ).filter(person__may_contact=True).order_by('-num_taught', 'awarded')
     context = {'title': 'Frequency of Instruction',
-               'instructors': instructors}
+               'awards': awards}
     return render(request, 'workshops/instructor_num_taught.html', context)
 
 
