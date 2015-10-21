@@ -68,6 +68,10 @@ class EventFilter(django_filters.FilterSet):
     ]
     status = EventStateFilter(choices=STATUS_CHOICES)
 
+    invoice_status = django_filters.ChoiceFilter(
+        choices=((None, '---------'), ) + Event.INVOICED_CHOICES,
+    )
+
     class Meta:
         model = Event
         fields = [
