@@ -4,6 +4,11 @@
 {% load revisions %}
 
 {% block content %}
+{% if event.completed %}
+<div class="alert alert-success" role="alert">
+  <strong>Well done!</strong> This event is completed, you don't have to work on it.
+</div>
+{% endif %}
 {% last_modified event %}
 <p class="edit-object">
   {% if perms.workshops.change_event %}
@@ -14,6 +19,7 @@
 </p>
 <table class="table table-striped">
   <tr><td>slug:</td><td colspan="2">{{ event.slug|default:"—" }}</td></tr>
+  <tr><td>completed:</td><td colspan="2">{{ event.completed|yesno }}</td></tr>
   <tr><td>start date:</td><td colspan="2">{{ event.start|default:"—" }}</td></tr>
   <tr><td>end date: </td><td colspan="2">{{ event.end|default:"—" }}</td></tr>
   <tr><td>host:</td><td colspan="2"><a href="{% url 'host_details' event.host.domain %}">{{ event.host }}</a></td></tr>

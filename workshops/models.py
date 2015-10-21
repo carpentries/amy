@@ -501,6 +501,11 @@ class Event(models.Model):
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
 
+    completed = models.BooleanField(
+        default=False,
+        help_text="Indicates that no more work is needed upon this event.",
+    )
+
     class Meta:
         ordering = ('-start', )
 
