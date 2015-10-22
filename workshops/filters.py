@@ -3,6 +3,8 @@ from django_countries import Countries
 
 from workshops.models import Event, Host, Person, Task, Airport
 
+EMPTY_SELECTION = (None, '---------')
+
 
 class AllCountriesFilter(django_filters.ChoiceFilter):
     @property
@@ -15,7 +17,7 @@ class AllCountriesFilter(django_filters.ChoiceFilter):
         countries.only = choices
 
         self.extra['choices'] = list(countries)
-        self.extra['choices'].insert(0, (None, '---------'))
+        self.extra['choices'].insert(0, EMPTY_SELECTION)
         return super().field
 
 
@@ -33,7 +35,7 @@ class ForeignKeyAllValuesFilter(django_filters.ChoiceFilter):
         qs1 = qs1.order_by(name).values_list(name, flat=True)
         qs2 = model.objects.filter(pk__in=qs1)
         self.extra['choices'] = [(o.pk, str(o)) for o in qs2]
-        self.extra['choices'].insert(0, (None, '---------'))
+        self.extra['choices'].insert(0, EMPTY_SELECTION)
         return super().field
 
 
@@ -69,7 +71,7 @@ class EventFilter(django_filters.FilterSet):
     status = EventStateFilter(choices=STATUS_CHOICES)
 
     invoice_status = django_filters.ChoiceFilter(
-        choices=((None, '---------'), ) + Event.INVOICED_CHOICES,
+        choices=(EMPTY_SELECTION, ) + Event.INVOICED_CHOICES,
     )
 
     class Meta:
