@@ -281,7 +281,7 @@ class EventForm(forms.ModelForm):
     class Meta:
         model = Event
         # reorder fields, don't display 'deleted' field
-        fields = ('slug', 'start', 'end', 'host', 'administrator',
+        fields = ('slug', 'completed', 'start', 'end', 'host', 'administrator',
                   'tags', 'url', 'reg_key', 'admin_fee', 'invoice_status',
                   'attendance', 'contact', 'notes',
                   'country', 'venue', 'address', 'latitude', 'longitude')
