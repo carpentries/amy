@@ -896,3 +896,14 @@ class KnowledgeDomain(models.Model):
 
     def __str__(self):
         return self.name
+
+# ------------------------------------------------------------
+
+
+class TodoItem(models.Model):
+    """Model representing to-do items for events."""
+    event = models.ForeignKey(Event, null=False, blank=False)
+    completed = models.BooleanField(default=False)
+    title = models.CharField(max_length=STR_LONG, default='', blank=False)
+    due = models.DateField(blank=True, null=True)
+    additional = models.CharField(max_length=255, default='', blank=True)
