@@ -104,7 +104,7 @@ div[role="tabpanel"] form {
     padding-left: 20px;
 }
 
-.checkbox label, .radio label {
+.form-horizontal .checkbox label, .form-horizontal .radio label {
     padding-left: 0;
 }
 
