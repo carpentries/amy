@@ -10,6 +10,13 @@ var first_startdate_selected = false;
 $(document).ready(function() {
     $("#id_start, #id_end").datepicker(DATEPICKER_DEFAULTS);
     $("#id_event-start, #id_event-end").datepicker(DATEPICKER_DEFAULTS);
+    $("#id_todo-due").datepicker({
+        autoclose: true,
+        clearBtn: true,
+        format: "yyyy-mm-dd",
+        todayHighlight: true,
+        orientation: "bottom auto"
+    });
 
     $('#id_start').on('changeDate', function(e) {
         // if user selects start date for the first time, set end date to +1d
