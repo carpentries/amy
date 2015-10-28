@@ -533,7 +533,7 @@ class PersonLookupForm(forms.Form):
 class SimpleTodoForm(forms.ModelForm):
     class Meta:
         model = TodoItem
-        fields = ('title', 'due', 'additional', 'completed')
+        fields = ('title', 'due', 'additional', 'completed', 'event')
         widgets = {'event': HiddenInput, }
 
     class Media:

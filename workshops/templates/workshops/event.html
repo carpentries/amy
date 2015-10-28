@@ -110,34 +110,32 @@
 
 <h3>TODOs</h3>
 <p>
-  <a href="" class="btn btn-primary">Add standard TODOs</a>
-  <a href="" class="btn btn-default" id="add-simple-todo">Add a simple TODO</a>
+  <a href="{% url 'todos_add' event.get_ident %}" class="btn btn-primary">Add standard TODOs</a>
 </p>
 {% if todos %}
-<p>TODOs list here. (placeholder)</p>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Title</th>
+      <th>Due date</th>
+      <th>Additional information</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for todo in todos %}
+    <tr>
+      <td>{{ todo.title }}</td>
+      <td>{{ todo.due|default:"—" }}</td>
+      <td>{{ todo.additional|default:"—"|urlize_newtab }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
 {% else %}
 <p>No TODOs.</p>
 {% endif %}
-
-<!-- Simple TODO modal -->
-<div class="modal fade" id="simple-todo-modal" tabindex="-1" role="dialog" aria-labelledby="simple-todo-modal-label" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title" id="simple-todo-modal-label">Add a TODO</h4>
-      </div>
-      <div class="modal-body">
-        {% crispy todo_form %}
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary">Submit</button>
-      </div>
-    </div>
-  </div>
-</div>
-
+<h4 id="newtodo">New TODO</h4>
+{% crispy todo_form helper %}
 {% endblock %}
 
 {% block extrajs %}
@@ -150,14 +148,14 @@
     return false;
   });
   $('#validation_modal').on('show.bs.modal', function() {
-    $('#validation_modal .modal-body').load("{% url 'validate_event' event.get_ident %} #validation")
+    $('#validation_modal .modal-body').load("{% url 'validate_event' event.get_ident %} #validation");
   });
-  $('#add-simple-todo').click(function() {
-    $('#simple-todo-modal').modal();
-    return false;
-  });
-  $('#simple-todo-modal').on('show.bs.modal', function() {
 
+  // scroll to TODOs if there's an alert with "todos" class
+  $(document).ready(function() {
+    if ($(".alert").hasClass('todos')) {
+      $("html, body").scrollTop($("#newtodo").offset().top);
+    }
   });
 </script>
 {% endblock %}

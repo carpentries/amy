@@ -791,14 +791,38 @@ def event_details(request, event_ident):
 
     event = Event.get_by_ident(event_ident)
     tasks = Task.objects.filter(event__id=event.id).order_by('role__name')
+    todos = event.todoitem_set.all()
     todo_form = SimpleTodoForm(prefix='todo', initial={
         'event': event,
     })
+
+    if request.method == "POST":
+        todo_form = SimpleTodoForm(request.POST, prefix='todo', initial={
+            'event': event,
+        })
+        if todo_form.is_valid():
+            todo = todo_form.save()
+
+            messages.success(
+                request,
+                'New TODO {todo} was added to the event {event}.'.format(
+                    todo=str(todo),
+                    event=event.get_ident(),
+                ),
+                extra_tags='todos',
+            )
+            return redirect(reverse(event_details, args=[event_ident, ]))
+        else:
+            messages.error(request, 'Fix errors in the TODO form.',
+                           extra_tags='todos')
+
     context = {
         'title': 'Event {0}'.format(event),
         'event': event,
         'tasks': tasks,
         'todo_form': todo_form,
+        'todos': todos,
+        'helper': bootstrap_helper,
     }
     return render(request, 'workshops/event.html', context)
 
