@@ -22,6 +22,7 @@ from django.http import Http404, HttpResponse, JsonResponse
 from django.db import IntegrityError
 from django.db.models import Count, Sum, Q, F, Model, ProtectedError
 from django.db.models import Case, When, Value, IntegerField
+from django.forms import modelformset_factory
 from django.shortcuts import redirect, render, get_object_or_404
 from django.template.loader import get_template
 from django.views.decorators.http import require_POST
@@ -46,6 +47,7 @@ from workshops.models import (
     Task,
     EventRequest,
     ProfileUpdateRequest,
+    TodoItem,
 )
 from workshops.check import check_file
 from workshops.forms import (
@@ -1844,3 +1846,95 @@ def profileupdaterequest_accept(request, request_id, person_id):
     messages.success(request,
                      '{} was updated successfully.'.format(person_name))
     return redirect(reverse('all_profileupdaterequests'))
+
+
+@login_required
+@permission_required('workshops.add_todo', raise_exception=True)
+def todos_add(request, event_ident):
+    """Add a standard TodoItems for a specific event."""
+    event = Event.get_by_ident(event_ident)
+
+    dt = datetime.datetime
+    timedelta = datetime.timedelta
+
+    initial = []
+    base = dt.now()
+    if event.start and event.end:
+        extra = 9
+    else:
+        extra = 10
+        initial = [
+            {
+                'title': 'Set date with host',
+                'due': dt.now() + timedelta(days=30),
+                'event': event,
+            },
+        ]
+
+    TodoFormSet = modelformset_factory(TodoItem, form=SimpleTodoForm,
+                                       extra=extra)
+
+    formset = TodoFormSet(queryset=TodoItem.objects.none(), initial=initial + [
+        {
+            'title': 'Set up a workshop website',
+            'due': base + timedelta(days=7),
+            'event': event,
+        },
+        {
+            'title': 'Find instructor #1',
+            'due': base + timedelta(days=14),
+            'event': event,
+        },
+        {
+            'title': 'Find instructor #2',
+            'due': base + timedelta(days=14),
+            'event': event,
+        },
+        {
+            'title': 'Follow up that instructors have booked travel',
+            'due': base + timedelta(days=21),
+            'event': event,
+        },
+        {
+            'title': 'Set up pre-workshop survey',
+            'due': event.start - timedelta(days=7) if event.start else '',
+            'event': event,
+        },
+        {
+            'title': 'Make sure instructors are set with materials',
+            'due': event.start - timedelta(days=1) if event.start else '',
+            'event': event,
+        },
+        {
+            'title': 'Submit invoice',
+            'due': event.end + timedelta(days=2) if event.end else '',
+            'event': event,
+        },
+        {
+            'title': 'Make sure instructors are reimbursed',
+            'due': event.end + timedelta(days=7) if event.end else '',
+            'event': event,
+        },
+        {
+            'title': 'Get attendee list',
+            'due': event.end + timedelta(days=7) if event.end else '',
+            'event': event,
+        },
+    ])
+
+    if request.method == 'POST':
+        formset = TodoFormSet(request.POST)
+        if formset.is_valid():
+            formset.save()
+            return redirect(reverse(event_details, args=(event.get_ident(), )))
+        else:
+            messages.error(request, 'Fix errors below.')
+            print(formset.errors)
+
+    context = {
+        'title': 'Add standard TODOs to the event',
+        'formset': formset,
+        'helper': bootstrap_helper,
+        'event': event,
+    }
+    return render(request, 'workshops/todos_add.html', context)

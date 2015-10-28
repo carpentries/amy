@@ -83,4 +83,6 @@ urlpatterns = [
     url(r'^profile_update/(?P<request_id>\d+)/discard/?$', views.profileupdaterequest_discard, name='profileupdaterequest_discard'),
     url(r'^profile_update/(?P<request_id>\d+)/accept/(?P<person_id>[\w\.-]+)/?$', views.profileupdaterequest_accept, name='profileupdaterequest_accept'),
     url(r'^update_profile/$', views.profileupdaterequest_create, name='profileupdate_request'),
+
+    url(r'^todos/(?P<event_ident>[\w-]+)/add$', views.todos_add, name='todos_add'),
 ]

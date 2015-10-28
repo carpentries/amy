@@ -10,7 +10,11 @@ var first_startdate_selected = false;
 $(document).ready(function() {
     $("#id_start, #id_end").datepicker(DATEPICKER_DEFAULTS);
     $("#id_event-start, #id_event-end").datepicker(DATEPICKER_DEFAULTS);
-    $("#id_todo-due").datepicker({
+    $("#id_todo-due, #id_form-0-due, #id_form-1-due, #id_form-2-due, " +
+      "#id_form-3-due, #id_form-4-due, #id_form-5-due, #id_form-6-due, " +
+      "#id_form-6-due, #id_form-7-due, #id_form-8-due, #id_form-9-due, " +
+      "#id_form-10-due, #id_form-11-due"
+    ).datepicker({
         autoclose: true,
         clearBtn: true,
         format: "yyyy-mm-dd",
