@@ -14,7 +14,7 @@ from selectable import forms as selectable
 
 from workshops.models import (
     Award, Event, Lesson, Person, Task, KnowledgeDomain, Airport, Host,
-    EventRequest, ProfileUpdateRequest,
+    EventRequest, ProfileUpdateRequest, TodoItem,
 )
 from workshops import lookups
 
@@ -528,3 +528,15 @@ class PersonLookupForm(forms.Form):
         help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
+
+
+class SimpleTodoForm(forms.ModelForm):
+    class Meta:
+        model = TodoItem
+        fields = ('title', 'due', 'additional', 'completed')
+        widgets = {'event': HiddenInput, }
+
+    class Media:
+        # thanks to this, {{ form.media }} in the template will generate
+        # a <link href=""> (for CSS files) or <script src=""> (for JS files)
+        js = ('calendar_popup.js', )

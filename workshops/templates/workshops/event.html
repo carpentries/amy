@@ -1,5 +1,6 @@
 {% extends "workshops/_page.html" %}
 
+{% load crispy_forms_tags %}
 {% load links %}
 {% load revisions %}
 
@@ -66,6 +67,7 @@
 {% endif %}
 
 {% if tasks %}
+<h3>Tasks</h3>
 <table class="table table-striped">
   <tr>
     <th>person</th>
@@ -82,7 +84,7 @@
 <p>No tasks.</p>
 {% endif %}
 {% if event.notes %}
-<p>Notes:</p>
+<h3>Notes</h3>
 <pre>
 {{ event.notes }}
 </pre>
@@ -106,9 +108,40 @@
   </p>
 </div>
 
+<h3>TODOs</h3>
+<p>
+  <a href="" class="btn btn-primary">Add standard TODOs</a>
+  <a href="" class="btn btn-default" id="add-simple-todo">Add a simple TODO</a>
+</p>
+{% if todos %}
+<p>TODOs list here. (placeholder)</p>
+{% else %}
+<p>No TODOs.</p>
+{% endif %}
+
+<!-- Simple TODO modal -->
+<div class="modal fade" id="simple-todo-modal" tabindex="-1" role="dialog" aria-labelledby="simple-todo-modal-label" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="simple-todo-modal-label">Add a TODO</h4>
+      </div>
+      <div class="modal-body">
+        {% crispy todo_form %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Submit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block extrajs %}
+{{ todo_form.media }}
 <script type="text/javascript">
   $('#error_event_url').popover({placement: "left", html: true});
   $('#error_closest_instructors').popover({placement: "left", html: true});
@@ -118,6 +151,13 @@
   });
   $('#validation_modal').on('show.bs.modal', function() {
     $('#validation_modal .modal-body').load("{% url 'validate_event' event.get_ident %} #validation")
+  });
+  $('#add-simple-todo').click(function() {
+    $('#simple-todo-modal').modal();
+    return false;
+  });
+  $('#simple-todo-modal').on('show.bs.modal', function() {
+
   });
 </script>
 {% endblock %}

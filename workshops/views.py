@@ -55,6 +55,7 @@ from workshops.forms import (
     PersonPermissionsForm, bootstrap_helper_filter, PersonMergeForm,
     PersonTaskForm, HostForm, SWCEventRequestForm, DCEventRequestForm,
     ProfileUpdateRequestForm, PersonLookupForm, bootstrap_helper_wider_labels,
+    SimpleTodoForm,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
@@ -790,9 +791,15 @@ def event_details(request, event_ident):
 
     event = Event.get_by_ident(event_ident)
     tasks = Task.objects.filter(event__id=event.id).order_by('role__name')
-    context = {'title' : 'Event {0}'.format(event),
-               'event' : event,
-               'tasks' : tasks}
+    todo_form = SimpleTodoForm(prefix='todo', initial={
+        'event': event,
+    })
+    context = {
+        'title': 'Event {0}'.format(event),
+        'event': event,
+        'tasks': tasks,
+        'todo_form': todo_form,
+    }
     return render(request, 'workshops/event.html', context)
 
 
