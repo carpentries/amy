@@ -113,21 +113,48 @@
   <a href="{% url 'todos_add' event.get_ident %}" class="btn btn-primary">Add standard TODOs</a>
 </p>
 {% if todos %}
-<table class="table table-striped">
+<table class="table">
   <thead>
     <tr>
       <th>Title</th>
       <th>Due date</th>
       <th>Additional information</th>
+      <th class="additional-links"></th>
     </tr>
   </thead>
   <tbody>
   {% for todo in todos %}
+  {% if todo.completed %}
     <tr>
-      <td>{{ todo.title }}</td>
-      <td>{{ todo.due|default:"—" }}</td>
-      <td>{{ todo.additional|default:"—"|urlize_newtab }}</td>
+      <td><s>{{ todo.title }}</s></td>
+      <td><s>{{ todo.due|default:"—" }}</s></td>
+      <td><s>{{ todo.additional|default:"—"|urlize_newtab }}</s></td>
+      <td><input type="checkbox"></td>
     </tr>
+  {% else %}
+
+    {% if todo.due and todo.due > today %}
+    <tr class="bg-success">
+    {% elif todo.due and todo.due < today %}
+    <tr class="bg-danger">
+    {% elif todo.due and todo.due == today %}
+    <tr class="bg-warning">
+    {% else %}
+    <tr>
+    {% endif %}
+      <td>{{ todo.title }}</td>
+      <td>
+        {{ todo.due|default:"—" }}
+        {% if todo.due and todo.due < today %}
+        <span class="label label-danger">overdue</span>
+        {% elif todo.due and todo.due == today %}
+        <span class="label label-warning">due today</span>
+        {% endif %}
+      </td>
+      <td>{{ todo.additional|default:"—"|urlize_newtab }}</td>
+      <td><input type="checkbox"></td>
+    </tr>
+  {% endif %}
   {% endfor %}
   </tbody>
 </table>

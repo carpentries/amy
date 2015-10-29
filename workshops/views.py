@@ -825,6 +825,7 @@ def event_details(request, event_ident):
         'todo_form': todo_form,
         'todos': todos,
         'helper': bootstrap_helper,
+        'today': datetime.date.today(),
     }
     return render(request, 'workshops/event.html', context)
 
