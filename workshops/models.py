@@ -907,3 +907,6 @@ class TodoItem(models.Model):
     title = models.CharField(max_length=STR_LONG, default='', blank=False)
     due = models.DateField(blank=True, null=True)
     additional = models.CharField(max_length=255, default='', blank=True)
+
+    class Meta:
+        ordering = ["due", "title"]
