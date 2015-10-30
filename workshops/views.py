@@ -1968,3 +1968,44 @@ def todo_mark_incompleted(request, todo_id):
     todo.save()
 
     return HttpResponse()
+
+
+class TodoItemUpdate(LoginRequiredMixin, PermissionRequiredMixin,
+                     UpdateViewContext):
+    perms = 'workshops.change_todoitem'
+    model = TodoItem
+    form_class = SimpleTodoForm
+    pk_url_kwarg = 'todo_id'
+    template_name = 'workshops/generic_form.html'
+
+    def get_success_url(self):
+        return reverse('event_details', args=[self.object.event.get_ident()])
+
+    def form_valid(self, form):
+        """Overwrite default way of showing the success message, because we
+        need to add extra tags to it)."""
+        self.object = form.save()
+
+        # Important: we need to use ModelFormMixin.form_valid() here!
+        # But by doing so we omit SuccessMessageMixin completely, so we need to
+        # simulate it.  The code below is almost identical to
+        # SuccessMessageMixin.form_valid().
+        response = super(ModelFormMixin, self).form_valid(form)
+        success_message = self.get_success_message(form.cleaned_data)
+        if success_message:
+            messages.success(self.request, success_message, extra_tags='todos')
+        return response
+
+
+@login_required
+@permission_required('workshops.delete_todoitem', raise_exception=True)
+def todo_delete(request, todo_id):
+    """Delete a TodoItem. This is used on the event details page."""
+    todo = get_object_or_404(TodoItem, pk=todo_id)
+    event_ident = todo.event.get_ident()
+    todo.delete()
+
+    messages.success(request, 'TODO was deleted successfully.',
+                     extra_tags='todos')
+
+    return redirect(event_details, event_ident)
