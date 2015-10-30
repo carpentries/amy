@@ -910,3 +910,10 @@ class TodoItem(models.Model):
 
     class Meta:
         ordering = ["due", "title"]
+
+    def __str__(self):
+        if self.due:
+            return "{title} due {due:%Y-%m-%d}".format(title=self.title,
+                                                       due=self.due)
+        else:
+            return self.title

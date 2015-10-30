@@ -13,7 +13,7 @@ $(document).ready(function() {
     $("#id_todo-due, #id_form-0-due, #id_form-1-due, #id_form-2-due, " +
       "#id_form-3-due, #id_form-4-due, #id_form-5-due, #id_form-6-due, " +
       "#id_form-6-due, #id_form-7-due, #id_form-8-due, #id_form-9-due, " +
-      "#id_form-10-due, #id_form-11-due"
+      "#id_form-10-due, #id_form-11-due, #id_due"
     ).datepicker({
         autoclose: true,
         clearBtn: true,

@@ -811,7 +811,7 @@ def event_details(request, event_ident):
                     todo=str(todo),
                     event=event.get_ident(),
                 ),
-                extra_tags='todos',
+                extra_tags='newtodo',
             )
             return redirect(reverse(event_details, args=[event_ident, ]))
         else:
@@ -1035,6 +1035,7 @@ class TaskUpdate(LoginRequiredMixin, PermissionRequiredMixin,
 #------------------------------------------------------------
 
 
+@login_required
 @permission_required('workshops.delete_award', raise_exception=True)
 def award_delete(request, award_id, person_id=None):
     """Delete an award. This is used on the person edit page."""
@@ -1512,6 +1513,8 @@ def _failed_to_delete(request, object, protected_objects, back=None):
 
     return render(request, 'workshops/failed_to_delete.html', context)
 
+#------------------------------------------------------------
+
 
 class SWCEventRequest(View):
     form_class = SWCEventRequestForm
@@ -1848,9 +1851,11 @@ def profileupdaterequest_accept(request, request_id, person_id):
                      '{} was updated successfully.'.format(person_name))
     return redirect(reverse('all_profileupdaterequests'))
 
+#------------------------------------------------------------
+
 
 @login_required
-@permission_required('workshops.add_todo', raise_exception=True)
+@permission_required('workshops.add_todoitem', raise_exception=True)
 def todos_add(request, event_ident):
     """Add a standard TodoItems for a specific event."""
     event = Event.get_by_ident(event_ident)
@@ -1927,6 +1932,8 @@ def todos_add(request, event_ident):
         formset = TodoFormSet(request.POST)
         if formset.is_valid():
             formset.save()
+            messages.success(request, 'Successfully added a bunch of TODOs.',
+                             extra_tags='todos')
             return redirect(reverse(event_details, args=(event.get_ident(), )))
         else:
             messages.error(request, 'Fix errors below.')
@@ -1942,7 +1949,7 @@ def todos_add(request, event_ident):
 
 
 @login_required
-@permission_required('workshops.add_todo', raise_exception=True)
+@permission_required('workshops.change_todoitem', raise_exception=True)
 def todo_mark_completed(request, todo_id):
     todo = get_object_or_404(TodoItem, pk=todo_id)
 
@@ -1953,7 +1960,7 @@ def todo_mark_completed(request, todo_id):
 
 
 @login_required
-@permission_required('workshops.add_todo', raise_exception=True)
+@permission_required('workshops.change_todoitem', raise_exception=True)
 def todo_mark_incompleted(request, todo_id):
     todo = get_object_or_404(TodoItem, pk=todo_id)
 
