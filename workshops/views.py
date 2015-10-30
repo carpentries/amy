@@ -1939,3 +1939,25 @@ def todos_add(request, event_ident):
         'event': event,
     }
     return render(request, 'workshops/todos_add.html', context)
+
+
+@login_required
+@permission_required('workshops.add_todo', raise_exception=True)
+def todo_mark_completed(request, todo_id):
+    todo = get_object_or_404(TodoItem, pk=todo_id)
+
+    todo.completed = True
+    todo.save()
+
+    return HttpResponse()
+
+
+@login_required
+@permission_required('workshops.add_todo', raise_exception=True)
+def todo_mark_incompleted(request, todo_id):
+    todo = get_object_or_404(TodoItem, pk=todo_id)
+
+    todo.completed = False
+    todo.save()
+
+    return HttpResponse()

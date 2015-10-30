@@ -85,4 +85,6 @@ urlpatterns = [
     url(r'^update_profile/$', views.profileupdaterequest_create, name='profileupdate_request'),
 
     url(r'^todos/(?P<event_ident>[\w-]+)/add$', views.todos_add, name='todos_add'),
+    url(r'^todo/(?P<todo_id>\d+)/completed', views.todo_mark_completed, name='todo_mark_completed'),
+    url(r'^todo/(?P<todo_id>\d+)/incompleted', views.todo_mark_incompleted, name='todo_mark_incompleted'),
 ]

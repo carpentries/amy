@@ -126,3 +126,11 @@ label.last-field {
 .workshop-form-logo {
     margin: -50px 0 40px;
 }
+
+.strikethrough {
+    text-decoration: line-through;
+}
+
+.bg-muted {
+    background-color: #F5F5F5;
+}
