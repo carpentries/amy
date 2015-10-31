@@ -10,7 +10,8 @@ from django.db.models import Q
 def add_self_organized_host(apps, schema_editor):
     """Make new host: self-organized."""
     Host = apps.get_model('workshops', 'Host')
-    Host.objects.create(domain='-', fullname='self-organized', country='W3')
+    Host.objects.create(domain='self-organized', fullname='self-organized',
+                        country='W3')
 
 
 def update_administrator_to_self_organized(apps, schema_editor):
