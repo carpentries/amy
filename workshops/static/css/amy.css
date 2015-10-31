@@ -12,6 +12,9 @@ table td.editable span {
 table .additional-links {
     width: 70px;
 }
+table .additional-links-wider {
+    width: 90px;
+}
 
 /* move country flag in tables a few pixels up */
 .country-flag {
@@ -127,10 +130,29 @@ label.last-field {
     margin: -50px 0 40px;
 }
 
-.strikethrough {
+
+/* any element but tr, with class .strikethrough */
+.strikethrough:not(tr) {
+    text-decoration: line-through;
+}
+
+/* styles for tr with class .strikethrough only: last td child without
+   strikethrough because there are links in this last column and it just seems
+   ugly to have them crossed out */
+tr.strikethrough td:last-child {
+    text-decoration: none;
+}
+tr.strikethrough td {
     text-decoration: line-through;
 }
 
 .bg-muted {
     background-color: #F5F5F5;
+}
+
+.space1 {
+    margin: 0 3px 0 9px;
+}
+.space2 {
+    margin: 0 3px;
 }

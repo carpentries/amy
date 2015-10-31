@@ -108,7 +108,7 @@
   </p>
 </div>
 
-<h3>TODOs</h3>
+<h3 id="todos">TODOs</h3>
 <p>
   <a href="{% url 'todos_add' event.get_ident %}" class="btn btn-primary">Add standard TODOs</a>
 </p>
@@ -119,12 +119,11 @@
       <th>Title</th>
       <th>Due date</th>
       <th>Additional information</th>
-      <th class="additional-links"></th>
+      <th class="additional-links-wider"></th>
     </tr>
   </thead>
   <tbody>
   {% for todo in todos %}
-
     <tr class="{% if todo.due and todo.due > today %}bg-success{% elif todo.due and todo.due < today %}bg-danger{% elif todo.due and todo.due == today %}bg-warning{% endif %} {% if todo.completed %}text-muted strikethrough bg-muted{% endif %}">
       <td>{{ todo.title }}</td>
       <td>
@@ -136,7 +135,11 @@
         {% endif %}
       </td>
       <td>{{ todo.additional|default:"—"|urlize_newtab }}</td>
-      <td><input type="checkbox" class="completness-indicator" {% if todo.completed %}checked="checked"{% endif %} data-todo-id="{{ todo.id }}"></td>
+      <td>
+        <input type="checkbox" class="completness-indicator" {% if todo.completed %}checked="checked"{% endif %} data-todo-id="{{ todo.id }}">
+        <a href="{% url 'todo_edit' todo.pk %}"><span class="space1 glyphicon glyphicon-pencil"></span></a>
+        <a href="{% url 'todo_delete' todo.pk %}" onclick='return confirm("Are you sure you wish to remove \"{{ todo }}\"?")'><span class="space2 glyphicon glyphicon-remove"></span></a>
+      </td>
     </tr>
   {% endfor %}
   </tbody>
@@ -163,8 +166,11 @@
 
   // scroll to TODOs if there's an alert with "todos" class
   $(document).ready(function() {
-    if ($(".alert").hasClass('todos')) {
+    if ($(".alert").hasClass('newtodo')) {
       $("html, body").scrollTop($("#newtodo").offset().top);
+    }
+    if ($(".alert").hasClass('todos')) {
+      $("html, body").scrollTop($("#todos").offset().top);
     }
 
     $(".completness-indicator").click(function() {
