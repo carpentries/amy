@@ -1937,7 +1937,6 @@ def todos_add(request, event_ident):
             return redirect(reverse(event_details, args=(event.get_ident(), )))
         else:
             messages.error(request, 'Fix errors below.')
-            print(formset.errors)
 
     context = {
         'title': 'Add standard TODOs to the event',
