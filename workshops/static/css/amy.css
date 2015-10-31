@@ -156,3 +156,11 @@ tr.strikethrough td {
 .space2 {
     margin: 0 3px;
 }
+
+/* better styles for inline formset (e.g. TODOs) */
+.form-horizontal table .control-label {
+    text-align: center;
+}
+.form-horizontal table .control-group {
+    text-align: center;
+}
