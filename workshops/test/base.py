@@ -213,6 +213,15 @@ class TestBase(TestCase):
                                  admin_fee=100,
                                  invoice_status=next(invoice))
 
+        # create a past event that has no admin fee specified, yet it needs
+        # invoice
+        event_start = today + datetime.timedelta(days=-4)
+        Event.objects.create(
+            start=event_start, end=today + datetime.timedelta(days=-1),
+            slug='{:%Y-%m-%d}-past-uninvoiced'.format(event_start),
+            host=test_host, admin_fee=None, invoice_status='not-invoiced',
+        )
+
         # Create an event that started yesterday and ends tomorrow
         # with no fee, and without specifying whether they've been
         # invoiced.
@@ -248,8 +257,7 @@ class TestBase(TestCase):
         self.num_uninvoiced_events = 0
         self.num_upcoming = 0
         for e in Event.objects.all():
-            if (e.admin_fee > 0) and (e.invoice_status == 'not-invoiced') \
-                    and (e.start < today):
+            if e.invoice_status == 'not-invoiced' and e.start < today:
                 self.num_uninvoiced_events += 1
             if e.url and (e.start > today):
                 self.num_upcoming += 1
