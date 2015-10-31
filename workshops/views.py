@@ -57,7 +57,7 @@ from workshops.forms import (
     PersonPermissionsForm, bootstrap_helper_filter, PersonMergeForm,
     PersonTaskForm, HostForm, SWCEventRequestForm, DCEventRequestForm,
     ProfileUpdateRequestForm, PersonLookupForm, bootstrap_helper_wider_labels,
-    SimpleTodoForm,
+    SimpleTodoForm, bootstrap_helper_inline_formsets,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
@@ -1942,7 +1942,7 @@ def todos_add(request, event_ident):
     context = {
         'title': 'Add standard TODOs to the event',
         'formset': formset,
-        'helper': bootstrap_helper,
+        'helper': bootstrap_helper_inline_formsets,
         'event': event,
     }
     return render(request, 'workshops/todos_add.html', context)

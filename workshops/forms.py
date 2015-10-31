@@ -74,11 +74,17 @@ class BootstrapHelperWiderLabels(BootstrapHelper):
     field_class = 'col-lg-7'
 
 
+class BootstrapHelperFormsetInline(BootstrapHelper):
+    """For use in inline formsets."""
+    template = 'bootstrap/table_inline_formset.html'
+
+
 bootstrap_helper = BootstrapHelper()
 bootstrap_helper_get = BootstrapHelperGet()
 bootstrap_helper_with_add = BootstrapHelperWithAdd()
 bootstrap_helper_filter = BootstrapHelperFilter()
 bootstrap_helper_wider_labels = BootstrapHelperWiderLabels()
+bootstrap_helper_inline_formsets = BootstrapHelperFormsetInline()
 
 
 class InstructorsForm(forms.Form):
