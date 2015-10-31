@@ -1,5 +1,6 @@
 import datetime
 import re
+from urllib.parse import urlencode
 
 from django.contrib.auth.models import (
     AbstractBaseUser, BaseUserManager, PermissionsMixin)
@@ -557,6 +558,27 @@ class Event(models.Model):
             # TypeError: self.url is None
             # KeyError: mo.groupdict doesn't supply required names to format
             return self.url
+
+    @property
+    def uninvoiced(self):
+        """Indicate if the event has been invoiced or not."""
+        return self.invoice_status == 'not-invoiced'
+
+    def get_invoice_form_url(self):
+        query = {
+            'entry.823772951': self.venue,  # Organization to invoice
+            'entry.351294200': 'Workshop administrative fee',  # Reason
+
+            # Date of event
+            'entry.1749215879': '{:%Y-%m-%d}'.format(self.start),
+            'entry.508035854': self.slug,  # Event or item ID
+            'entry.821460022': self.admin_fee,  # Total invoice amount
+            'entry.1316946828': 'US dollars',  # Currency
+        }
+        url = ("https://docs.google.com/forms/d/"
+               "1XljyEam4LERRXW0ebyh5eoZXjT1xR4bHkPxITLWiIyA/viewform?")
+        url += urlencode(query)
+        return url
 
     def get_ident(self):
         if self.slug:
