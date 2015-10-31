@@ -466,8 +466,7 @@ class Event(models.Model):
     administrator = models.ForeignKey(
         Host, related_name='administrator', null=True, blank=True,
         on_delete=models.PROTECT,
-        help_text='Organization responsible for administrative work. Leave '
-        'blank if self-organized.'
+        help_text='Organization responsible for administrative work.'
     )
     start      = models.DateField(null=True, blank=True,
                                   help_text='Setting this and url "publishes" the event.')

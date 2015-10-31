@@ -54,7 +54,7 @@ class TestSearchHost(TestBase):
                             'Expected three search results',
                             expected=3)
         texts = set([n.text for n in nodes])
-        assert texts == {'alpha.edu', '-', 'beta.com'}, \
+        assert texts == {'alpha.edu', 'self-organized', 'beta.com'}, \
             'Wrong names {0} in search result'.format(texts)
 
     def test_search_for_people_by_personal_family_names(self):
