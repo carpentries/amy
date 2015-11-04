@@ -22,6 +22,7 @@ from django.http import Http404, HttpResponse, JsonResponse
 from django.db import IntegrityError
 from django.db.models import Count, Sum, Q, F, Model, ProtectedError
 from django.db.models import Case, When, Value, IntegerField
+from django.forms import modelformset_factory
 from django.shortcuts import redirect, render, get_object_or_404
 from django.template.loader import get_template
 from django.views.decorators.http import require_POST
@@ -46,6 +47,7 @@ from workshops.models import (
     Task,
     EventRequest,
     ProfileUpdateRequest,
+    TodoItem,
 )
 from workshops.check import check_file
 from workshops.forms import (
@@ -55,6 +57,7 @@ from workshops.forms import (
     PersonPermissionsForm, bootstrap_helper_filter, PersonMergeForm,
     PersonTaskForm, HostForm, SWCEventRequestForm, DCEventRequestForm,
     ProfileUpdateRequestForm, PersonLookupForm, bootstrap_helper_wider_labels,
+    SimpleTodoForm, bootstrap_helper_inline_formsets,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
@@ -790,9 +793,40 @@ def event_details(request, event_ident):
 
     event = Event.get_by_ident(event_ident)
     tasks = Task.objects.filter(event__id=event.id).order_by('role__name')
-    context = {'title' : 'Event {0}'.format(event),
-               'event' : event,
-               'tasks' : tasks}
+    todos = event.todoitem_set.all()
+    todo_form = SimpleTodoForm(prefix='todo', initial={
+        'event': event,
+    })
+
+    if request.method == "POST":
+        todo_form = SimpleTodoForm(request.POST, prefix='todo', initial={
+            'event': event,
+        })
+        if todo_form.is_valid():
+            todo = todo_form.save()
+
+            messages.success(
+                request,
+                'New TODO {todo} was added to the event {event}.'.format(
+                    todo=str(todo),
+                    event=event.get_ident(),
+                ),
+                extra_tags='newtodo',
+            )
+            return redirect(reverse(event_details, args=[event_ident, ]))
+        else:
+            messages.error(request, 'Fix errors in the TODO form.',
+                           extra_tags='todos')
+
+    context = {
+        'title': 'Event {0}'.format(event),
+        'event': event,
+        'tasks': tasks,
+        'todo_form': todo_form,
+        'todos': todos,
+        'helper': bootstrap_helper,
+        'today': datetime.date.today(),
+    }
     return render(request, 'workshops/event.html', context)
 
 
@@ -1001,6 +1035,7 @@ class TaskUpdate(LoginRequiredMixin, PermissionRequiredMixin,
 #------------------------------------------------------------
 
 
+@login_required
 @permission_required('workshops.delete_award', raise_exception=True)
 def award_delete(request, award_id, person_id=None):
     """Delete an award. This is used on the person edit page."""
@@ -1478,6 +1513,8 @@ def _failed_to_delete(request, object, protected_objects, back=None):
 
     return render(request, 'workshops/failed_to_delete.html', context)
 
+#------------------------------------------------------------
+
 
 class SWCEventRequest(View):
     form_class = SWCEventRequestForm
@@ -1813,3 +1850,161 @@ def profileupdaterequest_accept(request, request_id, person_id):
     messages.success(request,
                      '{} was updated successfully.'.format(person_name))
     return redirect(reverse('all_profileupdaterequests'))
+
+#------------------------------------------------------------
+
+
+@login_required
+@permission_required('workshops.add_todoitem', raise_exception=True)
+def todos_add(request, event_ident):
+    """Add a standard TodoItems for a specific event."""
+    event = Event.get_by_ident(event_ident)
+
+    dt = datetime.datetime
+    timedelta = datetime.timedelta
+
+    initial = []
+    base = dt.now()
+    if event.start and event.end:
+        extra = 9
+    else:
+        extra = 10
+        initial = [
+            {
+                'title': 'Set date with host',
+                'due': dt.now() + timedelta(days=30),
+                'event': event,
+            },
+        ]
+
+    TodoFormSet = modelformset_factory(TodoItem, form=SimpleTodoForm,
+                                       extra=extra)
+
+    formset = TodoFormSet(queryset=TodoItem.objects.none(), initial=initial + [
+        {
+            'title': 'Set up a workshop website',
+            'due': base + timedelta(days=7),
+            'event': event,
+        },
+        {
+            'title': 'Find instructor #1',
+            'due': base + timedelta(days=14),
+            'event': event,
+        },
+        {
+            'title': 'Find instructor #2',
+            'due': base + timedelta(days=14),
+            'event': event,
+        },
+        {
+            'title': 'Follow up that instructors have booked travel',
+            'due': base + timedelta(days=21),
+            'event': event,
+        },
+        {
+            'title': 'Set up pre-workshop survey',
+            'due': event.start - timedelta(days=7) if event.start else '',
+            'event': event,
+        },
+        {
+            'title': 'Make sure instructors are set with materials',
+            'due': event.start - timedelta(days=1) if event.start else '',
+            'event': event,
+        },
+        {
+            'title': 'Submit invoice',
+            'due': event.end + timedelta(days=2) if event.end else '',
+            'event': event,
+        },
+        {
+            'title': 'Make sure instructors are reimbursed',
+            'due': event.end + timedelta(days=7) if event.end else '',
+            'event': event,
+        },
+        {
+            'title': 'Get attendee list',
+            'due': event.end + timedelta(days=7) if event.end else '',
+            'event': event,
+        },
+    ])
+
+    if request.method == 'POST':
+        formset = TodoFormSet(request.POST)
+        if formset.is_valid():
+            formset.save()
+            messages.success(request, 'Successfully added a bunch of TODOs.',
+                             extra_tags='todos')
+            return redirect(reverse(event_details, args=(event.get_ident(), )))
+        else:
+            messages.error(request, 'Fix errors below.')
+
+    context = {
+        'title': 'Add standard TODOs to the event',
+        'formset': formset,
+        'helper': bootstrap_helper_inline_formsets,
+        'event': event,
+    }
+    return render(request, 'workshops/todos_add.html', context)
+
+
+@login_required
+@permission_required('workshops.change_todoitem', raise_exception=True)
+def todo_mark_completed(request, todo_id):
+    todo = get_object_or_404(TodoItem, pk=todo_id)
+
+    todo.completed = True
+    todo.save()
+
+    return HttpResponse()
+
+
+@login_required
+@permission_required('workshops.change_todoitem', raise_exception=True)
+def todo_mark_incompleted(request, todo_id):
+    todo = get_object_or_404(TodoItem, pk=todo_id)
+
+    todo.completed = False
+    todo.save()
+
+    return HttpResponse()
+
+
+class TodoItemUpdate(LoginRequiredMixin, PermissionRequiredMixin,
+                     UpdateViewContext):
+    perms = 'workshops.change_todoitem'
+    model = TodoItem
+    form_class = SimpleTodoForm
+    pk_url_kwarg = 'todo_id'
+    template_name = 'workshops/generic_form.html'
+
+    def get_success_url(self):
+        return reverse('event_details', args=[self.object.event.get_ident()])
+
+    def form_valid(self, form):
+        """Overwrite default way of showing the success message, because we
+        need to add extra tags to it)."""
+        self.object = form.save()
+
+        # Important: we need to use ModelFormMixin.form_valid() here!
+        # But by doing so we omit SuccessMessageMixin completely, so we need to
+        # simulate it.  The code below is almost identical to
+        # SuccessMessageMixin.form_valid().
+        response = super(ModelFormMixin, self).form_valid(form)
+        success_message = self.get_success_message(form.cleaned_data)
+        if success_message:
+            messages.success(self.request, success_message, extra_tags='todos')
+        return response
+
+
+@login_required
+@permission_required('workshops.delete_todoitem', raise_exception=True)
+def todo_delete(request, todo_id):
+    """Delete a TodoItem. This is used on the event details page."""
+    todo = get_object_or_404(TodoItem, pk=todo_id)
+    event_ident = todo.event.get_ident()
+    todo.delete()
+
+    messages.success(request, 'TODO was deleted successfully.',
+                     extra_tags='todos')
+
+    return redirect(event_details, event_ident)
