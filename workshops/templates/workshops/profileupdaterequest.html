@@ -4,22 +4,28 @@
 {% load links %}
 
 {% block content %}
-<div class="alert alert-info" role="alert">
-  <p><strong>Instruction:</strong> Verify with the person from the
-  database that they updated their profile with data from the 'Update
-  request' column.</p>
-</div>
-{% if not old %}
-<div class="alert alert-danger" role="alert">
-  <p><strong>Error:</strong> No-one matches this email ({{ new.email }}) or name ({{ new.personal }} {{ new.family }}). Look up possible match yourself using search option and then point to that person below.</p>
-</div>
-{% crispy person_form form_helper %}
-{% endif %}
-{% if person_selected %}
-<div class="alert alert-warning" role="alert">
-  <p><strong>Re-select:</strong> You can change your selection below.</p>
-</div>
-{% crispy person_form form_helper %}
+{% if new.active %}
+  <div class="alert alert-info" role="alert">
+    <p><strong>Instruction:</strong> Verify with the person from the
+    database that they updated their profile with data from the 'Update
+    request' column.</p>
+  </div>
+  {% if not old %}
+  <div class="alert alert-danger" role="alert">
+    <p><strong>Error:</strong> No-one matches this email ({{ new.email }}) or name ({{ new.personal }} {{ new.family }}). Look up possible match yourself using search option and then point to that person below.</p>
+  </div>
+  {% crispy person_form form_helper %}
+  {% endif %}
+  {% if person_selected %}
+  <div class="alert alert-warning" role="alert">
+    <p><strong>Re-select:</strong> You can change your selection below.</p>
+  </div>
+  {% crispy person_form form_helper %}
+  {% endif %}
+{% else %}
+  <div class="alert alert-warning" role="alert">
+    <p><strong>Warning:</strong> This request was closed.</p>
+  </div>
 {% endif %}
 <table class="table table-striped">
   <thead>
@@ -32,26 +38,23 @@
   <tbody>
     <tr><th>Personal:</th>
         <td>{{ new.personal }}</td>
-        <td>{% if old %}{{ old.personal }}{% endif %}</td></tr>
+        <td>{% if old %}{{ old.personal|default:"—" }}{% endif %}</td></tr>
     <tr><th>Family:</th>
         <td>{{ new.family }}</td>
-        <td>{% if old %}{{ old.family }}{% endif %}</td></tr>
+        <td>{% if old %}{{ old.family|default:"—" }}{% endif %}</td></tr>
     <tr><th>Email:</th>
         <td>{{ new.email|urlize }}</td>
-        <td>{% if old %}{{ old.email|urlize }}{% endif %}</td></tr>
+        <td>{% if old %}{{ old.email|default:"—"|urlize }}{% endif %}</td></tr>
     <tr><th>Affiliation:</th>
-        <td>{{ new.affiliation }}</td>
-        <td>{% if old %}{{ old.affiliation }}{% endif %}</td></tr>
+        <td>{{ new.affiliation|default:"—" }}</td>
+        <td>{% if old %}{{ old.affiliation|default:"—" }}{% endif %}</td></tr>
     <tr><th>Nearest major airport:</th>
         {% if airport %}
         <td><a href="{{ airport.get_absolute_url }}">{{ airport.iata }}</a></td>
         {% else %}
         <td><a href="{% url 'airport_add' %}" title="Add airport {{ new.airport_iata }}">{{ new.airport_iata }}</a> <span class="label label-danger">Missing airport</span>  (<a href="https://www.world-airport-codes.com/search/?s={{ new.airport_iata }}" target="_blank">Lookup</a>)</td>
         {% endif %}
-        <td>{% if old %}<a href="{{ old.airport.get_absolute_url }}">{{ old.airport.iata }}</a>{% endif %}</td></tr>
-    <tr><th>Has instructor badge:</th>
-        <td>N/A</td>
-        <td>{% if old %}{{ old.has_instructor_badge|yesno }}{% endif %}</td></tr>
+        <td>{% if old and old.airport %}<a href="{{ old.airport.get_absolute_url }}">{{ old.airport.iata }}</a>{% else %}—{% endif %}</td></tr>
     <tr><th>GitHub username:</th>
         <td>{{ new.github|default:"—" }}</td>
         <td>{% if old %}{{ old.github|default:"—" }}{% endif %}</td></tr>
@@ -59,17 +62,11 @@
         <td>{{ new.twitter|default:"—" }}</td>
         <td>{% if old %}{{ old.twitter|default:"—" }}{% endif %}</td></tr>
     <tr><th>Personal website:</th>
-        <td>{{ new.website|urlize_newtab }}</td>
-        <td>{% if old %}{{ old.url|urlize_newtab }}{% endif %}</td></tr>
+        <td>{{ new.website|default:"—"|urlize_newtab }}</td>
+        <td>{% if old %}{{ old.url|default:"—"|urlize_newtab }}{% endif %}</td></tr>
     <tr><th>Gender:</th>
-        <td>{{ new.get_gender_display }}{{ new.gender_other }}</td>
+        <td>{{ new.get_gender_display }} {{ new.gender_other }}</td>
         <td>{% if old %}{{ old.get_gender_display }}{% endif %}</td></tr>
-    <tr><th>ORCID ID:</th>
-        <td>{{ new.orcid|default:"—" }}</td>
-        <td>N/A</td></tr>
-    <tr><th>Occupation/Career stage:</th>
-        <td>{{ new.get_occupation_display }}{{ new.occupation_other }}</td>
-        <td>N/A</td></tr>
     <tr><th>Areas of expertise:</th>
         <td>
           <ul>
@@ -112,9 +109,20 @@
         {% endif %}
         </td>
     </tr>
+    <tr><th colspan="3" class="text-center">Additional information (not being saved to the database)</th></tr>
+    <tr><th>Has instructor badge:</th>
+        <td><em>Not available</em></td>
+        <td>{% if old %}{{ old.has_instructor_badge|yesno }}{% endif %}</td></tr>
+    <tr><th>ORCID ID:</th>
+        <td>{{ new.orcid|default:"—" }}</td>
+        <td><em>Not available</em></td></tr>
+    <tr><th>Occupation/Career stage:</th>
+        <td>{{ new.get_occupation_display }}{{ new.occupation_other }}</td>
+        <td><em>Not available</em></td></tr>
   </tbody>
 </table>
 
+{% if new.active %}
 <div class="clearfix">
   <p class="edit-object pull-left">
     {% if old and airport and perms.workshops.change_profileupdaterequest and perms.workshops.change_person %}
@@ -131,4 +139,5 @@
     {% endif %}
   </p>
 </div>
+{% endif %}
 {% endblock %}

@@ -1,5 +1,6 @@
 import datetime
 import re
+from urllib.parse import urlencode
 
 from django.contrib.auth.models import (
     AbstractBaseUser, BaseUserManager, PermissionsMixin)
@@ -20,6 +21,8 @@ STR_REG_KEY =  20         # length of Eventbrite registration key
 
 #------------------------------------------------------------
 
+
+@reversion.register
 class Host(models.Model):
     '''Represent a workshop's host.'''
 
@@ -39,6 +42,8 @@ class Host(models.Model):
 
 #------------------------------------------------------------
 
+
+@reversion.register
 class Airport(models.Model):
     '''Represent an airport (used to locate instructors).'''
 
@@ -407,12 +412,12 @@ class EventQuerySet(models.query.QuerySet):
     def uninvoiced_events(self):
         '''Return a queryset for events that have not yet been invoiced.
 
-        These are events that have an admin fee, are not marked as invoiced, and have occurred.
+        These are marked as uninvoiced, and have occurred.
         Events are sorted oldest first.'''
 
-        return self.past_events().filter(admin_fee__gt=0)\
-                   .exclude(invoice_status='invoiced')\
-                   .order_by('start')
+        return self.past_events().filter(invoice_status='not-invoiced') \
+                                 .order_by('start')
+
 
 class EventManager(models.Manager):
     '''A custom manager which is essentially a proxy for EventQuerySet'''
@@ -461,8 +466,7 @@ class Event(models.Model):
     administrator = models.ForeignKey(
         Host, related_name='administrator', null=True, blank=True,
         on_delete=models.PROTECT,
-        help_text='Organization responsible for administrative work. Leave '
-        'blank if self-organized.'
+        help_text='Organization responsible for administrative work.'
     )
     start      = models.DateField(null=True, blank=True,
                                   help_text='Setting this and url "publishes" the event.')
@@ -496,6 +500,11 @@ class Event(models.Model):
     address = models.CharField(max_length=255, default='', blank=True)
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
+
+    completed = models.BooleanField(
+        default=False,
+        help_text="Indicates that no more work is needed upon this event.",
+    )
 
     class Meta:
         ordering = ('-start', )
@@ -548,6 +557,27 @@ class Event(models.Model):
             # TypeError: self.url is None
             # KeyError: mo.groupdict doesn't supply required names to format
             return self.url
+
+    @property
+    def uninvoiced(self):
+        """Indicate if the event has been invoiced or not."""
+        return self.invoice_status == 'not-invoiced'
+
+    def get_invoice_form_url(self):
+        query = {
+            'entry.823772951': self.venue,  # Organization to invoice
+            'entry.351294200': 'Workshop administrative fee',  # Reason
+
+            # Date of event
+            'entry.1749215879': '{:%Y-%m-%d}'.format(self.start),
+            'entry.508035854': self.slug,  # Event or item ID
+            'entry.821460022': self.admin_fee,  # Total invoice amount
+            'entry.1316946828': 'US dollars',  # Currency
+        }
+        url = ("https://docs.google.com/forms/d/"
+               "1XljyEam4LERRXW0ebyh5eoZXjT1xR4bHkPxITLWiIyA/viewform?")
+        url += urlencode(query)
+        return url
 
     def get_ident(self):
         if self.slug:
@@ -804,6 +834,7 @@ class TaskManager(models.Manager):
         return self.get_queryset().filter(role__name="helper")
 
 
+@reversion.register
 class Task(models.Model):
     '''Represent who did what at events.'''
 
@@ -886,3 +917,24 @@ class KnowledgeDomain(models.Model):
 
     def __str__(self):
         return self.name
+
+# ------------------------------------------------------------
+
+
+class TodoItem(models.Model):
+    """Model representing to-do items for events."""
+    event = models.ForeignKey(Event, null=False, blank=False)
+    completed = models.BooleanField(default=False)
+    title = models.CharField(max_length=STR_LONG, default='', blank=False)
+    due = models.DateField(blank=True, null=True)
+    additional = models.CharField(max_length=255, default='', blank=True)
+
+    class Meta:
+        ordering = ["due", "title"]
+
+    def __str__(self):
+        if self.due:
+            return "{title} due {due:%Y-%m-%d}".format(title=self.title,
+                                                       due=self.due)
+        else:
+            return self.title

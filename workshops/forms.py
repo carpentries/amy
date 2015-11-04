@@ -14,7 +14,7 @@ from selectable import forms as selectable
 
 from workshops.models import (
     Award, Event, Lesson, Person, Task, KnowledgeDomain, Airport, Host,
-    EventRequest, ProfileUpdateRequest,
+    EventRequest, ProfileUpdateRequest, TodoItem,
 )
 from workshops import lookups
 
@@ -74,11 +74,17 @@ class BootstrapHelperWiderLabels(BootstrapHelper):
     field_class = 'col-lg-7'
 
 
+class BootstrapHelperFormsetInline(BootstrapHelper):
+    """For use in inline formsets."""
+    template = 'bootstrap/table_inline_formset.html'
+
+
 bootstrap_helper = BootstrapHelper()
 bootstrap_helper_get = BootstrapHelperGet()
 bootstrap_helper_with_add = BootstrapHelperWithAdd()
 bootstrap_helper_filter = BootstrapHelperFilter()
 bootstrap_helper_wider_labels = BootstrapHelperWiderLabels()
+bootstrap_helper_inline_formsets = BootstrapHelperFormsetInline()
 
 
 class InstructorsForm(forms.Form):
@@ -281,7 +287,7 @@ class EventForm(forms.ModelForm):
     class Meta:
         model = Event
         # reorder fields, don't display 'deleted' field
-        fields = ('slug', 'start', 'end', 'host', 'administrator',
+        fields = ('slug', 'completed', 'start', 'end', 'host', 'administrator',
                   'tags', 'url', 'reg_key', 'admin_fee', 'invoice_status',
                   'attendance', 'contact', 'notes',
                   'country', 'venue', 'address', 'latitude', 'longitude')
@@ -528,3 +534,15 @@ class PersonLookupForm(forms.Form):
         help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
+
+
+class SimpleTodoForm(forms.ModelForm):
+    class Meta:
+        model = TodoItem
+        fields = ('title', 'due', 'additional', 'completed', 'event')
+        widgets = {'event': HiddenInput, }
+
+    class Media:
+        # thanks to this, {{ form.media }} in the template will generate
+        # a <link href=""> (for CSS files) or <script src=""> (for JS files)
+        js = ('calendar_popup.js', )

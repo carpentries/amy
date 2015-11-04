@@ -1,6 +1,9 @@
 {% extends "workshops/_page.html" %}
 
+{% load revisions %}
+
 {% block content %}
+{% last_modified airport %}
 
 <table class="table table-striped">
   <tr><td>full name:</td><td>{{ airport.fullname }}</td></tr>

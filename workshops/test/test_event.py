@@ -32,8 +32,8 @@ class TestEvent(TestBase):
         # There should be as many as there are strictly future events.
         assert len(uninvoiced_events) == self.num_uninvoiced_events
 
-        # Check that events with a fee of zero are not in the list of uninvoiced events.
-        assert not any([x for x in uninvoiced_events if x.admin_fee == 0])
+        # Check that events with a fee of zero or None are still on this list
+        assert any([x for x in uninvoiced_events if not x.admin_fee])
 
     def test_get_future_events(self):
         """Test that the events manager can find upcoming events"""
@@ -47,8 +47,7 @@ class TestEvent(TestBase):
 
         past_events = Event.objects.past_events()
 
-        # There are 3 past events
-        assert len(past_events) == 8
+        assert len(past_events) == 9
 
         # They should all start with past
         assert all(['past' in e.slug for e in past_events])

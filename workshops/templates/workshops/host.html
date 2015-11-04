@@ -1,8 +1,10 @@
 {% extends "workshops/_page.html" %}
 
 {% load links %}
+{% load revisions %}
 
 {% block content %}
+{% last_modified host %}
 
 <p class="edit-object">
   {% if perms.workshops.change_host %}

@@ -21,7 +21,7 @@
         {% if event.mailto_ %}
           <a href="mailto:{{event.mailto_}}?subject={% filter urlencode %}Missing attendance figures for workshop {{event.get_ident}}{% endfilter %}&body={% filter urlencode %}Hi,
 
-Can you please send us attendance figures for workshop {{ event.get_ident }}?
+Can you please send us attendance figures for the workshop {{ event.get_ident }}?  As per our FAQ (http://software-carpentry.org/faq.html#trademark), this is one of the conditions of using the Software Carpentry name and logo, and we need to get these figures to funders.
 
 Thanks for your help.{% endfilter %}">
           <span class="glyphicon glyphicon-envelope"></span>
@@ -36,8 +36,7 @@ Thanks for your help.{% endfilter %}">
         {% if event.mailto_ %}
           <a href="mailto:{{event.mailto_}}?subject={% filter urlencode %}Missing location for workshop {{event.get_ident}}{% endfilter %}&body={% filter urlencode %}Hi,
 
-Can you please send us the location where workshop {{ event.get_ident }}
-took place?
+Can you please send us the location where the {{ event.get_ident }} workshop took place?
 
 Thanks for your help.{% endfilter %}">
           <span class="glyphicon glyphicon-envelope"></span>

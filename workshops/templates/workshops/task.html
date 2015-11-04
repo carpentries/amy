@@ -1,6 +1,9 @@
 {% extends "workshops/_page.html" %}
 
+{% load revisions %}
+
 {% block content %}
+{% last_modified task %}
 
 <table class="table table-striped">
   <tr><td>event:</td><td><a href="{{ task.event.get_absolute_url }}">{{ task.event }}</a></td></tr>

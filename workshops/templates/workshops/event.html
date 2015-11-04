@@ -1,8 +1,16 @@
 {% extends "workshops/_page.html" %}
 
+{% load crispy_forms_tags %}
 {% load links %}
+{% load revisions %}
 
 {% block content %}
+{% if event.completed %}
+<div class="alert alert-success" role="alert">
+  <strong>Well done!</strong> This event is completed, you don't have to work on it.
+</div>
+{% endif %}
+{% last_modified event %}
 <p class="edit-object">
   {% if perms.workshops.change_event %}
   <a href="{% url 'event_edit' event.get_ident %}" class="btn btn-primary">Edit</a>
@@ -12,6 +20,7 @@
 </p>
 <table class="table table-striped">
   <tr><td>slug:</td><td colspan="2">{{ event.slug|default:"—" }}</td></tr>
+  <tr><td>completed:</td><td colspan="2">{{ event.completed|yesno }}</td></tr>
   <tr><td>start date:</td><td colspan="2">{{ event.start|default:"—" }}</td></tr>
   <tr><td>end date: </td><td colspan="2">{{ event.end|default:"—" }}</td></tr>
   <tr><td>host:</td><td colspan="2"><a href="{% url 'host_details' event.host.domain %}">{{ event.host }}</a></td></tr>
@@ -20,7 +29,17 @@
   <tr><td>Website URL:</td><td colspan="2">{{ event.website_url|default:"—"|urlize_newtab }} {% if event.url %}<a href="{% url 'validate_event' event.get_ident %}" class="btn btn-primary btn-xs pull-right" id="validate_event">validate event</a>{% else %}<a class="btn btn-danger btn-xs pull-right" id="error_event_url" href="#" data-toggle="popover" data-trigger="focus" title="Validation error" data-content="Cannot validate an event without URL pointing to the GitHub repository, e.g.: <code>https://github.com/swcarpentry/2015-05-24-training</code>">Error</a>{% endif %}</td></tr>
   <tr><td>Eventbrite key:</td><td colspan="2">{% if event.reg_key %}<a href="https://www.eventbrite.com/myevent?eid={{ event.reg_key }}" title="Go to Eventbrite's page for this event" target="_blank">{{ event.reg_key }}</a>{% else %}—{% endif %}</td></tr>
   <tr><td>admin fee:</td><td colspan="2">{{ event.admin_fee|default_if_none:"—" }}</td></tr>
-  <tr><td>invoice:</td><td colspan="2">{{ event.get_invoice_status_display }}</td></tr>
+  <tr>
+    <td>invoice:</td>
+    <td colspan="2">
+      {{ event.get_invoice_status_display }}
+      {% if event.uninvoiced %}
+      <a href="{{ event.get_invoice_form_url }}" target="_blank" class="btn btn-primary btn-xs pull-right">Invoice</a>
+      {% else %}
+      <a href="#" class="btn btn-primary btn-xs pull-right disabled">Invoice</a>
+      {% endif %}
+    </td>
+  </tr>
   <tr><td>attendance:</td><td colspan="2">{{ event.attendance|default_if_none:"—" }}</td></tr>
   <tr><td>contact:</td><td colspan="2">{{ event.contact|default_if_none:"—"|urlize }}</td></tr>
   <tr>
@@ -58,6 +77,7 @@
 {% endif %}
 
 {% if tasks %}
+<h3>Tasks</h3>
 <table class="table table-striped">
   <tr>
     <th>person</th>
@@ -74,7 +94,7 @@
 <p>No tasks.</p>
 {% endif %}
 {% if event.notes %}
-<p>Notes:</p>
+<h3>Notes</h3>
 <pre>
 {{ event.notes }}
 </pre>
@@ -98,9 +118,51 @@
   </p>
 </div>
 
+<h3 id="todos">TODOs</h3>
+<p>
+  <a href="{% url 'todos_add' event.get_ident %}" class="btn btn-primary">Add standard TODOs</a>
+</p>
+{% if todos %}
+<table class="table">
+  <thead>
+    <tr>
+      <th>Title</th>
+      <th>Due date</th>
+      <th>Additional information</th>
+      <th class="additional-links-wider"></th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for todo in todos %}
+    <tr class="{% if todo.due and todo.due > today %}bg-success{% elif todo.due and todo.due < today %}bg-danger{% elif todo.due and todo.due == today %}bg-warning{% endif %} {% if todo.completed %}text-muted strikethrough bg-muted{% endif %}">
+      <td>{{ todo.title }}</td>
+      <td>
+        {{ todo.due|default:"—" }}
+        {% if todo.due and todo.due < today %}
+        <span class="label label-danger {% if todo.completed %}hidden{% endif %}">overdue</span>
+        {% elif todo.due and todo.due == today %}
+        <span class="label label-warning {% if todo.completed %}hidden{% endif %}">due today</span>
+        {% endif %}
+      </td>
+      <td>{{ todo.additional|default:"—"|urlize_newtab }}</td>
+      <td>
+        <input type="checkbox" class="completness-indicator" {% if todo.completed %}checked="checked"{% endif %} data-todo-id="{{ todo.id }}">
+        <a href="{% url 'todo_edit' todo.pk %}"><span class="space1 glyphicon glyphicon-pencil"></span></a>
+        <a href="{% url 'todo_delete' todo.pk %}" onclick='return confirm("Are you sure you wish to remove \"{{ todo }}\"?")'><span class="space2 glyphicon glyphicon-remove"></span></a>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>No TODOs.</p>
+{% endif %}
+<h4 id="newtodo">New TODO</h4>
+{% crispy todo_form helper %}
 {% endblock %}
 
 {% block extrajs %}
+{{ todo_form.media }}
 <script type="text/javascript">
   $('#error_event_url').popover({placement: "left", html: true});
   $('#error_closest_instructors').popover({placement: "left", html: true});
@@ -109,7 +171,45 @@
     return false;
   });
   $('#validation_modal').on('show.bs.modal', function() {
-    $('#validation_modal .modal-body').load("{% url 'validate_event' event.get_ident %} #validation")
+    $('#validation_modal .modal-body').load("{% url 'validate_event' event.get_ident %} #validation");
+  });
+
+  // scroll to TODOs if there's an alert with "todos" class
+  $(document).ready(function() {
+    if ($(".alert").hasClass('newtodo')) {
+      $("html, body").scrollTop($("#newtodo").offset().top);
+    }
+    if ($(".alert").hasClass('todos')) {
+      $("html, body").scrollTop($("#todos").offset().top);
+    }
+
+    $(".completness-indicator").click(function() {
+      var todo_id = $(this).attr("data-todo-id");
+      var row = $(this).parent().parent();
+      if ($(this).is("input:checked")) {
+        // mark as complete
+        var url = "/workshops/todo/" + todo_id + "/completed";
+        $.get(url, function() {
+          // add the tick
+          $(this).attr("checked", "checked");
+          // hide labels
+          row.find(".label").addClass("hidden");
+          // add completness styles
+          row.addClass("text-muted strikethrough bg-muted");
+        });
+      } else {
+        // mark as incomplete
+        var url = "/workshops/todo/" + todo_id + "/incompleted";
+        $.get(url, function() {
+          // remove the tick
+          $(this).attr("checked", "");
+          // show labels
+          row.find(".label").removeClass("hidden");
+          // drop completness styles
+          row.removeClass("text-muted strikethrough bg-muted");
+        });
+      }
+    });
   });
 </script>
 {% endblock %}
