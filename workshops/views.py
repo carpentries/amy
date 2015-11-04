@@ -1350,6 +1350,27 @@ def instructors_over_time(request):
 
 
 @login_required
+def instructor_num_taught(request):
+    '''Export CSV of how often instructors have taught.'''
+
+    badge = Badge.objects.get(name='instructor')
+    awards = badge.award_set.annotate(
+        num_taught=Count(
+            Case(
+                When(
+                    person__task__role__name='instructor',
+                    then=Value(1)
+                ),
+            output_field=IntegerField()
+            )
+        )
+    ).filter(person__may_contact=True).order_by('-num_taught', 'awarded')
+    context = {'title': 'Frequency of Instruction',
+               'awards': awards}
+    return render(request, 'workshops/instructor_num_taught.html', context)
+
+
+@login_required
 def workshop_issues(request):
     '''Display workshops in the database whose records need attention.'''
 
