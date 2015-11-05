@@ -141,6 +141,8 @@ class Person(AbstractBaseUser, PermissionsMixin):
         blank=True,
     )
 
+    is_active = models.BooleanField(default=True)
+
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = [
         'personal',

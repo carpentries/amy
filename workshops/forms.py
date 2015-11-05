@@ -346,9 +346,9 @@ class PersonForm(forms.ModelForm):
         # don't display the 'password', 'user_permissions',
         # 'groups' or 'is_superuser' fields
         # + reorder fields
-        fields = ['username', 'personal', 'middle', 'family', 'may_contact',
-                  'email', 'gender', 'airport', 'affiliation', 'github',
-                  'twitter', 'url', 'notes', 'lessons', 'domains']
+        fields = ['username', 'personal', 'middle', 'family', 'is_active',
+                  'may_contact', 'email', 'gender', 'airport', 'affiliation',
+                  'github', 'twitter', 'url', 'notes', 'lessons', 'domains']
 
 
 class PersonPermissionsForm(forms.ModelForm):
