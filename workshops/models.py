@@ -404,26 +404,33 @@ class EventQuerySet(models.query.QuerySet):
 
         return queryset
 
-    def unpublished_events(self):
-        '''Return events without URLs that are upcoming or have unknown starts.
-
-        Events are ordered by slug and then by serial number.'''
-
-        future_without_url = Q(start__gte=datetime.date.today(), url__isnull=True)
+    def unpublished_conditional(self):
+        """Return conditional for events without: start OR country OR venue OR
+        url (ie. unpublished events). This will be used in
+        `self.published_events`, too."""
         unknown_start = Q(start__isnull=True)
-        return self.filter(future_without_url | unknown_start)\
-                   .order_by('slug', 'id')
+        no_country = Q(country__isnull=True)
+        no_venue = Q(venue__exact='')
+        no_address = Q(address__exact='')
+        no_latitude = Q(latitude__isnull=True)
+        no_longitude = Q(longitude__isnull=True)
+        no_url = Q(url__isnull=True)
+        return (
+            unknown_start | no_country | no_venue | no_address | no_latitude |
+            no_longitude | no_url
+        )
+
+    def unpublished_events(self):
+        """Return events considered as unpublished (see
+        `unpublished_conditional` above)."""
+        conditional = self.unpublished_conditional()
+        return self.filter(conditional).order_by('slug', 'id')
 
     def published_events(self):
-        '''Return events that have a start date and a URL.
-
-        Events are ordered most recent first and then by serial number.'''
-
-        queryset = self.exclude(
-            Q(start__isnull=True) | Q(url__isnull=True)
-            ).order_by('-start', 'id')
-
-        return queryset
+        """Return events considered as published (see `unpublished_conditional`
+        above)."""
+        conditional = self.unpublished_conditional()
+        return self.exclude(conditional).order_by('-start', 'id')
 
     def uninvoiced_events(self):
         '''Return a queryset for events that have not yet been invoiced.

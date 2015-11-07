@@ -35,7 +35,7 @@ class TestEvent(TestBase):
         # Check that events with a fee of zero or None are still on this list
         assert any([x for x in uninvoiced_events if not x.admin_fee])
 
-    def test_get_future_events(self):
+    def test_get_upcoming_events(self):
         """Test that the events manager can find upcoming events"""
 
         upcoming_events = Event.objects.upcoming_events()
@@ -69,6 +69,24 @@ class TestEvent(TestBase):
             self.assertCountEqual(event_slugs, correct_slugs)
         else:
             self.assertItemsEqual(event_slugs, correct_slugs)
+
+    def test_unpublished_events(self):
+        """Ensure that events manager finds unpublished events correctly."""
+        all_events = Event.objects.all()
+        self.assertEqual(set(all_events),
+                         set(Event.objects.unpublished_events()))
+        event_considered_published = Event.objects.create(
+            slug='published',
+            start=date.today() + timedelta(days=3),
+            end=date.today() + timedelta(days=6),
+            latitude=-10.0, longitude=10.0,
+            country='US', venue='University',
+            address='Phenomenal Street',
+            url='http://url/',
+            host=Host.objects.all().first(),
+        )
+        self.assertNotIn(event_considered_published,
+                         Event.objects.unpublished_events())
 
     def test_edit_event(self):
         """ Test that an event can be edited, and that people can be
