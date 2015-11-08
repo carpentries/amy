@@ -218,6 +218,15 @@ class DebriefForm(forms.Form):
 
 
 class EventForm(forms.ModelForm):
+    slug = forms.CharField(
+        max_length=Event._meta.get_field('slug').max_length,
+        required=not Event._meta.get_field('slug').blank,
+        validators=[
+            RegexValidator(
+                '[^\w-]+', inverse_match=True,
+                message='Only alphanumeric characters and "-" are allowed.')
+        ],
+    )
 
     host = selectable.AutoCompleteSelectField(
         lookup_class=lookups.HostLookup,

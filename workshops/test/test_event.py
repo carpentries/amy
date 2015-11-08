@@ -481,6 +481,26 @@ class TestEventViews(TestBase):
         event.refresh_from_db()
         assert event.attendance == 1
 
+    def test_slug_against_illegal_characters(self):
+        """Regression test: disallow events with slugs with wrong characters.
+
+        Only [\w-] are allowed."""
+        data = {
+            'slug': '',
+            'host_1': Host.objects.all()[0].pk,
+            'tags': Tag.objects.all(),
+        }
+        for slug in ['a/b', 'a b', 'a!b', 'a.b', 'a\\b', 'a?b']:
+            with self.subTest(slug=slug):
+                data['slug'] = slug
+                rv = self.client.post(reverse('event_add'), data, follow=False)
+                self.assertEqual(rv.status_code, 200)
+
+        # allow dashes in the slugs
+        data['slug'] = 'a-b'
+        rv = self.client.post(reverse('event_add'), data, follow=False)
+        self.assertEqual(rv.status_code, 200)
+
 
 class TestEventNotes(TestBase):
     """Make sure notes once written are saved forever!"""
