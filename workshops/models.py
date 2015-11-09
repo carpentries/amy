@@ -78,7 +78,9 @@ class PersonManager(BaseUserManager):
         user = self.model(
             username=username, personal=personal, family=family,
             email=self.normalize_email(email),
-            is_superuser=False)
+            is_superuser=False,
+            is_active=True,
+        )
         user.set_password(password)
         user.save(using=self._db)
         return user
@@ -90,7 +92,9 @@ class PersonManager(BaseUserManager):
         user = self.model(
             username=username, personal=personal, family=family,
             email=self.normalize_email(email),
-            is_superuser=True)
+            is_superuser=True,
+            is_active=True,
+        )
         user.set_password(password)
         user.save(using=self._db)
         return user
@@ -141,7 +145,8 @@ class Person(AbstractBaseUser, PermissionsMixin):
         blank=True,
     )
 
-    is_active = models.BooleanField(default=True)
+    # new people will be inactive by default
+    is_active = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = [
