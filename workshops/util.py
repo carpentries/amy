@@ -467,3 +467,7 @@ def update_event_attendance_from_tasks(event):
         .filter(pk=event.pk) \
         .filter(Q(attendance__lt=learners) | Q(attendance__isnull=True)) \
         .update(attendance=learners)
+
+
+def universal_date_format(date):
+    return '{:%Y-%m-%d}'.format(date)

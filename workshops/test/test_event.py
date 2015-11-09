@@ -501,6 +501,17 @@ class TestEventViews(TestBase):
         rv = self.client.post(reverse('event_add'), data, follow=False)
         self.assertEqual(rv.status_code, 200)
 
+    def test_display_of_event_without_start_date(self):
+        """A bug prevented events without start date to throw a 404.
+
+        This is a regression test against that bug.
+        The error happened when "".format encountered None instead of
+        datetime."""
+        event = Event.objects.create(slug='regression_event_0',
+                                     host=self.test_host)
+        rv = self.client.get(reverse('event_details', args=[event.pk]))
+        assert rv.status_code == 200
+
 
 class TestEventNotes(TestBase):
     """Make sure notes once written are saved forever!"""

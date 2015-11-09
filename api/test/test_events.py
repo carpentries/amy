@@ -13,6 +13,7 @@ from workshops.models import (
     Event,
     Host,
 )
+from workshops.util import universal_date_format
 
 
 class TestListingPastEvents(APITestCase):
@@ -122,8 +123,9 @@ class TestListingPastEvents(APITestCase):
         # turn dates into strings for the sake of this test
         for i, event in enumerate(self.expecting):
             for date in ['start', 'end']:
-                self.expecting[i][date] = '{:%Y-%m-%d}' \
-                                          .format(self.expecting[i][date])
+                self.expecting[i][date] = universal_date_format(
+                    self.expecting[i][date],
+                )
 
         # test only JSON output
         url = reverse(self.url)

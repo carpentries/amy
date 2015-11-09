@@ -564,12 +564,15 @@ class Event(models.Model):
         return self.invoice_status == 'not-invoiced'
 
     def get_invoice_form_url(self):
+        from .util import universal_date_format
+
         query = {
             'entry.823772951': self.venue,  # Organization to invoice
             'entry.351294200': 'Workshop administrative fee',  # Reason
 
             # Date of event
-            'entry.1749215879': '{:%Y-%m-%d}'.format(self.start),
+            'entry.1749215879': (universal_date_format(self.start)
+                                 if self.start else ''),
             'entry.508035854': self.slug,  # Event or item ID
             'entry.821460022': self.admin_fee,  # Total invoice amount
             'entry.1316946828': 'US dollars',  # Currency
@@ -933,8 +936,11 @@ class TodoItem(models.Model):
         ordering = ["due", "title"]
 
     def __str__(self):
+        from .util import universal_date_format
+
         if self.due:
-            return "{title} due {due:%Y-%m-%d}".format(title=self.title,
-                                                       due=self.due)
+            return "{title} due {due}".format(
+                title=self.title, due=universal_date_format(self.due),
+            )
         else:
             return self.title
