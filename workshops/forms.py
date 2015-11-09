@@ -346,16 +346,18 @@ class PersonForm(forms.ModelForm):
         # don't display the 'password', 'user_permissions',
         # 'groups' or 'is_superuser' fields
         # + reorder fields
-        fields = ['username', 'personal', 'middle', 'family', 'is_active',
-                  'may_contact', 'email', 'gender', 'airport', 'affiliation',
-                  'github', 'twitter', 'url', 'notes', 'lessons', 'domains']
+        fields = ['username', 'personal', 'middle', 'family', 'may_contact',
+                  'email', 'gender', 'airport', 'affiliation', 'github',
+                  'twitter', 'url', 'notes', 'lessons', 'domains']
 
 
 class PersonPermissionsForm(forms.ModelForm):
     class Meta:
         model = Person
-        # only display 'user_permissions', 'groups' and `is_superuser` fields
+        # only display administration-related fields: groups, permissions,
+        # being a superuser or being active (== ability to log in)
         fields = [
+            'is_active',
             'is_superuser',
             'user_permissions',
             'groups',
