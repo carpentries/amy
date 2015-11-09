@@ -21,6 +21,8 @@ from ..models import \
     Qualification, \
     Host
 
+from ..util import universal_date_format
+
 
 class TestBase(TestCase):
     '''Base class for AMY test cases.'''
@@ -187,7 +189,7 @@ class TestBase(TestCase):
         add_url = True
         for t in range(1, 11):
             event_start = today + datetime.timedelta(days=t)
-            date_string = event_start.strftime('%Y-%m-%d')
+            date_string = universal_date_format(event_start)
             slug = '{0}-upcoming'.format(date_string)
             if add_url:
                 url = 'http://' + ('{0}'.format(t) * 20)
@@ -206,7 +208,7 @@ class TestBase(TestCase):
         invoice = itertools.cycle(['invoiced', 'not-invoiced'])
         for t in range(3, 11):
             event_start = today + datetime.timedelta(days=-t)
-            date_string = event_start.strftime('%Y-%m-%d')
+            date_string = universal_date_format(event_start)
             Event.objects.create(start=event_start,
                                  slug='{0}-past'.format(date_string),
                                  host=test_host,
@@ -218,7 +220,9 @@ class TestBase(TestCase):
         event_start = today + datetime.timedelta(days=-4)
         Event.objects.create(
             start=event_start, end=today + datetime.timedelta(days=-1),
-            slug='{:%Y-%m-%d}-past-uninvoiced'.format(event_start),
+            slug='{}-past-uninvoiced'.format(
+                universal_date_format(event_start)
+            ),
             host=test_host, admin_fee=None, invoice_status='not-invoiced',
         )
 
