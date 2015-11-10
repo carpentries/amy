@@ -363,8 +363,10 @@ class PersonForm(forms.ModelForm):
 class PersonPermissionsForm(forms.ModelForm):
     class Meta:
         model = Person
-        # only display 'user_permissions', 'groups' and `is_superuser` fields
+        # only display administration-related fields: groups, permissions,
+        # being a superuser or being active (== ability to log in)
         fields = [
+            'is_active',
             'is_superuser',
             'user_permissions',
             'groups',
