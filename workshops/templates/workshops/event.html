@@ -21,8 +21,8 @@
 <table class="table table-striped">
   <tr><td>slug:</td><td colspan="2">{{ event.slug|default:"—" }}</td></tr>
   <tr><td>completed:</td><td colspan="2">{{ event.completed|yesno }}</td></tr>
-  <tr><td>start date:</td><td colspan="2">{{ event.start|default:"—" }}</td></tr>
-  <tr><td>end date: </td><td colspan="2">{{ event.end|default:"—" }}</td></tr>
+  <tr class="{% if event.start > event.end %}bg-danger{% endif %}"><td>start date:</td><td colspan="2">{{ event.start|default:"—" }}</td></tr>
+  <tr class="{% if event.start > event.end %}bg-danger{% endif %}"><td>end date: </td><td colspan="2">{{ event.end|default:"—" }}</td></tr>
   <tr><td>host:</td><td colspan="2"><a href="{% url 'host_details' event.host.domain %}">{{ event.host }}</a></td></tr>
   <tr><td>administrator:</td><td colspan="2">{% if event.administrator %}<a href="{{ event.administrator.get_absolute_url }}">{{ event.administrator }}</a>{% else %}—{% endif %}</td></tr>
   <tr><td>tags:</td><td colspan="2">{{ event.tags.all | join:", " }}</td></tr>
@@ -40,9 +40,9 @@
       {% endif %}
     </td>
   </tr>
-  <tr><td>attendance:</td><td colspan="2">{{ event.attendance|default_if_none:"—" }}</td></tr>
+  <tr class="{% if not event.attendance %}bg-danger{% endif %}"><td>attendance:</td><td colspan="2">{{ event.attendance|default_if_none:"—" }}</td></tr>
   <tr><td>contact:</td><td colspan="2">{{ event.contact|default_if_none:"—"|urlize }}</td></tr>
-  <tr>
+  <tr class="{% if not event.country %}bg-danger{% endif %}">
     <td rowspan="4">location details:</td>
     <td>Country:</td>
     <td>
@@ -53,8 +53,8 @@
     {% endif %}
     </td>
   </tr>
-  <tr><td>Venue:</td><td>{{ event.venue|default:"—" }}</td></tr>
-  <tr><td>Address:</td><td>{{ event.address|default:"—" }}</td></tr>
+  <tr class="{% if not event.venue %}bg-danger{% endif %}"><td>Venue:</td><td>{{ event.venue|default:"—" }}</td></tr>
+  <tr class="{% if not event.address %}bg-danger{% endif %}"><td>Address:</td><td>{{ event.address|default:"—" }}</td></tr>
   <tr><td>Lat/long:</td><td>{{ event.latitude|default:"—" }} / {{ event.longitude|default:"—" }} {% if event.latitude and event.longitude %}<a href="{% url 'instructors' %}?latitude={{ event.latitude }}&amp;longitude={{ event.longitude }}&amp;submit=Submit" class="btn btn-primary btn-xs pull-right" id="find_closest_instructors">find closest instructors</a>{% else %}<a class="btn btn-danger btn-xs pull-right" id="error_closest_instructors" href="#" data-toggle="popover" data-trigger="focus" title="Search error" data-content="Cannot search for closest instructors without latitude and longitude of event's location.">Error</a>{% endif %}</td></tr>
 </table>
 
