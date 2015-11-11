@@ -480,7 +480,8 @@ class SWCEventRequestForm(forms.ModelForm):
     class Meta:
         model = EventRequest
         exclude = ('active', 'created_at', 'data_types', 'data_types_other',
-                   'attendee_data_analysis_level', 'fee_waiver_request', )
+                   'attendee_data_analysis_level', 'fee_waiver_request',
+                   'assigned_to')
         widgets = {
             'approx_attendees': forms.RadioSelect(),
             'attendee_domains': forms.CheckboxSelectMultiple(),
@@ -507,7 +508,7 @@ class DCEventRequestForm(SWCEventRequestForm):
 
     class Meta(SWCEventRequestForm.Meta):
         exclude = ('active', 'created_at', 'admin_fee_payment',
-                   'attendee_computing_levels', )
+                   'attendee_computing_levels', 'assigned_to')
         widgets = {
             'approx_attendees': forms.RadioSelect(),
             'attendee_domains': forms.CheckboxSelectMultiple(),
