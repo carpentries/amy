@@ -1,7 +1,11 @@
+from distutils.util import strtobool
+
+import django.forms.widgets
+
 import django_filters
 from django_countries import Countries
 
-from workshops.models import Event, Host, Person, Task, Airport
+from workshops.models import Event, Host, Person, Task, Airport, EventRequest
 
 EMPTY_SELECTION = (None, '---------')
 
@@ -86,6 +90,27 @@ class EventFilter(django_filters.FilterSet):
             'completed',
         ]
         order_by = ['-slug', 'slug', 'start', '-start', 'end', '-end']
+
+
+class EventRequestFilter(django_filters.FilterSet):
+    assigned_to = ForeignKeyAllValuesFilter(Person)
+    country = AllCountriesFilter()
+    active = django_filters.TypedChoiceFilter(
+        choices=(('true', 'Open'), ('false', 'Closed')),
+        coerce=strtobool,
+        label='Status',
+        widget=django.forms.widgets.RadioSelect,
+    )
+
+    class Meta:
+        model = EventRequest
+        fields = [
+            'assigned_to',
+            'workshop_type',
+            'active',
+            'country',
+        ]
+        order_by = ['-created_at', 'created_at']
 
 
 class HostFilter(django_filters.FilterSet):

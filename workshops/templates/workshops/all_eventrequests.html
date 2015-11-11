@@ -1,10 +1,14 @@
-{% extends "workshops/_page.html" %}
+{% extends "workshops/_page_fluid.html" %}
 
-{% block content %}
-  <div class="btn-group" role="group" aria-label="Type of requests">
-    <a href="{% url 'all_eventrequests' %}" class="btn btn-default{% if active_requests %} active{% endif %}">New</a>
-    <a href="{% url 'all_closed_eventrequests' %}" class="btn btn-default{% if not active_requests %} active{% endif %}">Closed</a>
-  </div>
+{% load crispy_forms_tags %}
+{% load pagination %}
+
+{% block sidebar %}
+    <h3>Filter</h3>
+    {% crispy filter.form form_helper %}
+{% endblock %}
+
+{% block content-fluid %}
   {% if requests %}
   <table class="table table-striped">
     <thead>

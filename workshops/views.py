@@ -68,7 +68,8 @@ from workshops.util import (
 )
 
 from workshops.filters import (
-    EventFilter, HostFilter, PersonFilter, TaskFilter, AirportFilter
+    EventFilter, HostFilter, PersonFilter, TaskFilter, AirportFilter,
+    EventRequestFilter,
 )
 
 #------------------------------------------------------------
@@ -1655,24 +1656,26 @@ class DCEventRequest(SWCEventRequest):
     form_template = 'forms/workshop_dc_request.html'
 
 
-class AllEventRequests(LoginRequiredMixin, ListView):
-    active_requests = True
-    context_object_name = 'requests'
-    template_name = 'workshops/all_eventrequests.html'
+@login_required
+def all_eventrequests(request):
+    """List all event requests."""
 
-    def get_queryset(self):
-        return EventRequest.objects.filter(active=self.active_requests) \
-                                   .order_by('-created_at')
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'Workshop requests'
-        context['active_requests'] = self.active_requests
-        return context
-
-
-class AllClosedEventRequests(AllEventRequests):
-    active_requests = False
+    # Set initial value for the "active" radio select.  That's a hack, nothing
+    # else worked...
+    data = request.GET.copy()  # request.GET is immutable
+    data['active'] = data.get('active', 'true')
+    filter = EventRequestFilter(
+        data,
+        queryset=EventRequest.objects.all(),
+    )
+    eventrequests = _get_pagination_items(request, filter)
+    context = {
+        'title': 'Workshop requests',
+        'requests': eventrequests,
+        'filter': filter,
+        'form_helper': bootstrap_helper_filter,
+    }
+    return render(request, 'workshops/all_eventrequests.html', context)
 
 
 class EventRequestDetails(LoginRequiredMixin, DetailView):
