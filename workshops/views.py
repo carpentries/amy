@@ -9,6 +9,7 @@ from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import SetPasswordForm, PasswordChangeForm
+from django.contrib.auth.models import Group
 from django.core.paginator import EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
 from django.core.exceptions import (
@@ -165,14 +166,51 @@ class PermissionRequiredMixin(object):
 @login_required
 def dashboard(request):
     '''Home page.'''
-    upcoming_ongoing_events = (
+    current_events = (
         Event.objects.upcoming_events() | Event.objects.ongoing_events()
     )
     unpublished_events = Event.objects.unpublished_events()
     uninvoiced_events = Event.objects.uninvoiced_events()
+
+    user = request.user
+    is_admin = user.groups.filter(name='administrators').exists()
+
+    assigned_to = 'all'
+
+    if is_admin:
+        # One of the administrators.
+        # They should be presented with their events by default.
+        assigned_to = request.GET.get('assigned_to', 'me')
+
+    elif user.is_superuser:
+        # A superuser.  Should see all events by default
+        assigned_to = request.GET.get('assigned_to', 'all')
+
+    else:
+        # Normal user (for example subcommittee members).
+        assigned_to = 'all'
+
+    if assigned_to == 'me':
+        current_events = current_events.filter(assigned_to=user)
+        uninvoiced_events = uninvoiced_events.filter(assigned_to=user)
+        unpublished_events = unpublished_events.filter(assigned_to=user)
+
+    elif assigned_to == 'noone':
+        current_events = current_events.filter(assigned_to__isnull=True)
+        uninvoiced_events = uninvoiced_events.filter(
+            assigned_to__isnull=True)
+        unpublished_events = unpublished_events.filter(
+            assigned_to__isnull=True)
+
+    elif assigned_to == 'all':
+        # no filtering
+        pass
+
     context = {
         'title': None,
-        'upcoming_ongoing_events': upcoming_ongoing_events,
+        'is_admin': is_admin,
+        'assigned_to': assigned_to,
+        'current_events': current_events,
         'uninvoiced_events': uninvoiced_events,
         'unpublished_events': unpublished_events,
     }

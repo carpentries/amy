@@ -3,11 +3,23 @@
 {% block content-fluid %}
 {% include "amy-logo.html" %}
 
+{% if is_admin or user.is_superuser %}
+<div class="row">
+  <div class="col-xs-12">
+    <div class="btn-group" role="group" aria-label="Events assignment">
+      <a href="?assigned_to=me" class="btn btn-default{% if assigned_to == 'me' %} active{% endif %}">Mine</a>
+      <a href="?assigned_to=noone" class="btn btn-default{% if assigned_to == 'noone' %} active{% endif %}">Unassigned</a>
+      <a href="?assigned_to=all" class="btn btn-default{% if assigned_to == 'all' %} active{% endif %}">All</a>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 <div class="row">
   <div class="col-xs-3">
     <h3>Current</h3>
     <table class="table table-striped">
-    {% for event in upcoming_ongoing_events %}
+    {% for event in current_events %}
     <tr>
       <td><a href="{{ event.get_absolute_url }}">{{ event.get_ident }}</a></td>
     </tr>
