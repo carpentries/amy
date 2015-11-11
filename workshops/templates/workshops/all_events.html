@@ -18,14 +18,13 @@
 {% if all_events %}
     <table class="table table-striped">
       <tr>
+        <th>assignee</th>
         <th>slug</th>
         <th>tags</th>
         <th>url</th>
         <th>instructors</th>
         <th>host</th>
         <th>dates</th>
-        <th>attendance</th>
-        <th>admin fee</th>
         <th>invoice</th>
         <th>completed</th>
         <th class="additional-links"></th>
@@ -36,6 +35,7 @@
       {% else %}
       <tr>
       {% endif %}
+        <td>{% if event.assigned_to %}<a href="{{ event.assigned_to.get_absolute_url }}">{{ event.assigned_to.get_short_name }}</a>{% else %}—{% endif %}</td>
         <td {% if not event.slug %}class="warning"{% endif %}>
           {% if not event.slug %}
             —
@@ -54,8 +54,6 @@
         {% endwith %}
         <td><a href="{% url 'host_details' event.host.domain %}">{{ event.host }}</a></td>
         <td>{{ event.start }} &ndash; {{ event.end }}</td>
-        <td>{{ event.attendance|default_if_none:"—" }}</td>
-        <td>{{ event.admin_fee|default_if_none:"—" }}</td>
         <td>{{ event.get_invoice_status_display }}</td>
         <td>
           {{ event.completed|yesno }}

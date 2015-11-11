@@ -13,6 +13,7 @@
   <table class="table table-striped">
     <thead>
       <tr>
+        <th>assignee</th>
         <th>person</th>
         <th>affiliation</th>
         <th>preferred date</th>
@@ -24,6 +25,7 @@
     <tbody>
     {% for req in requests %}
       <tr>
+        <td>{% if req.assigned_to %}<a href="{{ req.assigned_to.get_absolute_url }}">{{ req.assigned_to.get_short_name }}</a>{% else %}—{% endif %}</td>
         <td>{{ req.name }} &lt;{{ req.email|urlize }}&gt;</td>
         <td>{{ req.affiliation }}</td>
         <td>{{ req.preferred_date }}</td>
