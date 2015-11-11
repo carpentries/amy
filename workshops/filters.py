@@ -57,6 +57,7 @@ class EventStateFilter(django_filters.ChoiceFilter):
 
 
 class EventFilter(django_filters.FilterSet):
+    assigned_to = ForeignKeyAllValuesFilter(Person)
     host = ForeignKeyAllValuesFilter(Host)
     administrator = ForeignKeyAllValuesFilter(Host)
 
@@ -77,6 +78,7 @@ class EventFilter(django_filters.FilterSet):
     class Meta:
         model = Event
         fields = [
+            'assigned_to',
             'tags',
             'host',
             'administrator',
