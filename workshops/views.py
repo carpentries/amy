@@ -59,6 +59,7 @@ from workshops.forms import (
     PersonTaskForm, HostForm, SWCEventRequestForm, DCEventRequestForm,
     ProfileUpdateRequestForm, PersonLookupForm, bootstrap_helper_wider_labels,
     SimpleTodoForm, bootstrap_helper_inline_formsets, BootstrapHelper,
+    AdminLookupForm,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
@@ -857,9 +858,9 @@ def event_details(request, event_ident):
             messages.error(request, 'Fix errors in the TODO form.',
                            extra_tags='todos')
 
-    person_lookup_form = PersonLookupForm()
+    person_lookup_form = AdminLookupForm()
     if event.assigned_to:
-        person_lookup_form = PersonLookupForm(
+        person_lookup_form = AdminLookupForm(
             initial={'person': event.assigned_to}
         )
 
@@ -1731,9 +1732,9 @@ class EventRequestDetails(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Workshop request #{}'.format(self.get_object().pk)
 
-        person_lookup_form = PersonLookupForm()
+        person_lookup_form = AdminLookupForm()
         if self.object.assigned_to:
-            person_lookup_form = PersonLookupForm(
+            person_lookup_form = AdminLookupForm(
                 initial={'person': self.object.assigned_to}
             )
 

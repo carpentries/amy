@@ -548,6 +548,16 @@ class PersonLookupForm(forms.Form):
     )
 
 
+class AdminLookupForm(forms.Form):
+    person = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.AdminLookup,
+        label='Administrator',
+        required=True,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+
 class SimpleTodoForm(forms.ModelForm):
     class Meta:
         model = TodoItem
