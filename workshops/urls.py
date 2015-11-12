@@ -33,6 +33,8 @@ urlpatterns = [
 
     url(r'^events/?$', views.all_events, name='all_events'),
     url(r'^event/(?P<event_ident>[\w-]+)/?$', views.event_details, name='event_details'),
+    url(r'^event/(?P<event_ident>[\w-]+)/assign$', views.event_assign, name='event_assign'),
+    url(r'^event/(?P<event_ident>[\w-]+)/assign/(?P<person_id>[\w\.-]+)$', views.event_assign, name='event_assign'),
     url(r'^event/(?P<event_ident>[\w-]+)/edit$', views.event_edit, name='event_edit'),
     url(r'^event/(?P<event_ident>[\w-]+)/delete$', views.event_delete, name='event_delete'),
     url(r'^events/add/$', views.EventCreate.as_view(), name='event_add'),

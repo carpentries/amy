@@ -58,7 +58,7 @@ from workshops.forms import (
     PersonPermissionsForm, bootstrap_helper_filter, PersonMergeForm,
     PersonTaskForm, HostForm, SWCEventRequestForm, DCEventRequestForm,
     ProfileUpdateRequestForm, PersonLookupForm, bootstrap_helper_wider_labels,
-    SimpleTodoForm, bootstrap_helper_inline_formsets,
+    SimpleTodoForm, bootstrap_helper_inline_formsets, BootstrapHelper,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
@@ -857,6 +857,16 @@ def event_details(request, event_ident):
             messages.error(request, 'Fix errors in the TODO form.',
                            extra_tags='todos')
 
+    person_lookup_form = PersonLookupForm()
+    if event.assigned_to:
+        person_lookup_form = PersonLookupForm(
+            initial={'person': event.assigned_to}
+        )
+
+    person_lookup_helper = BootstrapHelper()
+    person_lookup_helper.form_action = reverse('event_assign',
+                                               args=[event_ident])
+
     context = {
         'title': 'Event {0}'.format(event),
         'event': event,
@@ -865,6 +875,8 @@ def event_details(request, event_ident):
         'todos': todos,
         'helper': bootstrap_helper,
         'today': datetime.date.today(),
+        'person_lookup_form': person_lookup_form,
+        'person_lookup_helper': person_lookup_helper,
     }
     return render(request, 'workshops/event.html', context)
 
@@ -1012,6 +1024,37 @@ def event_import(request):
         return JsonResponse(translated_data)
     except (KeyError, WrongEventURL):
         raise SuspiciousOperation('Missing or wrong `url` POST parameter.')
+
+
+@login_required
+@permission_required('workshops.change_event', raise_exception=True)
+def event_assign(request, event_ident, person_id=None):
+    """Set event.assigned_to. This view works with both POST and GET requests:
+
+    * POST: read person ID from POST's person_1
+    * GET: read person_id from URL
+    * both: if person_id is None then make event.assigned_to empty
+    * otherwise assign matching person."""
+    try:
+        event = Event.get_by_ident(event_ident)
+
+        if request.method == "POST":
+            person_id = request.POST.get('person_1', None)
+
+        if person_id is None:
+            event.assigned_to = None
+        else:
+            person = Person.objects.get(pk=person_id)
+            event.assigned_to = person
+
+        event.save()
+
+        return redirect(reverse('event_details', args=[event.get_ident()]))
+
+    except Event.DoesNotExist:
+        raise Http404("No event found matching the query.")
+    except Person.DoesNotExist:
+        raise Http404("No person found matching the query.")
 
 #------------------------------------------------------------
 
