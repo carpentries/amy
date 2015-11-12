@@ -1730,6 +1730,19 @@ class EventRequestDetails(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Workshop request #{}'.format(self.get_object().pk)
+
+        person_lookup_form = PersonLookupForm()
+        if self.object.assigned_to:
+            person_lookup_form = PersonLookupForm(
+                initial={'person': self.object.assigned_to}
+            )
+
+        person_lookup_helper = BootstrapHelper()
+        person_lookup_helper.form_action = reverse('eventrequest_assign',
+                                                   args=[self.object.pk])
+
+        context['person_lookup_form'] = person_lookup_form
+        context['person_lookup_helper'] = person_lookup_helper
         return context
 
 
@@ -1771,6 +1784,38 @@ def eventrequest_accept(request, request_id):
         'form': form,
     }
     return render(request, 'workshops/eventrequest_accept.html', context)
+
+
+@login_required
+@permission_required(['workshops.change_eventrequest'], raise_exception=True)
+def eventrequest_assign(request, request_id, person_id=None):
+    """Set eventrequest.assigned_to. This view works with both POST and GET
+    requests:
+
+    * POST: read person_id from POST data
+    * GET: read person_id from URL
+    * both: if person_id is None then make event.assigned_to empty
+    * otherwise assign matching person."""
+    try:
+        event_req = EventRequest.objects.get(pk=request_id)
+
+        if request.method == "POST":
+            person_id = request.POST.get('person_1', None)
+
+        if person_id is None:
+            event_req.assigned_to = None
+        else:
+            person = Person.objects.get(pk=person_id)
+            event_req.assigned_to = person
+
+        event_req.save()
+
+        return redirect(reverse('eventrequest_details', args=[event_req.pk]))
+
+    except Event.DoesNotExist:
+        raise Http404("No event request found matching the query.")
+    except Person.DoesNotExist:
+        raise Http404("No person found matching the query.")
 
 
 def profileupdaterequest_create(request):

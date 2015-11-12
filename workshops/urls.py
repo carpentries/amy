@@ -76,6 +76,8 @@ urlpatterns = [
     url(r'^request/(?P<request_id>\d+)/?$', views.EventRequestDetails.as_view(), name='eventrequest_details'),
     url(r'^request/(?P<request_id>\d+)/discard/?$', views.eventrequest_discard, name='eventrequest_discard'),
     url(r'^request/(?P<request_id>\d+)/accept/?$', views.eventrequest_accept, name='eventrequest_accept'),
+    url(r'^request/(?P<request_id>\d+)/assign$', views.eventrequest_assign, name='eventrequest_assign'),
+    url(r'^request/(?P<request_id>\d+)/assign/(?P<person_id>[\w\.-]+)$', views.eventrequest_assign, name='eventrequest_assign'),
     url(r'^swc/request/$', views.SWCEventRequest.as_view(), name='swc_workshop_request'),
     url(r'^dc/request/$', views.DCEventRequest.as_view(), name='dc_workshop_request'),
 
