@@ -164,3 +164,22 @@ tr.strikethrough td {
 .form-horizontal table .control-group {
     text-align: center;
 }
+
+/* .table-striped has higher priority than default bg-* background classes
+   so it was necessary to define more precise rules like below */
+table.table-striped tr.bg-primary {
+    color: #FFF;
+    background-color: #337AB7;
+}
+table.table-striped tr.bg-success {
+    background-color: #DFF0D8;
+}
+table.table-striped tr.bg-info {
+    background-color: #D9EDF7;
+}
+table.table-striped tr.bg-warning {
+    background-color: #FCF8E3;
+}
+table.table-striped tr.bg-danger {
+    background-color: #F2DEDE;
+}

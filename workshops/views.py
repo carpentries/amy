@@ -1378,7 +1378,9 @@ def workshop_issues(request):
     instructor = Role.objects.get(name='instructor')
     events = Event.objects.past_events().\
         filter(Q(attendance=None) | Q(attendance=0) |
-               Q(country=None) | Q(venue=None) | Q(address=None) |
+               Q(country=None) |
+               Q(venue=None) | Q(venue__exact='') |
+               Q(address=None) | Q(address__exact='') |
                Q(start__gt=F('end')))
     for e in events:
         tasks = Task.objects.filter(event=e).\
