@@ -482,6 +482,7 @@ class Event(AssignmentMixin, models.Model):
     WEBSITE_REGEX = re.compile(r'https?://(?P<name>[^.]+)\.github\.'
                                r'(io|com)/(?P<repo>[^/]+)/?')
     WEBSITE_FORMAT = 'https://{name}.github.io/{repo}/'
+    PUBLISHED_HELP_TEXT = 'Required in order for this event to be "published".'
 
     host = models.ForeignKey(Host, on_delete=models.PROTECT,
                              help_text='Organization hosting the event.')
@@ -491,14 +492,19 @@ class Event(AssignmentMixin, models.Model):
         on_delete=models.PROTECT,
         help_text='Organization responsible for administrative work.'
     )
-    start      = models.DateField(null=True, blank=True,
-                                  help_text='Setting this and url "publishes" the event.')
+    start = models.DateField(
+        null=True, blank=True,
+        help_text=PUBLISHED_HELP_TEXT,
+    )
     end        = models.DateField(null=True, blank=True)
     slug       = models.CharField(max_length=STR_LONG, null=True, blank=True, unique=True)
-    url        = models.CharField(max_length=STR_LONG, unique=True, null=True, blank=True,
-                                  validators=[RegexValidator(REPO_REGEX, inverse_match=True)],
-                                  help_text='Setting this and startdate "publishes" the event.<br />'
-                                            'Use link to the event\'s website.')
+    url = models.CharField(
+        max_length=STR_LONG, unique=True, null=True, blank=True,
+        validators=[RegexValidator(REPO_REGEX, inverse_match=True)],
+        help_text=PUBLISHED_HELP_TEXT +
+                  '<br />Use link to the event\'s <b>website</b>, ' +
+                  'not repository.',
+    )
     reg_key    = models.CharField(max_length=STR_REG_KEY, null=True, blank=True, verbose_name="Eventbrite key")
     attendance = models.PositiveIntegerField(null=True, blank=True)
     admin_fee  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)])
@@ -518,11 +524,23 @@ class Event(AssignmentMixin, models.Model):
     )
     notes      = models.TextField(default="", blank=True)
     contact = models.CharField(max_length=255, default="", blank=True)
-    country = CountryField(null=True, blank=True)
-    venue = models.CharField(max_length=255, default='', blank=True)
-    address = models.CharField(max_length=255, default='', blank=True)
-    latitude = models.FloatField(null=True, blank=True)
-    longitude = models.FloatField(null=True, blank=True)
+    country = CountryField(
+        null=True, blank=True,
+        help_text=PUBLISHED_HELP_TEXT +
+                  '<br />Use <b>Online</b> for online events.',
+    )
+    venue = models.CharField(
+        max_length=255, default='', blank=True, help_text=PUBLISHED_HELP_TEXT,
+    )
+    address = models.CharField(
+        max_length=255, default='', blank=True, help_text=PUBLISHED_HELP_TEXT,
+    )
+    latitude = models.FloatField(
+        null=True, blank=True, help_text=PUBLISHED_HELP_TEXT,
+    )
+    longitude = models.FloatField(
+        null=True, blank=True, help_text=PUBLISHED_HELP_TEXT,
+    )
 
     completed = models.BooleanField(
         default=False,
