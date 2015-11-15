@@ -8,7 +8,7 @@
   <tr>
     <th>Event</th>
     <th>Attendance <a href="#" data-toggle="tooltip" title="Number of attendees is missing">[?]</a></th>
-    <th>Location <a href="#" data-toggle="tooltip" title="Venue, address or country is missing">[?]</a></th>
+    <th>Location <a href="#" data-toggle="tooltip" title="Country, venue, address or lat/long are missing">[?]</a></th>
     <th>Dates <a href="#" data-toggle="tooltip" title="Start date is in future of end date">[?]</a></th>
   </tr>
   {% for event in events %}
@@ -36,7 +36,7 @@ Thanks for your help.{% endfilter %}">
         {% if event.mailto_ %}
           <a href="mailto:{{event.mailto_}}?subject={% filter urlencode %}Missing location for workshop {{event.get_ident}}{% endfilter %}&body={% filter urlencode %}Hi,
 
-Can you please send us the location where the {{ event.get_ident }} workshop took place?
+Can you please send us the location where the {{ event.get_ident }} workshop took place? We need a country, address, venue, and latitude/longitude.
 
 Thanks for your help.{% endfilter %}">
           <span class="glyphicon glyphicon-envelope"></span>

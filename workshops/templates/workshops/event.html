@@ -57,10 +57,10 @@
   </tr>
   <tr class="{% if not event.attendance %}bg-danger{% endif %}"><td>attendance:</td><td colspan="2">{{ event.attendance|default_if_none:"—" }}</td></tr>
   <tr><td>contact:</td><td colspan="2">{{ event.contact|default_if_none:"—"|urlize }}</td></tr>
-  <tr class="{% if not event.country %}bg-danger{% endif %}">
+  <tr>
     <td rowspan="4">location details:</td>
-    <td>Country:</td>
-    <td>
+    <td class="{% if not event.country %}bg-danger{% endif %}">Country:</td>
+    <td class="{% if not event.country %}bg-danger{% endif %}">
     {% if event.country %}
       {{ event.country.name }} <img src="{{ event.country.flag }}" alt="{{ event.country }}" class="country-flag" />
     {% else %}
@@ -70,7 +70,7 @@
   </tr>
   <tr class="{% if not event.venue %}bg-danger{% endif %}"><td>Venue:</td><td>{{ event.venue|default:"—" }}</td></tr>
   <tr class="{% if not event.address %}bg-danger{% endif %}"><td>Address:</td><td>{{ event.address|default:"—" }}</td></tr>
-  <tr><td>Lat/long:</td><td>{{ event.latitude|default:"—" }} / {{ event.longitude|default:"—" }} {% if event.latitude and event.longitude %}<a href="{% url 'instructors' %}?latitude={{ event.latitude }}&amp;longitude={{ event.longitude }}&amp;submit=Submit" class="btn btn-primary btn-xs pull-right" id="find_closest_instructors">find closest instructors</a>{% else %}<a class="btn btn-danger btn-xs pull-right" id="error_closest_instructors" href="#" data-toggle="popover" data-trigger="focus" title="Search error" data-content="Cannot search for closest instructors without latitude and longitude of event's location.">Error</a>{% endif %}</td></tr>
+  <tr class="{% if not event.latitude or not event.longitude %}bg-danger{% endif %}"><td>Lat/long:</td><td>{{ event.latitude|default:"—" }} / {{ event.longitude|default:"—" }} {% if event.latitude and event.longitude %}<a href="{% url 'instructors' %}?latitude={{ event.latitude }}&amp;longitude={{ event.longitude }}&amp;submit=Submit" class="btn btn-primary btn-xs pull-right" id="find_closest_instructors">find closest instructors</a>{% else %}<a class="btn btn-danger btn-xs pull-right" id="error_closest_instructors" href="#" data-toggle="popover" data-trigger="focus" title="Search error" data-content="Cannot search for closest instructors without latitude and longitude of event's location.">Error</a>{% endif %}</td></tr>
 </table>
 
 {% if event.url %}
