@@ -1,14 +1,19 @@
-{% extends "workshops/_page.html" %}
+{% extends "workshops/_page_fluid.html" %}
 
-{% block content %}
-  <div class="btn-group" role="group" aria-label="Type of requests">
-    <a href="{% url 'all_eventrequests' %}" class="btn btn-default{% if active_requests %} active{% endif %}">New</a>
-    <a href="{% url 'all_closed_eventrequests' %}" class="btn btn-default{% if not active_requests %} active{% endif %}">Closed</a>
-  </div>
+{% load crispy_forms_tags %}
+{% load pagination %}
+
+{% block sidebar %}
+    <h3>Filter</h3>
+    {% crispy filter.form form_helper %}
+{% endblock %}
+
+{% block content-fluid %}
   {% if requests %}
   <table class="table table-striped">
     <thead>
       <tr>
+        <th>assignee</th>
         <th>person</th>
         <th>affiliation</th>
         <th>preferred date</th>
@@ -20,6 +25,7 @@
     <tbody>
     {% for req in requests %}
       <tr>
+        <td>{% if req.assigned_to %}<a href="{{ req.assigned_to.get_absolute_url }}">{{ req.assigned_to.get_short_name }}</a>{% else %}—{% endif %}</td>
         <td>{{ req.name }} &lt;{{ req.email|urlize }}&gt;</td>
         <td>{{ req.affiliation }}</td>
         <td>{{ req.preferred_date }}</td>

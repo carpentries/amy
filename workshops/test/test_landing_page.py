@@ -21,7 +21,7 @@ class TestLandingPage(TestBase):
         response = self.client.get(reverse('dashboard'))
 
         # This will fail if the context variable doesn't exist
-        events = response.context['upcoming_ongoing_events']
+        events = response.context['current_events']
 
         # They should all be labeled 'upcoming'.
         assert all([('upcoming' in e.slug or 'ongoing' in e.slug)

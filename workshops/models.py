@@ -22,6 +22,15 @@ STR_REG_KEY =  20         # length of Eventbrite registration key
 #------------------------------------------------------------
 
 
+class AssignmentMixin(models.Model):
+    """This abstract model acts as a mix-in, so it adds
+    "assigned to admin [...]" field to any inheriting model."""
+    assigned_to = models.ForeignKey("Person", null=True, blank=True,)
+
+    class Meta:
+        abstract = True
+
+
 @reversion.register
 class Host(models.Model):
     '''Represent a workshop's host.'''
@@ -457,7 +466,7 @@ class EventManager(models.Manager):
 
 
 @reversion.register
-class Event(models.Model):
+class Event(AssignmentMixin, models.Model):
     '''Represent a single event.'''
 
     REPO_REGEX = re.compile(r'https?://github\.com/(?P<name>[^/]+)/'
@@ -612,7 +621,7 @@ class Event(models.Model):
         super(Event, self).save(*args, **kwargs)
 
 
-class EventRequest(models.Model):
+class EventRequest(AssignmentMixin, models.Model):
     active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     name = models.CharField(max_length=STR_MED)

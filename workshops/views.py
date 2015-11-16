@@ -9,6 +9,7 @@ from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import SetPasswordForm, PasswordChangeForm
+from django.contrib.auth.models import Group
 from django.core.paginator import EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
 from django.core.exceptions import (
@@ -57,7 +58,8 @@ from workshops.forms import (
     PersonPermissionsForm, bootstrap_helper_filter, PersonMergeForm,
     PersonTaskForm, HostForm, SWCEventRequestForm, DCEventRequestForm,
     ProfileUpdateRequestForm, PersonLookupForm, bootstrap_helper_wider_labels,
-    SimpleTodoForm, bootstrap_helper_inline_formsets,
+    SimpleTodoForm, bootstrap_helper_inline_formsets, BootstrapHelper,
+    AdminLookupForm,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
@@ -67,7 +69,8 @@ from workshops.util import (
 )
 
 from workshops.filters import (
-    EventFilter, HostFilter, PersonFilter, TaskFilter, AirportFilter
+    EventFilter, HostFilter, PersonFilter, TaskFilter, AirportFilter,
+    EventRequestFilter,
 )
 
 #------------------------------------------------------------
@@ -165,14 +168,51 @@ class PermissionRequiredMixin(object):
 @login_required
 def dashboard(request):
     '''Home page.'''
-    upcoming_ongoing_events = (
+    current_events = (
         Event.objects.upcoming_events() | Event.objects.ongoing_events()
     )
     unpublished_events = Event.objects.unpublished_events()
     uninvoiced_events = Event.objects.uninvoiced_events()
+
+    user = request.user
+    is_admin = user.groups.filter(name='administrators').exists()
+
+    assigned_to = 'all'
+
+    if is_admin:
+        # One of the administrators.
+        # They should be presented with their events by default.
+        assigned_to = request.GET.get('assigned_to', 'me')
+
+    elif user.is_superuser:
+        # A superuser.  Should see all events by default
+        assigned_to = request.GET.get('assigned_to', 'all')
+
+    else:
+        # Normal user (for example subcommittee members).
+        assigned_to = 'all'
+
+    if assigned_to == 'me':
+        current_events = current_events.filter(assigned_to=user)
+        uninvoiced_events = uninvoiced_events.filter(assigned_to=user)
+        unpublished_events = unpublished_events.filter(assigned_to=user)
+
+    elif assigned_to == 'noone':
+        current_events = current_events.filter(assigned_to__isnull=True)
+        uninvoiced_events = uninvoiced_events.filter(
+            assigned_to__isnull=True)
+        unpublished_events = unpublished_events.filter(
+            assigned_to__isnull=True)
+
+    elif assigned_to == 'all':
+        # no filtering
+        pass
+
     context = {
         'title': None,
-        'upcoming_ongoing_events': upcoming_ongoing_events,
+        'is_admin': is_admin,
+        'assigned_to': assigned_to,
+        'current_events': current_events,
         'uninvoiced_events': uninvoiced_events,
         'unpublished_events': unpublished_events,
     }
@@ -818,6 +858,16 @@ def event_details(request, event_ident):
             messages.error(request, 'Fix errors in the TODO form.',
                            extra_tags='todos')
 
+    person_lookup_form = AdminLookupForm()
+    if event.assigned_to:
+        person_lookup_form = AdminLookupForm(
+            initial={'person': event.assigned_to}
+        )
+
+    person_lookup_helper = BootstrapHelper()
+    person_lookup_helper.form_action = reverse('event_assign',
+                                               args=[event_ident])
+
     context = {
         'title': 'Event {0}'.format(event),
         'event': event,
@@ -826,6 +876,8 @@ def event_details(request, event_ident):
         'todos': todos,
         'helper': bootstrap_helper,
         'today': datetime.date.today(),
+        'person_lookup_form': person_lookup_form,
+        'person_lookup_helper': person_lookup_helper,
     }
     return render(request, 'workshops/event.html', context)
 
@@ -973,6 +1025,21 @@ def event_import(request):
         return JsonResponse(translated_data)
     except (KeyError, WrongEventURL):
         raise SuspiciousOperation('Missing or wrong `url` POST parameter.')
+
+
+@login_required
+@permission_required('workshops.change_event', raise_exception=True)
+def event_assign(request, event_ident, person_id=None):
+    """Set event.assigned_to. See `_assign` docstring for more information."""
+    try:
+        event = Event.get_by_ident(event_ident)
+
+        _assign(request, event, person_id)
+
+        return redirect(reverse('event_details', args=[event.get_ident()]))
+
+    except Event.DoesNotExist:
+        raise Http404("No event found matching the query.")
 
 #------------------------------------------------------------
 
@@ -1619,24 +1686,26 @@ class DCEventRequest(SWCEventRequest):
     form_template = 'forms/workshop_dc_request.html'
 
 
-class AllEventRequests(LoginRequiredMixin, ListView):
-    active_requests = True
-    context_object_name = 'requests'
-    template_name = 'workshops/all_eventrequests.html'
+@login_required
+def all_eventrequests(request):
+    """List all event requests."""
 
-    def get_queryset(self):
-        return EventRequest.objects.filter(active=self.active_requests) \
-                                   .order_by('-created_at')
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'Workshop requests'
-        context['active_requests'] = self.active_requests
-        return context
-
-
-class AllClosedEventRequests(AllEventRequests):
-    active_requests = False
+    # Set initial value for the "active" radio select.  That's a hack, nothing
+    # else worked...
+    data = request.GET.copy()  # request.GET is immutable
+    data['active'] = data.get('active', 'true')
+    filter = EventRequestFilter(
+        data,
+        queryset=EventRequest.objects.all(),
+    )
+    eventrequests = _get_pagination_items(request, filter)
+    context = {
+        'title': 'Workshop requests',
+        'requests': eventrequests,
+        'filter': filter,
+        'form_helper': bootstrap_helper_filter,
+    }
+    return render(request, 'workshops/all_eventrequests.html', context)
 
 
 class EventRequestDetails(LoginRequiredMixin, DetailView):
@@ -1648,6 +1717,19 @@ class EventRequestDetails(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Workshop request #{}'.format(self.get_object().pk)
+
+        person_lookup_form = AdminLookupForm()
+        if self.object.assigned_to:
+            person_lookup_form = AdminLookupForm(
+                initial={'person': self.object.assigned_to}
+            )
+
+        person_lookup_helper = BootstrapHelper()
+        person_lookup_helper.form_action = reverse('eventrequest_assign',
+                                                   args=[self.object.pk])
+
+        context['person_lookup_form'] = person_lookup_form
+        context['person_lookup_helper'] = person_lookup_helper
         return context
 
 
@@ -1689,6 +1771,23 @@ def eventrequest_accept(request, request_id):
         'form': form,
     }
     return render(request, 'workshops/eventrequest_accept.html', context)
+
+
+@login_required
+@permission_required(['workshops.change_eventrequest'], raise_exception=True)
+def eventrequest_assign(request, request_id, person_id=None):
+    """Set eventrequest.assigned_to. See `_assign` docstring for more
+    information."""
+
+    try:
+        event_req = EventRequest.objects.get(pk=request_id)
+
+        _assign(request, event_req, person_id)
+
+        return redirect(reverse('eventrequest_details', args=[event_req.pk]))
+
+    except Event.DoesNotExist:
+        raise Http404("No event request found matching the query.")
 
 
 def profileupdaterequest_create(request):
@@ -2031,3 +2130,29 @@ def todo_delete(request, todo_id):
                      extra_tags='todos')
 
     return redirect(event_details, event_ident)
+
+
+def _assign(request, obj, person_id):
+    """Set obj.assigned_to. This view helper works with both POST and GET
+    requests:
+
+    * POST: read person ID from POST's person_1
+    * GET: read person_id from URL
+    * both: if person_id is None then make event.assigned_to empty
+    * otherwise assign matching person.
+
+    This is not a view, but it's used in some."""
+    try:
+        if request.method == "POST":
+            person_id = request.POST.get('person_1', None)
+
+        if person_id is None:
+            obj.assigned_to = None
+        else:
+            person = Person.objects.get(pk=person_id)
+            obj.assigned_to = person
+
+        obj.save()
+
+    except Person.DoesNotExist:
+        raise Http404("No person found matching the query.")

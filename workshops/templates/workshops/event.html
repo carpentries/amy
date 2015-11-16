@@ -10,14 +10,29 @@
   <strong>Well done!</strong> This event is completed, you don't have to work on it.
 </div>
 {% endif %}
-{% last_modified event %}
-<p class="edit-object">
-  {% if perms.workshops.change_event %}
-  <a href="{% url 'event_edit' event.get_ident %}" class="btn btn-primary">Edit</a>
-  {% else %}
-  <a href="{% url 'event_edit' event.get_ident %}" class="btn btn-primary disabled">Edit</a>
-  {% endif %}
-</p>
+<div class="row">
+  <div class="col-md-6">
+    {% last_modified event %}
+    <p class="edit-object">
+      {% if perms.workshops.change_event %}
+      <a href="{% url 'event_edit' event.get_ident %}" class="btn btn-primary">Edit</a>
+      {% else %}
+      <a href="{% url 'event_edit' event.get_ident %}" class="btn btn-primary disabled">Edit</a>
+      {% endif %}
+    </p>
+  </div>
+  <div class="col-md-6 text-right">
+    <p>
+      <a href="#" id="change_assignment"><span class="glyphicon glyphicon-cog"></span></a>
+      Assignee:
+      {% if event.assigned_to %}
+        <a href="{{ event.assigned_to.get_absolute_url }}">{{ event.assigned_to.get_full_name }}</a> (<a href="{% url 'event_assign' event.get_ident %}" id="clear-assignment">clear</a>).
+      {% else %}
+        no one (<a href="{% url 'event_assign' event.get_ident user.pk %}" id="assign-yourself">assign yourself</a>).
+      {% endif %}
+    </p>
+  </div>
+</div>
 <table class="table table-striped">
   <tr><td>slug:</td><td colspan="2">{{ event.slug|default:"—" }}</td></tr>
   <tr><td>completed:</td><td colspan="2">{{ event.completed|yesno }}</td></tr>
@@ -75,6 +90,24 @@
   </div>
 </div>
 {% endif %}
+
+<!-- selecting assignment modal -->
+<div class="modal fade" id="assignment_modal" tabindex="-1" role="dialog" aria-labelledby="assignment_modal_label" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="assignment_modal_label">Assignment</h4>
+      </div>
+      <div class="modal-body">
+        {% crispy person_lookup_form person_lookup_helper %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 {% if tasks %}
 <h3>Tasks</h3>
@@ -163,9 +196,14 @@
 
 {% block extrajs %}
 {{ todo_form.media }}
+{{ person_lookup_form.media }}
 <script type="text/javascript">
   $('#error_event_url').popover({placement: "left", html: true});
   $('#error_closest_instructors').popover({placement: "left", html: true});
+  $('#change_assignment').click(function() {
+    $('#assignment_modal').modal();
+    return false;
+  });
   $('#validate_event').click(function() {
     $('#validation_modal').modal();
     return false;
