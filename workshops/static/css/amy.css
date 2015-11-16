@@ -12,6 +12,9 @@ table td.editable span {
 table .additional-links {
     width: 70px;
 }
+table .additional-links-wider {
+    width: 90px;
+}
 
 /* move country flag in tables a few pixels up */
 .country-flag {
@@ -92,4 +95,91 @@ body {
    crispy form down a few notches */
 div[role="tabpanel"] form {
     padding-top: 10px;
+}
+
+/* Overwriting Bootstrap styles for horizontal forms. The checkboxes and radios
+   were shifted to the left too much, while singular checkbox questions were
+   okay. */
+.form-horizontal .checkbox,
+.form-horizontal .checkbox-inline,
+.form-horizontal .radio,
+.form-horizontal .radio-inline {
+    padding-left: 20px;
+}
+
+.form-horizontal .checkbox label, .form-horizontal .radio label {
+    padding-left: 0;
+}
+
+/* Styles for help_text in multiselect or radio fields for EventRequest
+   forms. And since help-block was always last and had a nice bottom margin,
+   now the very last radio/checkbox label should have that margin too. */
+p.help-block-no-margin {
+    display: block;
+    color: #737373;
+    margin: 7px 0px 0px;
+}
+
+label.last-field {
+    margin-bottom: 10px;
+}
+
+/* Move logos on workshop request pages more to the top. The negative margin
+   compensates big body padding required for the top navbar. */
+.workshop-form-logo {
+    margin: -50px 0 40px;
+}
+
+
+/* any element but tr, with class .strikethrough */
+.strikethrough:not(tr) {
+    text-decoration: line-through;
+}
+
+/* styles for tr with class .strikethrough only: last td child without
+   strikethrough because there are links in this last column and it just seems
+   ugly to have them crossed out */
+tr.strikethrough td:last-child {
+    text-decoration: none;
+}
+tr.strikethrough td {
+    text-decoration: line-through;
+}
+
+.bg-muted {
+    background-color: #F5F5F5;
+}
+
+.space1 {
+    margin: 0 3px 0 9px;
+}
+.space2 {
+    margin: 0 3px;
+}
+
+/* better styles for inline formset (e.g. TODOs) */
+.form-horizontal table .control-label {
+    text-align: center;
+}
+.form-horizontal table .control-group {
+    text-align: center;
+}
+
+/* .table-striped has higher priority than default bg-* background classes
+   so it was necessary to define more precise rules like below */
+table.table-striped tr.bg-primary {
+    color: #FFF;
+    background-color: #337AB7;
+}
+table.table-striped tr.bg-success {
+    background-color: #DFF0D8;
+}
+table.table-striped tr.bg-info {
+    background-color: #D9EDF7;
+}
+table.table-striped tr.bg-warning {
+    background-color: #FCF8E3;
+}
+table.table-striped tr.bg-danger {
+    background-color: #F2DEDE;
 }

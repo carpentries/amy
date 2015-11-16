@@ -49,3 +49,29 @@ class TestBadge(TestBase):
         self._check_status_code_and_parse(response, 200)
 
         assert self.instructor.award_set.count() == 4
+
+    def test_remove_award(self):
+        "Remove a badge from someone (ie. remove corresponding Award object)."
+        person = self.hermione
+        award = person.award_set.all()[0]
+        badge = award.badge
+        # test first URL
+        rv = self.client.get(
+            reverse('award_delete',
+                    kwargs=dict(award_id=award.pk, person_id=person.pk)),
+        )
+        assert rv.status_code == 302
+        assert award not in badge.award_set.all()  # award really removed
+        assert badge not in person.badges.all()  # badge not avail. via Awards
+
+        person = self.ron
+        award = person.award_set.all()[0]
+        badge = award.badge
+        # test second URL
+        rv = self.client.get(
+            reverse('award_delete',
+                    kwargs=dict(award_id=award.pk)),
+        )
+        assert rv.status_code == 302
+        assert award not in badge.award_set.all()  # award really removed
+        assert badge not in person.badges.all()  # badge not avail. via Awards

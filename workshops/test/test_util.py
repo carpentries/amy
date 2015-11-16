@@ -56,6 +56,15 @@ john,m,doe,john@doe.com"""
         person_tasks, empty_fields = self.compute_from_string(bad_csv)
         self.assertTrue('email' in empty_fields)
 
+    def test_csv_with_empty_lines(self):
+        csv = """personal,middle,family,emailaddress
+john,m,doe,john@doe.com
+,,,"""
+        person_tasks, empty_fields = self.compute_from_string(csv)
+        self.assertEqual(len(person_tasks), 1)
+        person = person_tasks[0]
+        self.assertEqual(person['personal'], 'john')
+
     def test_empty_field(self):
         ''' Ensure we don't mis-order fields given blank data '''
         csv = """personal,middle,family,email
@@ -98,6 +107,7 @@ class CSVBulkUploadTestBase(TestBase):
                                         fullname='Test Host')
 
         Role.objects.create(name='Instructor')
+        Role.objects.create(name='learner')
         Event.objects.create(start=datetime.now(),
                              host=test_host,
                              slug='foobar',
@@ -329,6 +339,42 @@ Harry,,Potter,harry@hogwarts.edu,foobar,Instructor
         self.assertEqual(users_pre, users_post)
         self.assertEqual(rv.status_code, 200)
 
+    def test_attendance_increases(self):
+        """
+        Check if uploading tasks with role "learner" increase event's
+        attendance.
+        """
+        foobar = Event.objects.get(slug="foobar")
+        assert foobar.attendance is None
+        foobar.save()
+
+        csv = """personal,middle,family,email,event,role
+Harry,,Potter,harry@hogwarts.edu,foobar,learner
+"""
+        data, _ = upload_person_task_csv(StringIO(csv))
+
+        # self.client is authenticated user so we have access to the session
+        store = self.client.session
+        store['bulk-add-people'] = data
+        store.save()
+
+        # send exactly what's in 'data'
+        payload = {
+            "personal": data[0]['personal'],
+            "middle": data[0]['middle'],
+            "family": data[0]['family'],
+            "email": data[0]['email'],
+            "event": data[0]['event'],
+            "role": data[0]['role'],
+            "confirm": "Confirm",
+        }
+
+        self.client.post(reverse('person_bulk_add_confirmation'), payload,
+                         follow=True)
+
+        foobar.refresh_from_db()
+        self.assertEqual(1, foobar.attendance)
+
 
 class TestEventURLNormalization(TestCase):
     def setUp(self):
@@ -395,7 +441,7 @@ COUNTRY: USA"""
             'slug': '2015-07-13-test',
             'start': date(2015, 7, 13),
             'end': date(2015, 7, 14),
-            'url': url,
+            'url': 'https://test.github.io/2015-07-13-test/',
             'reg_key': 1e7,
             'contact': 'hermione@granger.co.uk, rweasley@ministry.gov.uk',
             'notes': notes,
@@ -430,7 +476,7 @@ eventbrites: 10000000
             'slug': '2015-07-13-test',
             'start': '',
             'end': '',
-            'url': url,
+            'url': 'https://test.github.io/2015-07-13-test/',
             'reg_key': '',
             'contact': '',
             'notes': notes,
@@ -470,7 +516,7 @@ eventbrite: 10000000
             'slug': '2015-07-13-test',
             'start': date(2015, 7, 13),
             'end': date(2015, 7, 14),
-            'url': url,
+            'url': 'https://test.github.io/2015-07-13-test/',
             'reg_key': 1e7,
             'contact': 'hermione@granger.co.uk, rweasley@ministry.gov.uk',
             'notes': notes,
@@ -482,3 +528,43 @@ eventbrite: 10000000
         }
 
         self.assertEqual(parse_tags_from_event_index(url), expected)
+
+    @patch.object(requests, 'get')
+    def test_parsing_2letter_country(self, mock_get):
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.text = """---
+venue: Euphoric State University
+address: Highway to Heaven 42, Academipolis
+country: us
+startdate: 2015-07-13
+enddate: 2015-07-14
+instructor: ["Hermione Granger", "Harry Potter", "Ron Weasley",]
+helper: ["Peter Parker", "Tony Stark", "Natasha Romanova",]
+contact: hermione@granger.co.uk, rweasley@ministry.gov.uk
+eventbrite: 10000000
+---
+"""
+        url = 'http://test.github.io/2015-07-13-test/'
+        rv = parse_tags_from_event_index(url)
+
+        self.assertEqual(rv['country'], 'US')
+
+    @patch.object(requests, 'get')
+    def test_parsing_old_format_country(self, mock_get):
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.text = """---
+venue: Euphoric State University
+address: Highway to Heaven 42, Academipolis
+country: United-States
+startdate: 2015-07-13
+enddate: 2015-07-14
+instructor: ["Hermione Granger", "Harry Potter", "Ron Weasley",]
+helper: ["Peter Parker", "Tony Stark", "Natasha Romanova",]
+contact: hermione@granger.co.uk, rweasley@ministry.gov.uk
+eventbrite: 10000000
+---
+"""
+        url = 'http://test.github.io/2015-07-13-test/'
+        rv = parse_tags_from_event_index(url)
+
+        self.assertEqual(rv['country'], 'US')

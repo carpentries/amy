@@ -288,6 +288,44 @@ class TestPerson(TestBase):
         assert response.status_code == 302
         assert set(self.hermione.lessons.all()) == set([self.git, ])
 
+    def test_person_add_lessons(self):
+        "Check if it's still possible to add lessons via PersonCreate view."
+        data = {
+            'username': 'test',
+            'personal': 'Test',
+            'family': 'Test',
+            'gender': 'U',
+            'lessons': [1, 2],  # just IDs
+        }
+        rv = self.client.post(reverse('person_add'), data)
+        assert rv.status_code == 302
+
+        # make sure "no lessons" works too
+        data = {
+            'username': 'test2',
+            'personal': 'Test',
+            'family': 'Test',
+            'gender': 'U',
+            'lessons': [],
+        }
+        rv = self.client.post(reverse('person_add'), data)
+        assert rv.status_code == 302
+
+    def test_person_success_message(self):
+        """Since PersonCreate view simulates SuccessMessageMixin, check if it
+        does it correctly."""
+        data = {
+            'username': 'test',
+            'personal': 'Test',
+            'family': 'Test',
+            'gender': 'U',
+            'lessons': [1, 2],  # just IDs
+        }
+        rv = self.client.post(reverse('person_add'), data, follow=True)
+        assert rv.status_code == 200
+        content = rv.content.decode('utf-8')
+        assert "Test Test was created successfully." in content
+
 
 class TestPersonPassword(TestBase):
     """Separate tests for testing password setting.

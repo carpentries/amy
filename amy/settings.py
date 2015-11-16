@@ -32,6 +32,53 @@ else:
     SECRET_KEY = None
 SECRET_KEY = os.environ.get('AMY_SECRET_KEY', SECRET_KEY)
 
+# be sure to put these values in your envvars, even for development
+RECAPTCHA_PUBLIC_KEY = os.environ.get('AMY_RECAPTCHA_PUBLIC_KEY', None)
+RECAPTCHA_PRIVATE_KEY = os.environ.get('AMY_RECAPTCHA_PRIVATE_KEY', None)
+RECAPTCHA_USE_SSL = True
+NOCAPTCHA = True  # nicer input
+
+if DEBUG:
+    # 'PASSED' in the form will always pass the RECAPTCHA test
+    NOCAPTCHA = False  # uglier input, but possible to manually enter 'PASSED'
+    os.environ['RECAPTCHA_TESTING'] = 'True'
+else:
+    # ensure the keys are present on production
+    assert RECAPTCHA_PUBLIC_KEY, 'RECAPTCHA site key not present'
+    assert RECAPTCHA_PRIVATE_KEY, 'RECAPTCHA secure key not present'
+
+# email settings
+ADMINS = (
+    ('Piotr Banaszkiewicz', 'piotr@banaszkiewicz.org'),
+    ('Greg Wilson', 'gvwilson@software-carpentry.org'),
+)
+# "From:" for error messages sent out to ADMINS
+SERVER_EMAIL = os.environ.get('AMY_SERVER_EMAIL', 'root@localhost')
+
+# addresses to receive "New workshop request" or "New profile update request"
+# notifications
+REQUEST_NOTIFICATIONS_RECIPIENTS = (
+    'admin-all@lists.software-carpentry.org',
+)
+EMAIL_HOST = os.environ.get('AMY_EMAIL_HOST', 'localhost')
+EMAIL_HOST_USER = os.environ.get('AMY_EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('AMY_EMAIL_HOST_PASSWORD', '')
+EMAIL_PORT = int(os.environ.get('AMY_EMAIL_PORT', 25))
+EMAIL_TIMEOUT = 10  # timeout for blocking email operations, in seconds
+EMAIL_USE_TLS = json.loads(os.environ.get('AMY_EMAIL_USE_TLS', 'false'))
+EMAIL_USE_SSL = json.loads(os.environ.get('AMY_EMAIL_USE_SSL', 'false'))
+
+# "From:" for NOT error messages (ie. sent to whoever we want)
+DEFAULT_FROM_EMAIL = os.environ.get('AMY_DEFAULT_FROM_EMAIL',
+                                    'webmaster@localhost')
+
+if DEBUG:
+    # outgoing mails will be stored in `django.core.mail.outbox`
+    EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
+
+SITE_URL = 'https://amy.software-carpentry.org'
+if DEBUG:
+    SITE_URL = 'http://127.0.0.1:8000'
 
 # New template settings (for Django >= 1.8)
 TEMPLATES = [
@@ -76,6 +123,7 @@ INSTALLED_APPS = (
     'workshops',
     # this should be after 'workshops' because templates in
     # 'templates/registration/' clash
+    'django.contrib.admin',
     'crispy_forms',
     'selectable',
     'django_countries',
@@ -83,6 +131,7 @@ INSTALLED_APPS = (
     'reversion',
     'rest_framework',
     'api',
+    'captcha',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
@@ -158,6 +207,9 @@ LOGIN_URL = '/account/login/'
 # explicitely add European Union as a country
 COUNTRIES_OVERRIDE = {
     'EU': _('European Union'),
+    'GB': _('United Kingdom'),
+    'US': _('United States'),
+    'W3': _('Online'),
 }
 
 # settings for REST API

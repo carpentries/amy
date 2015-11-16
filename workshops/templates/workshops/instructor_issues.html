@@ -1,0 +1,82 @@
+{% extends "workshops/_page.html" %}
+
+{% block content %}
+<h2>Instructors</h2>
+{% if instructors %}
+<p><span class="glyphicon glyphicon-envelope"></span> = mail instructor about problem</p>
+<p><span class="glyphicon glyphicon-remove"></span> = no email address available</p>
+<table class="table table-striped">
+  <tr>
+    <th>Instructor</th>
+    <th>Location <a href="#" data-toggle="tooltip" title="Nearest airport is missing">[?]</a></th>
+  </tr>
+  {% for person in instructors %}
+  <tr>
+    <td><a href="{% url 'person_details' person.id %}">{{ person.get_full_name }}</a></td>
+    <td>
+      {% if person.email %}
+      <a href="mailto:{{person.email}}?subject={% filter urlencode %}Missing location information{% endfilter %}&body={% filter urlencode %}Hi,
+
+We are trying to update the Software and Data Carpentry instructor database - can you please fill in https://amy.software-carpentry.org/workshops/update_profile/ to let us know where you are so that we can match you with workshops?
+
+Thanks for your help.{% endfilter %}">
+        <span class="glyphicon glyphicon-envelope"></span>
+      </a>
+      {% else %}
+      <span class="glyphicon glyphicon-remove"></span>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p>None</p>
+{% endif %}
+
+<h2>Pending</h2>
+{% if pending %}
+  <p><span class="glyphicon glyphicon-envelope"></span> = mail person about problem</p>
+  <p><span class="glyphicon glyphicon-remove"></span> = no email address available</p>
+  <table class="table table-striped">
+    <tr>
+      <th>Person</th>
+      <th>Training(s) <a href="#" data-toggle="tooltip" title="Instructor Training(s) not finished">[?]</a></th>
+      <th>Email</th>
+    </tr>
+    {% regroup pending by person as trainings %}
+    {% for person_training in trainings %}
+    <tr>
+      <td><a href="{% url 'person_details' person_training.grouper.id %}">{{ person_training.grouper.get_full_name }}</a></td>
+      <td>
+        {% for e in person_training.list %}
+          <a href="{% url 'event_details' e.event.get_ident %}">{{ e.event }}</a>{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+      </td>
+      <td>
+        {% if person_training.grouper.email %}
+        <a href="mailto:{{person_training.grouper.email}}?subject={% filter urlencode %}Finishing instructor training{% endfilter %}&body={% filter urlencode %}Hi,
+
+  Can you please let us know if you intend to wrap up instructor training?  We'd still like to have you on the team.
+
+  Thanks!{% endfilter %}">
+          <span class="glyphicon glyphicon-envelope"></span>
+        </a>
+        {% else %}
+        <span class="glyphicon glyphicon-remove"></span>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+{% else %}
+  <p>None.</p>
+{% endif %}
+{% endblock %}
+
+{% block extrajs %}
+<script type="text/javascript">
+$(function () {
+  $('[data-toggle="tooltip"]').tooltip()
+})
+</script>
+{% endblock %}

@@ -9,6 +9,10 @@ from api.views import (
     ExportBadgesView,
     ExportInstructorLocationsView,
 )
+from api.serializers import (
+    ExportBadgesSerializer,
+    ExportInstructorLocationsSerializer,
+)
 from workshops.models import (
     Badge,
     Award,
@@ -49,9 +53,9 @@ class TestExportingBadges(APITestCase):
         ]
 
     def test_serialization(self):
-        # test calling the view directly, with "fake" request object (None)
         view = ExportBadgesView()
-        response = view.get(None)
+        serializer = view.get_serializer_class()
+        response = serializer(view.get_queryset(), many=True)
         self.assertEqual(response.data, self.expecting)
 
     def test_view(self):
@@ -94,6 +98,7 @@ class TestExportingInstructors(APITestCase):
         self.expecting = [
             {
                 'name': 'Airport1',
+                'country': 'PL',
                 'latitude': 1.0,
                 'longitude': 2.0,
                 'instructors': [
@@ -104,9 +109,9 @@ class TestExportingInstructors(APITestCase):
         ]
 
     def test_serialization(self):
-        # test calling the view directly, with "fake" request object (None)
         view = ExportInstructorLocationsView()
-        response = view.get(None)
+        serializer = view.get_serializer_class()
+        response = serializer(view.get_queryset(), many=True)
         self.assertEqual(response.data, self.expecting)
 
     def test_view(self):

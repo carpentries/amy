@@ -32,8 +32,8 @@ class TestEvent(TestBase):
         # There should be as many as there are strictly future events.
         assert len(uninvoiced_events) == self.num_uninvoiced_events
 
-        # Check that events with a fee of zero are not in the list of uninvoiced events.
-        assert not any([x for x in uninvoiced_events if x.admin_fee == 0])
+        # Check that events with a fee of zero or None are still on this list
+        assert any([x for x in uninvoiced_events if not x.admin_fee])
 
     def test_get_future_events(self):
         """Test that the events manager can find upcoming events"""
@@ -47,8 +47,7 @@ class TestEvent(TestBase):
 
         past_events = Event.objects.past_events()
 
-        # There are 3 past events
-        assert len(past_events) == 8
+        assert len(past_events) == 9
 
         # They should all start with past
         assert all(['past' in e.slug for e in past_events])
@@ -62,9 +61,9 @@ class TestEvent(TestBase):
 
         ongoing_events = Event.objects.ongoing_events()
         event_slugs = [e.slug for e in ongoing_events]
-        correct_slugs = ['starts_today',
-                         'ends_tomorrow',
-                         'ends_today', ]
+        correct_slugs = ['starts_today_ongoing',
+                         'ends_tomorrow_ongoing',
+                         'ends_today_ongoing', ]
 
         if sys.version_info >= (3,):
             self.assertCountEqual(event_slugs, correct_slugs)
@@ -108,7 +107,7 @@ class TestEvent(TestBase):
 
     def test_delete_event(self):
         """Make sure deleted event and its tasks are no longer accessible."""
-        event = Event.objects.get(slug="starts_today")
+        event = Event.objects.get(slug="starts_today_ongoing")
         role1 = Role.objects.create(name='NonInstructor')
         t1 = Task.objects.create(event=event, person=self.spiderman,
                                  role=role1)
@@ -123,7 +122,7 @@ class TestEvent(TestBase):
         assert rv.status_code == 302
 
         with self.assertRaises(Event.DoesNotExist):
-            Event.objects.get(slug="starts_today")
+            Event.objects.get(slug="starts_today_ongoing")
 
         for t in [t1, t2, t3]:
             with self.assertRaises(Task.DoesNotExist):
@@ -133,7 +132,7 @@ class TestEvent(TestBase):
         """Ensure we cannot delete an event with related tasks and awards.
 
         Deletion is prevented via Award.event's on_delete=PROTECT."""
-        event = Event.objects.get(slug="starts_today")
+        event = Event.objects.get(slug="starts_today_ongoing")
         role = Role.objects.create(name='NonInstructor')
         badge = Badge.objects.create(name='noninstructor',
                                      title='Non-instructor',
@@ -158,7 +157,7 @@ class TestEvent(TestBase):
         Task.objects.get(pk=task.pk)
         Award.objects.get(pk=award.pk)
 
-    def test_repository_url(self):
+    def test_repository_website_url(self):
         test_host = Host.objects.all()[0]
         links = [
             'http://user-name.github.com/repo-name',
@@ -169,32 +168,21 @@ class TestEvent(TestBase):
             'http://user-name.github.io/repo-name/',
             'https://user-name.github.com/repo-name/',
             'https://user-name.github.io/repo-name/',
-        ]
-        REPO = 'https://github.com/user-name/repo-name'
-        for index, link in enumerate(links):
-            event = Event.objects.create(
-                slug='e{}'.format(index),
-                host=test_host,
-                url=link
-            )
-            assert event.get_repository_url() == REPO
-
-    def test_website_url(self):
-        test_host = Host.objects.all()[0]
-        links = [
             'http://github.com/user-name/repo-name',
             'http://github.com/user-name/repo-name/',
             'https://github.com/user-name/repo-name',
             'https://github.com/user-name/repo-name/',
         ]
-        WEBSITE = 'https://user-name.github.io/repo-name'
+        REPO = 'https://github.com/user-name/repo-name'
+        WEBSITE = 'https://user-name.github.io/repo-name/'
         for index, link in enumerate(links):
             event = Event.objects.create(
                 slug='e{}'.format(index),
                 host=test_host,
                 url=link
             )
-            assert event.get_website_url() == WEBSITE
+            assert event.repository_url == REPO
+            assert event.website_url == WEBSITE
 
     def test_wrong_repository_website_urls(self):
         test_host = Host.objects.all()[0]
@@ -204,8 +192,8 @@ class TestEvent(TestBase):
             host=test_host,
             url=link
         )
-        assert event.get_repository_url() == link
-        assert event.get_website_url() == link
+        assert event.repository_url == link
+        assert event.website_url == link
 
 
 class TestEventViews(TestBase):
@@ -213,6 +201,9 @@ class TestEventViews(TestBase):
 
     def setUp(self):
         self._setUpUsersAndLogin()
+        self._setUpNonInstructors()
+
+        self.learner = Role.objects.get_or_create(name='learner')[0]
 
         # Create a test host
         self.test_host = Host.objects.create(domain='example.com',
@@ -470,6 +461,56 @@ class TestEventViews(TestBase):
         }
         response = self.client.post(reverse('event_add'), data)
         assert response.status_code == 302
+
+    def test_number_of_attendees_increasing(self):
+        """Ensure event.attendance gets bigger after adding new learners."""
+        event = Event.objects.get(slug='test_event_0')
+        event.attendance = 0  # testing for numeric case
+        event.save()
+
+        url, values = self._get_initial_form_index(1, 'event_edit', event.pk)
+        values['task-role'] = self.learner.pk
+        values['task-event'] = event.pk
+        values['task-person_0'] = str(self.spiderman)
+        values['task-person_1'] = self.spiderman.pk
+
+        rv = self.client.post(reverse('event_edit', args=[event.pk]), values,
+                              follow=True)
+        self._check_status_code_and_parse(rv, 200)
+
+        event.refresh_from_db()
+        assert event.attendance == 1
+
+    def test_slug_against_illegal_characters(self):
+        """Regression test: disallow events with slugs with wrong characters.
+
+        Only [\w-] are allowed."""
+        data = {
+            'slug': '',
+            'host_1': Host.objects.all()[0].pk,
+            'tags': Tag.objects.all(),
+        }
+        for slug in ['a/b', 'a b', 'a!b', 'a.b', 'a\\b', 'a?b']:
+            with self.subTest(slug=slug):
+                data['slug'] = slug
+                rv = self.client.post(reverse('event_add'), data, follow=False)
+                self.assertEqual(rv.status_code, 200)
+
+        # allow dashes in the slugs
+        data['slug'] = 'a-b'
+        rv = self.client.post(reverse('event_add'), data, follow=False)
+        self.assertEqual(rv.status_code, 200)
+
+    def test_display_of_event_without_start_date(self):
+        """A bug prevented events without start date to throw a 404.
+
+        This is a regression test against that bug.
+        The error happened when "".format encountered None instead of
+        datetime."""
+        event = Event.objects.create(slug='regression_event_0',
+                                     host=self.test_host)
+        rv = self.client.get(reverse('event_details', args=[event.pk]))
+        assert rv.status_code == 200
 
 
 class TestEventNotes(TestBase):

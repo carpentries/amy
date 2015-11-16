@@ -16,43 +16,54 @@ from django.core.exceptions import (
     PermissionDenied,
     SuspiciousOperation,
 )
+from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 from django.http import Http404, HttpResponse, JsonResponse
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError
 from django.db.models import Count, Sum, Q, F, Model, ProtectedError
 from django.db.models import Case, When, Value, IntegerField
+from django.forms import modelformset_factory
 from django.shortcuts import redirect, render, get_object_or_404
+from django.template.loader import get_template
 from django.views.decorators.http import require_POST
-from django.views.generic.base import ContextMixin
-from django.views.generic.edit import CreateView, UpdateView
-from django.contrib.auth.decorators import login_required
+from django.views.generic import ListView, DetailView, View
+from django.views.generic.edit import CreateView, UpdateView, ModelFormMixin
+from django.contrib.auth.decorators import login_required, permission_required
 
 from reversion import get_for_object
 from reversion.models import Revision
 
-from workshops.models import \
-    Airport, \
-    Award, \
-    Badge, \
-    Event, \
-    Qualification, \
-    Lesson, \
-    Person, \
-    Role, \
-    Host, \
-    Task
+from workshops.models import (
+    Airport,
+    Award,
+    Badge,
+    Event,
+    Qualification,
+    Lesson,
+    Person,
+    Role,
+    Host,
+    Tag,
+    Task,
+    EventRequest,
+    ProfileUpdateRequest,
+    TodoItem,
+)
 from workshops.check import check_file
 from workshops.forms import (
     SearchForm, DebriefForm, InstructorsForm, PersonForm, PersonBulkAddForm,
-    EventForm, TaskForm, TaskFullForm, bootstrap_helper,
+    EventForm, TaskForm, TaskFullForm, bootstrap_helper, bootstrap_helper_get,
     bootstrap_helper_with_add, BadgeAwardForm, PersonAwardForm,
     PersonPermissionsForm, bootstrap_helper_filter, PersonMergeForm,
-    PersonTaskForm,
+    PersonTaskForm, HostForm, SWCEventRequestForm, DCEventRequestForm,
+    ProfileUpdateRequestForm, PersonLookupForm, bootstrap_helper_wider_labels,
+    SimpleTodoForm, bootstrap_helper_inline_formsets,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
     create_uploaded_persons_tasks, InternalError, Paginator, merge_persons,
-    normalize_event_index_url, WrongEventURL, parse_tags_from_event_index
+    normalize_event_index_url, WrongEventURL, parse_tags_from_event_index,
+    update_event_attendance_from_tasks
 )
 
 from workshops.filters import (
@@ -121,7 +132,6 @@ class UpdateViewContext(SuccessMessageMixin, UpdateView):
         return self.success_message.format(cleaned_data, name=str(self.object))
 
 
-
 class LoginRequiredMixin(object):
     """
     Define @login_required-based mixin for class-based views that should allow
@@ -136,28 +146,51 @@ class LoginRequiredMixin(object):
         view = super(LoginRequiredMixin, cls).as_view(**kwargs)
         return login_required(view)
 
+
+class PermissionRequiredMixin(object):
+    """
+    Mixin for allowing only users with specific permissions to access the view.
+    """
+    perms = ''  # permission name or a list of them
+
+    @classmethod
+    def as_view(cls, **kwargs):
+        view = super().as_view(**kwargs)
+        return permission_required(cls.perms, raise_exception=True)(view)
+
+
 #------------------------------------------------------------
 
 
 @login_required
 def dashboard(request):
     '''Home page.'''
-    upcoming_events = Event.objects.upcoming_events()
+    upcoming_ongoing_events = (
+        Event.objects.upcoming_events() | Event.objects.ongoing_events()
+    )
     unpublished_events = Event.objects.unpublished_events()
     uninvoiced_events = Event.objects.uninvoiced_events()
-    recently_changed = Revision.objects.all().select_related('user') \
-                                       .prefetch_related('version_set') \
-                                       .order_by('-date_created')[:50]
-    context = {'title': None,
-               'upcoming_events': upcoming_events,
-               'uninvoiced_events': uninvoiced_events,
-               'unpublished_events': unpublished_events,
-               'recently_changed': recently_changed}
+    context = {
+        'title': None,
+        'upcoming_ongoing_events': upcoming_ongoing_events,
+        'uninvoiced_events': uninvoiced_events,
+        'unpublished_events': unpublished_events,
+    }
     return render(request, 'workshops/dashboard.html', context)
 
-#------------------------------------------------------------
 
-HOST_FIELDS = ['domain', 'fullname', 'country', 'notes']
+@login_required
+def changes_log(request):
+    log = Revision.objects.all().select_related('user') \
+                                .prefetch_related('version_set') \
+                                .order_by('-date_created')
+    log = _get_pagination_items(request, log)
+    context = {
+        'log': log
+    }
+    return render(request, 'workshops/changes_log.html', context)
+
+#------------------------------------------------------------
 
 
 @login_required
@@ -184,21 +217,26 @@ def host_details(request, host_domain):
     return render(request, 'workshops/host.html', context)
 
 
-class HostCreate(LoginRequiredMixin, CreateViewContext):
+class HostCreate(LoginRequiredMixin, PermissionRequiredMixin,
+                 CreateViewContext):
+    perms = 'workshops.add_host'
     model = Host
-    fields = HOST_FIELDS
+    form_class = HostForm
     template_name = 'workshops/generic_form.html'
 
 
-class HostUpdate(LoginRequiredMixin, UpdateViewContext):
+class HostUpdate(LoginRequiredMixin, PermissionRequiredMixin,
+                 UpdateViewContext):
+    perms = 'workshops.change_host'
     model = Host
-    fields = HOST_FIELDS
+    form_class = HostForm
     slug_field = 'domain'
     slug_url_kwarg = 'host_domain'
     template_name = 'workshops/generic_form.html'
 
 
 @login_required
+@permission_required('workshops.delete_host', raise_exception=True)
 def host_delete(request, host_domain):
     """Delete specific host."""
     try:
@@ -236,13 +274,17 @@ def airport_details(request, airport_iata):
     return render(request, 'workshops/airport.html', context)
 
 
-class AirportCreate(LoginRequiredMixin, CreateViewContext):
+class AirportCreate(LoginRequiredMixin, PermissionRequiredMixin,
+                    CreateViewContext):
+    perms = 'workshops.add_airport'
     model = Airport
     fields = AIRPORT_FIELDS
     template_name = 'workshops/generic_form.html'
 
 
-class AirportUpdate(LoginRequiredMixin, UpdateViewContext):
+class AirportUpdate(LoginRequiredMixin, PermissionRequiredMixin,
+                    UpdateViewContext):
+    perms = 'workshops.change_airport'
     model = Airport
     fields = AIRPORT_FIELDS
     slug_field = 'iata'
@@ -251,6 +293,7 @@ class AirportUpdate(LoginRequiredMixin, UpdateViewContext):
 
 
 @login_required
+@permission_required('workshops.delete_airport', raise_exception=True)
 def airport_delete(request, airport_iata):
     """Delete specific airport."""
     try:
@@ -318,6 +361,7 @@ def person_bulk_add_template(request):
 
 
 @login_required
+@permission_required('workshops.add_person', raise_exception=True)
 def person_bulk_add(request):
     if request.method == 'POST':
         form = PersonBulkAddForm(request.POST, request.FILES)
@@ -360,6 +404,7 @@ def person_bulk_add(request):
 
 
 @login_required
+@permission_required('workshops.add_person', raise_exception=True)
 def person_bulk_add_confirmation(request):
     """
     This view allows for manipulating and saving session-stored upload data.
@@ -456,13 +501,43 @@ def person_bulk_add_confirmation(request):
                       context)
 
 
-class PersonCreate(LoginRequiredMixin, CreateViewContext):
+class PersonCreate(LoginRequiredMixin, PermissionRequiredMixin,
+                   CreateViewContext):
+    perms = 'workshops.add_person'
     model = Person
     form_class = PersonForm
     template_name = 'workshops/generic_form.html'
 
+    def form_valid(self, form):
+        """Person.lessons uses an intermediary model so we need to manually add
+        objects of that model.
+
+        See more here: http://stackoverflow.com/a/15745652"""
+        self.object = form.save(commit=False)  # don't save M2M fields
+
+        # Need to save that object because of commit=False previously.
+        # This doesn't save our troublesome M2M field.
+        self.object.save()
+
+        # saving intermediary M2M model: Qualification
+        for lesson in form.cleaned_data['lessons']:
+            Qualification.objects.create(lesson=lesson, person=self.object)
+
+        # Important: we need to use ModelFormMixin.form_valid() here!
+        # But by doing so we omit SuccessMessageMixin completely, so we need to
+        # simulate it.  The code below is almost identical to
+        # SuccessMessageMixin.form_valid().
+        response = super(ModelFormMixin, self).form_valid(form)
+        success_message = self.get_success_message(form.cleaned_data)
+        if success_message:
+            messages.success(self.request, success_message)
+        return response
+
 
 @login_required
+@permission_required(['workshops.change_person', 'workshops.add_award',
+                      'workshops.add_task'],
+                     raise_exception=True)
 def person_edit(request, person_id):
     try:
         person = Person.objects.get(pk=person_id)
@@ -572,6 +647,7 @@ def person_edit(request, person_id):
 
 
 @login_required
+@permission_required('workshops.delete_person', raise_exception=True)
 def person_delete(request, person_id):
     """Delete specific person."""
     try:
@@ -584,7 +660,9 @@ def person_delete(request, person_id):
         return _failed_to_delete(request, person, e.protected_objects)
 
 
-class PersonPermissions(LoginRequiredMixin, UpdateViewContext):
+class PersonPermissions(LoginRequiredMixin, PermissionRequiredMixin,
+                        UpdateViewContext):
+    perms = 'workshops.change_person'
     model = Person
     form_class = PersonPermissionsForm
     pk_url_kwarg = 'person_id'
@@ -594,6 +672,12 @@ class PersonPermissions(LoginRequiredMixin, UpdateViewContext):
 @login_required
 def person_password(request, person_id):
     user = get_object_or_404(Person, pk=person_id)
+
+    # Either the user requests change of their own password, or someone with
+    # permission for changing person does.
+    if not ((request.user == user) or
+            (request.user.has_perm('workshops.change_person'))):
+        raise PermissionDenied
 
     Form = PasswordChangeForm
     if request.user.is_superuser:
@@ -628,6 +712,8 @@ def person_password(request, person_id):
 
 
 @login_required
+@permission_required(['workshops.add_person', 'workshops.delete_person'],
+                     raise_exception=True)
 def person_merge(request):
     'Merge information from one Person into another (in case of duplicates).'
 
@@ -654,6 +740,8 @@ def person_merge(request):
 
 
 @login_required
+@permission_required(['workshops.add_person', 'workshops.delete_person'],
+                     raise_exception=True)
 def person_merge_confirmation(request):
     '''Show what the merge will do and get confirmation.'''
     person_from = get_object_or_404(Person,
@@ -705,9 +793,40 @@ def event_details(request, event_ident):
 
     event = Event.get_by_ident(event_ident)
     tasks = Task.objects.filter(event__id=event.id).order_by('role__name')
-    context = {'title' : 'Event {0}'.format(event),
-               'event' : event,
-               'tasks' : tasks}
+    todos = event.todoitem_set.all()
+    todo_form = SimpleTodoForm(prefix='todo', initial={
+        'event': event,
+    })
+
+    if request.method == "POST":
+        todo_form = SimpleTodoForm(request.POST, prefix='todo', initial={
+            'event': event,
+        })
+        if todo_form.is_valid():
+            todo = todo_form.save()
+
+            messages.success(
+                request,
+                'New TODO {todo} was added to the event {event}.'.format(
+                    todo=str(todo),
+                    event=event.get_ident(),
+                ),
+                extra_tags='newtodo',
+            )
+            return redirect(reverse(event_details, args=[event_ident, ]))
+        else:
+            messages.error(request, 'Fix errors in the TODO form.',
+                           extra_tags='todos')
+
+    context = {
+        'title': 'Event {0}'.format(event),
+        'event': event,
+        'tasks': tasks,
+        'todo_form': todo_form,
+        'todos': todos,
+        'helper': bootstrap_helper,
+        'today': datetime.date.today(),
+    }
     return render(request, 'workshops/event.html', context)
 
 
@@ -718,7 +837,7 @@ def validate_event(request, event_ident):
     event = Event.get_by_ident(event_ident)
     github_url = request.GET.get('url', None)  # for manual override
     if github_url is None:
-        github_url = event.get_repository_url()
+        github_url = event.repository_url
 
     try:
         page_url, _ = normalize_event_index_url(github_url)
@@ -741,13 +860,17 @@ def validate_event(request, event_ident):
     return render(request, 'workshops/validate_event.html', context)
 
 
-class EventCreate(LoginRequiredMixin, CreateViewContext):
+class EventCreate(LoginRequiredMixin, PermissionRequiredMixin,
+                  CreateViewContext):
+    perms = 'workshops.add_event'
     model = Event
     form_class = EventForm
     template_name = 'workshops/event_create_form.html'
 
 
 @login_required
+@permission_required(['workshops.change_event', 'workshops.add_task'],
+                     raise_exception=True)
 def event_edit(request, event_ident):
     try:
         event = Event.get_by_ident(event_ident)
@@ -776,6 +899,10 @@ def event_edit(request, event_ident):
                     ),
                 )
 
+                # if event.attendance is lower than number of learners, then
+                # update the attendance
+                update_event_attendance_from_tasks(event)
+
                 # to reset the form values
                 return redirect(request.path)
 
@@ -795,11 +922,14 @@ def event_edit(request, event_ident):
                     ),
                 )
 
+                # if event.attendance is lower than number of learners, then
+                # update the attendance
+                update_event_attendance_from_tasks(event)
+
                 return redirect(event)
 
             else:
                 messages.error(request, 'Fix errors below.')
-
 
     context = {'title': 'Edit Event {0}'.format(event.get_ident()),
                'event_form': event_form,
@@ -814,6 +944,7 @@ def event_edit(request, event_ident):
 
 
 @login_required
+@permission_required('workshops.delete_event', raise_exception=True)
 def event_delete(request, event_ident):
     """Delete event, its tasks and related awards."""
     try:
@@ -872,6 +1003,7 @@ def task_details(request, task_id):
 
 
 @login_required
+@permission_required('workshops.delete_task', raise_exception=True)
 def task_delete(request, task_id, event_ident=None):
     '''Delete a task. This is used on the event edit page'''
     t = get_object_or_404(Task, pk=task_id)
@@ -884,17 +1016,41 @@ def task_delete(request, task_id, event_ident=None):
     return redirect(all_tasks)
 
 
-class TaskCreate(LoginRequiredMixin, CreateViewContext):
+class TaskCreate(LoginRequiredMixin, PermissionRequiredMixin,
+                 CreateViewContext):
+    perms = 'workshops.add_task'
     model = Task
     form_class = TaskFullForm
     template_name = 'workshops/generic_form.html'
 
 
-class TaskUpdate(LoginRequiredMixin, UpdateViewContext):
+class TaskUpdate(LoginRequiredMixin, PermissionRequiredMixin,
+                 UpdateViewContext):
+    perms = 'workshops.change_task'
     model = Task
     form_class = TaskFullForm
     pk_url_kwarg = 'task_id'
     template_name = 'workshops/generic_form.html'
+
+#------------------------------------------------------------
+
+
+@login_required
+@permission_required('workshops.delete_award', raise_exception=True)
+def award_delete(request, award_id, person_id=None):
+    """Delete an award. This is used on the person edit page."""
+    award = get_object_or_404(Award, pk=award_id)
+    badge_name = award.badge.name
+    award.delete()
+
+    messages.success(request, 'Award was deleted successfully.',
+                     extra_tags='awards')
+
+    if person_id:
+        # if a second form of URL, then return back to person edit page
+        return redirect(person_edit, person_id)
+
+    return redirect(reverse(badge_details, args=[badge_name]))
 
 
 #------------------------------------------------------------
@@ -926,8 +1082,12 @@ def badge_details(request, badge_name):
     elif request.method == 'POST':
         form = BadgeAwardForm(request.POST, initial=initial)
 
-        if form.is_valid():
-            form.save()
+        if request.user.has_perm('workshops.add_award'):
+            if form.is_valid():
+                form.save()
+        else:
+            messages.error(request,
+                           'You don\'t have permissions to award a badge.')
 
     awards = badge.award_set.all()
     awards = _get_pagination_items(request, awards)
@@ -1190,27 +1350,75 @@ def instructors_over_time(request):
 
 
 @login_required
-def problems(request):
-    '''Display problems in the database.'''
+def instructor_num_taught(request):
+    '''Export CSV of how often instructors have taught.'''
 
-    subject = 'attendance figures for '
-    body_pre = 'Hi,\nCan you please send us an attendance list (or even just a head count) for the '
-    body_post = ' workshop?\nThanks,\nSoftware Carpentry'
+    badge = Badge.objects.get(name='instructor')
+    awards = badge.award_set.annotate(
+        num_taught=Count(
+            Case(
+                When(
+                    person__task__role__name='instructor',
+                    then=Value(1)
+                ),
+            output_field=IntegerField()
+            )
+        )
+    ).filter(person__may_contact=True).order_by('-num_taught', 'awarded')
+    context = {'title': 'Frequency of Instruction',
+               'awards': awards}
+    return render(request, 'workshops/instructor_num_taught.html', context)
+
+
+@login_required
+def workshop_issues(request):
+    '''Display workshops in the database whose records need attention.'''
 
     host = Role.objects.get(name='host')
     instructor = Role.objects.get(name='instructor')
-    missing_attendance = Event.objects.past_events().\
-        filter(Q(attendance=None) | Q(attendance=0))
-    for e in missing_attendance:
+    events = Event.objects.past_events().\
+        filter(Q(attendance=None) | Q(attendance=0) |
+               Q(country=None) |
+               Q(venue=None) | Q(venue__exact='') |
+               Q(address=None) | Q(address__exact='') |
+               Q(start__gt=F('end')))
+    for e in events:
         tasks = Task.objects.filter(event=e).\
             filter(Q(role=host) | Q(role=instructor))
-        e.mailto = [t.person.email for t in tasks if t.person.email]
-    context = {'title': 'Problems',
-               'missing_attendance': missing_attendance,
-               'subject': subject,
-               'body_pre': body_pre,
-               'body_post': body_post}
-    return render(request, 'workshops/problems.html', context)
+        e.mailto_ = ','.join([t.person.email for t in tasks if t.person.email])
+        e.missing_attendance_ = (not e.attendance)
+        e.missing_location_ = not e.country or not e.venue or not e.address
+        e.bad_dates_ = e.start and e.end and (e.start > e.end)
+    context = {'title': 'Workshops with Issues',
+               'events': events}
+    return render(request, 'workshops/workshop_issues.html', context)
+
+
+@login_required
+def instructor_issues(request):
+    '''Display instructors in the database who need attention.'''
+
+    # Everyone who has a badge but needs attention.
+    instructor_badge = Badge.objects.get(name='instructor')
+    instructors = instructor_badge.person_set.filter(airport__isnull=True)
+
+    # Everyone who's been in instructor training but doesn't yet have a badge.
+    learner = Role.objects.get(name='learner')
+    ttt = Tag.objects.get(name='TTT')
+    ttt_events = Event.objects.filter(tags__in=[ttt])
+    pending_instructors = Task.objects \
+        .filter(event__in=ttt_events, role=learner) \
+        .exclude(person__badges__in=[instructor_badge]) \
+        .order_by('person__family', 'person__personal', 'event__start') \
+        .select_related('person', 'event')
+
+    context = {
+        'title': 'Instructors with Issues',
+        'instructors': instructors,
+        'pending': pending_instructors,
+    }
+    return render(request, 'workshops/instructor_issues.html', context)
+
 
 #------------------------------------------------------------
 
@@ -1327,3 +1535,499 @@ def _failed_to_delete(request, object, protected_objects, back=None):
     context['refs'].default_factory = None
 
     return render(request, 'workshops/failed_to_delete.html', context)
+
+#------------------------------------------------------------
+
+
+class SWCEventRequest(View):
+    form_class = SWCEventRequestForm
+    form_helper = bootstrap_helper_wider_labels
+    page_title = 'Request a Software Carpentry Workshop'
+    form_template = 'forms/workshop_swc_request.html'
+    success_template = 'forms/workshop_request_confirm.html'
+
+    def get(self, request, *args, **kwargs):
+        form = self.form_class()
+        context = {
+            'title': self.page_title,
+            'form': form,
+            'form_helper': self.form_helper,
+        }
+        return render(request, self.form_template, context)
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(request.POST)
+
+        if form.is_valid():
+            data = form.cleaned_data
+            event_req = form.save()
+
+            # prepare email notification
+            recipients = settings.REQUEST_NOTIFICATIONS_RECIPIENTS
+            subject = (
+                '[{tag}] New workshop request: {affiliation}, {country}'
+            ).format(
+                tag=data['workshop_type'].upper(),
+                country=event_req.country.name,
+                affiliation=event_req.affiliation,
+            )
+
+            link = event_req.get_absolute_url()
+            link_domain = settings.SITE_URL
+
+            body_txt = get_template(
+                'workshops/eventrequest_email_txt.html'
+            ).render({
+                'object': event_req,
+                'link': link,
+                'link_domain': link_domain,
+            })
+
+            body_html = get_template(
+                'workshops/eventrequest_email_html.html'
+            ).render({
+                'object': event_req,
+                'link': link,
+                'link_domain': link_domain,
+            })
+
+            reply_to = (data['email'], )
+            email = EmailMultiAlternatives(subject, body_txt, to=recipients,
+                                           reply_to=reply_to)
+            email.attach_alternative(body_html, 'text/html')
+
+            # fail loudly so that admins know if something's wrong
+            email.send(fail_silently=False)
+
+            context = {
+                'title': 'Thank you for requesting a workshop',
+            }
+            return render(request, self.success_template, context)
+        else:
+            messages.error(request, 'Fix errors below.')
+            context = {
+                'title': self.page_title,
+                'form': form,
+                'form_helper': self.form_helper,
+            }
+            return render(request, self.form_template, context)
+
+
+class DCEventRequest(SWCEventRequest):
+    form_class = DCEventRequestForm
+    page_title = 'Request a Data Carpentry Workshop'
+    form_template = 'forms/workshop_dc_request.html'
+
+
+class AllEventRequests(LoginRequiredMixin, ListView):
+    active_requests = True
+    context_object_name = 'requests'
+    template_name = 'workshops/all_eventrequests.html'
+
+    def get_queryset(self):
+        return EventRequest.objects.filter(active=self.active_requests) \
+                                   .order_by('-created_at')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Workshop requests'
+        context['active_requests'] = self.active_requests
+        return context
+
+
+class AllClosedEventRequests(AllEventRequests):
+    active_requests = False
+
+
+class EventRequestDetails(LoginRequiredMixin, DetailView):
+    queryset = EventRequest.objects.all()
+    context_object_name = 'object'
+    template_name = 'workshops/eventrequest.html'
+    pk_url_kwarg = 'request_id'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Workshop request #{}'.format(self.get_object().pk)
+        return context
+
+
+@login_required
+@permission_required('workshops.change_eventrequest', raise_exception=True)
+def eventrequest_discard(request, request_id):
+    """Discard EventRequest, ie. set it to inactive."""
+    eventrequest = get_object_or_404(EventRequest, active=True, pk=request_id)
+    eventrequest.active = False
+    eventrequest.save()
+
+    messages.success(request,
+                     'Workshop request was discarded successfully.')
+    return redirect(reverse('all_eventrequests'))
+
+
+@login_required
+@permission_required(['workshops.change_eventrequest', 'workshops.add_event'],
+                     raise_exception=True)
+def eventrequest_accept(request, request_id):
+    """Accept event request by creating a new event."""
+    eventrequest = get_object_or_404(EventRequest, active=True, pk=request_id)
+    form = EventForm()
+
+    if request.method == 'POST':
+        form = EventForm(request.POST)
+
+        if form.is_valid():
+            event = form.save()
+            eventrequest.active = False
+            eventrequest.save()
+            return redirect(reverse('event_details',
+                                    args=[event.get_ident()]))
+        else:
+            messages.error(request, 'Fix errors below.')
+
+    context = {
+        'object': eventrequest,
+        'form': form,
+    }
+    return render(request, 'workshops/eventrequest_accept.html', context)
+
+
+def profileupdaterequest_create(request):
+    """
+    Profile update request form. Accessible to all users (no login required).
+
+    This one is used when instructors want to change their information.
+    """
+    form = ProfileUpdateRequestForm()
+    form_helper = bootstrap_helper_wider_labels
+    page_title = 'Update Instructor Profile'
+
+    if request.method == 'POST':
+        form = ProfileUpdateRequestForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+
+            # TODO: email notification?
+
+            context = {
+                'title': 'Thank you for updating your instructor profile',
+            }
+            return render(request,
+                          'forms/profileupdate_confirm.html',
+                          context)
+        else:
+            messages.error(request, 'Fix errors below.')
+
+    context = {
+        'title': page_title,
+        'form': form,
+        'form_helper': form_helper,
+    }
+    return render(request, 'forms/profileupdate.html', context)
+
+
+class AllProfileUpdateRequests(LoginRequiredMixin, ListView):
+    active_requests = True
+    context_object_name = 'requests'
+    template_name = 'workshops/all_profileupdaterequests.html'
+
+    def get_queryset(self):
+        return ProfileUpdateRequest.objects \
+                                   .filter(active=self.active_requests) \
+                                   .order_by('-created_at')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Instructor profile update requests'
+        context['active_requests'] = self.active_requests
+        return context
+
+
+class AllClosedProfileUpdateRequests(AllProfileUpdateRequests):
+    active_requests = False
+
+
+@login_required
+def profileupdaterequest_details(request, request_id):
+    update_request = get_object_or_404(ProfileUpdateRequest,
+                                       pk=request_id)
+
+    person_selected = False
+
+    # Nested lookup.
+    # First check if there's person with the same email, then maybe check if
+    # there's a person with the same first and last names.
+    try:
+        person = Person.objects.get(email=update_request.email)
+        form = None
+    except Person.DoesNotExist:
+        try:
+            person = Person.objects.get(personal=update_request.personal,
+                                        family=update_request.family)
+            form = None
+        except (Person.DoesNotExist, Person.MultipleObjectsReturned):
+            # Either none or multiple people with the same first and last
+            # names.
+            # But the user might have submitted some person by themselves. We
+            # should check that!
+            try:
+                person = Person.objects.get(pk=int(request.GET['person_1']))
+                person_selected = True
+                form = PersonLookupForm(request.GET)
+            except KeyError:
+                person = None
+                # if the form wasn't submitted, initialize it without any
+                # input data
+                form = PersonLookupForm()
+            except (ValueError, Person.DoesNotExist):
+                person = None
+
+    if person:
+        # check if the person has instructor badge
+        try:
+            Award.objects.get(badge__name='instructor', person=person)
+            person.has_instructor_badge = True
+        except Award.DoesNotExist:
+            person.has_instructor_badge = False
+
+    try:
+        airport = Airport.objects.get(iata=update_request.airport_iata)
+    except Airport.DoesNotExist:
+        airport = None
+
+    context = {
+        'title': ('Instructor profile update request #{}'
+                  .format(update_request.pk)),
+        'new': update_request,
+        'old': person,
+        'person_form': form,
+        'person_selected': person_selected,
+        'form_helper': bootstrap_helper_get,
+        'airport': airport,
+    }
+    return render(request, 'workshops/profileupdaterequest.html', context)
+
+
+@login_required
+@permission_required('workshops.change_profileupdaterequest',
+                     raise_exception=True)
+def profileupdaterequest_discard(request, request_id):
+    """Discard ProfileUpdateRequest, ie. set it to inactive."""
+    profileupdate = get_object_or_404(ProfileUpdateRequest, active=True,
+                                      pk=request_id)
+    profileupdate.active = False
+    profileupdate.save()
+
+    messages.success(request,
+                     'Profile update request was discarded successfully.')
+    return redirect(reverse('all_profileupdaterequests'))
+
+
+@login_required
+@permission_required(['workshops.change_profileupdaterequest',
+                      'workshops.change_person'], raise_exception=True)
+def profileupdaterequest_accept(request, request_id, person_id):
+    """
+    Accept the profile update by rewriting values to selected user's profile.
+
+    IMPORTANT: we do not rewrite all of the data users input (like
+    occupation, or other gender, or other lessons).  All of it is still in
+    the database model ProfileUpdateRequest, but does not get written to the
+    Person model object.
+    """
+    profileupdate = get_object_or_404(ProfileUpdateRequest, active=True,
+                                      pk=request_id)
+    person = get_object_or_404(Person, pk=person_id)
+    person_name = str(person)
+
+    airport = get_object_or_404(Airport, iata=profileupdate.airport_iata)
+
+    person.personal = profileupdate.personal
+    person.family = profileupdate.family
+    person.email = profileupdate.email
+    person.affiliation = profileupdate.affiliation
+    person.airport = airport
+    person.github = profileupdate.github
+    person.twitter = profileupdate.twitter
+    person.url = profileupdate.website
+    person.gender = profileupdate.gender
+    person.domains = list(profileupdate.domains.all())
+
+    # Since Person.lessons uses a intermediate model Qualification, we ought to
+    # operate on Qualification objects instead of using Person.lessons as a
+    # list.
+
+    # erase old lessons
+    Qualification.objects.filter(person=person).delete()
+    # add new
+    Qualification.objects.bulk_create([
+        Qualification(person=person, lesson=L)
+        for L in profileupdate.lessons.all()
+    ])
+
+    person.save()
+
+    profileupdate.active = False
+    profileupdate.save()
+
+    messages.success(request,
+                     '{} was updated successfully.'.format(person_name))
+    return redirect(reverse('all_profileupdaterequests'))
+
+#------------------------------------------------------------
+
+
+@login_required
+@permission_required('workshops.add_todoitem', raise_exception=True)
+def todos_add(request, event_ident):
+    """Add a standard TodoItems for a specific event."""
+    event = Event.get_by_ident(event_ident)
+
+    dt = datetime.datetime
+    timedelta = datetime.timedelta
+
+    initial = []
+    base = dt.now()
+    if event.start and event.end:
+        extra = 9
+    else:
+        extra = 10
+        initial = [
+            {
+                'title': 'Set date with host',
+                'due': dt.now() + timedelta(days=30),
+                'event': event,
+            },
+        ]
+
+    TodoFormSet = modelformset_factory(TodoItem, form=SimpleTodoForm,
+                                       extra=extra)
+
+    formset = TodoFormSet(queryset=TodoItem.objects.none(), initial=initial + [
+        {
+            'title': 'Set up a workshop website',
+            'due': base + timedelta(days=7),
+            'event': event,
+        },
+        {
+            'title': 'Find instructor #1',
+            'due': base + timedelta(days=14),
+            'event': event,
+        },
+        {
+            'title': 'Find instructor #2',
+            'due': base + timedelta(days=14),
+            'event': event,
+        },
+        {
+            'title': 'Follow up that instructors have booked travel',
+            'due': base + timedelta(days=21),
+            'event': event,
+        },
+        {
+            'title': 'Set up pre-workshop survey',
+            'due': event.start - timedelta(days=7) if event.start else '',
+            'event': event,
+        },
+        {
+            'title': 'Make sure instructors are set with materials',
+            'due': event.start - timedelta(days=1) if event.start else '',
+            'event': event,
+        },
+        {
+            'title': 'Submit invoice',
+            'due': event.end + timedelta(days=2) if event.end else '',
+            'event': event,
+        },
+        {
+            'title': 'Make sure instructors are reimbursed',
+            'due': event.end + timedelta(days=7) if event.end else '',
+            'event': event,
+        },
+        {
+            'title': 'Get attendee list',
+            'due': event.end + timedelta(days=7) if event.end else '',
+            'event': event,
+        },
+    ])
+
+    if request.method == 'POST':
+        formset = TodoFormSet(request.POST)
+        if formset.is_valid():
+            formset.save()
+            messages.success(request, 'Successfully added a bunch of TODOs.',
+                             extra_tags='todos')
+            return redirect(reverse(event_details, args=(event.get_ident(), )))
+        else:
+            messages.error(request, 'Fix errors below.')
+
+    context = {
+        'title': 'Add standard TODOs to the event',
+        'formset': formset,
+        'helper': bootstrap_helper_inline_formsets,
+        'event': event,
+    }
+    return render(request, 'workshops/todos_add.html', context)
+
+
+@login_required
+@permission_required('workshops.change_todoitem', raise_exception=True)
+def todo_mark_completed(request, todo_id):
+    todo = get_object_or_404(TodoItem, pk=todo_id)
+
+    todo.completed = True
+    todo.save()
+
+    return HttpResponse()
+
+
+@login_required
+@permission_required('workshops.change_todoitem', raise_exception=True)
+def todo_mark_incompleted(request, todo_id):
+    todo = get_object_or_404(TodoItem, pk=todo_id)
+
+    todo.completed = False
+    todo.save()
+
+    return HttpResponse()
+
+
+class TodoItemUpdate(LoginRequiredMixin, PermissionRequiredMixin,
+                     UpdateViewContext):
+    perms = 'workshops.change_todoitem'
+    model = TodoItem
+    form_class = SimpleTodoForm
+    pk_url_kwarg = 'todo_id'
+    template_name = 'workshops/generic_form.html'
+
+    def get_success_url(self):
+        return reverse('event_details', args=[self.object.event.get_ident()])
+
+    def form_valid(self, form):
+        """Overwrite default way of showing the success message, because we
+        need to add extra tags to it)."""
+        self.object = form.save()
+
+        # Important: we need to use ModelFormMixin.form_valid() here!
+        # But by doing so we omit SuccessMessageMixin completely, so we need to
+        # simulate it.  The code below is almost identical to
+        # SuccessMessageMixin.form_valid().
+        response = super(ModelFormMixin, self).form_valid(form)
+        success_message = self.get_success_message(form.cleaned_data)
+        if success_message:
+            messages.success(self.request, success_message, extra_tags='todos')
+        return response
+
+
+@login_required
+@permission_required('workshops.delete_todoitem', raise_exception=True)
+def todo_delete(request, todo_id):
+    """Delete a TodoItem. This is used on the event details page."""
+    todo = get_object_or_404(TodoItem, pk=todo_id)
+    event_ident = todo.event.get_ident()
+    todo.delete()
+
+    messages.success(request, 'TODO was deleted successfully.',
+                     extra_tags='todos')
+
+    return redirect(event_details, event_ident)

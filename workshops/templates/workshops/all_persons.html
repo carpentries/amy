@@ -9,7 +9,11 @@
 {% endblock %}
 
 {% block content-fluid %}
+  {% if perms.workshops.add_person %}
     <p><a href="{% url 'person_add' %}" class="btn btn-success">New person</a></p>
+    {% else %}
+    <p><a href="{% url 'person_add' %}" class="btn btn-success disabled">New person</a></p>
+  {% endif %}
 {% if all_persons %}
     <table class="table table-striped">
       <tr>
@@ -26,13 +30,19 @@
         <td>
           <a href="{% url 'person_details' person.pk %}" title="View {{ person.get_full_name }}"><span class="glyphicon glyphicon-info-sign"></span></a>
           &nbsp;
+          {% if perms.workshops.change_person %}
           <a href="{% url 'person_edit' person.pk %}" title="Edit {{ person.get_full_name }}"><span class="glyphicon glyphicon-pencil"></span></a>
+          {% endif %}
         </td>
       </tr>
     {% endfor %}
     </table>
     {% pagination all_persons %}
+    {% if perms.workshops.add_person %}
     <p><a href="{% url 'person_add' %}" class="btn btn-success">New person</a></p>
+    {% else %}
+    <p><a href="{% url 'person_add' %}" class="btn btn-success disabled">New person</a></p>
+    {% endif %}
 {% else %}
     <p>No persons.</p>
 {% endif %}

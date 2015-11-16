@@ -2,6 +2,7 @@ htmlerror
 *~
 *.pyc
 db.sqlite3
+db.sqlite3.bak
 
 # coverage reports
 .coverage

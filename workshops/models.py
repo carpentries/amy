@@ -1,11 +1,11 @@
 import datetime
 import re
+from urllib.parse import urlencode
 
 from django.contrib.auth.models import (
     AbstractBaseUser, BaseUserManager, PermissionsMixin)
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
 from django.db.models import Q
 
@@ -21,6 +21,8 @@ STR_REG_KEY =  20         # length of Eventbrite registration key
 
 #------------------------------------------------------------
 
+
+@reversion.register
 class Host(models.Model):
     '''Represent a workshop's host.'''
 
@@ -40,6 +42,8 @@ class Host(models.Model):
 
 #------------------------------------------------------------
 
+
+@reversion.register
 class Airport(models.Model):
     '''Represent an airport (used to locate instructors).'''
 
@@ -74,7 +78,9 @@ class PersonManager(BaseUserManager):
         user = self.model(
             username=username, personal=personal, family=family,
             email=self.normalize_email(email),
-            is_superuser=False)
+            is_superuser=False,
+            is_active=True,
+        )
         user.set_password(password)
         user.save(using=self._db)
         return user
@@ -86,7 +92,9 @@ class PersonManager(BaseUserManager):
         user = self.model(
             username=username, personal=personal, family=family,
             email=self.normalize_email(email),
-            is_superuser=True)
+            is_superuser=True,
+            is_active=True,
+        )
         user.set_password(password)
         user.save(using=self._db)
         return user
@@ -95,14 +103,16 @@ class PersonManager(BaseUserManager):
 @reversion.register
 class Person(AbstractBaseUser, PermissionsMixin):
     '''Represent a single person.'''
+    UNDISCLOSED = 'U'
     MALE = 'M'
     FEMALE = 'F'
     OTHER = 'O'
     GENDER_CHOICES = (
+        (UNDISCLOSED, 'Prefer not to say (undisclosed)'),
         (MALE, 'Male'),
         (FEMALE, 'Female'),
         (OTHER, 'Other'),
-        )
+    )
 
     # These attributes should always contain field names of Person
     PERSON_UPLOAD_FIELDS = ('personal', 'middle', 'family', 'email')
@@ -113,7 +123,7 @@ class Person(AbstractBaseUser, PermissionsMixin):
     middle      = models.CharField(max_length=STR_LONG, null=True, blank=True)
     family      = models.CharField(max_length=STR_LONG)
     email       = models.CharField(max_length=STR_LONG, unique=True, null=True, blank=True)
-    gender      = models.CharField(max_length=1, choices=GENDER_CHOICES, null=True, blank=True)
+    gender      = models.CharField(max_length=1, choices=GENDER_CHOICES, null=False, default=UNDISCLOSED)
     may_contact = models.BooleanField(default=True)
     airport     = models.ForeignKey(Airport, null=True, blank=True, on_delete=models.PROTECT)
     github      = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True)
@@ -124,8 +134,19 @@ class Person(AbstractBaseUser, PermissionsMixin):
     affiliation = models.CharField(max_length=STR_LONG, default='', blank=True)
 
     badges = models.ManyToManyField("Badge", through="Award")
-    lessons = models.ManyToManyField("Lesson", through="Qualification")
-    domains = models.ManyToManyField("KnowledgeDomain")
+    lessons = models.ManyToManyField(
+        "Lesson",
+        through="Qualification",
+        blank=True,
+    )
+    domains = models.ManyToManyField(
+        "KnowledgeDomain",
+        limit_choices_to=~Q(name__startswith='Don\'t know yet'),
+        blank=True,
+    )
+
+    # new people will be inactive by default
+    is_active = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = [
@@ -172,6 +193,141 @@ class Person(AbstractBaseUser, PermissionsMixin):
         self.twitter = self.twitter or None
         self.url = self.url or None
         super().save(*args, **kwargs)
+
+
+class ProfileUpdateRequest(models.Model):
+    active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    personal = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Personal (first) name',
+        blank=False,
+    )
+    family = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Family (last) name',
+        blank=False,
+    )
+    email = models.EmailField(
+        verbose_name='Email address',
+        blank=False,
+    )
+    affiliation = models.CharField(
+        max_length=STR_LONG,
+        help_text='What university, company, lab, or other organization are '
+        'you affiliated with (if any)?',
+        blank=False,
+    )
+    airport_iata = models.CharField(
+        max_length=3,
+        verbose_name='Nearest major airport',
+        help_text='Please use its 3-letter IATA code '
+        '(<a href="http://www.airportcodes.aero/" target="_blank">'
+        'http://www.airportcodes.aero/</a>) to tell us where you\'re located.',
+        blank=False, null=False,
+    )
+
+    OCCUPATION_CHOICES = (
+        ('undisclosed', 'Prefer not to say'),
+        ('undergrad', 'Undergraduate student'),
+        ('grad', 'Graduate student'),
+        ('postdoc', 'Post-doctoral researcher'),
+        ('faculty', 'Faculty'),
+        ('research', 'Research staff (including research programmer)'),
+        ('support', 'Support staff (including technical support)'),
+        ('librarian', 'Librarian/archivist'),
+        ('commerce', 'Commercial software developer '),
+        ('', 'Other (enter below)'),
+    )
+    occupation = models.CharField(
+        max_length=STR_MED,
+        choices=OCCUPATION_CHOICES,
+        verbose_name='What is your current occupation/career stage?',
+        help_text='Please choose the one that best describes you.',
+        null=False, blank=True, default='undisclosed',
+    )
+    occupation_other = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Other occupation/career stage',
+        blank=True, default='',
+    )
+    github = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='GitHub username',
+        help_text='Please provide your username, not a numeric user ID.',
+        blank=True, default='',
+    )
+    twitter = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Twitter username',
+        blank=True, default='',
+    )
+    orcid = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='ORCID ID',
+        blank=True, default='',
+    )
+    website = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Personal website',
+        default='', blank=True,
+    )
+
+    GENDER_CHOICES = (
+        (Person.UNDISCLOSED, 'Prefer not to say'),
+        (Person.FEMALE, 'Female'),
+        (Person.MALE, 'Male'),
+        (Person.OTHER, 'Other (enter below)'),
+    )
+    gender = models.CharField(
+        max_length=1,
+        choices=GENDER_CHOICES,
+        null=False, blank=False, default=Person.UNDISCLOSED,
+    )
+    gender_other = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Other gender',
+        blank=True, default='',
+    )
+    domains = models.ManyToManyField(
+        'KnowledgeDomain',
+        verbose_name='Areas of expertise',
+        help_text='Please check all that apply.',
+        limit_choices_to=~Q(name__startswith='Don\'t know yet'),
+        blank=True,
+    )
+    domains_other = models.CharField(
+        max_length=255,
+        verbose_name='Other areas of expertise',
+        blank=True, default='',
+    )
+    lessons = models.ManyToManyField(
+        'Lesson',
+        verbose_name='Topic and lessons you\'re comfortable teaching',
+        help_text='Please mark ALL that apply.',
+        blank=False,
+    )
+    lessons_other = models.CharField(
+        max_length=255,
+        verbose_name='Other topics/lessons you\'re comfortable teaching',
+        help_text='Please include lesson URLs.',
+        blank=True, default='',
+    )
+
+    def save(self, *args, **kwargs):
+        """Save nullable char fields as empty strings."""
+        self.gender = self.gender or ''
+        self.occupation = self.occupation or ''
+        return super().save(*args, **kwargs)
+
+    def get_absolute_url(self):
+        return reverse('profileupdaterequest_details', args=[self.pk])
+
+    def __str__(self):
+        return "{personal} {family} <{email}> (from {affiliation})".format(
+            personal=self.personal, family=self.family, email=self.email,
+            affiliation=self.affiliation,
+        )
 
 
 #------------------------------------------------------------
@@ -249,15 +405,26 @@ class EventQuerySet(models.query.QuerySet):
         return self.filter(future_without_url | unknown_start)\
                    .order_by('slug', 'id')
 
+    def published_events(self):
+        '''Return events that have a start date and a URL.
+
+        Events are ordered most recent first and then by serial number.'''
+
+        queryset = self.exclude(
+            Q(start__isnull=True) | Q(url__isnull=True)
+            ).order_by('-start', 'id')
+
+        return queryset
+
     def uninvoiced_events(self):
         '''Return a queryset for events that have not yet been invoiced.
 
-        These are events that have an admin fee, are not marked as invoiced, and have occurred.
+        These are marked as uninvoiced, and have occurred.
         Events are sorted oldest first.'''
 
-        return self.past_events().filter(admin_fee__gt=0)\
-                   .exclude(invoiced=True)\
-                   .order_by('start')
+        return self.past_events().filter(invoice_status='not-invoiced') \
+                                 .order_by('start')
+
 
 class EventManager(models.Manager):
     '''A custom manager which is essentially a proxy for EventQuerySet'''
@@ -282,6 +449,9 @@ class EventManager(models.Manager):
     def unpublished_events(self):
         return self.get_queryset().unpublished_events()
 
+    def published_events(self):
+        return self.get_queryset().published_events()
+
     def uninvoiced_events(self):
         return self.get_queryset().uninvoiced_events()
 
@@ -290,25 +460,46 @@ class EventManager(models.Manager):
 class Event(models.Model):
     '''Represent a single event.'''
 
+    REPO_REGEX = re.compile(r'https?://github\.com/(?P<name>[^/]+)/'
+                            r'(?P<repo>[^/]+)/?')
+    REPO_FORMAT = 'https://github.com/{name}/{repo}'
+    WEBSITE_REGEX = re.compile(r'https?://(?P<name>[^.]+)\.github\.'
+                               r'(io|com)/(?P<repo>[^/]+)/?')
+    WEBSITE_FORMAT = 'https://{name}.github.io/{repo}/'
+
     host = models.ForeignKey(Host, on_delete=models.PROTECT,
                              help_text='Organization hosting the event.')
     tags       = models.ManyToManyField(Tag)
     administrator = models.ForeignKey(
         Host, related_name='administrator', null=True, blank=True,
         on_delete=models.PROTECT,
-        help_text='Organization responsible for administrative work. Leave '
-        'blank if self-organized.'
+        help_text='Organization responsible for administrative work.'
     )
     start      = models.DateField(null=True, blank=True,
                                   help_text='Setting this and url "publishes" the event.')
     end        = models.DateField(null=True, blank=True)
     slug       = models.CharField(max_length=STR_LONG, null=True, blank=True, unique=True)
     url        = models.CharField(max_length=STR_LONG, unique=True, null=True, blank=True,
-                                  help_text='Setting this and startdate "publishes" the event.')
+                                  validators=[RegexValidator(REPO_REGEX, inverse_match=True)],
+                                  help_text='Setting this and startdate "publishes" the event.<br />'
+                                            'Use link to the event\'s website.')
     reg_key    = models.CharField(max_length=STR_REG_KEY, null=True, blank=True, verbose_name="Eventbrite key")
     attendance = models.PositiveIntegerField(null=True, blank=True)
     admin_fee  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)])
-    invoiced   = models.NullBooleanField(default=False, blank=True)
+    INVOICED_CHOICES = (
+        ('unknown', 'Unknown'),
+        ('invoiced', 'Invoiced'),
+        ('not-invoiced', 'Not invoiced'),
+        ('na-self-org', 'Not applicable because self-organized'),
+        ('na-waiver', 'Not applicable because waiver granted'),
+        ('na-other', 'Not applicable because other arrangements made'),
+    )
+    invoice_status = models.CharField(
+        max_length=STR_MED,
+        choices=INVOICED_CHOICES,
+        verbose_name='Invoice status',
+        default='unknown', blank=True,
+    )
     notes      = models.TextField(default="", blank=True)
     contact = models.CharField(max_length=255, default="", blank=True)
     country = CountryField(null=True, blank=True)
@@ -317,12 +508,10 @@ class Event(models.Model):
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
 
-    REPO_REGEX = re.compile(r'https?://github\.com/(?P<name>[^/]+)/'
-                            r'(?P<repo>[^/]+)/?')
-    REPO_FORMAT = 'https://github.com/{name}/{repo}'
-    WEBSITE_REGEX = re.compile(r'https?://(?P<name>[^.]+)\.github\.'
-                               r'(io|com)/(?P<repo>[^/]+)/?')
-    WEBSITE_FORMAT = 'https://{name}.github.io/{repo}'
+    completed = models.BooleanField(
+        default=False,
+        help_text="Indicates that no more work is needed upon this event.",
+    )
 
     class Meta:
         ordering = ('-start', )
@@ -336,13 +525,17 @@ class Event(models.Model):
     def get_absolute_url(self):
         return reverse('event_details', args=[self.get_ident()])
 
-    def get_repository_url(self):
+    @property
+    def repository_url(self):
         """Return self.url formatted as it was repository URL.
 
         Repository URL is as specified in REPO_FORMAT.
         If it doesn't match, the original URL is returned."""
         try:
-            mo = self.WEBSITE_REGEX.match(self.url)
+            # Try to match repo regex first. This will result in all repo URLs
+            # always formatted in the same way.
+            mo = (self.REPO_REGEX.match(self.url)
+                  or self.WEBSITE_REGEX.match(self.url))
             if not mo:
                 return self.url
 
@@ -352,13 +545,17 @@ class Event(models.Model):
             # KeyError: mo.groupdict doesn't supply required names to format
             return self.url
 
-    def get_website_url(self):
+    @property
+    def website_url(self):
         """Return self.url formatted as it was website URL.
 
         Website URL is as specified in WEBSITE_FORMAT.
         If it doesn't match, the original URL is returned."""
         try:
-            mo = self.REPO_REGEX.match(self.url)
+            # Try to match website regex first. This will result in all website
+            # URLs always formatted in the same way.
+            mo = (self.WEBSITE_REGEX.match(self.url)
+                  or self.REPO_REGEX.match(self.url))
             if not mo:
                 return self.url
 
@@ -367,6 +564,30 @@ class Event(models.Model):
             # TypeError: self.url is None
             # KeyError: mo.groupdict doesn't supply required names to format
             return self.url
+
+    @property
+    def uninvoiced(self):
+        """Indicate if the event has been invoiced or not."""
+        return self.invoice_status == 'not-invoiced'
+
+    def get_invoice_form_url(self):
+        from .util import universal_date_format
+
+        query = {
+            'entry.823772951': self.venue,  # Organization to invoice
+            'entry.351294200': 'Workshop administrative fee',  # Reason
+
+            # Date of event
+            'entry.1749215879': (universal_date_format(self.start)
+                                 if self.start else ''),
+            'entry.508035854': self.slug,  # Event or item ID
+            'entry.821460022': self.admin_fee,  # Total invoice amount
+            'entry.1316946828': 'US dollars',  # Currency
+        }
+        url = ("https://docs.google.com/forms/d/"
+               "1XljyEam4LERRXW0ebyh5eoZXjT1xR4bHkPxITLWiIyA/viewform?")
+        url += urlencode(query)
+        return url
 
     def get_ident(self):
         if self.slug:
@@ -389,6 +610,211 @@ class Event(models.Model):
         self.slug = self.slug or None
         self.url = self.url or None
         super(Event, self).save(*args, **kwargs)
+
+
+class EventRequest(models.Model):
+    active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    name = models.CharField(max_length=STR_MED)
+    email = models.EmailField()
+    affiliation = models.CharField(max_length=STR_LONG,
+                                   help_text='University or Company')
+    location = models.CharField(max_length=STR_LONG,
+                                help_text='City, Province, or State')
+    country = CountryField()
+    conference = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='If the workshop is to be associated with a conference '
+                     'or meeting, which one? ',
+        blank=True, default='',
+    )
+    preferred_date = models.CharField(
+        max_length=255,
+        help_text='Please indicate when you would like to run the workshop. '
+                  'A range of at least a month is most helpful, although if '
+                  'you have specific dates you need the workshop, we will try '
+                  'to accommodate those requests.',
+        verbose_name='Preferred workshop dates',
+    )
+    language = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='What human language do you want the workshop to be run'
+                     ' in?',
+        blank=True, default='English',
+    )
+
+    WORKSHOP_TYPE_CHOICES = (
+        ('swc', 'Software-Carpentry'),
+        ('dc', 'Data-Carpentry'),
+    )
+    workshop_type = models.CharField(
+        max_length=STR_MED,
+        choices=WORKSHOP_TYPE_CHOICES,
+        blank=False, default='swc',
+    )
+
+    ATTENDEES_NUMBER_CHOICES = (
+        ('1-20', '1-20 (one room, one instructor)'),
+        ('20-40', '20-40 (one room, two instructors)'),
+        ('40-80', '40-80 (two rooms, four instructors)'),
+        ('80-120', '80-120 (three rooms, six instructors)'),
+    )
+    approx_attendees = models.CharField(
+        max_length=STR_MED,
+        choices=ATTENDEES_NUMBER_CHOICES,
+        help_text='This number doesn\'t need to be precise, but will help us '
+                  'decide how many instructors your workshop will need.',
+        verbose_name='Approximate number of Attendees',
+        blank=False,
+        default='20-40',
+    )
+
+    attendee_domains = models.ManyToManyField(
+        'KnowledgeDomain',
+        help_text='The attendees\' academic field(s) of study, if known.',
+        verbose_name='Domains or topic of interest for target audience',
+        blank=False,
+    )
+    attendee_domains_other = models.CharField(
+        max_length=STR_LONG,
+        help_text='If none of the fields above works for you.',
+        verbose_name='Other domains or topics of interest',
+        blank=True, default="",
+    )
+    DATA_TYPES_CHOICES = (
+        ('survey', 'Survey data (ecology, biodiversity, social science)'),
+        ('genomic', 'Genomic data'),
+        ('geospatial', 'Geospatial data'),
+        ('text-mining', 'Text mining'),
+        ('', 'Other (type below)'),
+    )
+    data_types = models.CharField(
+        max_length=STR_MED,
+        choices=DATA_TYPES_CHOICES,
+        verbose_name='We currently have developed or are developing workshops'
+                     ' focused on four types of data. Please let us know which'
+                     ' workshop would best suit your needs.',
+        blank=True,
+    )
+    data_types_other = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Other data domains for the workshop',
+        blank=True,
+    )
+    attendee_academic_levels = models.ManyToManyField(
+        'AcademicLevel',
+        help_text='If you know the academic level(s) of your attendees, '
+                  'indicate them here.',
+        verbose_name='Attendees\' Academic Level',
+    )
+    attendee_computing_levels = models.ManyToManyField(
+        'ComputingExperienceLevel',
+        help_text='Indicate the attendees\' level of computing experience, if '
+                  'known. We will ask attendees to fill in a skills survey '
+                  'before the workshop, so this answer can be an '
+                  'approximation.',
+        verbose_name='Attendees\' level of computing experience',
+    )
+    attendee_data_analysis_level = models.ManyToManyField(
+        'DataAnalysisLevel',
+        help_text='If you know, indicate learner\'s general level of data '
+                  'analysis experience',
+        verbose_name='Level of data analysis experience',
+    )
+    understand_admin_fee = models.BooleanField(
+        default=False,
+        # verbose_name a.k.a. label and help_text were moved to the
+        # SWCEventRequestForm and DCEventRequestForm
+    )
+    fee_waiver_request = models.BooleanField(
+        help_text='Waiver\'s of the administrative fee are available on '
+                  'a needs basis. If you are interested in submitting a waiver'
+                  ' application please indicate here.',
+        verbose_name='I would like to submit an administrative fee waiver '
+                     'application',
+        default=False,
+    )
+    cover_travel_accomodation = models.BooleanField(
+        default=False,
+        verbose_name='My institution will cover instructors\' travel and '
+                     'accommodation costs.',
+    )
+    TRAVEL_REIMBURSEMENT_CHOICES = (
+        ('', 'Don\'t know yet.'),
+        ('book', 'Book travel through our university or program.'),
+        ('reimburse', 'Book their own travel and be reimbursed.'),
+        ('', 'Other (type below)'),
+    )
+    travel_reimbursement = models.CharField(
+        max_length=STR_MED,
+        verbose_name='How will instructors\' travel and accommodations be '
+                     'managed?',
+        choices=TRAVEL_REIMBURSEMENT_CHOICES,
+        null=True, blank=True, default=None,
+    )
+    travel_reimbursement_other = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Other propositions for managing instructors\' travel and'
+                     ' accommodations',
+        blank=True,
+    )
+
+    ADMIN_FEE_PAYMENT_CHOICES = (
+        ('NP1', 'Non-profit / non-partner: US$2500'),
+        ('partner', 'Partner: US$1250'),
+        ('FP1', 'For-profit: US$10,000'),
+        ('self-organized', 'Self-organized: no fee (please let us know if you '
+                           'wish to make a donation)'),
+        ('waiver', 'Waiver requested (please give details in '
+                   '"Anything else")'),
+    )
+    admin_fee_payment = models.CharField(
+        max_length=STR_MED,
+        choices=ADMIN_FEE_PAYMENT_CHOICES,
+        verbose_name='Which of the following applies to your payment for the '
+                     'administrative fee?',
+        blank=False,
+        default='NP1',
+    )
+    comment = models.TextField(
+        help_text='What else do you want us to know about your workshop? About'
+                  ' your attendees? About you?',
+        verbose_name='Anything else?',
+        blank=True,
+    )
+
+    def get_absolute_url(self):
+        return reverse('eventrequest_details', args=[self.pk])
+
+    def __str__(self):
+        return "{name} (from {affiliation}, {type} workshop)".format(
+            name=self.name, affiliation=self.affiliation,
+            type=self.workshop_type,
+        )
+
+
+class AcademicLevel(models.Model):
+    name = models.CharField(max_length=STR_MED, null=False, blank=False)
+
+    def __str__(self):
+        return self.name
+
+
+class ComputingExperienceLevel(models.Model):
+    # it's a long field because we need to store reasoning too, for example:
+    # "Novice (uses a spreadsheet for data analysis rather than writing code)"
+    name = models.CharField(max_length=255, null=False, blank=False)
+
+    def __str__(self):
+        return self.name
+
+
+class DataAnalysisLevel(models.Model):
+    # ComputingExperienceLevel's sibling
+    name = models.CharField(max_length=255, null=False, blank=False)
+
+    def __str__(self):
+        return self.name
 
 
 #------------------------------------------------------------
@@ -418,6 +844,7 @@ class TaskManager(models.Manager):
         return self.get_queryset().filter(role__name="helper")
 
 
+@reversion.register
 class Task(models.Model):
     '''Represent who did what at events.'''
 
@@ -500,3 +927,27 @@ class KnowledgeDomain(models.Model):
 
     def __str__(self):
         return self.name
+
+# ------------------------------------------------------------
+
+
+class TodoItem(models.Model):
+    """Model representing to-do items for events."""
+    event = models.ForeignKey(Event, null=False, blank=False)
+    completed = models.BooleanField(default=False)
+    title = models.CharField(max_length=STR_LONG, default='', blank=False)
+    due = models.DateField(blank=True, null=True)
+    additional = models.CharField(max_length=255, default='', blank=True)
+
+    class Meta:
+        ordering = ["due", "title"]
+
+    def __str__(self):
+        from .util import universal_date_format
+
+        if self.due:
+            return "{title} due {due}".format(
+                title=self.title, due=universal_date_format(self.due),
+            )
+        else:
+            return self.title

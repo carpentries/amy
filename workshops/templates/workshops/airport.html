@@ -1,6 +1,9 @@
 {% extends "workshops/_page.html" %}
 
+{% load revisions %}
+
 {% block content %}
+{% last_modified airport %}
 
 <table class="table table-striped">
   <tr><td>full name:</td><td>{{ airport.fullname }}</td></tr>
@@ -11,7 +14,15 @@
 </table>
 
 <div class="clearfix">
+  {% if perms.workshops.change_airport %}
   <p class="edit-object pull-left"><a href="{% url 'airport_edit' airport.iata %}" class=" btn btn-primary">Edit</a></p>
+  {% else %}
+  <p class="edit-object pull-left"><a href="{% url 'airport_edit' airport.iata %}" class=" btn btn-primary disabled">Edit</a></p>
+  {% endif %}
+  {% if perms.workshops.delete_airport %}
   <p class="delete-object pull-right"><a href="{% url 'airport_delete' airport.iata %}" onclick='return confirm("Are you sure you wish to remove \"{{ airport }}\"?")' class="btn btn-danger">Delete airport</a></p>
+  {% else %}
+  <p class="delete-object pull-right"><a href="{% url 'airport_delete' airport.iata %}" class="btn btn-danger disabled">Delete airport</a></p>
+  {% endif %}
 </div>
 {% endblock %}

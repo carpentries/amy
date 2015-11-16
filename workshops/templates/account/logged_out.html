@@ -1,7 +1,11 @@
 {% extends "account/_page.html" %}
 
-{% block content %}
+{% block title %}
 {% include "amy-logo.html" %}
+{{ block.super }}
+{% endblock %}
+
+{% block content %}
 
 <p>Thanks for working with AMY today.</p>
 

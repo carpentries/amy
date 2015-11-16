@@ -9,7 +9,11 @@
 {% endblock %}
 
 {% block content-fluid %}
+    {% if perms.workshops.add_host %}
     <p><a href="{% url 'host_add' %}" class="btn btn-success">New host</a></p>
+    {% else %}
+    <p><a href="{% url 'host_add' %}" class="btn btn-success disabled">New host</a></p>
+    {% endif %}
 {% if all_hosts %}
     <table class="table table-striped">
         <tr>
@@ -21,18 +25,24 @@
     {% for host in all_hosts %}
         <tr>
             <td><a href="{% url 'host_details' host.domain %}">{{ host.fullname }}</a></td>
-            <td><a href="http://{{ host.domain }}">{{ host.domain }}</a></td>
+            <td><a href="http://{{ host.domain }}" target="_blank">{{ host.domain }}</a></td>
             <td>{{ host.notes|truncatechars:40 }}</td>
             <td>
                 <a href="{% url 'host_details' host.domain %}" title="View {{ host.fullname }}"><span class="glyphicon glyphicon-info-sign"></span></a>
                 &nbsp;
+                {% if perms.workshops.change_host %}
                 <a href="{% url 'host_edit' host.domain %}" title="Edit {{ host.fullname }}"><span class="glyphicon glyphicon-pencil"></span></a>
+                {% endif %}
             </td>
         </tr>
     {% endfor %}
     </table>
     {% pagination all_hosts %}
+    {% if perms.workshops.add_host %}
     <p><a href="{% url 'host_add' %}" class="btn btn-success">New host</a></p>
+    {% else %}
+    <p><a href="{% url 'host_add' %}" class="btn btn-success disabled">New host</a></p>
+    {% endif %}
 {% else %}
     <p>No hosts.</p>
 {% endif %}

@@ -1,6 +1,9 @@
 {% extends "workshops/_page.html" %}
 
+{% load revisions %}
+
 {% block content %}
+{% last_modified task %}
 
 <table class="table table-striped">
   <tr><td>event:</td><td><a href="{{ task.event.get_absolute_url }}">{{ task.event }}</a></td></tr>
@@ -9,7 +12,15 @@
 </table>
 
 <div class="clearfix">
+  {% if perms.workshops.change_task %}
   <p class="edit-object pull-left"><a href="{% url 'task_edit' task.id %}" class="btn btn-primary">Edit</a></p>
+  {% else %}
+  <p class="edit-object pull-left"><a href="{% url 'task_edit' task.id %}" class="btn btn-primary disabled">Edit</a></p>
+  {% endif %}
+  {% if perms.workshops.delete_task %}
   <p class="delete-object pull-right"><a href="{% url 'task_delete' task.id %}" onclick='return confirm("Are you sure you wish to remove \"{{ task }}\"?")' class="btn btn-danger">Delete task</a></p>
+  {% else %}
+  <p class="delete-object pull-right"><a href="{% url 'task_delete' task.id %}" class="btn btn-danger disabled">Delete task</a></p>
+  {% endif %}
 </div>
 {% endblock %}

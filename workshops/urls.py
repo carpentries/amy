@@ -4,6 +4,8 @@ from workshops import views
 urlpatterns = [
     url(r'^$', views.dashboard, name='dashboard'),
 
+    url(r'^log/$', views.changes_log, name='changes_log'),
+
     url(r'^hosts/?$', views.all_hosts, name='all_hosts'),
     url(r'^host/(?P<host_domain>[\w\.-]+)/?$', views.host_details, name='host_details'),
     url(r'^host/(?P<host_domain>[\w\.-]+)/edit$', views.HostUpdate.as_view(), name='host_edit'),
@@ -44,6 +46,9 @@ urlpatterns = [
     url(r'^event/(?P<event_ident>[\w-]+)/task/(?P<task_id>\d+)/delete$', views.task_delete, name='task_delete'),
     url(r'^tasks/add/$', views.TaskCreate.as_view(), name='task_add'),
 
+    url(r'^award/(?P<award_id>\d+)/delete$', views.award_delete, name='award_delete'),
+    url(r'^person/(?P<person_id>[\w\.-]+)/award/(?P<award_id>\d+)/delete$', views.award_delete, name='award_delete'),
+
     url(r'^badges/?$', views.all_badges, name='all_badges'),
     url(r'^badge/(?P<badge_name>[\w\.=-]+)/?$', views.badge_details, name='badge_details'),
 
@@ -59,7 +64,30 @@ urlpatterns = [
     url(r'^reports/workshops_over_time/?$', views.workshops_over_time, name='workshops_over_time'),
     url(r'^reports/learners_over_time/?$', views.learners_over_time, name='learners_over_time'),
     url(r'^reports/instructors_over_time/?$', views.instructors_over_time, name='instructors_over_time'),
-    url(r'^reports/problems/?$', views.problems, name='problems'),
+    url(r'^reports/instructor_num_taught/?$', views.instructor_num_taught, name='instructor_num_taught'),
+    url(r'^reports/workshop_issues/?$', views.workshop_issues, name='workshop_issues'),
+    url(r'^reports/instructor_issues/?$', views.instructor_issues, name='instructor_issues'),
 
     url(r'^revision/(?P<revision_id>[\d]+)/?$', views.object_changes, name='object_changes'),
+
+    url(r'^requests/$', views.AllEventRequests.as_view(), name='all_eventrequests'),
+    url(r'^requests/closed/$', views.AllClosedEventRequests.as_view(), name='all_closed_eventrequests'),
+    url(r'^request/(?P<request_id>\d+)/?$', views.EventRequestDetails.as_view(), name='eventrequest_details'),
+    url(r'^request/(?P<request_id>\d+)/discard/?$', views.eventrequest_discard, name='eventrequest_discard'),
+    url(r'^request/(?P<request_id>\d+)/accept/?$', views.eventrequest_accept, name='eventrequest_accept'),
+    url(r'^swc/request/$', views.SWCEventRequest.as_view(), name='swc_workshop_request'),
+    url(r'^dc/request/$', views.DCEventRequest.as_view(), name='dc_workshop_request'),
+
+    url(r'^profile_updates/$', views.AllProfileUpdateRequests.as_view(), name='all_profileupdaterequests'),
+    url(r'^profile_updates/closed/$', views.AllClosedProfileUpdateRequests.as_view(), name='all_closed_profileupdaterequests'),
+    url(r'^profile_update/(?P<request_id>\d+)/?$', views.profileupdaterequest_details, name='profileupdaterequest_details'),
+    url(r'^profile_update/(?P<request_id>\d+)/discard/?$', views.profileupdaterequest_discard, name='profileupdaterequest_discard'),
+    url(r'^profile_update/(?P<request_id>\d+)/accept/(?P<person_id>[\w\.-]+)/?$', views.profileupdaterequest_accept, name='profileupdaterequest_accept'),
+    url(r'^update_profile/$', views.profileupdaterequest_create, name='profileupdate_request'),
+
+    url(r'^todos/(?P<event_ident>[\w-]+)/add$', views.todos_add, name='todos_add'),
+    url(r'^todo/(?P<todo_id>\d+)/completed', views.todo_mark_completed, name='todo_mark_completed'),
+    url(r'^todo/(?P<todo_id>\d+)/incompleted', views.todo_mark_incompleted, name='todo_mark_incompleted'),
+    url(r'^todo/(?P<todo_id>\d+)/edit', views.TodoItemUpdate.as_view(), name='todo_edit'),
+    url(r'^todo/(?P<todo_id>\d+)/delete', views.todo_delete, name='todo_delete'),
 ]

@@ -1,0 +1,78 @@
+{% extends "workshops/_page.html" %}
+
+{% block content %}
+{% if events %}
+<p><span class="glyphicon glyphicon-envelope"></span> = mail instructors and host about problem</p>
+<p><span class="glyphicon glyphicon-remove"></span> = no email addresses available</p>
+<table class="table table-striped">
+  <tr>
+    <th>Event</th>
+    <th>Attendance <a href="#" data-toggle="tooltip" title="Number of attendees is missing">[?]</a></th>
+    <th>Location <a href="#" data-toggle="tooltip" title="Venue, address or country is missing">[?]</a></th>
+    <th>Dates <a href="#" data-toggle="tooltip" title="Start date is in future of end date">[?]</a></th>
+  </tr>
+  {% for event in events %}
+  <tr>
+    <td>
+      <a href="{% url 'event_details' event.get_ident %}">{{ event }}</a>
+    </td>
+    <td>
+      {% if event.missing_attendance_ %}
+        {% if event.mailto_ %}
+          <a href="mailto:{{event.mailto_}}?subject={% filter urlencode %}Missing attendance figures for workshop {{event.get_ident}}{% endfilter %}&body={% filter urlencode %}Hi,
+
+Can you please send us attendance figures for the workshop {{ event.get_ident }}?  As per our FAQ (http://software-carpentry.org/faq.html#trademark), this is one of the conditions of using the Software Carpentry name and logo, and we need to get these figures to funders.
+
+Thanks for your help.{% endfilter %}">
+          <span class="glyphicon glyphicon-envelope"></span>
+          </a>
+        {% else %}
+          <span class="glyphicon glyphicon-remove"></span>
+        {% endif %}
+      {% endif %}
+    </td>
+    <td>
+      {% if event.missing_location_ %}
+        {% if event.mailto_ %}
+          <a href="mailto:{{event.mailto_}}?subject={% filter urlencode %}Missing location for workshop {{event.get_ident}}{% endfilter %}&body={% filter urlencode %}Hi,
+
+Can you please send us the location where the {{ event.get_ident }} workshop took place?
+
+Thanks for your help.{% endfilter %}">
+          <span class="glyphicon glyphicon-envelope"></span>
+          </a>
+        {% else %}
+          <span class="glyphicon glyphicon-remove"></span>
+        {% endif %}
+      {% endif %}
+    </td>
+    <td>
+      {% if event.bad_dates_ %}
+        {% if event.mailto_ %}
+          <a href="mailto:{{event.mailto_}}?subject={% filter urlencode %}Bad dates for workshop {{ event.get_ident }}{% endfilter %}&body={% filter urlencode %}Hi,
+
+Can you please confirm the start and end dates for the workshop {{ event.get_ident }}?
+
+Thanks for your help.{% endfilter %}">
+          <span class="glyphicon glyphicon-envelope"></span>
+          </a>
+        {% else %}
+          <span class="glyphicon glyphicon-remove"></span>
+        {% endif %}
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p>None</p>
+{% endif %}
+{% endblock %}
+
+{% block extrajs %}
+<script type="text/javascript">
+$(function () {
+  $('[data-toggle="tooltip"]').tooltip()
+})
+</script>
+{% endblock %}

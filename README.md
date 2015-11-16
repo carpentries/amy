@@ -4,7 +4,7 @@
 
 AMY is a web-based workshop administration application for [Software
 Carpentry][swc] and related projects.  Its target audience is workshop
-coordinators, most of whon are non-programmers, who need to keep track
+coordinators, most of whom are non-programmers, who need to keep track
 of what workshops are being arranged, when they're supposed to occur,
 who's teaching what, and so on.
 
@@ -103,13 +103,11 @@ before starting work on new features.
         $ git checkout tags/<tag_name>
         ~~~~
 
-2.  Update dependencies:
+2.  Update dependencies front-end and back-end dependencies:
 
     ~~~
-    $ python3 -m pip install --user --upgrade -r requirements.txt
+    $ make upgrade
     ~~~
-
-    **Note**: front-end dependencies will be updated as soon as you run `make serve`.
 
 3.  (Optional) make the development-ready database:
 

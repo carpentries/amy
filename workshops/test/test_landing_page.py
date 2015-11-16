@@ -21,10 +21,8 @@ class TestLandingPage(TestBase):
         response = self.client.get(reverse('dashboard'))
 
         # This will fail if the context variable doesn't exist
-        upcoming_events = response.context['upcoming_events']
-
-        # Count published upcoming events.
-        assert len(upcoming_events) == self.num_upcoming
+        events = response.context['upcoming_ongoing_events']
 
         # They should all be labeled 'upcoming'.
-        assert all([('upcoming' in e.slug) for e in upcoming_events])
+        assert all([('upcoming' in e.slug or 'ongoing' in e.slug)
+                    for e in events])

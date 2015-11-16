@@ -21,6 +21,8 @@ from ..models import \
     Qualification, \
     Host
 
+from ..util import universal_date_format
+
 
 class TestBase(TestCase):
     '''Base class for AMY test cases.'''
@@ -135,7 +137,7 @@ class TestBase(TestCase):
 
         self.ironman = Person.objects.create(
             personal='Tony', middle=None, family='Stark', email='me@stark.com',
-            gender=None, may_contact=True, username="ironman")
+            gender='M', may_contact=True, username="ironman")
 
         self.blackwidow = Person.objects.create(
             personal='Natasha', middle=None, family='Romanova', email=None,
@@ -187,7 +189,7 @@ class TestBase(TestCase):
         add_url = True
         for t in range(1, 11):
             event_start = today + datetime.timedelta(days=t)
-            date_string = event_start.strftime('%Y-%m-%d')
+            date_string = universal_date_format(event_start)
             slug = '{0}-upcoming'.format(date_string)
             if add_url:
                 url = 'http://' + ('{0}'.format(t) * 20)
@@ -198,21 +200,31 @@ class TestBase(TestCase):
                                      slug=slug,
                                      host=test_host,
                                      admin_fee=100,
-                                     invoiced=False,
+                                     invoice_status='not-invoiced',
                                      url=url)
 
         # Create one new event for each day from 10 days ago to
         # 3 days ago, half invoiced
-        invoiced = True
+        invoice = itertools.cycle(['invoiced', 'not-invoiced'])
         for t in range(3, 11):
             event_start = today + datetime.timedelta(days=-t)
-            date_string = event_start.strftime('%Y-%m-%d')
+            date_string = universal_date_format(event_start)
             Event.objects.create(start=event_start,
                                  slug='{0}-past'.format(date_string),
                                  host=test_host,
                                  admin_fee=100,
-                                 invoiced=invoiced)
-            invoiced = not invoiced
+                                 invoice_status=next(invoice))
+
+        # create a past event that has no admin fee specified, yet it needs
+        # invoice
+        event_start = today + datetime.timedelta(days=-4)
+        Event.objects.create(
+            start=event_start, end=today + datetime.timedelta(days=-1),
+            slug='{}-past-uninvoiced'.format(
+                universal_date_format(event_start)
+            ),
+            host=test_host, admin_fee=None, invoice_status='not-invoiced',
+        )
 
         # Create an event that started yesterday and ends tomorrow
         # with no fee, and without specifying whether they've been
@@ -221,7 +233,7 @@ class TestBase(TestCase):
         event_end = today + datetime.timedelta(days=1)
         Event.objects.create(start=event_start,
                              end=event_end,
-                             slug='ends_tomorrow',
+                             slug='ends_tomorrow_ongoing',
                              host=test_host,
                              admin_fee=0)
 
@@ -231,7 +243,7 @@ class TestBase(TestCase):
         event_end = today
         Event.objects.create(start=event_start,
                              end=event_end,
-                             slug='ends_today',
+                             slug='ends_today_ongoing',
                              host=test_host,
                              admin_fee=0)
 
@@ -241,7 +253,7 @@ class TestBase(TestCase):
         event_end = today + datetime.timedelta(days=1)
         Event.objects.create(start=event_start,
                              end=event_end,
-                             slug='starts_today',
+                             slug='starts_today_ongoing',
                              host=test_host,
                              admin_fee=100)
 
@@ -249,7 +261,7 @@ class TestBase(TestCase):
         self.num_uninvoiced_events = 0
         self.num_upcoming = 0
         for e in Event.objects.all():
-            if (e.admin_fee > 0) and (not e.invoiced) and (e.start < today):
+            if e.invoice_status == 'not-invoiced' and e.start < today:
                 self.num_uninvoiced_events += 1
             if e.url and (e.start > today):
                 self.num_upcoming += 1
