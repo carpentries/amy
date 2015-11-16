@@ -1314,6 +1314,19 @@ def export_instructors(request):
     }
     return render(request, 'workshops/export.html', context)
 
+
+@login_required
+def export_members(request):
+    title = 'SCF Members'
+    json_link = reverse('api:export-members', kwargs={'format': 'json'})
+    yaml_link = reverse('api:export-members', kwargs={'format': 'yaml'})
+    context = {
+        'title': title,
+        'json_link': json_link,
+        'yaml_link': yaml_link,
+    }
+    return render(request, 'workshops/export.html', context)
+
 #------------------------------------------------------------
 
 @login_required
