@@ -499,3 +499,4 @@ def get_members():
                     break
 
     # Somehow have to add implicit_members to queryset
+    return queryset
