@@ -2,6 +2,7 @@
 import csv
 from math import pi, sin, cos, acos
 import re
+import datetime
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError, transaction
@@ -11,7 +12,7 @@ from django_countries import countries
 import requests
 
 from workshops.check import get_header
-from workshops.models import Event, Role, Person, Task, Award
+from workshops.models import Event, Role, Person, Task, Award, Badge
 
 
 class InternalError(Exception):
@@ -471,3 +472,30 @@ def update_event_attendance_from_tasks(event):
 
 def universal_date_format(date):
     return '{:%Y-%m-%d}'.format(date)
+
+
+def get_members():
+    '''Get everyone who is a member of the Software Carpentry Foundation.'''
+
+    # Everyone who is an explicit member.
+    member_badge = Badge.objects.get(name='member')
+    queryset = member_badge.person_set.all()
+
+    # This is a really clumsy way to add everyone who qualifies by having taught recently.
+    today = datetime.date.today()
+    cutoff = datetime.date(year=today.year-2, month=1, day=1)
+    member_ids = set([p.id for p in queryset])
+    instructor_badge = Badge.objects.get(name='instructor')
+    instructors = instructor_badge.person_set.all()
+    instructor_role = Role.objects.get(name='instructor')
+    implicit_members = []
+    for i in instructors:
+        if i.id not in member_ids:
+            tasks = i.task_set.filter(role=instructor_role)
+            for t in tasks:
+                if t.event.start and (t.event.start >= cutoff):
+                    implicit_members.append(i)
+                    member_ids.add(i.id)
+                    break
+
+    # Somehow have to add implicit_members to queryset
