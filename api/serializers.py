@@ -29,6 +29,15 @@ class ExportInstructorLocationsSerializer(serializers.ModelSerializer):
         fields = ('name', 'latitude', 'longitude', 'instructors', 'country')
 
 
+class ExportMembersSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source='fullname')
+    email = serializers.CharField(source='email')
+
+    class Meta:
+        model = Person
+        fields = ('name', 'email')
+
+
 class EventSerializer(serializers.ModelSerializer):
     humandate = serializers.SerializerMethodField()
     country = serializers.CharField()
