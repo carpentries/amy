@@ -102,6 +102,10 @@ published :
 serve : bower_components workshops/git_version.py
 	${MANAGE} runserver
 
+## serve_now    : run a server now
+serve_now :
+	${MANAGE} runserver
+
 ## upgrade      : force package upgrade using pip
 upgrade :
 	@pip install --upgrade -r requirements.txt
