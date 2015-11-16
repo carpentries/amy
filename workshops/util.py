@@ -483,7 +483,7 @@ def get_members():
 
     # This is a really clumsy way to add everyone who qualifies by having taught recently.
     today = datetime.date.today()
-    cutoff = datetime.date(year=today.year-2, month=1, day=1)
+    cutoff = datetime.date(year=today.year-2, month=today.month, day=today.day)
     member_ids = set([p.id for p in queryset])
     instructor_badge = Badge.objects.get(name='instructor')
     instructors = instructor_badge.person_set.all()
