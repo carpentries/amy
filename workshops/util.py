@@ -556,26 +556,30 @@ def universal_date_format(date):
 def get_members():
     '''Get everyone who is a member of the Software Carpentry Foundation.'''
 
-    # Everyone who is an explicit member.
+    earliest, latest = get_membership_cutoff()
+
     member_badge = Badge.objects.get(name='member')
-    queryset = member_badge.person_set.all()
-
-    # This is a really clumsy way to add everyone who qualifies by having taught recently.
-    today = datetime.date.today()
-    cutoff = datetime.date(year=today.year-2, month=today.month, day=today.day)
-    member_ids = set([p.id for p in queryset])
     instructor_badge = Badge.objects.get(name='instructor')
-    instructors = instructor_badge.person_set.all()
     instructor_role = Role.objects.get(name='instructor')
-    implicit_members = []
-    for i in instructors:
-        if i.id not in member_ids:
-            tasks = i.task_set.filter(role=instructor_role)
-            for t in tasks:
-                if t.event.start and (t.event.start >= cutoff):
-                    implicit_members.append(i)
-                    member_ids.add(i.id)
-                    break
 
-    # Somehow have to add implicit_members to queryset
-    return queryset
+    # Everyone who is an explicit member.
+    explicit = Person.objects.filter(badges__in=[member_badge]).distinct()
+
+    # Everyone who qualifies by having taught recently.
+    implicit = Person.objects.filter(task__role=instructor_role,
+                                     task__event__start__gte=earliest,
+                                     task__event__start__lte=latest,
+                                     badges__in=[instructor_badge]) \
+                             .distinct()
+
+    # Merge the two sets.
+    return explicit | implicit
+
+
+def get_membership_cutoff():
+    '''Get the low and high cutoffs for membership.  (Put in a separate
+    function to facilitate testing.)'''
+
+    today = datetime.date.today()
+    before = today - 2 * datetime.timedelta(days=365)
+    return before, today
