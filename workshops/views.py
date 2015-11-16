@@ -1030,32 +1030,16 @@ def event_import(request):
 @login_required
 @permission_required('workshops.change_event', raise_exception=True)
 def event_assign(request, event_ident, person_id=None):
-    """Set event.assigned_to. This view works with both POST and GET requests:
-
-    * POST: read person ID from POST's person_1
-    * GET: read person_id from URL
-    * both: if person_id is None then make event.assigned_to empty
-    * otherwise assign matching person."""
+    """Set event.assigned_to. See `_assign` docstring for more information."""
     try:
         event = Event.get_by_ident(event_ident)
 
-        if request.method == "POST":
-            person_id = request.POST.get('person_1', None)
-
-        if person_id is None:
-            event.assigned_to = None
-        else:
-            person = Person.objects.get(pk=person_id)
-            event.assigned_to = person
-
-        event.save()
+        _assign(request, event, person_id)
 
         return redirect(reverse('event_details', args=[event.get_ident()]))
 
     except Event.DoesNotExist:
         raise Http404("No event found matching the query.")
-    except Person.DoesNotExist:
-        raise Http404("No person found matching the query.")
 
 #------------------------------------------------------------
 
@@ -1790,33 +1774,18 @@ def eventrequest_accept(request, request_id):
 @login_required
 @permission_required(['workshops.change_eventrequest'], raise_exception=True)
 def eventrequest_assign(request, request_id, person_id=None):
-    """Set eventrequest.assigned_to. This view works with both POST and GET
-    requests:
+    """Set eventrequest.assigned_to. See `_assign` docstring for more
+    information."""
 
-    * POST: read person_id from POST data
-    * GET: read person_id from URL
-    * both: if person_id is None then make event.assigned_to empty
-    * otherwise assign matching person."""
     try:
         event_req = EventRequest.objects.get(pk=request_id)
 
-        if request.method == "POST":
-            person_id = request.POST.get('person_1', None)
-
-        if person_id is None:
-            event_req.assigned_to = None
-        else:
-            person = Person.objects.get(pk=person_id)
-            event_req.assigned_to = person
-
-        event_req.save()
+        _assign(request, event_req, person_id)
 
         return redirect(reverse('eventrequest_details', args=[event_req.pk]))
 
     except Event.DoesNotExist:
         raise Http404("No event request found matching the query.")
-    except Person.DoesNotExist:
-        raise Http404("No person found matching the query.")
 
 
 def profileupdaterequest_create(request):
@@ -2159,3 +2128,29 @@ def todo_delete(request, todo_id):
                      extra_tags='todos')
 
     return redirect(event_details, event_ident)
+
+
+def _assign(request, obj, person_id):
+    """Set obj.assigned_to. This view helper works with both POST and GET
+    requests:
+
+    * POST: read person ID from POST's person_1
+    * GET: read person_id from URL
+    * both: if person_id is None then make event.assigned_to empty
+    * otherwise assign matching person.
+
+    This is not a view, but it's used in some."""
+    try:
+        if request.method == "POST":
+            person_id = request.POST.get('person_1', None)
+
+        if person_id is None:
+            obj.assigned_to = None
+        else:
+            person = Person.objects.get(pk=person_id)
+            obj.assigned_to = person
+
+        obj.save()
+
+    except Person.DoesNotExist:
+        raise Http404("No person found matching the query.")
