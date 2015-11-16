@@ -304,7 +304,10 @@ class EventForm(forms.ModelForm):
     class Media:
         # thanks to this, {{ form.media }} in the template will generate
         # a <link href=""> (for CSS files) or <script src=""> (for JS files)
-        js = ('calendar_popup.js', )
+        js = (
+            'calendar_popup.js', 'import_from_url.js', 'update_from_url.js',
+            'online_country.js',
+        )
 
 
 class TaskForm(forms.ModelForm):
