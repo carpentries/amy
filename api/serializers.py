@@ -30,8 +30,7 @@ class ExportInstructorLocationsSerializer(serializers.ModelSerializer):
 
 
 class ExportMembersSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source='fullname')
-    email = serializers.CharField(source='email')
+    name = serializers.CharField(source='get_full_name')
 
     class Meta:
         model = Person
