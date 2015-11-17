@@ -50,7 +50,6 @@ from workshops.models import (
     ProfileUpdateRequest,
     TodoItem,
 )
-from workshops.check import check_file
 from workshops.forms import (
     SearchForm, DebriefForm, InstructorsForm, PersonForm, PersonBulkAddForm,
     EventForm, TaskForm, TaskFullForm, bootstrap_helper, bootstrap_helper_get,
@@ -64,8 +63,10 @@ from workshops.forms import (
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
     create_uploaded_persons_tasks, InternalError, Paginator, merge_persons,
-    normalize_event_index_url, WrongEventURL, parse_tags_from_event_index,
-    update_event_attendance_from_tasks
+    update_event_attendance_from_tasks,
+    find_tags_on_event_website,
+    parse_tags_from_event_website,
+    validate_tags_from_event_website,
 )
 
 from workshops.filters import (
@@ -885,30 +886,47 @@ def event_details(request, event_ident):
 @login_required
 def validate_event(request, event_ident):
     '''Check the event's home page *or* the specified URL (for testing).'''
-    page_url, error_messages = None, []
     event = Event.get_by_ident(event_ident)
-    github_url = request.GET.get('url', None)  # for manual override
-    if github_url is None:
-        github_url = event.repository_url
+
+    page_url = request.GET.get('url', None)  # for manual override
+    if page_url is None:
+        page_url = event.url
+
+    page_url = page_url.strip()
+
+    error_messages = []
 
     try:
-        page_url, _ = normalize_event_index_url(github_url)
+        # fetch page
         response = requests.get(page_url)
+        response.raise_for_status()  # assert it's 200 OK
+        content = response.text
 
-        if response.status_code != 200:
-            error_messages.append('Request for {0} returned status code {1}'
-                                  .format(page_url, response.status_code))
-        else:
-            error_messages = check_file(page_url, response.text)
-    except WrongEventURL:
-        error_messages = ["This is not a proper event URL.", ]
-    except requests.ConnectionError:
-        error_messages = ["Network connection error.", ]
+        # find tags
+        tags = find_tags_on_event_website(content)
 
-    context = {'title' : 'Validate Event {0}'.format(event),
-               'event' : event,
-               'page' : page_url,
-               'error_messages' : error_messages}
+        # validate them
+        error_messages = validate_tags_from_event_website(tags)
+
+        # and normalize (parse)
+        # tags = parse_tags_from_event_website(tags)
+
+    except requests.exceptions.HTTPError as e:
+        error_messages.append(
+            'Request for "{0}" returned status code {1}'
+            .format(page_url, e.response.status_code)
+        )
+
+    except (requests.exceptions.ConnectionError,
+            requests.exceptions.TimeoutError):
+        error_messages.append("Network connection error.")
+
+    context = {
+        'title': 'Validate Event {0}'.format(event),
+        'event': event,
+        'page': page_url,
+        'error_messages': error_messages,
+    }
     return render(request, 'workshops/validate_event.html', context)
 
 
@@ -1017,14 +1035,36 @@ def event_delete(request, event_ident):
 def event_import(request):
     """Read tags from remote URL and return them as JSON.
 
-    This is used to read tags from workshop index page and then fill up fields
+    This is used to read tags from workshop website and then fill up fields
     on event_create form."""
+
+    url = request.POST['url'].strip()
     try:
-        url = request.POST['url']
-        translated_data = parse_tags_from_event_index(url)
-        return JsonResponse(translated_data)
-    except (KeyError, WrongEventURL):
-        raise SuspiciousOperation('Missing or wrong `url` POST parameter.')
+        # fetch page
+        response = requests.get(url)
+        response.raise_for_status()  # assert it's 200 OK
+        content = response.text
+
+        # find tags
+        tags = find_tags_on_event_website(content)
+
+        # normalize (parse) them
+        tags = parse_tags_from_event_website(tags)
+
+        return JsonResponse(tags)
+
+    except requests.exceptions.HTTPError as e:
+        raise SuspiciousOperation(
+            'Request for "{0}" returned status code {1}.'
+            .format(url, e.response.status_code)
+        )
+
+    except (requests.exceptions.ConnectionError,
+            requests.exceptions.TimeoutError):
+        raise SuspiciousOperation('Network connection error.')
+
+    except KeyError:
+        raise SuspiciousOperation('Missing or wrong "url" POST parameter.')
 
 
 @login_required
