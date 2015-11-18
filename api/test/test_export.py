@@ -18,6 +18,7 @@ from workshops.models import (
     Award,
     Person,
     Airport,
+    Task,
 )
 
 
@@ -123,113 +124,22 @@ class TestExportingInstructors(APITestCase):
         self.assertEqual(json.loads(content), self.expecting)
 
 
-def TestExportingMembers(APITestCase):
+class TestExportingMembers(APITestCase):
     def setUp(self):
-        # FIXME: Why not super().setUp() ?
-
-        self.host_alpha = Host.objects.create(domain='alpha.edu',
-                                              fullname='Alpha Host',
-                                              country='Azerbaijan',
-                                              notes='')
-
-        self.hermione = Person.objects.create(
-            personal='Hermione', middle=None, family='Granger',
-            email='hermione@granger.co.uk', gender='F', may_contact=True,
-            airport=self.airport_0_0, github='herself', twitter='herself',
-            url='http://hermione.org', username="granger.h")
-        Award.objects.create(person=self.hermione,
-                             badge=self.instructor,
-                             awarded=datetime.date(2014, 1, 1))
-
-        self.harry = Person.objects.create(
-            personal='Harry', middle=None, family='Potter',
-            email='harry@hogwarts.edu', gender='M', may_contact=True,
-            airport=self.airport_0_50, github='hpotter', twitter=None,
-            url=None, username="potter.h")
-        Award.objects.create(person=self.harry,
-                             badge=self.instructor,
-                             awarded=datetime.date(2014, 5, 5))
-
-        self.ron = Person.objects.create(
-            personal='Ron', middle=None, family='Weasley',
-            email='rweasley@ministry.gov.uk', gender='M', may_contact=False,
-            airport=self.airport_50_100, github=None, twitter=None,
-            url='http://geocities.com/ron_weas', username="weasley.ron")
-        Award.objects.create(person=self.ron,
-                             badge=self.instructor,
-                             awarded=datetime.date(2014, 11, 11))
-
         self.spiderman = Person.objects.create(
             personal='Peter', middle='Q.', family='Parker',
             email='peter@webslinger.net', gender='O', may_contact=True,
             username="spiderman")
 
-        one_day = datetime.timedelta(days=1)
-        one_month = datetime.timedelta(days=30)
-        three_years = datetime.timedelta(days=3 * 365)
+        self.member = Badge.objects.create(name='member',
+                                          title='Member',
+                                          criteria='')
 
-        today = datetime.date.today()
-        yesterday = today - one_day
-        tomorrow = today + one_day
-        
-        earliest, latest = get_membership_cutoff()
-
-        # Set up events in the past, at present, and in future.
-        past = Event.objects.create(
-            host=self.host_alpha,
-            slug="in-past",
-            start=today - three_years,
-            end=tomorrow - three_years
-        )
-
-        present = Event.objects.create(
-            host=self.host_alpha,
-            slug="at-present",
-            start=today,
-            end=tomorrow
-        )
-
-        future = Event.objects.create(
-            host=self.host_alpha,
-            slug="in-future",
-            start=today + one_month,
-            end=tomorrow + one_month
-        )
-
-        # Roles and badges.
-        instructor_role = Role.objects.create(name='instructor')
-        member_badge = Badge.objects.create(name='member')
-
-        # Spiderman is an explicit member.
-        Award.objects.create(person=self.spiderman, badge=member_badge,
-                             awarded=yesterday)
-
-        # Hermione teaches in the past, now, and in future, so she's a member.
-        Task.objects.create(event=past, person=self.hermione,
-                            role=instructor_role)
-        Task.objects.create(event=present, person=self.hermione,
-                            role=instructor_role)
-        Task.objects.create(event=future, person=self.hermione,
-                            role=instructor_role)
-
-        # Ron only teaches in the distant past, so he's not a member.
-        t = \
-        Task.objects.create(event=past, person=self.ron,
-                            role=instructor_role)
-
-        # Harry only teaches in the future, so he's not a member.
-        Task.objects.create(event=future, person=self.harry,
-                            role=instructor_role)
+        Award.objects.create(person=self.spiderman,
+                             badge=self.member,
+                             awarded=datetime.date(2014, 1, 1))
 
         self.expecting = [
-            {
-                'name': 'Hermione Granger',
-                'email': 'hermione@granger.co.uk'
-            },
-            {
-                'name': 'Harry Potter',
-                'email': 'harry@hogwarts.edu'
-            },
             {
                 'name': 'Peter Q. Parker',
                 'email': 'peter@webslinger.net'
