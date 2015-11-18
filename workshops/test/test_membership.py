@@ -63,7 +63,6 @@ class TestMembership(TestBase):
                             role=instructor_role)
 
         # Ron only teaches in the distant past, so he's not a member.
-        t = \
         Task.objects.create(event=past, person=self.ron,
                             role=instructor_role)
 
