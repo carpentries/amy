@@ -154,12 +154,6 @@ class TestExportingMembers(APITestCase):
         ]
 
     def test_serialization(self):
-###
-        from workshops.util import get_members
-        members = get_members()
-        import sys
-        print('members explicitly', members, file=sys.stderr)
-###
         view = ExportMembersView()
         serializer = view.get_serializer_class()
         response = serializer(view.get_queryset(), many=True)
