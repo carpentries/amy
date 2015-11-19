@@ -67,8 +67,10 @@ class ExportMembersView(ListAPIView):
     permission_classes = (IsAuthenticatedOrReadOnly, )
     paginator = None  # disable pagination
 
-    queryset = get_members()
     serializer_class = ExportMembersSerializer
+
+    def get_queryset(self):
+        return get_members()
 
 
 class PublishedEvents(ListAPIView):
