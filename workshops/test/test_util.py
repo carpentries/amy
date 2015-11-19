@@ -11,6 +11,8 @@ from ..models import Host, Event, Role, Person, Task
 from ..util import (
     upload_person_task_csv,
     verify_upload_person_task,
+    generate_url_to_event_index,
+    find_tags_on_event_index,
     find_tags_on_event_website,
     parse_tags_from_event_website,
     validate_tags_from_event_website,
@@ -377,7 +379,55 @@ Harry,,Potter,harry@hogwarts.edu,foobar,learner
 class TestHandlingEventTags(TestCase):
     maxDiff = None
 
-    def test_finding_tags(self):
+    def test_generating_url_to_index(self):
+        tests = [
+            'http://swcarpentry.github.io/workshop-template',
+            'https://swcarpentry.github.com/workshop-template',
+            'http://swcarpentry.github.com/workshop-template/',
+        ]
+        expected = ('https://raw.githubusercontent.com/swcarpentry/'
+                    'workshop-template/gh-pages/index.html')
+        for url in tests:
+            with self.subTest(url=url):
+                self.assertEqual(expected, generate_url_to_event_index(url))
+
+    def test_finding_tags_on_index(self):
+        content = """---
+layout: workshop
+root: .
+venue: Euphoric State University
+address: Highway to Heaven 42, Academipolis
+country: us
+language: us
+latlng: 36.998977, -109.045173
+humandate: Jul 13-14, 2015
+humantime: 9:00 - 17:00
+startdate: 2015-07-13
+enddate: "2015-07-14"
+instructor: ["Hermione Granger", "Ron Weasley",]
+helper: ["Peter Parker", "Tony Stark", "Natasha Romanova",]
+contact: hermione@granger.co.uk, rweasley@ministry.gov
+etherpad:
+eventbrite: 10000000
+----
+Other content.
+"""
+        expected = {
+            'startdate': '2015-07-13',
+            'enddate': '2015-07-14',
+            'country': 'us',
+            'venue': 'Euphoric State University',
+            'address': 'Highway to Heaven 42, Academipolis',
+            'latlng': '36.998977, -109.045173',
+            'language': 'us',
+            'instructor': 'Hermione Granger, Ron Weasley',
+            'helper': 'Peter Parker, Tony Stark, Natasha Romanova',
+            'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
+            'eventbrite': '10000000',
+        }
+        self.assertEqual(expected, find_tags_on_event_index(content))
+
+    def test_finding_tags_on_website(self):
         content = """
 <html><head>
 <meta name="slug" content="2015-07-13-test" />

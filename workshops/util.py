@@ -4,6 +4,7 @@ import csv
 import datetime
 from math import pi, sin, cos, acos
 import re
+import yaml
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError, transaction
@@ -362,6 +363,50 @@ def merge_persons(person_from, person_to):
     person_from.delete()
 
 
+def generate_url_to_event_index(website_url):
+    """Given URL to workshop's website, generate a URL to its raw `index.html`
+    file in GitHub repository."""
+    template = ('https://raw.githubusercontent.com/{name}/{repo}'
+                '/gh-pages/index.html')
+    regex = Event.WEBSITE_REGEX
+
+    results = regex.match(website_url)
+    if results:
+        return template.format(**results.groupdict())
+    return None
+
+ALLOWED_TAG_NAMES = [
+    'slug', 'startdate', 'enddate', 'country', 'venue', 'address',
+    'latlng', 'language', 'eventbrite', 'instructor', 'helper', 'contact',
+]
+
+
+def find_tags_on_event_index(content):
+    """Given workshop's raw `index.html`, find and take YAML tags that
+    have workshop-related data."""
+    try:
+        first, header, last = content.split('---')
+        tags = yaml.load(header.strip())
+
+        # get tags to the form returned by `find_tags_on_event_website`
+        # because YAML tries to interpret values from index's header
+        filtered_tags = {key: value for key, value in tags.items()
+                         if key in ALLOWED_TAG_NAMES}
+        for key, value in filtered_tags.items():
+            if isinstance(value, int):
+                filtered_tags[key] = str(value)
+            elif isinstance(value, datetime.date):
+                filtered_tags[key] = '{:%Y-%m-%d}'.format(value)
+            elif isinstance(value, list):
+                filtered_tags[key] = ', '.join(value)
+
+        return filtered_tags
+
+    except (ValueError, yaml.scanner.ScannerError):
+        # can't unpack or header is not YML format
+        return dict()
+
+
 def find_tags_on_event_website(content):
     """Given website content, find and take <meta> tags that have
     workshop-related data."""
@@ -369,13 +414,8 @@ def find_tags_on_event_website(content):
     R = r'<meta name="(?P<name>[\w-]+)" content="(?P<content>.+)" />$'
     regexp = re.compile(R, re.M)
 
-    allowed_names = [
-        'slug', 'startdate', 'enddate', 'country', 'venue', 'address',
-        'latlng', 'language', 'eventbrite', 'instructor', 'helper', 'contact',
-    ]
-
     return {name: content for name, content in regexp.findall(content)
-            if name in allowed_names}
+            if name in ALLOWED_TAG_NAMES}
 
 
 def parse_tags_from_event_website(tags):

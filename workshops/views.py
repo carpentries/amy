@@ -64,6 +64,8 @@ from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
     create_uploaded_persons_tasks, InternalError, Paginator, merge_persons,
     update_event_attendance_from_tasks,
+    generate_url_to_event_index,
+    find_tags_on_event_index,
     find_tags_on_event_website,
     parse_tags_from_event_website,
     validate_tags_from_event_website,
@@ -905,11 +907,20 @@ def validate_event(request, event_ident):
         # find tags
         tags = find_tags_on_event_website(content)
 
+        if 'slug' not in tags:
+            # there are no HTML tags, so let's try the old method
+            page_url = generate_url_to_event_index(page_url)
+
+            # fetch page
+            response = requests.get(page_url)
+
+            if response.status_code == 200:
+                # don't throw errors for pages we fall back to
+                content = response.text
+                tags = find_tags_on_event_index(page_url)
+
         # validate them
         error_messages = validate_tags_from_event_website(tags)
-
-        # and normalize (parse)
-        # tags = parse_tags_from_event_website(tags)
 
     except requests.exceptions.HTTPError as e:
         error_messages.append(
@@ -918,7 +929,7 @@ def validate_event(request, event_ident):
         )
 
     except (requests.exceptions.ConnectionError,
-            requests.exceptions.TimeoutError):
+            requests.exceptions.Timeout):
         error_messages.append("Network connection error.")
 
     context = {
@@ -1048,8 +1059,22 @@ def event_import(request):
         # find tags
         tags = find_tags_on_event_website(content)
 
+        if 'slug' not in tags:
+            # there are no HTML tags, so let's try the old method
+            url = generate_url_to_event_index(url)
+
+            # fetch page
+            response = requests.get(url)
+
+            if response.status_code == 200:
+                # don't throw errors for pages we fall back to
+                content = response.text
+                tags = find_tags_on_event_index(content)
+
         # normalize (parse) them
         tags = parse_tags_from_event_website(tags)
+
+        # TODO: change JavaScript for handling import/update from URL
 
         return JsonResponse(tags)
 
@@ -1060,7 +1085,7 @@ def event_import(request):
         )
 
     except (requests.exceptions.ConnectionError,
-            requests.exceptions.TimeoutError):
+            requests.exceptions.Timeout):
         raise SuspiciousOperation('Network connection error.')
 
     except KeyError:
