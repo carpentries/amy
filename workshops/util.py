@@ -382,7 +382,11 @@ def parse_tags_from_event_website(tags):
     """Simple preprocessing of the tags from event website."""
     # no compatibility with old-style names
     country = tags.get('country', '').upper()[0:2]
+    if len(country) < 2:
+        country = ''
     language = tags.get('language', '').upper()[0:2]
+    if len(language) < 2:
+        language = ''
 
     try:
         latitude, _ = tags.get('latlng', '').split(',')

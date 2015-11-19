@@ -467,14 +467,13 @@ class TestHandlingEventTags(TestCase):
         }
         self.assertEqual(expected, parse_tags_from_event_website(tags))
 
-    def test_parsing_tricky_tags(self):
-        tags = {
-            'startdate': 'wrong start date',
-            'enddate': 'wrong end date',
-            'latlng': 'XYZ, ',
-            'instructor': 'Hermione Granger',
-            'helper': 'Peter Parker',
-        }
+    def test_parsing_tricky_country_language(self):
+        """Ensure we always get a 2-char string or nothing."""
+        tests = [
+            (('Usa', 'English'), ('US', 'EN')),
+            (('U', 'E'), ('', '')),
+            (('', ''), ('', '')),
+        ]
         expected = {
             'slug': '',
             'language': '',
@@ -486,11 +485,105 @@ class TestHandlingEventTags(TestCase):
             'latitude': None,
             'longitude': None,
             'reg_key': None,
-            'instructors': ['Hermione Granger', ],
-            'helpers': ['Peter Parker', ],
+            'instructors': [],
+            'helpers': [],
             'contact': '',
         }
-        self.assertEqual(expected, parse_tags_from_event_website(tags))
+
+        for (country, language), (country_exp, language_exp) in tests:
+            with self.subTest(iso_31661=(country, language)):
+                tags = dict(country=country, language=language)
+                expected['country'] = country_exp
+                expected['language'] = language_exp
+                self.assertEqual(expected, parse_tags_from_event_website(tags))
+
+    def test_parsing_tricky_dates(self):
+        """Test if non-dates don't get parsed."""
+        tests = [
+            (('wrong start date', 'wrong end date'), (None, None)),
+            (('11/19/2015', '11/19/2015'), (None, None)),
+        ]
+        expected = {
+            'slug': '',
+            'language': '',
+            'start': None,
+            'end': None,
+            'country': '',
+            'venue': '',
+            'address': '',
+            'latitude': None,
+            'longitude': None,
+            'reg_key': None,
+            'instructors': [],
+            'helpers': [],
+            'contact': '',
+        }
+
+        for (startdate, enddate), (start, end) in tests:
+            with self.subTest(dates=(startdate, enddate)):
+                tags = dict(startdate=startdate, enddate=enddate)
+                expected['start'] = start
+                expected['end'] = end
+                self.assertEqual(expected, parse_tags_from_event_website(tags))
+
+    def test_parsing_tricky_list_of_names(self):
+        """Ensure we always get a list."""
+        tests = [
+            (('', ''), ([], [])),
+            (('Hermione Granger', 'Peter Parker'),
+             (['Hermione Granger'], ['Peter Parker'])),
+        ]
+        expected = {
+            'slug': '',
+            'language': '',
+            'start': None,
+            'end': None,
+            'country': '',
+            'venue': '',
+            'address': '',
+            'latitude': None,
+            'longitude': None,
+            'reg_key': None,
+            'instructors': [],
+            'helpers': [],
+            'contact': '',
+        }
+
+        for (instructor, helper), (instructors, helpers) in tests:
+            with self.subTest(people=(instructor, helper)):
+                tags = dict(instructor=instructor, helper=helper)
+                expected['instructors'] = instructors
+                expected['helpers'] = helpers
+                self.assertEqual(expected, parse_tags_from_event_website(tags))
+
+    def test_parsing_tricky_latitude_longitude(self):
+        tests = [
+            ('XYZ', (None, None)),
+            ('XYZ, ', (None, None)),
+            (',-123', (None, -123.0)),
+            (',', (None, None)),
+        ]
+        expected = {
+            'slug': '',
+            'language': '',
+            'start': None,
+            'end': None,
+            'country': '',
+            'venue': '',
+            'address': '',
+            'latitude': None,
+            'longitude': None,
+            'reg_key': None,
+            'instructors': [],
+            'helpers': [],
+            'contact': '',
+        }
+        for latlng, (latitude, longitude) in tests:
+            with self.subTest(latlng=latlng):
+                tags = dict(latlng=latlng)
+                expected['latitude'] = latitude
+                expected['longitude'] = longitude
+                self.assertEqual(expected, parse_tags_from_event_website(tags))
 
     def test_validating_invalid_tags(self):
         tags = {
@@ -514,6 +607,7 @@ class TestHandlingEventTags(TestCase):
     def test_validating_missing_tags(self):
         tags = {}
         errors = validate_tags_from_event_website(tags)
+        assert len(errors) == 12
         assert all([error.startswith('Missing') for error in errors])
 
     def test_validating_default_tags(self):
@@ -532,9 +626,9 @@ class TestHandlingEventTags(TestCase):
             'contact': 'FIXME',
         }
         errors = validate_tags_from_event_website(tags)
+        assert len(errors) == 12
         assert all([
             error.startswith('Placeholder value "FIXME"')
-            or error.startswith('Invalid value')
             for error in errors
         ])
 
