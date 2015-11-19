@@ -8,6 +8,7 @@ from rest_framework.test import APITestCase
 from api.views import (
     ExportBadgesView,
     ExportInstructorLocationsView,
+    ExportMembersView,
 )
 from api.serializers import (
     ExportBadgesSerializer,
@@ -19,6 +20,7 @@ from workshops.models import (
     Person,
     Airport,
     Task,
+    Role
 )
 
 
@@ -126,9 +128,14 @@ class TestExportingInstructors(APITestCase):
 
 class TestExportingMembers(APITestCase):
     def setUp(self):
+        # Note: must create instructor badge for get_members query to run.
+        # Same for instructor role
+        Badge.objects.create(name='instructor', title='Instructor', criteria='')
+        Role.objects.create(name='instructor')
+
         self.spiderman = Person.objects.create(
             personal='Peter', middle='Q.', family='Parker',
-            email='peter@webslinger.net', gender='O', may_contact=True,
+            email='peter@webslinger.net',
             username="spiderman")
 
         self.member = Badge.objects.create(name='member',
@@ -145,6 +152,18 @@ class TestExportingMembers(APITestCase):
                 'email': 'peter@webslinger.net'
             },
         ]
+
+    def test_serialization(self):
+###
+        from workshops.util import get_members
+        members = get_members()
+        import sys
+        print('members explicitly', members, file=sys.stderr)
+###
+        view = ExportMembersView()
+        serializer = view.get_serializer_class()
+        response = serializer(view.get_queryset(), many=True)
+        self.assertEqual(response.data, self.expecting)
 
     def test_view(self):
         # test only JSON output
