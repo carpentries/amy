@@ -24,6 +24,23 @@ class TestEvent(TestBase):
         # Set up generic events.
         self._setUpEvents()
 
+    def test_online_country_enforced_values(self):
+        """Ensure that events from 'Online' country (W3) get some location data
+        forced upon `save()`."""
+        e = Event.objects.create(slug='online-event', country='W3',
+                                 host=Host.objects.first())
+        self.assertEqual(e.venue, 'Internet')
+        self.assertEqual(e.address, 'Internet')
+        self.assertAlmostEqual(e.latitude, -48.876667)
+        self.assertAlmostEqual(e.longitude, -123.393333)
+
+        e = Event.objects.create(slug='offline-event', country='US',
+                                 host=Host.objects.first())
+        self.assertNotEqual(e.venue, 'Internet')
+        self.assertNotEqual(e.address, 'Internet')
+        self.assertIsNone(e.latitude)
+        self.assertIsNone(e.longitude)
+
     def test_get_uninvoiced_events(self):
         """Test that the events manager can find events that owe money"""
 

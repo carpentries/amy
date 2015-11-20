@@ -643,6 +643,14 @@ class Event(AssignmentMixin, models.Model):
     def save(self, *args, **kwargs):
         self.slug = self.slug or None
         self.url = self.url or None
+
+        if self.country == 'W3':
+            # enforce location data for 'Online' country
+            self.venue = 'Internet'
+            self.address = 'Internet'
+            self.latitude = -48.876667
+            self.longitude = -123.393333
+
         super(Event, self).save(*args, **kwargs)
 
 
