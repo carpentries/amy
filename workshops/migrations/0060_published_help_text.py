@@ -16,6 +16,9 @@ def add_address_to_online_events(apps, schema_editor):
     Event.objects.filter(tags__in=[online]) \
                  .filter(models.Q(address=None) | models.Q(address='')) \
                  .update(address='Internet')
+    Event.objects.filter(country='W3') \
+                 .filter(models.Q(address=None) | models.Q(address='')) \
+                 .update(address='Internet')
 
 
 class Migration(migrations.Migration):
