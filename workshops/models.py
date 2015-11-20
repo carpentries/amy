@@ -442,36 +442,6 @@ class EventQuerySet(models.query.QuerySet):
                                  .order_by('start')
 
 
-class EventManager(models.Manager):
-    '''A custom manager which is essentially a proxy for EventQuerySet'''
-
-    def get_queryset(self):
-        """Attach our custom query set to the manager."""
-        return EventQuerySet(self.model, using=self._db)
-
-    # Proxy methods so we can call our custom filters from the manager
-    # without explicitly creating an EventQuerySet first - see
-    # reference above
-
-    def past_events(self):
-        return self.get_queryset().past_events()
-
-    def ongoing_events(self):
-        return self.get_queryset().ongoing_events()
-
-    def upcoming_events(self):
-        return self.get_queryset().upcoming_events()
-
-    def unpublished_events(self):
-        return self.get_queryset().unpublished_events()
-
-    def published_events(self):
-        return self.get_queryset().published_events()
-
-    def uninvoiced_events(self):
-        return self.get_queryset().uninvoiced_events()
-
-
 @reversion.register
 class Event(AssignmentMixin, models.Model):
     '''Represent a single event.'''
@@ -550,8 +520,8 @@ class Event(AssignmentMixin, models.Model):
     class Meta:
         ordering = ('-start', )
 
-    # Set the custom manager
-    objects = EventManager()
+    # make a custom manager from our QuerySet derivative
+    objects = EventQuerySet.as_manager()
 
     def __str__(self):
         return self.get_ident()
