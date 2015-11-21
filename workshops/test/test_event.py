@@ -24,6 +24,23 @@ class TestEvent(TestBase):
         # Set up generic events.
         self._setUpEvents()
 
+    def test_online_country_enforced_values(self):
+        """Ensure that events from 'Online' country (W3) get some location data
+        forced upon `save()`."""
+        e = Event.objects.create(slug='online-event', country='W3',
+                                 host=Host.objects.first())
+        self.assertEqual(e.venue, 'Internet')
+        self.assertEqual(e.address, 'Internet')
+        self.assertAlmostEqual(e.latitude, -48.876667)
+        self.assertAlmostEqual(e.longitude, -123.393333)
+
+        e = Event.objects.create(slug='offline-event', country='US',
+                                 host=Host.objects.first())
+        self.assertNotEqual(e.venue, 'Internet')
+        self.assertNotEqual(e.address, 'Internet')
+        self.assertIsNone(e.latitude)
+        self.assertIsNone(e.longitude)
+
     def test_get_uninvoiced_events(self):
         """Test that the events manager can find events that owe money"""
 
@@ -35,7 +52,7 @@ class TestEvent(TestBase):
         # Check that events with a fee of zero or None are still on this list
         assert any([x for x in uninvoiced_events if not x.admin_fee])
 
-    def test_get_future_events(self):
+    def test_get_upcoming_events(self):
         """Test that the events manager can find upcoming events"""
 
         upcoming_events = Event.objects.upcoming_events()
@@ -69,6 +86,24 @@ class TestEvent(TestBase):
             self.assertCountEqual(event_slugs, correct_slugs)
         else:
             self.assertItemsEqual(event_slugs, correct_slugs)
+
+    def test_unpublished_events(self):
+        """Ensure that events manager finds unpublished events correctly."""
+        all_events = Event.objects.all()
+        self.assertEqual(set(all_events),
+                         set(Event.objects.unpublished_events()))
+        event_considered_published = Event.objects.create(
+            slug='published',
+            start=date.today() + timedelta(days=3),
+            end=date.today() + timedelta(days=6),
+            latitude=-10.0, longitude=10.0,
+            country='US', venue='University',
+            address='Phenomenal Street',
+            url='http://url/',
+            host=Host.objects.all().first(),
+        )
+        self.assertNotIn(event_considered_published,
+                         Event.objects.unpublished_events())
 
     def test_edit_event(self):
         """ Test that an event can be edited, and that people can be

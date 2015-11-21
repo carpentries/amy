@@ -404,26 +404,33 @@ class EventQuerySet(models.query.QuerySet):
 
         return queryset
 
-    def unpublished_events(self):
-        '''Return events without URLs that are upcoming or have unknown starts.
-
-        Events are ordered by slug and then by serial number.'''
-
-        future_without_url = Q(start__gte=datetime.date.today(), url__isnull=True)
+    def unpublished_conditional(self):
+        """Return conditional for events without: start OR country OR venue OR
+        url (ie. unpublished events). This will be used in
+        `self.published_events`, too."""
         unknown_start = Q(start__isnull=True)
-        return self.filter(future_without_url | unknown_start)\
-                   .order_by('slug', 'id')
+        no_country = Q(country__isnull=True)
+        no_venue = Q(venue__exact='')
+        no_address = Q(address__exact='')
+        no_latitude = Q(latitude__isnull=True)
+        no_longitude = Q(longitude__isnull=True)
+        no_url = Q(url__isnull=True)
+        return (
+            unknown_start | no_country | no_venue | no_address | no_latitude |
+            no_longitude | no_url
+        )
+
+    def unpublished_events(self):
+        """Return events considered as unpublished (see
+        `unpublished_conditional` above)."""
+        conditional = self.unpublished_conditional()
+        return self.filter(conditional).order_by('slug', 'id')
 
     def published_events(self):
-        '''Return events that have a start date and a URL.
-
-        Events are ordered most recent first and then by serial number.'''
-
-        queryset = self.exclude(
-            Q(start__isnull=True) | Q(url__isnull=True)
-            ).order_by('-start', 'id')
-
-        return queryset
+        """Return events considered as published (see `unpublished_conditional`
+        above)."""
+        conditional = self.unpublished_conditional()
+        return self.exclude(conditional).order_by('-start', 'id')
 
     def uninvoiced_events(self):
         '''Return a queryset for events that have not yet been invoiced.
@@ -433,36 +440,6 @@ class EventQuerySet(models.query.QuerySet):
 
         return self.past_events().filter(invoice_status='not-invoiced') \
                                  .order_by('start')
-
-
-class EventManager(models.Manager):
-    '''A custom manager which is essentially a proxy for EventQuerySet'''
-
-    def get_queryset(self):
-        """Attach our custom query set to the manager."""
-        return EventQuerySet(self.model, using=self._db)
-
-    # Proxy methods so we can call our custom filters from the manager
-    # without explicitly creating an EventQuerySet first - see
-    # reference above
-
-    def past_events(self):
-        return self.get_queryset().past_events()
-
-    def ongoing_events(self):
-        return self.get_queryset().ongoing_events()
-
-    def upcoming_events(self):
-        return self.get_queryset().upcoming_events()
-
-    def unpublished_events(self):
-        return self.get_queryset().unpublished_events()
-
-    def published_events(self):
-        return self.get_queryset().published_events()
-
-    def uninvoiced_events(self):
-        return self.get_queryset().uninvoiced_events()
 
 
 @reversion.register
@@ -475,6 +452,7 @@ class Event(AssignmentMixin, models.Model):
     WEBSITE_REGEX = re.compile(r'https?://(?P<name>[^.]+)\.github\.'
                                r'(io|com)/(?P<repo>[^/]+)/?')
     WEBSITE_FORMAT = 'https://{name}.github.io/{repo}/'
+    PUBLISHED_HELP_TEXT = 'Required in order for this event to be "published".'
 
     host = models.ForeignKey(Host, on_delete=models.PROTECT,
                              help_text='Organization hosting the event.')
@@ -484,14 +462,19 @@ class Event(AssignmentMixin, models.Model):
         on_delete=models.PROTECT,
         help_text='Organization responsible for administrative work.'
     )
-    start      = models.DateField(null=True, blank=True,
-                                  help_text='Setting this and url "publishes" the event.')
+    start = models.DateField(
+        null=True, blank=True,
+        help_text=PUBLISHED_HELP_TEXT,
+    )
     end        = models.DateField(null=True, blank=True)
     slug       = models.CharField(max_length=STR_LONG, null=True, blank=True, unique=True)
-    url        = models.CharField(max_length=STR_LONG, unique=True, null=True, blank=True,
-                                  validators=[RegexValidator(REPO_REGEX, inverse_match=True)],
-                                  help_text='Setting this and startdate "publishes" the event.<br />'
-                                            'Use link to the event\'s website.')
+    url = models.CharField(
+        max_length=STR_LONG, unique=True, null=True, blank=True,
+        validators=[RegexValidator(REPO_REGEX, inverse_match=True)],
+        help_text=PUBLISHED_HELP_TEXT +
+                  '<br />Use link to the event\'s <b>website</b>, ' +
+                  'not repository.',
+    )
     reg_key    = models.CharField(max_length=STR_REG_KEY, null=True, blank=True, verbose_name="Eventbrite key")
     attendance = models.PositiveIntegerField(null=True, blank=True)
     admin_fee  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)])
@@ -511,11 +494,23 @@ class Event(AssignmentMixin, models.Model):
     )
     notes      = models.TextField(default="", blank=True)
     contact = models.CharField(max_length=255, default="", blank=True)
-    country = CountryField(null=True, blank=True)
-    venue = models.CharField(max_length=255, default='', blank=True)
-    address = models.CharField(max_length=255, default='', blank=True)
-    latitude = models.FloatField(null=True, blank=True)
-    longitude = models.FloatField(null=True, blank=True)
+    country = CountryField(
+        null=True, blank=True,
+        help_text=PUBLISHED_HELP_TEXT +
+                  '<br />Use <b>Online</b> for online events.',
+    )
+    venue = models.CharField(
+        max_length=255, default='', blank=True, help_text=PUBLISHED_HELP_TEXT,
+    )
+    address = models.CharField(
+        max_length=255, default='', blank=True, help_text=PUBLISHED_HELP_TEXT,
+    )
+    latitude = models.FloatField(
+        null=True, blank=True, help_text=PUBLISHED_HELP_TEXT,
+    )
+    longitude = models.FloatField(
+        null=True, blank=True, help_text=PUBLISHED_HELP_TEXT,
+    )
 
     completed = models.BooleanField(
         default=False,
@@ -525,8 +520,8 @@ class Event(AssignmentMixin, models.Model):
     class Meta:
         ordering = ('-start', )
 
-    # Set the custom manager
-    objects = EventManager()
+    # make a custom manager from our QuerySet derivative
+    objects = EventQuerySet.as_manager()
 
     def __str__(self):
         return self.get_ident()
@@ -618,6 +613,14 @@ class Event(AssignmentMixin, models.Model):
     def save(self, *args, **kwargs):
         self.slug = self.slug or None
         self.url = self.url or None
+
+        if self.country == 'W3':
+            # enforce location data for 'Online' country
+            self.venue = 'Internet'
+            self.address = 'Internet'
+            self.latitude = -48.876667
+            self.longitude = -123.393333
+
         super(Event, self).save(*args, **kwargs)
 
 

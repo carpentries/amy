@@ -16,7 +16,7 @@ from workshops.models import (
 from workshops.util import universal_date_format
 
 
-class TestListingPastEvents(APITestCase):
+class TestListingPublishedEvents(APITestCase):
     view = PublishedEvents
     serializer_class = EventSerializer
     url = 'api:events-published'
@@ -64,11 +64,38 @@ class TestListingPastEvents(APITestCase):
             host=host, latitude=3, longitude=-2, venue='University',
             address='On the street', country='US', contact='sb@sth.edu',
         )
+        # event with missing country
+        self.event6 = Event.objects.create(
+            slug='event6', start=future - delta_2d, end=future + delta_2d,
+            host=host, latitude=3, longitude=-2, venue='University',
+            address='On the street', country=None, contact='sb@sth.edu',
+            url='http://url6/',
+        )
+        # event with missing venue
+        self.event7 = Event.objects.create(
+            slug='event7', start=future - delta_2d, end=future + delta_2d,
+            host=host, latitude=3, longitude=-2, venue='',
+            address='On the street', country='US', contact='sb@sth.edu',
+            url='http://url7/',
+        )
         # event with missing both start and URL
         self.event8 = Event.objects.create(
             slug='event8', end=future + delta_1d,
             host=host, latitude=3.1, longitude=-1.9, venue='University',
             address='On the street', country='US', contact='sb@sth.edu',
+        )
+        # event with missing both country and venue
+        self.event9 = Event.objects.create(
+            slug='event9', start=future - delta_2d, end=future + delta_1d,
+            host=host, latitude=3.1, longitude=-1.9, venue='',
+            address='On the street', country=None, contact='sb@sth.edu',
+            url='http://url9/',
+        )
+        # event with missing start, URL, country, and venue
+        self.event10 = Event.objects.create(
+            slug='event10', end=future + delta_1d,
+            host=host, latitude=3.1, longitude=-1.9, venue='',
+            address='On the street', country=None, contact='sb@sth.edu',
         )
 
         self.expecting = [
