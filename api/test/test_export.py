@@ -1,5 +1,6 @@
 import datetime
 import json
+from urllib.parse import urlencode
 
 from django.core.urlresolvers import reverse
 from rest_framework import status
@@ -159,9 +160,16 @@ class TestExportingMembers(APITestCase):
         response = serializer(view.get_queryset(), many=True)
         self.assertEqual(response.data, self.expecting)
 
-    def test_view(self):
+    def test_view_default_cutoffs(self):
         # test only JSON output
         url = reverse('api:export-members')
+        response = self.client.get(url, format='json')
+        content = response.content.decode('utf-8')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(json.loads(content), self.expecting)
+
+    def test_view_explicit_earliest(self):
+        url = reverse('api:export-members') + '?' + urlencode({'earliest': str(datetime.date.today())})
         response = self.client.get(url, format='json')
         content = response.content.decode('utf-8')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
