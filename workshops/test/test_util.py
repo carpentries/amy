@@ -439,8 +439,8 @@ Other content.
 <meta name="latlng" content="36.998977, -109.045173" />
 <meta name="language" content="us" />
 <meta name="invalid" content="invalid" />
-<meta name="instructor" content="Hermione Granger, Ron Weasley" />
-<meta name="helper" content="Peter Parker, Tony Stark, Natasha Romanova" />
+<meta name="instructor" content="Hermione Granger|Ron Weasley" />
+<meta name="helper" content="Peter Parker|Tony Stark|Natasha Romanova" />
 <meta name="contact" content="hermione@granger.co.uk, rweasley@ministry.gov" />
 <meta name="eventbrite" content="10000000" />
 <meta name="charset" content="utf-8" />
@@ -458,8 +458,8 @@ Other content.
             'address': 'Highway to Heaven 42, Academipolis',
             'latlng': '36.998977, -109.045173',
             'language': 'us',
-            'instructor': 'Hermione Granger, Ron Weasley',
-            'helper': 'Peter Parker, Tony Stark, Natasha Romanova',
+            'instructor': 'Hermione Granger|Ron Weasley',
+            'helper': 'Peter Parker|Tony Stark|Natasha Romanova',
             'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
             'eventbrite': '10000000',
         }
@@ -495,8 +495,8 @@ Other content.
             'address': 'Highway to Heaven 42, Academipolis',
             'latlng': '36.998977, -109.045173',
             'language': 'us',
-            'instructor': 'Hermione Granger, Ron Weasley',
-            'helper': 'Peter Parker, Tony Stark, Natasha Romanova',
+            'instructor': 'Hermione Granger|Ron Weasley',
+            'helper': 'Peter Parker|Tony Stark|Natasha Romanova',
             'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
             'eventbrite': '10000000',
         }
@@ -582,6 +582,10 @@ Other content.
             (('', ''), ([], [])),
             (('Hermione Granger', 'Peter Parker'),
              (['Hermione Granger'], ['Peter Parker'])),
+            (('Harry,Ron', 'Hermione,Ginny'),
+             (['Harry,Ron'], ['Hermione,Ginny'])),
+            (('Harry| Ron', 'Hermione |Ginny'),
+             (['Harry', 'Ron'], ['Hermione', 'Ginny'])),
         ]
         expected = {
             'slug': '',
