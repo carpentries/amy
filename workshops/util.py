@@ -474,10 +474,10 @@ def universal_date_format(date):
     return '{:%Y-%m-%d}'.format(date)
 
 
-def get_members():
+def get_members(earliest=None, latest=None):
     '''Get everyone who is a member of the Software Carpentry Foundation.'''
 
-    earliest, latest = get_membership_cutoff()
+    earliest, latest = get_membership_cutoff(earliest, latest)
 
     member_badge = Badge.objects.get(name='member')
     instructor_badge = Badge.objects.get(name='instructor')
@@ -497,10 +497,14 @@ def get_members():
     return explicit | implicit
 
 
-def get_membership_cutoff():
+def get_membership_cutoff(earliest=None, latest=None):
     '''Get the low and high cutoffs for membership.  (Put in a separate
     function to facilitate testing.)'''
 
-    today = datetime.date.today()
-    before = today - 2 * datetime.timedelta(days=365)
-    return before, today
+    if earliest is None:
+        earliest = datetime.date.today() - (2 * datetime.timedelta(days=365))
+
+    if latest is None:
+        latest = datetime.date.today()
+
+    return earliest, latest

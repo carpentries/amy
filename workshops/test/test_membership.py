@@ -35,8 +35,7 @@ class TestMembership(TestBase):
         present = Event.objects.create(
             host=self.host_alpha,
             slug="at-present",
-            start=today,
-            end=tomorrow
+            start=today - one_month
         )
 
         future = Event.objects.create(
@@ -71,12 +70,24 @@ class TestMembership(TestBase):
                             role=instructor_role)
 
 
-    def test_members(self):
-        "Make sure membership rules are obeyed."
+    def test_members_default_cutoffs(self):
+        "Make sure default membership rules are obeyed."
 
         members = get_members()
         self.assertTrue(len(members) == 2)
         self.assertTrue(self.hermione in members) # taught recently
-        self.assertTrue(self.spiderman in members) # explicit member
         self.assertTrue(self.ron not in members) # taught too long ago
         self.assertTrue(self.harry not in members) # only teaching in the future
+        self.assertTrue(self.spiderman in members) # explicit member
+
+
+    def test_members_explicit_earliest(self):
+        "Make sure membership rules are obeyed with explicit earliest date."
+
+        # Set start date to exclude Hermione.
+        members = get_members(datetime.date.today() - datetime.timedelta(days=1))
+        self.assertTrue(len(members) == 1)
+        self.assertTrue(self.hermione not in members) # taught recently
+        self.assertTrue(self.ron not in members) # taught too long ago
+        self.assertTrue(self.harry not in members) # only teaching in the future
+        self.assertTrue(self.spiderman in members) # explicit member
