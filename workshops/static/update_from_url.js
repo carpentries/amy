@@ -8,6 +8,8 @@ $('#update_url_form').submit(function(e) {
   var btn = $(this).find('button[type=submit]');
   btn.attr('disabled', true);
 
+  var url = $(this).find(':input[name=url]').val();
+
   // load data from URL
   $.post("/workshops/events/import/", $(this).find(":input"), function(data) {
     var action = $('#update_url_form input[type=radio]:checked').val();
@@ -22,14 +24,17 @@ $('#update_url_form').submit(function(e) {
         $("#id_event-start").val(data.start);
         $("#id_event-end").val(data.end);
         $("#id_event-reg_key").val(data.reg_key);
-        $("#id_event-url").val(data.url);
+        $("#id_event-url").val(url);
         $("#id_event-contact").val(data.contact);
-        $("#id_event-notes").val(data.notes);
         $('#id_event-venue').val(data.venue);
         $('#id_event-address').val(data.address);
         $('#id_event-country').val(data.country);
         $('#id_event-latitude').val(data.latitude);
         $('#id_event-longitude').val(data.longitude);
+        $("#id_event-notes").val(
+          "INSTRUCTORS: " + data.instructors.join(", ") + "\n\n" +
+          "HELPERS: " + data.helpers.join(", ")
+        );
         break;
 
       case 'skip':
@@ -53,10 +58,6 @@ $('#update_url_form').submit(function(e) {
         if ($("#id_event-contact").val() == "") {
           $("#id_event-contact").val(data.contact);
         }
-        // append notes
-        var today = new Date();
-        var today_str = "\nUPDATE " + today.getFullYear() + "-" + today.getMonth() + "-" + today.getDay() + ":\n";
-        $("#id_event-notes").val($("#id_event-notes").val() + today_str + data.notes);
         if ($("#id_event-venue").val() == "") {
           $("#id_event-venue").val(data.venue);
         }
@@ -72,6 +73,16 @@ $('#update_url_form').submit(function(e) {
         if ($("#id_event-longitude").val() == "") {
           $("#id_event-longitude").val(data.longitude);
         }
+        // append notes
+        var today = new Date();
+        var today_str = "\n\n---------\nUPDATE " +
+          today.getFullYear() + "-" + today.getMonth() + "-" + today.getDay() +
+          ":\n";
+        $("#id_event-notes").val(
+          $("#id_event-notes").val() + today_str +
+          "INSTRUCTORS: " + data.instructors.join(", ") + "\n\n" +
+          "HELPERS: " + data.helpers.join(", ")
+        );
 
         break;
     }

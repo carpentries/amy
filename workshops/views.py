@@ -1074,8 +1074,6 @@ def event_import(request):
         # normalize (parse) them
         tags = parse_tags_from_event_website(tags)
 
-        # TODO: change JavaScript for handling import/update from URL
-
         return JsonResponse(tags)
 
     except requests.exceptions.HTTPError as e:
