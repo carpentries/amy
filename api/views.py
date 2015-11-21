@@ -51,4 +51,18 @@ class PublishedEvents(ListAPIView):
     paginator = None  # disable pagination
 
     serializer_class = EventSerializer
-    queryset = Event.objects.published_events()
+
+    def get_queryset(self):
+        """Optionally restrict the returned event set to events hosted by
+        specific host or administered by specific admin."""
+        queryset = Event.objects.published_events()
+
+        administrator = self.request.query_params.get('administrator', None)
+        if administrator is not None:
+            queryset = queryset.filter(administrator__pk=administrator)
+
+        host = self.request.query_params.get('host', None)
+        if host is not None:
+            queryset = queryset.filter(host__pk=host)
+
+        return queryset

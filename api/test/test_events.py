@@ -1,5 +1,6 @@
 import datetime
 import json
+from unittest.mock import patch
 
 from django.core.urlresolvers import reverse
 from rest_framework import status
@@ -50,6 +51,7 @@ class TestListingPastEvents(APITestCase):
             host=host, latitude=3, longitude=-2, venue='University',
             address='On the street', country='US', contact='sb@sth.edu',
             url='http://github.com/user/repository/',
+            reg_key='12341234',
         )
         # event with missing start
         self.event4 = Event.objects.create(
@@ -84,6 +86,7 @@ class TestListingPastEvents(APITestCase):
                 'country': 'US',
                 'url': 'https://user.github.io/repository/',
                 'contact': 'sb@sth.edu',
+                'eventbrite_id': '12341234',
             },
             {
                 'slug': 'event2',
@@ -99,6 +102,7 @@ class TestListingPastEvents(APITestCase):
                 'country': 'US',
                 'url': 'https://user.github.io/repository/',
                 'contact': 'sb@sth.edu',
+                'eventbrite_id': None,
             },
             {
                 'slug': 'event1',
@@ -112,10 +116,14 @@ class TestListingPastEvents(APITestCase):
                 'country': 'US',
                 'url': 'https://user.github.io/repository/',
                 'contact': 'sb@sth.edu',
+                'eventbrite_id': None,
             },
         ]
 
-    def test_serialization(self):
+    @patch.object(PublishedEvents, 'request', query_params={}, create=True)
+    def test_serialization(self, mock_request):
+        # we're mocking a request here because it's not possible to create
+        # a fake request context for the view
         response = self.serializer_class(self.view().get_queryset(), many=True)
         self.assertEqual(response.data, self.expecting)
 
