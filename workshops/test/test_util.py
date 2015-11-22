@@ -7,7 +7,7 @@ from django.contrib.sessions.serializers import JSONSerializer
 from django.test import TestCase
 from django.core.urlresolvers import reverse
 
-from ..models import Host, Event, Role, Person, Task
+from ..models import Host, Event, Role, Person, Task, Badge, Award
 from ..util import (
     upload_person_task_csv,
     verify_upload_person_task,
@@ -16,6 +16,8 @@ from ..util import (
     find_tags_on_event_website,
     parse_tags_from_event_website,
     validate_tags_from_event_website,
+    get_members,
+    default_membership_cutoff,
 )
 
 from .base import TestBase
@@ -703,3 +705,89 @@ Other content.
         }
         errors = validate_tags_from_event_website(tags)
         assert not errors
+
+
+class TestMembership(TestBase):
+    """Tests for SCF membership."""
+
+    def setUp(self):
+        super().setUp()
+        self._setUpUsersAndLogin()
+
+        one_day = datetime.timedelta(days=1)
+        one_month = datetime.timedelta(days=30)
+        three_years = datetime.timedelta(days=3 * 365)
+
+        today = datetime.date.today()
+        yesterday = today - one_day
+        tomorrow = today + one_day
+
+        # Set up events in the past, at present, and in future.
+        past = Event.objects.create(
+            host=self.host_alpha,
+            slug="in-past",
+            start=today - three_years,
+            end=tomorrow - three_years
+        )
+
+        present = Event.objects.create(
+            host=self.host_alpha,
+            slug="at-present",
+            start=today - one_month
+        )
+
+        future = Event.objects.create(
+            host=self.host_alpha,
+            slug="in-future",
+            start=today + one_month,
+            end=tomorrow + one_month
+        )
+
+        # Roles and badges.
+        instructor_role = Role.objects.create(name='instructor')
+        member_badge = Badge.objects.create(name='member')
+
+        # Spiderman is an explicit member.
+        Award.objects.create(person=self.spiderman, badge=member_badge,
+                             awarded=yesterday)
+
+        # Hermione teaches in the past, now, and in future, so she's a member.
+        Task.objects.create(event=past, person=self.hermione,
+                            role=instructor_role)
+        Task.objects.create(event=present, person=self.hermione,
+                            role=instructor_role)
+        Task.objects.create(event=future, person=self.hermione,
+                            role=instructor_role)
+
+        # Ron only teaches in the distant past, so he's not a member.
+        Task.objects.create(event=past, person=self.ron,
+                            role=instructor_role)
+
+        # Harry only teaches in the future, so he's not a member.
+        Task.objects.create(event=future, person=self.harry,
+                            role=instructor_role)
+
+    def test_members_default_cutoffs(self):
+        """Make sure default membership rules are obeyed."""
+        earliest, latest = default_membership_cutoff()
+        members = get_members(earliest=earliest, latest=latest)
+
+        self.assertIn(self.hermione, members)  # taught recently
+        self.assertNotIn(self.ron, members)  # taught too long ago
+        self.assertNotIn(self.harry, members)  # only teaching in the future
+        self.assertIn(self.spiderman, members)  # explicit member
+        self.assertEqual(len(members), 2)
+
+    def test_members_explicit_earliest(self):
+        """Make sure membership rules are obeyed with explicit earliest
+        date."""
+        # Set start date to exclude Hermione.
+        earliest = datetime.date.today() - datetime.timedelta(days=1)
+        _, latest = default_membership_cutoff()
+        members = get_members(earliest=earliest, latest=latest)
+
+        self.assertNotIn(self.hermione, members)  # taught recently
+        self.assertNotIn(self.ron, members)  # taught too long ago
+        self.assertNotIn(self.harry, members)  # only teaching in the future
+        self.assertIn(self.spiderman, members)  # explicit member
+        self.assertEqual(len(members), 1)
