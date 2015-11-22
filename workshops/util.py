@@ -1,16 +1,16 @@
 # coding: utf-8
+from collections import namedtuple
 import csv
+import datetime
 from math import pi, sin, cos, acos
 import re
+import yaml
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.core.paginator import Paginator as DjangoPaginator
-from django_countries import countries
-import requests
 
-from workshops.check import get_header
 from workshops.models import Event, Role, Person, Task, Award
 
 
@@ -363,100 +363,180 @@ def merge_persons(person_from, person_to):
     person_from.delete()
 
 
-class WrongEventURL(Exception):
-    pass
-
-
-def normalize_event_index_url(url):
-    """From any event URL, make one URL to the raw content.
-
-    For example:
-
-    * http://user.github.io/SLUG/
-    * http://user.github.io/SLUG/index.html
-    * https://github.com/user/SLUG/
-    * https://github.com/user/SLUG/blob/gh-pages/index.html
-    * https://raw.githubusercontent.com/user/SLUG/gh-pages/index.html
-
-    …will become:
-    https://raw.githubusercontent.com/user/SLUG/gh-pages/index.html
-    """
+def generate_url_to_event_index(website_url):
+    """Given URL to workshop's website, generate a URL to its raw `index.html`
+    file in GitHub repository."""
     template = ('https://raw.githubusercontent.com/{name}/{repo}'
                 '/gh-pages/index.html')
-    formats = [
-        r'https?://(?P<name>[^\.]+)\.github\.(io|com)/(?P<repo>[^/]+)/?',
-        (r'https?://(?P<name>[^\.]+)\.github\.(io|com)/(?P<repo>[^/]+)/'
-         r'index\.html'),
-        r'https://github\.com/(?P<name>[^/]+)/(?P<repo>[^/]+)/?',
-        (r'https://github\.com/(?P<name>[^/]+)/(?P<repo>[^/]+)/'
-         r'blob/gh-pages/index\.html'),
-        (r'https://raw.githubusercontent.com/(?P<name>[^/]+)/(?P<repo>[^/]+)'
-         r'/gh-pages/index.html'),
-    ]
-    for format in formats:
-        results = re.match(format, url)
-        if results:
-            repo = results.groupdict()['repo']
-            return template.format(**results.groupdict()), repo
+    regex = Event.WEBSITE_REGEX
 
-    raise WrongEventURL("This event URL is incorrect: {0}".format(url))
+    results = regex.match(website_url)
+    if results:
+        return template.format(**results.groupdict())
+    return None
+
+ALLOWED_TAG_NAMES = [
+    'slug', 'startdate', 'enddate', 'country', 'venue', 'address',
+    'latlng', 'language', 'eventbrite', 'instructor', 'helper', 'contact',
+]
 
 
-def parse_tags_from_event_index(orig_url):
-    url, slug = normalize_event_index_url(orig_url)
-    response = requests.get(url)
+def find_tags_on_event_index(content):
+    """Given workshop's raw `index.html`, find and take YAML tags that
+    have workshop-related data."""
+    try:
+        first, header, last = content.split('---')
+        tags = yaml.load(header.strip())
 
-    # will throw requests.exceptions.HTTPError if status is not OK
-    response.raise_for_status()
+        # get tags to the form returned by `find_tags_on_event_website`
+        # because YAML tries to interpret values from index's header
+        filtered_tags = {key: value for key, value in tags.items()
+                         if key in ALLOWED_TAG_NAMES}
+        for key, value in filtered_tags.items():
+            if isinstance(value, int):
+                filtered_tags[key] = str(value)
+            elif isinstance(value, datetime.date):
+                filtered_tags[key] = '{:%Y-%m-%d}'.format(value)
+            elif isinstance(value, list):
+                filtered_tags[key] = ', '.join(value)
 
-    _, headers = get_header(response.text)
+        return filtered_tags
+
+    except (ValueError, yaml.scanner.ScannerError):
+        # can't unpack or header is not YML format
+        return dict()
+
+
+def find_tags_on_event_website(content):
+    """Given website content, find and take <meta> tags that have
+    workshop-related data."""
+
+    R = r'<meta name="(?P<name>[\w-]+)" content="(?P<content>.+)" />$'
+    regexp = re.compile(R, re.M)
+
+    return {name: content for name, content in regexp.findall(content)
+            if name in ALLOWED_TAG_NAMES}
+
+
+def parse_tags_from_event_website(tags):
+    """Simple preprocessing of the tags from event website."""
+    # no compatibility with old-style names
+    country = tags.get('country', '').upper()[0:2]
+    if len(country) < 2:
+        country = ''
+    language = tags.get('language', '').upper()[0:2]
+    if len(language) < 2:
+        language = ''
 
     try:
-        latitude, longitude = headers.get('latlng', '').split(',')
-        latitude = latitude.strip()
-        longitude = longitude.strip()
+        latitude, _ = tags.get('latlng', '').split(',')
+        latitude = float(latitude.strip())
     except ValueError:
-        latitude, longitude = '', ''
+        latitude = None
+    try:
+        _, longitude = tags.get('latlng', '').split(',')
+        longitude = float(longitude.strip())
+    except ValueError:
+        longitude = None
 
-    country = headers.get('country', '')
-    if len(country) == 2:
-        # special case: we're asking workshops to have country as a 2-letter
-        # code, but for now most of them use (semi-)full country names
-        country = country.upper()
-    elif len(country):
-        # probably a full-length country name
-        countries_codes = {name: code for code, name in countries}
-        country = country.replace('-', ' ')
-        country = countries_codes.get(country, country)
+    try:
+        reg_key = tags.get('eventbrite', '')
+        reg_key = int(reg_key)
+    except ValueError:
+        reg_key = None
 
-    # put instructors, helpers and venue into notes
-    notes = """INSTRUCTORS: {instructors}
+    try:
+        start = tags.get('startdate', '')
+        start = datetime.datetime.strptime(start, '%Y-%m-%d').date()
+    except ValueError:
+        start = None
 
-HELPERS: {helpers}
+    try:
+        end = tags.get('enddate', '')
+        end = datetime.datetime.strptime(end, '%Y-%m-%d').date()
+    except ValueError:
+        end = None
 
-COUNTRY: {country}""".format(
-        country=country,
-        instructors=", ".join(headers.get('instructor') or []),
-        helpers=", ".join(headers.get('helper') or []),
-    )
+    # Split string of comma-separated names into a list, but return empty list
+    # instead of [''] when there are no instructors/helpers.
+    instructors = tags.get('instructor', '').split('|')
+    instructors = [instructor.strip() for instructor in instructors]
+    instructors = [] if not any(instructors) else instructors
+    helpers = tags.get('helper', '').split('|')
+    helpers = [helper.strip() for helper in helpers]
+    helpers = [] if not any(helpers) else helpers
 
     return {
-        'slug': slug,
-        'start': headers.get('startdate', ''),
-        'end': headers.get('enddate', ''),
-        # A neat trick to get website URL easily.  It creates an Event object
-        # (but doesn't add it to the database) and uses it's translating
-        # @property 'website_url's
-        'url': Event(url=orig_url).website_url,
-        'reg_key': headers.get('eventbrite', ''),
-        'contact': headers.get('contact', ''),
-        'notes': notes,
-        'venue': headers.get('venue', ''),
-        'address': headers.get('address', ''),
+        'slug': tags.get('slug', ''),
+        'language': language,
+        'start': start,
+        'end': end,
         'country': country,
+        'venue': tags.get('venue', ''),
+        'address': tags.get('address', ''),
         'latitude': latitude,
         'longitude': longitude,
+        'reg_key': reg_key,
+        'instructors': instructors,
+        'helpers': helpers,
+        'contact': tags.get('contact', ''),
     }
+
+
+def validate_tags_from_event_website(tags):
+    errors = []
+
+    Requirement = namedtuple(
+        'Requirement',
+        ['name', 'display', 'required', 'match_format'],
+    )
+
+    DATE_FMT = r'^\d{4}-\d{2}-\d{2}$'
+    SLUG_FMT = r'^\d{4}-\d{2}-\d{2}-.+$'
+    TWOCHAR_FMT = r'^\w\w$'
+    FRACTION_FMT = r'[-+]?[0-9]*\.?[0-9]*'
+    requirements = [
+        Requirement('slug', 'workshop name', True, SLUG_FMT),
+        Requirement('language', None, False, TWOCHAR_FMT),
+        Requirement('startdate', 'start date', True, DATE_FMT),
+        Requirement('enddate', 'end date', False, DATE_FMT),
+        Requirement('country', None, True, TWOCHAR_FMT),
+        Requirement('venue', None, True, None),
+        Requirement('address', None, True, None),
+        Requirement('latlng', 'latitude / longitude', True,
+                    '^' + FRACTION_FMT + r',\s?' + FRACTION_FMT + '$'),
+        Requirement('instructor', None, True, None),
+        Requirement('helper', None, True, None),
+        Requirement('contact', None, True, None),
+        Requirement('eventbrite', 'Eventbrite event ID', False, r'^\d+$'),
+    ]
+
+    for requirement in requirements:
+        d_ = requirement._asdict()
+        name_ = ('{display} ({name})'.format(**d_)
+                 if requirement.display
+                 else '{name}'.format(**d_))
+        type_ = 'required' if requirement.required else 'optional'
+        value_ = tags.get(requirement.name)
+
+        if not value_:
+            errors.append('Missing {} tag {}.'.format(type_, name_))
+
+        if value_ == 'FIXME':
+            errors.append('Placeholder value "FIXME" for {} tag {}.'
+                          .format(type_, name_))
+        else:
+            try:
+                if not re.match(requirement.match_format, value_):
+                    errors.append(
+                        'Invalid value "{}" for {} tag {}: should be in '
+                        'format "{}".'
+                        .format(value_, type_, name_, requirement.match_format)
+                    )
+            except (re.error, TypeError):
+                pass
+
+    return errors
 
 
 def update_event_attendance_from_tasks(event):

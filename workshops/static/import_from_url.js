@@ -8,6 +8,8 @@ $('#import_url_form').submit(function(e) {
   var btn = $(this).find('button[type=submit]');
   btn.attr('disabled', true);
 
+  var url = $(this).find(':input[name=url]').val();
+
   // load data from URL
   $.post("/workshops/events/import/", $(this).find(":input"), function(data) {
     $("#event_import_url").parent().removeClass('has-error');
@@ -17,14 +19,18 @@ $('#import_url_form').submit(function(e) {
     $("#id_start").val(data.start);
     $("#id_end").val(data.end);
     $("#id_reg_key").val(data.reg_key);
-    $("#id_url").val(data.url);
+    $("#id_url").val(url);
     $("#id_contact").val(data.contact);
-    $("#id_notes").val(data.notes);
     $('#id_venue').val(data.venue);
     $('#id_address').val(data.address);
     $('#id_country').val(data.country);
     $('#id_latitude').val(data.latitude);
     $('#id_longitude').val(data.longitude);
+
+    $("#id_notes").val(
+      "INSTRUCTORS: " + data.instructors.join(", ") + "\n\n" +
+      "HELPERS: " + data.helpers.join(", ")
+    );
   })
   .fail(function(data) {
     // something went wrong, let's indicate it
