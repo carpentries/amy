@@ -1,4 +1,5 @@
-from django.db.models import Q
+import datetime
+
 from rest_framework.generics import ListAPIView
 from rest_framework.metadata import SimpleMetadata
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
@@ -7,7 +8,7 @@ from rest_framework.reverse import reverse
 from rest_framework.views import APIView
 
 from workshops.models import Badge, Airport, Event
-from workshops.util import get_members
+from workshops.util import get_members, default_membership_cutoff
 
 from .serializers import (
     PersonNameEmailSerializer,
@@ -38,6 +39,8 @@ class ApiRoot(APIView):
                                      format=format),
             'export-instructors': reverse('api:export-instructors',
                                           request=request, format=format),
+            'export-members': reverse('api:export-members', request=request,
+                                      format=format),
             'events-published': reverse('api:events-published',
                                         request=request, format=format),
         })
@@ -70,7 +73,36 @@ class ExportMembersView(ListAPIView):
     serializer_class = PersonNameEmailSerializer
 
     def get_queryset(self):
-        return get_members()
+        earliest_default, latest_default = default_membership_cutoff()
+
+        earliest = self.request.query_params.get('earliest', None)
+        if earliest is not None:
+            try:
+                earliest = datetime.datetime.strptime(earliest, '%Y-%m-%d') \
+                                            .date()
+            except ValueError:
+                earliest = earliest_default
+        else:
+            earliest = earliest_default
+
+        latest = self.request.query_params.get('latest', None)
+        if latest is not None:
+            try:
+                latest = datetime.datetime.strptime(latest, '%Y-%m-%d').date()
+            except ValueError:
+                latest = latest_default
+        else:
+            latest = latest_default
+
+        return get_members(earliest, latest)
+
+    def get_query_params_description(self):
+        return {
+            'earliest': 'Date of earliest workshop someone taught at.'
+                        '  Defaults to -2*365 days from current date.',
+            'latest': 'Date of latest workshop someone taught at.'
+                      '  Defaults to current date.',
+        }
 
 
 class PublishedEvents(ListAPIView):
