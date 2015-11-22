@@ -19,7 +19,6 @@ class QueryMetadata(SimpleMetadata):
     """Additionally include info about query parameters."""
 
     def determine_metadata(self, request, view):
-        print('doing something')
         data = super().determine_metadata(request, view)
 
         try:
