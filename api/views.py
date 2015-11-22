@@ -10,9 +10,9 @@ from workshops.models import Badge, Airport, Event
 from workshops.util import get_members
 
 from .serializers import (
+    PersonNameEmailSerializer,
     ExportBadgesSerializer,
     ExportInstructorLocationsSerializer,
-    ExportMembersSerializer,
     EventSerializer,
 )
 
@@ -67,7 +67,7 @@ class ExportMembersView(ListAPIView):
     permission_classes = (IsAuthenticatedOrReadOnly, )
     paginator = None  # disable pagination
 
-    serializer_class = ExportMembersSerializer
+    serializer_class = PersonNameEmailSerializer
 
     def get_queryset(self):
         return get_members()

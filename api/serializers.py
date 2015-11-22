@@ -12,6 +12,14 @@ class PersonUsernameSerializer(serializers.ModelSerializer):
         fields = ('name', 'user', )
 
 
+class PersonNameEmailSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source='get_full_name')
+
+    class Meta:
+        model = Person
+        fields = ('name', 'email')
+
+
 class ExportBadgesSerializer(serializers.ModelSerializer):
     persons = PersonUsernameSerializer(many=True, source='person_set')
 
@@ -27,14 +35,6 @@ class ExportInstructorLocationsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Airport
         fields = ('name', 'latitude', 'longitude', 'instructors', 'country')
-
-
-class ExportMembersSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source='get_full_name')
-
-    class Meta:
-        model = Person
-        fields = ('name', 'email')
 
 
 class EventSerializer(serializers.ModelSerializer):
