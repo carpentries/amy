@@ -1,5 +1,6 @@
 import datetime
 import json
+from urllib.parse import urlencode
 
 from django.core.urlresolvers import reverse
 from rest_framework import status
@@ -8,6 +9,7 @@ from rest_framework.test import APITestCase
 from api.views import (
     ExportBadgesView,
     ExportInstructorLocationsView,
+    ExportMembersView,
 )
 from api.serializers import (
     ExportBadgesSerializer,
@@ -18,6 +20,8 @@ from workshops.models import (
     Award,
     Person,
     Airport,
+    Task,
+    Role
 )
 
 
@@ -117,6 +121,55 @@ class TestExportingInstructors(APITestCase):
     def test_view(self):
         # test only JSON output
         url = reverse('api:export-instructors')
+        response = self.client.get(url, format='json')
+        content = response.content.decode('utf-8')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(json.loads(content), self.expecting)
+
+
+class TestExportingMembers(APITestCase):
+    def setUp(self):
+        # Note: must create instructor badge for get_members query to run.
+        # Same for instructor role
+        Badge.objects.create(name='instructor', title='Instructor', criteria='')
+        Role.objects.create(name='instructor')
+
+        self.spiderman = Person.objects.create(
+            personal='Peter', middle='Q.', family='Parker',
+            email='peter@webslinger.net',
+            username="spiderman")
+
+        self.member = Badge.objects.create(name='member',
+                                          title='Member',
+                                          criteria='')
+
+        Award.objects.create(person=self.spiderman,
+                             badge=self.member,
+                             awarded=datetime.date(2014, 1, 1))
+
+        self.expecting = [
+            {
+                'name': 'Peter Q. Parker',
+                'email': 'peter@webslinger.net'
+            },
+        ]
+
+    def test_serialization(self):
+        view = ExportMembersView()
+        serializer = view.get_serializer_class()
+        response = serializer(view.get_queryset(), many=True)
+        self.assertEqual(response.data, self.expecting)
+
+    def test_view_default_cutoffs(self):
+        # test only JSON output
+        url = reverse('api:export-members')
+        response = self.client.get(url, format='json')
+        content = response.content.decode('utf-8')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(json.loads(content), self.expecting)
+
+    def test_view_explicit_earliest(self):
+        url = reverse('api:export-members') + '?' + urlencode({'earliest': str(datetime.date.today())})
         response = self.client.get(url, format='json')
         content = response.content.decode('utf-8')
         self.assertEqual(response.status_code, status.HTTP_200_OK)

@@ -6,10 +6,12 @@ from rest_framework.reverse import reverse
 from rest_framework.views import APIView
 
 from workshops.models import Badge, Airport, Event
+from workshops.util import get_members
 
 from .serializers import (
     ExportBadgesSerializer,
     ExportInstructorLocationsSerializer,
+    ExportMembersSerializer,
     EventSerializer,
 )
 
@@ -43,6 +45,17 @@ class ExportInstructorLocationsView(ListAPIView):
     queryset = Airport.objects.exclude(person=None) \
                               .prefetch_related('person_set')
     serializer_class = ExportInstructorLocationsSerializer
+
+
+class ExportMembersView(ListAPIView):
+    """Show everyone who qualifies as an SCF member."""
+    permission_classes = (IsAuthenticatedOrReadOnly, )
+    paginator = None  # disable pagination
+
+    serializer_class = ExportMembersSerializer
+
+    def get_queryset(self):
+        return get_members()
 
 
 class PublishedEvents(ListAPIView):

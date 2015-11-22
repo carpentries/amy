@@ -2,6 +2,7 @@
 import csv
 from math import pi, sin, cos, acos
 import re
+import datetime
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError, transaction
@@ -11,7 +12,7 @@ from django_countries import countries
 import requests
 
 from workshops.check import get_header
-from workshops.models import Event, Role, Person, Task, Award
+from workshops.models import Event, Role, Person, Task, Award, Badge
 
 
 class InternalError(Exception):
@@ -471,3 +472,39 @@ def update_event_attendance_from_tasks(event):
 
 def universal_date_format(date):
     return '{:%Y-%m-%d}'.format(date)
+
+
+def get_members(earliest=None, latest=None):
+    '''Get everyone who is a member of the Software Carpentry Foundation.'''
+
+    earliest, latest = get_membership_cutoff(earliest, latest)
+
+    member_badge = Badge.objects.get(name='member')
+    instructor_badge = Badge.objects.get(name='instructor')
+    instructor_role = Role.objects.get(name='instructor')
+
+    # Everyone who is an explicit member.
+    explicit = Person.objects.filter(badges__in=[member_badge]).distinct()
+
+    # Everyone who qualifies by having taught recently.
+    implicit = Person.objects.filter(task__role=instructor_role,
+                                     task__event__start__gte=earliest,
+                                     task__event__start__lte=latest,
+                                     badges__in=[instructor_badge]) \
+                             .distinct()
+
+    # Merge the two sets.
+    return explicit | implicit
+
+
+def get_membership_cutoff(earliest=None, latest=None):
+    '''Get the low and high cutoffs for membership.  (Put in a separate
+    function to facilitate testing.)'''
+
+    if earliest is None:
+        earliest = datetime.date.today() - (2 * datetime.timedelta(days=365))
+
+    if latest is None:
+        latest = datetime.date.today()
+
+    return earliest, latest
