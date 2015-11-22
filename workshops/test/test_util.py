@@ -616,6 +616,7 @@ Other content.
             ('XYZ, ', (None, None)),
             (',-123', (None, -123.0)),
             (',', (None, None)),
+            (None, (None, None)),
         ]
         expected = {
             'slug': '',
@@ -637,6 +638,33 @@ Other content.
                 tags = dict(latlng=latlng)
                 expected['latitude'] = latitude
                 expected['longitude'] = longitude
+                self.assertEqual(expected, parse_tags_from_event_website(tags))
+
+    def test_parsing_tricky_eventbrite_id(self):
+        tests = [
+            ('', None),
+            ('string', None),
+            (None, None),
+        ]
+        expected = {
+            'slug': '',
+            'language': '',
+            'start': None,
+            'end': None,
+            'country': '',
+            'venue': '',
+            'address': '',
+            'latitude': None,
+            'longitude': None,
+            'reg_key': None,
+            'instructors': [],
+            'helpers': [],
+            'contact': '',
+        }
+        for eventbrite_id, reg_key in tests:
+            with self.subTest(eventbrite_id=eventbrite_id):
+                tags = dict(eventbrite=eventbrite_id)
+                expected['reg_key'] = reg_key
                 self.assertEqual(expected, parse_tags_from_event_website(tags))
 
     def test_validating_invalid_tags(self):

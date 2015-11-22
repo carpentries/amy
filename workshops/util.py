@@ -431,18 +431,26 @@ def parse_tags_from_event_website(tags):
     try:
         latitude, _ = tags.get('latlng', '').split(',')
         latitude = float(latitude.strip())
-    except ValueError:
+    except (ValueError, TypeError, AttributeError):
+        # value error: can't convert string to float
+        # type error: can't convert None to float
+        # attribute error: object doesn't have "split" or "strip" methods
         latitude = None
     try:
         _, longitude = tags.get('latlng', '').split(',')
         longitude = float(longitude.strip())
-    except ValueError:
+    except (ValueError, TypeError, AttributeError):
+        # value error: can't convert string to float
+        # type error: can't convert None to float
+        # attribute error: object doesn't have "split" or "strip" methods
         longitude = None
 
     try:
         reg_key = tags.get('eventbrite', '')
         reg_key = int(reg_key)
-    except ValueError:
+    except (ValueError, TypeError):
+        # value error: can't convert string to int
+        # type error: can't convert None to int
         reg_key = None
 
     try:
