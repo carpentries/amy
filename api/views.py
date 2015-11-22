@@ -1,5 +1,6 @@
 from django.db.models import Q
 from rest_framework.generics import ListAPIView
+from rest_framework.metadata import SimpleMetadata
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
@@ -12,6 +13,21 @@ from .serializers import (
     ExportInstructorLocationsSerializer,
     EventSerializer,
 )
+
+
+class QueryMetadata(SimpleMetadata):
+    """Additionally include info about query parameters."""
+
+    def determine_metadata(self, request, view):
+        print('doing something')
+        data = super().determine_metadata(request, view)
+
+        try:
+            data['query_params'] = view.get_query_params_description()
+        except AttributeError:
+            pass
+
+        return data
 
 
 class ApiRoot(APIView):
@@ -46,11 +62,15 @@ class ExportInstructorLocationsView(ListAPIView):
 
 
 class PublishedEvents(ListAPIView):
+    """List published events."""
+
     # only events that have both a starting date and a URL
     permission_classes = (IsAuthenticatedOrReadOnly, )
     paginator = None  # disable pagination
 
     serializer_class = EventSerializer
+
+    metadata_class = QueryMetadata
 
     def get_queryset(self):
         """Optionally restrict the returned event set to events hosted by
@@ -66,3 +86,10 @@ class PublishedEvents(ListAPIView):
             queryset = queryset.filter(host__pk=host)
 
         return queryset
+
+    def get_query_params_description(self):
+        return {
+            'administrator': 'ID of the organization responsible for admin '
+                             'work on events.',
+            'host': 'ID of the organization hosting the event.',
+        }
