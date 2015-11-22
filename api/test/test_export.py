@@ -1,6 +1,6 @@
 import datetime
 import json
-from urllib.parse import urlencode
+from unittest.mock import patch
 
 from django.core.urlresolvers import reverse
 from rest_framework import status
@@ -11,18 +11,14 @@ from api.views import (
     ExportInstructorLocationsView,
     ExportMembersView,
 )
-from api.serializers import (
-    ExportBadgesSerializer,
-    ExportInstructorLocationsSerializer,
-)
 from workshops.models import (
     Badge,
     Award,
     Person,
     Airport,
-    Task,
     Role
 )
+from workshops.util import universal_date_format
 
 
 class TestExportingBadges(APITestCase):
@@ -131,7 +127,8 @@ class TestExportingMembers(APITestCase):
     def setUp(self):
         # Note: must create instructor badge for get_members query to run.
         # Same for instructor role
-        Badge.objects.create(name='instructor', title='Instructor', criteria='')
+        Badge.objects.create(name='instructor', title='Instructor',
+                             criteria='')
         Role.objects.create(name='instructor')
 
         self.spiderman = Person.objects.create(
@@ -140,8 +137,8 @@ class TestExportingMembers(APITestCase):
             username="spiderman")
 
         self.member = Badge.objects.create(name='member',
-                                          title='Member',
-                                          criteria='')
+                                           title='Member',
+                                           criteria='')
 
         Award.objects.create(person=self.spiderman,
                              badge=self.member,
@@ -154,7 +151,10 @@ class TestExportingMembers(APITestCase):
             },
         ]
 
-    def test_serialization(self):
+    @patch.object(ExportMembersView, 'request', query_params={}, create=True)
+    def test_serialization(self, mock_request):
+        # we're mocking a request here because it's not possible to create
+        # a fake request context for the view
         view = ExportMembersView()
         serializer = view.get_serializer_class()
         response = serializer(view.get_queryset(), many=True)
@@ -169,8 +169,10 @@ class TestExportingMembers(APITestCase):
         self.assertEqual(json.loads(content), self.expecting)
 
     def test_view_explicit_earliest(self):
-        url = reverse('api:export-members') + '?' + urlencode({'earliest': str(datetime.date.today())})
-        response = self.client.get(url, format='json')
+        url = reverse('api:export-members')
+        data = {'earliest': universal_date_format(datetime.date.today())}
+
+        response = self.client.get(url, data, format='json')
         content = response.content.decode('utf-8')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(json.loads(content), self.expecting)
