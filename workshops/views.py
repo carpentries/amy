@@ -1073,7 +1073,15 @@ def event_import(request):
                 tags = find_tags_on_event_index(content)
 
                 if 'slug' not in tags:
-                    tags['slug'] = urlparse(url).path.replace('/', '')
+                    # `url` should match WEBSITE_REGEX because of the check
+                    # performed in `generate_url_to_event_website`,
+                    # but, just in case someone removes that code, let's
+                    # throw ValueError here too
+                    try:
+                        tags['slug'] = Event.WEBSITE_REGEX.match(url) \
+                                                          .group('repo')
+                    except AttributeError:
+                        raise ValueError()
 
         # normalize (parse) them
         tags = parse_tags_from_event_website(tags)
@@ -1089,6 +1097,11 @@ def event_import(request):
     except (requests.exceptions.ConnectionError,
             requests.exceptions.Timeout):
         raise SuspiciousOperation('Network connection error.')
+
+    except ValueError:
+        # probably matching url with Event.WEBSITE_REGEX (either here or in
+        # `generate_url_to_event_index`) failed
+        raise SuspiciousOperation('Event\'s url is in wrong format.')
 
     except KeyError:
         raise SuspiciousOperation('Missing or wrong "url" POST parameter.')

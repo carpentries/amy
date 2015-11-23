@@ -373,7 +373,7 @@ def generate_url_to_event_index(website_url):
     results = regex.match(website_url)
     if results:
         return template.format(**results.groupdict())
-    return None
+    raise ValueError('URL does not match Event.WEBSITE_REGEX.')
 
 ALLOWED_TAG_NAMES = [
     'slug', 'startdate', 'enddate', 'country', 'venue', 'address',
@@ -431,17 +431,15 @@ def parse_tags_from_event_website(tags):
     try:
         latitude, _ = tags.get('latlng', '').split(',')
         latitude = float(latitude.strip())
-    except (ValueError, TypeError, AttributeError):
+    except (ValueError, AttributeError):
         # value error: can't convert string to float
-        # type error: can't convert None to float
         # attribute error: object doesn't have "split" or "strip" methods
         latitude = None
     try:
         _, longitude = tags.get('latlng', '').split(',')
         longitude = float(longitude.strip())
-    except (ValueError, TypeError, AttributeError):
+    except (ValueError, AttributeError):
         # value error: can't convert string to float
-        # type error: can't convert None to float
         # attribute error: object doesn't have "split" or "strip" methods
         longitude = None
 
