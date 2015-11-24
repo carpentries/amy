@@ -1351,8 +1351,12 @@ def search(request):
                     Q(slug__contains=term) |
                     Q(notes__contains=term) |
                     Q(host__domain__contains=term) |
-                    Q(host__fullname__contains=term)) \
-                    .order_by('-slug')
+                    Q(host__fullname__contains=term) |
+                    Q(url__contains=term) |
+                    Q(contact__contains=term) |
+                    Q(venue__contains=term) |
+                    Q(address__contains=term)
+                ).order_by('-slug')
                 results += list(events)
 
             if form.cleaned_data['in_persons']:
