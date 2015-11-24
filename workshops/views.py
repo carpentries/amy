@@ -1570,17 +1570,21 @@ def instructor_issues(request):
     # Everyone who's been in instructor training but doesn't yet have a badge.
     learner = Role.objects.get(name='learner')
     ttt = Tag.objects.get(name='TTT')
-    ttt_events = Event.objects.filter(tags__in=[ttt])
-    pending_instructors = Task.objects \
-        .filter(event__in=ttt_events, role=learner) \
+    stalled = Tag.objects.get(name='stalled')
+    trainees = Task.objects \
+        .filter(event__tags__in=[ttt], role=learner) \
         .exclude(person__badges__in=[instructor_badge]) \
         .order_by('person__family', 'person__personal', 'event__start') \
         .select_related('person', 'event')
+
+    pending_instructors = trainees.exclude(event__tags=stalled)
+    stalled_instructors = trainees.filter(event__tags=stalled)
 
     context = {
         'title': 'Instructors with Issues',
         'instructors': instructors,
         'pending': pending_instructors,
+        'stalled': stalled_instructors,
     }
     return render(request, 'workshops/instructor_issues.html', context)
 

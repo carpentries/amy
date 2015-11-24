@@ -71,6 +71,30 @@ Thanks for your help.{% endfilter %}">
 {% else %}
   <p>None.</p>
 {% endif %}
+
+<h2>Stalled Trainees</h2>
+{% if stalled %}
+  <table class="table table-striped">
+    <tr>
+      <th>Person</th>
+      <th>Training(s) <a href="#" data-toggle="tooltip" title="Instructor Training(s) not finished and marked as stalled">[?]</a></th>
+    </tr>
+    {% regroup stalled by person as trainings %}
+    {% for person_training in trainings %}
+    <tr>
+      <td><a href="{% url 'person_details' person_training.grouper.id %}">{{ person_training.grouper.get_full_name }}</a></td>
+      <td>
+        {% for e in person_training.list %}
+          <a href="{% url 'event_details' e.event.get_ident %}">{{ e.event }}</a>{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+{% else %}
+  <p>None.</p>
+{% endif %}
+
 {% endblock %}
 
 {% block extrajs %}
