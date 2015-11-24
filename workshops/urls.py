@@ -62,6 +62,7 @@ urlpatterns = [
 
     url(r'^export/badges/?$', views.export_badges, name='export_badges'),
     url(r'^export/instructors/?$', views.export_instructors, name='export_instructors'),
+    url(r'^export/members/?$', views.export_members, name='export_members'),
 
     url(r'^reports/workshops_over_time/?$', views.workshops_over_time, name='workshops_over_time'),
     url(r'^reports/learners_over_time/?$', views.learners_over_time, name='learners_over_time'),
