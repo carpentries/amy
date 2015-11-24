@@ -3,6 +3,7 @@
 {% load crispy_forms_tags %}
 {% load links %}
 {% load pagination %}
+{% load tags %}
 
 {% block sidebar %}
     <h3>Filter</h3>
@@ -45,7 +46,7 @@
             </a>
           {% endif %}
         </td>
-        <td>{{ event.tags.all | join:", " }}</td>
+        <td>{% for tag in event.tags.all %}{% bootstrap_tag tag.name %}{% endfor %}</td>
         <td {% if not event.repository_url %}class="warning"{% endif %}>
           {{ event.repository_url|default:"—"|urlize_newtab }}
         </td>
