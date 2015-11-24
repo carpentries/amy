@@ -4,6 +4,7 @@ import datetime
 import io
 import re
 import requests
+from urllib.parse import urlparse
 
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
@@ -1061,15 +1062,26 @@ def event_import(request):
 
         if 'slug' not in tags:
             # there are no HTML tags, so let's try the old method
-            url = generate_url_to_event_index(url)
+            index_url = generate_url_to_event_index(url)
 
             # fetch page
-            response = requests.get(url)
+            response = requests.get(index_url)
 
             if response.status_code == 200:
                 # don't throw errors for pages we fall back to
                 content = response.text
                 tags = find_tags_on_event_index(content)
+
+                if 'slug' not in tags:
+                    # `url` should match WEBSITE_REGEX because of the check
+                    # performed in `generate_url_to_event_website`,
+                    # but, just in case someone removes that code, let's
+                    # throw ValueError here too
+                    try:
+                        tags['slug'] = Event.WEBSITE_REGEX.match(url) \
+                                                          .group('repo')
+                    except AttributeError:
+                        raise ValueError()
 
         # normalize (parse) them
         tags = parse_tags_from_event_website(tags)
@@ -1085,6 +1097,11 @@ def event_import(request):
     except (requests.exceptions.ConnectionError,
             requests.exceptions.Timeout):
         raise SuspiciousOperation('Network connection error.')
+
+    except ValueError:
+        # probably matching url with Event.WEBSITE_REGEX (either here or in
+        # `generate_url_to_event_index`) failed
+        raise SuspiciousOperation('Event\'s url is in wrong format.')
 
     except KeyError:
         raise SuspiciousOperation('Missing or wrong "url" POST parameter.')
