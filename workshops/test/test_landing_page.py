@@ -1,8 +1,6 @@
-from datetime import datetime, timedelta
-
 from django.core.urlresolvers import reverse
 
-from ..models import Event, Host
+from ..models import Event, Host, Tag
 from .base import TestBase
 
 
@@ -26,3 +24,17 @@ class TestLandingPage(TestBase):
         # They should all be labeled 'upcoming'.
         assert all([('upcoming' in e.slug or 'ongoing' in e.slug)
                     for e in events])
+
+    def test_no_stalled_events_on_dashboard(self):
+        """Make sure we don't display stalled events on the dashboard."""
+        stalled = Tag.objects.get(name='stalled')
+        e = Event.objects.create(
+            slug='stalled-event', host=Host.objects.first(),
+        )
+        e.tags.add(stalled)
+
+        # stalled event appears in unfiltered list of events
+        self.assertIn(e, Event.objects.unpublished_events())
+
+        response = self.client.get(reverse('dashboard'))
+        self.assertNotIn(e, response.context['unpublished_events'])

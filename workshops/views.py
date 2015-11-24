@@ -174,9 +174,9 @@ def dashboard(request):
     '''Home page.'''
     current_events = (
         Event.objects.upcoming_events() | Event.objects.ongoing_events()
-    )
-    unpublished_events = Event.objects.unpublished_events()
-    uninvoiced_events = Event.objects.uninvoiced_events()
+    ).no_stalled()
+    uninvoiced_events = Event.objects.uninvoiced_events().no_stalled()
+    unpublished_events = Event.objects.unpublished_events().no_stalled()
 
     user = request.user
     is_admin = user.groups.filter(name='administrators').exists()
