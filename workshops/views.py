@@ -1578,7 +1578,13 @@ def instructor_issues(request):
         .select_related('person', 'event')
 
     pending_instructors = trainees.exclude(event__tags=stalled)
-    stalled_instructors = trainees.filter(event__tags=stalled)
+    pending_instructors_person_ids = pending_instructors.values_list(
+        'person__pk', flat=True,
+    )
+
+    stalled_instructors = trainees \
+        .filter(event__tags=stalled) \
+        .exclude(person__id__in=pending_instructors_person_ids)
 
     context = {
         'title': 'Instructors with Issues',
