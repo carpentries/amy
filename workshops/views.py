@@ -174,9 +174,9 @@ def dashboard(request):
     '''Home page.'''
     current_events = (
         Event.objects.upcoming_events() | Event.objects.ongoing_events()
-    )
-    unpublished_events = Event.objects.unpublished_events()
-    uninvoiced_events = Event.objects.uninvoiced_events()
+    ).no_stalled()
+    uninvoiced_events = Event.objects.uninvoiced_events().no_stalled()
+    unpublished_events = Event.objects.unpublished_events().no_stalled()
 
     user = request.user
     is_admin = user.groups.filter(name='administrators').exists()
@@ -1570,17 +1570,27 @@ def instructor_issues(request):
     # Everyone who's been in instructor training but doesn't yet have a badge.
     learner = Role.objects.get(name='learner')
     ttt = Tag.objects.get(name='TTT')
-    ttt_events = Event.objects.filter(tags__in=[ttt])
-    pending_instructors = Task.objects \
-        .filter(event__in=ttt_events, role=learner) \
+    stalled = Tag.objects.get(name='stalled')
+    trainees = Task.objects \
+        .filter(event__tags__in=[ttt], role=learner) \
         .exclude(person__badges__in=[instructor_badge]) \
         .order_by('person__family', 'person__personal', 'event__start') \
         .select_related('person', 'event')
+
+    pending_instructors = trainees.exclude(event__tags=stalled)
+    pending_instructors_person_ids = pending_instructors.values_list(
+        'person__pk', flat=True,
+    )
+
+    stalled_instructors = trainees \
+        .filter(event__tags=stalled) \
+        .exclude(person__id__in=pending_instructors_person_ids)
 
     context = {
         'title': 'Instructors with Issues',
         'instructors': instructors,
         'pending': pending_instructors,
+        'stalled': stalled_instructors,
     }
     return render(request, 'workshops/instructor_issues.html', context)
 

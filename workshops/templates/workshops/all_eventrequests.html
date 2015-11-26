@@ -2,6 +2,7 @@
 
 {% load crispy_forms_tags %}
 {% load pagination %}
+{% load tags %}
 
 {% block sidebar %}
     <h3>Filter</h3>
@@ -29,13 +30,7 @@
         <td>{{ req.name }} &lt;{{ req.email|urlize }}&gt;</td>
         <td>{{ req.affiliation }}</td>
         <td>{{ req.preferred_date }}</td>
-        <td>
-        {% if req.workshop_type == 'swc' %}
-          <span class="label label-primary">SWC</span>
-        {% else %}
-          <span class="label label-default">DC</span>
-        {% endif %}
-        </td>
+        <td>{% bootstrap_tag req.workshop_type|upper %}</td>
         <td>{{ req.comment|truncatewords:5|default:"—" }}</td>
         <td><a href="{{ req.get_absolute_url }}"><span class="glyphicon glyphicon-info-sign"></span></a></td>
       </tr>

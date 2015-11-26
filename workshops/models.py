@@ -358,6 +358,10 @@ class Tag(models.Model):
 class EventQuerySet(models.query.QuerySet):
     '''Handles finding past, ongoing and upcoming events'''
 
+    def no_stalled(self):
+        """Exclude events marked as 'stalled'."""
+        return self.exclude(tags__name='stalled')
+
     def past_events(self):
         '''Return past events.
 
@@ -456,7 +460,14 @@ class Event(AssignmentMixin, models.Model):
 
     host = models.ForeignKey(Host, on_delete=models.PROTECT,
                              help_text='Organization hosting the event.')
-    tags       = models.ManyToManyField(Tag)
+    tags = models.ManyToManyField(
+        Tag,
+        help_text='<ul><li><i>stalled</i> — for events with lost contact with '
+                  'the host or TTT events that aren\'t running.</li>'
+                  '<li><i>unresponsive</i> – for events whose hosts and/or '
+                  'organizers aren\'t going to send us attendance data.</li>'
+                  '</ul>',
+    )
     administrator = models.ForeignKey(
         Host, related_name='administrator', null=True, blank=True,
         on_delete=models.PROTECT,
