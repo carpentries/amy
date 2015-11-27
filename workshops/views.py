@@ -2092,7 +2092,7 @@ def profileupdaterequest_accept(request, request_id, person_id):
 
     messages.success(request,
                      '{} was updated successfully.'.format(person_name))
-    return redirect(reverse('all_profileupdaterequests'))
+    return redirect(person.get_absolute_url())
 
 #------------------------------------------------------------
 
