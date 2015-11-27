@@ -520,9 +520,7 @@ class DCEventRequestForm(SWCEventRequestForm):
         }
 
 
-class ProfileUpdateRequestForm(forms.ModelForm):
-    captcha = ReCaptchaField()
-
+class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):
     class Meta:
         model = ProfileUpdateRequest
         exclude = ('active', 'created_at')
@@ -537,6 +535,10 @@ class ProfileUpdateRequestForm(forms.ModelForm):
         """Remove '@'s from the beginning of the Twitter handle."""
         twitter_handle = self.cleaned_data['twitter']
         return re.sub('^@+', '', twitter_handle)
+
+
+class ProfileUpdateRequestForm(ProfileUpdateRequestFormNoCaptcha):
+    captcha = ReCaptchaField()
 
 
 class PersonLookupForm(forms.Form):
