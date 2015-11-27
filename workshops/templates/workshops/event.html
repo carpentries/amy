@@ -56,7 +56,17 @@
       {% endif %}
     </td>
   </tr>
-  <tr class="{% if not event.attendance %}bg-danger{% endif %}"><td>attendance:</td><td colspan="2">{{ event.attendance|default_if_none:"—" }}</td></tr>
+  <tr class="{% if not event.attendance %}bg-danger{% endif %}">
+    <td>attendance:</td>
+    <td colspan="2">
+      {{ event.attendance|default_if_none:"—" }}
+      {% if not event.attendance and event.mailto %}
+      <a href="{% include 'workshops/attendance_email_href.html' with event=event %}" target="_blank" class="btn btn-primary btn-xs pull-right">Ask for attendance</a>
+      {% else %}
+      <a href="#" class="btn btn-primary btn-xs pull-right disabled">Ask for attendance</a>
+      {% endif %}
+    </td>
+  </tr>
   <tr><td>contact:</td><td colspan="2">{{ event.contact|default_if_none:"—"|urlize }}</td></tr>
   <tr>
     <td rowspan="4">location details:</td>

@@ -13,6 +13,9 @@ from django.core.paginator import Paginator as DjangoPaginator
 
 from workshops.models import Event, Role, Person, Task, Award, Badge
 
+WORD_SPLIT = re.compile(r'''([\s<>"']+)''')
+SIMPLE_EMAIL = re.compile(r'^\S+@\S+\.\S+$')
+
 
 class InternalError(Exception):
     pass
@@ -586,3 +589,22 @@ def default_membership_cutoff():
     earliest = datetime.date.today() - 2 * datetime.timedelta(days=365)
     latest = datetime.date.today()
     return earliest, latest
+
+
+def find_emails(text):
+    """Find emails in the text.  This is based on Django's own
+    `django.utils.html.urlize`."""
+    # Split into tokens in case someone uses for example
+    # 'Name <name@gmail.com>' format.
+    emails = []
+
+    for word in WORD_SPLIT.split(text):
+        if SIMPLE_EMAIL.match(word):
+            local, domain = word.rsplit('@', 1)
+            try:
+                domain = domain.encode('idna').decode('ascii')
+            except UnicodeError:
+                continue
+            emails.append('{}@{}'.format(local, domain))
+
+    return emails
