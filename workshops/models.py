@@ -493,6 +493,8 @@ class Event(AssignmentMixin, models.Model):
         ('unknown', 'Unknown'),
         ('invoiced', 'Invoiced'),
         ('not-invoiced', 'Not invoiced'),
+        ('ni-historic', 'Not invoiced for historical reasons'),
+        ('ni-member', 'Not invoiced because of membership'),
         ('na-self-org', 'Not applicable because self-organized'),
         ('na-waiver', 'Not applicable because waiver granted'),
         ('na-other', 'Not applicable because other arrangements made'),
