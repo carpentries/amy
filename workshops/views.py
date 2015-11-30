@@ -59,7 +59,7 @@ from workshops.forms import (
     PersonTaskForm, HostForm, SWCEventRequestForm, DCEventRequestForm,
     ProfileUpdateRequestForm, PersonLookupForm, bootstrap_helper_wider_labels,
     SimpleTodoForm, bootstrap_helper_inline_formsets, BootstrapHelper,
-    AdminLookupForm,
+    AdminLookupForm, ProfileUpdateRequestFormNoCaptcha,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
@@ -2016,6 +2016,15 @@ def profileupdaterequest_details(request, request_id):
     return render(request, 'workshops/profileupdaterequest.html', context)
 
 
+class ProfileUpdateRequestFix(LoginRequiredMixin, PermissionRequiredMixin,
+                              UpdateViewContext):
+    perms = 'workshops.change_profileupdaterequest'
+    model = ProfileUpdateRequest
+    form_class = ProfileUpdateRequestFormNoCaptcha
+    pk_url_kwarg = 'request_id'
+    template_name = 'workshops/generic_form.html'
+
+
 @login_required
 @permission_required('workshops.change_profileupdaterequest',
                      raise_exception=True)
@@ -2080,7 +2089,7 @@ def profileupdaterequest_accept(request, request_id, person_id):
 
     messages.success(request,
                      '{} was updated successfully.'.format(person_name))
-    return redirect(reverse('all_profileupdaterequests'))
+    return redirect(person.get_absolute_url())
 
 #------------------------------------------------------------
 
