@@ -50,7 +50,6 @@ else:
 # email settings
 ADMINS = (
     ('Piotr Banaszkiewicz', 'piotr@banaszkiewicz.org'),
-    ('Greg Wilson', 'gvwilson@software-carpentry.org'),
 )
 # "From:" for error messages sent out to ADMINS
 SERVER_EMAIL = os.environ.get('AMY_SERVER_EMAIL', 'root@localhost')
