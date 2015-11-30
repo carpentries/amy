@@ -8,7 +8,7 @@
   <tr>
     <th>Event</th>
     <th>Attendance <a href="#" data-toggle="tooltip" title="Number of attendees is missing">[?]</a></th>
-    <th>Location <a href="#" data-toggle="tooltip" title="Venue, address or country is missing">[?]</a></th>
+    <th>Location <a href="#" data-toggle="tooltip" title="Country, venue, address or lat/long are missing">[?]</a></th>
     <th>Dates <a href="#" data-toggle="tooltip" title="Start date is in future of end date">[?]</a></th>
   </tr>
   {% for event in events %}
@@ -18,12 +18,8 @@
     </td>
     <td>
       {% if event.missing_attendance_ %}
-        {% if event.mailto_ %}
-          <a href="mailto:{{event.mailto_}}?subject={% filter urlencode %}Missing attendance figures for workshop {{event.get_ident}}{% endfilter %}&body={% filter urlencode %}Hi,
-
-Can you please send us attendance figures for the workshop {{ event.get_ident }}?  As per our FAQ (http://software-carpentry.org/faq.html#trademark), this is one of the conditions of using the Software Carpentry name and logo, and we need to get these figures to funders.
-
-Thanks for your help.{% endfilter %}">
+        {% if event.mailto %}
+          <a href="{% include 'workshops/attendance_email_href.html' with event=event %}">
           <span class="glyphicon glyphicon-envelope"></span>
           </a>
         {% else %}
@@ -33,10 +29,10 @@ Thanks for your help.{% endfilter %}">
     </td>
     <td>
       {% if event.missing_location_ %}
-        {% if event.mailto_ %}
-          <a href="mailto:{{event.mailto_}}?subject={% filter urlencode %}Missing location for workshop {{event.get_ident}}{% endfilter %}&body={% filter urlencode %}Hi,
+        {% if event.mailto %}
+          <a href="mailto:{{event.mailto}}?subject={% filter urlencode %}Missing location for workshop {{event.get_ident}}{% endfilter %}&body={% filter urlencode %}Hi,
 
-Can you please send us the location where the {{ event.get_ident }} workshop took place?
+Can you please send us the location where the {{ event.get_ident }} workshop took place? We need a country, address, venue, and latitude/longitude.
 
 Thanks for your help.{% endfilter %}">
           <span class="glyphicon glyphicon-envelope"></span>
@@ -48,8 +44,8 @@ Thanks for your help.{% endfilter %}">
     </td>
     <td>
       {% if event.bad_dates_ %}
-        {% if event.mailto_ %}
-          <a href="mailto:{{event.mailto_}}?subject={% filter urlencode %}Bad dates for workshop {{ event.get_ident }}{% endfilter %}&body={% filter urlencode %}Hi,
+        {% if event.mailto %}
+          <a href="mailto:{{event.mailto}}?subject={% filter urlencode %}Bad dates for workshop {{ event.get_ident }}{% endfilter %}&body={% filter urlencode %}Hi,
 
 Can you please confirm the start and end dates for the workshop {{ event.get_ident }}?
 
@@ -72,7 +68,7 @@ Thanks for your help.{% endfilter %}">
 {% block extrajs %}
 <script type="text/javascript">
 $(function () {
-  $('[data-toggle="tooltip"]').tooltip()
-})
+  $('[data-toggle="tooltip"]').tooltip();
+});
 </script>
 {% endblock %}

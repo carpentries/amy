@@ -25,8 +25,6 @@ AUTOCOMPLETE_HELP_TEXT = (
     "then select desired item from list."
 )
 
-DATE_HELP_TEXT = "Select date using widget, or enter in YYYY-MM-DD format."
-
 
 class BootstrapHelper(FormHelper):
     """Layout and behavior for crispy-displayed forms."""
@@ -218,6 +216,15 @@ class DebriefForm(forms.Form):
 
 
 class EventForm(forms.ModelForm):
+    slug = forms.CharField(
+        max_length=Event._meta.get_field('slug').max_length,
+        required=not Event._meta.get_field('slug').blank,
+        validators=[
+            RegexValidator(
+                '[^\w-]+', inverse_match=True,
+                message='Only alphanumeric characters and "-" are allowed.')
+        ],
+    )
 
     host = selectable.AutoCompleteSelectField(
         lookup_class=lookups.HostLookup,
@@ -245,8 +252,8 @@ class EventForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['start'].help_text = DATE_HELP_TEXT
-        self.fields['end'].help_text = DATE_HELP_TEXT
+        self.fields['start'].widget.attrs['placeholder'] = 'YYYY-MM-DD'
+        self.fields['end'].widget.attrs['placeholder'] = 'YYYY-MM-DD'
 
         self.helper = BootstrapHelper(self)
 
@@ -297,7 +304,10 @@ class EventForm(forms.ModelForm):
     class Media:
         # thanks to this, {{ form.media }} in the template will generate
         # a <link href=""> (for CSS files) or <script src=""> (for JS files)
-        js = ('calendar_popup.js', )
+        js = (
+            'calendar_popup.js', 'import_from_url.js', 'update_from_url.js',
+            'online_country.js',
+        )
 
 
 class TaskForm(forms.ModelForm):
@@ -354,8 +364,10 @@ class PersonForm(forms.ModelForm):
 class PersonPermissionsForm(forms.ModelForm):
     class Meta:
         model = Person
-        # only display 'user_permissions', 'groups' and `is_superuser` fields
+        # only display administration-related fields: groups, permissions,
+        # being a superuser or being active (== ability to log in)
         fields = [
+            'is_active',
             'is_superuser',
             'user_permissions',
             'groups',
@@ -469,7 +481,8 @@ class SWCEventRequestForm(forms.ModelForm):
     class Meta:
         model = EventRequest
         exclude = ('active', 'created_at', 'data_types', 'data_types_other',
-                   'attendee_data_analysis_level', 'fee_waiver_request', )
+                   'attendee_data_analysis_level', 'fee_waiver_request',
+                   'assigned_to')
         widgets = {
             'approx_attendees': forms.RadioSelect(),
             'attendee_domains': forms.CheckboxSelectMultiple(),
@@ -496,7 +509,7 @@ class DCEventRequestForm(SWCEventRequestForm):
 
     class Meta(SWCEventRequestForm.Meta):
         exclude = ('active', 'created_at', 'admin_fee_payment',
-                   'attendee_computing_levels', )
+                   'attendee_computing_levels', 'assigned_to')
         widgets = {
             'approx_attendees': forms.RadioSelect(),
             'attendee_domains': forms.CheckboxSelectMultiple(),
@@ -507,9 +520,7 @@ class DCEventRequestForm(SWCEventRequestForm):
         }
 
 
-class ProfileUpdateRequestForm(forms.ModelForm):
-    captcha = ReCaptchaField()
-
+class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):
     class Meta:
         model = ProfileUpdateRequest
         exclude = ('active', 'created_at')
@@ -526,10 +537,24 @@ class ProfileUpdateRequestForm(forms.ModelForm):
         return re.sub('^@+', '', twitter_handle)
 
 
+class ProfileUpdateRequestForm(ProfileUpdateRequestFormNoCaptcha):
+    captcha = ReCaptchaField()
+
+
 class PersonLookupForm(forms.Form):
     person = selectable.AutoCompleteSelectField(
         lookup_class=lookups.PersonLookup,
         label='Person',
+        required=True,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+
+class AdminLookupForm(forms.Form):
+    person = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.AdminLookup,
+        label='Administrator',
         required=True,
         help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,

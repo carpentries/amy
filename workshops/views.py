@@ -4,11 +4,13 @@ import datetime
 import io
 import re
 import requests
+from urllib.parse import urlparse
 
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import SetPasswordForm, PasswordChangeForm
+from django.contrib.auth.models import Group
 from django.core.paginator import EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
 from django.core.exceptions import (
@@ -49,7 +51,6 @@ from workshops.models import (
     ProfileUpdateRequest,
     TodoItem,
 )
-from workshops.check import check_file
 from workshops.forms import (
     SearchForm, DebriefForm, InstructorsForm, PersonForm, PersonBulkAddForm,
     EventForm, TaskForm, TaskFullForm, bootstrap_helper, bootstrap_helper_get,
@@ -57,17 +58,23 @@ from workshops.forms import (
     PersonPermissionsForm, bootstrap_helper_filter, PersonMergeForm,
     PersonTaskForm, HostForm, SWCEventRequestForm, DCEventRequestForm,
     ProfileUpdateRequestForm, PersonLookupForm, bootstrap_helper_wider_labels,
-    SimpleTodoForm, bootstrap_helper_inline_formsets,
+    SimpleTodoForm, bootstrap_helper_inline_formsets, BootstrapHelper,
+    AdminLookupForm, ProfileUpdateRequestFormNoCaptcha,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
     create_uploaded_persons_tasks, InternalError, Paginator, merge_persons,
-    normalize_event_index_url, WrongEventURL, parse_tags_from_event_index,
-    update_event_attendance_from_tasks
+    update_event_attendance_from_tasks,
+    generate_url_to_event_index,
+    find_tags_on_event_index,
+    find_tags_on_event_website,
+    parse_tags_from_event_website,
+    validate_tags_from_event_website,
 )
 
 from workshops.filters import (
-    EventFilter, HostFilter, PersonFilter, TaskFilter, AirportFilter
+    EventFilter, HostFilter, PersonFilter, TaskFilter, AirportFilter,
+    EventRequestFilter,
 )
 
 #------------------------------------------------------------
@@ -165,14 +172,51 @@ class PermissionRequiredMixin(object):
 @login_required
 def dashboard(request):
     '''Home page.'''
-    upcoming_ongoing_events = (
+    current_events = (
         Event.objects.upcoming_events() | Event.objects.ongoing_events()
-    )
-    unpublished_events = Event.objects.unpublished_events()
-    uninvoiced_events = Event.objects.uninvoiced_events()
+    ).no_stalled()
+    uninvoiced_events = Event.objects.uninvoiced_events().no_stalled()
+    unpublished_events = Event.objects.unpublished_events().no_stalled()
+
+    user = request.user
+    is_admin = user.groups.filter(name='administrators').exists()
+
+    assigned_to = 'all'
+
+    if is_admin:
+        # One of the administrators.
+        # They should be presented with their events by default.
+        assigned_to = request.GET.get('assigned_to', 'me')
+
+    elif user.is_superuser:
+        # A superuser.  Should see all events by default
+        assigned_to = request.GET.get('assigned_to', 'all')
+
+    else:
+        # Normal user (for example subcommittee members).
+        assigned_to = 'all'
+
+    if assigned_to == 'me':
+        current_events = current_events.filter(assigned_to=user)
+        uninvoiced_events = uninvoiced_events.filter(assigned_to=user)
+        unpublished_events = unpublished_events.filter(assigned_to=user)
+
+    elif assigned_to == 'noone':
+        current_events = current_events.filter(assigned_to__isnull=True)
+        uninvoiced_events = uninvoiced_events.filter(
+            assigned_to__isnull=True)
+        unpublished_events = unpublished_events.filter(
+            assigned_to__isnull=True)
+
+    elif assigned_to == 'all':
+        # no filtering
+        pass
+
     context = {
         'title': None,
-        'upcoming_ongoing_events': upcoming_ongoing_events,
+        'is_admin': is_admin,
+        'assigned_to': assigned_to,
+        'current_events': current_events,
         'uninvoiced_events': uninvoiced_events,
         'unpublished_events': unpublished_events,
     }
@@ -818,6 +862,16 @@ def event_details(request, event_ident):
             messages.error(request, 'Fix errors in the TODO form.',
                            extra_tags='todos')
 
+    person_lookup_form = AdminLookupForm()
+    if event.assigned_to:
+        person_lookup_form = AdminLookupForm(
+            initial={'person': event.assigned_to}
+        )
+
+    person_lookup_helper = BootstrapHelper()
+    person_lookup_helper.form_action = reverse('event_assign',
+                                               args=[event_ident])
+
     context = {
         'title': 'Event {0}'.format(event),
         'event': event,
@@ -826,6 +880,8 @@ def event_details(request, event_ident):
         'todos': todos,
         'helper': bootstrap_helper,
         'today': datetime.date.today(),
+        'person_lookup_form': person_lookup_form,
+        'person_lookup_helper': person_lookup_helper,
     }
     return render(request, 'workshops/event.html', context)
 
@@ -833,30 +889,56 @@ def event_details(request, event_ident):
 @login_required
 def validate_event(request, event_ident):
     '''Check the event's home page *or* the specified URL (for testing).'''
-    page_url, error_messages = None, []
     event = Event.get_by_ident(event_ident)
-    github_url = request.GET.get('url', None)  # for manual override
-    if github_url is None:
-        github_url = event.repository_url
+
+    page_url = request.GET.get('url', None)  # for manual override
+    if page_url is None:
+        page_url = event.url
+
+    page_url = page_url.strip()
+
+    error_messages = []
 
     try:
-        page_url, _ = normalize_event_index_url(github_url)
+        # fetch page
         response = requests.get(page_url)
+        response.raise_for_status()  # assert it's 200 OK
+        content = response.text
 
-        if response.status_code != 200:
-            error_messages.append('Request for {0} returned status code {1}'
-                                  .format(page_url, response.status_code))
-        else:
-            error_messages = check_file(page_url, response.text)
-    except WrongEventURL:
-        error_messages = ["This is not a proper event URL.", ]
-    except requests.ConnectionError:
-        error_messages = ["Network connection error.", ]
+        # find tags
+        tags = find_tags_on_event_website(content)
 
-    context = {'title' : 'Validate Event {0}'.format(event),
-               'event' : event,
-               'page' : page_url,
-               'error_messages' : error_messages}
+        if 'slug' not in tags:
+            # there are no HTML tags, so let's try the old method
+            page_url = generate_url_to_event_index(page_url)
+
+            # fetch page
+            response = requests.get(page_url)
+
+            if response.status_code == 200:
+                # don't throw errors for pages we fall back to
+                content = response.text
+                tags = find_tags_on_event_index(page_url)
+
+        # validate them
+        error_messages = validate_tags_from_event_website(tags)
+
+    except requests.exceptions.HTTPError as e:
+        error_messages.append(
+            'Request for "{0}" returned status code {1}'
+            .format(page_url, e.response.status_code)
+        )
+
+    except (requests.exceptions.ConnectionError,
+            requests.exceptions.Timeout):
+        error_messages.append("Network connection error.")
+
+    context = {
+        'title': 'Validate Event {0}'.format(event),
+        'event': event,
+        'page': page_url,
+        'error_messages': error_messages,
+    }
     return render(request, 'workshops/validate_event.html', context)
 
 
@@ -965,14 +1047,79 @@ def event_delete(request, event_ident):
 def event_import(request):
     """Read tags from remote URL and return them as JSON.
 
-    This is used to read tags from workshop index page and then fill up fields
+    This is used to read tags from workshop website and then fill up fields
     on event_create form."""
+
+    url = request.POST['url'].strip()
     try:
-        url = request.POST['url']
-        translated_data = parse_tags_from_event_index(url)
-        return JsonResponse(translated_data)
-    except (KeyError, WrongEventURL):
-        raise SuspiciousOperation('Missing or wrong `url` POST parameter.')
+        # fetch page
+        response = requests.get(url)
+        response.raise_for_status()  # assert it's 200 OK
+        content = response.text
+
+        # find tags
+        tags = find_tags_on_event_website(content)
+
+        if 'slug' not in tags:
+            # there are no HTML tags, so let's try the old method
+            index_url = generate_url_to_event_index(url)
+
+            # fetch page
+            response = requests.get(index_url)
+
+            if response.status_code == 200:
+                # don't throw errors for pages we fall back to
+                content = response.text
+                tags = find_tags_on_event_index(content)
+
+                if 'slug' not in tags:
+                    # `url` should match WEBSITE_REGEX because of the check
+                    # performed in `generate_url_to_event_website`,
+                    # but, just in case someone removes that code, let's
+                    # throw ValueError here too
+                    try:
+                        tags['slug'] = Event.WEBSITE_REGEX.match(url) \
+                                                          .group('repo')
+                    except AttributeError:
+                        raise ValueError()
+
+        # normalize (parse) them
+        tags = parse_tags_from_event_website(tags)
+
+        return JsonResponse(tags)
+
+    except requests.exceptions.HTTPError as e:
+        raise SuspiciousOperation(
+            'Request for "{0}" returned status code {1}.'
+            .format(url, e.response.status_code)
+        )
+
+    except (requests.exceptions.ConnectionError,
+            requests.exceptions.Timeout):
+        raise SuspiciousOperation('Network connection error.')
+
+    except ValueError:
+        # probably matching url with Event.WEBSITE_REGEX (either here or in
+        # `generate_url_to_event_index`) failed
+        raise SuspiciousOperation('Event\'s url is in wrong format.')
+
+    except KeyError:
+        raise SuspiciousOperation('Missing or wrong "url" POST parameter.')
+
+
+@login_required
+@permission_required('workshops.change_event', raise_exception=True)
+def event_assign(request, event_ident, person_id=None):
+    """Set event.assigned_to. See `_assign` docstring for more information."""
+    try:
+        event = Event.get_by_ident(event_ident)
+
+        _assign(request, event, person_id)
+
+        return redirect(reverse('event_details', args=[event.get_ident()]))
+
+    except Event.DoesNotExist:
+        raise Http404("No event found matching the query.")
 
 #------------------------------------------------------------
 
@@ -1204,8 +1351,12 @@ def search(request):
                     Q(slug__contains=term) |
                     Q(notes__contains=term) |
                     Q(host__domain__contains=term) |
-                    Q(host__fullname__contains=term)) \
-                    .order_by('-slug')
+                    Q(host__fullname__contains=term) |
+                    Q(url__contains=term) |
+                    Q(contact__contains=term) |
+                    Q(venue__contains=term) |
+                    Q(address__contains=term)
+                ).order_by('-slug')
                 results += list(events)
 
             if form.cleaned_data['in_persons']:
@@ -1314,6 +1465,19 @@ def export_instructors(request):
     }
     return render(request, 'workshops/export.html', context)
 
+
+@login_required
+def export_members(request):
+    title = 'SCF Members'
+    json_link = reverse('api:export-members', kwargs={'format': 'json'})
+    yaml_link = reverse('api:export-members', kwargs={'format': 'yaml'})
+    context = {
+        'title': title,
+        'json_link': json_link,
+        'yaml_link': yaml_link,
+    }
+    return render(request, 'workshops/export.html', context)
+
 #------------------------------------------------------------
 
 @login_required
@@ -1374,19 +1538,23 @@ def instructor_num_taught(request):
 def workshop_issues(request):
     '''Display workshops in the database whose records need attention.'''
 
-    host = Role.objects.get(name='host')
-    instructor = Role.objects.get(name='instructor')
-    events = Event.objects.past_events().\
-        filter(Q(attendance=None) | Q(attendance=0) |
-               Q(country=None) | Q(venue=None) | Q(address=None) |
-               Q(start__gt=F('end')))
+    events = Event.objects.past_events().filter(
+        Q(attendance=None) | Q(attendance=0) |
+        Q(country=None) |
+        Q(venue=None) | Q(venue__exact='') |
+        Q(address=None) | Q(address__exact='') |
+        Q(latitude=None) | Q(longitude=None) |
+        Q(start__gt=F('end'))
+    )
+
     for e in events:
-        tasks = Task.objects.filter(event=e).\
-            filter(Q(role=host) | Q(role=instructor))
-        e.mailto_ = ','.join([t.person.email for t in tasks if t.person.email])
         e.missing_attendance_ = (not e.attendance)
-        e.missing_location_ = not e.country or not e.venue or not e.address
+        e.missing_location_ = (
+            not e.country or not e.venue or not e.address or not e.latitude or
+            not e.longitude
+        )
         e.bad_dates_ = e.start and e.end and (e.start > e.end)
+
     context = {'title': 'Workshops with Issues',
                'events': events}
     return render(request, 'workshops/workshop_issues.html', context)
@@ -1403,17 +1571,27 @@ def instructor_issues(request):
     # Everyone who's been in instructor training but doesn't yet have a badge.
     learner = Role.objects.get(name='learner')
     ttt = Tag.objects.get(name='TTT')
-    ttt_events = Event.objects.filter(tags__in=[ttt])
-    pending_instructors = Task.objects \
-        .filter(event__in=ttt_events, role=learner) \
+    stalled = Tag.objects.get(name='stalled')
+    trainees = Task.objects \
+        .filter(event__tags__in=[ttt], role=learner) \
         .exclude(person__badges__in=[instructor_badge]) \
         .order_by('person__family', 'person__personal', 'event__start') \
         .select_related('person', 'event')
+
+    pending_instructors = trainees.exclude(event__tags=stalled)
+    pending_instructors_person_ids = pending_instructors.values_list(
+        'person__pk', flat=True,
+    )
+
+    stalled_instructors = trainees \
+        .filter(event__tags=stalled) \
+        .exclude(person__id__in=pending_instructors_person_ids)
 
     context = {
         'title': 'Instructors with Issues',
         'instructors': instructors,
         'pending': pending_instructors,
+        'stalled': stalled_instructors,
     }
     return render(request, 'workshops/instructor_issues.html', context)
 
@@ -1617,24 +1795,26 @@ class DCEventRequest(SWCEventRequest):
     form_template = 'forms/workshop_dc_request.html'
 
 
-class AllEventRequests(LoginRequiredMixin, ListView):
-    active_requests = True
-    context_object_name = 'requests'
-    template_name = 'workshops/all_eventrequests.html'
+@login_required
+def all_eventrequests(request):
+    """List all event requests."""
 
-    def get_queryset(self):
-        return EventRequest.objects.filter(active=self.active_requests) \
-                                   .order_by('-created_at')
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'Workshop requests'
-        context['active_requests'] = self.active_requests
-        return context
-
-
-class AllClosedEventRequests(AllEventRequests):
-    active_requests = False
+    # Set initial value for the "active" radio select.  That's a hack, nothing
+    # else worked...
+    data = request.GET.copy()  # request.GET is immutable
+    data['active'] = data.get('active', 'true')
+    filter = EventRequestFilter(
+        data,
+        queryset=EventRequest.objects.all(),
+    )
+    eventrequests = _get_pagination_items(request, filter)
+    context = {
+        'title': 'Workshop requests',
+        'requests': eventrequests,
+        'filter': filter,
+        'form_helper': bootstrap_helper_filter,
+    }
+    return render(request, 'workshops/all_eventrequests.html', context)
 
 
 class EventRequestDetails(LoginRequiredMixin, DetailView):
@@ -1646,6 +1826,19 @@ class EventRequestDetails(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Workshop request #{}'.format(self.get_object().pk)
+
+        person_lookup_form = AdminLookupForm()
+        if self.object.assigned_to:
+            person_lookup_form = AdminLookupForm(
+                initial={'person': self.object.assigned_to}
+            )
+
+        person_lookup_helper = BootstrapHelper()
+        person_lookup_helper.form_action = reverse('eventrequest_assign',
+                                                   args=[self.object.pk])
+
+        context['person_lookup_form'] = person_lookup_form
+        context['person_lookup_helper'] = person_lookup_helper
         return context
 
 
@@ -1687,6 +1880,23 @@ def eventrequest_accept(request, request_id):
         'form': form,
     }
     return render(request, 'workshops/eventrequest_accept.html', context)
+
+
+@login_required
+@permission_required(['workshops.change_eventrequest'], raise_exception=True)
+def eventrequest_assign(request, request_id, person_id=None):
+    """Set eventrequest.assigned_to. See `_assign` docstring for more
+    information."""
+
+    try:
+        event_req = EventRequest.objects.get(pk=request_id)
+
+        _assign(request, event_req, person_id)
+
+        return redirect(reverse('eventrequest_details', args=[event_req.pk]))
+
+    except Event.DoesNotExist:
+        raise Http404("No event request found matching the query.")
 
 
 def profileupdaterequest_create(request):
@@ -1806,6 +2016,15 @@ def profileupdaterequest_details(request, request_id):
     return render(request, 'workshops/profileupdaterequest.html', context)
 
 
+class ProfileUpdateRequestFix(LoginRequiredMixin, PermissionRequiredMixin,
+                              UpdateViewContext):
+    perms = 'workshops.change_profileupdaterequest'
+    model = ProfileUpdateRequest
+    form_class = ProfileUpdateRequestFormNoCaptcha
+    pk_url_kwarg = 'request_id'
+    template_name = 'workshops/generic_form.html'
+
+
 @login_required
 @permission_required('workshops.change_profileupdaterequest',
                      raise_exception=True)
@@ -1870,7 +2089,7 @@ def profileupdaterequest_accept(request, request_id, person_id):
 
     messages.success(request,
                      '{} was updated successfully.'.format(person_name))
-    return redirect(reverse('all_profileupdaterequests'))
+    return redirect(person.get_absolute_url())
 
 #------------------------------------------------------------
 
@@ -2029,3 +2248,29 @@ def todo_delete(request, todo_id):
                      extra_tags='todos')
 
     return redirect(event_details, event_ident)
+
+
+def _assign(request, obj, person_id):
+    """Set obj.assigned_to. This view helper works with both POST and GET
+    requests:
+
+    * POST: read person ID from POST's person_1
+    * GET: read person_id from URL
+    * both: if person_id is None then make event.assigned_to empty
+    * otherwise assign matching person.
+
+    This is not a view, but it's used in some."""
+    try:
+        if request.method == "POST":
+            person_id = request.POST.get('person_1', None)
+
+        if person_id is None:
+            obj.assigned_to = None
+        else:
+            person = Person.objects.get(pk=person_id)
+            obj.assigned_to = person
+
+        obj.save()
+
+    except Person.DoesNotExist:
+        raise Http404("No person found matching the query.")

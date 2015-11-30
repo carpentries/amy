@@ -12,6 +12,14 @@ class PersonUsernameSerializer(serializers.ModelSerializer):
         fields = ('name', 'user', )
 
 
+class PersonNameEmailSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source='get_full_name')
+
+    class Meta:
+        model = Person
+        fields = ('name', 'email')
+
+
 class ExportBadgesSerializer(serializers.ModelSerializer):
     persons = PersonUsernameSerializer(many=True, source='person_set')
 
@@ -35,6 +43,7 @@ class EventSerializer(serializers.ModelSerializer):
     start = serializers.DateField(format=None)
     end = serializers.DateField(format=None)
     url = serializers.URLField(source='website_url')
+    eventbrite_id = serializers.CharField(source='reg_key')
 
     def get_humandate(self, obj):
         """Render start and end dates as human-readable short date."""
@@ -62,5 +71,5 @@ class EventSerializer(serializers.ModelSerializer):
         model = Event
         fields = (
             'slug', 'start', 'end', 'url', 'humandate', 'contact', 'country',
-            'venue', 'address', 'latitude', 'longitude',
+            'venue', 'address', 'latitude', 'longitude', 'eventbrite_id',
         )

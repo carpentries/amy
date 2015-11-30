@@ -1,0 +1,5 @@
+mailto:{{ event.mailto }}?subject={% filter urlencode %}Missing attendance figures for workshop {{ event.get_ident }}{% endfilter %}&body={% filter urlencode %}Hi,
+
+Can you please send us attendance figures for the workshop {{ event.get_ident }}?  As per our FAQ (http://software-carpentry.org/faq.html#trademark), this is one of the conditions of using the Software Carpentry name and logo, and we need to get these figures to funders.
+
+Thanks for your help.{% endfilter %}

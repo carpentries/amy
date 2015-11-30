@@ -33,6 +33,8 @@ urlpatterns = [
 
     url(r'^events/?$', views.all_events, name='all_events'),
     url(r'^event/(?P<event_ident>[\w-]+)/?$', views.event_details, name='event_details'),
+    url(r'^event/(?P<event_ident>[\w-]+)/assign$', views.event_assign, name='event_assign'),
+    url(r'^event/(?P<event_ident>[\w-]+)/assign/(?P<person_id>[\w\.-]+)$', views.event_assign, name='event_assign'),
     url(r'^event/(?P<event_ident>[\w-]+)/edit$', views.event_edit, name='event_edit'),
     url(r'^event/(?P<event_ident>[\w-]+)/delete$', views.event_delete, name='event_delete'),
     url(r'^events/add/$', views.EventCreate.as_view(), name='event_add'),
@@ -60,6 +62,7 @@ urlpatterns = [
 
     url(r'^export/badges/?$', views.export_badges, name='export_badges'),
     url(r'^export/instructors/?$', views.export_instructors, name='export_instructors'),
+    url(r'^export/members/?$', views.export_members, name='export_members'),
 
     url(r'^reports/workshops_over_time/?$', views.workshops_over_time, name='workshops_over_time'),
     url(r'^reports/learners_over_time/?$', views.learners_over_time, name='learners_over_time'),
@@ -70,17 +73,19 @@ urlpatterns = [
 
     url(r'^revision/(?P<revision_id>[\d]+)/?$', views.object_changes, name='object_changes'),
 
-    url(r'^requests/$', views.AllEventRequests.as_view(), name='all_eventrequests'),
-    url(r'^requests/closed/$', views.AllClosedEventRequests.as_view(), name='all_closed_eventrequests'),
+    url(r'^requests/$', views.all_eventrequests, name='all_eventrequests'),
     url(r'^request/(?P<request_id>\d+)/?$', views.EventRequestDetails.as_view(), name='eventrequest_details'),
     url(r'^request/(?P<request_id>\d+)/discard/?$', views.eventrequest_discard, name='eventrequest_discard'),
     url(r'^request/(?P<request_id>\d+)/accept/?$', views.eventrequest_accept, name='eventrequest_accept'),
+    url(r'^request/(?P<request_id>\d+)/assign$', views.eventrequest_assign, name='eventrequest_assign'),
+    url(r'^request/(?P<request_id>\d+)/assign/(?P<person_id>[\w\.-]+)$', views.eventrequest_assign, name='eventrequest_assign'),
     url(r'^swc/request/$', views.SWCEventRequest.as_view(), name='swc_workshop_request'),
     url(r'^dc/request/$', views.DCEventRequest.as_view(), name='dc_workshop_request'),
 
     url(r'^profile_updates/$', views.AllProfileUpdateRequests.as_view(), name='all_profileupdaterequests'),
     url(r'^profile_updates/closed/$', views.AllClosedProfileUpdateRequests.as_view(), name='all_closed_profileupdaterequests'),
     url(r'^profile_update/(?P<request_id>\d+)/?$', views.profileupdaterequest_details, name='profileupdaterequest_details'),
+    url(r'^profile_update/(?P<request_id>\d+)/fix/?$', views.ProfileUpdateRequestFix.as_view(), name='profileupdaterequest_fix'),
     url(r'^profile_update/(?P<request_id>\d+)/discard/?$', views.profileupdaterequest_discard, name='profileupdaterequest_discard'),
     url(r'^profile_update/(?P<request_id>\d+)/accept/(?P<person_id>[\w\.-]+)/?$', views.profileupdaterequest_accept, name='profileupdaterequest_accept'),
     url(r'^update_profile/$', views.profileupdaterequest_create, name='profileupdate_request'),

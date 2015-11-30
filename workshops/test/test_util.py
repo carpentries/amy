@@ -1,25 +1,27 @@
 # coding: utf-8
 import cgi
-from datetime import datetime, date
+import datetime
 from io import StringIO
-from importlib import import_module
-from unittest.mock import patch
 
-from django.conf import settings
 from django.contrib.sessions.serializers import JSONSerializer
 from django.test import TestCase
 from django.core.urlresolvers import reverse
-import requests
 
-from ..models import Host, Event, Role, Person, Task
+from ..models import Host, Event, Role, Person, Task, Badge, Award
 from ..util import (
     upload_person_task_csv,
     verify_upload_person_task,
-    normalize_event_index_url,
-    parse_tags_from_event_index,
+    generate_url_to_event_index,
+    find_tags_on_event_index,
+    find_tags_on_event_website,
+    parse_tags_from_event_website,
+    validate_tags_from_event_website,
+    get_members,
+    default_membership_cutoff,
 )
 
 from .base import TestBase
+
 
 class UploadPersonTaskCSVTestCase(TestCase):
 
@@ -108,7 +110,7 @@ class CSVBulkUploadTestBase(TestBase):
 
         Role.objects.create(name='Instructor')
         Role.objects.create(name='learner')
-        Event.objects.create(start=datetime.now(),
+        Event.objects.create(start=datetime.date.today(),
                              host=test_host,
                              slug='foobar',
                              admin_fee=100)
@@ -376,195 +378,444 @@ Harry,,Potter,harry@hogwarts.edu,foobar,learner
         self.assertEqual(1, foobar.attendance)
 
 
-class TestEventURLNormalization(TestCase):
-    def setUp(self):
-        self.test_cases = [
-            'http://user-name.github.io/2015-07-13-City/',
-            'https://user-name.github.io/2015-07-13-City/',
-            'http://user-name.github.io/2015-07-13-City',
-            'https://user-name.github.io/2015-07-13-City',
-            'http://user-name.github.io/2015-07-13-City/index.html',
-            'https://github.com/user-name/2015-07-13-City/',
-            'https://github.com/user-name/2015-07-13-City',
-            ('https://github.com/user-name/2015-07-13-City/blob/'
-             'gh-pages/index.html'),
+class TestHandlingEventTags(TestCase):
+    maxDiff = None
+
+    def test_generating_url_to_index(self):
+        tests = [
+            'http://swcarpentry.github.io/workshop-template',
+            'https://swcarpentry.github.com/workshop-template',
+            'http://swcarpentry.github.com/workshop-template/',
         ]
+        expected = ('https://raw.githubusercontent.com/swcarpentry/'
+                    'workshop-template/gh-pages/index.html')
+        for url in tests:
+            with self.subTest(url=url):
+                self.assertEqual(expected, generate_url_to_event_index(url))
 
-        self.output = ('https://raw.githubusercontent.com/user-name/'
-                       '2015-07-13-City/gh-pages/index.html')
-
-    def test_normalization(self):
-        for url in self.test_cases:
-            assert normalize_event_index_url(url)[0] == self.output
-
-
-class TestParsingEventHeaders(TestCase):
-    maxDiff = None  # enable long diff in output
-
-    # Response.status_code apparently doesn't exist by default
-    @patch.object(requests.models.Response, 'status_code', 404, create=True)
-    def test_wrong_url(self):
-        with self.assertRaises(requests.exceptions.HTTPError):
-            url = 'http://test.github.io/2015-07-13-test/'
-            parse_tags_from_event_index(url)
-
-    @patch.object(requests, 'get')
-    def test_parsing_event_index(self, mock_get):
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.text = """---
+    def test_finding_tags_on_index(self):
+        content = """---
 layout: workshop
 root: .
 venue: Euphoric State University
 address: Highway to Heaven 42, Academipolis
-country: USA
+country: us
 language: us
 latlng: 36.998977, -109.045173
 humandate: Jul 13-14, 2015
 humantime: 9:00 - 17:00
 startdate: 2015-07-13
-enddate: 2015-07-14
-instructor: ["Hermione Granger", "Harry Potter", "Ron Weasley",]
+enddate: "2015-07-14"
+instructor: ["Hermione Granger", "Ron Weasley",]
 helper: ["Peter Parker", "Tony Stark", "Natasha Romanova",]
-contact: hermione@granger.co.uk, rweasley@ministry.gov.uk
+contact: hermione@granger.co.uk, rweasley@ministry.gov
 etherpad:
 eventbrite: 10000000
----
+----
+Other content.
 """
-        url = 'http://test.github.io/2015-07-13-test/'
-        notes = """INSTRUCTORS: Hermione Granger, Harry Potter, Ron Weasley
-
-HELPERS: Peter Parker, Tony Stark, Natasha Romanova
-
-COUNTRY: USA"""
-
         expected = {
-            'slug': '2015-07-13-test',
-            'start': date(2015, 7, 13),
-            'end': date(2015, 7, 14),
-            'url': 'https://test.github.io/2015-07-13-test/',
-            'reg_key': 1e7,
-            'contact': 'hermione@granger.co.uk, rweasley@ministry.gov.uk',
-            'notes': notes,
+            'startdate': '2015-07-13',
+            'enddate': '2015-07-14',
+            'country': 'us',
             'venue': 'Euphoric State University',
             'address': 'Highway to Heaven 42, Academipolis',
-            'country': 'USA',
-            'latitude': '36.998977',
-            'longitude': '-109.045173',
+            'latlng': '36.998977, -109.045173',
+            'language': 'us',
+            'instructor': 'Hermione Granger, Ron Weasley',
+            'helper': 'Peter Parker, Tony Stark, Natasha Romanova',
+            'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
+            'eventbrite': '10000000',
         }
+        self.assertEqual(expected, find_tags_on_event_index(content))
 
-        self.assertEqual(parse_tags_from_event_index(url), expected)
-
-    @patch.object(requests, 'get')
-    def test_parsing_malformed_file(self, mock_get):
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.text = """---
-venues: Euphoric State University
-addresses: Highway to Heaven 42, Academipolis
-countries: USA
-startdates: 2015-07-13
-enddates: 2015-07-14
-instructors: ["Hermione Granger", "Harry Potter", "Ron Weasley",]
-helpers: ["Peter Parker", "Tony Stark", "Natasha Romanova",]
-contacts: hermione@granger.co.uk, rweasley@ministry.gov.uk
-eventbrites: 10000000
----
+    def test_finding_tags_on_website(self):
+        content = """
+<html><head>
+<meta name="slug" content="2015-07-13-test" />
+<meta name="startdate" content="2015-07-13" />
+<meta name="enddate" content="2015-07-14" />
+<meta name="country" content="us" />
+<meta name="venue" content="Euphoric State University" />
+<meta name="address" content="Highway to Heaven 42, Academipolis" />
+<meta name="latlng" content="36.998977, -109.045173" />
+<meta name="language" content="us" />
+<meta name="invalid" content="invalid" />
+<meta name="instructor" content="Hermione Granger|Ron Weasley" />
+<meta name="helper" content="Peter Parker|Tony Stark|Natasha Romanova" />
+<meta name="contact" content="hermione@granger.co.uk, rweasley@ministry.gov" />
+<meta name="eventbrite" content="10000000" />
+<meta name="charset" content="utf-8" />
+</head>
+<body>
+<h1>test</h1>
+</body></html>
 """
-        url = 'http://test.github.io/2015-07-13-test/'
-        notes = "INSTRUCTORS: \n\nHELPERS: \n\nCOUNTRY: "
-
         expected = {
             'slug': '2015-07-13-test',
-            'start': '',
-            'end': '',
-            'url': 'https://test.github.io/2015-07-13-test/',
-            'reg_key': '',
-            'contact': '',
-            'notes': notes,
+            'startdate': '2015-07-13',
+            'enddate': '2015-07-14',
+            'country': 'us',
+            'venue': 'Euphoric State University',
+            'address': 'Highway to Heaven 42, Academipolis',
+            'latlng': '36.998977, -109.045173',
+            'language': 'us',
+            'instructor': 'Hermione Granger|Ron Weasley',
+            'helper': 'Peter Parker|Tony Stark|Natasha Romanova',
+            'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
+            'eventbrite': '10000000',
+        }
+
+        self.assertEqual(expected, find_tags_on_event_website(content))
+
+    def test_parsing_empty_tags(self):
+        empty_dict = {}
+        expected = {
+            'slug': '',
+            'language': '',
+            'start': None,
+            'end': None,
+            'country': '',
             'venue': '',
             'address': '',
-            'country': '',
-            'latitude': '',
-            'longitude': '',
+            'latitude': None,
+            'longitude': None,
+            'reg_key': None,
+            'instructors': [],
+            'helpers': [],
+            'contact': '',
         }
+        self.assertEqual(expected, parse_tags_from_event_website(empty_dict))
 
-        self.assertEqual(parse_tags_from_event_index(url), expected)
-
-    @patch.object(requests, 'get')
-    def test_parsing_empty_list_values(self, mock_get):
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.text = """---
-venue: Euphoric State University
-address: Highway to Heaven 42, Academipolis
-country: USA
-language: us
-latlng: 36.998977, -109.045173
-humandate: Jul 13-14, 2015
-humantime: 9:00 - 17:00
-startdate: 2015-07-13
-enddate: 2015-07-14
-instructor:  # instructors
-helper:  # helpers
-contact: hermione@granger.co.uk, rweasley@ministry.gov.uk
-etherpad:
-eventbrite: 10000000
----
-"""
-        url = 'http://test.github.io/2015-07-13-test/'
-        notes = """INSTRUCTORS: \n\nHELPERS: \n\nCOUNTRY: USA"""
-
-        expected = {
+    def test_parsing_correct_tags(self):
+        tags = {
             'slug': '2015-07-13-test',
-            'start': date(2015, 7, 13),
-            'end': date(2015, 7, 14),
-            'url': 'https://test.github.io/2015-07-13-test/',
-            'reg_key': 1e7,
-            'contact': 'hermione@granger.co.uk, rweasley@ministry.gov.uk',
-            'notes': notes,
+            'startdate': '2015-07-13',
+            'enddate': '2015-07-14',
+            'country': 'us',
             'venue': 'Euphoric State University',
             'address': 'Highway to Heaven 42, Academipolis',
-            'country': 'USA',
-            'latitude': '36.998977',
-            'longitude': '-109.045173',
+            'latlng': '36.998977, -109.045173',
+            'language': 'us',
+            'instructor': 'Hermione Granger|Ron Weasley',
+            'helper': 'Peter Parker|Tony Stark|Natasha Romanova',
+            'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
+            'eventbrite': '10000000',
+        }
+        expected = {
+            'slug': '2015-07-13-test',
+            'language': 'US',
+            'start': datetime.date(2015, 7, 13),
+            'end': datetime.date(2015, 7, 14),
+            'country': 'US',
+            'venue': 'Euphoric State University',
+            'address': 'Highway to Heaven 42, Academipolis',
+            'latitude': 36.998977,
+            'longitude': -109.045173,
+            'reg_key': 10000000,
+            'instructors': ['Hermione Granger', 'Ron Weasley'],
+            'helpers': ['Peter Parker', 'Tony Stark', 'Natasha Romanova'],
+            'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
+        }
+        self.assertEqual(expected, parse_tags_from_event_website(tags))
+
+    def test_parsing_tricky_country_language(self):
+        """Ensure we always get a 2-char string or nothing."""
+        tests = [
+            (('Usa', 'English'), ('US', 'EN')),
+            (('U', 'E'), ('', '')),
+            (('', ''), ('', '')),
+        ]
+        expected = {
+            'slug': '',
+            'language': '',
+            'start': None,
+            'end': None,
+            'country': '',
+            'venue': '',
+            'address': '',
+            'latitude': None,
+            'longitude': None,
+            'reg_key': None,
+            'instructors': [],
+            'helpers': [],
+            'contact': '',
         }
 
-        self.assertEqual(parse_tags_from_event_index(url), expected)
+        for (country, language), (country_exp, language_exp) in tests:
+            with self.subTest(iso_31661=(country, language)):
+                tags = dict(country=country, language=language)
+                expected['country'] = country_exp
+                expected['language'] = language_exp
+                self.assertEqual(expected, parse_tags_from_event_website(tags))
 
-    @patch.object(requests, 'get')
-    def test_parsing_2letter_country(self, mock_get):
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.text = """---
-venue: Euphoric State University
-address: Highway to Heaven 42, Academipolis
-country: us
-startdate: 2015-07-13
-enddate: 2015-07-14
-instructor: ["Hermione Granger", "Harry Potter", "Ron Weasley",]
-helper: ["Peter Parker", "Tony Stark", "Natasha Romanova",]
-contact: hermione@granger.co.uk, rweasley@ministry.gov.uk
-eventbrite: 10000000
----
-"""
-        url = 'http://test.github.io/2015-07-13-test/'
-        rv = parse_tags_from_event_index(url)
+    def test_parsing_tricky_dates(self):
+        """Test if non-dates don't get parsed."""
+        tests = [
+            (('wrong start date', 'wrong end date'), (None, None)),
+            (('11/19/2015', '11/19/2015'), (None, None)),
+        ]
+        expected = {
+            'slug': '',
+            'language': '',
+            'start': None,
+            'end': None,
+            'country': '',
+            'venue': '',
+            'address': '',
+            'latitude': None,
+            'longitude': None,
+            'reg_key': None,
+            'instructors': [],
+            'helpers': [],
+            'contact': '',
+        }
 
-        self.assertEqual(rv['country'], 'US')
+        for (startdate, enddate), (start, end) in tests:
+            with self.subTest(dates=(startdate, enddate)):
+                tags = dict(startdate=startdate, enddate=enddate)
+                expected['start'] = start
+                expected['end'] = end
+                self.assertEqual(expected, parse_tags_from_event_website(tags))
 
-    @patch.object(requests, 'get')
-    def test_parsing_old_format_country(self, mock_get):
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.text = """---
-venue: Euphoric State University
-address: Highway to Heaven 42, Academipolis
-country: United-States
-startdate: 2015-07-13
-enddate: 2015-07-14
-instructor: ["Hermione Granger", "Harry Potter", "Ron Weasley",]
-helper: ["Peter Parker", "Tony Stark", "Natasha Romanova",]
-contact: hermione@granger.co.uk, rweasley@ministry.gov.uk
-eventbrite: 10000000
----
-"""
-        url = 'http://test.github.io/2015-07-13-test/'
-        rv = parse_tags_from_event_index(url)
+    def test_parsing_tricky_list_of_names(self):
+        """Ensure we always get a list."""
+        tests = [
+            (('', ''), ([], [])),
+            (('Hermione Granger', 'Peter Parker'),
+             (['Hermione Granger'], ['Peter Parker'])),
+            (('Harry,Ron', 'Hermione,Ginny'),
+             (['Harry,Ron'], ['Hermione,Ginny'])),
+            (('Harry| Ron', 'Hermione |Ginny'),
+             (['Harry', 'Ron'], ['Hermione', 'Ginny'])),
+        ]
+        expected = {
+            'slug': '',
+            'language': '',
+            'start': None,
+            'end': None,
+            'country': '',
+            'venue': '',
+            'address': '',
+            'latitude': None,
+            'longitude': None,
+            'reg_key': None,
+            'instructors': [],
+            'helpers': [],
+            'contact': '',
+        }
 
-        self.assertEqual(rv['country'], 'US')
+        for (instructor, helper), (instructors, helpers) in tests:
+            with self.subTest(people=(instructor, helper)):
+                tags = dict(instructor=instructor, helper=helper)
+                expected['instructors'] = instructors
+                expected['helpers'] = helpers
+                self.assertEqual(expected, parse_tags_from_event_website(tags))
+
+    def test_parsing_tricky_latitude_longitude(self):
+        tests = [
+            ('XYZ', (None, None)),
+            ('XYZ, ', (None, None)),
+            (',-123', (None, -123.0)),
+            (',', (None, None)),
+            (None, (None, None)),
+        ]
+        expected = {
+            'slug': '',
+            'language': '',
+            'start': None,
+            'end': None,
+            'country': '',
+            'venue': '',
+            'address': '',
+            'latitude': None,
+            'longitude': None,
+            'reg_key': None,
+            'instructors': [],
+            'helpers': [],
+            'contact': '',
+        }
+        for latlng, (latitude, longitude) in tests:
+            with self.subTest(latlng=latlng):
+                tags = dict(latlng=latlng)
+                expected['latitude'] = latitude
+                expected['longitude'] = longitude
+                self.assertEqual(expected, parse_tags_from_event_website(tags))
+
+    def test_parsing_tricky_eventbrite_id(self):
+        tests = [
+            ('', None),
+            ('string', None),
+            (None, None),
+        ]
+        expected = {
+            'slug': '',
+            'language': '',
+            'start': None,
+            'end': None,
+            'country': '',
+            'venue': '',
+            'address': '',
+            'latitude': None,
+            'longitude': None,
+            'reg_key': None,
+            'instructors': [],
+            'helpers': [],
+            'contact': '',
+        }
+        for eventbrite_id, reg_key in tests:
+            with self.subTest(eventbrite_id=eventbrite_id):
+                tags = dict(eventbrite=eventbrite_id)
+                expected['reg_key'] = reg_key
+                self.assertEqual(expected, parse_tags_from_event_website(tags))
+
+    def test_validating_invalid_tags(self):
+        tags = {
+            'slug': 'WRONG FORMAT',
+            'language': 'ENGLISH',
+            'startdate': '07/13/2015',
+            'enddate': '07/14/2015',
+            'country': 'USA',
+            'venue': 'Euphoric State University',
+            'address': 'Highway to Heaven 42, Academipolis',
+            'latlng': '3699e-4, -1.09e2',
+            'instructor': 'Hermione Granger, Ron Weasley',
+            'helper': 'Peter Parker, Tony Stark, Natasha Romanova',
+            'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
+            'eventbrite': 'bigmoney',
+        }
+        errors = validate_tags_from_event_website(tags)
+        assert len(errors) == 7
+        assert all([error.startswith('Invalid value') for error in errors])
+
+    def test_validating_missing_tags(self):
+        tags = {}
+        errors = validate_tags_from_event_website(tags)
+        assert len(errors) == 12
+        assert all([error.startswith('Missing') for error in errors])
+
+    def test_validating_default_tags(self):
+        tags = {
+            'slug': 'FIXME',
+            'language': 'FIXME',
+            'startdate': 'FIXME',
+            'enddate': 'FIXME',
+            'country': 'FIXME',
+            'venue': 'FIXME',
+            'address': 'FIXME',
+            'latlng': 'FIXME',
+            'eventbrite': 'FIXME',
+            'instructor': 'FIXME',
+            'helper': 'FIXME',
+            'contact': 'FIXME',
+        }
+        errors = validate_tags_from_event_website(tags)
+        assert len(errors) == 12
+        assert all([
+            error.startswith('Placeholder value "FIXME"')
+            for error in errors
+        ])
+
+    def test_validating_correct_tags(self):
+        tags = {
+            'slug': '2015-07-13-test',
+            'language': 'us',
+            'startdate': '2015-07-13',
+            'enddate': '2015-07-14',
+            'country': 'us',
+            'venue': 'Euphoric State University',
+            'address': 'Highway to Heaven 42, Academipolis',
+            'latlng': '36.998977, -109.045173',
+            'eventbrite': '10000000',
+            'instructor': 'Hermione Granger, Ron Weasley',
+            'helper': 'Peter Parker, Tony Stark, Natasha Romanova',
+            'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
+        }
+        errors = validate_tags_from_event_website(tags)
+        assert not errors
+
+
+class TestMembership(TestBase):
+    """Tests for SCF membership."""
+
+    def setUp(self):
+        super().setUp()
+        self._setUpUsersAndLogin()
+
+        one_day = datetime.timedelta(days=1)
+        one_month = datetime.timedelta(days=30)
+        three_years = datetime.timedelta(days=3 * 365)
+
+        today = datetime.date.today()
+        yesterday = today - one_day
+        tomorrow = today + one_day
+
+        # Set up events in the past, at present, and in future.
+        past = Event.objects.create(
+            host=self.host_alpha,
+            slug="in-past",
+            start=today - three_years,
+            end=tomorrow - three_years
+        )
+
+        present = Event.objects.create(
+            host=self.host_alpha,
+            slug="at-present",
+            start=today - one_month
+        )
+
+        future = Event.objects.create(
+            host=self.host_alpha,
+            slug="in-future",
+            start=today + one_month,
+            end=tomorrow + one_month
+        )
+
+        # Roles and badges.
+        instructor_role = Role.objects.create(name='instructor')
+        member_badge = Badge.objects.create(name='member')
+
+        # Spiderman is an explicit member.
+        Award.objects.create(person=self.spiderman, badge=member_badge,
+                             awarded=yesterday)
+
+        # Hermione teaches in the past, now, and in future, so she's a member.
+        Task.objects.create(event=past, person=self.hermione,
+                            role=instructor_role)
+        Task.objects.create(event=present, person=self.hermione,
+                            role=instructor_role)
+        Task.objects.create(event=future, person=self.hermione,
+                            role=instructor_role)
+
+        # Ron only teaches in the distant past, so he's not a member.
+        Task.objects.create(event=past, person=self.ron,
+                            role=instructor_role)
+
+        # Harry only teaches in the future, so he's not a member.
+        Task.objects.create(event=future, person=self.harry,
+                            role=instructor_role)
+
+    def test_members_default_cutoffs(self):
+        """Make sure default membership rules are obeyed."""
+        earliest, latest = default_membership_cutoff()
+        members = get_members(earliest=earliest, latest=latest)
+
+        self.assertIn(self.hermione, members)  # taught recently
+        self.assertNotIn(self.ron, members)  # taught too long ago
+        self.assertNotIn(self.harry, members)  # only teaching in the future
+        self.assertIn(self.spiderman, members)  # explicit member
+        self.assertEqual(len(members), 2)
+
+    def test_members_explicit_earliest(self):
+        """Make sure membership rules are obeyed with explicit earliest
+        date."""
+        # Set start date to exclude Hermione.
+        earliest = datetime.date.today() - datetime.timedelta(days=1)
+        _, latest = default_membership_cutoff()
+        members = get_members(earliest=earliest, latest=latest)
+
+        self.assertNotIn(self.hermione, members)  # taught recently
+        self.assertNotIn(self.ron, members)  # taught too long ago
+        self.assertNotIn(self.harry, members)  # only teaching in the future
+        self.assertIn(self.spiderman, members)  # explicit member
+        self.assertEqual(len(members), 1)

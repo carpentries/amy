@@ -22,6 +22,15 @@ STR_REG_KEY =  20         # length of Eventbrite registration key
 #------------------------------------------------------------
 
 
+class AssignmentMixin(models.Model):
+    """This abstract model acts as a mix-in, so it adds
+    "assigned to admin [...]" field to any inheriting model."""
+    assigned_to = models.ForeignKey("Person", null=True, blank=True,)
+
+    class Meta:
+        abstract = True
+
+
 @reversion.register
 class Host(models.Model):
     '''Represent a workshop's host.'''
@@ -78,7 +87,9 @@ class PersonManager(BaseUserManager):
         user = self.model(
             username=username, personal=personal, family=family,
             email=self.normalize_email(email),
-            is_superuser=False)
+            is_superuser=False,
+            is_active=True,
+        )
         user.set_password(password)
         user.save(using=self._db)
         return user
@@ -90,7 +101,9 @@ class PersonManager(BaseUserManager):
         user = self.model(
             username=username, personal=personal, family=family,
             email=self.normalize_email(email),
-            is_superuser=True)
+            is_superuser=True,
+            is_active=True,
+        )
         user.set_password(password)
         user.save(using=self._db)
         return user
@@ -140,6 +153,9 @@ class Person(AbstractBaseUser, PermissionsMixin):
         limit_choices_to=~Q(name__startswith='Don\'t know yet'),
         blank=True,
     )
+
+    # new people will be inactive by default
+    is_active = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = [
@@ -342,6 +358,10 @@ class Tag(models.Model):
 class EventQuerySet(models.query.QuerySet):
     '''Handles finding past, ongoing and upcoming events'''
 
+    def no_stalled(self):
+        """Exclude events marked as 'stalled'."""
+        return self.exclude(tags__name='stalled')
+
     def past_events(self):
         '''Return past events.
 
@@ -388,26 +408,33 @@ class EventQuerySet(models.query.QuerySet):
 
         return queryset
 
-    def unpublished_events(self):
-        '''Return events without URLs that are upcoming or have unknown starts.
-
-        Events are ordered by slug and then by serial number.'''
-
-        future_without_url = Q(start__gte=datetime.date.today(), url__isnull=True)
+    def unpublished_conditional(self):
+        """Return conditional for events without: start OR country OR venue OR
+        url (ie. unpublished events). This will be used in
+        `self.published_events`, too."""
         unknown_start = Q(start__isnull=True)
-        return self.filter(future_without_url | unknown_start)\
-                   .order_by('slug', 'id')
+        no_country = Q(country__isnull=True)
+        no_venue = Q(venue__exact='')
+        no_address = Q(address__exact='')
+        no_latitude = Q(latitude__isnull=True)
+        no_longitude = Q(longitude__isnull=True)
+        no_url = Q(url__isnull=True)
+        return (
+            unknown_start | no_country | no_venue | no_address | no_latitude |
+            no_longitude | no_url
+        )
+
+    def unpublished_events(self):
+        """Return events considered as unpublished (see
+        `unpublished_conditional` above)."""
+        conditional = self.unpublished_conditional()
+        return self.filter(conditional).order_by('slug', 'id')
 
     def published_events(self):
-        '''Return events that have a start date and a URL.
-
-        Events are ordered most recent first and then by serial number.'''
-
-        queryset = self.exclude(
-            Q(start__isnull=True) | Q(url__isnull=True)
-            ).order_by('-start', 'id')
-
-        return queryset
+        """Return events considered as published (see `unpublished_conditional`
+        above)."""
+        conditional = self.unpublished_conditional()
+        return self.exclude(conditional).order_by('-start', 'id')
 
     def uninvoiced_events(self):
         '''Return a queryset for events that have not yet been invoiced.
@@ -419,38 +446,8 @@ class EventQuerySet(models.query.QuerySet):
                                  .order_by('start')
 
 
-class EventManager(models.Manager):
-    '''A custom manager which is essentially a proxy for EventQuerySet'''
-
-    def get_queryset(self):
-        """Attach our custom query set to the manager."""
-        return EventQuerySet(self.model, using=self._db)
-
-    # Proxy methods so we can call our custom filters from the manager
-    # without explicitly creating an EventQuerySet first - see
-    # reference above
-
-    def past_events(self):
-        return self.get_queryset().past_events()
-
-    def ongoing_events(self):
-        return self.get_queryset().ongoing_events()
-
-    def upcoming_events(self):
-        return self.get_queryset().upcoming_events()
-
-    def unpublished_events(self):
-        return self.get_queryset().unpublished_events()
-
-    def published_events(self):
-        return self.get_queryset().published_events()
-
-    def uninvoiced_events(self):
-        return self.get_queryset().uninvoiced_events()
-
-
 @reversion.register
-class Event(models.Model):
+class Event(AssignmentMixin, models.Model):
     '''Represent a single event.'''
 
     REPO_REGEX = re.compile(r'https?://github\.com/(?P<name>[^/]+)/'
@@ -459,23 +456,36 @@ class Event(models.Model):
     WEBSITE_REGEX = re.compile(r'https?://(?P<name>[^.]+)\.github\.'
                                r'(io|com)/(?P<repo>[^/]+)/?')
     WEBSITE_FORMAT = 'https://{name}.github.io/{repo}/'
+    PUBLISHED_HELP_TEXT = 'Required in order for this event to be "published".'
 
     host = models.ForeignKey(Host, on_delete=models.PROTECT,
                              help_text='Organization hosting the event.')
-    tags       = models.ManyToManyField(Tag)
+    tags = models.ManyToManyField(
+        Tag,
+        help_text='<ul><li><i>stalled</i> — for events with lost contact with '
+                  'the host or TTT events that aren\'t running.</li>'
+                  '<li><i>unresponsive</i> – for events whose hosts and/or '
+                  'organizers aren\'t going to send us attendance data.</li>'
+                  '</ul>',
+    )
     administrator = models.ForeignKey(
         Host, related_name='administrator', null=True, blank=True,
         on_delete=models.PROTECT,
         help_text='Organization responsible for administrative work.'
     )
-    start      = models.DateField(null=True, blank=True,
-                                  help_text='Setting this and url "publishes" the event.')
+    start = models.DateField(
+        null=True, blank=True,
+        help_text=PUBLISHED_HELP_TEXT,
+    )
     end        = models.DateField(null=True, blank=True)
     slug       = models.CharField(max_length=STR_LONG, null=True, blank=True, unique=True)
-    url        = models.CharField(max_length=STR_LONG, unique=True, null=True, blank=True,
-                                  validators=[RegexValidator(REPO_REGEX, inverse_match=True)],
-                                  help_text='Setting this and startdate "publishes" the event.<br />'
-                                            'Use link to the event\'s website.')
+    url = models.CharField(
+        max_length=STR_LONG, unique=True, null=True, blank=True,
+        validators=[RegexValidator(REPO_REGEX, inverse_match=True)],
+        help_text=PUBLISHED_HELP_TEXT +
+                  '<br />Use link to the event\'s <b>website</b>, ' +
+                  'not repository.',
+    )
     reg_key    = models.CharField(max_length=STR_REG_KEY, null=True, blank=True, verbose_name="Eventbrite key")
     attendance = models.PositiveIntegerField(null=True, blank=True)
     admin_fee  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)])
@@ -483,6 +493,8 @@ class Event(models.Model):
         ('unknown', 'Unknown'),
         ('invoiced', 'Invoiced'),
         ('not-invoiced', 'Not invoiced'),
+        ('ni-historic', 'Not invoiced for historical reasons'),
+        ('ni-member', 'Not invoiced because of membership'),
         ('na-self-org', 'Not applicable because self-organized'),
         ('na-waiver', 'Not applicable because waiver granted'),
         ('na-other', 'Not applicable because other arrangements made'),
@@ -495,11 +507,23 @@ class Event(models.Model):
     )
     notes      = models.TextField(default="", blank=True)
     contact = models.CharField(max_length=255, default="", blank=True)
-    country = CountryField(null=True, blank=True)
-    venue = models.CharField(max_length=255, default='', blank=True)
-    address = models.CharField(max_length=255, default='', blank=True)
-    latitude = models.FloatField(null=True, blank=True)
-    longitude = models.FloatField(null=True, blank=True)
+    country = CountryField(
+        null=True, blank=True,
+        help_text=PUBLISHED_HELP_TEXT +
+                  '<br />Use <b>Online</b> for online events.',
+    )
+    venue = models.CharField(
+        max_length=255, default='', blank=True, help_text=PUBLISHED_HELP_TEXT,
+    )
+    address = models.CharField(
+        max_length=255, default='', blank=True, help_text=PUBLISHED_HELP_TEXT,
+    )
+    latitude = models.FloatField(
+        null=True, blank=True, help_text=PUBLISHED_HELP_TEXT,
+    )
+    longitude = models.FloatField(
+        null=True, blank=True, help_text=PUBLISHED_HELP_TEXT,
+    )
 
     completed = models.BooleanField(
         default=False,
@@ -509,8 +533,8 @@ class Event(models.Model):
     class Meta:
         ordering = ('-start', )
 
-    # Set the custom manager
-    objects = EventManager()
+    # make a custom manager from our QuerySet derivative
+    objects = EventQuerySet.as_manager()
 
     def __str__(self):
         return self.get_ident()
@@ -563,13 +587,39 @@ class Event(models.Model):
         """Indicate if the event has been invoiced or not."""
         return self.invoice_status == 'not-invoiced'
 
+    @property
+    def mailto(self):
+        """Return list of emails we can contact about workshop details, like
+        attendance."""
+        from workshops.util import find_emails
+
+        emails = Task.objects \
+            .filter(event=self) \
+            .filter(
+                # we only want hosts, organizers and instructors
+                Q(role__name='host') | Q(role__name='organizer') |
+                Q(role__name='instructor')
+            ) \
+            .filter(person__may_contact=True) \
+            .exclude(Q(person__email='') | Q(person__email=None)) \
+            .values_list('person__email', flat=True)
+
+        additional_emails = find_emails(self.contact)
+        # Emails will become an iterator in 1.9 (ValuesListQuerySet previously)
+        # so we need a normal list that will be extended by that iterator.
+        # Bonus points: it works in 1.8.x too!
+        additional_emails.extend(emails)
+        return ','.join(additional_emails)
+
     def get_invoice_form_url(self):
+        from .util import universal_date_format
+
         query = {
             'entry.823772951': self.venue,  # Organization to invoice
             'entry.351294200': 'Workshop administrative fee',  # Reason
 
             # Date of event
-            'entry.1749215879': ('{:%Y-%m-%d}'.format(self.start)
+            'entry.1749215879': (universal_date_format(self.start)
                                  if self.start else ''),
             'entry.508035854': self.slug,  # Event or item ID
             'entry.821460022': self.admin_fee,  # Total invoice amount
@@ -600,10 +650,18 @@ class Event(models.Model):
     def save(self, *args, **kwargs):
         self.slug = self.slug or None
         self.url = self.url or None
+
+        if self.country == 'W3':
+            # enforce location data for 'Online' country
+            self.venue = 'Internet'
+            self.address = 'Internet'
+            self.latitude = -48.876667
+            self.longitude = -123.393333
+
         super(Event, self).save(*args, **kwargs)
 
 
-class EventRequest(models.Model):
+class EventRequest(AssignmentMixin, models.Model):
     active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     name = models.CharField(max_length=STR_MED)
@@ -934,8 +992,11 @@ class TodoItem(models.Model):
         ordering = ["due", "title"]
 
     def __str__(self):
+        from .util import universal_date_format
+
         if self.due:
-            return "{title} due {due:%Y-%m-%d}".format(title=self.title,
-                                                       due=self.due)
+            return "{title} due {due}".format(
+                title=self.title, due=universal_date_format(self.due),
+            )
         else:
             return self.title

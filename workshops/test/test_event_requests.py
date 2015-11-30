@@ -155,13 +155,13 @@ class TestEventRequestsViews(TestBase):
 
     def test_active_requests_list(self):
         rv = self.client.get(reverse('all_eventrequests'))
-        assert self.er1 in rv.context['object_list']
-        assert self.er2 not in rv.context['object_list']
+        assert self.er1 in rv.context['requests']
+        assert self.er2 not in rv.context['requests']
 
     def test_inactive_requests_list(self):
-        rv = self.client.get(reverse('all_closed_eventrequests'))
-        assert self.er1 not in rv.context['object_list']
-        assert self.er2 in rv.context['object_list']
+        rv = self.client.get(reverse('all_eventrequests') + '?active=false')
+        assert self.er1 not in rv.context['requests']
+        assert self.er2 in rv.context['requests']
 
     def test_active_request_view(self):
         rv = self.client.get(reverse('eventrequest_details',

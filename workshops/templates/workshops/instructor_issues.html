@@ -1,7 +1,7 @@
 {% extends "workshops/_page.html" %}
 
 {% block content %}
-<h2>Instructors</h2>
+<h2>Instructor Locations</h2>
 {% if instructors %}
 <p><span class="glyphicon glyphicon-envelope"></span> = mail instructor about problem</p>
 <p><span class="glyphicon glyphicon-remove"></span> = no email address available</p>
@@ -33,7 +33,7 @@ Thanks for your help.{% endfilter %}">
 <p>None</p>
 {% endif %}
 
-<h2>Pending</h2>
+<h2>Incomplete Trainees</h2>
 {% if pending %}
   <p><span class="glyphicon glyphicon-envelope"></span> = mail person about problem</p>
   <p><span class="glyphicon glyphicon-remove"></span> = no email address available</p>
@@ -71,6 +71,30 @@ Thanks for your help.{% endfilter %}">
 {% else %}
   <p>None.</p>
 {% endif %}
+
+<h2>Stalled Trainees</h2>
+{% if stalled %}
+  <table class="table table-striped">
+    <tr>
+      <th>Person</th>
+      <th>Training(s) <a href="#" data-toggle="tooltip" title="Instructor Training(s) not finished and marked as stalled">[?]</a></th>
+    </tr>
+    {% regroup stalled by person as trainings %}
+    {% for person_training in trainings %}
+    <tr>
+      <td><a href="{% url 'person_details' person_training.grouper.id %}">{{ person_training.grouper.get_full_name }}</a></td>
+      <td>
+        {% for e in person_training.list %}
+          <a href="{% url 'event_details' e.event.get_ident %}">{{ e.event }}</a>{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+{% else %}
+  <p>None.</p>
+{% endif %}
+
 {% endblock %}
 
 {% block extrajs %}

@@ -1,5 +1,6 @@
 import datetime
 import json
+from unittest.mock import patch
 
 from django.core.urlresolvers import reverse
 from rest_framework import status
@@ -13,9 +14,10 @@ from workshops.models import (
     Event,
     Host,
 )
+from workshops.util import universal_date_format
 
 
-class TestListingPastEvents(APITestCase):
+class TestListingPublishedEvents(APITestCase):
     view = PublishedEvents
     serializer_class = EventSerializer
     url = 'api:events-published'
@@ -49,6 +51,7 @@ class TestListingPastEvents(APITestCase):
             host=host, latitude=3, longitude=-2, venue='University',
             address='On the street', country='US', contact='sb@sth.edu',
             url='http://github.com/user/repository/',
+            reg_key='12341234',
         )
         # event with missing start
         self.event4 = Event.objects.create(
@@ -63,11 +66,38 @@ class TestListingPastEvents(APITestCase):
             host=host, latitude=3, longitude=-2, venue='University',
             address='On the street', country='US', contact='sb@sth.edu',
         )
+        # event with missing country
+        self.event6 = Event.objects.create(
+            slug='event6', start=future - delta_2d, end=future + delta_2d,
+            host=host, latitude=3, longitude=-2, venue='University',
+            address='On the street', country=None, contact='sb@sth.edu',
+            url='http://url6/',
+        )
+        # event with missing venue
+        self.event7 = Event.objects.create(
+            slug='event7', start=future - delta_2d, end=future + delta_2d,
+            host=host, latitude=3, longitude=-2, venue='',
+            address='On the street', country='US', contact='sb@sth.edu',
+            url='http://url7/',
+        )
         # event with missing both start and URL
         self.event8 = Event.objects.create(
             slug='event8', end=future + delta_1d,
             host=host, latitude=3.1, longitude=-1.9, venue='University',
             address='On the street', country='US', contact='sb@sth.edu',
+        )
+        # event with missing both country and venue
+        self.event9 = Event.objects.create(
+            slug='event9', start=future - delta_2d, end=future + delta_1d,
+            host=host, latitude=3.1, longitude=-1.9, venue='',
+            address='On the street', country=None, contact='sb@sth.edu',
+            url='http://url9/',
+        )
+        # event with missing start, URL, country, and venue
+        self.event10 = Event.objects.create(
+            slug='event10', end=future + delta_1d,
+            host=host, latitude=3.1, longitude=-1.9, venue='',
+            address='On the street', country=None, contact='sb@sth.edu',
         )
 
         self.expecting = [
@@ -83,6 +113,7 @@ class TestListingPastEvents(APITestCase):
                 'country': 'US',
                 'url': 'https://user.github.io/repository/',
                 'contact': 'sb@sth.edu',
+                'eventbrite_id': '12341234',
             },
             {
                 'slug': 'event2',
@@ -98,6 +129,7 @@ class TestListingPastEvents(APITestCase):
                 'country': 'US',
                 'url': 'https://user.github.io/repository/',
                 'contact': 'sb@sth.edu',
+                'eventbrite_id': None,
             },
             {
                 'slug': 'event1',
@@ -111,10 +143,14 @@ class TestListingPastEvents(APITestCase):
                 'country': 'US',
                 'url': 'https://user.github.io/repository/',
                 'contact': 'sb@sth.edu',
+                'eventbrite_id': None,
             },
         ]
 
-    def test_serialization(self):
+    @patch.object(PublishedEvents, 'request', query_params={}, create=True)
+    def test_serialization(self, mock_request):
+        # we're mocking a request here because it's not possible to create
+        # a fake request context for the view
         response = self.serializer_class(self.view().get_queryset(), many=True)
         self.assertEqual(response.data, self.expecting)
 
@@ -122,8 +158,9 @@ class TestListingPastEvents(APITestCase):
         # turn dates into strings for the sake of this test
         for i, event in enumerate(self.expecting):
             for date in ['start', 'end']:
-                self.expecting[i][date] = '{:%Y-%m-%d}' \
-                                          .format(self.expecting[i][date])
+                self.expecting[i][date] = universal_date_format(
+                    self.expecting[i][date],
+                )
 
         # test only JSON output
         url = reverse(self.url)

@@ -1,11 +1,28 @@
 {% extends "workshops/_page.html" %}
 
+{% load crispy_forms_tags %}
+
 {% block content %}
 {% if not object.active %}
   <div class="alert alert-warning" role="alert">
     <p><strong>Warning:</strong> This request was closed.</p>
   </div>
 {% endif %}
+
+<div class="row">
+  <div class="col-md-6 col-md-offset-6 text-right">
+    <p>
+      <a href="#" id="change_assignment"><span class="glyphicon glyphicon-cog"></span></a>
+      Assignee:
+      {% if object.assigned_to %}
+        <a href="{{ object.assigned_to.get_absolute_url }}">{{ object.assigned_to.get_full_name }}</a> (<a href="{% url 'eventrequest_assign' object.pk %}" id="clear-assignment">clear</a>).
+      {% else %}
+        no one (<a href="{% url 'eventrequest_assign' object.pk user.pk %}" id="assign-yourself">assign yourself</a>).
+      {% endif %}
+    </p>
+  </div>
+</div>
+
 {% include "workshops/eventrequest_email_html.html" %}
 
 {% if object.active %}
@@ -26,4 +43,31 @@
   </p>
 </div>
 {% endif %}
+
+<!-- selecting assignment modal -->
+<div class="modal fade" id="assignment_modal" tabindex="-1" role="dialog" aria-labelledby="assignment_modal_label" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="assignment_modal_label">Assignment</h4>
+      </div>
+      <div class="modal-body">
+        {% crispy person_lookup_form person_lookup_helper %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block extrajs %}
+<script type="text/javascript">
+  $('#change_assignment').click(function() {
+    $('#assignment_modal').modal();
+    return false;
+  });
+</script>
+{% endblock %}
 {% endblock %}

@@ -1,5 +1,6 @@
 import datetime
 import json
+from unittest.mock import patch
 
 from django.core.urlresolvers import reverse
 from rest_framework import status
@@ -8,17 +9,16 @@ from rest_framework.test import APITestCase
 from api.views import (
     ExportBadgesView,
     ExportInstructorLocationsView,
-)
-from api.serializers import (
-    ExportBadgesSerializer,
-    ExportInstructorLocationsSerializer,
+    ExportMembersView,
 )
 from workshops.models import (
     Badge,
     Award,
     Person,
     Airport,
+    Role
 )
+from workshops.util import universal_date_format
 
 
 class TestExportingBadges(APITestCase):
@@ -118,6 +118,61 @@ class TestExportingInstructors(APITestCase):
         # test only JSON output
         url = reverse('api:export-instructors')
         response = self.client.get(url, format='json')
+        content = response.content.decode('utf-8')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(json.loads(content), self.expecting)
+
+
+class TestExportingMembers(APITestCase):
+    def setUp(self):
+        # Note: must create instructor badge for get_members query to run.
+        # Same for instructor role
+        Badge.objects.create(name='instructor', title='Instructor',
+                             criteria='')
+        Role.objects.create(name='instructor')
+
+        self.spiderman = Person.objects.create(
+            personal='Peter', middle='Q.', family='Parker',
+            email='peter@webslinger.net',
+            username="spiderman")
+
+        self.member = Badge.objects.create(name='member',
+                                           title='Member',
+                                           criteria='')
+
+        Award.objects.create(person=self.spiderman,
+                             badge=self.member,
+                             awarded=datetime.date(2014, 1, 1))
+
+        self.expecting = [
+            {
+                'name': 'Peter Q. Parker',
+                'email': 'peter@webslinger.net'
+            },
+        ]
+
+    @patch.object(ExportMembersView, 'request', query_params={}, create=True)
+    def test_serialization(self, mock_request):
+        # we're mocking a request here because it's not possible to create
+        # a fake request context for the view
+        view = ExportMembersView()
+        serializer = view.get_serializer_class()
+        response = serializer(view.get_queryset(), many=True)
+        self.assertEqual(response.data, self.expecting)
+
+    def test_view_default_cutoffs(self):
+        # test only JSON output
+        url = reverse('api:export-members')
+        response = self.client.get(url, format='json')
+        content = response.content.decode('utf-8')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(json.loads(content), self.expecting)
+
+    def test_view_explicit_earliest(self):
+        url = reverse('api:export-members')
+        data = {'earliest': universal_date_format(datetime.date.today())}
+
+        response = self.client.get(url, data, format='json')
         content = response.content.decode('utf-8')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(json.loads(content), self.expecting)
