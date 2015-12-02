@@ -8,6 +8,7 @@ from django.core.urlresolvers import reverse
 from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
 from django.db.models import Q
+from django.utils import timezone
 
 from django_countries.fields import CountryField
 import reversion
@@ -39,6 +40,9 @@ class Host(models.Model):
     fullname   = models.CharField(max_length=STR_LONG, unique=True)
     country    = CountryField(null=True, blank=True)
     notes      = models.TextField(default="", blank=True)
+    membership = models.OneToOneField(
+        "Membership", null=True, on_delete=models.SET_NULL,
+    )
 
     def __str__(self):
         return self.domain
@@ -48,6 +52,85 @@ class Host(models.Model):
 
     class Meta:
         ordering = ('domain', )
+
+
+@reversion.register
+class Membership(models.Model):
+    """Represent a details of Host's membership."""
+
+    MEMBERSHIP_CHOICES = (
+        ('partner', 'Partner'),
+        ('affiliate', 'Affiliate'),
+        ('sponsor', 'Sponsor'),
+    )
+    variant = models.CharField(
+        max_length=STR_MED, null=False, blank=False,
+        choices=MEMBERSHIP_CHOICES,
+    )
+    agreement_start = models.DateField(
+        default=timezone.now, null=True, blank=True, editable=True,
+    )
+    agreement_end = models.DateField(
+        default=timezone.now, null=True, blank=True, editable=True,
+    )
+    CONTRIBUTION_CHOICES = (
+        ('financial', 'Financial'),
+        ('person-days', 'Person-days'),
+        ('other', 'Other'),
+    )
+    contribution_type = models.CharField(
+        max_length=STR_MED, null=True, blank=True,
+        choices=CONTRIBUTION_CHOICES,
+    )
+    workshops_without_admin_fee_per_year = models.PositiveIntegerField(
+        null=True, blank=True,
+        help_text="Acceptable number of workshops without admin fee per year",
+    )
+    self_organized_workshops_per_year = models.PositiveIntegerField(
+        null=True, blank=True,
+        help_text="Imposed number of self-organized workshops per year",
+    )
+    notes = models.TextField(default="", blank=True)
+
+    def __str__(self):
+        return "{} Membership of <{}>".format(self.variant, str(self.host))
+
+    @property
+    def workshops_without_admin_fee_per_year_completed(self):
+        """Count workshops without admin fee hosted this year."""
+        current_year = datetime.date.today().year
+        self_organized = (Q(administrator=None) |
+                          Q(administrator__domain='self-organized'))
+        no_fee = Q(admin_fee=0) | Q(admin_fee=None)
+
+        return Event.objects.filter(host=self.host, start__year=current_year) \
+                            .filter(no_fee) \
+                            .exclude(self_organized).count()
+
+    @property
+    def workshops_without_admin_fee_per_year_remaining(self):
+        """Count remaining workshops w/o admin fee for current year."""
+        a = self.workshops_without_admin_fee_per_year
+        b = self.workshops_without_admin_fee_per_year_completed
+        return a - b
+
+    @property
+    def self_organized_workshops_per_year_completed(self):
+        """Count self-organized workshops hosted this year."""
+        current_year = datetime.date.today().year
+        self_organized = (Q(administrator=None) |
+                          Q(administrator__domain='self-organized'))
+
+        return Event.objects.filter(host=self.host, start__year=current_year) \
+                            .filter(self_organized).count()
+
+    @property
+    def self_organized_workshops_per_year_remaining(self):
+        """Count remaining self-organized workshops for current year."""
+        a = self.self_organized_workshops_per_year
+        b = self.self_organized_workshops_per_year_completed
+        return a - b
+
 
 #------------------------------------------------------------
 
