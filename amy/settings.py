@@ -234,3 +234,20 @@ REST_FRAMEWORK = {
         'user': '1000/day'
     }
 }
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,  # merge with default configuration
+    'handlers': {
+        'null': {
+            'class': 'logging.NullHandler',
+        },
+    },
+    'loggers': {
+        # disable "Invalid HTTP_HOST" notifications
+        'django.security.DisallowedHost': {
+            'handlers': ['null'],
+            'propagate': False,
+        },
+    },
+}
