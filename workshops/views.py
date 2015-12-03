@@ -45,6 +45,7 @@ from workshops.models import (
     Person,
     Role,
     Host,
+    Membership,
     Tag,
     Task,
     EventRequest,
@@ -59,7 +60,7 @@ from workshops.forms import (
     PersonTaskForm, HostForm, SWCEventRequestForm, DCEventRequestForm,
     ProfileUpdateRequestForm, PersonLookupForm, bootstrap_helper_wider_labels,
     SimpleTodoForm, bootstrap_helper_inline_formsets, BootstrapHelper,
-    AdminLookupForm, ProfileUpdateRequestFormNoCaptcha,
+    AdminLookupForm, ProfileUpdateRequestFormNoCaptcha, MembershipForm,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
@@ -291,6 +292,43 @@ def host_delete(request, host_domain):
         return redirect(reverse('all_hosts'))
     except ProtectedError as e:
         return _failed_to_delete(request, host, e.protected_objects)
+
+
+def membership_create(request, host_domain):
+    host = get_object_or_404(Host, domain=host_domain, membership=None)
+    form = MembershipForm()
+
+    if request.method == "POST":
+        form = MembershipForm(request.POST)
+        if form.is_valid():
+            membership = form.save()
+            host.membership = membership
+            host.save()
+
+            messages.success(request,
+                             'Membership was successfully added to the host')
+
+            return redirect(reverse('host_details', args=[host.domain]))
+
+    context = {
+        'title': 'New membership for host {}'.format(host),
+        'form': form,
+        'form_helper': bootstrap_helper,
+    }
+    return render(request, 'workshops/generic_form.html', context)
+
+
+class MembershipUpdate(LoginRequiredMixin, PermissionRequiredMixin,
+                       UpdateViewContext):
+    perms = 'workshops.change_membership'
+    model = Membership
+    form_class = MembershipForm
+    pk_url_kwarg = 'membership_id'
+    template_name = 'workshops/generic_form.html'
+
+    def get_success_url(self):
+        return reverse('host_details', args=[self.object.host.domain])
+
 
 
 #------------------------------------------------------------

@@ -67,4 +67,20 @@
     {% endif %}
   </p>
 </div>
+
+<h3>Membership</h3>
+{% if host.membership %}
+{% include "workshops/membership.html" with membership=host.membership %}
+<div class="clearfix">
+  <p class="edit-object pull-left">
+    {% if perms.workshops.change_host %}
+    <a href="{% url 'membership_edit' host.membership.pk %}" class="btn btn-primary">Edit membership</a>
+    {% else %}
+    <a href="#" class="btn btn-primary disabled">Edit membership</a>
+    {% endif %}
+  </p>
+</div>
+{% else %}
+<p>No membership for this host. <a href="{% url 'membership_add' host.domain %}">Add membership</a>.</p>
+{% endif %}
 {% endblock %}
