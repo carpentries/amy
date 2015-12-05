@@ -68,19 +68,61 @@
   </p>
 </div>
 
-<h3>Membership</h3>
-{% if host.membership %}
-{% include "workshops/membership.html" with membership=host.membership %}
-<div class="clearfix">
-  <p class="edit-object pull-left">
-    {% if perms.workshops.change_host %}
-    <a href="{% url 'membership_edit' host.membership.pk %}" class="btn btn-primary">Edit membership</a>
-    {% else %}
-    <a href="#" class="btn btn-primary disabled">Edit membership</a>
-    {% endif %}
-  </p>
-</div>
+<h3>Memberships</h3>
+{% if host.membership_set.all %}
+<table class="table table-striped">
+  <tr>
+    <th>Variant</th>
+    <th>Agreement start</th>
+    <th>Agreement end</th>
+    <th>Contribution type</th>
+    <th colspan="3">Workshops w/o admin fee <a href="#" data-toggle="tooltip" title="Per year, counted for year of agreement start">[?]</a></th>
+    <th colspan="3">Self-organized workshops <a href="#" data-toggle="tooltip" title="Per year, counted for year of agreement start">[?]</a></th>
+    <th class="additional-links"></th>
+  </tr>
+  <tr>
+    <th></th><th></th><th></th><th></th>
+    <th><small>Imposed</small></th><th><small>Completed</small></th><th><small>Remaining</small></th>
+    <th><small>Imposed</small></th><th><small>Completed</small></th><th><small>Remaining</small></th>
+    <th></th>
+  </tr>
+  {% for membership in host.membership_set.all %}
+  <tr>
+    <td>{{ membership.get_variant_display }}</td>
+    <td>{{ membership.agreement_start }}</td>
+    <td>{{ membership.agreement_end }}</td>
+    <td>{{ membership.get_contribution_type_display }}</td>
+    <td>{{ membership.workshops_without_admin_fee_per_year }}</td>
+    <td>{{ membership.workshops_without_admin_fee_per_year_completed }}</td>
+    <td>{{ membership.workshops_without_admin_fee_per_year_remaining }}</td>
+    <td>{{ membership.self_organized_workshops_per_year }}</td>
+    <td>{{ membership.self_organized_workshops_per_year_completed }}</td>
+    <td>{{ membership.self_organized_workshops_per_year_remaining }}</td>
+    <td>
+      {% if perms.workshops.edit_membership %}
+      <a href="{% url 'membership_edit' membership.pk %}" title="Edit {{ membership }}"><span class="glyphicon glyphicon-pencil"></span></a>
+      {% endif %}
+      &nbsp;
+      {% if perms.workshops.delete_membership %}
+      <a href="{% url 'membership_delete' membership.pk %}" title="View {{ membership }}" onclick='return confirm("Are you sure you wish to remove \"{{ membership }}\"?")'><span class="glyphicon glyphicon-remove"></span></a>
+      {% endif %}
+  </tr>
+  {% endfor %}
+</table>
 {% else %}
-<p>No membership for this host. <a href="{% url 'membership_add' host.domain %}">Add membership</a>.</p>
+<p>No memberships for this host.</p>
 {% endif %}
+{% if perms.workshops.add_membership and perms.workshops.change_host %}
+<a href="{% url 'membership_add' host.domain %}" class="btn btn-default">Add a membership</a>
+{% else %}
+<a href="#" class="btn btn-default disabled">Add a membership</a>
+{% endif %}
+{% endblock %}
+
+{% block extrajs %}
+<script type="text/javascript">
+$(function () {
+  $('[data-toggle="tooltip"]').tooltip()
+})
+</script>
 {% endblock %}

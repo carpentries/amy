@@ -479,6 +479,7 @@ class MembershipForm(forms.ModelForm):
     class Meta:
         model = Membership
         fields = '__all__'
+        widgets = {'host': HiddenInput, }
 
     class Media:
         js = ('calendar_popup.js', )

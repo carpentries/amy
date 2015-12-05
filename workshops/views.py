@@ -294,16 +294,17 @@ def host_delete(request, host_domain):
         return _failed_to_delete(request, host, e.protected_objects)
 
 
+@login_required
+@permission_required(['workshops.add_membership', 'workshops.change_host'],
+                     raise_exception=True)
 def membership_create(request, host_domain):
-    host = get_object_or_404(Host, domain=host_domain, membership=None)
-    form = MembershipForm()
+    host = get_object_or_404(Host, domain=host_domain)
+    form = MembershipForm(initial={'host': host})
 
     if request.method == "POST":
         form = MembershipForm(request.POST)
         if form.is_valid():
-            membership = form.save()
-            host.membership = membership
-            host.save()
+            form.save()
 
             messages.success(request,
                              'Membership was successfully added to the host')
@@ -328,6 +329,20 @@ class MembershipUpdate(LoginRequiredMixin, PermissionRequiredMixin,
 
     def get_success_url(self):
         return reverse('host_details', args=[self.object.host.domain])
+
+
+@login_required
+@permission_required('workshops.delete_membership', raise_exception=True)
+def membership_delete(request, membership_id):
+    """Delete specific membership."""
+    try:
+        membership = get_object_or_404(Membership, pk=membership_id)
+        host = membership.host
+        membership.delete()
+        messages.success(request, 'Membership was deleted successfully.')
+        return redirect(reverse('host_details', args=[host.domain]))
+    except ProtectedError as e:
+        return _failed_to_delete(request, host, e.protected_objects)
 
 
 
@@ -869,6 +884,7 @@ def all_events(request):
 
 
 @login_required
+@permission_required('workshops.add_todoitem', raise_exception=True)
 def event_details(request, event_ident):
     '''List details of a particular event.'''
     try:
