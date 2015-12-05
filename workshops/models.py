@@ -97,36 +97,39 @@ class Membership(models.Model):
 
     @property
     def workshops_without_admin_fee_per_year_completed(self):
-        """Count workshops without admin fee hosted this year."""
-        current_year = datetime.date.today().year
+        """Count workshops without admin fee hosted the year agreement
+        started."""
+        year = self.agreement_start.year
         self_organized = (Q(administrator=None) |
                           Q(administrator__domain='self-organized'))
         no_fee = Q(admin_fee=0) | Q(admin_fee=None)
 
-        return Event.objects.filter(host=self.host, start__year=current_year) \
+        return Event.objects.filter(host=self.host, start__year=year) \
                             .filter(no_fee) \
                             .exclude(self_organized).count()
 
     @property
     def workshops_without_admin_fee_per_year_remaining(self):
-        """Count remaining workshops w/o admin fee for current year."""
+        """Count remaining workshops w/o admin fee for the year agreement
+        started."""
         a = self.workshops_without_admin_fee_per_year
         b = self.workshops_without_admin_fee_per_year_completed
         return a - b
 
     @property
     def self_organized_workshops_per_year_completed(self):
-        """Count self-organized workshops hosted this year."""
-        current_year = datetime.date.today().year
+        """Count self-organized workshops hosted the year agreement started."""
+        year = self.agreement_start.year
         self_organized = (Q(administrator=None) |
                           Q(administrator__domain='self-organized'))
 
-        return Event.objects.filter(host=self.host, start__year=current_year) \
+        return Event.objects.filter(host=self.host, start__year=year) \
                             .filter(self_organized).count()
 
     @property
     def self_organized_workshops_per_year_remaining(self):
-        """Count remaining self-organized workshops for current year."""
+        """Count remaining self-organized workshops for the year agreement
+        started."""
         a = self.self_organized_workshops_per_year
         b = self.self_organized_workshops_per_year_completed
         return a - b
