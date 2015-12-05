@@ -40,9 +40,6 @@ class Host(models.Model):
     fullname   = models.CharField(max_length=STR_LONG, unique=True)
     country    = CountryField(null=True, blank=True)
     notes      = models.TextField(default="", blank=True)
-    membership = models.OneToOneField(
-        "Membership", null=True, on_delete=models.SET_NULL,
-    )
 
     def __str__(self):
         return self.domain
@@ -91,6 +88,8 @@ class Membership(models.Model):
         help_text="Imposed number of self-organized workshops per year",
     )
     notes = models.TextField(default="", blank=True)
+    host = models.ForeignKey(Host, null=False, blank=False,
+                             on_delete=models.PROTECT)
 
     def __str__(self):
         return "{} Membership of <{}>".format(self.variant, str(self.host))
