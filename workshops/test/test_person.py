@@ -173,7 +173,7 @@ class TestPerson(TestBase):
                                                    self.spiderman.id)
         assert 'award-badge' in values
 
-        values['award-badge'] = self.instructor.pk
+        values['award-badge'] = self.swc_instructor.pk
         values['award-event_1'] = ''
         rv = self.client.post(url, data=values)
         assert rv.status_code == 302, \
@@ -182,7 +182,7 @@ class TestPerson(TestBase):
 
         # make sure the award was recorded in the database
         self.spiderman.refresh_from_db()
-        assert self.instructor == self.spiderman.award_set.all()[0].badge
+        assert self.swc_instructor == self.spiderman.award_set.all()[0].badge
 
     def test_person_add_task(self):
         self._setUpEvents()  # set up some events for us

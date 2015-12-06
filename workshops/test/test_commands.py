@@ -223,7 +223,7 @@ class TestUpgradeInstructorProfile(TestBase):
         }
         correct, errors, warnings = self.cmd.check_entry(entry)
         assert correct  # we want people even though they aren't instructors
-        assert 'This person does not have an instructor badge' in warnings[0]
+        assert 'This person does not have any instructor badge' in warnings[0]
 
         # check non-existing airport
         entry = {
