@@ -837,7 +837,10 @@ def event_details(request, event_ident):
         event = Event.get_by_ident(event_ident)
     except Event.DoesNotExist:
         raise Http404('Event matching query does not exist.')
-    tasks = Task.objects.filter(event__id=event.id).order_by('role__name')
+
+    tasks = Task.objects.filter(event__id=event.id) \
+                        .select_related('person', 'role') \
+                        .order_by('role__name')
     todos = event.todoitem_set.all()
     todo_form = SimpleTodoForm(prefix='todo', initial={
         'event': event,
@@ -1523,10 +1526,11 @@ def instructor_num_taught(request):
                     person__task__role__name='instructor',
                     then=Value(1)
                 ),
-            output_field=IntegerField()
+                output_field=IntegerField()
             )
         )
-    ).filter(person__may_contact=True).order_by('-num_taught', 'awarded')
+    ).select_related('person', 'person__airport') \
+     .filter(person__may_contact=True).order_by('-num_taught', 'awarded')
     context = {'title': 'Frequency of Instruction',
                'awards': awards}
     return render(request, 'workshops/instructor_num_taught.html', context)
