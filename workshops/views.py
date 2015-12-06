@@ -1314,6 +1314,10 @@ def instructors(request):
             if data['gender']:
                 instructors = instructors.filter(gender=data['gender'])
 
+            if data['instructor_badges']:
+                for badge in data['instructor_badges']:
+                    instructors = instructors.filter(badges__name=badge)
+
     instructors = _get_pagination_items(request, instructors)
     context = {
         'title': 'Find Instructors',

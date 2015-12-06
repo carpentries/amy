@@ -2,6 +2,7 @@
 
 {% load crispy_forms_tags %}
 {% load pagination %}
+{% load tags %}
 
 {% block sidebar %}
   <h3>Filter</h3>
@@ -16,6 +17,7 @@
         <th>taught</th>
         <th>airport</th>
         <th style="width: 150px">country</th>
+        <th>instructor badge</th>
         <th>lessons</th>
         <th>affiliation</th>
       </tr>
@@ -25,6 +27,13 @@
         <td>{{ p.num_taught }}</td>
         <td>{% if p.airport %}<a href="{{ p.airport.get_absolute_url }}">{{ p.airport }}</a>{% else %}—{% endif %}</td>
         <td>{% if p.airport %}{{ p.airport.country.name }}{% else %}—{% endif %}</td>
+        <td>{% for badge in p.badges.all %}
+        {% if badge.name == 'swc-instructor' %}
+          {% bootstrap_tag 'SWC' %}
+        {% elif badge.name == 'dc-instructor' %}
+          {% bootstrap_tag 'DC' %}
+        {% endif %}
+        {% endfor %}</td>
         <td>
         {% for lesson in p.lessons.all %}
           {% if lesson in lessons %}<strong>{{ lesson }}</strong>{% else %}{{ lesson }}{% endif %}{% if not forloop.last%}, {% endif %}

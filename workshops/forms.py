@@ -110,6 +110,16 @@ class InstructorsForm(forms.Form):
                                              widget=CheckboxSelectMultiple(),
                                              required=False)
 
+    INSTRUCTOR_BADGE_CHOICES = (
+        ('swc-instructor', 'Software Carpentry Instructor'),
+        ('dc-instructor', 'Data Carpentry Instructor'),
+    )
+    instructor_badges = forms.MultipleChoiceField(
+        choices=INSTRUCTOR_BADGE_CHOICES,
+        widget=CheckboxSelectMultiple(),
+        required=False,
+    )
+
     GENDER_CHOICES = ((None, '---------'), ) + Person.GENDER_CHOICES
     gender = forms.ChoiceField(choices=GENDER_CHOICES, required=False)
 
@@ -157,6 +167,7 @@ class InstructorsForm(forms.Form):
             ),
             'gender',
             'lessons',
+            'instructor_badges',
             FormActions(
                 Submit('submit', 'Submit'),
             ),
