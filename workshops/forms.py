@@ -18,7 +18,6 @@ from workshops.models import (
 )
 from workshops import lookups
 
-INSTRUCTORS_NUM = 10  # how many instrutors to return from a search by default
 
 AUTOCOMPLETE_HELP_TEXT = (
     "Autocomplete field; type characters to view available options, "
