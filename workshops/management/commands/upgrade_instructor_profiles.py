@@ -290,11 +290,12 @@ class Command(BaseCommand):
                                           entry['family']))
 
             # check if the person really is an instructor
-            instructor_badge = Badge.objects.get(name='instructor')
-            if person and instructor_badge not in person.badges.all():
+            instructor_badges = Badge.objects.filter(
+                name__endswith='instructor')
+            if person and not (instructor_badges & person.badges.all()):
                 # it's not an error, because we want to have that person in the
                 # database even though they aren't certified instructor
-                warnings.append('This person does not have an instructor'
+                warnings.append('This person does not have any instructor'
                                 ' badge')
 
             # cache airport IATA codes

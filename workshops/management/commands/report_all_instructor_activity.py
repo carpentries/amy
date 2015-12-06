@@ -16,10 +16,10 @@ class Command(BaseCommand):
         if len(args) != 0:
             raise CommandError('Usage: report_all_instructor_activity')
 
-        instructor_badge = Badge.objects.get(name='instructor')
+        instructor_badges = Badge.objects.filter(name__endswith='instructor')
 
         result = []
-        all_awards = Award.objects.filter(badge=instructor_badge)
+        all_awards = Award.objects.filter(badge__in=instructor_badges)
         for award in all_awards:
             person = award.person
             if not person.email:
