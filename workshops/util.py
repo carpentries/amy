@@ -366,6 +366,12 @@ def merge_persons(person_from, person_to):
     person_from.delete()
 
 
+class WrongWorkshopURL(ValueError):
+    def __str__(self):
+        return ('Event\'s URL doesn\'t match Github website format '
+                '"http://user.github.com/2015-12-08-workshop".')
+
+
 def generate_url_to_event_index(website_url):
     """Given URL to workshop's website, generate a URL to its raw `index.html`
     file in GitHub repository."""
@@ -375,8 +381,8 @@ def generate_url_to_event_index(website_url):
 
     results = regex.match(website_url)
     if results:
-        return template.format(**results.groupdict())
-    raise ValueError('URL does not match Event.WEBSITE_REGEX.')
+        return template.format(**results.groupdict()), results.group('repo')
+    raise WrongWorkshopURL()
 
 ALLOWED_TAG_NAMES = [
     'slug', 'startdate', 'enddate', 'country', 'venue', 'address',
