@@ -1,6 +1,22 @@
 #!/usr/bin/env python
 
-'''Mail people to check their activity based on YAML dump of Amy database.'''
+'''
+Mail people to check their activity based on YAML dump of Amy
+database.  This is a stand-alone script rather than built into the
+management command report_all_instructor_activity because it needs to
+run on our server (so that the mail messages come from the right
+machine).  The workflow is:
+
+1. Get a local copy of the AMY database.
+
+2. make all-activity > activity.yml.
+
+3. Copy this script and activity.yml to the server.
+
+4. python this-script < activity.yml to test.
+
+5. python this-script --real < activity.yml to send email.
+'''
 
 import sys
 import os
@@ -16,10 +32,11 @@ comfortable teaching, and would also like to update our list of where
 people are and what they've taught.  We would therefore be grateful if
 you could take ninety seconds to fill in:
 
-  https://docs.google.com/forms/d/1NA2z3mXnrz4ZfEV02rk6vwdK4M180_sYpVjUQBt-yMc/viewform
+  https://amy.software-carpentry.org/workshops/update_profile/
 
-If you would rather not receive mail from us in future, please reply
-to this message and we'll remove you from our contact list.
+If you would rather not receive mail from us in future, please mail
+admin@software-carpentry.org and we will remove you from our contact
+list.
 
 name: {name}
 preferred email: {email}
