@@ -312,7 +312,7 @@ def all_airports(request):
 @login_required
 def airport_details(request, airport_iata):
     '''List details of a particular airport.'''
-    airport = Airport.objects.get(iata=airport_iata)
+    airport = get_object_or_404(Airport, iata=airport_iata)
     context = {'title' : 'Airport {0}'.format(airport),
                'airport' : airport}
     return render(request, 'workshops/airport.html', context)
@@ -373,7 +373,7 @@ def all_persons(request):
 @login_required
 def person_details(request, person_id):
     '''List details of a particular person.'''
-    person = Person.objects.get(id=person_id)
+    person = get_object_or_404(Person, id=person_id)
     awards = person.award_set.all()
     tasks = person.task_set.all()
     lessons = person.lessons.all()
@@ -583,12 +583,9 @@ class PersonCreate(LoginRequiredMixin, PermissionRequiredMixin,
                       'workshops.add_task'],
                      raise_exception=True)
 def person_edit(request, person_id):
-    try:
-        person = Person.objects.get(pk=person_id)
-        awards = person.award_set.order_by('badge__name')
-        tasks = person.task_set.order_by('-event__slug')
-    except ObjectDoesNotExist:
-        raise Http404("No person found matching the query.")
+    person = get_object_or_404(Person, id=person_id)
+    awards = person.award_set.order_by('badge__name')
+    tasks = person.task_set.order_by('-event__slug')
 
     person_form = PersonForm(prefix='person', instance=person)
     award_form = PersonAwardForm(prefix='award', initial={
@@ -834,8 +831,10 @@ def all_events(request):
 @login_required
 def event_details(request, event_ident):
     '''List details of a particular event.'''
-
-    event = Event.get_by_ident(event_ident)
+    try:
+        event = Event.get_by_ident(event_ident)
+    except Event.DoesNotExist:
+        raise Http404('Event matching query does not exist.')
     tasks = Task.objects.filter(event__id=event.id).order_by('role__name')
     todos = event.todoitem_set.all()
     todo_form = SimpleTodoForm(prefix='todo', initial={
@@ -889,7 +888,10 @@ def event_details(request, event_ident):
 @login_required
 def validate_event(request, event_ident):
     '''Check the event's home page *or* the specified URL (for testing).'''
-    event = Event.get_by_ident(event_ident)
+    try:
+        event = Event.get_by_ident(event_ident)
+    except Event.DoesNotExist:
+        raise Http404('Event matching query does not exist.')
 
     page_url = request.GET.get('url', None)  # for manual override
     if page_url is None:
@@ -1143,7 +1145,7 @@ def all_tasks(request):
 @login_required
 def task_details(request, task_id):
     '''List details of a particular task.'''
-    task = Task.objects.get(pk=task_id)
+    task = get_object_or_404(Task, pk=task_id)
     context = {'title' : 'Task {0}'.format(task),
                'task' : task}
     return render(request, 'workshops/task.html', context)
@@ -1216,7 +1218,7 @@ def all_badges(request):
 def badge_details(request, badge_name):
     '''List details of a particular event.'''
 
-    badge = Badge.objects.get(name=badge_name)
+    badge = get_object_or_404(Badge, name=badge_name)
 
     initial = {
         'badge': badge,
@@ -1887,16 +1889,9 @@ def eventrequest_accept(request, request_id):
 def eventrequest_assign(request, request_id, person_id=None):
     """Set eventrequest.assigned_to. See `_assign` docstring for more
     information."""
-
-    try:
-        event_req = EventRequest.objects.get(pk=request_id)
-
-        _assign(request, event_req, person_id)
-
-        return redirect(reverse('eventrequest_details', args=[event_req.pk]))
-
-    except Event.DoesNotExist:
-        raise Http404("No event request found matching the query.")
+    event_req = get_object_or_404(EventRequest, pk=request_id)
+    _assign(request, event_req, person_id)
+    return redirect(reverse('eventrequest_details', args=[event_req.pk]))
 
 
 def profileupdaterequest_create(request):
@@ -2098,7 +2093,10 @@ def profileupdaterequest_accept(request, request_id, person_id):
 @permission_required('workshops.add_todoitem', raise_exception=True)
 def todos_add(request, event_ident):
     """Add a standard TodoItems for a specific event."""
-    event = Event.get_by_ident(event_ident)
+    try:
+        event = Event.get_by_ident(event_ident)
+    except Event.DoesNotExist:
+        raise Http404('Event matching query does not exist.')
 
     dt = datetime.datetime
     timedelta = datetime.timedelta
