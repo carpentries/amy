@@ -16,12 +16,13 @@
         <h4 class="modal-title" id="import_url_modal_label">Import event data from URL</h4>
       </div>
       <div class="modal-body">
+        <div class="alert alert-danger hidden" id="error_message"></div>
         <form id="import_url_form">
           {% csrf_token %}
           <div class="form-group">
             <label for="event_import_url" class="control-label">Event URL:</label>
             <input type="url" id="event_import_url" name="url" required class="form-control" />
-            <p class="help-block">Either URL to the event's website or to it's repository <code>index.html</code> will work.</p>
+            <p class="help-block">Use URL to the event's website, for example <code>http://swcarpentry.github.io/workshop-template/</code>.</p>
           </div>
           <button type="submit" class="btn btn-primary" data-loading-text="Loading..." autocomplete="off">Import</button>
         </form>

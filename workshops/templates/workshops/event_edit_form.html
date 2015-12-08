@@ -16,12 +16,13 @@
           <h4 class="modal-title" id="update_url_modal_label">Update event data from URL</h4>
         </div>
         <div class="modal-body">
+          <div class="alert alert-danger hidden" id="error_message"></div>
           <form id="update_url_form">
             {% csrf_token %}
             <div class="form-group">
               <label for="event_update_url" class="control-label">Event URL:</label>
               <input type="url" id="event_update_url" name="url" required="required" class="form-control" value="{{ object.url }}" />
-              <p class="help-block">Either URL to the event's website or to it's repository <code>index.html</code> will work.</p>
+              <p class="help-block">Use URL to the event's website, for example <code>http://swcarpentry.github.io/workshop-template/</code>.</p>
             </div>
             <div class="form-group">
               <div class="radio">
