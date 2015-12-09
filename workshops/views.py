@@ -361,7 +361,7 @@ def all_persons(request):
         queryset=Person.objects.all().defer('notes')  # notes are too large
     )
     # faster method
-    instructors = Badge.objects.filter(name__endswith='instructor') \
+    instructors = Badge.objects.instructor_badges() \
                                .values_list('person', flat=True)
     persons = _get_pagination_items(request, filter)
     context = {'title' : 'All Persons',
@@ -1253,7 +1253,7 @@ def badge_details(request, badge_name):
 @login_required
 def instructors(request):
     '''Search for instructors.'''
-    instructor_badges = Badge.objects.filter(name__endswith='instructor')
+    instructor_badges = Badge.objects.instructor_badges()
     instructors = Person.objects.filter(badges__in=instructor_badges) \
                                 .filter(airport__isnull=False) \
                                 .select_related('airport') \
@@ -1511,7 +1511,7 @@ def learners_over_time(request):
 def instructors_over_time(request):
     '''Export CSV of count of instructors vs. time.'''
 
-    badges = Badge.objects.filter(name__endswith='instructor')
+    badges = Badge.objects.instructor_badges()
     data = dict(Award.objects.filter(badge__in=badges)
                      .values_list('awarded')
                      .annotate(Count('person__id')))
@@ -1522,7 +1522,7 @@ def instructors_over_time(request):
 def instructor_num_taught(request):
     '''Export CSV of how often instructors have taught.'''
 
-    badges = Badge.objects.filter(name__endswith='instructor')
+    badges = Badge.objects.instructor_badges()
     awards = Award.objects.filter(badge__in=badges).annotate(
         num_taught=Count(
             Case(
@@ -1571,7 +1571,7 @@ def instructor_issues(request):
     '''Display instructors in the database who need attention.'''
 
     # Everyone who has a badge but needs attention.
-    instructor_badges = Badge.objects.filter(name__endswith='instructor')
+    instructor_badges = Badge.objects.instructor_badges()
     instructors = Person.objects.filter(badges__in=instructor_badges) \
                                 .filter(airport__isnull=True)
 
@@ -1993,7 +1993,7 @@ def profileupdaterequest_details(request, request_id):
     if person:
         # check if the person has instructor badge
         person.has_instructor_badge = Award.objects.filter(
-            badge__name__endswith='instructor', person=person
+            badge__in=Badge.objects.instructor_badges(), person=person
         ).exists()
 
     try:

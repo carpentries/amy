@@ -577,7 +577,7 @@ def get_members(earliest, latest):
     '''Get everyone who is a member of the Software Carpentry Foundation.'''
 
     member_badge = Badge.objects.get(name='member')
-    instructor_badges = Badge.objects.filter(name__endswith='instructor')
+    instructor_badges = Badge.objects.instructor_badges()
     instructor_role = Role.objects.get(name='instructor')
 
     # Everyone who is an explicit member.

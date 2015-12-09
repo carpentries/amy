@@ -16,7 +16,7 @@ class Command(BaseCommand):
         if len(args) != 0:
             raise CommandError('Usage: report_all_instructor_activity')
 
-        instructor_badges = Badge.objects.filter(name__endswith='instructor')
+        instructor_badges = Badge.objects.instructor_badges()
 
         result = []
         all_awards = Award.objects.filter(badge__in=instructor_badges)

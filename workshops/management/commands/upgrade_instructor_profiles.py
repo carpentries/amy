@@ -290,8 +290,7 @@ class Command(BaseCommand):
                                           entry['family']))
 
             # check if the person really is an instructor
-            instructor_badges = Badge.objects.filter(
-                name__endswith='instructor')
+            instructor_badges = Badge.objects.instructor_badges()
             if person and not (instructor_badges & person.badges.all()):
                 # it's not an error, because we want to have that person in the
                 # database even though they aren't certified instructor

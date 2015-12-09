@@ -27,7 +27,7 @@ class Command(BaseCommand):
                                if tt.event.start >= since])
 
         # Subtract people who have badges.
-        instructor_badges = Badge.objects.filter(name__endswith='instructor')
+        instructor_badges = Badge.objects.instructor_badges()
         instructor_awards = Award.objects.filter(badge__in=instructor_badges)
         for ia in instructor_awards:
             if ia.person in training_tasks:
