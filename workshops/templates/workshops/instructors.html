@@ -27,12 +27,8 @@
         <td>{{ p.num_taught }}</td>
         <td>{% if p.airport %}<a href="{{ p.airport.get_absolute_url }}">{{ p.airport }}</a>{% else %}—{% endif %}</td>
         <td>{% if p.airport %}{{ p.airport.country.name }}{% else %}—{% endif %}</td>
-        <td>{% for badge in p.badges.all %}
-        {% if badge.name == 'swc-instructor' %}
-          {% bootstrap_tag 'SWC' %}
-        {% elif badge.name == 'dc-instructor' %}
-          {% bootstrap_tag 'DC' %}
-        {% endif %}
+        <td>{% for badge in p.badges.instructor_badges %}
+        {% bootstrap_tag badge.name|cut:"-instructor"|upper %}
         {% endfor %}</td>
         <td>
         {% for lesson in p.lessons.all %}
