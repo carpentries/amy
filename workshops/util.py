@@ -367,9 +367,14 @@ def merge_persons(person_from, person_to):
 
 
 class WrongWorkshopURL(ValueError):
+    """Raised when we fall back to reading tags from event's YAML front matter,
+    which requires a link to GitHub raw hosted file, but we can't get that link
+    because provided URL doesn't match Event.WEBSITE_REGEX
+    (see `generate_url_to_event_index` below)."""
+
     def __str__(self):
         return ('Event\'s URL doesn\'t match Github website format '
-                '"http://user.github.com/2015-12-08-workshop".')
+                '"http://user.github.io/2015-12-08-workshop".')
 
 
 def generate_url_to_event_index(website_url):
