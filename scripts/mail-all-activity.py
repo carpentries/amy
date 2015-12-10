@@ -1,25 +1,63 @@
 #!/usr/bin/env python
 
-'''Mail people to check their activity based on YAML dump of Amy database.'''
+'''
+Mail people to check their activity based on YAML dump of Amy
+database.  This is a stand-alone script rather than built into the
+management command report_all_instructor_activity because it needs to
+run on our server (so that the mail messages come from the right
+machine).  The workflow is:
+
+1. Get a local copy of the AMY database.
+
+2. make all-activity > activity.yml.
+
+3. Copy this script and activity.yml to the server.
+
+4. python this-script < activity.yml to test.
+
+5. python this-script --real < activity.yml to send email.
+'''
 
 import sys
 import os
 import yaml
+import time
 
 
 USAGE = 'Usage: mail-all-activity [-r|--real] [filename]'
 
 SUBJECT = 'Updating your Software Carpentry information'
 
-BODY = '''We are changing the way we track the lessons that people are
-comfortable teaching, and would also like to update our list of where
-people are and what they've taught.  We would therefore be grateful if
-you could take ninety seconds to fill in:
+BODY = '''Hi,
 
-  https://docs.google.com/forms/d/1NA2z3mXnrz4ZfEV02rk6vwdK4M180_sYpVjUQBt-yMc/viewform
+The next election for the Software Carpentry Foundation Steering
+Committee [1] is going to be held in February 2016 [2], and to
+prepare, we'd like to make sure our records are up to date.  If your
+location, email, or location are out of date in the information below,
+please update them using:
 
-If you would rather not receive mail from us in future, please reply
-to this message and we'll remove you from our contact list.
+  https://amy.software-carpentry.org/workshops/update_profile/
+
+Please also check the information about workshops you've been involved
+in -- if any details are missing or incorrect, please mail
+admin@software-carpentry.org.  And if you have taught any self
+organized workshops, we'd like to add them to your records as well, so
+please send the date, location, instructors, number of attendees, and
+workshop website to the same address.
+
+If you would rather not receive mail from us in future, please mail
+admin@software-carpentry.org and we will remove you from our contact
+list.
+
+Thanks for all you've done for Software Carpentry - you're the ones
+who make what we do possible, and we look forward to continuing
+working with you.
+
+[1] http://software-carpentry.org/scf/
+
+[2] http://software-carpentry.org/blog/2015/12/call-for-candidates-elections-2016.html
+
+----------------------------------------
 
 name: {name}
 preferred email: {email}
@@ -55,10 +93,15 @@ def process(sender, reader):
     '''Process the YAML data loaded through reader.'''
 
     info = yaml.load(reader)
+    first = True
+    count = 0
     for record in info:
         address, subject, body = make_message(record)
-        sender(address, subject, body)
-
+        sender(first, address, subject, body)
+        first = False
+        count += 1
+        print(count, address, file=sys.stderr)
+        time.sleep(1)
 
 def make_message(record):
     '''Construct address, subject, and body of message.'''
@@ -100,22 +143,25 @@ def format_can_teach(can_teach):
 def format_task(task):
     '''Format tasks and collaborators for inclusion in the message body.'''
 
-    return 'You were a {0} at {1} with {2}'.format(
+    return '{0} at {1} with {2}'.format(
         task['role'],
         task['slug'],
         ', '.join(task['others']))
 
 
-def display(address, subject, body):
+def display(first, address, subject, body):
     '''Display a message that is not being sent.'''
 
+    if not first:
+        print('-' * 40)
+        print('')
     print('To:', address)
     print('Subject:', subject)
     print(body)
     print()
 
 
-def send(address, subject, body):
+def send(first, address, subject, body):
     '''Send email.'''
 
     sender = 'admin@software-carpentry.org'
@@ -123,7 +169,6 @@ def send(address, subject, body):
     writer = os.popen(command, 'w')
     writer.write(body)
     writer.close()
-    print(address, file=sys.stderr)
 
 def fail(msg):
     '''Halt and catch fire.'''

@@ -32,7 +32,7 @@ class Command(BaseCommand):
                       'role': t.role.name,
                       'others': self.others(t.event, person)}
                      for t in tasks]
-            can_teach = self.qualifications(person)
+            can_teach = self.lessons(person)
             record = {'name': person.get_full_name(),
                       'email': person.email,
                       'airport': person.airport.iata
@@ -53,5 +53,5 @@ class Command(BaseCommand):
                             .exclude(person=person)
         return [t.person.get_full_name() for t in tasks]
 
-    def qualifications(self, person):
-        return [q.skill.name for q in Qualification.objects.filter(person=person)]
+    def lessons(self, person):
+        return [q.lesson.name for q in Qualification.objects.filter(person=person)]

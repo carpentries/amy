@@ -16,11 +16,11 @@ from django.core.urlresolvers import reverse
 from django.core.exceptions import (
     ObjectDoesNotExist,
     PermissionDenied,
-    SuspiciousOperation,
 )
 from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 from django.http import Http404, HttpResponse, JsonResponse
+from django.http import HttpResponseBadRequest
 from django.db import IntegrityError
 from django.db.models import Count, Sum, Q, F, Model, ProtectedError
 from django.db.models import Case, When, Value, IntegerField
@@ -65,6 +65,7 @@ from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
     create_uploaded_persons_tasks, InternalError, Paginator, merge_persons,
     update_event_attendance_from_tasks,
+    WrongWorkshopURL,
     generate_url_to_event_index,
     find_tags_on_event_index,
     find_tags_on_event_website,
@@ -312,7 +313,7 @@ def all_airports(request):
 @login_required
 def airport_details(request, airport_iata):
     '''List details of a particular airport.'''
-    airport = Airport.objects.get(iata=airport_iata)
+    airport = get_object_or_404(Airport, iata=airport_iata)
     context = {'title' : 'Airport {0}'.format(airport),
                'airport' : airport}
     return render(request, 'workshops/airport.html', context)
@@ -373,7 +374,7 @@ def all_persons(request):
 @login_required
 def person_details(request, person_id):
     '''List details of a particular person.'''
-    person = Person.objects.get(id=person_id)
+    person = get_object_or_404(Person, id=person_id)
     awards = person.award_set.all()
     tasks = person.task_set.all()
     lessons = person.lessons.all()
@@ -583,12 +584,9 @@ class PersonCreate(LoginRequiredMixin, PermissionRequiredMixin,
                       'workshops.add_task'],
                      raise_exception=True)
 def person_edit(request, person_id):
-    try:
-        person = Person.objects.get(pk=person_id)
-        awards = person.award_set.order_by('badge__name')
-        tasks = person.task_set.order_by('-event__slug')
-    except ObjectDoesNotExist:
-        raise Http404("No person found matching the query.")
+    person = get_object_or_404(Person, id=person_id)
+    awards = person.award_set.order_by('badge__name')
+    tasks = person.task_set.order_by('-event__slug')
 
     person_form = PersonForm(prefix='person', instance=person)
     award_form = PersonAwardForm(prefix='award', initial={
@@ -834,8 +832,10 @@ def all_events(request):
 @login_required
 def event_details(request, event_ident):
     '''List details of a particular event.'''
-
-    event = Event.get_by_ident(event_ident)
+    try:
+        event = Event.get_by_ident(event_ident)
+    except Event.DoesNotExist:
+        raise Http404('Event matching query does not exist.')
     tasks = Task.objects.filter(event__id=event.id).order_by('role__name')
     todos = event.todoitem_set.all()
     todo_form = SimpleTodoForm(prefix='todo', initial={
@@ -889,7 +889,10 @@ def event_details(request, event_ident):
 @login_required
 def validate_event(request, event_ident):
     '''Check the event's home page *or* the specified URL (for testing).'''
-    event = Event.get_by_ident(event_ident)
+    try:
+        event = Event.get_by_ident(event_ident)
+    except Event.DoesNotExist:
+        raise Http404('Event matching query does not exist.')
 
     page_url = request.GET.get('url', None)  # for manual override
     if page_url is None:
@@ -910,7 +913,7 @@ def validate_event(request, event_ident):
 
         if 'slug' not in tags:
             # there are no HTML tags, so let's try the old method
-            page_url = generate_url_to_event_index(page_url)
+            page_url, _ = generate_url_to_event_index(page_url)
 
             # fetch page
             response = requests.get(page_url)
@@ -922,6 +925,9 @@ def validate_event(request, event_ident):
 
         # validate them
         error_messages = validate_tags_from_event_website(tags)
+
+    except WrongWorkshopURL as e:
+        error_messages.append(str(e))
 
     except requests.exceptions.HTTPError as e:
         error_messages.append(
@@ -1062,7 +1068,7 @@ def event_import(request):
 
         if 'slug' not in tags:
             # there are no HTML tags, so let's try the old method
-            index_url = generate_url_to_event_index(url)
+            index_url, repository = generate_url_to_event_index(url)
 
             # fetch page
             response = requests.get(index_url)
@@ -1073,15 +1079,7 @@ def event_import(request):
                 tags = find_tags_on_event_index(content)
 
                 if 'slug' not in tags:
-                    # `url` should match WEBSITE_REGEX because of the check
-                    # performed in `generate_url_to_event_website`,
-                    # but, just in case someone removes that code, let's
-                    # throw ValueError here too
-                    try:
-                        tags['slug'] = Event.WEBSITE_REGEX.match(url) \
-                                                          .group('repo')
-                    except AttributeError:
-                        raise ValueError()
+                    tags['slug'] = repository
 
         # normalize (parse) them
         tags = parse_tags_from_event_website(tags)
@@ -1089,22 +1087,20 @@ def event_import(request):
         return JsonResponse(tags)
 
     except requests.exceptions.HTTPError as e:
-        raise SuspiciousOperation(
+        return HttpResponseBadRequest(
             'Request for "{0}" returned status code {1}.'
             .format(url, e.response.status_code)
         )
 
     except (requests.exceptions.ConnectionError,
             requests.exceptions.Timeout):
-        raise SuspiciousOperation('Network connection error.')
+        return HttpResponseBadRequest('Network connection error.')
 
-    except ValueError:
-        # probably matching url with Event.WEBSITE_REGEX (either here or in
-        # `generate_url_to_event_index`) failed
-        raise SuspiciousOperation('Event\'s url is in wrong format.')
+    except WrongWorkshopURL as e:
+        return HttpResponseBadRequest(str(e))
 
     except KeyError:
-        raise SuspiciousOperation('Missing or wrong "url" POST parameter.')
+        return HttpResponseBadRequest('Missing or wrong "url" POST parameter.')
 
 
 @login_required
@@ -1143,7 +1139,7 @@ def all_tasks(request):
 @login_required
 def task_details(request, task_id):
     '''List details of a particular task.'''
-    task = Task.objects.get(pk=task_id)
+    task = get_object_or_404(Task, pk=task_id)
     context = {'title' : 'Task {0}'.format(task),
                'task' : task}
     return render(request, 'workshops/task.html', context)
@@ -1216,7 +1212,7 @@ def all_badges(request):
 def badge_details(request, badge_name):
     '''List details of a particular event.'''
 
-    badge = Badge.objects.get(name=badge_name)
+    badge = get_object_or_404(Badge, name=badge_name)
 
     initial = {
         'badge': badge,
@@ -1887,16 +1883,9 @@ def eventrequest_accept(request, request_id):
 def eventrequest_assign(request, request_id, person_id=None):
     """Set eventrequest.assigned_to. See `_assign` docstring for more
     information."""
-
-    try:
-        event_req = EventRequest.objects.get(pk=request_id)
-
-        _assign(request, event_req, person_id)
-
-        return redirect(reverse('eventrequest_details', args=[event_req.pk]))
-
-    except Event.DoesNotExist:
-        raise Http404("No event request found matching the query.")
+    event_req = get_object_or_404(EventRequest, pk=request_id)
+    _assign(request, event_req, person_id)
+    return redirect(reverse('eventrequest_details', args=[event_req.pk]))
 
 
 def profileupdaterequest_create(request):
@@ -2098,7 +2087,10 @@ def profileupdaterequest_accept(request, request_id, person_id):
 @permission_required('workshops.add_todoitem', raise_exception=True)
 def todos_add(request, event_ident):
     """Add a standard TodoItems for a specific event."""
-    event = Event.get_by_ident(event_ident)
+    try:
+        event = Event.get_by_ident(event_ident)
+    except Event.DoesNotExist:
+        raise Http404('Event matching query does not exist.')
 
     dt = datetime.datetime
     timedelta = datetime.timedelta

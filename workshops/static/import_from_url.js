@@ -14,6 +14,7 @@ $('#import_url_form').submit(function(e) {
   $.post("/workshops/events/import/", $(this).find(":input"), function(data) {
     $("#event_import_url").parent().removeClass('has-error');
     $('#import_url_modal').modal('hide');
+    $('#error_message').addClass('hidden');
 
     $("#id_slug").val(data.slug);
     $("#id_start").val(data.start);
@@ -35,6 +36,8 @@ $('#import_url_form').submit(function(e) {
   .fail(function(data) {
     // something went wrong, let's indicate it
     $("#event_import_url").parent().addClass('has-error');
+    $('#error_message').text(data.responseText);
+    $('#error_message').removeClass('hidden');
   })
   .always(function(data) {
     // let's always reenable the form's submit when the request finishes

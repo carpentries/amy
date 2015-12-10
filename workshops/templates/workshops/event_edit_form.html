@@ -7,45 +7,7 @@
   <button type="button" class="btn btn-default" id="update_url_button">Update from URL</button>
   {% crispy event_form %}
 
-  <!-- Event update from URL modal -->
-  <div class="modal fade" id="update_url_modal" tabindex="-1" role="dialog" aria-labelledby="update_url_modal_label" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
-          <h4 class="modal-title" id="update_url_modal_label">Update event data from URL</h4>
-        </div>
-        <div class="modal-body">
-          <form id="update_url_form">
-            {% csrf_token %}
-            <div class="form-group">
-              <label for="event_update_url" class="control-label">Event URL:</label>
-              <input type="url" id="event_update_url" name="url" required="required" class="form-control" value="{{ object.url }}" />
-              <p class="help-block">Either URL to the event's website or to it's repository <code>index.html</code> will work.</p>
-            </div>
-            <div class="form-group">
-              <div class="radio">
-                <label>
-                  <input type="radio" name="event_update_action" value="skip" checked="checked" />
-                  Skip non-empty fields.
-                </label>
-              </div>
-              <div class="radio">
-                <label>
-                  <input type="radio" name="event_update_action" value="overwrite" />
-                  Overwrite existing values.
-                </label>
-              </div>
-            </div>
-            <button type="submit" class="btn btn-primary" data-loading-text="Loading..." autocomplete="off">Update</button>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-        </div>
-      </div>
-    </div>
-  </div>
+  {% include "workshops/event_import_update_from_url.html" with update=True %}
 
   <h2 id="associated-tasks">Associated tasks</h2>
   {% crispy task_form form_helper_with_add %}
