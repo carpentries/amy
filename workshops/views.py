@@ -16,11 +16,11 @@ from django.core.urlresolvers import reverse
 from django.core.exceptions import (
     ObjectDoesNotExist,
     PermissionDenied,
-    SuspiciousOperation,
 )
 from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 from django.http import Http404, HttpResponse, JsonResponse
+from django.http import HttpResponseBadRequest
 from django.db import IntegrityError
 from django.db.models import Count, Sum, Q, F, Model, ProtectedError
 from django.db.models import Case, When, Value, IntegerField
@@ -65,6 +65,7 @@ from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
     create_uploaded_persons_tasks, InternalError, Paginator, merge_persons,
     update_event_attendance_from_tasks,
+    WrongWorkshopURL,
     generate_url_to_event_index,
     find_tags_on_event_index,
     find_tags_on_event_website,
@@ -910,7 +911,7 @@ def validate_event(request, event_ident):
 
         if 'slug' not in tags:
             # there are no HTML tags, so let's try the old method
-            page_url = generate_url_to_event_index(page_url)
+            page_url, _ = generate_url_to_event_index(page_url)
 
             # fetch page
             response = requests.get(page_url)
@@ -922,6 +923,9 @@ def validate_event(request, event_ident):
 
         # validate them
         error_messages = validate_tags_from_event_website(tags)
+
+    except WrongWorkshopURL as e:
+        error_messages.append(str(e))
 
     except requests.exceptions.HTTPError as e:
         error_messages.append(
@@ -1062,7 +1066,7 @@ def event_import(request):
 
         if 'slug' not in tags:
             # there are no HTML tags, so let's try the old method
-            index_url = generate_url_to_event_index(url)
+            index_url, repository = generate_url_to_event_index(url)
 
             # fetch page
             response = requests.get(index_url)
@@ -1073,15 +1077,7 @@ def event_import(request):
                 tags = find_tags_on_event_index(content)
 
                 if 'slug' not in tags:
-                    # `url` should match WEBSITE_REGEX because of the check
-                    # performed in `generate_url_to_event_website`,
-                    # but, just in case someone removes that code, let's
-                    # throw ValueError here too
-                    try:
-                        tags['slug'] = Event.WEBSITE_REGEX.match(url) \
-                                                          .group('repo')
-                    except AttributeError:
-                        raise ValueError()
+                    tags['slug'] = repository
 
         # normalize (parse) them
         tags = parse_tags_from_event_website(tags)
@@ -1089,22 +1085,20 @@ def event_import(request):
         return JsonResponse(tags)
 
     except requests.exceptions.HTTPError as e:
-        raise SuspiciousOperation(
+        return HttpResponseBadRequest(
             'Request for "{0}" returned status code {1}.'
             .format(url, e.response.status_code)
         )
 
     except (requests.exceptions.ConnectionError,
             requests.exceptions.Timeout):
-        raise SuspiciousOperation('Network connection error.')
+        return HttpResponseBadRequest('Network connection error.')
 
-    except ValueError:
-        # probably matching url with Event.WEBSITE_REGEX (either here or in
-        # `generate_url_to_event_index`) failed
-        raise SuspiciousOperation('Event\'s url is in wrong format.')
+    except WrongWorkshopURL as e:
+        return HttpResponseBadRequest(str(e))
 
     except KeyError:
-        raise SuspiciousOperation('Missing or wrong "url" POST parameter.')
+        return HttpResponseBadRequest('Missing or wrong "url" POST parameter.')
 
 
 @login_required

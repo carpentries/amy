@@ -387,11 +387,14 @@ class TestHandlingEventTags(TestCase):
             'https://swcarpentry.github.com/workshop-template',
             'http://swcarpentry.github.com/workshop-template/',
         ]
-        expected = ('https://raw.githubusercontent.com/swcarpentry/'
-                    'workshop-template/gh-pages/index.html')
+        expected_url = ('https://raw.githubusercontent.com/swcarpentry/'
+                        'workshop-template/gh-pages/index.html')
+        expected_repo = 'workshop-template'
         for url in tests:
             with self.subTest(url=url):
-                self.assertEqual(expected, generate_url_to_event_index(url))
+                url, repo = generate_url_to_event_index(url)
+                self.assertEqual(expected_url, url)
+                self.assertEqual(expected_repo, repo)
 
     def test_finding_tags_on_index(self):
         content = """---

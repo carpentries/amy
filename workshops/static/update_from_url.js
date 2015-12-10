@@ -16,6 +16,7 @@ $('#update_url_form').submit(function(e) {
 
     $("#event_update_url").parent().removeClass('has-error');
     $('#update_url_modal').modal('hide');
+    $('#error_message').addClass('hidden');
 
     switch (action) {
       case 'overwrite':
@@ -90,6 +91,8 @@ $('#update_url_form').submit(function(e) {
   .fail(function(data) {
     // something went wrong, let's indicate it
     $("#event_update_url").parent().addClass('has-error');
+    $('#error_message').text(data.responseText);
+    $('#error_message').removeClass('hidden');
   })
   .always(function(data) {
     // let's always reenable the form's submit when the request finishes
