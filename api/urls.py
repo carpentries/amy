@@ -17,6 +17,9 @@ urlpatterns = [
     url('^events/published/$',
         views.PublishedEvents.as_view(),
         name='events-published'),
+    url('^todos/user/$',
+        views.UserTodoItems.as_view(),
+        name='user-todos'),
 ]
 
 # for login-logout functionality

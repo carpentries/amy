@@ -2,12 +2,14 @@ import datetime
 
 from rest_framework.generics import ListAPIView
 from rest_framework.metadata import SimpleMetadata
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import (
+    IsAuthenticatedOrReadOnly, IsAuthenticated
+)
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.views import APIView
 
-from workshops.models import Badge, Airport, Event
+from workshops.models import Badge, Airport, Event, TodoItem
 from workshops.util import get_members, default_membership_cutoff
 
 from .serializers import (
@@ -15,6 +17,7 @@ from .serializers import (
     ExportBadgesSerializer,
     ExportInstructorLocationsSerializer,
     EventSerializer,
+    TodoSerializer,
 )
 
 
@@ -43,6 +46,8 @@ class ApiRoot(APIView):
                                       format=format),
             'events-published': reverse('api:events-published',
                                         request=request, format=format),
+            'user-todos': reverse('api:user-todos',
+                                  request=request, format=format),
         })
 
 
@@ -137,3 +142,15 @@ class PublishedEvents(ListAPIView):
                              'work on events.',
             'host': 'ID of the organization hosting the event.',
         }
+
+
+class UserTodoItems(ListAPIView):
+    permission_classes = (IsAuthenticated, )
+    paginator = None
+    serializer_class = TodoSerializer
+
+    def get_queryset(self):
+        """Return current TODOs for currently logged in user."""
+        return TodoItem.objects.user(self.request.user) \
+                               .incomplete() \
+                               .select_related('event')
