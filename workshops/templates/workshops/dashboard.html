@@ -1,7 +1,11 @@
 {% extends "workshops/_page_fluid_nosidebar.html" %}
 
 {% block content-fluid %}
-{% include "amy-logo.html" %}
+
+<div class="row">
+  <div class="col-xs-12"><h3>Timeline</h3></div>
+  <div class="col-xs-12" id="timeline"></div>
+</div>
 
 {% if is_admin or user.is_superuser %}
 <div class="row">
@@ -80,4 +84,25 @@
     </table>
   </div>
 </div>
+{% endblock %}
+
+{% block extrajs %}
+<script type="text/javascript">
+  $.getJSON("{% url 'api:user-todos' %}", {}, function(data) {
+    var container = document.getElementById('timeline');
+    var items = new vis.DataSet(data);
+    var options = {
+      width: '100%',
+      // height: '30px',
+      clickToUse: true,
+      timeAxis: {
+        scale: 'day',
+        step: 1
+      },
+      start: '{{ todos_start_date|date:'c' }}',
+      end: '{{ todos_end_date|date:'c' }}'
+    };
+    var timeline = new vis.Timeline(container, items, options);
+  });
+</script>
 {% endblock %}
