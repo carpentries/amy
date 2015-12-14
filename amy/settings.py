@@ -49,7 +49,7 @@ else:
 
 # email settings
 ADMINS = (
-    ('Piotr Banaszkiewicz', 'piotr@banaszkiewicz.org'),
+    ('Sysadmins ML', 'sysadmin@lists.software-carpentry.org'),
 )
 # "From:" for error messages sent out to ADMINS
 SERVER_EMAIL = os.environ.get('AMY_SERVER_EMAIL', 'root@localhost')
@@ -233,4 +233,21 @@ REST_FRAMEWORK = {
         'anon': '100/day',
         'user': '1000/day'
     }
+}
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,  # merge with default configuration
+    'handlers': {
+        'null': {
+            'class': 'logging.NullHandler',
+        },
+    },
+    'loggers': {
+        # disable "Invalid HTTP_HOST" notifications
+        'django.security.DisallowedHost': {
+            'handlers': ['null'],
+            'propagate': False,
+        },
+    },
 }
