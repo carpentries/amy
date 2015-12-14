@@ -194,8 +194,10 @@ class Person(AbstractBaseUser, PermissionsMixin):
     def save(self, *args, **kwargs):
         # save empty string as NULL to the database - otherwise there are
         # issues with UNIQUE constraint failing
-        self.middle = self.middle or None
-        self.email = self.email or None
+        self.personal = self.personal.strip()
+        self.family = self.family.strip()
+        self.middle = self.middle.strip() if self.middle else None
+        self.email = self.email.strip() if self.email else None
         self.gender = self.gender or None
         self.airport = self.airport or None
         self.github = self.github or None
@@ -325,6 +327,9 @@ class ProfileUpdateRequest(models.Model):
 
     def save(self, *args, **kwargs):
         """Save nullable char fields as empty strings."""
+        self.personal = self.personal.strip()
+        self.family = self.family.strip()
+        self.email = self.email.strip()
         self.gender = self.gender or ''
         self.occupation = self.occupation or ''
         return super().save(*args, **kwargs)
