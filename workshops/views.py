@@ -359,13 +359,14 @@ def all_persons(request):
     filter = PersonFilter(
         request.GET,
         queryset=Person.objects.all().defer('notes')  # notes are too large
-                                     .prefetch_related('badges')
     )
+    # faster method
+    instructors = Badge.objects.instructor_badges() \
+                               .values_list('person', flat=True)
     persons = _get_pagination_items(request, filter)
-    instructor = Badge.objects.get(name='instructor')
     context = {'title' : 'All Persons',
                'all_persons' : persons,
-               'instructor': instructor,
+               'instructors': instructors,
                'filter': filter,
                'form_helper': bootstrap_helper_filter}
     return render(request, 'workshops/all_persons.html', context)
@@ -836,7 +837,10 @@ def event_details(request, event_ident):
         event = Event.get_by_ident(event_ident)
     except Event.DoesNotExist:
         raise Http404('Event matching query does not exist.')
-    tasks = Task.objects.filter(event__id=event.id).order_by('role__name')
+
+    tasks = Task.objects.filter(event__id=event.id) \
+                        .select_related('person', 'role') \
+                        .order_by('role__name')
     todos = event.todoitem_set.all()
     todo_form = SimpleTodoForm(prefix='todo', initial={
         'event': event,
@@ -1249,10 +1253,11 @@ def badge_details(request, badge_name):
 @login_required
 def instructors(request):
     '''Search for instructors.'''
-    instructor_badge = Badge.objects.get(name='instructor')
-    instructors = instructor_badge.person_set.filter(airport__isnull=False) \
-                                  .select_related('airport') \
-                                  .prefetch_related('lessons')
+    instructor_badges = Badge.objects.instructor_badges()
+    instructors = Person.objects.filter(badges__in=instructor_badges) \
+                                .filter(airport__isnull=False) \
+                                .select_related('airport') \
+                                .prefetch_related('lessons')
     instructors = instructors.annotate(
         num_taught=Count(
             Case(
@@ -1308,6 +1313,10 @@ def instructors(request):
 
             if data['gender']:
                 instructors = instructors.filter(gender=data['gender'])
+
+            if data['instructor_badges']:
+                for badge in data['instructor_badges']:
+                    instructors = instructors.filter(badges__name=badge)
 
     instructors = _get_pagination_items(request, instructors)
     context = {
@@ -1502,8 +1511,8 @@ def learners_over_time(request):
 def instructors_over_time(request):
     '''Export CSV of count of instructors vs. time.'''
 
-    badge = Badge.objects.get(name='instructor')
-    data = dict(badge.award_set
+    badges = Badge.objects.instructor_badges()
+    data = dict(Award.objects.filter(badge__in=badges)
                      .values_list('awarded')
                      .annotate(Count('person__id')))
     return _time_series(request, data, 'Instructors over time')
@@ -1513,18 +1522,19 @@ def instructors_over_time(request):
 def instructor_num_taught(request):
     '''Export CSV of how often instructors have taught.'''
 
-    badge = Badge.objects.get(name='instructor')
-    awards = badge.award_set.annotate(
+    badges = Badge.objects.instructor_badges()
+    awards = Award.objects.filter(badge__in=badges).annotate(
         num_taught=Count(
             Case(
                 When(
                     person__task__role__name='instructor',
                     then=Value(1)
                 ),
-            output_field=IntegerField()
+                output_field=IntegerField()
             )
         )
-    ).filter(person__may_contact=True).order_by('-num_taught', 'awarded')
+    ).select_related('person', 'person__airport') \
+     .filter(person__may_contact=True).order_by('-num_taught', 'awarded')
     context = {'title': 'Frequency of Instruction',
                'awards': awards}
     return render(request, 'workshops/instructor_num_taught.html', context)
@@ -1561,8 +1571,9 @@ def instructor_issues(request):
     '''Display instructors in the database who need attention.'''
 
     # Everyone who has a badge but needs attention.
-    instructor_badge = Badge.objects.get(name='instructor')
-    instructors = instructor_badge.person_set.filter(airport__isnull=True)
+    instructor_badges = Badge.objects.instructor_badges()
+    instructors = Person.objects.filter(badges__in=instructor_badges) \
+                                .filter(airport__isnull=True)
 
     # Everyone who's been in instructor training but doesn't yet have a badge.
     learner = Role.objects.get(name='learner')
@@ -1570,7 +1581,7 @@ def instructor_issues(request):
     stalled = Tag.objects.get(name='stalled')
     trainees = Task.objects \
         .filter(event__tags__in=[ttt], role=learner) \
-        .exclude(person__badges__in=[instructor_badge]) \
+        .exclude(person__badges__in=instructor_badges) \
         .order_by('person__family', 'person__personal', 'event__start') \
         .select_related('person', 'event')
 
@@ -1981,11 +1992,9 @@ def profileupdaterequest_details(request, request_id):
 
     if person:
         # check if the person has instructor badge
-        try:
-            Award.objects.get(badge__name='instructor', person=person)
-            person.has_instructor_badge = True
-        except Award.DoesNotExist:
-            person.has_instructor_badge = False
+        person.has_instructor_badge = Award.objects.filter(
+            badge__in=Badge.objects.instructor_badges(), person=person
+        ).exists()
 
     try:
         airport = Airport.objects.get(iata=update_request.airport_iata)

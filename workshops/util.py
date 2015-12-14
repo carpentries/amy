@@ -577,7 +577,7 @@ def get_members(earliest, latest):
     '''Get everyone who is a member of the Software Carpentry Foundation.'''
 
     member_badge = Badge.objects.get(name='member')
-    instructor_badge = Badge.objects.get(name='instructor')
+    instructor_badges = Badge.objects.instructor_badges()
     instructor_role = Role.objects.get(name='instructor')
 
     # Everyone who is an explicit member.
@@ -586,7 +586,7 @@ def get_members(earliest, latest):
     # Everyone who qualifies by having taught recently.
     implicit = Person.objects.filter(
         task__role=instructor_role,
-        badges__in=[instructor_badge],
+        badges__in=instructor_badges,
         task__event__start__gte=earliest,
         task__event__start__lte=latest
     ).distinct()

@@ -938,12 +938,26 @@ class Qualification(models.Model):
 
 #------------------------------------------------------------
 
+
+class BadgeQuerySet(models.query.QuerySet):
+    """Custom QuerySet that provides easy way to get instructor badges
+    (we use that a lot)."""
+
+    INSTRUCTOR_BADGES = ('dc-instructor', 'swc-instructor')
+
+    def instructor_badges(self):
+        """Filter for instructor badges only."""
+        return self.filter(name__in=self.INSTRUCTOR_BADGES)
+
+
 class Badge(models.Model):
     '''Represent a badge we award.'''
 
     name       = models.CharField(max_length=STR_MED, unique=True)
     title      = models.CharField(max_length=STR_MED)
     criteria   = models.CharField(max_length=STR_LONG)
+
+    objects = BadgeQuerySet.as_manager()
 
     def __str__(self):
         return self.title
