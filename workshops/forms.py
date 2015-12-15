@@ -14,7 +14,7 @@ from selectable import forms as selectable
 
 from workshops.models import (
     Award, Event, Lesson, Person, Task, KnowledgeDomain, Airport, Host,
-    EventRequest, ProfileUpdateRequest, TodoItem,
+    EventRequest, ProfileUpdateRequest, TodoItem, Membership,
 )
 from workshops import lookups
 
@@ -473,6 +473,16 @@ class HostForm(forms.ModelForm):
     class Meta:
         model = Host
         fields = ['domain', 'fullname', 'country', 'notes']
+
+
+class MembershipForm(forms.ModelForm):
+    class Meta:
+        model = Membership
+        fields = '__all__'
+        widgets = {'host': HiddenInput, }
+
+    class Media:
+        js = ('calendar_popup.js', )
 
 
 class SWCEventRequestForm(forms.ModelForm):
