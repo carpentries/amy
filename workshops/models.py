@@ -1084,6 +1084,47 @@ class KnowledgeDomain(models.Model):
 # ------------------------------------------------------------
 
 
+class TodoItemQuerySet(models.query.QuerySet):
+    @staticmethod
+    def current_week_dates(today=None):
+        if not today:
+            today = datetime.date.today()
+        start = today - datetime.timedelta(days=today.weekday())
+        end = start + datetime.timedelta(days=7)
+        return start, end
+
+    @staticmethod
+    def next_week_dates(today=None):
+        if not today:
+            today = datetime.date.today()
+        start = today + datetime.timedelta(days=(7 - today.weekday()))
+        end = start + datetime.timedelta(days=7)
+        return start, end
+
+    def user(self, person):
+        """Return TODOs only for specific person."""
+        return self.filter(event__assigned_to=person)
+
+    def current_week(self, today=None):
+        """Select TODOs for the current week."""
+        start, end = TodoItemQuerySet.current_week_dates(today)
+        return self.filter(due__gte=start, due__lt=end)
+
+    def next_week(self, today=None):
+        """Select TODOs for the next week."""
+        start, end = TodoItemQuerySet.next_week_dates(today)
+        return self.filter(due__gte=start, due__lt=end)
+
+    def incomplete(self):
+        """Select TODOs that aren't marked as completed."""
+        return self.filter(completed=False)
+
+    def current(self, today=None):
+        """A shortcut for getting TODOs from this and upcoming week."""
+        return ((self.current_week(today) | self.next_week(today)) &
+                self.incomplete())
+
+
 class TodoItem(models.Model):
     """Model representing to-do items for events."""
     event = models.ForeignKey(Event, null=False, blank=False)
@@ -1091,6 +1132,8 @@ class TodoItem(models.Model):
     title = models.CharField(max_length=STR_LONG, default='', blank=False)
     due = models.DateField(blank=True, null=True)
     additional = models.CharField(max_length=255, default='', blank=True)
+
+    objects = TodoItemQuerySet.as_manager()
 
     class Meta:
         ordering = ["due", "title"]

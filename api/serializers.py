@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from workshops.models import Badge, Airport, Person, Event
+from workshops.models import Badge, Airport, Person, Event, TodoItem
 
 
 class PersonUsernameSerializer(serializers.ModelSerializer):
@@ -72,4 +72,25 @@ class EventSerializer(serializers.ModelSerializer):
         fields = (
             'slug', 'start', 'end', 'url', 'humandate', 'contact', 'country',
             'venue', 'address', 'latitude', 'longitude', 'eventbrite_id',
+        )
+
+
+class TodoSerializer(serializers.ModelSerializer):
+    content = serializers.SerializerMethodField()
+    start = serializers.DateField(format=None, source='due')
+
+    class Meta:
+        model = TodoItem
+        fields = (
+            'content', 'start',
+        )
+
+    def get_content(self, obj):
+        """Return HTML containing interesting information for admins.  This
+        will be displayed on labels in the timeline."""
+
+        return '<a href="{url}">{event}</a><br><small>{todo}</small>'.format(
+            url=obj.event.get_absolute_url(),
+            event=obj.event.get_ident(),
+            todo=obj.title,
         )

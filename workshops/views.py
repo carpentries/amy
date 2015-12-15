@@ -51,6 +51,7 @@ from workshops.models import (
     EventRequest,
     ProfileUpdateRequest,
     TodoItem,
+    TodoItemQuerySet,
 )
 from workshops.forms import (
     SearchForm, DebriefForm, InstructorsForm, PersonForm, PersonBulkAddForm,
@@ -178,7 +179,8 @@ def dashboard(request):
         Event.objects.upcoming_events() | Event.objects.ongoing_events()
     ).no_stalled()
     uninvoiced_events = Event.objects.uninvoiced_events().no_stalled()
-    unpublished_events = Event.objects.unpublished_events().no_stalled()
+    unpublished_events = Event.objects.unpublished_events().no_stalled() \
+                                      .select_related('host')
 
     user = request.user
     is_admin = user.groups.filter(name='administrators').exists()
@@ -221,6 +223,8 @@ def dashboard(request):
         'current_events': current_events,
         'uninvoiced_events': uninvoiced_events,
         'unpublished_events': unpublished_events,
+        'todos_start_date': TodoItemQuerySet.current_week_dates()[0],
+        'todos_end_date': TodoItemQuerySet.next_week_dates()[1],
     }
     return render(request, 'workshops/dashboard.html', context)
 

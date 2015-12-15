@@ -183,3 +183,7 @@ table.table-striped tr.bg-warning {
 table.table-striped tr.bg-danger {
     background-color: #F2DEDE;
 }
+
+#timeline {
+    margin-bottom: 40px;
+}
