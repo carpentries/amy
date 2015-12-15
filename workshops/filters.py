@@ -5,7 +5,17 @@ import django.forms.widgets
 import django_filters
 from django_countries import Countries
 
-from workshops.models import Event, Host, Person, Task, Airport, EventRequest
+from workshops.models import (
+    Event,
+    Host,
+    Person,
+    Task,
+    Airport,
+    EventRequest,
+    Tag,
+    Role,
+    Task,
+)
 
 EMPTY_SELECTION = (None, '---------')
 
@@ -124,11 +134,31 @@ class HostFilter(django_filters.FilterSet):
         order_by = ['fullname', '-fullname', 'domain', '-domain', ]
 
 
+def filter_taught_workshops(queryset, values):
+    """Limit Persons to only instructors from events with specific tags.
+
+    This needs to be in a separate function because django-filters doesn't
+    support `action` parameter as supposed, ie. with
+    `action='filter_taught_workshops'` it doesn't call the method; instead it
+    tries calling a string, which results in error."""
+    if not values:
+        return queryset
+
+    return queryset.filter(task__role__name='instructor') \
+                   .filter(task__event__tags__in=values) \
+                   .distinct()
+
+
 class PersonFilter(django_filters.FilterSet):
+    taught_workshops = django_filters.ModelMultipleChoiceFilter(
+        queryset=Tag.objects.all(), label='Taught at workshops of type',
+        action=filter_taught_workshops,
+    )
+
     class Meta:
         model = Person
         fields = [
-            'badges',
+            'badges', 'taught_workshops',
         ]
         order_by = ["lastname", "-lastname", "firstname", "-firstname",
                     "email", "-email"]
