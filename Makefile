@@ -7,12 +7,8 @@ MANAGE = ${PYTHON} manage.py
 # Database used by this application.
 APP_DB = db.sqlite3
 
-# Saved SQL for regenerating the database.
-APP_SQL = db.sql
-
 # Run a SQL query.
 QUERY = sqlite3 ${APP_DB}
-QUERY_CSV = sqlite3 -csv ${APP_DB}
 
 # Error messages.
 E_SITE_PATH = "error: must set SITE_PATH before running command"
@@ -30,15 +26,11 @@ commands : Makefile
 test :
 	${MANAGE} test
 
-## migrations   : create/apply migrations
-migrations :
-	${MANAGE} makemigrations
-	${MANAGE} migrate
-
-## database     : re-make database using saved data
-database :
+## dev_database : re-make database using saved data
+dev_database :
 	rm -f ${APP_DB}
-	${QUERY} < ${APP_SQL}
+	${MANAGE} migrate
+	${MANAGE} fake_database
 
 ## superuser    : make a super-user in the database
 superuser :

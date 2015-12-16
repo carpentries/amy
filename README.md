@@ -51,25 +51,19 @@ before starting work on new features.
     locally. You'll need to set up your `$PATH` correctly, though. Look
     [here][fixing-npm-permissions] for details.
 
-4.  Set up your local database with redacted (development-ready) data with:
+4.  Set up your local database with fake (development-ready) data with:
 
     ~~~
-    $ make database
+    $ make dev_database
     ~~~
     
-5.  Update the models in your local database:
-
-    ~~~
-    $ make migrations
-    ~~~
-
-6.  Create an administrator account:
+5.  Create an administrator account:
 
     ~~~
     $ python3 manage.py createsuperuser
     ~~~
 
-7.  Start a local Django development server by running:
+6.  Start a local Django development server by running:
 
     ~~~
     $ make serve
@@ -77,7 +71,7 @@ before starting work on new features.
 
     **Note**:  this also installs front-end dependencies for AMY, such as jQuery or Bootstrap.
 
-8.  Open <http://localhost:8000/workshops/> in your browser and start clicking.
+7.  Open <http://localhost:8000/workshops/> in your browser and start clicking.
 
     Use the administrator account that you created.
 
@@ -109,19 +103,19 @@ before starting work on new features.
     $ make upgrade
     ~~~
 
-3.  (Optional) make the development-ready database:
+3.  (Optional) make fresh development-ready database:
 
     ~~~
-    $ make database
+    $ make dev_database
     ~~~
 
-3.  Run database migrations:
+4.  Run database migrations:
 
     ~~~~
     $ python3 manage.py migrate
     ~~~~
 
-4.  Enjoy your new version of AMY:
+5.  Enjoy your new version of AMY:
 
     ~~~
     $ make serve
