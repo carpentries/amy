@@ -94,6 +94,12 @@ def upload_person_task_csv(stream):
             entry[col] = row.get(col, None)
         entry['errors'] = None
 
+        if 'personal' in entry and 'family' in entry:
+            entry['username'] = create_username(entry['personal'],
+                                                entry['family'])
+        else:
+            entry['username'] = ''
+
         result.append(entry)
 
     return result, list(empty_fields)

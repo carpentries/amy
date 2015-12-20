@@ -10,6 +10,7 @@
         <tr>
             <th>personal</th>
             <th>family</th>
+            <th>username (generated)</th>
             <th>email</th>
             <th>event</th>
             <th>role</th>
@@ -26,6 +27,10 @@
             <td class="editable">
                 <span>{{ entry.family|default:"&mdash;" }}</span>
                 <input type="text" name="family" value="{{ entry.family|default:"" }}" class="hidden">
+            </td>
+            <td>
+                <span>{{ entry.username|default:"&mdash;" }}</span>
+                <input type="text" name="username" value="{{ entry.username|default:"" }}" class="hidden">
             </td>
             <td class="editable">
                 <span>{{ entry.email|default:"&mdash;" }}</span>
