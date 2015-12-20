@@ -73,7 +73,11 @@
     The important implication of this approach is that the fields' names must
     stay the way they're now: "confirm" and "cancel".  Values can change.
     {% endcomment %}
+    {% if any_errors %}
+    <input type="submit" name="confirm" value="Confirm and save" class="btn btn-success disabled">
+    {% else %}
     <input type="submit" name="confirm" value="Confirm and save" class="btn btn-success">
+    {% endif %}
     <input type="submit" name="cancel" value="No, cancel" class="btn btn-default">
     <input type="submit" name="verify" value="Verify" class="btn btn-default pull-right">
     {% csrf_token %}

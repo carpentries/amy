@@ -558,7 +558,8 @@ def person_bulk_add_confirmation(request):
                                      "listed below.")
 
             context = {'title': 'Confirm uploaded data',
-                       'persons_tasks': persons_tasks}
+                       'persons_tasks': persons_tasks,
+                       'any_errors': any_errors}
             return render(request, 'workshops/person_bulk_add_results.html',
                           context)
 
@@ -576,18 +577,21 @@ def person_bulk_add_confirmation(request):
                                      "Error saving data to the database: {}. "
                                      "Please make sure to fix all errors "
                                      "listed below.".format(e))
-                verify_upload_person_task(persons_tasks)
+                any_errors = verify_upload_person_task(persons_tasks)
                 context = {'title': 'Confirm uploaded data',
-                           'persons_tasks': persons_tasks}
+                           'persons_tasks': persons_tasks,
+                           'any_errors': any_errors}
                 return render(request,
                               'workshops/person_bulk_add_results.html',
                               context, status=400)
 
             else:
                 request.session['bulk-add-people'] = None
-                messages.add_message(request, messages.SUCCESS,
-                                     "Successfully uploaded {0} persons and {1} tasks."
-                                     .format(len(persons_created), len(tasks_created)))
+                messages.add_message(
+                    request, messages.SUCCESS,
+                    'Successfully created {0} persons and {1} tasks.'
+                    .format(len(persons_created), len(tasks_created))
+                )
                 return redirect('person_bulk_add')
 
         else:
@@ -597,10 +601,11 @@ def person_bulk_add_confirmation(request):
 
     else:
         # alters persons_tasks via reference
-        verify_upload_person_task(persons_tasks)
+        any_errors = verify_upload_person_task(persons_tasks)
 
         context = {'title': 'Confirm uploaded data',
-                   'persons_tasks': persons_tasks}
+                   'persons_tasks': persons_tasks,
+                   'any_errors': any_errors}
         return render(request, 'workshops/person_bulk_add_results.html',
                       context)
 
