@@ -33,9 +33,9 @@ class UploadPersonTaskCSVTestCase(TestCase):
 
     def test_basic_parsing(self):
         ''' See Person.PERSON_UPLOAD_FIELDS for field ordering '''
-        csv = """personal,middle,family,email
-john,a,doe,johndoe@email.com
-jane,a,doe,janedoe@email.com"""
+        csv = """personal,family,email
+john,doe,johndoe@email.com
+jane,doe,janedoe@email.com"""
         person_tasks, _ = self.compute_from_string(csv)
 
         # assert
@@ -46,22 +46,22 @@ jane,a,doe,janedoe@email.com"""
 
     def test_csv_without_required_field(self):
         ''' All fields in Person.PERSON_UPLOAD_FIELDS must be in csv '''
-        bad_csv = """personal,middle,family
-john,,doe"""
+        bad_csv = """personal,family
+john,doe"""
         person_tasks, empty_fields = self.compute_from_string(bad_csv)
         self.assertTrue('email' in empty_fields)
 
     def test_csv_with_mislabeled_field(self):
         ''' It pays to be strict '''
-        bad_csv = """personal,middle,family,emailaddress
-john,m,doe,john@doe.com"""
+        bad_csv = """personal,family,emailaddress
+john,doe,john@doe.com"""
         person_tasks, empty_fields = self.compute_from_string(bad_csv)
         self.assertTrue('email' in empty_fields)
 
     def test_csv_with_empty_lines(self):
-        csv = """personal,middle,family,emailaddress
-john,m,doe,john@doe.com
-,,,"""
+        csv = """personal,family,emailaddress
+john,doe,john@doe.com
+,,"""
         person_tasks, empty_fields = self.compute_from_string(csv)
         self.assertEqual(len(person_tasks), 1)
         person = person_tasks[0]
@@ -69,16 +69,16 @@ john,m,doe,john@doe.com
 
     def test_empty_field(self):
         ''' Ensure we don't mis-order fields given blank data '''
-        csv = """personal,middle,family,email
-john,,doe,johndoe@email.com"""
+        csv = """personal,family,email
+john,,johndoe@email.com"""
         person_tasks, _ = self.compute_from_string(csv)
         person = person_tasks[0]
-        self.assertEqual(person['middle'], '')
+        self.assertEqual(person['family'], '')
 
     def test_serializability_of_parsed(self):
-        csv = """personal,middle,family,email
-john,a,doe,johndoe@email.com
-jane,a,doe,janedoe@email.com"""
+        csv = """personal,family,email
+john,doe,johndoe@email.com
+jane,doe,janedoe@email.com"""
         person_tasks, _ = self.compute_from_string(csv)
 
         try:
@@ -88,14 +88,14 @@ jane,a,doe,janedoe@email.com"""
             self.fail('Dumping person_tasks to JSON unexpectedly failed!')
 
     def test_malformed_CSV_with_proper_header_row(self):
-        csv = """personal,middle,family,email
+        csv = """personal,family,email
 This is a malformed CSV
         """
         person_tasks, empty_fields = self.compute_from_string(csv)
         self.assertEqual(person_tasks[0]["personal"],
                          "This is a malformed CSV")
         self.assertEqual(set(empty_fields),
-                         set(["middle", "family", "email"]))
+                         set(["family", "email"]))
 
 
 class CSVBulkUploadTestBase(TestBase):
@@ -121,8 +121,8 @@ class CSVBulkUploadTestBase(TestBase):
         """
         Sample CSV data
         """
-        return """personal,middle,family,email,event,role
-John,S,Doe,notin@db.com,foobar,Instructor
+        return """personal,family,email,event,role
+John,Doe,notin@db.com,foobar,Instructor
 """
 
     def make_data(self):
@@ -177,7 +177,6 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
         for email in ('harry@hogwarts.edu', 'HARRY@hogwarts.edu'):
             bad_data[0]['email'] = email
             bad_data[0]['personal'] = 'Harry'
-            bad_data[0]['middle'] = None
             bad_data[0]['family'] = 'Potter'
 
             has_errors = verify_upload_person_task(bad_data)
@@ -189,17 +188,15 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
         has_errors = verify_upload_person_task(bad_data)
         self.assertTrue(has_errors)
         errors = bad_data[0]['errors']
-        self.assertEqual(len(errors), 3)
+        self.assertEqual(len(errors), 2)
         self.assertTrue('personal' in errors[0])
-        self.assertTrue('middle' in errors[1])
-        self.assertTrue('family' in errors[2])
+        self.assertTrue('family' in errors[1])
 
     def test_verify_existing_user_has_workshop_role_provided(self):
         bad_data = [
             {
                 'email': 'harry@hogwarts.edu',
                 'personal': 'Harry',
-                'middle': None,
                 'family': 'Potter',
                 'event': '',
                 'role': '',
@@ -208,9 +205,9 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
         has_errors = verify_upload_person_task(bad_data)
         self.assertTrue(has_errors)
         errors = bad_data[0]['errors']
-        self.assertEqual(len(errors), 1)
-        self.assertTrue("User exists but no event and role to assign"
-                        in errors[0])
+        self.assertEqual(len(errors), 2)
+        self.assertIn('Must have a role', errors[0])
+        self.assertIn('Must have an event', errors[1])
 
 
 class BulkUploadUsersViewTestCase(CSVBulkUploadTestBase):
@@ -236,8 +233,8 @@ class BulkUploadUsersViewTestCase(CSVBulkUploadTestBase):
         # this one empty
         payload = {
             "personal": data[0]['personal'],
-            "middle": data[0]['middle'],
             "family": data[0]['family'],
+            "username": data[0]['username'],
             "email": data[0]['email'],
             "event": "",
             "role": "",
@@ -258,8 +255,8 @@ class BulkUploadUsersViewTestCase(CSVBulkUploadTestBase):
         This is a special case of upload feature: if user uploads a person that
         already exists we should only assign new role and event to that person.
         """
-        csv = """personal,middle,family,email,event,role
-Harry,,Potter,harry@hogwarts.edu,foobar,Helper
+        csv = """personal,family,email,event,role
+Harry,Potter,harry@hogwarts.edu,foobar,Helper
 """
         data, _ = upload_person_task_csv(StringIO(csv))
 
@@ -271,7 +268,6 @@ Harry,,Potter,harry@hogwarts.edu,foobar,Helper
         # send exactly what's in 'data'
         payload = {
             "personal": data[0]['personal'],
-            "middle": data[0]['middle'],
             "family": data[0]['family'],
             "email": data[0]['email'],
             "event": data[0]['event'],
@@ -306,8 +302,8 @@ Harry,,Potter,harry@hogwarts.edu,foobar,Helper
         instructor = Role.objects.get(name="Instructor")
         Task.objects.create(person=self.harry, event=foobar, role=instructor)
 
-        csv = """personal,middle,family,email,event,role
-Harry,,Potter,harry@hogwarts.edu,foobar,Instructor
+        csv = """personal,family,email,event,role
+Harry,Potter,harry@hogwarts.edu,foobar,Instructor
 """
         data, _ = upload_person_task_csv(StringIO(csv))
 
@@ -319,7 +315,6 @@ Harry,,Potter,harry@hogwarts.edu,foobar,Instructor
         # send exactly what's in 'data'
         payload = {
             "personal": data[0]['personal'],
-            "middle": data[0]['middle'],
             "family": data[0]['family'],
             "email": data[0]['email'],
             "event": data[0]['event'],
@@ -350,8 +345,8 @@ Harry,,Potter,harry@hogwarts.edu,foobar,Instructor
         assert foobar.attendance is None
         foobar.save()
 
-        csv = """personal,middle,family,email,event,role
-Harry,,Potter,harry@hogwarts.edu,foobar,learner
+        csv = """personal,family,email,event,role
+Harry,Potter,harry@hogwarts.edu,foobar,learner
 """
         data, _ = upload_person_task_csv(StringIO(csv))
 
@@ -363,7 +358,6 @@ Harry,,Potter,harry@hogwarts.edu,foobar,learner
         # send exactly what's in 'data'
         payload = {
             "personal": data[0]['personal'],
-            "middle": data[0]['middle'],
             "family": data[0]['family'],
             "email": data[0]['email'],
             "event": data[0]['event'],
