@@ -122,7 +122,7 @@ def verify_upload_person_task(data):
             try:
                 existing_event = Event.objects.get(slug=event)
             except Event.DoesNotExist:
-                errors.append(u'Event with slug {0} does not exist.'
+                errors.append('Event with slug {0} does not exist.'
                               .format(event))
 
         role = item.get('role', None)
@@ -131,10 +131,10 @@ def verify_upload_person_task(data):
             try:
                 existing_role = Role.objects.get(name=role)
             except Role.DoesNotExist:
-                errors.append(u'Role with name {0} does not exist.'
+                errors.append('Role with name {0} does not exist.'
                               .format(role))
             except Role.MultipleObjectsReturned:
-                errors.append(u'More than one role named {0} exists.'
+                errors.append('More than one role named {0} exists.'
                               .format(role))
 
         # check if the user exists, and if so: check if existing user's
@@ -143,26 +143,26 @@ def verify_upload_person_task(data):
         personal = item.get('personal', None)
         family = item.get('family', None)
         person = None
-        if email:
-            # we don't have to check if the user exists in the database
-            # but we should check if, in case the email matches, family and
-            # personal names match, too
 
+        if email:
             try:
+                # check if first and last name matches person in the database
                 person = Person.objects.get(email__iexact=email)
-                for (which, actual, uploaded) in (
+
+                for which, actual, uploaded in (
                         ('personal', person.personal, personal),
                         ('family', person.family, family)
                 ):
-                    if (actual == uploaded) or ((actual is None) and (uploaded == '')):
+                    if (actual == uploaded) or (not actual and not uploaded):
                         pass
                     else:
-                        errors.append('{0}: database "{1}" vs uploaded "{2}"'
+                        errors.append('{0} mismatch: database "{1}" '
+                                      'vs uploaded "{2}"'
                                       .format(which, actual, uploaded))
 
             except Person.DoesNotExist:
-                # in this case we need to add the user
-                info.append('Person and task will be created.')
+                # in this case we need to add a new person
+                pass
 
             else:
                 if existing_event and person and existing_role:
@@ -172,18 +172,46 @@ def verify_upload_person_task(data):
                         Task.objects.get(event=existing_event, person=person,
                                          role=existing_role)
                     except Task.DoesNotExist:
-                        info.append('Task will be created')
+                        info.append('Task will be created.')
                     else:
-                        info.append('Task already exists')
+                        info.append('Task already exists.')
 
         if person:
-            if not any([event, role]):
-                errors.append("User exists but no event and role to assign to"
-                              " the user to was provided")
+            # force username from existing record
+            item['username'] = person.username
 
-        if (event and not role) or (role and not event):
-            errors.append("Must have both: event ({0}) and role ({1})"
-                          .format(event, role))
+        else:
+            # force a newly created username
+            item['username'] = create_username(personal, family)
+
+            info.append('Person and task will be created.')
+
+            try:
+                # let's check if there's someone else named this way
+                similar_person = Person.objects.get(personal=personal,
+                                                    family=family)
+
+            except Person.DoesNotExist:
+                pass
+
+            except Person.MultipleObjectsReturned:
+                persons = [
+                    str(person) for person in
+                    Person.objects.filter(personal=personal, family=family)
+                ]
+                info.append('There\'s a couple of matching persons in the '
+                            'database: {}. '
+                            'Use email to merge.'.format(', '.join(persons)))
+
+            else:
+                info.append('There\'s a matching person in the database: {}. '
+                            'Use their email to merge.'.format(similar_person))
+
+        if not role:
+            errors.append('Must have a role.')
+
+        if not event:
+            errors.append('Must have an event.')
 
         if errors:
             errors_occur = True
@@ -212,8 +240,8 @@ def create_uploaded_persons_tasks(data):
         for row in data:
             try:
                 fields = {key: row[key] for key in Person.PERSON_UPLOAD_FIELDS}
-                fields['username'] = create_username(row['personal'],
-                                                     row['family'])
+                fields['username'] = row['username']
+
                 if fields['email']:
                     # we should use existing Person or create one
                     p, created = Person.objects.get_or_create(
