@@ -30,21 +30,21 @@ class Command(BaseCommand):
             help='Provide an initial seed for randomization mechanism.',
         )
 
-    def _fake_airports(self, faker, count=5):
+    def fake_airports(self, faker, count=5):
         """Add some airports."""
         # we're not doing anything here, since:
         # 1. data migrations add some airports already
         # 2. we'll have more airports as fixtures as of #626
         pass
 
-    def _fake_roles(self, faker):
+    def fake_roles(self, faker):
         """Provide fixed roles (before they end up in fixtures, see #626)."""
         roles = ['helper', 'instructor', 'host', 'learner', 'organizer',
                  'tutor', 'debriefed']
         for role in roles:
             Role.objects.create(name=role)
 
-    def _fake_tags(self, faker):
+    def fake_tags(self, faker):
         """Provide fixed tags (before they end up in fixtures, see #626)."""
         tags = [
             ('SWC', 'Software Carpentry Workshop'),
@@ -56,8 +56,8 @@ class Command(BaseCommand):
         for tag, details in tags:
             Tag.objects.create(name=tag, details=details)
 
-    def _fake_instructors(self, faker, count=5, add_badge=True,
-                          add_qualifications=True):
+    def fake_instructors(self, faker, count=5, add_badge=True,
+                         add_qualifications=True):
         """Add a few people with random instructor badge, random airport, and
         random qualification."""
         airports = list(Airport.objects.all())
@@ -101,14 +101,14 @@ class Command(BaseCommand):
                 for lesson in random.sample(lessons, 4):
                     Qualification.objects.create(person=person, lesson=lesson)
 
-    def _fake_noninstructors(self, faker, count=5):
+    def fake_noninstructors(self, faker, count=5):
         """Add a few people who aren't instructors."""
-        return self._fake_instructors(
+        return self.fake_instructors(
             faker=faker, count=count, add_badge=False,
             add_qualifications=False,
         )
 
-    def _fake_hosts(self, faker, count=5):
+    def fake_hosts(self, faker, count=5):
         """Add some hosts for events."""
         countries = list(Countries)
         for i in range(count):
@@ -118,7 +118,7 @@ class Command(BaseCommand):
                 country=random.choice(countries)[0],
             )
 
-    def _fake_current_events(self, faker, count=5):
+    def fake_current_events(self, faker, count=5):
         """Ongoing and upcoming events."""
         twodays = timedelta(days=2)
         hosts = list(Host.objects.exclude(domain='self-organized'))
@@ -141,7 +141,7 @@ class Command(BaseCommand):
                 longitude=random.uniform(0, 180),
             )
 
-    def _fake_uninvoiced_events(self, faker, count=5):
+    def fake_uninvoiced_events(self, faker, count=5):
         """Preferably in the past, and with 'uninvoiced' status."""
         twodays = timedelta(days=2)
         countries = list(Countries)
@@ -166,7 +166,7 @@ class Command(BaseCommand):
                 invoice_status='not-invoiced',
             )
 
-    def _fake_unpublished_events(self, faker, count=5):
+    def fake_unpublished_events(self, faker, count=5):
         """Events with missing location data (which is required for publishing
         them)."""
         twodays = timedelta(days=2)
@@ -183,7 +183,7 @@ class Command(BaseCommand):
                 host=random.choice(hosts),
             )
 
-    def _fake_self_organized_events(self, faker, count=5):
+    def fake_self_organized_events(self, faker, count=5):
         """Full-blown events with 'self-organized' host."""
         twodays = timedelta(days=2)
         self_organized = Host.objects.get(domain='self-organized')
@@ -209,7 +209,7 @@ class Command(BaseCommand):
                 invoice_status=random.choice(invoice_statuses)[0],
             )
 
-    def _fake_tasks(self, faker, count=50):
+    def fake_tasks(self, faker, count=50):
         events = Event.objects.all()
         persons = Person.objects.all()
         roles = Role.objects.all()
@@ -225,14 +225,14 @@ class Command(BaseCommand):
         if seed is not None:
             faker.seed(seed)
 
-        self._fake_airports(faker)
-        self._fake_roles(faker)
-        self._fake_tags(faker)
-        self._fake_instructors(faker)
-        self._fake_noninstructors(faker)
-        self._fake_hosts(faker)
-        self._fake_current_events(faker)
-        self._fake_uninvoiced_events(faker)
-        self._fake_unpublished_events(faker)
-        self._fake_self_organized_events(faker)
-        self._fake_tasks(faker)
+        self.fake_airports(faker)
+        self.fake_roles(faker)
+        self.fake_tags(faker)
+        self.fake_instructors(faker)
+        self.fake_noninstructors(faker)
+        self.fake_hosts(faker)
+        self.fake_current_events(faker)
+        self.fake_uninvoiced_events(faker)
+        self.fake_unpublished_events(faker)
+        self.fake_self_organized_events(faker)
+        self.fake_tasks(faker)

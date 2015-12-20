@@ -10,6 +10,10 @@ from workshops.management.commands.upgrade_instructor_profiles import (
     Command as UpgradeInstructorProfileCommand,
     ALL_FIELDS
 )
+from workshops.management.commands.fake_database import (
+    Command as FakeDatabaseCommand,
+    Faker
+)
 from workshops.models import (
     Airport,
     Role,
@@ -470,8 +474,10 @@ class TestUpgradeInstructorProfile(TestBase):
 
 class TestFakeDatabaseCommand(TestCase):
     def setUp(self):
-        self.cmd = UpgradeInstructorProfileCommand()
+        self.cmd = FakeDatabaseCommand()
         self.seed = 12345
+        self.faker = Faker()
+        self.faker.seed(self.seed)
 
     def test_no_airports_created(self):
         """Make sure we don't create any airports.
@@ -479,7 +485,7 @@ class TestFakeDatabaseCommand(TestCase):
         We don't want to create them, because data migrations add some, and in
         the future we want to add them via fixture (see #626)."""
         airports_before = set(Airport.objects.all())
-        call_command('fake_database', seed=self.seed)
+        self.cmd.fake_airports(self.faker)
         airports_after = set(Airport.objects.all())
 
         self.assertEqual(airports_before, airports_after)
@@ -490,7 +496,7 @@ class TestFakeDatabaseCommand(TestCase):
         roles = ['helper', 'instructor', 'host', 'learner', 'organizer',
                  'tutor', 'debriefed']
         self.assertFalse(Role.objects.filter(name__in=roles).exists())
-        call_command('fake_database', seed=self.seed)
+        self.cmd.fake_roles(self.faker)
 
         self.assertEqual(set(roles),
                          set(Role.objects.values_list('name', flat=True)))
@@ -503,7 +509,7 @@ class TestFakeDatabaseCommand(TestCase):
         self.assertNotEqual(set(tags),
                             set(Tag.objects.values_list('name', flat=True)))
 
-        call_command('fake_database', seed=self.seed)
+        self.cmd.fake_tags(self.faker)
         self.assertEqual(set(tags),
                          set(Tag.objects.values_list('name', flat=True)))
 
