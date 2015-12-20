@@ -522,18 +522,16 @@ def person_bulk_add_confirmation(request):
     if request.method == 'POST':
         # update values if user wants to change them
         personals = request.POST.getlist("personal")
-        middles = request.POST.getlist("middle")
         families = request.POST.getlist("family")
         emails = request.POST.getlist("email")
         events = request.POST.getlist("event")
         roles = request.POST.getlist("role")
-        data_update = zip(personals, middles, families, emails, events, roles)
+        data_update = zip(personals, families, emails, events, roles)
         for k, record in enumerate(data_update):
-            personal, middle, family, email, event, role = record
+            personal, family, email, event, role = record
             # "field or None" converts empty strings to None values
             persons_tasks[k] = {
                 'personal': personal,
-                'middle': middle or None,
                 'family': family,
                 'email': email or None
             }

@@ -135,7 +135,6 @@ def verify_upload_person_task(data):
         # personal and family names are the same as uploaded
         email = item.get('email', None)
         personal = item.get('personal', None)
-        middle = item.get('middle', None)
         family = item.get('family', None)
         person = None
         if email:
@@ -146,9 +145,9 @@ def verify_upload_person_task(data):
             try:
                 person = Person.objects.get(email__iexact=email)
                 for (which, actual, uploaded) in (
-                    ('personal', person.personal, personal),
-                    ('middle', person.middle, middle),
-                    ('family', person.family, family)):
+                        ('personal', person.personal, personal),
+                        ('family', person.family, family)
+                ):
                     if (actual == uploaded) or ((actual is None) and (uploaded == '')):
                         pass
                     else:

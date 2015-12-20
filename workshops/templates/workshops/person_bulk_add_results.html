@@ -9,7 +9,6 @@
     <table class="table table-striped" id="bulk-add-results">
         <tr>
             <th>personal</th>
-            <th>middle</th>
             <th>family</th>
             <th>email</th>
             <th>event</th>
@@ -23,10 +22,6 @@
             <td class="editable">
                 <span>{{ entry.personal|default:"&mdash;" }}</span>
                 <input type="text" name="personal" value="{{ entry.personal|default:"" }}" class="hidden">
-            </td>
-            <td class="editable">
-                <span>{{ entry.middle|default:"&mdash;" }}</span>
-                <input type="text" name="middle" value="{{ entry.middle|default:"" }}" class="hidden">
             </td>
             <td class="editable">
                 <span>{{ entry.family|default:"&mdash;" }}</span>
