@@ -7,6 +7,7 @@ import re
 import yaml
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.validators import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.core.paginator import Paginator as DjangoPaginator
@@ -139,7 +140,6 @@ def verify_upload_person_task(data):
         email = item.get('email', None)
         personal = item.get('personal', None)
         family = item.get('family', None)
-        username = item.get('username', None)
         person = None
 
         if email:
@@ -183,7 +183,7 @@ def verify_upload_person_task(data):
 
         else:
             # force a newly created username
-            if not username:
+            if not item.get('username'):
                 item['username'] = create_username(personal, family)
             item['person_exists'] = False
 
@@ -209,6 +209,15 @@ def verify_upload_person_task(data):
             else:
                 info.append('There\'s a matching person in the database: {}. '
                             'Use their email to merge.'.format(similar_person))
+
+        # let's check what Person model validators want to say
+        try:
+            p = Person(personal=personal, family=family, email=email,
+                       username=item['username'])
+            p.clean_fields(exclude=['password'])
+        except ValidationError as e:
+            for k, v in e.message_dict.items():
+                errors.append('{}: {}'.format(k, v))
 
         if not role:
             errors.append('Must have a role.')
