@@ -94,11 +94,8 @@ def upload_person_task_csv(stream):
             entry[col] = row.get(col, None)
         entry['errors'] = None
 
-        if entry.get('personal') and entry.get('family'):
-            entry['username'] = create_username(entry['personal'],
-                                                entry['family'])
-        else:
-            entry['username'] = ''
+        # it will be set in the `verify_upload_person_task`
+        entry['username'] = ''
 
         result.append(entry)
 
@@ -142,6 +139,7 @@ def verify_upload_person_task(data):
         email = item.get('email', None)
         personal = item.get('personal', None)
         family = item.get('family', None)
+        username = item.get('username', None)
         person = None
 
         if email:
@@ -175,14 +173,19 @@ def verify_upload_person_task(data):
                         info.append('Task will be created.')
                     else:
                         info.append('Task already exists.')
+        else:
+            info.append('It\'s highly recommended to add an email address.')
 
         if person:
             # force username from existing record
             item['username'] = person.username
+            item['person_exists'] = True
 
         else:
             # force a newly created username
-            item['username'] = create_username(personal, family)
+            if not username:
+                item['username'] = create_username(personal, family)
+            item['person_exists'] = False
 
             info.append('Person and task will be created.')
 

@@ -28,7 +28,7 @@
                 <span>{{ entry.family|default:"&mdash;" }}</span>
                 <input type="text" name="family" value="{{ entry.family|default:"" }}" class="hidden">
             </td>
-            <td>
+            <td {% if not entry.person_exists %}class="editable"{% endif %}>
                 <span>{{ entry.username|default:"&mdash;" }}</span>
                 <input type="text" name="username" value="{{ entry.username|default:"" }}" class="hidden">
             </td>
