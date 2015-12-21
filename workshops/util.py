@@ -155,7 +155,7 @@ def verify_upload_person_task(data):
                         pass
                     else:
                         errors.append('{0} mismatch: database "{1}" '
-                                      'vs uploaded "{2}"'
+                                      'vs uploaded "{2}".'
                                       .format(which, actual, uploaded))
 
             except Person.DoesNotExist:

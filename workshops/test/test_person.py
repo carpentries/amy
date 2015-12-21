@@ -3,6 +3,7 @@
 import datetime
 
 from django.core.urlresolvers import reverse
+from django.core.validators import ValidationError
 from django.contrib.auth.models import Permission, Group
 
 from django.test import TransactionTestCase
@@ -325,6 +326,24 @@ class TestPerson(TestBase):
         assert rv.status_code == 200
         content = rv.content.decode('utf-8')
         assert "Test Test was created successfully." in content
+
+    def test_person_username_validation(self):
+        """Ensure username doesn't allow for non-ASCII characters."""
+        invalid_usernames = ['Zażółć gęślą jaźń', 'chrząszcz']
+        for username in invalid_usernames:
+            with self.subTest(username=username):
+                person = Person.objects.create(
+                    personal='Testing', family='Testing', username=username,
+                )
+                with self.assertRaises(ValidationError) as cm:
+                    person.clean_fields(exclude=['password'])
+                self.assertIn('username', cm.exception.message_dict)
+
+        valid_username = 'testing.testing.2'
+        person = Person.objects.create(
+            personal='Testing', family='Testing', username=valid_username,
+        )
+        person.clean_fields(exclude=['password'])
 
 
 class TestPersonPassword(TestBase):

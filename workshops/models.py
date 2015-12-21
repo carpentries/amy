@@ -223,7 +223,10 @@ class Person(AbstractBaseUser, PermissionsMixin):
     github      = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True)
     twitter     = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True)
     url         = models.CharField(max_length=STR_LONG, null=True, blank=True)
-    username    = models.CharField(max_length=STR_MED, unique=True)
+    username = models.CharField(
+        max_length=STR_MED, unique=True,
+        validators=[RegexValidator(r'^[\w\.]+$', flags=re.A)],
+    )
     notes = models.TextField(default="", blank=True)
     affiliation = models.CharField(max_length=STR_LONG, default='', blank=True)
 
