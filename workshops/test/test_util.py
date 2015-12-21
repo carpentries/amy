@@ -209,6 +209,36 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
         self.assertIn('Must have a role', errors[0])
         self.assertIn('Must have an event', errors[1])
 
+    def test_username_from_existing_person(self):
+        """Make sure the username is being changed for correct one."""
+        data = [
+            {
+                'personal': 'Harry',
+                'family': 'Potter',
+                'username': 'wrong_username',
+                'email': 'harry@hogwarts.edu',
+                'event': '',
+                'role': '',
+            }
+        ]
+        verify_upload_person_task(data)
+        self.assertEqual('potter.h', data[0]['username'])
+
+    def test_username_from_nonexisting_person(self):
+        """Make sure the username is not being changed."""
+        data = [
+            {
+                'personal': 'Harry',
+                'family': 'Frotter',
+                'username': 'supplied_username',
+                'email': 'h.frotter@hogwarts.edu',
+                'event': '',
+                'role': '',
+            }
+        ]
+        verify_upload_person_task(data)
+        self.assertEqual('supplied_username', data[0]['username'])
+
 
 class BulkUploadUsersViewTestCase(CSVBulkUploadTestBase):
 
