@@ -522,19 +522,20 @@ def person_bulk_add_confirmation(request):
     if request.method == 'POST':
         # update values if user wants to change them
         personals = request.POST.getlist("personal")
-        middles = request.POST.getlist("middle")
         families = request.POST.getlist("family")
+        usernames = request.POST.getlist("username")
         emails = request.POST.getlist("email")
         events = request.POST.getlist("event")
         roles = request.POST.getlist("role")
-        data_update = zip(personals, middles, families, emails, events, roles)
+        data_update = zip(personals, families, usernames, emails, events,
+                          roles)
         for k, record in enumerate(data_update):
-            personal, middle, family, email, event, role = record
+            personal, family, username, email, event, role = record
             # "field or None" converts empty strings to None values
             persons_tasks[k] = {
                 'personal': personal,
-                'middle': middle or None,
                 'family': family,
+                'username': username,
                 'email': email or None
             }
             # when user wants to drop related event they will send empty string
@@ -557,7 +558,8 @@ def person_bulk_add_confirmation(request):
                                      "listed below.")
 
             context = {'title': 'Confirm uploaded data',
-                       'persons_tasks': persons_tasks}
+                       'persons_tasks': persons_tasks,
+                       'any_errors': any_errors}
             return render(request, 'workshops/person_bulk_add_results.html',
                           context)
 
@@ -575,18 +577,21 @@ def person_bulk_add_confirmation(request):
                                      "Error saving data to the database: {}. "
                                      "Please make sure to fix all errors "
                                      "listed below.".format(e))
-                verify_upload_person_task(persons_tasks)
+                any_errors = verify_upload_person_task(persons_tasks)
                 context = {'title': 'Confirm uploaded data',
-                           'persons_tasks': persons_tasks}
+                           'persons_tasks': persons_tasks,
+                           'any_errors': any_errors}
                 return render(request,
                               'workshops/person_bulk_add_results.html',
                               context, status=400)
 
             else:
                 request.session['bulk-add-people'] = None
-                messages.add_message(request, messages.SUCCESS,
-                                     "Successfully uploaded {0} persons and {1} tasks."
-                                     .format(len(persons_created), len(tasks_created)))
+                messages.add_message(
+                    request, messages.SUCCESS,
+                    'Successfully created {0} persons and {1} tasks.'
+                    .format(len(persons_created), len(tasks_created))
+                )
                 return redirect('person_bulk_add')
 
         else:
@@ -596,10 +601,11 @@ def person_bulk_add_confirmation(request):
 
     else:
         # alters persons_tasks via reference
-        verify_upload_person_task(persons_tasks)
+        any_errors = verify_upload_person_task(persons_tasks)
 
         context = {'title': 'Confirm uploaded data',
-                   'persons_tasks': persons_tasks}
+                   'persons_tasks': persons_tasks,
+                   'any_errors': any_errors}
         return render(request, 'workshops/person_bulk_add_results.html',
                       context)
 

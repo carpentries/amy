@@ -209,7 +209,7 @@ class Person(AbstractBaseUser, PermissionsMixin):
     )
 
     # These attributes should always contain field names of Person
-    PERSON_UPLOAD_FIELDS = ('personal', 'middle', 'family', 'email')
+    PERSON_UPLOAD_FIELDS = ('personal', 'family', 'email')
     PERSON_TASK_EXTRA_FIELDS = ('event', 'role')
     PERSON_TASK_UPLOAD_FIELDS = PERSON_UPLOAD_FIELDS + PERSON_TASK_EXTRA_FIELDS
 
@@ -223,7 +223,10 @@ class Person(AbstractBaseUser, PermissionsMixin):
     github      = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True)
     twitter     = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True)
     url         = models.CharField(max_length=STR_LONG, null=True, blank=True)
-    username    = models.CharField(max_length=STR_MED, unique=True)
+    username = models.CharField(
+        max_length=STR_MED, unique=True,
+        validators=[RegexValidator(r'^[\w\.]+$', flags=re.A)],
+    )
     notes = models.TextField(default="", blank=True)
     affiliation = models.CharField(max_length=STR_LONG, default='', blank=True)
 
