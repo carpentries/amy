@@ -723,6 +723,27 @@ class Event(AssignmentMixin, models.Model):
         url += urlencode(query)
         return url
 
+    @property
+    def human_readable_date(self):
+        """Render start and end dates as human-readable short date."""
+        date1 = self.start
+        date2 = self.end
+
+        if date1 and not date2:
+            return '{:%b %d, %Y}-???'.format(date1)
+        elif date2 and not date1:
+            return '???-{:%b %d, %Y}'.format(date2)
+        elif not date2 and not date1:
+            return '???-???'
+
+        if date1.year == date2.year:
+            if date1.month == date2.month:
+                return '{:%b %d}-{:%d, %Y}'.format(date1, date2)
+            else:
+                return '{:%b %d}-{:%b %d, %Y}'.format(date1, date2)
+        else:
+            return '{:%b %d, %Y}-{:%b %d, %Y}'.format(date1, date2)
+
     def get_ident(self):
         if self.slug:
             return str(self.slug)
