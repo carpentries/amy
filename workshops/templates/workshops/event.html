@@ -14,13 +14,6 @@
 <div class="row">
   <div class="col-md-6">
     {% last_modified event %}
-    <p class="edit-object">
-      {% if perms.workshops.change_event %}
-      <a href="{% url 'event_edit' event.get_ident %}" class="btn btn-primary">Edit</a>
-      {% else %}
-      <a href="{% url 'event_edit' event.get_ident %}" class="btn btn-primary disabled">Edit</a>
-      {% endif %}
-    </p>
   </div>
   <div class="col-md-6 text-right">
     <p>
@@ -31,6 +24,20 @@
       {% else %}
         no one (<a href="{% url 'event_assign' event.get_ident user.pk %}" id="assign-yourself">assign yourself</a>).
       {% endif %}
+    </p>
+  </div>
+</div>
+<div class="row">
+  <div class="col-md-12">
+    <p class="edit-object pull-left">
+      {% if perms.workshops.change_event %}
+      <a href="{% url 'event_edit' event.get_ident %}" class="btn btn-primary">Edit</a>
+      {% else %}
+      <a href="{% url 'event_edit' event.get_ident %}" class="btn btn-primary disabled">Edit</a>
+      {% endif %}
+    </p>
+    <p class="pull-right">
+      <a href="#" class="btn btn-default" id="preview_event">Show preview</a>
     </p>
   </div>
 </div>
@@ -112,6 +119,39 @@
       </div>
       <div class="modal-body">
         {% crispy person_lookup_form person_lookup_helper %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SWC website preview modal -->
+<div class="modal fade" id="preview_modal" tabindex="-1" role="dialog" aria-labelledby="preview_modal_label" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="preview_modal_label">Preview on Software-Carpentry website</h4>
+      </div>
+      <div class="modal-body">
+        <div id="map_canvas" style="width: 100%; height: 500px; margin-left:auto; margin-right: auto; margin-bottom: 15px"></div>
+
+        <h2>Future workshops</h2>
+        <table class="table table-striped">
+          <tr>
+            <td>{% if event.country %}<img src="{{ event.country.flag }}" alt="{{ event.country }}" class="country-flag" />{% else %}—{% endif %}</td>
+            <td>
+            {% if event.url %}
+              <a href="{{ event.url }}">{{ event.venue|default:"—" }}</a>
+            {% else %}
+              {{ event.venue|default:"—" }}
+            {% endif %}
+            </td>
+            <td>{{ event.human_readable_date }}</td>
+          </tr>
+        </table>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
@@ -208,7 +248,10 @@
 {% block extrajs %}
 {{ todo_form.media }}
 {{ person_lookup_form.media }}
+<script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
 <script type="text/javascript">
+  var gmap = null;
+
   $('#error_event_url').popover({placement: "left", html: true});
   $('#error_closest_instructors').popover({placement: "left", html: true});
   $('#change_assignment').click(function() {
@@ -221,6 +264,15 @@
   });
   $('#validation_modal').on('show.bs.modal', function() {
     $('#validation_modal .modal-body').load("{% url 'validate_event' event.get_ident %} #validation");
+  });
+  $('#preview_event').click(function() {
+    $('#preview_modal').modal();
+    return false;
+  });
+  $("#preview_modal").on("shown.bs.modal", function () {
+    // required for the map to show something, otherwise (due to using modal)
+    // we'd get grey area
+    google.maps.event.trigger(gmap, "resize");
   });
 
   // scroll to TODOs if there's an alert with "todos" class
@@ -258,6 +310,23 @@
           row.removeClass("text-muted strikethrough bg-muted");
         });
       }
+    });
+
+    // draw a pin on the map in website preview
+    var mapOptions = {
+      zoom: 1,
+      // by trial and error, these values lets us see the most w/o scrolling
+      center: {lat: 85, lng: 180},
+      mapTypeId: google.maps.MapTypeId.ROADMAP
+    };
+    gmap = new google.maps.Map(document.getElementById("map_canvas"),
+                               mapOptions);
+    var marker = new google.maps.Marker({
+      position: new google.maps.LatLng({{ event.latitude }},
+                                       {{ event.longitude }}),
+      map: gmap,
+      title: "{{ event.venue|escapejs }}: {{ event.humandate|escapejs }}",
+      visible: true   // marker shown directly, not clustered
     });
   });
 </script>
