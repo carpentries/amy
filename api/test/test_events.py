@@ -115,6 +115,7 @@ class TestListingPublishedEvents(APITestCase):
                 'url': 'https://user.github.io/repository/',
                 'contact': 'sb@sth.edu',
                 'eventbrite_id': '12341234',
+                'tags': [],
             },
             {
                 'slug': 'event2',
@@ -131,6 +132,7 @@ class TestListingPublishedEvents(APITestCase):
                 'url': 'https://user.github.io/repository/',
                 'contact': 'sb@sth.edu',
                 'eventbrite_id': None,
+                'tags': [],
             },
             {
                 'slug': 'event1',
@@ -145,6 +147,7 @@ class TestListingPublishedEvents(APITestCase):
                 'url': 'https://user.github.io/repository/',
                 'contact': 'sb@sth.edu',
                 'eventbrite_id': None,
+                'tags': [],
             },
         ]
 
