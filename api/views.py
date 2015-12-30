@@ -1,5 +1,6 @@
 import datetime
 
+from django.db.models import Q
 from rest_framework.generics import ListAPIView
 from rest_framework.metadata import SimpleMetadata
 from rest_framework.permissions import (
@@ -9,7 +10,7 @@ from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.views import APIView
 
-from workshops.models import Badge, Airport, Event, TodoItem
+from workshops.models import Badge, Airport, Event, TodoItem, Tag
 from workshops.util import get_members, default_membership_cutoff
 
 from .serializers import (
@@ -134,6 +135,12 @@ class PublishedEvents(ListAPIView):
         if host is not None:
             queryset = queryset.filter(host__pk=host)
 
+        tags = self.request.query_params.getlist('tag', None)
+        if tags:
+            tags = Tag.objects.filter(name__in=tags)
+            for tag in tags:
+                queryset = queryset.filter(tags=tag)
+
         return queryset
 
     def get_query_params_description(self):
@@ -141,6 +148,7 @@ class PublishedEvents(ListAPIView):
             'administrator': 'ID of the organization responsible for admin '
                              'work on events.',
             'host': 'ID of the organization hosting the event.',
+            'tag': 'Events\' tag. You can use this parameter multiple times.',
         }
 
 
