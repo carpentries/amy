@@ -3,6 +3,7 @@ import json
 from unittest.mock import patch
 
 from django.core.urlresolvers import reverse
+from django.http import QueryDict
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -114,6 +115,7 @@ class TestListingPublishedEvents(APITestCase):
                 'url': 'https://user.github.io/repository/',
                 'contact': 'sb@sth.edu',
                 'eventbrite_id': '12341234',
+                'tags': [],
             },
             {
                 'slug': 'event2',
@@ -128,6 +130,7 @@ class TestListingPublishedEvents(APITestCase):
                 'url': 'https://user.github.io/repository/',
                 'contact': 'sb@sth.edu',
                 'eventbrite_id': None,
+                'tags': [],
             },
             {
                 'slug': 'event1',
@@ -142,10 +145,12 @@ class TestListingPublishedEvents(APITestCase):
                 'url': 'https://user.github.io/repository/',
                 'contact': 'sb@sth.edu',
                 'eventbrite_id': None,
+                'tags': [],
             },
         ]
 
-    @patch.object(PublishedEvents, 'request', query_params={}, create=True)
+    @patch.object(PublishedEvents, 'request', query_params=QueryDict(),
+                  create=True)
     def test_serialization(self, mock_request):
         # we're mocking a request here because it's not possible to create
         # a fake request context for the view

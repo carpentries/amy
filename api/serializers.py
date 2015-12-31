@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from workshops.models import Badge, Airport, Person, Event, TodoItem
+from workshops.models import Badge, Airport, Person, Event, TodoItem, Tag
 
 
 class PersonUsernameSerializer(serializers.ModelSerializer):
@@ -37,6 +37,12 @@ class ExportInstructorLocationsSerializer(serializers.ModelSerializer):
         fields = ('name', 'latitude', 'longitude', 'instructors', 'country')
 
 
+class TagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tag
+        fields = ('name', )
+
+
 class EventSerializer(serializers.ModelSerializer):
     humandate = serializers.CharField(source='human_readable_date')
     country = serializers.CharField()
@@ -44,12 +50,14 @@ class EventSerializer(serializers.ModelSerializer):
     end = serializers.DateField(format=None)
     url = serializers.URLField(source='website_url')
     eventbrite_id = serializers.CharField(source='reg_key')
+    tags = TagSerializer(many=True)
 
     class Meta:
         model = Event
         fields = (
             'slug', 'start', 'end', 'url', 'humandate', 'contact', 'country',
             'venue', 'address', 'latitude', 'longitude', 'eventbrite_id',
+            'tags',
         )
 
 
