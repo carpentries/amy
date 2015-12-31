@@ -148,7 +148,8 @@ class PublishedEvents(ListAPIView):
             'administrator': 'ID of the organization responsible for admin '
                              'work on events.',
             'host': 'ID of the organization hosting the event.',
-            'tag': 'Events\' tag. You can use this parameter multiple times.',
+            'tag': "Events' tag(s). You can use this parameter multiple "
+                   "times.",
         }
 
 
