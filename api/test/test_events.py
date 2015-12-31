@@ -119,9 +119,7 @@ class TestListingPublishedEvents(APITestCase):
                 'slug': 'event2',
                 'start': self.event2.start,
                 'end': self.event2.end,
-                'humandate': self.serializer_class.human_readable_date(
-                    self.event2.start, self.event2.end
-                ),
+                'humandate': self.event2.human_readable_date,
                 'latitude': 3.,
                 'longitude': -2.,
                 'venue': 'University',
