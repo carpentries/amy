@@ -21,8 +21,18 @@ from workshops.models import (
 from workshops.util import universal_date_format
 
 
-class TestExportingBadges(APITestCase):
+class BaseExportingTest(APITestCase):
     def setUp(self):
+        # remove all existing badges (this will be rolled back anyway)
+        # including swc-instructor and dc-instructor introduced by migration
+        # 0064
+        Badge.objects.all().delete()
+
+
+class TestExportingBadges(BaseExportingTest):
+    def setUp(self):
+        super().setUp()
+
         # set up two badges, one with users, one without any
         self.badge1 = Badge.objects.create(name='badge1', title='Badge1',
                                            criteria='')
@@ -67,12 +77,17 @@ class TestExportingBadges(APITestCase):
         self.assertEqual(json.loads(content), self.expecting)
 
 
-class TestExportingInstructors(APITestCase):
+class TestExportingInstructors(BaseExportingTest):
     def setUp(self):
-        # set up two badges, one with users, one without any
-        self.badge = Badge.objects.create(name='instructor',
-                                          title='Instructor',
-                                          criteria='')
+        super().setUp()
+
+        # set up two badges, one for each user
+        self.swc_instructor = Badge.objects.create(
+            name='swc-instructor', title='Software Carpentry Instructor',
+            criteria='')
+        self.dc_instructor = Badge.objects.create(
+            name='dc-instructor', title='Data Carpentry Instructor',
+            criteria='')
         self.airport1 = Airport.objects.create(
             iata='ABC', fullname='Airport1', country='PL', latitude=1,
             longitude=2,
@@ -89,9 +104,11 @@ class TestExportingInstructors(APITestCase):
             username='user2', personal='User2', family='Name',
             email='user2@name.org', airport=self.airport1,
         )
-        Award.objects.create(person=self.user1, badge=self.badge,
+        # user1 is only a SWC instructor
+        Award.objects.create(person=self.user1, badge=self.swc_instructor,
                              awarded=datetime.date.today())
-        Award.objects.create(person=self.user2, badge=self.badge,
+        # user2 is only a DC instructor
+        Award.objects.create(person=self.user2, badge=self.dc_instructor,
                              awarded=datetime.date.today())
 
         # make sure we *do not* get empty airports
@@ -123,12 +140,18 @@ class TestExportingInstructors(APITestCase):
         self.assertEqual(json.loads(content), self.expecting)
 
 
-class TestExportingMembers(APITestCase):
+class TestExportingMembers(BaseExportingTest):
     def setUp(self):
-        # Note: must create instructor badge for get_members query to run.
+        super().setUp()
+
+        # Note: must create instructor badges for get_members query to run.
         # Same for instructor role
-        Badge.objects.create(name='instructor', title='Instructor',
-                             criteria='')
+        Badge.objects.create(
+            name='swc-instructor', title='Software Carpentry Instructor',
+            criteria='')
+        Badge.objects.create(
+            name='dc-instructor', title='Data Carpentry Instructor',
+            criteria='')
         Role.objects.create(name='instructor')
 
         self.spiderman = Person.objects.create(

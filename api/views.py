@@ -1,13 +1,16 @@
 import datetime
 
+from django.db.models import Q
 from rest_framework.generics import ListAPIView
 from rest_framework.metadata import SimpleMetadata
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import (
+    IsAuthenticatedOrReadOnly, IsAuthenticated
+)
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.views import APIView
 
-from workshops.models import Badge, Airport, Event
+from workshops.models import Badge, Airport, Event, TodoItem, Tag
 from workshops.util import get_members, default_membership_cutoff
 
 from .serializers import (
@@ -15,6 +18,7 @@ from .serializers import (
     ExportBadgesSerializer,
     ExportInstructorLocationsSerializer,
     EventSerializer,
+    TodoSerializer,
 )
 
 
@@ -43,6 +47,8 @@ class ApiRoot(APIView):
                                       format=format),
             'events-published': reverse('api:events-published',
                                         request=request, format=format),
+            'user-todos': reverse('api:user-todos',
+                                  request=request, format=format),
         })
 
 
@@ -129,6 +135,12 @@ class PublishedEvents(ListAPIView):
         if host is not None:
             queryset = queryset.filter(host__pk=host)
 
+        tags = self.request.query_params.getlist('tag', None)
+        if tags:
+            tags = Tag.objects.filter(name__in=tags)
+            for tag in tags:
+                queryset = queryset.filter(tags=tag)
+
         return queryset
 
     def get_query_params_description(self):
@@ -136,4 +148,18 @@ class PublishedEvents(ListAPIView):
             'administrator': 'ID of the organization responsible for admin '
                              'work on events.',
             'host': 'ID of the organization hosting the event.',
+            'tag': "Events' tag(s). You can use this parameter multiple "
+                   "times.",
         }
+
+
+class UserTodoItems(ListAPIView):
+    permission_classes = (IsAuthenticated, )
+    paginator = None
+    serializer_class = TodoSerializer
+
+    def get_queryset(self):
+        """Return current TODOs for currently logged in user."""
+        return TodoItem.objects.user(self.request.user) \
+                               .incomplete() \
+                               .select_related('event')

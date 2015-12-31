@@ -10,6 +10,14 @@ var id_country = '#id_country, #id_event-country',
     id_latitude = '#id_latitude, #id_event-latitude',
     id_longitude = '#id_longitude, #id_event-longitude';
 
+if ($(id_country).val() == 'W3') {
+    online_selected_before = true;
+    $(id_venue).prop('disabled', true);
+    $(id_address).prop('disabled', true);
+    $(id_latitude).prop('disabled', true);
+    $(id_longitude).prop('disabled', true);
+}
+
 // disable latitude, longitude inputs if online country selected
 $(id_country).change(function(e) {
   var new_country = $(e.target).val();

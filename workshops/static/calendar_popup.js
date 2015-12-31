@@ -8,6 +8,7 @@ var DATEPICKER_DEFAULTS = {
 var first_startdate_selected = false;
 
 $(document).ready(function() {
+    $("#id_agreement_start, #id_agreement_end").datepicker(DATEPICKER_DEFAULTS);
     $("#id_start, #id_end").datepicker(DATEPICKER_DEFAULTS);
     $("#id_event-start, #id_event-end").datepicker(DATEPICKER_DEFAULTS);
     $("#id_todo-due, #id_form-0-due, #id_form-1-due, #id_form-2-due, " +

@@ -8,6 +8,7 @@ from django.core.urlresolvers import reverse
 from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
 from django.db.models import Q
+from django.utils import timezone
 
 from django_countries.fields import CountryField
 import reversion
@@ -48,6 +49,90 @@ class Host(models.Model):
 
     class Meta:
         ordering = ('domain', )
+
+
+@reversion.register
+class Membership(models.Model):
+    """Represent a details of Host's membership."""
+
+    MEMBERSHIP_CHOICES = (
+        ('partner', 'Partner'),
+        ('affiliate', 'Affiliate'),
+        ('sponsor', 'Sponsor'),
+    )
+    variant = models.CharField(
+        max_length=STR_MED, null=False, blank=False,
+        choices=MEMBERSHIP_CHOICES,
+    )
+    agreement_start = models.DateField(
+        default=timezone.now, null=True, blank=True, editable=True,
+    )
+    agreement_end = models.DateField(
+        default=timezone.now, null=True, blank=True, editable=True,
+    )
+    CONTRIBUTION_CHOICES = (
+        ('financial', 'Financial'),
+        ('person-days', 'Person-days'),
+        ('other', 'Other'),
+    )
+    contribution_type = models.CharField(
+        max_length=STR_MED, null=True, blank=True,
+        choices=CONTRIBUTION_CHOICES,
+    )
+    workshops_without_admin_fee_per_year = models.PositiveIntegerField(
+        null=True, blank=True,
+        help_text="Acceptable number of workshops without admin fee per year",
+    )
+    self_organized_workshops_per_year = models.PositiveIntegerField(
+        null=True, blank=True,
+        help_text="Imposed number of self-organized workshops per year",
+    )
+    notes = models.TextField(default="", blank=True)
+    host = models.ForeignKey(Host, null=False, blank=False,
+                             on_delete=models.PROTECT)
+
+    def __str__(self):
+        return "{} Membership of <{}>".format(self.variant, str(self.host))
+
+    @property
+    def workshops_without_admin_fee_per_year_completed(self):
+        """Count workshops without admin fee hosted the year agreement
+        started."""
+        year = self.agreement_start.year
+        self_organized = (Q(administrator=None) |
+                          Q(administrator__domain='self-organized'))
+        no_fee = Q(admin_fee=0) | Q(admin_fee=None)
+
+        return Event.objects.filter(host=self.host, start__year=year) \
+                            .filter(no_fee) \
+                            .exclude(self_organized).count()
+
+    @property
+    def workshops_without_admin_fee_per_year_remaining(self):
+        """Count remaining workshops w/o admin fee for the year agreement
+        started."""
+        a = self.workshops_without_admin_fee_per_year
+        b = self.workshops_without_admin_fee_per_year_completed
+        return a - b
+
+    @property
+    def self_organized_workshops_per_year_completed(self):
+        """Count self-organized workshops hosted the year agreement started."""
+        year = self.agreement_start.year
+        self_organized = (Q(administrator=None) |
+                          Q(administrator__domain='self-organized'))
+
+        return Event.objects.filter(host=self.host, start__year=year) \
+                            .filter(self_organized).count()
+
+    @property
+    def self_organized_workshops_per_year_remaining(self):
+        """Count remaining self-organized workshops for the year agreement
+        started."""
+        a = self.self_organized_workshops_per_year
+        b = self.self_organized_workshops_per_year_completed
+        return a - b
+
 
 #------------------------------------------------------------
 
@@ -124,7 +209,7 @@ class Person(AbstractBaseUser, PermissionsMixin):
     )
 
     # These attributes should always contain field names of Person
-    PERSON_UPLOAD_FIELDS = ('personal', 'middle', 'family', 'email')
+    PERSON_UPLOAD_FIELDS = ('personal', 'family', 'email')
     PERSON_TASK_EXTRA_FIELDS = ('event', 'role')
     PERSON_TASK_UPLOAD_FIELDS = PERSON_UPLOAD_FIELDS + PERSON_TASK_EXTRA_FIELDS
 
@@ -138,7 +223,10 @@ class Person(AbstractBaseUser, PermissionsMixin):
     github      = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True)
     twitter     = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True)
     url         = models.CharField(max_length=STR_LONG, null=True, blank=True)
-    username    = models.CharField(max_length=STR_MED, unique=True)
+    username = models.CharField(
+        max_length=STR_MED, unique=True,
+        validators=[RegexValidator(r'^[\w\.]+$', flags=re.A)],
+    )
     notes = models.TextField(default="", blank=True)
     affiliation = models.CharField(max_length=STR_LONG, default='', blank=True)
 
@@ -194,8 +282,10 @@ class Person(AbstractBaseUser, PermissionsMixin):
     def save(self, *args, **kwargs):
         # save empty string as NULL to the database - otherwise there are
         # issues with UNIQUE constraint failing
-        self.middle = self.middle or None
-        self.email = self.email or None
+        self.personal = self.personal.strip()
+        self.family = self.family.strip()
+        self.middle = self.middle.strip() if self.middle else None
+        self.email = self.email.strip() if self.email else None
         self.gender = self.gender or None
         self.airport = self.airport or None
         self.github = self.github or None
@@ -325,6 +415,9 @@ class ProfileUpdateRequest(models.Model):
 
     def save(self, *args, **kwargs):
         """Save nullable char fields as empty strings."""
+        self.personal = self.personal.strip()
+        self.family = self.family.strip()
+        self.email = self.email.strip()
         self.gender = self.gender or ''
         self.occupation = self.occupation or ''
         return super().save(*args, **kwargs)
@@ -629,6 +722,27 @@ class Event(AssignmentMixin, models.Model):
                "1XljyEam4LERRXW0ebyh5eoZXjT1xR4bHkPxITLWiIyA/viewform?")
         url += urlencode(query)
         return url
+
+    @property
+    def human_readable_date(self):
+        """Render start and end dates as human-readable short date."""
+        date1 = self.start
+        date2 = self.end
+
+        if date1 and not date2:
+            return '{:%b %d, %Y}-???'.format(date1)
+        elif date2 and not date1:
+            return '???-{:%b %d, %Y}'.format(date2)
+        elif not date2 and not date1:
+            return '???-???'
+
+        if date1.year == date2.year:
+            if date1.month == date2.month:
+                return '{:%b %d}-{:%d, %Y}'.format(date1, date2)
+            else:
+                return '{:%b %d}-{:%b %d, %Y}'.format(date1, date2)
+        else:
+            return '{:%b %d, %Y}-{:%b %d, %Y}'.format(date1, date2)
 
     def get_ident(self):
         if self.slug:
@@ -938,12 +1052,26 @@ class Qualification(models.Model):
 
 #------------------------------------------------------------
 
+
+class BadgeQuerySet(models.query.QuerySet):
+    """Custom QuerySet that provides easy way to get instructor badges
+    (we use that a lot)."""
+
+    INSTRUCTOR_BADGES = ('dc-instructor', 'swc-instructor')
+
+    def instructor_badges(self):
+        """Filter for instructor badges only."""
+        return self.filter(name__in=self.INSTRUCTOR_BADGES)
+
+
 class Badge(models.Model):
     '''Represent a badge we award.'''
 
     name       = models.CharField(max_length=STR_MED, unique=True)
     title      = models.CharField(max_length=STR_MED)
     criteria   = models.CharField(max_length=STR_LONG)
+
+    objects = BadgeQuerySet.as_manager()
 
     def __str__(self):
         return self.title
@@ -980,6 +1108,47 @@ class KnowledgeDomain(models.Model):
 # ------------------------------------------------------------
 
 
+class TodoItemQuerySet(models.query.QuerySet):
+    @staticmethod
+    def current_week_dates(today=None):
+        if not today:
+            today = datetime.date.today()
+        start = today - datetime.timedelta(days=today.weekday())
+        end = start + datetime.timedelta(days=7)
+        return start, end
+
+    @staticmethod
+    def next_week_dates(today=None):
+        if not today:
+            today = datetime.date.today()
+        start = today + datetime.timedelta(days=(7 - today.weekday()))
+        end = start + datetime.timedelta(days=7)
+        return start, end
+
+    def user(self, person):
+        """Return TODOs only for specific person."""
+        return self.filter(event__assigned_to=person)
+
+    def current_week(self, today=None):
+        """Select TODOs for the current week."""
+        start, end = TodoItemQuerySet.current_week_dates(today)
+        return self.filter(due__gte=start, due__lt=end)
+
+    def next_week(self, today=None):
+        """Select TODOs for the next week."""
+        start, end = TodoItemQuerySet.next_week_dates(today)
+        return self.filter(due__gte=start, due__lt=end)
+
+    def incomplete(self):
+        """Select TODOs that aren't marked as completed."""
+        return self.filter(completed=False)
+
+    def current(self, today=None):
+        """A shortcut for getting TODOs from this and upcoming week."""
+        return ((self.current_week(today) | self.next_week(today)) &
+                self.incomplete())
+
+
 class TodoItem(models.Model):
     """Model representing to-do items for events."""
     event = models.ForeignKey(Event, null=False, blank=False)
@@ -987,6 +1156,8 @@ class TodoItem(models.Model):
     title = models.CharField(max_length=STR_LONG, default='', blank=False)
     due = models.DateField(blank=True, null=True)
     additional = models.CharField(max_length=255, default='', blank=True)
+
+    objects = TodoItemQuerySet.as_manager()
 
     class Meta:
         ordering = ["due", "title"]

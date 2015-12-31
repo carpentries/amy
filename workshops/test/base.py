@@ -19,7 +19,8 @@ from ..models import \
     Lesson, \
     Person, \
     Qualification, \
-    Host
+    Host, \
+    Role
 
 from ..util import universal_date_format
 
@@ -86,9 +87,14 @@ class TestBase(TestCase):
     def _setUpBadges(self):
         '''Set up badge objects.'''
 
-        self.instructor = Badge.objects.create(name='instructor',
-                                               title='Software Carpentry Instructor',
-                                               criteria='Worked hard for this')
+        self.swc_instructor, _ = Badge.objects.get_or_create(
+            name='swc-instructor',
+            defaults=dict(title='Software Carpentry Instructor',
+                          criteria='Worked hard for this'))
+        self.dc_instructor, _ = Badge.objects.get_or_create(
+            name='dc-instructor',
+            defaults=dict(title='Data Carpentry Instructor',
+                          criteria='Worked hard for this'))
 
     def _setUpInstructors(self):
         '''Set up person objects representing instructors.'''
@@ -99,8 +105,12 @@ class TestBase(TestCase):
             airport=self.airport_0_0, github='herself', twitter='herself',
             url='http://hermione.org', username="granger.h")
 
+        # Hermione is additionally a qualified Data Carpentry instructor
         Award.objects.create(person=self.hermione,
-                             badge=self.instructor,
+                             badge=self.swc_instructor,
+                             awarded=datetime.date(2014, 1, 1))
+        Award.objects.create(person=self.hermione,
+                             badge=self.dc_instructor,
                              awarded=datetime.date(2014, 1, 1))
         Qualification.objects.create(person=self.hermione, lesson=self.git)
         Qualification.objects.create(person=self.hermione, lesson=self.sql)
@@ -111,8 +121,12 @@ class TestBase(TestCase):
             airport=self.airport_0_50, github='hpotter', twitter=None,
             url=None, username="potter.h")
 
+        # Harry is additionally a qualified Data Carpentry instructor
         Award.objects.create(person=self.harry,
-                             badge=self.instructor,
+                             badge=self.swc_instructor,
+                             awarded=datetime.date(2014, 5, 5))
+        Award.objects.create(person=self.harry,
+                             badge=self.dc_instructor,
                              awarded=datetime.date(2014, 5, 5))
         Qualification.objects.create(person=self.harry, lesson=self.sql)
 
@@ -123,7 +137,7 @@ class TestBase(TestCase):
             url='http://geocities.com/ron_weas', username="weasley.ron")
 
         Award.objects.create(person=self.ron,
-                             badge=self.instructor,
+                             badge=self.swc_instructor,
                              awarded=datetime.date(2014, 11, 11))
         Qualification.objects.create(person=self.ron, lesson=self.git)
 
@@ -266,6 +280,15 @@ class TestBase(TestCase):
             if e.url and (e.start > today):
                 self.num_upcoming += 1
 
+    def _setUpRoles(self):
+        """Before #626, we don't have a migration that introduces roles that
+        are currently in the database.  This is an auxiliary method for adding
+        them to the tests, should one need them."""
+        Role.objects.bulk_create([
+            Role(name='helper'), Role(name='instructor'), Role(name='host'),
+            Role(name='learner'), Role(name='organizer'), Role(name='tutor'),
+            Role(name='debriefed'),
+        ])
 
     def _parse(self, response, save_to=None):
         """

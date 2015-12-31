@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from workshops.models import Badge, Airport, Person, Event
+from workshops.models import Badge, Airport, Person, Event, TodoItem, Tag
 
 
 class PersonUsernameSerializer(serializers.ModelSerializer):
@@ -37,39 +37,46 @@ class ExportInstructorLocationsSerializer(serializers.ModelSerializer):
         fields = ('name', 'latitude', 'longitude', 'instructors', 'country')
 
 
+class TagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tag
+        fields = ('name', )
+
+
 class EventSerializer(serializers.ModelSerializer):
-    humandate = serializers.SerializerMethodField()
+    humandate = serializers.CharField(source='human_readable_date')
     country = serializers.CharField()
     start = serializers.DateField(format=None)
     end = serializers.DateField(format=None)
     url = serializers.URLField(source='website_url')
     eventbrite_id = serializers.CharField(source='reg_key')
-
-    def get_humandate(self, obj):
-        """Render start and end dates as human-readable short date."""
-        return EventSerializer.human_readable_date(obj.start, obj.end)
-
-    @staticmethod
-    def human_readable_date(date1, date2):
-        """Render start and end dates as human-readable short date."""
-        if date1 and not date2:
-            return '{:%b %d, %Y}-???'.format(date1)
-        elif date2 and not date1:
-            return '???-{:%b %d, %Y}'.format(date2)
-        elif not date2 and not date1:
-            return '???-???'
-
-        if date1.year == date2.year:
-            if date1.month == date2.month:
-                return '{:%b %d}-{:%d, %Y}'.format(date1, date2)
-            else:
-                return '{:%b %d}-{:%b %d, %Y}'.format(date1, date2)
-        else:
-            return '{:%b %d, %Y}-{:%b %d, %Y}'.format(date1, date2)
+    tags = TagSerializer(many=True)
 
     class Meta:
         model = Event
         fields = (
             'slug', 'start', 'end', 'url', 'humandate', 'contact', 'country',
             'venue', 'address', 'latitude', 'longitude', 'eventbrite_id',
+            'tags',
+        )
+
+
+class TodoSerializer(serializers.ModelSerializer):
+    content = serializers.SerializerMethodField()
+    start = serializers.DateField(format=None, source='due')
+
+    class Meta:
+        model = TodoItem
+        fields = (
+            'content', 'start',
+        )
+
+    def get_content(self, obj):
+        """Return HTML containing interesting information for admins.  This
+        will be displayed on labels in the timeline."""
+
+        return '<a href="{url}">{event}</a><br><small>{todo}</small>'.format(
+            url=obj.event.get_absolute_url(),
+            event=obj.event.get_ident(),
+            todo=obj.title,
         )

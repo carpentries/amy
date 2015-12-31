@@ -14,11 +14,10 @@ from selectable import forms as selectable
 
 from workshops.models import (
     Award, Event, Lesson, Person, Task, KnowledgeDomain, Airport, Host,
-    EventRequest, ProfileUpdateRequest, TodoItem,
+    EventRequest, ProfileUpdateRequest, TodoItem, Membership,
 )
 from workshops import lookups
 
-INSTRUCTORS_NUM = 10  # how many instrutors to return from a search by default
 
 AUTOCOMPLETE_HELP_TEXT = (
     "Autocomplete field; type characters to view available options, "
@@ -111,6 +110,16 @@ class InstructorsForm(forms.Form):
                                              widget=CheckboxSelectMultiple(),
                                              required=False)
 
+    INSTRUCTOR_BADGE_CHOICES = (
+        ('swc-instructor', 'Software Carpentry Instructor'),
+        ('dc-instructor', 'Data Carpentry Instructor'),
+    )
+    instructor_badges = forms.MultipleChoiceField(
+        choices=INSTRUCTOR_BADGE_CHOICES,
+        widget=CheckboxSelectMultiple(),
+        required=False,
+    )
+
     GENDER_CHOICES = ((None, '---------'), ) + Person.GENDER_CHOICES
     gender = forms.ChoiceField(choices=GENDER_CHOICES, required=False)
 
@@ -158,6 +167,7 @@ class InstructorsForm(forms.Form):
             ),
             'gender',
             'lessons',
+            'instructor_badges',
             FormActions(
                 Submit('submit', 'Submit'),
             ),
@@ -463,6 +473,16 @@ class HostForm(forms.ModelForm):
     class Meta:
         model = Host
         fields = ['domain', 'fullname', 'country', 'notes']
+
+
+class MembershipForm(forms.ModelForm):
+    class Meta:
+        model = Membership
+        fields = '__all__'
+        widgets = {'host': HiddenInput, }
+
+    class Media:
+        js = ('calendar_popup.js', )
 
 
 class SWCEventRequestForm(forms.ModelForm):

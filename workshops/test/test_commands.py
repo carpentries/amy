@@ -2,458 +2,190 @@
 
 These commands are run via `./manage.py command`."""
 
-from django.core.management import call_command
-from django.utils.six import StringIO
+from datetime import date
 
-from workshops.management.commands.upgrade_instructor_profiles import (
-    Command,
-    ALL_FIELDS
+from django.core.management import call_command
+from django.test import TestCase
+
+from workshops.management.commands.fake_database import (
+    Command as FakeDatabaseCommand,
+    Faker
 )
-from workshops.models import Person
+from ..management.commands.instructors_activity import \
+    Command as InstructorsActivityCommand
 
 from .base import TestBase
+from workshops.models import (
+    Airport,
+    Role,
+    Badge,
+    Tag,
+    Person,
+    Host,
+    Event,
+    Task,
+)
 
 
-class TestUpgradeInstructorProfile(TestBase):
+class TestFakeDatabaseCommand(TestCase):
     def setUp(self):
-        super().setUp()
-        self.cmd = Command()
+        self.cmd = FakeDatabaseCommand()
+        self.seed = 12345
+        self.faker = Faker()
+        self.faker.seed(self.seed)
 
-    def test_domains_translation(self):
-        "Make sure translating domains from string to list works as expected."
-        TEST = [
-            (
-                'Organismal biology (ecology, botany, zoology, microbiology), '
-                'Genetics, genomics, bioinformatics, Computer science/'
-                'electrical engineering',
-                [
-                    'Organismal biology (ecology, botany, zoology, '
-                    'microbiology)',
-                    'Genetics, genomics, bioinformatics',
-                    'Computer science/electrical engineering',
-                ]
-            ),
-            ('Space sciences, Physics', ['Space sciences', 'Physics']),
-            ('Chemistry', ['Chemistry']),
-            # a case of wrong input (it's possible because instructors can put
-            # additional domains):
-            ('Neuroscience/Neuroimaging', ['Neuroscience/', 'Neuroimaging']),
-            ('', []),
-        ]
-        for input, expected in TEST:
-            assert self.cmd.translate_domains(input) == expected
+    def test_no_airports_created(self):
+        """Make sure we don't create any airports.
 
-    def test_lessons_translation(self):
-        "Make sure translating lessons from string to list works as expected."
-        TEST = [
-            (
-                'Git (e.g., http://swcarpentry.github.io/git-novice), Make,'
-                ' nltk',
-                [
-                    'swc/git', 'swc/make', 'nltk',
-                ]
-            ),
-            (
-                'The Unix Shell (e.g., http://swcarpentry.github.io/shell-'
-                'novice), Git (e.g., http://swcarpentry.github.io/git-novice),'
-                ' Mercurial (e.g., http://swcarpentry.github.io/hg-novice), '
-                'Databases and SQL (e.g., http://swcarpentry.github.io/sql-'
-                'novice-survey), Programming with Python (e.g., '
-                'http://swcarpentry.github.io/python-novice-inflammation), '
-                'Programming with R (e.g., http://swcarpentry.github.io/r-'
-                'novice-inflammation)',
-                [
-                    'swc/shell', 'swc/git', 'swc/hg', 'swc/sql', 'swc/python',
-                    'swc/r',
-                ]
-            ),
-            (
-                'Data Organization in Spreadsheets (e.g., '
-                'http://datacarpentry.github.io/excel-ecology), Data Analysis '
-                'and Visualization in R (e.g., http://datacarpentry.github.io'
-                '/R-ecology), Databases and SQL (e.g., '
-                'https://github.com/datacarpentry/sql-ecology/blob/gh-pages/'
-                'sql.md)',
-                [
-                    'dc/spreadsheets', 'dc/r', 'dc/sql',
-                ]
-            ),
-            (
-                'Data Analysis and Visualization in Python (e.g., '
-                'http://datacarpentry.github.io/python-ecology), Programming '
-                'with R: http://swcarpentry.github.io/r-novice-inflammation',
-                [
-                    'dc/python', 'swc/r',
-                ]
-            ),
-            ('', []),
-        ]
-        for input, expected in TEST:
-            assert self.cmd.translate_lessons(input) == expected
+        We don't want to create them, because data migrations add some, and in
+        the future we want to add them via fixture (see #626)."""
+        airports_before = set(Airport.objects.all())
+        self.cmd.fake_airports(self.faker)
+        airports_after = set(Airport.objects.all())
 
-    def test_gender_translation(self):
-        """Make sure different genders yield expected output."""
-        TEST = [
-            ("Male", "M"),
-            ("Female", "F"),
-            ("Prefer not to say", "U"),
-            ("Genderfluid", "O"),
-            ("", "U"),
-        ]
-        for input, expected in TEST:
-            assert self.cmd.translate_gender(input) == expected
+        self.assertEqual(airports_before, airports_after)
 
-    def test_entry_translation(self):
-        """Make sure a whole entry is translated correctly."""
-        entry_original = {
-            'Timestamp': '5/26/2015 22:31:50',
-            'Personal (first) name': 'John',
-            'Family (last) name': 'Smith',
-            'Email address': 'john@smith.com',
-            'Nearest major airport': 'FRA',
-            'GitHub username': 'johnsmith',
-            'Twitter username': 'johnsmith',
-            'Personal website': 'http://john.smith.com/',
-            'Gender': 'Prefer not to say',
-            'Areas of expertise': '',
-            'Software Carpentry topics you are comfortable teaching': '',
-            'ORCID ID': '000011112222',
-            'Data Carpentry lessons you are comfortable teaching': '',
-            'Affiliation': 'Smiths CO.',
-            'What is your current occupation/career stage?': 'director'
-        }
-        entry_new = {
-            'timestamp': '5/26/2015 22:31:50',
-            'personal': 'John',
-            'family': 'Smith',
-            'email': 'john@smith.com',
-            'airport': 'FRA',
-            'github': 'johnsmith',
-            'twitter': 'johnsmith',
-            'url': 'http://john.smith.com/',
-            'gender': "U",
-            'domains': [],
-            'teaching': [],
-            'orcid': '000011112222',
-            'affiliation': 'Smiths CO.',
-            'position': 'director'
-        }
-        assert self.cmd.translate(entry_original) == entry_new
+    def test_new_roles_added(self):
+        """Make sure we add roles that are hard-coded. They'll end up in
+        fixtures in future (see #626)."""
+        roles = ['helper', 'instructor', 'host', 'learner', 'organizer',
+                 'tutor', 'debriefed']
+        self.assertFalse(Role.objects.filter(name__in=roles).exists())
+        self.cmd.fake_roles(self.faker)
 
-    def test_check_entry(self):
-        """Make sure entry is well checked for any discrepancies."""
+        self.assertEqual(set(roles),
+                         set(Role.objects.values_list('name', flat=True)))
 
-        # check missing fields
-        entry = {}
-        correct, errors, warnings = self.cmd.check_entry(entry)
-        assert not correct
-        assert "Missing fields" in errors[0]
+    def test_new_tags_added(self):
+        """Make sure we add tags that are hard-coded. They'll end up in
+        fixtures in future (see #626)."""
+        tags = ['SWC', 'DC', 'LC', 'WiSE', 'TTT', 'online', 'stalled',
+                'unresponsive']
+        self.assertNotEqual(set(tags),
+                            set(Tag.objects.values_list('name', flat=True)))
 
-        # check empty required fields
-        entry = {
-            'timestamp': '', 'personal': '', 'family': '', 'email': '',
-            'airport': '', 'github': '', 'twitter': '', 'url': '',
-            'gender': '', 'domains': '', 'teaching': '', 'orcid': '',
-            'affiliation': '', 'position': '',
-        }
-        correct, errors, warnings = self.cmd.check_entry(entry)
-        assert not correct
-        assert "Missing fields" not in errors[0]
-        assert "Required field" in errors[0] and "is empty" in errors[0]
+        self.cmd.fake_tags(self.faker)
+        self.assertEqual(set(tags),
+                         set(Tag.objects.values_list('name', flat=True)))
 
-        # check matching person by email
-        entry = {
-            'timestamp': '', 'personal': 'H', 'family': 'G',
-            'email': 'hermione@granger.co.uk', 'airport': 'AAA',
-            'github': '', 'twitter': '', 'url': '',
-            'gender': '', 'domains': '', 'teaching': '', 'orcid': '',
-            'affiliation': '', 'position': '',
-        }
-        correct, errors, warnings = self.cmd.check_entry(entry)
-        assert correct
+    def test_database_populated(self):
+        """Make sure the database is getting populated."""
+        self.assertFalse(Person.objects.exists())
+        self.assertFalse(Host.objects.exclude(domain='self-organized')
+                                     .exists())
+        self.assertFalse(Event.objects.exists())
+        self.assertFalse(Task.objects.exists())
 
-        # check matching person by name
-        entry = {
-            'timestamp': '', 'personal': 'Hermione', 'family': 'Granger',
-            'email': 'hermione@granger.com', 'airport': 'AAA',
-            'github': '', 'twitter': '', 'url': '',
-            'gender': '', 'domains': '', 'teaching': '', 'orcid': '',
-            'affiliation': '', 'position': '',
-        }
-        correct, errors, warnings = self.cmd.check_entry(entry)
-        assert correct
+        call_command('fake_database', seed=self.seed)
 
-        # check matching >=2 persons by name
-        Person.objects.create(
-            personal='Hermione', middle=None, family='Granger', gender='F',
-            airport=self.airport_0_0, email='hermione@granger.eu'
+        self.assertTrue(Person.objects.exists())
+        self.assertTrue(Host.objects.exclude(domain='self-organized').exists())
+        self.assertTrue(Event.objects.exists())
+        self.assertTrue(Task.objects.exists())
+
+
+class TestInstructorsActivityCommand(TestBase):
+    def setUp(self):
+        self.cmd = InstructorsActivityCommand()
+
+        # add instructors
+        self._setUpLessons()
+        self._setUpBadges()
+        self._setUpAirports()
+        self._setUpInstructors()
+
+        # and some non-instructors
+        self._setUpNonInstructors()
+
+        # add one event that some instructors took part in
+        self._setUpHosts()
+        self.event = Event.objects.create(
+            slug='event-with-tasks',
+            host=self.host_alpha,
+            start=date(2015, 8, 30),
         )
-        entry = {
-            'timestamp': '', 'personal': 'Hermione', 'family': 'Granger',
-            'email': 'hermione@granger.com', 'airport': 'AAA',
-            'github': '', 'twitter': '', 'url': '',
-            'gender': '', 'domains': '', 'teaching': '', 'orcid': '',
-            'affiliation': '', 'position': '',
-        }
-        correct, errors, warnings = self.cmd.check_entry(entry)
-        assert not correct
-        assert 'There are multiple users with this name' in errors[0]
+        self._setUpRoles()
+        self.instructor = Role.objects.get(name='instructor')
+        self.helper = Role.objects.get(name='helper')
+        self.learner = Role.objects.get(name='learner')
 
-        # check non-existing person
-        entry = {
-            'timestamp': '', 'personal': 'Lord', 'family': 'Voldemort',
-            'email': 'lord@voldemort.com', 'airport': 'AAA',
-            'github': '', 'twitter': '', 'url': '',
-            'gender': '', 'domains': '', 'teaching': '', 'orcid': '',
-            'affiliation': '', 'position': '',
-        }
-        correct, errors, warnings = self.cmd.check_entry(entry)
-        assert not correct
-        assert 'User with either this email' in errors[0]
-        assert 'or this name' in errors[0]
-        assert 'does not exist' in errors[0]
+        Task.objects.bulk_create([
+            Task(event=self.event, person=self.hermione, role=self.instructor),
+            Task(event=self.event, person=self.ron, role=self.instructor),
+            Task(event=self.event, person=self.ron, role=self.helper),
+            Task(event=self.event, person=self.harry, role=self.helper),
+            Task(event=self.event, person=self.spiderman, role=self.learner),
+            Task(event=self.event, person=self.blackwidow, role=self.learner),
+        ])
 
-        # check non-instructor person
-        entry = {
-            'timestamp': '', 'personal': 'H', 'family': 'G',
-            'email': 'hermione@granger.eu', 'airport': 'AAA',
-            'github': '', 'twitter': '', 'url': '',
-            'gender': '', 'domains': '', 'teaching': '', 'orcid': '',
-            'affiliation': '', 'position': '',
-        }
-        correct, errors, warnings = self.cmd.check_entry(entry)
-        assert correct  # we want people even though they aren't instructors
-        assert 'This person does not have an instructor badge' in warnings[0]
+    def test_getting_foreign_tasks(self):
+        """Make sure we get tasks for other people (per event)."""
+        person = self.hermione
+        roles = [self.instructor, self.helper]
+        tasks = person.task_set.filter(role__in=roles)
 
-        # check non-existing airport
-        entry = {
-            'timestamp': '', 'personal': 'H', 'family': 'G',
-            'email': 'hermione@granger.co.uk', 'airport': 'ABC',
-            'github': '', 'twitter': '', 'url': '',
-            'gender': '', 'domains': '', 'teaching': '', 'orcid': '',
-            'affiliation': '', 'position': '',
-        }
-        correct, errors, warnings = self.cmd.check_entry(entry)
-        assert not correct
-        assert 'Airport "ABC" does not exist' in errors[0]
+        # index 0, because Hermione has only one task and we're checking it
+        fg_tasks = self.cmd.foreign_tasks(tasks, person, roles)[0]
 
-        # check presence of lessons
-        entry = {
-            'timestamp': '', 'personal': 'H', 'family': 'G',
-            'email': 'hermione@granger.co.uk', 'airport': 'AAA',
-            'github': '', 'twitter': '', 'url': '',
-            'gender': '', 'domains': '', 'teaching': ['asd/python', 'swc/git'],
-            'orcid': '',
-            'affiliation': '', 'position': '',
-        }
-        correct, errors, warnings = self.cmd.check_entry(entry)
-        assert not correct
-        errors = "".join(errors)
-        assert 'Lesson' in errors
-        assert 'asd/python' in errors
-        assert 'does not exist' in errors
-        assert 'swc/git' not in errors
+        # we should receive other instructors and helpers for self.event
+        expecting = set([
+            Task.objects.get(event=self.event, person=self.ron,
+                             role=self.instructor),
+            Task.objects.get(event=self.event, person=self.ron,
+                             role=self.helper),
+            Task.objects.get(event=self.event, person=self.harry,
+                             role=self.helper),
+        ])
 
-        # check correct entry
-        correct_entry = {
-            'timestamp': '5/26/2015 22:31:50',
-            'personal': 'Hermione',
-            'family': 'Granger',
-            'email': 'hermione@granger.co.uk',
-            'airport': 'AAA',
-            'github': 'hermionegranger',
-            'twitter': 'hermionegranger',
-            'url': 'http://hermione.granger.co.uk/',
-            'gender': "O",
-            'domains': [],
-            'teaching': [],
-            'orcid': '000011112222',
-            'affiliation': 'Hogwart CO.',
-            'position': 'undergraduate'
-        }
-        correct, errors, warnings = self.cmd.check_entry(correct_entry)
-        assert correct
-        assert errors == []
+        self.assertEqual(expecting, set(fg_tasks))
 
-    def test_update(self):
-        """Make sure entries are indeed updated."""
-        allowed_fields = ALL_FIELDS
+    def test_fetching_activity(self):
+        """Make sure we get correct results for all instructors."""
+        # include people who don't want to be contacted (other option is tested
+        # in `self.test_fetching_activity_may_contact_only`)
+        results = self.cmd.fetch_activity(may_contact_only=False)
+        instructor_badges = Badge.objects.instructor_badges()
 
-        assert self.hermione.github != 'hermionegranger'
-        assert self.hermione.lessons.all().count() != 0
+        persons = [d['person'] for d in results]
+        lessons = [list(d['lessons']) for d in results]
+        instructor_awards = [list(d['instructor_awards']) for d in results]
+        tasks = [d['tasks'] for d in results]
 
-        correct_entry = {
-            'timestamp': '5/26/2015 22:31:50',
-            'personal': 'Hermione',
-            'family': 'Granger',
-            'email': 'hermione@granger.co.uk',
-            'airport': 'AAA',
-            'github': 'hermionegranger',
-            'twitter': 'hermionegranger',
-            'url': 'http://hermione.granger.co.uk/',
-            'gender': "O",
-            'domains': [],
-            'teaching': [],
-            'orcid': '000011112222',
-            'affiliation': 'Hogwart CO.',
-            'position': 'undergraduate'
-        }
-        correct, errors, warnings = self.cmd.check_entry(correct_entry)
-        assert correct
-        self.cmd.update(correct_entry, allowed_fields=allowed_fields)
-
-        self.hermione.refresh_from_db()
-        assert self.hermione.github == 'hermionegranger'
-        assert self.hermione.affiliation == 'Hogwart CO.'
-        assert self.hermione.lessons.all().count() == 0
-
-    def test_update_no_affiliation(self):
-        """Ensure no affiliation yields correct empty string after update."""
-        allowed_fields = ALL_FIELDS
-
-        correct_entry = {
-            'timestamp': '5/26/2015 22:31:50',
-            'personal': 'Hermione',
-            'family': 'Granger',
-            'email': 'hermione@granger.co.uk',
-            'airport': 'AAA',
-            'github': 'hermionegranger',
-            'twitter': 'hermionegranger',
-            'url': 'http://hermione.granger.co.uk/',
-            'gender': "O",
-            'domains': [],
-            'teaching': [],
-            'orcid': '000011112222',
-            'affiliation': '',
-            'position': 'undergraduate'
-        }
-        correct, errors, warnings = self.cmd.check_entry(correct_entry)
-        assert correct
-        self.cmd.update(correct_entry, allowed_fields=allowed_fields)
-
-        self.hermione.refresh_from_db()
-        assert self.hermione.affiliation == ''
-
-    def test_update_subset_of_fields(self):
-        """We can update specific fields."""
-        allowed_fields = ['family', 'affiliation']
-
-        correct_entry = {
-            'timestamp': '5/26/2015 22:31:50',
-            'personal': 'Hermione-the-Conjurer',
-            'family': 'Grangerdaughter',
-            'email': 'hermione@granger.co.uk',
-            'airport': 'AAA',
-            'github': 'hermionegranger',
-            'twitter': 'hermionegranger',
-            'url': 'http://hermione.granger.co.uk/',
-            'gender': "O",
-            'domains': [],
-            'teaching': [],
-            'orcid': '000011112222',
-            'affiliation': 'Hogwart The School of Wizardry',
-            'position': 'undergraduate'
-        }
-        correct, errors, warnings = self.cmd.check_entry(correct_entry)
-        assert correct
-        self.cmd.update(correct_entry, allowed_fields=allowed_fields)
-
-        self.hermione.refresh_from_db()
-        assert self.hermione.affiliation == 'Hogwart The School of Wizardry'
-        assert self.hermione.personal == 'Hermione'
-        assert self.hermione.family == 'Grangerdaughter'
-
-    def test_process(self):
-        """Make sure the Command works well with CSVs (even ill-formatted)."""
-        # we'll only test immunity to ill-formatted CSVs, not if they succeed
-        # in updating instructors
-        FN = [
-            'workshops/test/upgrade_instructor_profiles1.csv',
-            'workshops/test/upgrade_instructor_profiles2.csv',
-            'workshops/test/upgrade_instructor_profiles3.csv',
+        expecting_persons = [self.hermione, self.harry, self.ron]
+        expecting_lessons = [list(self.hermione.lessons.all()),
+                             list(self.harry.lessons.all()),
+                             list(self.ron.lessons.all())]
+        expecting_awards = [
+            list(person.award_set.filter(badge__in=instructor_badges))
+            for person in expecting_persons
         ]
 
-        correct_list = []
-        for fname in FN:
-            with open(fname, 'r') as f:
-                # A little hack: in "for-else" with generators "else" clause is
-                # always evaluated at StopIteration, ie. when generator runs
-                # out.
-                # This works because our only test files contain at most only
-                # 1 entry.
-                correct = False
-                for entry in self.cmd.process(f):
-                    correct, _, _ = self.cmd.check_entry(entry)
-                else:
-                    # empty file
-                    correct_list.append(correct)
+        self.assertEqual(set(persons), set(expecting_persons))
+        self.assertEqual(lessons, expecting_lessons)
+        self.assertEqual(instructor_awards, expecting_awards)
 
-        assert correct_list == [True, False, False], correct_list
+        for task in tasks:
+            for own_task, foreign_tasks in task:
+                # we don't test foreign tasks, since they should be tested in
+                # `self.test_getting_foreign_tasks`
+                self.assertIn(
+                    own_task,
+                    own_task.person.task_set.filter(
+                        role__name__in=['instructor', 'helper']
+                    )
+                )
 
-    def test_output(self):
-        """Make sure the Command works well."""
+    def test_fetching_activity_may_contact_only(self):
+        """Make sure we get results only for people we can send emails to."""
+        # let's make Harry willing to receive emails
+        self.hermione.may_contact = False
+        self.harry.may_contact = True
+        self.ron.may_contact = False
+        self.hermione.save()
+        self.harry.save()
+        self.ron.save()
 
-        def stringify_streams(stream1, stream2):
-            stream1.seek(0)
-            stream2.seek(0)
-            return stream1.read(), stream2.read()
-
-        call_args = [
-            (
-                'workshops/test/upgrade_instructor_profiles1.csv',
-                {'force': False}
-            ),
-            (
-                'workshops/test/upgrade_instructor_profiles2.csv',
-                {'force': False}
-            ),
-            (
-                'workshops/test/upgrade_instructor_profiles3.csv',
-                {'force': False}
-            ),
-            (
-                'workshops/test/upgrade_instructor_profiles4.csv',
-                {'force': True}
-            ),
-        ]
-
-        # 1st file: all correct
-        positional, options = call_args[0]
-        stdout = StringIO()
-        stderr = StringIO()
-        call_command('upgrade_instructor_profiles', positional,
-                     stdout=stdout, stderr=stderr, **options)
-        stdout, stderr = stringify_streams(stdout, stderr)
-        assert 'ERROR' not in stderr
-        assert 'WARNING' not in stdout
-
-        # 2nd file: no input
-        positional, options = call_args[1]
-        stdout = StringIO()
-        stderr = StringIO()
-        call_command('upgrade_instructor_profiles', positional,
-                     stdout=stdout, stderr=stderr, **options)
-        stdout, stderr = stringify_streams(stdout, stderr)
-        assert 'ERROR' not in stderr
-        assert 'WARNING' not in stdout
-
-        # 3rd file: missing some fields
-        positional, options = call_args[2]
-        stdout = StringIO()
-        stderr = StringIO()
-        call_command('upgrade_instructor_profiles', positional,
-                     stdout=stdout, stderr=stderr, **options)
-        stdout, stderr = stringify_streams(stdout, stderr)
-        assert 'row 1' in stderr
-        assert 'ERROR' in stderr
-
-        # 4th file: first entry correct, second has missing lesson 'ruby'
-        positional, options = call_args[3]
-        stdout = StringIO()
-        stderr = StringIO()
-        call_command('upgrade_instructor_profiles', positional,
-                     stdout=stdout, stderr=stderr, **options)
-        stdout, stderr = stringify_streams(stdout, stderr)
-        assert 'row 2' in stderr
-        assert 'ERROR' in stderr
-        assert 'ruby' in stderr
+        results = self.cmd.fetch_activity(may_contact_only=True)
+        persons = [d['person'] for d in results]
+        expecting_persons = [self.harry]
+        self.assertEqual(set(persons), set(expecting_persons))

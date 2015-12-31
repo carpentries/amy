@@ -45,11 +45,13 @@ from workshops.models import (
     Person,
     Role,
     Host,
+    Membership,
     Tag,
     Task,
     EventRequest,
     ProfileUpdateRequest,
     TodoItem,
+    TodoItemQuerySet,
 )
 from workshops.forms import (
     SearchForm, DebriefForm, InstructorsForm, PersonForm, PersonBulkAddForm,
@@ -59,7 +61,7 @@ from workshops.forms import (
     PersonTaskForm, HostForm, SWCEventRequestForm, DCEventRequestForm,
     ProfileUpdateRequestForm, PersonLookupForm, bootstrap_helper_wider_labels,
     SimpleTodoForm, bootstrap_helper_inline_formsets, BootstrapHelper,
-    AdminLookupForm, ProfileUpdateRequestFormNoCaptcha,
+    AdminLookupForm, ProfileUpdateRequestFormNoCaptcha, MembershipForm,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
@@ -177,7 +179,8 @@ def dashboard(request):
         Event.objects.upcoming_events() | Event.objects.ongoing_events()
     ).no_stalled()
     uninvoiced_events = Event.objects.uninvoiced_events().no_stalled()
-    unpublished_events = Event.objects.unpublished_events().no_stalled()
+    unpublished_events = Event.objects.unpublished_events().no_stalled() \
+                                      .select_related('host')
 
     user = request.user
     is_admin = user.groups.filter(name='administrators').exists()
@@ -220,6 +223,8 @@ def dashboard(request):
         'current_events': current_events,
         'uninvoiced_events': uninvoiced_events,
         'unpublished_events': unpublished_events,
+        'todos_start_date': TodoItemQuerySet.current_week_dates()[0],
+        'todos_end_date': TodoItemQuerySet.next_week_dates()[1],
     }
     return render(request, 'workshops/dashboard.html', context)
 
@@ -293,6 +298,58 @@ def host_delete(request, host_domain):
         return _failed_to_delete(request, host, e.protected_objects)
 
 
+@login_required
+@permission_required(['workshops.add_membership', 'workshops.change_host'],
+                     raise_exception=True)
+def membership_create(request, host_domain):
+    host = get_object_or_404(Host, domain=host_domain)
+    form = MembershipForm(initial={'host': host})
+
+    if request.method == "POST":
+        form = MembershipForm(request.POST)
+        if form.is_valid():
+            form.save()
+
+            messages.success(request,
+                             'Membership was successfully added to the host')
+
+            return redirect(reverse('host_details', args=[host.domain]))
+
+    context = {
+        'title': 'New membership for host {}'.format(host),
+        'form': form,
+        'form_helper': bootstrap_helper,
+    }
+    return render(request, 'workshops/generic_form.html', context)
+
+
+class MembershipUpdate(LoginRequiredMixin, PermissionRequiredMixin,
+                       UpdateViewContext):
+    perms = 'workshops.change_membership'
+    model = Membership
+    form_class = MembershipForm
+    pk_url_kwarg = 'membership_id'
+    template_name = 'workshops/generic_form.html'
+
+    def get_success_url(self):
+        return reverse('host_details', args=[self.object.host.domain])
+
+
+@login_required
+@permission_required('workshops.delete_membership', raise_exception=True)
+def membership_delete(request, membership_id):
+    """Delete specific membership."""
+    try:
+        membership = get_object_or_404(Membership, pk=membership_id)
+        host = membership.host
+        membership.delete()
+        messages.success(request, 'Membership was deleted successfully.')
+        return redirect(reverse('host_details', args=[host.domain]))
+    except ProtectedError as e:
+        return _failed_to_delete(request, host, e.protected_objects)
+
+
+
 #------------------------------------------------------------
 
 AIRPORT_FIELDS = ['iata', 'fullname', 'country', 'latitude', 'longitude']
@@ -359,13 +416,14 @@ def all_persons(request):
     filter = PersonFilter(
         request.GET,
         queryset=Person.objects.all().defer('notes')  # notes are too large
-                                     .prefetch_related('badges')
     )
+    # faster method
+    instructors = Badge.objects.instructor_badges() \
+                               .values_list('person', flat=True)
     persons = _get_pagination_items(request, filter)
-    instructor = Badge.objects.get(name='instructor')
     context = {'title' : 'All Persons',
                'all_persons' : persons,
-               'instructor': instructor,
+               'instructors': instructors,
                'filter': filter,
                'form_helper': bootstrap_helper_filter}
     return render(request, 'workshops/all_persons.html', context)
@@ -464,19 +522,20 @@ def person_bulk_add_confirmation(request):
     if request.method == 'POST':
         # update values if user wants to change them
         personals = request.POST.getlist("personal")
-        middles = request.POST.getlist("middle")
         families = request.POST.getlist("family")
+        usernames = request.POST.getlist("username")
         emails = request.POST.getlist("email")
         events = request.POST.getlist("event")
         roles = request.POST.getlist("role")
-        data_update = zip(personals, middles, families, emails, events, roles)
+        data_update = zip(personals, families, usernames, emails, events,
+                          roles)
         for k, record in enumerate(data_update):
-            personal, middle, family, email, event, role = record
+            personal, family, username, email, event, role = record
             # "field or None" converts empty strings to None values
             persons_tasks[k] = {
                 'personal': personal,
-                'middle': middle or None,
                 'family': family,
+                'username': username,
                 'email': email or None
             }
             # when user wants to drop related event they will send empty string
@@ -499,7 +558,8 @@ def person_bulk_add_confirmation(request):
                                      "listed below.")
 
             context = {'title': 'Confirm uploaded data',
-                       'persons_tasks': persons_tasks}
+                       'persons_tasks': persons_tasks,
+                       'any_errors': any_errors}
             return render(request, 'workshops/person_bulk_add_results.html',
                           context)
 
@@ -517,18 +577,21 @@ def person_bulk_add_confirmation(request):
                                      "Error saving data to the database: {}. "
                                      "Please make sure to fix all errors "
                                      "listed below.".format(e))
-                verify_upload_person_task(persons_tasks)
+                any_errors = verify_upload_person_task(persons_tasks)
                 context = {'title': 'Confirm uploaded data',
-                           'persons_tasks': persons_tasks}
+                           'persons_tasks': persons_tasks,
+                           'any_errors': any_errors}
                 return render(request,
                               'workshops/person_bulk_add_results.html',
                               context, status=400)
 
             else:
                 request.session['bulk-add-people'] = None
-                messages.add_message(request, messages.SUCCESS,
-                                     "Successfully uploaded {0} persons and {1} tasks."
-                                     .format(len(persons_created), len(tasks_created)))
+                messages.add_message(
+                    request, messages.SUCCESS,
+                    'Successfully created {0} persons and {1} tasks.'
+                    .format(len(persons_created), len(tasks_created))
+                )
                 return redirect('person_bulk_add')
 
         else:
@@ -538,10 +601,11 @@ def person_bulk_add_confirmation(request):
 
     else:
         # alters persons_tasks via reference
-        verify_upload_person_task(persons_tasks)
+        any_errors = verify_upload_person_task(persons_tasks)
 
         context = {'title': 'Confirm uploaded data',
-                   'persons_tasks': persons_tasks}
+                   'persons_tasks': persons_tasks,
+                   'any_errors': any_errors}
         return render(request, 'workshops/person_bulk_add_results.html',
                       context)
 
@@ -830,13 +894,17 @@ def all_events(request):
 
 
 @login_required
+@permission_required('workshops.add_todoitem', raise_exception=True)
 def event_details(request, event_ident):
     '''List details of a particular event.'''
     try:
         event = Event.get_by_ident(event_ident)
     except Event.DoesNotExist:
         raise Http404('Event matching query does not exist.')
-    tasks = Task.objects.filter(event__id=event.id).order_by('role__name')
+
+    tasks = Task.objects.filter(event__id=event.id) \
+                        .select_related('person', 'role') \
+                        .order_by('role__name')
     todos = event.todoitem_set.all()
     todo_form = SimpleTodoForm(prefix='todo', initial={
         'event': event,
@@ -1249,10 +1317,11 @@ def badge_details(request, badge_name):
 @login_required
 def instructors(request):
     '''Search for instructors.'''
-    instructor_badge = Badge.objects.get(name='instructor')
-    instructors = instructor_badge.person_set.filter(airport__isnull=False) \
-                                  .select_related('airport') \
-                                  .prefetch_related('lessons')
+    instructor_badges = Badge.objects.instructor_badges()
+    instructors = Person.objects.filter(badges__in=instructor_badges) \
+                                .filter(airport__isnull=False) \
+                                .select_related('airport') \
+                                .prefetch_related('lessons')
     instructors = instructors.annotate(
         num_taught=Count(
             Case(
@@ -1308,6 +1377,10 @@ def instructors(request):
 
             if data['gender']:
                 instructors = instructors.filter(gender=data['gender'])
+
+            if data['instructor_badges']:
+                for badge in data['instructor_badges']:
+                    instructors = instructors.filter(badges__name=badge)
 
     instructors = _get_pagination_items(request, instructors)
     context = {
@@ -1502,8 +1575,8 @@ def learners_over_time(request):
 def instructors_over_time(request):
     '''Export CSV of count of instructors vs. time.'''
 
-    badge = Badge.objects.get(name='instructor')
-    data = dict(badge.award_set
+    badges = Badge.objects.instructor_badges()
+    data = dict(Award.objects.filter(badge__in=badges)
                      .values_list('awarded')
                      .annotate(Count('person__id')))
     return _time_series(request, data, 'Instructors over time')
@@ -1513,18 +1586,19 @@ def instructors_over_time(request):
 def instructor_num_taught(request):
     '''Export CSV of how often instructors have taught.'''
 
-    badge = Badge.objects.get(name='instructor')
-    awards = badge.award_set.annotate(
+    badges = Badge.objects.instructor_badges()
+    awards = Award.objects.filter(badge__in=badges).annotate(
         num_taught=Count(
             Case(
                 When(
                     person__task__role__name='instructor',
                     then=Value(1)
                 ),
-            output_field=IntegerField()
+                output_field=IntegerField()
             )
         )
-    ).filter(person__may_contact=True).order_by('-num_taught', 'awarded')
+    ).select_related('person', 'person__airport') \
+     .filter(person__may_contact=True).order_by('-num_taught', 'awarded')
     context = {'title': 'Frequency of Instruction',
                'awards': awards}
     return render(request, 'workshops/instructor_num_taught.html', context)
@@ -1561,8 +1635,9 @@ def instructor_issues(request):
     '''Display instructors in the database who need attention.'''
 
     # Everyone who has a badge but needs attention.
-    instructor_badge = Badge.objects.get(name='instructor')
-    instructors = instructor_badge.person_set.filter(airport__isnull=True)
+    instructor_badges = Badge.objects.instructor_badges()
+    instructors = Person.objects.filter(badges__in=instructor_badges) \
+                                .filter(airport__isnull=True)
 
     # Everyone who's been in instructor training but doesn't yet have a badge.
     learner = Role.objects.get(name='learner')
@@ -1570,7 +1645,7 @@ def instructor_issues(request):
     stalled = Tag.objects.get(name='stalled')
     trainees = Task.objects \
         .filter(event__tags__in=[ttt], role=learner) \
-        .exclude(person__badges__in=[instructor_badge]) \
+        .exclude(person__badges__in=instructor_badges) \
         .order_by('person__family', 'person__personal', 'event__start') \
         .select_related('person', 'event')
 
@@ -1981,11 +2056,9 @@ def profileupdaterequest_details(request, request_id):
 
     if person:
         # check if the person has instructor badge
-        try:
-            Award.objects.get(badge__name='instructor', person=person)
-            person.has_instructor_badge = True
-        except Award.DoesNotExist:
-            person.has_instructor_badge = False
+        person.has_instructor_badge = Award.objects.filter(
+            badge__in=Badge.objects.instructor_badges(), person=person
+        ).exists()
 
     try:
         airport = Airport.objects.get(iata=update_request.airport_iata)
