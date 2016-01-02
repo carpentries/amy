@@ -110,6 +110,13 @@ class InstructorsForm(forms.Form):
                                              widget=CheckboxSelectMultiple(),
                                              required=False)
 
+    language = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.LanguageLookup,
+        label='Language',
+        required=False,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
     INSTRUCTOR_BADGE_CHOICES = (
         ('swc-instructor', 'Software Carpentry Instructor'),
         ('dc-instructor', 'Data Carpentry Instructor'),
@@ -165,6 +172,7 @@ class InstructorsForm(forms.Form):
                 ),
                 css_class='panel panel-default ',
             ),
+            'language',
             'gender',
             'lessons',
             'instructor_badges',

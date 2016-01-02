@@ -1387,6 +1387,11 @@ def instructors(request):
                     airport__country__in=data['country']
                 ).order_by('family')
 
+            if data['language']:
+                instructors = instructors.filter(
+                    languagequalification__language=data['language'],
+                    languagequalification__weight__gte=0.5)
+
             if data['gender']:
                 instructors = instructors.filter(gender=data['gender'])
 
