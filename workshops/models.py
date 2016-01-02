@@ -241,6 +241,11 @@ class Person(AbstractBaseUser, PermissionsMixin):
         limit_choices_to=~Q(name__startswith='Don\'t know yet'),
         blank=True,
     )
+    languages = models.ManyToManyField(
+        'Language',
+        through='LanguageQualification',
+        blank=True,
+    )
 
     # new people will be inactive by default
     is_active = models.BooleanField(default=False)
@@ -1104,6 +1109,43 @@ class KnowledgeDomain(models.Model):
 
     def __str__(self):
         return self.name
+
+#------------------------------------------------------------
+
+class Language(models.Model):
+    """A language tag.
+
+    https://tools.ietf.org/html/rfc5646
+    """
+    name = models.CharField(
+        max_length=STR_MED,
+        help_text='Description of this language tag in English')
+    language = models.CharField(
+        max_length=STR_SHORT,
+        help_text=
+            'Primary language subtag.  '
+            'https://tools.ietf.org/html/rfc5646#section-2.2.1')
+
+    def tag(self):
+        return self.language
+
+    def __str__(self):
+        return self.name
+
+
+class LanguageQualification(models.Model):
+    """What language can someone speak?
+
+    https://tools.ietf.org/html/rfc7231#section-5.3.5
+    """
+    person = models.ForeignKey(Person)
+    language = models.ForeignKey(Language)
+    weight = models.FloatField(
+        default=1,
+        help_text='https://tools.ietf.org/html/rfc7231#section-5.3.1')
+
+    def __str__(self):
+        return '({}, {}, {})'.format(self.person, self.language, self.weight)
 
 # ------------------------------------------------------------
 
