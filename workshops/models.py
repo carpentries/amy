@@ -780,6 +780,10 @@ class Event(AssignmentMixin, models.Model):
         super(Event, self).save(*args, **kwargs)
 
 
+def get_english():
+    return Language.objects.get(language='en').pk
+
+
 class EventRequest(AssignmentMixin, models.Model):
     active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -804,11 +808,11 @@ class EventRequest(AssignmentMixin, models.Model):
                   'to accommodate those requests.',
         verbose_name='Preferred workshop dates',
     )
-    language = models.CharField(
-        max_length=STR_LONG,
+    language = models.ForeignKey(
+        'Language',
         verbose_name='What human language do you want the workshop to be run'
                      ' in?',
-        blank=True, default='English',
+        blank=True, default=get_english,
     )
 
     WORKSHOP_TYPE_CHOICES = (
