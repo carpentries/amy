@@ -361,6 +361,14 @@ class PersonForm(forms.ModelForm):
         widget=selectable.AutoComboboxSelectWidget,
     )
 
+    languages = selectable.AutoCompleteSelectMultipleField(
+        lookup_class=lookups.LanguageLookup,
+        label='Languages',
+        required=False,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectMultipleWidget,
+    )
+
     class Meta:
         model = Person
         # don't display the 'password', 'user_permissions',
@@ -369,6 +377,15 @@ class PersonForm(forms.ModelForm):
         fields = ['username', 'personal', 'middle', 'family', 'may_contact',
                   'email', 'gender', 'airport', 'affiliation', 'github',
                   'twitter', 'url', 'notes', 'lessons', 'domains']
+
+    def __init__(self, instance=None, **kwargs):
+        kwargs['instance'] = instance
+        if instance:
+            if 'initial' not in kwargs:
+                kwargs['initial'] = {}
+            if 'languages' not in kwargs['initial']:
+                kwargs['initial']['languages'] = instance.languages.all()
+        super(PersonForm, self).__init__(**kwargs)
 
 
 class PersonPermissionsForm(forms.ModelForm):
