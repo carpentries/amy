@@ -2,7 +2,7 @@ import re
 
 from django import forms
 from django.core.validators import RegexValidator
-from django.forms import HiddenInput, CheckboxSelectMultiple
+from django.forms import HiddenInput, CheckboxSelectMultiple, TextInput
 
 from captcha.fields import ReCaptchaField
 from crispy_forms.helper import FormHelper
@@ -258,7 +258,7 @@ class EventForm(forms.ModelForm):
     )
 
     admin_fee = forms.DecimalField(min_value=0, decimal_places=2,
-                                   required=False)
+                                   required=False, widget=TextInput)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -310,6 +310,12 @@ class EventForm(forms.ModelForm):
                   'country', 'venue', 'address', 'latitude', 'longitude')
         # WARNING: don't change put any fields between 'country' and
         #          'longitude' that don't relate to the venue of the event
+
+        widgets = {
+            'attendance': TextInput,
+            'latitude': TextInput,
+            'longitude': TextInput,
+        }
 
     class Media:
         # thanks to this, {{ form.media }} in the template will generate
