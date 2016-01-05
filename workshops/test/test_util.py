@@ -20,6 +20,8 @@ from ..util import (
     get_members,
     default_membership_cutoff,
     assignment_selection,
+    create_username,
+    InternalError,
 )
 
 from .base import TestBase
@@ -911,3 +913,33 @@ class TestAssignmentSelection(TestCase):
         assignment, is_admin = assignment_selection(request)
         self.assertEqual(assignment, 'noone')
         self.assertTrue(is_admin)
+
+
+class TestUsernameGeneration(TestCase):
+    def setUp(self):
+        Person.objects.create_user(username='potter_harry', personal='Harry',
+                                   family='Potter', email='hp@ministry.gov')
+
+    def test_conflicting_name(self):
+        """Ensure `create_username` works correctly when conflicting username
+        already exists."""
+        username = create_username(personal='Harry', family='Potter')
+        self.assertEqual(username, 'potter_harry_2')
+
+    def test_nonconflicting_name(self):
+        """Ensure `create_username` works correctly when there's no conflicts
+        in the database."""
+        username = create_username(personal='Hermione', family='Granger')
+        self.assertEqual(username, 'granger_hermione')
+
+    def test_nonlatin_characters(self):
+        """Ensure correct behavior for non-latin names."""
+        username = create_username(personal='Grzegorz',
+                                   family='Brzęczyszczykiewicz')
+        self.assertEqual(username, 'brzczyszczykiewicz_grzegorz')
+
+    def test_reached_number_of_tries(self):
+        """Ensure we don't DoS ourselves."""
+        tries = 1
+        with self.assertRaises(InternalError):
+            create_username(personal='Harry', family='Potter', tries=tries)

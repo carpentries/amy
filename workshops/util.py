@@ -297,27 +297,25 @@ def create_uploaded_persons_tasks(data):
     return persons_created, tasks_created
 
 
-def create_username(personal, family):
+def create_username(personal, family, tries=100):
     '''Generate unique username.'''
-    stem = normalize_name(family) + '.' + normalize_name(personal)
+    stem = normalize_name(family) + '_' + normalize_name(personal)
+
     counter = None
-    while True:
+    for i in range(tries):  # let's limit ourselves to only 100 tries
         try:
             if counter is None:
                 username = stem
                 counter = 1
             else:
                 counter += 1
-                username = '{0}.{1}'.format(stem, counter)
+                username = '{0}_{1}'.format(stem, counter)
             Person.objects.get(username=username)
         except ObjectDoesNotExist:
-            break
+            return username
 
-    if any([ord(c) >= 128 for c in username]):
-        raise InternalError('Normalized username still contains non-normal '
-                            'characters "{0}"'.format(username))
-
-    return username
+    raise InternalError('Cannot find a non-repeating username'
+                        '(tried 100 usernames): {}.'.format(username))
 
 
 def normalize_name(name):
@@ -325,6 +323,8 @@ def normalize_name(name):
     name = name.strip()
     for (accented, flat) in [(' ', '-')]:
         name = name.replace(accented, flat)
+
+    name = re.sub(r'[^\w]', '', name, flags=re.A)  # remove all non-ASCII chars
 
     # We should use lower-cased username, because it directly corresponds to
     # some files Software Carpentry stores about some people - and, as we know,
