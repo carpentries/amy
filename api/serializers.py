@@ -5,11 +5,14 @@ from workshops.models import Badge, Airport, Person, Event, TodoItem, Tag
 
 class PersonUsernameSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='get_full_name')
-    user = serializers.CharField(source='username')
+    user = serializers.SerializerMethodField()
 
     class Meta:
         model = Person
         fields = ('name', 'user', )
+
+    def get_user(self, obj):
+        return obj.username.replace('.', '_')
 
 
 class PersonNameEmailSerializer(serializers.ModelSerializer):
