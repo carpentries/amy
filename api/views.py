@@ -162,4 +162,5 @@ class UserTodoItems(ListAPIView):
         """Return current TODOs for currently logged in user."""
         return TodoItem.objects.user(self.request.user) \
                                .incomplete() \
+                               .exclude(due=None) \
                                .select_related('event')
