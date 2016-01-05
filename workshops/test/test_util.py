@@ -226,7 +226,7 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
             }
         ]
         verify_upload_person_task(data)
-        self.assertEqual('potter.h', data[0]['username'])
+        self.assertEqual('potter_harry', data[0]['username'])
 
     def test_username_from_nonexisting_person(self):
         """Make sure the username is not being changed."""

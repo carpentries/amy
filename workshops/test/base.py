@@ -103,7 +103,7 @@ class TestBase(TestCase):
             personal='Hermione', middle=None, family='Granger',
             email='hermione@granger.co.uk', gender='F', may_contact=True,
             airport=self.airport_0_0, github='herself', twitter='herself',
-            url='http://hermione.org', username="granger.h")
+            url='http://hermione.org', username="granger_hermione")
 
         # Hermione is additionally a qualified Data Carpentry instructor
         Award.objects.create(person=self.hermione,
@@ -119,7 +119,7 @@ class TestBase(TestCase):
             personal='Harry', middle=None, family='Potter',
             email='harry@hogwarts.edu', gender='M', may_contact=True,
             airport=self.airport_0_50, github='hpotter', twitter=None,
-            url=None, username="potter.h")
+            url=None, username="potter_harry")
 
         # Harry is additionally a qualified Data Carpentry instructor
         Award.objects.create(person=self.harry,
@@ -134,7 +134,7 @@ class TestBase(TestCase):
             personal='Ron', middle=None, family='Weasley',
             email='rweasley@ministry.gov.uk', gender='M', may_contact=False,
             airport=self.airport_50_100, github=None, twitter=None,
-            url='http://geocities.com/ron_weas', username="weasley.ron")
+            url='http://geocities.com/ron_weas', username="weasley_ron")
 
         Award.objects.create(person=self.ron,
                              badge=self.swc_instructor,
