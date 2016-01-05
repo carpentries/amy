@@ -38,9 +38,9 @@ class TestExportingBadges(BaseExportingTest):
                                            criteria='')
         self.badge2 = Badge.objects.create(name='badge2', title='Badge2',
                                            criteria='')
-        self.user1 = Person.objects.create_user('user1', 'User1', 'Name',
+        self.user1 = Person.objects.create_user('name.user1', 'User1', 'Name',
                                                 'user1@name.org')
-        self.user2 = Person.objects.create_user('user2', 'User2', 'Name',
+        self.user2 = Person.objects.create_user('name.user2', 'User2', 'Name',
                                                 'user2@name.org')
         Award.objects.create(person=self.user1, badge=self.badge1,
                              awarded=datetime.date.today())
@@ -52,8 +52,8 @@ class TestExportingBadges(BaseExportingTest):
             {
                 'name': 'badge1',
                 'persons': [
-                    {'name': 'User1 Name', 'user': 'user1'},
-                    {'name': 'User2 Name', 'user': 'user2'},
+                    {'name': 'User1 Name', 'user': 'name_user1'},
+                    {'name': 'User2 Name', 'user': 'name_user2'},
                 ]
             },
             {
@@ -97,11 +97,11 @@ class TestExportingInstructors(BaseExportingTest):
             longitude=1,
         )
         self.user1 = Person.objects.create(
-            username='user1', personal='User1', family='Name',
+            username='name.user1', personal='User1', family='Name',
             email='user1@name.org', airport=self.airport1,
         )
         self.user2 = Person.objects.create(
-            username='user2', personal='User2', family='Name',
+            username='name.user2', personal='User2', family='Name',
             email='user2@name.org', airport=self.airport1,
         )
         # user1 is only a SWC instructor
@@ -119,8 +119,8 @@ class TestExportingInstructors(BaseExportingTest):
                 'latitude': 1.0,
                 'longitude': 2.0,
                 'instructors': [
-                    {'name': 'User1 Name', 'user': 'user1'},
-                    {'name': 'User2 Name', 'user': 'user2'},
+                    {'name': 'User1 Name', 'user': 'name_user1'},
+                    {'name': 'User2 Name', 'user': 'name_user2'},
                 ]
             },
         ]
