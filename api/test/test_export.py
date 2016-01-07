@@ -170,7 +170,8 @@ class TestExportingMembers(BaseExportingTest):
         self.expecting = [
             {
                 'name': 'Peter Q. Parker',
-                'email': 'peter@webslinger.net'
+                'email': 'peter@webslinger.net',
+                'username': 'spiderman',
             },
         ]
 

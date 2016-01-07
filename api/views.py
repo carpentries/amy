@@ -14,7 +14,7 @@ from workshops.models import Badge, Airport, Event, TodoItem, Tag
 from workshops.util import get_members, default_membership_cutoff
 
 from .serializers import (
-    PersonNameEmailSerializer,
+    PersonNameEmailUsernameSerializer,
     ExportBadgesSerializer,
     ExportInstructorLocationsSerializer,
     EventSerializer,
@@ -76,7 +76,7 @@ class ExportMembersView(ListAPIView):
     permission_classes = (IsAuthenticatedOrReadOnly, )
     paginator = None  # disable pagination
 
-    serializer_class = PersonNameEmailSerializer
+    serializer_class = PersonNameEmailUsernameSerializer
 
     def get_queryset(self):
         earliest_default, latest_default = default_membership_cutoff()
