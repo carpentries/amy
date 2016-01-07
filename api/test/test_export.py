@@ -28,6 +28,12 @@ class BaseExportingTest(APITestCase):
         # 0064
         Badge.objects.all().delete()
 
+    def login(self):
+        self.admin = Person.objects.create_superuser(
+                username="admin", personal="Super", family="User",
+                email="sudo@example.org", password='admin')
+        self.client.login(username='admin', password='admin')
+
 
 class TestExportingBadges(BaseExportingTest):
     def setUp(self):
@@ -184,9 +190,18 @@ class TestExportingMembers(BaseExportingTest):
         response = serializer(view.get_queryset(), many=True)
         self.assertEqual(response.data, self.expecting)
 
+    def test_requires_login(self):
+        url = reverse('api:export-members')
+        response = self.client.get(url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.login()
+        response = self.client.get(url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
     def test_view_default_cutoffs(self):
         # test only JSON output
         url = reverse('api:export-members')
+        self.login()
         response = self.client.get(url, format='json')
         content = response.content.decode('utf-8')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -196,6 +211,7 @@ class TestExportingMembers(BaseExportingTest):
         url = reverse('api:export-members')
         data = {'earliest': universal_date_format(datetime.date.today())}
 
+        self.login()
         response = self.client.get(url, data, format='json')
         content = response.content.decode('utf-8')
         self.assertEqual(response.status_code, status.HTTP_200_OK)

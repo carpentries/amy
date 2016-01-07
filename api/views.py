@@ -73,7 +73,7 @@ class ExportInstructorLocationsView(ListAPIView):
 
 class ExportMembersView(ListAPIView):
     """Show everyone who qualifies as an SCF member."""
-    permission_classes = (IsAuthenticatedOrReadOnly, )
+    permission_classes = (IsAuthenticated, )
     paginator = None  # disable pagination
 
     serializer_class = PersonNameEmailUsernameSerializer
