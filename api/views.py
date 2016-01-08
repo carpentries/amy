@@ -1,6 +1,7 @@
 import datetime
 
 from django.db.models import Q
+from rest_framework import viewsets
 from rest_framework.generics import ListAPIView
 from rest_framework.metadata import SimpleMetadata
 from rest_framework.permissions import (
@@ -10,7 +11,7 @@ from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.views import APIView
 
-from workshops.models import Badge, Airport, Event, TodoItem, Tag
+from workshops.models import Badge, Airport, Event, TodoItem, Tag, Host, Task
 from workshops.util import get_members, default_membership_cutoff
 
 from .serializers import (
@@ -19,6 +20,9 @@ from .serializers import (
     ExportInstructorLocationsSerializer,
     EventSerializer,
     TodoSerializer,
+    HostSerializer,
+    DetailedEventSerializer,
+    TaskSerializer,
 )
 
 
@@ -164,3 +168,66 @@ class UserTodoItems(ListAPIView):
                                .incomplete() \
                                .exclude(due=None) \
                                .select_related('event')
+
+# ----------------------
+# "new" API starts below
+# ----------------------
+
+
+class HostViewSet(viewsets.ReadOnlyModelViewSet):
+    """List many hosts or retrieve only one."""
+    queryset = Host.objects.all()
+    serializer_class = HostSerializer
+    lookup_field = 'domain'
+    lookup_value_regex = r'[^/]+'  # the default one doesn't work with domains
+
+
+class EventViewSet(viewsets.ReadOnlyModelViewSet):
+    """List many events or retrieve only one."""
+    permission_classes = (IsAuthenticated, )
+    queryset = Event.objects.all()
+    serializer_class = DetailedEventSerializer
+    lookup_field = 'slug'
+
+
+class TaskViewSet(viewsets.ReadOnlyModelViewSet):
+    """List tasks belonging to specific event."""
+    permission_classes = (IsAuthenticated, )
+    serializer_class = TaskSerializer
+    _event_slug = None
+
+    def get_queryset(self):
+        qs = Task.objects.all().select_related('person', 'role',
+                                               'person__airport')
+        if self._event_slug:
+            qs = qs.filter(event__slug=self._event_slug)
+        return qs
+
+    def list(self, request, event_slug=None):
+        self._event_slug = event_slug
+        return super().list(request)
+
+    def retrieve(self, request, pk=None, event_slug=None):
+        self._event_slug = event_slug
+        return super().retrieve(request, pk=pk)
+
+
+class TodoViewSet(viewsets.ReadOnlyModelViewSet):
+    """List todos belonging to specific event."""
+    permission_classes = (IsAuthenticated, )
+    serializer_class = TodoSerializer
+    _event_slug = None
+
+    def get_queryset(self):
+        qs = TodoItem.objects.all()
+        if self._event_slug:
+            qs = qs.filter(event__slug=self._event_slug)
+        return qs
+
+    def list(self, request, event_slug=None):
+        self._event_slug = event_slug
+        return super().list(request)
+
+    def retrieve(self, request, pk=None, event_slug=None):
+        self._event_slug = event_slug
+        return super().retrieve(request, pk=pk)
