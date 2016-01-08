@@ -12,12 +12,12 @@ class PersonUsernameSerializer(serializers.ModelSerializer):
         fields = ('name', 'user', )
 
 
-class PersonNameEmailSerializer(serializers.ModelSerializer):
+class PersonNameEmailUsernameSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='get_full_name')
 
     class Meta:
         model = Person
-        fields = ('name', 'email')
+        fields = ('name', 'email', 'username')
 
 
 class ExportBadgesSerializer(serializers.ModelSerializer):
