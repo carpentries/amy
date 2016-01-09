@@ -9,6 +9,7 @@ from workshops.models import (
     Tag,
     Host,
     Task,
+    Award,
 )
 
 
@@ -111,20 +112,46 @@ class AirportSerializer(serializers.ModelSerializer):
         fields = ('iata', 'fullname', 'country', 'latitude', 'longitude')
 
 
+class AwardSerializer(serializers.ModelSerializer):
+    person = serializers.HyperlinkedRelatedField(
+        read_only=True, view_name='api:person-detail')
+    badge = serializers.SlugRelatedField(
+        many=False, read_only=True, slug_field='name')
+    event = serializers.HyperlinkedRelatedField(
+        read_only=True, view_name='api:event-detail', lookup_field='slug')
+
+    class Meta:
+        model = Award
+        fields = ('person', 'badge', 'awarded', 'event')
+
+
 class PersonSerializer(serializers.ModelSerializer):
-    airport = AirportSerializer()
+    airport = serializers.HyperlinkedRelatedField(
+        read_only=True, view_name='api:airport-detail', lookup_field='iata')
+    lessons = serializers.SlugRelatedField(
+        many=True, read_only=True, slug_field='name')
+    domains = serializers.SlugRelatedField(
+        many=True, read_only=True, slug_field='name')
+    badges = serializers.SlugRelatedField(
+        many=True, read_only=True, slug_field='name')
+    awards = serializers.HyperlinkedIdentityField(
+        view_name='api:person-awards-list',
+        lookup_field='pk',
+        lookup_url_kwarg='person_pk',
+    )
 
     class Meta:
         model = Person
         fields = (
             'personal', 'middle', 'family', 'email', 'gender', 'may_contact',
             'airport', 'github', 'twitter', 'url', 'username', 'notes',
-            'affiliation',
+            'affiliation', 'badges', 'lessons', 'domains', 'awards',
         )
 
 
 class TaskSerializer(serializers.ModelSerializer):
-    person = PersonSerializer()
+    person = serializers.HyperlinkedRelatedField(
+        read_only=True, view_name='api:person-detail')
     role = serializers.SlugRelatedField(
         many=False, read_only=True, slug_field='name')
 

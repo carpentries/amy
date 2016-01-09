@@ -13,7 +13,17 @@ from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.views import APIView
 
-from workshops.models import Badge, Airport, Event, TodoItem, Tag, Host, Task
+from workshops.models import (
+    Badge,
+    Airport,
+    Event,
+    TodoItem,
+    Tag,
+    Host,
+    Task,
+    Award,
+    Person,
+)
 from workshops.util import get_members, default_membership_cutoff
 
 from .serializers import (
@@ -25,6 +35,9 @@ from .serializers import (
     HostSerializer,
     DetailedEventSerializer,
     TaskSerializer,
+    AirportSerializer,
+    AwardSerializer,
+    PersonSerializer,
 )
 
 from .filters import EventFilter, TaskFilter
@@ -254,3 +267,41 @@ class TodoViewSet(viewsets.ReadOnlyModelViewSet):
     def retrieve(self, request, pk=None, event_slug=None):
         self._event_slug = event_slug
         return super().retrieve(request, pk=pk)
+
+
+class PersonViewSet(viewsets.ReadOnlyModelViewSet):
+    """List many people or retrieve only one person."""
+    permission_classes = (IsAuthenticated, )
+    queryset = Person.objects.all()
+    serializer_class = PersonSerializer
+    pagination_class = StandardResultsSetPagination
+
+
+class AwardViewSet(viewsets.ReadOnlyModelViewSet):
+    """List awards belonging to specific person."""
+    permission_classes = (IsAuthenticated, )
+    serializer_class = AwardSerializer
+    _person_pk = None
+
+    def get_queryset(self):
+        qs = Award.objects.all()
+        if self._person_pk:
+            qs = qs.filter(person=self._person_pk)
+        return qs
+
+    def list(self, request, person_pk=None):
+        self._person_pk = person_pk
+        return super().list(request)
+
+    def retrieve(self, request, pk=None, person_pk=None):
+        self._person_pk = person_pk
+        return super().retrieve(request, pk=pk)
+
+
+class AirportViewSet(viewsets.ReadOnlyModelViewSet):
+    """List many airports or retrieve only one."""
+    permission_classes = (IsAuthenticated, )
+    queryset = Airport.objects.all()
+    serializer_class = AirportSerializer
+    lookup_field = 'iata'
+    pagination_class = StandardResultsSetPagination
