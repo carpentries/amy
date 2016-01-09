@@ -2,8 +2,10 @@ import datetime
 
 from django.db.models import Q
 from rest_framework import viewsets
+from rest_framework.filters import DjangoFilterBackend
 from rest_framework.generics import ListAPIView
 from rest_framework.metadata import SimpleMetadata
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import (
     IsAuthenticatedOrReadOnly, IsAuthenticated
 )
@@ -25,6 +27,8 @@ from .serializers import (
     TaskSerializer,
 )
 
+from .filters import EventFilter, TaskFilter
+
 
 class QueryMetadata(SimpleMetadata):
     """Additionally include info about query parameters."""
@@ -38,6 +42,18 @@ class QueryMetadata(SimpleMetadata):
             pass
 
         return data
+
+
+class LargeResultsSetPagination(PageNumberPagination):
+    page_size = 1000
+    page_size_query_param = 'page_size'
+    max_page_size = 10000
+
+
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 100
+    page_size_query_param = 'page_size'
+    max_page_size = 1000
 
 
 class ApiRoot(APIView):
@@ -185,15 +201,22 @@ class HostViewSet(viewsets.ReadOnlyModelViewSet):
 class EventViewSet(viewsets.ReadOnlyModelViewSet):
     """List many events or retrieve only one."""
     permission_classes = (IsAuthenticated, )
-    queryset = Event.objects.all()
+    queryset = Event.objects.all().select_related('host', 'administrator') \
+                                  .prefetch_related('tags')
     serializer_class = DetailedEventSerializer
     lookup_field = 'slug'
+    pagination_class = StandardResultsSetPagination
+    filter_backends = (DjangoFilterBackend, )
+    filter_class = EventFilter
 
 
 class TaskViewSet(viewsets.ReadOnlyModelViewSet):
     """List tasks belonging to specific event."""
     permission_classes = (IsAuthenticated, )
     serializer_class = TaskSerializer
+    pagination_class = StandardResultsSetPagination
+    filter_backends = (DjangoFilterBackend, )
+    filter_class = TaskFilter
     _event_slug = None
 
     def get_queryset(self):
