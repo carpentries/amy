@@ -83,6 +83,16 @@ class ApiRoot(APIView):
                                         request=request, format=format),
             'user-todos': reverse('api:user-todos',
                                   request=request, format=format),
+
+            # "new" API list-type endpoints below
+            'airport-list': reverse('api:airport-list', request=request,
+                                    format=format),
+            'person-list': reverse('api:person-list', request=request,
+                                   format=format),
+            'event-list': reverse('api:event-list', request=request,
+                                  format=format),
+            'host-list': reverse('api:host-list', request=request,
+                                 format=format),
         })
 
 

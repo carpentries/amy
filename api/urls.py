@@ -18,7 +18,7 @@ router.register('hosts', views.HostViewSet)
 router.register('airports', views.AirportViewSet)
 
 urlpatterns = [
-    url('^$', views.ApiRoot.as_view()),
+    url('^$', views.ApiRoot.as_view(), name='root'),
     # TODO: turn these export views into ViewSets and add them to the router
     url('^export/badges/$',
         views.ExportBadgesView.as_view(),
