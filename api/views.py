@@ -31,10 +31,11 @@ from .serializers import (
     ExportBadgesSerializer,
     ExportInstructorLocationsSerializer,
     EventSerializer,
-    TodoSerializer,
+    TodoWidgetSerializer,
     HostSerializer,
     DetailedEventSerializer,
     TaskSerializer,
+    TodoSerializer,
     AirportSerializer,
     AwardSerializer,
     PersonSerializer,
@@ -189,7 +190,7 @@ class PublishedEvents(ListAPIView):
 class UserTodoItems(ListAPIView):
     permission_classes = (IsAuthenticated, )
     paginator = None
-    serializer_class = TodoSerializer
+    serializer_class = TodoWidgetSerializer
 
     def get_queryset(self):
         """Return current TODOs for currently logged in user."""

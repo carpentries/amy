@@ -71,7 +71,7 @@ class EventSerializer(serializers.ModelSerializer):
         )
 
 
-class TodoSerializer(serializers.ModelSerializer):
+class TodoWidgetSerializer(serializers.ModelSerializer):
     content = serializers.SerializerMethodField()
     start = serializers.DateField(format=None, source='due')
 
@@ -158,6 +158,12 @@ class TaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
         fields = ('person', 'role')
+
+
+class TodoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TodoItem
+        fields = ('completed', 'title', 'due', 'additional')
 
 
 class DetailedEventSerializer(serializers.ModelSerializer):
