@@ -216,10 +216,12 @@ class UserTodoItems(ListAPIView):
 
 class HostViewSet(viewsets.ReadOnlyModelViewSet):
     """List many hosts or retrieve only one."""
+    permission_classes = (IsAuthenticated, )
     queryset = Host.objects.all()
     serializer_class = HostSerializer
     lookup_field = 'domain'
     lookup_value_regex = r'[^/]+'  # the default one doesn't work with domains
+    pagination_class = StandardResultsSetPagination
 
 
 class EventViewSet(viewsets.ReadOnlyModelViewSet):
