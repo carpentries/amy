@@ -113,8 +113,6 @@ class AirportSerializer(serializers.ModelSerializer):
 
 
 class AwardSerializer(serializers.ModelSerializer):
-    person = serializers.HyperlinkedRelatedField(
-        read_only=True, view_name='api:person-detail')
     badge = serializers.SlugRelatedField(
         many=False, read_only=True, slug_field='name')
     event = serializers.HyperlinkedRelatedField(
@@ -122,7 +120,7 @@ class AwardSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Award
-        fields = ('person', 'badge', 'awarded', 'event')
+        fields = ('badge', 'awarded', 'event')
 
 
 class PersonSerializer(serializers.ModelSerializer):
@@ -188,6 +186,8 @@ class DetailedEventSerializer(serializers.ModelSerializer):
         lookup_url_kwarg='event_slug',
         source='todoitem_set',
     )
+    assigned_to = serializers.HyperlinkedRelatedField(
+        read_only=True, view_name='api:person-detail')
 
     class Meta:
         model = Event
@@ -195,5 +195,5 @@ class DetailedEventSerializer(serializers.ModelSerializer):
             'slug', 'completed', 'start', 'end', 'host', 'administrator',
             'tags', 'website_url', 'reg_key', 'admin_fee', 'invoice_status',
             'attendance', 'contact', 'country', 'venue', 'address',
-            'latitude', 'longitude', 'notes', 'tasks', 'todos',
+            'latitude', 'longitude', 'notes', 'tasks', 'todos', 'assigned_to',
         )
