@@ -6,6 +6,7 @@ from . import views
 
 # routers generate URLs for methods like `.list` or `.retrieve`
 router = routers.SimpleRouter()
+router.register('reports', views.ReportsViewSet, base_name='reports')
 router.register('persons', views.PersonViewSet)
 awards_router = routers.NestedSimpleRouter(router, 'persons', lookup='person')
 awards_router.register('awards', views.AwardViewSet, base_name='person-awards')
@@ -35,6 +36,7 @@ urlpatterns = [
     url('^todos/user/$',
         views.UserTodoItems.as_view(),
         name='user-todos'),
+
     url('^', include(router.urls)),
     url('^', include(awards_router.urls)),
     url('^', include(tasks_router.urls)),

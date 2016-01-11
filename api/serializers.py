@@ -91,6 +91,17 @@ class TimelineTodoSerializer(serializers.ModelSerializer):
             todo=obj.title,
         )
 
+
+class WorkshopsOverTimeSerializer(serializers.Serializer):
+    date = serializers.DateField(format=None, source='start')
+    count = serializers.IntegerField()
+
+
+class InstructorsOverTimeSerializer(serializers.Serializer):
+    date = serializers.DateField(format=None, source='awarded')
+    count = serializers.IntegerField()
+
+
 # ----------------------
 # "new" API starts below
 # ----------------------

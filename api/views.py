@@ -1,7 +1,9 @@
 import datetime
+from itertools import accumulate
 
-from django.db.models import Q
+from django.db.models import Q, Count, Sum, F
 from rest_framework import viewsets
+from rest_framework.decorators import list_route
 from rest_framework.filters import DjangoFilterBackend
 from rest_framework.generics import ListAPIView
 from rest_framework.metadata import SimpleMetadata
@@ -9,9 +11,11 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import (
     IsAuthenticatedOrReadOnly, IsAuthenticated
 )
+from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.views import APIView
+from rest_framework.viewsets import ViewSet
 
 from workshops.models import (
     Badge,
@@ -32,6 +36,8 @@ from .serializers import (
     ExportInstructorLocationsSerializer,
     ExportEventSerializer,
     TimelineTodoSerializer,
+    WorkshopsOverTimeSerializer,
+    InstructorsOverTimeSerializer,
     HostSerializer,
     EventSerializer,
     TaskSerializer,
@@ -208,6 +214,84 @@ class UserTodoItems(ListAPIView):
                                .incomplete() \
                                .exclude(due=None) \
                                .select_related('event')
+
+
+class ReportsViewSet(ViewSet):
+    """This viewset will return data for many of our reports.
+
+    This is implemented as a ViewSet, but actions like create/list/retrieve/etc
+    are missing, because we want to still have the power and simplicity of
+    a router."""
+    permission_classes = (IsAuthenticated, )
+    queryset1 = Event.objects.past_events().order_by('start')
+    queryset2 = Award.objects.order_by('awarded')
+
+    # YAML renderer is turned off because it has problems reading our
+    # accumulative generator (lol)
+    renderer_classes = (BrowsableAPIRenderer, JSONRenderer)
+
+    def _add_counts(self, a, b):
+        c = b
+        c['count'] = (a.get('count') or 0) + (b.get('count') or 0)
+        return c
+
+    def _only_latest_date(self, iterable):
+        it = iter(iterable)
+        try:
+            prev_ = next(it)
+        except StopIteration:
+            return
+        for next_ in it:
+            if prev_['date'] != next_['date']:
+                yield prev_
+            prev_ = next_
+        yield next_
+
+    @list_route(methods=['GET'])
+    def workshops_over_time(self, request, format=None):
+        """Cumulative number of workshops run by Software Carpentry over
+        time."""
+        qs = self.queryset1.annotate(count=Count('id'))
+        serializer = WorkshopsOverTimeSerializer(qs, many=True)
+
+        # run a cumulative generator over the data
+        data = accumulate(serializer.data, self._add_counts)
+        return Response(data)
+
+    @list_route(methods=['GET'])
+    def learners_over_time(self, request, format=None):
+        """Cumulative number of learners attending Software-Carpentry workshops
+        over time."""
+        qs = self.queryset1.annotate(count=Sum('attendance'))
+        # we reuse the serializer because it works here too
+        serializer = WorkshopsOverTimeSerializer(qs, many=True)
+
+        # run a cumulative generator over the data
+        data = accumulate(serializer.data, self._add_counts)
+        return Response(data)
+
+    @list_route(methods=['GET'])
+    def instructors_over_time(self, request, format=None):
+        """Cumulative number of instructor appearances on workshops over
+        time."""
+        badges = Badge.objects.instructor_badges()
+        qs = self.queryset2.filter(badge__in=badges) \
+                           .annotate(count=Count('person__id')).distinct()
+        serializer = InstructorsOverTimeSerializer(qs, many=True)
+
+        # run a cumulative generator over the data
+        data = accumulate(serializer.data, self._add_counts)
+
+        # drop data for the same days by showing the last record for
+        # particular date
+        data = self._only_latest_date(data)
+
+        return Response(data)
+
+    # let's wait for #649 to merge, then finish this
+    def instructor_num_taught(self, request, format=None):
+        pass
+
 
 # ----------------------
 # "new" API starts below
