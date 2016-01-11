@@ -336,8 +336,8 @@ class ReportsViewSet(ViewSet):
         swc_dc_workshops = events_qs.filter(tags__in=[swc_tag, dc_tag]).count()
         wise_workshops = events_qs.filter(tags=wise_tag).count()
         ttt_workshops = events_qs.filter(tags=TTT_tag).count()
-        self_organized_workshops = events_qs.filter(host=self_organized_host) \
-                                            .count()
+        self_organized_workshops = events_qs \
+            .filter(administrator=self_organized_host).count()
 
         # total and unique instructors
         total_instructors = Person.objects \
