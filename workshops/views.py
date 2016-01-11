@@ -1592,6 +1592,17 @@ def instructor_num_taught(request):
 
 
 @login_required
+def all_activity_over_time(request):
+    """Display number of workshops (of differend kinds), instructors and
+    learners over some specific period of time."""
+    context = {
+        'api_endpoint': reverse('api:reports-all-activity-over-time'),
+        'title': 'All activity over time',
+    }
+    return render(request, 'workshops/all_activity_over_time.html', context)
+
+
+@login_required
 def workshop_issues(request):
     '''Display workshops in the database whose records need attention.'''
 

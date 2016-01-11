@@ -1,0 +1,95 @@
+{% extends "workshops/_page.html" %}
+
+{% load static %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-12">
+    <p>
+      <a href="{{ api_endpoint }}">API link</a>.
+    </p>
+
+    <form class="form-inline" action="{{ api_endpoint }}" method="GET" id="form">
+      <div class="form-group">
+        <label for="id_start">Start date:</label>
+        <input type="date" class="form-control" id="id_start" name="start">
+      </div>
+      <div class="form-group">
+        <label for="id_end">End date:</label>
+        <input type="date" class="form-control" id="id_end" name="end">
+      </div>
+      <input type="hidden" name="format" value="json" />
+      <input type="submit" class="btn btn-default" value="Submit" />
+    </form>
+
+    <h3>Results</h3>
+    <dl>
+      <dt>Total number of instructors who taught in this period:</dt>
+      <dd id="instructors_total">None</dd>
+      <dt>Number of unique instructors who taught in this period:</dt>
+      <dd id="instructors_unique">None</dd>
+      <dt>Total number of learners:</dt>
+      <dd id="learners_total">None</dd>
+      <dt>Number of SWC workshops:</dt>
+      <dd id="workshops_SWC">None</dd>
+      <dt>Number of DC workshops:</dt>
+      <dd id="workshops_DC">None</dd>
+      <dt>Number of SWC or DC workshops:</dt>
+      <dd id="workshops_SWCDC">None</dd>
+      <dt>Number of TTT workshops:</dt>
+      <dd id="workshops_TTT">None</dd>
+      <dt>Number of WiSE workshops:</dt>
+      <dd id="workshops_WiSE">None</dd>
+      <dt>Number of self-organized workshops:</dt>
+      <dd id="workshops_self-organized">None</dd>
+      <dt>Workshops with missing instructors:</dt>
+      <dd id="missing_instructors">None</dd>
+      <dt>Workshops with missing attendance:</dt>
+      <dd id="missing_attendance">None</dd>
+    </dl>
+  </div>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+  <script type="text/javascript" src="{% static 'calendar_popup.js' %}"></script>
+  <script type="text/javascript">
+    $(document).ready(function() {
+      $('#form').submit(function(e) {
+        var form = $(e.target);
+        $.ajax({
+          type: form.attr('method'),
+          url: form.attr('action'),
+          data: form.serialize(),
+          success: function(data) {
+            // go through level 1 of our structure
+            for (var name in data) {
+
+              // ignore elements 'start' and 'end'
+              if (!(name == "start" || name == "end")) {
+
+                // go through level 2 of our structure
+                for (var subname in data[name]) {
+
+                  // subelements usually have a number or string as their value
+                  var content = data[name][subname];
+
+                  // two subelements have arrays as their values
+                  if (data[name][subname] instanceof Array) {
+                    content = data[name][subname].join(', ');
+                  }
+
+                  // construct ID of <dd> that will have its content replaced
+                  var element = '#' + name + '_' + (subname.replace(',', ''));
+
+                  $(element).text(content);
+                }
+              }
+            }
+          }
+        });
+        return false;
+      });
+    });
+  </script>
+{% endblock %}
