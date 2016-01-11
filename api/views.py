@@ -1,7 +1,7 @@
 import datetime
 from itertools import accumulate
 
-from django.db.models import Q, Count, Sum, F
+from django.db.models import Count, Sum, Case, When, Value, IntegerField
 from rest_framework import viewsets
 from rest_framework.decorators import list_route
 from rest_framework.filters import DjangoFilterBackend
@@ -291,6 +291,101 @@ class ReportsViewSet(ViewSet):
     # let's wait for #649 to merge, then finish this
     def instructor_num_taught(self, request, format=None):
         pass
+
+    def _default_start_end_dates(self):
+        today = datetime.date.today()
+        start_of_year = datetime.date(today.year, 1, 1)
+        end_of_year = (datetime.date(today.year + 1, 1, 1) -
+                       datetime.timedelta(days=1))
+        return start_of_year, end_of_year
+
+    @list_route(methods=['GET'])
+    def all_activity_over_time(self, request, format=None):
+        """Workshops, instructors, and missing data in specific periods."""
+        start_default, end_default = self._default_start_end_dates()
+
+        start = self.request.query_params.get('start', None)
+        if start is not None:
+            try:
+                start = datetime.datetime.strptime(start, '%Y-%m-%d').date()
+            except ValueError:
+                start = start_default
+        else:
+            start = start_default
+
+        end = self.request.query_params.get('end', None)
+        if end is not None:
+            try:
+                end = datetime.datetime.strptime(end, '%Y-%m-%d').date()
+            except ValueError:
+                end = end_default
+        else:
+            end = end_default
+
+        events_qs = Event.objects.filter(start__gte=start, start__lte=end)
+        swc_tag = Tag.objects.get(name='SWC')
+        dc_tag = Tag.objects.get(name='DC')
+        wise_tag = Tag.objects.get(name='WiSE')
+        TTT_tag = Tag.objects.get(name='TTT')
+        self_organized_host = Host.objects.get(domain='self-organized')
+
+        # count workshops: SWC, DC, total (SWC and/or DC), self-organized,
+        # WiSE, TTT
+        swc_workshops = events_qs.filter(tags=swc_tag).count()
+        dc_workshops = events_qs.filter(tags=dc_tag).count()
+        swc_dc_workshops = events_qs.filter(tags__in=[swc_tag, dc_tag]).count()
+        wise_workshops = events_qs.filter(tags=wise_tag).count()
+        ttt_workshops = events_qs.filter(tags=TTT_tag).count()
+        self_organized_workshops = events_qs.filter(host=self_organized_host) \
+                                            .count()
+
+        # total and unique instructors
+        total_instructors = Person.objects \
+            .filter(task__event__in=events_qs, task__role__name='instructor')
+        unique_instructors = total_instructors.distinct().count()
+        total_instructors = total_instructors.count()
+
+        # total learners
+        total_learners = events_qs.aggregate(learners=Sum('attendance'))
+        total_learners = total_learners['learners']
+
+        # workshops missing any of this data
+        # TODO: use hyperlinks once #649 is merged
+        missing_attendance = events_qs.filter(attendance=None) \
+                                      .values_list('slug', flat=True)
+        missing_instructors = events_qs.annotate(
+            instructors=Sum(
+                Case(
+                    When(task__role__name='instructor', then=Value(1)),
+                    default=Value(0),
+                    output_field=IntegerField()
+                )
+            )
+        ).filter(instructors=0).values_list('slug', flat=True)
+
+        return Response({
+            'start': start,
+            'end': end,
+            'workshops': {
+                'SWC': swc_workshops,
+                'DC': dc_workshops,
+                'SWC,DC': swc_dc_workshops,
+                'WiSE': wise_workshops,
+                'TTT': ttt_workshops,
+                'self-organized': self_organized_workshops,
+            },
+            'instructors': {
+                'total': total_instructors,
+                'unique': unique_instructors,
+            },
+            'learners': {
+                'total': total_learners,
+            },
+            'missing': {
+                'attendance': missing_attendance,
+                'instructors': missing_instructors,
+            }
+        })
 
 
 # ----------------------
