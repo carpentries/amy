@@ -1541,7 +1541,7 @@ def export_members(request):
 
 @login_required
 def workshops_over_time(request):
-    '''Export CSV of count of workshops vs. time.'''
+    '''Export JSON of count of workshops vs. time.'''
     context = {
         'api_endpoint': reverse('api:reports-workshops-over-time'),
         'title': 'Workshops over time',
@@ -1551,7 +1551,7 @@ def workshops_over_time(request):
 
 @login_required
 def learners_over_time(request):
-    '''Export CSV of count of learners vs. time.'''
+    '''Export JSON of count of learners vs. time.'''
     context = {
         'api_endpoint': reverse('api:reports-learners-over-time'),
         'title': 'Learners over time',
@@ -1561,7 +1561,7 @@ def learners_over_time(request):
 
 @login_required
 def instructors_over_time(request):
-    '''Export CSV of count of instructors vs. time.'''
+    '''Export JSON of count of instructors vs. time.'''
     context = {
         'api_endpoint': reverse('api:reports-instructors-over-time'),
         'title': 'Instructors over time',
