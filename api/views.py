@@ -403,6 +403,14 @@ class ReportsViewSet(ViewSet):
             }
         })
 
+    # TODO: implement once #649 is merged
+    # @list_route(methods=['GET'])
+    # def instructor_activity_over_time(self, request, format=None):
+    #     """Who our instructors are, and they did, and with whom."""
+    #     # this is API endpoint for our `instructors_activity` management
+    #     # command
+    #     pass
+
 
 # ----------------------
 # "new" API starts below
