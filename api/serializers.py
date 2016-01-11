@@ -102,6 +102,11 @@ class InstructorsOverTimeSerializer(serializers.Serializer):
     count = serializers.IntegerField()
 
 
+class InstructorNumTaughtSerializer(serializers.Serializer):
+    person = PersonNameEmailUsernameSerializer(source='*')
+    num_taught = serializers.IntegerField()
+
+
 # ----------------------
 # "new" API starts below
 # ----------------------

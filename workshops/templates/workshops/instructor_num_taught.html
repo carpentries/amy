@@ -1,6 +1,18 @@
 {% extends "workshops/_page.html" %}
 
 {% block content %}
-<pre>{% for a in awards %}
-{{a.num_taught}},{{a.person.get_full_name}},{{a.person.email}},{{a.awarded|date:"Y-m-d"}},{{a.person.gender}},{% if a.person.airport %}{{a.person.airport.country}}{% else %}-{% endif %}{% endfor %}</pre>
+<p>
+  <a href="{{ api_endpoint }}">API link</a>.
+</p>
+<pre id="source"></pre>
+{% endblock %}
+
+{% block extrajs %}
+  <script type="text/javascript">
+    $(document).ready(function() {
+      $.get('{{ api_endpoint }}?format=json', function(data) {
+        $('#source').text(data);
+      }, "html");
+    });
+  </script>
 {% endblock %}

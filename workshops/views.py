@@ -1571,23 +1571,11 @@ def instructors_over_time(request):
 
 @login_required
 def instructor_num_taught(request):
-    '''Export CSV of how often instructors have taught.'''
-
-    badges = Badge.objects.instructor_badges()
-    awards = Award.objects.filter(badge__in=badges).annotate(
-        num_taught=Count(
-            Case(
-                When(
-                    person__task__role__name='instructor',
-                    then=Value(1)
-                ),
-                output_field=IntegerField()
-            )
-        )
-    ).select_related('person', 'person__airport') \
-     .filter(person__may_contact=True).order_by('-num_taught', 'awarded')
-    context = {'title': 'Frequency of Instruction',
-               'awards': awards}
+    '''Export JSON of how often instructors have taught.'''
+    context = {
+        'api_endpoint': reverse('api:reports-instructor-num-taught'),
+        'title': 'Frequency of Instruction',
+    }
     return render(request, 'workshops/instructor_num_taught.html', context)
 
 

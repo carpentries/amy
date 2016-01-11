@@ -38,6 +38,7 @@ from .serializers import (
     TimelineTodoSerializer,
     WorkshopsOverTimeSerializer,
     InstructorsOverTimeSerializer,
+    InstructorNumTaughtSerializer,
     HostSerializer,
     EventSerializer,
     TaskSerializer,
@@ -288,9 +289,24 @@ class ReportsViewSet(ViewSet):
 
         return Response(data)
 
-    # let's wait for #649 to merge, then finish this
+    @list_route(methods=['GET'])
     def instructor_num_taught(self, request, format=None):
-        pass
+        badges = Badge.objects.instructor_badges()
+        persons = Person.objects.filter(badges__in=badges).annotate(
+            num_taught=Count(
+                Case(
+                    When(
+                        task__role__name='instructor',
+                        then=Value(1)
+                    ),
+                    output_field=IntegerField()
+                )
+            )
+        ).filter(may_contact=True).order_by('-num_taught')
+        # for now it uses a very simple person serializer
+        # TODO: use hyperlinks once #649 is merged
+        serializer = InstructorNumTaughtSerializer(persons, many=True)
+        return Response(serializer.data)
 
     def _default_start_end_dates(self):
         today = datetime.date.today()
