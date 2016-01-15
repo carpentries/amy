@@ -315,7 +315,7 @@ def create_username(personal, family, tries=100):
             return username
 
     raise InternalError('Cannot find a non-repeating username'
-                        '(tried 100 usernames): {}.'.format(username))
+                        '(tried {} usernames): {}.'.format(tries, username))
 
 
 def normalize_name(name):
@@ -324,7 +324,8 @@ def normalize_name(name):
     for (accented, flat) in [(' ', '-')]:
         name = name.replace(accented, flat)
 
-    name = re.sub(r'[^\w]', '', name, flags=re.A)  # remove all non-ASCII chars
+    # remove all non-ASCII, non-hyphen chars
+    name = re.sub(r'[^\w\-]', '', name, flags=re.A)
 
     # We should use lower-cased username, because it directly corresponds to
     # some files Software Carpentry stores about some people - and, as we know,

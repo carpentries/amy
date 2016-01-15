@@ -943,3 +943,9 @@ class TestUsernameGeneration(TestCase):
         tries = 1
         with self.assertRaises(InternalError):
             create_username(personal='Harry', family='Potter', tries=tries)
+
+    def test_hyphenated_name(self):
+        """Ensure people with hyphens in names have correct usernames
+        generated."""
+        username = create_username(personal='Andy', family='Blanking-Crush')
+        self.assertEqual(username, 'blanking-crush_andy')
