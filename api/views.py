@@ -347,23 +347,31 @@ class ReportsViewSet(ViewSet):
 
         # count workshops: SWC, DC, total (SWC and/or DC), self-organized,
         # WiSE, TTT
-        swc_workshops = events_qs.filter(tags=swc_tag).count()
-        dc_workshops = events_qs.filter(tags=dc_tag).count()
+        swc_workshops = events_qs.filter(tags=swc_tag)
+        dc_workshops = events_qs.filter(tags=dc_tag)
         swc_dc_workshops = events_qs.filter(tags__in=[swc_tag, dc_tag]).count()
         wise_workshops = events_qs.filter(tags=wise_tag).count()
         ttt_workshops = events_qs.filter(tags=TTT_tag).count()
         self_organized_workshops = events_qs \
             .filter(administrator=self_organized_host).count()
 
-        # total and unique instructors
-        total_instructors = Person.objects \
-            .filter(task__event__in=events_qs, task__role__name='instructor')
-        unique_instructors = total_instructors.distinct().count()
-        total_instructors = total_instructors.count()
+        # total and unique instructors for both SWC and DC workshops
+        swc_total_instr = Person.objects \
+            .filter(task__event__in=swc_workshops,
+                    task__role__name='instructor')
+        swc_unique_instr = swc_total_instr.distinct().count()
+        swc_total_instr = swc_total_instr.count()
+        dc_total_instr = Person.objects \
+            .filter(task__event__in=dc_workshops,
+                    task__role__name='instructor')
+        dc_unique_instr = dc_total_instr.distinct().count()
+        dc_total_instr = dc_total_instr.count()
 
-        # total learners
-        total_learners = events_qs.aggregate(learners=Sum('attendance'))
-        total_learners = total_learners['learners']
+        # total learners for both SWC and DC workshops
+        swc_total_learners = swc_workshops.aggregate(count=Sum('attendance'))
+        swc_total_learners = swc_total_learners['count']
+        dc_total_learners = dc_workshops.aggregate(count=Sum('attendance'))
+        dc_total_learners = dc_total_learners['count']
 
         # workshops missing any of this data
         # TODO: use hyperlinks once #649 is merged
@@ -383,19 +391,26 @@ class ReportsViewSet(ViewSet):
             'start': start,
             'end': end,
             'workshops': {
-                'SWC': swc_workshops,
-                'DC': dc_workshops,
+                'SWC': swc_workshops.count(),
+                'DC': dc_workshops.count(),
                 'SWC,DC': swc_dc_workshops,
                 'WiSE': wise_workshops,
                 'TTT': ttt_workshops,
                 'self-organized': self_organized_workshops,
             },
             'instructors': {
-                'total': total_instructors,
-                'unique': unique_instructors,
+                'SWC': {
+                    'total': swc_total_instr,
+                    'unique': swc_unique_instr,
+                },
+                'DC': {
+                    'total': dc_total_instr,
+                    'unique': dc_unique_instr,
+                },
             },
             'learners': {
-                'total': total_learners,
+                'SWC': swc_total_learners,
+                'DC': dc_total_learners,
             },
             'missing': {
                 'attendance': missing_attendance,
