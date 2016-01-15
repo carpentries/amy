@@ -233,7 +233,7 @@ class Person(AbstractBaseUser, PermissionsMixin):
     url         = models.CharField(max_length=STR_LONG, null=True, blank=True)
     username = models.CharField(
         max_length=STR_MED, unique=True,
-        validators=[RegexValidator(r'^[\w_]+$', flags=re.A)],
+        validators=[RegexValidator(r'^[\w\-_]+$', flags=re.A)],
     )
     notes = models.TextField(default="", blank=True)
     affiliation = models.CharField(max_length=STR_LONG, default='', blank=True)

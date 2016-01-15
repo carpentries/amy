@@ -348,9 +348,9 @@ class TestPerson(TestBase):
                     person.clean_fields(exclude=['password'])
                 self.assertIn('username', cm.exception.message_dict)
 
-        valid_username = 'testing_testing_2'
+        valid_username = 'blanking-crush_andy'
         person = Person.objects.create(
-            personal='Testing', family='Testing', username=valid_username,
+            personal='Andy', family='Blanking-Crush', username=valid_username,
         )
         person.clean_fields(exclude=['password'])
 
