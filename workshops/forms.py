@@ -275,9 +275,21 @@ class EventForm(forms.ModelForm):
         # wrap <div class='panel-body'> within <div class='panel panel-…'>
         self.helper[idx_start].wrap_together(Div,
                                              css_class='panel panel-default')
-        # add <div class='panel-heading'>Venue details</div> inside "div.panel"
+        # add <div class='panel-heading'>Loc. details</div> inside "div.panel"
         self.helper.layout[idx_start].insert(0, Div(HTML('Location details'),
                                                     css_class='panel-heading'))
+
+        id_learners_pre = self.helper['learners_pre'].slice[0][0][0]
+        id_learners_longterm = self.helper['learners_longterm'].slice[0][0][0]
+        # wrap all survey fields within <div class='panel-body'>
+        self.helper[id_learners_pre:id_learners_longterm + 1] \
+            .wrap_together(Div, css_class='panel-body')
+        # wrap <div class='panel-body'> within <div class='panel panel-…'>
+        self.helper[id_learners_pre].wrap_together(
+            Div, css_class='panel panel-default')
+        # add <div class='panel-heading'>Venue details</div> inside "div.panel"
+        self.helper.layout[id_learners_pre].insert(
+            0, Div(HTML('Survey links'), css_class='panel-heading'))
 
     def clean_slug(self):
         # Ensure slug is not an integer value for Event.get_by_ident
@@ -307,7 +319,9 @@ class EventForm(forms.ModelForm):
         fields = ('slug', 'completed', 'start', 'end', 'host', 'administrator',
                   'tags', 'url', 'reg_key', 'admin_fee', 'invoice_status',
                   'attendance', 'contact', 'notes',
-                  'country', 'venue', 'address', 'latitude', 'longitude')
+                  'country', 'venue', 'address', 'latitude', 'longitude',
+                  'learners_pre', 'learners_post', 'instructors_pre',
+                  'instructors_post', 'learners_longterm')
         # WARNING: don't change put any fields between 'country' and
         #          'longitude' that don't relate to the venue of the event
 
