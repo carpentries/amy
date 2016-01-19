@@ -1483,7 +1483,7 @@ def debrief(request):
 
     start_date = end_date = None
 
-    tags = Tag.objects.filter(name__in=['TTT', 'stalled', 'unresponsive'])
+    tags = Tag.objects.filter(name__in=['stalled', 'unresponsive'])
 
     if request.method == 'POST':
         form = DebriefForm(request.POST)
