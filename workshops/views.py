@@ -2115,7 +2115,7 @@ def profileupdaterequest_accept(request, request_id, person_id):
     Accept the profile update by rewriting values to selected user's profile.
 
     IMPORTANT: we do not rewrite all of the data users input (like
-    occupation, or other gender, or other lessons).  All of it is still in
+    other gender, or other lessons).  All of it is still in
     the database model ProfileUpdateRequest, but does not get written to the
     Person model object.
     """
@@ -2134,6 +2134,13 @@ def profileupdaterequest_accept(request, request_id, person_id):
     person.github = profileupdate.github
     person.twitter = profileupdate.twitter
     person.url = profileupdate.website
+    # if occupation is "Other", simply save the `occupation_other` field,
+    # otherwise get full display of occupation (since it's a choice field)
+    if profileupdate.occupation == '':
+        person.occupation = profileupdate.occupation_other
+    else:
+        person.occupation = profileupdate.get_occupation_display()
+    person.orcid = profileupdate.orcid
     person.gender = profileupdate.gender
     person.domains = list(profileupdate.domains.all())
 

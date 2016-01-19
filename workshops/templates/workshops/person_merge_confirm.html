@@ -73,6 +73,16 @@
     <td>{{ person_to.url|urlize_newtab|default_if_none:"—" }}</td>
   </tr>
   <tr>
+    <th>occupation:</th>
+    <td class="{% warn_if_different person_from.occupation person_to.occupation %}">{{ person_from.occupation|urlize_newtab|default_if_none:"—" }}</td>
+    <td>{{ person_to.occupation|urlize_newtab|default_if_none:"—" }}</td>
+  </tr>
+  <tr>
+    <th>ORCID ID:</th>
+    <td class="{% warn_if_different person_from.orcid person_to.orcid %}">{{ person_from.orcid|urlize_newtab|default_if_none:"—" }}</td>
+    <td>{{ person_to.orcid|urlize_newtab|default_if_none:"—" }}</td>
+  </tr>
+  <tr>
     <th>notes:</th>
     <td class="{% success_if_any_content person_from.notes %}">{% if person_from.notes %}<pre>{{ person_from.notes }}</pre>{% endif %}</td>
     <td>{% if person_to.notes %}<pre>{{ person_to.notes }}</pre>{% endif %}</td>

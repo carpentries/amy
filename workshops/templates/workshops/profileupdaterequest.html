@@ -67,6 +67,12 @@
     <tr><th>Gender:</th>
         <td>{{ new.get_gender_display }} {{ new.gender_other }}</td>
         <td>{% if old %}{{ old.get_gender_display }}{% endif %}</td></tr>
+    <tr><th>Occupation/Career stage:</th>
+        <td>{{ new.get_occupation_display }} {{ new.occupation_other }}</td>
+        <td>{% if old %}{{ old.occupation|default:"—" }}{% endif %}</td></tr>
+    <tr><th>ORCID ID:</th>
+        <td>{{ new.orcid|default:"—" }}</td>
+        <td>{% if old %}{{ old.orcid|default:"—" }}{% endif %}</td></tr>
     <tr><th>Areas of expertise:</th>
         <td>
           <ul>
@@ -109,16 +115,9 @@
         {% endif %}
         </td>
     </tr>
-    <tr><th colspan="3" class="text-center">Additional information (not being saved to the database)</th></tr>
     <tr><th>Has instructor badge:</th>
-        <td><em>Not available</em></td>
+        <td><em>Not available since it applies to people from database only</em></td>
         <td>{% if old %}{{ old.has_instructor_badge|yesno }}{% endif %}</td></tr>
-    <tr><th>ORCID ID:</th>
-        <td>{{ new.orcid|default:"—" }}</td>
-        <td><em>Not available</em></td></tr>
-    <tr><th>Occupation/Career stage:</th>
-        <td>{{ new.get_occupation_display }}{{ new.occupation_other }}</td>
-        <td><em>Not available</em></td></tr>
   </tbody>
 </table>
 
