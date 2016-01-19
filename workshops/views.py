@@ -1483,6 +1483,8 @@ def debrief(request):
 
     start_date = end_date = None
 
+    tags = Tag.objects.filter(name__in=['stalled', 'unresponsive'])
+
     if request.method == 'POST':
         form = DebriefForm(request.POST)
         if form.is_valid():
@@ -1493,7 +1495,8 @@ def debrief(request):
                 event__end__lte=end_date,
                 role__name='instructor',
                 person__may_contact=True,
-            ).order_by('event', 'person', 'role')
+            ).exclude(event__tags=tags).order_by('event', 'person', 'role') \
+             .select_related('person', 'event', 'role')
 
     else:
         # if a GET (or any other method) we'll create a blank form
