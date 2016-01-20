@@ -407,61 +407,36 @@ class TestEventViews(TestBase):
 
         This is a regression test for
         https://github.com/swcarpentry/amy/issues/435."""
-        data = {
-            'host': self.test_host.id,
-            'tags': [self.test_tag.id],
-            'slug': 'test-event',
-            'admin_fee': -1200,
-        }
-        S = "Ensure this value is greater than or equal to 0"
-        response = self.client.post(reverse('event_add'), data)
-        assert response.status_code == 200
-        content = response.content.decode('utf-8')
-        assert content.count(S) == 1
+        error_str = "Ensure this value is greater than or equal to 0."
 
         data = {
             'host': self.test_host.id,
             'tags': [self.test_tag.id],
             'slug': 'test-event',
             'admin_fee': -1200,
-            'attendance': -36,
         }
-        response = self.client.post(reverse('event_add'), data)
-        assert response.status_code == 200
-        content = response.content.decode('utf-8')
-        assert content.count(S) == 2
 
-        data = {
-            'host': self.test_host.id,
-            'tags': [self.test_tag.id],
-            'slug': 'test-event',
-            'attendance': -36,
-        }
-        S = "Ensure this value is greater than or equal to 0"
-        response = self.client.post(reverse('event_add'), data)
-        assert response.status_code == 200
-        content = response.content.decode('utf-8')
-        assert content.count(S) == 1
+        f = EventForm(data)
+        self.assertIn('admin_fee', f.errors)
+        self.assertIn(error_str, f.errors['admin_fee'])
 
-        data = {
-            'host': self.test_host.id,
-            'tags': [self.test_tag.id],
-            'slug': 'test-event',
-            'admin_fee': 0,
-            'attendance': 0,
-        }
-        response = self.client.post(reverse('event_add'), data)
-        assert response.status_code == 302
+        del data['admin_fee']
+        data['attendance'] = -36
+        f = EventForm(data)
+        self.assertIn('attendance', f.errors)
+        self.assertIn(error_str, f.errors['attendance'])
 
-        data = {
-            'host': self.test_host.id,
-            'tags': [self.test_tag.id],
-            'slug': 'test-event2',
-            'admin_fee': 1200,
-            'attendance': 36,
-        }
-        response = self.client.post(reverse('event_add'), data)
-        assert response.status_code == 302
+        data['admin_fee'] = 0
+        data['attendance'] = 0
+        f = EventForm(data)
+        self.assertNotIn('admin_fee', f.errors)
+        self.assertNotIn('attendance', f.errors)
+
+        data['slug'] = 'test-event2'
+        data['admin_fee'] = 1200
+        data['attendance'] = 36
+        f = EventForm(data)
+        self.assertTrue(f.is_valid())
 
     def test_number_of_attendees_increasing(self):
         """Ensure event.attendance gets bigger after adding new learners."""
