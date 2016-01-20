@@ -8,6 +8,7 @@ from django.contrib.auth.models import Permission, Group
 
 from django.test import TransactionTestCase
 
+from ..forms import PersonForm
 from ..models import (
     Person, Task, Qualification, Award, Role, Event, KnowledgeDomain, Badge,
     Lesson, Host
@@ -40,19 +41,11 @@ class TestPerson(TestBase):
         self._test_edit_person_email(self.spiderman)
 
     def test_edit_person_empty_family_name(self):
-        url, values = self._get_initial_form_index(0, 'person_edit',
-                                                   self.ironman.id)
-        assert 'person-family' in values, \
-            'No family name in initial form'
-
-        values['person-family'] = '' # family name cannot be empty
-        response = self.client.post(url, values)
-        assert response.status_code == 200, \
-            'Expected error page with status 200, got status {0}'.format(response.status_code)
-        doc = self._parse(response=response)
-        errors = self._collect_errors(doc)
-        assert errors, \
-            'Expected error messages in response page'
+        data = {
+            'person-family': '',  # family name cannot be empty
+        }
+        f = PersonForm(data)
+        self.assertIn('family', f.errors)
 
     def _test_edit_person_email(self, person):
         url, values = self._get_initial_form_index(0, 'person_edit', person.id)
