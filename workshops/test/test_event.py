@@ -444,16 +444,12 @@ class TestEventViews(TestBase):
         event.attendance = 0  # testing for numeric case
         event.save()
 
-        url, values = self._get_initial_form_index(1, 'event_edit', event.pk)
-        values['task-role'] = self.learner.pk
-        values['task-event'] = event.pk
-        values['task-person_0'] = str(self.spiderman)
-        values['task-person_1'] = self.spiderman.pk
-
-        rv = self.client.post(reverse('event_edit', args=[event.pk]), values,
-                              follow=True)
-        self._check_status_code_and_parse(rv, 200)
-
+        data = {
+            'task-role': self.learner.pk,
+            'task-event': event.pk,
+            'task-person_1': self.spiderman.pk,
+        }
+        self.client.post(reverse('event_edit', args=[event.pk]), data)
         event.refresh_from_db()
         assert event.attendance == 1
 
