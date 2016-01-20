@@ -91,7 +91,7 @@ class TestProfileUpdateRequest(TestBase):
             affiliation='Auror at Ministry of Magic', airport_iata='AAA',
             occupation='', occupation_other='Auror',
             github='hpotter', twitter='hpotter',
-            orcid='', website='http://warry.trotter.com/', gender='M',
+            orcid='0000-1111', website='http://warry.trotter.com/', gender='M',
         )
         pr.domains.add(*KnowledgeDomain.objects.all()[0:2]),
         pr.lessons.add(*Lesson.objects.all()[0:2]),
@@ -108,6 +108,8 @@ class TestProfileUpdateRequest(TestBase):
         assert person.github == person.twitter == 'hpotter'
         assert person.url == 'http://warry.trotter.com/'
         assert person.gender == 'M'
+        assert person.occupation == 'Auror'
+        assert person.orcid == '0000-1111'
         assert set(person.domains.all()) == \
             set(KnowledgeDomain.objects.all()[0:2])
         assert set(person.lessons.all()) == set(Lesson.objects.all()[0:2])
