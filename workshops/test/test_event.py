@@ -106,41 +106,6 @@ class TestEvent(TestBase):
         self.assertNotIn(event_considered_published,
                          Event.objects.unpublished_events())
 
-    def test_edit_event(self):
-        """ Test that an event can be edited, and that people can be
-            added from the event edit page.
-        """
-
-        event = Event.objects.all()[0]
-        tag = Tag.objects.get(name='Test Tag')
-        role = Role.objects.get(name='Test Role')
-        url, values = self._get_initial_form_index(0, 'event_edit', event.id)
-        assert len(values) > 0
-        values['event-end'] = ''
-        values['event-tags'] = tag.id
-        assert "event-reg_key" in values, \
-            'No reg key in initial form'
-        new_reg_key = 'test_reg_key'
-        assert event.reg_key != new_reg_key, \
-            'Would be unable to tell if reg_key had changed'
-        values['event-reg_key'] = new_reg_key
-        response = self.client.post(url, values, follow=True)
-        content = response.content.decode('utf-8')
-        assert new_reg_key in content
-
-        url, values = self._get_initial_form_index(1, 'event_edit', event.id)
-        assert "task-person_0" in values, \
-            'No person select in initial form'
-
-        person = Person.objects.all()[0]
-        values['task-person_1'] = person.id
-        values['task-role'] = role.id
-
-        response = self.client.post(url, values, follow=True)
-        content = response.content.decode('utf-8')
-        assert "/workshops/person/1" in content
-        assert "Test Role" in content
-
     def test_delete_event(self):
         """Make sure deleted event and its tasks are no longer accessible."""
         event = Event.objects.get(slug="starts_today_ongoing")
