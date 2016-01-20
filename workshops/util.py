@@ -664,3 +664,27 @@ def find_emails(text):
             emails.append('{}@{}'.format(local, domain))
 
     return emails
+
+
+def assignment_selection(request):
+    """Parse `assigned_to` query param depending on the logged-in user."""
+    user = request.user
+    is_admin = user.groups.filter(name='administrators').exists()
+
+    # it's always possible to assign something entirely else
+    # in the `?assigned_to` query param
+
+    if is_admin:
+        # One of the administrators.
+        # They should be presented with their events by default.
+        assigned_to = request.GET.get('assigned_to', 'me')
+
+    elif user.is_superuser:
+        # A superuser.  Should see all events by default
+        assigned_to = request.GET.get('assigned_to', 'all')
+
+    else:
+        # Normal user (for example subcommittee members).
+        assigned_to = 'all'
+
+    return assigned_to, is_admin

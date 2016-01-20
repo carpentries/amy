@@ -73,6 +73,7 @@ from workshops.util import (
     find_tags_on_event_website,
     parse_tags_from_event_website,
     validate_tags_from_event_website,
+    assignment_selection,
 )
 
 from workshops.filters import (
@@ -182,28 +183,13 @@ def dashboard(request):
     unpublished_events = Event.objects.unpublished_events().no_stalled() \
                                       .select_related('host')
 
-    user = request.user
-    is_admin = user.groups.filter(name='administrators').exists()
-
-    assigned_to = 'all'
-
-    if is_admin:
-        # One of the administrators.
-        # They should be presented with their events by default.
-        assigned_to = request.GET.get('assigned_to', 'me')
-
-    elif user.is_superuser:
-        # A superuser.  Should see all events by default
-        assigned_to = request.GET.get('assigned_to', 'all')
-
-    else:
-        # Normal user (for example subcommittee members).
-        assigned_to = 'all'
+    assigned_to, is_admin = assignment_selection(request)
 
     if assigned_to == 'me':
-        current_events = current_events.filter(assigned_to=user)
-        uninvoiced_events = uninvoiced_events.filter(assigned_to=user)
-        unpublished_events = unpublished_events.filter(assigned_to=user)
+        current_events = current_events.filter(assigned_to=request.user)
+        uninvoiced_events = uninvoiced_events.filter(assigned_to=request.user)
+        unpublished_events = unpublished_events.filter(
+            assigned_to=request.user)
 
     elif assigned_to == 'noone':
         current_events = current_events.filter(assigned_to__isnull=True)
@@ -1620,6 +1606,18 @@ def workshop_issues(request):
         Q(start__gt=F('end'))
     )
 
+    assigned_to, is_admin = assignment_selection(request)
+
+    if assigned_to == 'me':
+        events = events.filter(assigned_to=request.user)
+
+    elif assigned_to == 'noone':
+        events = events.filter(assigned_to=None)
+
+    elif assigned_to == 'all':
+        # no filtering
+        pass
+
     for e in events:
         e.missing_attendance_ = (not e.attendance)
         e.missing_location_ = (
@@ -1628,8 +1626,12 @@ def workshop_issues(request):
         )
         e.bad_dates_ = e.start and e.end and (e.start > e.end)
 
-    context = {'title': 'Workshops with Issues',
-               'events': events}
+    context = {
+        'title': 'Workshops with Issues',
+        'events': events,
+        'is_admin': is_admin,
+        'assigned_to': assigned_to,
+    }
     return render(request, 'workshops/workshop_issues.html', context)
 
 
