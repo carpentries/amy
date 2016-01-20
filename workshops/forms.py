@@ -388,7 +388,8 @@ class PersonForm(forms.ModelForm):
         # + reorder fields
         fields = ['username', 'personal', 'middle', 'family', 'may_contact',
                   'email', 'gender', 'airport', 'affiliation', 'github',
-                  'twitter', 'url', 'notes', 'lessons', 'domains']
+                  'twitter', 'url', 'occupation', 'orcid', 'notes', 'lessons',
+                  'domains']
 
 
 class PersonPermissionsForm(forms.ModelForm):

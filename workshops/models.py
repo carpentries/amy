@@ -245,6 +245,20 @@ class Person(AbstractBaseUser, PermissionsMixin):
     # new people will be inactive by default
     is_active = models.BooleanField(default=False)
 
+    # Recorded in ProfileUpdateRequest. Occupation will store the either
+    # 'undisclosed' or full text of occupation selected by user.  In case of
+    # selecting 'other' the value from `occupation_other` field will be used.
+    occupation = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Current occupation/career stage',
+        blank=True, default='',
+    )
+    orcid = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='ORCID ID',
+        blank=True, default='',
+    )
+
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = [
         'personal',
