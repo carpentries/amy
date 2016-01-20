@@ -623,6 +623,23 @@ class Event(AssignmentMixin, models.Model):
         help_text="Indicates that no more work is needed upon this event.",
     )
 
+    # links to the surveys
+    learners_pre = models.URLField(
+        blank=True, default="",
+        verbose_name="Pre-workshop assessment survey for learners")
+    learners_post = models.URLField(
+        blank=True, default="",
+        verbose_name="Post-workshop assessment survey for learners")
+    instructors_pre = models.URLField(
+        blank=True, default="",
+        verbose_name="Pre-workshop assessment survey for instructors")
+    instructors_post = models.URLField(
+        blank=True, default="",
+        verbose_name="Pre-workshop assessment survey for instructors")
+    learners_longterm = models.URLField(
+        blank=True, default="",
+        verbose_name="Long-term assessment survey for learners")
+
     class Meta:
         ordering = ('-start', )
 
