@@ -5,6 +5,7 @@ import cgi
 from django.test import TestCase
 from django.core.urlresolvers import reverse
 from ..models import (Event, Host, Tag, Person, Role, Task, Award, Badge)
+from ..forms import EventForm
 from .base import TestBase
 
 
@@ -528,13 +529,15 @@ class TestEventViews(TestBase):
         for slug in ['a/b', 'a b', 'a!b', 'a.b', 'a\\b', 'a?b']:
             with self.subTest(slug=slug):
                 data['slug'] = slug
-                rv = self.client.post(reverse('event_add'), data, follow=False)
-                self.assertEqual(rv.status_code, 200)
+                f = EventForm(data)
+                self.assertEqual(f.is_valid(), False)
+                self.assertIn('slug', f.errors)
 
         # allow dashes in the slugs
         data['slug'] = 'a-b'
-        rv = self.client.post(reverse('event_add'), data, follow=False)
-        self.assertEqual(rv.status_code, 200)
+        f = EventForm(data)
+        self.assertEqual(f.is_valid(), False)
+        self.assertNotIn('slug', f.errors)
 
     def test_display_of_event_without_start_date(self):
         """A bug prevented events without start date to throw a 404.
