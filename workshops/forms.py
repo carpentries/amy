@@ -2,7 +2,9 @@ import re
 
 from django import forms
 from django.core.validators import RegexValidator
-from django.forms import HiddenInput, CheckboxSelectMultiple, TextInput
+from django.forms import (
+    HiddenInput, CheckboxSelectMultiple, TextInput, modelformset_factory,
+)
 
 from captcha.fields import ReCaptchaField
 from crispy_forms.helper import FormHelper
@@ -612,3 +614,8 @@ class SimpleTodoForm(forms.ModelForm):
         # thanks to this, {{ form.media }} in the template will generate
         # a <link href=""> (for CSS files) or <script src=""> (for JS files)
         js = ('calendar_popup.js', )
+
+
+# `extra`: number of forms populated via `initial` parameter; it's hardcoded in
+# `views.todos_add`
+TodoFormSet = modelformset_factory(TodoItem, form=SimpleTodoForm, extra=10)

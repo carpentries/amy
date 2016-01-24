@@ -62,6 +62,7 @@ from workshops.forms import (
     ProfileUpdateRequestForm, PersonLookupForm, bootstrap_helper_wider_labels,
     SimpleTodoForm, bootstrap_helper_inline_formsets, BootstrapHelper,
     AdminLookupForm, ProfileUpdateRequestFormNoCaptcha, MembershipForm,
+    TodoFormSet,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
@@ -2182,10 +2183,8 @@ def todos_add(request, event_ident):
 
     initial = []
     base = dt.now()
-    if event.start and event.end:
-        extra = 9
-    else:
-        extra = 10
+
+    if not event.start or not event.end:
         initial = [
             {
                 'title': 'Set date with host',
@@ -2193,9 +2192,6 @@ def todos_add(request, event_ident):
                 'event': event,
             },
         ]
-
-    TodoFormSet = modelformset_factory(TodoItem, form=SimpleTodoForm,
-                                       extra=extra)
 
     formset = TodoFormSet(queryset=TodoItem.objects.none(), initial=initial + [
         {
