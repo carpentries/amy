@@ -2,6 +2,7 @@
 
 import datetime
 
+from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
 from django.core.validators import ValidationError
 from django.contrib.auth.models import Permission, Group
@@ -22,6 +23,14 @@ class TestPerson(TestBase):
     def setUp(self):
         super().setUp()
         self._setUpUsersAndLogin()
+
+    def test_login_with_email(self):
+        """Make sure we can login with user's email too, not only with the
+        username."""
+        self.client.logout()
+        email = 'sudo@example.org'  # admin's email
+        user = authenticate(username=email, password='admin')
+        self.assertEqual(user, self.admin)
 
     def test_display_person_correctly_with_all_fields(self):
         response = self.client.get(reverse('person_details', args=[str(self.hermione.id)]))
@@ -339,9 +348,9 @@ class TestPerson(TestBase):
                     person.clean_fields(exclude=['password'])
                 self.assertIn('username', cm.exception.message_dict)
 
-        valid_username = 'testing.testing.2'
+        valid_username = 'blanking-crush_andy'
         person = Person.objects.create(
-            personal='Testing', family='Testing', username=valid_username,
+            personal='Andy', family='Blanking-Crush', username=valid_username,
         )
         person.clean_fields(exclude=['password'])
 

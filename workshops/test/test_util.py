@@ -20,6 +20,8 @@ from ..util import (
     get_members,
     default_membership_cutoff,
     assignment_selection,
+    create_username,
+    InternalError,
 )
 
 from .base import TestBase
@@ -224,7 +226,7 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
             }
         ]
         verify_upload_person_task(data)
-        self.assertEqual('potter.h', data[0]['username'])
+        self.assertEqual('potter_harry', data[0]['username'])
 
     def test_username_from_nonexisting_person(self):
         """Make sure the username is not being changed."""
@@ -911,3 +913,39 @@ class TestAssignmentSelection(TestCase):
         assignment, is_admin = assignment_selection(request)
         self.assertEqual(assignment, 'noone')
         self.assertTrue(is_admin)
+
+
+class TestUsernameGeneration(TestCase):
+    def setUp(self):
+        Person.objects.create_user(username='potter_harry', personal='Harry',
+                                   family='Potter', email='hp@ministry.gov')
+
+    def test_conflicting_name(self):
+        """Ensure `create_username` works correctly when conflicting username
+        already exists."""
+        username = create_username(personal='Harry', family='Potter')
+        self.assertEqual(username, 'potter_harry_2')
+
+    def test_nonconflicting_name(self):
+        """Ensure `create_username` works correctly when there's no conflicts
+        in the database."""
+        username = create_username(personal='Hermione', family='Granger')
+        self.assertEqual(username, 'granger_hermione')
+
+    def test_nonlatin_characters(self):
+        """Ensure correct behavior for non-latin names."""
+        username = create_username(personal='Grzegorz',
+                                   family='Brzęczyszczykiewicz')
+        self.assertEqual(username, 'brzczyszczykiewicz_grzegorz')
+
+    def test_reached_number_of_tries(self):
+        """Ensure we don't DoS ourselves."""
+        tries = 1
+        with self.assertRaises(InternalError):
+            create_username(personal='Harry', family='Potter', tries=tries)
+
+    def test_hyphenated_name(self):
+        """Ensure people with hyphens in names have correct usernames
+        generated."""
+        username = create_username(personal='Andy', family='Blanking-Crush')
+        self.assertEqual(username, 'blanking-crush_andy')

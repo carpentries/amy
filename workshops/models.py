@@ -193,6 +193,14 @@ class PersonManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
+    def get_by_natural_key(self, username):
+        """Let's make this command so that it gets user by *either* username or
+        email.  Original behavior is to get user by USERNAME_FIELD."""
+        if '@' in username:
+            return self.get(email=username)
+        else:
+            return super().get_by_natural_key(username)
+
 
 @reversion.register
 class Person(AbstractBaseUser, PermissionsMixin):
@@ -225,7 +233,7 @@ class Person(AbstractBaseUser, PermissionsMixin):
     url         = models.CharField(max_length=STR_LONG, null=True, blank=True)
     username = models.CharField(
         max_length=STR_MED, unique=True,
-        validators=[RegexValidator(r'^[\w\.]+$', flags=re.A)],
+        validators=[RegexValidator(r'^[\w\-_]+$', flags=re.A)],
     )
     notes = models.TextField(default="", blank=True)
     affiliation = models.CharField(max_length=STR_LONG, default='', blank=True)
