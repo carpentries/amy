@@ -4,6 +4,7 @@ import cgi
 
 from django.test import TestCase
 from django.core.urlresolvers import reverse
+from django.db.utils import IntegrityError
 from ..models import (Event, Host, Tag, Person, Role, Task, Award, Badge)
 from ..forms import EventForm
 from .base import TestBase
@@ -336,17 +337,10 @@ class TestEventViews(TestBase):
 
         This is a regression test for
         https://github.com/swcarpentry/amy/issues/427"""
-        data = {
-            'host': self.test_host.id,
-            'tags': [self.test_tag.id],
-            'slug': 'testing-unique-slug',
-        }
-        response = self.client.post(reverse('event_add'), data)
-        assert response.status_code == 302
-
-        response = self.client.post(reverse('event_add'), data)
-        with self.assertRaises(AssertionError):
-            self._check_status_code_and_parse(response, 200)
+        Event.objects.create(host=self.test_host, slug='testing-unique-slug')
+        with self.assertRaises(IntegrityError):
+            Event.objects.create(host=self.test_host,
+                                 slug='testing-unique-slug')
 
     def test_unique_empty_slug(self):
         """Ensure events with no slugs are saved to the DB.
