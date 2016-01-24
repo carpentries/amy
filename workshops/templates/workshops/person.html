@@ -38,6 +38,8 @@
   <tr><td>github:</td><td id="github">{% if person.github %}<a href="https://github.com/{{ person.github }}" target="_blank">{{ person.github }}</a>{% else %}—{% endif %}</td></tr>
   <tr><td>twitter:</td><td id="twitter">{% if person.twitter %}<a href="https://twitter.com/{{ person.twitter }}" target="_blank">{{ person.twitter }}</a>{% else %}—{% endif %}</td></tr>
   <tr><td>url:</td><td id="url">{{ person.url|default:""|urlize_newtab|default:"—" }}</td></tr>
+  <tr><td>occupation:</td><td>{{ person.occupation|default:"—" }}</td></tr>
+  <tr><td>ORCID ID:</td><td>{{ person.orcid|default:"—" }}</td></tr>
 </table>
 
 {% if person.notes %}

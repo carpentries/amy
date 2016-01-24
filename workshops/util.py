@@ -17,6 +17,8 @@ from workshops.models import Event, Role, Person, Task, Award, Badge
 WORD_SPLIT = re.compile(r'''([\s<>"']+)''')
 SIMPLE_EMAIL = re.compile(r'^\S+@\S+\.\S+$')
 
+NUM_TRIES = 100
+
 
 class InternalError(Exception):
     pass
@@ -297,27 +299,25 @@ def create_uploaded_persons_tasks(data):
     return persons_created, tasks_created
 
 
-def create_username(personal, family):
+def create_username(personal, family, tries=NUM_TRIES):
     '''Generate unique username.'''
-    stem = normalize_name(family) + '.' + normalize_name(personal)
+    stem = normalize_name(family) + '_' + normalize_name(personal)
+
     counter = None
-    while True:
+    for i in range(tries):  # let's limit ourselves to only 100 tries
         try:
             if counter is None:
                 username = stem
                 counter = 1
             else:
                 counter += 1
-                username = '{0}.{1}'.format(stem, counter)
+                username = '{0}_{1}'.format(stem, counter)
             Person.objects.get(username=username)
         except ObjectDoesNotExist:
-            break
+            return username
 
-    if any([ord(c) >= 128 for c in username]):
-        raise InternalError('Normalized username still contains non-normal '
-                            'characters "{0}"'.format(username))
-
-    return username
+    raise InternalError('Cannot find a non-repeating username'
+                        '(tried {} usernames): {}.'.format(tries, username))
 
 
 def normalize_name(name):
@@ -325,6 +325,9 @@ def normalize_name(name):
     name = name.strip()
     for (accented, flat) in [(' ', '-')]:
         name = name.replace(accented, flat)
+
+    # remove all non-alphanumeric, non-hyphen chars
+    name = re.sub(r'[^\w\-]', '', name, flags=re.A)
 
     # We should use lower-cased username, because it directly corresponds to
     # some files Software Carpentry stores about some people - and, as we know,
@@ -664,3 +667,27 @@ def find_emails(text):
             emails.append('{}@{}'.format(local, domain))
 
     return emails
+
+
+def assignment_selection(request):
+    """Parse `assigned_to` query param depending on the logged-in user."""
+    user = request.user
+    is_admin = user.groups.filter(name='administrators').exists()
+
+    # it's always possible to assign something entirely else
+    # in the `?assigned_to` query param
+
+    if is_admin:
+        # One of the administrators.
+        # They should be presented with their events by default.
+        assigned_to = request.GET.get('assigned_to', 'me')
+
+    elif user.is_superuser:
+        # A superuser.  Should see all events by default
+        assigned_to = request.GET.get('assigned_to', 'all')
+
+    else:
+        # Normal user (for example subcommittee members).
+        assigned_to = 'all'
+
+    return assigned_to, is_admin

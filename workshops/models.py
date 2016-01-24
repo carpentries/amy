@@ -193,6 +193,14 @@ class PersonManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
+    def get_by_natural_key(self, username):
+        """Let's make this command so that it gets user by *either* username or
+        email.  Original behavior is to get user by USERNAME_FIELD."""
+        if '@' in username:
+            return self.get(email=username)
+        else:
+            return super().get_by_natural_key(username)
+
 
 @reversion.register
 class Person(AbstractBaseUser, PermissionsMixin):
@@ -225,7 +233,7 @@ class Person(AbstractBaseUser, PermissionsMixin):
     url         = models.CharField(max_length=STR_LONG, null=True, blank=True)
     username = models.CharField(
         max_length=STR_MED, unique=True,
-        validators=[RegexValidator(r'^[\w\.]+$', flags=re.A)],
+        validators=[RegexValidator(r'^[\w\-_]+$', flags=re.A)],
     )
     notes = models.TextField(default="", blank=True)
     affiliation = models.CharField(max_length=STR_LONG, default='', blank=True)
@@ -244,6 +252,20 @@ class Person(AbstractBaseUser, PermissionsMixin):
 
     # new people will be inactive by default
     is_active = models.BooleanField(default=False)
+
+    # Recorded in ProfileUpdateRequest. Occupation will store the either
+    # 'undisclosed' or full text of occupation selected by user.  In case of
+    # selecting 'other' the value from `occupation_other` field will be used.
+    occupation = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Current occupation/career stage',
+        blank=True, default='',
+    )
+    orcid = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='ORCID ID',
+        blank=True, default='',
+    )
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = [
@@ -622,6 +644,23 @@ class Event(AssignmentMixin, models.Model):
         default=False,
         help_text="Indicates that no more work is needed upon this event.",
     )
+
+    # links to the surveys
+    learners_pre = models.URLField(
+        blank=True, default="",
+        verbose_name="Pre-workshop assessment survey for learners")
+    learners_post = models.URLField(
+        blank=True, default="",
+        verbose_name="Post-workshop assessment survey for learners")
+    instructors_pre = models.URLField(
+        blank=True, default="",
+        verbose_name="Pre-workshop assessment survey for instructors")
+    instructors_post = models.URLField(
+        blank=True, default="",
+        verbose_name="Pre-workshop assessment survey for instructors")
+    learners_longterm = models.URLField(
+        blank=True, default="",
+        verbose_name="Long-term assessment survey for learners")
 
     class Meta:
         ordering = ('-start', )

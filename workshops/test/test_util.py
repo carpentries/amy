@@ -3,8 +3,9 @@ import cgi
 import datetime
 from io import StringIO
 
+from django.contrib.auth.models import Group
 from django.contrib.sessions.serializers import JSONSerializer
-from django.test import TestCase
+from django.test import TestCase, RequestFactory
 from django.core.urlresolvers import reverse
 
 from ..models import Host, Event, Role, Person, Task, Badge, Award
@@ -18,6 +19,9 @@ from ..util import (
     validate_tags_from_event_website,
     get_members,
     default_membership_cutoff,
+    assignment_selection,
+    create_username,
+    InternalError,
 )
 
 from .base import TestBase
@@ -222,7 +226,7 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
             }
         ]
         verify_upload_person_task(data)
-        self.assertEqual('potter.h', data[0]['username'])
+        self.assertEqual('potter_harry', data[0]['username'])
 
     def test_username_from_nonexisting_person(self):
         """Make sure the username is not being changed."""
@@ -846,3 +850,102 @@ class TestMembership(TestBase):
         self.assertNotIn(self.harry, members)  # only teaching in the future
         self.assertIn(self.spiderman, members)  # explicit member
         self.assertEqual(len(members), 1)
+
+
+class TestAssignmentSelection(TestCase):
+    def setUp(self):
+        """Set up RequestFactory and some users with different levels of
+        privileges."""
+        self.factory = RequestFactory()
+        self.superuser = Person.objects.create_superuser(
+            username='superuser', personal='admin', family='admin',
+            email='superuser@superuser', password='superuser')
+        self.admin = Person.objects.create_user(
+            username='admin', personal='admin', family='admin',
+            email='admin@admin', password='admin')
+        self.admin.groups = [Group.objects.get(name='administrators')]
+        self.normal_user = Person.objects.create_user(
+            username='user', personal='typical', family='user',
+            email='typical@user', password='user')
+
+    def test_no_selection_superuser(self):
+        """User is superuser and they selected nothing. The result should be
+        default value for this kind of a user."""
+        request = self.factory.get('/')
+        request.user = self.superuser
+        assignment, is_admin = assignment_selection(request)
+        self.assertEqual(assignment, 'all')
+        self.assertFalse(is_admin)
+
+    def test_no_selection_admin(self):
+        """User is admin and they selected nothing. The result should be
+        default value for this kind of a user."""
+        request = self.factory.get('/')
+        request.user = self.admin
+        assignment, is_admin = assignment_selection(request)
+        self.assertEqual(assignment, 'me')
+        self.assertTrue(is_admin)
+
+    def test_no_selection_normal_user(self):
+        """User is normal user and they selected nothing. The result should be
+        default value for this kind of a user."""
+        request = self.factory.get('/')
+        request.user = self.normal_user
+        assignment, is_admin = assignment_selection(request)
+        self.assertEqual(assignment, 'all')
+        self.assertFalse(is_admin)
+
+    def test_selection_normal_user(self):
+        """User is normal user and they selected self-assigned. This is invalid
+        selection (normal user cannot select anything), so the default option
+        should be returned."""
+        request = self.factory.get('/', {'assigned_to': 'me'})
+        request.user = self.normal_user
+        assignment, is_admin = assignment_selection(request)
+        self.assertEqual(assignment, 'all')
+        self.assertFalse(is_admin)
+
+    def test_selection_privileged_user(self):
+        """User is admin and they selected "not assigned to anyone". Actually
+        for privileged user any selection should make through."""
+        request = self.factory.get('/', {'assigned_to': 'noone'})
+        request.user = self.admin
+        assignment, is_admin = assignment_selection(request)
+        self.assertEqual(assignment, 'noone')
+        self.assertTrue(is_admin)
+
+
+class TestUsernameGeneration(TestCase):
+    def setUp(self):
+        Person.objects.create_user(username='potter_harry', personal='Harry',
+                                   family='Potter', email='hp@ministry.gov')
+
+    def test_conflicting_name(self):
+        """Ensure `create_username` works correctly when conflicting username
+        already exists."""
+        username = create_username(personal='Harry', family='Potter')
+        self.assertEqual(username, 'potter_harry_2')
+
+    def test_nonconflicting_name(self):
+        """Ensure `create_username` works correctly when there's no conflicts
+        in the database."""
+        username = create_username(personal='Hermione', family='Granger')
+        self.assertEqual(username, 'granger_hermione')
+
+    def test_nonlatin_characters(self):
+        """Ensure correct behavior for non-latin names."""
+        username = create_username(personal='Grzegorz',
+                                   family='Brzęczyszczykiewicz')
+        self.assertEqual(username, 'brzczyszczykiewicz_grzegorz')
+
+    def test_reached_number_of_tries(self):
+        """Ensure we don't DoS ourselves."""
+        tries = 1
+        with self.assertRaises(InternalError):
+            create_username(personal='Harry', family='Potter', tries=tries)
+
+    def test_hyphenated_name(self):
+        """Ensure people with hyphens in names have correct usernames
+        generated."""
+        username = create_username(personal='Andy', family='Blanking-Crush')
+        self.assertEqual(username, 'blanking-crush_andy')

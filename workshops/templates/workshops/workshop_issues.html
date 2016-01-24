@@ -1,68 +1,85 @@
 {% extends "workshops/_page.html" %}
 
 {% block content %}
-{% if events %}
-<p><span class="glyphicon glyphicon-envelope"></span> = mail instructors and host about problem</p>
-<p><span class="glyphicon glyphicon-remove"></span> = no email addresses available</p>
-<table class="table table-striped">
-  <tr>
-    <th>Event</th>
-    <th>Attendance <a href="#" data-toggle="tooltip" title="Number of attendees is missing">[?]</a></th>
-    <th>Location <a href="#" data-toggle="tooltip" title="Country, venue, address or lat/long are missing">[?]</a></th>
-    <th>Dates <a href="#" data-toggle="tooltip" title="Start date is in future of end date">[?]</a></th>
-  </tr>
-  {% for event in events %}
-  <tr>
-    <td>
-      <a href="{% url 'event_details' event.get_ident %}">{{ event }}</a>
-    </td>
-    <td>
-      {% if event.missing_attendance_ %}
-        {% if event.mailto %}
-          <a href="{% include 'workshops/attendance_email_href.html' with event=event %}">
-          <span class="glyphicon glyphicon-envelope"></span>
-          </a>
-        {% else %}
-          <span class="glyphicon glyphicon-remove"></span>
-        {% endif %}
-      {% endif %}
-    </td>
-    <td>
-      {% if event.missing_location_ %}
-        {% if event.mailto %}
-          <a href="mailto:{{event.mailto}}?subject={% filter urlencode %}Missing location for workshop {{event.get_ident}}{% endfilter %}&body={% filter urlencode %}Hi,
+
+{% if is_admin or user.is_superuser %}
+<div class="row">
+  <div class="col-xs-12">
+    <div class="btn-group" role="group" aria-label="Events assignment">
+      <a href="?assigned_to=me" class="btn btn-default{% if assigned_to == 'me' %} active{% endif %}">Mine</a>
+      <a href="?assigned_to=noone" class="btn btn-default{% if assigned_to == 'noone' %} active{% endif %}">Unassigned</a>
+      <a href="?assigned_to=all" class="btn btn-default{% if assigned_to == 'all' %} active{% endif %}">All</a>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="row">
+  <div class="col-xs-12">
+    {% if events %}
+    <p><span class="glyphicon glyphicon-envelope"></span> = mail instructors and host about problem</p>
+    <p><span class="glyphicon glyphicon-remove"></span> = no email addresses available</p>
+    <table class="table table-striped">
+      <tr>
+        <th>Event</th>
+        <th>Attendance <a href="#" data-toggle="tooltip" title="Number of attendees is missing">[?]</a></th>
+        <th>Location <a href="#" data-toggle="tooltip" title="Country, venue, address or lat/long are missing">[?]</a></th>
+        <th>Dates <a href="#" data-toggle="tooltip" title="Start date is in future of end date">[?]</a></th>
+      </tr>
+      {% for event in events %}
+      <tr>
+        <td>
+          <a href="{% url 'event_details' event.get_ident %}">{{ event }}</a>
+        </td>
+        <td>
+          {% if event.missing_attendance_ %}
+            {% if event.mailto %}
+              <a href="{% include 'workshops/attendance_email_href.html' with event=event %}">
+              <span class="glyphicon glyphicon-envelope"></span>
+              </a>
+            {% else %}
+              <span class="glyphicon glyphicon-remove"></span>
+            {% endif %}
+          {% endif %}
+        </td>
+        <td>
+          {% if event.missing_location_ %}
+            {% if event.mailto %}
+              <a href="mailto:{{event.mailto}}?subject={% filter urlencode %}Missing location for workshop {{event.get_ident}}{% endfilter %}&body={% filter urlencode %}Hi,
 
 Can you please send us the location where the {{ event.get_ident }} workshop took place? We need a country, address, venue, and latitude/longitude.
 
 Thanks for your help.{% endfilter %}">
-          <span class="glyphicon glyphicon-envelope"></span>
-          </a>
-        {% else %}
-          <span class="glyphicon glyphicon-remove"></span>
-        {% endif %}
-      {% endif %}
-    </td>
-    <td>
-      {% if event.bad_dates_ %}
-        {% if event.mailto %}
-          <a href="mailto:{{event.mailto}}?subject={% filter urlencode %}Bad dates for workshop {{ event.get_ident }}{% endfilter %}&body={% filter urlencode %}Hi,
+              <span class="glyphicon glyphicon-envelope"></span>
+              </a>
+            {% else %}
+              <span class="glyphicon glyphicon-remove"></span>
+            {% endif %}
+          {% endif %}
+        </td>
+        <td>
+          {% if event.bad_dates_ %}
+            {% if event.mailto %}
+              <a href="mailto:{{event.mailto}}?subject={% filter urlencode %}Bad dates for workshop {{ event.get_ident }}{% endfilter %}&body={% filter urlencode %}Hi,
 
 Can you please confirm the start and end dates for the workshop {{ event.get_ident }}?
 
 Thanks for your help.{% endfilter %}">
-          <span class="glyphicon glyphicon-envelope"></span>
-          </a>
-        {% else %}
-          <span class="glyphicon glyphicon-remove"></span>
-        {% endif %}
-      {% endif %}
-    </td>
-  </tr>
-  {% endfor %}
-</table>
-{% else %}
-<p>None</p>
-{% endif %}
+              <span class="glyphicon glyphicon-envelope"></span>
+              </a>
+            {% else %}
+              <span class="glyphicon glyphicon-remove"></span>
+            {% endif %}
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}
+    <p>None</p>
+    {% endif %}
+  </div>
+</div>
 {% endblock %}
 
 {% block extrajs %}
