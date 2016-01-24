@@ -326,7 +326,7 @@ def normalize_name(name):
     for (accented, flat) in [(' ', '-')]:
         name = name.replace(accented, flat)
 
-    # remove all non-ASCII, non-hyphen chars
+    # remove all non-alphanumeric, non-hyphen chars
     name = re.sub(r'[^\w\-]', '', name, flags=re.A)
 
     # We should use lower-cased username, because it directly corresponds to
