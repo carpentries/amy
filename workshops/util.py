@@ -17,6 +17,8 @@ from workshops.models import Event, Role, Person, Task, Award, Badge
 WORD_SPLIT = re.compile(r'''([\s<>"']+)''')
 SIMPLE_EMAIL = re.compile(r'^\S+@\S+\.\S+$')
 
+NUM_TRIES = 100
+
 
 class InternalError(Exception):
     pass
@@ -297,7 +299,7 @@ def create_uploaded_persons_tasks(data):
     return persons_created, tasks_created
 
 
-def create_username(personal, family, tries=100):
+def create_username(personal, family, tries=NUM_TRIES):
     '''Generate unique username.'''
     stem = normalize_name(family) + '_' + normalize_name(personal)
 
