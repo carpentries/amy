@@ -68,6 +68,20 @@ class TestFakeDatabaseCommand(TestCase):
         self.assertEqual(set(tags),
                          set(Tag.objects.values_list('name', flat=True)))
 
+    def test_new_badges_added(self):
+        """Make sure we add badges that are hard-coded. They'll end up in
+        fixtures in future (see #626)."""
+        badges_pre = [
+            'swc-instructor', 'dc-instructor', 'maintainer', 'trainer',
+        ]
+        badges_post = ['creator', 'member', 'organizer']
+        self.assertEqual(set(badges_pre),
+                         set(Badge.objects.values_list('name', flat=True)))
+
+        self.cmd.fake_badges(self.faker)
+        self.assertEqual(set(badges_pre + badges_post),
+                         set(Badge.objects.values_list('name', flat=True)))
+
     def test_database_populated(self):
         """Make sure the database is getting populated."""
         self.assertFalse(Person.objects.exists())
