@@ -1,7 +1,7 @@
 import django_filters
 from rest_framework import filters
 
-from workshops.models import Event, Task, Tag
+from workshops.models import Event, Task, Tag, Person, Badge
 
 
 def filter_tag_by_name(queryset, values):
@@ -23,12 +23,12 @@ class EventFilter(filters.FilterSet):
 
     class Meta:
         model = Event
-        fields = [
+        fields = (
             'completed', 'tag',
             'start', 'start_before', 'start_after',
             'end', 'end_before', 'end_after',
-        ]
-        order_by = ['-slug', 'slug', 'start', '-start', 'end', '-end']
+        )
+        order_by = ('-slug', 'slug', 'start', '-start', 'end', '-end')
 
 
 class TaskFilter(filters.FilterSet):
@@ -36,6 +36,42 @@ class TaskFilter(filters.FilterSet):
 
     class Meta:
         model = Task
-        fields = [
-            'role'
-        ]
+        fields = (
+            'role',
+        )
+
+
+def filter_instructors(queryset, value):
+    instructor_badges = Badge.objects.instructor_badges()
+    if value is True:
+        return queryset.filter(badges__in=instructor_badges)
+    elif value is False:
+        return queryset.exclude(badges__in=instructor_badges)
+    else:
+        return queryset
+
+
+class PersonFilter(filters.FilterSet):
+    is_instructor = django_filters.BooleanFilter(action=filter_instructors)
+
+    class Meta:
+        model = Person
+        fields = (
+            'badges', 'username', 'personal', 'middle', 'family', 'email',
+            'may_contact',
+        )
+        order_by = (
+            'lastname', '-lastname', 'firstname', '-firstname', 'email',
+            '-email',
+        )
+
+    def get_order_by(self, order_value):
+        if order_value == 'firstname':
+            return ['personal', 'middle', 'family']
+        elif order_value == '-firstname':
+            return ['-personal', '-middle', '-family']
+        elif order_value == 'lastname':
+            return ['family', 'middle', 'personal']
+        elif order_value == '-lastname':
+            return ['-family', '-middle', '-personal']
+        return super().get_order_by(order_value)

@@ -10,6 +10,10 @@ router.register('reports', views.ReportsViewSet, base_name='reports')
 router.register('persons', views.PersonViewSet)
 awards_router = routers.NestedSimpleRouter(router, 'persons', lookup='person')
 awards_router.register('awards', views.AwardViewSet, base_name='person-awards')
+person_task_router = routers.NestedSimpleRouter(router, 'persons',
+                                                lookup='person')
+person_task_router.register('tasks', views.PersonTaskViewSet,
+                            base_name='person-tasks')
 router.register('events', views.EventViewSet)
 tasks_router = routers.NestedSimpleRouter(router, 'events', lookup='event')
 tasks_router.register('tasks', views.TaskViewSet, base_name='event-tasks')
@@ -39,6 +43,7 @@ urlpatterns = [
 
     url('^', include(router.urls)),
     url('^', include(awards_router.urls)),
+    url('^', include(person_task_router.urls)),
     url('^', include(tasks_router.urls)),
     url('^', include(todos_router.urls)),
 ]

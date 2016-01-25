@@ -155,17 +155,24 @@ class PersonSerializer(serializers.ModelSerializer):
         lookup_field='pk',
         lookup_url_kwarg='person_pk',
     )
+    tasks = serializers.HyperlinkedIdentityField(
+        view_name='api:person-tasks-list',
+        lookup_field='pk',
+        lookup_url_kwarg='person_pk',
+    )
 
     class Meta:
         model = Person
         fields = (
             'personal', 'middle', 'family', 'email', 'gender', 'may_contact',
             'airport', 'github', 'twitter', 'url', 'username', 'notes',
-            'affiliation', 'badges', 'lessons', 'domains', 'awards',
+            'affiliation', 'badges', 'lessons', 'domains', 'awards', 'tasks',
         )
 
 
 class TaskSerializer(serializers.ModelSerializer):
+    event = serializers.HyperlinkedRelatedField(
+        read_only=True, view_name='api:event-detail', lookup_field='slug')
     person = serializers.HyperlinkedRelatedField(
         read_only=True, view_name='api:person-detail')
     role = serializers.SlugRelatedField(
@@ -173,7 +180,7 @@ class TaskSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Task
-        fields = ('person', 'role')
+        fields = ('event', 'person', 'role')
 
 
 class TodoSerializer(serializers.ModelSerializer):

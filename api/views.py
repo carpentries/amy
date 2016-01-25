@@ -48,7 +48,7 @@ from .serializers import (
     PersonSerializer,
 )
 
-from .filters import EventFilter, TaskFilter
+from .filters import EventFilter, TaskFilter, PersonFilter
 
 
 class QueryMetadata(SimpleMetadata):
@@ -422,14 +422,6 @@ class ReportsViewSet(ViewSet):
             }
         })
 
-    # TODO: implement once #649 is merged
-    # @list_route(methods=['GET'])
-    # def instructor_activity_over_time(self, request, format=None):
-    #     """Who our instructors are, and they did, and with whom."""
-    #     # this is API endpoint for our `instructors_activity` management
-    #     # command
-    #     pass
-
     def list(self, request, format=None):
         """Display list of links to the reports."""
         return Response({
@@ -527,9 +519,12 @@ class TodoViewSet(viewsets.ReadOnlyModelViewSet):
 class PersonViewSet(viewsets.ReadOnlyModelViewSet):
     """List many people or retrieve only one person."""
     permission_classes = (IsAuthenticated, )
-    queryset = Person.objects.all()
+    queryset = Person.objects.all().select_related('airport') \
+                     .prefetch_related('badges', 'domains', 'lessons')
     serializer_class = PersonSerializer
     pagination_class = StandardResultsSetPagination
+    filter_backends = (DjangoFilterBackend, )
+    filter_class = PersonFilter
 
 
 class AwardViewSet(viewsets.ReadOnlyModelViewSet):
@@ -540,6 +535,27 @@ class AwardViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         qs = Award.objects.all()
+        if self._person_pk:
+            qs = qs.filter(person=self._person_pk)
+        return qs
+
+    def list(self, request, person_pk=None):
+        self._person_pk = person_pk
+        return super().list(request)
+
+    def retrieve(self, request, pk=None, person_pk=None):
+        self._person_pk = person_pk
+        return super().retrieve(request, pk=pk)
+
+
+class PersonTaskViewSet(viewsets.ReadOnlyModelViewSet):
+    """List tasks done by specific person."""
+    permission_classes = (IsAuthenticated, )
+    serializer_class = TaskSerializer
+    _person_pk = None
+
+    def get_queryset(self):
+        qs = Task.objects.all()
         if self._person_pk:
             qs = qs.filter(person=self._person_pk)
         return qs
