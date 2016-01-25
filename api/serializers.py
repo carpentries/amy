@@ -103,7 +103,9 @@ class InstructorsOverTimeSerializer(serializers.Serializer):
 
 
 class InstructorNumTaughtSerializer(serializers.Serializer):
-    person = PersonNameEmailUsernameSerializer(source='*')
+    person = serializers.HyperlinkedRelatedField(
+        read_only=True, view_name='api:person-detail', lookup_field='pk',
+        source='*')
     num_taught = serializers.IntegerField()
 
 

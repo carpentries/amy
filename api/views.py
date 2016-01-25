@@ -305,9 +305,8 @@ class ReportsViewSet(ViewSet):
                 )
             )
         ).filter(may_contact=True).order_by('-num_taught')
-        # for now it uses a very simple person serializer
-        # TODO: use hyperlinks once #649 is merged
-        serializer = InstructorNumTaughtSerializer(persons, many=True)
+        serializer = InstructorNumTaughtSerializer(
+            persons, many=True, context=dict(request=request))
         return Response(serializer.data)
 
     def _default_start_end_dates(self):
@@ -375,8 +374,11 @@ class ReportsViewSet(ViewSet):
         dc_total_learners = dc_workshops.aggregate(count=Sum('attendance'))
         dc_total_learners = dc_total_learners['count']
 
-        # workshops missing any of this data
-        # TODO: use hyperlinks once #649 is merged
+        # Workshops missing any of this data.
+        # There's no point in using hyperlinks here, because it would:
+        # a) require using reverse() unless we somehow managed to switch to
+        #    serializer for this view
+        # b) make JS part even harder (what is available right now just works)
         missing_attendance = events_qs.filter(attendance=None) \
                                       .values_list('slug', flat=True)
         missing_instructors = events_qs.annotate(
