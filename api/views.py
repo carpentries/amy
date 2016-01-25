@@ -90,6 +90,8 @@ class ApiRoot(APIView):
                                         request=request, format=format),
             'user-todos': reverse('api:user-todos',
                                   request=request, format=format),
+            'reports-list': reverse('api:reports-list',
+                                    request=request, format=format),
 
             # "new" API list-type endpoints below
             'airport-list': reverse('api:airport-list', request=request,
@@ -425,6 +427,26 @@ class ReportsViewSet(ViewSet):
     #     # this is API endpoint for our `instructors_activity` management
     #     # command
     #     pass
+
+    def list(self, request, format=None):
+        """Display list of links to the reports."""
+        return Response({
+            'reports-all-activity-over-time': reverse(
+                'api:reports-all-activity-over-time', request=request,
+                format=format),
+            'reports-instructor-num-taught': reverse(
+                'api:reports-instructor-num-taught', request=request,
+                format=format),
+            'reports-instructors-over-time': reverse(
+                'api:reports-instructors-over-time', request=request,
+                format=format),
+            'reports-learners-over-time': reverse(
+                'api:reports-learners-over-time', request=request,
+                format=format),
+            'reports-workshops-over-time': reverse(
+                'api:reports-workshops-over-time', request=request,
+                format=format),
+        })
 
 
 # ----------------------
