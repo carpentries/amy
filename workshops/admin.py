@@ -8,6 +8,7 @@ from .models import (
     Role,
     Lesson,
     KnowledgeDomain,
+    Badge,
 )
 
 admin.site.register(Tag)
@@ -17,3 +18,4 @@ admin.site.register(DataAnalysisLevel)
 admin.site.register(Role)
 admin.site.register(Lesson)
 admin.site.register(KnowledgeDomain)
+admin.site.register(Badge)
