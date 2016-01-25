@@ -4,7 +4,9 @@ import cgi
 
 from django.test import TestCase
 from django.core.urlresolvers import reverse
+from django.db.utils import IntegrityError
 from ..models import (Event, Host, Tag, Person, Role, Task, Award, Badge)
+from ..forms import EventForm
 from .base import TestBase
 
 
@@ -104,41 +106,6 @@ class TestEvent(TestBase):
         )
         self.assertNotIn(event_considered_published,
                          Event.objects.unpublished_events())
-
-    def test_edit_event(self):
-        """ Test that an event can be edited, and that people can be
-            added from the event edit page.
-        """
-
-        event = Event.objects.all()[0]
-        tag = Tag.objects.get(name='Test Tag')
-        role = Role.objects.get(name='Test Role')
-        url, values = self._get_initial_form_index(0, 'event_edit', event.id)
-        assert len(values) > 0
-        values['event-end'] = ''
-        values['event-tags'] = tag.id
-        assert "event-reg_key" in values, \
-            'No reg key in initial form'
-        new_reg_key = 'test_reg_key'
-        assert event.reg_key != new_reg_key, \
-            'Would be unable to tell if reg_key had changed'
-        values['event-reg_key'] = new_reg_key
-        response = self.client.post(url, values, follow=True)
-        content = response.content.decode('utf-8')
-        assert new_reg_key in content
-
-        url, values = self._get_initial_form_index(1, 'event_edit', event.id)
-        assert "task-person_0" in values, \
-            'No person select in initial form'
-
-        person = Person.objects.all()[0]
-        values['task-person_1'] = person.id
-        values['task-role'] = role.id
-
-        response = self.client.post(url, values, follow=True)
-        content = response.content.decode('utf-8')
-        assert "/workshops/person/1" in content
-        assert "Test Role" in content
 
     def test_delete_event(self):
         """Make sure deleted event and its tasks are no longer accessible."""
@@ -370,17 +337,10 @@ class TestEventViews(TestBase):
 
         This is a regression test for
         https://github.com/swcarpentry/amy/issues/427"""
-        data = {
-            'host': self.test_host.id,
-            'tags': [self.test_tag.id],
-            'slug': 'testing-unique-slug',
-        }
-        response = self.client.post(reverse('event_add'), data)
-        assert response.status_code == 302
-
-        response = self.client.post(reverse('event_add'), data)
-        with self.assertRaises(AssertionError):
-            self._check_status_code_and_parse(response, 200)
+        Event.objects.create(host=self.test_host, slug='testing-unique-slug')
+        with self.assertRaises(IntegrityError):
+            Event.objects.create(host=self.test_host,
+                                 slug='testing-unique-slug')
 
     def test_unique_empty_slug(self):
         """Ensure events with no slugs are saved to the DB.
@@ -441,61 +401,36 @@ class TestEventViews(TestBase):
 
         This is a regression test for
         https://github.com/swcarpentry/amy/issues/435."""
-        data = {
-            'host': self.test_host.id,
-            'tags': [self.test_tag.id],
-            'slug': 'test-event',
-            'admin_fee': -1200,
-        }
-        S = "Ensure this value is greater than or equal to 0"
-        response = self.client.post(reverse('event_add'), data)
-        assert response.status_code == 200
-        content = response.content.decode('utf-8')
-        assert content.count(S) == 1
+        error_str = "Ensure this value is greater than or equal to 0."
 
         data = {
             'host': self.test_host.id,
             'tags': [self.test_tag.id],
             'slug': 'test-event',
             'admin_fee': -1200,
-            'attendance': -36,
         }
-        response = self.client.post(reverse('event_add'), data)
-        assert response.status_code == 200
-        content = response.content.decode('utf-8')
-        assert content.count(S) == 2
 
-        data = {
-            'host': self.test_host.id,
-            'tags': [self.test_tag.id],
-            'slug': 'test-event',
-            'attendance': -36,
-        }
-        S = "Ensure this value is greater than or equal to 0"
-        response = self.client.post(reverse('event_add'), data)
-        assert response.status_code == 200
-        content = response.content.decode('utf-8')
-        assert content.count(S) == 1
+        f = EventForm(data)
+        self.assertIn('admin_fee', f.errors)
+        self.assertIn(error_str, f.errors['admin_fee'])
 
-        data = {
-            'host': self.test_host.id,
-            'tags': [self.test_tag.id],
-            'slug': 'test-event',
-            'admin_fee': 0,
-            'attendance': 0,
-        }
-        response = self.client.post(reverse('event_add'), data)
-        assert response.status_code == 302
+        del data['admin_fee']
+        data['attendance'] = -36
+        f = EventForm(data)
+        self.assertIn('attendance', f.errors)
+        self.assertIn(error_str, f.errors['attendance'])
 
-        data = {
-            'host': self.test_host.id,
-            'tags': [self.test_tag.id],
-            'slug': 'test-event2',
-            'admin_fee': 1200,
-            'attendance': 36,
-        }
-        response = self.client.post(reverse('event_add'), data)
-        assert response.status_code == 302
+        data['admin_fee'] = 0
+        data['attendance'] = 0
+        f = EventForm(data)
+        self.assertNotIn('admin_fee', f.errors)
+        self.assertNotIn('attendance', f.errors)
+
+        data['slug'] = 'test-event2'
+        data['admin_fee'] = 1200
+        data['attendance'] = 36
+        f = EventForm(data)
+        self.assertTrue(f.is_valid())
 
     def test_number_of_attendees_increasing(self):
         """Ensure event.attendance gets bigger after adding new learners."""
@@ -503,16 +438,12 @@ class TestEventViews(TestBase):
         event.attendance = 0  # testing for numeric case
         event.save()
 
-        url, values = self._get_initial_form_index(1, 'event_edit', event.pk)
-        values['task-role'] = self.learner.pk
-        values['task-event'] = event.pk
-        values['task-person_0'] = str(self.spiderman)
-        values['task-person_1'] = self.spiderman.pk
-
-        rv = self.client.post(reverse('event_edit', args=[event.pk]), values,
-                              follow=True)
-        self._check_status_code_and_parse(rv, 200)
-
+        data = {
+            'task-role': self.learner.pk,
+            'task-event': event.pk,
+            'task-person_1': self.spiderman.pk,
+        }
+        self.client.post(reverse('event_edit', args=[event.pk]), data)
         event.refresh_from_db()
         assert event.attendance == 1
 
@@ -528,13 +459,15 @@ class TestEventViews(TestBase):
         for slug in ['a/b', 'a b', 'a!b', 'a.b', 'a\\b', 'a?b']:
             with self.subTest(slug=slug):
                 data['slug'] = slug
-                rv = self.client.post(reverse('event_add'), data, follow=False)
-                self.assertEqual(rv.status_code, 200)
+                f = EventForm(data)
+                self.assertEqual(f.is_valid(), False)
+                self.assertIn('slug', f.errors)
 
         # allow dashes in the slugs
         data['slug'] = 'a-b'
-        rv = self.client.post(reverse('event_add'), data, follow=False)
-        self.assertEqual(rv.status_code, 200)
+        f = EventForm(data)
+        self.assertEqual(f.is_valid(), False)
+        self.assertNotIn('slug', f.errors)
 
     def test_display_of_event_without_start_date(self):
         """A bug prevented events without start date to throw a 404.
