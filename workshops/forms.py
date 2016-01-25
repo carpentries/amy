@@ -291,7 +291,7 @@ class EventForm(forms.ModelForm):
             Div, css_class='panel panel-default')
         # add <div class='panel-heading'>Venue details</div> inside "div.panel"
         self.helper.layout[id_learners_pre].insert(
-            0, Div(HTML('Survey links'), css_class='panel-heading'))
+            0, Div(HTML('Survey results'), css_class='panel-heading'))
 
     def clean_slug(self):
         # Ensure slug is not an integer value for Event.get_by_ident

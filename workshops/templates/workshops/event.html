@@ -91,7 +91,7 @@
   <tr class="{% if not event.latitude or not event.longitude %}bg-danger{% endif %}"><td>Lat/long:</td><td>{{ event.latitude|default:"—" }} / {{ event.longitude|default:"—" }} {% if event.latitude and event.longitude %}<a href="{% url 'instructors' %}?latitude={{ event.latitude }}&amp;longitude={{ event.longitude }}&amp;submit=Submit" class="btn btn-primary btn-xs pull-right" id="find_closest_instructors">find closest instructors</a>{% else %}<a class="btn btn-danger btn-xs pull-right" id="error_closest_instructors" href="#" data-toggle="popover" data-trigger="focus" title="Search error" data-content="Cannot search for closest instructors without latitude and longitude of event's location.">Error</a>{% endif %}</td></tr>
 
   <tr>
-    <td rowspan="5">survey links:</td>
+    <td rowspan="5">survey results:</td>
     <td>pre workshop for learners:</td>
     <td>{{ event.learners_pre|default:"—"|urlize }}</td>
   </tr>
