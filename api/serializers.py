@@ -1,6 +1,16 @@
 from rest_framework import serializers
 
-from workshops.models import Badge, Airport, Person, Event, TodoItem, Tag
+from workshops.models import (
+    Badge,
+    Airport,
+    Person,
+    Event,
+    TodoItem,
+    Tag,
+    Host,
+    Task,
+    Award,
+)
 
 
 class PersonUsernameSerializer(serializers.ModelSerializer):
@@ -43,7 +53,7 @@ class TagSerializer(serializers.ModelSerializer):
         fields = ('name', )
 
 
-class EventSerializer(serializers.ModelSerializer):
+class ExportEventSerializer(serializers.ModelSerializer):
     humandate = serializers.CharField(source='human_readable_date')
     country = serializers.CharField()
     start = serializers.DateField(format=None)
@@ -61,7 +71,7 @@ class EventSerializer(serializers.ModelSerializer):
         )
 
 
-class TodoSerializer(serializers.ModelSerializer):
+class TimelineTodoSerializer(serializers.ModelSerializer):
     content = serializers.SerializerMethodField()
     start = serializers.DateField(format=None, source='due')
 
@@ -79,4 +89,111 @@ class TodoSerializer(serializers.ModelSerializer):
             url=obj.event.get_absolute_url(),
             event=obj.event.get_ident(),
             todo=obj.title,
+        )
+
+# ----------------------
+# "new" API starts below
+# ----------------------
+
+
+class HostSerializer(serializers.ModelSerializer):
+    country = serializers.CharField()
+
+    class Meta:
+        model = Host
+        fields = ('domain', 'fullname', 'country', 'notes')
+
+
+class AirportSerializer(serializers.ModelSerializer):
+    country = serializers.CharField()
+
+    class Meta:
+        model = Airport
+        fields = ('iata', 'fullname', 'country', 'latitude', 'longitude')
+
+
+class AwardSerializer(serializers.ModelSerializer):
+    badge = serializers.SlugRelatedField(
+        many=False, read_only=True, slug_field='name')
+    event = serializers.HyperlinkedRelatedField(
+        read_only=True, view_name='api:event-detail', lookup_field='slug')
+
+    class Meta:
+        model = Award
+        fields = ('badge', 'awarded', 'event')
+
+
+class PersonSerializer(serializers.ModelSerializer):
+    airport = serializers.HyperlinkedRelatedField(
+        read_only=True, view_name='api:airport-detail', lookup_field='iata')
+    lessons = serializers.SlugRelatedField(
+        many=True, read_only=True, slug_field='name')
+    domains = serializers.SlugRelatedField(
+        many=True, read_only=True, slug_field='name')
+    badges = serializers.SlugRelatedField(
+        many=True, read_only=True, slug_field='name')
+    awards = serializers.HyperlinkedIdentityField(
+        view_name='api:person-awards-list',
+        lookup_field='pk',
+        lookup_url_kwarg='person_pk',
+    )
+
+    class Meta:
+        model = Person
+        fields = (
+            'personal', 'middle', 'family', 'email', 'gender', 'may_contact',
+            'airport', 'github', 'twitter', 'url', 'username', 'notes',
+            'affiliation', 'badges', 'lessons', 'domains', 'awards',
+        )
+
+
+class TaskSerializer(serializers.ModelSerializer):
+    person = serializers.HyperlinkedRelatedField(
+        read_only=True, view_name='api:person-detail')
+    role = serializers.SlugRelatedField(
+        many=False, read_only=True, slug_field='name')
+
+    class Meta:
+        model = Task
+        fields = ('person', 'role')
+
+
+class TodoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TodoItem
+        fields = ('completed', 'title', 'due', 'additional')
+
+
+class EventSerializer(serializers.ModelSerializer):
+    country = serializers.CharField()
+    start = serializers.DateField(format=None)
+    end = serializers.DateField(format=None)
+
+    host = serializers.HyperlinkedRelatedField(
+        read_only=True, view_name='api:host-detail', lookup_field='domain')
+    administrator = serializers.HyperlinkedRelatedField(
+        read_only=True, view_name='api:host-detail', lookup_field='domain')
+    tags = serializers.SlugRelatedField(
+        many=True, read_only=True, slug_field='name')
+    tasks = serializers.HyperlinkedIdentityField(
+        view_name='api:event-tasks-list',
+        lookup_field='slug',
+        lookup_url_kwarg='event_slug',
+    )
+    todos = serializers.HyperlinkedIdentityField(
+        view_name='api:event-todos-list',
+        lookup_field='slug',
+        lookup_url_kwarg='event_slug',
+        source='todoitem_set',
+    )
+    assigned_to = serializers.HyperlinkedRelatedField(
+        read_only=True, view_name='api:person-detail')
+
+    class Meta:
+        model = Event
+        fields = (
+            'slug', 'completed', 'start', 'end', 'host', 'administrator',
+            'tags', 'website_url', 'reg_key', 'admin_fee', 'invoice_status',
+            'attendance', 'contact', 'country', 'venue', 'address',
+            'latitude', 'longitude', 'notes', 'tasks', 'todos', 'assigned_to',
         )

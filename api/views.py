@@ -1,8 +1,11 @@
 import datetime
 
 from django.db.models import Q
+from rest_framework import viewsets
+from rest_framework.filters import DjangoFilterBackend
 from rest_framework.generics import ListAPIView
 from rest_framework.metadata import SimpleMetadata
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import (
     IsAuthenticatedOrReadOnly, IsAuthenticated
 )
@@ -10,16 +13,35 @@ from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.views import APIView
 
-from workshops.models import Badge, Airport, Event, TodoItem, Tag
+from workshops.models import (
+    Badge,
+    Airport,
+    Event,
+    TodoItem,
+    Tag,
+    Host,
+    Task,
+    Award,
+    Person,
+)
 from workshops.util import get_members, default_membership_cutoff
 
 from .serializers import (
     PersonNameEmailUsernameSerializer,
     ExportBadgesSerializer,
     ExportInstructorLocationsSerializer,
+    ExportEventSerializer,
+    TimelineTodoSerializer,
+    HostSerializer,
     EventSerializer,
+    TaskSerializer,
     TodoSerializer,
+    AirportSerializer,
+    AwardSerializer,
+    PersonSerializer,
 )
+
+from .filters import EventFilter, TaskFilter
 
 
 class QueryMetadata(SimpleMetadata):
@@ -36,6 +58,18 @@ class QueryMetadata(SimpleMetadata):
         return data
 
 
+class LargeResultsSetPagination(PageNumberPagination):
+    page_size = 1000
+    page_size_query_param = 'page_size'
+    max_page_size = 10000
+
+
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 100
+    page_size_query_param = 'page_size'
+    max_page_size = 1000
+
+
 class ApiRoot(APIView):
     def get(self, request, format=None):
         return Response({
@@ -49,6 +83,16 @@ class ApiRoot(APIView):
                                         request=request, format=format),
             'user-todos': reverse('api:user-todos',
                                   request=request, format=format),
+
+            # "new" API list-type endpoints below
+            'airport-list': reverse('api:airport-list', request=request,
+                                    format=format),
+            'person-list': reverse('api:person-list', request=request,
+                                   format=format),
+            'event-list': reverse('api:event-list', request=request,
+                                  format=format),
+            'host-list': reverse('api:host-list', request=request,
+                                 format=format),
         })
 
 
@@ -118,7 +162,7 @@ class PublishedEvents(ListAPIView):
     permission_classes = (IsAuthenticatedOrReadOnly, )
     paginator = None  # disable pagination
 
-    serializer_class = EventSerializer
+    serializer_class = ExportEventSerializer
 
     metadata_class = QueryMetadata
 
@@ -156,7 +200,7 @@ class PublishedEvents(ListAPIView):
 class UserTodoItems(ListAPIView):
     permission_classes = (IsAuthenticated, )
     paginator = None
-    serializer_class = TodoSerializer
+    serializer_class = TimelineTodoSerializer
 
     def get_queryset(self):
         """Return current TODOs for currently logged in user."""
@@ -164,3 +208,113 @@ class UserTodoItems(ListAPIView):
                                .incomplete() \
                                .exclude(due=None) \
                                .select_related('event')
+
+# ----------------------
+# "new" API starts below
+# ----------------------
+
+
+class HostViewSet(viewsets.ReadOnlyModelViewSet):
+    """List many hosts or retrieve only one."""
+    permission_classes = (IsAuthenticated, )
+    queryset = Host.objects.all()
+    serializer_class = HostSerializer
+    lookup_field = 'domain'
+    lookup_value_regex = r'[^/]+'  # the default one doesn't work with domains
+    pagination_class = StandardResultsSetPagination
+
+
+class EventViewSet(viewsets.ReadOnlyModelViewSet):
+    """List many events or retrieve only one."""
+    permission_classes = (IsAuthenticated, )
+    queryset = Event.objects.all().select_related('host', 'administrator') \
+                                  .prefetch_related('tags')
+    serializer_class = EventSerializer
+    lookup_field = 'slug'
+    pagination_class = StandardResultsSetPagination
+    filter_backends = (DjangoFilterBackend, )
+    filter_class = EventFilter
+
+
+class TaskViewSet(viewsets.ReadOnlyModelViewSet):
+    """List tasks belonging to specific event."""
+    permission_classes = (IsAuthenticated, )
+    serializer_class = TaskSerializer
+    pagination_class = StandardResultsSetPagination
+    filter_backends = (DjangoFilterBackend, )
+    filter_class = TaskFilter
+    _event_slug = None
+
+    def get_queryset(self):
+        qs = Task.objects.all().select_related('person', 'role',
+                                               'person__airport')
+        if self._event_slug:
+            qs = qs.filter(event__slug=self._event_slug)
+        return qs
+
+    def list(self, request, event_slug=None):
+        self._event_slug = event_slug
+        return super().list(request)
+
+    def retrieve(self, request, pk=None, event_slug=None):
+        self._event_slug = event_slug
+        return super().retrieve(request, pk=pk)
+
+
+class TodoViewSet(viewsets.ReadOnlyModelViewSet):
+    """List todos belonging to specific event."""
+    permission_classes = (IsAuthenticated, )
+    serializer_class = TodoSerializer
+    _event_slug = None
+
+    def get_queryset(self):
+        qs = TodoItem.objects.all()
+        if self._event_slug:
+            qs = qs.filter(event__slug=self._event_slug)
+        return qs
+
+    def list(self, request, event_slug=None):
+        self._event_slug = event_slug
+        return super().list(request)
+
+    def retrieve(self, request, pk=None, event_slug=None):
+        self._event_slug = event_slug
+        return super().retrieve(request, pk=pk)
+
+
+class PersonViewSet(viewsets.ReadOnlyModelViewSet):
+    """List many people or retrieve only one person."""
+    permission_classes = (IsAuthenticated, )
+    queryset = Person.objects.all()
+    serializer_class = PersonSerializer
+    pagination_class = StandardResultsSetPagination
+
+
+class AwardViewSet(viewsets.ReadOnlyModelViewSet):
+    """List awards belonging to specific person."""
+    permission_classes = (IsAuthenticated, )
+    serializer_class = AwardSerializer
+    _person_pk = None
+
+    def get_queryset(self):
+        qs = Award.objects.all()
+        if self._person_pk:
+            qs = qs.filter(person=self._person_pk)
+        return qs
+
+    def list(self, request, person_pk=None):
+        self._person_pk = person_pk
+        return super().list(request)
+
+    def retrieve(self, request, pk=None, person_pk=None):
+        self._person_pk = person_pk
+        return super().retrieve(request, pk=pk)
+
+
+class AirportViewSet(viewsets.ReadOnlyModelViewSet):
+    """List many airports or retrieve only one."""
+    permission_classes = (IsAuthenticated, )
+    queryset = Airport.objects.all()
+    serializer_class = AirportSerializer
+    lookup_field = 'iata'
+    pagination_class = StandardResultsSetPagination
