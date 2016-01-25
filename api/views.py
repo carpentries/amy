@@ -30,10 +30,10 @@ from .serializers import (
     PersonNameEmailSerializer,
     ExportBadgesSerializer,
     ExportInstructorLocationsSerializer,
-    EventSerializer,
-    TodoWidgetSerializer,
+    ExportEventSerializer,
+    TimelineTodoSerializer,
     HostSerializer,
-    DetailedEventSerializer,
+    EventSerializer,
     TaskSerializer,
     TodoSerializer,
     AirportSerializer,
@@ -162,7 +162,7 @@ class PublishedEvents(ListAPIView):
     permission_classes = (IsAuthenticatedOrReadOnly, )
     paginator = None  # disable pagination
 
-    serializer_class = EventSerializer
+    serializer_class = ExportEventSerializer
 
     metadata_class = QueryMetadata
 
@@ -200,7 +200,7 @@ class PublishedEvents(ListAPIView):
 class UserTodoItems(ListAPIView):
     permission_classes = (IsAuthenticated, )
     paginator = None
-    serializer_class = TodoWidgetSerializer
+    serializer_class = TimelineTodoSerializer
 
     def get_queryset(self):
         """Return current TODOs for currently logged in user."""
@@ -229,7 +229,7 @@ class EventViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (IsAuthenticated, )
     queryset = Event.objects.all().select_related('host', 'administrator') \
                                   .prefetch_related('tags')
-    serializer_class = DetailedEventSerializer
+    serializer_class = EventSerializer
     lookup_field = 'slug'
     pagination_class = StandardResultsSetPagination
     filter_backends = (DjangoFilterBackend, )

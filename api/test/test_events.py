@@ -10,7 +10,6 @@ from rest_framework.test import APITestCase
 from api.views import (
     PublishedEvents,
 )
-from api.serializers import EventSerializer
 from workshops.models import (
     Event,
     Host,
@@ -20,7 +19,7 @@ from workshops.util import universal_date_format
 
 class TestListingPublishedEvents(APITestCase):
     view = PublishedEvents
-    serializer_class = EventSerializer
+    serializer_class = PublishedEvents.serializer_class
     url = 'api:events-published'
     maxDiff = None
 

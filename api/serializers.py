@@ -53,7 +53,7 @@ class TagSerializer(serializers.ModelSerializer):
         fields = ('name', )
 
 
-class EventSerializer(serializers.ModelSerializer):
+class ExportEventSerializer(serializers.ModelSerializer):
     humandate = serializers.CharField(source='human_readable_date')
     country = serializers.CharField()
     start = serializers.DateField(format=None)
@@ -71,7 +71,7 @@ class EventSerializer(serializers.ModelSerializer):
         )
 
 
-class TodoWidgetSerializer(serializers.ModelSerializer):
+class TimelineTodoSerializer(serializers.ModelSerializer):
     content = serializers.SerializerMethodField()
     start = serializers.DateField(format=None, source='due')
 
@@ -164,7 +164,7 @@ class TodoSerializer(serializers.ModelSerializer):
         fields = ('completed', 'title', 'due', 'additional')
 
 
-class DetailedEventSerializer(serializers.ModelSerializer):
+class EventSerializer(serializers.ModelSerializer):
     country = serializers.CharField()
     start = serializers.DateField(format=None)
     end = serializers.DateField(format=None)
