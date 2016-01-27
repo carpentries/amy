@@ -10,8 +10,12 @@
 {% block extrajs %}
   <script type="text/javascript">
     $(document).ready(function() {
-      $.get('{{ api_endpoint }}?format=json', function(data) {
-        $('#source').text(data);
+      $.getJSON('{{ api_endpoint }}?format=json', function(data) {
+        var items = [];
+        $.each(data, function(record, value) {
+            items.push(value.person + ": " + value.num_taught);
+        });
+        $('#source').text(items.join("\n"));
       }, "html");
     });
   </script>
