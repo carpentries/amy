@@ -1,63 +1,38 @@
 # coding: utf-8
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 import csv
 import datetime
-from math import pi, sin, cos, acos
 import re
 import yaml
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.paginator import (
+    EmptyPage, PageNotAnInteger, Paginator as DjangoPaginator,
+)
 from django.core.validators import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import Q
-from django.core.paginator import Paginator as DjangoPaginator
+from django.http import Http404
+from django.shortcuts import render
 
 from workshops.models import Event, Role, Person, Task, Award, Badge
+
+
+ITEMS_PER_PAGE = 25
 
 WORD_SPLIT = re.compile(r'''([\s<>"']+)''')
 SIMPLE_EMAIL = re.compile(r'^\S+@\S+\.\S+$')
 
 NUM_TRIES = 100
 
+ALLOWED_TAG_NAMES = [
+    'slug', 'startdate', 'enddate', 'country', 'venue', 'address',
+    'latlng', 'language', 'eventbrite', 'instructor', 'helper', 'contact',
+]
+
 
 class InternalError(Exception):
     pass
-
-
-def earth_distance(pos1, pos2):
-    '''Taken from http://www.johndcook.com/python_longitude_latitude.html.'''
-
-    # Extract fields.
-    lat1, long1 = pos1
-    lat2, long2 = pos2
-
-    # Convert latitude and longitude to spherical coordinates in radians.
-    degrees_to_radians = pi/180.0
-
-    # phi = 90 - latitude
-    phi1 = (90.0 - lat1) * degrees_to_radians
-    phi2 = (90.0 - lat2) * degrees_to_radians
-
-    # theta = longitude
-    theta1 = long1 * degrees_to_radians
-    theta2 = long2 * degrees_to_radians
-
-    # Compute spherical distance from spherical coordinates.
-    # For two locations in spherical coordinates
-    # (1, theta, phi) and (1, theta, phi)
-    # cosine( arc length ) = sin phi sin phi' cos(theta-theta') + cos phi cos phi'
-    # distance = rho * arc length
-    c = sin(phi1) * sin(phi2) * cos(theta1 - theta2) + cos(phi1) * cos(phi2)
-
-    # due to round-off errors, sometimes c may be out of range
-    if c > 1:
-        c = 1
-    if c < -1:
-        c = -1
-    arc = acos(c)
-
-    # Multiply by 6373 to get distance in km.
-    return arc * 6373
 
 
 def upload_person_task_csv(stream):
@@ -387,6 +362,41 @@ class Paginator(DjangoPaginator):
         return pagination
 
 
+def get_pagination_items(request, all_objects):
+    '''Select paginated items.'''
+
+    # Get parameters.
+    items = request.GET.get('items_per_page', ITEMS_PER_PAGE)
+    if items != 'all':
+        try:
+            items = int(items)
+        except ValueError:
+            items = ITEMS_PER_PAGE
+    else:
+        # Show everything.
+        items = all_objects.count()
+
+    # Figure out where we are.
+    page = request.GET.get('page')
+
+    # Show selected items.
+    paginator = Paginator(all_objects, items)
+
+    # Select the pages.
+    try:
+        result = paginator.page(page)
+
+    # If page is not an integer, deliver first page.
+    except PageNotAnInteger:
+        result = paginator.page(1)
+
+    # If page is out of range, deliver last page of results.
+    except EmptyPage:
+        result = paginator.page(paginator.num_pages)
+
+    return result
+
+
 def merge_persons(person_from, person_to):
     for award in person_from.award_set.all():
         try:
@@ -436,11 +446,6 @@ def generate_url_to_event_index(website_url):
     if results:
         return template.format(**results.groupdict()), results.group('repo')
     raise WrongWorkshopURL()
-
-ALLOWED_TAG_NAMES = [
-    'slug', 'startdate', 'enddate', 'country', 'venue', 'address',
-    'latlng', 'language', 'eventbrite', 'instructor', 'helper', 'contact',
-]
 
 
 def find_tags_on_event_index(content):
@@ -691,3 +696,48 @@ def assignment_selection(request):
         assigned_to = 'all'
 
     return assigned_to, is_admin
+
+
+def failed_to_delete(request, object, protected_objects, back=None):
+    context = {
+        'title': 'Failed to delete',
+        'back': back or object.get_absolute_url,
+        'object': object,
+        'refs': defaultdict(list),
+    }
+
+    for obj in protected_objects:
+        # e.g. for model Award its plural name is 'awards'
+        name = str(obj.__class__._meta.verbose_name_plural)
+        context['refs'][name].append(obj)
+
+    # this trick enables looping through defaultdict instance
+    context['refs'].default_factory = None
+
+    return render(request, 'workshops/failed_to_delete.html', context)
+
+
+def assign(request, obj, person_id):
+    """Set obj.assigned_to. This view helper works with both POST and GET
+    requests:
+
+    * POST: read person ID from POST's person_1
+    * GET: read person_id from URL
+    * both: if person_id is None then make event.assigned_to empty
+    * otherwise assign matching person.
+
+    This is not a view, but it's used in some."""
+    try:
+        if request.method == "POST":
+            person_id = request.POST.get('person_1', None)
+
+        if person_id is None:
+            obj.assigned_to = None
+        else:
+            person = Person.objects.get(pk=person_id)
+            obj.assigned_to = person
+
+        obj.save()
+
+    except Person.DoesNotExist:
+        raise Http404("No person found matching the query.")
