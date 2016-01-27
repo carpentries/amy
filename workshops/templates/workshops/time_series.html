@@ -1,9 +1,33 @@
 {% extends "workshops/_page.html" %}
 
+{% load static %}
+
 {% block content %}
-{% if data %}
-<pre>{{data}}</pre>
-{% else %}
-<p>Error: no such data.</p>
-{% endif %}
+<p>
+  <a href="{{ api_endpoint }}">API link</a>.
+</p>
+<div id='chart'></div>
+{% endblock %}
+
+{% block extrastyle %}
+    <link rel="stylesheet" href="{% static 'metrics-graphics/dist/metricsgraphics.css' %}" />
+{% endblock %}
+{% block extrajs %}
+    <script src="{% static 'd3/d3.min.js' %}"></script>
+    <script src="{% static 'metrics-graphics/dist/metricsgraphics.js' %}"></script>
+
+    <script type="text/javascript">
+        d3.json('{{ api_endpoint }}?format=json', function(data) {
+            data = MG.convert.date(data, 'date');
+            MG.data_graphic({
+                title: "{{ title }}",
+                data: data,
+                width: 800,
+                height: 600,
+                target: document.getElementById('chart'),
+                x_accessor: 'date',
+                y_accessor: 'count'
+            });
+        });
+    </script>
 {% endblock %}

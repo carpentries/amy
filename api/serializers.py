@@ -91,6 +91,24 @@ class TimelineTodoSerializer(serializers.ModelSerializer):
             todo=obj.title,
         )
 
+
+class WorkshopsOverTimeSerializer(serializers.Serializer):
+    date = serializers.DateField(format=None, source='start')
+    count = serializers.IntegerField()
+
+
+class InstructorsOverTimeSerializer(serializers.Serializer):
+    date = serializers.DateField(format=None, source='awarded')
+    count = serializers.IntegerField()
+
+
+class InstructorNumTaughtSerializer(serializers.Serializer):
+    person = serializers.HyperlinkedRelatedField(
+        read_only=True, view_name='api:person-detail', lookup_field='pk',
+        source='*')
+    num_taught = serializers.IntegerField()
+
+
 # ----------------------
 # "new" API starts below
 # ----------------------
@@ -137,17 +155,24 @@ class PersonSerializer(serializers.ModelSerializer):
         lookup_field='pk',
         lookup_url_kwarg='person_pk',
     )
+    tasks = serializers.HyperlinkedIdentityField(
+        view_name='api:person-tasks-list',
+        lookup_field='pk',
+        lookup_url_kwarg='person_pk',
+    )
 
     class Meta:
         model = Person
         fields = (
             'personal', 'middle', 'family', 'email', 'gender', 'may_contact',
             'airport', 'github', 'twitter', 'url', 'username', 'notes',
-            'affiliation', 'badges', 'lessons', 'domains', 'awards',
+            'affiliation', 'badges', 'lessons', 'domains', 'awards', 'tasks',
         )
 
 
 class TaskSerializer(serializers.ModelSerializer):
+    event = serializers.HyperlinkedRelatedField(
+        read_only=True, view_name='api:event-detail', lookup_field='slug')
     person = serializers.HyperlinkedRelatedField(
         read_only=True, view_name='api:person-detail')
     role = serializers.SlugRelatedField(
@@ -155,7 +180,7 @@ class TaskSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Task
-        fields = ('person', 'role')
+        fields = ('event', 'person', 'role')
 
 
 class TodoSerializer(serializers.ModelSerializer):

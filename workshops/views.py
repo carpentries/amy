@@ -1541,57 +1541,53 @@ def export_members(request):
 
 @login_required
 def workshops_over_time(request):
-    '''Export CSV of count of workshops vs. time.'''
-
-    data = dict(Event.objects
-                     .past_events()
-                     .values_list('start')
-                     .annotate(Count('id')))
-    return _time_series(request, data, 'Workshop over time')
+    '''Export JSON of count of workshops vs. time.'''
+    context = {
+        'api_endpoint': reverse('api:reports-workshops-over-time'),
+        'title': 'Workshops over time',
+    }
+    return render(request, 'workshops/time_series.html', context)
 
 
 @login_required
 def learners_over_time(request):
-    '''Export CSV of count of learners vs. time.'''
-
-    data = dict(Event.objects
-                     .past_events()
-                     .values_list('start')
-                     .annotate(Sum('attendance')))
-    return _time_series(request, data, 'Learners over time')
+    '''Export JSON of count of learners vs. time.'''
+    context = {
+        'api_endpoint': reverse('api:reports-learners-over-time'),
+        'title': 'Learners over time',
+    }
+    return render(request, 'workshops/time_series.html', context)
 
 
 @login_required
 def instructors_over_time(request):
-    '''Export CSV of count of instructors vs. time.'''
-
-    badges = Badge.objects.instructor_badges()
-    data = dict(Award.objects.filter(badge__in=badges)
-                     .values_list('awarded')
-                     .annotate(Count('person__id')))
-    return _time_series(request, data, 'Instructors over time')
+    '''Export JSON of count of instructors vs. time.'''
+    context = {
+        'api_endpoint': reverse('api:reports-instructors-over-time'),
+        'title': 'Instructors over time',
+    }
+    return render(request, 'workshops/time_series.html', context)
 
 
 @login_required
 def instructor_num_taught(request):
-    '''Export CSV of how often instructors have taught.'''
-
-    badges = Badge.objects.instructor_badges()
-    awards = Award.objects.filter(badge__in=badges).annotate(
-        num_taught=Count(
-            Case(
-                When(
-                    person__task__role__name='instructor',
-                    then=Value(1)
-                ),
-                output_field=IntegerField()
-            )
-        )
-    ).select_related('person', 'person__airport') \
-     .filter(person__may_contact=True).order_by('-num_taught', 'awarded')
-    context = {'title': 'Frequency of Instruction',
-               'awards': awards}
+    '''Export JSON of how often instructors have taught.'''
+    context = {
+        'api_endpoint': reverse('api:reports-instructor-num-taught'),
+        'title': 'Frequency of Instruction',
+    }
     return render(request, 'workshops/instructor_num_taught.html', context)
+
+
+@login_required
+def all_activity_over_time(request):
+    """Display number of workshops (of differend kinds), instructors and
+    learners over some specific period of time."""
+    context = {
+        'api_endpoint': reverse('api:reports-all-activity-over-time'),
+        'title': 'All activity over time',
+    }
+    return render(request, 'workshops/all_activity_over_time.html', context)
 
 
 @login_required
@@ -1748,27 +1744,6 @@ def _get_pagination_items(request, all_objects):
         result = paginator.page(paginator.num_pages)
 
     return result
-
-
-def _time_series(request, data, title):
-    '''Prepare time-series data for display and render it.'''
-
-    # Make sure addition will work.
-    for key in data:
-        if data[key] is None:
-            data[key] = 0
-
-    # Create running total.
-    data = list(data.items())
-    data.sort()
-    for i in range(1, len(data)):
-        data[i] = (data[i][0], data[i][1] + data[i-1][1])
-
-    # Textualize and display.
-    data = '\n'.join(['{0},{1}'.format(*d) for d in data])
-    context = {'title': title,
-               'data': data}
-    return render(request, 'workshops/time_series.html', context)
 
 
 def _failed_to_delete(request, object, protected_objects, back=None):
