@@ -1,0 +1,167 @@
+{% extends "workshops/_page.html" %}
+
+{% load links %}
+{% load tags %}
+{% load merge_strategies %}
+
+{% block content %}
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th width="20%">Strategy</th>
+      <th width="40%">Event A</th>
+      <th width="40%">Event B</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      {# selecting an ID basically shows which event should stay, and which should go #}
+      <td>ID
+      {% select_one 'id' %}</td>
+      <td>{{ obj_a.id|default:"—" }}</td><td>{{ obj_b.id|default:"—" }}</td>
+    </tr>
+    <tr>
+      <td>Slug
+      {% select_one 'slug' %}</td>
+      <td>{{ obj_a.slug|default:"—" }}</td><td>{{ obj_b.slug|default:"—" }}</td>
+    </tr>
+    <tr>
+      <td>Completed?
+      {% select_one 'completed' %}</td>
+      <td>{{ obj_a.completed|yesno }}</td><td>{{ obj_b.completed|yesno }}</td>
+    </tr>
+    <tr>
+      <td>Assignee
+      {% select_one 'assigned_to' %}</td>
+      <td>{% if obj_a.assigned_to %}<a href="{{ obj_a.assigned_to.get_absolute_url }}">{{ obj_a.assigned_to.get_full_name }}</a>{% else %}—{% endif %}</td>
+      <td>{% if obj_b.assigned_to %}<a href="{{ obj_b.assigned_to.get_absolute_url }}">{{ obj_b.assigned_to.get_full_name }}</a>{% else %}—{% endif %}</td>
+    </tr>
+    <tr>
+      <td>Start date
+      {% select_one 'start' %}</td>
+      <td>{{ obj_a.start|default:"—" }}</td><td>{{ obj_b.start|default:"—" }}</td>
+    </tr>
+    <tr>
+      <td>End date
+      {% select_one 'end' %}</td>
+      <td>{{ obj_a.end|default:"—" }}</td><td>{{ obj_b.end|default:"—" }}</td>
+    </tr>
+    <tr>
+      <td>Host
+      {% select_one 'host' %}</td>
+      <td><a href="{{ obj_a.host.get_absolute_url }}">{{ obj_a.host }}</a></td>
+      <td><a href="{{ obj_b.host.get_absolute_url }}">{{ obj_b.host }}</a></td>
+    </tr>
+    <tr>
+      <td>Administrator
+      {% select_one 'administrator' %}</td>
+      <td>{% if obj_a.administrator %}<a href="{{ obj_a.administrator.get_absolute_url }}">{{ obj_a.administrator }}</a>{% else %}—{% endif %}</td>
+      <td>{% if obj_b.administrator %}<a href="{{ obj_b.administrator.get_absolute_url }}">{{ obj_b.administrator }}</a>{% else %}—{% endif %}</td>
+    </tr>
+    <tr>
+      <td>Tags
+      {% select_one_or_combine 'tags' %}</td>
+      <td>{% for tag in obj_a.tags.all %}{% bootstrap_tag tag.name %}{% empty %}—{% endfor %}</td>
+      <td>{% for tag in obj_b.tags.all %}{% bootstrap_tag tag.name %}{% empty %}—{% endfor %}</td>
+    </tr>
+    <tr>
+      <td>URL
+      {% select_one 'url' %}</td>
+      <td>{{ obj_a.url|default:"—"|urlize_newtab }}</td><td>{{ obj_b.url|default:"—"|urlize_newtab }}</td>
+    </tr>
+    <tr>
+      <td>Eventbrite key
+      {% select_one 'reg_key' %}</td>
+      <td>{{ obj_a.reg_key|default:"—" }}</td><td>{{ obj_b.reg_key|default:"—" }}</td>
+    </tr>
+    <tr>
+      <td>Admin fee
+      {% select_one 'admin_fee' %}</td>
+      <td>{{ obj_a.admin_fee|default:"—" }}</td><td>{{ obj_b.admin_fee|default:"—" }}</td>
+    </tr>
+    <tr>
+      <td>Invoice
+      {% select_one 'invoice_status' %}</td>
+      <td>{{ obj_a.get_invoice_status_display }}</td><td>{{ obj_b.get_invoice_status_display }}</td>
+    </tr>
+    <tr>
+      <td>Attendance
+      {% select_one 'attendance' %}</td>
+      <td>{{ obj_a.attendance|default_if_none:"—" }}</td><td>{{ obj_b.attendance|default_if_none:"—" }}</td>
+    </tr>
+    <tr>
+      <td>Contact
+      {% select_one_or_combine 'contact' %}</td>
+      <td>{{ obj_a.contact|default:"—" }}</td><td>{{ obj_b.contact|default:"—" }}</td>
+    </tr>
+    <tr>
+      <td>Country
+      {% select_one 'country' %}</td>
+      <td>{% if obj_a.country %}{{ obj_a.country.name }} <img src="{{ obj_a.country.flag }}" alt="{{ obj_a.country }}" class="country-flag" />{% else %}—{% endif %}</td>
+      <td>{% if obj_b.country %}{{ obj_b.country.name }} <img src="{{ obj_b.country.flag }}" alt="{{ obj_b.country }}" class="country-flag" />{% else %}—{% endif %}</td>
+    </tr>
+    <tr>
+      <td>Venue
+      {% select_one 'venue' %}</td>
+      <td>{{ obj_a.venue|default:"—" }}</td><td>{{ obj_b.venue|default:"—" }}</td>
+    </tr>
+    <tr>
+      <td>Address
+      {% select_one 'address' %}</td>
+      <td>{{ obj_a.address|default:"—" }}</td><td>{{ obj_b.address|default:"—" }}</td>
+    </tr>
+    <tr>
+      <td>Latitude
+      {% select_one 'latitude' %}</td>
+      <td>{{ obj_a.latitude|default:"—" }}</td><td>{{ obj_b.latitude|default:"—" }}</td>
+    </tr>
+    <tr>
+      <td>Longitude
+      {% select_one 'longitude' %}</td>
+      <td>{{ obj_a.longitude|default:"—" }}</td><td>{{ obj_b.longitude|default:"—" }}</td>
+    </tr>
+    <tr>
+      <td>Pre-workshop survey results (learners)
+      {% select_one 'learners_pre' %}</td>
+      <td>{{ obj_a.learners_pre|default:"—"|urlize_newtab }}</td><td>{{ obj_b.learners_pre|default:"—"|urlize_newtab }}</td>
+    </tr>
+    <tr>
+      <td>Post-workshop survey results (learners)
+      {% select_one 'learners_post' %}</td>
+      <td>{{ obj_a.learners_post|default:"—"|urlize_newtab }}</td><td>{{ obj_b.learners_post|default:"—"|urlize_newtab }}</td>
+    </tr>
+    <tr>
+      <td>Pre-workshop survey results (instructors)
+      {% select_one 'instructors_pre' %}</td>
+      <td>{{ obj_a.instructors_pre|default:"—"|urlize_newtab }}</td><td>{{ obj_b.instructors_pre|default:"—"|urlize_newtab }}</td>
+    </tr>
+    <tr>
+      <td>Post-workshop survey results (instructors)
+      {% select_one 'instructors_post' %}</td>
+      <td>{{ obj_a.instructors_post|default:"—"|urlize_newtab }}</td><td>{{ obj_b.instructors_post|default:"—"|urlize_newtab }}</td>
+    </tr>
+    <tr>
+      <td>Long-term survey results (learners)
+      {% select_one 'learners_longterm' %}</td>
+      <td>{{ obj_a.learners_longterm|default:"—"|urlize_newtab }}</td><td>{{ obj_b.learners_longterm|default:"—"|urlize_newtab }}</td>
+    </tr>
+    <tr>
+      <td>Notes
+      {% select_one_or_combine 'notes' %}</td>
+      <td>{{ obj_a.notes|default:"—" }}</td><td>{{ obj_b.notes|default:"—" }}</td>
+    </tr>
+    <tr>
+      <td>Tasks
+      {% select_one_or_combine 'task_set' %}</td>
+      <td>{% if obj_a.task_set.all %}<ul>{% for task in obj_a.task_set.all %}<li><a href="{{ task.get_absolute_url }}">{{ task }}</a></li>{% endfor %}</ul>{% else %}—{% endif %}</td>
+      <td>{% if obj_b.task_set.all %}<ul>{% for task in obj_b.task_set.all %}<li><a href="{{ task.get_absolute_url }}">{{ task }}</a></li>{% endfor %}</ul>{% else %}—{% endif %}</td>
+    </tr>
+    <tr>
+      <td>TODOs
+      {% select_one_or_combine 'todoitem_set' %}</td>
+      <td>{% if obj_a.todoitem_set.all %}<ul>{% for todo in obj_a.todoitem_set.all %}<li>{% if todo.completed %}<del>{{ todo }}</del>{% else %}{{ todo }}{% endif %}</li>{% endfor %}</ul>{% else %}—{% endif %}</td>
+      <td>{% if obj_b.todoitem_set.all %}<ul>{% for todo in obj_b.todoitem_set.all %}<li>{% if todo.completed %}<del>{{ todo }}</del>{% else %}{{ todo }}{% endif %}</li>{% endfor %}</ul>{% else %}—{% endif %}</td>
+    </tr>
+  </tbody>
+</table>
+{% endblock %}

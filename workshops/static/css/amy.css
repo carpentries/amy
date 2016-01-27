@@ -187,3 +187,8 @@ table.table-striped tr.bg-danger {
 #timeline {
     margin-bottom: 40px;
 }
+
+label.onethird {
+    width: 34%;
+    font-weight: normal;
+}

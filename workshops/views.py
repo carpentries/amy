@@ -1164,6 +1164,24 @@ def event_assign(request, event_ident, person_id=None):
     except Event.DoesNotExist:
         raise Http404("No event found matching the query.")
 
+
+@login_required
+@permission_required(['workshops.delete_event', 'workshops.change_event'],
+                     raise_exception=True)
+def events_merge(request):
+    """Display two events side by side on GET and merge them on POST."""
+    obj_a_slug = request.GET.get('object_a')
+    obj_a = get_object_or_404(Event, slug=obj_a_slug)
+    obj_b_slug = request.GET.get('object_b')
+    obj_b = get_object_or_404(Event, slug=obj_b_slug)
+
+    context = {
+        'title': 'Merge two events',
+        'obj_a': obj_a,
+        'obj_b': obj_b,
+    }
+    return render(request, 'workshops/events_merge.html', context)
+
 #------------------------------------------------------------
 
 @login_required
