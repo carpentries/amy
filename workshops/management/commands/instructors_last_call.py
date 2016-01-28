@@ -22,11 +22,11 @@ class Command(BaseCommand):
             instructor_badges = Badge.objects.instructor_badges()
             trainees = Task.objects.filter(event=event, role=learner).exclude(person__badges__in=instructor_badges)
         except ObjectDoesNotExist as e:
-            print(str(e), file=sys.stderr)
+            self.stderr.write(str(e))
             sys.exit(1)
 
         # Report.
         people = list(set([(t.person.family, t.person.personal, t.person.email) for t in trainees]))
         people.sort()
         for (family, personal, email) in people:
-            print('{0} {1} <{2}>'.format(personal, family, email))
+            self.stdout.write('{0} {1} <{2}>'.format(personal, family, email))
