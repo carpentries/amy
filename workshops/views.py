@@ -56,7 +56,7 @@ from workshops.forms import (
     ProfileUpdateRequestForm, PersonLookupForm, bootstrap_helper_wider_labels,
     SimpleTodoForm, bootstrap_helper_inline_formsets, BootstrapHelper,
     AdminLookupForm, ProfileUpdateRequestFormNoCaptcha, MembershipForm,
-    TodoFormSet,
+    TodoFormSet, EventsMergeForm,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
@@ -1179,6 +1179,7 @@ def events_merge(request):
         'title': 'Merge two events',
         'obj_a': obj_a,
         'obj_b': obj_b,
+        'form': EventsMergeForm(),
     }
     return render(request, 'workshops/events_merge.html', context)
 

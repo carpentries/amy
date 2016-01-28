@@ -188,7 +188,6 @@ table.table-striped tr.bg-danger {
     margin-bottom: 40px;
 }
 
-label.onethird {
-    width: 34%;
+table tr label {
     font-weight: normal;
 }
