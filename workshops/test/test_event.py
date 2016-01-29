@@ -1,12 +1,11 @@
 from datetime import datetime, timedelta, date
+from urllib.parse import urlencode
 import sys
-import cgi
 
-from django.test import TestCase
 from django.core.urlresolvers import reverse
 from django.db.utils import IntegrityError
-from ..models import (Event, Host, Tag, Person, Role, Task, Award, Badge)
-from ..forms import EventForm
+from ..models import (Event, Host, Tag, Role, Task, Award, Badge, TodoItem)
+from ..forms import EventForm, EventsMergeForm
 from .base import TestBase
 
 
@@ -18,10 +17,10 @@ class TestEvent(TestBase):
         self._setUpUsersAndLogin()
 
         # Create a test tag
-        test_tag = Tag.objects.create(name='Test Tag', details='For testing')
+        Tag.objects.create(name='Test Tag', details='For testing')
 
         # Create a test role
-        test_role = Role.objects.create(name='Test Role')
+        Role.objects.create(name='Test Role')
 
         # Set up generic events.
         self._setUpEvents()
