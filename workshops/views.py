@@ -17,7 +17,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 from django.http import Http404, HttpResponse, JsonResponse
 from django.http import HttpResponseBadRequest
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.db.models import Count, Q, F, Model, ProtectedError
 from django.db.models import Case, When, Value, IntegerField
 from django.shortcuts import redirect, render, get_object_or_404
@@ -1175,11 +1175,88 @@ def events_merge(request):
     obj_b_slug = request.GET.get('object_b')
     obj_b = get_object_or_404(Event, slug=obj_b_slug)
 
+    form = EventsMergeForm(initial=dict(event_a=obj_a, event_b=obj_b))
+
+    if request.method == "POST":
+        form = EventsMergeForm(request.POST)
+
+        if form.is_valid():
+            data = form.cleaned_data
+
+            event_a = data['event_a']
+            event_b = data['event_b']
+
+            base_event = event_a  # stays in the database after merge
+            merging = event_b  # will be removed from DB after merge
+            if data['id'] == 'obj_b':
+                base_event = event_b
+                merging = event_a
+
+            # non-M2M-relationships:
+            easy = (
+                'slug', 'completed', 'assigned_to', 'start', 'end', 'host',
+                'administrator', 'url', 'reg_key', 'admin_fee',
+                'invoice_status', 'attendance', 'contact', 'country', 'venue',
+                'address', 'latitude', 'longitude', 'learners_pre',
+                'learners_post',  'instructors_pre', 'instructors_post',
+                'learners_longterm', 'notes',
+            )
+            # M2M relationships
+            difficult = ('tags', 'task_set', 'todoitem_set')
+
+            try:
+                with transaction.atomic():
+                    for attr in easy:
+                        value = data.get(attr)
+                        if value == 'obj_a':
+                            setattr(base_event, attr, getattr(event_a, attr))
+                        elif value == 'obj_b':
+                            setattr(base_event, attr, getattr(event_b, attr))
+                        elif value == 'combine':
+                            try:
+                                new_value = (getattr(event_a, attr) +
+                                             getattr(event_b, attr))
+                                setattr(base_event, attr, new_value)
+                            except TypeError:
+                                # probably 'unsupported operand type', but we
+                                # can't do much about it…
+                                pass
+
+                    for attr in difficult:
+                        objects_a = getattr(event_a, attr)
+                        objects_b = getattr(event_b, attr)
+
+                        manager = getattr(base_event, attr)
+                        value = data.get(attr)
+
+                        if value == 'obj_a' and manager != objects_a:
+                            manager.all().delete()
+                            manager.add(*list(objects_a.all()))
+
+                        elif value == 'obj_b' and manager != objects_b:
+                            manager.all().delete()
+                            manager.add(*list(objects_b.all()))
+
+                        elif value == 'combine':
+                            # remove duplicates
+                            manager.add(*list(objects_a.all() |
+                                              objects_b.all()))
+
+                    merging.delete()
+
+                    base_event.save()
+
+            except ProtectedError as e:
+                return failed_to_delete(request, object=merging,
+                                        protected_objects=e.protected_objects)
+
+            return redirect(base_event.get_absolute_url())
+
     context = {
         'title': 'Merge two events',
         'obj_a': obj_a,
         'obj_b': obj_b,
-        'form': EventsMergeForm(),
+        'form': form,
     }
     return render(request, 'workshops/events_merge.html', context)
 
