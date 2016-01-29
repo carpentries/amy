@@ -629,6 +629,12 @@ class EventsMergeForm(forms.Form):
     THREE = TWO + (('combine', 'Combine'), )
     DEFAULT = 'obj_a'
 
+    event_a = forms.ModelChoiceField(queryset=Event.objects.all(),
+                                     widget=forms.HiddenInput)
+
+    event_b = forms.ModelChoiceField(queryset=Event.objects.all(),
+                                     widget=forms.HiddenInput)
+
     id = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
