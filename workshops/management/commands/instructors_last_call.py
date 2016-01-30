@@ -18,15 +18,17 @@ class Command(BaseCommand):
             slug = options['event']
             event = Event.objects.get(slug=slug)
             learner = Role.objects.get(name='learner')
-            ttt = Tag.objects.get(name='TTT')
             instructor_badges = Badge.objects.instructor_badges()
-            trainees = Person.objects.filter(task__event=event, task__role=learner).exclude(badges__in=instructor_badges).distinct()
         except ObjectDoesNotExist as e:
             self.stderr.write(str(e))
             sys.exit(1)
 
         # Report.
-        trainees = trainees.order_by('family', 'personal', 'email')
+        trainees = Person.objects\
+                         .filter(task__event=event, task__role=learner)\
+                         .exclude(badges__in=instructor_badges)\
+                         .distinct()\
+                         .order_by('family', 'personal', 'email')
         people = trainees.values_list('family', 'personal', 'email')            
         for (family, personal, email) in people:
             self.stdout.write('{0} {1} <{2}>'.format(personal, family, email))
