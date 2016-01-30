@@ -819,9 +819,9 @@ def person_merge(request):
         form = PersonMergeForm()
 
     context = {'title': 'Merge Persons',
-               'person_merge_form': form,
+               'form': form,
                'form_helper': bootstrap_helper}
-    return render(request, 'workshops/person_merge_form.html', context)
+    return render(request, 'workshops/merge_form.html', context)
 
 
 @login_required
