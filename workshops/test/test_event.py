@@ -616,8 +616,8 @@ class TestEventMerging(TestBase):
         }
         base_url = reverse('events_merge')
         query = urlencode({
-            'object_a': self.event_a.get_ident(),
-            'object_b': self.event_b.get_ident()
+            'event_a_0': self.event_a.slug,
+            'event_b_0': self.event_b.slug
         })
         self.url = '{}?{}'.format(base_url, query)
 

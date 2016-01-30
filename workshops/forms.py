@@ -621,6 +621,24 @@ class SimpleTodoForm(forms.ModelForm):
 TodoFormSet = modelformset_factory(TodoItem, form=SimpleTodoForm, extra=10)
 
 
+class EventsSelectionForm(forms.Form):
+    event_a = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.EventLookup,
+        label='Event A',
+        required=True,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+    event_b = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.EventLookup,
+        label='Event B',
+        required=True,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+
 class EventsMergeForm(forms.Form):
     TWO = (
         ('obj_a', 'Use A'),

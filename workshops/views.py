@@ -56,7 +56,7 @@ from workshops.forms import (
     ProfileUpdateRequestForm, PersonLookupForm, bootstrap_helper_wider_labels,
     SimpleTodoForm, bootstrap_helper_inline_formsets, BootstrapHelper,
     AdminLookupForm, ProfileUpdateRequestFormNoCaptcha, MembershipForm,
-    TodoFormSet, EventsMergeForm,
+    TodoFormSet, EventsSelectionForm, EventsMergeForm,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
@@ -1169,10 +1169,23 @@ def event_assign(request, event_ident, person_id=None):
 @permission_required(['workshops.delete_event', 'workshops.change_event'],
                      raise_exception=True)
 def events_merge(request):
-    """Display two events side by side on GET and merge them on POST."""
-    obj_a_slug = request.GET.get('object_a')
+    """Display two events side by side on GET and merge them on POST.
+
+    If no events are supplied via GET params, display event selection form."""
+
+    # field names come from selectable widgets (name_0 for repr, name_1 for pk)
+    obj_a_slug = request.GET.get('event_a_0')
+    obj_b_slug = request.GET.get('event_b_0')
+
+    if not obj_a_slug and not obj_b_slug:
+        context = {
+            'title': 'Merge Events',
+            'form': EventsSelectionForm(),
+            'form_helper': bootstrap_helper_get,
+        }
+        return render(request, 'workshops/merge_form.html', context)
+
     obj_a = get_object_or_404(Event, slug=obj_a_slug)
-    obj_b_slug = request.GET.get('object_b')
     obj_b = get_object_or_404(Event, slug=obj_b_slug)
 
     form = EventsMergeForm(initial=dict(event_a=obj_a, event_b=obj_b))
