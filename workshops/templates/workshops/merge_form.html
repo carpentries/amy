@@ -5,10 +5,10 @@
 
 {% block content %}
 
-    {% crispy person_merge_form form_helper %}
+    {% crispy form form_helper %}
 
 {% endblock %}
 
 {% block extrajs %}
-{{person_merge_form.media}}
+{{ form.media }}
 {% endblock extrajs %}

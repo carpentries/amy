@@ -44,6 +44,7 @@ urlpatterns = [
     url(r'^events/add/$', views.EventCreate.as_view(), name='event_add'),
     url(r'^event/(?P<event_ident>[\w-]+)/validate/?$', views.validate_event, name='validate_event'),
     url(r'^events/import/?$', views.event_import, name='event_import'),
+    url(r'^events/merge/?$', views.events_merge, name='events_merge'),
 
     url(r'^tasks/?$', views.all_tasks, name='all_tasks'),
     url(r'^task/(?P<task_id>\d+)/?$', views.task_details, name='task_details'),
