@@ -44,6 +44,7 @@ urlpatterns = [
     url(r'^events/add/$', views.EventCreate.as_view(), name='event_add'),
     url(r'^event/(?P<event_ident>[\w-]+)/validate/?$', views.validate_event, name='validate_event'),
     url(r'^events/import/?$', views.event_import, name='event_import'),
+    url(r'^events/merge/?$', views.events_merge, name='events_merge'),
 
     url(r'^tasks/?$', views.all_tasks, name='all_tasks'),
     url(r'^task/(?P<task_id>\d+)/?$', views.task_details, name='task_details'),
@@ -72,6 +73,7 @@ urlpatterns = [
     url(r'^reports/learners_over_time/?$', views.learners_over_time, name='learners_over_time'),
     url(r'^reports/instructors_over_time/?$', views.instructors_over_time, name='instructors_over_time'),
     url(r'^reports/instructor_num_taught/?$', views.instructor_num_taught, name='instructor_num_taught'),
+    url(r'^reports/all_activity_over_time/?$', views.all_activity_over_time, name='all_activity_over_time'),
     url(r'^reports/workshop_issues/?$', views.workshop_issues, name='workshop_issues'),
     url(r'^reports/instructor_issues/?$', views.instructor_issues, name='instructor_issues'),
 

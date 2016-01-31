@@ -2,7 +2,9 @@ import re
 
 from django import forms
 from django.core.validators import RegexValidator
-from django.forms import HiddenInput, CheckboxSelectMultiple, TextInput
+from django.forms import (
+    HiddenInput, CheckboxSelectMultiple, TextInput, modelformset_factory,
+)
 
 from captcha.fields import ReCaptchaField
 from crispy_forms.helper import FormHelper
@@ -289,7 +291,7 @@ class EventForm(forms.ModelForm):
             Div, css_class='panel panel-default')
         # add <div class='panel-heading'>Venue details</div> inside "div.panel"
         self.helper.layout[id_learners_pre].insert(
-            0, Div(HTML('Survey links'), css_class='panel-heading'))
+            0, Div(HTML('Survey results'), css_class='panel-heading'))
 
     def clean_slug(self):
         # Ensure slug is not an integer value for Event.get_by_ident
@@ -612,3 +614,126 @@ class SimpleTodoForm(forms.ModelForm):
         # thanks to this, {{ form.media }} in the template will generate
         # a <link href=""> (for CSS files) or <script src=""> (for JS files)
         js = ('calendar_popup.js', )
+
+
+# `extra`: number of forms populated via `initial` parameter; it's hardcoded in
+# `views.todos_add`
+TodoFormSet = modelformset_factory(TodoItem, form=SimpleTodoForm, extra=10)
+
+
+class EventsSelectionForm(forms.Form):
+    event_a = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.EventLookup,
+        label='Event A',
+        required=True,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+    event_b = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.EventLookup,
+        label='Event B',
+        required=True,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+
+class EventsMergeForm(forms.Form):
+    TWO = (
+        ('obj_a', 'Use A'),
+        ('obj_b', 'Use B'),
+    )
+    THREE = TWO + (('combine', 'Combine'), )
+    DEFAULT = 'obj_a'
+
+    event_a = forms.ModelChoiceField(queryset=Event.objects.all(),
+                                     widget=forms.HiddenInput)
+
+    event_b = forms.ModelChoiceField(queryset=Event.objects.all(),
+                                     widget=forms.HiddenInput)
+
+    id = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    slug = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    completed = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    assigned_to = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    start = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    end = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    host = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    administrator = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    tags = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    url = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    reg_key = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    admin_fee = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    invoice_status = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    attendance = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    contact = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    country = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    venue = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    address = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    latitude = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    longitude = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    learners_pre = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    learners_post = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    instructors_pre = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    instructors_post = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    learners_longterm = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    notes = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    task_set = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    todoitem_set = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )

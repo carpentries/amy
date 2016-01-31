@@ -31,6 +31,7 @@ dev_database :
 	rm -f ${APP_DB}
 	${MANAGE} migrate
 	${MANAGE} fake_database
+	${MANAGE} createinitialrevisions
 
 ## superuser    : make a super-user in the database
 superuser :

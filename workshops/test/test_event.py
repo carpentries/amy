@@ -1,10 +1,11 @@
 from datetime import datetime, timedelta, date
+from urllib.parse import urlencode
 import sys
-import cgi
 
-from django.test import TestCase
 from django.core.urlresolvers import reverse
-from ..models import (Event, Host, Tag, Person, Role, Task, Award, Badge)
+from django.db.utils import IntegrityError
+from ..models import (Event, Host, Tag, Role, Task, Award, Badge, TodoItem)
+from ..forms import EventForm, EventsMergeForm
 from .base import TestBase
 
 
@@ -16,10 +17,10 @@ class TestEvent(TestBase):
         self._setUpUsersAndLogin()
 
         # Create a test tag
-        test_tag = Tag.objects.create(name='Test Tag', details='For testing')
+        Tag.objects.create(name='Test Tag', details='For testing')
 
         # Create a test role
-        test_role = Role.objects.create(name='Test Role')
+        Role.objects.create(name='Test Role')
 
         # Set up generic events.
         self._setUpEvents()
@@ -104,41 +105,6 @@ class TestEvent(TestBase):
         )
         self.assertNotIn(event_considered_published,
                          Event.objects.unpublished_events())
-
-    def test_edit_event(self):
-        """ Test that an event can be edited, and that people can be
-            added from the event edit page.
-        """
-
-        event = Event.objects.all()[0]
-        tag = Tag.objects.get(name='Test Tag')
-        role = Role.objects.get(name='Test Role')
-        url, values = self._get_initial_form_index(0, 'event_edit', event.id)
-        assert len(values) > 0
-        values['event-end'] = ''
-        values['event-tags'] = tag.id
-        assert "event-reg_key" in values, \
-            'No reg key in initial form'
-        new_reg_key = 'test_reg_key'
-        assert event.reg_key != new_reg_key, \
-            'Would be unable to tell if reg_key had changed'
-        values['event-reg_key'] = new_reg_key
-        response = self.client.post(url, values, follow=True)
-        content = response.content.decode('utf-8')
-        assert new_reg_key in content
-
-        url, values = self._get_initial_form_index(1, 'event_edit', event.id)
-        assert "task-person_0" in values, \
-            'No person select in initial form'
-
-        person = Person.objects.all()[0]
-        values['task-person_1'] = person.id
-        values['task-role'] = role.id
-
-        response = self.client.post(url, values, follow=True)
-        content = response.content.decode('utf-8')
-        assert "/workshops/person/1" in content
-        assert "Test Role" in content
 
     def test_delete_event(self):
         """Make sure deleted event and its tasks are no longer accessible."""
@@ -370,17 +336,10 @@ class TestEventViews(TestBase):
 
         This is a regression test for
         https://github.com/swcarpentry/amy/issues/427"""
-        data = {
-            'host': self.test_host.id,
-            'tags': [self.test_tag.id],
-            'slug': 'testing-unique-slug',
-        }
-        response = self.client.post(reverse('event_add'), data)
-        assert response.status_code == 302
-
-        response = self.client.post(reverse('event_add'), data)
-        with self.assertRaises(AssertionError):
-            self._check_status_code_and_parse(response, 200)
+        Event.objects.create(host=self.test_host, slug='testing-unique-slug')
+        with self.assertRaises(IntegrityError):
+            Event.objects.create(host=self.test_host,
+                                 slug='testing-unique-slug')
 
     def test_unique_empty_slug(self):
         """Ensure events with no slugs are saved to the DB.
@@ -441,61 +400,36 @@ class TestEventViews(TestBase):
 
         This is a regression test for
         https://github.com/swcarpentry/amy/issues/435."""
-        data = {
-            'host': self.test_host.id,
-            'tags': [self.test_tag.id],
-            'slug': 'test-event',
-            'admin_fee': -1200,
-        }
-        S = "Ensure this value is greater than or equal to 0"
-        response = self.client.post(reverse('event_add'), data)
-        assert response.status_code == 200
-        content = response.content.decode('utf-8')
-        assert content.count(S) == 1
+        error_str = "Ensure this value is greater than or equal to 0."
 
         data = {
             'host': self.test_host.id,
             'tags': [self.test_tag.id],
             'slug': 'test-event',
             'admin_fee': -1200,
-            'attendance': -36,
         }
-        response = self.client.post(reverse('event_add'), data)
-        assert response.status_code == 200
-        content = response.content.decode('utf-8')
-        assert content.count(S) == 2
 
-        data = {
-            'host': self.test_host.id,
-            'tags': [self.test_tag.id],
-            'slug': 'test-event',
-            'attendance': -36,
-        }
-        S = "Ensure this value is greater than or equal to 0"
-        response = self.client.post(reverse('event_add'), data)
-        assert response.status_code == 200
-        content = response.content.decode('utf-8')
-        assert content.count(S) == 1
+        f = EventForm(data)
+        self.assertIn('admin_fee', f.errors)
+        self.assertIn(error_str, f.errors['admin_fee'])
 
-        data = {
-            'host': self.test_host.id,
-            'tags': [self.test_tag.id],
-            'slug': 'test-event',
-            'admin_fee': 0,
-            'attendance': 0,
-        }
-        response = self.client.post(reverse('event_add'), data)
-        assert response.status_code == 302
+        del data['admin_fee']
+        data['attendance'] = -36
+        f = EventForm(data)
+        self.assertIn('attendance', f.errors)
+        self.assertIn(error_str, f.errors['attendance'])
 
-        data = {
-            'host': self.test_host.id,
-            'tags': [self.test_tag.id],
-            'slug': 'test-event2',
-            'admin_fee': 1200,
-            'attendance': 36,
-        }
-        response = self.client.post(reverse('event_add'), data)
-        assert response.status_code == 302
+        data['admin_fee'] = 0
+        data['attendance'] = 0
+        f = EventForm(data)
+        self.assertNotIn('admin_fee', f.errors)
+        self.assertNotIn('attendance', f.errors)
+
+        data['slug'] = 'test-event2'
+        data['admin_fee'] = 1200
+        data['attendance'] = 36
+        f = EventForm(data)
+        self.assertTrue(f.is_valid())
 
     def test_number_of_attendees_increasing(self):
         """Ensure event.attendance gets bigger after adding new learners."""
@@ -503,16 +437,12 @@ class TestEventViews(TestBase):
         event.attendance = 0  # testing for numeric case
         event.save()
 
-        url, values = self._get_initial_form_index(1, 'event_edit', event.pk)
-        values['task-role'] = self.learner.pk
-        values['task-event'] = event.pk
-        values['task-person_0'] = str(self.spiderman)
-        values['task-person_1'] = self.spiderman.pk
-
-        rv = self.client.post(reverse('event_edit', args=[event.pk]), values,
-                              follow=True)
-        self._check_status_code_and_parse(rv, 200)
-
+        data = {
+            'task-role': self.learner.pk,
+            'task-event': event.pk,
+            'task-person_1': self.spiderman.pk,
+        }
+        self.client.post(reverse('event_edit', args=[event.pk]), data)
         event.refresh_from_db()
         assert event.attendance == 1
 
@@ -528,13 +458,15 @@ class TestEventViews(TestBase):
         for slug in ['a/b', 'a b', 'a!b', 'a.b', 'a\\b', 'a?b']:
             with self.subTest(slug=slug):
                 data['slug'] = slug
-                rv = self.client.post(reverse('event_add'), data, follow=False)
-                self.assertEqual(rv.status_code, 200)
+                f = EventForm(data)
+                self.assertEqual(f.is_valid(), False)
+                self.assertIn('slug', f.errors)
 
         # allow dashes in the slugs
         data['slug'] = 'a-b'
-        rv = self.client.post(reverse('event_add'), data, follow=False)
-        self.assertEqual(rv.status_code, 200)
+        f = EventForm(data)
+        self.assertEqual(f.is_valid(), False)
+        self.assertNotIn('slug', f.errors)
 
     def test_display_of_event_without_start_date(self):
         """A bug prevented events without start date to throw a 404.
@@ -587,3 +519,226 @@ class TestEventNotes(TestBase):
 
         # make sure that notes have been saved
         self.assertEqual(e.notes, notes)
+
+
+class TestEventMerging(TestBase):
+    def setUp(self):
+        self._setUpHosts()
+        self._setUpAirports()
+        self._setUpBadges()
+        self._setUpLessons()
+        self._setUpRoles()
+        self._setUpInstructors()
+        self._setUpUsersAndLogin()
+        self._setUpTags()
+
+        today = date.today()
+        tomorrow = today + timedelta(days=1)
+
+        # Add full-blown events so that we can test merging of everything.
+        # Random data such as contact, venue, address, lat/long, URLs or notes
+        # were generated with faker (see `fake_database.py` for details).
+        self.event_a = Event.objects.create(
+            slug='event-a', completed=True, assigned_to=self.harry,
+            start=today, end=tomorrow,
+            host=self.host_alpha, administrator=self.host_alpha,
+            url='http://reichel.com/event-a', reg_key='123456',
+            admin_fee=2500, invoice_status='not-invoiced',
+            attendance=30, contact='moore.buna@schuppe.info', country='US',
+            venue='Modi', address='876 Dot Fork',
+            latitude=59.987509, longitude=-51.507076,
+            learners_pre='http://reichel.com/learners_pre',
+            learners_post='http://reichel.com/learners_post',
+            instructors_pre='http://reichel.com/instructors_pre',
+            instructors_post='http://reichel.com/instructors_post',
+            learners_longterm='http://reichel.com/learners_longterm',
+            notes='Voluptates hic aspernatur non aut.'
+        )
+        self.event_a.tags = Tag.objects.filter(name__in=['LC', 'DC'])
+        self.event_a.task_set.create(person=self.harry,
+                                     role=Role.objects.get(name='instructor'))
+        self.event_a.todoitem_set.create(completed=False,
+                                         title='Find instructors', due=today)
+
+        self.event_b = Event.objects.create(
+            slug='event-b', completed=False, assigned_to=self.hermione,
+            start=today, end=tomorrow + timedelta(days=1),
+            host=self.host_beta, administrator=self.host_beta,
+            url='http://www.cummings.biz/event-b', reg_key='654321',
+            admin_fee=2500, invoice_status='not-invoiced',
+            attendance=40, contact='haleigh.schneider@hotmail.com',
+            country='GB', venue='Nisi', address='59747 Fernanda Cape',
+            latitude=-29.545137, longitude=32.417491,
+            learners_pre='http://www.cummings.biz/learners_pre',
+            learners_post='http://www.cummings.biz/learners_post',
+            instructors_pre='http://www.cummings.biz/instructors_pre',
+            instructors_post='http://www.cummings.biz/instructors_post',
+            learners_longterm='http://www.cummings.biz/learners_longterm',
+            notes='Est qui iusto sapiente possimus consectetur rerum et.'
+        )
+        self.event_b.tags = Tag.objects.filter(name='SWC')
+        # no tasks for this event
+        self.event_b.todoitem_set.create(completed=True, title='Test merging',
+                                         due=today)
+
+        # some "random" strategy for testing
+        self.strategy = {
+            'event_a': self.event_a.pk,
+            'event_b': self.event_b.pk,
+            'id': 'obj_b',
+            'slug': 'obj_a',
+            'completed': 'obj_b',
+            'assigned_to': 'obj_a',
+            'start': 'obj_b',
+            'end': 'obj_a',
+            'host': 'obj_b',
+            'administrator': 'obj_a',
+            'url': 'obj_b',
+            'reg_key': 'obj_a',
+            'admin_fee': 'obj_b',
+            'invoice_status': 'obj_a',
+            'attendance': 'obj_b',
+            'country': 'obj_a',
+            'latitude': 'obj_b',
+            'longitude': 'obj_a',
+            'learners_pre': 'obj_b',
+            'learners_post': 'obj_a',
+            'instructors_pre': 'obj_b',
+            'instructors_post': 'obj_a',
+            'learners_longterm': 'obj_b',
+            'contact': 'obj_a',
+            'venue': 'obj_b',
+            'address': 'combine',
+            'notes': 'obj_a',
+            'tags': 'combine',
+            'task_set': 'obj_b',
+            'todoitem_set': 'obj_a',
+        }
+        base_url = reverse('events_merge')
+        query = urlencode({
+            'event_a_0': self.event_a.slug,
+            'event_b_0': self.event_b.slug
+        })
+        self.url = '{}?{}'.format(base_url, query)
+
+    def test_form_invalid_values(self):
+        """Make sure only a few fields accept third option ("combine")."""
+        hidden = {
+            'event_a': self.event_a.pk,
+            'event_b': self.event_b.pk,
+        }
+        # fields accepting only 2 options: "obj_a" and "obj_b"
+        failing = {
+            'id': 'combine',
+            'slug': 'combine',
+            'completed': 'combine',
+            'assigned_to': 'combine',
+            'start': 'combine',
+            'end': 'combine',
+            'host': 'combine',
+            'administrator': 'combine',
+            'url': 'combine',
+            'reg_key': 'combine',
+            'admin_fee': 'combine',
+            'invoice_status': 'combine',
+            'attendance': 'combine',
+            'country': 'combine',
+            'latitude': 'combine',
+            'longitude': 'combine',
+            'learners_pre': 'combine',
+            'learners_post': 'combine',
+            'instructors_pre': 'combine',
+            'instructors_post': 'combine',
+            'learners_longterm': 'combine',
+        }
+        # fields additionally accepting "combine"
+        passing = {
+            'tags': 'combine',
+            'contact': 'combine',
+            'venue': 'combine',
+            'address': 'combine',
+            'notes': 'combine',
+            'task_set': 'combine',
+            'todoitem_set': 'combine',
+        }
+        data = hidden.copy()
+        data.update(failing)
+        data.update(passing)
+
+        form = EventsMergeForm(data)
+        self.assertFalse(form.is_valid())
+
+        for key in failing:
+            self.assertIn(key, form.errors)
+        for key in passing:
+            self.assertNotIn(key, form.errors)
+
+        # make sure no fields are added without this test being updated
+        self.assertEqual(set(list(form.fields.keys())), set(list(data.keys())))
+
+    def test_merging_base_event(self):
+        """Merging: ensure the base event is selected based on ID form
+        field.
+
+        If ID field has a value of 'obj_a', then event A is base event and it
+        won't be removed from the database after the merge. Event B, on the
+        other hand, will."""
+        rv = self.client.post(self.url, data=self.strategy)
+        self.assertEqual(rv.status_code, 302)
+
+        self.event_b.refresh_from_db()
+        with self.assertRaises(Event.DoesNotExist):
+            self.event_a.refresh_from_db()
+
+    def test_merging_basic_attributes(self):
+        """Merging: ensure basic (non-relationships) attributes are properly
+        saved."""
+        assertions = {
+            'id': self.event_b.id,
+            'slug': self.event_a.slug,
+            'completed': self.event_b.completed,
+            'assigned_to': self.event_a.assigned_to,
+            'start': self.event_b.start,
+            'end': self.event_a.end,
+            'host': self.event_b.host,
+            'administrator': self.event_a.administrator,
+            'url': self.event_b.url,
+            'reg_key': self.event_a.reg_key,
+            'admin_fee': self.event_b.admin_fee,
+            'invoice_status': self.event_a.invoice_status,
+            'attendance': self.event_b.attendance,
+            'country': self.event_a.country,
+            'latitude': self.event_b.latitude,
+            'longitude': self.event_a.longitude,
+            'learners_pre': self.event_b.learners_pre,
+            'learners_post': self.event_a.learners_post,
+            'instructors_pre': self.event_b.instructors_pre,
+            'instructors_post': self.event_a.instructors_post,
+            'learners_longterm': self.event_b.learners_longterm,
+            'contact': self.event_a.contact,
+            'venue': self.event_b.venue,
+            'notes': self.event_a.notes,
+            'address': self.event_a.address + self.event_b.address,
+        }
+        rv = self.client.post(self.url, data=self.strategy)
+        self.assertEqual(rv.status_code, 302)
+        self.event_b.refresh_from_db()
+
+        for key, value in assertions.items():
+            self.assertEqual(getattr(self.event_b, key), value, key)
+
+    def test_merging_m2m_attributes(self):
+        """Merging: ensure M2M-related fields are properly saved/combined."""
+        assertions = {
+            'tags': set(Tag.objects.filter(name__in=['SWC', 'DC', 'LC'])),
+            'task_set': set(Task.objects.none()),
+            'todoitem_set': set(TodoItem.objects
+                                        .filter(title='Find instructors')),
+        }
+
+        rv = self.client.post(self.url, data=self.strategy)
+        self.assertEqual(rv.status_code, 302)
+        self.event_b.refresh_from_db()
+
+        for key, value in assertions.items():
+            self.assertEqual(set(getattr(self.event_b, key).all()), value, key)

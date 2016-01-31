@@ -1,25 +1,54 @@
 import datetime
+from itertools import accumulate
 
-from django.db.models import Q
+from django.db.models import Count, Sum, Case, When, Value, IntegerField
+from rest_framework import viewsets
+from rest_framework.decorators import list_route
+from rest_framework.filters import DjangoFilterBackend
 from rest_framework.generics import ListAPIView
 from rest_framework.metadata import SimpleMetadata
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import (
     IsAuthenticatedOrReadOnly, IsAuthenticated
 )
+from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.views import APIView
+from rest_framework.viewsets import ViewSet
 
-from workshops.models import Badge, Airport, Event, TodoItem, Tag
+from workshops.models import (
+    Badge,
+    Airport,
+    Event,
+    TodoItem,
+    Tag,
+    Host,
+    Task,
+    Award,
+    Person,
+)
 from workshops.util import get_members, default_membership_cutoff
 
 from .serializers import (
     PersonNameEmailUsernameSerializer,
     ExportBadgesSerializer,
     ExportInstructorLocationsSerializer,
+    ExportEventSerializer,
+    TimelineTodoSerializer,
+    WorkshopsOverTimeSerializer,
+    InstructorsOverTimeSerializer,
+    InstructorNumTaughtSerializer,
+    HostSerializer,
     EventSerializer,
+    TaskSerializer,
     TodoSerializer,
+    AirportSerializer,
+    AwardSerializer,
+    PersonSerializer,
 )
+
+from .filters import EventFilter, TaskFilter, PersonFilter
 
 
 class QueryMetadata(SimpleMetadata):
@@ -36,6 +65,18 @@ class QueryMetadata(SimpleMetadata):
         return data
 
 
+class LargeResultsSetPagination(PageNumberPagination):
+    page_size = 1000
+    page_size_query_param = 'page_size'
+    max_page_size = 10000
+
+
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 100
+    page_size_query_param = 'page_size'
+    max_page_size = 1000
+
+
 class ApiRoot(APIView):
     def get(self, request, format=None):
         return Response({
@@ -49,6 +90,18 @@ class ApiRoot(APIView):
                                         request=request, format=format),
             'user-todos': reverse('api:user-todos',
                                   request=request, format=format),
+            'reports-list': reverse('api:reports-list',
+                                    request=request, format=format),
+
+            # "new" API list-type endpoints below
+            'airport-list': reverse('api:airport-list', request=request,
+                                    format=format),
+            'person-list': reverse('api:person-list', request=request,
+                                   format=format),
+            'event-list': reverse('api:event-list', request=request,
+                                  format=format),
+            'host-list': reverse('api:host-list', request=request,
+                                 format=format),
         })
 
 
@@ -118,7 +171,7 @@ class PublishedEvents(ListAPIView):
     permission_classes = (IsAuthenticatedOrReadOnly, )
     paginator = None  # disable pagination
 
-    serializer_class = EventSerializer
+    serializer_class = ExportEventSerializer
 
     metadata_class = QueryMetadata
 
@@ -156,7 +209,7 @@ class PublishedEvents(ListAPIView):
 class UserTodoItems(ListAPIView):
     permission_classes = (IsAuthenticated, )
     paginator = None
-    serializer_class = TodoSerializer
+    serializer_class = TimelineTodoSerializer
 
     def get_queryset(self):
         """Return current TODOs for currently logged in user."""
@@ -164,3 +217,362 @@ class UserTodoItems(ListAPIView):
                                .incomplete() \
                                .exclude(due=None) \
                                .select_related('event')
+
+
+class ReportsViewSet(ViewSet):
+    """This viewset will return data for many of our reports.
+
+    This is implemented as a ViewSet, but actions like create/list/retrieve/etc
+    are missing, because we want to still have the power and simplicity of
+    a router."""
+    permission_classes = (IsAuthenticated, )
+    queryset1 = Event.objects.past_events().order_by('start')
+    queryset2 = Award.objects.order_by('awarded')
+
+    # YAML renderer is turned off because it has problems reading our
+    # accumulative generator (lol)
+    renderer_classes = (BrowsableAPIRenderer, JSONRenderer)
+
+    def _add_counts(self, a, b):
+        c = b
+        c['count'] = (a.get('count') or 0) + (b.get('count') or 0)
+        return c
+
+    def _only_latest_date(self, iterable):
+        it = iter(iterable)
+        try:
+            prev_ = next(it)
+        except StopIteration:
+            return
+        for next_ in it:
+            if prev_['date'] != next_['date']:
+                yield prev_
+            prev_ = next_
+        yield next_
+
+    @list_route(methods=['GET'])
+    def workshops_over_time(self, request, format=None):
+        """Cumulative number of workshops run by Software Carpentry over
+        time."""
+        qs = self.queryset1.annotate(count=Count('id'))
+        serializer = WorkshopsOverTimeSerializer(qs, many=True)
+
+        # run a cumulative generator over the data
+        data = accumulate(serializer.data, self._add_counts)
+        return Response(data)
+
+    @list_route(methods=['GET'])
+    def learners_over_time(self, request, format=None):
+        """Cumulative number of learners attending Software-Carpentry workshops
+        over time."""
+        qs = self.queryset1.annotate(count=Sum('attendance'))
+        # we reuse the serializer because it works here too
+        serializer = WorkshopsOverTimeSerializer(qs, many=True)
+
+        # run a cumulative generator over the data
+        data = accumulate(serializer.data, self._add_counts)
+        return Response(data)
+
+    @list_route(methods=['GET'])
+    def instructors_over_time(self, request, format=None):
+        """Cumulative number of instructor appearances on workshops over
+        time."""
+        badges = Badge.objects.instructor_badges()
+        qs = self.queryset2.filter(badge__in=badges) \
+                           .annotate(count=Count('person__id')).distinct()
+        serializer = InstructorsOverTimeSerializer(qs, many=True)
+
+        # run a cumulative generator over the data
+        data = accumulate(serializer.data, self._add_counts)
+
+        # drop data for the same days by showing the last record for
+        # particular date
+        data = self._only_latest_date(data)
+
+        return Response(data)
+
+    @list_route(methods=['GET'])
+    def instructor_num_taught(self, request, format=None):
+        badges = Badge.objects.instructor_badges()
+        persons = Person.objects.filter(badges__in=badges).annotate(
+            num_taught=Count(
+                Case(
+                    When(
+                        task__role__name='instructor',
+                        then=Value(1)
+                    ),
+                    output_field=IntegerField()
+                )
+            )
+        ).filter(may_contact=True).order_by('-num_taught')
+        serializer = InstructorNumTaughtSerializer(
+            persons, many=True, context=dict(request=request))
+        return Response(serializer.data)
+
+    def _default_start_end_dates(self):
+        today = datetime.date.today()
+        start_of_year = datetime.date(today.year, 1, 1)
+        end_of_year = (datetime.date(today.year + 1, 1, 1) -
+                       datetime.timedelta(days=1))
+        return start_of_year, end_of_year
+
+    @list_route(methods=['GET'])
+    def all_activity_over_time(self, request, format=None):
+        """Workshops, instructors, and missing data in specific periods."""
+        start_default, end_default = self._default_start_end_dates()
+
+        start = self.request.query_params.get('start', None)
+        if start is not None:
+            try:
+                start = datetime.datetime.strptime(start, '%Y-%m-%d').date()
+            except ValueError:
+                start = start_default
+        else:
+            start = start_default
+
+        end = self.request.query_params.get('end', None)
+        if end is not None:
+            try:
+                end = datetime.datetime.strptime(end, '%Y-%m-%d').date()
+            except ValueError:
+                end = end_default
+        else:
+            end = end_default
+
+        events_qs = Event.objects.filter(start__gte=start, start__lte=end)
+        swc_tag = Tag.objects.get(name='SWC')
+        dc_tag = Tag.objects.get(name='DC')
+        wise_tag = Tag.objects.get(name='WiSE')
+        TTT_tag = Tag.objects.get(name='TTT')
+        self_organized_host = Host.objects.get(domain='self-organized')
+
+        # count workshops: SWC, DC, total (SWC and/or DC), self-organized,
+        # WiSE, TTT
+        swc_workshops = events_qs.filter(tags=swc_tag)
+        dc_workshops = events_qs.filter(tags=dc_tag)
+        swc_dc_workshops = events_qs.filter(tags__in=[swc_tag, dc_tag]).count()
+        wise_workshops = events_qs.filter(tags=wise_tag).count()
+        ttt_workshops = events_qs.filter(tags=TTT_tag).count()
+        self_organized_workshops = events_qs \
+            .filter(administrator=self_organized_host).count()
+
+        # total and unique instructors for both SWC and DC workshops
+        swc_total_instr = Person.objects \
+            .filter(task__event__in=swc_workshops,
+                    task__role__name='instructor')
+        swc_unique_instr = swc_total_instr.distinct().count()
+        swc_total_instr = swc_total_instr.count()
+        dc_total_instr = Person.objects \
+            .filter(task__event__in=dc_workshops,
+                    task__role__name='instructor')
+        dc_unique_instr = dc_total_instr.distinct().count()
+        dc_total_instr = dc_total_instr.count()
+
+        # total learners for both SWC and DC workshops
+        swc_total_learners = swc_workshops.aggregate(count=Sum('attendance'))
+        swc_total_learners = swc_total_learners['count']
+        dc_total_learners = dc_workshops.aggregate(count=Sum('attendance'))
+        dc_total_learners = dc_total_learners['count']
+
+        # Workshops missing any of this data.
+        # There's no point in using hyperlinks here, because it would:
+        # a) require using reverse() unless we somehow managed to switch to
+        #    serializer for this view
+        # b) make JS part even harder (what is available right now just works)
+        missing_attendance = events_qs.filter(attendance=None) \
+                                      .values_list('slug', flat=True)
+        missing_instructors = events_qs.annotate(
+            instructors=Sum(
+                Case(
+                    When(task__role__name='instructor', then=Value(1)),
+                    default=Value(0),
+                    output_field=IntegerField()
+                )
+            )
+        ).filter(instructors=0).values_list('slug', flat=True)
+
+        return Response({
+            'start': start,
+            'end': end,
+            'workshops': {
+                'SWC': swc_workshops.count(),
+                'DC': dc_workshops.count(),
+                'SWC,DC': swc_dc_workshops,
+                'WiSE': wise_workshops,
+                'TTT': ttt_workshops,
+                'self-organized': self_organized_workshops,
+            },
+            'instructors': {
+                'SWC': {
+                    'total': swc_total_instr,
+                    'unique': swc_unique_instr,
+                },
+                'DC': {
+                    'total': dc_total_instr,
+                    'unique': dc_unique_instr,
+                },
+            },
+            'learners': {
+                'SWC': swc_total_learners,
+                'DC': dc_total_learners,
+            },
+            'missing': {
+                'attendance': missing_attendance,
+                'instructors': missing_instructors,
+            }
+        })
+
+    def list(self, request, format=None):
+        """Display list of links to the reports."""
+        return Response({
+            'reports-all-activity-over-time': reverse(
+                'api:reports-all-activity-over-time', request=request,
+                format=format),
+            'reports-instructor-num-taught': reverse(
+                'api:reports-instructor-num-taught', request=request,
+                format=format),
+            'reports-instructors-over-time': reverse(
+                'api:reports-instructors-over-time', request=request,
+                format=format),
+            'reports-learners-over-time': reverse(
+                'api:reports-learners-over-time', request=request,
+                format=format),
+            'reports-workshops-over-time': reverse(
+                'api:reports-workshops-over-time', request=request,
+                format=format),
+        })
+
+
+# ----------------------
+# "new" API starts below
+# ----------------------
+
+
+class HostViewSet(viewsets.ReadOnlyModelViewSet):
+    """List many hosts or retrieve only one."""
+    permission_classes = (IsAuthenticated, )
+    queryset = Host.objects.all()
+    serializer_class = HostSerializer
+    lookup_field = 'domain'
+    lookup_value_regex = r'[^/]+'  # the default one doesn't work with domains
+    pagination_class = StandardResultsSetPagination
+
+
+class EventViewSet(viewsets.ReadOnlyModelViewSet):
+    """List many events or retrieve only one."""
+    permission_classes = (IsAuthenticated, )
+    queryset = Event.objects.all().select_related('host', 'administrator') \
+                                  .prefetch_related('tags')
+    serializer_class = EventSerializer
+    lookup_field = 'slug'
+    pagination_class = StandardResultsSetPagination
+    filter_backends = (DjangoFilterBackend, )
+    filter_class = EventFilter
+
+
+class TaskViewSet(viewsets.ReadOnlyModelViewSet):
+    """List tasks belonging to specific event."""
+    permission_classes = (IsAuthenticated, )
+    serializer_class = TaskSerializer
+    pagination_class = StandardResultsSetPagination
+    filter_backends = (DjangoFilterBackend, )
+    filter_class = TaskFilter
+    _event_slug = None
+
+    def get_queryset(self):
+        qs = Task.objects.all().select_related('person', 'role',
+                                               'person__airport')
+        if self._event_slug:
+            qs = qs.filter(event__slug=self._event_slug)
+        return qs
+
+    def list(self, request, event_slug=None):
+        self._event_slug = event_slug
+        return super().list(request)
+
+    def retrieve(self, request, pk=None, event_slug=None):
+        self._event_slug = event_slug
+        return super().retrieve(request, pk=pk)
+
+
+class TodoViewSet(viewsets.ReadOnlyModelViewSet):
+    """List todos belonging to specific event."""
+    permission_classes = (IsAuthenticated, )
+    serializer_class = TodoSerializer
+    _event_slug = None
+
+    def get_queryset(self):
+        qs = TodoItem.objects.all()
+        if self._event_slug:
+            qs = qs.filter(event__slug=self._event_slug)
+        return qs
+
+    def list(self, request, event_slug=None):
+        self._event_slug = event_slug
+        return super().list(request)
+
+    def retrieve(self, request, pk=None, event_slug=None):
+        self._event_slug = event_slug
+        return super().retrieve(request, pk=pk)
+
+
+class PersonViewSet(viewsets.ReadOnlyModelViewSet):
+    """List many people or retrieve only one person."""
+    permission_classes = (IsAuthenticated, )
+    queryset = Person.objects.all().select_related('airport') \
+                     .prefetch_related('badges', 'domains', 'lessons')
+    serializer_class = PersonSerializer
+    pagination_class = StandardResultsSetPagination
+    filter_backends = (DjangoFilterBackend, )
+    filter_class = PersonFilter
+
+
+class AwardViewSet(viewsets.ReadOnlyModelViewSet):
+    """List awards belonging to specific person."""
+    permission_classes = (IsAuthenticated, )
+    serializer_class = AwardSerializer
+    _person_pk = None
+
+    def get_queryset(self):
+        qs = Award.objects.all()
+        if self._person_pk:
+            qs = qs.filter(person=self._person_pk)
+        return qs
+
+    def list(self, request, person_pk=None):
+        self._person_pk = person_pk
+        return super().list(request)
+
+    def retrieve(self, request, pk=None, person_pk=None):
+        self._person_pk = person_pk
+        return super().retrieve(request, pk=pk)
+
+
+class PersonTaskViewSet(viewsets.ReadOnlyModelViewSet):
+    """List tasks done by specific person."""
+    permission_classes = (IsAuthenticated, )
+    serializer_class = TaskSerializer
+    _person_pk = None
+
+    def get_queryset(self):
+        qs = Task.objects.all()
+        if self._person_pk:
+            qs = qs.filter(person=self._person_pk)
+        return qs
+
+    def list(self, request, person_pk=None):
+        self._person_pk = person_pk
+        return super().list(request)
+
+    def retrieve(self, request, pk=None, person_pk=None):
+        self._person_pk = person_pk
+        return super().retrieve(request, pk=pk)
+
+
+class AirportViewSet(viewsets.ReadOnlyModelViewSet):
+    """List many airports or retrieve only one."""
+    permission_classes = (IsAuthenticated, )
+    queryset = Airport.objects.all()
+    serializer_class = AirportSerializer
+    lookup_field = 'iata'
+    pagination_class = StandardResultsSetPagination

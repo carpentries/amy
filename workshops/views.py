@@ -1,17 +1,13 @@
-from collections import defaultdict
 import csv
 import datetime
 import io
 import re
 import requests
-from urllib.parse import urlparse
 
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import SetPasswordForm, PasswordChangeForm
-from django.contrib.auth.models import Group
-from django.core.paginator import EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
 from django.core.exceptions import (
     ObjectDoesNotExist,
@@ -21,10 +17,9 @@ from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 from django.http import Http404, HttpResponse, JsonResponse
 from django.http import HttpResponseBadRequest
-from django.db import IntegrityError
-from django.db.models import Count, Sum, Q, F, Model, ProtectedError
+from django.db import IntegrityError, transaction
+from django.db.models import Count, Q, F, Model, ProtectedError
 from django.db.models import Case, When, Value, IntegerField
-from django.forms import modelformset_factory
 from django.shortcuts import redirect, render, get_object_or_404
 from django.template.loader import get_template
 from django.views.decorators.http import require_POST
@@ -41,7 +36,6 @@ from workshops.models import (
     Badge,
     Event,
     Qualification,
-    Lesson,
     Person,
     Role,
     Host,
@@ -62,10 +56,11 @@ from workshops.forms import (
     ProfileUpdateRequestForm, PersonLookupForm, bootstrap_helper_wider_labels,
     SimpleTodoForm, bootstrap_helper_inline_formsets, BootstrapHelper,
     AdminLookupForm, ProfileUpdateRequestFormNoCaptcha, MembershipForm,
+    TodoFormSet, EventsSelectionForm, EventsMergeForm,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
-    create_uploaded_persons_tasks, InternalError, Paginator, merge_persons,
+    create_uploaded_persons_tasks, InternalError, merge_persons,
     update_event_attendance_from_tasks,
     WrongWorkshopURL,
     generate_url_to_event_index,
@@ -74,6 +69,9 @@ from workshops.util import (
     parse_tags_from_event_website,
     validate_tags_from_event_website,
     assignment_selection,
+    get_pagination_items,
+    failed_to_delete,
+    assign,
 )
 
 from workshops.filters import (
@@ -81,11 +79,7 @@ from workshops.filters import (
     EventRequestFilter,
 )
 
-#------------------------------------------------------------
-
-ITEMS_PER_PAGE = 25
-
-#------------------------------------------------------------
+# ------------------------------------------------------------
 
 
 class CreateViewContext(SuccessMessageMixin, CreateView):
@@ -220,7 +214,7 @@ def changes_log(request):
     log = Revision.objects.all().select_related('user') \
                                 .prefetch_related('version_set') \
                                 .order_by('-date_created')
-    log = _get_pagination_items(request, log)
+    log = get_pagination_items(request, log)
     context = {
         'log': log
     }
@@ -234,7 +228,7 @@ def all_hosts(request):
     '''List all hosts.'''
 
     filter = HostFilter(request.GET, queryset=Host.objects.all())
-    hosts = _get_pagination_items(request, filter)
+    hosts = get_pagination_items(request, filter)
     context = {'title' : 'All Hosts',
                'all_hosts' : hosts,
                'filter': filter,
@@ -281,7 +275,7 @@ def host_delete(request, host_domain):
         messages.success(request, 'Host was deleted successfully.')
         return redirect(reverse('all_hosts'))
     except ProtectedError as e:
-        return _failed_to_delete(request, host, e.protected_objects)
+        return failed_to_delete(request, host, e.protected_objects)
 
 
 @login_required
@@ -332,8 +326,7 @@ def membership_delete(request, membership_id):
         messages.success(request, 'Membership was deleted successfully.')
         return redirect(reverse('host_details', args=[host.domain]))
     except ProtectedError as e:
-        return _failed_to_delete(request, host, e.protected_objects)
-
+        return failed_to_delete(request, host, e.protected_objects)
 
 
 #------------------------------------------------------------
@@ -345,7 +338,7 @@ AIRPORT_FIELDS = ['iata', 'fullname', 'country', 'latitude', 'longitude']
 def all_airports(request):
     '''List all airports.'''
     filter = AirportFilter(request.GET, queryset=Airport.objects.all())
-    airports = _get_pagination_items(request, filter)
+    airports = get_pagination_items(request, filter)
     context = {'title' : 'All Airports',
                'all_airports' : airports,
                'filter': filter,
@@ -390,7 +383,7 @@ def airport_delete(request, airport_iata):
         messages.success(request, 'Airport was deleted successfully.')
         return redirect(reverse('all_airports'))
     except ProtectedError as e:
-        return _failed_to_delete(request, airport, e.protected_objects)
+        return failed_to_delete(request, airport, e.protected_objects)
 
 #------------------------------------------------------------
 
@@ -406,7 +399,7 @@ def all_persons(request):
     # faster method
     instructors = Badge.objects.instructor_badges() \
                                .values_list('person', flat=True)
-    persons = _get_pagination_items(request, filter)
+    persons = get_pagination_items(request, filter)
     context = {'title' : 'All Persons',
                'all_persons' : persons,
                'instructors': instructors,
@@ -749,7 +742,7 @@ def person_delete(request, person_id):
         messages.success(request, 'Person was deleted successfully.')
         return redirect(reverse('all_persons'))
     except ProtectedError as e:
-        return _failed_to_delete(request, person, e.protected_objects)
+        return failed_to_delete(request, person, e.protected_objects)
 
 
 class PersonPermissions(LoginRequiredMixin, PermissionRequiredMixin,
@@ -826,9 +819,9 @@ def person_merge(request):
         form = PersonMergeForm()
 
     context = {'title': 'Merge Persons',
-               'person_merge_form': form,
+               'form': form,
                'form_helper': bootstrap_helper}
-    return render(request, 'workshops/person_merge_form.html', context)
+    return render(request, 'workshops/merge_form.html', context)
 
 
 @login_required
@@ -871,7 +864,7 @@ def all_events(request):
         queryset=Event.objects.all().defer('notes')  # notes are too large
                                     .prefetch_related('host', 'tags'),
     )
-    events = _get_pagination_items(request, filter)
+    events = get_pagination_items(request, filter)
     context = {'title' : 'All Events',
                'all_events' : events,
                'filter': filter,
@@ -1099,7 +1092,7 @@ def event_delete(request, event_ident):
     except ObjectDoesNotExist:
         raise Http404("No event found matching the query.")
     except ProtectedError as e:
-        return _failed_to_delete(request, event, e.protected_objects)
+        return failed_to_delete(request, event, e.protected_objects)
 
 
 @login_required
@@ -1160,16 +1153,125 @@ def event_import(request):
 @login_required
 @permission_required('workshops.change_event', raise_exception=True)
 def event_assign(request, event_ident, person_id=None):
-    """Set event.assigned_to. See `_assign` docstring for more information."""
+    """Set event.assigned_to. See `assign` docstring for more information."""
     try:
         event = Event.get_by_ident(event_ident)
 
-        _assign(request, event, person_id)
+        assign(request, event, person_id)
 
         return redirect(reverse('event_details', args=[event.get_ident()]))
 
     except Event.DoesNotExist:
         raise Http404("No event found matching the query.")
+
+
+@login_required
+@permission_required(['workshops.delete_event', 'workshops.change_event'],
+                     raise_exception=True)
+def events_merge(request):
+    """Display two events side by side on GET and merge them on POST.
+
+    If no events are supplied via GET params, display event selection form."""
+
+    # field names come from selectable widgets (name_0 for repr, name_1 for pk)
+    obj_a_slug = request.GET.get('event_a_0')
+    obj_b_slug = request.GET.get('event_b_0')
+
+    if not obj_a_slug and not obj_b_slug:
+        context = {
+            'title': 'Merge Events',
+            'form': EventsSelectionForm(),
+            'form_helper': bootstrap_helper_get,
+        }
+        return render(request, 'workshops/merge_form.html', context)
+
+    obj_a = get_object_or_404(Event, slug=obj_a_slug)
+    obj_b = get_object_or_404(Event, slug=obj_b_slug)
+
+    form = EventsMergeForm(initial=dict(event_a=obj_a, event_b=obj_b))
+
+    if request.method == "POST":
+        form = EventsMergeForm(request.POST)
+
+        if form.is_valid():
+            data = form.cleaned_data
+
+            event_a = data['event_a']
+            event_b = data['event_b']
+
+            base_event = event_a  # stays in the database after merge
+            merging = event_b  # will be removed from DB after merge
+            if data['id'] == 'obj_b':
+                base_event = event_b
+                merging = event_a
+
+            # non-M2M-relationships:
+            easy = (
+                'slug', 'completed', 'assigned_to', 'start', 'end', 'host',
+                'administrator', 'url', 'reg_key', 'admin_fee',
+                'invoice_status', 'attendance', 'contact', 'country', 'venue',
+                'address', 'latitude', 'longitude', 'learners_pre',
+                'learners_post',  'instructors_pre', 'instructors_post',
+                'learners_longterm', 'notes',
+            )
+            # M2M relationships
+            difficult = ('tags', 'task_set', 'todoitem_set')
+
+            try:
+                with transaction.atomic():
+                    for attr in easy:
+                        value = data.get(attr)
+                        if value == 'obj_a':
+                            setattr(base_event, attr, getattr(event_a, attr))
+                        elif value == 'obj_b':
+                            setattr(base_event, attr, getattr(event_b, attr))
+                        elif value == 'combine':
+                            try:
+                                new_value = (getattr(event_a, attr) +
+                                             getattr(event_b, attr))
+                                setattr(base_event, attr, new_value)
+                            except TypeError:
+                                # probably 'unsupported operand type', but we
+                                # can't do much about it…
+                                pass
+
+                    for attr in difficult:
+                        objects_a = getattr(event_a, attr)
+                        objects_b = getattr(event_b, attr)
+
+                        manager = getattr(base_event, attr)
+                        value = data.get(attr)
+
+                        if value == 'obj_a' and manager != objects_a:
+                            manager.all().delete()
+                            manager.add(*list(objects_a.all()))
+
+                        elif value == 'obj_b' and manager != objects_b:
+                            manager.all().delete()
+                            manager.add(*list(objects_b.all()))
+
+                        elif value == 'combine':
+                            # remove duplicates
+                            manager.add(*list(objects_a.all() |
+                                              objects_b.all()))
+
+                    merging.delete()
+
+                    base_event.save()
+
+            except ProtectedError as e:
+                return failed_to_delete(request, object=merging,
+                                        protected_objects=e.protected_objects)
+
+            return redirect(base_event.get_absolute_url())
+
+    context = {
+        'title': 'Merge two events',
+        'obj_a': obj_a,
+        'obj_b': obj_b,
+        'form': form,
+    }
+    return render(request, 'workshops/events_merge.html', context)
 
 #------------------------------------------------------------
 
@@ -1182,7 +1284,7 @@ def all_tasks(request):
         queryset=Task.objects.all().select_related('event', 'person', 'role')
                                    .defer('person__notes', 'event__notes')
     )
-    tasks = _get_pagination_items(request, filter)
+    tasks = get_pagination_items(request, filter)
     context = {'title' : 'All Tasks',
                'all_tasks' : tasks,
                'filter': filter,
@@ -1287,7 +1389,7 @@ def badge_details(request, badge_name):
                            'You don\'t have permissions to award a badge.')
 
     awards = badge.award_set.all()
-    awards = _get_pagination_items(request, awards)
+    awards = get_pagination_items(request, awards)
 
     context = {'title': 'Badge {0}'.format(badge),
                'badge': badge,
@@ -1368,7 +1470,7 @@ def instructors(request):
                 for badge in data['instructor_badges']:
                     instructors = instructors.filter(badges__name=badge)
 
-    instructors = _get_pagination_items(request, instructors)
+    instructors = get_pagination_items(request, instructors)
     context = {
         'title': 'Find Instructors',
         'form': form,
@@ -1540,57 +1642,53 @@ def export_members(request):
 
 @login_required
 def workshops_over_time(request):
-    '''Export CSV of count of workshops vs. time.'''
-
-    data = dict(Event.objects
-                     .past_events()
-                     .values_list('start')
-                     .annotate(Count('id')))
-    return _time_series(request, data, 'Workshop over time')
+    '''Export JSON of count of workshops vs. time.'''
+    context = {
+        'api_endpoint': reverse('api:reports-workshops-over-time'),
+        'title': 'Workshops over time',
+    }
+    return render(request, 'workshops/time_series.html', context)
 
 
 @login_required
 def learners_over_time(request):
-    '''Export CSV of count of learners vs. time.'''
-
-    data = dict(Event.objects
-                     .past_events()
-                     .values_list('start')
-                     .annotate(Sum('attendance')))
-    return _time_series(request, data, 'Learners over time')
+    '''Export JSON of count of learners vs. time.'''
+    context = {
+        'api_endpoint': reverse('api:reports-learners-over-time'),
+        'title': 'Learners over time',
+    }
+    return render(request, 'workshops/time_series.html', context)
 
 
 @login_required
 def instructors_over_time(request):
-    '''Export CSV of count of instructors vs. time.'''
-
-    badges = Badge.objects.instructor_badges()
-    data = dict(Award.objects.filter(badge__in=badges)
-                     .values_list('awarded')
-                     .annotate(Count('person__id')))
-    return _time_series(request, data, 'Instructors over time')
+    '''Export JSON of count of instructors vs. time.'''
+    context = {
+        'api_endpoint': reverse('api:reports-instructors-over-time'),
+        'title': 'Instructors over time',
+    }
+    return render(request, 'workshops/time_series.html', context)
 
 
 @login_required
 def instructor_num_taught(request):
-    '''Export CSV of how often instructors have taught.'''
-
-    badges = Badge.objects.instructor_badges()
-    awards = Award.objects.filter(badge__in=badges).annotate(
-        num_taught=Count(
-            Case(
-                When(
-                    person__task__role__name='instructor',
-                    then=Value(1)
-                ),
-                output_field=IntegerField()
-            )
-        )
-    ).select_related('person', 'person__airport') \
-     .filter(person__may_contact=True).order_by('-num_taught', 'awarded')
-    context = {'title': 'Frequency of Instruction',
-               'awards': awards}
+    '''Export JSON of how often instructors have taught.'''
+    context = {
+        'api_endpoint': reverse('api:reports-instructor-num-taught'),
+        'title': 'Frequency of Instruction',
+    }
     return render(request, 'workshops/instructor_num_taught.html', context)
+
+
+@login_required
+def all_activity_over_time(request):
+    """Display number of workshops (of differend kinds), instructors and
+    learners over some specific period of time."""
+    context = {
+        'api_endpoint': reverse('api:reports-all-activity-over-time'),
+        'title': 'All activity over time',
+    }
+    return render(request, 'workshops/all_activity_over_time.html', context)
 
 
 @login_required
@@ -1714,82 +1812,6 @@ def object_changes(request, revision_id):
 
 # ------------------------------------------------------------
 
-def _get_pagination_items(request, all_objects):
-    '''Select paginated items.'''
-
-    # Get parameters.
-    items = request.GET.get('items_per_page', ITEMS_PER_PAGE)
-    if items != 'all':
-        try:
-            items = int(items)
-        except ValueError:
-            items = ITEMS_PER_PAGE
-    else:
-        # Show everything.
-        items = all_objects.count()
-
-    # Figure out where we are.
-    page = request.GET.get('page')
-
-    # Show selected items.
-    paginator = Paginator(all_objects, items)
-
-    # Select the pages.
-    try:
-        result = paginator.page(page)
-
-    # If page is not an integer, deliver first page.
-    except PageNotAnInteger:
-        result = paginator.page(1)
-
-    # If page is out of range, deliver last page of results.
-    except EmptyPage:
-        result = paginator.page(paginator.num_pages)
-
-    return result
-
-
-def _time_series(request, data, title):
-    '''Prepare time-series data for display and render it.'''
-
-    # Make sure addition will work.
-    for key in data:
-        if data[key] is None:
-            data[key] = 0
-
-    # Create running total.
-    data = list(data.items())
-    data.sort()
-    for i in range(1, len(data)):
-        data[i] = (data[i][0], data[i][1] + data[i-1][1])
-
-    # Textualize and display.
-    data = '\n'.join(['{0},{1}'.format(*d) for d in data])
-    context = {'title': title,
-               'data': data}
-    return render(request, 'workshops/time_series.html', context)
-
-
-def _failed_to_delete(request, object, protected_objects, back=None):
-    context = {
-        'title': 'Failed to delete',
-        'back': back or object.get_absolute_url,
-        'object': object,
-        'refs': defaultdict(list),
-    }
-
-    for obj in protected_objects:
-        # e.g. for model Award its plural name is 'awards'
-        name = str(obj.__class__._meta.verbose_name_plural)
-        context['refs'][name].append(obj)
-
-    # this trick enables looping through defaultdict instance
-    context['refs'].default_factory = None
-
-    return render(request, 'workshops/failed_to_delete.html', context)
-
-#------------------------------------------------------------
-
 
 class SWCEventRequest(View):
     form_class = SWCEventRequestForm
@@ -1883,7 +1905,7 @@ def all_eventrequests(request):
         data,
         queryset=EventRequest.objects.all(),
     )
-    eventrequests = _get_pagination_items(request, filter)
+    eventrequests = get_pagination_items(request, filter)
     context = {
         'title': 'Workshop requests',
         'requests': eventrequests,
@@ -1961,10 +1983,10 @@ def eventrequest_accept(request, request_id):
 @login_required
 @permission_required(['workshops.change_eventrequest'], raise_exception=True)
 def eventrequest_assign(request, request_id, person_id=None):
-    """Set eventrequest.assigned_to. See `_assign` docstring for more
+    """Set eventrequest.assigned_to. See `assign` docstring for more
     information."""
     event_req = get_object_or_404(EventRequest, pk=request_id)
-    _assign(request, event_req, person_id)
+    assign(request, event_req, person_id)
     return redirect(reverse('eventrequest_details', args=[event_req.pk]))
 
 
@@ -2182,10 +2204,8 @@ def todos_add(request, event_ident):
 
     initial = []
     base = dt.now()
-    if event.start and event.end:
-        extra = 9
-    else:
-        extra = 10
+
+    if not event.start or not event.end:
         initial = [
             {
                 'title': 'Set date with host',
@@ -2193,9 +2213,6 @@ def todos_add(request, event_ident):
                 'event': event,
             },
         ]
-
-    TodoFormSet = modelformset_factory(TodoItem, form=SimpleTodoForm,
-                                       extra=extra)
 
     formset = TodoFormSet(queryset=TodoItem.objects.none(), initial=initial + [
         {
@@ -2325,29 +2342,3 @@ def todo_delete(request, todo_id):
                      extra_tags='todos')
 
     return redirect(event_details, event_ident)
-
-
-def _assign(request, obj, person_id):
-    """Set obj.assigned_to. This view helper works with both POST and GET
-    requests:
-
-    * POST: read person ID from POST's person_1
-    * GET: read person_id from URL
-    * both: if person_id is None then make event.assigned_to empty
-    * otherwise assign matching person.
-
-    This is not a view, but it's used in some."""
-    try:
-        if request.method == "POST":
-            person_id = request.POST.get('person_1', None)
-
-        if person_id is None:
-            obj.assigned_to = None
-        else:
-            person = Person.objects.get(pk=person_id)
-            obj.assigned_to = person
-
-        obj.save()
-
-    except Person.DoesNotExist:
-        raise Http404("No person found matching the query.")

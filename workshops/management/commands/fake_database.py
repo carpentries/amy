@@ -56,12 +56,26 @@ class Command(BaseCommand):
         for tag, details in tags:
             Tag.objects.create(name=tag, details=details)
 
+    def fake_badges(self, faker):
+        """Provide fixed badges (before they end up in fixtures, see #626)."""
+        # 4 badges are already in the migrations: swc-instructor,
+        # dc-instructor, maintainer, and trainer
+        badges = [
+            ('creator', 'Creator',
+             'Creating learning materials and other content'),
+            ('member', 'Member', 'Software Carpentry Foundation member'),
+            ('organizer', 'Organizer',
+             'Organizing workshops and learning groups'),
+        ]
+        for name, title, criteria in badges:
+            Badge.objects.create(name=name, title=title, criteria=criteria)
+
     def fake_instructors(self, faker, count=5, add_badge=True,
                          add_qualifications=True):
         """Add a few people with random instructor badge, random airport, and
         random qualification."""
         airports = list(Airport.objects.all())
-        badges = list(Badge.objects.all())
+        badges = list(Badge.objects.instructor_badges())
         lessons = list(Lesson.objects.all())
         for i in range(count):
             user_name = faker.user_name()
@@ -228,6 +242,7 @@ class Command(BaseCommand):
         self.fake_airports(faker)
         self.fake_roles(faker)
         self.fake_tags(faker)
+        self.fake_badges(faker)
         self.fake_instructors(faker)
         self.fake_noninstructors(faker)
         self.fake_hosts(faker)

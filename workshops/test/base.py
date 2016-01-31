@@ -20,7 +20,8 @@ from ..models import \
     Person, \
     Qualification, \
     Host, \
-    Role
+    Role, \
+    Tag
 
 from ..util import universal_date_format
 
@@ -188,6 +189,17 @@ class TestBase(TestCase):
         self.ron.user_permissions.add(add_badge)
         self.spiderman.groups.add(badge_admin)
         self.spiderman.user_permissions.add(add_badge)
+
+    def _setUpTags(self):
+        """Set up tags (the same as in production database, minus some added
+        via migrations)."""
+        Tag.objects.bulk_create([
+            Tag(name='TTT', details=''),
+            Tag(name='WiSE', details=''),
+            Tag(name='LC', details=''),
+            Tag(name='DC', details=''),
+            Tag(name='SWC', details=''),
+        ])
 
     def _setUpEvents(self):
         '''Set up a bunch of events and record some statistics.'''
