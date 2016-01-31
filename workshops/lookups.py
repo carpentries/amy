@@ -66,8 +66,18 @@ class AirportLookup(ModelLookup):
     )
 
 
+@login_required
+class LanguageLookup(ModelLookup):
+    model = models.Language
+    search_fields = (
+        'name__icontains',
+        'language__icontains'
+    )
+
+
 registry.register(EventLookup)
 registry.register(HostLookup)
 registry.register(PersonLookup)
 registry.register(AdminLookup)
 registry.register(AirportLookup)
+registry.register(LanguageLookup)

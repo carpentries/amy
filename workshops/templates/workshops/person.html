@@ -76,6 +76,17 @@
     {% else %}
     <h5>No tasks.</h5>
     {% endif %}
+
+    {% if language_qualifications %}
+    <h5>Languages:</h5>
+    <ul>
+      {% for lang in language_qualifications %}
+      <li>{{ lang.language }} ({{lang.weight}})</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <h5>No languages.</h5>
+    {% endif %}
   </div>
 
   <div class="col-sm-6">

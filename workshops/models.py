@@ -249,6 +249,11 @@ class Person(AbstractBaseUser, PermissionsMixin):
         limit_choices_to=~Q(name__startswith='Don\'t know yet'),
         blank=True,
     )
+    languages = models.ManyToManyField(
+        'Language',
+        through='LanguageQualification',
+        blank=True,
+    )
 
     # new people will be inactive by default
     is_active = models.BooleanField(default=False)
@@ -814,6 +819,10 @@ class Event(AssignmentMixin, models.Model):
         super(Event, self).save(*args, **kwargs)
 
 
+def get_english():
+    return Language.objects.get(language='en').pk
+
+
 class EventRequest(AssignmentMixin, models.Model):
     active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -838,11 +847,11 @@ class EventRequest(AssignmentMixin, models.Model):
                   'to accommodate those requests.',
         verbose_name='Preferred workshop dates',
     )
-    language = models.CharField(
-        max_length=STR_LONG,
+    language = models.ForeignKey(
+        'Language',
         verbose_name='What human language do you want the workshop to be run'
                      ' in?',
-        blank=True, default='English',
+        blank=True, default=get_english,
     )
 
     WORKSHOP_TYPE_CHOICES = (
@@ -1143,6 +1152,43 @@ class KnowledgeDomain(models.Model):
 
     def __str__(self):
         return self.name
+
+#------------------------------------------------------------
+
+class Language(models.Model):
+    """A language tag.
+
+    https://tools.ietf.org/html/rfc5646
+    """
+    name = models.CharField(
+        max_length=STR_MED,
+        help_text='Description of this language tag in English')
+    language = models.CharField(
+        max_length=STR_SHORT,
+        help_text=
+            'Primary language subtag.  '
+            'https://tools.ietf.org/html/rfc5646#section-2.2.1')
+
+    def tag(self):
+        return self.language
+
+    def __str__(self):
+        return self.name
+
+
+class LanguageQualification(models.Model):
+    """What language can someone speak?
+
+    https://tools.ietf.org/html/rfc7231#section-5.3.5
+    """
+    person = models.ForeignKey(Person)
+    language = models.ForeignKey(Language)
+    weight = models.FloatField(
+        default=1,
+        help_text='https://tools.ietf.org/html/rfc7231#section-5.3.1')
+
+    def __str__(self):
+        return '({}, {}, {})'.format(self.person, self.language, self.weight)
 
 # ------------------------------------------------------------
 

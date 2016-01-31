@@ -41,6 +41,7 @@ from workshops.models import (
     Badge,
     Event,
     Qualification,
+    LanguageQualification,
     Lesson,
     Person,
     Role,
@@ -424,6 +425,7 @@ def person_details(request, person_id):
     tasks = person.task_set.all()
     lessons = person.lessons.all()
     domains = person.domains.all()
+    language_qualifications = person.languagequalification_set.all()
     context = {
         'title': 'Person {0}'.format(person),
         'person': person,
@@ -431,6 +433,7 @@ def person_details(request, person_id):
         'tasks': tasks,
         'lessons': lessons,
         'domains': domains,
+        'language_qualifications': language_qualifications,
     }
     return render(request, 'workshops/person.html', context)
 
@@ -619,6 +622,10 @@ class PersonCreate(LoginRequiredMixin, PermissionRequiredMixin,
         for lesson in form.cleaned_data['lessons']:
             Qualification.objects.create(lesson=lesson, person=self.object)
 
+        for language in form.cleaned_data['languages']:
+            LanguageQualification.objects.create(
+                person=self.object, language=language)
+
         # Important: we need to use ModelFormMixin.form_valid() here!
         # But by doing so we omit SuccessMessageMixin completely, so we need to
         # simulate it.  The code below is almost identical to
@@ -695,7 +702,7 @@ def person_edit(request, person_id):
                                extra_tags='tasks')
 
         else:
-            person_form = PersonForm(request.POST, prefix='person',
+            person_form = PersonForm(data=request.POST, prefix='person',
                                      instance=person)
             if person_form.is_valid():
                 lessons = person_form.cleaned_data['lessons']
@@ -709,6 +716,11 @@ def person_edit(request, person_id):
 
                 # don't save related lessons
                 del person_form.cleaned_data['lessons']
+
+                LanguageQualification.objects.filter(person=person).delete()
+                for language in person_form.cleaned_data['languages']:
+                    LanguageQualification.objects.create(
+                        person=person, language=language)
 
                 person = person_form.save()
 
@@ -1361,6 +1373,11 @@ def instructors(request):
                 instructors = instructors.filter(
                     airport__country__in=data['country']
                 ).order_by('family')
+
+            if data['language']:
+                instructors = instructors.filter(
+                    languagequalification__language=data['language'],
+                    languagequalification__weight__gte=0.5)
 
             if data['gender']:
                 instructors = instructors.filter(gender=data['gender'])
