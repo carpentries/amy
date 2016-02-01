@@ -170,8 +170,29 @@ DATABASES = {
 }
 
 # Authentication
-
 AUTH_USER_MODEL = 'workshops.Person'
+VALIDATION = 'django.contrib.auth.password_validation.'
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': VALIDATION + 'UserAttributeSimilarityValidator',
+        'OPTIONS': {
+            'user_attributes': ('username', 'personal', 'middle', 'family',
+                                'email')
+        }
+    },
+    {
+        'NAME': VALIDATION + 'MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 10,
+        }
+    },
+    {
+        'NAME': VALIDATION + 'CommonPasswordValidator',
+    },
+    {
+        'NAME': VALIDATION + 'NumericPasswordValidator',
+    },
+]
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.7/topics/i18n/
