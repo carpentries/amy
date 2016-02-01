@@ -27,8 +27,8 @@ from django.views.generic import ListView, DetailView, View
 from django.views.generic.edit import CreateView, UpdateView, ModelFormMixin
 from django.contrib.auth.decorators import login_required, permission_required
 
-from reversion import get_for_object
 from reversion.models import Revision
+from reversion.revisions import get_for_object
 
 from workshops.models import (
     Airport,
