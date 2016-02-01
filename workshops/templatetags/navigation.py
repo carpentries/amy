@@ -1,5 +1,7 @@
 from django import template
 from django.core.urlresolvers import reverse
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 
 register = template.Library()
 
@@ -21,17 +23,20 @@ def navbar_template(title, url, active=False, disabled=False):
 
     if active:
         classes.append('active')
-        screen_reader = '<span class="sr-only">(active)</span>'
+        screen_reader = mark_safe('<span class="sr-only">(active)</span>')
 
     if classes:
         classes = ' '.join(classes)
         template = ('<li class="{classes}"><a href="{url}">{title} '
                     '{screen_reader}</a></li>')
-        return template.format(classes=classes, url=url, title=title,
-                               screen_reader=screen_reader)
+        # return template.format(classes=classes, url=url, title=title,
+        #                        screen_reader=screen_reader)
+        return format_html(template, classes=classes, url=url,
+                           title=title, screen_reader=screen_reader)
     else:
         template = ('<li><a href="{url}">{title}</a></li>')
-        return template.format(url=url, title=title)
+        # return template.format(url=url, title=title)
+        return format_html(template, url=url, title=title)
 
 
 @register.simple_tag(takes_context=True)
@@ -43,7 +48,7 @@ def navbar_element(context, title, url_name):
     """
     url = reverse(url_name)
     active = context['request'].path == url
-    return navbar_template(title, url, active=active)
+    return mark_safe(navbar_template(title, url, active=active))
 
 
 @register.simple_tag(takes_context=True)
@@ -65,7 +70,8 @@ def navbar_element_permed(context, title, url_name, perms):
     perms = map(lambda x: x in perms_ctx, perms)
     disabled = not all(perms)  # or: enabled = all(perms)
 
-    return navbar_template(title, url, active=active, disabled=disabled)
+    return mark_safe(navbar_template(title, url, active=active,
+                                     disabled=disabled))
 
 
 @register.simple_tag(takes_context=True)
@@ -75,4 +81,4 @@ def navbar_element_url(context, title, url):
     accessibility elements.  This tag takes a pre-made URL as an argument.
     """
     active = context['request'].path == url
-    return navbar_template(title, url, active=active)
+    return mark_safe(navbar_template(title, url, active=active))
