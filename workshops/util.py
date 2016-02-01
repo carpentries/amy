@@ -335,7 +335,7 @@ class Paginator(DjangoPaginator):
         stands for a separator.
         """
         index = int(self._page_number) or 1
-        items = self.page_range
+        items = list(self.page_range)
         L = items[0:5]
         M = items[index-3:index+4] or items[0:index+1]
         R = items[-5:]
@@ -343,18 +343,25 @@ class Paginator(DjangoPaginator):
         M_s = set(M)
         R_s = set(R)
 
+        dots = [None]
+
         D1 = L_s.isdisjoint(M_s)
         D2 = M_s.isdisjoint(R_s)
+        D3 = L_s.isdisjoint(R_s)
 
-        if D1 and D2:
+        if D1 and D2 and D3:
             # L…M…R
-            pagination = L + [None] + M + [None] + R
-        elif not D1 and D2:
+            pagination = L + dots + M + dots + R
+        elif not D1 and D2 and D3:
             # LM…R
-            pagination = sorted(L_s | M_s) + [None] + R
-        elif D1 and not D2:
+            pagination = sorted(L_s | M_s) + dots + R
+        elif D1 and not D2 and D3:
             # L…MR
-            pagination = L + [None] + sorted(M_s | R_s)
+            pagination = L + dots + sorted(M_s | R_s)
+        elif not D3:
+            # tough situation, we may have split something wrong,
+            # so lets just display all pages
+            pagination = items
         else:
             # LMR
             pagination = sorted(L_s | M_s | R_s)
