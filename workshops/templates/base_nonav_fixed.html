@@ -24,8 +24,7 @@
   </head>
   <body>
     {% block navbar %}{% endblock %}
-    <div class="container{% block fluid2 %}{% endblock %}">
-      {% block title %}{% if title %}<h1>{{ title }}</h1>{% endif %}{% endblock %}
+    <div class="container{% block fluid-content %}{% endblock %}">
       {% for message in messages %}
       <div class="row">
         <div class="{% block fluid-messages %}col-sm-12{% endblock %}">
@@ -43,10 +42,17 @@
         </div>
       </div>
       {% endfor %}
-      {% block content %}{% endblock %}
+      {% block main %}
+      <div class="row">
+        <div class="col-sm-12 col-md-12 main">
+        {% block title %}{% if title %}<h1>{{ title }}</h1>{% endif %}{% endblock %}
+        {% block content %}{% endblock %}
+        </div>
+      </div>
+      {% endblock %}
     </div>
     <hr class="footer-hr" />
-    <div class="container{% block fluid3 %}{% endblock %}">
+    <div class="container{% block fluid-footer %}{% endblock %}">
       <div class="row">
         <div class="col-sm-12 footer">
           <p>
