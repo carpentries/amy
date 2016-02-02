@@ -1,5 +1,8 @@
 {% extends "workshops/_page_fluid_nosidebar.html" %}
 
+{% load compress %}
+{% load static %}
+
 {% block content-fluid %}
 
 <div class="row">
@@ -87,6 +90,9 @@
 {% endblock %}
 
 {% block extrajs %}
+{% compress js %}
+<script src="{% static 'vis/dist/vis.js' %}"></script>
+{% endcompress %}
 <script type="text/javascript">
   $.getJSON("{% url 'api:user-todos' %}", {}, function(data) {
     var container = document.getElementById('timeline');
