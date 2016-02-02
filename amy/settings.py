@@ -223,9 +223,6 @@ STATICFILES_FINDERS = [
     'compressor.finders.CompressorFinder',
 ]
 
-# Compression of JS/CSS assets
-COMPRESS_ENABLED = True  # always enabled, not only when `DEBUG = False`
-
 # if "next" (or "?next") variable is not set when logging in, redirect to
 # workshops
 LOGIN_REDIRECT_URL = '/workshops/'
