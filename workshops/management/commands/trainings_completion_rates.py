@@ -2,6 +2,7 @@ from django.core.management.base import BaseCommand
 from django.template.loader import get_template
 
 from workshops.models import Badge, Event, Tag, Person, Role
+from workshops.util import universal_date_format
 
 
 class Command(BaseCommand):
@@ -12,12 +13,13 @@ class Command(BaseCommand):
     swc_badge = Badge.objects.get(name='swc-instructor')
     dc_tag = Tag.objects.get(name='DC')
     swc_tag = Tag.objects.get(name='SWC')
+    online_tag = Tag.objects.get(name='online')
 
     def trainings(self):
         """Create list of trainings."""
         return Event.objects.filter(tags=Tag.objects.get(name='TTT')) \
                             .prefetch_related('tags', 'task_set') \
-                            .order_by('-start')
+                            .order_by('start')
 
     def badge_type(self, tags):
         """Return badge of the same type as event tags.
@@ -36,16 +38,20 @@ class Command(BaseCommand):
                                      task__role=self.learner)
 
     def handle(self, *args, **options):
+        records = []
         for training in self.trainings():
             badge = self.badge_type(training.tags.all())
             learners = self.learners(training)
-            context = {
+            records.append({
                 'training': training,
+                'start': universal_date_format(training.start),
                 'badge': badge,
+                'online': self.online_tag in training.tags.all(),
                 'learners_len': learners.count(),
                 'completed_len': learners.filter(badges=badge, award__event=training).count(),
                 'completed_other_len': learners.filter(badges=badge).exclude(award__event=training).count(),
                 'no_badge_len': learners.exclude(badges=badge).count(),
-            }
-            tmplt = get_template('reports/training_completion_rates.txt')
-            self.stdout.write(tmplt.render(context=context))
+            })
+        context = {'records' : records}
+        tmplt = get_template('reports/training_completion_rates.txt')
+        self.stdout.write(tmplt.render(context=context))

@@ -1,6 +1,2 @@
-------------------------------------
-{{ training.slug }} ({{ training.tags.all|join:", " }}), badge: {{ badge }}
-Learners: {{ learners_len }}
-Completed this training with badge: {{ completed_len }} ({% widthratio completed_len learners_len 100 %}%)
-Completed other training with badge: {{ completed_other_len }} ({% widthratio completed_other_len learners_len 100 %}%)
-No badge: {{ no_badge_len }} ({% widthratio no_badge_len learners_len 100 %}%)
+start,slug,online,badge,learners,completed this,completed this %age,completed other,completed other %age,no badge, no badge %{% for record in records %}
+{{ record.start }},{{ record.training.slug }},{{ record.online }},{{ record.badge }},{{ record.learners_len }},{{ record.completed_len }},{% widthratio record.completed_len record.learners_len 100 %}%,{{ record.completed_other_len }},{% widthratio record.completed_other_len record.learners_len 100 %}%,{{ record.no_badge_len }},{% widthratio record.no_badge_len record.learners_len 100 %}%{% endfor %}
