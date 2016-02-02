@@ -131,6 +131,7 @@ INSTALLED_APPS = (
     'rest_framework',
     'api',
     'captcha',
+    'compressor',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
@@ -216,6 +217,14 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'bower_components'),
 )
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+    'compressor.finders.CompressorFinder',
+]
+
+# Compression of JS/CSS assets
+COMPRESS_ENABLED = True  # always enabled, not only when `DEBUG = False`
 
 # if "next" (or "?next") variable is not set when logging in, redirect to
 # workshops
