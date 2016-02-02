@@ -1,3 +1,5 @@
+import csv
+
 from django.core.management.base import BaseCommand
 from django.template.loader import get_template
 
@@ -37,21 +39,36 @@ class Command(BaseCommand):
         return Person.objects.filter(task__event=event,
                                      task__role=self.learner)
 
+    def percent(self, numerator, denominator):
+        """Return percentage if non-zero denominator else 0.0"""
+        if denominator:
+            return round((100. * numerator) / denominator, 1)
+        return 0.0
+
     def handle(self, *args, **options):
-        records = []
+        records = [['start', 'slug', 'online', 'badge', 'learners',
+                    'completed this', 'completed this %age',
+                    'completed other', 'completed other %age',
+                    'no badge', 'no badge %']]
         for training in self.trainings():
             badge = self.badge_type(training.tags.all())
             learners = self.learners(training)
-            records.append({
-                'training': training,
-                'start': universal_date_format(training.start),
-                'badge': badge,
-                'online': self.online_tag in training.tags.all(),
-                'learners_len': learners.count(),
-                'completed_len': learners.filter(badges=badge, award__event=training).count(),
-                'completed_other_len': learners.filter(badges=badge).exclude(award__event=training).count(),
-                'no_badge_len': learners.exclude(badges=badge).count(),
-            })
-        context = {'records' : records}
-        tmplt = get_template('reports/training_completion_rates.txt')
-        self.stdout.write(tmplt.render(context=context))
+            learners_len = learners.count()
+            completed_len = \
+                learners.filter(badges=badge, award__event=training).count()
+            completed_other_len = \
+                learners.filter(badges=badge).exclude(award__event=training).count()
+            no_badge_len = \
+                learners.exclude(badges=badge).count()
+            records.append([universal_date_format(training.start),
+                            training.slug,
+                            int(self.online_tag in training.tags.all()),
+                            badge.title,
+                            learners_len,
+                            completed_len,
+                            self.percent(completed_len, learners_len),
+                            completed_other_len,
+                            self.percent(completed_other_len, learners_len),
+                            no_badge_len,
+                            self.percent(no_badge_len, learners_len)])
+        csv.writer(self.stdout).writerows(records)
