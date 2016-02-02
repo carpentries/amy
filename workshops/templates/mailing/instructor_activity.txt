@@ -1,4 +1,3 @@
-{# even though this is .html file, the content is TXT email #}
 Hi,
 
 The next election for the Software Carpentry Foundation Steering
