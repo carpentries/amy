@@ -1,4 +1,4 @@
-{% extends "workshops/_page_fluid.html" %}
+{% extends "base_nav_fluid_sidebar.html" %}
 
 {% load crispy_forms_tags %}
 {% load pagination %}
@@ -8,7 +8,7 @@
     {% crispy filter.form form_helper %}
 {% endblock %}
 
-{% block content-fluid %}
+{% block content %}
   {% if perms.workshops.add_person %}
     <p><a href="{% url 'person_add' %}" class="btn btn-success">New person</a></p>
     {% else %}

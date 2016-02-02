@@ -1,4 +1,4 @@
-{% extends "workshops/_page_fluid.html" %}
+{% extends "base_nav_fluid_sidebar.html" %}
 
 {% load crispy_forms_tags %}
 {% load pagination %}
@@ -9,7 +9,7 @@
     {% crispy filter.form form_helper %}
 {% endblock %}
 
-{% block content-fluid %}
+{% block content %}
   {% if requests %}
   <table class="table table-striped">
     <thead>
