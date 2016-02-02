@@ -2,6 +2,7 @@
 from collections import namedtuple, defaultdict
 import csv
 import datetime
+from itertools import chain
 import re
 import yaml
 
@@ -335,10 +336,25 @@ class Paginator(DjangoPaginator):
         stands for a separator.
         """
         index = int(self._page_number) or 1
-        items = list(self.page_range)
+        items = self.page_range
+        length = self._num_pages
+
         L = items[0:5]
-        M = items[index-3:index+4] or items[0:index+1]
-        R = items[-5:]
+
+        if index - 3 == 5:
+            # Fix when two sets, L_s and M_s, are disjoint but make a sequence
+            # [... 3 4, 5 6 ...], then there should not be dots between them
+            M = items[index-4:index+4] or items[0:index+1]
+        else:
+            M = items[index-3:index+4] or items[0:index+1]
+
+        if index + 4 == length - 5:
+            # Fix when two sets, M_s and R_s, are disjoint but make a sequence
+            # [... 3 4, 5 6 ...], then there should not be dots between them
+            R = items[-6:]
+        else:
+            R = items[-5:]
+
         L_s = set(L)
         M_s = set(M)
         R_s = set(R)
@@ -351,20 +367,20 @@ class Paginator(DjangoPaginator):
 
         if D1 and D2 and D3:
             # L…M…R
-            pagination = L + dots + M + dots + R
+            pagination = chain(L, dots, M, dots, R)
         elif not D1 and D2 and D3:
             # LM…R
-            pagination = sorted(L_s | M_s) + dots + R
+            pagination = chain(sorted(L_s | M_s), dots, R)
         elif D1 and not D2 and D3:
             # L…MR
-            pagination = L + dots + sorted(M_s | R_s)
+            pagination = chain(L, dots, sorted(M_s | R_s))
         elif not D3:
             # tough situation, we may have split something wrong,
             # so lets just display all pages
             pagination = items
         else:
             # LMR
-            pagination = sorted(L_s | M_s | R_s)
+            pagination = iter(sorted(L_s | M_s | R_s))
 
         return pagination
 
