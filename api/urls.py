@@ -4,6 +4,10 @@ from rest_framework.urlpatterns import format_suffix_patterns
 
 from . import views
 
+# new in Django 1.9: this defines a namespace for URLs; there's no need for
+# `namespace='api'` in the include()
+app_name = 'api'
+
 # routers generate URLs for methods like `.list` or `.retrieve`
 router = routers.SimpleRouter()
 router.register('reports', views.ReportsViewSet, base_name='reports')

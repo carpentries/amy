@@ -1,5 +1,5 @@
 from django.core.urlresolvers import reverse
-from reversion import get_for_object, create_revision
+from reversion.revisions import get_for_object, create_revision
 
 from workshops.models import Event, Person
 

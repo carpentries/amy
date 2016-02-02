@@ -8,6 +8,9 @@ from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import SetPasswordForm, PasswordChangeForm
+from django.contrib.auth.mixins import (
+    LoginRequiredMixin, PermissionRequiredMixin,
+)
 from django.core.urlresolvers import reverse
 from django.core.exceptions import (
     ObjectDoesNotExist,
@@ -27,8 +30,8 @@ from django.views.generic import ListView, DetailView, View
 from django.views.generic.edit import CreateView, UpdateView, ModelFormMixin
 from django.contrib.auth.decorators import login_required, permission_required
 
-from reversion import get_for_object
 from reversion.models import Revision
+from reversion.revisions import get_for_object
 
 from workshops.models import (
     Airport,
@@ -136,34 +139,6 @@ class UpdateViewContext(SuccessMessageMixin, UpdateView):
         "Format self.success_message, used by messages framework from Django."
         return self.success_message.format(cleaned_data, name=str(self.object))
 
-
-class LoginRequiredMixin(object):
-    """
-    Define @login_required-based mixin for class-based views that should allow
-    only logged-in users.
-
-    Based on Django docs:
-    https://docs.djangoproject.com/en/1.8/topics/class-based-views/intro/#mixins-that-wrap-as-view
-    """
-
-    @classmethod
-    def as_view(cls, **kwargs):
-        view = super(LoginRequiredMixin, cls).as_view(**kwargs)
-        return login_required(view)
-
-
-class PermissionRequiredMixin(object):
-    """
-    Mixin for allowing only users with specific permissions to access the view.
-    """
-    perms = ''  # permission name or a list of them
-
-    @classmethod
-    def as_view(cls, **kwargs):
-        view = super().as_view(**kwargs)
-        return permission_required(cls.perms, raise_exception=True)(view)
-
-
 #------------------------------------------------------------
 
 
@@ -249,7 +224,7 @@ def host_details(request, host_domain):
 
 class HostCreate(LoginRequiredMixin, PermissionRequiredMixin,
                  CreateViewContext):
-    perms = 'workshops.add_host'
+    permission_required = 'workshops.add_host'
     model = Host
     form_class = HostForm
     template_name = 'workshops/generic_form.html'
@@ -257,7 +232,7 @@ class HostCreate(LoginRequiredMixin, PermissionRequiredMixin,
 
 class HostUpdate(LoginRequiredMixin, PermissionRequiredMixin,
                  UpdateViewContext):
-    perms = 'workshops.change_host'
+    permission_required = 'workshops.change_host'
     model = Host
     form_class = HostForm
     slug_field = 'domain'
@@ -305,7 +280,7 @@ def membership_create(request, host_domain):
 
 class MembershipUpdate(LoginRequiredMixin, PermissionRequiredMixin,
                        UpdateViewContext):
-    perms = 'workshops.change_membership'
+    permission_required = 'workshops.change_membership'
     model = Membership
     form_class = MembershipForm
     pk_url_kwarg = 'membership_id'
@@ -357,7 +332,7 @@ def airport_details(request, airport_iata):
 
 class AirportCreate(LoginRequiredMixin, PermissionRequiredMixin,
                     CreateViewContext):
-    perms = 'workshops.add_airport'
+    permission_required = 'workshops.add_airport'
     model = Airport
     fields = AIRPORT_FIELDS
     template_name = 'workshops/generic_form.html'
@@ -365,7 +340,7 @@ class AirportCreate(LoginRequiredMixin, PermissionRequiredMixin,
 
 class AirportUpdate(LoginRequiredMixin, PermissionRequiredMixin,
                     UpdateViewContext):
-    perms = 'workshops.change_airport'
+    permission_required = 'workshops.change_airport'
     model = Airport
     fields = AIRPORT_FIELDS
     slug_field = 'iata'
@@ -591,7 +566,7 @@ def person_bulk_add_confirmation(request):
 
 class PersonCreate(LoginRequiredMixin, PermissionRequiredMixin,
                    CreateViewContext):
-    perms = 'workshops.add_person'
+    permission_required = 'workshops.add_person'
     model = Person
     form_class = PersonForm
     template_name = 'workshops/generic_form.html'
@@ -747,7 +722,7 @@ def person_delete(request, person_id):
 
 class PersonPermissions(LoginRequiredMixin, PermissionRequiredMixin,
                         UpdateViewContext):
-    perms = 'workshops.change_person'
+    permission_required = 'workshops.change_person'
     model = Person
     form_class = PersonPermissionsForm
     pk_url_kwarg = 'person_id'
@@ -997,7 +972,7 @@ def validate_event(request, event_ident):
 
 class EventCreate(LoginRequiredMixin, PermissionRequiredMixin,
                   CreateViewContext):
-    perms = 'workshops.add_event'
+    permission_required = 'workshops.add_event'
     model = Event
     form_class = EventForm
     template_name = 'workshops/event_create_form.html'
@@ -1317,7 +1292,7 @@ def task_delete(request, task_id, event_ident=None):
 
 class TaskCreate(LoginRequiredMixin, PermissionRequiredMixin,
                  CreateViewContext):
-    perms = 'workshops.add_task'
+    permission_required = 'workshops.add_task'
     model = Task
     form_class = TaskFullForm
     template_name = 'workshops/generic_form.html'
@@ -1325,7 +1300,7 @@ class TaskCreate(LoginRequiredMixin, PermissionRequiredMixin,
 
 class TaskUpdate(LoginRequiredMixin, PermissionRequiredMixin,
                  UpdateViewContext):
-    perms = 'workshops.change_task'
+    permission_required = 'workshops.change_task'
     model = Task
     form_class = TaskFullForm
     pk_url_kwarg = 'task_id'
@@ -2107,7 +2082,7 @@ def profileupdaterequest_details(request, request_id):
 
 class ProfileUpdateRequestFix(LoginRequiredMixin, PermissionRequiredMixin,
                               UpdateViewContext):
-    perms = 'workshops.change_profileupdaterequest'
+    permission_required = 'workshops.change_profileupdaterequest'
     model = ProfileUpdateRequest
     form_class = ProfileUpdateRequestFormNoCaptcha
     pk_url_kwarg = 'request_id'
@@ -2305,7 +2280,7 @@ def todo_mark_incompleted(request, todo_id):
 
 class TodoItemUpdate(LoginRequiredMixin, PermissionRequiredMixin,
                      UpdateViewContext):
-    perms = 'workshops.change_todoitem'
+    permission_required = 'workshops.change_todoitem'
     model = TodoItem
     form_class = SimpleTodoForm
     pk_url_kwarg = 'todo_id'

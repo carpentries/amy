@@ -11,7 +11,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from django_countries.fields import CountryField
-import reversion
+from reversion import revisions as reversion
 
 #------------------------------------------------------------
 

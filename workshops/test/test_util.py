@@ -22,6 +22,7 @@ from ..util import (
     assignment_selection,
     create_username,
     InternalError,
+    Paginator,
 )
 
 from .base import TestBase
@@ -949,3 +950,61 @@ class TestUsernameGeneration(TestCase):
         generated."""
         username = create_username(personal='Andy', family='Blanking-Crush')
         self.assertEqual(username, 'blanking-crush_andy')
+
+
+class TestPaginatorSections(TestCase):
+    def make_paginator(self, num_pages, page_index=None):
+        # there's no need to initialize with real values
+        p = Paginator(object_list=None, per_page=1)
+        p._num_pages = num_pages
+        p._page_number = page_index
+        return p
+
+    def test_shortest(self):
+        """Ensure paginator works correctly for only one page."""
+        paginator = self.make_paginator(num_pages=1, page_index=1)
+        sections = paginator.paginate_sections()
+        self.assertEqual(list(sections), [1])
+
+    def test_very_long(self):
+        """Ensure paginator works correctly for big number of pages."""
+        paginator = self.make_paginator(num_pages=20, page_index=1)
+        sections = paginator.paginate_sections()
+        self.assertEqual(
+            list(sections),
+            [1, 2, 3, 4, 5, None, 16, 17, 18, 19, 20]  # None is a break, '...'
+        )
+
+    def test_in_the_middle(self):
+        """Ensure paginator puts two breaks when page index is in the middle
+        of pages range."""
+        paginator = self.make_paginator(num_pages=20, page_index=10)
+        sections = paginator.paginate_sections()
+        self.assertEqual(
+            list(sections),
+            # None is a break, it appears as '...' in the paginator widget
+            [1, 2, 3, 4, 5, None, 8, 9, 10, 11, 12, 13, 14, None, 16, 17, 18,
+             19, 20]
+        )
+
+    def test_at_the_end(self):
+        """Ensure paginator puts one break when page index is in the right-most
+        part of pages range."""
+        paginator = self.make_paginator(num_pages=20, page_index=20)
+        sections = paginator.paginate_sections()
+        self.assertEqual(
+            list(sections),
+            # None is a break, it appears as '...' in the paginator widget
+            [1, 2, 3, 4, 5, None, 16, 17, 18, 19, 20]
+        )
+
+    def test_long_no_breaks(self):
+        """Ensure paginator doesn't add breaks when sections touch each
+        other."""
+        paginator = self.make_paginator(num_pages=17, page_index=8)
+        sections = paginator.paginate_sections()
+        self.assertEqual(
+            list(sections),
+            # None is a break, it appears as '...' in the paginator widget
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+        )
