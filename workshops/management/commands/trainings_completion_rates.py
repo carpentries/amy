@@ -42,12 +42,10 @@ class Command(BaseCommand):
             context = {
                 'training': training,
                 'badge': badge,
-                'learners': learners,
-                'completed': learners.filter(badges=badge,
-                                             award__event=training),
-                'completed_other': learners.filter(badges=badge)
-                                           .exclude(award__event=training),
-                'no_badge': learners.exclude(badges=badge),
+                'learners_len': learners.count(),
+                'completed_len': learners.filter(badges=badge, award__event=training).count(),
+                'completed_other_len': learners.filter(badges=badge).exclude(award__event=training).count(),
+                'no_badge_len': learners.exclude(badges=badge).count(),
             }
             tmplt = get_template('reports/training_completion_rates.txt')
             self.stdout.write(tmplt.render(context=context))
