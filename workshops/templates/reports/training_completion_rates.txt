@@ -1,2 +1,0 @@
-start,slug,online,badge,learners,completed this,completed this %age,completed other,completed other %age,no badge, no badge %{% for record in records %}
-{{ record.start }},{{ record.training.slug }},{{ record.online }},{{ record.badge }},{{ record.learners_len }},{{ record.completed_len }},{% widthratio record.completed_len record.learners_len 100 %}%,{{ record.completed_other_len }},{% widthratio record.completed_other_len record.learners_len 100 %}%,{{ record.no_badge_len }},{% widthratio record.no_badge_len record.learners_len 100 %}%{% endfor %}
