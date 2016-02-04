@@ -13,6 +13,15 @@ from workshops.models import (
 )
 
 
+class AwardPersonSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source='person.get_full_name')
+    user = serializers.CharField(source='person.username')
+
+    class Meta:
+        model = Award
+        fields = ('name', 'user', 'awarded')
+
+
 class PersonUsernameSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='get_full_name')
     user = serializers.CharField(source='username')
@@ -31,7 +40,7 @@ class PersonNameEmailUsernameSerializer(serializers.ModelSerializer):
 
 
 class ExportBadgesSerializer(serializers.ModelSerializer):
-    persons = PersonUsernameSerializer(many=True, source='person_set')
+    persons = AwardPersonSerializer(many=True, source='award_set')
 
     class Meta:
         model = Badge
