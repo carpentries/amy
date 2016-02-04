@@ -1,6 +1,7 @@
 import csv
 
 from django.core.management.base import BaseCommand
+from django.db.models import Count, Case, When, Value, IntegerField
 
 from workshops.models import Badge, Event, Tag, Person, Role
 from workshops.util import universal_date_format
@@ -50,6 +51,7 @@ class Command(BaseCommand):
             'completed this', 'completed this [%]',
             'completed other', 'completed other [%]',
             'no badge', 'no badge [%]',
+            'taught at least once', 'taught at least once [%]',
         ]
         writer = csv.DictWriter(self.stdout, fieldnames=fields)
         writer.writeheader()
@@ -65,6 +67,35 @@ class Command(BaseCommand):
                                           .count()
             no_badge_len = learners.exclude(badges=badge).count()
 
+            # Django tries to optimize every query; for example here I had to
+            # cast to list explicitly to achieve a query without any
+            # WHEREs to task__role__name (which self.learners() unfortunately
+            # has to add).
+            learners2 = Person.objects.filter(
+                pk__in=list(learners.values_list('pk', flat=True)))
+
+            # 1. Grab people who received a badge for this training
+            # 2. Count how many times each of them taught
+            instructors = learners2.filter(award__badge=badge,
+                                           award__event=training)\
+                .annotate(
+                    num_taught=Count(
+                        Case(
+                            When(
+                                task__role__name='instructor',
+                                # task__event__start__gte=training.start,
+                                then=Value(1)
+                            ),
+                            output_field=IntegerField()
+                        )
+                    )
+                )
+            # 3. Get only people who taught at least once
+            # 4. And count them
+            instructors_taught_at_least_once = instructors \
+                .filter(num_taught__gt=0) \
+                .aggregate(Count('num_taught'))['num_taught__count'] or 0
+
             record = {
                 fields[0]: universal_date_format(training.start),
                 fields[1]: training.slug,
@@ -77,5 +108,8 @@ class Command(BaseCommand):
                 fields[8]: self.percent(completed_other_len, learners_len),
                 fields[9]: no_badge_len,
                 fields[10]: self.percent(no_badge_len, learners_len),
+                fields[11]: instructors_taught_at_least_once,
+                fields[12]: self.percent(instructors_taught_at_least_once,
+                                         learners_len),
             }
             writer.writerow(record)
