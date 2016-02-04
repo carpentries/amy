@@ -14,8 +14,10 @@ from rest_framework.permissions import (
 from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
+from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
+from rest_framework_csv.renderers import CSVRenderer
 
 from workshops.models import (
     Badge,
@@ -128,6 +130,8 @@ class ExportMembersView(ListAPIView):
     """Show everyone who qualifies as an SCF member."""
     permission_classes = (IsAuthenticated, )
     paginator = None  # disable pagination
+
+    renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES + [CSVRenderer, ]
 
     serializer_class = PersonNameEmailUsernameSerializer
 
