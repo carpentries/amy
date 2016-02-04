@@ -79,7 +79,7 @@ from workshops.util import (
 
 from workshops.filters import (
     EventFilter, HostFilter, PersonFilter, TaskFilter, AirportFilter,
-    EventRequestFilter,
+    EventRequestFilter, BadgeAwardsFilter,
 )
 
 # ------------------------------------------------------------
@@ -1341,7 +1341,23 @@ def all_badges(request):
 
 @login_required
 def badge_details(request, badge_name):
-    '''List details of a particular event.'''
+    '''List details of a particular badge, list people who were awarded it.'''
+
+    badge = get_object_or_404(Badge, name=badge_name)
+
+    filter = BadgeAwardsFilter(
+        request.GET,
+        queryset=badge.award_set.select_related('event', 'person', 'badge')
+    )
+    awards = get_pagination_items(request, filter)
+
+    context = {'title': 'Badge {0}'.format(badge),
+               'badge': badge,
+               'awards': awards,
+               'filter': filter,
+               'form_helper': bootstrap_helper_filter}
+    return render(request, 'workshops/badge.html', context)
+
 
     badge = get_object_or_404(Badge, name=badge_name)
 

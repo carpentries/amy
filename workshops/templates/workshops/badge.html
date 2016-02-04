@@ -1,7 +1,12 @@
-{% extends "base_nav_fixed.html" %}
+{% extends "base_nav_fluid_sidebar.html" %}
 
 {% load crispy_forms_tags %}
 {% load pagination %}
+
+{% block sidebar %}
+    <h3>Filter</h3>
+    {% crispy filter.form form_helper %}
+{% endblock %}
 
 {% block content %}
 <table class="table table-striped">
@@ -10,8 +15,11 @@
   <tr><td>criteria:</td><td>{{ badge.criteria|default:"—" }}</td></tr>
 </table>
 
-<h3>Award new</h3>
-{% crispy form form_helper %}
+  {% if perms.workshops.add_award %}
+    <p><a href="{% url 'badge_award' badge.name %}" class="btn btn-success">Award new</a></p>
+  {% else %}
+    <p><a href="{% url 'badge_award' badge.name %}" class="btn btn-success disabled">Award new</a></p>
+  {% endif %}
 
 {% if awards %}
   <h3>Awarded:</h3>
@@ -34,12 +42,15 @@
     {% endfor %}
   </table>
   {% pagination awards %}
+
+  {% if perms.workshops.add_award %}
+    <p><a href="{% url 'badge_award' badge.name %}" class="btn btn-success">Award new</a></p>
+  {% else %}
+    <p><a href="{% url 'badge_award' badge.name %}" class="btn btn-success disabled">Award new</a></p>
+  {% endif %}
+
 {% else %}
 <p>None awarded.</p>
 {% endif %}
 
-{% endblock %}
-
-{% block extrajs %}
-{{ form.media }}
 {% endblock %}
