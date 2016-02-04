@@ -1,14 +1,11 @@
-{% extends "base_without_navbar.html" %}
+{% extends "base_nonav_fixed.html" %}
 {% load static %}
 
 {% load crispy_forms_tags %}
 {% load selectable_tags %}
 
-{% block title %}
-{% block form_header_image %}
+{% block logo %}
 <img src="{% static 'software-carpentry-banner.png' %}" alt='Software-Carpentry logo' class="workshop-form-logo" />
-{% endblock %}
-{{ block.super }}
 {% endblock %}
 
 {% block content %}

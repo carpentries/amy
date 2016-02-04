@@ -1,9 +1,9 @@
-{% extends "workshops/_page_fluid_nosidebar.html" %}
+{% extends "base_nav_fluid.html" %}
 
 {% load crispy_forms_tags %}
 {% load selectable_tags %}
 
-{% block content-fluid %}
+{% block content %}
 <div class="row">
   <div class="col-sm-6">
     <h1>Workshop request #{{ object.pk }}</h1>

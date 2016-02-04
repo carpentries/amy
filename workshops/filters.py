@@ -9,11 +9,9 @@ from workshops.models import (
     Event,
     Host,
     Person,
-    Task,
     Airport,
     EventRequest,
     Tag,
-    Role,
     Task,
 )
 
@@ -70,7 +68,23 @@ class EventStateFilter(django_filters.ChoiceFilter):
             return qs
 
 
-class EventFilter(django_filters.FilterSet):
+class FilterSetWithoutHelpText(django_filters.FilterSet):
+    """Because of some stupidity this got merged to django-filters:
+    https://github.com/alex/django-filter/commit/90d244b
+
+    What it does is it adds a help_text to ALL filters!!!
+    In this class I try to remove it from every field. The solution:
+    https://github.com/alex/django-filter/pull/136#issuecomment-135602792
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        for key in self.filters.items():
+            self.filters[key[0]].extra.update({'help_text': ''})
+
+
+class EventFilter(FilterSetWithoutHelpText):
     assigned_to = ForeignKeyAllValuesFilter(Person)
     host = ForeignKeyAllValuesFilter(Host)
     administrator = ForeignKeyAllValuesFilter(Host)
@@ -102,7 +116,7 @@ class EventFilter(django_filters.FilterSet):
         order_by = ['-slug', 'slug', 'start', '-start', 'end', '-end']
 
 
-class EventRequestFilter(django_filters.FilterSet):
+class EventRequestFilter(FilterSetWithoutHelpText):
     assigned_to = ForeignKeyAllValuesFilter(Person)
     country = AllCountriesFilter()
     active = django_filters.TypedChoiceFilter(
@@ -123,7 +137,7 @@ class EventRequestFilter(django_filters.FilterSet):
         order_by = ['-created_at', 'created_at']
 
 
-class HostFilter(django_filters.FilterSet):
+class HostFilter(FilterSetWithoutHelpText):
     country = AllCountriesFilter()
 
     class Meta:
@@ -149,7 +163,7 @@ def filter_taught_workshops(queryset, values):
                    .distinct()
 
 
-class PersonFilter(django_filters.FilterSet):
+class PersonFilter(FilterSetWithoutHelpText):
     taught_workshops = django_filters.ModelMultipleChoiceFilter(
         queryset=Tag.objects.all(), label='Taught at workshops of type',
         action=filter_taught_workshops,
@@ -175,7 +189,7 @@ class PersonFilter(django_filters.FilterSet):
         return super().get_order_by(order_value)
 
 
-class TaskFilter(django_filters.FilterSet):
+class TaskFilter(FilterSetWithoutHelpText):
     class Meta:
         model = Task
         fields = [
@@ -195,7 +209,7 @@ class TaskFilter(django_filters.FilterSet):
         ]
 
 
-class AirportFilter(django_filters.FilterSet):
+class AirportFilter(FilterSetWithoutHelpText):
     fullname = django_filters.CharFilter(lookup_type='icontains')
 
     class Meta:
