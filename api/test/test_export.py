@@ -39,6 +39,8 @@ class TestExportingBadges(BaseExportingTest):
     def setUp(self):
         super().setUp()
 
+        today = datetime.date.today()
+
         # set up two badges, one with users, one without any
         self.badge1 = Badge.objects.create(name='badge1', title='Badge1',
                                            criteria='')
@@ -49,18 +51,20 @@ class TestExportingBadges(BaseExportingTest):
         self.user2 = Person.objects.create_user('user2', 'User2', 'Name',
                                                 'user2@name.org')
         Award.objects.create(person=self.user1, badge=self.badge1,
-                             awarded=datetime.date.today())
+                             awarded=today)
         Award.objects.create(person=self.user2, badge=self.badge1,
-                             awarded=datetime.date.today())
+                             awarded=today)
 
         # make sure we *do* get empty badges
         self.expecting = [
             {
                 'name': 'badge1',
                 'persons': [
-                    {'name': 'User1 Name', 'user': 'user1'},
-                    {'name': 'User2 Name', 'user': 'user2'},
-                ]
+                    {'name': 'User1 Name', 'user': 'user1',
+                     'awarded': '{:%Y-%m-%d}'.format(today)},
+                    {'name': 'User2 Name', 'user': 'user2',
+                     'awarded': '{:%Y-%m-%d}'.format(today)},
+                ],
             },
             {
                 'name': 'badge2',
