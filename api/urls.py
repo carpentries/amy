@@ -52,10 +52,4 @@ urlpatterns = [
     url('^', include(todos_router.urls)),
 ]
 
-# for login-logout functionality
-urlpatterns += [
-    url(r'^api-auth/',
-        include('rest_framework.urls', namespace='rest_framework')),
-]
-
 urlpatterns = format_suffix_patterns(urlpatterns)  # allow to specify format
