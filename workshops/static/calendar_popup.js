@@ -1,6 +1,7 @@
 var DATEPICKER_DEFAULTS = {
     autoclose: true,
     clearBtn: true,
+    orientation: "bottom auto",
     format: "yyyy-mm-dd",
     todayHighlight: true
 };
