@@ -58,6 +58,7 @@ urlpatterns = [
 
     url(r'^badges/?$', views.all_badges, name='all_badges'),
     url(r'^badge/(?P<badge_name>[\w\.=-]+)/?$', views.badge_details, name='badge_details'),
+    url(r'^badge/(?P<badge_name>[\w\.=-]+)/award/?$', views.badge_award, name='badge_award'),
 
     url(r'^instructors/?$', views.instructors, name='instructors'),
 

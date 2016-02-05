@@ -13,6 +13,7 @@ from workshops.models import (
     EventRequest,
     Tag,
     Task,
+    Award,
 )
 
 EMPTY_SELECTION = (None, '---------')
@@ -218,3 +219,20 @@ class AirportFilter(FilterSetWithoutHelpText):
             'fullname',
         ]
         order_by = ["iata", "-iata", "fullname", "-fullname"]
+
+
+class BadgeAwardsFilter(FilterSetWithoutHelpText):
+    awarded_after = django_filters.DateFilter(name='awarded',
+                                              lookup_type='gte')
+    awarded_before = django_filters.DateFilter(name='awarded',
+                                               lookup_type='lte')
+
+    class Meta:
+        model = Award
+        fields = (
+            'awarded_after', 'awarded_before', 'event',
+        )
+        order_by = [
+            '-awarded', 'awarded', '-person__family',
+            'person__family',
+        ]

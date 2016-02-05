@@ -337,7 +337,7 @@ class EventForm(forms.ModelForm):
         # thanks to this, {{ form.media }} in the template will generate
         # a <link href=""> (for CSS files) or <script src=""> (for JS files)
         js = (
-            'calendar_popup.js', 'import_from_url.js', 'update_from_url.js',
+            'import_from_url.js', 'update_from_url.js',
             'online_country.js',
         )
 
@@ -504,9 +504,6 @@ class MembershipForm(forms.ModelForm):
         fields = '__all__'
         widgets = {'host': HiddenInput, }
 
-    class Media:
-        js = ('calendar_popup.js', )
-
 
 class SWCEventRequestForm(forms.ModelForm):
     captcha = ReCaptchaField()
@@ -609,12 +606,6 @@ class SimpleTodoForm(forms.ModelForm):
         model = TodoItem
         fields = ('title', 'due', 'additional', 'completed', 'event')
         widgets = {'event': HiddenInput, }
-
-    class Media:
-        # thanks to this, {{ form.media }} in the template will generate
-        # a <link href=""> (for CSS files) or <script src=""> (for JS files)
-        js = ('calendar_popup.js', )
-
 
 # `extra`: number of forms populated via `initial` parameter; it's hardcoded in
 # `views.todos_add`

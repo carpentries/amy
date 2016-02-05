@@ -79,7 +79,7 @@ from workshops.util import (
 
 from workshops.filters import (
     EventFilter, HostFilter, PersonFilter, TaskFilter, AirportFilter,
-    EventRequestFilter,
+    EventRequestFilter, BadgeAwardsFilter,
 )
 
 # ------------------------------------------------------------
@@ -1341,8 +1341,28 @@ def all_badges(request):
 
 @login_required
 def badge_details(request, badge_name):
-    '''List details of a particular event.'''
+    '''List details of a particular badge, list people who were awarded it.'''
 
+    badge = get_object_or_404(Badge, name=badge_name)
+
+    filter = BadgeAwardsFilter(
+        request.GET,
+        queryset=badge.award_set.select_related('event', 'person', 'badge')
+    )
+    awards = get_pagination_items(request, filter)
+
+    context = {'title': 'Badge {0}'.format(badge),
+               'badge': badge,
+               'awards': awards,
+               'filter': filter,
+               'form_helper': bootstrap_helper_filter}
+    return render(request, 'workshops/badge.html', context)
+
+
+@login_required
+@permission_required('workshops.add_award', raise_exception=True)
+def badge_award(request, badge_name):
+    """Award a badge to someone (== create a new Award)."""
     badge = get_object_or_404(Badge, name=badge_name)
 
     initial = {
@@ -1352,26 +1372,20 @@ def badge_details(request, badge_name):
 
     if request.method == 'GET':
         form = BadgeAwardForm(initial=initial)
-
     elif request.method == 'POST':
         form = BadgeAwardForm(request.POST, initial=initial)
 
-        if request.user.has_perm('workshops.add_award'):
-            if form.is_valid():
-                form.save()
-        else:
-            messages.error(request,
-                           'You don\'t have permissions to award a badge.')
+        if form.is_valid():
+            form.save()
+            return redirect(reverse('badge_details', args=[badge.name]))
 
-    awards = badge.award_set.all()
-    awards = get_pagination_items(request, awards)
-
-    context = {'title': 'Badge {0}'.format(badge),
-               'badge': badge,
-               'awards': awards,
-               'form': form,
-               'form_helper': bootstrap_helper}
-    return render(request, 'workshops/badge.html', context)
+    context = {
+        'title': 'Badge {0}'.format(badge),
+        'badge': badge,
+        'form': form,
+        'form_helper': bootstrap_helper,
+    }
+    return render(request, 'workshops/generic_form.html', context)
 
 
 #------------------------------------------------------------
