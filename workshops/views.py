@@ -1890,6 +1890,7 @@ def all_eventrequests(request):
     # else worked...
     data = request.GET.copy()  # request.GET is immutable
     data['active'] = data.get('active', 'true')
+    data['workshop_type'] = data.get('workshop_type', '')
     filter = EventRequestFilter(
         data,
         queryset=EventRequest.objects.all(),

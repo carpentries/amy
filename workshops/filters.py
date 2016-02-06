@@ -1,5 +1,3 @@
-from distutils.util import strtobool
-
 import django.forms.widgets
 
 import django_filters
@@ -119,13 +117,26 @@ class EventFilter(FilterSetWithoutHelpText):
         order_by = ['-slug', 'slug', 'start', '-start', 'end', '-end']
 
 
+def filter_active_eventrequest(qs, value):
+    if value == 'true':
+        return qs.filter(active=True)
+    elif value == 'false':
+        return qs.filter(active=False)
+    return qs
+
+
 class EventRequestFilter(FilterSetWithoutHelpText):
     assigned_to = ForeignKeyAllValuesFilter(Person)
     country = AllCountriesFilter()
-    active = django_filters.TypedChoiceFilter(
-        choices=(('true', 'Open'), ('false', 'Closed')),
-        coerce=strtobool,
-        label='Status',
+    active = django_filters.ChoiceFilter(
+        choices=(('all', 'All'), ('true', 'Open'), ('false', 'Closed')),
+        label='Status', action=filter_active_eventrequest,
+        widget=django.forms.widgets.RadioSelect,
+    )
+    workshop_type = django_filters.ChoiceFilter(
+        choices=(('', 'All'), ('swc', 'Software-Carpentry'),
+                 ('dc', 'Data-Carpentry')),
+        label='Workshop type',
         widget=django.forms.widgets.RadioSelect,
     )
 
