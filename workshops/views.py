@@ -1956,6 +1956,9 @@ def eventrequest_accept(request, request_id):
 
         if form.is_valid():
             event = form.save()
+            event.request = eventrequest
+            event.save()
+
             eventrequest.active = False
             eventrequest.save()
             return redirect(reverse('event_details',
