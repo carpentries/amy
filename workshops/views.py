@@ -147,9 +147,9 @@ def dashboard(request):
     '''Home page.'''
     current_events = (
         Event.objects.upcoming_events() | Event.objects.ongoing_events()
-    ).no_stalled()
-    uninvoiced_events = Event.objects.uninvoiced_events().no_stalled()
-    unpublished_events = Event.objects.unpublished_events().no_stalled() \
+    ).active()
+    uninvoiced_events = Event.objects.active().uninvoiced_events()
+    unpublished_events = Event.objects.active().unpublished_events() \
                                       .select_related('host')
 
     assigned_to, is_admin = assignment_selection(request)
@@ -1684,7 +1684,7 @@ def all_activity_over_time(request):
 def workshop_issues(request):
     '''Display workshops in the database whose records need attention.'''
 
-    events = Event.objects.past_events().filter(
+    events = Event.objects.active().past_events().filter(
         Q(attendance=None) | Q(attendance=0) |
         Q(country=None) |
         Q(venue=None) | Q(venue__exact='') |
