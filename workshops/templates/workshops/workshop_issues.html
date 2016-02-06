@@ -23,6 +23,7 @@
       <tr>
         <th>Event</th>
         <th>Attendance <a href="#" data-toggle="tooltip" title="Number of attendees is missing">[?]</a></th>
+        <th>Instructors <a href="#" data-toggle="tooltip" title="No instructors assigned to the event">[?]</a></th>
         <th>Location <a href="#" data-toggle="tooltip" title="Country, venue, address or lat/long are missing">[?]</a></th>
         <th>Dates <a href="#" data-toggle="tooltip" title="Start date is in future of end date">[?]</a></th>
       </tr>
@@ -35,6 +36,21 @@
           {% if event.missing_attendance_ %}
             {% if event.mailto %}
               <a href="{% include 'workshops/attendance_email_href.html' with event=event %}">
+              <span class="glyphicon glyphicon-envelope"></span>
+              </a>
+            {% else %}
+              <span class="glyphicon glyphicon-remove"></span>
+            {% endif %}
+          {% endif %}
+        </td>
+        <td>
+          {% if event.no_instructors_ %}
+            {% if event.mailto %}
+              <a href="mailto:{{event.mailto}}?subject={% filter urlencode %}Missing instructors for workshop {{event.get_ident}}{% endfilter %}&body={% filter urlencode %}Hi,
+
+Can you please send us list of instructors who taught at {{ event.get_ident }} workshop?
+
+Thanks for your help.{% endfilter %}">
               <span class="glyphicon glyphicon-envelope"></span>
               </a>
             {% else %}
