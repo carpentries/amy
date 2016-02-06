@@ -25,16 +25,22 @@ class TestLandingPage(TestBase):
         assert all([('upcoming' in e.slug or 'ongoing' in e.slug)
                     for e in events])
 
-    def test_no_stalled_events_on_dashboard(self):
-        """Make sure we don't display stalled events on the dashboard."""
-        stalled = Tag.objects.get(name='stalled')
-        e = Event.objects.create(
+    def test_no_inactive_events_on_dashboard(self):
+        """Make sure we don't display stalled or completed events on the
+        dashboard."""
+        stalled_tag = Tag.objects.get(name='stalled')
+        stalled = Event.objects.create(
             slug='stalled-event', host=Host.objects.first(),
         )
-        e.tags.add(stalled)
+        stalled.tags.add(stalled_tag)
+        completed = Event.objects.create(slug='completed-event',
+                                         completed=True,
+                                         host=Host.objects.first())
 
         # stalled event appears in unfiltered list of events
-        self.assertIn(e, Event.objects.unpublished_events())
+        self.assertIn(stalled, Event.objects.unpublished_events())
+        self.assertIn(completed, Event.objects.unpublished_events())
 
         response = self.client.get(reverse('dashboard'))
-        self.assertNotIn(e, response.context['unpublished_events'])
+        self.assertNotIn(stalled, response.context['unpublished_events'])
+        self.assertNotIn(completed, response.context['unpublished_events'])

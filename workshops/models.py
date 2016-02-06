@@ -467,15 +467,16 @@ class Tag(models.Model):
 
 #------------------------------------------------------------
 
+
 # In order to make our custom filters chainable, we have to
 # define them on the QuerySet, not the Manager - see
 # http://www.dabapps.com/blog/higher-level-query-api-django-orm/
 class EventQuerySet(models.query.QuerySet):
     '''Handles finding past, ongoing and upcoming events'''
 
-    def no_stalled(self):
-        """Exclude events marked as 'stalled'."""
-        return self.exclude(tags__name='stalled')
+    def active(self):
+        """Exclude inactive events (stalled or completed)."""
+        return self.exclude(tags__name='stalled').exclude(completed=True)
 
     def past_events(self):
         '''Return past events.

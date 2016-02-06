@@ -64,7 +64,7 @@ class EventStateFilter(django_filters.ChoiceFilter):
         # no need to check if value exists in self.extra['choices'] because
         # validation is done by django_filters
         try:
-            return getattr(qs, "{}_events".format(value))()
+            return getattr(qs, value)()
         except AttributeError:
             return qs
 
@@ -92,11 +92,13 @@ class EventFilter(FilterSetWithoutHelpText):
 
     STATUS_CHOICES = [
         ('', 'All'),
-        ('past', 'Past'),
-        ('ongoing', 'Ongoing'),
-        ('upcoming', 'Upcoming'),
-        ('unpublished', 'Unpublished'),
-        ('uninvoiced', 'Uninvoiced'),
+        ('active', 'Active'),
+        ('past_events', 'Past'),
+        ('ongoing_events', 'Ongoing'),
+        ('upcoming_events', 'Upcoming'),
+        ('unpublished_events', 'Unpublished'),
+        ('published_events', 'Published'),
+        ('uninvoiced_events', 'Uninvoiced'),
     ]
     status = EventStateFilter(choices=STATUS_CHOICES)
 
