@@ -2,7 +2,7 @@ from django.core.urlresolvers import reverse
 from django.core import mail
 
 from .base import TestBase
-from ..models import EventRequest
+from ..models import EventRequest, Event, Host
 from ..forms import SWCEventRequestForm, DCEventRequestForm
 
 
@@ -177,6 +177,21 @@ class TestEventRequestsViews(TestBase):
         rv = self.client.get(reverse('eventrequest_accept',
                                      args=[self.er1.pk]))
         assert rv.status_code == 200
+
+    def test_active_request_accepted(self):
+        """Ensure a backlink from Event to EventRequest that created the
+        event exists after ER is accepted."""
+        data = {
+            'slug': 'test-event',
+            'host_1': Host.objects.first().pk,
+            'tags': [1],
+        }
+        rv = self.client.post(
+            reverse('eventrequest_accept', args=[self.er1.pk]),
+            data)
+        assert rv.status_code == 302, rv.status_code
+        self.assertEqual(Event.objects.get(slug='test-event').request,
+                         self.er1)
 
     def test_inactive_request_accept(self):
         rv = self.client.get(reverse('eventrequest_accept',
