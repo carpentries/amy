@@ -5,8 +5,9 @@ from io import StringIO
 
 from django.contrib.auth.models import Group
 from django.contrib.sessions.serializers import JSONSerializer
-from django.test import TestCase, RequestFactory
 from django.core.urlresolvers import reverse
+from django.http import Http404
+from django.test import TestCase, RequestFactory
 
 from ..models import Host, Event, Role, Person, Task, Badge, Award
 from ..util import (
@@ -23,6 +24,7 @@ from ..util import (
     create_username,
     InternalError,
     Paginator,
+    assign,
 )
 
 from .base import TestBase
@@ -1008,3 +1010,62 @@ class TestPaginatorSections(TestCase):
             # None is a break, it appears as '...' in the paginator widget
             [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
         )
+
+
+class TestAssignUtil(TestCase):
+    def setUp(self):
+        """Set up RequestFactory for making fast fake requests."""
+        Person.objects.create_user('test_user', 'User', 'Test', 'user@test')
+        self.factory = RequestFactory()
+        self.event = Event.objects.create(
+            slug='event-for-assignment', host=Host.objects.first())
+
+    def test_no_integer_pk(self):
+        """Ensure we fail with 404 when person PK is string, not integer."""
+        tests = [
+            (self.factory.get('/'), 'alpha'),
+            (self.factory.post('/', {'person_1': 'alpha'}), None),
+        ]
+        for request, person_id in tests:
+            with self.subTest(method=request.method):
+                with self.assertRaises(Http404):
+                    assign(request, self.event, person_id=person_id)
+
+                # just reset the link, for safety sake
+                self.event.assigned_to = None
+                self.event.save()
+
+    def test_assigning(self):
+        """Ensure that with assignment is set correctly."""
+        first_person = Person.objects.first()
+        tests = [
+            (self.factory.get('/'), first_person.pk),
+            (self.factory.post('/', {'person_1': first_person.pk}), None),
+        ]
+        for request, person_id in tests:
+            with self.subTest(method=request.method):
+                # just reset the link, for safety sake
+                self.event.assigned_to = None
+                self.event.save()
+
+                assign(request, self.event, person_id=person_id)
+                self.event.refresh_from_db()
+                self.assertEqual(self.event.assigned_to, first_person)
+
+    def test_removing_assignment(self):
+        """Ensure that with person_id=None, the assignment is removed."""
+        first_person = Person.objects.first()
+        tests = [
+            (self.factory.get('/'), None),
+            (self.factory.post('/'), None),
+        ]
+        for request, person_id in tests:
+            with self.subTest(method=request.method):
+                # just re-set the link to first person, for safety sake
+                self.event.assigned_to = first_person
+                self.event.save()
+
+                assign(request, self.event, person_id=person_id)
+
+                self.event.refresh_from_db()
+                self.assertEqual(self.event.assigned_to, None)
