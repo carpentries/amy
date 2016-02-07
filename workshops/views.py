@@ -1684,13 +1684,25 @@ def all_activity_over_time(request):
 def workshop_issues(request):
     '''Display workshops in the database whose records need attention.'''
 
-    events = Event.objects.active().past_events().filter(
+    events = Event.objects.active().past_events().annotate(
+        num_instructors=Count(
+            Case(
+                When(
+                    task__role__name='instructor',
+                    then=Value(1)
+                ),
+                output_field=IntegerField()
+            )
+        )
+    )
+    events = events.filter(
         Q(attendance=None) | Q(attendance=0) |
         Q(country=None) |
         Q(venue=None) | Q(venue__exact='') |
         Q(address=None) | Q(address__exact='') |
         Q(latitude=None) | Q(longitude=None) |
-        Q(start__gt=F('end'))
+        Q(start__gt=F('end')) |
+        Q(num_instructors=0)
     )
 
     assigned_to, is_admin = assignment_selection(request)
@@ -1712,6 +1724,7 @@ def workshop_issues(request):
             not e.longitude
         )
         e.bad_dates_ = e.start and e.end and (e.start > e.end)
+        e.no_instructors_ = not e.num_instructors
 
     context = {
         'title': 'Workshops with Issues',
