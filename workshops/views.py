@@ -1903,6 +1903,7 @@ def all_eventrequests(request):
     # else worked...
     data = request.GET.copy()  # request.GET is immutable
     data['active'] = data.get('active', 'true')
+    data['workshop_type'] = data.get('workshop_type', '')
     filter = EventRequestFilter(
         data,
         queryset=EventRequest.objects.all(),
@@ -1968,6 +1969,9 @@ def eventrequest_accept(request, request_id):
 
         if form.is_valid():
             event = form.save()
+            event.request = eventrequest
+            event.save()
+
             eventrequest.active = False
             eventrequest.save()
             return redirect(reverse('event_details',

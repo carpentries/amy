@@ -111,6 +111,7 @@
     <td>long-term for learners:</td>
     <td>{{ event.learners_longterm|default:"—"|urlize_newtab }}</td>
   </tr>
+  <tr><td>Event request</td><td colspan="2">{% if event.request %}<a href="{{ event.request.get_absolute_url }}">{{ event.request }}</a>{% else %}—{% endif %}</td></tr>
 </table>
 
 {% if event.url %}

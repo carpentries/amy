@@ -663,6 +663,11 @@ class Event(AssignmentMixin, models.Model):
         blank=True, default="",
         verbose_name="Long-term assessment survey for learners")
 
+    request = models.ForeignKey(
+        'EventRequest', null=True, blank=True,
+        help_text='Backlink to the request that created this event.',
+    )
+
     class Meta:
         ordering = ('-start', )
 
