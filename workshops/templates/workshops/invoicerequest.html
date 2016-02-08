@@ -1,0 +1,43 @@
+{% extends "base_nav_fixed.html" %}
+
+{% load links %}
+{% load revisions %}
+
+{% block content %}
+  {% if object.status == 'paid' %}
+  <div class="alert alert-success" role="alert">
+    <p><strong>Success:</strong> This invoice was paid on {{ object.paid_date }}.</p>
+  </div>
+  {% endif %}
+
+<div class="row">
+  <div class="col-md-6">
+    {% last_modified object %}
+  </div>
+
+  <div class="col-md-12">
+    <table class="table table-striped">
+      <tr><td>current status:</td><td>{{ object.get_status_display }}</td></tr>
+      <tr><td>sent on:</td><td>{{ object.sent_date|default:"—" }}</td></tr>
+      <tr><td>paid on:</td><td>{{ object.paid_date|default:"—" }}</td></tr>
+      <tr><td>reason for invoice:</td><td>{{ object.get_reason_display }} {{ object.reason_other }}</td></tr>
+      <tr><td>organization:</td><td><a href="{{ object.organization.get_absolute_url }}" target="_blank">{{ object.organization }}</a></td></tr>
+      <tr><td>event:</td><td><a href="{{ object.event.get_absolute_url }}" target="_blank">{{ object.event }}</a></td></tr>
+      <tr><td>date of invoice subject:</td><td>{{ object.date|date:"Y-m-d" }}</td></tr>
+      <tr><td>event location:</td><td>{{ object.event_location|default:"—" }}</td></tr>
+      <tr><td>item ID:</td><td>{{ object.item_id|default:"—" }}</td></tr>
+      <tr><td>contact:</td><td>{{ object.contact_name }} &lt;{{ object.contact_email|urlize_newtab }}&gt;{% if object.contact_phone %}, phone: {{ object.contact.phone }}{% endif %}</td></tr>
+      <tr><td>PO #:</td><td>{{ object.postal_number|default:"—" }}</td></tr>
+      <tr><td>full address:</td><td><pre>{{ object.full_address }}</pre></td></tr>
+      <tr><td>invoice amount:</td><td>{{ object.amount }} {% if object.currency %}{{ object.currency }}{% else %}{{ object.currency_other }}{% endif %}</td></tr>
+      <tr><td>breakdown:</td><td><pre>{{ object.breakdown }}</pre></td></tr>
+      <tr><td>vendor/supplier forms required?</td><td>{{ object.get_vendor_form_required_display }}</td></tr>
+      <tr><td>vendor/supplier forms:</td><td>{{ object.vendor_form_link|default:"—"|urlize_newtab }}</td></tr>
+      <tr><td>organization needs W-9?</td><td>{{ object.form_W9|yesno|title }}</td></tr>
+      <tr><td>receipts sent?</td><td>{{ object.get_receipts_sent_display }}</td></tr>
+      <tr><td>shared receipts link:</td><td>{{ object.shared_receipts_link|default:"—"|urlize_newtab }}</td></tr>
+      <tr><td>notes:</td><td><pre>{{ object.notes }}</pre></td></tr>
+    </table>
+  </div>
+</div>
+{% endblock %}

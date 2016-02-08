@@ -1319,6 +1319,18 @@ class AllInvoiceRequests(LoginRequiredMixin, FilteredListView):
         return context
 
 
+class InvoiceRequestDetails(LoginRequiredMixin, DetailView):
+    context_object_name = 'object'
+    template_name = 'workshops/invoicerequest.html'
+    queryset = InvoiceRequest.objects.all()
+    pk_url_kwarg = 'request_id'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Invoice request #{}'.format(self.get_object().pk)
+        return context
+
+
 # ------------------------------------------------------------
 
 @login_required

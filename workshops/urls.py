@@ -48,6 +48,7 @@ urlpatterns = [
 
     url(r'^event/(?P<event_ident>[\w-]+)/invoice$', views.event_invoice, name='event_invoice'),
     url(r'^invoices/?$', views.AllInvoiceRequests.as_view(), name='all_invoicerequests'),
+    url(r'^invoice/(?P<request_id>\d+)/?$', views.InvoiceRequestDetails.as_view(), name='invoicerequest_details'),
 
     url(r'^tasks/?$', views.all_tasks, name='all_tasks'),
     url(r'^task/(?P<task_id>\d+)/?$', views.task_details, name='task_details'),
