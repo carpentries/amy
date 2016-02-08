@@ -1262,6 +1262,19 @@ def event_invoice(request, event_ident):
         event_location=event.venue, amount=event.admin_fee,
     ))
 
+    if request.method == 'POST':
+        form = InvoiceRequestForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request,
+                             'Successfully added an invoice request for {}.'
+                             .format(event.get_ident()))
+            return redirect(reverse('event_details',
+                                    args=[event.get_ident()]))
+        else:
+            messages.error(request, 'Fix errors below.')
+
     context = {
         'title_left': 'Event {}'.format(event.get_ident()),
         'title_right': 'New invoice request',
