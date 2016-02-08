@@ -1,0 +1,39 @@
+{% extends "base_nav_fluid_sidebar.html" %}
+
+{% load crispy_forms_tags %}
+{% load pagination %}
+{% load links %}
+
+{% block sidebar %}
+    <h3>Filter</h3>
+    {% crispy filter.form form_helper %}
+{% endblock %}
+
+{% block content %}
+  {% if requests %}
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>event</th>
+        <th>organization</th>
+        <th>contact</th>
+        <th>status</th>
+        <th class="additional-links"></th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for req in requests %}
+      <tr>
+        <td><a href="{{ req.event.get_absolute_url }}">{{ req.event.get_ident }}</a></td>
+        <td><a href="{{ req.organization.get_absolute_url }}">{{ req.organization }}</a></td>
+        <td>{{ req.contact_name }} &lt;{{ req.contact_email|urlize_newtab }}&gt;</td>
+        <td>{{ req.get_status_display }}</td>
+        <td><a href="{{ req.get_absolute_url }}"><span class="glyphicon glyphicon-info-sign"></span></a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No invoice requests matching the filter.</p>
+  {% endif %}
+{% endblock %}

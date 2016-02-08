@@ -12,6 +12,7 @@ from workshops.models import (
     Tag,
     Task,
     Award,
+    InvoiceRequest,
 )
 
 EMPTY_SELECTION = (None, '---------')
@@ -248,4 +249,23 @@ class BadgeAwardsFilter(FilterSetWithoutHelpText):
         order_by = [
             '-awarded', 'awarded', '-person__family',
             'person__family',
+        ]
+
+
+class InvoiceRequestFilter(FilterSetWithoutHelpText):
+    STATUS_CHOICES = (('', 'All'),) + InvoiceRequest.STATUS_CHOICES
+    status = django_filters.ChoiceFilter(
+        choices=STATUS_CHOICES,
+        widget=django.forms.widgets.RadioSelect,
+    )
+
+    class Meta:
+        model = InvoiceRequest
+        fields = [
+            'status',
+            'organization',
+        ]
+        order_by = [
+            '-event__slug', 'event__slug',
+            'organization__domain', '-organization__domain',
         ]
