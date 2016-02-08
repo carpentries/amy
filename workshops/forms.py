@@ -4,6 +4,7 @@ from django import forms
 from django.core.validators import RegexValidator
 from django.forms import (
     HiddenInput, CheckboxSelectMultiple, TextInput, modelformset_factory,
+    RadioSelect,
 )
 
 from captcha.fields import ReCaptchaField
@@ -331,6 +332,7 @@ class EventForm(forms.ModelForm):
             'attendance': TextInput,
             'latitude': TextInput,
             'longitude': TextInput,
+            'invoice_status': RadioSelect,
         }
 
     class Media:
