@@ -297,6 +297,7 @@ class TestEventViews(TestBase):
                 'host': host.id,
                 'tags': [self.test_tag.id],
                 'administrator': host.id,
+                'invoice_status': 'unknown',
             })
         if response.status_code == 302:
             url = response['location']
@@ -319,6 +320,7 @@ class TestEventViews(TestBase):
                 'host': host.id,
                 'tags': [self.test_tag.id],
                 'administrator': host.id,
+                'invoice_status': 'unknown',
             }
         response = self.client.post(url, data)
         assert response.status_code == 302, (
@@ -351,6 +353,7 @@ class TestEventViews(TestBase):
             'host': self.test_host.id,
             'tags': [self.test_tag.id],
             'slug': '',
+            'invoice_status': 'unknown',
         }
         response = self.client.post(reverse('event_add'), data)
         assert response.status_code == 302
@@ -369,6 +372,7 @@ class TestEventViews(TestBase):
             'slug': 'test-event',
             'start': date(2015, 7, 20),
             'end': date(2015, 7, 19),
+            'invoice_status': 'unknown',
         }
         response = self.client.post(reverse('event_add'), data)
         assert response.status_code == 200
@@ -381,6 +385,7 @@ class TestEventViews(TestBase):
             'slug': 'test-event',
             'start': date(2015, 7, 20),
             'end': date(2015, 7, 20),
+            'invoice_status': 'unknown',
         }
         response = self.client.post(reverse('event_add'), data)
         assert response.status_code == 302
@@ -391,6 +396,7 @@ class TestEventViews(TestBase):
             'slug': 'test-event2',
             'start': date(2015, 7, 20),
             'end': date(2015, 7, 21),
+            'invoice_status': 'unknown',
         }
         response = self.client.post(reverse('event_add'), data)
         assert response.status_code == 302
@@ -407,6 +413,7 @@ class TestEventViews(TestBase):
             'tags': [self.test_tag.id],
             'slug': 'test-event',
             'admin_fee': -1200,
+            'invoice_status': 'unknown',
         }
 
         f = EventForm(data)

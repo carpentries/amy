@@ -185,6 +185,7 @@ class TestEventRequestsViews(TestBase):
             'slug': 'test-event',
             'host_1': Host.objects.first().pk,
             'tags': [1],
+            'invoice_status': 'unknown',
         }
         rv = self.client.post(
             reverse('eventrequest_accept', args=[self.er1.pk]),
