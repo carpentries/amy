@@ -1224,12 +1224,20 @@ class TodoItem(models.Model):
 class InvoiceRequest(models.Model):
     STATUS_CHOICES = (
         ('not-invoiced', 'Not invoiced'),
-        ('invoiced', 'Invoiced'),
+        ('sent', 'Sent out'),
+        ('paid', 'Paid'),
     )
     status = models.CharField(
         max_length=STR_MED, null=False, blank=False, default='not-invoiced',
         choices=STATUS_CHOICES,
         verbose_name='Invoice status')
+
+    sent_date = models.DateField(
+        null=True, blank=True, verbose_name='Date invoice was sent out',
+        help_text='YYYY-MM-DD')
+    paid_date = models.DateField(
+        null=True, blank=True, verbose_name='Date invoice was paid',
+        help_text='YYYY-MM-DD')
 
     organization = models.ForeignKey(
         Host, on_delete=models.PROTECT, verbose_name='Organization to invoice',
@@ -1274,8 +1282,8 @@ class InvoiceRequest(models.Model):
     contact_phone = models.CharField(
         max_length=STR_LONG, null=False, blank=True,
         verbose_name='Organization contact phone #')
-    full_address = models.CharField(
-        max_length=255, null=False, blank=False,
+    full_address = models.TextField(
+        null=False, blank=False,
         verbose_name='Full address to invoice',
         help_text='e.g. Dr. Jane Smith; University of Florida Ecology '
                   'Department; 123 University Way; Gainesville, FL 32844')
@@ -1335,3 +1343,14 @@ class InvoiceRequest(models.Model):
     notes = models.TextField(
         blank=True, default='',
         verbose_name='Any other notes')
+
+    def __str__(self):
+        return "Invoice to {!s} for {!s}".format(self.organization,
+                                                 self.event)
+
+    def get_absolute_url(self):
+        return reverse('invoicerequest_details', args=[self.pk])
+
+    @property
+    def paid(self):
+        return self.status == 'paid'
