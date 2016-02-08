@@ -1216,3 +1216,122 @@ class TodoItem(models.Model):
             )
         else:
             return self.title
+
+# ------------------------------------------------------------
+
+
+@reversion.register
+class InvoiceRequest(models.Model):
+    STATUS_CHOICES = (
+        ('not-invoiced', 'Not invoiced'),
+        ('invoiced', 'Invoiced'),
+    )
+    status = models.CharField(
+        max_length=STR_MED, null=False, blank=False, default='not-invoiced',
+        choices=STATUS_CHOICES,
+        verbose_name='Invoice status')
+
+    organization = models.ForeignKey(
+        Host, on_delete=models.PROTECT, verbose_name='Organization to invoice',
+        help_text='e.g. University of Florida Ecology Department')
+
+    INVOICE_REASON = (
+        ('admin-fee', 'Workshop administrative fee'),
+        ('admin-fee-expenses', 'Workshop administrative fee plus expenses'),
+        ('partner', 'Partner agreement'),
+        ('affiliate', 'Affiliate agreement'),
+        ('consulting', 'Consulting'),
+        ('', 'Other (enter below)'),
+    )
+    reason = models.CharField(
+        max_length=STR_MED, null=False, blank=True, default='admin-fee',
+        choices=INVOICE_REASON,
+        verbose_name='Reason for invoice')
+    reason_other = models.CharField(
+        max_length=STR_LONG, null=False, blank=True, default='',
+        verbose_name='Other reason for invoice')
+    date = models.DateField(
+        null=False, blank=False, verbose_name='Date of invoice subject',
+        help_text='YYYY-MM-DD; either event\'s date or invoice reason date.')
+    event = models.ForeignKey(
+        Event, on_delete=models.PROTECT, null=True, blank=True)
+    event_location = models.CharField(
+        max_length=STR_LONG, null=False, blank=True, default='')
+    item_id = models.CharField(
+        max_length=STR_MED, null=False, blank=True, default='',
+        verbose_name='Item ID (if applicable)')
+    postal_number = models.CharField(
+        max_length=STR_MED, null=False, blank=True, default='',
+        verbose_name='PO # (if required)')
+    contact_name = models.CharField(
+        max_length=STR_LONG, null=False, blank=False,
+        verbose_name='Organization contact name',
+        help_text='e.g. Dr. Jane Smith - the name of the person to contact at '
+                  'the organization about the invoice')
+    contact_email = models.CharField(
+        max_length=STR_LONG, null=False, blank=False,
+        verbose_name='Organization contact email')
+    contact_phone = models.CharField(
+        max_length=STR_LONG, null=False, blank=True,
+        verbose_name='Organization contact phone #')
+    full_address = models.CharField(
+        max_length=255, null=False, blank=False,
+        verbose_name='Full address to invoice',
+        help_text='e.g. Dr. Jane Smith; University of Florida Ecology '
+                  'Department; 123 University Way; Gainesville, FL 32844')
+    amount = models.DecimalField(
+        max_digits=8, decimal_places=2, null=False, blank=False,
+        validators=[MinValueValidator(0)],
+        verbose_name='Full invoice amount',
+        help_text='e.g. 1992.33 ')
+
+    CURRENCY = (
+        ('USD', 'US Dollars'),
+        ('GBP', 'UK Pounds'),
+        ('EUR', 'Euros'),
+        ('', 'Other (enter below)'),
+    )
+    currency = models.CharField(
+        max_length=STR_MED, null=False, blank=True, default='USD',
+        choices=CURRENCY)
+    currency_other = models.CharField(
+        max_length=STR_LONG, null=False, blank=True, default='',
+        verbose_name='Other currency')
+
+    breakdown = models.TextField(
+        blank=True, default='',
+        verbose_name='Notes on invoice breakdown',
+        help_text='e.g. 1250.00 workshop fee;'
+                  ' 742.33 Instructor, Pat Li, travel expenses')
+
+    VENDOR_FORM_CHOICES = (
+        ('yes', 'Yes'),
+        ('no', 'No'),
+        ('unsure', 'Will check with contact and submit info if needed'),
+    )
+    vendor_form_required = models.CharField(
+        max_length=STR_SHORT, null=False, blank=False, default='no',
+        choices=VENDOR_FORM_CHOICES,
+        verbose_name='Do vendor/supplier forms need to be submitted?')
+    vendor_form_link = models.URLField(
+        null=False, blank=True, default='',
+        verbose_name='Link to vendor/supplier forms')
+    form_W9 = models.BooleanField(verbose_name='Organization needs a W-9 form')
+
+    RECEIPTS_CHOICES = (
+        ('email', 'Via email'),
+        ('shared', 'In a Google Drive or other shared location'),
+        ('not-yet', 'Haven\'t sent yet'),
+        ('na', 'Not applicable'),
+    )
+    receipts_sent = models.CharField(
+        max_length=STR_MED, null=False, blank=False, default='not-yet',
+        choices=RECEIPTS_CHOICES,
+        verbose_name='Any required receipts sent?')
+    shared_receipts_link = models.URLField(
+        null=False, blank=True, default='',
+        verbose_name='Link to receipts in shared location',
+        help_text='e.g. link to Google drive folder')
+    notes = models.TextField(
+        blank=True, default='',
+        verbose_name='Any other notes')
