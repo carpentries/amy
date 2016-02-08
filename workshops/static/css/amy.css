@@ -191,3 +191,12 @@ table.table-striped tr.bg-danger {
 table tr label {
     font-weight: normal;
 }
+
+/* Remove too much empty space over some radio filters. This style is copied
+   from Bootstrap behavior for form-horizontal. */
+.sidebar form .radio,
+.sidebar form .checkbox {
+    min-height: 27px;
+    margin-top: 0;
+    margin-bottom: 0;
+}
