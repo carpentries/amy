@@ -762,5 +762,5 @@ def assign(request, obj, person_id):
 
         obj.save()
 
-    except Person.DoesNotExist:
+    except (Person.DoesNotExist, ValueError):
         raise Http404("No person found matching the query.")
