@@ -750,3 +750,11 @@ class InvoiceRequestForm(forms.ModelForm):
             'vendor_form_required': RadioSelect,
             'receipts_sent': RadioSelect,
         }
+
+
+class InvoiceRequestUpdateForm(forms.ModelForm):
+    class Meta:
+        model = InvoiceRequest
+        fields = (
+            'status', 'sent_date', 'paid_date', 'notes'
+        )

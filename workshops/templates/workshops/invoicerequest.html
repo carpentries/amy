@@ -38,6 +38,15 @@
       <tr><td>shared receipts link:</td><td>{{ object.shared_receipts_link|default:"—"|urlize_newtab }}</td></tr>
       <tr><td>notes:</td><td><pre>{{ object.notes }}</pre></td></tr>
     </table>
+    <div class="clearfix">
+      <div class="edit-object pull-right">
+        {% if perms.workshops.change_invoicerequest %}
+        <a href="{% url 'invoicerequest_edit' object.pk %}" class="btn btn-success">Update</a>
+        {% else %}
+        <a href="#" class="btn btn-success disabled">Update</a>
+        {% endif %}
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}

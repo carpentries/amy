@@ -61,6 +61,7 @@ from workshops.forms import (
     SimpleTodoForm, bootstrap_helper_inline_formsets, BootstrapHelper,
     AdminLookupForm, ProfileUpdateRequestFormNoCaptcha, MembershipForm,
     TodoFormSet, EventsSelectionForm, EventsMergeForm, InvoiceRequestForm,
+    InvoiceRequestUpdateForm,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
@@ -1329,6 +1330,15 @@ class InvoiceRequestDetails(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Invoice request #{}'.format(self.get_object().pk)
         return context
+
+
+class InvoiceRequestUpdate(LoginRequiredMixin, PermissionRequiredMixin,
+                           UpdateViewContext):
+    permission_required = 'workshops.change_invoicerequest'
+    model = InvoiceRequest
+    form_class = InvoiceRequestUpdateForm
+    pk_url_kwarg = 'request_id'
+    template_name = 'workshops/generic_form.html'
 
 
 # ------------------------------------------------------------
