@@ -9,14 +9,14 @@ from django.forms import (
 
 from captcha.fields import ReCaptchaField
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Div, HTML, Submit, Field
+from crispy_forms.layout import Layout, Div, HTML, Submit
 from crispy_forms.bootstrap import FormActions
 from django_countries import Countries
 from django_countries.fields import CountryField
 from selectable import forms as selectable
 
 from workshops.models import (
-    Award, Event, Lesson, Person, Task, KnowledgeDomain, Airport, Host,
+    Award, Event, Lesson, Person, Task, Airport, Host,
     EventRequest, ProfileUpdateRequest, TodoItem, Membership,
 )
 from workshops import lookups
