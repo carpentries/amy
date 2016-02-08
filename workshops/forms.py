@@ -18,6 +18,7 @@ from selectable import forms as selectable
 from workshops.models import (
     Award, Event, Lesson, Person, Task, Airport, Host,
     EventRequest, ProfileUpdateRequest, TodoItem, Membership,
+    InvoiceRequest,
 )
 from workshops import lookups
 
@@ -730,3 +731,22 @@ class EventsMergeForm(forms.Form):
     todoitem_set = forms.ChoiceField(
         choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
     )
+
+
+class InvoiceRequestForm(forms.ModelForm):
+    class Meta:
+        model = InvoiceRequest
+        fields = (
+            'organization', 'reason', 'reason_other', 'date', 'event',
+            'event_location', 'item_id', 'postal_number', 'contact_name',
+            'contact_email', 'contact_phone', 'full_address', 'amount',
+            'currency', 'currency_other', 'breakdown', 'vendor_form_required',
+            'vendor_form_link', 'form_W9', 'receipts_sent',
+            'shared_receipts_link', 'notes',
+        )
+        widgets = {
+            'reason': RadioSelect,
+            'currency': RadioSelect,
+            'vendor_form_required': RadioSelect,
+            'receipts_sent': RadioSelect,
+        }

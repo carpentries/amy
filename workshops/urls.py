@@ -46,6 +46,8 @@ urlpatterns = [
     url(r'^events/import/?$', views.event_import, name='event_import'),
     url(r'^events/merge/?$', views.events_merge, name='events_merge'),
 
+    url(r'^event/(?P<event_ident>[\w-]+)/invoice$', views.event_invoice, name='event_invoice'),
+
     url(r'^tasks/?$', views.all_tasks, name='all_tasks'),
     url(r'^task/(?P<task_id>\d+)/?$', views.task_details, name='task_details'),
     url(r'^task/(?P<task_id>\d+)/edit$', views.TaskUpdate.as_view(), name='task_edit'),

@@ -59,7 +59,7 @@ from workshops.forms import (
     ProfileUpdateRequestForm, PersonLookupForm, bootstrap_helper_wider_labels,
     SimpleTodoForm, bootstrap_helper_inline_formsets, BootstrapHelper,
     AdminLookupForm, ProfileUpdateRequestFormNoCaptcha, MembershipForm,
-    TodoFormSet, EventsSelectionForm, EventsMergeForm,
+    TodoFormSet, EventsSelectionForm, EventsMergeForm, InvoiceRequestForm,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
@@ -1247,6 +1247,29 @@ def events_merge(request):
         'form': form,
     }
     return render(request, 'workshops/events_merge.html', context)
+
+
+@login_required
+@permission_required('workshops.add_invoicerequest', raise_exception=True)
+def event_invoice(request, event_ident):
+    try:
+        event = Event.get_by_ident(event_ident)
+    except ObjectDoesNotExist:
+        raise Http404("No event found matching the query.")
+
+    form = InvoiceRequestForm(initial=dict(
+        organization=event.host, date=event.start, event=event,
+        event_location=event.venue, amount=event.admin_fee,
+    ))
+
+    context = {
+        'title_left': 'Event {}'.format(event.get_ident()),
+        'title_right': 'New invoice request',
+        'event': event,
+        'form': form,
+        'form_helper': bootstrap_helper,
+    }
+    return render(request, 'workshops/event_invoice.html', context)
 
 #------------------------------------------------------------
 
