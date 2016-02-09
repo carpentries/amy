@@ -22,6 +22,20 @@
       {% endif %}
     </td>
   </tr>
+  <tr>
+    <td>invoice requests:</td>
+    <td colspan="2">
+      {% if event.invoicerequest_set.all %}
+      <ul>
+        {% for request in event.invoicerequest_set.all %}
+        <li><a href="{{ request.get_absolute_url }}" target="_blank">{{ request }}</a> (status: {{ request.long_status }})</li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      —
+      {% endif %}
+    </td>
+  </tr>
   <tr class="{% if not event.attendance %}bg-danger{% endif %}">
     <td>attendance:</td>
     <td colspan="2">

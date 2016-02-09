@@ -1354,3 +1354,14 @@ class InvoiceRequest(models.Model):
     @property
     def paid(self):
         return self.status == 'paid'
+
+    @property
+    def long_status(self):
+        """Display status with date, if available."""
+        LONG_FMT = '{} on {:%Y-%m-%d}'
+        if self.status == 'sent' and self.sent_date:
+            return LONG_FMT.format(self.get_status_display(), self.sent_date)
+        elif self.status == 'paid' and self.paid_date:
+            return LONG_FMT.format(self.get_status_display(), self.paid_date)
+
+        return self.get_status_display()
