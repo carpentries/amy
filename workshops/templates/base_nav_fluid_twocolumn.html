@@ -1,0 +1,15 @@
+{% extends "base_nav_fluid.html" %}
+
+{% block content %}
+<div class="row">
+  <div class="col-sm-6">
+    {% block title-left %}<h1>{{ title_left }}</h1>{% endblock %}
+    {% block content-left %}{% endblock %}
+  </div>
+  <div class="col-sm-6">
+    {% block title-right %}<h1>{{ title_right }}</h1>{% endblock %}
+    {% block content-right %}{% endblock %}
+  </div>
+</div>
+{% block content-below %}{% endblock %}
+{% endblock %}

@@ -49,6 +49,7 @@ from workshops.models import (
     ProfileUpdateRequest,
     TodoItem,
     TodoItemQuerySet,
+    InvoiceRequest,
 )
 from workshops.forms import (
     SearchForm, DebriefForm, InstructorsForm, PersonForm, PersonBulkAddForm,
@@ -59,7 +60,8 @@ from workshops.forms import (
     ProfileUpdateRequestForm, PersonLookupForm, bootstrap_helper_wider_labels,
     SimpleTodoForm, bootstrap_helper_inline_formsets, BootstrapHelper,
     AdminLookupForm, ProfileUpdateRequestFormNoCaptcha, MembershipForm,
-    TodoFormSet, EventsSelectionForm, EventsMergeForm,
+    TodoFormSet, EventsSelectionForm, EventsMergeForm, InvoiceRequestForm,
+    InvoiceRequestUpdateForm,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
@@ -73,13 +75,14 @@ from workshops.util import (
     validate_tags_from_event_website,
     assignment_selection,
     get_pagination_items,
+    Paginator,
     failed_to_delete,
     assign,
 )
 
 from workshops.filters import (
     EventFilter, HostFilter, PersonFilter, TaskFilter, AirportFilter,
-    EventRequestFilter, BadgeAwardsFilter,
+    EventRequestFilter, BadgeAwardsFilter, InvoiceRequestFilter,
 )
 
 # ------------------------------------------------------------
@@ -138,6 +141,30 @@ class UpdateViewContext(SuccessMessageMixin, UpdateView):
     def get_success_message(self, cleaned_data):
         "Format self.success_message, used by messages framework from Django."
         return self.success_message.format(cleaned_data, name=str(self.object))
+
+
+class FilteredListView(ListView):
+    paginator_class = Paginator
+    filter_class = None
+    queryset = None
+
+    def get_filter_data(self):
+        """Datasource for the filter."""
+        return self.request.GET
+
+    def get_queryset(self):
+        """Apply a filter to the queryset. Filter is compatible with pagination
+        and queryset."""
+        self.filter = self.filter_class(self.get_filter_data(),
+                                        super().get_queryset())
+        return self.filter
+
+    def get_context_data(self, **kwargs):
+        """Enhance context by adding a filter to it."""
+        context = super().get_context_data(**kwargs)
+        context['filter'] = self.filter
+        context['form_helper'] = bootstrap_helper_filter
+        return context
 
 #------------------------------------------------------------
 
@@ -1248,7 +1275,82 @@ def events_merge(request):
     }
     return render(request, 'workshops/events_merge.html', context)
 
-#------------------------------------------------------------
+
+@login_required
+@permission_required('workshops.add_invoicerequest', raise_exception=True)
+def event_invoice(request, event_ident):
+    try:
+        event = Event.get_by_ident(event_ident)
+    except ObjectDoesNotExist:
+        raise Http404("No event found matching the query.")
+
+    form = InvoiceRequestForm(initial=dict(
+        organization=event.host, date=event.start, event=event,
+        event_location=event.venue, amount=event.admin_fee,
+    ))
+
+    if request.method == 'POST':
+        form = InvoiceRequestForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request,
+                             'Successfully added an invoice request for {}.'
+                             .format(event.get_ident()))
+            return redirect(reverse('event_details',
+                                    args=[event.get_ident()]))
+        else:
+            messages.error(request, 'Fix errors below.')
+
+    context = {
+        'title_left': 'Event {}'.format(event.get_ident()),
+        'title_right': 'New invoice request',
+        'event': event,
+        'form': form,
+        'form_helper': bootstrap_helper,
+    }
+    return render(request, 'workshops/event_invoice.html', context)
+
+
+class AllInvoiceRequests(LoginRequiredMixin, FilteredListView):
+    context_object_name = 'requests'
+    template_name = 'workshops/all_invoicerequests.html'
+    filter_class = InvoiceRequestFilter
+    queryset = InvoiceRequest.objects.all()
+
+    def get_filter_data(self):
+        data = self.request.GET.copy()
+        data['status'] = data.get('status', '')
+        return data
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Invoice requests'
+        return context
+
+
+class InvoiceRequestDetails(LoginRequiredMixin, DetailView):
+    context_object_name = 'object'
+    template_name = 'workshops/invoicerequest.html'
+    queryset = InvoiceRequest.objects.all()
+    pk_url_kwarg = 'request_id'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Invoice request #{}'.format(self.get_object().pk)
+        return context
+
+
+class InvoiceRequestUpdate(LoginRequiredMixin, PermissionRequiredMixin,
+                           UpdateViewContext):
+    permission_required = 'workshops.change_invoicerequest'
+    model = InvoiceRequest
+    form_class = InvoiceRequestUpdateForm
+    pk_url_kwarg = 'request_id'
+    template_name = 'workshops/generic_form.html'
+
+
+# ------------------------------------------------------------
 
 @login_required
 def all_tasks(request):

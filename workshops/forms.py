@@ -4,19 +4,21 @@ from django import forms
 from django.core.validators import RegexValidator
 from django.forms import (
     HiddenInput, CheckboxSelectMultiple, TextInput, modelformset_factory,
+    RadioSelect,
 )
 
 from captcha.fields import ReCaptchaField
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Div, HTML, Submit, Field
+from crispy_forms.layout import Layout, Div, HTML, Submit
 from crispy_forms.bootstrap import FormActions
 from django_countries import Countries
 from django_countries.fields import CountryField
 from selectable import forms as selectable
 
 from workshops.models import (
-    Award, Event, Lesson, Person, Task, KnowledgeDomain, Airport, Host,
+    Award, Event, Lesson, Person, Task, Airport, Host,
     EventRequest, ProfileUpdateRequest, TodoItem, Membership,
+    InvoiceRequest,
 )
 from workshops import lookups
 
@@ -331,6 +333,7 @@ class EventForm(forms.ModelForm):
             'attendance': TextInput,
             'latitude': TextInput,
             'longitude': TextInput,
+            'invoice_status': RadioSelect,
         }
 
     class Media:
@@ -728,3 +731,30 @@ class EventsMergeForm(forms.Form):
     todoitem_set = forms.ChoiceField(
         choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
     )
+
+
+class InvoiceRequestForm(forms.ModelForm):
+    class Meta:
+        model = InvoiceRequest
+        fields = (
+            'organization', 'reason', 'reason_other', 'date', 'event',
+            'event_location', 'item_id', 'postal_number', 'contact_name',
+            'contact_email', 'contact_phone', 'full_address', 'amount',
+            'currency', 'currency_other', 'breakdown', 'vendor_form_required',
+            'vendor_form_link', 'form_W9', 'receipts_sent',
+            'shared_receipts_link', 'notes',
+        )
+        widgets = {
+            'reason': RadioSelect,
+            'currency': RadioSelect,
+            'vendor_form_required': RadioSelect,
+            'receipts_sent': RadioSelect,
+        }
+
+
+class InvoiceRequestUpdateForm(forms.ModelForm):
+    class Meta:
+        model = InvoiceRequest
+        fields = (
+            'status', 'sent_date', 'paid_date', 'notes'
+        )
