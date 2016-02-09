@@ -148,10 +148,14 @@ class FilteredListView(ListView):
     filter_class = None
     queryset = None
 
+    def get_filter_data(self):
+        """Datasource for the filter."""
+        return self.request.GET
+
     def get_queryset(self):
         """Apply a filter to the queryset. Filter is compatible with pagination
         and queryset."""
-        self.filter = self.filter_class(self.request.GET,
+        self.filter = self.filter_class(self.get_filter_data(),
                                         super().get_queryset())
         return self.filter
 
@@ -1313,6 +1317,11 @@ class AllInvoiceRequests(LoginRequiredMixin, FilteredListView):
     template_name = 'workshops/all_invoicerequests.html'
     filter_class = InvoiceRequestFilter
     queryset = InvoiceRequest.objects.all()
+
+    def get_filter_data(self):
+        data = self.request.GET.copy()
+        data['status'] = data.get('status', '')
+        return data
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
