@@ -210,24 +210,18 @@ class TestBase(TestCase):
         test_host = Host.objects.create(domain='example.com',
                                         fullname='Test Host')
 
-        # Create one new event for each day in the next 10 days,
-        # half with URLs.
-        add_url = True
+        # Create one new published event for each day in the next 10 days.
         for t in range(1, 11):
             event_start = today + datetime.timedelta(days=t)
             date_string = universal_date_format(event_start)
             slug = '{0}-upcoming'.format(date_string)
-            if add_url:
-                url = 'http://' + ('{0}'.format(t) * 20)
-            else:
-                url = None
-            add_url = not add_url
-            e = Event.objects.create(start=event_start,
-                                     slug=slug,
-                                     host=test_host,
-                                     admin_fee=100,
-                                     invoice_status='not-invoiced',
-                                     url=url)
+            url = 'http://example.org/' + ('{0}'.format(t) * 20)
+            e = Event.objects.create(
+                start=event_start, slug=slug,
+                host=test_host, admin_fee=100,
+                url=url, invoice_status='not-invoiced',
+                country='US', venue='School', address='Overthere',
+                latitude=1, longitude=2)
 
         # Create one new event for each day from 10 days ago to
         # 3 days ago, half invoiced
@@ -257,21 +251,23 @@ class TestBase(TestCase):
         # invoiced.
         event_start = today + datetime.timedelta(days=-1)
         event_end = today + datetime.timedelta(days=1)
-        Event.objects.create(start=event_start,
-                             end=event_end,
-                             slug='ends_tomorrow_ongoing',
-                             host=test_host,
-                             admin_fee=0)
+        Event.objects.create(
+            start=event_start, end=event_end, slug='ends-tomorrow-ongoing',
+            host=test_host, admin_fee=0,
+            url='http://example.org/ends-tomorrow-ongoing',
+            country='US', venue='School', address='Overthere',
+            latitude=1, longitude=2)
 
         # Create an event that ends today with no fee, and without
         # specifying whether the fee has been invoiced.
         event_start = today + datetime.timedelta(days=-1)
         event_end = today
-        Event.objects.create(start=event_start,
-                             end=event_end,
-                             slug='ends_today_ongoing',
-                             host=test_host,
-                             admin_fee=0)
+        Event.objects.create(
+            start=event_start, end=event_end, slug='ends-today-ongoing',
+            host=test_host, admin_fee=0,
+            url='http://example.org/ends-today-ongoing',
+            country='US', venue='School', address='Overthere',
+            latitude=1, longitude=2)
 
         # Create an event that starts today with a fee, and without
         # specifying whether the fee has been invoiced.
@@ -279,7 +275,7 @@ class TestBase(TestCase):
         event_end = today + datetime.timedelta(days=1)
         Event.objects.create(start=event_start,
                              end=event_end,
-                             slug='starts_today_ongoing',
+                             slug='starts-today-ongoing',
                              host=test_host,
                              admin_fee=100)
 

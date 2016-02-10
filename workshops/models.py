@@ -498,29 +498,29 @@ class EventQuerySet(models.query.QuerySet):
         return queryset
 
     def upcoming_events(self):
-        '''Return published upcoming events.
+        """Return published upcoming events.
 
-        Upcoming events are those which start after today.  Published
-        events are those which have a URL. Events are ordered by date,
-        soonest first.
-        '''
+        Upcoming events are published events (see `published_events` below)
+        that start after today."""
 
-        queryset = self.filter(start__gt=datetime.date.today())\
-                       .filter(url__isnull=False)\
+        queryset = self.published_events() \
+                       .filter(start__gt=datetime.date.today()) \
                        .order_by('start')
         return queryset
 
     def ongoing_events(self):
-        '''Return ongoing events.
+        """Return ongoing events.
 
-        Ongoing events are those which start after today.
-        '''
+        Ongoing events are published events (see `published_events` below)
+        that are currently taking place (ie. start today or before and end
+        today or later)."""
 
-        # All events that start before or on today
-        queryset = self.filter(start__lte=datetime.date.today())
-
-        # Of those, only the ones that finish after or on today
-        queryset = queryset.filter(end__gte=datetime.date.today())
+        # All events that start before or on today, and finish after or on
+        # today.
+        queryset = self.published_events() \
+                       .filter(start__lte=datetime.date.today()) \
+                       .filter(end__gte=datetime.date.today()) \
+                       .order_by('start')
 
         return queryset
 
