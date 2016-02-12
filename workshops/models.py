@@ -1276,7 +1276,7 @@ class InvoiceRequest(models.Model):
         verbose_name='Organization contact name',
         help_text='e.g. Dr. Jane Smith - the name of the person to contact at '
                   'the organization about the invoice')
-    contact_email = models.CharField(
+    contact_email = models.EmailField(
         max_length=STR_LONG, null=False, blank=False,
         verbose_name='Organization contact email')
     contact_phone = models.CharField(
