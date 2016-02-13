@@ -50,6 +50,7 @@ from workshops.models import (
     TodoItem,
     TodoItemQuerySet,
     InvoiceRequest,
+    EventSubmission as EventSubmissionModel,
 )
 from workshops.forms import (
     SearchForm, DebriefForm, InstructorsForm, PersonForm, PersonBulkAddForm,
@@ -61,7 +62,7 @@ from workshops.forms import (
     SimpleTodoForm, bootstrap_helper_inline_formsets, BootstrapHelper,
     AdminLookupForm, ProfileUpdateRequestFormNoCaptcha, MembershipForm,
     TodoFormSet, EventsSelectionForm, EventsMergeForm, InvoiceRequestForm,
-    InvoiceRequestUpdateForm,
+    InvoiceRequestUpdateForm, EventSubmitForm,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
@@ -2330,6 +2331,60 @@ def profileupdaterequest_accept(request, request_id, person_id):
     messages.success(request,
                      '{} was updated successfully.'.format(person_name))
     return redirect(person.get_absolute_url())
+
+
+class EventSubmission(EmailSendMixin, CreateViewContext):
+    """Display form for submitting existing workshops."""
+    model = EventSubmissionModel
+    form_class = EventSubmitForm
+    template_name = 'forms/event_submit.html'
+    success_url = reverse_lazy('event_submission_confirm')
+    email_fail_silently = False
+    email_kwargs = {
+        'to': settings.REQUEST_NOTIFICATIONS_RECIPIENTS,
+    }
+
+    def get_success_message(self, *args, **kwargs):
+        """Don't display a success message."""
+        return ''
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Tell us about your workshop'
+        context['form_helper'] = bootstrap_helper_wider_labels
+        return context
+
+    def get_subject(self):
+        return ('New workshop submission from {}'
+                .format(self.object.contact_name))
+
+    def get_body(self):
+        link = self.object.get_absolute_url()
+        link_domain = settings.SITE_URL
+        body_txt = get_template('mailing/event_submission.txt') \
+            .render({
+                'object': self.object,
+                'link': link,
+                'link_domain': link_domain,
+            })
+        body_html = get_template('mailing/event_submission.html') \
+            .render({
+                'object': self.object,
+                'link': link,
+                'link_domain': link_domain,
+            })
+        return body_txt, body_html
+
+
+class EventSubmissionConfirm(TemplateView):
+    """Display confirmation of received workshop submission."""
+    template_name = 'forms/event_submission_confirm.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Thanks for your submission'
+        return context
+
 
 #------------------------------------------------------------
 

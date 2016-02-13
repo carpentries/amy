@@ -18,7 +18,7 @@ from selectable import forms as selectable
 from workshops.models import (
     Award, Event, Lesson, Person, Task, Airport, Host,
     EventRequest, ProfileUpdateRequest, TodoItem, Membership,
-    InvoiceRequest,
+    InvoiceRequest, EventSubmission,
 )
 from workshops import lookups
 
@@ -561,6 +561,14 @@ class DCEventRequestForm(SWCEventRequestForm):
             'attendee_data_analysis_level': forms.CheckboxSelectMultiple(),
             'travel_reimbursement': forms.RadioSelect(),
         }
+
+
+class EventSubmitForm(forms.ModelForm):
+    captcha = ReCaptchaField()
+
+    class Meta:
+        model = EventSubmission
+        exclude = ('active', 'assigned_to', )
 
 
 class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):

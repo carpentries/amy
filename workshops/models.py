@@ -1021,7 +1021,10 @@ class EventSubmission(AssignmentMixin, models.Model):
         null=False, blank=True, default='')
 
     def __str__(self):
-        return 'Event submission <{url}>'.format_map(self)
+        return 'Event submission <{}>'.format(self.url)
+
+    def get_absolute_url(self):
+        return 'placeholder'  # TODO: fix it once the view is ready
 
 
 class AcademicLevel(models.Model):
