@@ -1987,7 +1987,7 @@ class SWCEventRequest(EmailSendMixin, CreateViewContext):
         link_domain = settings.SITE_URL
 
         body_txt = get_template(
-            'workshops/eventrequest_email_txt.html'
+            'mailing/eventrequest.txt'
         ).render({
             'object': self.object,
             'link': link,
@@ -1995,7 +1995,7 @@ class SWCEventRequest(EmailSendMixin, CreateViewContext):
         })
 
         body_html = get_template(
-            'workshops/eventrequest_email_html.html'
+            'mailing/eventrequest.html'
         ).render({
             'object': self.object,
             'link': link,
