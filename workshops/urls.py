@@ -97,6 +97,9 @@ urlpatterns = [
     url(r'^dc/request/confirm/$', views.DCEventRequestConfirm.as_view(), name='dc_workshop_request_confirm'),
 
     url(r'^submissions/$', views.AllEventSubmissions.as_view(), name='all_eventsubmissions'),
+    url(r'^submission/(?P<submission_id>\d+)/?$', views.EventSubmissionDetails.as_view(), name='eventsubmission_details'),
+    url(r'^submission/(?P<submission_id>\d+)/assign$', views.eventsubmission_assign, name='eventsubmission_assign'),
+    url(r'^submission/(?P<submission_id>\d+)/assign/(?P<person_id>[\w\.-]+)$', views.eventsubmission_assign, name='eventsubmission_assign'),
     url(r'^submit/$', views.EventSubmission.as_view(), name='event_submit'),
     url(r'^submit/confirm/$', views.EventSubmissionConfirm.as_view(), name='event_submission_confirm'),
 

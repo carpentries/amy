@@ -1,0 +1,75 @@
+{% extends "base_nav_fixed.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+{% if not object.active %}
+  <div class="alert alert-warning" role="alert">
+    <p><strong>Warning:</strong> This submission was closed.</p>
+  </div>
+{% endif %}
+
+<div class="row">
+  <div class="col-md-6 col-md-offset-6 text-right">
+    <p>
+      <a href="#" id="change_assignment"><span class="glyphicon glyphicon-cog"></span></a>
+      Assignee:
+      {% if object.assigned_to %}
+        <a href="{{ object.assigned_to.get_absolute_url }}">{{ object.assigned_to.get_full_name }}</a> (<a href="{% url 'eventsubmission_assign' object.pk %}" id="clear-assignment">clear</a>).
+      {% else %}
+        no one (<a href="{% url 'eventsubmission_assign' object.pk user.pk %}" id="assign-yourself">assign yourself</a>).
+      {% endif %}
+    </p>
+  </div>
+</div>
+
+{% include "mailing/event_submission.html" with object=object load=1 %}
+
+{% if object.active %}
+<div class="clearfix">
+  <div class="edit-object pull-left">
+    {% if perms.workshops.change_eventsubmission and perms.workshops.add_event %}
+    <a href="{% url 'eventsubmission_accept' object.pk %}" class="btn btn-success">Accept</a>
+    {% else %}
+    <a href="#" class="btn btn-success disabled">Accept</a>
+    {% endif %}
+  </div>
+  <div class="btn-group delete-object pull-right" role="group">
+    {% if perms.workshops.change_eventsubmission %}
+    <a href="{% url 'eventsubmission_fix' object.pk %}" role="button" class="btn btn-default">Fix submission</a>
+    <a href="{% url 'eventsubmission_discard' object.pk %}" onclick='return confirm("Are you sure you wish to discard \"{{ object }}\"?")' class="btn btn-danger">Discard submission</a>
+    {% else %}
+    <a href="#" role="button" class="btn btn-default">Fix submission</a>
+    <a href="#" class="btn btn-danger disabled">Discard submission</a>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<!-- selecting assignment modal -->
+<div class="modal fade" id="assignment_modal" tabindex="-1" role="dialog" aria-labelledby="assignment_modal_label" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="assignment_modal_label">Assignment</h4>
+      </div>
+      <div class="modal-body">
+        {% crispy person_lookup_form person_lookup_helper %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<script type="text/javascript">
+  $('#change_assignment').click(function() {
+    $('#assignment_modal').modal();
+    return false;
+  });
+</script>
+{% endblock %}

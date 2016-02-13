@@ -2403,6 +2403,42 @@ class AllEventSubmissions(LoginRequiredMixin, FilteredListView):
         context['title'] = 'Workshop submissions'
         return context
 
+
+class EventSubmissionDetails(LoginRequiredMixin, DetailView):
+    context_object_name = 'object'
+    template_name = 'workshops/eventsubmission.html'
+    queryset = EventSubmissionModel.objects.all()
+    pk_url_kwarg = 'submission_id'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Workshop submission #{}'.format(
+            self.get_object().pk)
+
+        person_lookup_form = AdminLookupForm()
+        if self.object.assigned_to:
+            person_lookup_form = AdminLookupForm(
+                initial={'person': self.object.assigned_to}
+            )
+
+        person_lookup_helper = BootstrapHelper()
+        person_lookup_helper.form_action = reverse('eventsubmission_assign',
+                                                   args=[self.object.pk])
+
+        context['person_lookup_form'] = person_lookup_form
+        context['person_lookup_helper'] = person_lookup_helper
+        return context
+
+
+@login_required
+@permission_required(['workshops.change_eventrequest'], raise_exception=True)
+def eventsubmission_assign(request, submission_id, person_id=None):
+    """Set eventsubmission.assigned_to. See `assign` docstring for more
+    information."""
+    submission = get_object_or_404(EventSubmissionModel, pk=submission_id)
+    assign(request, submission, person_id)
+    return redirect(submission.get_absolute_url())
+
 #------------------------------------------------------------
 
 

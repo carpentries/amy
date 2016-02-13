@@ -1024,7 +1024,7 @@ class EventSubmission(AssignmentMixin, models.Model):
         return 'Event submission <{}>'.format(self.url)
 
     def get_absolute_url(self):
-        return 'placeholder'  # TODO: fix it once the view is ready
+        return reverse('eventsubmission_details', args=[self.pk])
 
 
 class AcademicLevel(models.Model):
