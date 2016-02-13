@@ -1001,6 +1001,29 @@ class EventRequest(AssignmentMixin, models.Model):
         )
 
 
+class EventSubmission(AssignmentMixin, models.Model):
+    active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    url = models.URLField(
+        null=False, blank=False,
+        verbose_name='Link to the workshop\'s website')
+    contact_name = models.CharField(
+        null=False, blank=False, max_length=STR_LONG,
+        verbose_name='Your name')
+    contact_email = models.EmailField(
+        null=False, blank=False,
+        verbose_name='Your email',
+        help_text='We may need to contact you regarding workshop details.')
+    self_organized = models.BooleanField(
+        null=False, default=False,
+        verbose_name='Was the workshop self-organized?')
+    notes = models.TextField(
+        null=False, blank=True, default='')
+
+    def __str__(self):
+        return 'Event submission <{url}>'.format_map(self)
+
+
 class AcademicLevel(models.Model):
     name = models.CharField(max_length=STR_MED, null=False, blank=False)
 
