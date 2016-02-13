@@ -26,7 +26,7 @@ from django.db.models import Case, When, Value, IntegerField
 from django.shortcuts import redirect, render, get_object_or_404
 from django.template.loader import get_template
 from django.views.decorators.http import require_POST
-from django.views.generic import ListView, DetailView, View, TemplateView
+from django.views.generic import ListView, DetailView, TemplateView
 from django.views.generic.edit import CreateView, UpdateView, ModelFormMixin
 from django.contrib.auth.decorators import login_required, permission_required
 
@@ -84,6 +84,7 @@ from workshops.util import (
 from workshops.filters import (
     EventFilter, HostFilter, PersonFilter, TaskFilter, AirportFilter,
     EventRequestFilter, BadgeAwardsFilter, InvoiceRequestFilter,
+    EventSubmissionFilter,
 )
 
 # ------------------------------------------------------------
@@ -2385,6 +2386,22 @@ class EventSubmissionConfirm(TemplateView):
         context['title'] = 'Thanks for your submission'
         return context
 
+
+class AllEventSubmissions(LoginRequiredMixin, FilteredListView):
+    context_object_name = 'submissions'
+    template_name = 'workshops/all_eventsubmissions.html'
+    filter_class = EventSubmissionFilter
+    queryset = EventSubmissionModel.objects.all()
+
+    def get_filter_data(self):
+        data = self.request.GET.copy()
+        data['active'] = data.get('active', 'true')
+        return data
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Workshop submissions'
+        return context
 
 #------------------------------------------------------------
 
