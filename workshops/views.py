@@ -25,7 +25,6 @@ from django.db.models import Count, Q, F, Model, ProtectedError
 from django.db.models import Case, When, Value, IntegerField
 from django.shortcuts import redirect, render, get_object_or_404
 from django.template.loader import get_template
-from django.views.decorators.http import require_POST
 from django.views.generic import ListView, DetailView, TemplateView
 from django.views.generic.edit import CreateView, UpdateView, ModelFormMixin
 from django.contrib.auth.decorators import login_required, permission_required
@@ -1133,14 +1132,16 @@ def event_delete(request, event_ident):
 
 
 @login_required
-@require_POST
 def event_import(request):
     """Read tags from remote URL and return them as JSON.
 
     This is used to read tags from workshop website and then fill up fields
     on event_create form."""
 
-    url = request.POST['url'].strip()
+    # TODO: remove POST support completely
+    url = request.POST.get('url', '').strip()
+    if not url:
+        url = request.GET.get('url', '').strip()
     try:
         # fetch page
         response = requests.get(url)
@@ -1184,7 +1185,7 @@ def event_import(request):
         return HttpResponseBadRequest(str(e))
 
     except KeyError:
-        return HttpResponseBadRequest('Missing or wrong "url" POST parameter.')
+        return HttpResponseBadRequest('Missing or wrong "url" parameter.')
 
 
 @login_required

@@ -25,6 +25,24 @@
 
 {% include "mailing/event_submission.html" with object=object load=1 %}
 
+<div class="hidden" id="loaded_data">
+  <h3>Workshop data</h3>
+  <table class="table table-striped">
+    <tr><th>Slug:</th><td id="slug"></td></tr>
+    <tr><th>Start:</th><td id="start"></td></tr>
+    <tr><th>End:</th><td id="end"></td></tr>
+    <tr><th>Language:</th><td id="language"></td></tr>
+    <tr><th>Contact:</th><td id="contact"></td></tr>
+    <tr><th>Country:</th><td id="country"></td></tr>
+    <tr><th>Venue:</th><td id="venue"></td></tr>
+    <tr><th>Address:</th><td id="address"></td></tr>
+    <tr><th>Latitude:</th><td id="latitude"></td></tr>
+    <tr><th>Longitude:</th><td id="longitude"></td></tr>
+    <tr><th>Instructors:</th><td><ul id="instructors"></ul></td></tr>
+    <tr><th>Helpers:</th><td><ul id="helpers"></ul></td></tr>
+  </table>
+</div>
+
 {% if object.active %}
 <div class="clearfix">
   <div class="edit-object pull-left">
@@ -71,5 +89,23 @@
     $('#assignment_modal').modal();
     return false;
   });
+
+  $('#load_event').click(function(e) {
+    $.getJSON(e.target.href, function(data) {
+      for (var name in data) {
+        if (name == 'instructors' || name == 'helpers') {
+          for (var subname in data[name]) {
+            var li = $('<li>').text(data[name][subname]);
+            $('#' + name).append(li);
+          }
+        } else {
+          $('#' + name).text(data[name]);
+        }
+      }
+
+      $('#loaded_data').removeClass('hidden');
+    })
+    return false;
+  })
 </script>
 {% endblock %}
