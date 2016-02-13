@@ -98,6 +98,9 @@ urlpatterns = [
 
     url(r'^submissions/$', views.AllEventSubmissions.as_view(), name='all_eventsubmissions'),
     url(r'^submission/(?P<submission_id>\d+)/?$', views.EventSubmissionDetails.as_view(), name='eventsubmission_details'),
+    url(r'^submission/(?P<submission_id>\d+)/fix/?$', views.EventSubmissionFix.as_view(), name='eventsubmission_fix'),
+    url(r'^submission/(?P<submission_id>\d+)/discard/?$', views.eventsubmission_discard, name='eventsubmission_discard'),
+    url(r'^submission/(?P<submission_id>\d+)/accept/?$', views.eventsubmission_accept, name='eventsubmission_accept'),
     url(r'^submission/(?P<submission_id>\d+)/assign$', views.eventsubmission_assign, name='eventsubmission_assign'),
     url(r'^submission/(?P<submission_id>\d+)/assign/(?P<person_id>[\w\.-]+)$', views.eventsubmission_assign, name='eventsubmission_assign'),
     url(r'^submit/$', views.EventSubmission.as_view(), name='event_submit'),

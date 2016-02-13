@@ -563,12 +563,14 @@ class DCEventRequestForm(SWCEventRequestForm):
         }
 
 
-class EventSubmitForm(forms.ModelForm):
-    captcha = ReCaptchaField()
-
+class EventSubmitFormNoCaptcha(forms.ModelForm):
     class Meta:
         model = EventSubmission
         exclude = ('active', 'assigned_to', )
+
+
+class EventSubmitForm(EventSubmitFormNoCaptcha):
+    captcha = ReCaptchaField()
 
 
 class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):

@@ -61,7 +61,7 @@ from workshops.forms import (
     SimpleTodoForm, bootstrap_helper_inline_formsets, BootstrapHelper,
     AdminLookupForm, ProfileUpdateRequestFormNoCaptcha, MembershipForm,
     TodoFormSet, EventsSelectionForm, EventsMergeForm, InvoiceRequestForm,
-    InvoiceRequestUpdateForm, EventSubmitForm,
+    InvoiceRequestUpdateForm, EventSubmitForm, EventSubmitFormNoCaptcha,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
@@ -2429,6 +2429,59 @@ class EventSubmissionDetails(LoginRequiredMixin, DetailView):
         context['person_lookup_form'] = person_lookup_form
         context['person_lookup_helper'] = person_lookup_helper
         return context
+
+
+class EventSubmissionFix(LoginRequiredMixin, PermissionRequiredMixin,
+                         UpdateViewContext):
+    permission_required = 'change_eventsubmission'
+    model = EventSubmissionModel
+    form_class = EventSubmitFormNoCaptcha
+    pk_url_kwarg = 'submission_id'
+    template_name = 'workshops/generic_form.html'
+
+
+@login_required
+@permission_required(['workshops.change_eventsubmission',
+                      'workshops.add_event'], raise_exception=True)
+def eventsubmission_accept(request, submission_id):
+    """Accept event submission by creating a new event."""
+    submission = get_object_or_404(EventSubmissionModel, active=True,
+                                   pk=submission_id)
+    form = EventForm()
+
+    if request.method == 'POST':
+        form = EventForm(request.POST)
+
+        if form.is_valid():
+            event = form.save()
+
+            submission.active = False
+            submission.save()
+            return redirect(reverse('event_details',
+                                    args=[event.get_ident()]))
+        else:
+            messages.error(request, 'Fix errors below.')
+
+    context = {
+        'object': submission,
+        'form': form,
+        'title': 'New event',
+    }
+    return render(request, 'workshops/eventsubmission_accept.html', context)
+
+
+@login_required
+@permission_required('workshops.change_eventsubmission', raise_exception=True)
+def eventsubmission_discard(request, submission_id):
+    """Discard EventSubmission, ie. set it to inactive."""
+    submission = get_object_or_404(EventSubmissionModel, active=True,
+                                   pk=submission_id)
+    submission.active = False
+    submission.save()
+
+    messages.success(request,
+                     'Workshop submission was discarded successfully.')
+    return redirect(reverse('all_eventsubmissions'))
 
 
 @login_required
