@@ -1,0 +1,16 @@
+{% extends "base_nonav_fixed.html" %}
+{% load static %}
+
+{% load crispy_forms_tags %}
+
+{% block logo %}
+<img src="{% static 'software-carpentry-banner.png' %}" alt='Software-Carpentry logo' class="workshop-form-logo" />
+{% endblock %}
+
+{% block content %}
+{% crispy form form_helper %}
+{% endblock %}
+
+{% block extrajs %}
+{{ form.media }}
+{% endblock extrajs %}

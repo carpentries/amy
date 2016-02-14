@@ -43,7 +43,8 @@ class TestSWCEventRequestForm(TestBase):
             'travel_reimbursement': 'book', 'travel_reimbursement_other': '',
             'admin_fee_payment': 'self-organized', 'comment': '',
         }
-        rv = self.client.post(reverse('swc_workshop_request'), data)
+        rv = self.client.post(reverse('swc_workshop_request'), data,
+                              follow=True)
         assert rv.status_code == 200
         content = rv.content.decode('utf-8')
         assert 'Fix errors below' not in content
@@ -110,7 +111,8 @@ class TestDCEventRequestForm(TestBase):
             'travel_reimbursement': 'book', 'travel_reimbursement_other': '',
             'comment': '',
         }
-        rv = self.client.post(reverse('dc_workshop_request'), data)
+        rv = self.client.post(reverse('dc_workshop_request'), data,
+                              follow=True)
         assert rv.status_code == 200
         content = rv.content.decode('utf-8')
         assert 'Fix errors below' not in content

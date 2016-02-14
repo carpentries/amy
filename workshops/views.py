@@ -11,7 +11,7 @@ from django.contrib.auth.forms import SetPasswordForm, PasswordChangeForm
 from django.contrib.auth.mixins import (
     LoginRequiredMixin, PermissionRequiredMixin,
 )
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, reverse_lazy
 from django.core.exceptions import (
     ObjectDoesNotExist,
     PermissionDenied,
@@ -25,8 +25,7 @@ from django.db.models import Count, Q, F, Model, ProtectedError
 from django.db.models import Case, When, Value, IntegerField
 from django.shortcuts import redirect, render, get_object_or_404
 from django.template.loader import get_template
-from django.views.decorators.http import require_POST
-from django.views.generic import ListView, DetailView, View
+from django.views.generic import ListView, DetailView, TemplateView
 from django.views.generic.edit import CreateView, UpdateView, ModelFormMixin
 from django.contrib.auth.decorators import login_required, permission_required
 
@@ -50,6 +49,7 @@ from workshops.models import (
     TodoItem,
     TodoItemQuerySet,
     InvoiceRequest,
+    EventSubmission as EventSubmissionModel,
 )
 from workshops.forms import (
     SearchForm, DebriefForm, InstructorsForm, PersonForm, PersonBulkAddForm,
@@ -61,7 +61,7 @@ from workshops.forms import (
     SimpleTodoForm, bootstrap_helper_inline_formsets, BootstrapHelper,
     AdminLookupForm, ProfileUpdateRequestFormNoCaptcha, MembershipForm,
     TodoFormSet, EventsSelectionForm, EventsMergeForm, InvoiceRequestForm,
-    InvoiceRequestUpdateForm,
+    InvoiceRequestUpdateForm, EventSubmitForm, EventSubmitFormNoCaptcha,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
@@ -83,6 +83,7 @@ from workshops.util import (
 from workshops.filters import (
     EventFilter, HostFilter, PersonFilter, TaskFilter, AirportFilter,
     EventRequestFilter, BadgeAwardsFilter, InvoiceRequestFilter,
+    EventSubmissionFilter,
 )
 
 # ------------------------------------------------------------
@@ -165,6 +166,39 @@ class FilteredListView(ListView):
         context['filter'] = self.filter
         context['form_helper'] = bootstrap_helper_filter
         return context
+
+
+class EmailSendMixin():
+    email_fail_silently = True
+    email_kwargs = None
+
+    def get_subject(self):
+        """Generate email subject."""
+        return ""
+
+    def get_body(self):
+        """Generate email body (in TXT and HTML versions)."""
+        return "", ""
+
+    def prepare_email(self):
+        """Set up email contents."""
+        subject = self.get_subject()
+        body_txt, body_html = self.get_body()
+        email = EmailMultiAlternatives(subject, body_txt,
+                                       **self.email_kwargs)
+        email.attach_alternative(body_html, 'text/html')
+        return email
+
+    def send_email(self, email):
+        """Send a prepared email out."""
+        return email.send(fail_silently=self.email_fail_silently)
+
+    def form_valid(self, form):
+        """Once form is valid, send the email."""
+        results = super().form_valid(form)
+        email = self.prepare_email()
+        self.send_email(email)
+        return results
 
 #------------------------------------------------------------
 
@@ -1098,14 +1132,16 @@ def event_delete(request, event_ident):
 
 
 @login_required
-@require_POST
 def event_import(request):
     """Read tags from remote URL and return them as JSON.
 
     This is used to read tags from workshop website and then fill up fields
     on event_create form."""
 
-    url = request.POST['url'].strip()
+    # TODO: remove POST support completely
+    url = request.POST.get('url', '').strip()
+    if not url:
+        url = request.GET.get('url', '').strip()
     try:
         # fetch page
         response = requests.get(url)
@@ -1149,7 +1185,7 @@ def event_import(request):
         return HttpResponseBadRequest(str(e))
 
     except KeyError:
-        return HttpResponseBadRequest('Missing or wrong "url" POST parameter.')
+        return HttpResponseBadRequest('Missing or wrong "url" parameter.')
 
 
 @login_required
@@ -1917,84 +1953,87 @@ def object_changes(request, revision_id):
 # ------------------------------------------------------------
 
 
-class SWCEventRequest(View):
+class SWCEventRequest(EmailSendMixin, CreateViewContext):
+    model = EventRequest
     form_class = SWCEventRequestForm
-    form_helper = bootstrap_helper_wider_labels
     page_title = 'Request a Software Carpentry Workshop'
-    form_template = 'forms/workshop_swc_request.html'
-    success_template = 'forms/workshop_request_confirm.html'
+    template_name = 'forms/workshop_swc_request.html'
+    success_url = reverse_lazy('swc_workshop_request_confirm')
+    email_fail_silently = False
+    email_kwargs = {
+        'to': settings.REQUEST_NOTIFICATIONS_RECIPIENTS,
+        'reply_to': None,
+    }
 
-    def get(self, request, *args, **kwargs):
-        form = self.form_class()
-        context = {
-            'title': self.page_title,
-            'form': form,
-            'form_helper': self.form_helper,
-        }
-        return render(request, self.form_template, context)
+    def get_success_message(self, *args, **kwargs):
+        """Don't display a success message."""
+        return ''
 
-    def post(self, request, *args, **kwargs):
-        form = self.form_class(request.POST)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = self.page_title
+        context['form_helper'] = bootstrap_helper_wider_labels
+        return context
 
-        if form.is_valid():
-            data = form.cleaned_data
-            event_req = form.save()
+    def get_subject(self):
+        subject = (
+            '[{tag}] New workshop request: {affiliation}, {country}'
+        ).format(
+            tag=self.object.workshop_type.upper(),
+            country=self.object.country.name,
+            affiliation=self.object.affiliation,
+        )
+        return subject
 
-            # prepare email notification
-            recipients = settings.REQUEST_NOTIFICATIONS_RECIPIENTS
-            subject = (
-                '[{tag}] New workshop request: {affiliation}, {country}'
-            ).format(
-                tag=data['workshop_type'].upper(),
-                country=event_req.country.name,
-                affiliation=event_req.affiliation,
-            )
+    def get_body(self):
+        link = self.object.get_absolute_url()
+        link_domain = settings.SITE_URL
 
-            link = event_req.get_absolute_url()
-            link_domain = settings.SITE_URL
+        body_txt = get_template(
+            'mailing/eventrequest.txt'
+        ).render({
+            'object': self.object,
+            'link': link,
+            'link_domain': link_domain,
+        })
 
-            body_txt = get_template(
-                'workshops/eventrequest_email_txt.html'
-            ).render({
-                'object': event_req,
-                'link': link,
-                'link_domain': link_domain,
-            })
+        body_html = get_template(
+            'mailing/eventrequest.html'
+        ).render({
+            'object': self.object,
+            'link': link,
+            'link_domain': link_domain,
+        })
+        return body_txt, body_html
 
-            body_html = get_template(
-                'workshops/eventrequest_email_html.html'
-            ).render({
-                'object': event_req,
-                'link': link,
-                'link_domain': link_domain,
-            })
+    def form_valid(self, form):
+        """Send email to admins if the form is valid."""
+        data = form.cleaned_data
+        self.email_kwargs['reply_to'] = (data['email'], )
+        result = super().form_valid(form)
+        return result
 
-            reply_to = (data['email'], )
-            email = EmailMultiAlternatives(subject, body_txt, to=recipients,
-                                           reply_to=reply_to)
-            email.attach_alternative(body_html, 'text/html')
 
-            # fail loudly so that admins know if something's wrong
-            email.send(fail_silently=False)
+class SWCEventRequestConfirm(TemplateView):
+    """Display confirmation of received workshop request."""
+    template_name = 'forms/workshop_swc_request_confirm.html'
 
-            context = {
-                'title': 'Thank you for requesting a workshop',
-            }
-            return render(request, self.success_template, context)
-        else:
-            messages.error(request, 'Fix errors below.')
-            context = {
-                'title': self.page_title,
-                'form': form,
-                'form_helper': self.form_helper,
-            }
-            return render(request, self.form_template, context)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Thank you for requesting a workshop'
+        return context
 
 
 class DCEventRequest(SWCEventRequest):
     form_class = DCEventRequestForm
     page_title = 'Request a Data Carpentry Workshop'
     form_template = 'forms/workshop_dc_request.html'
+    success_url = reverse_lazy('dc_workshop_request_confirm')
+
+
+class DCEventRequestConfirm(SWCEventRequestConfirm):
+    """Display confirmation of received workshop request."""
+    template_name = 'forms/workshop_dc_request_confirm.html'
 
 
 @login_required
@@ -2294,6 +2333,165 @@ def profileupdaterequest_accept(request, request_id, person_id):
     messages.success(request,
                      '{} was updated successfully.'.format(person_name))
     return redirect(person.get_absolute_url())
+
+
+class EventSubmission(EmailSendMixin, CreateViewContext):
+    """Display form for submitting existing workshops."""
+    model = EventSubmissionModel
+    form_class = EventSubmitForm
+    template_name = 'forms/event_submit.html'
+    success_url = reverse_lazy('event_submission_confirm')
+    email_fail_silently = False
+    email_kwargs = {
+        'to': settings.REQUEST_NOTIFICATIONS_RECIPIENTS,
+    }
+
+    def get_success_message(self, *args, **kwargs):
+        """Don't display a success message."""
+        return ''
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Tell us about your workshop'
+        context['form_helper'] = bootstrap_helper_wider_labels
+        return context
+
+    def get_subject(self):
+        return ('New workshop submission from {}'
+                .format(self.object.contact_name))
+
+    def get_body(self):
+        link = self.object.get_absolute_url()
+        link_domain = settings.SITE_URL
+        body_txt = get_template('mailing/event_submission.txt') \
+            .render({
+                'object': self.object,
+                'link': link,
+                'link_domain': link_domain,
+            })
+        body_html = get_template('mailing/event_submission.html') \
+            .render({
+                'object': self.object,
+                'link': link,
+                'link_domain': link_domain,
+            })
+        return body_txt, body_html
+
+
+class EventSubmissionConfirm(TemplateView):
+    """Display confirmation of received workshop submission."""
+    template_name = 'forms/event_submission_confirm.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Thanks for your submission'
+        return context
+
+
+class AllEventSubmissions(LoginRequiredMixin, FilteredListView):
+    context_object_name = 'submissions'
+    template_name = 'workshops/all_eventsubmissions.html'
+    filter_class = EventSubmissionFilter
+    queryset = EventSubmissionModel.objects.all()
+
+    def get_filter_data(self):
+        data = self.request.GET.copy()
+        data['active'] = data.get('active', 'true')
+        return data
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Workshop submissions'
+        return context
+
+
+class EventSubmissionDetails(LoginRequiredMixin, DetailView):
+    context_object_name = 'object'
+    template_name = 'workshops/eventsubmission.html'
+    queryset = EventSubmissionModel.objects.all()
+    pk_url_kwarg = 'submission_id'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Workshop submission #{}'.format(
+            self.get_object().pk)
+
+        person_lookup_form = AdminLookupForm()
+        if self.object.assigned_to:
+            person_lookup_form = AdminLookupForm(
+                initial={'person': self.object.assigned_to}
+            )
+
+        person_lookup_helper = BootstrapHelper()
+        person_lookup_helper.form_action = reverse('eventsubmission_assign',
+                                                   args=[self.object.pk])
+
+        context['person_lookup_form'] = person_lookup_form
+        context['person_lookup_helper'] = person_lookup_helper
+        return context
+
+
+class EventSubmissionFix(LoginRequiredMixin, PermissionRequiredMixin,
+                         UpdateViewContext):
+    permission_required = 'change_eventsubmission'
+    model = EventSubmissionModel
+    form_class = EventSubmitFormNoCaptcha
+    pk_url_kwarg = 'submission_id'
+    template_name = 'workshops/generic_form.html'
+
+
+@login_required
+@permission_required(['workshops.change_eventsubmission',
+                      'workshops.add_event'], raise_exception=True)
+def eventsubmission_accept(request, submission_id):
+    """Accept event submission by creating a new event."""
+    submission = get_object_or_404(EventSubmissionModel, active=True,
+                                   pk=submission_id)
+    form = EventForm()
+
+    if request.method == 'POST':
+        form = EventForm(request.POST)
+
+        if form.is_valid():
+            event = form.save()
+
+            submission.active = False
+            submission.save()
+            return redirect(reverse('event_details',
+                                    args=[event.get_ident()]))
+        else:
+            messages.error(request, 'Fix errors below.')
+
+    context = {
+        'object': submission,
+        'form': form,
+        'title': 'New event',
+    }
+    return render(request, 'workshops/eventsubmission_accept.html', context)
+
+
+@login_required
+@permission_required('workshops.change_eventsubmission', raise_exception=True)
+def eventsubmission_discard(request, submission_id):
+    """Discard EventSubmission, ie. set it to inactive."""
+    submission = get_object_or_404(EventSubmissionModel, active=True,
+                                   pk=submission_id)
+    submission.active = False
+    submission.save()
+
+    messages.success(request,
+                     'Workshop submission was discarded successfully.')
+    return redirect(reverse('all_eventsubmissions'))
+
+
+@login_required
+@permission_required(['workshops.change_eventrequest'], raise_exception=True)
+def eventsubmission_assign(request, submission_id, person_id=None):
+    """Set eventsubmission.assigned_to. See `assign` docstring for more
+    information."""
+    submission = get_object_or_404(EventSubmissionModel, pk=submission_id)
+    assign(request, submission, person_id)
+    return redirect(submission.get_absolute_url())
 
 #------------------------------------------------------------
 

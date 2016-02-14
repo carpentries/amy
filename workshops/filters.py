@@ -13,6 +13,7 @@ from workshops.models import (
     Task,
     Award,
     InvoiceRequest,
+    EventSubmission,
 )
 
 EMPTY_SELECTION = (None, '---------')
@@ -268,4 +269,31 @@ class InvoiceRequestFilter(FilterSetWithoutHelpText):
         order_by = [
             '-event__slug', 'event__slug',
             'organization__domain', '-organization__domain',
+        ]
+
+
+def filter_active_eventsubmission(qs, value):
+    if value == 'true':
+        return qs.filter(active=True)
+    elif value == 'false':
+        return qs.filter(active=False)
+    return qs
+
+
+class EventSubmissionFilter(FilterSetWithoutHelpText):
+    active = django_filters.ChoiceFilter(
+        choices=(('', 'All'), ('true', 'Open'), ('false', 'Closed')),
+        label='Status', action=filter_active_eventsubmission,
+        widget=django.forms.widgets.RadioSelect,
+    )
+    assigned_to = ForeignKeyAllValuesFilter(Person)
+
+    class Meta:
+        model = EventSubmission
+        fields = [
+            'active',
+            'assigned_to',
+        ]
+        order_by = [
+            '-created_at', 'created_at',
         ]

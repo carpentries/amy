@@ -23,7 +23,7 @@
   </div>
 </div>
 
-{% include "workshops/eventrequest_email_html.html" %}
+{% include "mailing/eventrequest.html" %}
 
 {% if object.active %}
 <div class="clearfix">
@@ -61,6 +61,7 @@
     </div>
   </div>
 </div>
+{% endblock %}
 
 {% block extrajs %}
 <script type="text/javascript">
@@ -69,5 +70,4 @@
     return false;
   });
 </script>
-{% endblock %}
 {% endblock %}

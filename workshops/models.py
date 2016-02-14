@@ -1001,6 +1001,32 @@ class EventRequest(AssignmentMixin, models.Model):
         )
 
 
+class EventSubmission(AssignmentMixin, models.Model):
+    active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    url = models.URLField(
+        null=False, blank=False,
+        verbose_name='Link to the workshop\'s website')
+    contact_name = models.CharField(
+        null=False, blank=False, max_length=STR_LONG,
+        verbose_name='Your name')
+    contact_email = models.EmailField(
+        null=False, blank=False,
+        verbose_name='Your email',
+        help_text='We may need to contact you regarding workshop details.')
+    self_organized = models.BooleanField(
+        null=False, default=False,
+        verbose_name='Was the workshop self-organized?')
+    notes = models.TextField(
+        null=False, blank=True, default='')
+
+    def __str__(self):
+        return 'Event submission <{}>'.format(self.url)
+
+    def get_absolute_url(self):
+        return reverse('eventsubmission_details', args=[self.pk])
+
+
 class AcademicLevel(models.Model):
     name = models.CharField(max_length=STR_MED, null=False, blank=False)
 
@@ -1276,7 +1302,7 @@ class InvoiceRequest(models.Model):
         verbose_name='Organization contact name',
         help_text='e.g. Dr. Jane Smith - the name of the person to contact at '
                   'the organization about the invoice')
-    contact_email = models.CharField(
+    contact_email = models.EmailField(
         max_length=STR_LONG, null=False, blank=False,
         verbose_name='Organization contact email')
     contact_phone = models.CharField(
