@@ -32,7 +32,7 @@ urlpatterns = [
     url(r'^persons/bulkadd/$',views.person_bulk_add, name='person_bulk_add'),
     url(r'^persons/bulkadd/template',views.person_bulk_add_template, name='person_bulk_add_template'),
     url(r'^persons/bulkadd/confirm$',views.person_bulk_add_confirmation, name='person_bulk_add_confirmation'),
-    url(r'^persons/merge/$',views.person_merge, name='person_merge'),
+    url(r'^persons/merge/$', views.persons_merge, name='persons_merge'),
     url(r'^persons/merge/confirm$',views.person_merge_confirmation, name='person_merge_confirmation'),
 
     url(r'^events/?$', views.all_events, name='all_events'),

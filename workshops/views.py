@@ -835,7 +835,7 @@ def person_password(request, person_id):
 @login_required
 @permission_required(['workshops.add_person', 'workshops.delete_person'],
                      raise_exception=True)
-def person_merge(request):
+def persons_merge(request):
     'Merge information from one Person into another (in case of duplicates).'
 
     if request.method == 'POST':
@@ -875,14 +875,14 @@ def person_merge_confirmation(request):
         del request.session['person_from']
         del request.session['person_to']
         messages.warning(request, 'Cannot merge a person with themselves.')
-        return redirect('person_merge')
+        return redirect('persons_merge')
 
     if "confirmed" in request.GET:
         merge_persons(person_from, person_to)
         messages.success(request,
                          'Merging {0} into {1}'.format(person_from,
                                                        person_to))
-        return redirect('person_merge')
+        return redirect('persons_merge')
 
     else:
         context = {'title': 'Confirm merge',

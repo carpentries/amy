@@ -146,7 +146,7 @@
 
 <div class="edit-object">
   <div class="btn-group pull-right" role="group">
-    <a href="{% url 'person_merge' %}" class="btn btn-primary">Cancel</a>
+    <a href="{% url 'persons_merge' %}" class="btn btn-primary">Cancel</a>
     <a href="{% url 'person_merge_confirmation' %}?confirmed=1" onclick='return confirm("Are you sure you wish to merge \"{{ person_from }}\" into \"{{ person_to }}\"?")' class="btn btn-danger">Merge these people</a>
   </div>
 </div>

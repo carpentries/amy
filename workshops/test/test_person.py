@@ -501,7 +501,7 @@ class TestPersonMerge(TestBase):
             'person_to_0': 'Second person',
             'person_to_1': 2000,
         }
-        rv = self.client.post(reverse('person_merge'), data, follow=True)
+        rv = self.client.post(reverse('persons_merge'), data, follow=True)
         content = rv.content.decode('utf-8')
         assert 'Fix errors below' in content
 
@@ -523,7 +523,7 @@ class TestPersonMerge(TestBase):
             'person_to_0': '',
             'person_to_1': self.hermione.pk,
         }
-        rv = self.client.post(reverse('person_merge'), data, follow=True)
+        rv = self.client.post(reverse('persons_merge'), data, follow=True)
         content = rv.content.decode('utf-8')
         assert 'Fix errors below' not in content
         assert self.ron.personal in content
@@ -547,7 +547,7 @@ class TestPersonMerge(TestBase):
             'person_to_0': '',
             'person_to_1': self.ron.pk,
         }
-        rv = self.client.post(reverse('person_merge'), data, follow=True)
+        rv = self.client.post(reverse('persons_merge'), data, follow=True)
         assert rv.status_code == 200
         content = rv.content.decode('utf-8')
         assert 'Fix errors below' not in content
