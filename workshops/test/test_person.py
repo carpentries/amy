@@ -7,14 +7,11 @@ from django.core.urlresolvers import reverse
 from django.core.validators import ValidationError
 from django.contrib.auth.models import Permission, Group
 
-from django.test import TransactionTestCase
-
 from ..forms import PersonForm
 from ..models import (
     Person, Task, Qualification, Award, Role, Event, KnowledgeDomain, Badge,
     Lesson, Host
 )
-from ..util import merge_persons
 from .base import TestBase
 
 

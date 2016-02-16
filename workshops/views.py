@@ -66,7 +66,7 @@ from workshops.forms import (
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
-    create_uploaded_persons_tasks, InternalError, merge_persons,
+    create_uploaded_persons_tasks, InternalError,
     update_event_attendance_from_tasks,
     WrongWorkshopURL,
     generate_url_to_event_index,

@@ -420,33 +420,6 @@ def get_pagination_items(request, all_objects):
     return result
 
 
-def merge_persons(person_from, person_to):
-    for award in person_from.award_set.all():
-        try:
-            award.person = person_to
-            award.save()
-        except IntegrityError:
-            # unique constraints fail (probably)
-            pass
-
-    for task in person_from.task_set.all():
-        try:
-            task.person = person_to
-            task.save()
-        except IntegrityError:
-            # unique constraints fail (probably)
-            pass
-
-    # update only unique lessons
-    person_from.qualification_set.exclude(lesson__in=person_to.lessons.all()) \
-                                 .update(person=person_to)
-
-    person_to.domains.add(*person_from.domains.all())
-
-    # removes tasks, awards, qualifications in a cascading way
-    person_from.delete()
-
-
 class WrongWorkshopURL(ValueError):
     """Raised when we fall back to reading tags from event's YAML front matter,
     which requires a link to GitHub raw hosted file, but we can't get that link
