@@ -55,13 +55,14 @@ from workshops.forms import (
     SearchForm, DebriefForm, InstructorsForm, PersonForm, PersonBulkAddForm,
     EventForm, TaskForm, TaskFullForm, bootstrap_helper, bootstrap_helper_get,
     bootstrap_helper_with_add, BadgeAwardForm, PersonAwardForm,
-    PersonPermissionsForm, bootstrap_helper_filter, PersonMergeForm,
+    PersonPermissionsForm, bootstrap_helper_filter, PersonsSelectionForm,
     PersonTaskForm, HostForm, SWCEventRequestForm, DCEventRequestForm,
     ProfileUpdateRequestForm, PersonLookupForm, bootstrap_helper_wider_labels,
     SimpleTodoForm, bootstrap_helper_inline_formsets, BootstrapHelper,
     AdminLookupForm, ProfileUpdateRequestFormNoCaptcha, MembershipForm,
     TodoFormSet, EventsSelectionForm, EventsMergeForm, InvoiceRequestForm,
     InvoiceRequestUpdateForm, EventSubmitForm, EventSubmitFormNoCaptcha,
+    PersonsMergeForm,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
@@ -833,31 +834,47 @@ def person_password(request, person_id):
 
 
 @login_required
-@permission_required(['workshops.add_person', 'workshops.delete_person'],
+@permission_required(['workshops.delete_person', 'workshops.change_person'],
                      raise_exception=True)
 def persons_merge(request):
-    'Merge information from one Person into another (in case of duplicates).'
+    """Display two persons side by side on GET and merge them on POST.
+
+    If no persons are supplied via GET params, display person selection
+    form."""
+
+    obj_a_pk = request.GET.get('person_a_1')
+    obj_b_pk = request.GET.get('person_b_1')
+
+    if not obj_a_pk or not obj_b_pk:
+        context = {
+            'title': 'Merge Persons',
+            'form': PersonsSelectionForm(),
+            'form_helper': bootstrap_helper_get,
+        }
+        return render(request, 'workshops/merge_form.html', context)
+
+    obj_a = get_object_or_404(Person, pk=obj_a_pk)
+    obj_b = get_object_or_404(Person, pk=obj_b_pk)
+
+    form = PersonsMergeForm(initial=dict(person_a=obj_a, person_b=obj_b))
 
     if request.method == 'POST':
-        form = PersonMergeForm(request.POST)
+        form = PersonsMergeForm(request.POST)
+
         if form.is_valid():
-            request.session['person_from'] = form.cleaned_data['person_from'] \
-                                                 .pk
-            request.session['person_to'] = form.cleaned_data['person_to'].pk
-            return redirect('person_merge_confirmation')
+            # merging in process
+            pass
+
         else:
             messages.error(request, 'Fix errors below.')
-    else:
-        if 'person_from' in request.session:
-            del request.session['person_from']
-        if 'person_to' in request.session:
-            del request.session['person_to']
-        form = PersonMergeForm()
 
-    context = {'title': 'Merge Persons',
-               'form': form,
-               'form_helper': bootstrap_helper}
-    return render(request, 'workshops/merge_form.html', context)
+    context = {
+        'title': 'Merge two persons',
+        'form': form,
+        'obj_a': obj_a,
+        'obj_b': obj_b,
+    }
+    return render(request, 'workshops/persons_merge.html', context)
 
 
 @login_required

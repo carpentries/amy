@@ -410,9 +410,9 @@ class PersonPermissionsForm(forms.ModelForm):
         ]
 
 
-class PersonMergeForm(forms.Form):
+class PersonsSelectionForm(forms.Form):
 
-    person_from = selectable.AutoCompleteSelectField(
+    person_a = selectable.AutoCompleteSelectField(
         lookup_class=lookups.PersonLookup,
         label='Person From',
         required=True,
@@ -420,12 +420,91 @@ class PersonMergeForm(forms.Form):
         widget=selectable.AutoComboboxSelectWidget,
     )
 
-    person_to = selectable.AutoCompleteSelectField(
+    person_b = selectable.AutoCompleteSelectField(
         lookup_class=lookups.PersonLookup,
         label='Person To',
         required=True,
         help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
+    )
+
+
+class PersonsMergeForm(forms.Form):
+    TWO = (
+        ('obj_a', 'Use A'),
+        ('obj_b', 'Use B'),
+    )
+    THREE = TWO + (('combine', 'Combine'), )
+    DEFAULT = 'obj_a'
+
+    person_a = forms.ModelChoiceField(queryset=Person.objects.all(),
+                                      widget=forms.HiddenInput)
+
+    person_b = forms.ModelChoiceField(queryset=Person.objects.all(),
+                                      widget=forms.HiddenInput)
+
+    id = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    username = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    personal = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    middle = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    family = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    email = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    may_contact = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    gender = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    airport = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    github = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    twitter = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    url = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    notes = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    affiliation = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    occupation = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    orcid = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    award_set = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    lessons = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    domains = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    task_set = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    is_active = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
 
 
