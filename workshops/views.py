@@ -79,6 +79,7 @@ from workshops.util import (
     Paginator,
     failed_to_delete,
     assign,
+    merge_objects,
 )
 
 from workshops.filters import (
@@ -863,10 +864,43 @@ def persons_merge(request):
 
         if form.is_valid():
             # merging in process
-            pass
+            data = form.cleaned_data
 
-        else:
-            messages.error(request, 'Fix errors below.')
+            obj_a = data['person_a']
+            obj_b = data['person_b']
+
+            # `base_obj` stays in the database after merge
+            # `merging_obj` will be removed from DB after merge
+            if data['id'] == 'obj_a':
+                base_obj = obj_a
+                merging_obj = obj_b
+                base_a = True
+            else:
+                base_obj = obj_b
+                merging_obj = obj_a
+                base_a = False
+
+            # non-M2M-relationships
+            easy = (
+                'username', 'personal', 'middle', 'family', 'email',
+                'may_contact', 'gender', 'airport', 'github', 'twitter',
+                'url', 'notes', 'affiliation', 'occupation', 'orcid',
+                'is_active',
+            )
+
+            # M2M relationships
+            difficult = ('award_set', 'lessons', 'domains', 'task_set')
+
+            try:
+                merge_objects(obj_a, obj_b, easy, difficult, choices=data,
+                              base_a=base_a)
+
+            except ProtectedError as e:
+                return failed_to_delete(request, object=merging_obj,
+                                        protected_objects=e.protected_objects)
+
+            else:
+                return redirect(base_obj.get_absolute_url())
 
     context = {
         'title': 'Merge two persons',
@@ -1219,16 +1253,22 @@ def events_merge(request):
         form = EventsMergeForm(request.POST)
 
         if form.is_valid():
+            # merging in process
             data = form.cleaned_data
 
-            event_a = data['event_a']
-            event_b = data['event_b']
+            obj_a = data['event_a']
+            obj_b = data['event_b']
 
-            base_event = event_a  # stays in the database after merge
-            merging = event_b  # will be removed from DB after merge
-            if data['id'] == 'obj_b':
-                base_event = event_b
-                merging = event_a
+            # `base_obj` stays in the database after merge
+            # `merging_obj` will be removed from DB after merge
+            if data['id'] == 'obj_a':
+                base_obj = obj_a
+                merging_obj = obj_b
+                base_a = True
+            else:
+                base_obj = obj_b
+                merging_obj = obj_a
+                base_a = False
 
             # non-M2M-relationships:
             easy = (
@@ -1243,52 +1283,15 @@ def events_merge(request):
             difficult = ('tags', 'task_set', 'todoitem_set')
 
             try:
-                with transaction.atomic():
-                    for attr in easy:
-                        value = data.get(attr)
-                        if value == 'obj_a':
-                            setattr(base_event, attr, getattr(event_a, attr))
-                        elif value == 'obj_b':
-                            setattr(base_event, attr, getattr(event_b, attr))
-                        elif value == 'combine':
-                            try:
-                                new_value = (getattr(event_a, attr) +
-                                             getattr(event_b, attr))
-                                setattr(base_event, attr, new_value)
-                            except TypeError:
-                                # probably 'unsupported operand type', but we
-                                # can't do much about it…
-                                pass
-
-                    for attr in difficult:
-                        objects_a = getattr(event_a, attr)
-                        objects_b = getattr(event_b, attr)
-
-                        manager = getattr(base_event, attr)
-                        value = data.get(attr)
-
-                        if value == 'obj_a' and manager != objects_a:
-                            manager.all().delete()
-                            manager.add(*list(objects_a.all()))
-
-                        elif value == 'obj_b' and manager != objects_b:
-                            manager.all().delete()
-                            manager.add(*list(objects_b.all()))
-
-                        elif value == 'combine':
-                            # remove duplicates
-                            manager.add(*list(objects_a.all() |
-                                              objects_b.all()))
-
-                    merging.delete()
-
-                    base_event.save()
+                merge_objects(obj_a, obj_b, easy, difficult, choices=data,
+                              base_a=base_a)
 
             except ProtectedError as e:
-                return failed_to_delete(request, object=merging,
+                return failed_to_delete(request, object=merging_obj,
                                         protected_objects=e.protected_objects)
 
-            return redirect(base_event.get_absolute_url())
+            else:
+                return redirect(base_obj.get_absolute_url())
 
     context = {
         'title': 'Merge two events',
