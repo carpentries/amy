@@ -877,36 +877,6 @@ def persons_merge(request):
     return render(request, 'workshops/persons_merge.html', context)
 
 
-@login_required
-@permission_required(['workshops.add_person', 'workshops.delete_person'],
-                     raise_exception=True)
-def person_merge_confirmation(request):
-    '''Show what the merge will do and get confirmation.'''
-    person_from = get_object_or_404(Person,
-                                    pk=request.session.get('person_from'))
-    person_to = get_object_or_404(Person,
-                                  pk=request.session.get('person_to'))
-
-    # Must not be the same person.
-    if person_from == person_to:
-        del request.session['person_from']
-        del request.session['person_to']
-        messages.warning(request, 'Cannot merge a person with themselves.')
-        return redirect('persons_merge')
-
-    if "confirmed" in request.GET:
-        merge_persons(person_from, person_to)
-        messages.success(request,
-                         'Merging {0} into {1}'.format(person_from,
-                                                       person_to))
-        return redirect('persons_merge')
-
-    else:
-        context = {'title': 'Confirm merge',
-                   'person_from': person_from,
-                   'person_to': person_to}
-        return render(request, 'workshops/person_merge_confirm.html', context)
-
 #------------------------------------------------------------
 
 @login_required
