@@ -1,13 +1,14 @@
 # coding: utf-8
 
 import datetime
+from urllib.parse import urlencode
 
 from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
 from django.core.validators import ValidationError
 from django.contrib.auth.models import Permission, Group
 
-from ..forms import PersonForm
+from ..forms import PersonForm, PersonsMergeForm
 from ..models import (
     Person, Task, Qualification, Award, Role, Event, KnowledgeDomain, Badge,
     Lesson, Host
@@ -459,3 +460,191 @@ class TestPersonPassword(TestBase):
         user = self.admin
         rv = self.client.get(reverse('person_password', args=[user.pk]))
         assert rv.status_code == 403
+
+
+class TestPersonMerging(TestBase):
+    def setUp(self):
+        self._setUpAirports()
+        self._setUpBadges()
+        self._setUpLessons()
+        self._setUpRoles()
+        self._setUpEvents()
+        self._setUpUsersAndLogin()
+
+        self.person_a = Person.objects.create(
+            personal='Kelsi', middle='', family='Purdy',
+            username='purdy_kelsi', email='purdy.kelsi@example.com',
+            gender='F', may_contact=True, airport=self.airport_0_0,
+            github='purdy_kelsi', twitter='purdy_kelsi',
+            url='http://kelsipurdy.com/', notes='',
+            affiliation='University of Arizona',
+            occupation='TA at Biology Department', orcid='0000-0000-0000',
+            is_active=True,
+        )
+        self.person_a.award_set.create(badge=self.swc_instructor,
+                                       awarded=datetime.date(2016, 2, 16))
+        Qualification.objects.create(person=self.person_a, lesson=self.git)
+        Qualification.objects.create(person=self.person_a, lesson=self.sql)
+        self.person_a.domains = [KnowledgeDomain.objects.first()]
+        self.person_a.task_set.create(
+            event=Event.objects.get(slug='ends-tomorrow-ongoing'),
+            role=Role.objects.get(name='instructor'),
+        )
+
+        self.person_b = Person.objects.create(
+            personal='Jayden', middle='', family='Deckow',
+            username='deckow_jayden', email='deckow.jayden@example.com',
+            gender='M', may_contact=True, airport=self.airport_0_50,
+            github='deckow_jayden', twitter='deckow_jayden',
+            url='http://jaydendeckow.com/', notes='deckow_jayden',
+            affiliation='UFlo',
+            occupation='Staff', orcid='0000-0000-0001',
+            is_active=True,
+        )
+        self.person_b.award_set.create(badge=self.dc_instructor,
+                                       awarded=datetime.date(2016, 2, 16))
+        Qualification.objects.create(person=self.person_b, lesson=self.sql)
+        self.person_b.domains = [KnowledgeDomain.objects.last()]
+
+        self.strategy = {
+            'person_a': self.person_a.pk,
+            'person_b': self.person_b.pk,
+            'id': 'obj_b',
+            'username': 'obj_a',
+            'personal': 'obj_b',
+            'middle': 'obj_a',
+            'family': 'obj_a',
+            'email': 'obj_b',
+            'may_contact': 'obj_a',
+            'gender': 'obj_b',
+            'airport': 'obj_a',
+            'github': 'obj_b',
+            'twitter': 'obj_a',
+            'url': 'obj_b',
+            'notes': 'combine',
+            'affiliation': 'obj_b',
+            'occupation': 'obj_a',
+            'orcid': 'obj_b',
+            'award_set': 'obj_a',
+            'qualification_set': 'obj_b',
+            'domains': 'combine',
+            'task_set': 'obj_b',
+            'is_active': 'obj_a',
+        }
+        base_url = reverse('persons_merge')
+        query = urlencode({
+            'person_a_1': self.person_a.pk,
+            'person_b_1': self.person_b.pk
+        })
+        self.url = '{}?{}'.format(base_url, query)
+
+    def test_form_invalid_values(self):
+        """Make sure only a few fields accept third option ("combine")."""
+        hidden = {
+            'person_a': self.person_a.pk,
+            'person_b': self.person_b.pk,
+        }
+        # fields accepting only 2 options: "obj_a" and "obj_b"
+        failing = {
+            'id': 'combine',
+            'username': 'combine',
+            'personal': 'combine',
+            'middle': 'combine',
+            'family': 'combine',
+            'email': 'combine',
+            'may_contact': 'combine',
+            'gender': 'combine',
+            'airport': 'combine',
+            'github': 'combine',
+            'twitter': 'combine',
+            'url': 'combine',
+            'affiliation': 'combine',
+            'occupation': 'combine',
+            'orcid': 'combine',
+            'is_active': 'combine',
+        }
+        # fields additionally accepting "combine"
+        passing = {
+            'notes': 'combine',
+            'award_set': 'combine',
+            'qualification_set': 'combine',
+            'domains': 'combine',
+            'task_set': 'combine',
+        }
+        data = hidden.copy()
+        data.update(failing)
+        data.update(passing)
+
+        form = PersonsMergeForm(data)
+        self.assertFalse(form.is_valid())
+
+        for key in failing:
+            self.assertIn(key, form.errors)
+        for key in passing:
+            self.assertNotIn(key, form.errors)
+
+        # make sure no fields are added without this test being updated
+        self.assertEqual(set(list(form.fields.keys())), set(list(data.keys())))
+
+    def test_merging_base_person(self):
+        """Merging: ensure the base person is selected based on ID form
+        field.
+
+        If ID field has a value of 'obj_a', then person A is base event and it
+        won't be removed from the database after the merge. Person B, on the
+        other hand, will."""
+        rv = self.client.post(self.url, data=self.strategy)
+        self.assertEqual(rv.status_code, 302)
+
+        self.person_b.refresh_from_db()
+        with self.assertRaises(Person.DoesNotExist):
+            self.person_a.refresh_from_db()
+
+    def test_merging_basic_attributes(self):
+        """Merging: ensure basic (non-relationships) attributes are properly
+        saved."""
+        assertions = {
+            'id': self.person_b.id,
+            'username': self.person_a.username,
+            'personal': self.person_b.personal,
+            'middle': self.person_a.middle,
+            'family': self.person_a.family,
+            'email': self.person_b.email,
+            'may_contact': self.person_a.may_contact,
+            'gender': self.person_b.gender,
+            'airport': self.person_a.airport,
+            'github': self.person_b.github,
+            'twitter': self.person_a.twitter,
+            'url': self.person_b.url,
+            'notes': self.person_a.notes + self.person_b.notes,
+            'affiliation': self.person_b.affiliation,
+            'occupation': self.person_a.occupation,
+            'orcid': self.person_b.orcid,
+            'is_active': self.person_a.is_active,
+        }
+        rv = self.client.post(self.url, data=self.strategy)
+        self.assertEqual(rv.status_code, 302)
+        self.person_b.refresh_from_db()
+
+        for key, value in assertions.items():
+            self.assertEqual(getattr(self.person_b, key), value, key)
+
+    def test_merging_m2m_attributes(self):
+        """Merging: ensure M2M-related fields are properly saved/combined."""
+        assertions = {
+            # instead testing awards, let's simply test badges
+            'badges': set(Badge.objects.filter(name='swc-instructor')),
+            # we're saving/combining qualifications, but it affects lessons
+            'lessons': set([self.sql]),
+            'domains': set([KnowledgeDomain.objects.first(),
+                            KnowledgeDomain.objects.last()]),
+            'task_set': set(Task.objects.none()),
+        }
+
+        rv = self.client.post(self.url, data=self.strategy)
+        self.assertEqual(rv.status_code, 302)
+        self.person_b.refresh_from_db()
+
+        for key, value in assertions.items():
+            self.assertEqual(set(getattr(self.person_b, key).all()), value,
+                             key)
