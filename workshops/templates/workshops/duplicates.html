@@ -1,5 +1,7 @@
 {% extends "base_nav_fixed.html" %}
 
+{% load assignments %}
+
 {% block content %}
   <h3>Persons with switched names</h3>
   {% if switched_persons %}
@@ -16,7 +18,13 @@
   {% if duplicate_persons %}
   <ul>
     {% for person in duplicate_persons %}
-    <li><a href="{{ person.get_absolute_url }}">{{ person }}</a></li>
+    <li>
+      <a href="{{ person.get_absolute_url }}">{{ person }}</a>
+      {% if not forloop.first %}
+      <a href="{% url 'persons_merge' %}?person_b_1={{ person.pk }}&person_a_1={{ prev_person_pk }}" target="_blank">(merge up)</a>
+      {% endif %}
+      {% assign person.pk as prev_person_pk %}
+    </li>
     {% endfor %}
   </ul>
   {% else %}
