@@ -494,8 +494,9 @@ class PersonsMergeForm(forms.Form):
     award_set = forms.ChoiceField(
         choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
     )
-    lessons = forms.ChoiceField(
+    qualification_set = forms.ChoiceField(
         choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+        label='Lessons',
     )
     domains = forms.ChoiceField(
         choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,

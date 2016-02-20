@@ -108,7 +108,7 @@
       <th>Lessons</th>
       <td>{% if obj_a.lessons.all %}<ul>{% for lesson in obj_a.lessons.all %}<li>{{ lesson }}</li>{% endfor %}</ul>{% else %}—{% endif %}</td>
       <td>{% if obj_b.lessons.all %}<ul>{% for lesson in obj_b.lessons.all %}<li>{{ lesson }}</li>{% endfor %}</ul>{% else %}—{% endif %}</td>
-      <th>{% include "workshops/merge_radio.html" with field=form.lessons %}</th>
+      <th>{% include "workshops/merge_radio.html" with field=form.qualification_set %}</th>
     </tr>
     <tr>
       <th>Domains</th>

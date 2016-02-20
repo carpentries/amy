@@ -842,7 +842,6 @@ def persons_merge(request):
 
     If no persons are supplied via GET params, display person selection
     form."""
-
     obj_a_pk = request.GET.get('person_a_1')
     obj_b_pk = request.GET.get('person_b_1')
 
@@ -889,7 +888,8 @@ def persons_merge(request):
             )
 
             # M2M relationships
-            difficult = ('award_set', 'lessons', 'domains', 'task_set')
+            difficult = ('award_set', 'qualification_set', 'domains',
+                         'task_set')
 
             try:
                 merge_objects(obj_a, obj_b, easy, difficult, choices=data,
