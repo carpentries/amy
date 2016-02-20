@@ -81,6 +81,7 @@ urlpatterns = [
     url(r'^reports/all_activity_over_time/?$', views.all_activity_over_time, name='all_activity_over_time'),
     url(r'^reports/workshop_issues/?$', views.workshop_issues, name='workshop_issues'),
     url(r'^reports/instructor_issues/?$', views.instructor_issues, name='instructor_issues'),
+    url(r'^reports/duplicates/?$', views.duplicates, name='duplicates'),
 
     url(r'^revision/(?P<revision_id>[\d]+)/?$', views.object_changes, name='object_changes'),
 

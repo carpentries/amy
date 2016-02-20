@@ -1,0 +1,25 @@
+{% extends "base_nav_fixed.html" %}
+
+{% block content %}
+  <h3>Persons with switched names</h3>
+  {% if switched_persons %}
+  <ul>
+    {% for person in switched_persons %}
+    <li><a href="{{ person.get_absolute_url }}">{{ person }}</a></li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>None.</p>
+  {% endif %}
+
+  <h3>Persons with the same names</h3>
+  {% if duplicate_persons %}
+  <ul>
+    {% for person in duplicate_persons %}
+    <li><a href="{{ person.get_absolute_url }}">{{ person }}</a></li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>None.</p>
+  {% endif %}
+{% endblock %}
