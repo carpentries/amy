@@ -1,20 +1,18 @@
 # coding: utf-8
 
 import datetime
+from urllib.parse import urlencode
 
 from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
 from django.core.validators import ValidationError
 from django.contrib.auth.models import Permission, Group
 
-from django.test import TransactionTestCase
-
-from ..forms import PersonForm
+from ..forms import PersonForm, PersonsMergeForm
 from ..models import (
     Person, Task, Qualification, Award, Role, Event, KnowledgeDomain, Badge,
     Lesson, Host
 )
-from ..util import merge_persons
 from .base import TestBase
 
 
@@ -464,222 +462,189 @@ class TestPersonPassword(TestBase):
         assert rv.status_code == 403
 
 
-class TestPersonMerge(TestBase):
-    """Test various scenarios for merging people."""
-
+class TestPersonMerging(TestBase):
     def setUp(self):
-        super().setUp()
+        self._setUpAirports()
+        self._setUpBadges()
+        self._setUpLessons()
+        self._setUpRoles()
+        self._setUpEvents()
         self._setUpUsersAndLogin()
 
-        self.person1 = Person.objects.create(personal='Test',
-                                             family='Person1',
-                                             username='tp1')
-        self.person2 = Person.objects.create(personal='Test',
-                                             family='Person2',
-                                             username='tp2')
+        self.person_a = Person.objects.create(
+            personal='Kelsi', middle='', family='Purdy',
+            username='purdy_kelsi', email='purdy.kelsi@example.com',
+            gender='F', may_contact=True, airport=self.airport_0_0,
+            github='purdy_kelsi', twitter='purdy_kelsi',
+            url='http://kelsipurdy.com/', notes='',
+            affiliation='University of Arizona',
+            occupation='TA at Biology Department', orcid='0000-0000-0000',
+            is_active=True,
+        )
+        self.person_a.award_set.create(badge=self.swc_instructor,
+                                       awarded=datetime.date(2016, 2, 16))
+        Qualification.objects.create(person=self.person_a, lesson=self.git)
+        Qualification.objects.create(person=self.person_a, lesson=self.sql)
+        self.person_a.domains = [KnowledgeDomain.objects.first()]
+        self.person_a.task_set.create(
+            event=Event.objects.get(slug='ends-tomorrow-ongoing'),
+            role=Role.objects.get(name='instructor'),
+        )
 
-        self.role1 = Role.objects.create(name='Role1')
-        self.role2 = Role.objects.create(name='Role2')
+        self.person_b = Person.objects.create(
+            personal='Jayden', middle='', family='Deckow',
+            username='deckow_jayden', email='deckow.jayden@example.com',
+            gender='M', may_contact=True, airport=self.airport_0_50,
+            github='deckow_jayden', twitter='deckow_jayden',
+            url='http://jaydendeckow.com/', notes='deckow_jayden',
+            affiliation='UFlo',
+            occupation='Staff', orcid='0000-0000-0001',
+            is_active=True,
+        )
+        self.person_b.award_set.create(badge=self.dc_instructor,
+                                       awarded=datetime.date(2016, 2, 16))
+        Qualification.objects.create(person=self.person_b, lesson=self.sql)
+        self.person_b.domains = [KnowledgeDomain.objects.last()]
 
-        self.badge1 = Badge.objects.create(name='Badge1')
-        self.badge2 = Badge.objects.create(name='Badge2')
-
-        self.lesson1 = Lesson.objects.get(name='dc/spreadsheets')
-        self.lesson2 = Lesson.objects.get(name='swc/python')
-
-        self.domain1 = KnowledgeDomain.objects.get(pk=1)  # space sciences
-        self.domain2 = KnowledgeDomain.objects.get(pk=2)  # geo* sciences
-
-        self.event1 = Event.objects.create(slug='event1', host=self.host_alpha)
-        self.event2 = Event.objects.create(slug='event2', host=self.host_beta)
-
-    def test_nonexisting_persons(self):
-        """Make sure we handle wrong user input correctly."""
-        data = {
-            'person_from_0': 'First person',
-            'person_from_1': 1000,
-            'person_to_0': 'Second person',
-            'person_to_1': 2000,
+        self.strategy = {
+            'person_a': self.person_a.pk,
+            'person_b': self.person_b.pk,
+            'id': 'obj_b',
+            'username': 'obj_a',
+            'personal': 'obj_b',
+            'middle': 'obj_a',
+            'family': 'obj_a',
+            'email': 'obj_b',
+            'may_contact': 'obj_a',
+            'gender': 'obj_b',
+            'airport': 'obj_a',
+            'github': 'obj_b',
+            'twitter': 'obj_a',
+            'url': 'obj_b',
+            'notes': 'combine',
+            'affiliation': 'obj_b',
+            'occupation': 'obj_a',
+            'orcid': 'obj_b',
+            'award_set': 'obj_a',
+            'qualification_set': 'obj_b',
+            'domains': 'combine',
+            'task_set': 'obj_b',
+            'is_active': 'obj_a',
         }
-        rv = self.client.post(reverse('person_merge'), data, follow=True)
-        content = rv.content.decode('utf-8')
-        assert 'Fix errors below' in content
+        base_url = reverse('persons_merge')
+        query = urlencode({
+            'person_a_1': self.person_a.pk,
+            'person_b_1': self.person_b.pk
+        })
+        self.url = '{}?{}'.format(base_url, query)
 
-        session = self.client.session
-        combinations = [(1000, 2000), (1000, self.ron.pk), (self.ron.pk, 2000)]
-        for person_from, person_to in combinations:
-            session['person_from'] = person_from
-            session['person_to'] = person_to
-            session.save()
-
-            rv = self.client.get(reverse('person_merge_confirmation'))
-            assert rv.status_code == 404
-
-    def test_existing_persons(self):
-        """Make sure we allow selecting existing persons."""
-        data = {
-            'person_from_0': '',
-            'person_from_1': self.ron.pk,
-            'person_to_0': '',
-            'person_to_1': self.hermione.pk,
+    def test_form_invalid_values(self):
+        """Make sure only a few fields accept third option ("combine")."""
+        hidden = {
+            'person_a': self.person_a.pk,
+            'person_b': self.person_b.pk,
         }
-        rv = self.client.post(reverse('person_merge'), data, follow=True)
-        content = rv.content.decode('utf-8')
-        assert 'Fix errors below' not in content
-        assert self.ron.personal in content
-        assert self.hermione.personal in content
-
-        session = self.client.session
-        session['person_from'] = self.ron.pk
-        session['person_to'] = self.hermione.pk
-        session.save()
-
-        rv = self.client.get(reverse('person_merge_confirmation'))
-        assert rv.status_code == 200
-
-    def test_same_person(self):
-        """Make sure we forbid selecting 2x the same person."""
-        msg = 'Cannot merge a person with themselves'
-
-        data = {
-            'person_from_0': '',
-            'person_from_1': self.ron.pk,
-            'person_to_0': '',
-            'person_to_1': self.ron.pk,
+        # fields accepting only 2 options: "obj_a" and "obj_b"
+        failing = {
+            'id': 'combine',
+            'username': 'combine',
+            'personal': 'combine',
+            'middle': 'combine',
+            'family': 'combine',
+            'email': 'combine',
+            'may_contact': 'combine',
+            'gender': 'combine',
+            'airport': 'combine',
+            'github': 'combine',
+            'twitter': 'combine',
+            'url': 'combine',
+            'affiliation': 'combine',
+            'occupation': 'combine',
+            'orcid': 'combine',
+            'is_active': 'combine',
         }
-        rv = self.client.post(reverse('person_merge'), data, follow=True)
-        assert rv.status_code == 200
-        content = rv.content.decode('utf-8')
-        assert 'Fix errors below' not in content
-        assert msg in content
+        # fields additionally accepting "combine"
+        passing = {
+            'notes': 'combine',
+            'award_set': 'combine',
+            'qualification_set': 'combine',
+            'domains': 'combine',
+            'task_set': 'combine',
+        }
+        data = hidden.copy()
+        data.update(failing)
+        data.update(passing)
 
-        session = self.client.session
-        session['person_from'] = self.ron.pk
-        session['person_to'] = self.ron.pk
-        session.save()
+        form = PersonsMergeForm(data)
+        self.assertFalse(form.is_valid())
 
-        rv = self.client.get(reverse('person_merge_confirmation'), follow=True)
-        assert rv.status_code == 200
-        content = rv.content.decode('utf-8')
-        assert 'Fix errors below' not in content
-        assert msg in content
+        for key in failing:
+            self.assertIn(key, form.errors)
+        for key in passing:
+            self.assertNotIn(key, form.errors)
 
-    def test_merging_no_related(self):
-        """Make sure actual merging works correctly.
+        # make sure no fields are added without this test being updated
+        self.assertEqual(set(list(form.fields.keys())), set(list(data.keys())))
 
-        Test for people without any awards (badges), qualifications (lessons),
-        tasks (roles) or domains.
-        """
-        session = self.client.session
-        session['person_from'] = self.person1.pk
-        session['person_to'] = self.person2.pk
-        session.save()
-        rv = self.client.get(reverse('person_merge_confirmation'),
-                             {'confirmed': 1}, follow=True)
-        assert rv.status_code == 200
+    def test_merging_base_person(self):
+        """Merging: ensure the base person is selected based on ID form
+        field.
 
-        Person.objects.get(pk=self.person2.pk)
+        If ID field has a value of 'obj_a', then person A is base event and it
+        won't be removed from the database after the merge. Person B, on the
+        other hand, will."""
+        rv = self.client.post(self.url, data=self.strategy)
+        self.assertEqual(rv.status_code, 302)
+
+        self.person_b.refresh_from_db()
         with self.assertRaises(Person.DoesNotExist):
-            Person.objects.get(pk=self.person1.pk)
+            self.person_a.refresh_from_db()
 
-    def test_merging_disjoint_related(self):
-        """Make sure actual merging works correctly.
+    def test_merging_basic_attributes(self):
+        """Merging: ensure basic (non-relationships) attributes are properly
+        saved."""
+        assertions = {
+            'id': self.person_b.id,
+            'username': self.person_a.username,
+            'personal': self.person_b.personal,
+            'middle': self.person_a.middle,
+            'family': self.person_a.family,
+            'email': self.person_b.email,
+            'may_contact': self.person_a.may_contact,
+            'gender': self.person_b.gender,
+            'airport': self.person_a.airport,
+            'github': self.person_b.github,
+            'twitter': self.person_a.twitter,
+            'url': self.person_b.url,
+            'notes': self.person_a.notes + self.person_b.notes,
+            'affiliation': self.person_b.affiliation,
+            'occupation': self.person_a.occupation,
+            'orcid': self.person_b.orcid,
+            'is_active': self.person_a.is_active,
+        }
+        rv = self.client.post(self.url, data=self.strategy)
+        self.assertEqual(rv.status_code, 302)
+        self.person_b.refresh_from_db()
 
-        Test for people with disjoint badges, lessons, roles, and domains.
-        """
-        self.person1.award_set.create(badge=self.badge1,
-                                      awarded=datetime.date.today())
-        self.person2.award_set.create(badge=self.badge2,
-                                      awarded=datetime.date.today())
-        self.person1.qualification_set.create(lesson=self.lesson1)
-        self.person2.qualification_set.create(lesson=self.lesson2)
-        self.person1.task_set.create(event=self.event1, role=self.role1)
-        self.person2.task_set.create(event=self.event2, role=self.role2)
-        self.person1.domains = [self.domain1]
-        self.person2.domains = [self.domain2]
+        for key, value in assertions.items():
+            self.assertEqual(getattr(self.person_b, key), value, key)
 
-        # using the utility function without accessing the view
-        # because the view was tested in previous tests
-        merge_persons(self.person1, self.person2)
+    def test_merging_m2m_attributes(self):
+        """Merging: ensure M2M-related fields are properly saved/combined."""
+        assertions = {
+            # instead testing awards, let's simply test badges
+            'badges': set(Badge.objects.filter(name='swc-instructor')),
+            # we're saving/combining qualifications, but it affects lessons
+            'lessons': set([self.sql]),
+            'domains': set([KnowledgeDomain.objects.first(),
+                            KnowledgeDomain.objects.last()]),
+            'task_set': set(Task.objects.none()),
+        }
 
-        p = Person.objects.get(pk=self.person2.pk)
-        with self.assertRaises(Person.DoesNotExist):
-            Person.objects.get(pk=self.person1.pk)
+        rv = self.client.post(self.url, data=self.strategy)
+        self.assertEqual(rv.status_code, 302)
+        self.person_b.refresh_from_db()
 
-        self.assertEqual([self.badge1, self.badge2], list(p.badges.all()))
-        assert Task.objects.filter(person=p, role=self.role1)
-        assert Task.objects.filter(person=p, role=self.role2)
-        self.assertEqual([self.domain1, self.domain2], list(p.domains.all()))
-        self.assertEqual([self.lesson1, self.lesson2], list(p.lessons.all()))
-
-
-class TestPersonMergeNonTransactional(TransactionTestCase):
-    """Test various scenarios for merging people in transaction-disabled
-    environment.
-
-    IntegrityError run in 'normal' TestCase prevents anything from running.
-    But we're using duck typing in `merge_persons` to catch unique constraint
-    errors.  So this test case won't run within `atomic` block and therefore
-    allow us to test `merge_people` extensively."""
-
-    def test_merging_overlapping_related(self):
-        """Make sure actual merging works correctly.
-
-        Test for people with overlapping badges, lessons, roles and domains.
-        """
-        # set up
-        self.person1 = Person.objects.create(personal='Test',
-                                             family='Person1',
-                                             username='tp1')
-        self.person2 = Person.objects.create(personal='Test',
-                                             family='Person2',
-                                             username='tp2')
-
-        self.host_alpha = Host.objects.create(domain='alpha.edu',
-                                              fullname='Alpha Host')
-
-        self.host_beta = Host.objects.create(domain='beta.com',
-                                             fullname='Beta Host')
-
-        self.role1 = Role.objects.create(name='Role1')
-        self.role2 = Role.objects.create(name='Role2')
-
-        self.badge1 = Badge.objects.create(name='Badge1')
-
-        self.lesson1 = Lesson.objects.get(name='swc/python')
-
-        self.domain1 = KnowledgeDomain.objects.get(pk=1)  # space sciences
-
-        self.event1 = Event.objects.create(slug='event1', host=self.host_alpha)
-        self.event2 = Event.objects.create(slug='event2', host=self.host_beta)
-
-        # assign
-        self.person1.award_set.create(badge=self.badge1,
-                                      awarded=datetime.date.today())
-        self.person2.award_set.create(badge=self.badge1,
-                                      awarded=datetime.date.today())
-        self.person1.qualification_set.create(lesson=self.lesson1)
-        self.person2.qualification_set.create(lesson=self.lesson1)
-        self.person1.task_set.create(event=self.event1, role=self.role1)
-        self.person1.task_set.create(event=self.event2, role=self.role1)
-        self.person2.task_set.create(event=self.event1, role=self.role2)
-        self.person2.task_set.create(event=self.event2, role=self.role1)
-        self.person1.domains = [self.domain1]
-        self.person2.domains = [self.domain1]
-
-        # test
-        merge_persons(self.person1, self.person2)
-
-        p = Person.objects.get(pk=self.person2.pk)
-        with self.assertRaises(Person.DoesNotExist):
-            Person.objects.get(pk=self.person1.pk)
-
-        self.assertEqual([self.badge1], list(p.badges.all()))
-        assert Task.objects.filter(person=p, event=self.event1,
-                                   role=self.role1).count() == 1
-        assert Task.objects.filter(person=p, event=self.event1,
-                                   role=self.role2).count() == 1
-        assert Task.objects.filter(person=p, event=self.event2,
-                                   role=self.role1).count() == 1
-        self.assertEqual([self.domain1], list(p.domains.all()))
-        self.assertEqual([self.lesson1], list(p.lessons.all()))
+        for key, value in assertions.items():
+            self.assertEqual(set(getattr(self.person_b, key).all()), value,
+                             key)

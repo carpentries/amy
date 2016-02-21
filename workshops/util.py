@@ -420,33 +420,6 @@ def get_pagination_items(request, all_objects):
     return result
 
 
-def merge_persons(person_from, person_to):
-    for award in person_from.award_set.all():
-        try:
-            award.person = person_to
-            award.save()
-        except IntegrityError:
-            # unique constraints fail (probably)
-            pass
-
-    for task in person_from.task_set.all():
-        try:
-            task.person = person_to
-            task.save()
-        except IntegrityError:
-            # unique constraints fail (probably)
-            pass
-
-    # update only unique lessons
-    person_from.qualification_set.exclude(lesson__in=person_to.lessons.all()) \
-                                 .update(person=person_to)
-
-    person_to.domains.add(*person_from.domains.all())
-
-    # removes tasks, awards, qualifications in a cascading way
-    person_from.delete()
-
-
 class WrongWorkshopURL(ValueError):
     """Raised when we fall back to reading tags from event's YAML front matter,
     which requires a link to GitHub raw hosted file, but we can't get that link
@@ -764,3 +737,71 @@ def assign(request, obj, person_id):
 
     except (Person.DoesNotExist, ValueError):
         raise Http404("No person found matching the query.")
+
+
+def merge_objects(object_a, object_b, easy_fields, difficult_fields,
+                  choices, base_a=True):
+    """Merge two objects of the same model.
+
+    `object_a` and `object_b` are two objects being merged. If `base_a==True`
+    (default value), then object_b will be removed and object_a will stay
+    after the merge.  If `base_a!=True` then object_a will be removed, and
+    object_b will stay after the merge.
+
+    `easy_fields` contains names of non-M2M-relation fields, while
+    `difficult_fields` contains names of M2M-relation fields.
+
+    Finally, `choices` is a dictionary of field name as a key and one of
+    3 values: 'obj_a', 'obj_b', or 'combine'.
+
+    This view can throw ProtectedError when removing an object is not allowed;
+    in that case, this function's call should be wrapped in try-except
+    block."""
+    if base_a:
+        base_obj = object_a
+        merging_obj = object_b
+    else:
+        base_obj = object_b
+        merging_obj = object_a
+
+    with transaction.atomic():
+        for attr in easy_fields:
+            value = choices.get(attr)
+            if value == 'obj_a':
+                setattr(base_obj, attr, getattr(object_a, attr))
+            elif value == 'obj_b':
+                setattr(base_obj, attr, getattr(object_b, attr))
+            elif value == 'combine':
+                try:
+                    new_value = (getattr(object_a, attr) +
+                                 getattr(object_b, attr))
+                    setattr(base_obj, attr, new_value)
+                except TypeError:
+                    # probably 'unsupported operand type', but we
+                    # can't do much about it…
+                    pass
+
+        for attr in difficult_fields:
+            related_a = getattr(object_a, attr)
+            related_b = getattr(object_b, attr)
+
+            manager = getattr(base_obj, attr)
+            value = choices.get(attr)
+
+            # switch only if this is opposite object
+            if value == 'obj_a' and manager != related_a:
+                manager.all().delete()
+                manager.add(*list(related_a.all()))
+
+            elif value == 'obj_b' and manager != related_b:
+                manager.all().delete()
+                manager.add(*list(related_b.all()))
+
+            elif value == 'combine':
+                # remove duplicates
+                manager.add(*list(related_a.all() |
+                                  related_b.all()))
+
+        merging_obj.delete()
+
+        return base_obj.save()

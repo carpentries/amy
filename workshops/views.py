@@ -55,17 +55,18 @@ from workshops.forms import (
     SearchForm, DebriefForm, InstructorsForm, PersonForm, PersonBulkAddForm,
     EventForm, TaskForm, TaskFullForm, bootstrap_helper, bootstrap_helper_get,
     bootstrap_helper_with_add, BadgeAwardForm, PersonAwardForm,
-    PersonPermissionsForm, bootstrap_helper_filter, PersonMergeForm,
+    PersonPermissionsForm, bootstrap_helper_filter, PersonsSelectionForm,
     PersonTaskForm, HostForm, SWCEventRequestForm, DCEventRequestForm,
     ProfileUpdateRequestForm, PersonLookupForm, bootstrap_helper_wider_labels,
     SimpleTodoForm, bootstrap_helper_inline_formsets, BootstrapHelper,
     AdminLookupForm, ProfileUpdateRequestFormNoCaptcha, MembershipForm,
     TodoFormSet, EventsSelectionForm, EventsMergeForm, InvoiceRequestForm,
     InvoiceRequestUpdateForm, EventSubmitForm, EventSubmitFormNoCaptcha,
+    PersonsMergeForm,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
-    create_uploaded_persons_tasks, InternalError, merge_persons,
+    create_uploaded_persons_tasks, InternalError,
     update_event_attendance_from_tasks,
     WrongWorkshopURL,
     generate_url_to_event_index,
@@ -78,6 +79,7 @@ from workshops.util import (
     Paginator,
     failed_to_delete,
     assign,
+    merge_objects,
 )
 
 from workshops.filters import (
@@ -833,62 +835,81 @@ def person_password(request, person_id):
 
 
 @login_required
-@permission_required(['workshops.add_person', 'workshops.delete_person'],
+@permission_required(['workshops.delete_person', 'workshops.change_person'],
                      raise_exception=True)
-def person_merge(request):
-    'Merge information from one Person into another (in case of duplicates).'
+def persons_merge(request):
+    """Display two persons side by side on GET and merge them on POST.
+
+    If no persons are supplied via GET params, display person selection
+    form."""
+    obj_a_pk = request.GET.get('person_a_1')
+    obj_b_pk = request.GET.get('person_b_1')
+
+    if not obj_a_pk or not obj_b_pk:
+        context = {
+            'title': 'Merge Persons',
+            'form': PersonsSelectionForm(),
+            'form_helper': bootstrap_helper_get,
+        }
+        return render(request, 'workshops/merge_form.html', context)
+
+    obj_a = get_object_or_404(Person, pk=obj_a_pk)
+    obj_b = get_object_or_404(Person, pk=obj_b_pk)
+
+    form = PersonsMergeForm(initial=dict(person_a=obj_a, person_b=obj_b))
 
     if request.method == 'POST':
-        form = PersonMergeForm(request.POST)
+        form = PersonsMergeForm(request.POST)
+
         if form.is_valid():
-            request.session['person_from'] = form.cleaned_data['person_from'] \
-                                                 .pk
-            request.session['person_to'] = form.cleaned_data['person_to'].pk
-            return redirect('person_merge_confirmation')
-        else:
-            messages.error(request, 'Fix errors below.')
-    else:
-        if 'person_from' in request.session:
-            del request.session['person_from']
-        if 'person_to' in request.session:
-            del request.session['person_to']
-        form = PersonMergeForm()
+            # merging in process
+            data = form.cleaned_data
 
-    context = {'title': 'Merge Persons',
-               'form': form,
-               'form_helper': bootstrap_helper}
-    return render(request, 'workshops/merge_form.html', context)
+            obj_a = data['person_a']
+            obj_b = data['person_b']
 
+            # `base_obj` stays in the database after merge
+            # `merging_obj` will be removed from DB after merge
+            if data['id'] == 'obj_a':
+                base_obj = obj_a
+                merging_obj = obj_b
+                base_a = True
+            else:
+                base_obj = obj_b
+                merging_obj = obj_a
+                base_a = False
 
-@login_required
-@permission_required(['workshops.add_person', 'workshops.delete_person'],
-                     raise_exception=True)
-def person_merge_confirmation(request):
-    '''Show what the merge will do and get confirmation.'''
-    person_from = get_object_or_404(Person,
-                                    pk=request.session.get('person_from'))
-    person_to = get_object_or_404(Person,
-                                  pk=request.session.get('person_to'))
+            # non-M2M-relationships
+            easy = (
+                'username', 'personal', 'middle', 'family', 'email',
+                'may_contact', 'gender', 'airport', 'github', 'twitter',
+                'url', 'notes', 'affiliation', 'occupation', 'orcid',
+                'is_active',
+            )
 
-    # Must not be the same person.
-    if person_from == person_to:
-        del request.session['person_from']
-        del request.session['person_to']
-        messages.warning(request, 'Cannot merge a person with themselves.')
-        return redirect('person_merge')
+            # M2M relationships
+            difficult = ('award_set', 'qualification_set', 'domains',
+                         'task_set')
 
-    if "confirmed" in request.GET:
-        merge_persons(person_from, person_to)
-        messages.success(request,
-                         'Merging {0} into {1}'.format(person_from,
-                                                       person_to))
-        return redirect('person_merge')
+            try:
+                merge_objects(obj_a, obj_b, easy, difficult, choices=data,
+                              base_a=base_a)
 
-    else:
-        context = {'title': 'Confirm merge',
-                   'person_from': person_from,
-                   'person_to': person_to}
-        return render(request, 'workshops/person_merge_confirm.html', context)
+            except ProtectedError as e:
+                return failed_to_delete(request, object=merging_obj,
+                                        protected_objects=e.protected_objects)
+
+            else:
+                return redirect(base_obj.get_absolute_url())
+
+    context = {
+        'title': 'Merge two persons',
+        'form': form,
+        'obj_a': obj_a,
+        'obj_b': obj_b,
+    }
+    return render(request, 'workshops/persons_merge.html', context)
+
 
 #------------------------------------------------------------
 
@@ -1232,16 +1253,22 @@ def events_merge(request):
         form = EventsMergeForm(request.POST)
 
         if form.is_valid():
+            # merging in process
             data = form.cleaned_data
 
-            event_a = data['event_a']
-            event_b = data['event_b']
+            obj_a = data['event_a']
+            obj_b = data['event_b']
 
-            base_event = event_a  # stays in the database after merge
-            merging = event_b  # will be removed from DB after merge
-            if data['id'] == 'obj_b':
-                base_event = event_b
-                merging = event_a
+            # `base_obj` stays in the database after merge
+            # `merging_obj` will be removed from DB after merge
+            if data['id'] == 'obj_a':
+                base_obj = obj_a
+                merging_obj = obj_b
+                base_a = True
+            else:
+                base_obj = obj_b
+                merging_obj = obj_a
+                base_a = False
 
             # non-M2M-relationships:
             easy = (
@@ -1256,52 +1283,15 @@ def events_merge(request):
             difficult = ('tags', 'task_set', 'todoitem_set')
 
             try:
-                with transaction.atomic():
-                    for attr in easy:
-                        value = data.get(attr)
-                        if value == 'obj_a':
-                            setattr(base_event, attr, getattr(event_a, attr))
-                        elif value == 'obj_b':
-                            setattr(base_event, attr, getattr(event_b, attr))
-                        elif value == 'combine':
-                            try:
-                                new_value = (getattr(event_a, attr) +
-                                             getattr(event_b, attr))
-                                setattr(base_event, attr, new_value)
-                            except TypeError:
-                                # probably 'unsupported operand type', but we
-                                # can't do much about it…
-                                pass
-
-                    for attr in difficult:
-                        objects_a = getattr(event_a, attr)
-                        objects_b = getattr(event_b, attr)
-
-                        manager = getattr(base_event, attr)
-                        value = data.get(attr)
-
-                        if value == 'obj_a' and manager != objects_a:
-                            manager.all().delete()
-                            manager.add(*list(objects_a.all()))
-
-                        elif value == 'obj_b' and manager != objects_b:
-                            manager.all().delete()
-                            manager.add(*list(objects_b.all()))
-
-                        elif value == 'combine':
-                            # remove duplicates
-                            manager.add(*list(objects_a.all() |
-                                              objects_b.all()))
-
-                    merging.delete()
-
-                    base_event.save()
+                merge_objects(obj_a, obj_b, easy, difficult, choices=data,
+                              base_a=base_a)
 
             except ProtectedError as e:
-                return failed_to_delete(request, object=merging,
+                return failed_to_delete(request, object=merging_obj,
                                         protected_objects=e.protected_objects)
 
-            return redirect(base_event.get_absolute_url())
+            else:
+                return redirect(base_obj.get_absolute_url())
 
     context = {
         'title': 'Merge two events',
