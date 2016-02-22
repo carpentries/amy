@@ -2638,3 +2638,47 @@ def todo_delete(request, todo_id):
                      extra_tags='todos')
 
     return redirect(event_details, event_ident)
+
+
+# ------------------------------------------------------------
+
+@login_required
+def duplicates(request):
+    """Find possible duplicates amongst persons.
+
+    Criteria for persons:
+    * switched personal/family names
+    * same name on different people."""
+    names_normal = set(Person.objects.all().values_list('personal', 'family'))
+    names_switched = set(Person.objects.all().values_list('family',
+                                                          'personal'))
+    names = names_normal & names_switched  # intersection
+
+    switched_criteria = Q()
+    for personal, family in names:
+        # get people who appear in `names`
+        switched_criteria |= (Q(personal=personal) & Q(family=family))
+
+    switched_persons = Person.objects.filter(switched_criteria) \
+                                     .order_by('email')
+
+    duplicate_names = Person.objects.values('personal', 'family') \
+                                    .order_by() \
+                                    .annotate(count_id=Count('id')) \
+                                    .filter(count_id__gt=1)
+
+    duplicate_criteria = Q()
+    for name in duplicate_names:
+        # get people who appear in `names`
+        duplicate_criteria |= (Q(personal=name['personal']) &
+                               Q(family=name['family']))
+    duplicate_persons = Person.objects.filter(duplicate_criteria) \
+                                      .order_by('family', 'personal', 'email')
+
+    context = {
+        'title': 'Possible duplicates',
+        'switched_persons': switched_persons,
+        'duplicate_persons': duplicate_persons,
+    }
+
+    return render(request, 'workshops/duplicates.html', context)
