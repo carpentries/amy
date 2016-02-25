@@ -1683,7 +1683,7 @@ def search(request):
 #------------------------------------------------------------
 
 @login_required
-def debrief(request):
+def instructors_by_date(request):
     '''Show who taught between begin_date and end_date.'''
     tasks = None
 
@@ -1699,13 +1699,13 @@ def debrief(request):
         rvs = ReportsViewSet()
         tasks = rvs.instructors_by_time_queryset(start_date, end_date)
 
-    context = {'title': 'Debrief',
+    context = {'title': 'List of instructors by time period',
                'form': form,
                'form_helper': bootstrap_helper_get,
                'all_tasks': tasks,
                'start_date': start_date,
                'end_date': end_date}
-    return render(request, 'workshops/debrief.html', context)
+    return render(request, 'workshops/instructors_by_date.html', context)
 
 #------------------------------------------------------------
 
