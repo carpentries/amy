@@ -313,35 +313,37 @@ class ReportsViewSet(ViewSet):
             persons, many=True, context=dict(request=request))
         return Response(serializer.data)
 
-    def _default_start_end_dates(self):
+    def _default_start_end_dates(self, start=None, end=None):
+        """Parse GET start and end dates or return default values for them."""
         today = datetime.date.today()
         start_of_year = datetime.date(today.year, 1, 1)
         end_of_year = (datetime.date(today.year + 1, 1, 1) -
                        datetime.timedelta(days=1))
-        return start_of_year, end_of_year
 
-    @list_route(methods=['GET'])
-    def all_activity_over_time(self, request, format=None):
-        """Workshops, instructors, and missing data in specific periods."""
-        start_default, end_default = self._default_start_end_dates()
-
-        start = self.request.query_params.get('start', None)
         if start is not None:
             try:
                 start = datetime.datetime.strptime(start, '%Y-%m-%d').date()
             except ValueError:
-                start = start_default
+                start = start_of_year
         else:
-            start = start_default
+            start = start_of_year
 
-        end = self.request.query_params.get('end', None)
         if end is not None:
             try:
                 end = datetime.datetime.strptime(end, '%Y-%m-%d').date()
             except ValueError:
-                end = end_default
+                end = end_of_year
         else:
-            end = end_default
+            end = end_of_year
+
+        return start, end
+
+    @list_route(methods=['GET'])
+    def all_activity_over_time(self, request, format=None):
+        """Workshops, instructors, and missing data in specific periods."""
+        start, end = self._default_start_end_dates(
+            start=self.request.query_params.get('start', None),
+            end=self.request.query_params.get('end', None))
 
         events_qs = Event.objects.filter(start__gte=start, start__lte=end)
         swc_tag = Tag.objects.get(name='SWC')
