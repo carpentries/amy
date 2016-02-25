@@ -1,5 +1,6 @@
 import sys
 import os
+import csv
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError
 from workshops.models import Award, Badge, Person
@@ -19,15 +20,18 @@ class Command(BaseCommand):
         path_to_root = options['path']
 
         badges = self.get_badges()
+        result = [['which','badge','username','person','email','awarded']]
         for (name, badge) in badges:
-            db_people = self.get_db_people(badge)
+            db_records = self.get_db_people(badge)
+            db_people = db_records.keys()
             cert_path = os.path.join(path_to_root, name)
             if not os.path.isdir(cert_path):
-                print('No directory {0}'.format(name))
+                print('No directory {0}'.format(name), file=sys.stderr)
             else:
                 file_people = self.get_file_people(cert_path)
-                self.report_missing('database but not disk', name, db_people - file_people)
-                self.report_missing('disk but not database', name, file_people - db_people)
+                self.missing(result, 'database-disk', name, db_people - file_people, db_records)
+                self.missing(result, 'disk-database', name, file_people - db_people, db_records)
+        csv.writer(sys.stdout).writerows(result)
 
     def get_badges(self):
         '''Get all available badges as list of lower-case name and badge pairs.'''
@@ -37,7 +41,7 @@ class Command(BaseCommand):
     def get_db_people(self, badge):
         '''Get set of usernames of all people with the given badge.'''
 
-        return set(Award.objects.filter(badge=badge).values_list('person__username', flat=True))
+        return dict(Award.objects.filter(badge=badge).values_list('person__username', 'awarded'))
 
     def get_file_people(self, path):
         '''Get names of all people with the given certificate.'''
@@ -46,13 +50,13 @@ class Command(BaseCommand):
                     for e in os.listdir(path)
                     if e.endswith('.pdf')])
 
-    def report_missing(self, title, kind, items):
-        '''Report missing items.'''
-        if items:
-            print('{0} {1}'.format(kind, title))
-            for i in sorted(list(items)):
-                try:
-                    p = Person.objects.get(username=i)
-                    print(' {0}: {1}'.format(i, p))
-                except Person.DoesNotExist:
-                    print(' {0}'.format(i))
+    def missing(self, report, title, kind, usernames, records):
+        '''Report missing usernames.'''
+        for u in usernames:
+            try:
+                p = Person.objects.get(username=u)
+                name = p.get_full_name()
+                email = p.email
+                report.append([title, kind, u, p.get_full_name(), p.email, records.get(u, '')])
+            except Person.DoesNotExist:
+                print('{0}'.format(u), file=sys.stderr)
