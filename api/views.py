@@ -41,6 +41,7 @@ from .serializers import (
     WorkshopsOverTimeSerializer,
     InstructorsOverTimeSerializer,
     InstructorNumTaughtSerializer,
+    InstructorsByTime,
     HostSerializer,
     EventSerializer,
     TaskSerializer,
@@ -428,6 +429,29 @@ class ReportsViewSet(ViewSet):
             }
         })
 
+    def instructors_by_time_queryset(self, start, end):
+        """Just a queryset to be reused in other view."""
+        tags = Tag.objects.filter(name__in=['stalled', 'unresponsive'])
+        tasks = Task.objects.filter(
+            event__start__gte=start,
+            event__end__lte=end,
+            role__name='instructor',
+            person__may_contact=True,
+        ).exclude(event__tags=tags).order_by('event', 'person', 'role') \
+         .select_related('person', 'event', 'role')
+        return tasks
+
+    @list_route(methods=['GET'])
+    def instructors_by_time(self, request, format=None):
+        """Workshops and instructors who taught in specific time period."""
+        start, end = self._default_start_end_dates(
+            start=self.request.query_params.get('start', None),
+            end=self.request.query_params.get('end', None))
+        tasks = self.instructors_by_time_queryset(start, end)
+        serializer = InstructorsByTime(
+            tasks, many=True, context=dict(request=request))
+        return Response(serializer.data)
+
     def list(self, request, format=None):
         """Display list of links to the reports."""
         return Response({
@@ -445,6 +469,9 @@ class ReportsViewSet(ViewSet):
                 format=format),
             'reports-workshops-over-time': reverse(
                 'api:reports-workshops-over-time', request=request,
+                format=format),
+            'reports-instructors-by-time': reverse(
+                'api:reports-instructors-by-time', request=request,
                 format=format),
         })
 
