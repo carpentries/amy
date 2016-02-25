@@ -236,7 +236,7 @@ class ReportsViewSet(ViewSet):
 
     # YAML renderer is turned off because it has problems reading our
     # accumulative generator (lol)
-    renderer_classes = (BrowsableAPIRenderer, JSONRenderer)
+    renderer_classes = (BrowsableAPIRenderer, JSONRenderer, CSVRenderer)
 
     def _add_counts(self, a, b):
         c = b
