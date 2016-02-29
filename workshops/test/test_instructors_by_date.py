@@ -6,7 +6,7 @@ from ..models import Event, Task, Role
 from .base import TestBase
 
 
-class TestDebrief(TestBase):
+class TestInstructorsByDate(TestBase):
     def setUp(self):
         super().setUp()
         self._setUpUsersAndLogin()
@@ -50,9 +50,12 @@ class TestDebrief(TestBase):
         "Make sure proper events are returned withing specific date ranges."
         data = {
             'begin_date': self.today,
-            'end_date': self.tomorrow
+            'end_date': self.tomorrow,
+            'url': reverse('instructors_by_date'),
         }
-        rv = self.client.post(reverse('debrief'), data)
+        FMT = '{url}?begin_date={begin_date}&end_date={end_date}'
+
+        rv = self.client.get(FMT.format_map(data))
         assert rv.status_code == 200
         content = rv.content.decode('utf-8')
         assert self.e1.slug in content
@@ -60,7 +63,7 @@ class TestDebrief(TestBase):
         assert self.e3.slug not in content
 
         data['begin_date'] = self.yesterday
-        rv = self.client.post(reverse('debrief'), data)
+        rv = self.client.get(FMT.format_map(data))
         assert rv.status_code == 200
         content = rv.content.decode('utf-8')
         assert self.e1.slug in content
@@ -68,7 +71,7 @@ class TestDebrief(TestBase):
         assert self.e3.slug not in content
 
         data['end_date'] = self.after_tomorrow
-        rv = self.client.post(reverse('debrief'), data)
+        rv = self.client.get(FMT.format_map(data))
         assert rv.status_code == 200
         content = rv.content.decode('utf-8')
         assert self.e1.slug in content
@@ -76,7 +79,7 @@ class TestDebrief(TestBase):
         assert self.e3.slug in content
 
         data['begin_date'] = self.today
-        rv = self.client.post(reverse('debrief'), data)
+        rv = self.client.get(FMT.format_map(data))
         assert rv.status_code == 200
         content = rv.content.decode('utf-8')
         assert self.e1.slug in content

@@ -118,6 +118,23 @@ class InstructorNumTaughtSerializer(serializers.Serializer):
     num_taught = serializers.IntegerField()
 
 
+class InstructorsByTimePeriodSerializer(serializers.ModelSerializer):
+    event_slug = serializers.CharField(source='event.slug')
+    person_name = serializers.CharField(source='person.get_full_name')
+    person_email = serializers.EmailField(source='person.email')
+    num_taught = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Task
+        fields = ('event_slug', 'person_name', 'person_email', 'num_taught')
+
+    def get_num_taught(self, obj):
+        """Count number of workshops attended with 'instructor' role."""
+        # pretty terrible performance-wise, but we cannot annotate the original
+        # query (yields wrong results)
+        return obj.person.task_set.instructors().count()
+
+
 # ----------------------
 # "new" API starts below
 # ----------------------

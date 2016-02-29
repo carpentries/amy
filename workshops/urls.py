@@ -68,7 +68,7 @@ urlpatterns = [
 
     url(r'^search/?$', views.search, name='search'),
 
-    url(r'^debrief/?$', views.debrief, name='debrief'),
+    url(r'^instructors_by_date/?$', views.instructors_by_date, name='instructors_by_date'),
 
     url(r'^export/badges/?$', views.export_badges, name='export_badges'),
     url(r'^export/instructors/?$', views.export_instructors, name='export_instructors'),

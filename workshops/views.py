@@ -88,6 +88,8 @@ from workshops.filters import (
     EventSubmissionFilter,
 )
 
+from api.views import ReportsViewSet
+
 # ------------------------------------------------------------
 
 
@@ -1681,39 +1683,29 @@ def search(request):
 #------------------------------------------------------------
 
 @login_required
-def debrief(request):
+def instructors_by_date(request):
     '''Show who taught between begin_date and end_date.'''
-
     tasks = None
 
     start_date = end_date = None
 
-    tags = Tag.objects.filter(name__in=['stalled', 'unresponsive'])
+    form = DebriefForm()
+    if 'begin_date' in request.GET and 'end_date' in request.GET:
+        form = DebriefForm(request.GET)
 
-    if request.method == 'POST':
-        form = DebriefForm(request.POST)
-        if form.is_valid():
-            start_date = form.cleaned_data['begin_date']
-            end_date = form.cleaned_data['end_date']
-            tasks = Task.objects.filter(
-                event__start__gte=start_date,
-                event__end__lte=end_date,
-                role__name='instructor',
-                person__may_contact=True,
-            ).exclude(event__tags=tags).order_by('event', 'person', 'role') \
-             .select_related('person', 'event', 'role')
+    if form.is_valid():
+        start_date = form.cleaned_data['begin_date']
+        end_date = form.cleaned_data['end_date']
+        rvs = ReportsViewSet()
+        tasks = rvs.instructors_by_time_queryset(start_date, end_date)
 
-    else:
-        # if a GET (or any other method) we'll create a blank form
-        form = DebriefForm()
-
-    context = {'title': 'Debrief',
+    context = {'title': 'List of instructors by time period',
                'form': form,
-               'form_helper': bootstrap_helper,
+               'form_helper': bootstrap_helper_get,
                'all_tasks': tasks,
                'start_date': start_date,
                'end_date': end_date}
-    return render(request, 'workshops/debrief.html', context)
+    return render(request, 'workshops/instructors_by_date.html', context)
 
 #------------------------------------------------------------
 
