@@ -530,7 +530,7 @@ class BadgeAwardForm(forms.ModelForm):
     awarded_by = selectable.AutoCompleteSelectField(
         lookup_class=lookups.PersonLookup,
         label='Awarded by',
-        required=True,
+        required=False,
         help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
@@ -554,7 +554,7 @@ class PersonAwardForm(forms.ModelForm):
     awarded_by = selectable.AutoCompleteSelectField(
         lookup_class=lookups.PersonLookup,
         label='Awarded by',
-        required=True,
+        required=False,
         help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
