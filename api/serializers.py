@@ -118,7 +118,7 @@ class InstructorNumTaughtSerializer(serializers.Serializer):
     num_taught = serializers.IntegerField()
 
 
-class InstructorsByTime(serializers.ModelSerializer):
+class InstructorsByTimePeriodSerializer(serializers.ModelSerializer):
     event_slug = serializers.CharField(source='event.slug')
     person_name = serializers.CharField(source='person.get_full_name')
     person_email = serializers.EmailField(source='person.email')

@@ -41,7 +41,7 @@ from .serializers import (
     WorkshopsOverTimeSerializer,
     InstructorsOverTimeSerializer,
     InstructorNumTaughtSerializer,
-    InstructorsByTime,
+    InstructorsByTimePeriodSerializer,
     HostSerializer,
     EventSerializer,
     TaskSerializer,
@@ -448,7 +448,7 @@ class ReportsViewSet(ViewSet):
             start=self.request.query_params.get('start', None),
             end=self.request.query_params.get('end', None))
         tasks = self.instructors_by_time_queryset(start, end)
-        serializer = InstructorsByTime(
+        serializer = InstructorsByTimePeriodSerializer(
             tasks, many=True, context=dict(request=request))
         return Response(serializer.data)
 
