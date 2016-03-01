@@ -176,6 +176,9 @@ class TestPerson(TestBase):
 
         values['award-badge'] = self.swc_instructor.pk
         values['award-event_1'] = ''
+        values['award-awarded_by_0'] = ''
+        values['award-awarded_by_1'] = ''
+
         rv = self.client.post(url, data=values)
         assert rv.status_code == 302, \
             'After awarding a badge we should be redirected to the same page, got {} instead'.format(rv.status_code)

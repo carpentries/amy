@@ -42,6 +42,8 @@ class TestBadge(TestBase):
         values['person_0'] = ''
         values['event_1'] = ''
         values['event_0'] = ''
+        values['awarded_by_0'] = ''
+        values['awarded_by_1'] = ''
 
         assert self.swc_instructor.award_set.count() == 3
 
