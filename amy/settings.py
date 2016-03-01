@@ -93,10 +93,10 @@ TEMPLATES = [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.i18n',
                 'django.template.context_processors.media',
+                'django.template.context_processors.request',
                 'django.template.context_processors.static',
                 'django.template.context_processors.tz',
                 'django.contrib.messages.context_processors.messages',
-                'django.core.context_processors.request',
                 'workshops.context_processors.version',
             ],
 
@@ -131,6 +131,7 @@ INSTALLED_APPS = (
     'rest_framework',
     'api',
     'captcha',
+    'compressor',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
@@ -170,8 +171,29 @@ DATABASES = {
 }
 
 # Authentication
-
 AUTH_USER_MODEL = 'workshops.Person'
+VALIDATION = 'django.contrib.auth.password_validation.'
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': VALIDATION + 'UserAttributeSimilarityValidator',
+        'OPTIONS': {
+            'user_attributes': ('username', 'personal', 'middle', 'family',
+                                'email')
+        }
+    },
+    {
+        'NAME': VALIDATION + 'MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 10,
+        }
+    },
+    {
+        'NAME': VALIDATION + 'CommonPasswordValidator',
+    },
+    {
+        'NAME': VALIDATION + 'NumericPasswordValidator',
+    },
+]
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.7/topics/i18n/
@@ -195,6 +217,11 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'bower_components'),
 )
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+    'compressor.finders.CompressorFinder',
+]
 
 # if "next" (or "?next") variable is not set when logging in, redirect to
 # workshops
@@ -206,7 +233,6 @@ LOGIN_URL = '/account/login/'
 # explicitely add European Union as a country
 COUNTRIES_OVERRIDE = {
     'EU': _('European Union'),
-    'GB': _('United Kingdom'),
     'US': _('United States'),
     'W3': _('Online'),
 }
@@ -230,8 +256,8 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.UserRateThrottle'
     ),
     'DEFAULT_THROTTLE_RATES': {
-        'anon': '100/day',
-        'user': '1000/day'
+        'anon': '50/hour',
+        'user': '200/hour'
     }
 }
 

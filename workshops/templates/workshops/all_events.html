@@ -1,4 +1,4 @@
-{% extends "workshops/_page_fluid.html" %}
+{% extends "base_nav_fluid_sidebar.html" %}
 
 {% load crispy_forms_tags %}
 {% load links %}
@@ -10,7 +10,7 @@
     {% crispy filter.form form_helper %}
 {% endblock %}
 
-{% block content-fluid %}
+{% block content %}
   {% if perms.workshops.add_event %}
     <p><a href="{% url 'event_add' %}" class="btn btn-success">New event</a></p>
   {% else %}

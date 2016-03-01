@@ -11,7 +11,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from django_countries.fields import CountryField
-import reversion
+from reversion import revisions as reversion
 
 #------------------------------------------------------------
 
@@ -238,7 +238,9 @@ class Person(AbstractBaseUser, PermissionsMixin):
     notes = models.TextField(default="", blank=True)
     affiliation = models.CharField(max_length=STR_LONG, default='', blank=True)
 
-    badges = models.ManyToManyField("Badge", through="Award")
+    badges = models.ManyToManyField(
+        "Badge", through="Award",
+        through_fields=('person', 'badge'))
     lessons = models.ManyToManyField(
         "Lesson",
         through="Qualification",
@@ -467,15 +469,16 @@ class Tag(models.Model):
 
 #------------------------------------------------------------
 
+
 # In order to make our custom filters chainable, we have to
 # define them on the QuerySet, not the Manager - see
 # http://www.dabapps.com/blog/higher-level-query-api-django-orm/
 class EventQuerySet(models.query.QuerySet):
     '''Handles finding past, ongoing and upcoming events'''
 
-    def no_stalled(self):
-        """Exclude events marked as 'stalled'."""
-        return self.exclude(tags__name='stalled')
+    def active(self):
+        """Exclude inactive events (stalled or completed)."""
+        return self.exclude(tags__name='stalled').exclude(completed=True)
 
     def past_events(self):
         '''Return past events.
@@ -497,29 +500,29 @@ class EventQuerySet(models.query.QuerySet):
         return queryset
 
     def upcoming_events(self):
-        '''Return published upcoming events.
+        """Return published upcoming events.
 
-        Upcoming events are those which start after today.  Published
-        events are those which have a URL. Events are ordered by date,
-        soonest first.
-        '''
+        Upcoming events are published events (see `published_events` below)
+        that start after today."""
 
-        queryset = self.filter(start__gt=datetime.date.today())\
-                       .filter(url__isnull=False)\
+        queryset = self.published_events() \
+                       .filter(start__gt=datetime.date.today()) \
                        .order_by('start')
         return queryset
 
     def ongoing_events(self):
-        '''Return ongoing events.
+        """Return ongoing events.
 
-        Ongoing events are those which start after today.
-        '''
+        Ongoing events are published events (see `published_events` below)
+        that are currently taking place (ie. start today or before and end
+        today or later)."""
 
-        # All events that start before or on today
-        queryset = self.filter(start__lte=datetime.date.today())
-
-        # Of those, only the ones that finish after or on today
-        queryset = queryset.filter(end__gte=datetime.date.today())
+        # All events that start before or on today, and finish after or on
+        # today.
+        queryset = self.published_events() \
+                       .filter(start__lte=datetime.date.today()) \
+                       .filter(end__gte=datetime.date.today()) \
+                       .order_by('start')
 
         return queryset
 
@@ -618,7 +621,7 @@ class Event(AssignmentMixin, models.Model):
         max_length=STR_MED,
         choices=INVOICED_CHOICES,
         verbose_name='Invoice status',
-        default='unknown', blank=True,
+        default='unknown', blank=False,
     )
     notes      = models.TextField(default="", blank=True)
     contact = models.CharField(max_length=255, default="", blank=True)
@@ -661,6 +664,11 @@ class Event(AssignmentMixin, models.Model):
     learners_longterm = models.URLField(
         blank=True, default="",
         verbose_name="Long-term assessment survey for learners")
+
+    request = models.ForeignKey(
+        'EventRequest', null=True, blank=True,
+        help_text='Backlink to the request that created this event.',
+    )
 
     class Meta:
         ordering = ('-start', )
@@ -995,6 +1003,32 @@ class EventRequest(AssignmentMixin, models.Model):
         )
 
 
+class EventSubmission(AssignmentMixin, models.Model):
+    active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    url = models.URLField(
+        null=False, blank=False,
+        verbose_name='Link to the workshop\'s website')
+    contact_name = models.CharField(
+        null=False, blank=False, max_length=STR_LONG,
+        verbose_name='Your name')
+    contact_email = models.EmailField(
+        null=False, blank=False,
+        verbose_name='Your email',
+        help_text='We may need to contact you regarding workshop details.')
+    self_organized = models.BooleanField(
+        null=False, default=False,
+        verbose_name='Was the workshop self-organized?')
+    notes = models.TextField(
+        null=False, blank=True, default='')
+
+    def __str__(self):
+        return 'Event submission <{}>'.format(self.url)
+
+    def get_absolute_url(self):
+        return reverse('eventsubmission_details', args=[self.pk])
+
+
 class AcademicLevel(models.Model):
     name = models.CharField(max_length=STR_MED, null=False, blank=False)
 
@@ -1128,6 +1162,9 @@ class Award(models.Model):
     awarded    = models.DateField()
     event      = models.ForeignKey(Event, null=True, blank=True,
                                    on_delete=models.PROTECT)
+    awarded_by = models.ForeignKey(
+        Person, null=True, blank=True, on_delete=models.PROTECT,
+        related_name='awarded_set')
 
     class Meta:
         unique_together = ("person", "badge", )
@@ -1210,3 +1247,152 @@ class TodoItem(models.Model):
             )
         else:
             return self.title
+
+# ------------------------------------------------------------
+
+
+@reversion.register
+class InvoiceRequest(models.Model):
+    STATUS_CHOICES = (
+        ('not-invoiced', 'Not invoiced'),
+        ('sent', 'Sent out'),
+        ('paid', 'Paid'),
+    )
+    status = models.CharField(
+        max_length=STR_MED, null=False, blank=False, default='not-invoiced',
+        choices=STATUS_CHOICES,
+        verbose_name='Invoice status')
+
+    sent_date = models.DateField(
+        null=True, blank=True, verbose_name='Date invoice was sent out',
+        help_text='YYYY-MM-DD')
+    paid_date = models.DateField(
+        null=True, blank=True, verbose_name='Date invoice was paid',
+        help_text='YYYY-MM-DD')
+
+    organization = models.ForeignKey(
+        Host, on_delete=models.PROTECT, verbose_name='Organization to invoice',
+        help_text='e.g. University of Florida Ecology Department')
+
+    INVOICE_REASON = (
+        ('admin-fee', 'Workshop administrative fee'),
+        ('admin-fee-expenses', 'Workshop administrative fee plus expenses'),
+        ('partner', 'Partner agreement'),
+        ('affiliate', 'Affiliate agreement'),
+        ('consulting', 'Consulting'),
+        ('', 'Other (enter below)'),
+    )
+    reason = models.CharField(
+        max_length=STR_MED, null=False, blank=True, default='admin-fee',
+        choices=INVOICE_REASON,
+        verbose_name='Reason for invoice')
+    reason_other = models.CharField(
+        max_length=STR_LONG, null=False, blank=True, default='',
+        verbose_name='Other reason for invoice')
+    date = models.DateField(
+        null=False, blank=False, verbose_name='Date of invoice subject',
+        help_text='YYYY-MM-DD; either event\'s date or invoice reason date.')
+    event = models.ForeignKey(
+        Event, on_delete=models.PROTECT, null=True, blank=True)
+    event_location = models.CharField(
+        max_length=STR_LONG, null=False, blank=True, default='')
+    item_id = models.CharField(
+        max_length=STR_MED, null=False, blank=True, default='',
+        verbose_name='Item ID (if applicable)')
+    postal_number = models.CharField(
+        max_length=STR_MED, null=False, blank=True, default='',
+        verbose_name='PO # (if required)')
+    contact_name = models.CharField(
+        max_length=STR_LONG, null=False, blank=False,
+        verbose_name='Organization contact name',
+        help_text='e.g. Dr. Jane Smith - the name of the person to contact at '
+                  'the organization about the invoice')
+    contact_email = models.EmailField(
+        max_length=STR_LONG, null=False, blank=False,
+        verbose_name='Organization contact email')
+    contact_phone = models.CharField(
+        max_length=STR_LONG, null=False, blank=True,
+        verbose_name='Organization contact phone #')
+    full_address = models.TextField(
+        null=False, blank=False,
+        verbose_name='Full address to invoice',
+        help_text='e.g. Dr. Jane Smith; University of Florida Ecology '
+                  'Department; 123 University Way; Gainesville, FL 32844')
+    amount = models.DecimalField(
+        max_digits=8, decimal_places=2, null=False, blank=False,
+        validators=[MinValueValidator(0)],
+        verbose_name='Full invoice amount',
+        help_text='e.g. 1992.33 ')
+
+    CURRENCY = (
+        ('USD', 'US Dollars'),
+        ('GBP', 'UK Pounds'),
+        ('EUR', 'Euros'),
+        ('', 'Other (enter below)'),
+    )
+    currency = models.CharField(
+        max_length=STR_MED, null=False, blank=True, default='USD',
+        choices=CURRENCY)
+    currency_other = models.CharField(
+        max_length=STR_LONG, null=False, blank=True, default='',
+        verbose_name='Other currency')
+
+    breakdown = models.TextField(
+        blank=True, default='',
+        verbose_name='Notes on invoice breakdown',
+        help_text='e.g. 1250.00 workshop fee;'
+                  ' 742.33 Instructor, Pat Li, travel expenses')
+
+    VENDOR_FORM_CHOICES = (
+        ('yes', 'Yes'),
+        ('no', 'No'),
+        ('unsure', 'Will check with contact and submit info if needed'),
+    )
+    vendor_form_required = models.CharField(
+        max_length=STR_SHORT, null=False, blank=False, default='no',
+        choices=VENDOR_FORM_CHOICES,
+        verbose_name='Do vendor/supplier forms need to be submitted?')
+    vendor_form_link = models.URLField(
+        null=False, blank=True, default='',
+        verbose_name='Link to vendor/supplier forms')
+    form_W9 = models.BooleanField(verbose_name='Organization needs a W-9 form')
+
+    RECEIPTS_CHOICES = (
+        ('email', 'Via email'),
+        ('shared', 'In a Google Drive or other shared location'),
+        ('not-yet', 'Haven\'t sent yet'),
+        ('na', 'Not applicable'),
+    )
+    receipts_sent = models.CharField(
+        max_length=STR_MED, null=False, blank=False, default='not-yet',
+        choices=RECEIPTS_CHOICES,
+        verbose_name='Any required receipts sent?')
+    shared_receipts_link = models.URLField(
+        null=False, blank=True, default='',
+        verbose_name='Link to receipts in shared location',
+        help_text='e.g. link to Google drive folder')
+    notes = models.TextField(
+        blank=True, default='',
+        verbose_name='Any other notes')
+
+    def __str__(self):
+        return "Invoice to {!s} for {!s}".format(self.organization,
+                                                 self.event)
+
+    def get_absolute_url(self):
+        return reverse('invoicerequest_details', args=[self.pk])
+
+    @property
+    def paid(self):
+        return self.status == 'paid'
+
+    @property
+    def long_status(self):
+        """Display status with date, if available."""
+        LONG_FMT = '{} on {:%Y-%m-%d}'
+        if self.status == 'sent' and self.sent_date:
+            return LONG_FMT.format(self.get_status_display(), self.sent_date)
+        elif self.status == 'paid' and self.paid_date:
+            return LONG_FMT.format(self.get_status_display(), self.paid_date)
+
+        return self.get_status_display()

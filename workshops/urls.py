@@ -32,8 +32,7 @@ urlpatterns = [
     url(r'^persons/bulkadd/$',views.person_bulk_add, name='person_bulk_add'),
     url(r'^persons/bulkadd/template',views.person_bulk_add_template, name='person_bulk_add_template'),
     url(r'^persons/bulkadd/confirm$',views.person_bulk_add_confirmation, name='person_bulk_add_confirmation'),
-    url(r'^persons/merge/$',views.person_merge, name='person_merge'),
-    url(r'^persons/merge/confirm$',views.person_merge_confirmation, name='person_merge_confirmation'),
+    url(r'^persons/merge/$', views.persons_merge, name='persons_merge'),
 
     url(r'^events/?$', views.all_events, name='all_events'),
     url(r'^event/(?P<event_ident>[\w-]+)/?$', views.event_details, name='event_details'),
@@ -45,6 +44,11 @@ urlpatterns = [
     url(r'^event/(?P<event_ident>[\w-]+)/validate/?$', views.validate_event, name='validate_event'),
     url(r'^events/import/?$', views.event_import, name='event_import'),
     url(r'^events/merge/?$', views.events_merge, name='events_merge'),
+
+    url(r'^event/(?P<event_ident>[\w-]+)/invoice$', views.event_invoice, name='event_invoice'),
+    url(r'^invoices/?$', views.AllInvoiceRequests.as_view(), name='all_invoicerequests'),
+    url(r'^invoice/(?P<request_id>\d+)/?$', views.InvoiceRequestDetails.as_view(), name='invoicerequest_details'),
+    url(r'^invoice/(?P<request_id>\d+)/edit$', views.InvoiceRequestUpdate.as_view(), name='invoicerequest_edit'),
 
     url(r'^tasks/?$', views.all_tasks, name='all_tasks'),
     url(r'^task/(?P<task_id>\d+)/?$', views.task_details, name='task_details'),
@@ -58,12 +62,13 @@ urlpatterns = [
 
     url(r'^badges/?$', views.all_badges, name='all_badges'),
     url(r'^badge/(?P<badge_name>[\w\.=-]+)/?$', views.badge_details, name='badge_details'),
+    url(r'^badge/(?P<badge_name>[\w\.=-]+)/award/?$', views.badge_award, name='badge_award'),
 
     url(r'^instructors/?$', views.instructors, name='instructors'),
 
     url(r'^search/?$', views.search, name='search'),
 
-    url(r'^debrief/?$', views.debrief, name='debrief'),
+    url(r'^instructors_by_date/?$', views.instructors_by_date, name='instructors_by_date'),
 
     url(r'^export/badges/?$', views.export_badges, name='export_badges'),
     url(r'^export/instructors/?$', views.export_instructors, name='export_instructors'),
@@ -76,6 +81,7 @@ urlpatterns = [
     url(r'^reports/all_activity_over_time/?$', views.all_activity_over_time, name='all_activity_over_time'),
     url(r'^reports/workshop_issues/?$', views.workshop_issues, name='workshop_issues'),
     url(r'^reports/instructor_issues/?$', views.instructor_issues, name='instructor_issues'),
+    url(r'^reports/duplicates/?$', views.duplicates, name='duplicates'),
 
     url(r'^revision/(?P<revision_id>[\d]+)/?$', views.object_changes, name='object_changes'),
 
@@ -86,7 +92,19 @@ urlpatterns = [
     url(r'^request/(?P<request_id>\d+)/assign$', views.eventrequest_assign, name='eventrequest_assign'),
     url(r'^request/(?P<request_id>\d+)/assign/(?P<person_id>[\w\.-]+)$', views.eventrequest_assign, name='eventrequest_assign'),
     url(r'^swc/request/$', views.SWCEventRequest.as_view(), name='swc_workshop_request'),
+    url(r'^swc/request/confirm/$', views.SWCEventRequestConfirm.as_view(), name='swc_workshop_request_confirm'),
     url(r'^dc/request/$', views.DCEventRequest.as_view(), name='dc_workshop_request'),
+    url(r'^dc/request/confirm/$', views.DCEventRequestConfirm.as_view(), name='dc_workshop_request_confirm'),
+
+    url(r'^submissions/$', views.AllEventSubmissions.as_view(), name='all_eventsubmissions'),
+    url(r'^submission/(?P<submission_id>\d+)/?$', views.EventSubmissionDetails.as_view(), name='eventsubmission_details'),
+    url(r'^submission/(?P<submission_id>\d+)/fix/?$', views.EventSubmissionFix.as_view(), name='eventsubmission_fix'),
+    url(r'^submission/(?P<submission_id>\d+)/discard/?$', views.eventsubmission_discard, name='eventsubmission_discard'),
+    url(r'^submission/(?P<submission_id>\d+)/accept/?$', views.eventsubmission_accept, name='eventsubmission_accept'),
+    url(r'^submission/(?P<submission_id>\d+)/assign$', views.eventsubmission_assign, name='eventsubmission_assign'),
+    url(r'^submission/(?P<submission_id>\d+)/assign/(?P<person_id>[\w\.-]+)$', views.eventsubmission_assign, name='eventsubmission_assign'),
+    url(r'^submit/$', views.EventSubmission.as_view(), name='event_submit'),
+    url(r'^submit/confirm/$', views.EventSubmissionConfirm.as_view(), name='event_submission_confirm'),
 
     url(r'^profile_updates/$', views.AllProfileUpdateRequests.as_view(), name='all_profileupdaterequests'),
     url(r'^profile_updates/closed/$', views.AllClosedProfileUpdateRequests.as_view(), name='all_closed_profileupdaterequests'),

@@ -1,6 +1,7 @@
 var DATEPICKER_DEFAULTS = {
     autoclose: true,
     clearBtn: true,
+    orientation: "bottom auto",
     format: "yyyy-mm-dd",
     todayHighlight: true
 };
@@ -8,21 +9,7 @@ var DATEPICKER_DEFAULTS = {
 var first_startdate_selected = false;
 
 $(document).ready(function() {
-    $("#id_agreement_start, #id_agreement_end").datepicker(DATEPICKER_DEFAULTS);
-    $("#id_start, #id_end").datepicker(DATEPICKER_DEFAULTS);
-    $("#id_event-start, #id_event-end").datepicker(DATEPICKER_DEFAULTS);
-    $("#id_todo-due, #id_form-0-due, #id_form-1-due, #id_form-2-due, " +
-      "#id_form-3-due, #id_form-4-due, #id_form-5-due, #id_form-6-due, " +
-      "#id_form-6-due, #id_form-7-due, #id_form-8-due, #id_form-9-due, " +
-      "#id_form-10-due, #id_form-11-due, #id_due"
-    ).datepicker({
-        autoclose: true,
-        clearBtn: true,
-        format: "yyyy-mm-dd",
-        todayHighlight: true,
-        orientation: "bottom auto"
-    });
-
+    $('input.dateinput').datepicker(DATEPICKER_DEFAULTS);
     $('#id_start').on('changeDate', function(e) {
         // if user selects start date for the first time, set end date to +1d
         if (e.date && !first_startdate_selected) {

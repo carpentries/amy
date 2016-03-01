@@ -3,6 +3,7 @@ from urllib.parse import urlencode
 import sys
 
 from django.core.urlresolvers import reverse
+from django.db.models import Q
 from django.db.utils import IntegrityError
 from ..models import (Event, Host, Tag, Role, Task, Award, Badge, TodoItem)
 from ..forms import EventForm, EventsMergeForm
@@ -57,8 +58,8 @@ class TestEvent(TestBase):
         """Test that the events manager can find upcoming events"""
 
         upcoming_events = Event.objects.upcoming_events()
-        assert len(upcoming_events) == self.num_upcoming
-        assert all(['upcoming' in e.slug for e in upcoming_events])
+        expected = Event.objects.filter(slug__endswith='upcoming')
+        self.assertEqual(set(upcoming_events), set(expected))
 
     def test_get_past_events(self):
         """Test that the events manager can find past events"""
@@ -79,20 +80,18 @@ class TestEvent(TestBase):
 
         ongoing_events = Event.objects.ongoing_events()
         event_slugs = [e.slug for e in ongoing_events]
-        correct_slugs = ['starts_today_ongoing',
-                         'ends_tomorrow_ongoing',
-                         'ends_today_ongoing', ]
+        correct_slugs = ['ends-tomorrow-ongoing', 'ends-today-ongoing']
 
-        if sys.version_info >= (3,):
-            self.assertCountEqual(event_slugs, correct_slugs)
-        else:
-            self.assertItemsEqual(event_slugs, correct_slugs)
+        self.assertCountEqual(event_slugs, correct_slugs)
 
     def test_unpublished_events(self):
         """Ensure that events manager finds unpublished events correctly."""
-        all_events = Event.objects.all()
-        self.assertEqual(set(all_events),
-                         set(Event.objects.unpublished_events()))
+        expected = Event.objects.exclude(Q(slug__endswith='upcoming')) \
+                                .exclude(slug__in=['ends-today-ongoing',
+                                                   'ends-tomorrow-ongoing'])
+        self.assertEqual(set(Event.objects.unpublished_events()),
+                         set(expected))
+
         event_considered_published = Event.objects.create(
             slug='published',
             start=date.today() + timedelta(days=3),
@@ -108,7 +107,7 @@ class TestEvent(TestBase):
 
     def test_delete_event(self):
         """Make sure deleted event and its tasks are no longer accessible."""
-        event = Event.objects.get(slug="starts_today_ongoing")
+        event = Event.objects.get(slug="starts-today-ongoing")
         role1 = Role.objects.create(name='NonInstructor')
         t1 = Task.objects.create(event=event, person=self.spiderman,
                                  role=role1)
@@ -123,7 +122,7 @@ class TestEvent(TestBase):
         assert rv.status_code == 302
 
         with self.assertRaises(Event.DoesNotExist):
-            Event.objects.get(slug="starts_today_ongoing")
+            Event.objects.get(slug="starts-today-ongoing")
 
         for t in [t1, t2, t3]:
             with self.assertRaises(Task.DoesNotExist):
@@ -133,7 +132,7 @@ class TestEvent(TestBase):
         """Ensure we cannot delete an event with related tasks and awards.
 
         Deletion is prevented via Award.event's on_delete=PROTECT."""
-        event = Event.objects.get(slug="starts_today_ongoing")
+        event = Event.objects.get(slug="starts-today-ongoing")
         role = Role.objects.create(name='NonInstructor')
         badge = Badge.objects.create(name='noninstructor',
                                      title='Non-instructor',
@@ -297,6 +296,7 @@ class TestEventViews(TestBase):
                 'host': host.id,
                 'tags': [self.test_tag.id],
                 'administrator': host.id,
+                'invoice_status': 'unknown',
             })
         if response.status_code == 302:
             url = response['location']
@@ -319,6 +319,7 @@ class TestEventViews(TestBase):
                 'host': host.id,
                 'tags': [self.test_tag.id],
                 'administrator': host.id,
+                'invoice_status': 'unknown',
             }
         response = self.client.post(url, data)
         assert response.status_code == 302, (
@@ -351,6 +352,7 @@ class TestEventViews(TestBase):
             'host': self.test_host.id,
             'tags': [self.test_tag.id],
             'slug': '',
+            'invoice_status': 'unknown',
         }
         response = self.client.post(reverse('event_add'), data)
         assert response.status_code == 302
@@ -369,6 +371,7 @@ class TestEventViews(TestBase):
             'slug': 'test-event',
             'start': date(2015, 7, 20),
             'end': date(2015, 7, 19),
+            'invoice_status': 'unknown',
         }
         response = self.client.post(reverse('event_add'), data)
         assert response.status_code == 200
@@ -381,6 +384,7 @@ class TestEventViews(TestBase):
             'slug': 'test-event',
             'start': date(2015, 7, 20),
             'end': date(2015, 7, 20),
+            'invoice_status': 'unknown',
         }
         response = self.client.post(reverse('event_add'), data)
         assert response.status_code == 302
@@ -391,6 +395,7 @@ class TestEventViews(TestBase):
             'slug': 'test-event2',
             'start': date(2015, 7, 20),
             'end': date(2015, 7, 21),
+            'invoice_status': 'unknown',
         }
         response = self.client.post(reverse('event_add'), data)
         assert response.status_code == 302
@@ -407,6 +412,7 @@ class TestEventViews(TestBase):
             'tags': [self.test_tag.id],
             'slug': 'test-event',
             'admin_fee': -1200,
+            'invoice_status': 'unknown',
         }
 
         f = EventForm(data)
@@ -680,8 +686,8 @@ class TestEventMerging(TestBase):
         """Merging: ensure the base event is selected based on ID form
         field.
 
-        If ID field has a value of 'obj_a', then event A is base event and it
-        won't be removed from the database after the merge. Event B, on the
+        If ID field has a value of 'obj_b', then event B is base event and it
+        won't be removed from the database after the merge. Event A, on the
         other hand, will."""
         rv = self.client.post(self.url, data=self.strategy)
         self.assertEqual(rv.status_code, 302)

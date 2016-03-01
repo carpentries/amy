@@ -8,7 +8,10 @@ from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import SetPasswordForm, PasswordChangeForm
-from django.core.urlresolvers import reverse
+from django.contrib.auth.mixins import (
+    LoginRequiredMixin, PermissionRequiredMixin,
+)
+from django.core.urlresolvers import reverse, reverse_lazy
 from django.core.exceptions import (
     ObjectDoesNotExist,
     PermissionDenied,
@@ -22,13 +25,12 @@ from django.db.models import Count, Q, F, Model, ProtectedError
 from django.db.models import Case, When, Value, IntegerField
 from django.shortcuts import redirect, render, get_object_or_404
 from django.template.loader import get_template
-from django.views.decorators.http import require_POST
-from django.views.generic import ListView, DetailView, View
+from django.views.generic import ListView, DetailView, TemplateView
 from django.views.generic.edit import CreateView, UpdateView, ModelFormMixin
 from django.contrib.auth.decorators import login_required, permission_required
 
-from reversion import get_for_object
 from reversion.models import Revision
+from reversion.revisions import get_for_object
 
 from workshops.models import (
     Airport,
@@ -46,21 +48,25 @@ from workshops.models import (
     ProfileUpdateRequest,
     TodoItem,
     TodoItemQuerySet,
+    InvoiceRequest,
+    EventSubmission as EventSubmissionModel,
 )
 from workshops.forms import (
     SearchForm, DebriefForm, InstructorsForm, PersonForm, PersonBulkAddForm,
     EventForm, TaskForm, TaskFullForm, bootstrap_helper, bootstrap_helper_get,
     bootstrap_helper_with_add, BadgeAwardForm, PersonAwardForm,
-    PersonPermissionsForm, bootstrap_helper_filter, PersonMergeForm,
+    PersonPermissionsForm, bootstrap_helper_filter, PersonsSelectionForm,
     PersonTaskForm, HostForm, SWCEventRequestForm, DCEventRequestForm,
     ProfileUpdateRequestForm, PersonLookupForm, bootstrap_helper_wider_labels,
     SimpleTodoForm, bootstrap_helper_inline_formsets, BootstrapHelper,
     AdminLookupForm, ProfileUpdateRequestFormNoCaptcha, MembershipForm,
-    TodoFormSet, EventsSelectionForm, EventsMergeForm,
+    TodoFormSet, EventsSelectionForm, EventsMergeForm, InvoiceRequestForm,
+    InvoiceRequestUpdateForm, EventSubmitForm, EventSubmitFormNoCaptcha,
+    PersonsMergeForm,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
-    create_uploaded_persons_tasks, InternalError, merge_persons,
+    create_uploaded_persons_tasks, InternalError,
     update_event_attendance_from_tasks,
     WrongWorkshopURL,
     generate_url_to_event_index,
@@ -70,14 +76,19 @@ from workshops.util import (
     validate_tags_from_event_website,
     assignment_selection,
     get_pagination_items,
+    Paginator,
     failed_to_delete,
     assign,
+    merge_objects,
 )
 
 from workshops.filters import (
     EventFilter, HostFilter, PersonFilter, TaskFilter, AirportFilter,
-    EventRequestFilter,
+    EventRequestFilter, BadgeAwardsFilter, InvoiceRequestFilter,
+    EventSubmissionFilter,
 )
+
+from api.views import ReportsViewSet
 
 # ------------------------------------------------------------
 
@@ -137,32 +148,61 @@ class UpdateViewContext(SuccessMessageMixin, UpdateView):
         return self.success_message.format(cleaned_data, name=str(self.object))
 
 
-class LoginRequiredMixin(object):
-    """
-    Define @login_required-based mixin for class-based views that should allow
-    only logged-in users.
+class FilteredListView(ListView):
+    paginator_class = Paginator
+    filter_class = None
+    queryset = None
 
-    Based on Django docs:
-    https://docs.djangoproject.com/en/1.8/topics/class-based-views/intro/#mixins-that-wrap-as-view
-    """
+    def get_filter_data(self):
+        """Datasource for the filter."""
+        return self.request.GET
 
-    @classmethod
-    def as_view(cls, **kwargs):
-        view = super(LoginRequiredMixin, cls).as_view(**kwargs)
-        return login_required(view)
+    def get_queryset(self):
+        """Apply a filter to the queryset. Filter is compatible with pagination
+        and queryset."""
+        self.filter = self.filter_class(self.get_filter_data(),
+                                        super().get_queryset())
+        return self.filter
+
+    def get_context_data(self, **kwargs):
+        """Enhance context by adding a filter to it."""
+        context = super().get_context_data(**kwargs)
+        context['filter'] = self.filter
+        context['form_helper'] = bootstrap_helper_filter
+        return context
 
 
-class PermissionRequiredMixin(object):
-    """
-    Mixin for allowing only users with specific permissions to access the view.
-    """
-    perms = ''  # permission name or a list of them
+class EmailSendMixin():
+    email_fail_silently = True
+    email_kwargs = None
 
-    @classmethod
-    def as_view(cls, **kwargs):
-        view = super().as_view(**kwargs)
-        return permission_required(cls.perms, raise_exception=True)(view)
+    def get_subject(self):
+        """Generate email subject."""
+        return ""
 
+    def get_body(self):
+        """Generate email body (in TXT and HTML versions)."""
+        return "", ""
+
+    def prepare_email(self):
+        """Set up email contents."""
+        subject = self.get_subject()
+        body_txt, body_html = self.get_body()
+        email = EmailMultiAlternatives(subject, body_txt,
+                                       **self.email_kwargs)
+        email.attach_alternative(body_html, 'text/html')
+        return email
+
+    def send_email(self, email):
+        """Send a prepared email out."""
+        return email.send(fail_silently=self.email_fail_silently)
+
+    def form_valid(self, form):
+        """Once form is valid, send the email."""
+        results = super().form_valid(form)
+        email = self.prepare_email()
+        self.send_email(email)
+        return results
 
 #------------------------------------------------------------
 
@@ -172,9 +212,9 @@ def dashboard(request):
     '''Home page.'''
     current_events = (
         Event.objects.upcoming_events() | Event.objects.ongoing_events()
-    ).no_stalled()
-    uninvoiced_events = Event.objects.uninvoiced_events().no_stalled()
-    unpublished_events = Event.objects.unpublished_events().no_stalled() \
+    ).active()
+    uninvoiced_events = Event.objects.active().uninvoiced_events()
+    unpublished_events = Event.objects.active().unpublished_events() \
                                       .select_related('host')
 
     assigned_to, is_admin = assignment_selection(request)
@@ -249,7 +289,7 @@ def host_details(request, host_domain):
 
 class HostCreate(LoginRequiredMixin, PermissionRequiredMixin,
                  CreateViewContext):
-    perms = 'workshops.add_host'
+    permission_required = 'workshops.add_host'
     model = Host
     form_class = HostForm
     template_name = 'workshops/generic_form.html'
@@ -257,7 +297,7 @@ class HostCreate(LoginRequiredMixin, PermissionRequiredMixin,
 
 class HostUpdate(LoginRequiredMixin, PermissionRequiredMixin,
                  UpdateViewContext):
-    perms = 'workshops.change_host'
+    permission_required = 'workshops.change_host'
     model = Host
     form_class = HostForm
     slug_field = 'domain'
@@ -305,7 +345,7 @@ def membership_create(request, host_domain):
 
 class MembershipUpdate(LoginRequiredMixin, PermissionRequiredMixin,
                        UpdateViewContext):
-    perms = 'workshops.change_membership'
+    permission_required = 'workshops.change_membership'
     model = Membership
     form_class = MembershipForm
     pk_url_kwarg = 'membership_id'
@@ -357,7 +397,7 @@ def airport_details(request, airport_iata):
 
 class AirportCreate(LoginRequiredMixin, PermissionRequiredMixin,
                     CreateViewContext):
-    perms = 'workshops.add_airport'
+    permission_required = 'workshops.add_airport'
     model = Airport
     fields = AIRPORT_FIELDS
     template_name = 'workshops/generic_form.html'
@@ -365,7 +405,7 @@ class AirportCreate(LoginRequiredMixin, PermissionRequiredMixin,
 
 class AirportUpdate(LoginRequiredMixin, PermissionRequiredMixin,
                     UpdateViewContext):
-    perms = 'workshops.change_airport'
+    permission_required = 'workshops.change_airport'
     model = Airport
     fields = AIRPORT_FIELDS
     slug_field = 'iata'
@@ -591,7 +631,7 @@ def person_bulk_add_confirmation(request):
 
 class PersonCreate(LoginRequiredMixin, PermissionRequiredMixin,
                    CreateViewContext):
-    perms = 'workshops.add_person'
+    permission_required = 'workshops.add_person'
     model = Person
     form_class = PersonForm
     template_name = 'workshops/generic_form.html'
@@ -747,7 +787,7 @@ def person_delete(request, person_id):
 
 class PersonPermissions(LoginRequiredMixin, PermissionRequiredMixin,
                         UpdateViewContext):
-    perms = 'workshops.change_person'
+    permission_required = 'workshops.change_person'
     model = Person
     form_class = PersonPermissionsForm
     pk_url_kwarg = 'person_id'
@@ -797,62 +837,81 @@ def person_password(request, person_id):
 
 
 @login_required
-@permission_required(['workshops.add_person', 'workshops.delete_person'],
+@permission_required(['workshops.delete_person', 'workshops.change_person'],
                      raise_exception=True)
-def person_merge(request):
-    'Merge information from one Person into another (in case of duplicates).'
+def persons_merge(request):
+    """Display two persons side by side on GET and merge them on POST.
+
+    If no persons are supplied via GET params, display person selection
+    form."""
+    obj_a_pk = request.GET.get('person_a_1')
+    obj_b_pk = request.GET.get('person_b_1')
+
+    if not obj_a_pk or not obj_b_pk:
+        context = {
+            'title': 'Merge Persons',
+            'form': PersonsSelectionForm(),
+            'form_helper': bootstrap_helper_get,
+        }
+        return render(request, 'workshops/merge_form.html', context)
+
+    obj_a = get_object_or_404(Person, pk=obj_a_pk)
+    obj_b = get_object_or_404(Person, pk=obj_b_pk)
+
+    form = PersonsMergeForm(initial=dict(person_a=obj_a, person_b=obj_b))
 
     if request.method == 'POST':
-        form = PersonMergeForm(request.POST)
+        form = PersonsMergeForm(request.POST)
+
         if form.is_valid():
-            request.session['person_from'] = form.cleaned_data['person_from'] \
-                                                 .pk
-            request.session['person_to'] = form.cleaned_data['person_to'].pk
-            return redirect('person_merge_confirmation')
-        else:
-            messages.error(request, 'Fix errors below.')
-    else:
-        if 'person_from' in request.session:
-            del request.session['person_from']
-        if 'person_to' in request.session:
-            del request.session['person_to']
-        form = PersonMergeForm()
+            # merging in process
+            data = form.cleaned_data
 
-    context = {'title': 'Merge Persons',
-               'form': form,
-               'form_helper': bootstrap_helper}
-    return render(request, 'workshops/merge_form.html', context)
+            obj_a = data['person_a']
+            obj_b = data['person_b']
 
+            # `base_obj` stays in the database after merge
+            # `merging_obj` will be removed from DB after merge
+            if data['id'] == 'obj_a':
+                base_obj = obj_a
+                merging_obj = obj_b
+                base_a = True
+            else:
+                base_obj = obj_b
+                merging_obj = obj_a
+                base_a = False
 
-@login_required
-@permission_required(['workshops.add_person', 'workshops.delete_person'],
-                     raise_exception=True)
-def person_merge_confirmation(request):
-    '''Show what the merge will do and get confirmation.'''
-    person_from = get_object_or_404(Person,
-                                    pk=request.session.get('person_from'))
-    person_to = get_object_or_404(Person,
-                                  pk=request.session.get('person_to'))
+            # non-M2M-relationships
+            easy = (
+                'username', 'personal', 'middle', 'family', 'email',
+                'may_contact', 'gender', 'airport', 'github', 'twitter',
+                'url', 'notes', 'affiliation', 'occupation', 'orcid',
+                'is_active',
+            )
 
-    # Must not be the same person.
-    if person_from == person_to:
-        del request.session['person_from']
-        del request.session['person_to']
-        messages.warning(request, 'Cannot merge a person with themselves.')
-        return redirect('person_merge')
+            # M2M relationships
+            difficult = ('award_set', 'qualification_set', 'domains',
+                         'task_set')
 
-    if "confirmed" in request.GET:
-        merge_persons(person_from, person_to)
-        messages.success(request,
-                         'Merging {0} into {1}'.format(person_from,
-                                                       person_to))
-        return redirect('person_merge')
+            try:
+                merge_objects(obj_a, obj_b, easy, difficult, choices=data,
+                              base_a=base_a)
 
-    else:
-        context = {'title': 'Confirm merge',
-                   'person_from': person_from,
-                   'person_to': person_to}
-        return render(request, 'workshops/person_merge_confirm.html', context)
+            except ProtectedError as e:
+                return failed_to_delete(request, object=merging_obj,
+                                        protected_objects=e.protected_objects)
+
+            else:
+                return redirect(base_obj.get_absolute_url())
+
+    context = {
+        'title': 'Merge two persons',
+        'form': form,
+        'obj_a': obj_a,
+        'obj_b': obj_b,
+    }
+    return render(request, 'workshops/persons_merge.html', context)
+
 
 #------------------------------------------------------------
 
@@ -997,7 +1056,7 @@ def validate_event(request, event_ident):
 
 class EventCreate(LoginRequiredMixin, PermissionRequiredMixin,
                   CreateViewContext):
-    perms = 'workshops.add_event'
+    permission_required = 'workshops.add_event'
     model = Event
     form_class = EventForm
     template_name = 'workshops/event_create_form.html'
@@ -1096,14 +1155,16 @@ def event_delete(request, event_ident):
 
 
 @login_required
-@require_POST
 def event_import(request):
     """Read tags from remote URL and return them as JSON.
 
     This is used to read tags from workshop website and then fill up fields
     on event_create form."""
 
-    url = request.POST['url'].strip()
+    # TODO: remove POST support completely
+    url = request.POST.get('url', '').strip()
+    if not url:
+        url = request.GET.get('url', '').strip()
     try:
         # fetch page
         response = requests.get(url)
@@ -1147,7 +1208,7 @@ def event_import(request):
         return HttpResponseBadRequest(str(e))
 
     except KeyError:
-        return HttpResponseBadRequest('Missing or wrong "url" POST parameter.')
+        return HttpResponseBadRequest('Missing or wrong "url" parameter.')
 
 
 @login_required
@@ -1194,16 +1255,22 @@ def events_merge(request):
         form = EventsMergeForm(request.POST)
 
         if form.is_valid():
+            # merging in process
             data = form.cleaned_data
 
-            event_a = data['event_a']
-            event_b = data['event_b']
+            obj_a = data['event_a']
+            obj_b = data['event_b']
 
-            base_event = event_a  # stays in the database after merge
-            merging = event_b  # will be removed from DB after merge
-            if data['id'] == 'obj_b':
-                base_event = event_b
-                merging = event_a
+            # `base_obj` stays in the database after merge
+            # `merging_obj` will be removed from DB after merge
+            if data['id'] == 'obj_a':
+                base_obj = obj_a
+                merging_obj = obj_b
+                base_a = True
+            else:
+                base_obj = obj_b
+                merging_obj = obj_a
+                base_a = False
 
             # non-M2M-relationships:
             easy = (
@@ -1218,52 +1285,15 @@ def events_merge(request):
             difficult = ('tags', 'task_set', 'todoitem_set')
 
             try:
-                with transaction.atomic():
-                    for attr in easy:
-                        value = data.get(attr)
-                        if value == 'obj_a':
-                            setattr(base_event, attr, getattr(event_a, attr))
-                        elif value == 'obj_b':
-                            setattr(base_event, attr, getattr(event_b, attr))
-                        elif value == 'combine':
-                            try:
-                                new_value = (getattr(event_a, attr) +
-                                             getattr(event_b, attr))
-                                setattr(base_event, attr, new_value)
-                            except TypeError:
-                                # probably 'unsupported operand type', but we
-                                # can't do much about it…
-                                pass
-
-                    for attr in difficult:
-                        objects_a = getattr(event_a, attr)
-                        objects_b = getattr(event_b, attr)
-
-                        manager = getattr(base_event, attr)
-                        value = data.get(attr)
-
-                        if value == 'obj_a' and manager != objects_a:
-                            manager.all().delete()
-                            manager.add(*list(objects_a.all()))
-
-                        elif value == 'obj_b' and manager != objects_b:
-                            manager.all().delete()
-                            manager.add(*list(objects_b.all()))
-
-                        elif value == 'combine':
-                            # remove duplicates
-                            manager.add(*list(objects_a.all() |
-                                              objects_b.all()))
-
-                    merging.delete()
-
-                    base_event.save()
+                merge_objects(obj_a, obj_b, easy, difficult, choices=data,
+                              base_a=base_a)
 
             except ProtectedError as e:
-                return failed_to_delete(request, object=merging,
+                return failed_to_delete(request, object=merging_obj,
                                         protected_objects=e.protected_objects)
 
-            return redirect(base_event.get_absolute_url())
+            else:
+                return redirect(base_obj.get_absolute_url())
 
     context = {
         'title': 'Merge two events',
@@ -1273,7 +1303,82 @@ def events_merge(request):
     }
     return render(request, 'workshops/events_merge.html', context)
 
-#------------------------------------------------------------
+
+@login_required
+@permission_required('workshops.add_invoicerequest', raise_exception=True)
+def event_invoice(request, event_ident):
+    try:
+        event = Event.get_by_ident(event_ident)
+    except ObjectDoesNotExist:
+        raise Http404("No event found matching the query.")
+
+    form = InvoiceRequestForm(initial=dict(
+        organization=event.host, date=event.start, event=event,
+        event_location=event.venue, amount=event.admin_fee,
+    ))
+
+    if request.method == 'POST':
+        form = InvoiceRequestForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request,
+                             'Successfully added an invoice request for {}.'
+                             .format(event.get_ident()))
+            return redirect(reverse('event_details',
+                                    args=[event.get_ident()]))
+        else:
+            messages.error(request, 'Fix errors below.')
+
+    context = {
+        'title_left': 'Event {}'.format(event.get_ident()),
+        'title_right': 'New invoice request',
+        'event': event,
+        'form': form,
+        'form_helper': bootstrap_helper,
+    }
+    return render(request, 'workshops/event_invoice.html', context)
+
+
+class AllInvoiceRequests(LoginRequiredMixin, FilteredListView):
+    context_object_name = 'requests'
+    template_name = 'workshops/all_invoicerequests.html'
+    filter_class = InvoiceRequestFilter
+    queryset = InvoiceRequest.objects.all()
+
+    def get_filter_data(self):
+        data = self.request.GET.copy()
+        data['status'] = data.get('status', '')
+        return data
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Invoice requests'
+        return context
+
+
+class InvoiceRequestDetails(LoginRequiredMixin, DetailView):
+    context_object_name = 'object'
+    template_name = 'workshops/invoicerequest.html'
+    queryset = InvoiceRequest.objects.all()
+    pk_url_kwarg = 'request_id'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Invoice request #{}'.format(self.get_object().pk)
+        return context
+
+
+class InvoiceRequestUpdate(LoginRequiredMixin, PermissionRequiredMixin,
+                           UpdateViewContext):
+    permission_required = 'workshops.change_invoicerequest'
+    model = InvoiceRequest
+    form_class = InvoiceRequestUpdateForm
+    pk_url_kwarg = 'request_id'
+    template_name = 'workshops/generic_form.html'
+
+
+# ------------------------------------------------------------
 
 @login_required
 def all_tasks(request):
@@ -1317,7 +1422,7 @@ def task_delete(request, task_id, event_ident=None):
 
 class TaskCreate(LoginRequiredMixin, PermissionRequiredMixin,
                  CreateViewContext):
-    perms = 'workshops.add_task'
+    permission_required = 'workshops.add_task'
     model = Task
     form_class = TaskFullForm
     template_name = 'workshops/generic_form.html'
@@ -1325,7 +1430,7 @@ class TaskCreate(LoginRequiredMixin, PermissionRequiredMixin,
 
 class TaskUpdate(LoginRequiredMixin, PermissionRequiredMixin,
                  UpdateViewContext):
-    perms = 'workshops.change_task'
+    permission_required = 'workshops.change_task'
     model = Task
     form_class = TaskFullForm
     pk_url_kwarg = 'task_id'
@@ -1366,8 +1471,28 @@ def all_badges(request):
 
 @login_required
 def badge_details(request, badge_name):
-    '''List details of a particular event.'''
+    '''List details of a particular badge, list people who were awarded it.'''
 
+    badge = get_object_or_404(Badge, name=badge_name)
+
+    filter = BadgeAwardsFilter(
+        request.GET,
+        queryset=badge.award_set.select_related('event', 'person', 'badge')
+    )
+    awards = get_pagination_items(request, filter)
+
+    context = {'title': 'Badge {0}'.format(badge),
+               'badge': badge,
+               'awards': awards,
+               'filter': filter,
+               'form_helper': bootstrap_helper_filter}
+    return render(request, 'workshops/badge.html', context)
+
+
+@login_required
+@permission_required('workshops.add_award', raise_exception=True)
+def badge_award(request, badge_name):
+    """Award a badge to someone (== create a new Award)."""
     badge = get_object_or_404(Badge, name=badge_name)
 
     initial = {
@@ -1377,26 +1502,20 @@ def badge_details(request, badge_name):
 
     if request.method == 'GET':
         form = BadgeAwardForm(initial=initial)
-
     elif request.method == 'POST':
         form = BadgeAwardForm(request.POST, initial=initial)
 
-        if request.user.has_perm('workshops.add_award'):
-            if form.is_valid():
-                form.save()
-        else:
-            messages.error(request,
-                           'You don\'t have permissions to award a badge.')
+        if form.is_valid():
+            form.save()
+            return redirect(reverse('badge_details', args=[badge.name]))
 
-    awards = badge.award_set.all()
-    awards = get_pagination_items(request, awards)
-
-    context = {'title': 'Badge {0}'.format(badge),
-               'badge': badge,
-               'awards': awards,
-               'form': form,
-               'form_helper': bootstrap_helper}
-    return render(request, 'workshops/badge.html', context)
+    context = {
+        'title': 'Badge {0}'.format(badge),
+        'badge': badge,
+        'form': form,
+        'form_helper': bootstrap_helper,
+    }
+    return render(request, 'workshops/generic_form.html', context)
 
 
 #------------------------------------------------------------
@@ -1564,39 +1683,29 @@ def search(request):
 #------------------------------------------------------------
 
 @login_required
-def debrief(request):
+def instructors_by_date(request):
     '''Show who taught between begin_date and end_date.'''
-
     tasks = None
 
     start_date = end_date = None
 
-    tags = Tag.objects.filter(name__in=['stalled', 'unresponsive'])
+    form = DebriefForm()
+    if 'begin_date' in request.GET and 'end_date' in request.GET:
+        form = DebriefForm(request.GET)
 
-    if request.method == 'POST':
-        form = DebriefForm(request.POST)
-        if form.is_valid():
-            start_date = form.cleaned_data['begin_date']
-            end_date = form.cleaned_data['end_date']
-            tasks = Task.objects.filter(
-                event__start__gte=start_date,
-                event__end__lte=end_date,
-                role__name='instructor',
-                person__may_contact=True,
-            ).exclude(event__tags=tags).order_by('event', 'person', 'role') \
-             .select_related('person', 'event', 'role')
+    if form.is_valid():
+        start_date = form.cleaned_data['begin_date']
+        end_date = form.cleaned_data['end_date']
+        rvs = ReportsViewSet()
+        tasks = rvs.instructors_by_time_queryset(start_date, end_date)
 
-    else:
-        # if a GET (or any other method) we'll create a blank form
-        form = DebriefForm()
-
-    context = {'title': 'Debrief',
+    context = {'title': 'List of instructors by time period',
                'form': form,
-               'form_helper': bootstrap_helper,
+               'form_helper': bootstrap_helper_get,
                'all_tasks': tasks,
                'start_date': start_date,
                'end_date': end_date}
-    return render(request, 'workshops/debrief.html', context)
+    return render(request, 'workshops/instructors_by_date.html', context)
 
 #------------------------------------------------------------
 
@@ -1695,13 +1804,25 @@ def all_activity_over_time(request):
 def workshop_issues(request):
     '''Display workshops in the database whose records need attention.'''
 
-    events = Event.objects.past_events().filter(
+    events = Event.objects.active().past_events().annotate(
+        num_instructors=Count(
+            Case(
+                When(
+                    task__role__name='instructor',
+                    then=Value(1)
+                ),
+                output_field=IntegerField()
+            )
+        )
+    )
+    events = events.filter(
         Q(attendance=None) | Q(attendance=0) |
         Q(country=None) |
         Q(venue=None) | Q(venue__exact='') |
         Q(address=None) | Q(address__exact='') |
         Q(latitude=None) | Q(longitude=None) |
-        Q(start__gt=F('end'))
+        Q(start__gt=F('end')) |
+        Q(num_instructors=0)
     )
 
     assigned_to, is_admin = assignment_selection(request)
@@ -1723,6 +1844,7 @@ def workshop_issues(request):
             not e.longitude
         )
         e.bad_dates_ = e.start and e.end and (e.start > e.end)
+        e.no_instructors_ = not e.num_instructors
 
     context = {
         'title': 'Workshops with Issues',
@@ -1813,84 +1935,87 @@ def object_changes(request, revision_id):
 # ------------------------------------------------------------
 
 
-class SWCEventRequest(View):
+class SWCEventRequest(EmailSendMixin, CreateViewContext):
+    model = EventRequest
     form_class = SWCEventRequestForm
-    form_helper = bootstrap_helper_wider_labels
     page_title = 'Request a Software Carpentry Workshop'
-    form_template = 'forms/workshop_swc_request.html'
-    success_template = 'forms/workshop_request_confirm.html'
+    template_name = 'forms/workshop_swc_request.html'
+    success_url = reverse_lazy('swc_workshop_request_confirm')
+    email_fail_silently = False
+    email_kwargs = {
+        'to': settings.REQUEST_NOTIFICATIONS_RECIPIENTS,
+        'reply_to': None,
+    }
 
-    def get(self, request, *args, **kwargs):
-        form = self.form_class()
-        context = {
-            'title': self.page_title,
-            'form': form,
-            'form_helper': self.form_helper,
-        }
-        return render(request, self.form_template, context)
+    def get_success_message(self, *args, **kwargs):
+        """Don't display a success message."""
+        return ''
 
-    def post(self, request, *args, **kwargs):
-        form = self.form_class(request.POST)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = self.page_title
+        context['form_helper'] = bootstrap_helper_wider_labels
+        return context
 
-        if form.is_valid():
-            data = form.cleaned_data
-            event_req = form.save()
+    def get_subject(self):
+        subject = (
+            '[{tag}] New workshop request: {affiliation}, {country}'
+        ).format(
+            tag=self.object.workshop_type.upper(),
+            country=self.object.country.name,
+            affiliation=self.object.affiliation,
+        )
+        return subject
 
-            # prepare email notification
-            recipients = settings.REQUEST_NOTIFICATIONS_RECIPIENTS
-            subject = (
-                '[{tag}] New workshop request: {affiliation}, {country}'
-            ).format(
-                tag=data['workshop_type'].upper(),
-                country=event_req.country.name,
-                affiliation=event_req.affiliation,
-            )
+    def get_body(self):
+        link = self.object.get_absolute_url()
+        link_domain = settings.SITE_URL
 
-            link = event_req.get_absolute_url()
-            link_domain = settings.SITE_URL
+        body_txt = get_template(
+            'mailing/eventrequest.txt'
+        ).render({
+            'object': self.object,
+            'link': link,
+            'link_domain': link_domain,
+        })
 
-            body_txt = get_template(
-                'workshops/eventrequest_email_txt.html'
-            ).render({
-                'object': event_req,
-                'link': link,
-                'link_domain': link_domain,
-            })
+        body_html = get_template(
+            'mailing/eventrequest.html'
+        ).render({
+            'object': self.object,
+            'link': link,
+            'link_domain': link_domain,
+        })
+        return body_txt, body_html
 
-            body_html = get_template(
-                'workshops/eventrequest_email_html.html'
-            ).render({
-                'object': event_req,
-                'link': link,
-                'link_domain': link_domain,
-            })
+    def form_valid(self, form):
+        """Send email to admins if the form is valid."""
+        data = form.cleaned_data
+        self.email_kwargs['reply_to'] = (data['email'], )
+        result = super().form_valid(form)
+        return result
 
-            reply_to = (data['email'], )
-            email = EmailMultiAlternatives(subject, body_txt, to=recipients,
-                                           reply_to=reply_to)
-            email.attach_alternative(body_html, 'text/html')
 
-            # fail loudly so that admins know if something's wrong
-            email.send(fail_silently=False)
+class SWCEventRequestConfirm(TemplateView):
+    """Display confirmation of received workshop request."""
+    template_name = 'forms/workshop_swc_request_confirm.html'
 
-            context = {
-                'title': 'Thank you for requesting a workshop',
-            }
-            return render(request, self.success_template, context)
-        else:
-            messages.error(request, 'Fix errors below.')
-            context = {
-                'title': self.page_title,
-                'form': form,
-                'form_helper': self.form_helper,
-            }
-            return render(request, self.form_template, context)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Thank you for requesting a workshop'
+        return context
 
 
 class DCEventRequest(SWCEventRequest):
     form_class = DCEventRequestForm
     page_title = 'Request a Data Carpentry Workshop'
     form_template = 'forms/workshop_dc_request.html'
+    success_url = reverse_lazy('dc_workshop_request_confirm')
+
+
+class DCEventRequestConfirm(SWCEventRequestConfirm):
+    """Display confirmation of received workshop request."""
+    template_name = 'forms/workshop_dc_request_confirm.html'
 
 
 @login_required
@@ -1901,6 +2026,7 @@ def all_eventrequests(request):
     # else worked...
     data = request.GET.copy()  # request.GET is immutable
     data['active'] = data.get('active', 'true')
+    data['workshop_type'] = data.get('workshop_type', '')
     filter = EventRequestFilter(
         data,
         queryset=EventRequest.objects.all(),
@@ -1966,6 +2092,9 @@ def eventrequest_accept(request, request_id):
 
         if form.is_valid():
             event = form.save()
+            event.request = eventrequest
+            event.save()
+
             eventrequest.active = False
             eventrequest.save()
             return redirect(reverse('event_details',
@@ -2107,7 +2236,7 @@ def profileupdaterequest_details(request, request_id):
 
 class ProfileUpdateRequestFix(LoginRequiredMixin, PermissionRequiredMixin,
                               UpdateViewContext):
-    perms = 'workshops.change_profileupdaterequest'
+    permission_required = 'workshops.change_profileupdaterequest'
     model = ProfileUpdateRequest
     form_class = ProfileUpdateRequestFormNoCaptcha
     pk_url_kwarg = 'request_id'
@@ -2186,6 +2315,165 @@ def profileupdaterequest_accept(request, request_id, person_id):
     messages.success(request,
                      '{} was updated successfully.'.format(person_name))
     return redirect(person.get_absolute_url())
+
+
+class EventSubmission(EmailSendMixin, CreateViewContext):
+    """Display form for submitting existing workshops."""
+    model = EventSubmissionModel
+    form_class = EventSubmitForm
+    template_name = 'forms/event_submit.html'
+    success_url = reverse_lazy('event_submission_confirm')
+    email_fail_silently = False
+    email_kwargs = {
+        'to': settings.REQUEST_NOTIFICATIONS_RECIPIENTS,
+    }
+
+    def get_success_message(self, *args, **kwargs):
+        """Don't display a success message."""
+        return ''
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Tell us about your workshop'
+        context['form_helper'] = bootstrap_helper_wider_labels
+        return context
+
+    def get_subject(self):
+        return ('New workshop submission from {}'
+                .format(self.object.contact_name))
+
+    def get_body(self):
+        link = self.object.get_absolute_url()
+        link_domain = settings.SITE_URL
+        body_txt = get_template('mailing/event_submission.txt') \
+            .render({
+                'object': self.object,
+                'link': link,
+                'link_domain': link_domain,
+            })
+        body_html = get_template('mailing/event_submission.html') \
+            .render({
+                'object': self.object,
+                'link': link,
+                'link_domain': link_domain,
+            })
+        return body_txt, body_html
+
+
+class EventSubmissionConfirm(TemplateView):
+    """Display confirmation of received workshop submission."""
+    template_name = 'forms/event_submission_confirm.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Thanks for your submission'
+        return context
+
+
+class AllEventSubmissions(LoginRequiredMixin, FilteredListView):
+    context_object_name = 'submissions'
+    template_name = 'workshops/all_eventsubmissions.html'
+    filter_class = EventSubmissionFilter
+    queryset = EventSubmissionModel.objects.all()
+
+    def get_filter_data(self):
+        data = self.request.GET.copy()
+        data['active'] = data.get('active', 'true')
+        return data
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Workshop submissions'
+        return context
+
+
+class EventSubmissionDetails(LoginRequiredMixin, DetailView):
+    context_object_name = 'object'
+    template_name = 'workshops/eventsubmission.html'
+    queryset = EventSubmissionModel.objects.all()
+    pk_url_kwarg = 'submission_id'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Workshop submission #{}'.format(
+            self.get_object().pk)
+
+        person_lookup_form = AdminLookupForm()
+        if self.object.assigned_to:
+            person_lookup_form = AdminLookupForm(
+                initial={'person': self.object.assigned_to}
+            )
+
+        person_lookup_helper = BootstrapHelper()
+        person_lookup_helper.form_action = reverse('eventsubmission_assign',
+                                                   args=[self.object.pk])
+
+        context['person_lookup_form'] = person_lookup_form
+        context['person_lookup_helper'] = person_lookup_helper
+        return context
+
+
+class EventSubmissionFix(LoginRequiredMixin, PermissionRequiredMixin,
+                         UpdateViewContext):
+    permission_required = 'change_eventsubmission'
+    model = EventSubmissionModel
+    form_class = EventSubmitFormNoCaptcha
+    pk_url_kwarg = 'submission_id'
+    template_name = 'workshops/generic_form.html'
+
+
+@login_required
+@permission_required(['workshops.change_eventsubmission',
+                      'workshops.add_event'], raise_exception=True)
+def eventsubmission_accept(request, submission_id):
+    """Accept event submission by creating a new event."""
+    submission = get_object_or_404(EventSubmissionModel, active=True,
+                                   pk=submission_id)
+    form = EventForm()
+
+    if request.method == 'POST':
+        form = EventForm(request.POST)
+
+        if form.is_valid():
+            event = form.save()
+
+            submission.active = False
+            submission.save()
+            return redirect(reverse('event_details',
+                                    args=[event.get_ident()]))
+        else:
+            messages.error(request, 'Fix errors below.')
+
+    context = {
+        'object': submission,
+        'form': form,
+        'title': 'New event',
+    }
+    return render(request, 'workshops/eventsubmission_accept.html', context)
+
+
+@login_required
+@permission_required('workshops.change_eventsubmission', raise_exception=True)
+def eventsubmission_discard(request, submission_id):
+    """Discard EventSubmission, ie. set it to inactive."""
+    submission = get_object_or_404(EventSubmissionModel, active=True,
+                                   pk=submission_id)
+    submission.active = False
+    submission.save()
+
+    messages.success(request,
+                     'Workshop submission was discarded successfully.')
+    return redirect(reverse('all_eventsubmissions'))
+
+
+@login_required
+@permission_required(['workshops.change_eventrequest'], raise_exception=True)
+def eventsubmission_assign(request, submission_id, person_id=None):
+    """Set eventsubmission.assigned_to. See `assign` docstring for more
+    information."""
+    submission = get_object_or_404(EventSubmissionModel, pk=submission_id)
+    assign(request, submission, person_id)
+    return redirect(submission.get_absolute_url())
 
 #------------------------------------------------------------
 
@@ -2305,7 +2593,7 @@ def todo_mark_incompleted(request, todo_id):
 
 class TodoItemUpdate(LoginRequiredMixin, PermissionRequiredMixin,
                      UpdateViewContext):
-    perms = 'workshops.change_todoitem'
+    permission_required = 'workshops.change_todoitem'
     model = TodoItem
     form_class = SimpleTodoForm
     pk_url_kwarg = 'todo_id'
@@ -2342,3 +2630,47 @@ def todo_delete(request, todo_id):
                      extra_tags='todos')
 
     return redirect(event_details, event_ident)
+
+
+# ------------------------------------------------------------
+
+@login_required
+def duplicates(request):
+    """Find possible duplicates amongst persons.
+
+    Criteria for persons:
+    * switched personal/family names
+    * same name on different people."""
+    names_normal = set(Person.objects.all().values_list('personal', 'family'))
+    names_switched = set(Person.objects.all().values_list('family',
+                                                          'personal'))
+    names = names_normal & names_switched  # intersection
+
+    switched_criteria = Q()
+    for personal, family in names:
+        # get people who appear in `names`
+        switched_criteria |= (Q(personal=personal) & Q(family=family))
+
+    switched_persons = Person.objects.filter(switched_criteria) \
+                                     .order_by('email')
+
+    duplicate_names = Person.objects.values('personal', 'family') \
+                                    .order_by() \
+                                    .annotate(count_id=Count('id')) \
+                                    .filter(count_id__gt=1)
+
+    duplicate_criteria = Q()
+    for name in duplicate_names:
+        # get people who appear in `names`
+        duplicate_criteria |= (Q(personal=name['personal']) &
+                               Q(family=name['family']))
+    duplicate_persons = Person.objects.filter(duplicate_criteria) \
+                                      .order_by('family', 'personal', 'email')
+
+    context = {
+        'title': 'Possible duplicates',
+        'switched_persons': switched_persons,
+        'duplicate_persons': duplicate_persons,
+    }
+
+    return render(request, 'workshops/duplicates.html', context)

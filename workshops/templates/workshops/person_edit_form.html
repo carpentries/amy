@@ -1,4 +1,4 @@
-{% extends "workshops/_page.html" %}
+{% extends "base_nav_fixed.html" %}
 
 {% load crispy_forms_tags %}
 {% load selectable_tags %}
@@ -25,6 +25,7 @@
           <th>badge</th>
           <th>awarded</th>
           <th>event</th>
+          <th>awarded by</th>
           <th>action</th>
         </tr>
       </thead>
@@ -34,6 +35,7 @@
           <td><a href="{{ award.badge.get_absolute_url }}">{{ award.badge.title }}</a></td>
           <td>{{ award.awarded }}</td>
           <td>{% if award.event %}<a href="{{ award.event.get_absolute_url }}">{{ award.event }}</a>{% else %}—{% endif %}</td>
+          <td>{% if award.awarded_by %}<a href="{{ award.awarded_by.get_absolute_url }}">{{ award.awarded_by.get_full_name }}</a>{% else %}—{% endif %}</td>
           <td>
             <a onclick='return confirm("Are you sure you wish to drop award \"{{ award.badge.title }}\" from \"{{ award.person }}\"?")' href="{% url 'award_delete' award_id=award.pk person_id=award.person.pk %}" class='btn btn-danger'>Delete</a>
           </td>

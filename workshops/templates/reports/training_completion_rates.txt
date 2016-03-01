@@ -1,6 +1,0 @@
-------------------------------------
-{{ training.slug }} ({{ training.tags.all|join:", " }}), badge: {{ badge }}
-{% with learners_len=learners.count completed_len=completed.count completed_other_len=completed_other.count no_badge_len=no_badge.count %}Learners: {{ learners_len }}
-Completed this training with badge: {{ completed_len }} ({% widthratio completed_len learners_len 100 %}%)
-Completed other training with badge: {{ completed_other_len }} ({% widthratio completed_other_len learners_len 100 %}%)
-No badge: {{ no_badge_len }} ({% widthratio no_badge_len learners_len 100 %}%){% endwith %}

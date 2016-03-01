@@ -1,4 +1,4 @@
-{% extends "workshops/_page.html" %}
+{% extends "base_nav_fixed.html" %}
 
 {% load links %}
 {% load revisions %}
@@ -57,7 +57,7 @@
     <h5>Awards:</h5>
     <ul>
       {% for a in awards %}
-      <li>awarded a(n) <a href="{{ a.badge.get_absolute_url }}">{{ a.badge }}</a> badge on {{ a.awarded }}{% if a.event %} for <a href="{{ a.event.get_absolute_url }}">{{ a.event }}</a>{% endif %}</li>
+      <li>awarded {% if a.awarded_by %}by <a href="{{ a.awarded_by.get_absolute_url }}">{{ a.awarded_by.get_full_name }}</a>{% endif %} a(n) <a href="{{ a.badge.get_absolute_url }}">{{ a.badge }}</a> badge on {{ a.awarded }}{% if a.event %} for <a href="{{ a.event.get_absolute_url }}">{{ a.event }}</a>{% endif %}</li>
       {% endfor %}
     </ul>
     {% else %}

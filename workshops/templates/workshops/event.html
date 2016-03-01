@@ -1,4 +1,4 @@
-{% extends "workshops/_page.html" %}
+{% extends "base_nav_fixed.html" %}
 
 {% load crispy_forms_tags %}
 {% load links %}
@@ -41,77 +41,8 @@
     </p>
   </div>
 </div>
-<table class="table table-striped">
-  <tr><td>slug:</td><td colspan="2">{{ event.slug|default:"—" }}</td></tr>
-  <tr><td>completed:</td><td colspan="2">{{ event.completed|yesno }}</td></tr>
-  <tr class="{% if event.start > event.end %}bg-danger{% endif %}"><td>start date:</td><td colspan="2">{{ event.start|default:"—" }}</td></tr>
-  <tr class="{% if event.start > event.end %}bg-danger{% endif %}"><td>end date: </td><td colspan="2">{{ event.end|default:"—" }}</td></tr>
-  <tr><td>host:</td><td colspan="2"><a href="{% url 'host_details' event.host.domain %}">{{ event.host }}</a></td></tr>
-  <tr><td>administrator:</td><td colspan="2">{% if event.administrator %}<a href="{{ event.administrator.get_absolute_url }}">{{ event.administrator }}</a>{% else %}—{% endif %}</td></tr>
-  <tr><td>tags:</td><td colspan="2">{% for tag in event.tags.all %}{% bootstrap_tag tag.name %}{% endfor %}</td></tr>
-  <tr class="{% if not event.url %}bg-danger{% endif %}"><td>Website URL:</td><td colspan="2">{{ event.website_url|default:"—"|urlize_newtab }} {% if event.url %}<a href="{% url 'validate_event' event.get_ident %}" class="btn btn-primary btn-xs pull-right" id="validate_event">validate event</a>{% else %}<a class="btn btn-danger btn-xs pull-right" id="error_event_url" href="#" data-toggle="popover" data-trigger="focus" title="Validation error" data-content="Cannot validate an event without URL pointing to the GitHub repository, e.g.: <code>https://github.com/swcarpentry/2015-05-24-training</code>">Error</a>{% endif %}</td></tr>
-  <tr><td>Eventbrite key:</td><td colspan="2">{% if event.reg_key %}<a href="https://www.eventbrite.com/myevent?eid={{ event.reg_key }}" title="Go to Eventbrite's page for this event" target="_blank">{{ event.reg_key }}</a>{% else %}—{% endif %}</td></tr>
-  <tr><td>admin fee:</td><td colspan="2">{{ event.admin_fee|default_if_none:"—" }}</td></tr>
-  <tr>
-    <td>invoice:</td>
-    <td colspan="2">
-      {{ event.get_invoice_status_display }}
-      {% if event.uninvoiced %}
-      <a href="{{ event.get_invoice_form_url }}" target="_blank" class="btn btn-primary btn-xs pull-right">Invoice</a>
-      {% else %}
-      <a href="#" class="btn btn-primary btn-xs pull-right disabled">Invoice</a>
-      {% endif %}
-    </td>
-  </tr>
-  <tr class="{% if not event.attendance %}bg-danger{% endif %}">
-    <td>attendance:</td>
-    <td colspan="2">
-      {{ event.attendance|default_if_none:"—" }}
-      {% if not event.attendance and event.mailto %}
-      <a href="{% include 'workshops/attendance_email_href.html' with event=event %}" target="_blank" class="btn btn-primary btn-xs pull-right">Ask for attendance</a>
-      {% else %}
-      <a href="#" class="btn btn-primary btn-xs pull-right disabled">Ask for attendance</a>
-      {% endif %}
-    </td>
-  </tr>
-  <tr><td>contact:</td><td colspan="2">{{ event.contact|default_if_none:"—"|urlize }}</td></tr>
-  <tr>
-    <td rowspan="4">location details:</td>
-    <td class="{% if not event.country %}bg-danger{% endif %}">Country:</td>
-    <td class="{% if not event.country %}bg-danger{% endif %}">
-    {% if event.country %}
-      {{ event.country.name }} <img src="{{ event.country.flag }}" alt="{{ event.country }}" class="country-flag" />
-    {% else %}
-      —
-    {% endif %}
-    </td>
-  </tr>
-  <tr class="{% if not event.venue %}bg-danger{% endif %}"><td>Venue:</td><td>{{ event.venue|default:"—" }}</td></tr>
-  <tr class="{% if not event.address %}bg-danger{% endif %}"><td>Address:</td><td>{{ event.address|default:"—" }}</td></tr>
-  <tr class="{% if not event.latitude or not event.longitude %}bg-danger{% endif %}"><td>Lat/long:</td><td>{{ event.latitude|default:"—" }} / {{ event.longitude|default:"—" }} {% if event.latitude and event.longitude %}<a href="{% url 'instructors' %}?latitude={{ event.latitude }}&amp;longitude={{ event.longitude }}&amp;submit=Submit" class="btn btn-primary btn-xs pull-right" id="find_closest_instructors">find closest instructors</a>{% else %}<a class="btn btn-danger btn-xs pull-right" id="error_closest_instructors" href="#" data-toggle="popover" data-trigger="focus" title="Search error" data-content="Cannot search for closest instructors without latitude and longitude of event's location.">Error</a>{% endif %}</td></tr>
 
-  <tr>
-    <td rowspan="5">survey results:</td>
-    <td>pre workshop for learners:</td>
-    <td>{{ event.learners_pre|default:"—"|urlize_newtab }}</td>
-  </tr>
-  <tr>
-    <td>post workshop for learners:</td>
-    <td>{{ event.learners_post|default:"—"|urlize_newtab }}</td>
-  </tr>
-  <tr>
-    <td>pre workshop for instructors:</td>
-    <td>{{ event.instructors_pre|default:"—"|urlize_newtab }}</td>
-  </tr>
-  <tr>
-    <td>post workshop for instructors:</td>
-    <td>{{ event.instructors_post|default:"—"|urlize_newtab }}</td>
-  </tr>
-  <tr>
-    <td>long-term for learners:</td>
-    <td>{{ event.learners_longterm|default:"—"|urlize_newtab }}</td>
-  </tr>
-</table>
+{% include "workshops/event_details_table.html" with event=event %}
 
 {% if event.url %}
 <!-- Validation modal -->
@@ -198,14 +129,6 @@
 </table>
 {% else %}
 <p>No tasks.</p>
-{% endif %}
-{% if event.notes %}
-<h3>Notes</h3>
-<pre>
-{{ event.notes }}
-</pre>
-{% else %}
-<p>No notes.</p>
 {% endif %}
 <div class="clearfix">
   <p class="edit-object pull-left">

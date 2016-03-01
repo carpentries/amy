@@ -1,5 +1,3 @@
-from distutils.util import strtobool
-
 import django.forms.widgets
 
 import django_filters
@@ -9,12 +7,13 @@ from workshops.models import (
     Event,
     Host,
     Person,
-    Task,
     Airport,
     EventRequest,
     Tag,
-    Role,
     Task,
+    Award,
+    InvoiceRequest,
+    EventSubmission,
 )
 
 EMPTY_SELECTION = (None, '---------')
@@ -65,23 +64,41 @@ class EventStateFilter(django_filters.ChoiceFilter):
         # no need to check if value exists in self.extra['choices'] because
         # validation is done by django_filters
         try:
-            return getattr(qs, "{}_events".format(value))()
+            return getattr(qs, value)()
         except AttributeError:
             return qs
 
 
-class EventFilter(django_filters.FilterSet):
+class FilterSetWithoutHelpText(django_filters.FilterSet):
+    """Because of some stupidity this got merged to django-filters:
+    https://github.com/alex/django-filter/commit/90d244b
+
+    What it does is it adds a help_text to ALL filters!!!
+    In this class I try to remove it from every field. The solution:
+    https://github.com/alex/django-filter/pull/136#issuecomment-135602792
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        for key in self.filters.items():
+            self.filters[key[0]].extra.update({'help_text': ''})
+
+
+class EventFilter(FilterSetWithoutHelpText):
     assigned_to = ForeignKeyAllValuesFilter(Person)
     host = ForeignKeyAllValuesFilter(Host)
     administrator = ForeignKeyAllValuesFilter(Host)
 
     STATUS_CHOICES = [
         ('', 'All'),
-        ('past', 'Past'),
-        ('ongoing', 'Ongoing'),
-        ('upcoming', 'Upcoming'),
-        ('unpublished', 'Unpublished'),
-        ('uninvoiced', 'Uninvoiced'),
+        ('active', 'Active'),
+        ('past_events', 'Past'),
+        ('ongoing_events', 'Ongoing'),
+        ('upcoming_events', 'Upcoming'),
+        ('unpublished_events', 'Unpublished'),
+        ('published_events', 'Published'),
+        ('uninvoiced_events', 'Uninvoiced'),
     ]
     status = EventStateFilter(choices=STATUS_CHOICES)
 
@@ -102,13 +119,26 @@ class EventFilter(django_filters.FilterSet):
         order_by = ['-slug', 'slug', 'start', '-start', 'end', '-end']
 
 
-class EventRequestFilter(django_filters.FilterSet):
+def filter_active_eventrequest(qs, value):
+    if value == 'true':
+        return qs.filter(active=True)
+    elif value == 'false':
+        return qs.filter(active=False)
+    return qs
+
+
+class EventRequestFilter(FilterSetWithoutHelpText):
     assigned_to = ForeignKeyAllValuesFilter(Person)
     country = AllCountriesFilter()
-    active = django_filters.TypedChoiceFilter(
-        choices=(('true', 'Open'), ('false', 'Closed')),
-        coerce=strtobool,
-        label='Status',
+    active = django_filters.ChoiceFilter(
+        choices=(('all', 'All'), ('true', 'Open'), ('false', 'Closed')),
+        label='Status', action=filter_active_eventrequest,
+        widget=django.forms.widgets.RadioSelect,
+    )
+    workshop_type = django_filters.ChoiceFilter(
+        choices=(('', 'All'), ('swc', 'Software-Carpentry'),
+                 ('dc', 'Data-Carpentry')),
+        label='Workshop type',
         widget=django.forms.widgets.RadioSelect,
     )
 
@@ -123,7 +153,7 @@ class EventRequestFilter(django_filters.FilterSet):
         order_by = ['-created_at', 'created_at']
 
 
-class HostFilter(django_filters.FilterSet):
+class HostFilter(FilterSetWithoutHelpText):
     country = AllCountriesFilter()
 
     class Meta:
@@ -149,7 +179,7 @@ def filter_taught_workshops(queryset, values):
                    .distinct()
 
 
-class PersonFilter(django_filters.FilterSet):
+class PersonFilter(FilterSetWithoutHelpText):
     taught_workshops = django_filters.ModelMultipleChoiceFilter(
         queryset=Tag.objects.all(), label='Taught at workshops of type',
         action=filter_taught_workshops,
@@ -175,7 +205,7 @@ class PersonFilter(django_filters.FilterSet):
         return super().get_order_by(order_value)
 
 
-class TaskFilter(django_filters.FilterSet):
+class TaskFilter(FilterSetWithoutHelpText):
     class Meta:
         model = Task
         fields = [
@@ -195,7 +225,7 @@ class TaskFilter(django_filters.FilterSet):
         ]
 
 
-class AirportFilter(django_filters.FilterSet):
+class AirportFilter(FilterSetWithoutHelpText):
     fullname = django_filters.CharFilter(lookup_type='icontains')
 
     class Meta:
@@ -204,3 +234,66 @@ class AirportFilter(django_filters.FilterSet):
             'fullname',
         ]
         order_by = ["iata", "-iata", "fullname", "-fullname"]
+
+
+class BadgeAwardsFilter(FilterSetWithoutHelpText):
+    awarded_after = django_filters.DateFilter(name='awarded',
+                                              lookup_type='gte')
+    awarded_before = django_filters.DateFilter(name='awarded',
+                                               lookup_type='lte')
+
+    class Meta:
+        model = Award
+        fields = (
+            'awarded_after', 'awarded_before', 'event',
+        )
+        order_by = [
+            '-awarded', 'awarded', '-person__family',
+            'person__family',
+        ]
+
+
+class InvoiceRequestFilter(FilterSetWithoutHelpText):
+    STATUS_CHOICES = (('', 'All'),) + InvoiceRequest.STATUS_CHOICES
+    status = django_filters.ChoiceFilter(
+        choices=STATUS_CHOICES,
+        widget=django.forms.widgets.RadioSelect,
+    )
+
+    class Meta:
+        model = InvoiceRequest
+        fields = [
+            'status',
+            'organization',
+        ]
+        order_by = [
+            '-event__slug', 'event__slug',
+            'organization__domain', '-organization__domain',
+        ]
+
+
+def filter_active_eventsubmission(qs, value):
+    if value == 'true':
+        return qs.filter(active=True)
+    elif value == 'false':
+        return qs.filter(active=False)
+    return qs
+
+
+class EventSubmissionFilter(FilterSetWithoutHelpText):
+    active = django_filters.ChoiceFilter(
+        choices=(('', 'All'), ('true', 'Open'), ('false', 'Closed')),
+        label='Status', action=filter_active_eventsubmission,
+        widget=django.forms.widgets.RadioSelect,
+    )
+    assigned_to = ForeignKeyAllValuesFilter(Person)
+
+    class Meta:
+        model = EventSubmission
+        fields = [
+            'active',
+            'assigned_to',
+        ]
+        order_by = [
+            '-created_at', 'created_at',
+        ]

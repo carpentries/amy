@@ -33,8 +33,8 @@ class TestBadge(TestBase):
                 "Award for {} not found".format(award.person)
 
     def test_badge_award(self):
-        """Ensure we can add awards from badge details page."""
-        url, values = self._get_initial_form('badge_details',
+        """Ensure we can add awards from badge_award page."""
+        url, values = self._get_initial_form('badge_award',
                                              self.swc_instructor.name)
         values['person_1'] = self.spiderman.id
 
@@ -42,11 +42,13 @@ class TestBadge(TestBase):
         values['person_0'] = ''
         values['event_1'] = ''
         values['event_0'] = ''
+        values['awarded_by_0'] = ''
+        values['awarded_by_1'] = ''
 
         assert self.swc_instructor.award_set.count() == 3
 
         response = self.client.post(url, values)
-        self._check_status_code_and_parse(response, 200)
+        self.assertEqual(response.status_code, 302)
 
         assert self.swc_instructor.award_set.count() == 4
 

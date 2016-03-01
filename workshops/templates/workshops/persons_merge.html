@@ -1,0 +1,144 @@
+{% extends "base_nav_fixed.html" %}
+
+{% load links %}
+
+{% block content %}
+<form method="POST">
+{% csrf_token %}
+{{ form.person_a }}
+{{ form.person_b }}
+<table class="table table-striped table-hover">
+  <thead>
+    <tr>
+      <th width="12%">Field</th>
+      <th width="38%">Person A (<a href="{{ obj_a.get_absolute_url }}" target="_blank">link</a>)</th>
+      <th width="38%">Person B (<a href="{{ obj_b.get_absolute_url }}" target="_blank">link</a>)</th>
+      <th width="12%">Strategy</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      {# selecting an ID basically shows which person should stay, and which should go #}
+      <th>ID <a href="#" data-toggle="tooltip" title="This indicates which person (as database object) will stay; the other one will be removed.">[?]</a></th>
+      <td>{{ obj_a.id|default:"—" }}</td><td>{{ obj_b.id|default:"—" }}</td>
+      <th>{% include "workshops/merge_radio.html" with field=form.id %}</th>
+    </tr>
+    <tr>
+      <th>Username</th>
+      <td>{{ obj_a.username|default:"—" }}</td><td>{{ obj_b.username|default:"—" }}</td>
+      <th>{% include "workshops/merge_radio.html" with field=form.username %}</th>
+    </tr>
+    <tr>
+      <th>Personal</th>
+      <td>{{ obj_a.personal|default:"—" }}</td><td>{{ obj_b.personal|default:"—" }}</td>
+      <th>{% include "workshops/merge_radio.html" with field=form.personal %}</th>
+    </tr>
+    <tr>
+      <th>Middle</th>
+      <td>{{ obj_a.middle|default:"—" }}</td><td>{{ obj_b.middle|default:"—" }}</td>
+      <th>{% include "workshops/merge_radio.html" with field=form.middle %}</th>
+    </tr>
+    <tr>
+      <th>Family</th>
+      <td>{{ obj_a.family|default:"—" }}</td><td>{{ obj_b.family|default:"—" }}</td>
+      <th>{% include "workshops/merge_radio.html" with field=form.family %}</th>
+    </tr>
+    <tr>
+      <th>Email</th>
+      <td>{{ obj_a.email|default:"—"|urlize_newtab }}</td><td>{{ obj_b.email|default:"—"|urlize_newtab }}</td>
+      <th>{% include "workshops/merge_radio.html" with field=form.email %}</th>
+    </tr>
+    <tr>
+      <th>May contact</th>
+      <td>{{ obj_a.may_contact|yesno }}</td><td>{{ obj_b.may_contact|yesno }}</td>
+      <th>{% include "workshops/merge_radio.html" with field=form.may_contact %}</th>
+    </tr>
+    <tr>
+      <th>Gender</th>
+      <td>{{ obj_a.get_gender_display|default:"—"|urlize_newtab }}</td><td>{{ obj_b.get_gender_display|default:"—"|urlize_newtab }}</td>
+      <th>{% include "workshops/merge_radio.html" with field=form.gender %}</th>
+    </tr>
+    <tr>
+      <th>Airport</th>
+      <td>{% if obj_a.airport %}<a href="{{ obj_a.airport.get_absolute_url }}">{{ obj_a.airport }}</a>{% else %}—{% endif %}</td><td>{% if obj_b.airport %}<a href="{{ obj_b.airport.get_absolute_url }}">{{ obj_b.airport }}</a>{% else %}—{% endif %}</td>
+      <th>{% include "workshops/merge_radio.html" with field=form.airport %}</th>
+    </tr>
+    <tr>
+      <th>Github</th>
+      <td>{{ obj_a.github|default:"—" }}</td><td>{{ obj_b.github|default:"—" }}</td>
+      <th>{% include "workshops/merge_radio.html" with field=form.github %}</th>
+    </tr>
+    <tr>
+      <th>Twitter</th>
+      <td>{{ obj_a.twitter|default:"—" }}</td><td>{{ obj_b.twitter|default:"—" }}</td>
+      <th>{% include "workshops/merge_radio.html" with field=form.twitter %}</th>
+    </tr>
+    <tr>
+      <th>URL</th>
+      <td>{{ obj_a.url|default:"—"|urlize_newtab }}</td><td>{{ obj_b.url|default:"—"|urlize_newtab }}</td>
+      <th>{% include "workshops/merge_radio.html" with field=form.url %}</th>
+    </tr>
+    <tr>
+      <th>Notes</th>
+      <td>{% if obj_a.notes %}<pre>{{ obj_a.notes }}</pre>{% else %}—{% endif %}</td><td>{% if obj_b.notes %}<pre>{{ obj_b.notes }}</pre>{% else %}—{% endif %}</td>
+      <th>{% include "workshops/merge_radio.html" with field=form.notes %}</th>
+    </tr>
+    <tr>
+      <th>Affiliation</th>
+      <td>{{ obj_a.affiliation|default:"—" }}</td><td>{{ obj_b.affiliation|default:"—" }}</td>
+      <th>{% include "workshops/merge_radio.html" with field=form.affiliation %}</th>
+    </tr>
+    <tr>
+      <th>Occupation</th>
+      <td>{{ obj_a.occupation|default:"—" }}</td><td>{{ obj_b.occupation|default:"—" }}</td>
+      <th>{% include "workshops/merge_radio.html" with field=form.occupation %}</th>
+    </tr>
+    <tr>
+      <th>ORCID</th>
+      <td>{{ obj_a.orcid|default:"—" }}</td><td>{{ obj_b.orcid|default:"—" }}</td>
+      <th>{% include "workshops/merge_radio.html" with field=form.orcid %}</th>
+    </tr>
+    <tr>
+      <th>Awards</th>
+      <td>{% if obj_a.award_set.all %}<ul>{% for award in obj_a.award_set.all %}<li>{{ award }}</li>{% endfor %}</ul>{% else %}—{% endif %}</td>
+      <td>{% if obj_b.award_set.all %}<ul>{% for award in obj_b.award_set.all %}<li>{{ award }}</li>{% endfor %}</ul>{% else %}—{% endif %}</td>
+      <th>{% include "workshops/merge_radio.html" with field=form.award_set %}</th>
+    </tr>
+    <tr>
+      <th>Lessons</th>
+      <td>{% if obj_a.lessons.all %}<ul>{% for lesson in obj_a.lessons.all %}<li>{{ lesson }}</li>{% endfor %}</ul>{% else %}—{% endif %}</td>
+      <td>{% if obj_b.lessons.all %}<ul>{% for lesson in obj_b.lessons.all %}<li>{{ lesson }}</li>{% endfor %}</ul>{% else %}—{% endif %}</td>
+      <th>{% include "workshops/merge_radio.html" with field=form.qualification_set %}</th>
+    </tr>
+    <tr>
+      <th>Domains</th>
+      <td>{% if obj_a.domains.all %}<ul>{% for domain in obj_a.domains.all %}<li>{{ domain }}</li>{% endfor %}</ul>{% else %}—{% endif %}</td>
+      <td>{% if obj_b.domains.all %}<ul>{% for domain in obj_b.domains.all %}<li>{{ domain }}</li>{% endfor %}</ul>{% else %}—{% endif %}</td>
+      <th>{% include "workshops/merge_radio.html" with field=form.domains %}</th>
+    </tr>
+    <tr>
+      <th>Tasks</th>
+      <td>{% if obj_a.task_set.all %}<ul>{% for task in obj_a.task_set.all %}<li><a href="{{ task.get_absolute_url }}">{{ task }}</a></li>{% endfor %}</ul>{% else %}—{% endif %}</td>
+      <td>{% if obj_b.task_set.all %}<ul>{% for task in obj_b.task_set.all %}<li><a href="{{ task.get_absolute_url }}">{{ task }}</a></li>{% endfor %}</ul>{% else %}—{% endif %}</td>
+      <th>{% include "workshops/merge_radio.html" with field=form.task_set %}</th>
+    </tr>
+    <tr>
+      <th>Is active <a href="#" data-toggle="tooltip" title="This indicates wheter person can log into AMY.">[?]</a></th>
+      <td>{{ obj_a.is_active|yesno }}</td><td>{{ obj_b.is_active|yesno }}</td>
+      <th>{% include "workshops/merge_radio.html" with field=form.is_active %}</th>
+    </tr>
+  </tbody>
+</table>
+<div class="pull-right">
+  <input class="btn btn-primary" type="submit" value="Submit" />
+</div>
+</form>
+{% endblock %}
+
+{% block extrajs %}
+<script type="text/javascript">
+  $(function () {
+    $('[data-toggle="tooltip"]').tooltip();
+  });
+</script>
+{% endblock %}

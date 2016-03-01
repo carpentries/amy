@@ -4,6 +4,10 @@ from rest_framework.urlpatterns import format_suffix_patterns
 
 from . import views
 
+# new in Django 1.9: this defines a namespace for URLs; there's no need for
+# `namespace='api'` in the include()
+app_name = 'api'
+
 # routers generate URLs for methods like `.list` or `.retrieve`
 router = routers.SimpleRouter()
 router.register('reports', views.ReportsViewSet, base_name='reports')
@@ -46,12 +50,6 @@ urlpatterns = [
     url('^', include(person_task_router.urls)),
     url('^', include(tasks_router.urls)),
     url('^', include(todos_router.urls)),
-]
-
-# for login-logout functionality
-urlpatterns += [
-    url(r'^api-auth/',
-        include('rest_framework.urls', namespace='rest_framework')),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)  # allow to specify format

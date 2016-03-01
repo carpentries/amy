@@ -13,6 +13,15 @@ from workshops.models import (
 )
 
 
+class AwardPersonSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source='person.get_full_name')
+    user = serializers.CharField(source='person.username')
+
+    class Meta:
+        model = Award
+        fields = ('name', 'user', 'awarded')
+
+
 class PersonUsernameSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='get_full_name')
     user = serializers.CharField(source='username')
@@ -31,7 +40,7 @@ class PersonNameEmailUsernameSerializer(serializers.ModelSerializer):
 
 
 class ExportBadgesSerializer(serializers.ModelSerializer):
-    persons = PersonUsernameSerializer(many=True, source='person_set')
+    persons = AwardPersonSerializer(many=True, source='award_set')
 
     class Meta:
         model = Badge
@@ -107,6 +116,23 @@ class InstructorNumTaughtSerializer(serializers.Serializer):
         read_only=True, view_name='api:person-detail', lookup_field='pk',
         source='*')
     num_taught = serializers.IntegerField()
+
+
+class InstructorsByTimePeriodSerializer(serializers.ModelSerializer):
+    event_slug = serializers.CharField(source='event.slug')
+    person_name = serializers.CharField(source='person.get_full_name')
+    person_email = serializers.EmailField(source='person.email')
+    num_taught = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Task
+        fields = ('event_slug', 'person_name', 'person_email', 'num_taught')
+
+    def get_num_taught(self, obj):
+        """Count number of workshops attended with 'instructor' role."""
+        # pretty terrible performance-wise, but we cannot annotate the original
+        # query (yields wrong results)
+        return obj.person.task_set.instructors().count()
 
 
 # ----------------------

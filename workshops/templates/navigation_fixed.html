@@ -1,9 +1,7 @@
-{% extends "base_without_navbar.html" %}
-
+{% load navigation %}
 {% block navbar %}
-    {% load navigation %}
     <nav class="navbar navbar-default navbar-fixed-top">
-      <div class="container{% block fluid1 %}{% endblock %}">
+      <div class="container{% block fluid-navbar %}{% endblock %}">
         <!-- Brand and toggle get grouped for better mobile display -->
         <div class="navbar-header">
           <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse-1">
@@ -29,13 +27,14 @@
                 {% navbar_element "Badges" "all_badges" %}
                 {% navbar_element "Airports" "all_airports" %}
                 {% navbar_element "Workshop requests" "all_eventrequests" %}
+                {% navbar_element "Workshop submissions" "all_eventsubmissions" %}
                 {% navbar_element "Profile update requests" "all_profileupdaterequests" %}
+                {% navbar_element "Invoice requests" "all_invoicerequests" %}
                 <li class="divider"></li>
                 {% navbar_element_permed "Bulk add persons" "person_bulk_add" "workshops.add_person" %}
-                {% navbar_element_permed "Merge persons" "person_merge" "workshops.delete_person" %}
+                {% navbar_element_permed "Merge persons" "persons_merge" "workshops.delete_person" %}
                 {% navbar_element_permed "Merge events" "events_merge" "workshops.change_event,workshops.delete_event" %}
                 {% navbar_element "Find instructors" "instructors" %}
-                {% navbar_element "Debrief" "debrief" %}
                 <li class="divider"></li>
                 {% url "export_badges" as export_badges_url %}
                 {% url "export_instructors" as export_instructors_url %}
@@ -48,6 +47,7 @@
             <li class="dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Reports <span class="caret"></span></a>
               <ul class="dropdown-menu" role="menu">
+                {% navbar_element "List of instructors by time period" "instructors_by_date" %}
                 {% navbar_element "Workshops over time" "workshops_over_time" %}
                 {% navbar_element "Learners over time" "learners_over_time" %}
                 {% navbar_element "Instructors over time" "instructors_over_time" %}
@@ -56,8 +56,9 @@
                 <li class="divider"></li>
                 {% navbar_element "Workshop issues" "workshop_issues" %}
                 {% navbar_element "Instructor issues" "instructor_issues" %}
-	      </ul>
-	    </li>
+                {% navbar_element "Find duplicates" "duplicates" %}
+              </ul>
+            </li>
           </ul>
           <form class="navbar-form navbar-left" role="search" method="post" action="{% url "search" %}">
             {% csrf_token %}
@@ -68,7 +69,6 @@
             <div class="form-group">
               <input type="text" class="form-control" placeholder="Search" name="term" />
             </div>
-            <!-- <button type="submit" class="btn btn-default">Submit</button> -->
           </form>
 
           <ul class="nav navbar-nav navbar-right">

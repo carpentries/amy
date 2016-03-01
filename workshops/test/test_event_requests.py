@@ -2,7 +2,7 @@ from django.core.urlresolvers import reverse
 from django.core import mail
 
 from .base import TestBase
-from ..models import EventRequest
+from ..models import EventRequest, Event, Host
 from ..forms import SWCEventRequestForm, DCEventRequestForm
 
 
@@ -43,7 +43,8 @@ class TestSWCEventRequestForm(TestBase):
             'travel_reimbursement': 'book', 'travel_reimbursement_other': '',
             'admin_fee_payment': 'self-organized', 'comment': '',
         }
-        rv = self.client.post(reverse('swc_workshop_request'), data)
+        rv = self.client.post(reverse('swc_workshop_request'), data,
+                              follow=True)
         assert rv.status_code == 200
         content = rv.content.decode('utf-8')
         assert 'Fix errors below' not in content
@@ -110,7 +111,8 @@ class TestDCEventRequestForm(TestBase):
             'travel_reimbursement': 'book', 'travel_reimbursement_other': '',
             'comment': '',
         }
-        rv = self.client.post(reverse('dc_workshop_request'), data)
+        rv = self.client.post(reverse('dc_workshop_request'), data,
+                              follow=True)
         assert rv.status_code == 200
         content = rv.content.decode('utf-8')
         assert 'Fix errors below' not in content
@@ -177,6 +179,22 @@ class TestEventRequestsViews(TestBase):
         rv = self.client.get(reverse('eventrequest_accept',
                                      args=[self.er1.pk]))
         assert rv.status_code == 200
+
+    def test_active_request_accepted(self):
+        """Ensure a backlink from Event to EventRequest that created the
+        event exists after ER is accepted."""
+        data = {
+            'slug': 'test-event',
+            'host_1': Host.objects.first().pk,
+            'tags': [1],
+            'invoice_status': 'unknown',
+        }
+        rv = self.client.post(
+            reverse('eventrequest_accept', args=[self.er1.pk]),
+            data)
+        assert rv.status_code == 302, rv.status_code
+        self.assertEqual(Event.objects.get(slug='test-event').request,
+                         self.er1)
 
     def test_inactive_request_accept(self):
         rv = self.client.get(reverse('eventrequest_accept',

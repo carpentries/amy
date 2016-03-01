@@ -4,19 +4,21 @@ from django import forms
 from django.core.validators import RegexValidator
 from django.forms import (
     HiddenInput, CheckboxSelectMultiple, TextInput, modelformset_factory,
+    RadioSelect,
 )
 
 from captcha.fields import ReCaptchaField
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Div, HTML, Submit, Field
+from crispy_forms.layout import Layout, Div, HTML, Submit
 from crispy_forms.bootstrap import FormActions
 from django_countries import Countries
 from django_countries.fields import CountryField
 from selectable import forms as selectable
 
 from workshops.models import (
-    Award, Event, Lesson, Person, Task, KnowledgeDomain, Airport, Host,
+    Award, Event, Lesson, Person, Task, Airport, Host,
     EventRequest, ProfileUpdateRequest, TodoItem, Membership,
+    InvoiceRequest, EventSubmission,
 )
 from workshops import lookups
 
@@ -331,13 +333,14 @@ class EventForm(forms.ModelForm):
             'attendance': TextInput,
             'latitude': TextInput,
             'longitude': TextInput,
+            'invoice_status': RadioSelect,
         }
 
     class Media:
         # thanks to this, {{ form.media }} in the template will generate
         # a <link href=""> (for CSS files) or <script src=""> (for JS files)
         js = (
-            'calendar_popup.js', 'import_from_url.js', 'update_from_url.js',
+            'import_from_url.js', 'update_from_url.js',
             'online_country.js',
         )
 
@@ -407,9 +410,9 @@ class PersonPermissionsForm(forms.ModelForm):
         ]
 
 
-class PersonMergeForm(forms.Form):
+class PersonsSelectionForm(forms.Form):
 
-    person_from = selectable.AutoCompleteSelectField(
+    person_a = selectable.AutoCompleteSelectField(
         lookup_class=lookups.PersonLookup,
         label='Person From',
         required=True,
@@ -417,12 +420,92 @@ class PersonMergeForm(forms.Form):
         widget=selectable.AutoComboboxSelectWidget,
     )
 
-    person_to = selectable.AutoCompleteSelectField(
+    person_b = selectable.AutoCompleteSelectField(
         lookup_class=lookups.PersonLookup,
         label='Person To',
         required=True,
         help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
+    )
+
+
+class PersonsMergeForm(forms.Form):
+    TWO = (
+        ('obj_a', 'Use A'),
+        ('obj_b', 'Use B'),
+    )
+    THREE = TWO + (('combine', 'Combine'), )
+    DEFAULT = 'obj_a'
+
+    person_a = forms.ModelChoiceField(queryset=Person.objects.all(),
+                                      widget=forms.HiddenInput)
+
+    person_b = forms.ModelChoiceField(queryset=Person.objects.all(),
+                                      widget=forms.HiddenInput)
+
+    id = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    username = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    personal = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    middle = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    family = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    email = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    may_contact = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    gender = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    airport = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    github = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    twitter = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    url = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    notes = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    affiliation = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    occupation = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    orcid = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    award_set = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    qualification_set = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+        label='Lessons',
+    )
+    domains = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    task_set = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    is_active = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
 
 
@@ -444,6 +527,14 @@ class BadgeAwardForm(forms.ModelForm):
         widget=selectable.AutoComboboxSelectWidget,
     )
 
+    awarded_by = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.PersonLookup,
+        label='Awarded by',
+        required=False,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
     class Meta:
         model = Award
         fields = '__all__'
@@ -455,6 +546,14 @@ class PersonAwardForm(forms.ModelForm):
     event = selectable.AutoCompleteSelectField(
         lookup_class=lookups.EventLookup,
         label='Event',
+        required=False,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+    awarded_by = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.PersonLookup,
+        label='Awarded by',
         required=False,
         help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
@@ -503,9 +602,6 @@ class MembershipForm(forms.ModelForm):
         model = Membership
         fields = '__all__'
         widgets = {'host': HiddenInput, }
-
-    class Media:
-        js = ('calendar_popup.js', )
 
 
 class SWCEventRequestForm(forms.ModelForm):
@@ -563,6 +659,16 @@ class DCEventRequestForm(SWCEventRequestForm):
         }
 
 
+class EventSubmitFormNoCaptcha(forms.ModelForm):
+    class Meta:
+        model = EventSubmission
+        exclude = ('active', 'assigned_to', )
+
+
+class EventSubmitForm(EventSubmitFormNoCaptcha):
+    captcha = ReCaptchaField()
+
+
 class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):
     class Meta:
         model = ProfileUpdateRequest
@@ -609,12 +715,6 @@ class SimpleTodoForm(forms.ModelForm):
         model = TodoItem
         fields = ('title', 'due', 'additional', 'completed', 'event')
         widgets = {'event': HiddenInput, }
-
-    class Media:
-        # thanks to this, {{ form.media }} in the template will generate
-        # a <link href=""> (for CSS files) or <script src=""> (for JS files)
-        js = ('calendar_popup.js', )
-
 
 # `extra`: number of forms populated via `initial` parameter; it's hardcoded in
 # `views.todos_add`
@@ -737,3 +837,30 @@ class EventsMergeForm(forms.Form):
     todoitem_set = forms.ChoiceField(
         choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
     )
+
+
+class InvoiceRequestForm(forms.ModelForm):
+    class Meta:
+        model = InvoiceRequest
+        fields = (
+            'organization', 'reason', 'reason_other', 'date', 'event',
+            'event_location', 'item_id', 'postal_number', 'contact_name',
+            'contact_email', 'contact_phone', 'full_address', 'amount',
+            'currency', 'currency_other', 'breakdown', 'vendor_form_required',
+            'vendor_form_link', 'form_W9', 'receipts_sent',
+            'shared_receipts_link', 'notes',
+        )
+        widgets = {
+            'reason': RadioSelect,
+            'currency': RadioSelect,
+            'vendor_form_required': RadioSelect,
+            'receipts_sent': RadioSelect,
+        }
+
+
+class InvoiceRequestUpdateForm(forms.ModelForm):
+    class Meta:
+        model = InvoiceRequest
+        fields = (
+            'status', 'sent_date', 'paid_date', 'notes'
+        )

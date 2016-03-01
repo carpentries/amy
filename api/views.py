@@ -14,8 +14,10 @@ from rest_framework.permissions import (
 from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
+from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
+from rest_framework_csv.renderers import CSVRenderer
 
 from workshops.models import (
     Badge,
@@ -39,6 +41,7 @@ from .serializers import (
     WorkshopsOverTimeSerializer,
     InstructorsOverTimeSerializer,
     InstructorNumTaughtSerializer,
+    InstructorsByTimePeriodSerializer,
     HostSerializer,
     EventSerializer,
     TaskSerializer,
@@ -110,7 +113,7 @@ class ExportBadgesView(ListAPIView):
     permission_classes = (IsAuthenticatedOrReadOnly, )
     paginator = None  # disable pagination
 
-    queryset = Badge.objects.prefetch_related('person_set')
+    queryset = Badge.objects.prefetch_related('award_set')
     serializer_class = ExportBadgesSerializer
 
 
@@ -128,6 +131,8 @@ class ExportMembersView(ListAPIView):
     """Show everyone who qualifies as an SCF member."""
     permission_classes = (IsAuthenticated, )
     paginator = None  # disable pagination
+
+    renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES + [CSVRenderer, ]
 
     serializer_class = PersonNameEmailUsernameSerializer
 
@@ -231,7 +236,7 @@ class ReportsViewSet(ViewSet):
 
     # YAML renderer is turned off because it has problems reading our
     # accumulative generator (lol)
-    renderer_classes = (BrowsableAPIRenderer, JSONRenderer)
+    renderer_classes = (BrowsableAPIRenderer, JSONRenderer, CSVRenderer)
 
     def _add_counts(self, a, b):
         c = b
@@ -309,35 +314,37 @@ class ReportsViewSet(ViewSet):
             persons, many=True, context=dict(request=request))
         return Response(serializer.data)
 
-    def _default_start_end_dates(self):
+    def _default_start_end_dates(self, start=None, end=None):
+        """Parse GET start and end dates or return default values for them."""
         today = datetime.date.today()
         start_of_year = datetime.date(today.year, 1, 1)
         end_of_year = (datetime.date(today.year + 1, 1, 1) -
                        datetime.timedelta(days=1))
-        return start_of_year, end_of_year
 
-    @list_route(methods=['GET'])
-    def all_activity_over_time(self, request, format=None):
-        """Workshops, instructors, and missing data in specific periods."""
-        start_default, end_default = self._default_start_end_dates()
-
-        start = self.request.query_params.get('start', None)
         if start is not None:
             try:
                 start = datetime.datetime.strptime(start, '%Y-%m-%d').date()
             except ValueError:
-                start = start_default
+                start = start_of_year
         else:
-            start = start_default
+            start = start_of_year
 
-        end = self.request.query_params.get('end', None)
         if end is not None:
             try:
                 end = datetime.datetime.strptime(end, '%Y-%m-%d').date()
             except ValueError:
-                end = end_default
+                end = end_of_year
         else:
-            end = end_default
+            end = end_of_year
+
+        return start, end
+
+    @list_route(methods=['GET'])
+    def all_activity_over_time(self, request, format=None):
+        """Workshops, instructors, and missing data in specific periods."""
+        start, end = self._default_start_end_dates(
+            start=self.request.query_params.get('start', None),
+            end=self.request.query_params.get('end', None))
 
         events_qs = Event.objects.filter(start__gte=start, start__lte=end)
         swc_tag = Tag.objects.get(name='SWC')
@@ -422,6 +429,29 @@ class ReportsViewSet(ViewSet):
             }
         })
 
+    def instructors_by_time_queryset(self, start, end):
+        """Just a queryset to be reused in other view."""
+        tags = Tag.objects.filter(name__in=['stalled', 'unresponsive'])
+        tasks = Task.objects.filter(
+            event__start__gte=start,
+            event__end__lte=end,
+            role__name='instructor',
+            person__may_contact=True,
+        ).exclude(event__tags=tags).order_by('event', 'person', 'role') \
+         .select_related('person', 'event', 'role')
+        return tasks
+
+    @list_route(methods=['GET'])
+    def instructors_by_time(self, request, format=None):
+        """Workshops and instructors who taught in specific time period."""
+        start, end = self._default_start_end_dates(
+            start=self.request.query_params.get('start', None),
+            end=self.request.query_params.get('end', None))
+        tasks = self.instructors_by_time_queryset(start, end)
+        serializer = InstructorsByTimePeriodSerializer(
+            tasks, many=True, context=dict(request=request))
+        return Response(serializer.data)
+
     def list(self, request, format=None):
         """Display list of links to the reports."""
         return Response({
@@ -439,6 +469,9 @@ class ReportsViewSet(ViewSet):
                 format=format),
             'reports-workshops-over-time': reverse(
                 'api:reports-workshops-over-time', request=request,
+                format=format),
+            'reports-instructors-by-time': reverse(
+                'api:reports-instructors-by-time', request=request,
                 format=format),
         })
 

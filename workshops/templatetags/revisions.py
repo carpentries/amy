@@ -1,6 +1,6 @@
 from django import template
 
-import reversion
+from reversion.revisions import get_for_object
 
 register = template.Library()
 
@@ -12,7 +12,7 @@ def last_modified(obj):
     "Created on ASD by DSA."
     "Last modified on ASD by DSA."
     """
-    versions = reversion.get_for_object(obj)
+    versions = get_for_object(obj)
 
     try:
         last, *_, created = versions

@@ -77,7 +77,7 @@ class Command(BaseCommand):
         return result
 
     def make_message(self, record):
-        tmplt = get_template('mailing/instructor_activity.html')
+        tmplt = get_template('mailing/instructor_activity.txt')
         return tmplt.render(context=record)
 
     def subject(self, record):

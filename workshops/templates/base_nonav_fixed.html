@@ -1,27 +1,32 @@
+{% load compress %}
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <link rel="stylesheet" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}" />
-    <link rel="stylesheet" href="{% static 'bootstrap/dist/css/bootstrap-theme.min.css' %}" />
-    <link rel="stylesheet" href="{% static 'bootstrap-datepicker/dist/css/bootstrap-datepicker3.min.css' %}" />
-    <link rel="stylesheet" href="{% static 'jquery-ui-custom/jquery-ui.min.css' %}" />
+    {% compress css %}
+    <link rel="stylesheet" href="{% static 'bootstrap/dist/css/bootstrap.css' %}" />
+    <link rel="stylesheet" href="{% static 'bootstrap/dist/css/bootstrap-theme.css' %}" />
+    <link rel="stylesheet" href="{% static 'bootstrap-datepicker/dist/css/bootstrap-datepicker3.css' %}" />
+    <link rel="stylesheet" href="{% static 'jquery-ui-custom/jquery-ui.css' %}" />
     <link rel="stylesheet" href="{% static 'css/amy.css' %}" />
-    <link rel="stylesheet" href="{% static 'vis/dist/vis.min.css' %}" />
+    <link rel="stylesheet" href="{% static 'vis/dist/vis.css' %}" />
+    {% endcompress %}
     {% block extrastyle %}{% endblock %}
 
-    <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
-    <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
-    <script src="{% static 'jquery-ui-custom/jquery-ui.min.js' %}"></script>
-    <script src="{% static 'bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js' %}"></script>
-    <script src="{% static 'vis/dist/vis.js' %}"></script>
+    {% compress js %}
+    <script src="{% static 'jquery/dist/jquery.js' %}"></script>
+    <script src="{% static 'bootstrap/dist/js/bootstrap.js' %}"></script>
+    <script src="{% static 'jquery-ui-custom/jquery-ui.js' %}"></script>
+    <script src="{% static 'bootstrap-datepicker/dist/js/bootstrap-datepicker.js' %}"></script>
+    <script src="{% static 'calendar_popup.js' %}"></script>
+    {% endcompress %}
 
     <title>AMY{% if title %}: {{ title }}{% endif %}</title>
   </head>
   <body>
     {% block navbar %}{% endblock %}
-    <div class="container{% block fluid2 %}{% endblock %}">
-      {% block title %}{% if title %}<h1>{{ title }}</h1>{% endif %}{% endblock %}
+    <div class="container{% block fluid-content %}{% endblock %}">
+      {% block logo %}{% endblock %}
       {% for message in messages %}
       <div class="row">
         <div class="{% block fluid-messages %}col-sm-12{% endblock %}">
@@ -39,24 +44,31 @@
         </div>
       </div>
       {% endfor %}
-      {% block content %}{% endblock %}
+      {% block main %}
+      <div class="row">
+        <div class="col-sm-12 col-md-12 main">
+        {% block title %}{% if title %}<h1>{{ title }}</h1>{% endif %}{% endblock %}
+        {% block content %}{% endblock %}
+        </div>
+      </div>
+      {% endblock %}
     </div>
     <hr class="footer-hr" />
-    <div class="container{% block fluid3 %}{% endblock %}">
+    <div class="container{% block fluid-footer %}{% endblock %}">
       <div class="row">
         <div class="col-sm-12 footer">
-	  <p>
+          <p>
             Powered by <a href="https://github.com/swcarpentry/amy">AMY</a>
             version {{workshops_version}}
             {% if workshops_git_hash %}
               (<a href="https://github.com/swcarpentry/amy/commit/{{workshops_git_hash}}">{{workshops_git_short_hash}}</a>
               {{workshops_git_date}}{% if workshops_git_dirty %} dirty{% endif %})
             {% endif %}
-	  </p>
-	  <p>
-	    This project was funded in part by a grant from the National Science Foundation (0953694)
-	    to <a href="http://whitelab.weecology.org/">Prof. Ethan White</a>.
-	  </p>
+          </p>
+          <p>
+            This project was funded in part by a grant from the National Science Foundation (0953694)
+            to <a href="http://whitelab.weecology.org/">Prof. Ethan White</a>.
+          </p>
         </div>
       </div>
     </div>
