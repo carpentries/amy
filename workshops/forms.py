@@ -527,6 +527,14 @@ class BadgeAwardForm(forms.ModelForm):
         widget=selectable.AutoComboboxSelectWidget,
     )
 
+    awarded_by = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.PersonLookup,
+        label='Awarded by',
+        required=False,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
     class Meta:
         model = Award
         fields = '__all__'
@@ -538,6 +546,14 @@ class PersonAwardForm(forms.ModelForm):
     event = selectable.AutoCompleteSelectField(
         lookup_class=lookups.EventLookup,
         label='Event',
+        required=False,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+    awarded_by = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.PersonLookup,
+        label='Awarded by',
         required=False,
         help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,

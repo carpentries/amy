@@ -238,7 +238,9 @@ class Person(AbstractBaseUser, PermissionsMixin):
     notes = models.TextField(default="", blank=True)
     affiliation = models.CharField(max_length=STR_LONG, default='', blank=True)
 
-    badges = models.ManyToManyField("Badge", through="Award")
+    badges = models.ManyToManyField(
+        "Badge", through="Award",
+        through_fields=('person', 'badge'))
     lessons = models.ManyToManyField(
         "Lesson",
         through="Qualification",
@@ -1161,6 +1163,9 @@ class Award(models.Model):
     awarded    = models.DateField()
     event      = models.ForeignKey(Event, null=True, blank=True,
                                    on_delete=models.PROTECT)
+    awarded_by = models.ForeignKey(
+        Person, null=True, blank=True, on_delete=models.PROTECT,
+        related_name='awarded_set')
 
     class Meta:
         unique_together = ("person", "badge", )
