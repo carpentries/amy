@@ -436,6 +436,7 @@ class ProfileUpdateRequest(models.Model):
         help_text='Please include lesson URLs.',
         blank=True, default='',
     )
+    notes = models.TextField(default="", blank=True)
 
     def save(self, *args, **kwargs):
         """Save nullable char fields as empty strings."""
