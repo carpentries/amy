@@ -3,6 +3,40 @@ from django.core.urlresolvers import reverse
 from ..models import Person
 from .base import TestBase
 
+class TestEmptyDuplicates(TestBase):
+    def setUp(self):
+        self._setUpUsersAndLogin()
+
+        self.harry = Person.objects.create(
+            personal='Harry', family='Potter', username='potter_harry',
+            email='hp@hogwart.edu')
+        self.kira = Person.objects.create(
+            personal='Light', family='Yagami', username='light_yagami',
+            email='ly@hogwart.edu')
+        self.batman = Person.objects.create(
+            personal='Bruce', family='Wayne', username='bruce_wayne',
+            email='batman@waynecorp.com')
+        self.ironman = Person.objects.create(
+            personal='Tony', family='Stark', username='tony_stark',
+            email='ironman@starkindustries.com')
+
+        self.url = reverse('duplicates')
+
+    def test_switched_names_persons(self):
+        rv = self.client.get(self.url)
+        switched = rv.context['switched_persons']
+        self.assertNotIn(self.harry, switched)
+        self.assertNotIn(self.kira, switched)
+        self.assertNotIn(self.batman, switched)
+        self.assertNotIn(self.ironman, switched)
+
+    def test_duplicate_persons(self):
+        rv = self.client.get(self.url)
+        switched = rv.context['duplicate_persons']
+        self.assertNotIn(self.harry, switched)
+        self.assertNotIn(self.kira, switched)
+        self.assertNotIn(self.batman, switched)
+        self.assertNotIn(self.ironman, switched)
 
 class TestFindingDuplicates(TestBase):
     def setUp(self):
