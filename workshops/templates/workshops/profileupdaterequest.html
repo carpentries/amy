@@ -119,8 +119,8 @@
         <td><em>Not available since it applies to people from database only</em></td>
         <td>{% if old %}{{ old.has_instructor_badge|yesno }}{% endif %}</td></tr>
     <tr><th>Note from the user:</th>
-        <td>{{ new.notes|default:"—" }}</td>
-        <td>{% if old %}{{ old.notes|default:"—" }}{% endif %}</td></tr>
+        <td><pre>{{ new.notes|default:"—" }}</pre></td>
+        <td><pre>{% if old %}{{ old.notes|default:"—" }}{% endif %}</pre></td></tr>
   </tbody>
 </table>
 
