@@ -2640,13 +2640,14 @@ def duplicates(request):
 
     Criteria for persons:
     * switched personal/family names
-    * same name on different people."""
+    * same name on different people
+    * same emails on different people."""
     names_normal = set(Person.objects.all().values_list('personal', 'family'))
     names_switched = set(Person.objects.all().values_list('family',
                                                           'personal'))
     names = names_normal & names_switched  # intersection
 
-    switched_criteria = Q()
+    switched_criteria = Q(id=0)
     for personal, family in names:
         # get people who appear in `names`
         switched_criteria |= (Q(personal=personal) & Q(family=family))
@@ -2659,7 +2660,7 @@ def duplicates(request):
                                     .annotate(count_id=Count('id')) \
                                     .filter(count_id__gt=1)
 
-    duplicate_criteria = Q()
+    duplicate_criteria = Q(id=0)
     for name in duplicate_names:
         # get people who appear in `names`
         duplicate_criteria |= (Q(personal=name['personal']) &
@@ -2667,10 +2668,21 @@ def duplicates(request):
     duplicate_persons = Person.objects.filter(duplicate_criteria) \
                                       .order_by('family', 'personal', 'email')
 
+    all_emails_lowercase = [x.email.lower() for x in Person.objects.all()]
+    repeated_emails = set([x for x in all_emails_lowercase if all_emails_lowercase.count(x) > 1])
+
+    email_criteria = Q(id=0)
+    for email in repeated_emails:
+        email_criteria |= Q(email__icontains=email)
+
+    duplicate_emails = Person.objects.filter(email_criteria) \
+                                     .order_by('email', 'family', 'personal')
+
     context = {
         'title': 'Possible duplicates',
         'switched_persons': switched_persons,
         'duplicate_persons': duplicate_persons,
+        'duplicate_emails' : duplicate_emails,
     }
 
     return render(request, 'workshops/duplicates.html', context)
