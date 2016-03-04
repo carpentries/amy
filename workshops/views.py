@@ -1897,7 +1897,7 @@ def instructor_issues(request):
 
 @login_required
 def object_changes(request, revision_id):
-    revision = Revision.objects.get(pk=revision_id)
+    revision = get_object_or_404(Revision, pk=revision_id)
 
     # we assume there's only one version per revision
     current_version = revision.version_set.all()[0]
