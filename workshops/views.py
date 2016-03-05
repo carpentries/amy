@@ -2646,7 +2646,8 @@ def duplicates(request):
                                                           'personal'))
     names = names_normal & names_switched  # intersection
 
-    switched_criteria = Q()
+    switched_criteria = Q(id=0)
+    # empty query results if names is empty
     for personal, family in names:
         # get people who appear in `names`
         switched_criteria |= (Q(personal=personal) & Q(family=family))
@@ -2659,7 +2660,7 @@ def duplicates(request):
                                     .annotate(count_id=Count('id')) \
                                     .filter(count_id__gt=1)
 
-    duplicate_criteria = Q()
+    duplicate_criteria = Q(id=0)
     for name in duplicate_names:
         # get people who appear in `names`
         duplicate_criteria |= (Q(personal=name['personal']) &
