@@ -4,6 +4,7 @@ from ..models import Person
 from .base import TestBase
 
 class TestEmptyDuplicates(TestBase):
+    """Tests to return empty context variables when no matches found."""
     def setUp(self):
         self._setUpUsersAndLogin()
 
@@ -23,6 +24,7 @@ class TestEmptyDuplicates(TestBase):
         self.url = reverse('duplicates')
 
     def test_switched_names_persons(self):
+        """Ensure none of the above persons are in `switched_persons`."""
         rv = self.client.get(self.url)
         switched = rv.context['switched_persons']
         self.assertNotIn(self.harry, switched)
@@ -31,6 +33,7 @@ class TestEmptyDuplicates(TestBase):
         self.assertNotIn(self.ironman, switched)
 
     def test_duplicate_persons(self):
+        """Ensure none of the above persons are in `duplicate_persons`."""
         rv = self.client.get(self.url)
         switched = rv.context['duplicate_persons']
         self.assertNotIn(self.harry, switched)
