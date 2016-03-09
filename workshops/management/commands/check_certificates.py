@@ -64,4 +64,4 @@ class Command(BaseCommand):
                     awarded = records[uid]['awarded']
                 report.append([title, kind, event, uid, p.get_full_name(), p.email, awarded])
             except Person.DoesNotExist:
-                print('{0}'.format(u), file=sys.stderr)
+                print('{0}'.format(uid), file=sys.stderr)
