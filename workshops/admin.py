@@ -9,6 +9,7 @@ from .models import (
     Lesson,
     KnowledgeDomain,
     Badge,
+    Certificate,
 )
 
 admin.site.register(Tag)
@@ -19,3 +20,4 @@ admin.site.register(Role)
 admin.site.register(Lesson)
 admin.site.register(KnowledgeDomain)
 admin.site.register(Badge)
+admin.site.register(Certificate)

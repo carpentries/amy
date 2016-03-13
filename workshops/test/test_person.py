@@ -195,7 +195,7 @@ class TestPerson(TestBase):
         assert not self.spiderman.task_set.all()
 
         # add new task
-        url, values = self._get_initial_form_index(2, 'person_edit',
+        url, values = self._get_initial_form_index(3, 'person_edit',
                                                    self.spiderman.id)
         assert 'task-role' in values
 

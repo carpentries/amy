@@ -35,6 +35,7 @@ from reversion.revisions import get_for_object
 from workshops.models import (
     Airport,
     Award,
+    Certificate,
     Badge,
     Event,
     Qualification,
@@ -62,7 +63,7 @@ from workshops.forms import (
     AdminLookupForm, ProfileUpdateRequestFormNoCaptcha, MembershipForm,
     TodoFormSet, EventsSelectionForm, EventsMergeForm, InvoiceRequestForm,
     InvoiceRequestUpdateForm, EventSubmitForm, EventSubmitFormNoCaptcha,
-    PersonsMergeForm,
+    PersonsMergeForm, PersonCertificateForm
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
@@ -456,6 +457,7 @@ def person_details(request, person_id):
     tasks = person.task_set.all()
     lessons = person.lessons.all()
     domains = person.domains.all()
+    certificates = person.certificate_set.all()
     context = {
         'title': 'Person {0}'.format(person),
         'person': person,
@@ -463,6 +465,7 @@ def person_details(request, person_id):
         'tasks': tasks,
         'lessons': lessons,
         'domains': domains,
+        'certificates' : certificates,
     }
     return render(request, 'workshops/person.html', context)
 
@@ -670,6 +673,7 @@ def person_edit(request, person_id):
     person = get_object_or_404(Person, id=person_id)
     awards = person.award_set.order_by('badge__name')
     tasks = person.task_set.order_by('-event__slug')
+    certificates = person.certificate_set.order_by('badge__name')
 
     person_form = PersonForm(prefix='person', instance=person)
     award_form = PersonAwardForm(prefix='award', initial={
@@ -677,6 +681,10 @@ def person_edit(request, person_id):
         'person': person,
     })
     task_form = PersonTaskForm(prefix='task', initial={'person': person})
+    certificate_form = PersonCertificateForm(prefix='certificate', initial={
+        'awarded': datetime.date.today(),
+        'person': person,
+    })
 
     if request.method == 'POST':
         # check which form was submitted
@@ -693,6 +701,28 @@ def person_edit(request, person_id):
                         badge=award.badge.title,
                     ),
                     extra_tags='awards',
+                )
+
+                # to reset the form values
+                return redirect(request.path)
+
+            else:
+                messages.error(request, 'Fix errors in the award form.',
+                               extra_tags='awards')
+
+        elif 'certificate-badge' in request.POST:
+            certificate_form = PersonCertificateForm(request.POST, prefix='certificate')
+
+            if certificate_form.is_valid():
+                certificate = certificate_form.save()
+
+                messages.success(
+                    request,
+                    '{person} was awarded a {badge} certificate.'.format(
+                        person=str(person),
+                        badge=certificate.badge.title,
+                    ),
+                    extra_tags='certificates',
                 )
 
                 # to reset the form values
@@ -765,6 +795,8 @@ def person_edit(request, person_id):
                'award_form': award_form,
                'tasks': tasks,
                'task_form': task_form,
+               'certificates': certificates,
+               'certificate_form': certificate_form,
                'form_helper': bootstrap_helper,
                'form_helper_with_add': bootstrap_helper_with_add,
                }
@@ -1449,6 +1481,26 @@ def award_delete(request, award_id, person_id=None):
 
     messages.success(request, 'Award was deleted successfully.',
                      extra_tags='awards')
+
+    if person_id:
+        # if a second form of URL, then return back to person edit page
+        return redirect(person_edit, person_id)
+
+    return redirect(reverse(badge_details, args=[badge_name]))
+
+
+#------------------------------------------------------------
+
+
+@login_required
+def certificate_delete(request, certificate_id, person_id=None):
+    """Delete a certificate. This is used on the person edit page."""
+    certi = get_object_or_404(Certificate, pk=certificate_id)
+    badge_name = certi.badge.name
+    certi.delete()
+
+    messages.success(request, 'Certificate was deleted successfully.',
+                     extra_tags='certificates')
 
     if person_id:
         # if a second form of URL, then return back to person edit page
@@ -2675,3 +2727,36 @@ def duplicates(request):
     }
 
     return render(request, 'workshops/duplicates.html', context)
+
+
+#------------------------------------------------------------
+
+@login_required
+def certificate_download(request, certificate_id):
+    """Generate a certificate, and return the pdf for download.
+    Used on the person edit page."""
+
+    certificate = get_object_or_404(Certificate, pk=certificate_id)
+
+    class Arguments:
+        def __init__(self):
+            self.badge_type = certificate.badge.name
+            self.user_id = certificate.person.username
+            self.params = {}
+            self.params['date'] = certificate.awarded.strftime('%B %d, %Y')
+            self.params['instructor'] = certificate.get_awarded_by_names()
+            self.params['name'] = certificate.person.get_full_name()
+
+    args = Arguments()
+
+    from certification import certificates
+    path = certificates.process_single(args)
+    print(path)
+
+    response = HttpResponse(path, content_type='application/pdf')
+    response['Content-Disposition'] = 'inline; filename="{}.pdf"'.format(args.user_id)
+    return response
+    # return redirect(reverse(badge_details, args=[badge_name]))
+
+
+#------------------------------------------------------------

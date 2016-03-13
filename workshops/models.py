@@ -1177,6 +1177,22 @@ class Award(models.Model):
 
 #------------------------------------------------------------
 
+class Certificate(models.Model):
+    """Represents a certificate awarded to a person."""
+
+    person     = models.ForeignKey(Person)
+    badge      = models.ForeignKey(Badge)
+    awarded    = models.DateField()
+    awarded_by = models.ManyToManyField(
+        Person, blank=True, related_name='certified_set')
+
+    def get_awarded_by_names(self):
+        names = [x.get_full_name() for x in self.awarded_by.all()]
+        print(names)
+        return ', '.join(names)
+
+#------------------------------------------------------------
+
 class KnowledgeDomain(models.Model):
     """Represent a knowledge domain a person is engaged in."""
     name = models.CharField(max_length=STR_LONG)
