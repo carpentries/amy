@@ -2182,26 +2182,27 @@ def profileupdaterequest_details(request, request_id):
 
     person_selected = False
 
+    person = None
+    form = None
+
     # Nested lookup.
     # First check if there's person with the same email, then maybe check if
     # there's a person with the same first and last names.
     try:
         person = Person.objects.get(email=update_request.email)
-        form = None
     except Person.DoesNotExist:
         try:
             person = Person.objects.get(personal=update_request.personal,
                                         family=update_request.family)
-            form = None
         except (Person.DoesNotExist, Person.MultipleObjectsReturned):
             # Either none or multiple people with the same first and last
             # names.
             # But the user might have submitted some person by themselves. We
             # should check that!
             try:
+                form = PersonLookupForm(request.GET)
                 person = Person.objects.get(pk=int(request.GET['person_1']))
                 person_selected = True
-                form = PersonLookupForm(request.GET)
             except KeyError:
                 person = None
                 # if the form wasn't submitted, initialize it without any
