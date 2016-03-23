@@ -31,7 +31,7 @@
   <tr><td>middle:</td><td id="middle">{{ person.middle|default:"—" }}</td></tr>
   <tr><td>family:</td><td id="family">{{ person.family|default:"—" }}</td></tr>
   <tr><td>may contact:</td><td id="may_contact">{{ person.may_contact|yesno }}</td></tr>
-  <tr><td>email:</td><td id="email">{% if person.email %}{{ person.email|urlize }}{% else %}-{% endif %}</td></tr>
+  <tr><td>email:</td><td id="email">{% if person.email %}{{ person.email|urlize }}{% else %}—{% endif %}</td></tr>
   <tr><td>gender:</td><td id="gender">{{ person.get_gender_display|default:"—" }}</td></tr>
   <tr><td>airport:</td><td id="airport">{% if person.airport %}<a href="{{ person.airport.get_absolute_url }}">{{ person.airport }}</a>{% else %}—{% endif %}</td></tr>
   <tr><td>affiliation:</td><td>{{ person.affiliation|default:"—" }}</td></tr>
