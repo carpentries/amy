@@ -62,7 +62,7 @@ from workshops.forms import (
     AdminLookupForm, ProfileUpdateRequestFormNoCaptcha, MembershipForm,
     TodoFormSet, EventsSelectionForm, EventsMergeForm, InvoiceRequestForm,
     InvoiceRequestUpdateForm, EventSubmitForm, EventSubmitFormNoCaptcha,
-    PersonsMergeForm,
+    PersonsMergeForm, PersonCreateForm,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
@@ -80,6 +80,7 @@ from workshops.util import (
     failed_to_delete,
     assign,
     merge_objects,
+    create_username,
 )
 
 from workshops.filters import (
@@ -633,7 +634,7 @@ class PersonCreate(LoginRequiredMixin, PermissionRequiredMixin,
                    CreateViewContext):
     permission_required = 'workshops.add_person'
     model = Person
-    form_class = PersonForm
+    form_class = PersonCreateForm
     template_name = 'workshops/generic_form.html'
 
     def form_valid(self, form):
@@ -642,6 +643,10 @@ class PersonCreate(LoginRequiredMixin, PermissionRequiredMixin,
 
         See more here: http://stackoverflow.com/a/15745652"""
         self.object = form.save(commit=False)  # don't save M2M fields
+
+        self.object.username = create_username(
+            personal=form.cleaned_data['personal'],
+            family=form.cleaned_data['family'])
 
         # Need to save that object because of commit=False previously.
         # This doesn't save our troublesome M2M field.

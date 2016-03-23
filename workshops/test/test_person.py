@@ -348,6 +348,19 @@ class TestPerson(TestBase):
         )
         person.clean_fields(exclude=['password'])
 
+    def test_new_person_auto_username(self):
+        """Ensure after adding a new person, they're automatically assigned
+        a unique username."""
+        url = reverse('person_add')
+        data = {
+            'personal': 'Albert',
+            'family': 'Einstein',
+            'gender': 'U',
+        }
+        self.client.post(url, data)
+        Person.objects.get(personal='Albert', family='Einstein',
+                           username='einstein_albert')
+
 
 class TestPersonPassword(TestBase):
     """Separate tests for testing password setting.
