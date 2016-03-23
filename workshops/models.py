@@ -867,7 +867,7 @@ class EventRequest(AssignmentMixin, models.Model):
     )
 
     ATTENDEES_NUMBER_CHOICES = (
-        ('1-20', '1-20 (one room, one instructor)'),
+        ('1-20', '1-20 (one room, two instructors)'),
         ('20-40', '20-40 (one room, two instructors)'),
         ('40-80', '40-80 (two rooms, four instructors)'),
         ('80-120', '80-120 (three rooms, six instructors)'),
@@ -876,7 +876,8 @@ class EventRequest(AssignmentMixin, models.Model):
         max_length=STR_MED,
         choices=ATTENDEES_NUMBER_CHOICES,
         help_text='This number doesn\'t need to be precise, but will help us '
-                  'decide how many instructors your workshop will need.',
+                  'decide how many instructors your workshop will need.'
+                  'Each workshop must have at least two instructors.',
         verbose_name='Approximate number of Attendees',
         blank=False,
         default='20-40',
