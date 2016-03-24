@@ -18,6 +18,7 @@ from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
 from rest_framework_csv.renderers import CSVRenderer
+from rest_framework_yaml.renderers import YAMLRenderer
 
 from workshops.models import (
     Badge,
@@ -234,9 +235,10 @@ class ReportsViewSet(ViewSet):
     queryset1 = Event.objects.past_events().order_by('start')
     queryset2 = Award.objects.order_by('awarded')
 
-    # YAML renderer is turned off because it has problems reading our
-    # accumulative generator (lol)
-    renderer_classes = (BrowsableAPIRenderer, JSONRenderer, CSVRenderer)
+    # YAML and CSV renderers don't understand generators (>.<) so we had to
+    # turn the `accumulate` generator results into a list
+    renderer_classes = (BrowsableAPIRenderer, JSONRenderer, CSVRenderer,
+                        YAMLRenderer)
 
     def _add_counts(self, a, b):
         c = b
@@ -264,7 +266,7 @@ class ReportsViewSet(ViewSet):
 
         # run a cumulative generator over the data
         data = accumulate(serializer.data, self._add_counts)
-        return Response(data)
+        return Response(list(data))
 
     @list_route(methods=['GET'])
     def learners_over_time(self, request, format=None):
@@ -276,7 +278,7 @@ class ReportsViewSet(ViewSet):
 
         # run a cumulative generator over the data
         data = accumulate(serializer.data, self._add_counts)
-        return Response(data)
+        return Response(list(data))
 
     @list_route(methods=['GET'])
     def instructors_over_time(self, request, format=None):
@@ -294,7 +296,7 @@ class ReportsViewSet(ViewSet):
         # particular date
         data = self._only_latest_date(data)
 
-        return Response(data)
+        return Response(list(data))
 
     @list_route(methods=['GET'])
     def instructor_num_taught(self, request, format=None):
