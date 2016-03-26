@@ -663,7 +663,7 @@ class Event(AssignmentMixin, models.Model):
         verbose_name="Pre-workshop assessment survey for instructors")
     instructors_post = models.URLField(
         blank=True, default="",
-        verbose_name="Pre-workshop assessment survey for instructors")
+        verbose_name="Post-workshop assessment survey for instructors")
     learners_longterm = models.URLField(
         blank=True, default="",
         verbose_name="Long-term assessment survey for learners")
