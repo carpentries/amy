@@ -748,3 +748,15 @@ class TestEventMerging(TestBase):
 
         for key, value in assertions.items():
             self.assertEqual(set(getattr(self.event_b, key).all()), value, key)
+
+
+class TestEventImport(TestBase):
+    def setUp(self):
+        self._setUpUsersAndLogin()
+
+    def test_no_exception_when_empty_url(self):
+        """Regression test: ensure no exceptions are raised when accessing
+        `event_import` view without `url` GET param."""
+        url = reverse('event_import')
+        rv = self.client.get(url)
+        self.assertLess(rv.status_code, 500)

@@ -768,6 +768,37 @@ Other content.
         errors = validate_tags_from_event_website(tags)
         assert not errors
 
+    def test_no_attribute_error_missing_instructors_helpers(self):
+        """Regression test: ensure no exception is raised when instructors
+        or helpers aren't in the tags or their values are None."""
+        tests = [
+            ((None, None), ([], [])),
+            ((None, ''), ([], [])),
+            (('', None), ([], [])),
+        ]
+        expected = {
+            'slug': '',
+            'language': '',
+            'start': None,
+            'end': None,
+            'country': '',
+            'venue': '',
+            'address': '',
+            'latitude': None,
+            'longitude': None,
+            'reg_key': None,
+            'instructors': [],
+            'helpers': [],
+            'contact': '',
+        }
+
+        for (instructor, helper), (instructors, helpers) in tests:
+            with self.subTest(people=(instructor, helper)):
+                tags = dict(instructor=instructor, helper=helper)
+                expected['instructors'] = instructors
+                expected['helpers'] = helpers
+                self.assertEqual(expected, parse_tags_from_event_website(tags))
+
 
 class TestMembership(TestBase):
     """Tests for SCF membership."""
