@@ -1205,8 +1205,7 @@ def event_import(request):
             .format(url, e.response.status_code)
         )
 
-    except (requests.exceptions.ConnectionError,
-            requests.exceptions.Timeout):
+    except requests.exceptions.RequestException:
         return HttpResponseBadRequest('Network connection error.')
 
     except WrongWorkshopURL as e:
