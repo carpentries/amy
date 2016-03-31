@@ -303,6 +303,12 @@ class Person(AbstractBaseUser, PermissionsMixin):
         """
         return self.is_superuser
 
+    def clean(self):
+        """This will be called by the ModelForm.is_valid(). No saving to the
+        database."""
+        # lowercase the email
+        self.email = self.email.lower()
+
     def save(self, *args, **kwargs):
         # save empty string as NULL to the database - otherwise there are
         # issues with UNIQUE constraint failing

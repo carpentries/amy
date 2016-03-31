@@ -8,7 +8,7 @@ from django.core.urlresolvers import reverse
 from django.core.validators import ValidationError
 from django.contrib.auth.models import Permission, Group
 
-from ..forms import PersonForm, PersonsMergeForm
+from ..forms import PersonForm, PersonCreateForm, PersonsMergeForm
 from ..models import (
     Person, Task, Qualification, Award, Role, Event, KnowledgeDomain, Badge,
     Lesson, Host
@@ -360,6 +360,25 @@ class TestPerson(TestBase):
         self.client.post(url, data)
         Person.objects.get(personal='Albert', family='Einstein',
                            username='einstein_albert')
+
+    def test_person_email_auto_lowercase(self):
+        """Make sure PersonForm/PersonCreateForm lowercases user's email."""
+        data = {
+            'username': 'curie_marie',
+            'personal': 'Marie',
+            'family': 'Curie',
+            'gender': 'F',
+            'email': 'M.CURIE@sorbonne.fr',
+        }
+        url = reverse('person_add')
+        self.client.post(url, data)
+        person = Person.objects.get(username='curie_marie')
+        self.assertEqual(person.email, 'm.curie@sorbonne.fr')
+
+        url = reverse('person_edit', args=[person.pk])
+        self.client.post(url, data)
+        person.refresh_from_db()
+        self.assertEqual(person.email, 'm.curie@sorbonne.fr')
 
 
 class TestPersonPassword(TestBase):
