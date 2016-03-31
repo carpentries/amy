@@ -18,6 +18,7 @@ from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
 from rest_framework_csv.renderers import CSVRenderer
+from rest_framework_yaml.renderers import YAMLRenderer
 
 from workshops.models import (
     Badge,
@@ -234,9 +235,12 @@ class ReportsViewSet(ViewSet):
     queryset1 = Event.objects.past_events().order_by('start')
     queryset2 = Award.objects.order_by('awarded')
 
-    # YAML renderer is turned off because it has problems reading our
-    # accumulative generator (lol)
-    renderer_classes = (BrowsableAPIRenderer, JSONRenderer, CSVRenderer)
+    renderer_classes = (BrowsableAPIRenderer, JSONRenderer, CSVRenderer,
+                        YAMLRenderer)
+
+    # YAML and CSV renderers don't understand generators (>.<) so we had to
+    # turn the `accumulate` generator results into a list
+    formats_requiring_lists = ('csv', 'yaml')
 
     def _add_counts(self, a, b):
         c = b
@@ -255,6 +259,19 @@ class ReportsViewSet(ViewSet):
             prev_ = next_
         yield next_
 
+    def listify(self, iterable, request, format=None):
+        """Some renderers require lists instead of any iterables for rendering.
+        This function conditionally turns iterables into lists based on the
+        format requested by browser."""
+        # choose either '?format=...' or '/url.format' or None
+        format_ = (request.query_params.get('format') or format or '').lower
+
+        if format_ in self.formats_requiring_lists:
+            # list-ify the generator for renderers requiring lists
+            return list(iterable)
+
+        return iterable
+
     @list_route(methods=['GET'])
     def workshops_over_time(self, request, format=None):
         """Cumulative number of workshops run by Software Carpentry over
@@ -264,6 +281,9 @@ class ReportsViewSet(ViewSet):
 
         # run a cumulative generator over the data
         data = accumulate(serializer.data, self._add_counts)
+
+        data = self.listify(data, request, format)
+
         return Response(data)
 
     @list_route(methods=['GET'])
@@ -276,6 +296,9 @@ class ReportsViewSet(ViewSet):
 
         # run a cumulative generator over the data
         data = accumulate(serializer.data, self._add_counts)
+
+        data = self.listify(data, request, format)
+
         return Response(data)
 
     @list_route(methods=['GET'])
@@ -293,6 +316,8 @@ class ReportsViewSet(ViewSet):
         # drop data for the same days by showing the last record for
         # particular date
         data = self._only_latest_date(data)
+
+        data = self.listify(data, request, format)
 
         return Response(data)
 
