@@ -115,6 +115,7 @@ class InstructorNumTaughtSerializer(serializers.Serializer):
     person = serializers.HyperlinkedRelatedField(
         read_only=True, view_name='api:person-detail', lookup_field='pk',
         source='*')
+    name = serializers.CharField(source='get_full_name')
     num_taught = serializers.IntegerField()
 
 

@@ -13,7 +13,7 @@
       $.getJSON('{{ api_endpoint }}?format=json', function(data) {
         var items = [];
         $.each(data, function(record, value) {
-            items.push(value.person + ": " + value.num_taught);
+            items.push(value.name + ": " + value.num_taught);
         });
         $('#source').text(items.join("\n"));
       }, "html");
