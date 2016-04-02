@@ -528,12 +528,10 @@ def parse_tags_from_event_website(tags):
 
     # Split string of comma-separated names into a list, but return empty list
     # instead of [''] when there are no instructors/helpers.
-    instructors = tags.get('instructor', '').split('|')
-    instructors = [instructor.strip() for instructor in instructors]
-    instructors = [] if not any(instructors) else instructors
-    helpers = tags.get('helper', '').split('|')
-    helpers = [helper.strip() for helper in helpers]
-    helpers = [] if not any(helpers) else helpers
+    instructors = (tags.get('instructor') or '').split('|')
+    instructors = [instr.strip() for instr in instructors if instr]
+    helpers = (tags.get('helper') or '').split('|')
+    helpers = [helper.strip() for helper in helpers if helper]
 
     return {
         'slug': tags.get('slug', ''),

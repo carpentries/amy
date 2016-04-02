@@ -303,6 +303,12 @@ class Person(AbstractBaseUser, PermissionsMixin):
         """
         return self.is_superuser
 
+    def clean(self):
+        """This will be called by the ModelForm.is_valid(). No saving to the
+        database."""
+        # lowercase the email
+        self.email = self.email.lower()
+
     def save(self, *args, **kwargs):
         # save empty string as NULL to the database - otherwise there are
         # issues with UNIQUE constraint failing
@@ -436,6 +442,9 @@ class ProfileUpdateRequest(models.Model):
         help_text='Please include lesson URLs.',
         blank=True, default='',
     )
+    notes = models.TextField(
+        default="",
+        blank=True)
 
     def save(self, *args, **kwargs):
         """Save nullable char fields as empty strings."""
@@ -660,7 +669,7 @@ class Event(AssignmentMixin, models.Model):
         verbose_name="Pre-workshop assessment survey for instructors")
     instructors_post = models.URLField(
         blank=True, default="",
-        verbose_name="Pre-workshop assessment survey for instructors")
+        verbose_name="Post-workshop assessment survey for instructors")
     learners_longterm = models.URLField(
         blank=True, default="",
         verbose_name="Long-term assessment survey for learners")
@@ -864,7 +873,7 @@ class EventRequest(AssignmentMixin, models.Model):
     )
 
     ATTENDEES_NUMBER_CHOICES = (
-        ('1-20', '1-20 (one room, one instructor)'),
+        ('1-20', '1-20 (one room, two instructors)'),
         ('20-40', '20-40 (one room, two instructors)'),
         ('40-80', '40-80 (two rooms, four instructors)'),
         ('80-120', '80-120 (three rooms, six instructors)'),
@@ -873,7 +882,8 @@ class EventRequest(AssignmentMixin, models.Model):
         max_length=STR_MED,
         choices=ATTENDEES_NUMBER_CHOICES,
         help_text='This number doesn\'t need to be precise, but will help us '
-                  'decide how many instructors your workshop will need.',
+                  'decide how many instructors your workshop will need.'
+                  'Each workshop must have at least two instructors.',
         verbose_name='Approximate number of Attendees',
         blank=False,
         default='20-40',

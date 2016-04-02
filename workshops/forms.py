@@ -397,6 +397,14 @@ class PersonForm(forms.ModelForm):
                   'domains']
 
 
+class PersonCreateForm(PersonForm):
+    class Meta(PersonForm.Meta):
+        # remove 'username' field as it's being populated after form save
+        # in the `views.PersonCreate.form_valid`
+        fields = PersonForm.Meta.fields.copy()
+        fields.remove('username')
+
+
 class PersonPermissionsForm(forms.ModelForm):
     class Meta:
         model = Person

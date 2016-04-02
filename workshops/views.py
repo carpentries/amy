@@ -62,7 +62,7 @@ from workshops.forms import (
     AdminLookupForm, ProfileUpdateRequestFormNoCaptcha, MembershipForm,
     TodoFormSet, EventsSelectionForm, EventsMergeForm, InvoiceRequestForm,
     InvoiceRequestUpdateForm, EventSubmitForm, EventSubmitFormNoCaptcha,
-    PersonsMergeForm,
+    PersonsMergeForm, PersonCreateForm,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
@@ -80,6 +80,7 @@ from workshops.util import (
     failed_to_delete,
     assign,
     merge_objects,
+    create_username,
 )
 
 from workshops.filters import (
@@ -633,7 +634,7 @@ class PersonCreate(LoginRequiredMixin, PermissionRequiredMixin,
                    CreateViewContext):
     permission_required = 'workshops.add_person'
     model = Person
-    form_class = PersonForm
+    form_class = PersonCreateForm
     template_name = 'workshops/generic_form.html'
 
     def form_valid(self, form):
@@ -642,6 +643,10 @@ class PersonCreate(LoginRequiredMixin, PermissionRequiredMixin,
 
         See more here: http://stackoverflow.com/a/15745652"""
         self.object = form.save(commit=False)  # don't save M2M fields
+
+        self.object.username = create_username(
+            personal=form.cleaned_data['personal'],
+            family=form.cleaned_data['family'])
 
         # Need to save that object because of commit=False previously.
         # This doesn't save our troublesome M2M field.
@@ -1200,8 +1205,7 @@ def event_import(request):
             .format(url, e.response.status_code)
         )
 
-    except (requests.exceptions.ConnectionError,
-            requests.exceptions.Timeout):
+    except requests.exceptions.RequestException:
         return HttpResponseBadRequest('Network connection error.')
 
     except WrongWorkshopURL as e:
@@ -1897,7 +1901,7 @@ def instructor_issues(request):
 
 @login_required
 def object_changes(request, revision_id):
-    revision = Revision.objects.get(pk=revision_id)
+    revision = get_object_or_404(Revision, pk=revision_id)
 
     # we assume there's only one version per revision
     current_version = revision.version_set.all()[0]
@@ -2182,26 +2186,27 @@ def profileupdaterequest_details(request, request_id):
 
     person_selected = False
 
+    person = None
+    form = None
+
     # Nested lookup.
     # First check if there's person with the same email, then maybe check if
     # there's a person with the same first and last names.
     try:
         person = Person.objects.get(email=update_request.email)
-        form = None
     except Person.DoesNotExist:
         try:
             person = Person.objects.get(personal=update_request.personal,
                                         family=update_request.family)
-            form = None
         except (Person.DoesNotExist, Person.MultipleObjectsReturned):
             # Either none or multiple people with the same first and last
             # names.
             # But the user might have submitted some person by themselves. We
             # should check that!
             try:
+                form = PersonLookupForm(request.GET)
                 person = Person.objects.get(pk=int(request.GET['person_1']))
                 person_selected = True
-                form = PersonLookupForm(request.GET)
             except KeyError:
                 person = None
                 # if the form wasn't submitted, initialize it without any
@@ -2646,7 +2651,8 @@ def duplicates(request):
                                                           'personal'))
     names = names_normal & names_switched  # intersection
 
-    switched_criteria = Q()
+    switched_criteria = Q(id=0)
+    # empty query results if names is empty
     for personal, family in names:
         # get people who appear in `names`
         switched_criteria |= (Q(personal=personal) & Q(family=family))
@@ -2659,7 +2665,7 @@ def duplicates(request):
                                     .annotate(count_id=Count('id')) \
                                     .filter(count_id__gt=1)
 
-    duplicate_criteria = Q()
+    duplicate_criteria = Q(id=0)
     for name in duplicate_names:
         # get people who appear in `names`
         duplicate_criteria |= (Q(personal=name['personal']) &
