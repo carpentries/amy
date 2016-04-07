@@ -114,6 +114,24 @@ class TestProfileUpdateRequest(TestBase):
             set(KnowledgeDomain.objects.all()[0:2])
         assert set(person.lessons.all()) == set(Lesson.objects.all()[0:2])
 
+    def test_incomplete_selection_of_matching_person(self):
+        """Regression test: no 500 when incomplete form submitted to select
+        a matching person."""
+        pr = ProfileUpdateRequest.objects.create(
+            active=True,
+            personal='Warry', family='Trotter', email='warry@trotter.com',
+            affiliation='Auror at Ministry of Magic', airport_iata='AAA',
+            occupation='', occupation_other='Auror',
+            github='hpotter', twitter='hpotter',
+            orcid='0000-1111', website='http://warry.trotter.com/', gender='M',
+        )
+        pr.domains.add(*KnowledgeDomain.objects.all()[0:2]),
+        pr.lessons.add(*Lesson.objects.all()[0:2]),
+        url = (reverse('profileupdaterequest_details', args=[pr.pk]) +
+               '?person_0=inigo&person_1=&submit=Submit')
+        rv = self.client.get(url)
+        self.assertNotEqual(rv.status_code, 500)
+
 
 class TestProfileUpdateRequestsViews(TestBase):
     def setUp(self):

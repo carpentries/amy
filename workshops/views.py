@@ -64,7 +64,7 @@ from workshops.forms import (
     AdminLookupForm, ProfileUpdateRequestFormNoCaptcha, MembershipForm,
     TodoFormSet, EventsSelectionForm, EventsMergeForm, InvoiceRequestForm,
     InvoiceRequestUpdateForm, EventSubmitForm, EventSubmitFormNoCaptcha,
-    PersonsMergeForm, PersonCertificateForm
+    PersonsMergeForm, PersonCertificateForm, PersonCreateForm,
 )
 from workshops.util import (
     upload_person_task_csv,  verify_upload_person_task,
@@ -82,6 +82,7 @@ from workshops.util import (
     failed_to_delete,
     assign,
     merge_objects,
+    create_username,
 )
 
 from workshops.filters import (
@@ -637,7 +638,7 @@ class PersonCreate(LoginRequiredMixin, PermissionRequiredMixin,
                    CreateViewContext):
     permission_required = 'workshops.add_person'
     model = Person
-    form_class = PersonForm
+    form_class = PersonCreateForm
     template_name = 'workshops/generic_form.html'
 
     def form_valid(self, form):
@@ -646,6 +647,10 @@ class PersonCreate(LoginRequiredMixin, PermissionRequiredMixin,
 
         See more here: http://stackoverflow.com/a/15745652"""
         self.object = form.save(commit=False)  # don't save M2M fields
+
+        self.object.username = create_username(
+            personal=form.cleaned_data['personal'],
+            family=form.cleaned_data['family'])
 
         # Need to save that object because of commit=False previously.
         # This doesn't save our troublesome M2M field.
@@ -1233,8 +1238,7 @@ def event_import(request):
             .format(url, e.response.status_code)
         )
 
-    except (requests.exceptions.ConnectionError,
-            requests.exceptions.Timeout):
+    except requests.exceptions.RequestException:
         return HttpResponseBadRequest('Network connection error.')
 
     except WrongWorkshopURL as e:
@@ -2235,26 +2239,27 @@ def profileupdaterequest_details(request, request_id):
 
     person_selected = False
 
+    person = None
+    form = None
+
     # Nested lookup.
     # First check if there's person with the same email, then maybe check if
     # there's a person with the same first and last names.
     try:
         person = Person.objects.get(email=update_request.email)
-        form = None
     except Person.DoesNotExist:
         try:
             person = Person.objects.get(personal=update_request.personal,
                                         family=update_request.family)
-            form = None
         except (Person.DoesNotExist, Person.MultipleObjectsReturned):
             # Either none or multiple people with the same first and last
             # names.
             # But the user might have submitted some person by themselves. We
             # should check that!
             try:
+                form = PersonLookupForm(request.GET)
                 person = Person.objects.get(pk=int(request.GET['person_1']))
                 person_selected = True
-                form = PersonLookupForm(request.GET)
             except KeyError:
                 person = None
                 # if the form wasn't submitted, initialize it without any
