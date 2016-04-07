@@ -733,8 +733,8 @@ class TestEventMerging(TestBase):
         for key, value in assertions.items():
             self.assertEqual(getattr(self.event_b, key), value, key)
 
-    def test_merging_m2m_attributes(self):
-        """Merging: ensure M2M-related fields are properly saved/combined."""
+    def test_merging_relational_attributes(self):
+        """Merging: ensure relational fields are properly saved/combined."""
         assertions = {
             'tags': set(Tag.objects.filter(name__in=['SWC', 'DC', 'LC'])),
             'task_set': set(Task.objects.none()),
@@ -748,6 +748,25 @@ class TestEventMerging(TestBase):
 
         for key, value in assertions.items():
             self.assertEqual(set(getattr(self.event_b, key).all()), value, key)
+
+    def test_merging_m2m_attributes(self):
+        """Merging: ensure M2M-related fields are properly saved/combined.
+        This is a regression test; we have to ensure that M2M objects aren't
+        removed from the database."""
+        assertions = {
+            'tags': set(Tag.objects.filter(name__in=['SWC'])),
+        }
+        self.strategy.update({
+            'id': 'obj_a',
+            'tags': 'obj_b',
+        })
+
+        rv = self.client.post(self.url, data=self.strategy)
+        self.assertEqual(rv.status_code, 302)
+        self.event_a.refresh_from_db()
+
+        for key, value in assertions.items():
+            self.assertEqual(set(getattr(self.event_a, key).all()), value, key)
 
 
 class TestEventImport(TestBase):
