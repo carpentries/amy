@@ -14,18 +14,19 @@ import os
 import re
 import tempfile
 import cairosvg
+from django.conf import settings
 
 #---------------------------------------------------------------
 # Main Functions
 
-def process_single(args):
+def generate(args):
     '''Process a single entry and returns their certificate'''
     root_dir = os.path.dirname(__file__)
     template_path = construct_template_path(root_dir, args.badge_type)
-    return create_certificate(template_path, args.params)
+    return create_certificate(template_path, args.params, args.cert_id)
 
 
-def create_certificate(template_path, params):
+def create_certificate(template_path, params, cert_id):
     '''Creates and returns a single certificate.'''
 
     with open(template_path, 'r') as reader:
@@ -37,9 +38,11 @@ def create_certificate(template_path, params):
         template = template.replace(pattern, value)
 
     tmp = tempfile.NamedTemporaryFile(suffix='.svg', delete=False)
+    # tmp = open(str(params.id) + '.svg', 'wb')
     tmp.write(bytes(template, 'utf-8'))
-
-    return cairosvg.svg2pdf(url=tmp.name, dpi=90)
+    filename = os.path.join(settings.CERTIFICATES_DIR, str(cert_id) + '.pdf')
+    cairosvg.svg2pdf(url=tmp.name, dpi=90, write_to=filename)
+    return
 
 #---------------------------------------------------------------
 # Helper Functions

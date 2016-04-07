@@ -1188,7 +1188,6 @@ class Certificate(models.Model):
 
     def get_awarded_by_names(self):
         names = [x.get_full_name() for x in self.awarded_by.all()]
-        print(names)
         return ', '.join(names)
 
 #------------------------------------------------------------

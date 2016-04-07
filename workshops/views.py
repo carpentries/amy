@@ -2,6 +2,7 @@ import csv
 import datetime
 import io
 import re
+import os
 import requests
 
 from django.contrib import messages
@@ -2738,25 +2739,20 @@ def certificate_download(request, certificate_id):
 
     certificate = get_object_or_404(Certificate, pk=certificate_id)
 
-    class Arguments:
-        def __init__(self):
-            self.badge_type = certificate.badge.name
-            self.user_id = certificate.person.username
-            self.params = {}
-            self.params['date'] = certificate.awarded.strftime('%B %d, %Y')
-            self.params['instructor'] = certificate.get_awarded_by_names()
-            self.params['name'] = certificate.person.get_full_name()
+    filename = os.path.join(settings.CERTIFICATES_DIR,
+                            str(certificate.id) + '.pdf')
+    try:
+        binary = open(filename, 'rb')
+    except FileNotFoundError:
+        messages.error(
+            request,
+            'This certificate is not yet available for download. Please check back later.',
+        )
+        return render(request, 'workshops/certificate_error.html')
 
-    args = Arguments()
-
-    from certification import certificates
-    path = certificates.process_single(args)
-    print(path)
-
-    response = HttpResponse(path, content_type='application/pdf')
-    response['Content-Disposition'] = 'inline; filename="{}.pdf"'.format(args.user_id)
+    response = HttpResponse(binary, content_type='application/pdf')
+    response['Content-Disposition'] = 'inline; filename="{}.pdf"'\
+        .format(certificate.person.get_full_name())
     return response
-    # return redirect(reverse(badge_details, args=[badge_name]))
-
 
 #------------------------------------------------------------
