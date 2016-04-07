@@ -788,12 +788,28 @@ def merge_objects(object_a, object_b, easy_fields, difficult_fields,
 
             # switch only if this is opposite object
             if value == 'obj_a' and manager != related_a:
-                manager.all().delete()
-                manager.add(*list(related_a.all()))
+                if hasattr(manager, 'clear'):
+                    # M2M and FK with `null=True` have `.clear()` method
+                    # which unassigns instead of removing the related objects
+                    manager.clear()
+                else:
+                    # in some cases FK are strictly related with the instance
+                    # ie. they cannot be unassigned (`null=False`), so the
+                    # only sensible solution is to remove them
+                    manager.all().delete()
+                manager.set(list(related_a.all()))
 
             elif value == 'obj_b' and manager != related_b:
-                manager.all().delete()
-                manager.add(*list(related_b.all()))
+                if hasattr(manager, 'clear'):
+                    # M2M and FK with `null=True` have `.clear()` method
+                    # which unassigns instead of removing the related objects
+                    manager.clear()
+                else:
+                    # in some cases FK are strictly related with the instance
+                    # ie. they cannot be unassigned (`null=False`), so the
+                    # only sensible solution is to remove them
+                    manager.all().delete()
+                manager.set(list(related_b.all()))
 
             elif value == 'combine':
                 # remove duplicates

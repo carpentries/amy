@@ -664,7 +664,7 @@ class TestPersonMerging(TestBase):
         for key, value in assertions.items():
             self.assertEqual(getattr(self.person_b, key), value, key)
 
-    def test_merging_m2m_attributes(self):
+    def test_merging_relational_attributes(self):
         """Merging: ensure M2M-related fields are properly saved/combined."""
         assertions = {
             # instead testing awards, let's simply test badges
@@ -675,6 +675,28 @@ class TestPersonMerging(TestBase):
                             KnowledgeDomain.objects.last()]),
             'task_set': set(Task.objects.none()),
         }
+
+        rv = self.client.post(self.url, data=self.strategy)
+        self.assertEqual(rv.status_code, 302)
+        self.person_b.refresh_from_db()
+
+        for key, value in assertions.items():
+            self.assertEqual(set(getattr(self.person_b, key).all()), value,
+                             key)
+
+    def test_merging_m2m_attributes(self):
+        """Merging: ensure M2M-related fields are properly saved/combined.
+        This is a regression test; we have to ensure that M2M objects aren't
+        removed from the database."""
+        assertions = {
+            # instead testing awards, let's simply test badges
+            'badges': set(Badge.objects.filter(name='swc-instructor')),
+            # we're saving/combining qualifications, but it affects lessons
+            'lessons': set([self.sql, self.git]),
+            'domains': set([KnowledgeDomain.objects.first(),
+                            KnowledgeDomain.objects.last()]),
+        }
+        self.strategy['qualification_set'] = 'obj_a'
 
         rv = self.client.post(self.url, data=self.strategy)
         self.assertEqual(rv.status_code, 302)
