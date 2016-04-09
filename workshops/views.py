@@ -1196,6 +1196,7 @@ def event_import(request):
 
         # normalize (parse) them
         tags = parse_tags_from_event_website(tags)
+        tags['url'] = url
 
         return JsonResponse(tags)
 
