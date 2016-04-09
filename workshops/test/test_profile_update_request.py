@@ -132,6 +132,44 @@ class TestProfileUpdateRequest(TestBase):
         rv = self.client.get(url)
         self.assertNotEqual(rv.status_code, 500)
 
+    def test_request_accepted_new_person_added(self):
+        """Ensure new person is added when no-one matches the profile update
+        request."""
+        Person.objects.exclude(username='admin').delete()
+        self.assertEqual(Person.objects.count(), 1)
+
+        pr = ProfileUpdateRequest.objects.create(
+            active=True,
+            personal='Warry', family='Trotter', email='warry@trotter.com',
+            affiliation='Auror at Ministry of Magic', airport_iata='AAA',
+            occupation='', occupation_other='Auror',
+            github='hpotter', twitter='hpotter',
+            orcid='0000-1111', website='http://warry.trotter.com/', gender='M',
+        )
+        pr.domains.add(*KnowledgeDomain.objects.all()[0:2]),
+        pr.lessons.add(*Lesson.objects.all()[0:2]),
+        rv = self.client.get(reverse('profileupdaterequest_accept',
+                                     args=[pr.pk]))
+        self.assertEqual(rv.status_code, 302, rv.status_code)
+
+        self.assertEqual(Person.objects.count(), 2)
+        person = Person.objects.get(personal='Warry', family='Trotter')
+        self.assertEqual(person.personal, 'Warry')
+        self.assertEqual(person.family, 'Trotter')
+        self.assertEqual(person.email, 'warry@trotter.com')
+        self.assertEqual(person.affiliation, 'Auror at Ministry of Magic')
+        self.assertEqual(person.airport.iata, 'AAA')
+        self.assertEqual(person.github, 'hpotter')
+        self.assertEqual(person.twitter, 'hpotter')
+        self.assertEqual(person.url, 'http://warry.trotter.com/')
+        self.assertEqual(person.gender, 'M')
+        self.assertEqual(person.occupation, 'Auror')
+        self.assertEqual(person.orcid, '0000-1111')
+        self.assertEqual(set(person.domains.all()),
+                         set(KnowledgeDomain.objects.all()[0:2]))
+        self.assertEqual(set(person.lessons.all()),
+                         set(Lesson.objects.all()[0:2]))
+
 
 class TestProfileUpdateRequestsViews(TestBase):
     def setUp(self):
