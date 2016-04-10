@@ -16,19 +16,19 @@ import tempfile
 import cairosvg
 from django.conf import settings
 
-#---------------------------------------------------------------
+# --------------------------------------------------------------
 # Main Functions
+
 
 def generate(args):
     '''Process a single entry and returns their certificate'''
     root_dir = os.path.dirname(__file__)
-    template_path = construct_template_path(root_dir, args.badge_type)
-    return create_certificate(template_path, args.params, args.cert_id)
+    template_path = construct_template_path(root_dir, args['badge_type'])
+    return create_certificate(template_path, args['params'], args['cert_id'])
 
 
 def create_certificate(template_path, params, cert_id):
-    '''Creates and returns a single certificate.'''
-
+    """Create a PDF certificate from the given parameters."""
     with open(template_path, 'r') as reader:
         template = reader.read()
     check_template(template, params)
@@ -37,20 +37,19 @@ def create_certificate(template_path, params, cert_id):
         pattern = '{{' + key + '}}'
         template = template.replace(pattern, value)
 
-    tmp = tempfile.NamedTemporaryFile(suffix='.svg', delete=False)
-    # tmp = open(str(params.id) + '.svg', 'wb')
-    tmp.write(bytes(template, 'utf-8'))
     filename = os.path.join(settings.CERTIFICATES_DIR, str(cert_id) + '.pdf')
-    cairosvg.svg2pdf(url=tmp.name, dpi=90, write_to=filename)
-    return
+    cairosvg.svg2pdf(bytestring=template.encode('utf-8'),
+                     dpi=90, write_to=filename)
 
-#---------------------------------------------------------------
+# ---------------------------------------------------------------
 # Helper Functions
+
 
 def construct_template_path(root_dir, badge_type):
     '''Create path for template file.'''
 
     return os.path.join(root_dir, badge_type + '.svg')
+
 
 def check_template(template, params):
     '''Check that all values required by template are present.'''
@@ -58,7 +57,9 @@ def check_template(template, params):
     expected = re.findall(r'\{\{([^}]*)\}\}', template)
     missing = set(expected) - set(params.keys())
     check(not missing,
-          'Missing parameters required by template: {0}'.format(' '.join(missing)))
+          'Missing parameters required by template: {0}'
+          .format(' '.join(missing)))
+
 
 def check(condition, message):
     '''Fail if condition not met.'''
@@ -67,4 +68,4 @@ def check(condition, message):
         print(message, file=sys.stderr)
         sys.exit(1)
 
-#---------------------------------------------------------------
+# ---------------------------------------------------------------
