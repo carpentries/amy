@@ -679,6 +679,19 @@ class Event(AssignmentMixin, models.Model):
         help_text='Backlink to the request that created this event.',
     )
 
+    # used in getting tag updates from GitHub
+    repository_last_commit_hash = models.CharField(
+        max_length=40, blank=True, default='',
+        help_text='Event\'s repository last commit SHA1 hash')
+    repository_tags = models.TextField(
+        blank=True, default='',
+        help_text='JSON-serialized tags from event\'s website')
+    tag_changes_detected = models.TextField(
+        blank=True, default='', help_text='List of detected tag changes')
+    tags_changed = models.BooleanField(
+        default=False,
+        help_text='Indicate if tags changed since last check')
+
     class Meta:
         ordering = ('-start', )
 
