@@ -7,15 +7,16 @@ from datetime import date
 from django.core.management import call_command
 from django.test import TestCase
 
-from workshops.management.commands.fake_database import (
+from .base import TestBase
+from ..management.commands.fake_database import (
     Command as FakeDatabaseCommand,
     Faker
 )
-from ..management.commands.instructors_activity import \
-    Command as InstructorsActivityCommand
-
-from .base import TestBase
-from workshops.models import (
+from ..management.commands.instructors_activity import (
+    Command as InstructorsActivityCommand)
+from ..management.commands.check_for_workshop_websites_updates import (
+    Command as WebsiteUpdatesCommand)
+from ..models import (
     Airport,
     Role,
     Badge,
