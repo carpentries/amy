@@ -585,7 +585,7 @@ class PersonCertificateForm(forms.ModelForm):
 
     class Meta:
         model = Certificate
-        fields = '__all__'
+        exclude = ['download_ready']
         widgets = {'person': HiddenInput}
 
 

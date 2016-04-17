@@ -1192,6 +1192,7 @@ class Certificate(models.Model):
     awarded    = models.DateField()
     awarded_by = models.ManyToManyField(
         Person, blank=True, related_name='certified_set')
+    download_ready  = models.BooleanField(default=False)
 
     def get_awarded_by_names(self):
         names = [x.get_full_name() for x in self.awarded_by.all()]

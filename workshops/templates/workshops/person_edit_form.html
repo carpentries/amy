@@ -68,7 +68,11 @@
           <td>{% if certi.awarded_by %}{{ certi.get_awarded_by_names }}{% else %}—{% endif %}</td>
           <td>
             <a onclick='return confirm("Are you sure you wish to drop certificate \"{{ certi.badge.title }}\" from \"{{ certi.person }}\"?")' href="{% url 'certificate_delete' certificate_id=certi.pk person_id=certi.person.pk %}" class='btn btn-danger'>Delete</a>
+            {% if certi.download_ready %}
             <a href="{% url 'certificate_download' certificate_id=certi.id %}" class='btn btn-info'>Download</a>
+            {% else %}
+            <a href="#" class='btn btn-default' disabled data-toggle="tooltip" title="Will be available within 30 minutes.">Download</a>
+            {% endif %}
           </td>
         </tr>
         {% endfor %}
@@ -104,6 +108,9 @@
       format: "yyyy-mm-dd",
       todayHighlight: true
     });
+
+    // enable tooltips
+    $('[data-toggle="tooltip"]').tooltip();
 
     // change tabs if django messages indicates so
     ['awards', 'tasks', 'certificates'].forEach(function(label) {
