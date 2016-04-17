@@ -8,6 +8,7 @@
   <ul class="nav nav-tabs" role="tablist">
     <li role="presentation" class="active"><a href="#person" aria-controls="person" role="tab" data-toggle="tab">Person</a></li>
     <li role="presentation"><a href="#awards" aria-controls="awards" role="tab" data-toggle="tab">Awards</a></li>
+    <li role="presentation"><a href="#certificates" aria-controls="certificates" role="tab" data-toggle="tab">Certificates</a></li>
     <li role="presentation"><a href="#tasks" aria-controls="tasks" role="tab" data-toggle="tab">Tasks</a></li>
   </ul>
 </div>
@@ -47,6 +48,40 @@
     <p>No awards</p>
     {% endif %}
   </div>
+  <div role="tabpanel" class="tab-pane" id="certificates">
+    {% crispy certificate_form form_helper_with_add %}
+    {% if certificates %}
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>badge</th>
+          <th>awarded</th>
+          <th>awarded by</th>
+          <th>action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for certi in certificates %}
+        <tr>
+          <td><a href="{{ certi.badge.get_absolute_url }}">{{ certi.badge.title }}</a></td>
+          <td>{{ certi.awarded }}</td>
+          <td>{% if certi.awarded_by %}{{ certi.get_awarded_by_names }}{% else %}—{% endif %}</td>
+          <td>
+            <a onclick='return confirm("Are you sure you wish to drop certificate \"{{ certi.badge.title }}\" from \"{{ certi.person }}\"?")' href="{% url 'certificate_delete' certificate_id=certi.pk person_id=certi.person.pk %}" class='btn btn-danger'>Delete</a>
+            {% if certi.download_ready %}
+            <a href="{% url 'certificate_download' certificate_id=certi.id %}" class='btn btn-info'>Download</a>
+            {% else %}
+            <a href="#" class='btn btn-default' disabled data-toggle="tooltip" title="Will be available within 30 minutes.">Download</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p>No certificates</p>
+    {% endif %}
+  </div>
   <div role="tabpanel" class="tab-pane" id="tasks">
     {% crispy task_form form_helper_with_add %}
     {% if tasks %}
@@ -66,6 +101,7 @@
 {{ person_form.media }}
 {{ award_form.media }}
 {{ task_form.media }}
+{{ certificate_form.media }}
 <script type="text/javascript">
   $(document).ready(function() {
     $("#id_award-awarded").datepicker({
@@ -73,8 +109,11 @@
       todayHighlight: true
     });
 
+    // enable tooltips
+    $('[data-toggle="tooltip"]').tooltip();
+
     // change tabs if django messages indicates so
-    ['awards', 'tasks'].forEach(function(label) {
+    ['awards', 'tasks', 'certificates'].forEach(function(label) {
       if ($(".alert").hasClass(label)) {
         $('ul[role="tablist"] a[href="#' + label + '"]').tab('show');
       }

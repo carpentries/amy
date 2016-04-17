@@ -58,7 +58,10 @@ urlpatterns = [
     url(r'^tasks/add/$', views.TaskCreate.as_view(), name='task_add'),
 
     url(r'^award/(?P<award_id>\d+)/delete$', views.award_delete, name='award_delete'),
+    url(r'^certificate/(?P<certificate_id>\d+)/delete$', views.certificate_delete, name='certificate_delete'),
+    url(r'^certificate/(?P<certificate_id>\d+)/?$', views.certificate_download, name='certificate_download'),
     url(r'^person/(?P<person_id>[\w\.-]+)/award/(?P<award_id>\d+)/delete$', views.award_delete, name='award_delete'),
+    url(r'^person/(?P<person_id>[\w\.-]+)/certificate/(?P<certificate_id>\d+)/delete$', views.certificate_delete, name='certificate_delete'),
 
     url(r'^badges/?$', views.all_badges, name='all_badges'),
     url(r'^badge/(?P<badge_name>[\w\.=-]+)/?$', views.badge_details, name='badge_details'),

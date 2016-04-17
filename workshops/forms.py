@@ -16,7 +16,7 @@ from django_countries.fields import CountryField
 from selectable import forms as selectable
 
 from workshops.models import (
-    Award, Event, Lesson, Person, Task, Airport, Host,
+    Award, Certificate, Event, Lesson, Person, Task, Airport, Host,
     EventRequest, ProfileUpdateRequest, TodoItem, Membership,
     InvoiceRequest, EventSubmission,
 )
@@ -570,6 +570,22 @@ class PersonAwardForm(forms.ModelForm):
     class Meta:
         model = Award
         fields = '__all__'
+        widgets = {'person': HiddenInput}
+
+
+class PersonCertificateForm(forms.ModelForm):
+
+    awarded_by = selectable.AutoCompleteSelectMultipleField(
+        lookup_class=lookups.PersonLookup,
+        label='Awarded by',
+        required=False,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectMultipleWidget,
+    )
+
+    class Meta:
+        model = Certificate
+        exclude = ['download_ready']
         widgets = {'person': HiddenInput}
 
 

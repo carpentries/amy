@@ -277,3 +277,6 @@ LOGGING = {
         },
     },
 }
+
+# Directory used to host generated certificates
+CERTIFICATES_DIR = os.path.join(BASE_DIR, 'certification', 'certificates')

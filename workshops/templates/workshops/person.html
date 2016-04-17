@@ -64,6 +64,18 @@
     <h5>No awards.</h5>
     {% endif %}
 
+    {% if certificates %}
+    <h5>Certificates:</h5>
+    <ul>
+      {% for c in certificates %}
+      <li>awarded {% if c.awarded_by %}by {{ c.get_awarded_by_names }}{% endif %} a(n) <a href="{{ c.badge.get_absolute_url }}">{{ c.badge }}</a> certificate on {{ c.awarded }} (<a href="{% url 'certificate_download' certificate_id=c.pk %}">download</a>)</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <h5>No certificates.</h5>
+    {% endif %}
+
+
     {% if tasks %}
     <h5>Tasks:</h5>
     <ul>
