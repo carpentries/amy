@@ -26,6 +26,7 @@ from django.db.models import Count, Q, F, Model, ProtectedError
 from django.db.models import Case, When, Value, IntegerField
 from django.shortcuts import redirect, render, get_object_or_404
 from django.template.loader import get_template
+from django.utils.text import slugify
 from django.views.generic import ListView, DetailView, TemplateView
 from django.views.generic.edit import CreateView, UpdateView, ModelFormMixin
 from django.contrib.auth.decorators import login_required, permission_required
@@ -2765,7 +2766,6 @@ def duplicates(request):
 def certificate_download(request, certificate_id):
     """Generate a certificate, and return the pdf for download.
     Used on the person edit page."""
-
     certificate = get_object_or_404(Certificate, pk=certificate_id)
 
     filename = os.path.join(settings.CERTIFICATES_DIR,
@@ -2778,10 +2778,11 @@ def certificate_download(request, certificate_id):
             'This certificate is not yet available for download. Please check back later.',
         )
         return render(request, 'workshops/certificate_error.html')
-
+    namestring = certificate.badge.name + " " + certificate.person.get_full_name()
+    filename = slugify(namestring)
     response = HttpResponse(binary, content_type='application/pdf')
     response['Content-Disposition'] = 'inline; filename="{}.pdf"'\
-        .format(certificate.person.get_full_name())
+        .format(filename)
     return response
 
 #------------------------------------------------------------
