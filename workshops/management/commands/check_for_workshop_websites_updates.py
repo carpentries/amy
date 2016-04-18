@@ -142,12 +142,9 @@ class Command(BaseCommand):
         branch = repo.get_branch('gh-pages')
         return branch
 
-    def detect_changes(self, github, event, save_tags=False):
+    def detect_changes(self, branch, event, save_tags=False):
         """Detect changes made to event's meta tags."""
         changes = []
-
-        # load from API
-        branch = self.load_from_github(github, event.repository_url)
 
         # compare commit hashes
         if branch.commit.sha != event.repository_last_commit_hash:
@@ -178,20 +175,19 @@ class Command(BaseCommand):
                     changes.append(reason)
                     changed = True
 
-            if save_tags:
-                event.repository_tags = self.serialize(tags_new)
             if changed:
+                if save_tags:
+                    # we may not want to update the tags
+                    event.repository_tags = self.serialize(tags_new)
+
                 event.tag_changes_detected = "\n".join(changes)
                 event.tags_changed = True
             event.save()
 
         return changes
 
-    def init(self, github, event):
+    def init(self, branch, event):
         """Load initial data into event's repository and tag information."""
-        # load from API
-        branch = self.load_from_github(github, event.repository_url)
-
         event.repository_last_commit_hash = branch.commit.sha
         tags = self.get_event_tags(event.url)
         event.repository_tags = self.serialize(tags)
@@ -221,10 +217,12 @@ class Command(BaseCommand):
         for event in events:
             try:
                 if initial_run:
-                    self.init(g, event)
+                    branch = self.load_from_github(g, event.repository_url)
+                    self.init(branch, event)
                     print('Initialized {}'.format(event.slug))
                 else:
-                    changes = self.detect_changes(g, event)
+                    branch = self.load_from_github(g, event.repository_url)
+                    changes = self.detect_changes(branch, event)
                     if changes:
                         events_for_update[event.slug] = changes
                         print('Detected changes in {}'.format(event.slug))
