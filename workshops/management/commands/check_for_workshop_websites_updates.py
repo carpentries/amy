@@ -1,4 +1,6 @@
+from collections.abc import Iterable
 import datetime
+from functools import partial
 import json
 
 from django.core.management.base import BaseCommand
@@ -14,45 +16,74 @@ from workshops.util import (
 )
 
 
-class JSONDecoder(json.JSONDecoder):
-    def decode(self, obj):
-        try:
-            # try parsing date
-            v = datetime.datetime.strptime(obj, '%Y-%m-%d')
-            v = v.date()
-        except ValueError:
-            pass
+def datetime_match(string):
+    """Convert string date/datetime/time to date/datetime/time."""
+    try:
+        # try parsing date
+        v = datetime.datetime.strptime(string, '%Y-%m-%d')
+        return v.date()
+    except ValueError:
+        pass
 
-        try:
-            # try parsing datetime (no microseconds, timezone unaware)
-            v = datetime.datetime.strptime(obj, '%Y-%m-%dT%H:%M:%S')
-        except ValueError:
-            pass
+    try:
+        # try parsing datetime (no microseconds, timezone unaware)
+        return datetime.datetime.strptime(string, '%Y-%m-%dT%H:%M:%S')
+    except ValueError:
+        pass
 
-        try:
-            # try parsing datetime (w/ microseconds, timezone unaware)
-            v = datetime.datetime.strptime(obj, '%Y-%m-%dT%H:%M:%S.%f')
-        except ValueError:
-            pass
+    try:
+        # try parsing datetime (w/ microseconds, timezone unaware)
+        return datetime.datetime.strptime(string,
+                                          '%Y-%m-%dT%H:%M:%S.%f')
+    except ValueError:
+        pass
 
-        # TODO: Implement timezone-aware datetime parsing (currently not
-        #       available because datetime.datetime.strptime doesn't support
-        #       "+HH:MM" format [only "+HHMM"]; nor does it support "Z" at the
-        #       end)
+    # TODO: Implement timezone-aware datetime parsing (currently
+    #       not available because datetime.datetime.strptime
+    #       doesn't support "+HH:MM" format [only "+HHMM"]; nor
+    #       does it support "Z" at the end)
 
-        try:
-            # try parsing time (no microseconds, timezone unaware)
-            v = datetime.datetime.strptime(obj, '%H:%M:%S')
-            v = v.time()
-        except ValueError:
-            pass
+    try:
+        # try parsing time (no microseconds, timezone unaware)
+        v = datetime.datetime.strptime(string, '%H:%M:%S')
+        return v.time()
+    except ValueError:
+        pass
 
-        try:
-            # try parsing time (w/ microseconds, timezone unaware)
-            v = datetime.datetime.strptime(obj, '%H:%M:%S.%f')
-            v = v.time()
-        except ValueError:
-            pass
+    try:
+        # try parsing time (w/ microseconds, timezone unaware)
+        v = datetime.datetime.strptime(string, '%H:%M:%S.%f')
+        return v.time()
+    except ValueError:
+        pass
+
+    return string
+
+
+def datetime_decode(obj):
+    """Recursively call for each iterable, and try to decode each string."""
+    iterator = None
+    if isinstance(obj, dict):
+        iterator = obj.items
+    elif isinstance(obj, list):
+        iterator = partial(enumerate, obj)
+
+    if iterator:
+        for k, item in iterator():
+            if isinstance(item, str):
+                obj[k] = datetime_match(item)
+
+            elif isinstance(item, Iterable):
+                # recursive call
+                obj[k] = datetime_decode(item)
+
+        return obj
+
+    elif isinstance(obj, str):
+        return datetime_match(obj)
+
+    else:
+        return obj
 
 
 class Command(BaseCommand):
@@ -100,7 +131,9 @@ class Command(BaseCommand):
 
     def deserialize(self, obj):
         """Deserialize object from the database."""
-        return json.loads(obj, cls=JSONDecoder)
+        objs = json.loads(obj)
+        # convert strings to datetimes (if they match format)
+        return datetime_decode(objs)
 
     def load_from_github(self, github, repo_url, default_branch='gh-pages'):
         """Fetch repository data from GitHub API."""
