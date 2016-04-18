@@ -125,6 +125,10 @@ class Command(BaseCommand):
         tags = parse_tags_from_event_website(tags)
         return tags
 
+    def empty_tags(self):
+        """Prepare basic, empty tags."""
+        return parse_tags_from_event_website({})
+
     def serialize(self, obj):
         """Serialize object to be put in the database."""
         return json.dumps(obj, cls=JSONEncoder)
@@ -153,7 +157,12 @@ class Command(BaseCommand):
 
             tags_new = self.get_event_tags(event.url)
 
-            tags_old = self.deserialize(event.repository_tags)
+            try:
+                tags_old = self.deserialize(event.repository_tags)
+            except json.decoder.JSONDecodeError:
+                # this means that the value in DB is pretty much useless
+                # so let's set it to the default value
+                tags_old = self.empty_tags()
 
             tags_to_check = (
                 ('instructors', 'Instructors changed'),
