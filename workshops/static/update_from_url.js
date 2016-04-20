@@ -54,7 +54,7 @@ $('#update_url_form').submit(function(e) {
           $("#id_event-reg_key").val(data.reg_key);
         }
         if ($("#id_event-url").val() == "") {
-          $("#id_event-url").val(data.url);
+          $("#id_event-url").val(url);
         }
         if ($("#id_event-contact").val() == "") {
           $("#id_event-contact").val(data.contact);

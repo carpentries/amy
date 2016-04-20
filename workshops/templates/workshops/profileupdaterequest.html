@@ -126,11 +126,16 @@
 
 {% if new.active %}
 <div class="clearfix">
-  <div class="edit-object pull-left">
+  <div class="edit-object pull-left btn-group" role="group">
     {% if old and airport and perms.workshops.change_profileupdaterequest and perms.workshops.change_person %}
-    <a href="{% url 'profileupdaterequest_accept' new.pk old.pk %}"  onclick='return confirm("Did you verify the changes with \"{{ old }}\"? If you agree, their record will get updated.")' class="btn btn-success">Update</a>
+    <a href="{% url 'profileupdaterequest_accept' new.pk old.pk %}" role="button" onclick='return confirm("Did you verify the changes with \"{{ old }}\"? If you agree, their record will get updated.")' class="btn btn-success">Update</a>
     {% else %}
-    <a href="#" class="btn btn-success disabled">Update</a>
+    <a href="#" class="btn btn-success disabled" role="button">Update</a>
+    {% endif %}
+    {% if not old and airport and perms.workshops.change_profileupdaterequest and perms.workshops.add_person %}
+    <a href="{% url 'profileupdaterequest_accept' new.pk %}" class="btn btn-success" role="button">Add new person</a>
+    {% else %}
+    <a href="#" class="btn btn-success disabled" role="button">Add new person</a>
     {% endif %}
   </div>
   <div class="btn-group delete-object pull-right" role="group">

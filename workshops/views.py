@@ -2264,9 +2264,9 @@ def profileupdaterequest_discard(request, request_id):
 
 
 @login_required
-@permission_required(['workshops.change_profileupdaterequest',
-                      'workshops.change_person'], raise_exception=True)
-def profileupdaterequest_accept(request, request_id, person_id):
+@permission_required('workshops.change_profileupdaterequest',
+                     raise_exception=True)
+def profileupdaterequest_accept(request, request_id, person_id=None):
     """
     Accept the profile update by rewriting values to selected user's profile.
 
@@ -2277,10 +2277,23 @@ def profileupdaterequest_accept(request, request_id, person_id):
     """
     profileupdate = get_object_or_404(ProfileUpdateRequest, active=True,
                                       pk=request_id)
-    person = get_object_or_404(Person, pk=person_id)
-    person_name = str(person)
-
     airport = get_object_or_404(Airport, iata=profileupdate.airport_iata)
+
+    if person_id is None:
+        person = Person()
+        # since required perms change depending on `person_id`, we have to
+        # check the perms programmatically; here user is required
+        # `workshops.add_person` in order to add a new person
+        if not request.user.has_perm('workshops.add_person'):
+            raise PermissionDenied
+    else:
+        person = get_object_or_404(Person, pk=person_id)
+        person_name = str(person)
+        # since required perms change depending on `person_id`, we have to
+        # check the perms programmatically; here user is required
+        # `workshops.change_person` in order to set existing person's fields
+        if not request.user.has_perm('workshops.change_person'):
+            raise PermissionDenied
 
     person.personal = profileupdate.personal
     person.family = profileupdate.family
@@ -2298,6 +2311,12 @@ def profileupdaterequest_accept(request, request_id, person_id):
         person.occupation = profileupdate.get_occupation_display()
     person.orcid = profileupdate.orcid
     person.gender = profileupdate.gender
+
+    # we need person to exist in the database in order to set domains and
+    # lessons
+    if not person.id:
+        person.save()
+
     person.domains = list(profileupdate.domains.all())
 
     # Since Person.lessons uses a intermediate model Qualification, we ought to
@@ -2317,8 +2336,13 @@ def profileupdaterequest_accept(request, request_id, person_id):
     profileupdate.active = False
     profileupdate.save()
 
-    messages.success(request,
-                     '{} was updated successfully.'.format(person_name))
+    if person_id is None:
+        messages.success(request,
+                         'New person was added successfully.')
+    else:
+        messages.success(request,
+                         '{} was updated successfully.'.format(person_name))
+
     return redirect(person.get_absolute_url())
 
 
