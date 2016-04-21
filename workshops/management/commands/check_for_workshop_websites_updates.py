@@ -175,6 +175,7 @@ class Command(BaseCommand):
                 ('latitude', 'Latitude changed'),
                 ('longitude', 'Longitude changed'),
                 ('contact', 'Contact details changed'),
+                ('reg_key', 'Eventbrite key changed'),
             )
 
             changed = False

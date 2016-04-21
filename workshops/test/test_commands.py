@@ -428,6 +428,7 @@ class TestWebsiteUpdatesCommand(TestBase):
             'Venue changed',
             'Address changed',
             'Contact details changed',
+            'Eventbrite key changed',
         ]
         self.assertEqual(changes, expected)
 
