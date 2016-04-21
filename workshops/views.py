@@ -32,6 +32,8 @@ from django.contrib.auth.decorators import login_required, permission_required
 from reversion.models import Revision
 from reversion.revisions import get_for_object
 
+from workshops.management.commands.check_for_workshop_websites_updates import (
+    Command as WebsiteUpdatesCommand)
 from workshops.models import (
     Airport,
     Award,
@@ -1299,6 +1301,105 @@ def event_invoice(request, event_ident):
         'form_helper': bootstrap_helper,
     }
     return render(request, 'workshops/event_invoice.html', context)
+
+
+@login_required
+@permission_required('workshops.change_event', raise_exception=True)
+def event_review_repo_changes(request, event_ident):
+    """Review changes made to meta tags on event's website."""
+    try:
+        event = Event.get_by_ident(event_ident)
+    except Event.DoesNotExist:
+        raise Http404('No event found matching the query.')
+
+    tags = fetch_event_tags(event.website_url)
+    tags = parse_tags_from_event_website(tags)
+
+    # save serialized tags in session so in case of acceptance we don't reload
+    # them
+    cmd = WebsiteUpdatesCommand()
+    tags_serialized = cmd.serialize(tags)
+    request.session['tags_from_event_website'] = tags_serialized
+
+    context = {
+        'title': 'Review changes for {}'.format(str(event)),
+        'tags': tags,
+        'event': event,
+    }
+    return render(request, 'workshops/event_review_tag_changes.html', context)
+
+
+@login_required
+@permission_required('workshops.change_event', raise_exception=True)
+def event_review_repo_changes_accept(request, event_ident):
+    """Review changes made to meta tags on event's website."""
+    try:
+        event = Event.get_by_ident(event_ident)
+    except Event.DoesNotExist:
+        raise Http404('No event found matching the query.')
+
+    # load serialized tags from session
+    tags_serialized = request.session.get('tags_from_event_website')
+    if not tags_serialized:
+        raise Http404('Nothing to update.')
+    cmd = WebsiteUpdatesCommand()
+    tags = cmd.deserialize(tags_serialized)
+
+    # update values
+    ALLOWED_TAGS = ('start', 'end', 'country', 'venue', 'address', 'latitude',
+                    'longitude', 'contact', 'reg_key')
+    for tag, value in tags.items():
+        if hasattr(event, tag) and tag in ALLOWED_TAGS:
+            setattr(event, tag, value)
+
+    # update instructors and helpers
+    instructors = ', '.join(tags.get('instructors', []))
+    helpers = ', '.join(tags.get('helpers', []))
+    event.notes += (
+        '\n\n---------\nUPDATE {:%Y-%m-%d}:'
+        '\nINSTRUCTORS: {}\n\nHELPERS: {}'
+        .format(datetime.date.today(), instructors, helpers)
+    )
+
+    # save serialized tags
+    event.repository_tags = tags_serialized
+
+    # dismiss notification
+    event.tag_changes_detected = ''
+    event.tags_changed = False
+    event.save()
+
+    # remove tags from session
+    del request.session['tags_from_event_website']
+
+    messages.success(request,
+                     'Successfully updated {}.'.format(event.get_ident()))
+
+    return redirect(reverse('event_details', args=[event.get_ident()]))
+
+
+@login_required
+@permission_required('workshops.change_event', raise_exception=True)
+def event_review_repo_changes_dismiss(request, event_ident):
+    """Review changes made to meta tags on event's website."""
+    try:
+        event = Event.get_by_ident(event_ident)
+    except Event.DoesNotExist:
+        raise Http404('No event found matching the query.')
+
+    # dismiss notification
+    event.tag_changes_detected = ''
+    event.tags_changed = False
+    event.save()
+
+    # remove tags from session
+    if 'tags_from_event_website' in request.session:
+        del request.session['tags_from_event_website']
+
+    messages.success(request,
+                     'Changes to {} were dismissed.'.format(event.get_ident()))
+
+    return redirect(reverse('event_details', args=[event.get_ident()]))
 
 
 class AllInvoiceRequests(LoginRequiredMixin, FilteredListView):
