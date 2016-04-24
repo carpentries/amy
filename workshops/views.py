@@ -1932,7 +1932,7 @@ def object_changes(request, revision_id):
         context['verbose_name'] = obj._meta.verbose_name
         context['fields'] = [
             f for f in obj._meta.get_fields()
-            if f.concrete and not f.is_relation
+            if f.concrete
         ]
         return render(request, 'workshops/object_diff.html', context)
 

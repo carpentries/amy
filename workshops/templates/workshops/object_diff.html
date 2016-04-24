@@ -14,7 +14,11 @@
     {% if field.name != 'id' %}
   <tr>
     <th>{{ field.verbose_name }}:</th>
+    {% if field.is_relation %}
+    <td>{% relation_diff previous_version current_version field %}</td>
+    {% else %}
     <td>{% semantic_diff previous_version current_version field.name %}</td>
+    {% endif %}
   </tr>
     {% endif %}
   {% endfor %}
