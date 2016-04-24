@@ -18,44 +18,35 @@ from workshops.util import (
 
 def datetime_match(string):
     """Convert string date/datetime/time to date/datetime/time."""
-    try:
-        # try parsing date
-        v = datetime.datetime.strptime(string, '%Y-%m-%d')
-        return v.date()
-    except ValueError:
-        pass
+    formats = (
+        # date
+        ('%Y-%m-%d', 'date'),
 
-    try:
-        # try parsing datetime (no microseconds, timezone unaware)
-        return datetime.datetime.strptime(string, '%Y-%m-%dT%H:%M:%S')
-    except ValueError:
-        pass
+        # datetime (no microseconds, timezone unaware)
+        ('%Y-%m-%dT%H:%M:%S', None),
 
-    try:
-        # try parsing datetime (w/ microseconds, timezone unaware)
-        return datetime.datetime.strptime(string,
-                                          '%Y-%m-%dT%H:%M:%S.%f')
-    except ValueError:
-        pass
+        # datetime (w/ microseconds, timezone unaware)
+        ('%Y-%m-%dT%H:%M:%S.%f', None),
+
+        # time (no microseconds, timezone unaware)
+        ('%H:%M:%S', 'time'),
+
+        # try parsing time (w/ microseconds, timezone unaware)
+        ('%H:%M:%S.%f', 'time'),
+    )
+    for format_, method in formats:
+        try:
+            v = datetime.datetime.strptime(string, format_)
+            if method is not None:
+                return getattr(v, method)()
+            return v
+        except ValueError:
+            pass
 
     # TODO: Implement timezone-aware datetime parsing (currently
     #       not available because datetime.datetime.strptime
     #       doesn't support "+HH:MM" format [only "+HHMM"]; nor
     #       does it support "Z" at the end)
-
-    try:
-        # try parsing time (no microseconds, timezone unaware)
-        v = datetime.datetime.strptime(string, '%H:%M:%S')
-        return v.time()
-    except ValueError:
-        pass
-
-    try:
-        # try parsing time (w/ microseconds, timezone unaware)
-        v = datetime.datetime.strptime(string, '%H:%M:%S.%f')
-        return v.time()
-    except ValueError:
-        pass
 
     return string
 
