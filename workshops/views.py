@@ -937,7 +937,6 @@ def all_events(request):
 
 
 @login_required
-@permission_required('workshops.add_todoitem', raise_exception=True)
 def event_details(request, event_ident):
     '''List details of a particular event.'''
     try:
@@ -953,7 +952,8 @@ def event_details(request, event_ident):
         'event': event,
     })
 
-    if request.method == "POST":
+    if request.method == "POST" and request.user.has_perm('workshops.add_todoitem'):
+        # Create ToDo items on todo_form submission only when user has permission
         todo_form = SimpleTodoForm(request.POST, prefix='todo', initial={
             'event': event,
         })
