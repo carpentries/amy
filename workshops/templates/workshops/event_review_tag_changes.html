@@ -1,0 +1,80 @@
+{% extends "base_nav_fixed.html" %}
+
+{% block content %}
+
+  <p>These changes were made by third party to the event's website and/or repository.</p>
+
+  <table class="table table-striped">
+    <tr>
+      <th></th>
+      <th>Current</th>
+      <th>On event's website</th>
+    </tr>
+    <tr>
+      <th>Instructors</th>
+      <td>{% for t in event.task_set.instructors %}{{ t.person.get_full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+      <td>{{ tags.instructors|join:', ' }}</td>
+    </tr>
+    <tr>
+      <th>Helpers</th>
+      <td>{% for t in event.task_set.helpers %}{{ t.person.get_full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+      <td>{{ tags.helpers|join:', ' }}</td>
+    </tr>
+    <tr>
+      <th>Contact</th>
+      <td>{{ event.contact }}</td>
+      <td>{{ tags.contact }}</td>
+    </tr>
+    <tr>
+      <th>Start date</th>
+      <td>{{ event.start }}</td>
+      <td>{{ tags.start }}</td>
+    </tr>
+    <tr>
+      <th>End date</th>
+      <td>{{ event.end }}</td>
+      <td>{{ tags.end }}</td>
+    </tr>
+    <tr>
+      <th>Country</th>
+      <td>{{ event.country }}</td>
+      <td>{{ tags.country }}</td>
+    </tr>
+    <tr>
+      <th>Venue</th>
+      <td>{{ event.venue }}</td>
+      <td>{{ tags.venue }}</td>
+    </tr>
+    <tr>
+      <th>Address</th>
+      <td>{{ event.address }}</td>
+      <td>{{ tags.address }}</td>
+    </tr>
+    <tr>
+      <th>Latitude</th>
+      <td>{{ event.latitude }}</td>
+      <td>{{ tags.latitude }}</td>
+    </tr>
+    <tr>
+      <th>Longitude</th>
+      <td>{{ event.longitude }}</td>
+      <td>{{ tags.longitude }}</td>
+    </tr>
+    <tr>
+      <th>Eventbrite key</th>
+      <td>{{ event.reg_key }}</td>
+      <td>{{ tags.reg_key }}</td>
+    </tr>
+  </table>
+
+  <p>
+    {% if perms.workshops.change_event %}
+    <a href="{% url 'event_review_repo_changes_accept' event.get_ident %}" class="btn btn-success" onclick='return confirm("Do you really want to update saved values? Note: instructors and helpers cannot be updated this way, they have to be updated manually.")'>Update changes</a>
+    <a href="{% url 'event_review_repo_changes_dismiss' event.get_ident %}" class="btn btn-default">Dismiss</a>
+    {% else %}
+    <a href="#" class="btn btn-success">Update changes</a>
+    <a href="#" class="btn btn-default">Dismiss</a>
+    {% endif %}
+  </p>
+
+{% endblock %}

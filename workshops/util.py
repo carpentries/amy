@@ -15,6 +15,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import render
+import requests
 
 from workshops.models import Event, Role, Person, Task, Award, Badge
 
@@ -418,6 +419,37 @@ def get_pagination_items(request, all_objects):
         result = paginator.page(paginator.num_pages)
 
     return result
+
+
+def fetch_event_tags(event_url):
+    """Handle tags from any event site (works with rendered <meta> tags and
+    YAML tags in `index.html`)."""
+    # fetch page
+    response = requests.get(event_url)
+    response.raise_for_status()  # assert it's 200 OK
+    content = response.text
+
+    # find tags
+    tags = find_tags_on_event_website(content)
+
+    if 'slug' not in tags:
+        # there are no HTML tags, so let's try the old method
+        index_url, repository = generate_url_to_event_index(event_url)
+
+        # fetch page
+        response = requests.get(index_url)
+
+        if response.status_code == 200:
+            # don't throw errors for pages we fall back to
+            content = response.text
+            tags = find_tags_on_event_index(content)
+
+            # add 'slug' tag if missing
+            if 'slug' not in tags:
+                tags['slug'] = repository
+
+    # leave normalization or validation to the caller function
+    return tags
 
 
 class WrongWorkshopURL(ValueError):

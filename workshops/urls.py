@@ -42,6 +42,9 @@ urlpatterns = [
     url(r'^event/(?P<event_ident>[\w-]+)/delete$', views.event_delete, name='event_delete'),
     url(r'^events/add/$', views.EventCreate.as_view(), name='event_add'),
     url(r'^event/(?P<event_ident>[\w-]+)/validate/?$', views.validate_event, name='validate_event'),
+    url(r'^event/(?P<event_ident>[\w-]+)/review_tag_changes/?$', views.event_review_repo_changes, name='event_review_repo_changes'),
+    url(r'^event/(?P<event_ident>[\w-]+)/review_tag_changes/accept/?$', views.event_review_repo_changes_accept, name='event_review_repo_changes_accept'),
+    url(r'^event/(?P<event_ident>[\w-]+)/review_tag_changes/dismiss/?$', views.event_review_repo_changes_dismiss, name='event_review_repo_changes_dismiss'),
     url(r'^events/import/?$', views.event_import, name='event_import'),
     url(r'^events/merge/?$', views.events_merge, name='events_merge'),
 

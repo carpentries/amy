@@ -9,10 +9,13 @@ from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.test import TestCase, RequestFactory
 
+import requests_mock
+
 from ..models import Host, Event, Role, Person, Task, Badge, Award
 from ..util import (
     upload_person_task_csv,
     verify_upload_person_task,
+    fetch_event_tags,
     generate_url_to_event_index,
     find_tags_on_event_index,
     find_tags_on_event_website,
@@ -412,59 +415,7 @@ Harry,Potter,harry@hogwarts.edu,foobar,learner
 class TestHandlingEventTags(TestCase):
     maxDiff = None
 
-    def test_generating_url_to_index(self):
-        tests = [
-            'http://swcarpentry.github.io/workshop-template',
-            'https://swcarpentry.github.com/workshop-template',
-            'http://swcarpentry.github.com/workshop-template/',
-        ]
-        expected_url = ('https://raw.githubusercontent.com/swcarpentry/'
-                        'workshop-template/gh-pages/index.html')
-        expected_repo = 'workshop-template'
-        for url in tests:
-            with self.subTest(url=url):
-                url, repo = generate_url_to_event_index(url)
-                self.assertEqual(expected_url, url)
-                self.assertEqual(expected_repo, repo)
-
-    def test_finding_tags_on_index(self):
-        content = """---
-layout: workshop
-root: .
-venue: Euphoric State University
-address: Highway to Heaven 42, Academipolis
-country: us
-language: us
-latlng: 36.998977, -109.045173
-humandate: Jul 13-14, 2015
-humantime: 9:00 - 17:00
-startdate: 2015-07-13
-enddate: "2015-07-14"
-instructor: ["Hermione Granger", "Ron Weasley",]
-helper: ["Peter Parker", "Tony Stark", "Natasha Romanova",]
-contact: hermione@granger.co.uk, rweasley@ministry.gov
-etherpad:
-eventbrite: 10000000
-----
-Other content.
-"""
-        expected = {
-            'startdate': '2015-07-13',
-            'enddate': '2015-07-14',
-            'country': 'us',
-            'venue': 'Euphoric State University',
-            'address': 'Highway to Heaven 42, Academipolis',
-            'latlng': '36.998977, -109.045173',
-            'language': 'us',
-            'instructor': 'Hermione Granger, Ron Weasley',
-            'helper': 'Peter Parker, Tony Stark, Natasha Romanova',
-            'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
-            'eventbrite': '10000000',
-        }
-        self.assertEqual(expected, find_tags_on_event_index(content))
-
-    def test_finding_tags_on_website(self):
-        content = """
+    html_content = """
 <html><head>
 <meta name="slug" content="2015-07-13-test" />
 <meta name="startdate" content="2015-07-13" />
@@ -485,6 +436,83 @@ Other content.
 <h1>test</h1>
 </body></html>
 """
+    yaml_content = """---
+layout: workshop
+root: .
+venue: Euphoric State University
+address: Highway to Heaven 42, Academipolis
+country: us
+language: us
+latlng: 36.998977, -109.045173
+humandate: Jul 13-14, 2015
+humantime: 9:00 - 17:00
+startdate: 2015-07-13
+enddate: "2015-07-14"
+instructor: ["Hermione Granger", "Ron Weasley",]
+helper: ["Peter Parker", "Tony Stark", "Natasha Romanova",]
+contact: hermione@granger.co.uk, rweasley@ministry.gov
+etherpad:
+eventbrite: 10000000
+----
+Other content.
+"""
+
+    @requests_mock.Mocker()
+    def test_fetching_event_tags_html(self, mock):
+        "Ensure 'fetch_event_tags' works correctly with HTML tags provided."
+        website_url = 'https://pbanaszkiewicz.github.io/workshop'
+        repo_url = ('https://raw.githubusercontent.com/pbanaszkiewicz/'
+                    'workshop/gh-pages/index.html')
+        mock.get(website_url, text=self.html_content, status_code=200)
+        mock.get(repo_url, text='', status_code=200)
+        tags = fetch_event_tags(website_url)
+        self.assertEqual(tags['slug'], '2015-07-13-test')
+
+    @requests_mock.Mocker()
+    def test_fetching_event_tags_yaml(self, mock):
+        "Ensure 'fetch_event_tags' works correctly with YAML tags provided."
+        website_url = 'https://pbanaszkiewicz.github.io/workshop'
+        repo_url = ('https://raw.githubusercontent.com/pbanaszkiewicz/'
+                    'workshop/gh-pages/index.html')
+        mock.get(website_url, text='', status_code=200)
+        mock.get(repo_url, text=self.yaml_content, status_code=200)
+        tags = fetch_event_tags(website_url)
+        self.assertEqual(tags['slug'], 'workshop')
+
+    def test_generating_url_to_index(self):
+        tests = [
+            'http://swcarpentry.github.io/workshop-template',
+            'https://swcarpentry.github.com/workshop-template',
+            'http://swcarpentry.github.com/workshop-template/',
+        ]
+        expected_url = ('https://raw.githubusercontent.com/swcarpentry/'
+                        'workshop-template/gh-pages/index.html')
+        expected_repo = 'workshop-template'
+        for url in tests:
+            with self.subTest(url=url):
+                url, repo = generate_url_to_event_index(url)
+                self.assertEqual(expected_url, url)
+                self.assertEqual(expected_repo, repo)
+
+    def test_finding_tags_on_index(self):
+        content = self.yaml_content
+        expected = {
+            'startdate': '2015-07-13',
+            'enddate': '2015-07-14',
+            'country': 'us',
+            'venue': 'Euphoric State University',
+            'address': 'Highway to Heaven 42, Academipolis',
+            'latlng': '36.998977, -109.045173',
+            'language': 'us',
+            'instructor': 'Hermione Granger, Ron Weasley',
+            'helper': 'Peter Parker, Tony Stark, Natasha Romanova',
+            'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
+            'eventbrite': '10000000',
+        }
+        self.assertEqual(expected, find_tags_on_event_index(content))
+
+    def test_finding_tags_on_website(self):
+        content = self.html_content
         expected = {
             'slug': '2015-07-13-test',
             'startdate': '2015-07-13',
