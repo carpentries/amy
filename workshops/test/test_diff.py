@@ -10,16 +10,19 @@ class TestRevisions(TestBase):
     def setUp(self):
         self._setUpUsersAndLogin()
         self._setUpHosts()
-        self.tag, _ = Tag.objects.get_or_create(pk=1)
+        self.tag1, _ = Tag.objects.get_or_create(pk=1)
+        self.tag2, _ = Tag.objects.get_or_create(pk=2)
 
         with create_revision():
             self.event = Event.objects.create(host=self.host_alpha,
                                               slug='event')
+            self.event.tags.add(self.tag1)
+            self.event.save()
 
         with create_revision():
             self.event.slug = 'better-event'
             self.event.host = self.host_beta
-            self.event.tags.add(self.tag)
+            self.event.tags.add(self.tag2)
             self.event.save()
 
         # load versions
@@ -61,21 +64,33 @@ class TestRevisions(TestBase):
             ),
             html=True
         )
-        # Green label for assigned tag
+        # Grey label for pre-assigned tag
+        self.assertContains(rv,
+            '<a class="label label-default" href="#">{}</a>'.format(
+                self.tag1
+            ),
+            html=True
+        )
+        # Green label for additionally assigned tag
         self.assertContains(rv,
             '<a class="label label-success" href="#">+{}</a>'.format(
-                self.tag
+                self.tag2
             ),
             html=True
         )
 
     def test_diff_shows_PK_for_deleted_relationships(self):
         # Delete the tag
-        self.tag.delete()
+        self.tag1.delete()
+        self.tag2.delete()
         # get newer revision page
         rv = self.client.get(reverse('object_changes',
                                      args=[self.newer.revision.pk]))
         self.assertContains(rv,
-            '<a class="label label-success" href="#">+1</a>',
+            '<a class="label label-default" href="#">1</a>',
+            html=True
+        )
+        self.assertContains(rv,
+            '<a class="label label-success" href="#">+2</a>',
             html=True
         )
