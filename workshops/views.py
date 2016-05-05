@@ -438,12 +438,15 @@ def all_persons(request):
         queryset=Person.objects.all().defer('notes')  # notes are too large
     )
     # faster method
-    instructors = Badge.objects.instructor_badges() \
-                               .values_list('person', flat=True)
+    swc_instructors = Badge.objects.instructor_badges('swc-instructor') \
+                                   .values_list('person', flat=True)
+    dc_instructors = Badge.objects.instructor_badges('dc-instructor') \
+                                  .values_list('person', flat=True)
     persons = get_pagination_items(request, filter)
     context = {'title' : 'All Persons',
                'all_persons' : persons,
-               'instructors': instructors,
+               'swc_instructors': swc_instructors,
+               'dc_instructors': dc_instructors,
                'filter': filter,
                'form_helper': bootstrap_helper_filter}
     return render(request, 'workshops/all_persons.html', context)

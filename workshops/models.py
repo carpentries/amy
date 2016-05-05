@@ -1159,8 +1159,14 @@ class BadgeQuerySet(models.query.QuerySet):
 
     INSTRUCTOR_BADGES = ('dc-instructor', 'swc-instructor')
 
-    def instructor_badges(self):
-        """Filter for instructor badges only."""
+    def instructor_badges(self, *extras):
+        """Filter for instructor badges."""
+
+        # Caller has specified which badge(s).
+        if extras:
+            return self.filter(name__in=extras)
+
+        # Caller hasn't specified, so look for instructor badges.
         return self.filter(name__in=self.INSTRUCTOR_BADGES)
 
 
