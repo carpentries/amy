@@ -985,11 +985,17 @@ def event_details(request, event_ident):
     person_lookup_helper = BootstrapHelper()
     person_lookup_helper.form_action = reverse('event_assign',
                                                args=[event_ident])
+    swc_instructors = Badge.objects.instructor_badges('swc-instructor') \
+                                   .values_list('person', flat=True)
+    dc_instructors = Badge.objects.instructor_badges('dc-instructor') \
+                                  .values_list('person', flat=True)
 
     context = {
         'title': 'Event {0}'.format(event),
         'event': event,
         'tasks': tasks,
+        'swc_instructors': swc_instructors,
+        'dc_instructors': dc_instructors,
         'todo_form': todo_form,
         'todos': todos,
         'helper': bootstrap_helper,
