@@ -135,8 +135,8 @@
   </tr>
   {% for t in tasks %}
   <tr>
-    <td class="text-center">{% if t.person.pk in dc_instructors %}Ⓓ{% endif %}</td>
-    <td class="text-center">{% if t.person.pk in swc_instructors %}Ⓢ{% endif %}</td>
+    <td class="text-center">{% if t.person.pk in dc_instructors %}{% bootstrap_tag "DC" %}{% endif %}</td>
+    <td class="text-center">{% if t.person.pk in swc_instructors %}{% bootstrap_tag "SWC" %}{% endif %}</td>
     <td><a href="{{ t.person.get_absolute_url }}">{{ t.person.get_full_name }}</a>{% if t.person.email and t.person.may_contact %} &lt;{{ t.person.email|urlize }}&gt;{% endif %}</td>
     <td>{{ t.role.name }}</td>
   </tr>
