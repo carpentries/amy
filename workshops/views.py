@@ -989,7 +989,7 @@ def event_details(request, event_ident):
         'tasks': tasks,
         'todo_form': todo_form,
         'todos': todos,
-        'all_emails' : ','.join([t.person.email for t in tasks if (t.person.email and t.person.may_contact)]),
+        'all_emails' : [t.person.email for t in tasks if (t.person.email and t.person.may_contact)],
         'helper': bootstrap_helper,
         'today': datetime.date.today(),
         'person_lookup_form': person_lookup_form,
