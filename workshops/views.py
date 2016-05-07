@@ -2071,7 +2071,7 @@ class SWCEventRequestConfirm(TemplateView):
 class DCEventRequest(SWCEventRequest):
     form_class = DCEventRequestForm
     page_title = 'Request a Data Carpentry Workshop'
-    form_template = 'forms/workshop_dc_request.html'
+    template_name = 'forms/workshop_dc_request.html'
     success_url = reverse_lazy('dc_workshop_request_confirm')
 
 
