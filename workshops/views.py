@@ -989,6 +989,9 @@ def event_details(request, event_ident):
         'tasks': tasks,
         'todo_form': todo_form,
         'todos': todos,
+        'all_emails' : tasks.filter(person__may_contact=True)\
+            .exclude(person__email=None)\
+            .values_list('person__email', flat=True),
         'helper': bootstrap_helper,
         'today': datetime.date.today(),
         'person_lookup_form': person_lookup_form,
