@@ -83,7 +83,7 @@ class AdminLookup(ModelLookup):
         admin_group = Group.objects.get(name='administrators')
         results = results.filter(
             Q(is_superuser=True) | Q(groups__in=[admin_group])
-        )
+        ).distinct()
         return results
 
 
