@@ -1614,11 +1614,18 @@ def instructors(request):
     form = InstructorsForm()
 
     lessons = list()
+    swc_instructors = list()
+    dc_instructors = list()
 
     if 'submit' in request.GET:
         form = InstructorsForm(request.GET)
         if form.is_valid():
             data = form.cleaned_data
+
+            swc_instructors = Badge.objects.instructor_badges('swc-instructor') \
+                .values_list('person', flat=True)
+            dc_instructors = Badge.objects.instructor_badges('dc-instructor') \
+                .values_list('person', flat=True)
 
             if data['lessons']:
                 lessons = data['lessons']
@@ -1665,6 +1672,8 @@ def instructors(request):
         'title': 'Find Instructors',
         'form': form,
         'persons': instructors,
+        'swc_instructors': swc_instructors,
+        'dc_instructors': dc_instructors,
         'lessons': lessons,
     }
     return render(request, 'workshops/instructors.html', context)
