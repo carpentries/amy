@@ -1750,9 +1750,6 @@ def search(request):
 @login_required
 def instructors_by_date(request):
     '''Show who taught between begin_date and end_date.'''
-    tasks = None
-
-    start_date = end_date = None
 
     form = DebriefForm()
     if 'begin_date' in request.GET and 'end_date' in request.GET:
@@ -1763,11 +1760,20 @@ def instructors_by_date(request):
         end_date = form.cleaned_data['end_date']
         rvs = ReportsViewSet()
         tasks = rvs.instructors_by_time_queryset(start_date, end_date)
+        emails = tasks.filter(person__may_contact=True)\
+                      .exclude(person__email=None)\
+                      .values_list('person__email', flat=True)
+    else:
+        start_date = None
+        end_date = None
+        tasks = None
+        emails = None
 
     context = {'title': 'List of instructors by time period',
                'form': form,
                'form_helper': bootstrap_helper_get,
                'all_tasks': tasks,
+               'emails': emails,
                'start_date': start_date,
                'end_date': end_date}
     return render(request, 'workshops/instructors_by_date.html', context)
