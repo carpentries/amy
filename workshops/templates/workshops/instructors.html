@@ -24,8 +24,8 @@
       </tr>
     {% for p in persons %}
       <tr>
-	<td class="text-center">{% if p.pk in dc_instructors %}{% bootstrap_tag "DC" %}{% endif %}</td>
-	<td class="text-center">{% if p.pk in swc_instructors %}{% bootstrap_tag "SWC" %}{% endif %}</td>
+	<td class="text-center">{% if p.is_dc_instructor %}{% bootstrap_tag "DC" %}{% endif %}</td>
+	<td class="text-center">{% if p.is_swc_instructor %}{% bootstrap_tag "SWC" %}{% endif %}</td>
         <td><a href="{{ p.get_absolute_url }}">{{ p.get_full_name }}</a>{% if p.email and p.may_contact %} &lt;{{ p.email|urlize }}&gt;{% endif %}</td>
         <td>{{ p.num_taught }}</td>
         <td>{% if p.airport %}<a href="{{ p.airport.get_absolute_url }}">{{ p.airport }}</a>{% else %}—{% endif %}</td>
