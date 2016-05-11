@@ -8,6 +8,9 @@
   <a href="{{ object.get_absolute_url }}" class="btn btn-primary">View newest</a>
 </p>
 <p>Changed on {{ revision.date_created|date:'M j, P' }} by {{ revision.user|default:'Unknown user' }}.</p>
+{% if previous_version == current_version %}
+<p>This is a new object, it doesn't have any previous revisions.</p>
+{% endif %}
 {% block difftable %}
 <table class="table table-striped">
   {% for field in fields %}
