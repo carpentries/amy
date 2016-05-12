@@ -127,6 +127,11 @@ class InstructorsForm(forms.Form):
     GENDER_CHOICES = ((None, '---------'), ) + Person.GENDER_CHOICES
     gender = forms.ChoiceField(choices=GENDER_CHOICES, required=False)
 
+    was_helper = forms.BooleanField(
+        required=False, label='Was helper at least once before')
+    was_organizer = forms.BooleanField(
+        required=False, label='Was organizer at least once before')
+
     def __init__(self, *args, **kwargs):
         '''Build form layout dynamically.'''
         super().__init__(*args, **kwargs)
@@ -156,6 +161,8 @@ class InstructorsForm(forms.Form):
                 css_class='panel panel-default ',
             ),
             'instructor_badges',
+            'was_helper',
+            'was_organizer',
             'gender',
             'lessons',
             FormActions(

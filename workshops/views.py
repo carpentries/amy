@@ -1664,7 +1664,25 @@ def workshop_staff(request):
                 ),
                 output_field=IntegerField()
             )
-        )
+        ),
+        num_helper=Count(
+            Case(
+                When(
+                    task__role__name='helper',
+                    then=Value(1)
+                ),
+                output_field=IntegerField()
+            )
+        ),
+        num_organizer=Count(
+            Case(
+                When(
+                    task__role__name='organizer',
+                    then=Value(1)
+                ),
+                output_field=IntegerField()
+            )
+        ),
     )
     form = InstructorsForm()
 
@@ -1689,8 +1707,8 @@ def workshop_staff(request):
                 x = data['airport'].latitude
                 y = data['airport'].longitude
                 # using Euclidean distance just because it's faster and easier
-                complex_F = ((F('airport__latitude') - x) ** 2
-                             + (F('airport__longitude') - y) ** 2)
+                complex_F = ((F('airport__latitude') - x) ** 2 +
+                             (F('airport__longitude') - y) ** 2)
                 instructors = instructors.annotate(distance=complex_F) \
                                          .order_by('distance', 'family')
 
@@ -1698,8 +1716,8 @@ def workshop_staff(request):
                 x = data['latitude']
                 y = data['longitude']
                 # using Euclidean distance just because it's faster and easier
-                complex_F = ((F('airport__latitude') - x) ** 2
-                             + (F('airport__longitude') - y) ** 2)
+                complex_F = ((F('airport__latitude') - x) ** 2 +
+                             (F('airport__longitude') - y) ** 2)
                 instructors = instructors.annotate(distance=complex_F) \
                                          .order_by('distance', 'family')
 
@@ -1715,12 +1733,19 @@ def workshop_staff(request):
                 for badge in data['instructor_badges']:
                     instructors = instructors.filter(badges__name=badge)
 
+            if data['was_helper']:
+                instructors = instructors.filter(num_helper__gte=1)
+
+            if data['was_organizer']:
+                instructors = instructors.filter(num_organizer__gte=1)
+
     instructors = get_pagination_items(request, instructors)
     context = {
         'title': 'Find Workshop Staff',
         'form': form,
         'persons': instructors,
         'lessons': lessons,
+        'instructor_badges': instructor_badges,
     }
     return render(request, 'workshops/workshop_staff.html', context)
 
