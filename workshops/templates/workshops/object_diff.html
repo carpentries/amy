@@ -8,13 +8,20 @@
   <a href="{{ object.get_absolute_url }}" class="btn btn-primary">View newest</a>
 </p>
 <p>Changed on {{ revision.date_created|date:'M j, P' }} by {{ revision.user|default:'Unknown user' }}.</p>
+{% if previous_version == current_version %}
+<p>This is a new object, it doesn't have any previous revisions.</p>
+{% endif %}
 {% block difftable %}
 <table class="table table-striped">
   {% for field in fields %}
     {% if field.name != 'id' %}
   <tr>
     <th>{{ field.verbose_name }}:</th>
+    {% if field.is_relation %}
+    <td>{% relation_diff previous_version current_version field %}</td>
+    {% else %}
     <td>{% semantic_diff previous_version current_version field.name %}</td>
+    {% endif %}
   </tr>
     {% endif %}
   {% endfor %}

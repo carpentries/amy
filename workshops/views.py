@@ -1990,18 +1990,13 @@ def object_changes(request, revision_id):
         'current_version': current_version,
         'revision': revision,
         'title': str(obj),
-    }
-    if obj.__class__ == Person:
-        return render(request, 'workshops/person_diff.html', context)
-    elif obj.__class__ == Event:
-        return render(request, 'workshops/event_diff.html', context)
-    else:
-        context['verbose_name'] = obj._meta.verbose_name
-        context['fields'] = [
+        'verbose_name': obj._meta.verbose_name,
+        'fields': [
             f for f in obj._meta.get_fields()
-            if f.concrete and not f.is_relation
-        ]
-        return render(request, 'workshops/object_diff.html', context)
+            if f.concrete
+        ],
+    }
+    return render(request, 'workshops/object_diff.html', context)
 
 # ------------------------------------------------------------
 
