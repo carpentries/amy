@@ -1628,24 +1628,33 @@ def all_trainings(request):
 
 
 @login_required
-def instructors(request):
-    '''Search for instructors.'''
+def workshop_staff(request):
+    '''Search for workshop staff.'''
     instructor_badges = Badge.objects.instructor_badges()
-    instructors = Person.objects\
-                        .filter(badges__in=instructor_badges) \
-                        .filter(airport__isnull=False) \
-                        .annotate(is_swc_instructor=Sum(
-                                      Case(When(badges__name='swc-instructor',
-                                                then=1),
-                                           default=0,
-                                           output_field=IntegerField())),
-                                  is_dc_instructor=Sum(
-                                      Case(When(badges__name='dc-instructor',
-                                                then=1),
-                                           default=0,
-                                           output_field=IntegerField()))) \
-                        .select_related('airport') \
-                        .prefetch_related('lessons')
+
+    people = Person.objects.filter(airport__isnull=False) \
+                           .select_related('airport')
+
+    instructors = people.filter(badges__in=instructor_badges) \
+                        .annotate(
+                            is_swc_instructor=Sum(
+                                Case(
+                                    When(badges__name='swc-instructor',
+                                         then=1),
+                                    default=0,
+                                    output_field=IntegerField()
+                                )
+                            ),
+                            is_dc_instructor=Sum(
+                                Case(
+                                    When(badges__name='dc-instructor',
+                                         then=1),
+                                    default=0,
+                                    output_field=IntegerField()
+                                )
+                            )
+                        ).prefetch_related('lessons')
+
     instructors = instructors.annotate(
         num_taught=Count(
             Case(
@@ -1708,12 +1717,12 @@ def instructors(request):
 
     instructors = get_pagination_items(request, instructors)
     context = {
-        'title': 'Find Instructors',
+        'title': 'Find Workshop Staff',
         'form': form,
         'persons': instructors,
         'lessons': lessons,
     }
-    return render(request, 'workshops/instructors.html', context)
+    return render(request, 'workshops/workshop_staff.html', context)
 
 #------------------------------------------------------------
 
