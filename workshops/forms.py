@@ -177,18 +177,18 @@ class WorkshopStaffForm(forms.Form):
         airport = bool(cleaned_data.get('airport'))
         country = bool(cleaned_data.get('country'))
         latlng = lat and lng
-        any_ = any([airport, country, latlng])  # at least one is used
 
         # if searching by coordinates, then there must be both lat & lng
         # present
-        if not (lat ^ lng):
+        if lat ^ lng:
             raise forms.ValidationError(
                 'Must specify both latitude and longitude if searching by '
                 'coordinates')
 
-        # user must search by airport, or country, or coordinates, or none
-        # of them
-        if not (airport ^ country ^ latlng ^ (not any_)):
+        # User must search by airport, or country, or coordinates, or none
+        # of them. Sum of boolean elements must be equal 0 (if general search)
+        # or 1 (if searching by airport OR country OR lat/lng).
+        if sum([airport, country, latlng]) not in [0, 1]:
             raise forms.ValidationError(
                 'Must specify an airport OR a country, OR use coordinates, OR '
                 'none of them.')

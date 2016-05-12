@@ -1,0 +1,196 @@
+from django.core.urlresolvers import reverse
+
+from .base import TestBase
+from ..models import Task, Role, Event
+
+
+class TestLocateWorkshopStaff(TestBase):
+    '''Test cases for locating workshop staff.'''
+
+    def setUp(self):
+        super().setUp()
+        self._setUpUsersAndLogin()
+
+    def test_non_instructors_and_instructors_returned_by_search(self):
+        """Ensure search returns everyone with defined airport."""
+        response = self.client.get(
+            reverse('workshop_staff'),
+            {'airport_1': self.airport_0_0.pk, 'submit': 'Submit'}
+        )
+        self.assertEqual(response.status_code, 200)
+
+        # instructors
+        self.assertIn(self.hermione, response.context['persons'])
+        self.assertIn(self.harry, response.context['persons'])
+        self.assertIn(self.ron, response.context['persons'])
+        # non-instructors
+        self.assertIn(self.spiderman, response.context['persons'])
+        self.assertIn(self.ironman, response.context['persons'])
+        self.assertIn(self.blackwidow, response.context['persons'])
+
+    def test_match_on_one_skill(self):
+        """Ensure people with correct skill are returned."""
+        response = self.client.get(
+            reverse('workshop_staff'),
+            {'airport_1': self.airport_50_100.pk, 'lessons': [self.git.pk],
+             'submit': 'Submit'}
+        )
+        self.assertEqual(response.status_code, 200)
+        # lessons
+        self.assertIn(self.git, response.context['lessons'])
+
+        # instructors
+        self.assertIn(self.hermione, response.context['persons'])
+        self.assertNotIn(self.harry, response.context['persons'])
+        self.assertIn(self.ron, response.context['persons'])
+        # non-instructors
+        self.assertNotIn(self.spiderman, response.context['persons'])
+        self.assertNotIn(self.ironman, response.context['persons'])
+        self.assertNotIn(self.blackwidow, response.context['persons'])
+
+    def test_match_instructors_on_two_skills(self):
+        """Ensure people with correct skills are returned."""
+        response = self.client.get(
+            reverse('workshop_staff'),
+            {'airport_1': self.airport_50_100.pk,
+             'lessons': [self.git.pk, self.sql.pk],
+             'submit': 'Submit'}
+        )
+        self.assertEqual(response.status_code, 200)
+        # lessons
+        self.assertIn(self.git, response.context['lessons'])
+        self.assertIn(self.sql, response.context['lessons'])
+
+        # instructors
+        self.assertIn(self.hermione, response.context['persons'])
+        self.assertNotIn(self.harry, response.context['persons'])
+        self.assertNotIn(self.ron, response.context['persons'])
+        # non-instructors
+        self.assertNotIn(self.spiderman, response.context['persons'])
+        self.assertNotIn(self.ironman, response.context['persons'])
+        self.assertNotIn(self.blackwidow, response.context['persons'])
+
+    def test_match_by_country(self):
+        """Ensure people with airports in Bulgaria are returned."""
+        response = self.client.get(
+            reverse('workshop_staff'),
+            {'country': ['BG'], 'submit': 'Submit'}
+        )
+        self.assertEqual(response.status_code, 200)
+
+        # instructors
+        self.assertNotIn(self.hermione, response.context['persons'])
+        self.assertIn(self.harry, response.context['persons'])
+        self.assertNotIn(self.ron, response.context['persons'])
+        # non-instructors
+        self.assertNotIn(self.spiderman, response.context['persons'])
+        self.assertNotIn(self.ironman, response.context['persons'])
+        self.assertIn(self.blackwidow, response.context['persons'])
+
+    def test_match_by_multiple_countries(self):
+        """Ensure people with airports in Albania and Bulgaria are returned."""
+        response = self.client.get(
+            reverse('workshop_staff'),
+            {'country': ['AL', 'BG'], 'submit': 'Submit'}
+        )
+        self.assertEqual(response.status_code, 200)
+
+        # instructors
+        self.assertIn(self.hermione, response.context['persons'])
+        self.assertIn(self.harry, response.context['persons'])
+        self.assertNotIn(self.ron, response.context['persons'])
+        # non-instructors
+        self.assertNotIn(self.spiderman, response.context['persons'])
+        self.assertNotIn(self.ironman, response.context['persons'])
+        self.assertIn(self.blackwidow, response.context['persons'])
+
+    def test_match_gender(self):
+        """Ensure only people with specific gender are returned."""
+        response = self.client.get(
+            reverse('workshop_staff'),
+            {'airport': self.airport_0_0.pk, 'gender': 'F', 'submit': 'Submit'}
+        )
+        self.assertEqual(response.status_code, 200)
+
+        # instructors
+        self.assertIn(self.hermione, response.context['persons'])
+        self.assertNotIn(self.harry, response.context['persons'])
+        self.assertNotIn(self.ron, response.context['persons'])
+        # non-instructors
+        self.assertNotIn(self.spiderman, response.context['persons'])
+        self.assertNotIn(self.ironman, response.context['persons'])
+        self.assertIn(self.blackwidow, response.context['persons'])
+
+    def test_instructor_badges(self):
+        """Ensure people with instructor badges are returned by search."""
+        response = self.client.get(
+            reverse('workshop_staff'),
+            {'airport': self.airport_0_0.pk,
+             'instructor_badges': ['swc-instructor', 'dc-instructor'],
+             'submit': 'Submit'}
+        )
+        self.assertEqual(response.status_code, 200)
+
+        # instructors
+        self.assertIn(self.hermione, response.context['persons'])
+        self.assertIn(self.harry, response.context['persons'])
+        # Ron doesn't have a DC badge
+        self.assertNotIn(self.ron, response.context['persons'])
+        # non-instructors
+        self.assertNotIn(self.spiderman, response.context['persons'])
+        self.assertNotIn(self.ironman, response.context['persons'])
+        self.assertNotIn(self.blackwidow, response.context['persons'])
+
+    def test_roles(self):
+        """Ensure people with at least one helper/organizer roles are returned
+        by search."""
+        # prepare events and tasks
+        self._setUpEvents()
+        self._setUpRoles()
+        helper_role = Role.objects.get(name='helper')
+        organizer_role = Role.objects.get(name='organizer')
+
+        Task.objects.create(role=helper_role, person=self.spiderman,
+                            event=Event.objects.first())
+        Task.objects.create(role=organizer_role, person=self.blackwidow,
+                            event=Event.objects.first())
+
+        response = self.client.get(
+            reverse('workshop_staff'),
+            {'airport': self.airport_0_0.pk,
+             'was_helper': 'on',
+             'submit': 'Submit'}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(list(response.context['persons']), [self.spiderman])
+
+        response = self.client.get(
+            reverse('workshop_staff'),
+            {'airport': self.airport_0_0.pk,
+             'was_organizer': 'on',
+             'submit': 'Submit'}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(list(response.context['persons']), [self.blackwidow])
+
+    def test_form_logic(self):
+        """Check if logic preventing searching from multiple fields,
+        except lat+lng pair, and allowing searching from no location field,
+        works."""
+        test_vectors = [
+            (True, {'latitude': 1, 'longitude': 2}),
+            (True, dict()),
+            (False, {'latitude': 1}),
+            (False, {'longitude': 1, 'country': ['BG']}),
+            (False, {'latitude': 1, 'longitude': 2, 'country': ['BG']}),
+            (False, {'latitude': 1, 'longitude': 2, 'country': ['BG'],
+                     'airport': self.airport_0_0.pk}),
+        ]
+
+        for form_pass, data in test_vectors:
+            with self.subTest(data=data):
+                params = dict(submit='Submit')
+                params.update(data)
+                rv = self.client.get(reverse('workshop_staff'), params)
+                form = rv.context['form']
+                self.assertEqual(form.is_valid(), form_pass, form.errors)
