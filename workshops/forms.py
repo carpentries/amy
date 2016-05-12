@@ -88,7 +88,7 @@ bootstrap_helper_wider_labels = BootstrapHelperWiderLabels()
 bootstrap_helper_inline_formsets = BootstrapHelperFormsetInline()
 
 
-class InstructorsForm(forms.Form):
+class WorkshopStaffForm(forms.Form):
     '''Represent instructor matching form.'''
 
     latitude = forms.FloatField(label='Latitude',
