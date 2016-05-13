@@ -81,7 +81,7 @@ def datetime_decode(obj):
 
 
 class Command(BaseCommand):
-    help = ''
+    help = 'Check if events have had updated their metadata.'
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -93,8 +93,13 @@ class Command(BaseCommand):
         parser.add_argument(
             '--init', action='store_true', help='Run for the first time.',
         )
+        parser.add_argument(
+            '--cutoff-days', default=180, type=int,
+            help='Age (in days) of the oldest events that can be checked.  '
+                 'Default: 180'
+        )
 
-    def get_events(self):
+    def get_events(self, cutoff_days=180):
         """Get all active events.
 
         This method is used for getting all events that should be checked
@@ -103,7 +108,7 @@ class Command(BaseCommand):
 
         # events as old as 2014 are still marked as active, so we impose age
         # limit of half a year
-        half_a_year = datetime.timedelta(days=182)
+        half_a_year = datetime.timedelta(days=cutoff_days)
         events = events.filter(start__gte=datetime.date.today() - half_a_year)
         return events
 
@@ -209,11 +214,12 @@ class Command(BaseCommand):
         token = options['token']
         initial_run = options['init']
         slug = options['slug']
+        cutoff_days = options['cutoff_days']
 
         g = Github(token)
 
         # get all events
-        events = self.get_events()
+        events = self.get_events(cutoff_days)
 
         if slug:
             events = events.filter(slug=slug)
