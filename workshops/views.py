@@ -1314,6 +1314,32 @@ def event_invoice(request, event_ident):
 
 
 @login_required
+def events_tag_changed(request):
+    """List events with metatags changed."""
+    events = Event.objects.active().filter(tags_changed=True)
+
+    assigned_to, is_admin = assignment_selection(request)
+
+    if assigned_to == 'me':
+        events = events.filter(assigned_to=request.user)
+
+    elif assigned_to == 'noone':
+        events = events.filter(assigned_to=None)
+
+    elif assigned_to == 'all':
+        # no filtering
+        pass
+
+    context = {
+        'title': 'Events with metatags changed',
+        'events': events,
+        'is_admin': is_admin,
+        'assigned_to': assigned_to,
+    }
+    return render(request, 'workshops/events_tag_changed.html', context)
+
+
+@login_required
 @permission_required('workshops.change_event', raise_exception=True)
 def event_review_repo_changes(request, event_ident):
     """Review changes made to meta tags on event's website."""

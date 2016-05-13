@@ -1,0 +1,38 @@
+{% extends "base_nav_fixed.html" %}
+
+{% block content %}
+
+{% if is_admin or user.is_superuser %}
+<div class="row">
+  <div class="col-xs-12">
+    <div class="btn-group" role="group" aria-label="Events assignment">
+      <a href="?assigned_to=me" class="btn btn-default{% if assigned_to == 'me' %} active{% endif %}">Mine</a>
+      <a href="?assigned_to=noone" class="btn btn-default{% if assigned_to == 'noone' %} active{% endif %}">Unassigned</a>
+      <a href="?assigned_to=all" class="btn btn-default{% if assigned_to == 'all' %} active{% endif %}">All</a>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if events.all %}
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Assignee</th>
+        <th>Event</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for event in events.all %}
+      <tr>
+        <td>{% if event.assigned_to %}<a href="{{ event.assigned_to.get_absolute_url }}">{{ event.assigned_to.get_short_name }}</a>{% else %}—{% endif %}</td>
+        <td>{% if not event.slug %}—{% else %}<a href="{{ event.get_absolute_url }}">{{ event.get_ident }}</a>{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+
+{% endif %}
+
+{% endblock %}
