@@ -13,23 +13,23 @@
   {% if persons %}
     <table class="table table-striped">
       <tr>
+	<th>DC?</th>
+	<th>SWC?</th>
         <th>person</th>
         <th>taught</th>
         <th>airport</th>
-        <th style="width: 150px">country</th>
-        <th>instructor badge</th>
+        <th>country</th>
         <th>lessons</th>
         <th>affiliation</th>
       </tr>
     {% for p in persons %}
       <tr>
+	<td class="text-center">{% if p.pk in dc_instructors %}{% bootstrap_tag "DC" %}{% endif %}</td>
+	<td class="text-center">{% if p.pk in swc_instructors %}{% bootstrap_tag "SWC" %}{% endif %}</td>
         <td><a href="{{ p.get_absolute_url }}">{{ p.get_full_name }}</a>{% if p.email and p.may_contact %} &lt;{{ p.email|urlize }}&gt;{% endif %}</td>
         <td>{{ p.num_taught }}</td>
         <td>{% if p.airport %}<a href="{{ p.airport.get_absolute_url }}">{{ p.airport }}</a>{% else %}—{% endif %}</td>
         <td>{% if p.airport %}{{ p.airport.country.name }}{% else %}—{% endif %}</td>
-        <td>{% for badge in p.badges.instructor_badges %}
-        {% bootstrap_tag badge.name|cut:"-instructor"|upper %}
-        {% endfor %}</td>
         <td>
         {% for lesson in p.lessons.all %}
           {% if lesson in lessons %}<strong>{{ lesson }}</strong>{% else %}{{ lesson }}{% endif %}{% if not forloop.last%}, {% endif %}

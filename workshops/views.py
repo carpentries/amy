@@ -438,12 +438,15 @@ def all_persons(request):
         queryset=Person.objects.all().defer('notes')  # notes are too large
     )
     # faster method
-    instructors = Badge.objects.instructor_badges() \
-                               .values_list('person', flat=True)
+    swc_instructors = Badge.objects.instructor_badges('swc-instructor') \
+                                   .values_list('person', flat=True)
+    dc_instructors = Badge.objects.instructor_badges('dc-instructor') \
+                                  .values_list('person', flat=True)
     persons = get_pagination_items(request, filter)
     context = {'title' : 'All Persons',
                'all_persons' : persons,
-               'instructors': instructors,
+               'swc_instructors': swc_instructors,
+               'dc_instructors': dc_instructors,
                'filter': filter,
                'form_helper': bootstrap_helper_filter}
     return render(request, 'workshops/all_persons.html', context)
@@ -982,11 +985,17 @@ def event_details(request, event_ident):
     person_lookup_helper = BootstrapHelper()
     person_lookup_helper.form_action = reverse('event_assign',
                                                args=[event_ident])
+    swc_instructors = Badge.objects.instructor_badges('swc-instructor') \
+                                   .values_list('person', flat=True)
+    dc_instructors = Badge.objects.instructor_badges('dc-instructor') \
+                                  .values_list('person', flat=True)
 
     context = {
         'title': 'Event {0}'.format(event),
         'event': event,
         'tasks': tasks,
+        'swc_instructors': swc_instructors,
+        'dc_instructors': dc_instructors,
         'todo_form': todo_form,
         'todos': todos,
         'all_emails' : tasks.filter(person__may_contact=True)\
@@ -1608,11 +1617,18 @@ def instructors(request):
     form = InstructorsForm()
 
     lessons = list()
+    swc_instructors = list()
+    dc_instructors = list()
 
     if 'submit' in request.GET:
         form = InstructorsForm(request.GET)
         if form.is_valid():
             data = form.cleaned_data
+
+            swc_instructors = Badge.objects.instructor_badges('swc-instructor') \
+                .values_list('person', flat=True)
+            dc_instructors = Badge.objects.instructor_badges('dc-instructor') \
+                .values_list('person', flat=True)
 
             if data['lessons']:
                 lessons = data['lessons']
@@ -1659,6 +1675,8 @@ def instructors(request):
         'title': 'Find Instructors',
         'form': form,
         'persons': instructors,
+        'swc_instructors': swc_instructors,
+        'dc_instructors': dc_instructors,
         'lessons': lessons,
     }
     return render(request, 'workshops/instructors.html', context)
