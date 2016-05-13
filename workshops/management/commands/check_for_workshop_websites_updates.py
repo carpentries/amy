@@ -3,6 +3,7 @@ import datetime
 from functools import partial
 import json
 import socket
+import sys
 
 from django.core.management.base import BaseCommand
 from github import Github
@@ -236,16 +237,20 @@ class Command(BaseCommand):
                         print('Detected changes in {}'.format(event.slug))
 
             except GithubException:
-                print('GitHub error when accessing {} repo'.format(event.slug))
+                print('GitHub error when accessing {} repo'.format(event.slug),
+                      file=sys.stderr)
 
             except socket.timeout:
-                print('Timeout when accessing {} repo'.format(event.slug))
+                print('Timeout when accessing {} repo'.format(event.slug),
+                      file=sys.stderr)
 
             except WrongWorkshopURL:
-                print('Wrong URL for {}'.format(event.slug))
+                print('Wrong URL for {}'.format(event.slug), file=sys.stderr)
 
             except requests.exceptions.RequestException:
-                print('Network error when accessing {}'.format(event.slug))
+                print('Network error when accessing {}'.format(event.slug),
+                      file=sys.stderr)
 
             except Exception as e:
-                print('Unknown error ({}): {}'.format(event.slug, e))
+                print('Unknown error ({}): {}'.format(event.slug, e),
+                      file=sys.stderr)
