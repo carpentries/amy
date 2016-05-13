@@ -1161,6 +1161,7 @@ class BadgeQuerySet(models.query.QuerySet):
 
     def instructor_badges(self):
         """Filter for instructor badges only."""
+
         return self.filter(name__in=self.INSTRUCTOR_BADGES)
 
 

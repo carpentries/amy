@@ -21,7 +21,7 @@ from django.conf import settings
 from django.http import Http404, HttpResponse, JsonResponse
 from django.http import HttpResponseBadRequest
 from django.db import IntegrityError
-from django.db.models import Count, Q, F, Model, ProtectedError
+from django.db.models import Count, Q, F, Model, ProtectedError, Sum
 from django.db.models import Case, When, Value, IntegerField
 from django.shortcuts import redirect, render, get_object_or_404
 from django.template.loader import get_template
@@ -435,15 +435,22 @@ def all_persons(request):
 
     filter = PersonFilter(
         request.GET,
-        queryset=Person.objects.all().defer('notes')  # notes are too large
+        # notes are too large, so we defer them
+        queryset=Person.objects.defer('notes').annotate(
+            is_swc_instructor=Sum(Case(When(badges__name='swc-instructor',
+                                            then=1),
+                                       default=0,
+                                       output_field=IntegerField())),
+            is_dc_instructor=Sum(Case(When(badges__name='dc-instructor',
+                                           then=1),
+                                      default=0,
+                                      output_field=IntegerField())),
+        )
     )
-    # faster method
-    instructors = Badge.objects.instructor_badges() \
-                               .values_list('person', flat=True)
     persons = get_pagination_items(request, filter)
+
     context = {'title' : 'All Persons',
                'all_persons' : persons,
-               'instructors': instructors,
                'filter': filter,
                'form_helper': bootstrap_helper_filter}
     return render(request, 'workshops/all_persons.html', context)
@@ -944,9 +951,20 @@ def event_details(request, event_ident):
     except Event.DoesNotExist:
         raise Http404('Event matching query does not exist.')
 
-    tasks = Task.objects.filter(event__id=event.id) \
-                        .select_related('person', 'role') \
-                        .order_by('role__name')
+    tasks = Task.objects \
+                .filter(event__id=event.id) \
+                .select_related('person', 'role') \
+                .annotate(person_is_swc_instructor=Sum(
+                              Case(When(person__badges__name='swc-instructor',
+                                        then=1),
+                                   default=0,
+                                   output_field=IntegerField())),
+                          person_is_dc_instructor=Sum(
+                              Case(When(person__badges__name='dc-instructor',
+                                        then=1),
+                                   default=0,
+                                   output_field=IntegerField()))) \
+                .order_by('role__name')
     todos = event.todoitem_set.all()
     todo_form = SimpleTodoForm(prefix='todo', initial={
         'event': event,
@@ -982,7 +1000,6 @@ def event_details(request, event_ident):
     person_lookup_helper = BootstrapHelper()
     person_lookup_helper.form_action = reverse('event_assign',
                                                args=[event_ident])
-
     context = {
         'title': 'Event {0}'.format(event),
         'event': event,
@@ -1590,10 +1607,21 @@ def badge_award(request, badge_name):
 def instructors(request):
     '''Search for instructors.'''
     instructor_badges = Badge.objects.instructor_badges()
-    instructors = Person.objects.filter(badges__in=instructor_badges) \
-                                .filter(airport__isnull=False) \
-                                .select_related('airport') \
-                                .prefetch_related('lessons')
+    instructors = Person.objects\
+                        .filter(badges__in=instructor_badges) \
+                        .filter(airport__isnull=False) \
+                        .annotate(is_swc_instructor=Sum(
+                                      Case(When(badges__name='swc-instructor',
+                                                then=1),
+                                           default=0,
+                                           output_field=IntegerField())),
+                                  is_dc_instructor=Sum(
+                                      Case(When(badges__name='dc-instructor',
+                                                then=1),
+                                           default=0,
+                                           output_field=IntegerField()))) \
+                        .select_related('airport') \
+                        .prefetch_related('lessons')
     instructors = instructors.annotate(
         num_taught=Count(
             Case(
