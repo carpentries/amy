@@ -1604,12 +1604,21 @@ def badge_award(request, badge_name):
 def instructors(request):
     '''Search for instructors.'''
     instructor_badges = Badge.objects.instructor_badges()
-    instructors = Person.objects.filter(badges__in=instructor_badges) \
-                                .filter(airport__isnull=False) \
-                                .annotate(is_swc_instructor=Sum(Case(When(badges__name='swc-instructor', then=1), default=0, output_field=IntegerField())),
-                                          is_dc_instructor=Sum(Case(When(badges__name='dc-instructor', then=1), default=0, output_field=IntegerField()))) \
-                                .select_related('airport') \
-                                .prefetch_related('lessons')
+    instructors = Person.objects\
+                        .filter(badges__in=instructor_badges) \
+                        .filter(airport__isnull=False) \
+                        .annotate(is_swc_instructor=Sum(
+                                      Case(When(badges__name='swc-instructor',
+                                                then=1),
+                                           default=0,
+                                           output_field=IntegerField())),
+                                  is_dc_instructor=Sum(
+                                      Case(When(badges__name='dc-instructor',
+                                                then=1),
+                                           default=0,
+                                           output_field=IntegerField()))) \
+                        .select_related('airport') \
+                        .prefetch_related('lessons')
     instructors = instructors.annotate(
         num_taught=Count(
             Case(
