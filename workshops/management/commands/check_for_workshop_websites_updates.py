@@ -2,9 +2,11 @@ from collections.abc import Iterable
 import datetime
 from functools import partial
 import json
+import socket
 
 from django.core.management.base import BaseCommand
 from github import Github
+from github.GithubException import GithubException
 import requests
 from rest_framework.utils.encoders import JSONEncoder
 
@@ -97,6 +99,11 @@ class Command(BaseCommand):
         This method is used for getting all events that should be checked
         against up-to-date data."""
         events = Event.objects.active().filter(url__isnull=False)
+
+        # events as old as 2014 are still marked as active, so we impose age
+        # limit of half a year
+        half_a_year = datetime.timedelta(days=182)
+        events = events.filter(start__gte=datetime.date.today() - half_a_year)
         return events
 
     def parse_github_url(self, url):
@@ -228,8 +235,17 @@ class Command(BaseCommand):
                         events_for_update[event.slug] = changes
                         print('Detected changes in {}'.format(event.slug))
 
+            except GithubException:
+                print('GitHub error when accessing {} repo'.format(event.slug))
+
+            except socket.timeout:
+                print('Timeout when accessing {} repo'.format(event.slug))
+
             except WrongWorkshopURL:
                 print('Wrong URL for {}'.format(event.slug))
 
             except requests.exceptions.RequestException:
                 print('Network error when accessing {}'.format(event.slug))
+
+            except Exception as e:
+                print('Unknown error ({}): {}'.format(event.slug, e))
