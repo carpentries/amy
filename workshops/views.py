@@ -435,9 +435,17 @@ def all_persons(request):
 
     filter = PersonFilter(
         request.GET,
-        queryset=Person.objects.defer('notes') # notes are too large
-                       .annotate(is_swc_instructor=Sum(Case(When(badges__name='swc-instructor', then=1), default=0, output_field=IntegerField())),
-                                 is_dc_instructor=Sum(Case(When(badges__name='dc-instructor', then=1), default=0, output_field=IntegerField())))
+        # notes are too large, so we defer them
+        queryset=Person.objects.defer('notes').annotate(
+            is_swc_instructor=Sum(Case(When(badges__name='swc-instructor',
+                                            then=1),
+                                       default=0,
+                                       output_field=IntegerField())),
+            is_dc_instructor=Sum(Case(When(badges__name='dc-instructor',
+                                           then=1),
+                                      default=0,
+                                      output_field=IntegerField())),
+        )
     )
     persons = get_pagination_items(request, filter)
 
@@ -944,11 +952,20 @@ def event_details(request, event_ident):
     except Event.DoesNotExist:
         raise Http404('Event matching query does not exist.')
 
-    tasks = Task.objects.filter(event__id=event.id) \
-                        .select_related('person', 'role') \
-                        .annotate(person_is_swc_instructor=Sum(Case(When(person__badges__name='swc-instructor', then=1), default=0, output_field=IntegerField())),
-                                  person_is_dc_instructor=Sum(Case(When(person__badges__name='dc-instructor', then=1), default=0, output_field=IntegerField()))) \
-                        .order_by('role__name')
+    tasks = Task.objects \
+                .filter(event__id=event.id) \
+                .select_related('person', 'role') \
+                .annotate(person_is_swc_instructor=Sum(
+                              Case(When(person__badges__name='swc-instructor',
+                                        then=1),
+                                   default=0,
+                                   output_field=IntegerField())),
+                          person_is_dc_instructor=Sum(
+                              Case(When(person__badges__name='dc-instructor',
+                                        then=1),
+                                   default=0,
+                                   output_field=IntegerField()))) \
+                .order_by('role__name')
     todos = event.todoitem_set.all()
     todo_form = SimpleTodoForm(prefix='todo', initial={
         'event': event,
