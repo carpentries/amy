@@ -237,6 +237,12 @@ def dashboard(request):
         # no filtering
         pass
 
+    # assigned events that have unaccepted changes
+    updated_metatags = Event.objects.active() \
+                                    .filter(assigned_to=request.user) \
+                                    .filter(tags_changed=True) \
+                                    .count()
+
     context = {
         'title': None,
         'is_admin': is_admin,
@@ -246,6 +252,7 @@ def dashboard(request):
         'unpublished_events': unpublished_events,
         'todos_start_date': TodoItemQuerySet.current_week_dates()[0],
         'todos_end_date': TodoItemQuerySet.next_week_dates()[1],
+        'updated_metatags': updated_metatags,
     }
     return render(request, 'workshops/dashboard.html', context)
 
