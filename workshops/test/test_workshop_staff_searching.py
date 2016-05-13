@@ -1,7 +1,7 @@
 from django.core.urlresolvers import reverse
 
 from .base import TestBase
-from ..models import Task, Role, Event
+from ..models import Task, Role, Event, Tag, Host
 
 
 class TestLocateWorkshopStaff(TestBase):
@@ -9,8 +9,9 @@ class TestLocateWorkshopStaff(TestBase):
 
     def setUp(self):
         super().setUp()
-        self._setUpUsersAndLogin()
         self._setUpTags()
+        self._setUpRoles()
+        self._setUpUsersAndLogin()
 
     def test_non_instructors_and_instructors_returned_by_search(self):
         """Ensure search returns everyone with defined airport."""
@@ -147,7 +148,6 @@ class TestLocateWorkshopStaff(TestBase):
         by search."""
         # prepare events and tasks
         self._setUpEvents()
-        self._setUpRoles()
         helper_role = Role.objects.get(name='helper')
         organizer_role = Role.objects.get(name='organizer')
 
@@ -195,3 +195,42 @@ class TestLocateWorkshopStaff(TestBase):
                 rv = self.client.get(reverse('workshop_staff'), params)
                 form = rv.context['form']
                 self.assertEqual(form.is_valid(), form_pass, form.errors)
+
+    def test_searching_trainees(self):
+        """Make sure finding trainees works."""
+        response = self.client.get(
+            reverse('workshop_staff'),
+            {'airport': self.airport_0_0.pk,
+             'is_in_progress_trainee': 'on',
+             'submit': 'Submit'}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(list(response.context['persons']), [])
+
+        TTT = Tag.objects.get(name='TTT')
+        stalled = Tag.objects.get(name='stalled')
+        e1 = Event.objects.create(slug='TTT-event', host=Host.objects.first())
+        e1.tags = [TTT]
+        e2 = Event.objects.create(slug='stalled-TTT-event',
+                                  host=Host.objects.first())
+        e2.tags = [TTT, stalled]
+
+        learner = Role.objects.get(name='learner')
+        # Ron is an instructor, so he should not be available as a trainee
+        Task.objects.create(person=self.ron, event=e1, role=learner)
+        Task.objects.create(person=self.ron, event=e2, role=learner)
+        # Black Widow, on the other hand, is now practising to become certified
+        # SWC instructor!
+        Task.objects.create(person=self.blackwidow, event=e1, role=learner)
+        # Spiderman tried to became an instructor, but hasn't finished it yet
+        Task.objects.create(person=self.spiderman, event=e2, role=learner)
+
+        # repeat the query
+        response = self.client.get(
+            reverse('workshop_staff'),
+            {'airport': self.airport_0_0.pk,
+             'is_in_progress_trainee': 'on',
+             'submit': 'Submit'}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(list(response.context['persons']), [self.blackwidow])
