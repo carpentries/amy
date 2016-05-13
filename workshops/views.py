@@ -1602,6 +1602,30 @@ def badge_award(request, badge_name):
 
 #------------------------------------------------------------
 
+@login_required
+def all_trainings(request):
+    '''List all Instructor Trainings.'''
+
+    learner = Role.objects.get(name='learner')
+    ttt = Tag.objects.get(name='TTT')
+
+    finished = Award.objects.filter(badge__in=Badge.objects.instructor_badges(), event__tags=ttt) \
+        .values('event').annotate(finished=Count('person'))
+    finished = {f['event']: f['finished'] for f in finished}
+
+    trainings = Task.objects.filter(role=learner).filter(event__tags=ttt).order_by('event__start') \
+        .values('event', 'event__slug').annotate(trainees=Count('person'))
+    for t in trainings:
+        event_id = t['event']
+        t['finished'] = finished.get(event_id, 0)
+
+    trainings = get_pagination_items(request, trainings)
+    context = {'title': 'All Instructor Trainings',
+               'all_trainings': trainings}
+    return render(request, 'workshops/all_trainings.html', context)
+
+#------------------------------------------------------------
+
 
 @login_required
 def instructors(request):
