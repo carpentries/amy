@@ -1634,51 +1634,26 @@ def workshop_staff(request):
 
     people = Person.objects.filter(airport__isnull=False) \
                            .select_related('airport') \
-                           .prefetch_related('lessons')
+                           .prefetch_related('badges', 'lessons')
 
     # we need to count number of specific roles users had
     # and if they are SWC/DC instructors
     people = people.annotate(
         num_taught=Count(
             Case(
-                When(
-                    task__role__name='instructor',
-                    then=Value(1)
-                ),
+                When(task__role__name='instructor', then=Value(1)),
                 output_field=IntegerField()
             )
         ),
         num_helper=Count(
             Case(
-                When(
-                    task__role__name='helper',
-                    then=Value(1)
-                ),
+                When(task__role__name='helper', then=Value(1)),
                 output_field=IntegerField()
             )
         ),
         num_organizer=Count(
             Case(
-                When(
-                    task__role__name='organizer',
-                    then=Value(1)
-                ),
-                output_field=IntegerField()
-            )
-        ),
-        is_swc_instructor=Sum(
-            Case(
-                When(badges__name='swc-instructor',
-                     then=1),
-                default=0,
-                output_field=IntegerField()
-            )
-        ),
-        is_dc_instructor=Sum(
-            Case(
-                When(badges__name='dc-instructor',
-                     then=1),
-                default=0,
+                When(task__role__name='organizer', then=Value(1)),
                 output_field=IntegerField()
             )
         )
