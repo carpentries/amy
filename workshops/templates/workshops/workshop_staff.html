@@ -16,6 +16,7 @@
         <th>instr. badges</th>
         <th>person</th>
         <th>taught</th>
+        <th>trainee?</th>
         <th>airport</th>
         <th>country</th>
         <th>lessons</th>
@@ -30,6 +31,7 @@
         {% endfor %}</td>
         <td><a href="{{ p.get_absolute_url }}">{{ p.get_full_name }}</a>{% if p.email and p.may_contact %} &lt;{{ p.email|urlize }}&gt;{% endif %}</td>
         <td>{{ p.num_taught }}</td>
+        <td>{% if p.pk in trainees %}yes{% else %}no{% endif %}</td>
         <td>{% if p.airport %}<a href="{{ p.airport.get_absolute_url }}">{{ p.airport }}</a>{% else %}—{% endif %}</td>
         <td>{% if p.airport %}{{ p.airport.country.name }}{% else %}—{% endif %}</td>
         <td>

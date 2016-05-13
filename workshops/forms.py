@@ -131,6 +131,8 @@ class WorkshopStaffForm(forms.Form):
         required=False, label='Was helper at least once before')
     was_organizer = forms.BooleanField(
         required=False, label='Was organizer at least once before')
+    is_in_progress_trainee = forms.BooleanField(
+        required=False, label='Is an in-progress instructor trainee')
 
     def __init__(self, *args, **kwargs):
         '''Build form layout dynamically.'''
@@ -163,6 +165,7 @@ class WorkshopStaffForm(forms.Form):
             'instructor_badges',
             'was_helper',
             'was_organizer',
+            'is_in_progress_trainee',
             'gender',
             'lessons',
             FormActions(

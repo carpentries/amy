@@ -1631,10 +1631,19 @@ def all_trainings(request):
 def workshop_staff(request):
     '''Search for workshop staff.'''
     instructor_badges = Badge.objects.instructor_badges()
+    TTT = Tag.objects.get(name='TTT')
+    stalled = Tag.objects.get(name='stalled')
 
     people = Person.objects.filter(airport__isnull=False) \
                            .select_related('airport') \
                            .prefetch_related('badges', 'lessons')
+
+    trainees = Task.objects.filter(event__tags=TTT) \
+                           .filter(role__name='learner') \
+                           .filter(person__airport__isnull=False) \
+                           .exclude(event__tags=stalled) \
+                           .exclude(person__badges__in=instructor_badges) \
+                           .values_list('person__pk', flat=True)
 
     # we need to count number of specific roles users had
     # and if they are SWC/DC instructors
@@ -1716,6 +1725,13 @@ def workshop_staff(request):
             if data['was_organizer']:
                 people = people.filter(num_organizer__gte=1)
 
+            if data['is_in_progress_trainee']:
+                q = Q(task__event__tags=TTT) & ~Q(task__event__tags=stalled)
+                people = (
+                    people.filter(q, task__role__name='learner')
+                    .exclude(badges__in=instructor_badges)
+                )
+
     people = get_pagination_items(request, people)
     context = {
         'title': 'Find Workshop Staff',
@@ -1723,6 +1739,7 @@ def workshop_staff(request):
         'persons': people,
         'lessons': lessons,
         'instructor_badges': instructor_badges,
+        'trainees': trainees,
     }
     return render(request, 'workshops/workshop_staff.html', context)
 

@@ -10,6 +10,7 @@ class TestLocateWorkshopStaff(TestBase):
     def setUp(self):
         super().setUp()
         self._setUpUsersAndLogin()
+        self._setUpTags()
 
     def test_non_instructors_and_instructors_returned_by_search(self):
         """Ensure search returns everyone with defined airport."""
