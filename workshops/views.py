@@ -237,6 +237,10 @@ def dashboard(request):
         # no filtering
         pass
 
+    else:
+        # no filtering
+        pass
+
     # assigned events that have unaccepted changes
     updated_metatags = Event.objects.active() \
                                     .filter(assigned_to=request.user) \
@@ -1330,6 +1334,10 @@ def events_tag_changed(request):
         # no filtering
         pass
 
+    else:
+        # no filtering
+        pass
+
     context = {
         'title': 'Events with metatags changed',
         'events': events,
@@ -1938,6 +1946,10 @@ def workshop_issues(request):
         events = events.filter(assigned_to=None)
 
     elif assigned_to == 'all':
+        # no filtering
+        pass
+
+    else:
         # no filtering
         pass
 
