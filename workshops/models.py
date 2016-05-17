@@ -694,7 +694,7 @@ class Event(AssignmentMixin, models.Model):
         blank=True, default='', help_text='List of detected metadata changes')
     metadata_changed = models.BooleanField(
         default=False,
-        help_text='Indicate if tags changed since last check')
+        help_text='Indicate if metadata changed since last check')
 
     class Meta:
         ordering = ('-start', )
