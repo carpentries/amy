@@ -18,7 +18,7 @@ from ..util import (
     fetch_event_metadata,
     generate_url_to_event_index,
     find_tags_on_event_index,
-    find_tags_on_event_website,
+    find_metadata_on_event_website,
     parse_tags_from_event_website,
     validate_tags_from_event_website,
     get_members,
@@ -528,7 +528,7 @@ Other content.
             'eventbrite': '10000000',
         }
 
-        self.assertEqual(expected, find_tags_on_event_website(content))
+        self.assertEqual(expected, find_metadata_on_event_website(content))
 
     def test_parsing_empty_tags(self):
         empty_dict = {}

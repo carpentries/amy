@@ -430,7 +430,7 @@ def fetch_event_metadata(event_url):
     content = response.text
 
     # find metadata
-    metadata = find_tags_on_event_website(content)
+    metadata = find_metadata_on_event_website(content)
 
     if 'slug' not in metadata:
         # there are no HTML tags, so let's try the old method
@@ -483,7 +483,7 @@ def find_tags_on_event_index(content):
         first, header, last = content.split('---')
         tags = yaml.load(header.strip())
 
-        # get tags to the form returned by `find_tags_on_event_website`
+        # get tags to the form returned by `find_metadata_on_event_website`
         # because YAML tries to interpret values from index's header
         filtered_tags = {key: value for key, value in tags.items()
                          if key in ALLOWED_TAG_NAMES}
@@ -502,8 +502,8 @@ def find_tags_on_event_index(content):
         return dict()
 
 
-def find_tags_on_event_website(content):
-    """Given website content, find and take <meta> tags that have
+def find_metadata_on_event_website(content):
+    """Given website content, find and take <meta> metadata that have
     workshop-related data."""
 
     R = r'<meta name="(?P<name>[\w-]+)" content="(?P<content>.+)" />$'
