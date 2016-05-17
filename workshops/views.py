@@ -1409,7 +1409,7 @@ def event_review_repo_changes(request, event_ident):
         'tags': tags,
         'event': event,
     }
-    return render(request, 'workshops/event_review_tag_changes.html', context)
+    return render(request, 'workshops/event_review_metadata_changes.html', context)
 
 
 @login_required
