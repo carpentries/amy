@@ -72,7 +72,7 @@ from workshops.util import (
     update_event_attendance_from_tasks,
     WrongWorkshopURL,
     fetch_event_metadata,
-    parse_tags_from_event_website,
+    parse_metadata_from_event_website,
     validate_tags_from_event_website,
     assignment_selection,
     get_pagination_items,
@@ -1208,7 +1208,7 @@ def event_import(request):
     try:
         tags = fetch_event_metadata(url)
         # normalize the tags
-        tags = parse_tags_from_event_website(tags)
+        tags = parse_metadata_from_event_website(tags)
         return JsonResponse(tags)
 
     except requests.exceptions.HTTPError as e:
@@ -1396,7 +1396,7 @@ def event_review_repo_changes(request, event_ident):
         raise Http404('No event found matching the query.')
 
     tags = fetch_event_metadata(event.website_url)
-    tags = parse_tags_from_event_website(tags)
+    tags = parse_metadata_from_event_website(tags)
 
     # save serialized tags in session so in case of acceptance we don't reload
     # them

@@ -19,7 +19,7 @@ from ..util import (
     generate_url_to_event_index,
     find_metadata_on_event_index,
     find_metadata_on_event_website,
-    parse_tags_from_event_website,
+    parse_metadata_from_event_website,
     validate_tags_from_event_website,
     get_members,
     default_membership_cutoff,
@@ -547,7 +547,7 @@ Other content.
             'helpers': [],
             'contact': '',
         }
-        self.assertEqual(expected, parse_tags_from_event_website(empty_dict))
+        self.assertEqual(expected, parse_metadata_from_event_website(empty_dict))
 
     def test_parsing_correct_tags(self):
         tags = {
@@ -579,7 +579,7 @@ Other content.
             'helpers': ['Peter Parker', 'Tony Stark', 'Natasha Romanova'],
             'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
         }
-        self.assertEqual(expected, parse_tags_from_event_website(tags))
+        self.assertEqual(expected, parse_metadata_from_event_website(tags))
 
     def test_parsing_tricky_country_language(self):
         """Ensure we always get a 2-char string or nothing."""
@@ -609,7 +609,7 @@ Other content.
                 tags = dict(country=country, language=language)
                 expected['country'] = country_exp
                 expected['language'] = language_exp
-                self.assertEqual(expected, parse_tags_from_event_website(tags))
+                self.assertEqual(expected, parse_metadata_from_event_website(tags))
 
     def test_parsing_tricky_dates(self):
         """Test if non-dates don't get parsed."""
@@ -638,7 +638,7 @@ Other content.
                 tags = dict(startdate=startdate, enddate=enddate)
                 expected['start'] = start
                 expected['end'] = end
-                self.assertEqual(expected, parse_tags_from_event_website(tags))
+                self.assertEqual(expected, parse_metadata_from_event_website(tags))
 
     def test_parsing_tricky_list_of_names(self):
         """Ensure we always get a list."""
@@ -672,7 +672,7 @@ Other content.
                 tags = dict(instructor=instructor, helper=helper)
                 expected['instructors'] = instructors
                 expected['helpers'] = helpers
-                self.assertEqual(expected, parse_tags_from_event_website(tags))
+                self.assertEqual(expected, parse_metadata_from_event_website(tags))
 
     def test_parsing_tricky_latitude_longitude(self):
         tests = [
@@ -702,7 +702,7 @@ Other content.
                 tags = dict(latlng=latlng)
                 expected['latitude'] = latitude
                 expected['longitude'] = longitude
-                self.assertEqual(expected, parse_tags_from_event_website(tags))
+                self.assertEqual(expected, parse_metadata_from_event_website(tags))
 
     def test_parsing_tricky_eventbrite_id(self):
         tests = [
@@ -729,7 +729,7 @@ Other content.
             with self.subTest(eventbrite_id=eventbrite_id):
                 tags = dict(eventbrite=eventbrite_id)
                 expected['reg_key'] = reg_key
-                self.assertEqual(expected, parse_tags_from_event_website(tags))
+                self.assertEqual(expected, parse_metadata_from_event_website(tags))
 
     def test_validating_invalid_tags(self):
         tags = {
@@ -825,7 +825,7 @@ Other content.
                 tags = dict(instructor=instructor, helper=helper)
                 expected['instructors'] = instructors
                 expected['helpers'] = helpers
-                self.assertEqual(expected, parse_tags_from_event_website(tags))
+                self.assertEqual(expected, parse_metadata_from_event_website(tags))
 
 
 class TestMembership(TestBase):

@@ -513,25 +513,25 @@ def find_metadata_on_event_website(content):
             if name in ALLOWED_METADATA_NAMES}
 
 
-def parse_tags_from_event_website(tags):
-    """Simple preprocessing of the tags from event website."""
+def parse_metadata_from_event_website(metadata):
+    """Simple preprocessing of the metadata from event website."""
     # no compatibility with old-style names
-    country = tags.get('country', '').upper()[0:2]
+    country = metadata.get('country', '').upper()[0:2]
     if len(country) < 2:
         country = ''
-    language = tags.get('language', '').upper()[0:2]
+    language = metadata.get('language', '').upper()[0:2]
     if len(language) < 2:
         language = ''
 
     try:
-        latitude, _ = tags.get('latlng', '').split(',')
+        latitude, _ = metadata.get('latlng', '').split(',')
         latitude = float(latitude.strip())
     except (ValueError, AttributeError):
         # value error: can't convert string to float
         # attribute error: object doesn't have "split" or "strip" methods
         latitude = None
     try:
-        _, longitude = tags.get('latlng', '').split(',')
+        _, longitude = metadata.get('latlng', '').split(',')
         longitude = float(longitude.strip())
     except (ValueError, AttributeError):
         # value error: can't convert string to float
@@ -539,7 +539,7 @@ def parse_tags_from_event_website(tags):
         longitude = None
 
     try:
-        reg_key = tags.get('eventbrite', '')
+        reg_key = metadata.get('eventbrite', '')
         reg_key = int(reg_key)
     except (ValueError, TypeError):
         # value error: can't convert string to int
@@ -547,38 +547,38 @@ def parse_tags_from_event_website(tags):
         reg_key = None
 
     try:
-        start = tags.get('startdate', '')
+        start = metadata.get('startdate', '')
         start = datetime.datetime.strptime(start, '%Y-%m-%d').date()
     except ValueError:
         start = None
 
     try:
-        end = tags.get('enddate', '')
+        end = metadata.get('enddate', '')
         end = datetime.datetime.strptime(end, '%Y-%m-%d').date()
     except ValueError:
         end = None
 
     # Split string of comma-separated names into a list, but return empty list
     # instead of [''] when there are no instructors/helpers.
-    instructors = (tags.get('instructor') or '').split('|')
+    instructors = (metadata.get('instructor') or '').split('|')
     instructors = [instr.strip() for instr in instructors if instr]
-    helpers = (tags.get('helper') or '').split('|')
+    helpers = (metadata.get('helper') or '').split('|')
     helpers = [helper.strip() for helper in helpers if helper]
 
     return {
-        'slug': tags.get('slug', ''),
+        'slug': metadata.get('slug', ''),
         'language': language,
         'start': start,
         'end': end,
         'country': country,
-        'venue': tags.get('venue', ''),
-        'address': tags.get('address', ''),
+        'venue': metadata.get('venue', ''),
+        'address': metadata.get('address', ''),
         'latitude': latitude,
         'longitude': longitude,
         'reg_key': reg_key,
         'instructors': instructors,
         'helpers': helpers,
-        'contact': tags.get('contact', ''),
+        'contact': metadata.get('contact', ''),
     }
 
 
