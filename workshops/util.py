@@ -27,7 +27,7 @@ SIMPLE_EMAIL = re.compile(r'^\S+@\S+\.\S+$')
 
 NUM_TRIES = 100
 
-ALLOWED_TAG_NAMES = [
+ALLOWED_METADATA_NAMES = [
     'slug', 'startdate', 'enddate', 'country', 'venue', 'address',
     'latlng', 'language', 'eventbrite', 'instructor', 'helper', 'contact',
 ]
@@ -486,7 +486,7 @@ def find_tags_on_event_index(content):
         # get tags to the form returned by `find_metadata_on_event_website`
         # because YAML tries to interpret values from index's header
         filtered_tags = {key: value for key, value in tags.items()
-                         if key in ALLOWED_TAG_NAMES}
+                         if key in ALLOWED_METADATA_NAMES}
         for key, value in filtered_tags.items():
             if isinstance(value, int):
                 filtered_tags[key] = str(value)
@@ -510,7 +510,7 @@ def find_metadata_on_event_website(content):
     regexp = re.compile(R, re.M)
 
     return {name: content for name, content in regexp.findall(content)
-            if name in ALLOWED_TAG_NAMES}
+            if name in ALLOWED_METADATA_NAMES}
 
 
 def parse_tags_from_event_website(tags):
