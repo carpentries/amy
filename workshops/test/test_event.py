@@ -850,7 +850,7 @@ class TestEventReviewingRepoChanges(TestBase):
 
         self.assertEqual(self.event.tags_changed, False)
         self.assertEqual(self.event.tag_changes_detected, '')
-        self.assertEqual(self.event.repository_tags, self.tags_serialized)
+        self.assertEqual(self.event.repository_metadata, self.tags_serialized)
         for tag, value in self.tags.items():
             if tag not in ('slug', 'instructors', 'helpers', 'language'):
                 self.assertEqual(getattr(self.event, tag), value)

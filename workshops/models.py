@@ -687,9 +687,9 @@ class Event(AssignmentMixin, models.Model):
     repository_last_commit_hash = models.CharField(
         max_length=40, blank=True, default='',
         help_text='Event\'s repository last commit SHA1 hash')
-    repository_tags = models.TextField(
+    repository_metadata = models.TextField(
         blank=True, default='',
-        help_text='JSON-serialized tags from event\'s website')
+        help_text='JSON-serialized metadata from event\'s website')
     tag_changes_detected = models.TextField(
         blank=True, default='', help_text='List of detected tag changes')
     tags_changed = models.BooleanField(

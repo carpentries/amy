@@ -407,7 +407,7 @@ class TestWebsiteUpdatesCommand(TestBase):
             slug='with-changes', host=Host.objects.first(),
             url='https://swcarpentry.github.io/workshop-template/',
             repository_last_commit_hash=hash_,
-            repository_tags='',
+            repository_metadata='',
             tags_changed=False)
 
         branch = MagicMock()
@@ -426,7 +426,7 @@ class TestWebsiteUpdatesCommand(TestBase):
         tags['instructors'] = self.expected_metadata_parsed['instructors']
         tags['latitude'] = self.expected_metadata_parsed['latitude']
         tags['longitude'] = self.expected_metadata_parsed['longitude']
-        e.repository_tags = self.cmd.serialize(tags)
+        e.repository_metadata = self.cmd.serialize(tags)
         e.save()
 
         changes = self.cmd.detect_changes(branch, e)
@@ -448,7 +448,7 @@ class TestWebsiteUpdatesCommand(TestBase):
         e = Event.objects.create(
             slug='with-changes', host=Host.objects.first(),
             url='https://swcarpentry.github.io/workshop-template/',
-            repository_last_commit_hash='', repository_tags='',
+            repository_last_commit_hash='', repository_metadata='',
             tags_changed=False, tag_changes_detected='')
 
         hash_ = 'abcdefghijklmnopqrstuvwxyz'
@@ -463,7 +463,7 @@ class TestWebsiteUpdatesCommand(TestBase):
         e.refresh_from_db()
         # tags updated
         self.assertEqual(e.repository_last_commit_hash, hash_)
-        self.assertEqual(self.cmd.deserialize(e.repository_tags),
+        self.assertEqual(self.cmd.deserialize(e.repository_metadata),
                          self.expected_metadata_parsed)
         self.assertEqual(e.tag_changes_detected, '')
         self.assertEqual(e.tags_changed, False)

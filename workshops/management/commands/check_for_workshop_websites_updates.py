@@ -162,7 +162,7 @@ class Command(BaseCommand):
             tags_new = self.get_event_metadata(event.url)
 
             try:
-                tags_old = self.deserialize(event.repository_tags)
+                tags_old = self.deserialize(event.repository_metadata)
             except json.decoder.JSONDecodeError:
                 # this means that the value in DB is pretty much useless
                 # so let's set it to the default value
@@ -192,7 +192,7 @@ class Command(BaseCommand):
             if changed:
                 if save_tags:
                     # we may not want to update the tags
-                    event.repository_tags = self.serialize(tags_new)
+                    event.repository_metadata = self.serialize(tags_new)
 
                 event.tag_changes_detected = "\n".join(changes)
                 event.tags_changed = True
@@ -204,7 +204,7 @@ class Command(BaseCommand):
         """Load initial data into event's repository and tag information."""
         event.repository_last_commit_hash = branch.commit.sha
         tags = self.get_event_metadata(event.url)
-        event.repository_tags = self.serialize(tags)
+        event.repository_metadata = self.serialize(tags)
         event.tag_changes_detected = ''
         event.tags_changed = False
         event.save()

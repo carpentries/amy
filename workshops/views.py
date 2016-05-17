@@ -1445,7 +1445,7 @@ def event_review_repo_changes_accept(request, event_ident):
     )
 
     # save serialized tags
-    event.repository_tags = tags_serialized
+    event.repository_metadata = tags_serialized
 
     # dismiss notification
     event.tag_changes_detected = ''
