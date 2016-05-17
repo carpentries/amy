@@ -129,8 +129,8 @@ class Command(BaseCommand):
         metadata = parse_metadata_from_event_website(metadata)
         return metadata
 
-    def empty_tags(self):
-        """Prepare basic, empty tags."""
+    def empty_metadata(self):
+        """Prepare basic, empty metadata."""
         return parse_metadata_from_event_website({})
 
     def serialize(self, obj):
@@ -166,7 +166,7 @@ class Command(BaseCommand):
             except json.decoder.JSONDecodeError:
                 # this means that the value in DB is pretty much useless
                 # so let's set it to the default value
-                tags_old = self.empty_tags()
+                tags_old = self.empty_metadata()
 
             tags_to_check = (
                 ('instructors', 'Instructors changed'),
