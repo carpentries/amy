@@ -337,8 +337,8 @@ class TestWebsiteUpdatesCommand(TestBase):
         mock.get(website_url, text=mock_text, status_code=200)
         # mock placed, let's test `get_event_metadata`
 
-        tags = self.cmd.get_event_metadata(website_url)
-        self.assertEqual(tags, self.expected_metadata_parsed)
+        metadata = self.cmd.get_event_metadata(website_url)
+        self.assertEqual(metadata, self.expected_metadata_parsed)
 
     def test_deserialization_of_string(self):
         "Ensure our datetime matching function works correctly for strings."
