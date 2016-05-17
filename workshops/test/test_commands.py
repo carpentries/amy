@@ -245,7 +245,7 @@ class TestWebsiteUpdatesCommand(TestBase):
 <h1>test</h1>
 </body></html>
 """
-        self.expected_tags_parsed = {
+        self.expected_metadata_parsed = {
             'slug': '2015-07-13-test',
             'language': 'US',
             'start': date(2015, 7, 13),
@@ -338,7 +338,7 @@ class TestWebsiteUpdatesCommand(TestBase):
         # mock placed, let's test `get_event_tags`
 
         tags = self.cmd.get_event_tags(website_url)
-        self.assertEqual(tags, self.expected_tags_parsed)
+        self.assertEqual(tags, self.expected_metadata_parsed)
 
     def test_deserialization_of_string(self):
         "Ensure our datetime matching function works correctly for strings."
@@ -380,7 +380,7 @@ class TestWebsiteUpdatesCommand(TestBase):
         datetimes and times.
         Ensure derialization from JSON works correctly with dates,
         datetimes and times."""
-        serialized_json = self.cmd.serialize(self.expected_tags_parsed)
+        serialized_json = self.cmd.serialize(self.expected_metadata_parsed)
 
         self.assertIn('2015-07-13', serialized_json)
         self.assertIn('2015-07-14', serialized_json)
@@ -391,7 +391,7 @@ class TestWebsiteUpdatesCommand(TestBase):
                       serialized_json)
 
         deserialized_data = self.cmd.deserialize(serialized_json)
-        self.assertEqual(deserialized_data, self.expected_tags_parsed)
+        self.assertEqual(deserialized_data, self.expected_metadata_parsed)
 
     @unittest.skip('Don\'t know how to test it')
     def test_loading_from_github(self):
@@ -423,9 +423,9 @@ class TestWebsiteUpdatesCommand(TestBase):
         mock_text = self.mocked_event_page
         mock.get(e.url, text=mock_text, status_code=200)
         tags = self.cmd.empty_tags()
-        tags['instructors'] = self.expected_tags_parsed['instructors']
-        tags['latitude'] = self.expected_tags_parsed['latitude']
-        tags['longitude'] = self.expected_tags_parsed['longitude']
+        tags['instructors'] = self.expected_metadata_parsed['instructors']
+        tags['latitude'] = self.expected_metadata_parsed['latitude']
+        tags['longitude'] = self.expected_metadata_parsed['longitude']
         e.repository_tags = self.cmd.serialize(tags)
         e.save()
 
@@ -464,7 +464,7 @@ class TestWebsiteUpdatesCommand(TestBase):
         # tags updated
         self.assertEqual(e.repository_last_commit_hash, hash_)
         self.assertEqual(self.cmd.deserialize(e.repository_tags),
-                         self.expected_tags_parsed)
+                         self.expected_metadata_parsed)
         self.assertEqual(e.tag_changes_detected, '')
         self.assertEqual(e.tags_changed, False)
 
