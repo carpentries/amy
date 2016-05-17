@@ -122,12 +122,12 @@ class Command(BaseCommand):
             return groups['name'], groups['repo']
         raise WrongWorkshopURL()
 
-    def get_event_tags(self, event_url):
+    def get_event_metadata(self, event_url):
         """Get metadata from event (location, instructors, helpers, etc.)."""
-        tags = fetch_event_tags(event_url)
+        metadata = fetch_event_tags(event_url)
         # normalize the tags
-        tags = parse_tags_from_event_website(tags)
-        return tags
+        metadata = parse_tags_from_event_website(metadata)
+        return metadata
 
     def empty_tags(self):
         """Prepare basic, empty tags."""
@@ -159,7 +159,7 @@ class Command(BaseCommand):
             # Hashes differ? Update commit hash and compare stored tags
             event.repository_last_commit_hash = branch.commit.sha
 
-            tags_new = self.get_event_tags(event.url)
+            tags_new = self.get_event_metadata(event.url)
 
             try:
                 tags_old = self.deserialize(event.repository_tags)
@@ -203,7 +203,7 @@ class Command(BaseCommand):
     def init(self, branch, event):
         """Load initial data into event's repository and tag information."""
         event.repository_last_commit_hash = branch.commit.sha
-        tags = self.get_event_tags(event.url)
+        tags = self.get_event_metadata(event.url)
         event.repository_tags = self.serialize(tags)
         event.tag_changes_detected = ''
         event.tags_changed = False
