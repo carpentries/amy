@@ -412,7 +412,7 @@ Harry,Potter,harry@hogwarts.edu,foobar,learner
         self.assertEqual(1, foobar.attendance)
 
 
-class TestHandlingEventTags(TestCase):
+class TestHandlingEventMetadata(TestCase):
     maxDiff = None
 
     html_content = """
@@ -458,26 +458,26 @@ Other content.
 """
 
     @requests_mock.Mocker()
-    def test_fetching_event_tags_html(self, mock):
-        "Ensure 'fetch_event_metadata' works correctly with HTML tags provided."
+    def test_fetching_event_metadata_html(self, mock):
+        "Ensure 'fetch_event_metadata' works correctly with HTML metadata provided."
         website_url = 'https://pbanaszkiewicz.github.io/workshop'
         repo_url = ('https://raw.githubusercontent.com/pbanaszkiewicz/'
                     'workshop/gh-pages/index.html')
         mock.get(website_url, text=self.html_content, status_code=200)
         mock.get(repo_url, text='', status_code=200)
-        tags = fetch_event_metadata(website_url)
-        self.assertEqual(tags['slug'], '2015-07-13-test')
+        metadata = fetch_event_metadata(website_url)
+        self.assertEqual(metadata['slug'], '2015-07-13-test')
 
     @requests_mock.Mocker()
-    def test_fetching_event_tags_yaml(self, mock):
-        "Ensure 'fetch_event_metadata' works correctly with YAML tags provided."
+    def test_fetching_event_metadata_yaml(self, mock):
+        "Ensure 'fetch_event_metadata' works correctly with YAML metadata provided."
         website_url = 'https://pbanaszkiewicz.github.io/workshop'
         repo_url = ('https://raw.githubusercontent.com/pbanaszkiewicz/'
                     'workshop/gh-pages/index.html')
         mock.get(website_url, text='', status_code=200)
         mock.get(repo_url, text=self.yaml_content, status_code=200)
-        tags = fetch_event_metadata(website_url)
-        self.assertEqual(tags['slug'], 'workshop')
+        metadata = fetch_event_metadata(website_url)
+        self.assertEqual(metadata['slug'], 'workshop')
 
     def test_generating_url_to_index(self):
         tests = [
@@ -494,7 +494,7 @@ Other content.
                 self.assertEqual(expected_url, url)
                 self.assertEqual(expected_repo, repo)
 
-    def test_finding_tags_on_index(self):
+    def test_finding_metadata_on_index(self):
         content = self.yaml_content
         expected = {
             'startdate': '2015-07-13',
@@ -511,7 +511,7 @@ Other content.
         }
         self.assertEqual(expected, find_metadata_on_event_index(content))
 
-    def test_finding_tags_on_website(self):
+    def test_finding_metadata_on_website(self):
         content = self.html_content
         expected = {
             'slug': '2015-07-13-test',
@@ -530,7 +530,7 @@ Other content.
 
         self.assertEqual(expected, find_metadata_on_event_website(content))
 
-    def test_parsing_empty_tags(self):
+    def test_parsing_empty_metadata(self):
         empty_dict = {}
         expected = {
             'slug': '',
@@ -549,8 +549,8 @@ Other content.
         }
         self.assertEqual(expected, parse_metadata_from_event_website(empty_dict))
 
-    def test_parsing_correct_tags(self):
-        tags = {
+    def test_parsing_correct_metadata(self):
+        metadata = {
             'slug': '2015-07-13-test',
             'startdate': '2015-07-13',
             'enddate': '2015-07-14',
@@ -579,7 +579,7 @@ Other content.
             'helpers': ['Peter Parker', 'Tony Stark', 'Natasha Romanova'],
             'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
         }
-        self.assertEqual(expected, parse_metadata_from_event_website(tags))
+        self.assertEqual(expected, parse_metadata_from_event_website(metadata))
 
     def test_parsing_tricky_country_language(self):
         """Ensure we always get a 2-char string or nothing."""
@@ -606,10 +606,10 @@ Other content.
 
         for (country, language), (country_exp, language_exp) in tests:
             with self.subTest(iso_31661=(country, language)):
-                tags = dict(country=country, language=language)
+                metadata = dict(country=country, language=language)
                 expected['country'] = country_exp
                 expected['language'] = language_exp
-                self.assertEqual(expected, parse_metadata_from_event_website(tags))
+                self.assertEqual(expected, parse_metadata_from_event_website(metadata))
 
     def test_parsing_tricky_dates(self):
         """Test if non-dates don't get parsed."""
@@ -635,10 +635,10 @@ Other content.
 
         for (startdate, enddate), (start, end) in tests:
             with self.subTest(dates=(startdate, enddate)):
-                tags = dict(startdate=startdate, enddate=enddate)
+                metadata = dict(startdate=startdate, enddate=enddate)
                 expected['start'] = start
                 expected['end'] = end
-                self.assertEqual(expected, parse_metadata_from_event_website(tags))
+                self.assertEqual(expected, parse_metadata_from_event_website(metadata))
 
     def test_parsing_tricky_list_of_names(self):
         """Ensure we always get a list."""
@@ -669,10 +669,10 @@ Other content.
 
         for (instructor, helper), (instructors, helpers) in tests:
             with self.subTest(people=(instructor, helper)):
-                tags = dict(instructor=instructor, helper=helper)
+                metadata = dict(instructor=instructor, helper=helper)
                 expected['instructors'] = instructors
                 expected['helpers'] = helpers
-                self.assertEqual(expected, parse_metadata_from_event_website(tags))
+                self.assertEqual(expected, parse_metadata_from_event_website(metadata))
 
     def test_parsing_tricky_latitude_longitude(self):
         tests = [
@@ -699,10 +699,10 @@ Other content.
         }
         for latlng, (latitude, longitude) in tests:
             with self.subTest(latlng=latlng):
-                tags = dict(latlng=latlng)
+                metadata = dict(latlng=latlng)
                 expected['latitude'] = latitude
                 expected['longitude'] = longitude
-                self.assertEqual(expected, parse_metadata_from_event_website(tags))
+                self.assertEqual(expected, parse_metadata_from_event_website(metadata))
 
     def test_parsing_tricky_eventbrite_id(self):
         tests = [
@@ -727,12 +727,12 @@ Other content.
         }
         for eventbrite_id, reg_key in tests:
             with self.subTest(eventbrite_id=eventbrite_id):
-                tags = dict(eventbrite=eventbrite_id)
+                metadata = dict(eventbrite=eventbrite_id)
                 expected['reg_key'] = reg_key
-                self.assertEqual(expected, parse_metadata_from_event_website(tags))
+                self.assertEqual(expected, parse_metadata_from_event_website(metadata))
 
-    def test_validating_invalid_tags(self):
-        tags = {
+    def test_validating_invalid_metadata(self):
+        metadata = {
             'slug': 'WRONG FORMAT',
             'language': 'ENGLISH',
             'startdate': '07/13/2015',
@@ -746,18 +746,18 @@ Other content.
             'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
             'eventbrite': 'bigmoney',
         }
-        errors = validate_metadata_from_event_website(tags)
+        errors = validate_metadata_from_event_website(metadata)
         assert len(errors) == 7
         assert all([error.startswith('Invalid value') for error in errors])
 
-    def test_validating_missing_tags(self):
-        tags = {}
-        errors = validate_metadata_from_event_website(tags)
+    def test_validating_missing_metadata(self):
+        metadata = {}
+        errors = validate_metadata_from_event_website(metadata)
         assert len(errors) == 12
         assert all([error.startswith('Missing') for error in errors])
 
-    def test_validating_default_tags(self):
-        tags = {
+    def test_validating_default_metadata(self):
+        metadata = {
             'slug': 'FIXME',
             'language': 'FIXME',
             'startdate': 'FIXME',
@@ -771,15 +771,15 @@ Other content.
             'helper': 'FIXME',
             'contact': 'FIXME',
         }
-        errors = validate_metadata_from_event_website(tags)
+        errors = validate_metadata_from_event_website(metadata)
         assert len(errors) == 12
         assert all([
             error.startswith('Placeholder value "FIXME"')
             for error in errors
         ])
 
-    def test_validating_correct_tags(self):
-        tags = {
+    def test_validating_correct_metadata(self):
+        metadata = {
             'slug': '2015-07-13-test',
             'language': 'us',
             'startdate': '2015-07-13',
@@ -793,12 +793,12 @@ Other content.
             'helper': 'Peter Parker, Tony Stark, Natasha Romanova',
             'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
         }
-        errors = validate_metadata_from_event_website(tags)
+        errors = validate_metadata_from_event_website(metadata)
         assert not errors
 
     def test_no_attribute_error_missing_instructors_helpers(self):
         """Regression test: ensure no exception is raised when instructors
-        or helpers aren't in the tags or their values are None."""
+        or helpers aren't in the metadata or their values are None."""
         tests = [
             ((None, None), ([], [])),
             ((None, ''), ([], [])),
@@ -822,10 +822,10 @@ Other content.
 
         for (instructor, helper), (instructors, helpers) in tests:
             with self.subTest(people=(instructor, helper)):
-                tags = dict(instructor=instructor, helper=helper)
+                metadata = dict(instructor=instructor, helper=helper)
                 expected['instructors'] = instructors
                 expected['helpers'] = helpers
-                self.assertEqual(expected, parse_metadata_from_event_website(tags))
+                self.assertEqual(expected, parse_metadata_from_event_website(metadata))
 
 
 class TestMembership(TestBase):
