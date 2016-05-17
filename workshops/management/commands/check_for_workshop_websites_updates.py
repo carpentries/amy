@@ -204,8 +204,8 @@ class Command(BaseCommand):
     def init(self, branch, event):
         """Load initial data into event's repository and tag information."""
         event.repository_last_commit_hash = branch.commit.sha
-        tags = self.get_event_metadata(event.url)
-        event.repository_metadata = self.serialize(tags)
+        metadata = self.get_event_metadata(event.url)
+        event.repository_metadata = self.serialize(metadata)
         event.metadata_all_changes = ''
         event.metadata_changed = False
         event.save()
