@@ -462,7 +462,7 @@ class TestWebsiteUpdatesCommand(TestBase):
         self.cmd.init(branch, e)
 
         e.refresh_from_db()
-        # tags updated
+        # metadata updated
         self.assertEqual(e.repository_last_commit_hash, hash_)
         self.assertEqual(self.cmd.deserialize(e.repository_metadata),
                          self.expected_metadata_parsed)
