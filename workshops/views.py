@@ -1195,9 +1195,9 @@ def event_delete(request, event_ident):
 
 @login_required
 def event_import(request):
-    """Read tags from remote URL and return them as JSON.
+    """Read metadata from remote URL and return them as JSON.
 
-    This is used to read tags from workshop website and then fill up fields
+    This is used to read metadata from workshop website and then fill up fields
     on event_create form."""
 
     # TODO: remove POST support completely
@@ -1206,10 +1206,10 @@ def event_import(request):
         url = request.GET.get('url', '').strip()
 
     try:
-        tags = fetch_event_metadata(url)
-        # normalize the tags
-        tags = parse_metadata_from_event_website(tags)
-        return JsonResponse(tags)
+        metadata = fetch_event_metadata(url)
+        # normalize the metadata
+        metadata = parse_metadata_from_event_website(metadata)
+        return JsonResponse(metadata)
 
     except requests.exceptions.HTTPError as e:
         return HttpResponseBadRequest(
