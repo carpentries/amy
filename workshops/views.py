@@ -1448,7 +1448,7 @@ def event_review_repo_changes_accept(request, event_ident):
     event.repository_metadata = tags_serialized
 
     # dismiss notification
-    event.tag_changes_detected = ''
+    event.metadata_all_changes = ''
     event.tags_changed = False
     event.save()
 
@@ -1471,7 +1471,7 @@ def event_review_repo_changes_dismiss(request, event_ident):
         raise Http404('No event found matching the query.')
 
     # dismiss notification
-    event.tag_changes_detected = ''
+    event.metadata_all_changes = ''
     event.tags_changed = False
     event.save()
 

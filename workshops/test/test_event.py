@@ -849,7 +849,7 @@ class TestEventReviewingRepoChanges(TestBase):
         self.event.refresh_from_db()
 
         self.assertEqual(self.event.tags_changed, False)
-        self.assertEqual(self.event.tag_changes_detected, '')
+        self.assertEqual(self.event.metadata_all_changes, '')
         self.assertEqual(self.event.repository_metadata, self.tags_serialized)
         for tag, value in self.tags.items():
             if tag not in ('slug', 'instructors', 'helpers', 'language'):
@@ -878,7 +878,7 @@ class TestEventReviewingRepoChanges(TestBase):
         self.event.refresh_from_db()
 
         self.assertEqual(self.event.tags_changed, False)
-        self.assertEqual(self.event.tag_changes_detected, '')
+        self.assertEqual(self.event.metadata_all_changes, '')
         for tag, value in self.tags.items():
             if tag not in ('slug', 'instructors', 'helpers', 'language'):
                 self.assertNotEqual(getattr(self.event, tag), value)

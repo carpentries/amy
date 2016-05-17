@@ -449,7 +449,7 @@ class TestWebsiteUpdatesCommand(TestBase):
             slug='with-changes', host=Host.objects.first(),
             url='https://swcarpentry.github.io/workshop-template/',
             repository_last_commit_hash='', repository_metadata='',
-            tags_changed=False, tag_changes_detected='')
+            tags_changed=False, metadata_all_changes='')
 
         hash_ = 'abcdefghijklmnopqrstuvwxyz'
         branch = MagicMock()
@@ -465,7 +465,7 @@ class TestWebsiteUpdatesCommand(TestBase):
         self.assertEqual(e.repository_last_commit_hash, hash_)
         self.assertEqual(self.cmd.deserialize(e.repository_metadata),
                          self.expected_metadata_parsed)
-        self.assertEqual(e.tag_changes_detected, '')
+        self.assertEqual(e.metadata_all_changes, '')
         self.assertEqual(e.tags_changed, False)
 
     @unittest.skip('This command requires internet connection')

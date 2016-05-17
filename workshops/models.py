@@ -690,7 +690,7 @@ class Event(AssignmentMixin, models.Model):
     repository_metadata = models.TextField(
         blank=True, default='',
         help_text='JSON-serialized metadata from event\'s website')
-    tag_changes_detected = models.TextField(
+    metadata_all_changes = models.TextField(
         blank=True, default='', help_text='List of detected tag changes')
     tags_changed = models.BooleanField(
         default=False,

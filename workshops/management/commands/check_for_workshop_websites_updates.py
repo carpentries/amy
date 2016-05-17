@@ -194,7 +194,7 @@ class Command(BaseCommand):
                     # we may not want to update the tags
                     event.repository_metadata = self.serialize(tags_new)
 
-                event.tag_changes_detected = "\n".join(changes)
+                event.metadata_all_changes = "\n".join(changes)
                 event.tags_changed = True
             event.save()
 
@@ -205,7 +205,7 @@ class Command(BaseCommand):
         event.repository_last_commit_hash = branch.commit.sha
         tags = self.get_event_metadata(event.url)
         event.repository_metadata = self.serialize(tags)
-        event.tag_changes_detected = ''
+        event.metadata_all_changes = ''
         event.tags_changed = False
         event.save()
 
