@@ -330,8 +330,9 @@ class TestWebsiteUpdatesCommand(TestBase):
     @requests_mock.Mocker()
     def test_getting_event_metadata(self, mock):
         """Ensure metadata are fetched and normalized by `get_event_metadata`."""
-        # underlying `fetch_event_metadata` and `parse_event_tags` are tested in
-        # great detail in `test_util.py`, so here's just a short test
+        # underlying `fetch_event_metadata` and `parse_metadata_from_event_website`
+        # are tested in great detail in `test_util.py`, so here's just a short
+        # test
         website_url = 'https://github.com/swcarpentry/workshop-template'
         mock_text = self.mocked_event_page
         mock.get(website_url, text=mock_text, status_code=200)
