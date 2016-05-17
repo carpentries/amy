@@ -433,7 +433,7 @@ def fetch_event_metadata(event_url):
     metadata = find_metadata_on_event_website(content)
 
     if 'slug' not in metadata:
-        # there are no HTML tags, so let's try the old method
+        # there are no HTML metadata, so let's try the old method
         index_url, repository = generate_url_to_event_index(event_url)
 
         # fetch page
@@ -453,7 +453,7 @@ def fetch_event_metadata(event_url):
 
 
 class WrongWorkshopURL(ValueError):
-    """Raised when we fall back to reading tags from event's YAML front matter,
+    """Raised when we fall back to reading metadata from event's YAML front matter,
     which requires a link to GitHub raw hosted file, but we can't get that link
     because provided URL doesn't match Event.WEBSITE_REGEX
     (see `generate_url_to_event_index` below)."""
