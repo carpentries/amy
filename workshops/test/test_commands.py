@@ -328,8 +328,8 @@ class TestWebsiteUpdatesCommand(TestBase):
             self.cmd.parse_github_url(url)
 
     @requests_mock.Mocker()
-    def test_getting_event_tags(self, mock):
-        """Ensure tags are fetched and normalized by `get_event_tags`."""
+    def test_getting_event_metadata(self, mock):
+        """Ensure metadata are fetched and normalized by `get_event_tags`."""
         # underlying `fetch_event_tags` and `parse_event_tags` are tested in
         # great detail in `test_util.py`, so here's just a short test
         website_url = 'https://github.com/swcarpentry/workshop-template'
