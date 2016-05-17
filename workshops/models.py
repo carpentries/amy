@@ -572,9 +572,9 @@ class EventQuerySet(models.query.QuerySet):
         return self.past_events().filter(invoice_status='not-invoiced') \
                                  .order_by('start')
 
-    def tags_changed(self):
+    def metadata_changed(self):
         """Return events for which remote metatags have been updated."""
-        return self.filter(tags_changed=True)
+        return self.filter(metadata_changed=True)
 
 
 @reversion.register
@@ -692,7 +692,7 @@ class Event(AssignmentMixin, models.Model):
         help_text='JSON-serialized metadata from event\'s website')
     metadata_all_changes = models.TextField(
         blank=True, default='', help_text='List of detected metadata changes')
-    tags_changed = models.BooleanField(
+    metadata_changed = models.BooleanField(
         default=False,
         help_text='Indicate if tags changed since last check')
 

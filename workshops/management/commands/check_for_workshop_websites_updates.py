@@ -195,7 +195,8 @@ class Command(BaseCommand):
                     event.repository_metadata = self.serialize(tags_new)
 
                 event.metadata_all_changes = "\n".join(changes)
-                event.tags_changed = True
+                event.metadata_changed = True
+
             event.save()
 
         return changes
@@ -206,7 +207,7 @@ class Command(BaseCommand):
         tags = self.get_event_metadata(event.url)
         event.repository_metadata = self.serialize(tags)
         event.metadata_all_changes = ''
-        event.tags_changed = False
+        event.metadata_changed = False
         event.save()
 
     def handle(self, *args, **options):

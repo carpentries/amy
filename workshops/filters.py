@@ -99,7 +99,7 @@ class EventFilter(FilterSetWithoutHelpText):
         ('unpublished_events', 'Unpublished'),
         ('published_events', 'Published'),
         ('uninvoiced_events', 'Uninvoiced'),
-        ('tags_changed', 'Detected changes in tags'),
+        ('metadata_changed', 'Detected changes in tags'),
     ]
     status = EventStateFilter(choices=STATUS_CHOICES)
 

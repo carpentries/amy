@@ -244,7 +244,7 @@ def dashboard(request):
     # assigned events that have unaccepted changes
     updated_metatags = Event.objects.active() \
                                     .filter(assigned_to=request.user) \
-                                    .filter(tags_changed=True) \
+                                    .filter(metadata_changed=True) \
                                     .count()
 
     context = {
@@ -1359,7 +1359,7 @@ def event_invoice(request, event_ident):
 @login_required
 def events_tag_changed(request):
     """List events with metatags changed."""
-    events = Event.objects.active().filter(tags_changed=True)
+    events = Event.objects.active().filter(metadata_changed=True)
 
     assigned_to, is_admin = assignment_selection(request)
 
@@ -1449,7 +1449,7 @@ def event_review_repo_changes_accept(request, event_ident):
 
     # dismiss notification
     event.metadata_all_changes = ''
-    event.tags_changed = False
+    event.metadata_changed = False
     event.save()
 
     # remove tags from session
@@ -1472,7 +1472,7 @@ def event_review_repo_changes_dismiss(request, event_ident):
 
     # dismiss notification
     event.metadata_all_changes = ''
-    event.tags_changed = False
+    event.metadata_changed = False
     event.save()
 
     # remove tags from session

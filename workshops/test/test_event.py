@@ -817,7 +817,7 @@ class TestEventReviewingRepoChanges(TestBase):
         self.event = Event.objects.create(
             slug='event-for-changes', start=date(2016, 4, 20),
             end=date(2016, 4, 22), host=Host.objects.first(),
-            tags_changed=True)
+            metadata_changed=True)
 
         # add tags to the session
         session = self.client.session
@@ -848,7 +848,7 @@ class TestEventReviewingRepoChanges(TestBase):
 
         self.event.refresh_from_db()
 
-        self.assertEqual(self.event.tags_changed, False)
+        self.assertEqual(self.event.metadata_changed, False)
         self.assertEqual(self.event.metadata_all_changes, '')
         self.assertEqual(self.event.repository_metadata, self.tags_serialized)
         for tag, value in self.tags.items():
@@ -877,8 +877,9 @@ class TestEventReviewingRepoChanges(TestBase):
 
         self.event.refresh_from_db()
 
-        self.assertEqual(self.event.tags_changed, False)
+        self.assertEqual(self.event.metadata_changed, False)
         self.assertEqual(self.event.metadata_all_changes, '')
+
         for tag, value in self.tags.items():
             if tag not in ('slug', 'instructors', 'helpers', 'language'):
                 self.assertNotEqual(getattr(self.event, tag), value)
