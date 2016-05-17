@@ -17,7 +17,7 @@ from ..util import (
     verify_upload_person_task,
     fetch_event_metadata,
     generate_url_to_event_index,
-    find_tags_on_event_index,
+    find_metadata_on_event_index,
     find_metadata_on_event_website,
     parse_tags_from_event_website,
     validate_tags_from_event_website,
@@ -509,7 +509,7 @@ Other content.
             'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
             'eventbrite': '10000000',
         }
-        self.assertEqual(expected, find_tags_on_event_index(content))
+        self.assertEqual(expected, find_metadata_on_event_index(content))
 
     def test_finding_tags_on_website(self):
         content = self.html_content

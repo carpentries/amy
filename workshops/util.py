@@ -442,7 +442,7 @@ def fetch_event_metadata(event_url):
         if response.status_code == 200:
             # don't throw errors for pages we fall back to
             content = response.text
-            metadata = find_tags_on_event_index(content)
+            metadata = find_metadata_on_event_index(content)
 
             # add 'slug' tag if missing
             if 'slug' not in metadata:
@@ -476,26 +476,26 @@ def generate_url_to_event_index(website_url):
     raise WrongWorkshopURL()
 
 
-def find_tags_on_event_index(content):
-    """Given workshop's raw `index.html`, find and take YAML tags that
+def find_metadata_on_event_index(content):
+    """Given workshop's raw `index.html`, find and take YAML metadata that
     have workshop-related data."""
     try:
         first, header, last = content.split('---')
-        tags = yaml.load(header.strip())
+        metadata = yaml.load(header.strip())
 
-        # get tags to the form returned by `find_metadata_on_event_website`
+        # get metadata to the form returned by `find_metadata_on_event_website`
         # because YAML tries to interpret values from index's header
-        filtered_tags = {key: value for key, value in tags.items()
+        filtered_metadata = {key: value for key, value in metadata.items()
                          if key in ALLOWED_METADATA_NAMES}
-        for key, value in filtered_tags.items():
+        for key, value in filtered_metadata.items():
             if isinstance(value, int):
-                filtered_tags[key] = str(value)
+                filtered_metadata[key] = str(value)
             elif isinstance(value, datetime.date):
-                filtered_tags[key] = '{:%Y-%m-%d}'.format(value)
+                filtered_metadata[key] = '{:%Y-%m-%d}'.format(value)
             elif isinstance(value, list):
-                filtered_tags[key] = ', '.join(value)
+                filtered_metadata[key] = ', '.join(value)
 
-        return filtered_tags
+        return filtered_metadata
 
     except (ValueError, yaml.scanner.ScannerError):
         # can't unpack or header is not YML format
