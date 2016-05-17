@@ -15,7 +15,7 @@ from ..models import Host, Event, Role, Person, Task, Badge, Award
 from ..util import (
     upload_person_task_csv,
     verify_upload_person_task,
-    fetch_event_tags,
+    fetch_event_metadata,
     generate_url_to_event_index,
     find_tags_on_event_index,
     find_tags_on_event_website,
@@ -459,24 +459,24 @@ Other content.
 
     @requests_mock.Mocker()
     def test_fetching_event_tags_html(self, mock):
-        "Ensure 'fetch_event_tags' works correctly with HTML tags provided."
+        "Ensure 'fetch_event_metadata' works correctly with HTML tags provided."
         website_url = 'https://pbanaszkiewicz.github.io/workshop'
         repo_url = ('https://raw.githubusercontent.com/pbanaszkiewicz/'
                     'workshop/gh-pages/index.html')
         mock.get(website_url, text=self.html_content, status_code=200)
         mock.get(repo_url, text='', status_code=200)
-        tags = fetch_event_tags(website_url)
+        tags = fetch_event_metadata(website_url)
         self.assertEqual(tags['slug'], '2015-07-13-test')
 
     @requests_mock.Mocker()
     def test_fetching_event_tags_yaml(self, mock):
-        "Ensure 'fetch_event_tags' works correctly with YAML tags provided."
+        "Ensure 'fetch_event_metadata' works correctly with YAML tags provided."
         website_url = 'https://pbanaszkiewicz.github.io/workshop'
         repo_url = ('https://raw.githubusercontent.com/pbanaszkiewicz/'
                     'workshop/gh-pages/index.html')
         mock.get(website_url, text='', status_code=200)
         mock.get(repo_url, text=self.yaml_content, status_code=200)
-        tags = fetch_event_tags(website_url)
+        tags = fetch_event_metadata(website_url)
         self.assertEqual(tags['slug'], 'workshop')
 
     def test_generating_url_to_index(self):

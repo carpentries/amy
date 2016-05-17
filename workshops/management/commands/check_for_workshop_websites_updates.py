@@ -13,7 +13,7 @@ from rest_framework.utils.encoders import JSONEncoder
 
 from workshops.models import Event
 from workshops.util import (
-    fetch_event_tags,
+    fetch_event_metadata,
     parse_tags_from_event_website,
     WrongWorkshopURL,
 )
@@ -124,7 +124,7 @@ class Command(BaseCommand):
 
     def get_event_metadata(self, event_url):
         """Get metadata from event (location, instructors, helpers, etc.)."""
-        metadata = fetch_event_tags(event_url)
+        metadata = fetch_event_metadata(event_url)
         # normalize the tags
         metadata = parse_tags_from_event_website(metadata)
         return metadata

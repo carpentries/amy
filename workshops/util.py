@@ -421,18 +421,18 @@ def get_pagination_items(request, all_objects):
     return result
 
 
-def fetch_event_tags(event_url):
-    """Handle tags from any event site (works with rendered <meta> tags and
-    YAML tags in `index.html`)."""
+def fetch_event_metadata(event_url):
+    """Handle metadata from any event site (works with rendered <meta> metadata and
+    YAML metadata in `index.html`)."""
     # fetch page
     response = requests.get(event_url)
     response.raise_for_status()  # assert it's 200 OK
     content = response.text
 
-    # find tags
-    tags = find_tags_on_event_website(content)
+    # find metadata
+    metadata = find_tags_on_event_website(content)
 
-    if 'slug' not in tags:
+    if 'slug' not in metadata:
         # there are no HTML tags, so let's try the old method
         index_url, repository = generate_url_to_event_index(event_url)
 
@@ -442,14 +442,14 @@ def fetch_event_tags(event_url):
         if response.status_code == 200:
             # don't throw errors for pages we fall back to
             content = response.text
-            tags = find_tags_on_event_index(content)
+            metadata = find_tags_on_event_index(content)
 
             # add 'slug' tag if missing
-            if 'slug' not in tags:
-                tags['slug'] = repository
+            if 'slug' not in metadata:
+                metadata['slug'] = repository
 
     # leave normalization or validation to the caller function
-    return tags
+    return metadata
 
 
 class WrongWorkshopURL(ValueError):

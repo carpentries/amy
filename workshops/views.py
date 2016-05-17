@@ -67,11 +67,11 @@ from workshops.forms import (
     PersonsMergeForm, PersonCreateForm,
 )
 from workshops.util import (
-    upload_person_task_csv,  verify_upload_person_task,
+    upload_person_task_csv, verify_upload_person_task,
     create_uploaded_persons_tasks, InternalError,
     update_event_attendance_from_tasks,
     WrongWorkshopURL,
-    fetch_event_tags,
+    fetch_event_metadata,
     parse_tags_from_event_website,
     validate_tags_from_event_website,
     assignment_selection,
@@ -1067,7 +1067,7 @@ def validate_event(request, event_ident):
     error_messages = []
 
     try:
-        tags = fetch_event_tags(page_url)
+        tags = fetch_event_metadata(page_url)
         # validate tags
         error_messages = validate_tags_from_event_website(tags)
 
@@ -1206,7 +1206,7 @@ def event_import(request):
         url = request.GET.get('url', '').strip()
 
     try:
-        tags = fetch_event_tags(url)
+        tags = fetch_event_metadata(url)
         # normalize the tags
         tags = parse_tags_from_event_website(tags)
         return JsonResponse(tags)
@@ -1395,7 +1395,7 @@ def event_review_repo_changes(request, event_ident):
     except Event.DoesNotExist:
         raise Http404('No event found matching the query.')
 
-    tags = fetch_event_tags(event.website_url)
+    tags = fetch_event_metadata(event.website_url)
     tags = parse_tags_from_event_website(tags)
 
     # save serialized tags in session so in case of acceptance we don't reload
