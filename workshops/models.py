@@ -691,7 +691,7 @@ class Event(AssignmentMixin, models.Model):
         blank=True, default='',
         help_text='JSON-serialized metadata from event\'s website')
     metadata_all_changes = models.TextField(
-        blank=True, default='', help_text='List of detected tag changes')
+        blank=True, default='', help_text='List of detected metadata changes')
     tags_changed = models.BooleanField(
         default=False,
         help_text='Indicate if tags changed since last check')
