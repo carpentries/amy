@@ -125,7 +125,7 @@ class Command(BaseCommand):
     def get_event_metadata(self, event_url):
         """Get metadata from event (location, instructors, helpers, etc.)."""
         metadata = fetch_event_metadata(event_url)
-        # normalize the tags
+        # normalize the metadata
         metadata = parse_metadata_from_event_website(metadata)
         return metadata
 
