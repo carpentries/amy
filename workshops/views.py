@@ -1067,9 +1067,9 @@ def validate_event(request, event_ident):
     error_messages = []
 
     try:
-        tags = fetch_event_metadata(page_url)
-        # validate tags
-        error_messages = validate_metadata_from_event_website(tags)
+        metadata = fetch_event_metadata(page_url)
+        # validate metadata
+        error_messages = validate_metadata_from_event_website(metadata)
 
     except WrongWorkshopURL as e:
         error_messages.append(str(e))
