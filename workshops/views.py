@@ -1464,7 +1464,7 @@ def event_review_repo_changes_accept(request, event_ident):
 @login_required
 @permission_required('workshops.change_event', raise_exception=True)
 def event_review_repo_changes_dismiss(request, event_ident):
-    """Review changes made to meta tags on event's website."""
+    """Review changes made to metadata on event's website."""
     try:
         event = Event.get_by_ident(event_ident)
     except Event.DoesNotExist:
@@ -1475,7 +1475,7 @@ def event_review_repo_changes_dismiss(request, event_ident):
     event.metadata_changed = False
     event.save()
 
-    # remove tags from session
+    # remove metadata from session
     if 'metadata_from_event_website' in request.session:
         del request.session['metadata_from_event_website']
 
