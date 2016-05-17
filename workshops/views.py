@@ -1402,7 +1402,7 @@ def event_review_repo_changes(request, event_ident):
     # them
     cmd = WebsiteUpdatesCommand()
     metadata_serialized = cmd.serialize(metadata)
-    request.session['tags_from_event_website'] = metadata_serialized
+    request.session['metadata_from_event_website'] = metadata_serialized
 
     context = {
         'title': 'Review changes for {}'.format(str(event)),
@@ -1422,7 +1422,7 @@ def event_review_repo_changes_accept(request, event_ident):
         raise Http404('No event found matching the query.')
 
     # load serialized tags from session
-    tags_serialized = request.session.get('tags_from_event_website')
+    tags_serialized = request.session.get('metadata_from_event_website')
     if not tags_serialized:
         raise Http404('Nothing to update.')
     cmd = WebsiteUpdatesCommand()
@@ -1453,7 +1453,7 @@ def event_review_repo_changes_accept(request, event_ident):
     event.save()
 
     # remove tags from session
-    del request.session['tags_from_event_website']
+    del request.session['metadata_from_event_website']
 
     messages.success(request,
                      'Successfully updated {}.'.format(event.get_ident()))
@@ -1476,8 +1476,8 @@ def event_review_repo_changes_dismiss(request, event_ident):
     event.save()
 
     # remove tags from session
-    if 'tags_from_event_website' in request.session:
-        del request.session['tags_from_event_website']
+    if 'metadata_from_event_website' in request.session:
+        del request.session['metadata_from_event_website']
 
     messages.success(request,
                      'Changes to {} were dismissed.'.format(event.get_ident()))

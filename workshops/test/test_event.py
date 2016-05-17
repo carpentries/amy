@@ -821,7 +821,7 @@ class TestEventReviewingRepoChanges(TestBase):
 
         # add tags to the session
         session = self.client.session
-        session['tags_from_event_website'] = self.tags_serialized
+        session['metadata_from_event_website'] = self.tags_serialized
         session.save()
 
     def test_showing_all_events_with_changed_metatags(self):
@@ -857,9 +857,9 @@ class TestEventReviewingRepoChanges(TestBase):
 
     def test_accepting_changes_no_session_data(self):
         """Ensure `event_review_repo_changes_accept` throws 404 when specific
-        session key 'tags_from_event_website' is unavailable."""
+        session key 'metadata_from_event_website' is unavailable."""
         session = self.client.session
-        del session['tags_from_event_website']
+        del session['metadata_from_event_website']
         session.save()
 
         url = reverse('event_review_repo_changes_accept',
