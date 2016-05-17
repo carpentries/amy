@@ -423,11 +423,11 @@ class TestWebsiteUpdatesCommand(TestBase):
         branch.commit.sha = hash_
         mock_text = self.mocked_event_page
         mock.get(e.url, text=mock_text, status_code=200)
-        tags = self.cmd.empty_metadata()
-        tags['instructors'] = self.expected_metadata_parsed['instructors']
-        tags['latitude'] = self.expected_metadata_parsed['latitude']
-        tags['longitude'] = self.expected_metadata_parsed['longitude']
-        e.repository_metadata = self.cmd.serialize(tags)
+        metadata = self.cmd.empty_metadata()
+        metadata['instructors'] = self.expected_metadata_parsed['instructors']
+        metadata['latitude'] = self.expected_metadata_parsed['latitude']
+        metadata['longitude'] = self.expected_metadata_parsed['longitude']
+        e.repository_metadata = self.cmd.serialize(metadata)
         e.save()
 
         changes = self.cmd.detect_changes(branch, e)
