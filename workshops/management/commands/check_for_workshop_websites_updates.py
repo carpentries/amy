@@ -150,25 +150,25 @@ class Command(BaseCommand):
         branch = repo.get_branch('gh-pages')
         return branch
 
-    def detect_changes(self, branch, event, save_tags=False):
-        """Detect changes made to event's meta tags."""
+    def detect_changes(self, branch, event, save_metadata=False):
+        """Detect changes made to event's metadata."""
         changes = []
 
         # compare commit hashes
         if branch.commit.sha != event.repository_last_commit_hash:
-            # Hashes differ? Update commit hash and compare stored tags
+            # Hashes differ? Update commit hash and compare stored metadata
             event.repository_last_commit_hash = branch.commit.sha
 
-            tags_new = self.get_event_metadata(event.url)
+            metadata_new = self.get_event_metadata(event.url)
 
             try:
-                tags_old = self.deserialize(event.repository_metadata)
+                metadata_old = self.deserialize(event.repository_metadata)
             except json.decoder.JSONDecodeError:
                 # this means that the value in DB is pretty much useless
                 # so let's set it to the default value
-                tags_old = self.empty_metadata()
+                metadata_old = self.empty_metadata()
 
-            tags_to_check = (
+            metadata_to_check = (
                 ('instructors', 'Instructors changed'),
                 ('helpers', 'Helpers changed'),
                 ('start', 'Start date changed'),
@@ -183,16 +183,16 @@ class Command(BaseCommand):
             )
 
             changed = False
-            # look for changed tags
-            for tag, reason in tags_to_check:
-                if tags_new[tag] != tags_old[tag]:
+            # look for changed metadata
+            for key, reason in metadata_to_check:
+                if metadata_new[key] != metadata_old[key]:
                     changes.append(reason)
                     changed = True
 
             if changed:
-                if save_tags:
-                    # we may not want to update the tags
-                    event.repository_metadata = self.serialize(tags_new)
+                if save_metadata:
+                    # we may not want to update the metadata
+                    event.repository_metadata = self.serialize(metadata_new)
 
                 event.metadata_all_changes = "\n".join(changes)
                 event.metadata_changed = True
