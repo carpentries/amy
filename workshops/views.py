@@ -1415,44 +1415,44 @@ def event_review_repo_changes(request, event_ident):
 @login_required
 @permission_required('workshops.change_event', raise_exception=True)
 def event_review_repo_changes_accept(request, event_ident):
-    """Review changes made to meta tags on event's website."""
+    """Review changes made to metadata on event's website."""
     try:
         event = Event.get_by_ident(event_ident)
     except Event.DoesNotExist:
         raise Http404('No event found matching the query.')
 
-    # load serialized tags from session
-    tags_serialized = request.session.get('metadata_from_event_website')
-    if not tags_serialized:
+    # load serialized metadata from session
+    metadata_serialized = request.session.get('metadata_from_event_website')
+    if not metadata_serialized:
         raise Http404('Nothing to update.')
     cmd = WebsiteUpdatesCommand()
-    tags = cmd.deserialize(tags_serialized)
+    metadata = cmd.deserialize(metadata_serialized)
 
     # update values
-    ALLOWED_TAGS = ('start', 'end', 'country', 'venue', 'address', 'latitude',
+    ALLOWED_METADATA = ('start', 'end', 'country', 'venue', 'address', 'latitude',
                     'longitude', 'contact', 'reg_key')
-    for tag, value in tags.items():
-        if hasattr(event, tag) and tag in ALLOWED_TAGS:
-            setattr(event, tag, value)
+    for key, value in metadata.items():
+        if hasattr(event, key) and key in ALLOWED_METADATA:
+            setattr(event, key, value)
 
     # update instructors and helpers
-    instructors = ', '.join(tags.get('instructors', []))
-    helpers = ', '.join(tags.get('helpers', []))
+    instructors = ', '.join(metadata.get('instructors', []))
+    helpers = ', '.join(metadata.get('helpers', []))
     event.notes += (
         '\n\n---------\nUPDATE {:%Y-%m-%d}:'
         '\nINSTRUCTORS: {}\n\nHELPERS: {}'
         .format(datetime.date.today(), instructors, helpers)
     )
 
-    # save serialized tags
-    event.repository_metadata = tags_serialized
+    # save serialized metadata
+    event.repository_metadata = metadata_serialized
 
     # dismiss notification
     event.metadata_all_changes = ''
     event.metadata_changed = False
     event.save()
 
-    # remove tags from session
+    # remove metadata from session
     del request.session['metadata_from_event_website']
 
     messages.success(request,
