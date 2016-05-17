@@ -73,7 +73,7 @@ from workshops.util import (
     WrongWorkshopURL,
     fetch_event_metadata,
     parse_metadata_from_event_website,
-    validate_tags_from_event_website,
+    validate_metadata_from_event_website,
     assignment_selection,
     get_pagination_items,
     Paginator,
@@ -1069,7 +1069,7 @@ def validate_event(request, event_ident):
     try:
         tags = fetch_event_metadata(page_url)
         # validate tags
-        error_messages = validate_tags_from_event_website(tags)
+        error_messages = validate_metadata_from_event_website(tags)
 
     except WrongWorkshopURL as e:
         error_messages.append(str(e))

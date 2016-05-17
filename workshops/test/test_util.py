@@ -20,7 +20,7 @@ from ..util import (
     find_metadata_on_event_index,
     find_metadata_on_event_website,
     parse_metadata_from_event_website,
-    validate_tags_from_event_website,
+    validate_metadata_from_event_website,
     get_members,
     default_membership_cutoff,
     assignment_selection,
@@ -746,13 +746,13 @@ Other content.
             'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
             'eventbrite': 'bigmoney',
         }
-        errors = validate_tags_from_event_website(tags)
+        errors = validate_metadata_from_event_website(tags)
         assert len(errors) == 7
         assert all([error.startswith('Invalid value') for error in errors])
 
     def test_validating_missing_tags(self):
         tags = {}
-        errors = validate_tags_from_event_website(tags)
+        errors = validate_metadata_from_event_website(tags)
         assert len(errors) == 12
         assert all([error.startswith('Missing') for error in errors])
 
@@ -771,7 +771,7 @@ Other content.
             'helper': 'FIXME',
             'contact': 'FIXME',
         }
-        errors = validate_tags_from_event_website(tags)
+        errors = validate_metadata_from_event_website(tags)
         assert len(errors) == 12
         assert all([
             error.startswith('Placeholder value "FIXME"')
@@ -793,7 +793,7 @@ Other content.
             'helper': 'Peter Parker, Tony Stark, Natasha Romanova',
             'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
         }
-        errors = validate_tags_from_event_website(tags)
+        errors = validate_metadata_from_event_website(tags)
         assert not errors
 
     def test_no_attribute_error_missing_instructors_helpers(self):

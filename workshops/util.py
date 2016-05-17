@@ -582,7 +582,7 @@ def parse_metadata_from_event_website(metadata):
     }
 
 
-def validate_tags_from_event_website(tags):
+def validate_metadata_from_event_website(metadata):
     errors = []
 
     Requirement = namedtuple(
@@ -616,19 +616,19 @@ def validate_tags_from_event_website(tags):
                  if requirement.display
                  else '{name}'.format(**d_))
         type_ = 'required' if requirement.required else 'optional'
-        value_ = tags.get(requirement.name)
+        value_ = metadata.get(requirement.name)
 
         if not value_:
-            errors.append('Missing {} tag {}.'.format(type_, name_))
+            errors.append('Missing {} metadata {}.'.format(type_, name_))
 
         if value_ == 'FIXME':
-            errors.append('Placeholder value "FIXME" for {} tag {}.'
+            errors.append('Placeholder value "FIXME" for {} metadata {}.'
                           .format(type_, name_))
         else:
             try:
                 if not re.match(requirement.match_format, value_):
                     errors.append(
-                        'Invalid value "{}" for {} tag {}: should be in '
+                        'Invalid value "{}" for {} metadata {}: should be in '
                         'format "{}".'
                         .format(value_, type_, name_, requirement.match_format)
                     )
