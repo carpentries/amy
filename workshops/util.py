@@ -444,7 +444,7 @@ def fetch_event_metadata(event_url):
             content = response.text
             metadata = find_metadata_on_event_index(content)
 
-            # add 'slug' tag if missing
+            # add 'slug' metadata if missing
             if 'slug' not in metadata:
                 metadata['slug'] = repository
 

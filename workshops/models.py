@@ -683,7 +683,7 @@ class Event(AssignmentMixin, models.Model):
         help_text='Backlink to the request that created this event.',
     )
 
-    # used in getting tag updates from GitHub
+    # used in getting metadata updates from GitHub
     repository_last_commit_hash = models.CharField(
         max_length=40, blank=True, default='',
         help_text='Event\'s repository last commit SHA1 hash')

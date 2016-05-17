@@ -402,7 +402,7 @@ class TestWebsiteUpdatesCommand(TestBase):
 
     @requests_mock.Mocker()
     def test_detecting_changes(self, mock):
-        """Make sure tag changes are detected."""
+        """Make sure metadata changes are detected."""
         hash_ = 'abcdefghijklmnopqrstuvwxyz'
         e = Event.objects.create(
             slug='with-changes', host=Host.objects.first(),

@@ -202,7 +202,7 @@ class Command(BaseCommand):
         return changes
 
     def init(self, branch, event):
-        """Load initial data into event's repository and tag information."""
+        """Load initial data into event's repository and metadata information."""
         event.repository_last_commit_hash = branch.commit.sha
         metadata = self.get_event_metadata(event.url)
         event.repository_metadata = self.serialize(metadata)
