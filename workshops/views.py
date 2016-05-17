@@ -1389,24 +1389,24 @@ def events_tag_changed(request):
 @login_required
 @permission_required('workshops.change_event', raise_exception=True)
 def event_review_repo_changes(request, event_ident):
-    """Review changes made to meta tags on event's website."""
+    """Review changes made to metadata on event's website."""
     try:
         event = Event.get_by_ident(event_ident)
     except Event.DoesNotExist:
         raise Http404('No event found matching the query.')
 
-    tags = fetch_event_metadata(event.website_url)
-    tags = parse_metadata_from_event_website(tags)
+    metadata = fetch_event_metadata(event.website_url)
+    metadata = parse_metadata_from_event_website(metadata)
 
-    # save serialized tags in session so in case of acceptance we don't reload
+    # save serialized metadata in session so in case of acceptance we don't reload
     # them
     cmd = WebsiteUpdatesCommand()
-    tags_serialized = cmd.serialize(tags)
-    request.session['tags_from_event_website'] = tags_serialized
+    metadata_serialized = cmd.serialize(metadata)
+    request.session['tags_from_event_website'] = metadata_serialized
 
     context = {
         'title': 'Review changes for {}'.format(str(event)),
-        'tags': tags,
+        'metadata': metadata,
         'event': event,
     }
     return render(request, 'workshops/event_review_metadata_changes.html', context)

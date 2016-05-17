@@ -13,57 +13,57 @@
     <tr>
       <th>Instructors</th>
       <td>{% for t in event.task_set.instructors %}{{ t.person.get_full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-      <td>{{ tags.instructors|join:', ' }}</td>
+      <td>{{ metadata.instructors|join:', ' }}</td>
     </tr>
     <tr>
       <th>Helpers</th>
       <td>{% for t in event.task_set.helpers %}{{ t.person.get_full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-      <td>{{ tags.helpers|join:', ' }}</td>
+      <td>{{ metadata.helpers|join:', ' }}</td>
     </tr>
     <tr>
       <th>Contact</th>
       <td>{{ event.contact }}</td>
-      <td>{{ tags.contact }}</td>
+      <td>{{ metadata.contact }}</td>
     </tr>
     <tr>
       <th>Start date</th>
       <td>{{ event.start }}</td>
-      <td>{{ tags.start }}</td>
+      <td>{{ metadata.start }}</td>
     </tr>
     <tr>
       <th>End date</th>
       <td>{{ event.end }}</td>
-      <td>{{ tags.end }}</td>
+      <td>{{ metadata.end }}</td>
     </tr>
     <tr>
       <th>Country</th>
       <td>{{ event.country }}</td>
-      <td>{{ tags.country }}</td>
+      <td>{{ metadata.country }}</td>
     </tr>
     <tr>
       <th>Venue</th>
       <td>{{ event.venue }}</td>
-      <td>{{ tags.venue }}</td>
+      <td>{{ metadata.venue }}</td>
     </tr>
     <tr>
       <th>Address</th>
       <td>{{ event.address }}</td>
-      <td>{{ tags.address }}</td>
+      <td>{{ metadata.address }}</td>
     </tr>
     <tr>
       <th>Latitude</th>
       <td>{{ event.latitude }}</td>
-      <td>{{ tags.latitude }}</td>
+      <td>{{ metadata.latitude }}</td>
     </tr>
     <tr>
       <th>Longitude</th>
       <td>{{ event.longitude }}</td>
-      <td>{{ tags.longitude }}</td>
+      <td>{{ metadata.longitude }}</td>
     </tr>
     <tr>
       <th>Eventbrite key</th>
       <td>{{ event.reg_key }}</td>
-      <td>{{ tags.reg_key }}</td>
+      <td>{{ metadata.reg_key }}</td>
     </tr>
   </table>
 
