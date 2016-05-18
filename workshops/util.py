@@ -442,7 +442,7 @@ def fetch_event_metadata(event_url):
         if response.status_code == 200:
             # don't throw errors for pages we fall back to
             content = response.text
-            metadata = find_metadata_on_event_index(content)
+            metadata = find_metadata_on_event_homepage(content)
 
             # add 'slug' metadata if missing
             if 'slug' not in metadata:
@@ -476,7 +476,7 @@ def generate_url_to_event_index(website_url):
     raise WrongWorkshopURL()
 
 
-def find_metadata_on_event_index(content):
+def find_metadata_on_event_homepage(content):
     """Given workshop's raw `index.html`, find and take YAML metadata that
     have workshop-related data."""
     try:
