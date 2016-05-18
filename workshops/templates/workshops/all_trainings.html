@@ -1,0 +1,25 @@
+{% extends "base_nav_fixed.html" %}
+
+{% load pagination %}
+
+{% block content %}
+  {% if all_trainings %}
+    <table class="table table-striped">
+      <tr>
+        <th>instructor training</th>
+        <th>number of people who took part</th>
+        <th>number of people who are now instructors</th>
+      </tr>
+      {% for training in all_trainings %}
+      <tr>
+        <td><a href="{% url 'event_details' training.event %}">{{ training.event__slug }}</a></td>
+        <td>{{ training.trainees }}</td>
+        <td>{{ training.finished }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% pagination all_trainings %}
+  {% else %}
+    <p>No trainings.</p>
+  {% endif %}
+{% endblock %}
