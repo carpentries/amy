@@ -283,7 +283,7 @@ class TestWebsiteUpdatesCommand(TestBase):
 
     def test_getting_events(self):
         """Ensure only active events with URL are returned."""
-        self.fake_cmd.fake_current_events(self.faker, count=4)
+        self.fake_cmd.fake_current_events(self.faker, count=6)
 
         # one active event with URL and one without
         e1, e2 = Event.objects.all()[0:2]
@@ -303,9 +303,19 @@ class TestWebsiteUpdatesCommand(TestBase):
         e4.url = None
         e4.save()
 
+        # both active but one very old
+        e5, e6 = Event.objects.all()[4:6]
+        e5.completed = False
+        e5.url = 'https://swcarpentry.github.io/workshop-template2/'
+        e5.start = date(2014, 1, 1)
+        e5.save()
+        e6.completed = False
+        e6.url = 'https://datacarpentry.github.io/workshop-template2/'
+        e6.save()
+
         # check
         events = set(self.cmd.get_events())
-        self.assertEqual({e1}, events)
+        self.assertEqual({e1, e6}, events)
 
     def test_parsing_github_url(self):
         """Ensure `parse_github_url()` correctly parses repository URL."""

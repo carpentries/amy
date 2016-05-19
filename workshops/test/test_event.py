@@ -822,6 +822,15 @@ class TestEventReviewingRepoChanges(TestBase):
         session['tags_from_event_website'] = self.tags_serialized
         session.save()
 
+    def test_showing_all_events_with_changed_metatags(self):
+        """Ensure `events_tag_changed` only shows events with changed
+        metatags."""
+        url = reverse('events_tag_changed')
+        rv = self.client.get(url)
+        self.assertEqual(rv.status_code, 200)
+
+        self.assertEqual(list(rv.context['events']), [self.event])
+
     def test_accepting_changes(self):
         """Ensure `event_review_repo_changes_accept`:
         * updates changed values in event

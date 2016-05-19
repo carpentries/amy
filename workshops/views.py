@@ -237,6 +237,16 @@ def dashboard(request):
         # no filtering
         pass
 
+    else:
+        # no filtering
+        pass
+
+    # assigned events that have unaccepted changes
+    updated_metatags = Event.objects.active() \
+                                    .filter(assigned_to=request.user) \
+                                    .filter(tags_changed=True) \
+                                    .count()
+
     context = {
         'title': None,
         'is_admin': is_admin,
@@ -246,6 +256,7 @@ def dashboard(request):
         'unpublished_events': unpublished_events,
         'todos_start_date': TodoItemQuerySet.current_week_dates()[0],
         'todos_end_date': TodoItemQuerySet.next_week_dates()[1],
+        'updated_metatags': updated_metatags,
     }
     return render(request, 'workshops/dashboard.html', context)
 
@@ -1324,6 +1335,36 @@ def event_invoice(request, event_ident):
 
 
 @login_required
+def events_tag_changed(request):
+    """List events with metatags changed."""
+    events = Event.objects.active().filter(tags_changed=True)
+
+    assigned_to, is_admin = assignment_selection(request)
+
+    if assigned_to == 'me':
+        events = events.filter(assigned_to=request.user)
+
+    elif assigned_to == 'noone':
+        events = events.filter(assigned_to=None)
+
+    elif assigned_to == 'all':
+        # no filtering
+        pass
+
+    else:
+        # no filtering
+        pass
+
+    context = {
+        'title': 'Events with metatags changed',
+        'events': events,
+        'is_admin': is_admin,
+        'assigned_to': assigned_to,
+    }
+    return render(request, 'workshops/events_tag_changed.html', context)
+
+
+@login_required
 @permission_required('workshops.change_event', raise_exception=True)
 def event_review_repo_changes(request, event_ident):
     """Review changes made to meta tags on event's website."""
@@ -1957,6 +1998,10 @@ def workshop_issues(request):
         events = events.filter(assigned_to=None)
 
     elif assigned_to == 'all':
+        # no filtering
+        pass
+
+    else:
         # no filtering
         pass
 
