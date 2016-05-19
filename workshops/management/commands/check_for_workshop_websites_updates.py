@@ -81,7 +81,7 @@ def datetime_decode(obj):
 
 
 class Command(BaseCommand):
-    help = 'Check if events have had updated their metadata.'
+    help = 'Check if events have had their metadata updated.'
 
     def add_arguments(self, parser):
         parser.add_argument(
