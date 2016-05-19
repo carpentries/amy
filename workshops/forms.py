@@ -391,6 +391,13 @@ class PersonForm(forms.ModelForm):
         help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
+    languages = selectable.AutoCompleteSelectMultipleField(
+        lookup_class=lookups.LanguageLookup,
+        label='Languages',
+        required=False,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectMultipleWidget,
+    )
 
     class Meta:
         model = Person
@@ -400,7 +407,7 @@ class PersonForm(forms.ModelForm):
         fields = ['username', 'personal', 'middle', 'family', 'may_contact',
                   'email', 'gender', 'airport', 'affiliation', 'github',
                   'twitter', 'url', 'occupation', 'orcid', 'notes', 'lessons',
-                  'domains']
+                  'domains', 'languages']
 
 
 class PersonCreateForm(PersonForm):
