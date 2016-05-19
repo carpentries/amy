@@ -111,6 +111,17 @@
     {% else %}
     <h5>No lessons.</h5>
     {% endif %}
+
+    {% if languages %}
+    <h5>Languages:</h5>
+    <ul>
+      {% for lang in languages %}
+      <li>{{ lang }}</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <h5>No language preference.</h5>
+    {% endif %}
   </div>
 </div>
 

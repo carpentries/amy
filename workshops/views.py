@@ -497,6 +497,7 @@ def person_details(request, person_id):
     tasks = person.task_set.all()
     lessons = person.lessons.all()
     domains = person.domains.all()
+    languages = person.languages.all()
     context = {
         'title': 'Person {0}'.format(person),
         'person': person,
@@ -504,6 +505,7 @@ def person_details(request, person_id):
         'tasks': tasks,
         'lessons': lessons,
         'domains': domains,
+        'languages': languages,
     }
     return render(request, 'workshops/person.html', context)
 
