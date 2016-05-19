@@ -107,6 +107,12 @@ class WorkshopStaffForm(forms.Form):
             lookup_class=lookups.AirportLookup,
         ),
     )
+    languages = selectable.AutoCompleteSelectMultipleField(
+        lookup_class=lookups.LanguageLookup,
+        label='Languages',
+        required=False,
+        widget=selectable.AutoComboboxSelectMultipleWidget,
+    )
 
     country = forms.MultipleChoiceField(choices=[])
 
@@ -166,6 +172,7 @@ class WorkshopStaffForm(forms.Form):
             'was_helper',
             'was_organizer',
             'is_in_progress_trainee',
+            'languages',
             'gender',
             'lessons',
             FormActions(

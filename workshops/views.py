@@ -1808,6 +1808,10 @@ def workshop_staff(request):
                 people = people.filter(q, task__role__name='learner') \
                                .exclude(badges__in=instructor_badges)
 
+            if data['languages']:
+                for language in data['languages']:
+                    people = people.filter(languages=language)
+
     emails = people.filter(may_contact=True).values_list('email', flat=True)
     people = get_pagination_items(request, people)
     context = {
