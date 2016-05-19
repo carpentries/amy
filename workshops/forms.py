@@ -129,11 +129,12 @@ class InstructorsForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         '''Build form layout dynamically.'''
-        super(InstructorsForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         # dynamically build choices for country field
-        only = Airport.objects.distinct().values_list('country', flat=True)
-        only = [c for c in only if c]
+        only = Airport.objects.distinct().exclude(country='') \
+                                         .exclude(country=None) \
+                                         .values_list('country', flat=True)
         countries = Countries()
         countries.only = only
 
@@ -146,49 +147,44 @@ class InstructorsForm(forms.Form):
         self.helper.form_method = 'get'
         self.helper.layout = Layout(
             Div(
-                Div(
-                    'latitude',
-                    'longitude',
-                    css_class='panel-body'
-                ),
+                Div(HTML('Location close to'), css_class='panel-heading'),
+                Div('airport', css_class='panel-body'),
+                Div(HTML('<b>OR</b>'), css_class='panel-footer'),
+                Div('country', css_class='panel-body'),
+                Div(HTML('<b>OR</b>'), css_class='panel-footer'),
+                Div('latitude', 'longitude', css_class='panel-body'),
                 css_class='panel panel-default ',
             ),
-            HTML('<p>OR</p>'),
-            Div(
-                Div(
-                    'airport',
-                    css_class='panel-body'
-                ),
-                css_class='panel panel-default ',
-            ),
-            HTML('<p>OR</p>'),
-            Div(
-                Div(
-                    'country',
-                    css_class='panel-body'
-                ),
-                css_class='panel panel-default ',
-            ),
+            'instructor_badges',
             'gender',
             'lessons',
-            'instructor_badges',
             FormActions(
                 Submit('submit', 'Submit'),
             ),
         )
 
     def clean(self):
-        cleaned_data = super(InstructorsForm, self).clean()
-        airport = cleaned_data.get('airport')
-        lat = cleaned_data.get('latitude')
-        long = cleaned_data.get('longitude')
-        country = cleaned_data.get('country')
+        cleaned_data = super().clean()
+        lat = bool(cleaned_data.get('latitude'))
+        lng = bool(cleaned_data.get('longitude'))
+        airport = bool(cleaned_data.get('airport'))
+        country = bool(cleaned_data.get('country'))
+        latlng = lat and lng
+        any_ = any([airport, country, latlng])  # at least one is used
 
-        sum = bool(airport) + bool(lat and long) + bool(country)
-        # user can specify only one: either airport, or lat&long, or country
-        if sum != 1:
-            raise forms.ValidationError('Must specify an airport, or latitude'
-                                        ' and longitude, or a country.')
+        # if searching by coordinates, then there must be both lat & lng
+        # present
+        if not (lat ^ lng):
+            raise forms.ValidationError(
+                'Must specify both latitude and longitude if searching by '
+                'coordinates')
+
+        # user must search by airport, or country, or coordinates, or none
+        # of them
+        if not (airport ^ country ^ latlng ^ (not any_)):
+            raise forms.ValidationError(
+                'Must specify an airport OR a country, OR use coordinates, OR '
+                'none of them.')
         return cleaned_data
 
 
