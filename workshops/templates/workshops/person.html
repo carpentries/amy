@@ -73,6 +73,17 @@
       </li>
       {% endfor %}
     </ul>
+    <ul>
+      {% if person.num_taught %}
+      <li> Has taught {{ person.num_taught }} time{{ person.num_taught|pluralize }}</li>
+      {% endif %}
+      {% if person.num_helper %}
+      <li> Has helped {{ person.num_helper }} time{{ person.num_helper|pluralize }}</li>
+      {% endif %}
+      {% if person.num_learner %}
+      <li> Has learned {{ person.num_learner }} time{{ person.num_learner|pluralize }}</li>
+      {% endif %}
+    </ul>
     {% else %}
     <h5>No tasks.</h5>
     {% endif %}
