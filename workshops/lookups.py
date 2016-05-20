@@ -96,7 +96,6 @@ class AirportLookup(ModelLookup):
     )
 
 
-@login_required
 class LanguageLookup(ModelLookup):
     model = models.Language
     search_fields = (

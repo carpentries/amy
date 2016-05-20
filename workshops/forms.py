@@ -18,8 +18,9 @@ from selectable import forms as selectable
 from workshops.models import (
     Award, Event, Lesson, Person, Task, Airport, Host,
     EventRequest, ProfileUpdateRequest, TodoItem, Membership,
-    InvoiceRequest, EventSubmission,
+    InvoiceRequest, EventSubmission, Language,
     TrainingRequest)
+
 from workshops import lookups
 
 
@@ -643,6 +644,13 @@ class SWCEventRequestForm(forms.ModelForm):
         help_text='<a href="http://software-carpentry.org/blog/2015/07/changes'
                   '-to-admin-fee.html" target="_blank">Look up administration '
                   'fees</a>.',
+    )
+    language = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.LanguageLookup,
+        label='Language',
+        required=False,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
     )
 
     class Meta:
