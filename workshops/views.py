@@ -1727,10 +1727,8 @@ def workshop_staff(request):
 
             if data['is_in_progress_trainee']:
                 q = Q(task__event__tags=TTT) & ~Q(task__event__tags=stalled)
-                people = (
-                    people.filter(q, task__role__name='learner')
-                    .exclude(badges__in=instructor_badges)
-                )
+                people = people.filter(q, task__role__name='learner') \
+                               .exclude(badges__in=instructor_badges)
 
     people = get_pagination_items(request, people)
     context = {
