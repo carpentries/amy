@@ -894,11 +894,11 @@ class EventRequest(AssignmentMixin, models.Model):
                   'to accommodate those requests.',
         verbose_name='Preferred workshop dates',
     )
-    language = models.CharField(
-        max_length=STR_LONG,
+    language = models.ForeignKey(
+        'Language',
         verbose_name='What human language do you want the workshop to be run'
                      ' in?',
-        blank=True, default='English',
+        null=True,
     )
 
     WORKSHOP_TYPE_CHOICES = (

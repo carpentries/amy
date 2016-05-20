@@ -25,7 +25,7 @@ def migrate_language(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('workshops', '0087_auto_20160519_0739'),
+        ('workshops', '0097_auto_20160519_0739'),
     ]
 
     operations = [
