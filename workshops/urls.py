@@ -42,6 +42,10 @@ urlpatterns = [
     url(r'^event/(?P<event_ident>[\w-]+)/delete$', views.event_delete, name='event_delete'),
     url(r'^events/add/$', views.EventCreate.as_view(), name='event_add'),
     url(r'^event/(?P<event_ident>[\w-]+)/validate/?$', views.validate_event, name='validate_event'),
+    url(r'^events/tag_changed/?$', views.events_tag_changed, name='events_tag_changed'),
+    url(r'^event/(?P<event_ident>[\w-]+)/review_tag_changes/?$', views.event_review_repo_changes, name='event_review_repo_changes'),
+    url(r'^event/(?P<event_ident>[\w-]+)/review_tag_changes/accept/?$', views.event_review_repo_changes_accept, name='event_review_repo_changes_accept'),
+    url(r'^event/(?P<event_ident>[\w-]+)/review_tag_changes/dismiss/?$', views.event_review_repo_changes_dismiss, name='event_review_repo_changes_dismiss'),
     url(r'^events/import/?$', views.event_import, name='event_import'),
     url(r'^events/merge/?$', views.events_merge, name='events_merge'),
 
@@ -64,7 +68,9 @@ urlpatterns = [
     url(r'^badge/(?P<badge_name>[\w\.=-]+)/?$', views.badge_details, name='badge_details'),
     url(r'^badge/(?P<badge_name>[\w\.=-]+)/award/?$', views.badge_award, name='badge_award'),
 
-    url(r'^instructors/?$', views.instructors, name='instructors'),
+    url(r'^trainings/?$', views.all_trainings, name='all_trainings'),
+
+    url(r'^workshop_staff/?$', views.workshop_staff, name='workshop_staff'),
 
     url(r'^search/?$', views.search, name='search'),
 

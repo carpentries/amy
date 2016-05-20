@@ -11,6 +11,7 @@ class TestTodoItemViews(TestBase):
     """Tests for the TodoItem model."""
 
     def setUp(self):
+        self._setUpAirports()
         self._setUpNonInstructors()
         self._setUpUsersAndLogin()
         self._setUpEvents()

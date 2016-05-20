@@ -20,8 +20,8 @@ from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 from django.http import Http404, HttpResponse, JsonResponse
 from django.http import HttpResponseBadRequest
-from django.db import IntegrityError, transaction
-from django.db.models import Count, Q, F, Model, ProtectedError
+from django.db import IntegrityError
+from django.db.models import Count, Q, F, Model, ProtectedError, Sum
 from django.db.models import Case, When, Value, IntegerField
 from django.shortcuts import redirect, render, get_object_or_404
 from django.template.loader import get_template
@@ -32,6 +32,8 @@ from django.contrib.auth.decorators import login_required, permission_required
 from reversion.models import Revision
 from reversion.revisions import get_for_object
 
+from workshops.management.commands.check_for_workshop_websites_updates import (
+    Command as WebsiteUpdatesCommand)
 from workshops.models import (
     Airport,
     Award,
@@ -52,7 +54,7 @@ from workshops.models import (
     EventSubmission as EventSubmissionModel,
 )
 from workshops.forms import (
-    SearchForm, DebriefForm, InstructorsForm, PersonForm, PersonBulkAddForm,
+    SearchForm, DebriefForm, WorkshopStaffForm, PersonForm, PersonBulkAddForm,
     EventForm, TaskForm, TaskFullForm, bootstrap_helper, bootstrap_helper_get,
     bootstrap_helper_with_add, BadgeAwardForm, PersonAwardForm,
     PersonPermissionsForm, bootstrap_helper_filter, PersonsSelectionForm,
@@ -69,9 +71,7 @@ from workshops.util import (
     create_uploaded_persons_tasks, InternalError,
     update_event_attendance_from_tasks,
     WrongWorkshopURL,
-    generate_url_to_event_index,
-    find_tags_on_event_index,
-    find_tags_on_event_website,
+    fetch_event_tags,
     parse_tags_from_event_website,
     validate_tags_from_event_website,
     assignment_selection,
@@ -237,6 +237,16 @@ def dashboard(request):
         # no filtering
         pass
 
+    else:
+        # no filtering
+        pass
+
+    # assigned events that have unaccepted changes
+    updated_metatags = Event.objects.active() \
+                                    .filter(assigned_to=request.user) \
+                                    .filter(tags_changed=True) \
+                                    .count()
+
     context = {
         'title': None,
         'is_admin': is_admin,
@@ -246,6 +256,7 @@ def dashboard(request):
         'unpublished_events': unpublished_events,
         'todos_start_date': TodoItemQuerySet.current_week_dates()[0],
         'todos_end_date': TodoItemQuerySet.next_week_dates()[1],
+        'updated_metatags': updated_metatags,
     }
     return render(request, 'workshops/dashboard.html', context)
 
@@ -435,15 +446,22 @@ def all_persons(request):
 
     filter = PersonFilter(
         request.GET,
-        queryset=Person.objects.all().defer('notes')  # notes are too large
+        # notes are too large, so we defer them
+        queryset=Person.objects.defer('notes').annotate(
+            is_swc_instructor=Sum(Case(When(badges__name='swc-instructor',
+                                            then=1),
+                                       default=0,
+                                       output_field=IntegerField())),
+            is_dc_instructor=Sum(Case(When(badges__name='dc-instructor',
+                                           then=1),
+                                      default=0,
+                                      output_field=IntegerField())),
+        )
     )
-    # faster method
-    instructors = Badge.objects.instructor_badges() \
-                               .values_list('person', flat=True)
     persons = get_pagination_items(request, filter)
+
     context = {'title' : 'All Persons',
                'all_persons' : persons,
-               'instructors': instructors,
                'filter': filter,
                'form_helper': bootstrap_helper_filter}
     return render(request, 'workshops/all_persons.html', context)
@@ -937,7 +955,6 @@ def all_events(request):
 
 
 @login_required
-@permission_required('workshops.add_todoitem', raise_exception=True)
 def event_details(request, event_ident):
     '''List details of a particular event.'''
     try:
@@ -945,15 +962,27 @@ def event_details(request, event_ident):
     except Event.DoesNotExist:
         raise Http404('Event matching query does not exist.')
 
-    tasks = Task.objects.filter(event__id=event.id) \
-                        .select_related('person', 'role') \
-                        .order_by('role__name')
+    tasks = Task.objects \
+                .filter(event__id=event.id) \
+                .select_related('person', 'role') \
+                .annotate(person_is_swc_instructor=Sum(
+                              Case(When(person__badges__name='swc-instructor',
+                                        then=1),
+                                   default=0,
+                                   output_field=IntegerField())),
+                          person_is_dc_instructor=Sum(
+                              Case(When(person__badges__name='dc-instructor',
+                                        then=1),
+                                   default=0,
+                                   output_field=IntegerField()))) \
+                .order_by('role__name')
     todos = event.todoitem_set.all()
     todo_form = SimpleTodoForm(prefix='todo', initial={
         'event': event,
     })
 
-    if request.method == "POST":
+    if request.method == "POST" and request.user.has_perm('workshops.add_todoitem'):
+        # Create ToDo items on todo_form submission only when user has permission
         todo_form = SimpleTodoForm(request.POST, prefix='todo', initial={
             'event': event,
         })
@@ -982,13 +1011,15 @@ def event_details(request, event_ident):
     person_lookup_helper = BootstrapHelper()
     person_lookup_helper.form_action = reverse('event_assign',
                                                args=[event_ident])
-
     context = {
         'title': 'Event {0}'.format(event),
         'event': event,
         'tasks': tasks,
         'todo_form': todo_form,
         'todos': todos,
+        'all_emails' : tasks.filter(person__may_contact=True)\
+            .exclude(person__email=None)\
+            .values_list('person__email', flat=True),
         'helper': bootstrap_helper,
         'today': datetime.date.today(),
         'person_lookup_form': person_lookup_form,
@@ -1014,27 +1045,8 @@ def validate_event(request, event_ident):
     error_messages = []
 
     try:
-        # fetch page
-        response = requests.get(page_url)
-        response.raise_for_status()  # assert it's 200 OK
-        content = response.text
-
-        # find tags
-        tags = find_tags_on_event_website(content)
-
-        if 'slug' not in tags:
-            # there are no HTML tags, so let's try the old method
-            page_url, _ = generate_url_to_event_index(page_url)
-
-            # fetch page
-            response = requests.get(page_url)
-
-            if response.status_code == 200:
-                # don't throw errors for pages we fall back to
-                content = response.text
-                tags = find_tags_on_event_index(page_url)
-
-        # validate them
+        tags = fetch_event_tags(page_url)
+        # validate tags
         error_messages = validate_tags_from_event_website(tags)
 
     except WrongWorkshopURL as e:
@@ -1170,33 +1182,11 @@ def event_import(request):
     url = request.POST.get('url', '').strip()
     if not url:
         url = request.GET.get('url', '').strip()
+
     try:
-        # fetch page
-        response = requests.get(url)
-        response.raise_for_status()  # assert it's 200 OK
-        content = response.text
-
-        # find tags
-        tags = find_tags_on_event_website(content)
-
-        if 'slug' not in tags:
-            # there are no HTML tags, so let's try the old method
-            index_url, repository = generate_url_to_event_index(url)
-
-            # fetch page
-            response = requests.get(index_url)
-
-            if response.status_code == 200:
-                # don't throw errors for pages we fall back to
-                content = response.text
-                tags = find_tags_on_event_index(content)
-
-                if 'slug' not in tags:
-                    tags['slug'] = repository
-
-        # normalize (parse) them
+        tags = fetch_event_tags(url)
+        # normalize the tags
         tags = parse_tags_from_event_website(tags)
-
         return JsonResponse(tags)
 
     except requests.exceptions.HTTPError as e:
@@ -1342,6 +1332,135 @@ def event_invoice(request, event_ident):
         'form_helper': bootstrap_helper,
     }
     return render(request, 'workshops/event_invoice.html', context)
+
+
+@login_required
+def events_tag_changed(request):
+    """List events with metatags changed."""
+    events = Event.objects.active().filter(tags_changed=True)
+
+    assigned_to, is_admin = assignment_selection(request)
+
+    if assigned_to == 'me':
+        events = events.filter(assigned_to=request.user)
+
+    elif assigned_to == 'noone':
+        events = events.filter(assigned_to=None)
+
+    elif assigned_to == 'all':
+        # no filtering
+        pass
+
+    else:
+        # no filtering
+        pass
+
+    context = {
+        'title': 'Events with metatags changed',
+        'events': events,
+        'is_admin': is_admin,
+        'assigned_to': assigned_to,
+    }
+    return render(request, 'workshops/events_tag_changed.html', context)
+
+
+@login_required
+@permission_required('workshops.change_event', raise_exception=True)
+def event_review_repo_changes(request, event_ident):
+    """Review changes made to meta tags on event's website."""
+    try:
+        event = Event.get_by_ident(event_ident)
+    except Event.DoesNotExist:
+        raise Http404('No event found matching the query.')
+
+    tags = fetch_event_tags(event.website_url)
+    tags = parse_tags_from_event_website(tags)
+
+    # save serialized tags in session so in case of acceptance we don't reload
+    # them
+    cmd = WebsiteUpdatesCommand()
+    tags_serialized = cmd.serialize(tags)
+    request.session['tags_from_event_website'] = tags_serialized
+
+    context = {
+        'title': 'Review changes for {}'.format(str(event)),
+        'tags': tags,
+        'event': event,
+    }
+    return render(request, 'workshops/event_review_tag_changes.html', context)
+
+
+@login_required
+@permission_required('workshops.change_event', raise_exception=True)
+def event_review_repo_changes_accept(request, event_ident):
+    """Review changes made to meta tags on event's website."""
+    try:
+        event = Event.get_by_ident(event_ident)
+    except Event.DoesNotExist:
+        raise Http404('No event found matching the query.')
+
+    # load serialized tags from session
+    tags_serialized = request.session.get('tags_from_event_website')
+    if not tags_serialized:
+        raise Http404('Nothing to update.')
+    cmd = WebsiteUpdatesCommand()
+    tags = cmd.deserialize(tags_serialized)
+
+    # update values
+    ALLOWED_TAGS = ('start', 'end', 'country', 'venue', 'address', 'latitude',
+                    'longitude', 'contact', 'reg_key')
+    for tag, value in tags.items():
+        if hasattr(event, tag) and tag in ALLOWED_TAGS:
+            setattr(event, tag, value)
+
+    # update instructors and helpers
+    instructors = ', '.join(tags.get('instructors', []))
+    helpers = ', '.join(tags.get('helpers', []))
+    event.notes += (
+        '\n\n---------\nUPDATE {:%Y-%m-%d}:'
+        '\nINSTRUCTORS: {}\n\nHELPERS: {}'
+        .format(datetime.date.today(), instructors, helpers)
+    )
+
+    # save serialized tags
+    event.repository_tags = tags_serialized
+
+    # dismiss notification
+    event.tag_changes_detected = ''
+    event.tags_changed = False
+    event.save()
+
+    # remove tags from session
+    del request.session['tags_from_event_website']
+
+    messages.success(request,
+                     'Successfully updated {}.'.format(event.get_ident()))
+
+    return redirect(reverse('event_details', args=[event.get_ident()]))
+
+
+@login_required
+@permission_required('workshops.change_event', raise_exception=True)
+def event_review_repo_changes_dismiss(request, event_ident):
+    """Review changes made to meta tags on event's website."""
+    try:
+        event = Event.get_by_ident(event_ident)
+    except Event.DoesNotExist:
+        raise Http404('No event found matching the query.')
+
+    # dismiss notification
+    event.tag_changes_detected = ''
+    event.tags_changed = False
+    event.save()
+
+    # remove tags from session
+    if 'tags_from_event_website' in request.session:
+        del request.session['tags_from_event_website']
+
+    messages.success(request,
+                     'Changes to {} were dismissed.'.format(event.get_ident()))
+
+    return redirect(reverse('event_details', args=[event.get_ident()]))
 
 
 class AllInvoiceRequests(LoginRequiredMixin, FilteredListView):
@@ -1524,32 +1643,78 @@ def badge_award(request, badge_name):
 
 #------------------------------------------------------------
 
+@login_required
+def all_trainings(request):
+    '''List all Instructor Trainings.'''
+
+    learner = Role.objects.get(name='learner')
+    ttt = Tag.objects.get(name='TTT')
+
+    finished = Award.objects.filter(badge__in=Badge.objects.instructor_badges(), event__tags=ttt) \
+        .values('event').annotate(finished=Count('person'))
+    finished = {f['event']: f['finished'] for f in finished}
+
+    trainings = Task.objects.filter(role=learner).filter(event__tags=ttt).order_by('event__start') \
+        .values('event', 'event__slug').annotate(trainees=Count('person'))
+    for t in trainings:
+        event_id = t['event']
+        t['finished'] = finished.get(event_id, 0)
+
+    trainings = get_pagination_items(request, trainings)
+    context = {'title': 'All Instructor Trainings',
+               'all_trainings': trainings}
+    return render(request, 'workshops/all_trainings.html', context)
+
+#------------------------------------------------------------
+
 
 @login_required
-def instructors(request):
-    '''Search for instructors.'''
+def workshop_staff(request):
+    '''Search for workshop staff.'''
     instructor_badges = Badge.objects.instructor_badges()
-    instructors = Person.objects.filter(badges__in=instructor_badges) \
-                                .filter(airport__isnull=False) \
-                                .select_related('airport') \
-                                .prefetch_related('lessons')
-    instructors = instructors.annotate(
+    TTT = Tag.objects.get(name='TTT')
+    stalled = Tag.objects.get(name='stalled')
+
+    people = Person.objects.filter(airport__isnull=False) \
+                           .select_related('airport') \
+                           .prefetch_related('badges', 'lessons')
+
+    trainees = Task.objects.filter(event__tags=TTT) \
+                           .filter(role__name='learner') \
+                           .filter(person__airport__isnull=False) \
+                           .exclude(event__tags=stalled) \
+                           .exclude(person__badges__in=instructor_badges) \
+                           .values_list('person__pk', flat=True)
+
+    # we need to count number of specific roles users had
+    # and if they are SWC/DC instructors
+    people = people.annotate(
         num_taught=Count(
             Case(
-                When(
-                    task__role__name='instructor',
-                    then=Value(1)
-                ),
+                When(task__role__name='instructor', then=Value(1)),
+                output_field=IntegerField()
+            )
+        ),
+        num_helper=Count(
+            Case(
+                When(task__role__name='helper', then=Value(1)),
+                output_field=IntegerField()
+            )
+        ),
+        num_organizer=Count(
+            Case(
+                When(task__role__name='organizer', then=Value(1)),
                 output_field=IntegerField()
             )
         )
     )
-    form = InstructorsForm()
+
+    form = WorkshopStaffForm()
 
     lessons = list()
 
     if 'submit' in request.GET:
-        form = InstructorsForm(request.GET)
+        form = WorkshopStaffForm(request.GET)
         if form.is_valid():
             data = form.cleaned_data
 
@@ -1559,7 +1724,7 @@ def instructors(request):
                 # not any lesson within the list (as it would be with
                 # `.filter(lessons_in=lessons)`)
                 for lesson in lessons:
-                    instructors = instructors.filter(
+                    people = people.filter(
                         qualification__lesson=lesson
                     )
 
@@ -1567,40 +1732,55 @@ def instructors(request):
                 x = data['airport'].latitude
                 y = data['airport'].longitude
                 # using Euclidean distance just because it's faster and easier
-                complex_F = ((F('airport__latitude') - x) ** 2
-                             + (F('airport__longitude') - y) ** 2)
-                instructors = instructors.annotate(distance=complex_F) \
-                                         .order_by('distance', 'family')
+                complex_F = ((F('airport__latitude') - x) ** 2 +
+                             (F('airport__longitude') - y) ** 2)
+                people = people.annotate(distance=complex_F) \
+                               .order_by('distance', 'family')
 
             if data['latitude'] and data['longitude']:
                 x = data['latitude']
                 y = data['longitude']
                 # using Euclidean distance just because it's faster and easier
-                complex_F = ((F('airport__latitude') - x) ** 2
-                             + (F('airport__longitude') - y) ** 2)
-                instructors = instructors.annotate(distance=complex_F) \
-                                         .order_by('distance', 'family')
+                complex_F = ((F('airport__latitude') - x) ** 2 +
+                             (F('airport__longitude') - y) ** 2)
+                people = people.annotate(distance=complex_F) \
+                               .order_by('distance', 'family')
 
             if data['country']:
-                instructors = instructors.filter(
+                people = people.filter(
                     airport__country__in=data['country']
                 ).order_by('family')
 
             if data['gender']:
-                instructors = instructors.filter(gender=data['gender'])
+                people = people.filter(gender=data['gender'])
 
             if data['instructor_badges']:
                 for badge in data['instructor_badges']:
-                    instructors = instructors.filter(badges__name=badge)
+                    people = people.filter(badges__name=badge)
 
-    instructors = get_pagination_items(request, instructors)
+            # it's faster to count role=helper occurences than to check if user
+            # had a role=helper
+            if data['was_helper']:
+                people = people.filter(num_helper__gte=1)
+
+            if data['was_organizer']:
+                people = people.filter(num_organizer__gte=1)
+
+            if data['is_in_progress_trainee']:
+                q = Q(task__event__tags=TTT) & ~Q(task__event__tags=stalled)
+                people = people.filter(q, task__role__name='learner') \
+                               .exclude(badges__in=instructor_badges)
+
+    people = get_pagination_items(request, people)
     context = {
-        'title': 'Find Instructors',
+        'title': 'Find Workshop Staff',
         'form': form,
-        'persons': instructors,
+        'persons': people,
         'lessons': lessons,
+        'instructor_badges': instructor_badges,
+        'trainees': trainees,
     }
-    return render(request, 'workshops/instructors.html', context)
+    return render(request, 'workshops/workshop_staff.html', context)
 
 #------------------------------------------------------------
 
@@ -1689,9 +1869,6 @@ def search(request):
 @login_required
 def instructors_by_date(request):
     '''Show who taught between begin_date and end_date.'''
-    tasks = None
-
-    start_date = end_date = None
 
     form = DebriefForm()
     if 'begin_date' in request.GET and 'end_date' in request.GET:
@@ -1702,11 +1879,20 @@ def instructors_by_date(request):
         end_date = form.cleaned_data['end_date']
         rvs = ReportsViewSet()
         tasks = rvs.instructors_by_time_queryset(start_date, end_date)
+        emails = tasks.filter(person__may_contact=True)\
+                      .exclude(person__email=None)\
+                      .values_list('person__email', flat=True)
+    else:
+        start_date = None
+        end_date = None
+        tasks = None
+        emails = None
 
     context = {'title': 'List of instructors by time period',
                'form': form,
                'form_helper': bootstrap_helper_get,
                'all_tasks': tasks,
+               'emails': emails,
                'start_date': start_date,
                'end_date': end_date}
     return render(request, 'workshops/instructors_by_date.html', context)
@@ -1841,6 +2027,10 @@ def workshop_issues(request):
         # no filtering
         pass
 
+    else:
+        # no filtering
+        pass
+
     for e in events:
         e.missing_attendance_ = (not e.attendance)
         e.missing_location_ = (
@@ -1923,18 +2113,13 @@ def object_changes(request, revision_id):
         'current_version': current_version,
         'revision': revision,
         'title': str(obj),
-    }
-    if obj.__class__ == Person:
-        return render(request, 'workshops/person_diff.html', context)
-    elif obj.__class__ == Event:
-        return render(request, 'workshops/event_diff.html', context)
-    else:
-        context['verbose_name'] = obj._meta.verbose_name
-        context['fields'] = [
+        'verbose_name': obj._meta.verbose_name,
+        'fields': [
             f for f in obj._meta.get_fields()
-            if f.concrete and not f.is_relation
-        ]
-        return render(request, 'workshops/object_diff.html', context)
+            if f.concrete
+        ],
+    }
+    return render(request, 'workshops/object_diff.html', context)
 
 # ------------------------------------------------------------
 
@@ -2013,7 +2198,7 @@ class SWCEventRequestConfirm(TemplateView):
 class DCEventRequest(SWCEventRequest):
     form_class = DCEventRequestForm
     page_title = 'Request a Data Carpentry Workshop'
-    form_template = 'forms/workshop_dc_request.html'
+    template_name = 'forms/workshop_dc_request.html'
     success_url = reverse_lazy('dc_workshop_request_confirm')
 
 

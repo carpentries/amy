@@ -23,6 +23,9 @@ class TestAirport(TestBase):
             self.hermione.pk,
             self.harry.pk,
             self.ron.pk,
+            self.spiderman.pk,
+            self.ironman.pk,
+            self.blackwidow.pk,
         ]
 
         for iata in L1[:3]:

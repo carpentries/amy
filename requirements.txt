@@ -1,6 +1,7 @@
 Django>=1.9,<1.10
 PyYAML
 requests>=2.0
+requests-mock>=0.7,<0.8
 django-crispy-forms>=1.6,<1.7
 django-selectable>=0.9.0,<1.0
 django-countries>=3.4,<3.5
@@ -14,3 +15,4 @@ django-recaptcha>=1.0.0,<1.1.0
 fake-factory>=0.5.3,<0.6
 drf-nested-routers>=0.11.1,<0.12
 django_compressor>=2.0,<2.1
+pygithub>=1.26,<=1.27

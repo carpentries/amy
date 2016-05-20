@@ -5,6 +5,9 @@ import sys
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.db.utils import IntegrityError
+
+from ..management.commands.check_for_workshop_websites_updates import (
+    Command as WebsiteUpdatesCommand)
 from ..models import (Event, Host, Tag, Role, Task, Award, Badge, TodoItem)
 from ..forms import EventForm, EventsMergeForm
 from .base import TestBase
@@ -14,6 +17,7 @@ class TestEvent(TestBase):
     "Tests for the event model and its manager."
 
     def setUp(self):
+        self._setUpAirports()
         self._setUpNonInstructors()
         self._setUpUsersAndLogin()
 
@@ -201,6 +205,7 @@ class TestEventViews(TestBase):
 
     def setUp(self):
         self._setUpUsersAndLogin()
+        self._setUpAirports()
         self._setUpNonInstructors()
 
         self.learner = Role.objects.get_or_create(name='learner')[0]
@@ -779,3 +784,101 @@ class TestEventImport(TestBase):
         url = reverse('event_import')
         rv = self.client.get(url)
         self.assertLess(rv.status_code, 500)
+
+
+class TestEventReviewingRepoChanges(TestBase):
+    """Ensure views used for reviewing, accepting and dismissing changes made
+    to event's meta tags work correctly."""
+
+    def setUp(self):
+        self._setUpUsersAndLogin()
+        self._setUpHosts()
+
+        self.cmd = WebsiteUpdatesCommand()
+
+        self.tags = {
+            'slug': '2015-07-13-test',
+            'language': 'US',
+            'start': date(2015, 7, 13),
+            'end': date(2015, 7, 14),
+            'country': 'US',
+            'venue': 'Euphoric State University',
+            'address': 'Highway to Heaven 42, Academipolis',
+            'latitude': 36.998977,
+            'longitude': -109.045173,
+            'reg_key': '10000000',
+            'instructors': ['Hermione Granger', 'Ron Weasley'],
+            'helpers': ['Peter Parker', 'Tony Stark', 'Natasha Romanova'],
+            'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
+        }
+        self.tags_serialized = self.cmd.serialize(self.tags)
+
+        # create event with some changes detected
+        self.event = Event.objects.create(
+            slug='event-for-changes', start=date(2016, 4, 20),
+            end=date(2016, 4, 22), host=Host.objects.first(),
+            tags_changed=True)
+
+        # add tags to the session
+        session = self.client.session
+        session['tags_from_event_website'] = self.tags_serialized
+        session.save()
+
+    def test_showing_all_events_with_changed_metatags(self):
+        """Ensure `events_tag_changed` only shows events with changed
+        metatags."""
+        url = reverse('events_tag_changed')
+        rv = self.client.get(url)
+        self.assertEqual(rv.status_code, 200)
+
+        self.assertEqual(list(rv.context['events']), [self.event])
+
+    def test_accepting_changes(self):
+        """Ensure `event_review_repo_changes_accept`:
+        * updates changed values in event
+        * dismisses notification about changed tags
+        * removes tags from session
+        * redirects to the event details page."""
+        url = reverse('event_review_repo_changes_accept',
+                      args=[self.event.get_ident()])
+        rv = self.client.get(url, follow=False)
+
+        # check for redirect to event's details page
+        self.assertEqual(rv.status_code, 302)
+
+        self.event.refresh_from_db()
+
+        self.assertEqual(self.event.tags_changed, False)
+        self.assertEqual(self.event.tag_changes_detected, '')
+        self.assertEqual(self.event.repository_tags, self.tags_serialized)
+        for tag, value in self.tags.items():
+            if tag not in ('slug', 'instructors', 'helpers', 'language'):
+                self.assertEqual(getattr(self.event, tag), value)
+
+    def test_accepting_changes_no_session_data(self):
+        """Ensure `event_review_repo_changes_accept` throws 404 when specific
+        session key 'tags_from_event_website' is unavailable."""
+        session = self.client.session
+        del session['tags_from_event_website']
+        session.save()
+
+        url = reverse('event_review_repo_changes_accept',
+                      args=[self.event.get_ident()])
+        rv = self.client.get(url, follow=False)
+        self.assertEqual(rv.status_code, 404)
+
+    def test_dismissing_changes(self):
+        url = reverse('event_review_repo_changes_dismiss',
+                      args=[self.event.get_ident()])
+        rv = self.client.get(url, follow=False)
+
+        # check for redirect to event's details page
+        self.assertEqual(rv.status_code, 302)
+
+        self.event.refresh_from_db()
+
+        self.assertEqual(self.event.tags_changed, False)
+        self.assertEqual(self.event.tag_changes_detected, '')
+        for tag, value in self.tags.items():
+            if tag not in ('slug', 'instructors', 'helpers', 'language'):
+                self.assertNotEqual(getattr(self.event, tag), value)

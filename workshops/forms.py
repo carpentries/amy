@@ -88,7 +88,7 @@ bootstrap_helper_wider_labels = BootstrapHelperWiderLabels()
 bootstrap_helper_inline_formsets = BootstrapHelperFormsetInline()
 
 
-class InstructorsForm(forms.Form):
+class WorkshopStaffForm(forms.Form):
     '''Represent instructor matching form.'''
 
     latitude = forms.FloatField(label='Latitude',
@@ -127,13 +127,21 @@ class InstructorsForm(forms.Form):
     GENDER_CHOICES = ((None, '---------'), ) + Person.GENDER_CHOICES
     gender = forms.ChoiceField(choices=GENDER_CHOICES, required=False)
 
+    was_helper = forms.BooleanField(
+        required=False, label='Was helper at least once before')
+    was_organizer = forms.BooleanField(
+        required=False, label='Was organizer at least once before')
+    is_in_progress_trainee = forms.BooleanField(
+        required=False, label='Is an in-progress instructor trainee')
+
     def __init__(self, *args, **kwargs):
         '''Build form layout dynamically.'''
-        super(InstructorsForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         # dynamically build choices for country field
-        only = Airport.objects.distinct().values_list('country', flat=True)
-        only = [c for c in only if c]
+        only = Airport.objects.distinct().exclude(country='') \
+                                         .exclude(country=None) \
+                                         .values_list('country', flat=True)
         countries = Countries()
         countries.only = only
 
@@ -146,49 +154,47 @@ class InstructorsForm(forms.Form):
         self.helper.form_method = 'get'
         self.helper.layout = Layout(
             Div(
-                Div(
-                    'latitude',
-                    'longitude',
-                    css_class='panel-body'
-                ),
+                Div(HTML('Location close to'), css_class='panel-heading'),
+                Div('airport', css_class='panel-body'),
+                Div(HTML('<b>OR</b>'), css_class='panel-footer'),
+                Div('country', css_class='panel-body'),
+                Div(HTML('<b>OR</b>'), css_class='panel-footer'),
+                Div('latitude', 'longitude', css_class='panel-body'),
                 css_class='panel panel-default ',
             ),
-            HTML('<p>OR</p>'),
-            Div(
-                Div(
-                    'airport',
-                    css_class='panel-body'
-                ),
-                css_class='panel panel-default ',
-            ),
-            HTML('<p>OR</p>'),
-            Div(
-                Div(
-                    'country',
-                    css_class='panel-body'
-                ),
-                css_class='panel panel-default ',
-            ),
+            'instructor_badges',
+            'was_helper',
+            'was_organizer',
+            'is_in_progress_trainee',
             'gender',
             'lessons',
-            'instructor_badges',
             FormActions(
                 Submit('submit', 'Submit'),
             ),
         )
 
     def clean(self):
-        cleaned_data = super(InstructorsForm, self).clean()
-        airport = cleaned_data.get('airport')
-        lat = cleaned_data.get('latitude')
-        long = cleaned_data.get('longitude')
-        country = cleaned_data.get('country')
+        cleaned_data = super().clean()
+        lat = bool(cleaned_data.get('latitude'))
+        lng = bool(cleaned_data.get('longitude'))
+        airport = bool(cleaned_data.get('airport'))
+        country = bool(cleaned_data.get('country'))
+        latlng = lat and lng
 
-        sum = bool(airport) + bool(lat and long) + bool(country)
-        # user can specify only one: either airport, or lat&long, or country
-        if sum != 1:
-            raise forms.ValidationError('Must specify an airport, or latitude'
-                                        ' and longitude, or a country.')
+        # if searching by coordinates, then there must be both lat & lng
+        # present
+        if lat ^ lng:
+            raise forms.ValidationError(
+                'Must specify both latitude and longitude if searching by '
+                'coordinates')
+
+        # User must search by airport, or country, or coordinates, or none
+        # of them. Sum of boolean elements must be equal 0 (if general search)
+        # or 1 (if searching by airport OR country OR lat/lng).
+        if sum([airport, country, latlng]) not in [0, 1]:
+            raise forms.ValidationError(
+                'Must specify an airport OR a country, OR use coordinates, OR '
+                'none of them.')
         return cleaned_data
 
 

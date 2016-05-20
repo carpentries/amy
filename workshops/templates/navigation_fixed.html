@@ -25,6 +25,7 @@
               <ul class="dropdown-menu" role="menu">
                 {% navbar_element "Tasks" "all_tasks" %}
                 {% navbar_element "Badges" "all_badges" %}
+                {% navbar_element "Trainings" "all_trainings" %}
                 {% navbar_element "Airports" "all_airports" %}
                 {% navbar_element "Workshop requests" "all_eventrequests" %}
                 {% navbar_element "Workshop submissions" "all_eventsubmissions" %}
@@ -34,7 +35,7 @@
                 {% navbar_element_permed "Bulk add persons" "person_bulk_add" "workshops.add_person" %}
                 {% navbar_element_permed "Merge persons" "persons_merge" "workshops.delete_person" %}
                 {% navbar_element_permed "Merge events" "events_merge" "workshops.change_event,workshops.delete_event" %}
-                {% navbar_element "Find instructors" "instructors" %}
+                {% navbar_element "Find Workshop Staff" "workshop_staff" %}
                 <li class="divider"></li>
                 {% url "export_badges" as export_badges_url %}
                 {% url "export_instructors" as export_instructors_url %}

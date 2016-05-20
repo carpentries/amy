@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 import itertools
 import random
 
@@ -232,6 +232,42 @@ class Command(BaseCommand):
         for event, person, role in random.sample(list(all_possible), count):
             Task.objects.create(event=event, person=person, role=role)
 
+    def fake_trainees(self, faker):
+        host = Host.objects.all()[0]
+        tag = Tag.objects.get(name='TTT')
+        learner = Role.objects.get(name='learner')
+        swc_instructor = Badge.objects.get(name='swc-instructor')
+        dc_instructor = Badge.objects.get(name='dc-instructor')
+
+        # events
+        first_event = Event.objects.create(host=host, slug='first-ttt-event')
+        first_event.tags.add(tag)
+        first_event.save()
+
+        second_event = Event.objects.create(host=host, slug='second-ttt-event')
+        second_event.tags.add(tag)
+        second_event.save()
+
+        third_event = Event.objects.create(host=host, slug='third-ttt-event')
+        third_event.tags.add(tag)
+        third_event.save()
+
+        # persons
+        bob = Person.objects.create(username='bob-trainee')
+        alice = Person.objects.create(username='alice-trainee')
+        john = Person.objects.create(username='john-trainee')
+
+        # tasks
+        Task.objects.create(event=first_event, person=bob, role=learner)
+        Task.objects.create(event=first_event, person=alice, role=learner)
+        Task.objects.create(event=second_event, person=john, role=learner)
+
+        # awards
+        Award.objects.create(event=first_event, person=bob, badge=swc_instructor,
+                             awarded=datetime(2016, 4, 1))
+        Award.objects.create(event=third_event, person=bob, badge=dc_instructor,
+                             awarded=datetime(2016, 4, 1))
+
     def handle(self, *args, **options):
         faker = Faker()
 
@@ -251,3 +287,4 @@ class Command(BaseCommand):
         self.fake_unpublished_events(faker)
         self.fake_self_organized_events(faker)
         self.fake_tasks(faker)
+        self.fake_trainees(faker)

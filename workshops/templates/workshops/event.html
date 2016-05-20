@@ -6,6 +6,17 @@
 {% load tags %}
 
 {% block content %}
+
+{% if event.tags_changed %}
+<div class="alert alert-warning alert-dismissible" role="alert">
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
+  <h4>Event's website updated</h4>
+  <p>This event's repository was updated by the repository owner. Changes detected:</p>
+  <p>{{ event.tag_changes_detected|linebreaksbr }}</p>
+  <p><a class="btn btn-warning" href="{% url 'event_review_repo_changes' event.get_ident %}">Review changes</a></p>
+</div>
+{% endif %}
+
 {% if event.completed %}
 <div class="alert alert-success" role="alert">
   <strong>Well done!</strong> This event is completed, you don't have to work on it.
@@ -115,13 +126,18 @@
 
 {% if tasks %}
 <h3>Tasks</h3>
+{% if all_emails %}<p><a href="mailto:{{ all_emails|join:',' }}" class="btn btn-primary">Mail everyone</a></p>{% endif %}
 <table class="table table-striped">
   <tr>
+    <th width="25">DC?</th>
+    <th width="25">SWC?</th>
     <th>person</th>
     <th>role</th>
   </tr>
   {% for t in tasks %}
   <tr>
+    <td class="text-center">{% if t.person_is_dc_instructor %}{% bootstrap_tag "DC" %}{% endif %}</td>
+    <td class="text-center">{% if t.person_is_swc_instructor %}{% bootstrap_tag "SWC" %}{% endif %}</td>
     <td><a href="{{ t.person.get_absolute_url }}">{{ t.person.get_full_name }}</a>{% if t.person.email and t.person.may_contact %} &lt;{{ t.person.email|urlize }}&gt;{% endif %}</td>
     <td>{{ t.role.name }}</td>
   </tr>
@@ -148,9 +164,11 @@
 </div>
 
 <h3 id="todos">TODOs</h3>
+{% if perms.workshops.add_todoitem %}
 <p>
   <a href="{% url 'todos_add' event.get_ident %}" class="btn btn-primary">Add standard TODOs</a>
 </p>
+{% endif %}
 {% if todos %}
 <table class="table">
   <thead>
@@ -186,8 +204,10 @@
 {% else %}
 <p>No TODOs.</p>
 {% endif %}
+{% if perms.workshops.add_todoitem %}
 <h4 id="newtodo">New TODO</h4>
 {% crispy todo_form helper %}
+{% endif %}
 {% endblock %}
 
 {% block extrajs %}
