@@ -54,7 +54,7 @@ from workshops.models import (
     EventSubmission as EventSubmissionModel,
 )
 from workshops.forms import (
-    SearchForm, DebriefForm, InstructorsForm, PersonForm, PersonBulkAddForm,
+    SearchForm, DebriefForm, WorkshopStaffForm, PersonForm, PersonBulkAddForm,
     EventForm, TaskForm, TaskFullForm, bootstrap_helper, bootstrap_helper_get,
     bootstrap_helper_with_add, BadgeAwardForm, PersonAwardForm,
     PersonPermissionsForm, bootstrap_helper_filter, PersonsSelectionForm,
@@ -1669,41 +1669,52 @@ def all_trainings(request):
 
 
 @login_required
-def instructors(request):
-    '''Search for instructors.'''
+def workshop_staff(request):
+    '''Search for workshop staff.'''
     instructor_badges = Badge.objects.instructor_badges()
-    instructors = Person.objects\
-                        .filter(badges__in=instructor_badges) \
-                        .filter(airport__isnull=False) \
-                        .annotate(is_swc_instructor=Sum(
-                                      Case(When(badges__name='swc-instructor',
-                                                then=1),
-                                           default=0,
-                                           output_field=IntegerField())),
-                                  is_dc_instructor=Sum(
-                                      Case(When(badges__name='dc-instructor',
-                                                then=1),
-                                           default=0,
-                                           output_field=IntegerField()))) \
-                        .select_related('airport') \
-                        .prefetch_related('lessons')
-    instructors = instructors.annotate(
+    TTT = Tag.objects.get(name='TTT')
+    stalled = Tag.objects.get(name='stalled')
+
+    people = Person.objects.filter(airport__isnull=False) \
+                           .select_related('airport') \
+                           .prefetch_related('badges', 'lessons')
+
+    trainees = Task.objects.filter(event__tags=TTT) \
+                           .filter(role__name='learner') \
+                           .filter(person__airport__isnull=False) \
+                           .exclude(event__tags=stalled) \
+                           .exclude(person__badges__in=instructor_badges) \
+                           .values_list('person__pk', flat=True)
+
+    # we need to count number of specific roles users had
+    # and if they are SWC/DC instructors
+    people = people.annotate(
         num_taught=Count(
             Case(
-                When(
-                    task__role__name='instructor',
-                    then=Value(1)
-                ),
+                When(task__role__name='instructor', then=Value(1)),
+                output_field=IntegerField()
+            )
+        ),
+        num_helper=Count(
+            Case(
+                When(task__role__name='helper', then=Value(1)),
+                output_field=IntegerField()
+            )
+        ),
+        num_organizer=Count(
+            Case(
+                When(task__role__name='organizer', then=Value(1)),
                 output_field=IntegerField()
             )
         )
     )
-    form = InstructorsForm()
+
+    form = WorkshopStaffForm()
 
     lessons = list()
 
     if 'submit' in request.GET:
-        form = InstructorsForm(request.GET)
+        form = WorkshopStaffForm(request.GET)
         if form.is_valid():
             data = form.cleaned_data
 
@@ -1713,7 +1724,7 @@ def instructors(request):
                 # not any lesson within the list (as it would be with
                 # `.filter(lessons_in=lessons)`)
                 for lesson in lessons:
-                    instructors = instructors.filter(
+                    people = people.filter(
                         qualification__lesson=lesson
                     )
 
@@ -1721,40 +1732,55 @@ def instructors(request):
                 x = data['airport'].latitude
                 y = data['airport'].longitude
                 # using Euclidean distance just because it's faster and easier
-                complex_F = ((F('airport__latitude') - x) ** 2
-                             + (F('airport__longitude') - y) ** 2)
-                instructors = instructors.annotate(distance=complex_F) \
-                                         .order_by('distance', 'family')
+                complex_F = ((F('airport__latitude') - x) ** 2 +
+                             (F('airport__longitude') - y) ** 2)
+                people = people.annotate(distance=complex_F) \
+                               .order_by('distance', 'family')
 
             if data['latitude'] and data['longitude']:
                 x = data['latitude']
                 y = data['longitude']
                 # using Euclidean distance just because it's faster and easier
-                complex_F = ((F('airport__latitude') - x) ** 2
-                             + (F('airport__longitude') - y) ** 2)
-                instructors = instructors.annotate(distance=complex_F) \
-                                         .order_by('distance', 'family')
+                complex_F = ((F('airport__latitude') - x) ** 2 +
+                             (F('airport__longitude') - y) ** 2)
+                people = people.annotate(distance=complex_F) \
+                               .order_by('distance', 'family')
 
             if data['country']:
-                instructors = instructors.filter(
+                people = people.filter(
                     airport__country__in=data['country']
                 ).order_by('family')
 
             if data['gender']:
-                instructors = instructors.filter(gender=data['gender'])
+                people = people.filter(gender=data['gender'])
 
             if data['instructor_badges']:
                 for badge in data['instructor_badges']:
-                    instructors = instructors.filter(badges__name=badge)
+                    people = people.filter(badges__name=badge)
 
-    instructors = get_pagination_items(request, instructors)
+            # it's faster to count role=helper occurences than to check if user
+            # had a role=helper
+            if data['was_helper']:
+                people = people.filter(num_helper__gte=1)
+
+            if data['was_organizer']:
+                people = people.filter(num_organizer__gte=1)
+
+            if data['is_in_progress_trainee']:
+                q = Q(task__event__tags=TTT) & ~Q(task__event__tags=stalled)
+                people = people.filter(q, task__role__name='learner') \
+                               .exclude(badges__in=instructor_badges)
+
+    people = get_pagination_items(request, people)
     context = {
-        'title': 'Find Instructors',
+        'title': 'Find Workshop Staff',
         'form': form,
-        'persons': instructors,
+        'persons': people,
         'lessons': lessons,
+        'instructor_badges': instructor_badges,
+        'trainees': trainees,
     }
-    return render(request, 'workshops/instructors.html', context)
+    return render(request, 'workshops/workshop_staff.html', context)
 
 #------------------------------------------------------------
 

@@ -70,7 +70,7 @@ urlpatterns = [
 
     url(r'^trainings/?$', views.all_trainings, name='all_trainings'),
 
-    url(r'^instructors/?$', views.instructors, name='instructors'),
+    url(r'^workshop_staff/?$', views.workshop_staff, name='workshop_staff'),
 
     url(r'^search/?$', views.search, name='search'),
 

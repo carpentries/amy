@@ -148,15 +148,17 @@ class TestBase(TestCase):
         self.spiderman = Person.objects.create(
             personal='Peter', middle='Q.', family='Parker',
             email='peter@webslinger.net', gender='O', may_contact=True,
-            username="spiderman")
+            username="spiderman", airport=self.airport_55_105)
 
         self.ironman = Person.objects.create(
             personal='Tony', middle=None, family='Stark', email='me@stark.com',
-            gender='M', may_contact=True, username="ironman")
+            gender='M', may_contact=True, username="ironman",
+            airport=self.airport_50_100)
 
         self.blackwidow = Person.objects.create(
             personal='Natasha', middle=None, family='Romanova', email=None,
-            gender='F', may_contact=False, username="blackwidow")
+            gender='F', may_contact=False, username="blackwidow",
+            airport=self.airport_0_50)
 
     def _setUpUsersAndLogin(self):
         """Set up one account for administrator that can log into the website.

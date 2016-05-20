@@ -17,6 +17,7 @@ class TestEvent(TestBase):
     "Tests for the event model and its manager."
 
     def setUp(self):
+        self._setUpAirports()
         self._setUpNonInstructors()
         self._setUpUsersAndLogin()
 
@@ -204,6 +205,7 @@ class TestEventViews(TestBase):
 
     def setUp(self):
         self._setUpUsersAndLogin()
+        self._setUpAirports()
         self._setUpNonInstructors()
 
         self.learner = Role.objects.get_or_create(name='learner')[0]
