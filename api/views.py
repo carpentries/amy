@@ -324,7 +324,7 @@ class ReportsViewSet(ViewSet):
     @list_route(methods=['GET'])
     def instructor_num_taught(self, request, format=None):
         badges = Badge.objects.instructor_badges()
-        persons = Person.objects.filter(badges__in=badges).annotate(
+        persons = Person.objects.filter(badges=badges).annotate(
             num_taught=Count(
                 Case(
                     When(
