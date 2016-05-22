@@ -65,7 +65,7 @@ from workshops.forms import (
     TodoFormSet, EventsSelectionForm, EventsMergeForm, InvoiceRequestForm,
     InvoiceRequestUpdateForm, EventSubmitForm, EventSubmitFormNoCaptcha,
     PersonsMergeForm, PersonCreateForm,
-)
+    TrainingRequestForm, BootstrapHelperWiderLabels)
 from workshops.util import (
     upload_person_task_csv, verify_upload_person_task,
     create_uploaded_persons_tasks, InternalError,
@@ -2914,3 +2914,34 @@ def duplicates(request):
     }
 
     return render(request, 'workshops/duplicates.html', context)
+
+
+def trainingrequest_create(request):
+    """ A form to let all users (no login required) to request Instructor Training. """
+
+    form = TrainingRequestForm()
+    page_title = 'Apply for Instructor Training'
+
+    if request.method == 'POST':
+        form = TrainingRequestForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+
+            # TODO: email notification?
+
+            context = {
+                'title': 'Thank you for an instructor training.',
+            }
+            return render(request,
+                          'forms/trainingrequest_confirm.html',
+                          context)
+        else:
+            messages.error(request, 'Fix errors below.')
+
+    context = {
+        'title': page_title,
+        'form': form,
+        'form_helper': BootstrapHelperWiderLabels(form),
+    }
+    return render(request, 'forms/trainingrequest.html', context)
