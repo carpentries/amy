@@ -12,11 +12,11 @@
     <form class="form-inline" action="{{ api_endpoint }}" method="GET" id="form">
       <div class="form-group">
         <label for="id_start">Start date:</label>
-        <input type="date" class="form-control" id="id_start" name="start">
+        <input type="date" class="form-control dateinput" id="id_start" name="start" value="{{ start|date:"Y-m-d" }}">
       </div>
       <div class="form-group">
         <label for="id_end">End date:</label>
-        <input type="date" class="form-control" id="id_end" name="end">
+        <input type="date" class="form-control dateinput" id="id_end" name="end" value="{{ end|date:"Y-m-d" }}">
       </div>
       <input type="hidden" name="format" value="json" />
       <input type="submit" class="btn btn-default" value="Submit" />
