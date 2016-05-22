@@ -1085,10 +1085,12 @@ class DataAnalysisLevel(models.Model):
 class Role(models.Model):
     '''Enumerate roles in workshops.'''
 
-    name       = models.CharField(max_length=STR_MED)
+    name = models.CharField(max_length=STR_MED)
+    verbose_name = models.CharField(max_length=STR_LONG,
+                                    null=False, blank=True, default='')
 
     def __str__(self):
-        return self.name
+        return self.verbose_name
 
 #------------------------------------------------------------
 
