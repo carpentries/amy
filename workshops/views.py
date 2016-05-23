@@ -1986,6 +1986,8 @@ def all_activity_over_time(request):
     context = {
         'api_endpoint': reverse('api:reports-all-activity-over-time'),
         'title': 'All activity over time',
+        'start': datetime.date.today() - datetime.timedelta(days=365),
+        'end': datetime.date.today(),
     }
     return render(request, 'workshops/all_activity_over_time.html', context)
 
