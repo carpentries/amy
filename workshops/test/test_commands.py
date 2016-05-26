@@ -55,8 +55,7 @@ class TestFakeDatabaseCommand(TestCase):
     def test_new_roles_added(self):
         """Make sure we add roles that are hard-coded. They'll end up in
         fixtures in future (see #626)."""
-        roles = ['helper', 'instructor', 'host', 'learner', 'organizer',
-                 'tutor', 'debriefed']
+        roles = ['helper', 'instructor', 'host', 'learner', 'organizer']
         self.assertFalse(Role.objects.filter(name__in=roles).exists())
         self.cmd.fake_roles(self.faker)
 

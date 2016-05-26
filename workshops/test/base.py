@@ -297,7 +297,6 @@ class TestBase(TestCase):
         Role.objects.bulk_create([
             Role(name='helper'), Role(name='instructor'), Role(name='host'),
             Role(name='learner'), Role(name='organizer'), Role(name='tutor'),
-            Role(name='debriefed'),
         ])
 
     def _parse(self, response, save_to=None):
