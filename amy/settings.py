@@ -279,6 +279,8 @@ LOGGING = {
     },
 }
 
+# weaker hasher brings test speedup according to Django docs:
+# https://docs.djangoproject.com/en/1.9/topics/testing/overview/#speeding-up-the-tests
 if DEBUG and 'test' in sys.argv:
     PASSWORD_HASHERS = (
         'django.contrib.auth.hashers.MD5PasswordHasher',
