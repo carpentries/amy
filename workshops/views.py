@@ -470,7 +470,29 @@ def all_persons(request):
 @login_required
 def person_details(request, person_id):
     '''List details of a particular person.'''
-    person = get_object_or_404(Person, id=person_id)
+    try:
+        person = Person.objects.annotate(
+            num_taught=Count(
+                 Case(
+                    When(task__role__name='instructor', then=Value(1)),
+                    output_field=IntegerField()
+                )
+            ),
+            num_helper=Count(
+                Case(
+                    When(task__role__name='helper', then=Value(1)),
+                    output_field=IntegerField()
+                )
+            ),
+            num_learner=Count(
+                Case(
+                    When(task__role__name='learner', then=Value(1)),
+                     output_field=IntegerField()
+                )
+            )
+        ).get(id=person_id)
+    except Person.DoesNotExist:
+        raise Http404('Person matching query does not exist.')
     awards = person.award_set.all()
     tasks = person.task_set.all()
     lessons = person.lessons.all()
