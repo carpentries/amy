@@ -824,10 +824,10 @@ class TestEventReviewingRepoChanges(TestBase):
         session['metadata_from_event_website'] = self.metadata_serialized
         session.save()
 
-    def test_showing_all_events_with_changed_metatags(self):
-        """Ensure `events_tag_changed` only shows events with changed
-        metatags."""
-        url = reverse('events_tag_changed')
+    def test_showing_all_events_with_changed_metadata(self):
+        """Ensure `events_metadata_changed` only shows events with changed
+        metadata."""
+        url = reverse('events_metadata_changed')
         rv = self.client.get(url)
         self.assertEqual(rv.status_code, 200)
 

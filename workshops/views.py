@@ -242,7 +242,7 @@ def dashboard(request):
         pass
 
     # assigned events that have unaccepted changes
-    updated_metatags = Event.objects.active() \
+    updated_metadata = Event.objects.active() \
                                     .filter(assigned_to=request.user) \
                                     .filter(metadata_changed=True) \
                                     .count()
@@ -256,7 +256,7 @@ def dashboard(request):
         'unpublished_events': unpublished_events,
         'todos_start_date': TodoItemQuerySet.current_week_dates()[0],
         'todos_end_date': TodoItemQuerySet.next_week_dates()[1],
-        'updated_metatags': updated_metatags,
+        'updated_metadata': updated_metadata,
     }
     return render(request, 'workshops/dashboard.html', context)
 
@@ -1357,8 +1357,8 @@ def event_invoice(request, event_ident):
 
 
 @login_required
-def events_tag_changed(request):
-    """List events with metatags changed."""
+def events_metadata_changed(request):
+    """List events with metadata changed."""
     events = Event.objects.active().filter(metadata_changed=True)
 
     assigned_to, is_admin = assignment_selection(request)
@@ -1378,12 +1378,12 @@ def events_tag_changed(request):
         pass
 
     context = {
-        'title': 'Events with metatags changed',
+        'title': 'Events with metadata changed',
         'events': events,
         'is_admin': is_admin,
         'assigned_to': assigned_to,
     }
-    return render(request, 'workshops/events_tag_changed.html', context)
+    return render(request, 'workshops/events_metadata_changed.html', context)
 
 
 @login_required
