@@ -4,7 +4,7 @@ from .base import TestBase
 from ..models import Person, Role, TrainingRequest
 
 
-class TestSWCEventRequestForm(TestBase):
+class TestTrainingRequestForm(TestBase):
     def setUp(self):
         self._setUpUsersAndLogin()
         self._setUpRoles()
@@ -46,3 +46,38 @@ class TestSWCEventRequestForm(TestBase):
         content = rv.content.decode('utf-8')
         self.assertNotIn('Fix errors below', content)
         self.assertEqual(TrainingRequest.objects.all().count(), 1)
+
+
+class TestTrainingRequestViews(TestBase):
+    def setUp(self):
+        self._setUpUsersAndLogin()
+        self._setUpRoles()
+
+        self.req = TrainingRequest.objects.create(
+            personal='John',
+            family='Smith',
+            email='john@smith.com',
+            occupation='',
+            affiliation='AGH University of Science and Technology',
+            location='Cracow',
+            country='PL',
+            gender=Person.MALE,
+            previous_training='none',
+            previous_experience='none',
+            programming_language_usage_frequency='hourly',
+            reason='Just for fun.',
+            teaching_frequency_expectation='often',
+            max_travelling_frequency='yearly',
+        )
+        self.req.previous_involvement.add(Role.objects.get(name='host'))
+        self.req.save()
+
+    def test_list_view(self):
+        rv = self.client.get(reverse('all_trainingrequests'))
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(list(rv.context['requests']), [self.req])
+
+    def test_detailed_view(self):
+        rv = self.client.get(reverse('trainingrequest_details',
+                                     args=[self.req.pk]))
+        self.assertEqual(rv.status_code, 200)

@@ -122,6 +122,8 @@ urlpatterns = [
     url(r'^update_profile/$', views.profileupdaterequest_create, name='profileupdate_request'),
 
     url(r'^request_training/$', views.trainingrequest_create, name='training_request'),
+    url(r'^training_requests/$', views.TrainingRequestListView.as_view(), name='all_trainingrequests'),
+    url(r'^training_requests/(?P<request_id>\d+)/?$', views.TrainingRequestDetails.as_view(), name='trainingrequest_details'),
 
     url(r'^todos/(?P<event_ident>[\w-]+)/add$', views.todos_add, name='todos_add'),
     url(r'^todo/(?P<todo_id>\d+)/completed', views.todo_mark_completed, name='todo_mark_completed'),

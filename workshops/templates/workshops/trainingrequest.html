@@ -1,0 +1,60 @@
+{% extends "base_nav_fixed.html" %}
+
+{% load revisions %}
+
+{% block content %}
+{% last_modified req %}
+
+<table class="table table-striped">
+  <tr><th>created_at</th>
+      <td>{{ req.created_at }}</td></tr>
+  <tr><th>personal name</th>
+      <td>{{ req.personal }}</td></tr>
+  <tr><th>family name</th>
+      <td>{{ req.family}}</td></tr>
+  <tr><th>email</th>
+      <td>{{ req.email|urlize }}</td></tr>
+  <tr><th>occupation</th>
+      <td>{{ req.get_occupation_display }} {{ req.occupation_other }}</td></tr>
+  <tr><th>affiliation</th>
+      <td>{{ req.affiliation }}</td></tr>
+  <tr><th>location</th>
+      <td>{{ req.location}}</td></tr>
+  <tr><th>country</th>
+      <td>{{ req.get_country_display }}</td></tr>
+  <tr><th>domains</th>
+      <td><ul>
+          {% for domain in req.domains.all %}
+            <li>{{ domain }}</li>
+          {% empty %}
+            <li>No knowledge domain.</li>
+          {% endfor %}
+          </ul></td></tr>
+  <tr><th>other areas of expertise</th>
+      <td>{{ req.domains_other|default:"—" }}</td></tr>
+  <tr><th>gender</th>
+      <td>{{ req.get_gender_display }} {{ req.gender_other }}</td></tr>
+  <tr><th>previous_involvement</th>
+      <td><ul>
+          {% for involvement in req.previous_involvement.all %}
+            <li>{{ involvement }}</li>
+          {% empty %}
+            <li>No previous involvement.</li>
+          {% endfor %}
+          </ul></td></tr>
+  <tr><th>previous training in teaching</th>
+      <td>{{ req.get_previous_experience_display }} {{ req.previous_experience_other }}</td></tr>
+  <tr><th>programming language usage frequency</th>
+      <td>{{ req.get_programming_language_usage_frequency_display }}</td></tr>
+  <tr><th>Why do you want to attend this training course?</th>
+      <td><pre>{{ req.reason }}</pre></td></tr>
+  <tr><th>teaching frequency expectation</th>
+      <td>{{ req.get_teaching_frequency_expectation_display }} {{ req.teaching_frequency_expectation_other}}</td></tr>
+  <tr><th>max travelling frequency</th>
+      <td>{{ req.get_max_travelling_frequency_display }} {{ req.max_travelling_frequency_other }}</td></tr>
+  <tr><th>additional skills</th>
+      <td><pre>{{ req.additional_skills|default:"—" }}</pre></td></tr>
+
+</table>
+
+{% endblock %}

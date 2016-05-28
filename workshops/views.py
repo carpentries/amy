@@ -52,7 +52,7 @@ from workshops.models import (
     TodoItemQuerySet,
     InvoiceRequest,
     EventSubmission as EventSubmissionModel,
-)
+    TrainingRequest)
 from workshops.forms import (
     SearchForm, DebriefForm, WorkshopStaffForm, PersonForm, PersonBulkAddForm,
     EventForm, TaskForm, TaskFullForm, bootstrap_helper, bootstrap_helper_get,
@@ -2945,3 +2945,26 @@ def trainingrequest_create(request):
         'form_helper': BootstrapHelperWiderLabels(form),
     }
     return render(request, 'forms/trainingrequest.html', context)
+
+
+class TrainingRequestListView(LoginRequiredMixin, ListView):
+    context_object_name = 'requests'
+    template_name = 'workshops/all_trainingrequests.html'
+    queryset = TrainingRequest.objects.all().order_by('-created_at')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'All training requests'
+        return context
+
+
+class TrainingRequestDetails(LoginRequiredMixin, DetailView):
+    context_object_name = 'req'
+    template_name = 'workshops/trainingrequest.html'
+    pk_url_kwarg = 'request_id'
+    queryset = TrainingRequest.objects.all()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Training request #{}'.format(self.get_object().pk)
+        return context
