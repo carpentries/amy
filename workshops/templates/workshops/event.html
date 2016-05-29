@@ -13,7 +13,7 @@
   <h4>Event's website updated</h4>
   <p>This event's repository was updated by the repository owner. Changes detected:</p>
   <p>{{ event.metadata_all_changes |linebreaksbr }}</p>
-  <p><a class="btn btn-warning" href="{% url 'event_review_repo_changes' event.get_ident %}">Review changes</a></p>
+  <p><a class="btn btn-warning" href="{% url 'event_review_metadata_changes' event.get_ident %}">Review changes</a></p>
 </div>
 {% endif %}
 

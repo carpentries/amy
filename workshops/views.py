@@ -1388,7 +1388,7 @@ def events_metadata_changed(request):
 
 @login_required
 @permission_required('workshops.change_event', raise_exception=True)
-def event_review_repo_changes(request, event_ident):
+def event_review_metadata_changes(request, event_ident):
     """Review changes made to metadata on event's website."""
     try:
         event = Event.get_by_ident(event_ident)
@@ -1398,8 +1398,8 @@ def event_review_repo_changes(request, event_ident):
     metadata = fetch_event_metadata(event.website_url)
     metadata = parse_metadata_from_event_website(metadata)
 
-    # save serialized metadata in session so in case of acceptance we don't reload
-    # them
+    # save serialized metadata in session so in case of acceptance we don't
+    # reload them
     cmd = WebsiteUpdatesCommand()
     metadata_serialized = cmd.serialize(metadata)
     request.session['metadata_from_event_website'] = metadata_serialized
@@ -1409,12 +1409,13 @@ def event_review_repo_changes(request, event_ident):
         'metadata': metadata,
         'event': event,
     }
-    return render(request, 'workshops/event_review_metadata_changes.html', context)
+    return render(request, 'workshops/event_review_metadata_changes.html',
+                  context)
 
 
 @login_required
 @permission_required('workshops.change_event', raise_exception=True)
-def event_review_repo_changes_accept(request, event_ident):
+def event_accept_metadata_changes(request, event_ident):
     """Review changes made to metadata on event's website."""
     try:
         event = Event.get_by_ident(event_ident)
@@ -1429,8 +1430,8 @@ def event_review_repo_changes_accept(request, event_ident):
     metadata = cmd.deserialize(metadata_serialized)
 
     # update values
-    ALLOWED_METADATA = ('start', 'end', 'country', 'venue', 'address', 'latitude',
-                    'longitude', 'contact', 'reg_key')
+    ALLOWED_METADATA = ('start', 'end', 'country', 'venue', 'address',
+                        'latitude', 'longitude', 'contact', 'reg_key')
     for key, value in metadata.items():
         if hasattr(event, key) and key in ALLOWED_METADATA:
             setattr(event, key, value)
@@ -1463,7 +1464,7 @@ def event_review_repo_changes_accept(request, event_ident):
 
 @login_required
 @permission_required('workshops.change_event', raise_exception=True)
-def event_review_repo_changes_dismiss(request, event_ident):
+def event_dismiss_metadata_changes(request, event_ident):
     """Review changes made to metadata on event's website."""
     try:
         event = Event.get_by_ident(event_ident)
