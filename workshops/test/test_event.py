@@ -839,7 +839,7 @@ class TestEventReviewingRepoChanges(TestBase):
         * dismisses notification about changed metadata
         * removes metadata from session
         * redirects to the event details page."""
-        url = reverse('event_review_repo_changes_accept',
+        url = reverse('event_accept_metadata_changes',
                       args=[self.event.get_ident()])
         rv = self.client.get(url, follow=False)
 
@@ -862,13 +862,13 @@ class TestEventReviewingRepoChanges(TestBase):
         del session['metadata_from_event_website']
         session.save()
 
-        url = reverse('event_review_repo_changes_accept',
+        url = reverse('event_accept_metadata_changes',
                       args=[self.event.get_ident()])
         rv = self.client.get(url, follow=False)
         self.assertEqual(rv.status_code, 404)
 
     def test_dismissing_changes(self):
-        url = reverse('event_review_repo_changes_dismiss',
+        url = reverse('event_dismiss_metadata_changes',
                       args=[self.event.get_ident()])
         rv = self.client.get(url, follow=False)
 
