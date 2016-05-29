@@ -615,10 +615,11 @@ def validate_metadata_from_event_website(metadata):
         name_ = ('{display} ({name})'.format(**d_)
                  if requirement.display
                  else '{name}'.format(**d_))
-        type_ = 'required' if requirement.required else 'optional'
+        required_ = requirement.required
+        type_ = 'required' if required_ else 'optional'
         value_ = metadata.get(requirement.name)
 
-        if not value_:
+        if value_ is None:
             errors.append('Missing {} metadata {}.'.format(type_, name_))
 
         if value_ == 'FIXME':
@@ -626,12 +627,14 @@ def validate_metadata_from_event_website(metadata):
                           .format(type_, name_))
         else:
             try:
-                if not re.match(requirement.match_format, value_):
-                    errors.append(
-                        'Invalid value "{}" for {} metadata {}: should be in '
-                        'format "{}".'
-                        .format(value_, type_, name_, requirement.match_format)
-                    )
+                if required_ or value_:
+                    if not re.match(requirement.match_format, value_):
+                        errors.append(
+                            'Invalid value "{}" for {} metadata {}: should be'
+                            ' in format "{}".'
+                            .format(value_, type_, name_,
+                                    requirement.match_format)
+                        )
             except (re.error, TypeError):
                 pass
 
