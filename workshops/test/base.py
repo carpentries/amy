@@ -317,7 +317,7 @@ class TestBase(TestCase):
             with open(save_to, 'w') as writer:
                 writer.write(content)
 
-        # Report unfilled tags.
+        # Report undefined variables in templates.
         STRING_IF_INVALID = \
             settings.TEMPLATES[0]['OPTIONS']['string_if_invalid']
         if STRING_IF_INVALID in content:

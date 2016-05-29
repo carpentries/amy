@@ -67,13 +67,13 @@ from workshops.forms import (
     PersonsMergeForm, PersonCreateForm,
 )
 from workshops.util import (
-    upload_person_task_csv,  verify_upload_person_task,
+    upload_person_task_csv, verify_upload_person_task,
     create_uploaded_persons_tasks, InternalError,
     update_event_attendance_from_tasks,
     WrongWorkshopURL,
-    fetch_event_tags,
-    parse_tags_from_event_website,
-    validate_tags_from_event_website,
+    fetch_event_metadata,
+    parse_metadata_from_event_website,
+    validate_metadata_from_event_website,
     assignment_selection,
     get_pagination_items,
     Paginator,
@@ -242,9 +242,9 @@ def dashboard(request):
         pass
 
     # assigned events that have unaccepted changes
-    updated_metatags = Event.objects.active() \
+    updated_metadata = Event.objects.active() \
                                     .filter(assigned_to=request.user) \
-                                    .filter(tags_changed=True) \
+                                    .filter(metadata_changed=True) \
                                     .count()
 
     context = {
@@ -256,7 +256,7 @@ def dashboard(request):
         'unpublished_events': unpublished_events,
         'todos_start_date': TodoItemQuerySet.current_week_dates()[0],
         'todos_end_date': TodoItemQuerySet.next_week_dates()[1],
-        'updated_metatags': updated_metatags,
+        'updated_metadata': updated_metadata,
     }
     return render(request, 'workshops/dashboard.html', context)
 
@@ -1067,9 +1067,9 @@ def validate_event(request, event_ident):
     error_messages = []
 
     try:
-        tags = fetch_event_tags(page_url)
-        # validate tags
-        error_messages = validate_tags_from_event_website(tags)
+        metadata = fetch_event_metadata(page_url)
+        # validate metadata
+        error_messages = validate_metadata_from_event_website(metadata)
 
     except WrongWorkshopURL as e:
         error_messages.append(str(e))
@@ -1195,9 +1195,9 @@ def event_delete(request, event_ident):
 
 @login_required
 def event_import(request):
-    """Read tags from remote URL and return them as JSON.
+    """Read metadata from remote URL and return them as JSON.
 
-    This is used to read tags from workshop website and then fill up fields
+    This is used to read metadata from workshop website and then fill up fields
     on event_create form."""
 
     # TODO: remove POST support completely
@@ -1206,10 +1206,10 @@ def event_import(request):
         url = request.GET.get('url', '').strip()
 
     try:
-        tags = fetch_event_tags(url)
-        # normalize the tags
-        tags = parse_tags_from_event_website(tags)
-        return JsonResponse(tags)
+        metadata = fetch_event_metadata(url)
+        # normalize the metadata
+        metadata = parse_metadata_from_event_website(metadata)
+        return JsonResponse(metadata)
 
     except requests.exceptions.HTTPError as e:
         return HttpResponseBadRequest(
@@ -1357,9 +1357,9 @@ def event_invoice(request, event_ident):
 
 
 @login_required
-def events_tag_changed(request):
-    """List events with metatags changed."""
-    events = Event.objects.active().filter(tags_changed=True)
+def events_metadata_changed(request):
+    """List events with metadata changed."""
+    events = Event.objects.active().filter(metadata_changed=True)
 
     assigned_to, is_admin = assignment_selection(request)
 
@@ -1378,82 +1378,83 @@ def events_tag_changed(request):
         pass
 
     context = {
-        'title': 'Events with metatags changed',
+        'title': 'Events with metadata changed',
         'events': events,
         'is_admin': is_admin,
         'assigned_to': assigned_to,
     }
-    return render(request, 'workshops/events_tag_changed.html', context)
+    return render(request, 'workshops/events_metadata_changed.html', context)
 
 
 @login_required
 @permission_required('workshops.change_event', raise_exception=True)
-def event_review_repo_changes(request, event_ident):
-    """Review changes made to meta tags on event's website."""
+def event_review_metadata_changes(request, event_ident):
+    """Review changes made to metadata on event's website."""
     try:
         event = Event.get_by_ident(event_ident)
     except Event.DoesNotExist:
         raise Http404('No event found matching the query.')
 
-    tags = fetch_event_tags(event.website_url)
-    tags = parse_tags_from_event_website(tags)
+    metadata = fetch_event_metadata(event.website_url)
+    metadata = parse_metadata_from_event_website(metadata)
 
-    # save serialized tags in session so in case of acceptance we don't reload
-    # them
+    # save serialized metadata in session so in case of acceptance we don't
+    # reload them
     cmd = WebsiteUpdatesCommand()
-    tags_serialized = cmd.serialize(tags)
-    request.session['tags_from_event_website'] = tags_serialized
+    metadata_serialized = cmd.serialize(metadata)
+    request.session['metadata_from_event_website'] = metadata_serialized
 
     context = {
         'title': 'Review changes for {}'.format(str(event)),
-        'tags': tags,
+        'metadata': metadata,
         'event': event,
     }
-    return render(request, 'workshops/event_review_tag_changes.html', context)
+    return render(request, 'workshops/event_review_metadata_changes.html',
+                  context)
 
 
 @login_required
 @permission_required('workshops.change_event', raise_exception=True)
-def event_review_repo_changes_accept(request, event_ident):
-    """Review changes made to meta tags on event's website."""
+def event_accept_metadata_changes(request, event_ident):
+    """Review changes made to metadata on event's website."""
     try:
         event = Event.get_by_ident(event_ident)
     except Event.DoesNotExist:
         raise Http404('No event found matching the query.')
 
-    # load serialized tags from session
-    tags_serialized = request.session.get('tags_from_event_website')
-    if not tags_serialized:
+    # load serialized metadata from session
+    metadata_serialized = request.session.get('metadata_from_event_website')
+    if not metadata_serialized:
         raise Http404('Nothing to update.')
     cmd = WebsiteUpdatesCommand()
-    tags = cmd.deserialize(tags_serialized)
+    metadata = cmd.deserialize(metadata_serialized)
 
     # update values
-    ALLOWED_TAGS = ('start', 'end', 'country', 'venue', 'address', 'latitude',
-                    'longitude', 'contact', 'reg_key')
-    for tag, value in tags.items():
-        if hasattr(event, tag) and tag in ALLOWED_TAGS:
-            setattr(event, tag, value)
+    ALLOWED_METADATA = ('start', 'end', 'country', 'venue', 'address',
+                        'latitude', 'longitude', 'contact', 'reg_key')
+    for key, value in metadata.items():
+        if hasattr(event, key) and key in ALLOWED_METADATA:
+            setattr(event, key, value)
 
     # update instructors and helpers
-    instructors = ', '.join(tags.get('instructors', []))
-    helpers = ', '.join(tags.get('helpers', []))
+    instructors = ', '.join(metadata.get('instructors', []))
+    helpers = ', '.join(metadata.get('helpers', []))
     event.notes += (
         '\n\n---------\nUPDATE {:%Y-%m-%d}:'
         '\nINSTRUCTORS: {}\n\nHELPERS: {}'
         .format(datetime.date.today(), instructors, helpers)
     )
 
-    # save serialized tags
-    event.repository_tags = tags_serialized
+    # save serialized metadata
+    event.repository_metadata = metadata_serialized
 
     # dismiss notification
-    event.tag_changes_detected = ''
-    event.tags_changed = False
+    event.metadata_all_changes = ''
+    event.metadata_changed = False
     event.save()
 
-    # remove tags from session
-    del request.session['tags_from_event_website']
+    # remove metadata from session
+    del request.session['metadata_from_event_website']
 
     messages.success(request,
                      'Successfully updated {}.'.format(event.get_ident()))
@@ -1463,21 +1464,21 @@ def event_review_repo_changes_accept(request, event_ident):
 
 @login_required
 @permission_required('workshops.change_event', raise_exception=True)
-def event_review_repo_changes_dismiss(request, event_ident):
-    """Review changes made to meta tags on event's website."""
+def event_dismiss_metadata_changes(request, event_ident):
+    """Review changes made to metadata on event's website."""
     try:
         event = Event.get_by_ident(event_ident)
     except Event.DoesNotExist:
         raise Http404('No event found matching the query.')
 
     # dismiss notification
-    event.tag_changes_detected = ''
-    event.tags_changed = False
+    event.metadata_all_changes = ''
+    event.metadata_changed = False
     event.save()
 
-    # remove tags from session
-    if 'tags_from_event_website' in request.session:
-        del request.session['tags_from_event_website']
+    # remove metadata from session
+    if 'metadata_from_event_website' in request.session:
+        del request.session['metadata_from_event_website']
 
     messages.success(request,
                      'Changes to {} were dismissed.'.format(event.get_ident()))

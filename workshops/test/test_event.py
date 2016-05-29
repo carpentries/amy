@@ -788,7 +788,7 @@ class TestEventImport(TestBase):
 
 class TestEventReviewingRepoChanges(TestBase):
     """Ensure views used for reviewing, accepting and dismissing changes made
-    to event's meta tags work correctly."""
+    to event's metadata work correctly."""
 
     def setUp(self):
         self._setUpUsersAndLogin()
@@ -796,7 +796,7 @@ class TestEventReviewingRepoChanges(TestBase):
 
         self.cmd = WebsiteUpdatesCommand()
 
-        self.tags = {
+        self.metadata = {
             'slug': '2015-07-13-test',
             'language': 'US',
             'start': date(2015, 7, 13),
@@ -811,23 +811,23 @@ class TestEventReviewingRepoChanges(TestBase):
             'helpers': ['Peter Parker', 'Tony Stark', 'Natasha Romanova'],
             'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
         }
-        self.tags_serialized = self.cmd.serialize(self.tags)
+        self.metadata_serialized = self.cmd.serialize(self.metadata)
 
         # create event with some changes detected
         self.event = Event.objects.create(
             slug='event-for-changes', start=date(2016, 4, 20),
             end=date(2016, 4, 22), host=Host.objects.first(),
-            tags_changed=True)
+            metadata_changed=True)
 
-        # add tags to the session
+        # add metadata to the session
         session = self.client.session
-        session['tags_from_event_website'] = self.tags_serialized
+        session['metadata_from_event_website'] = self.metadata_serialized
         session.save()
 
-    def test_showing_all_events_with_changed_metatags(self):
-        """Ensure `events_tag_changed` only shows events with changed
-        metatags."""
-        url = reverse('events_tag_changed')
+    def test_showing_all_events_with_changed_metadata(self):
+        """Ensure `events_metadata_changed` only shows events with changed
+        metadata."""
+        url = reverse('events_metadata_changed')
         rv = self.client.get(url)
         self.assertEqual(rv.status_code, 200)
 
@@ -836,8 +836,8 @@ class TestEventReviewingRepoChanges(TestBase):
     def test_accepting_changes(self):
         """Ensure `event_review_repo_changes_accept`:
         * updates changed values in event
-        * dismisses notification about changed tags
-        * removes tags from session
+        * dismisses notification about changed metadata
+        * removes metadata from session
         * redirects to the event details page."""
         url = reverse('event_review_repo_changes_accept',
                       args=[self.event.get_ident()])
@@ -848,18 +848,18 @@ class TestEventReviewingRepoChanges(TestBase):
 
         self.event.refresh_from_db()
 
-        self.assertEqual(self.event.tags_changed, False)
-        self.assertEqual(self.event.tag_changes_detected, '')
-        self.assertEqual(self.event.repository_tags, self.tags_serialized)
-        for tag, value in self.tags.items():
-            if tag not in ('slug', 'instructors', 'helpers', 'language'):
-                self.assertEqual(getattr(self.event, tag), value)
+        self.assertEqual(self.event.metadata_changed, False)
+        self.assertEqual(self.event.metadata_all_changes, '')
+        self.assertEqual(self.event.repository_metadata, self.metadata_serialized)
+        for key, value in self.metadata.items():
+            if key not in ('slug', 'instructors', 'helpers', 'language'):
+                self.assertEqual(getattr(self.event, key), value)
 
     def test_accepting_changes_no_session_data(self):
         """Ensure `event_review_repo_changes_accept` throws 404 when specific
-        session key 'tags_from_event_website' is unavailable."""
+        session key 'metadata_from_event_website' is unavailable."""
         session = self.client.session
-        del session['tags_from_event_website']
+        del session['metadata_from_event_website']
         session.save()
 
         url = reverse('event_review_repo_changes_accept',
@@ -877,8 +877,8 @@ class TestEventReviewingRepoChanges(TestBase):
 
         self.event.refresh_from_db()
 
-        self.assertEqual(self.event.tags_changed, False)
-        self.assertEqual(self.event.tag_changes_detected, '')
-        for tag, value in self.tags.items():
-            if tag not in ('slug', 'instructors', 'helpers', 'language'):
-                self.assertNotEqual(getattr(self.event, tag), value)
+        self.assertEqual(self.event.metadata_changed, False)
+        self.assertEqual(self.event.metadata_all_changes, '')
+        for key, value in self.metadata.items():
+            if key not in ('slug', 'instructors', 'helpers', 'language'):
+                self.assertNotEqual(getattr(self.event, key), value)

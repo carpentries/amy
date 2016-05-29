@@ -245,7 +245,7 @@ class TestWebsiteUpdatesCommand(TestBase):
 <h1>test</h1>
 </body></html>
 """
-        self.expected_tags_parsed = {
+        self.expected_metadata_parsed = {
             'slug': '2015-07-13-test',
             'language': 'US',
             'start': date(2015, 7, 13),
@@ -328,17 +328,18 @@ class TestWebsiteUpdatesCommand(TestBase):
             self.cmd.parse_github_url(url)
 
     @requests_mock.Mocker()
-    def test_getting_event_tags(self, mock):
-        """Ensure tags are fetched and normalized by `get_event_tags`."""
-        # underlying `fetch_event_tags` and `parse_event_tags` are tested in
-        # great detail in `test_util.py`, so here's just a short test
+    def test_getting_event_metadata(self, mock):
+        """Ensure metadata are fetched and normalized by `get_event_metadata`."""
+        # underlying `fetch_event_metadata` and `parse_metadata_from_event_website`
+        # are tested in great detail in `test_util.py`, so here's just a short
+        # test
         website_url = 'https://github.com/swcarpentry/workshop-template'
         mock_text = self.mocked_event_page
         mock.get(website_url, text=mock_text, status_code=200)
-        # mock placed, let's test `get_event_tags`
+        # mock placed, let's test `get_event_metadata`
 
-        tags = self.cmd.get_event_tags(website_url)
-        self.assertEqual(tags, self.expected_tags_parsed)
+        metadata = self.cmd.get_event_metadata(website_url)
+        self.assertEqual(metadata, self.expected_metadata_parsed)
 
     def test_deserialization_of_string(self):
         "Ensure our datetime matching function works correctly for strings."
@@ -380,7 +381,7 @@ class TestWebsiteUpdatesCommand(TestBase):
         datetimes and times.
         Ensure derialization from JSON works correctly with dates,
         datetimes and times."""
-        serialized_json = self.cmd.serialize(self.expected_tags_parsed)
+        serialized_json = self.cmd.serialize(self.expected_metadata_parsed)
 
         self.assertIn('2015-07-13', serialized_json)
         self.assertIn('2015-07-14', serialized_json)
@@ -391,7 +392,7 @@ class TestWebsiteUpdatesCommand(TestBase):
                       serialized_json)
 
         deserialized_data = self.cmd.deserialize(serialized_json)
-        self.assertEqual(deserialized_data, self.expected_tags_parsed)
+        self.assertEqual(deserialized_data, self.expected_metadata_parsed)
 
     @unittest.skip('Don\'t know how to test it')
     def test_loading_from_github(self):
@@ -401,14 +402,14 @@ class TestWebsiteUpdatesCommand(TestBase):
 
     @requests_mock.Mocker()
     def test_detecting_changes(self, mock):
-        """Make sure tag changes are detected."""
+        """Make sure metadata changes are detected."""
         hash_ = 'abcdefghijklmnopqrstuvwxyz'
         e = Event.objects.create(
             slug='with-changes', host=Host.objects.first(),
             url='https://swcarpentry.github.io/workshop-template/',
             repository_last_commit_hash=hash_,
-            repository_tags='',
-            tags_changed=False)
+            repository_metadata='',
+            metadata_changed=False)
 
         branch = MagicMock()
         branch.commit = MagicMock()
@@ -422,11 +423,11 @@ class TestWebsiteUpdatesCommand(TestBase):
         branch.commit.sha = hash_
         mock_text = self.mocked_event_page
         mock.get(e.url, text=mock_text, status_code=200)
-        tags = self.cmd.empty_tags()
-        tags['instructors'] = self.expected_tags_parsed['instructors']
-        tags['latitude'] = self.expected_tags_parsed['latitude']
-        tags['longitude'] = self.expected_tags_parsed['longitude']
-        e.repository_tags = self.cmd.serialize(tags)
+        metadata = self.cmd.empty_metadata()
+        metadata['instructors'] = self.expected_metadata_parsed['instructors']
+        metadata['latitude'] = self.expected_metadata_parsed['latitude']
+        metadata['longitude'] = self.expected_metadata_parsed['longitude']
+        e.repository_metadata = self.cmd.serialize(metadata)
         e.save()
 
         changes = self.cmd.detect_changes(branch, e)
@@ -448,8 +449,8 @@ class TestWebsiteUpdatesCommand(TestBase):
         e = Event.objects.create(
             slug='with-changes', host=Host.objects.first(),
             url='https://swcarpentry.github.io/workshop-template/',
-            repository_last_commit_hash='', repository_tags='',
-            tags_changed=False, tag_changes_detected='')
+            repository_last_commit_hash='', repository_metadata='',
+            metadata_changed=False, metadata_all_changes='')
 
         hash_ = 'abcdefghijklmnopqrstuvwxyz'
         branch = MagicMock()
@@ -461,12 +462,13 @@ class TestWebsiteUpdatesCommand(TestBase):
         self.cmd.init(branch, e)
 
         e.refresh_from_db()
-        # tags updated
+        # metadata updated
         self.assertEqual(e.repository_last_commit_hash, hash_)
-        self.assertEqual(self.cmd.deserialize(e.repository_tags),
-                         self.expected_tags_parsed)
-        self.assertEqual(e.tag_changes_detected, '')
-        self.assertEqual(e.tags_changed, False)
+        self.assertEqual(self.cmd.deserialize(e.repository_metadata),
+                         self.expected_metadata_parsed)
+
+        self.assertEqual(e.metadata_all_changes, '')
+        self.assertEqual(e.metadata_changed, False)
 
     @unittest.skip('This command requires internet connection')
     def test_running(self):
