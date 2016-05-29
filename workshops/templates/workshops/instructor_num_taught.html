@@ -1,22 +1,48 @@
 {% extends "base_nav_fixed.html" %}
 
+{% load static %}
+
 {% block content %}
 <p>
   <a href="{{ api_endpoint }}">API link</a>.
 </p>
+
+<div id='chart'></div>
+
 <pre id="source"></pre>
 {% endblock %}
 
+{% block extrastyle %}
+  <link rel="stylesheet" href="{% static 'metrics-graphics/dist/metricsgraphics.css' %}" />
+{% endblock %}
 {% block extrajs %}
+  <script src="{% static 'd3/d3.min.js' %}"></script>
+  <script src="{% static 'metrics-graphics/dist/metricsgraphics.js' %}"></script>
   <script type="text/javascript">
-    $(document).ready(function() {
-      $.getJSON('{{ api_endpoint }}?format=json', function(data) {
-        var items = [];
-        $.each(data, function(record, value) {
-            items.push(value.name + ": " + value.num_taught);
-        });
-        $('#source').text(items.join("\n"));
-      }, "html");
+    d3.json('{{ api_endpoint }}?format=json', function(data) {
+      var items = [];
+      var anonymous_data = [];
+      var max = 0;
+      $.each(data, function(record, value) {
+        items.push(value.name + ": " + value.num_taught);
+        anonymous_data.push(value.num_taught);
+        if (max < value.num_taught) {
+          max = value.num_taught;
+        }
+      });
+
+      $('#source').text(items.join("\n"));
+
+      MG.data_graphic({
+        title: "{{ title }}",
+        data: anonymous_data,
+        chart_type: 'histogram',
+        bins: max,
+        width: 800,
+        height: 600,
+        y_extended_ticks: true,
+        target: document.getElementById('chart')
+      });
     });
   </script>
 {% endblock %}
