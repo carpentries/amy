@@ -756,6 +756,27 @@ Other content.
         assert len(errors) == 12
         assert all([error.startswith('Missing') for error in errors])
 
+    def test_validating_empty_metadata(self):
+        metadata = {
+            'slug': '',
+            'language': '',
+            'startdate': '',
+            'enddate': '',
+            'country': '',
+            'venue': '',
+            'address': '',
+            'latlng': '',
+            'instructor': '',
+            'helper': '',
+            'contact': '',
+            'eventbrite': '',
+        }
+        expected_errors = ['slug', 'startdate', 'country', 'latlng',
+                           'instructor', 'helper', 'contact']
+        errors = validate_metadata_from_event_website(metadata)
+        for error, key in zip(errors, expected_errors):
+            self.assertIn(key, error)
+
     def test_validating_default_metadata(self):
         metadata = {
             'slug': 'FIXME',
