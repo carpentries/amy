@@ -847,9 +847,17 @@ def merge_objects(object_a, object_b, easy_fields, difficult_fields,
                 manager.set(list(related_b.all()))
 
             elif value == 'combine':
-                # remove duplicates
-                manager.add(*list(related_a.all() |
-                                  related_b.all()))
+                summed = related_a.all() | related_b.all()
+
+                # some entries may cause IntegrityError (violation of
+                # uniqueness constraint) because they are duplicates *after*
+                # being added to the database
+                for element in summed:
+                    try:
+                        with transaction.atomic():
+                            manager.add(element)
+                    except IntegrityError:
+                        pass
 
         merging_obj.delete()
 
