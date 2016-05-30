@@ -103,7 +103,7 @@ class TestPerson(TestBase):
                 assert node.text in (str(value), "yes" if value else "no"), \
                     'Mis-match in {0}: expected boolean value, got {1}' \
                     .format(key, node.text)
-            elif value is None:
+            elif not value:
                 # None is also a special case.  We should handle:
                 # "None", "unknown", "maybe", or even "—" (mdash)
                 assert node.text in (str(value), "unknown", "maybe", "—"), \

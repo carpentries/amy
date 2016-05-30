@@ -66,6 +66,7 @@ class TestEventSubmitForm(TestBase):
         """Ensure submission is turned inactive after acceptance."""
         self.assertEqual(self.submission.active, True)
         minimal_event = {
+            'slug': '1970-01-01-first-event',
             'host': Host.objects.first().pk,
             'tags': [Tag.objects.first().pk],
             'invoice_status': 'not-invoiced',

@@ -98,7 +98,6 @@ class Command(BaseCommand):
 
             person = Person.objects.create(
                 personal=name,
-                middle=None,
                 family=last_name,
                 email=random.choice(emails),
                 gender=gender,
