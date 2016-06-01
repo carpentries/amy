@@ -1794,6 +1794,7 @@ def workshop_staff(request):
                 people = people.filter(q, task__role__name='learner') \
                                .exclude(badges__in=instructor_badges)
 
+    emails = people.filter(may_contact=True).values_list('email', flat=True)
     people = get_pagination_items(request, people)
     context = {
         'title': 'Find Workshop Staff',
@@ -1802,6 +1803,7 @@ def workshop_staff(request):
         'lessons': lessons,
         'instructor_badges': instructor_badges,
         'trainees': trainees,
+        'emails': emails,
     }
     return render(request, 'workshops/workshop_staff.html', context)
 

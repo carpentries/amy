@@ -43,6 +43,7 @@
       </tr>
     {% endfor %}
     </table>
+    <p><a href="mailto:{{ emails|join:',' }}" class="btn btn-primary">Contact all</a></p>
     {% pagination persons %}
   {% else %}
     <p>No matches.</p>
