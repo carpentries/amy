@@ -54,7 +54,12 @@ class TestViewsFor404ing(TestBase):
         rv = self.client.get(url)
         self.assertEqual(rv.status_code, 404)
 
-    def todos_add(self):
+    def test_todos_add(self):
         url = reverse('todos_add', args=['non-existing-event'])
+        rv = self.client.get(url)
+        self.assertEqual(rv.status_code, 404)
+
+    def test_host_details(self):
+        url = reverse('host_details', args=['non-existing-host'])
         rv = self.client.get(url)
         self.assertEqual(rv.status_code, 404)

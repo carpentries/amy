@@ -291,7 +291,7 @@ def all_hosts(request):
 @login_required
 def host_details(request, host_domain):
     '''List details of a particular host.'''
-    host = Host.objects.get(domain=host_domain)
+    host = get_object_or_404(Host, domain=host_domain)
     events = Event.objects.filter(host=host)
     context = {'title' : 'Host {0}'.format(host),
                'host' : host,
