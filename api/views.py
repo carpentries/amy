@@ -1,7 +1,7 @@
 import datetime
 from itertools import accumulate
 
-from django.db.models import Count, Sum, Case, When, Value, IntegerField
+from django.db.models import Count, Sum, Case, F, When, Value, IntegerField
 from rest_framework import viewsets
 from rest_framework.decorators import list_route
 from rest_framework.filters import DjangoFilterBackend
@@ -329,12 +329,12 @@ class ReportsViewSet(ViewSet):
                 Case(
                     When(
                         task__role__name='instructor',
-                        then=Value(1)
+                        then=F('task'),
                     ),
-                    output_field=IntegerField()
-                )
+                ),
+                distinct=True
             )
-        ).filter(may_contact=True).order_by('-num_taught')
+        ).order_by('-num_taught')
         serializer = InstructorNumTaughtSerializer(
             persons, many=True, context=dict(request=request))
         return Response(serializer.data)
