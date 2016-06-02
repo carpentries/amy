@@ -52,7 +52,7 @@ from workshops.models import (
     TodoItemQuerySet,
     InvoiceRequest,
     EventSubmission as EventSubmissionModel,
-)
+    TrainingRequest)
 from workshops.forms import (
     SearchForm, DebriefForm, WorkshopStaffForm, PersonForm, PersonBulkAddForm,
     EventForm, TaskForm, TaskFullForm, bootstrap_helper, bootstrap_helper_get,
@@ -65,7 +65,7 @@ from workshops.forms import (
     TodoFormSet, EventsSelectionForm, EventsMergeForm, InvoiceRequestForm,
     InvoiceRequestUpdateForm, EventSubmitForm, EventSubmitFormNoCaptcha,
     PersonsMergeForm, PersonCreateForm,
-)
+    TrainingRequestForm, BootstrapHelperWiderLabels)
 from workshops.util import (
     upload_person_task_csv, verify_upload_person_task,
     create_uploaded_persons_tasks, InternalError,
@@ -2916,3 +2916,57 @@ def duplicates(request):
     }
 
     return render(request, 'workshops/duplicates.html', context)
+
+
+def trainingrequest_create(request):
+    """ A form to let all users (no login required) to request Instructor Training. """
+
+    form = TrainingRequestForm()
+    page_title = 'Apply for Instructor Training'
+
+    if request.method == 'POST':
+        form = TrainingRequestForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+
+            # TODO: email notification?
+
+            context = {
+                'title': 'Thank you for an instructor training.',
+            }
+            return render(request,
+                          'forms/trainingrequest_confirm.html',
+                          context)
+        else:
+            messages.error(request, 'Fix errors below.')
+
+    context = {
+        'title': page_title,
+        'form': form,
+        'form_helper': BootstrapHelperWiderLabels(form),
+    }
+    return render(request, 'forms/trainingrequest.html', context)
+
+
+class TrainingRequestListView(LoginRequiredMixin, ListView):
+    context_object_name = 'requests'
+    template_name = 'workshops/all_trainingrequests.html'
+    queryset = TrainingRequest.objects.all().order_by('-created_at')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'All training requests'
+        return context
+
+
+class TrainingRequestDetails(LoginRequiredMixin, DetailView):
+    context_object_name = 'req'
+    template_name = 'workshops/trainingrequest.html'
+    pk_url_kwarg = 'request_id'
+    queryset = TrainingRequest.objects.all()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Training request #{}'.format(self.get_object().pk)
+        return context

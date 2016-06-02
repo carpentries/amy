@@ -39,10 +39,15 @@ class Command(BaseCommand):
 
     def fake_roles(self, faker):
         """Provide fixed roles (before they end up in fixtures, see #626)."""
-        roles = ['helper', 'instructor', 'host', 'learner', 'organizer',
-                 'tutor', 'debriefed']
-        for role in roles:
-            Role.objects.create(name=role)
+        roles = [
+            ('organizer', 'Workshop organizer'),
+            ('learner', 'Learner'),
+            ('host', 'Workshop host'),
+            ('instructor', 'Instructor'),
+            ('helper', 'Helper'),
+        ]
+        for name, verbose_name in roles:
+            Role.objects.create(name=name, verbose_name=verbose_name)
 
     def fake_tags(self, faker):
         """Provide fixed tags (before they end up in fixtures, see #626)."""

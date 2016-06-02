@@ -1085,10 +1085,12 @@ class DataAnalysisLevel(models.Model):
 class Role(models.Model):
     '''Enumerate roles in workshops.'''
 
-    name       = models.CharField(max_length=STR_MED)
+    name = models.CharField(max_length=STR_MED)
+    verbose_name = models.CharField(max_length=STR_LONG,
+                                    null=False, blank=True, default='')
 
     def __str__(self):
-        return self.name
+        return self.verbose_name
 
 #------------------------------------------------------------
 
@@ -1424,3 +1426,178 @@ class InvoiceRequest(models.Model):
             return LONG_FMT.format(self.get_status_display(), self.paid_date)
 
         return self.get_status_display()
+
+#------------------------------------------------------------
+
+
+def build_choice_field_with_other_option(choices, default, verbose_name=None):
+    assert default in [c[0] for c in choices]
+    assert all(c[0] != '' for c in choices)
+
+    field = models.CharField(
+        max_length=STR_MED,
+        choices=choices,
+        verbose_name=verbose_name,
+        null=False, blank=False, default=default,
+    )
+    other_field = models.CharField(
+        max_length=STR_LONG,
+        verbose_name=' ',
+        null=False, blank=True, default='',
+    )
+    return field, other_field
+
+
+@reversion.register
+class TrainingRequest(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    personal = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Personal name',
+        blank=False,
+    )
+    family = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Family name',
+        blank=False,
+    )
+
+    email = models.EmailField(
+        verbose_name='Email address',
+        blank=False,
+    )
+
+    occupation = models.CharField(
+        max_length=STR_MED,
+        choices=ProfileUpdateRequest.OCCUPATION_CHOICES,
+        verbose_name='What is your current occupation/career stage?',
+        help_text='Please choose the one that best describes you.',
+        null=False, blank=True, default='undisclosed',
+    )
+    occupation_other = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Other occupation/career stage',
+        blank=True, default='',
+    )
+
+    affiliation = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Institutional Affiliation',
+        null=False, blank=False,
+    )
+
+    location = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Location',
+        help_text='please give city, province or state',
+        blank=False,
+    )
+    country = CountryField()
+
+    domains = models.ManyToManyField(
+        'KnowledgeDomain',
+        verbose_name='Areas of expertise',
+        help_text='Please check all that apply.',
+        limit_choices_to=~Q(name__startswith='Don\'t know yet'),
+        blank=True,
+    )
+    domains_other = models.CharField(
+        max_length=255,
+        verbose_name='Other areas of expertise',
+        blank=True, default='',
+    )
+
+    gender = models.CharField(
+        max_length=1,
+        choices=ProfileUpdateRequest.GENDER_CHOICES,
+        null=False, blank=False, default=Person.UNDISCLOSED,
+    )
+    gender_other = models.CharField(
+        max_length=STR_LONG,
+        verbose_name=' ',
+        blank=True, default='',
+    )
+
+    previous_involvement = models.ManyToManyField(
+        'Role',
+        verbose_name='Previous involvement with Software Carpentry or Data Carpentry',
+        help_text='Please check all that apply.',
+        blank=True,
+    )
+
+    PREVIOUS_TRAINING_CHOICES = (
+        ('none', 'None'),
+        ('hours', 'A few hours'),
+        ('days', 'A few days'),
+        ('full', 'A full degree'),
+        ('other', 'Other (enter below)')
+    )
+    previous_training, previous_training_other = build_choice_field_with_other_option(
+        choices=PREVIOUS_TRAINING_CHOICES,
+        verbose_name='Previous training in teaching',
+        default='none',
+    )
+
+    PREVIOUS_EXPERIENCE_CHOICES = (
+        ('none', 'None'),
+        ('hours', 'Have taught for a few hours'),
+        ('courses', 'Have taught entire courses'),
+        ('other', 'Other (enter below)')
+    )
+    previous_experience, previous_experience_other = build_choice_field_with_other_option(
+        choices=PREVIOUS_EXPERIENCE_CHOICES,
+        default='none',
+        verbose_name='Previous experience in teaching'
+    )
+
+    PROGRAMMING_LANGUAGE_USAGE_FREQUENCY_CHOICES = (
+        ('all-time', 'Every waking moment'),
+        ('hourly', 'Hourly'),
+        ('daily', 'Daily'),
+        ('weekly', 'Weekly'),
+        ('not-much', 'Not much'),
+    )
+    programming_language_usage_frequency = models.CharField(
+        max_length=STR_MED,
+        choices=PROGRAMMING_LANGUAGE_USAGE_FREQUENCY_CHOICES,
+        verbose_name='How frequently do you use Python, R or Matlab?',
+        null=False, blank=False, default='all-time',
+    )
+
+    reason = models.TextField(
+        verbose_name='Why do you want to attend this training course?',
+        null=False, blank=False,
+    )
+
+    TEACHING_FREQUENCY_EXPECTATION_CHOICES = (
+        ('not-at-all', 'Not at all'),
+        ('yearly', 'Once a year'),
+        ('monthly', 'Several times a year'),
+        ('often', 'Primary occupation'),
+        ('other', 'Other (enter below)'),
+    )
+    teaching_frequency_expectation, teaching_frequency_expectation_other = build_choice_field_with_other_option(
+        choices=TEACHING_FREQUENCY_EXPECTATION_CHOICES,
+        verbose_name='How often would you expect to teach classes on Software '
+                     'or Data Carpentry Workshops after this training?',
+        default='not-at-all',
+    )
+
+    MAX_TRAVELLING_FREQUENCY_CHOICES = (
+        ('not-at-all', 'Not at all'),
+        ('yearly', 'Once a year'),
+        ('often', 'Several times a year'),
+        ('other', 'Other (enter below)'),
+    )
+    max_travelling_frequency, max_travelling_frequency_other = build_choice_field_with_other_option(
+        choices=MAX_TRAVELLING_FREQUENCY_CHOICES,
+        verbose_name='How frequently would you be able to travel to teach such classes?',
+        default='not-at-all',
+    )
+
+    additional_skills = models.TextField(
+        verbose_name='Do you have any additional relevant skills '
+                     'or interests that we should know about?',
+        null=False, blank=True, default='',
+    )

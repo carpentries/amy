@@ -1,0 +1,44 @@
+{% extends "base_nonav_fixed.html" %}
+
+{% load static %}
+{% load crispy_forms_tags %}
+{% load selectable_tags %}
+
+{% block logo %}
+<img src="{% static 'software-carpentry-banner.png' %}" alt='Software-Carpentry logo' class="workshop-form-logo" />
+<img src="{% static 'data-carpentry-banner.png' %}" alt='Data-Carpentry logo' class="workshop-form-logo" />
+{% endblock %}
+
+{% block content %}
+<p>We run two-day instructor training classes for people who wish to learn how to
+teach Software Carpentry and Data Carpentry workshops. If you wish to apply to
+attend an upcoming workshop, please fill in the form below. We will notify
+applicants as spaces become available. If you have any questions, please mail
+<a href="mailto:training@software-carpentry.org">training@software-carpentry.org</a>.</p>
+
+<p>Please note that as a condition of taking this training:</p>
+
+<ul>
+<li>You are required to abide by our code of conduct, which can be found at
+<a href="http://software-carpentry.org/conduct/">
+http://software-carpentry.org/conduct/</a>.</li>
+
+<li>You must complete three short tasks after the course in order to complete
+certification. The tasks are described at
+<a href="http://swcarpentry.github.io/instructor-training/checkout/">
+http://swcarpentry.github.io/instructor-training/checkout/</a>, and take a total
+of approximately 2 hours.</li>
+
+<li>You are expected to teach at a Software Carpentry or Data Carpentry workshop
+within 12 months of the course.</li>
+</ul>
+
+<p>For more information on Software and Data Carpentry instructor training,
+please see <a href="http://swcarpentry.github.io/instructor-training/">
+http://swcarpentry.github.io/instructor-training/</a>.</p>
+{% crispy form form_helper %}
+{% endblock %}
+
+{% block extrajs %}
+{{ form.media }}
+{% endblock extrajs %}

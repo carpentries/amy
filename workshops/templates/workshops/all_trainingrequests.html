@@ -1,0 +1,29 @@
+{% extends "base_nav_fixed.html" %}
+
+{% load pagination %}
+
+{% block content %}
+{% if requests %}
+    <table class="table table-striped">
+        <tr>
+            <th>#</th>
+            <th>submitter</th>
+            <th>created at</th>
+            <th class="additional-links"></th>
+        </tr>
+    {% for request in requests %}
+        <tr>
+            <td><a href="{% url 'trainingrequest_details' request.id%}">{{ request.id }}</a></td>
+            <td>{{ request.personal }} {{ request.family }} &lt;{{ request.email|urlize }}&gt;</td>
+            <td>{{ request.created_at }}</td>
+            <td>
+                <a href="{% url 'trainingrequest_details' request.id %}" title="View"><span class="glyphicon glyphicon-info-sign"></span></a>
+            </td>
+        </tr>
+    {% endfor %}
+    </table>
+    {% pagination requests %}
+{% else %}
+    <p>No training requests.</p>
+{% endif %}
+{% endblock %}

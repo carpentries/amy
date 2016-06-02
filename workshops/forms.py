@@ -19,7 +19,7 @@ from workshops.models import (
     Award, Event, Lesson, Person, Task, Airport, Host,
     EventRequest, ProfileUpdateRequest, TodoItem, Membership,
     InvoiceRequest, EventSubmission,
-)
+    TrainingRequest)
 from workshops import lookups
 
 
@@ -878,3 +878,42 @@ class InvoiceRequestUpdateForm(forms.ModelForm):
         fields = (
             'status', 'sent_date', 'paid_date', 'notes'
         )
+
+
+class TrainingRequestForm(forms.ModelForm):
+    agreed_to_code_of_conduct = forms.BooleanField(
+        required=True,
+        initial=False,
+        label='I agree to abide by Software Carpentry\'s Code of Conduct',
+        help_text='The Code of Conduct can be found at http://software-carpentry.org/conduct/',
+    )
+    agreed_to_complete_training = forms.BooleanField(
+        required=True,
+        initial=False,
+        label='I agree to complete this training within three months of the Training Course',
+        help_text='The completion steps are described '
+                  'at http://swcarpentry.github.io/instructor-training/checkout/ '
+                  'and take a total of approximately two hours.',
+    )
+    agreed_to_teach_workshops = forms.BooleanField(
+        required=True,
+        initial=False,
+        label='I agree to help teach a Software Carpentry or Data Carpentry '
+              'workshop within 12 months of this Training Course',
+    )
+    captcha = ReCaptchaField()
+
+    class Meta:
+        model = TrainingRequest
+        exclude = ()
+        widgets = {
+            'occupation': forms.RadioSelect(),
+            'domains':  forms.CheckboxSelectMultiple(),
+            'gender': forms.RadioSelect(),
+            'previous_involvement': forms.CheckboxSelectMultiple(),
+            'previous_training': forms.RadioSelect(),
+            'previous_experience': forms.RadioSelect(),
+            'programming_language_usage_frequency': forms.RadioSelect(),
+            'teaching_frequency_expectation': forms.RadioSelect(),
+            'max_travelling_frequency': forms.RadioSelect(),
+        }

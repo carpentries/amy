@@ -295,9 +295,12 @@ class TestBase(TestCase):
         are currently in the database.  This is an auxiliary method for adding
         them to the tests, should one need them."""
         Role.objects.bulk_create([
-            Role(name='helper'), Role(name='instructor'), Role(name='host'),
-            Role(name='learner'), Role(name='organizer'), Role(name='tutor'),
-            Role(name='debriefed'),
+            Role(name='helper'),
+            Role(name='instructor'),
+            Role(name='host', verbose_name='Host'),
+            Role(name='learner'),
+            Role(name='organizer'),
+            Role(name='tutor'),
         ])
 
     def _parse(self, response, save_to=None):
