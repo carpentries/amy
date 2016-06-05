@@ -70,7 +70,7 @@ class TestFakeDatabaseCommand(TestCase):
         """Make sure we add tags that are hard-coded. They'll end up in
         fixtures in future (see #626)."""
         tags = ['SWC', 'DC', 'LC', 'WiSE', 'TTT', 'online', 'stalled',
-                'unresponsive', 'hackathon']
+                'unresponsive', 'hackathon', 'PyData']
         self.assertNotEqual(set(tags),
                             set(Tag.objects.values_list('name', flat=True)))
 
