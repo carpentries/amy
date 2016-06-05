@@ -201,7 +201,13 @@ class WorkshopStaffForm(forms.Form):
 class PersonBulkAddForm(forms.Form):
     '''Represent CSV upload form for bulk adding people.'''
 
-    file = forms.FileField()
+    file = forms.FileField(required=False)
+    event = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.PyDataEventLookup,
+        label='PyData Event',
+        required=False,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+    )
 
 
 class SearchForm(forms.Form):
