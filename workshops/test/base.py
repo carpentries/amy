@@ -201,6 +201,7 @@ class TestBase(TestCase):
             Tag(name='LC', details=''),
             Tag(name='DC', details=''),
             Tag(name='SWC', details=''),
+            Tag(name='PyData', details=''),
         ])
 
     def _setUpEvents(self):
