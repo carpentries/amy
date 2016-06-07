@@ -145,6 +145,50 @@ class TestLocateWorkshopStaff(TestBase):
         self.assertNotIn(self.ironman, response.context['persons'])
         self.assertNotIn(self.blackwidow, response.context['persons'])
 
+    def test_match_on_one_language(self):
+        """Ensure people with one particular language preference
+        are returned by search."""
+        # prepare langauges
+        self._setUpLanguages()
+        # Ron can communicate in English
+        self.ron.languages.add(self.english)
+        self.ron.save()
+        # Harry can communicate in French
+        self.harry.languages.add(self.french)
+        self.harry.save()
+
+        response = self.client.get(
+            reverse('workshop_staff'),
+            {'languages_1': [self.french.pk,],
+             'submit': 'Submit'}
+        )
+        self.assertEqual(response.status_code, 200)
+
+        self.assertIn(self.harry, response.context['persons'])
+        self.assertNotIn(self.ron, response.context['persons'])
+
+    def test_match_on_many_language(self):
+        """Ensure people with a set of language preferences
+        are returned by search."""
+        # prepare langauges
+        self._setUpLanguages()
+        # Ron can communicate in many languages
+        self.ron.languages.add(self.english, self.french)
+        self.ron.save()
+        # Harry is mono-lingual
+        self.harry.languages.add(self.french)
+        self.harry.save()
+
+        response = self.client.get(
+            reverse('workshop_staff'),
+            {'languages_1': [self.english.pk, self.french.pk],
+             'submit': 'Submit'}
+        )
+        self.assertEqual(response.status_code, 200)
+
+        self.assertIn(self.ron, response.context['persons'])
+        self.assertNotIn(self.harry, response.context['persons'])
+
     def test_roles(self):
         """Ensure people with at least one helper/organizer roles are returned
         by search."""
