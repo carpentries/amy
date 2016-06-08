@@ -797,6 +797,11 @@ def merge_objects(object_a, object_b, easy_fields, difficult_fields,
         base_obj = object_b
         merging_obj = object_a
 
+    # used to catch all IntegrityErrors caused by violated database constraints
+    # when adding two similar entries by the manager (see below for more
+    # details)
+    integrity_errors = []
+
     with transaction.atomic():
         for attr in easy_fields:
             value = choices.get(attr)
@@ -847,10 +852,18 @@ def merge_objects(object_a, object_b, easy_fields, difficult_fields,
                 manager.set(list(related_b.all()))
 
             elif value == 'combine':
-                # remove duplicates
-                manager.add(*list(related_a.all() |
-                                  related_b.all()))
+                summed = related_a.all() | related_b.all()
+
+                # some entries may cause IntegrityError (violation of
+                # uniqueness constraint) because they are duplicates *after*
+                # being added by the manager
+                for element in summed:
+                    try:
+                        with transaction.atomic():
+                            manager.add(element)
+                    except IntegrityError as e:
+                        integrity_errors.append(str(e))
 
         merging_obj.delete()
 
-        return base_obj.save()
+        return base_obj.save(), integrity_errors

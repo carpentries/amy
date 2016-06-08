@@ -705,3 +705,17 @@ class TestPersonMerging(TestBase):
         for key, value in assertions.items():
             self.assertEqual(set(getattr(self.person_b, key).all()), value,
                              key)
+
+    def test_merging_m2m_with_similar_attributes(self):
+        """Regression test: merging people with the same M2M objects, e.g. when
+        both people have task 'learner' in event 'ABCD', would result in unique
+        constraint violation and cause IntegrityError."""
+        self.person_b.task_set.create(
+            event=Event.objects.get(slug='ends-tomorrow-ongoing'),
+            role=Role.objects.get(name='instructor'),
+        )
+
+        self.strategy['task_set'] = 'combine'
+
+        rv = self.client.post(self.url, data=self.strategy)
+        self.assertEqual(rv.status_code, 302)
