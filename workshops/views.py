@@ -939,8 +939,14 @@ def persons_merge(request):
                          'task_set')
 
             try:
-                merge_objects(obj_a, obj_b, easy, difficult, choices=data,
-                              base_a=base_a)
+                _, integrity_errors = merge_objects(obj_a, obj_b, easy,
+                                                    difficult, choices=data,
+                                                    base_a=base_a)
+
+                if integrity_errors:
+                    msg = ('There were integrity errors when merging related '
+                           'objects:\n' '\n'.join(integrity_errors))
+                    messages.warning(request, msg)
 
             except ProtectedError as e:
                 return failed_to_delete(request, object=merging_obj,
@@ -1294,15 +1300,21 @@ def events_merge(request):
                 'administrator', 'url', 'reg_key', 'admin_fee',
                 'invoice_status', 'attendance', 'contact', 'country', 'venue',
                 'address', 'latitude', 'longitude', 'learners_pre',
-                'learners_post',  'instructors_pre', 'instructors_post',
+                'learners_post', 'instructors_pre', 'instructors_post',
                 'learners_longterm', 'notes',
             )
             # M2M relationships
             difficult = ('tags', 'task_set', 'todoitem_set')
 
             try:
-                merge_objects(obj_a, obj_b, easy, difficult, choices=data,
-                              base_a=base_a)
+                _, integrity_errors = merge_objects(obj_a, obj_b, easy,
+                                                    difficult, choices=data,
+                                                    base_a=base_a)
+
+                if integrity_errors:
+                    msg = ('There were integrity errors when merging related '
+                           'objects:\n' '\n'.join(integrity_errors))
+                    messages.warning(request, msg)
 
             except ProtectedError as e:
                 return failed_to_delete(request, object=merging_obj,
