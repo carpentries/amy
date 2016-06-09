@@ -270,6 +270,14 @@ class EventForm(forms.ModelForm):
         widget=selectable.AutoComboboxSelectWidget,
     )
 
+    language = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.LanguageLookup,
+        label='Language',
+        required=False,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
     country = CountryField().formfield(
         required=False,
         help_text=Event._meta.get_field('country').help_text,
@@ -335,8 +343,8 @@ class EventForm(forms.ModelForm):
         model = Event
         # reorder fields, don't display 'deleted' field
         fields = ('slug', 'completed', 'start', 'end', 'host', 'administrator',
-                  'tags', 'url', 'reg_key', 'admin_fee', 'invoice_status',
-                  'attendance', 'contact', 'notes',
+                  'tags', 'url', 'language', 'reg_key', 'admin_fee',
+                  'invoice_status', 'attendance', 'contact', 'notes',
                   'country', 'venue', 'address', 'latitude', 'longitude',
                   'learners_pre', 'learners_post', 'instructors_pre',
                   'instructors_post', 'learners_longterm')

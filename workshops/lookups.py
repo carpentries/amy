@@ -106,6 +106,8 @@ class LanguageLookup(ModelLookup):
     def get_query(self, request, term):
         # Order the languages by their decreasing popularity
         results = super().get_query(request, term)
+        if 'subtag' in request.GET.keys():
+            return results.filter(subtag__iexact=term)
         return results.annotate(person_count=Count('person'))\
                 .order_by('-person_count')
 
