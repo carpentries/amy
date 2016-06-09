@@ -632,6 +632,11 @@ class Event(AssignmentMixin, models.Model):
     )
     end        = models.DateField(null=True, blank=True)
     slug       = models.CharField(max_length=STR_LONG, null=True, blank=True, unique=True)
+    language = models.ForeignKey(
+        Language, on_delete=models.SET_NULL,
+        null=True, blank=True,
+        help_text='Human language of instruction during the workshop.'
+    )
     url = models.CharField(
         max_length=STR_LONG, unique=True, null=True, blank=True,
         validators=[RegexValidator(REPO_REGEX, inverse_match=True)],
