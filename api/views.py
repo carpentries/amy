@@ -264,7 +264,7 @@ class ReportsViewSet(ViewSet):
         This function conditionally turns iterables into lists based on the
         format requested by browser."""
         # choose either '?format=...' or '/url.format' or None
-        format_ = (request.query_params.get('format') or format or '').lower
+        format_ = (request.query_params.get('format') or format or '').lower()
 
         if format_ in self.formats_requiring_lists:
             # list-ify the generator for renderers requiring lists
