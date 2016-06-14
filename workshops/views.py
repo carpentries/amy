@@ -304,7 +304,7 @@ class HostCreate(LoginRequiredMixin, PermissionRequiredMixin,
     permission_required = 'workshops.add_host'
     model = Host
     form_class = HostForm
-    template_name = 'workshops/generic_form.html'
+    template_name = 'workshops/host_create_form.html'
 
 
 class HostUpdate(LoginRequiredMixin, PermissionRequiredMixin,
@@ -328,6 +328,24 @@ def host_delete(request, host_domain):
         return redirect(reverse('all_hosts'))
     except ProtectedError as e:
         return failed_to_delete(request, host, e.protected_objects)
+
+
+@login_required
+def host_import(request):
+    """ Fetch API from a PyData conference"""
+    domain = request.GET['domain'].rstrip('/')
+    try:
+        r = requests.get('http://' + domain + '/api/')
+        host = r.json()
+        host['fullname'] = host.pop('title')
+        return JsonResponse(host)
+    except requests.exceptions.HTTPError as e:
+        return HttpResponseBadRequest(
+            'Request for "{0}" returned status code {1}.'
+            .format(url, e.response.status_code)
+        )
+    except requests.exceptions.RequestException:
+        return HttpResponseBadRequest('Network connection error.')
 
 
 @login_required
