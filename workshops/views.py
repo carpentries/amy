@@ -211,9 +211,12 @@ class EmailSendMixin():
 #------------------------------------------------------------
 
 
-@login_required
-def dashboard(request):
-    '''Home page.'''
+
+
+@only_for_admins
+def admin_dashboard(request):
+    '''Home page for admins.'''
+
     current_events = (
         Event.objects.upcoming_events() | Event.objects.ongoing_events()
     ).active()
@@ -261,7 +264,7 @@ def dashboard(request):
         'todos_end_date': TodoItemQuerySet.next_week_dates()[1],
         'updated_metadata': updated_metadata,
     }
-    return render(request, 'workshops/dashboard.html', context)
+    return render(request, 'workshops/admin_dashboard.html', context)
 
 
 @only_for_admins
