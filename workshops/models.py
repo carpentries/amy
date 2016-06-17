@@ -32,6 +32,26 @@ class AssignmentMixin(models.Model):
         abstract = True
 
 
+class ActiveMixin(models.Model):
+    """This mixin adds 'active' field for marking model instances as active or
+    inactive (e.g. closed or in 'not have to worry about it' state)."""
+    active = models.BooleanField(default=True)
+
+    class Meta:
+        abstract = True
+
+
+class CreatedUpdatedMixin(models.Model):
+    """This mixin provides two fields for storing instance creation time and
+    last update time. It's faster than checking model revisions (and they
+    aren't always enabled for some models)."""
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_updated_at = models.DateTimeField(auto_now=True, null=True)
+
+    class Meta:
+        abstract = True
+
+
 @reversion.register
 class Host(models.Model):
     '''Represent a workshop's host.'''
@@ -328,9 +348,7 @@ class Person(AbstractBaseUser, PermissionsMixin):
         super().save(*args, **kwargs)
 
 
-class ProfileUpdateRequest(models.Model):
-    active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
     personal = models.CharField(
         max_length=STR_LONG,
         verbose_name='Personal (first) name',
@@ -875,9 +893,8 @@ class Event(AssignmentMixin, models.Model):
         super(Event, self).save(*args, **kwargs)
 
 
-class EventRequest(AssignmentMixin, models.Model):
-    active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+class EventRequest(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
+                   models.Model):
     name = models.CharField(max_length=STR_MED)
     email = models.EmailField()
     affiliation = models.CharField(max_length=STR_LONG,
@@ -1057,9 +1074,8 @@ class EventRequest(AssignmentMixin, models.Model):
         )
 
 
-class EventSubmission(AssignmentMixin, models.Model):
-    active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+class EventSubmission(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
+                      models.Model):
     url = models.URLField(
         null=False, blank=False,
         verbose_name='Link to the workshop\'s website')
@@ -1477,9 +1493,7 @@ def build_choice_field_with_other_option(choices, default, verbose_name=None):
 
 
 @reversion.register
-class TrainingRequest(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-
+class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
     personal = models.CharField(
         max_length=STR_LONG,
         verbose_name='Personal name',
