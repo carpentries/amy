@@ -1019,3 +1019,39 @@ class TrainingRequestForm(forms.ModelForm):
             'teaching_frequency_expectation': forms.RadioSelect(),
             'max_travelling_frequency': forms.RadioSelect(),
         }
+
+
+class AutoUpdateProfileForm(forms.ModelForm):
+    username = forms.CharField(disabled=True)
+
+    ERROR_MSG = ("This GitHub account is already associated with different "
+                 "AMY account. Log out and log in using your GitHub account.")
+    github = forms.CharField(error_messages={'unique': ERROR_MSG})
+
+    class Meta:
+        model = Person
+        fields = [
+            'personal',
+            'middle',
+            'family',
+            'email',
+            'gender',
+            'may_contact',
+            'airport',
+            'github',
+            'twitter',
+            'url',
+            'username',
+            'affiliation',
+            'domains',
+            'lessons',
+        ]
+        readonly_fields = (
+            'username',
+        )
+        widgets = {
+            'occupation': forms.RadioSelect(),
+            'gender': forms.RadioSelect(),
+            'domains': forms.CheckboxSelectMultiple(),
+            'lessons': forms.CheckboxSelectMultiple(),
+        }

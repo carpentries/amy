@@ -65,7 +65,7 @@ from workshops.forms import (
     TodoFormSet, EventsSelectionForm, EventsMergeForm, InvoiceRequestForm,
     InvoiceRequestUpdateForm, EventSubmitForm, EventSubmitFormNoCaptcha,
     PersonsMergeForm, PersonCreateForm,
-    TrainingRequestForm, BootstrapHelperWiderLabels,
+    TrainingRequestForm, BootstrapHelperWiderLabels, AutoUpdateProfileForm,
     DCSelfOrganizedEventRequestForm, DCSelfOrganizedEventRequestFormNoCaptcha)
 from workshops.util import (
     upload_person_task_csv, verify_upload_person_task,
@@ -3113,3 +3113,37 @@ class TrainingRequestDetails(OnlyForAdminsMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Training request #{}'.format(self.get_object().pk)
         return context
+
+# ------------------------------------------------------------
+# Views for trainees
+
+@login_required
+def autoupdate_profile(request):
+    user = request.user
+    form = AutoUpdateProfileForm(instance=user)
+
+    if request.method == 'POST':
+        form = AutoUpdateProfileForm(request.POST, instance=user)
+
+        if form.is_valid() and form.instance == user:
+            user = form.save(commit=False)
+
+            # save lessons
+            user.lessons.clear()
+            for lesson in form.cleaned_data['lessons']:
+                q = Qualification(lesson=lesson, person=user)
+                q.save()
+
+            user.save()
+
+            return redirect(reverse('trainee-dashboard'))
+        else:
+            messages.error(request, 'Fix errors below.')
+
+    context = {
+        'title': 'Update Your Profile',
+        'form': form,
+        'form_helper': bootstrap_helper,
+    }
+    return render(request, 'workshops/generic_form_nonav.html', context)
+

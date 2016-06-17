@@ -242,22 +242,33 @@ class Person(AbstractBaseUser, PermissionsMixin):
     PERSON_TASK_EXTRA_FIELDS = ('event', 'role')
     PERSON_TASK_UPLOAD_FIELDS = PERSON_UPLOAD_FIELDS + PERSON_TASK_EXTRA_FIELDS
 
-    personal    = models.CharField(max_length=STR_LONG)
-    middle      = models.CharField(max_length=STR_LONG, null=True, blank=True)
-    family      = models.CharField(max_length=STR_LONG)
-    email       = models.CharField(max_length=STR_LONG, unique=True, null=True, blank=True)
+    personal    = models.CharField(max_length=STR_LONG,
+                                   verbose_name='Personal (first) name')
+    middle      = models.CharField(max_length=STR_LONG, null=True, blank=True,
+                                   verbose_name='Middle name')
+    family      = models.CharField(max_length=STR_LONG,
+                                   verbose_name='Family (last) name')
+    email       = models.CharField(max_length=STR_LONG, unique=True, null=True, blank=True,
+                                   verbose_name='Email address')
     gender      = models.CharField(max_length=1, choices=GENDER_CHOICES, null=False, default=UNDISCLOSED)
     may_contact = models.BooleanField(default=True)
-    airport     = models.ForeignKey(Airport, null=True, blank=True, on_delete=models.PROTECT)
-    github      = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True)
-    twitter     = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True)
-    url         = models.CharField(max_length=STR_LONG, null=True, blank=True)
+    airport     = models.ForeignKey(Airport, null=True, blank=True, on_delete=models.PROTECT,
+                                    verbose_name='Nearest major airport')
+    github      = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True,
+                                   verbose_name='GitHub username')
+    twitter     = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True,
+                                   verbose_name='Twitter username')
+    url         = models.CharField(max_length=STR_LONG, null=True, blank=True,
+                                   verbose_name='Personal website')
     username = models.CharField(
         max_length=STR_MED, unique=True,
         validators=[RegexValidator(r'^[\w\-_]+$', flags=re.A)],
     )
     notes = models.TextField(default="", blank=True)
-    affiliation = models.CharField(max_length=STR_LONG, default='', blank=True)
+    affiliation = models.CharField(
+        max_length=STR_LONG, default='', blank=True,
+        help_text='What university, company, lab, or other organization are '
+                  'you affiliated with (if any)?')
 
     badges = models.ManyToManyField(
         "Badge", through="Award",
@@ -265,11 +276,15 @@ class Person(AbstractBaseUser, PermissionsMixin):
     lessons = models.ManyToManyField(
         "Lesson",
         through="Qualification",
+        verbose_name='Topic and lessons you\'re comfortable teaching',
+        help_text='Please check all that apply.',
         blank=True,
     )
     domains = models.ManyToManyField(
         "KnowledgeDomain",
         limit_choices_to=~Q(name__startswith='Don\'t know yet'),
+        verbose_name='Areas of expertise',
+        help_text='Please check all that apply.',
         blank=True,
     )
     languages = models.ManyToManyField(
@@ -299,7 +314,7 @@ class Person(AbstractBaseUser, PermissionsMixin):
         'personal',
         'family',
         'email',
-        ]
+    ]
 
     objects = PersonManager()
 

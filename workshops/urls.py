@@ -127,6 +127,7 @@ urlpatterns = [
     url(r'^profile_update/(?P<request_id>\d+)/accept/?$', views.profileupdaterequest_accept, name='profileupdaterequest_accept'),
     url(r'^profile_update/(?P<request_id>\d+)/accept/(?P<person_id>[\w\.-]+)/?$', views.profileupdaterequest_accept, name='profileupdaterequest_accept'),
     url(r'^update_profile/$', views.profileupdaterequest_create, name='profileupdate_request'),
+    url(r'^autoupdate_profile/$', views.autoupdate_profile, name='autoupdate_profile'),
 
     url(r'^request_training/$', views.trainingrequest_create, name='training_request'),
     url(r'^training_requests/$', views.TrainingRequestListView.as_view(), name='all_trainingrequests'),
