@@ -2,6 +2,8 @@ from django.conf.urls import include, url
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
 
+from workshops import github_auth
+
 urlpatterns = [
     url(r'^workshops/admin/', include(admin.site.urls)),
     url(r'^workshops/', include('workshops.urls')),
@@ -40,4 +42,7 @@ urlpatterns = [
 
     # REST API v1
     url(r'^api/v1/', include('api.urls')),
+
+    # Login with GitHub credentials
+    url('', include('social.apps.django_app.urls', namespace='social')),
 ]
