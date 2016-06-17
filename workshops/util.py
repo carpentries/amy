@@ -2,6 +2,11 @@
 from collections import namedtuple, defaultdict
 import csv
 import datetime
+from django.contrib.auth.mixins import UserPassesTestMixin
+
+from selectable.decorators import results_decorator
+
+from django.contrib.auth.decorators import user_passes_test
 from itertools import chain
 import re
 import yaml
@@ -14,6 +19,8 @@ from django.core.validators import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.http import Http404
+from django.http.response import HttpResponse
+from django.http.response import HttpResponseForbidden
 from django.shortcuts import render
 import requests
 
@@ -867,3 +874,24 @@ def merge_objects(object_a, object_b, easy_fields, difficult_fields,
         merging_obj.delete()
 
         return base_obj.save(), integrity_errors
+
+
+def only_for_admins(f):
+    f = user_passes_test(lambda user: user is not None and user.is_admin)(f)
+    return f
+
+
+@results_decorator
+def lookup_only_for_admins(request):
+    user = getattr(request, 'user', None)
+    if user is None or not user.is_authenticated():
+        return HttpResponse(status=401)  # Unauthorized
+    elif not user.is_admin:
+        return HttpResponseForbidden()
+    else:
+        return None
+
+
+class OnlyForAdminsMixin(UserPassesTestMixin):
+    def test_func(self):
+        return self.request.user is not None and self.request.user.is_admin

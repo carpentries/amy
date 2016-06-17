@@ -328,6 +328,11 @@ class Person(AbstractBaseUser, PermissionsMixin):
         """
         return self.is_superuser
 
+    @property
+    def is_admin(self):
+        is_admin = self.groups.filter(name='Admins').exists()
+        return is_admin or self.is_staff or self.is_superuser
+
     def clean(self):
         """This will be called by the ModelForm.is_valid(). No saving to the
         database."""
