@@ -1,0 +1,58 @@
+{% extends "base_nonav_fixed.html" %}
+
+{% block content %}
+
+<div>
+
+<p><a href="{% url 'logout' %}" class="btn btn-primary">Log out</a></p>
+
+<table class="table table-striped">
+  <tr><th>personal name</th><td>{{ user.personal|default:"—" }}</td></tr>
+  <tr><th>middle name</th><td>{{ user.middle|default:"—" }}</td></tr>
+  <tr><th>family name</th><td>{{ user.family|default:"—" }}</td></tr>
+  <tr><th>email</th><td>{{ user.email|default:"—" }}</td></tr>
+  <tr><th>gender</th><td>{{ user.get_gender_display }}</td></tr>
+  <tr><th>can we contact you?</th><td>{{ user.may_contact|yesno }}</td></tr>
+  <tr><th>airport</th><td>{{ user.airport|default:"—"  }}</td></tr>
+  <tr><th>github </th><td>{{ user.github|default:"—" }}</td></tr>
+  <tr><th>twitter</th><td>{{ user.twitter|default:"—" }}</td></tr>
+  <tr><th>url</th><td>{{ user.url|default:"—" }}</td></tr>
+  <tr><th>username</th><td>{{ user.username|default:"—" }}</td></tr>
+  <tr><th>affiliation</th><td>{{ user.affiliation|default:"—" }}</td></tr>
+  <tr><th>occupation</th><td>{{ user.occupation|default:"—" }}</td></tr>
+  <tr><th>orcid</th><td>{{ user.orcid|default:"—" }}</td></tr>
+  <tr><th>knowledge domains</th><td>
+      <ul>
+        {% for domain in user.domains.all %}
+          <li>{{ domain }}</li>
+        {% empty %}
+          <li>No knowledge domain.</li>
+        {% endfor %}
+      </ul>
+  </td></tr>
+  <tr><th>lessons that you can teach</th><td>
+      <ul>
+        {% for lesson in user.lessons.all %}
+          <li>{{ lesson }}</li>
+        {% empty %}
+          <li>No lesson chosen.</li>
+        {% endfor %}
+      </ul>
+  </td></tr>
+  <tr><th>your badges</th><td>
+      <ul>
+        {% for badge in user.badges.all %}
+          <li>{{ badge }}</li>
+        {% empty %}
+          <li>No badges awarded.</li>
+        {% endfor %}
+      </ul>
+      <p>If you think that you're missing a badge, please email us at <a href="mailto:TODO">TODO@TODO.com</a></p>
+  </td></tr>
+</table>
+
+<p><a href="{% url 'autoupdate_profile' %}" class="btn btn-primary">Update your profile</a></p>
+
+</div>
+
+{% endblock %}

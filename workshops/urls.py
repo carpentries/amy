@@ -3,6 +3,7 @@ from workshops import views
 
 urlpatterns = [
     url(r'^admin-dashboard/$', views.admin_dashboard, name='admin-dashboard'),
+    url(r'^trainee-dashboard/$', views.trainee_dashboard, name='trainee-dashboard'),
 
     url(r'^log/$', views.changes_log, name='changes_log'),
 

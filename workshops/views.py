@@ -3121,6 +3121,15 @@ class TrainingRequestDetails(OnlyForAdminsMixin, DetailView):
 # Views for trainees
 
 @login_required
+def trainee_dashboard(request):
+    context = {
+        'title': 'Your profile',
+        'user': request.user,
+    }
+    return render(request, 'workshops/trainee_dashboard.html', context)
+
+
+@login_required
 def autoupdate_profile(request):
     user = request.user
     form = AutoUpdateProfileForm(instance=user)
