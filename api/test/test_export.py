@@ -46,10 +46,12 @@ class TestExportingBadges(BaseExportingTest):
                                            criteria='')
         self.badge2 = Badge.objects.create(name='badge2', title='Badge2',
                                            criteria='')
-        self.user1 = Person.objects.create_user('user1', 'User1', 'Name',
-                                                'user1@name.org')
-        self.user2 = Person.objects.create_user('user2', 'User2', 'Name',
-                                                'user2@name.org')
+        self.user1 = Person.objects.create_user(
+            username='user1', email='user1@name.org',
+            personal='User1', family='Name')
+        self.user2 = Person.objects.create_user(
+            username='user2', email='user2@name.org',
+            personal='User2', family='Name')
         Award.objects.create(person=self.user1, badge=self.badge1,
                              awarded=today)
         Award.objects.create(person=self.user2, badge=self.badge1,
