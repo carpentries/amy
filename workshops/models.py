@@ -1126,6 +1126,23 @@ class DataAnalysisLevel(models.Model):
         return self.name
 
 
+class DCWorkshopTopic(models.Model):
+    """Single lesson topic used in a workshop."""
+    name = models.CharField(max_length=STR_LONGEST, null=False, blank=False)
+
+    def __str__(self):
+        return self.name
+
+
+class DCWorkshopDomain(models.Model):
+    """Single domain used in a workshop (it corresponds to a set of lessons
+    Data Carpentry prepared)."""
+    name = models.CharField(max_length=STR_LONGEST, null=False, blank=False)
+
+    def __str__(self):
+        return self.name
+
+
 #------------------------------------------------------------
 
 class Role(models.Model):
