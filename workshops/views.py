@@ -211,6 +211,12 @@ class EmailSendMixin():
 #------------------------------------------------------------
 
 
+@login_required
+def dispatch(request):
+    if request.user and request.user.is_admin:
+        return redirect(reverse('admin-dashboard'))
+    else:
+        return redirect(reverse('trainee-dashboard'))
 
 
 @only_for_admins

@@ -2,6 +2,7 @@ from django.conf.urls import url
 from workshops import views
 
 urlpatterns = [
+    url(r'^$', views.dispatch, name='dispatch'),
     url(r'^admin-dashboard/$', views.admin_dashboard, name='admin-dashboard'),
     url(r'^trainee-dashboard/$', views.trainee_dashboard, name='trainee-dashboard'),
 
