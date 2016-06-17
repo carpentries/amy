@@ -18,6 +18,7 @@ from reversion import revisions as reversion
 STR_SHORT   =  10         # length of short strings
 STR_MED     =  40         # length of medium strings
 STR_LONG    = 100         # length of long strings
+STR_LONGEST = 255  # length of the longest strings
 STR_REG_KEY =  20         # length of Eventbrite registration key
 
 #------------------------------------------------------------
@@ -448,7 +449,7 @@ class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         blank=True,
     )
     domains_other = models.CharField(
-        max_length=255,
+        max_length=STR_LONGEST,
         verbose_name='Other areas of expertise',
         blank=True, default='',
     )
@@ -459,7 +460,7 @@ class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         blank=False,
     )
     lessons_other = models.CharField(
-        max_length=255,
+        max_length=STR_LONGEST,
         verbose_name='Other topics/lessons you\'re comfortable teaching',
         help_text='Please include lesson URLs.',
         blank=True, default='',
@@ -682,17 +683,19 @@ class Event(AssignmentMixin, models.Model):
         default='unknown', blank=False,
     )
     notes      = models.TextField(default="", blank=True)
-    contact = models.CharField(max_length=255, default="", blank=True)
+    contact = models.CharField(max_length=STR_LONGEST, default="", blank=True)
     country = CountryField(
         null=True, blank=True,
         help_text=PUBLISHED_HELP_TEXT +
                   '<br />Use <b>Online</b> for online events.',
     )
     venue = models.CharField(
-        max_length=255, default='', blank=True, help_text=PUBLISHED_HELP_TEXT,
+        max_length=STR_LONGEST, default='', blank=True,
+        help_text=PUBLISHED_HELP_TEXT,
     )
     address = models.CharField(
-        max_length=255, default='', blank=True, help_text=PUBLISHED_HELP_TEXT,
+        max_length=STR_LONGEST, default='', blank=True,
+        help_text=PUBLISHED_HELP_TEXT,
     )
     latitude = models.FloatField(
         null=True, blank=True, help_text=PUBLISHED_HELP_TEXT,
@@ -909,7 +912,7 @@ class EventRequest(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
         blank=True, default='',
     )
     preferred_date = models.CharField(
-        max_length=255,
+        max_length=STR_LONGEST,
         help_text='Please indicate when you would like to run the workshop. '
                   'A range of at least a month is most helpful, although if '
                   'you have specific dates you need the workshop, we will try '
@@ -1109,7 +1112,7 @@ class AcademicLevel(models.Model):
 class ComputingExperienceLevel(models.Model):
     # it's a long field because we need to store reasoning too, for example:
     # "Novice (uses a spreadsheet for data analysis rather than writing code)"
-    name = models.CharField(max_length=255, null=False, blank=False)
+    name = models.CharField(max_length=STR_LONGEST, null=False, blank=False)
 
     def __str__(self):
         return self.name
@@ -1117,7 +1120,7 @@ class ComputingExperienceLevel(models.Model):
 
 class DataAnalysisLevel(models.Model):
     # ComputingExperienceLevel's sibling
-    name = models.CharField(max_length=255, null=False, blank=False)
+    name = models.CharField(max_length=STR_LONGEST, null=False, blank=False)
 
     def __str__(self):
         return self.name
@@ -1305,7 +1308,8 @@ class TodoItem(models.Model):
     completed = models.BooleanField(default=False)
     title = models.CharField(max_length=STR_LONG, default='', blank=False)
     due = models.DateField(blank=True, null=True)
-    additional = models.CharField(max_length=255, default='', blank=True)
+    additional = models.CharField(max_length=STR_LONGEST, default='',
+                                  blank=True)
 
     objects = TodoItemQuerySet.as_manager()
 
@@ -1545,7 +1549,7 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         blank=True,
     )
     domains_other = models.CharField(
-        max_length=255,
+        max_length=STR_LONGEST,
         verbose_name='Other areas of expertise',
         blank=True, default='',
     )
