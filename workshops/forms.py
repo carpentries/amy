@@ -610,6 +610,11 @@ class HostForm(forms.ModelForm):
         model = Host
         fields = ['domain', 'fullname', 'country', 'notes']
 
+    class Media:
+        js = (
+            'import_host_from_url.js',
+        )
+
 
 class MembershipForm(forms.ModelForm):
     class Meta:

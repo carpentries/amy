@@ -11,6 +11,7 @@ urlpatterns = [
     url(r'^host/(?P<host_domain>[\w\.-]+)/edit$', views.HostUpdate.as_view(), name='host_edit'),
     url(r'^host/(?P<host_domain>[\w\.-]+)/delete$', views.host_delete, name='host_delete'),
     url(r'^hosts/add/$', views.HostCreate.as_view(), name='host_add'),
+    url(r'^hosts/import/$', views.host_import, name='host_import'),
 
     url(r'membership/(?P<host_domain>[\w\.-]+)/add', views.membership_create, name='membership_add'),
     url(r'membership/(?P<membership_id>\d+)/edit', views.MembershipUpdate.as_view(), name='membership_edit'),
