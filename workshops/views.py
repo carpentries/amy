@@ -68,7 +68,7 @@ from workshops.forms import (
     InvoiceRequestUpdateForm, EventSubmitForm, EventSubmitFormNoCaptcha,
     PersonsMergeForm, PersonCreateForm,
     TrainingRequestForm, BootstrapHelperWiderLabels,
-    DCSelfOrganizedEventRequestForm,
+    DCSelfOrganizedEventRequestForm, DCSelfOrganizedEventRequestFormNoCaptcha,
 )
 from workshops.util import (
     upload_person_task_csv, verify_upload_person_task,
@@ -90,7 +90,7 @@ from workshops.util import (
 from workshops.filters import (
     EventFilter, HostFilter, PersonFilter, TaskFilter, AirportFilter,
     EventRequestFilter, BadgeAwardsFilter, InvoiceRequestFilter,
-    EventSubmissionFilter,
+    EventSubmissionFilter, DCSelfOrganizedEventRequestFilter,
 )
 
 from api.views import ReportsViewSet
@@ -2678,7 +2678,7 @@ class EventSubmissionDetails(LoginRequiredMixin, DetailView):
 
 class EventSubmissionFix(LoginRequiredMixin, PermissionRequiredMixin,
                          UpdateViewContext):
-    permission_required = 'change_eventsubmission'
+    permission_required = 'workshops.change_eventsubmission'
     model = EventSubmissionModel
     form_class = EventSubmitFormNoCaptcha
     pk_url_kwarg = 'submission_id'
@@ -2792,6 +2792,72 @@ class DCSelfOrganizedEventRequestConfirm(TemplateView):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Thanks for your submission'
         return context
+
+
+class AllDCSelfOrganizedEventRequests(LoginRequiredMixin, FilteredListView):
+    context_object_name = 'requests'
+    template_name = 'workshops/all_dcselforganizedeventrequests.html'
+    filter_class = DCSelfOrganizedEventRequestFilter
+    queryset = DCSelfOrganizedEventRequestModel.objects.all()
+
+    def get_filter_data(self):
+        data = self.request.GET.copy()
+        data['active'] = data.get('active', 'true')
+        return data
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Data Carpentry self-organized workshop requests'
+        return context
+
+
+class DCSelfOrganizedEventRequestDetails(LoginRequiredMixin, DetailView):
+    context_object_name = 'object'
+    template_name = 'workshops/dcselforganizedeventrequest.html'
+    queryset = DCSelfOrganizedEventRequestModel.objects.all()
+    pk_url_kwarg = 'request_id'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'DC self-organized workshop request #{}'.format(
+            self.get_object().pk)
+
+        person_lookup_form = AdminLookupForm()
+        if self.object.assigned_to:
+            person_lookup_form = AdminLookupForm(
+                initial={'person': self.object.assigned_to}
+            )
+
+        person_lookup_helper = BootstrapHelper()
+        person_lookup_helper.form_action = reverse(
+            'dcselforganizedeventrequest_assign', args=[self.object.pk])
+
+        context['person_lookup_form'] = person_lookup_form
+        context['person_lookup_helper'] = person_lookup_helper
+        return context
+
+
+class DCSelfOrganizedEventRequestChange(LoginRequiredMixin,
+                                        PermissionRequiredMixin,
+                                        UpdateViewContext):
+    permission_required = 'workshops.change_dcselforganizedeventrequest'
+    model = DCSelfOrganizedEventRequestModel
+    form_class = DCSelfOrganizedEventRequestFormNoCaptcha
+    pk_url_kwarg = 'request_id'
+    template_name = 'workshops/generic_form.html'
+
+
+@login_required
+@permission_required(['workshops.change_dcselforganizedeventrequest'],
+                     raise_exception=True)
+def dcselforganizedeventrequest_assign(request, request_id, person_id=None):
+    """Set eventrequest.assigned_to. See `assign` docstring for more
+    information."""
+    event_req = get_object_or_404(DCSelfOrganizedEventRequestModel,
+                                  pk=request_id)
+    assign(request, event_req, person_id)
+    return redirect(reverse('dcselforganizedeventrequest_details',
+                            args=[event_req.pk]))
 
 #------------------------------------------------------------
 

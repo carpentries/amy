@@ -1258,7 +1258,7 @@ class DCSelfOrganizedEventRequest(AssignmentMixin, ActiveMixin,
     )
 
     def get_absolute_url(self):
-        return ''
+        return reverse('dcselforganizedeventrequest_details', args=[self.pk])
 
 
 class AcademicLevel(models.Model):

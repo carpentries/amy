@@ -1,0 +1,43 @@
+{% extends "base_nav_fluid_sidebar.html" %}
+
+{% load crispy_forms_tags %}
+{% load pagination %}
+{% load tags %}
+
+{% block sidebar %}
+    <h3>Filter</h3>
+    {% crispy filter.form form_helper %}
+{% endblock %}
+
+{% block content %}
+  {% if requests %}
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>assignee</th>
+        <th>person</th>
+        <th>is instructor</th>
+        <th>organization</th>
+        <th>planned dates</th>
+        <th>location</th>
+        <th class="additional-links"></th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for req in requests %}
+      <tr>
+        <td>{% if req.assigned_to %}<a href="{{ req.assigned_to.get_absolute_url }}">{{ req.assigned_to.get_short_name }}</a>{% else %}—{% endif %}</td>
+        <td>{{ req.name }} &lt;{{ req.email|urlize }}&gt;</td>
+        <td>{{ req.instructor_status }}</td>
+        <td>{{ req.organization }}</td>
+        <td>{{ req.dates }}</td>
+        <td>{{ req.location }}, {{ req.country.name }}</td>
+        <td><a href="{{ req.get_absolute_url }}"><span class="glyphicon glyphicon-info-sign"></span></a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No workshop requests matching the filter.</p>
+  {% endif %}
+{% endblock %}

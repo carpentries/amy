@@ -18,17 +18,17 @@
     <tr><th>Dates:</th>
         <td>{{ object.dates }}</td></tr>
     <tr><th>Domains:</th>
-        <td><ul>{% for domain in object.domains.all %}{{ domain }}{% endfor %}</ul></td></tr>
+        <td><ul>{% for domain in object.domains.all %}<li>{{ domain }}</li>{% endfor %}</ul></td></tr>
     <tr><th>Other domains:</th>
         <td>{{ object.domains_other }}</td></tr>
     <tr><th>Topics:</th>
-        <td><ul>{% for topic in object.topics.all %}{{ topic }}{% endfor %}</ul></td></tr>
+        <td><ul>{% for topic in object.topics.all %}<li>{{ topic }}</li>{% endfor %}</ul></td></tr>
     <tr><th>Other topics:</th>
         <td>{{ object.topics_other }}</td></tr>
     <tr><th>Attendees' academic levels:</th>
-        <td><ul>{% for level in object.attendee_academic_levels.all %}{{ level }}{% endfor %}</ul></td></tr>
+        <td><ul>{% for level in object.attendee_academic_levels.all %}<li>{{ level }}</li>{% endfor %}</ul></td></tr>
     <tr><th>Attendees' data analysis levels:</th>
-        <td><ul>{% for level in object.attendee_data_analysis_level.all %}{{ level }}{% endfor %}</ul></td></tr>
+        <td><ul>{% for level in object.attendee_data_analysis_level.all %}<li>{{ level }}</li>{% endfor %}</ul></td></tr>
     <tr><th>Payment:</th>
         <td>{{ object.get_payment_display }}</td></tr>
     <tr><th>Reason for fee waiver:</th>

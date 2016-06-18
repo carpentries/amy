@@ -726,7 +726,7 @@ class DCSelfOrganizedEventRequestFormNoCaptcha(forms.ModelForm):
 
     class Meta:
         model = DCSelfOrganizedEventRequest
-        exclude = ('active', 'created_at', 'last_updated_at', 'assigned_to')
+        exclude = ('created_at', 'last_updated_at', 'assigned_to')
         widgets = {
             'instructor_status': forms.RadioSelect(),
             'is_partner': forms.RadioSelect(),
@@ -741,6 +741,9 @@ class DCSelfOrganizedEventRequestFormNoCaptcha(forms.ModelForm):
 class DCSelfOrganizedEventRequestForm(
         DCSelfOrganizedEventRequestFormNoCaptcha):
     captcha = ReCaptchaField()
+
+    class Meta(DCSelfOrganizedEventRequestFormNoCaptcha.Meta):
+        exclude = ('active', 'created_at', 'last_updated_at', 'assigned_to')
 
 
 class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):
