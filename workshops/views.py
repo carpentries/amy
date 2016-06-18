@@ -497,6 +497,7 @@ def person_details(request, person_id):
     tasks = person.task_set.all()
     lessons = person.lessons.all()
     domains = person.domains.all()
+    languages = person.languages.all()
     context = {
         'title': 'Person {0}'.format(person),
         'person': person,
@@ -504,6 +505,7 @@ def person_details(request, person_id):
         'tasks': tasks,
         'lessons': lessons,
         'domains': domains,
+        'languages': languages,
     }
     return render(request, 'workshops/person.html', context)
 
@@ -1805,6 +1807,10 @@ def workshop_staff(request):
                 q = Q(task__event__tags=TTT) & ~Q(task__event__tags=stalled)
                 people = people.filter(q, task__role__name='learner') \
                                .exclude(badges__in=instructor_badges)
+
+            if data['languages']:
+                for language in data['languages']:
+                    people = people.filter(languages=language)
 
     emails = people.filter(may_contact=True).values_list('email', flat=True)
     people = get_pagination_items(request, people)

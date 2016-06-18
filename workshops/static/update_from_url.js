@@ -26,6 +26,21 @@ $('#update_url_form').submit(function(e) {
         $("#id_event-end").val(data.end);
         $("#id_event-reg_key").val(data.reg_key);
         $("#id_event-url").val(url);
+
+        var elem = $("#id_event-language_0");
+        // query only using the subtag
+        elem.djselectable('option', 'prepareQuery', function(q) { q.subtag = true });
+        // select the first results of a search
+        elem.on("autocompleteresponse", function(event, ui) {
+          ui.item = ui.content[0];
+          $(this).data('ui-djselectable')._trigger('select', null, ui);
+        });
+        elem.djselectable('search', data.language);
+        // reset callbacks and options
+        elem.djselectable('option', 'prepareQuery', null);
+        elem.on("autocompleteresponse", null);
+        elem.djselectable('close');
+
         $("#id_event-contact").val(data.contact);
         $('#id_event-venue').val(data.venue);
         $('#id_event-address').val(data.address);
@@ -55,6 +70,21 @@ $('#update_url_form').submit(function(e) {
         }
         if ($("#id_event-url").val() == "") {
           $("#id_event-url").val(url);
+        }
+        if ($("#id_event-language_0").val() == "") {
+          var elem = $("#id_event-language_0");
+          // query only using the subtag
+          elem.djselectable('option', 'prepareQuery', function(q) { q.subtag = true });
+          // select the first results of a search
+          elem.on("autocompleteresponse", function(event, ui) {
+            ui.item = ui.content[0];
+            $(this).data('ui-djselectable')._trigger('select', null, ui);
+          });
+          elem.djselectable('search', data.language);
+          // reset callbacks and options
+          elem.djselectable('option', 'prepareQuery', null);
+          elem.on("autocompleteresponse", null);
+          elem.djselectable('close');
         }
         if ($("#id_event-contact").val() == "") {
           $("#id_event-contact").val(data.contact);

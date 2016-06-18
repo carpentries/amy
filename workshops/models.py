@@ -251,6 +251,10 @@ class Person(AbstractBaseUser, PermissionsMixin):
         limit_choices_to=~Q(name__startswith='Don\'t know yet'),
         blank=True,
     )
+    languages = models.ManyToManyField(
+        "Language",
+        blank=True,
+    )
 
     # new people will be inactive by default
     is_active = models.BooleanField(default=False)
@@ -478,6 +482,24 @@ class Tag(models.Model):
 
 #------------------------------------------------------------
 
+class Language(models.Model):
+    """A language tag.
+
+    https://tools.ietf.org/html/rfc5646
+    """
+    name = models.CharField(
+        max_length=STR_MED,
+        help_text='Description of this language tag in English')
+    subtag = models.CharField(
+        max_length=STR_SHORT,
+        help_text=
+            'Primary language subtag.  '
+            'https://tools.ietf.org/html/rfc5646#section-2.2.1')
+
+    def __str__(self):
+        return self.name
+
+#------------------------------------------------------------
 
 # In order to make our custom filters chainable, we have to
 # define them on the QuerySet, not the Manager - see
@@ -610,6 +632,11 @@ class Event(AssignmentMixin, models.Model):
     )
     end        = models.DateField(null=True, blank=True)
     slug       = models.CharField(max_length=STR_LONG, null=True, blank=True, unique=True)
+    language = models.ForeignKey(
+        Language, on_delete=models.SET_NULL,
+        null=True, blank=True,
+        help_text='Human language of instruction during the workshop.'
+    )
     url = models.CharField(
         max_length=STR_LONG, unique=True, null=True, blank=True,
         validators=[RegexValidator(REPO_REGEX, inverse_match=True)],
@@ -872,11 +899,11 @@ class EventRequest(AssignmentMixin, models.Model):
                   'to accommodate those requests.',
         verbose_name='Preferred workshop dates',
     )
-    language = models.CharField(
-        max_length=STR_LONG,
+    language = models.ForeignKey(
+        'Language',
         verbose_name='What human language do you want the workshop to be run'
                      ' in?',
-        blank=True, default='English',
+        null=True,
     )
 
     WORKSHOP_TYPE_CHOICES = (

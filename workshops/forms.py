@@ -18,8 +18,9 @@ from selectable import forms as selectable
 from workshops.models import (
     Award, Event, Lesson, Person, Task, Airport, Host,
     EventRequest, ProfileUpdateRequest, TodoItem, Membership,
-    InvoiceRequest, EventSubmission,
+    InvoiceRequest, EventSubmission, Language,
     TrainingRequest)
+
 from workshops import lookups
 
 
@@ -107,6 +108,12 @@ class WorkshopStaffForm(forms.Form):
             lookup_class=lookups.AirportLookup,
         ),
     )
+    languages = selectable.AutoCompleteSelectMultipleField(
+        lookup_class=lookups.LanguageLookup,
+        label='Languages',
+        required=False,
+        widget=selectable.AutoComboboxSelectMultipleWidget,
+    )
 
     country = forms.MultipleChoiceField(choices=[])
 
@@ -166,6 +173,7 @@ class WorkshopStaffForm(forms.Form):
             'was_helper',
             'was_organizer',
             'is_in_progress_trainee',
+            'languages',
             'gender',
             'lessons',
             FormActions(
@@ -262,6 +270,14 @@ class EventForm(forms.ModelForm):
         widget=selectable.AutoComboboxSelectWidget,
     )
 
+    language = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.LanguageLookup,
+        label='Language',
+        required=False,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
     country = CountryField().formfield(
         required=False,
         help_text=Event._meta.get_field('country').help_text,
@@ -327,8 +343,8 @@ class EventForm(forms.ModelForm):
         model = Event
         # reorder fields, don't display 'deleted' field
         fields = ('slug', 'completed', 'start', 'end', 'host', 'administrator',
-                  'tags', 'url', 'reg_key', 'admin_fee', 'invoice_status',
-                  'attendance', 'contact', 'notes',
+                  'tags', 'url', 'language', 'reg_key', 'admin_fee',
+                  'invoice_status', 'attendance', 'contact', 'notes',
                   'country', 'venue', 'address', 'latitude', 'longitude',
                   'learners_pre', 'learners_post', 'instructors_pre',
                   'instructors_post', 'learners_longterm')
@@ -391,6 +407,13 @@ class PersonForm(forms.ModelForm):
         help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
+    languages = selectable.AutoCompleteSelectMultipleField(
+        lookup_class=lookups.LanguageLookup,
+        label='Languages',
+        required=False,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectMultipleWidget,
+    )
 
     class Meta:
         model = Person
@@ -400,7 +423,7 @@ class PersonForm(forms.ModelForm):
         fields = ['username', 'personal', 'middle', 'family', 'may_contact',
                   'email', 'gender', 'airport', 'affiliation', 'github',
                   'twitter', 'url', 'occupation', 'orcid', 'notes', 'lessons',
-                  'domains']
+                  'domains', 'languages']
 
 
 class PersonCreateForm(PersonForm):
@@ -629,6 +652,13 @@ class SWCEventRequestForm(forms.ModelForm):
         help_text='<a href="http://software-carpentry.org/blog/2015/07/changes'
                   '-to-admin-fee.html" target="_blank">Look up administration '
                   'fees</a>.',
+    )
+    language = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.LanguageLookup,
+        label='Language',
+        required=False,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
     )
 
     class Meta:
