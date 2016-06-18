@@ -1,7 +1,9 @@
 import datetime
 import json
+from unittest.mock import MagicMock
 
 from django.core.urlresolvers import reverse
+from django.http import QueryDict
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -81,3 +83,51 @@ class TestReportingInstructorNumTaught(BaseReportingTest):
         content = response.content.decode('utf-8')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(json.loads(content), self.expecting)
+
+
+class TestCSVYAMLListSerialization(BaseReportingTest):
+    def setUp(self):
+        self.iterable = zip(['list', 'dict', 'tuple'],
+                            ['set', 'namedtuple', 'OrderedDict'])
+        self.formats = ReportsViewSet.formats_requiring_lists
+
+    def test_listify_query_param(self):
+        """Regression test: make sure it's possible to iterate through results
+        serialized with CSV or YAML serializer.
+
+        This test uses `?format' query param."""
+        rvs = ReportsViewSet()
+        for format_ in self.formats:
+            with self.subTest(format=format_):
+                mock_request = MagicMock()
+                mock_request.query_params = QueryDict('format={}'
+                                                      .format(format_))
+                result = rvs.listify(self.iterable, mock_request)
+                self.assertEqual(type(result), type(list()))
+
+    def test_listify_format_as_param(self):
+        """Regression test: make sure it's possible to iterate through results
+        serialized with CSV or YAML serializer.
+
+        This test uses 'format' function parameter."""
+        rvs = ReportsViewSet()
+        for format_ in self.formats:
+            with self.subTest(format=format_):
+                mock_request = MagicMock()
+                mock_request.query_params = QueryDict()
+                result = rvs.listify(self.iterable, mock_request,
+                                     format=format_)
+                self.assertEqual(type(result), type(list()))
+
+    def test_iterator_when_not_forbidden_format(self):
+        """Ensure other formats than self.formats return iterators/generators,
+        not lists."""
+        format_ = 'json'
+        self.assertNotIn(format_, self.formats)
+
+        rvs = ReportsViewSet()
+        mock_request = MagicMock()
+        mock_request.query_params = QueryDict()
+        result = rvs.listify(self.iterable, mock_request,
+                             format=format_)
+        self.assertNotEqual(type(result), type(list()))
