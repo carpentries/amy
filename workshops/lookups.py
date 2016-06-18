@@ -3,7 +3,7 @@ import operator
 import re
 
 from django.contrib.auth.models import Group
-from django.db.models import Q
+from django.db.models import Q, Count
 
 from selectable.base import ModelLookup
 from selectable.registry import registry
@@ -96,8 +96,25 @@ class AirportLookup(ModelLookup):
     )
 
 
+class LanguageLookup(ModelLookup):
+    model = models.Language
+    search_fields = (
+        'name__icontains',
+        'subtag__icontains',
+    )
+
+    def get_query(self, request, term):
+        # Order the languages by their decreasing popularity
+        results = super().get_query(request, term)
+        if 'subtag' in request.GET.keys():
+            return results.filter(subtag__iexact=term)
+        return results.annotate(person_count=Count('person'))\
+                .order_by('-person_count')
+
+
 registry.register(EventLookup)
 registry.register(HostLookup)
 registry.register(PersonLookup)
 registry.register(AdminLookup)
 registry.register(AirportLookup)
+registry.register(LanguageLookup)

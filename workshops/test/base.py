@@ -21,7 +21,8 @@ from ..models import \
     Qualification, \
     Host, \
     Role, \
-    Tag
+    Tag, \
+    Language
 
 from ..util import universal_date_format
 
@@ -84,6 +85,19 @@ class TestBase(TestCase):
             iata='DDD', fullname='Airport 55x105',
             country='CM',
             latitude=55.0, longitude=105.0)
+
+    def _setUpLanguages(self):
+        '''Set up language objects.'''
+
+        self.english, _ = Language.objects.get_or_create(
+            name='English',
+        )
+        self.french, _ = Language.objects.get_or_create(
+            name='French',
+        )
+        self.latin, _ = Language.objects.get_or_create(
+            name='Latin',
+        )
 
     def _setUpBadges(self):
         '''Set up badge objects.'''

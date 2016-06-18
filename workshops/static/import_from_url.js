@@ -9,6 +9,21 @@ function import_from_url(url) {
     $("#id_end").val(data.end);
     $("#id_reg_key").val(data.reg_key);
     $("#id_url").val(url);
+
+    var elem = $("id_language_0");
+    // query only using the subtag
+    elem.djselectable('option', 'prepareQuery', function(q) { q.subtag = true });
+    // select the first results of a search
+    elem.on("autocompleteresponse", function(event, ui) {
+      ui.item = ui.content[0];
+      $(this).data('ui-djselectable')._trigger('select', null, ui);
+    });
+    elem.djselectable('search', data.language);
+    // reset callbacks and options
+    elem.djselectable('option', 'prepareQuery', null);
+    elem.on("autocompleteresponse", null);
+    elem.djselectable('close');
+
     $("#id_contact").val(data.contact);
     $('#id_venue').val(data.venue);
     $('#id_address').val(data.address);
