@@ -26,12 +26,7 @@
                 {% navbar_element "Tasks" "all_tasks" %}
                 {% navbar_element "Badges" "all_badges" %}
                 {% navbar_element "Trainings" "all_trainings" %}
-                {% navbar_element "Training requests" "all_trainingrequests" %}
                 {% navbar_element "Airports" "all_airports" %}
-                {% navbar_element "Workshop requests" "all_eventrequests" %}
-                {% navbar_element "Workshop submissions" "all_eventsubmissions" %}
-                {% navbar_element "Profile update requests" "all_profileupdaterequests" %}
-                {% navbar_element "Invoice requests" "all_invoicerequests" %}
                 {% navbar_element "Events with changed metadata" "events_metadata_changed" %}
                 <li class="divider"></li>
                 {% navbar_element_permed "Bulk add persons" "person_bulk_add" "workshops.add_person" %}
@@ -60,6 +55,16 @@
                 {% navbar_element "Workshop issues" "workshop_issues" %}
                 {% navbar_element "Instructor issues" "instructor_issues" %}
                 {% navbar_element "Find duplicates" "duplicates" %}
+              </ul>
+            </li>
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Requests / forms <span class="caret"></span></a>
+              <ul class="dropdown-menu" role="menu">
+                {% navbar_element "Training requests" "all_trainingrequests" %}
+                {% navbar_element "Workshop requests" "all_eventrequests" %}
+                {% navbar_element "Workshop submissions" "all_eventsubmissions" %}
+                {% navbar_element "Profile update requests" "all_profileupdaterequests" %}
+                {% navbar_element "Invoice requests" "all_invoicerequests" %}
               </ul>
             </li>
           </ul>
