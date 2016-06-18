@@ -663,9 +663,9 @@ class SWCEventRequestForm(forms.ModelForm):
 
     class Meta:
         model = EventRequest
-        exclude = ('active', 'created_at', 'data_types', 'data_types_other',
-                   'attendee_data_analysis_level', 'fee_waiver_request',
-                   'assigned_to')
+        exclude = ('active', 'created_at', 'last_updated_at', 'assigned_to',
+                   'data_types', 'data_types_other',
+                   'attendee_data_analysis_level', 'fee_waiver_request')
         widgets = {
             'approx_attendees': forms.RadioSelect(),
             'attendee_domains': forms.CheckboxSelectMultiple(),
@@ -691,8 +691,8 @@ class DCEventRequestForm(SWCEventRequestForm):
     )
 
     class Meta(SWCEventRequestForm.Meta):
-        exclude = ('active', 'created_at', 'admin_fee_payment',
-                   'attendee_computing_levels', 'assigned_to')
+        exclude = ('active', 'created_at', 'last_updated_at', 'assigned_to',
+                   'admin_fee_payment', 'attendee_computing_levels')
         widgets = {
             'approx_attendees': forms.RadioSelect(),
             'attendee_domains': forms.CheckboxSelectMultiple(),
@@ -706,7 +706,7 @@ class DCEventRequestForm(SWCEventRequestForm):
 class EventSubmitFormNoCaptcha(forms.ModelForm):
     class Meta:
         model = EventSubmission
-        exclude = ('active', 'assigned_to', )
+        exclude = ('active', 'created_at', 'last_updated_at', 'assigned_to')
 
 
 class EventSubmitForm(EventSubmitFormNoCaptcha):
@@ -716,7 +716,7 @@ class EventSubmitForm(EventSubmitFormNoCaptcha):
 class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):
     class Meta:
         model = ProfileUpdateRequest
-        exclude = ('active', 'created_at')
+        exclude = ('active', 'created_at', 'last_updated_at')
         widgets = {
             'domains': forms.CheckboxSelectMultiple(),
             'lessons': forms.CheckboxSelectMultiple(),
