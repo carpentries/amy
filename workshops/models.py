@@ -1257,6 +1257,9 @@ class DCSelfOrganizedEventRequest(AssignmentMixin, ActiveMixin,
                      ' Conduct',
     )
 
+    def get_absolute_url(self):
+        return ''
+
 
 class AcademicLevel(models.Model):
     name = models.CharField(max_length=STR_MED, null=False, blank=False)

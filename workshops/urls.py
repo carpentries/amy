@@ -101,6 +101,8 @@ urlpatterns = [
     url(r'^swc/request/confirm/$', views.SWCEventRequestConfirm.as_view(), name='swc_workshop_request_confirm'),
     url(r'^dc/request/$', views.DCEventRequest.as_view(), name='dc_workshop_request'),
     url(r'^dc/request/confirm/$', views.DCEventRequestConfirm.as_view(), name='dc_workshop_request_confirm'),
+    url(r'^dc/request_selforganized/$', views.DCSelfOrganizedEventRequest.as_view(), name='dc_workshop_selforganized_request'),
+    url(r'^dc/request_selforganized/confirm/$', views.DCSelfOrganizedEventRequestConfirm.as_view(), name='dc_workshop_selforganized_request_confirm'),
 
     url(r'^submissions/$', views.AllEventSubmissions.as_view(), name='all_eventsubmissions'),
     url(r'^submission/(?P<submission_id>\d+)/?$', views.EventSubmissionDetails.as_view(), name='eventsubmission_details'),

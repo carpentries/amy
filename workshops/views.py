@@ -52,7 +52,9 @@ from workshops.models import (
     TodoItemQuerySet,
     InvoiceRequest,
     EventSubmission as EventSubmissionModel,
-    TrainingRequest)
+    TrainingRequest,
+    DCSelfOrganizedEventRequest as DCSelfOrganizedEventRequestModel,
+)
 from workshops.forms import (
     SearchForm, DebriefForm, WorkshopStaffForm, PersonForm, PersonBulkAddForm,
     EventForm, TaskForm, TaskFullForm, bootstrap_helper, bootstrap_helper_get,
@@ -65,7 +67,9 @@ from workshops.forms import (
     TodoFormSet, EventsSelectionForm, EventsMergeForm, InvoiceRequestForm,
     InvoiceRequestUpdateForm, EventSubmitForm, EventSubmitFormNoCaptcha,
     PersonsMergeForm, PersonCreateForm,
-    TrainingRequestForm, BootstrapHelperWiderLabels)
+    TrainingRequestForm, BootstrapHelperWiderLabels,
+    DCSelfOrganizedEventRequestForm,
+)
 from workshops.util import (
     upload_person_task_csv, verify_upload_person_task,
     create_uploaded_persons_tasks, InternalError,
@@ -2733,6 +2737,61 @@ def eventsubmission_assign(request, submission_id, person_id=None):
     submission = get_object_or_404(EventSubmissionModel, pk=submission_id)
     assign(request, submission, person_id)
     return redirect(submission.get_absolute_url())
+
+
+class DCSelfOrganizedEventRequest(EmailSendMixin, CreateViewContext):
+    "Display form for requesting self-organized workshops for Data Carpentry."
+    model = DCSelfOrganizedEventRequestModel
+    form_class = DCSelfOrganizedEventRequestForm
+    # we're reusing DC templates for normal workshop requests
+    template_name = 'forms/workshop_dc_request.html'
+    success_url = reverse_lazy('dc_workshop_selforganized_request_confirm')
+    email_fail_silently = False
+    email_kwargs = {
+        'to': settings.REQUEST_NOTIFICATIONS_RECIPIENTS,
+    }
+
+    def get_success_message(self, *args, **kwargs):
+        """Don't display a success message."""
+        return ''
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Request a self-organized Data Carpentry workshop'
+        context['form_helper'] = bootstrap_helper_wider_labels
+        return context
+
+    def get_subject(self):
+        return ('DC: new self-organized workshop request from {} @ {}'
+                .format(self.object.name, self.object.organization))
+
+    def get_body(self):
+        link = self.object.get_absolute_url()
+        link_domain = settings.SITE_URL
+        body_txt = get_template('mailing/dc_self_organized.txt') \
+            .render({
+                'object': self.object,
+                'link': link,
+                'link_domain': link_domain,
+            })
+        body_html = get_template('mailing/dc_self_organized.html') \
+            .render({
+                'object': self.object,
+                'link': link,
+                'link_domain': link_domain,
+            })
+        return body_txt, body_html
+
+
+class DCSelfOrganizedEventRequestConfirm(TemplateView):
+    """Display confirmation of a received self-organized workshop request."""
+    # we're reusing DC templates for normal workshop requests
+    template_name = 'forms/workshop_dc_request_confirm.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Thanks for your submission'
+        return context
 
 #------------------------------------------------------------
 

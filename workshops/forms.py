@@ -19,8 +19,9 @@ from workshops.models import (
     Award, Event, Lesson, Person, Task, Airport, Host,
     EventRequest, ProfileUpdateRequest, TodoItem, Membership,
     InvoiceRequest, EventSubmission, Language,
-    TrainingRequest)
-
+    TrainingRequest,
+    DCSelfOrganizedEventRequest,
+)
 from workshops import lookups
 
 
@@ -710,6 +711,35 @@ class EventSubmitFormNoCaptcha(forms.ModelForm):
 
 
 class EventSubmitForm(EventSubmitFormNoCaptcha):
+    captcha = ReCaptchaField()
+
+
+class DCSelfOrganizedEventRequestFormNoCaptcha(forms.ModelForm):
+    # the easiest way to make these fields required without rewriting their
+    # verbose names or help texts
+    handle_registration = DCSelfOrganizedEventRequest._meta \
+        .get_field('handle_registration').formfield(required=True)
+    distribute_surveys = DCSelfOrganizedEventRequest._meta \
+        .get_field('distribute_surveys').formfield(required=True)
+    follow_code_of_conduct = DCSelfOrganizedEventRequest._meta \
+        .get_field('follow_code_of_conduct').formfield(required=True)
+
+    class Meta:
+        model = DCSelfOrganizedEventRequest
+        exclude = ('active', 'created_at', 'last_updated_at', 'assigned_to')
+        widgets = {
+            'instructor_status': forms.RadioSelect(),
+            'is_partner': forms.RadioSelect(),
+            'domains': forms.CheckboxSelectMultiple(),
+            'topics': forms.CheckboxSelectMultiple(),
+            'attendee_academic_levels': forms.CheckboxSelectMultiple(),
+            'attendee_data_analysis_level': forms.CheckboxSelectMultiple(),
+            'payment': forms.RadioSelect(),
+        }
+
+
+class DCSelfOrganizedEventRequestForm(
+        DCSelfOrganizedEventRequestFormNoCaptcha):
     captcha = ReCaptchaField()
 
 

@@ -1,0 +1,29 @@
+Submission date: {{ object.created_at }}
+Person: {{ object.name }} &lt;{{ object.email|urlize }}&gt;
+Instructor status: {{ object.get_instructor_status_display }}
+Organization: {{ object.organization }}
+Partner status: {{ object.get_is_partner_display }} {% if object.is_partner_other %}({{ object.is_partner_other }}){% endif %}
+Location: {{ object.location }}, {{ object.country.name }}
+Associated conference: {{ object.associated_conference }}
+Dates: {{ object.dates }}
+Domains: {% for domain in object.domains.all %}
+    * {{ domain }}{% endfor %}
+Other domains: {{ object.domains_other }}
+Topics: {% for topic in object.topics.all %}
+    * {{ topic }}{% endfor %}
+Other topics: {{ object.topics_other }}
+Attendees' academic levels: {% for level in object.attendee_academic_levels.all %}
+    * {{ level }}{% endfor %}
+Attendees' data analysis levels: {% for level in object.attendee_data_analysis_level.all %}
+    * {{ level }}{% endfor %}
+Payment: {{ object.get_payment_display }}
+Reason for fee waiver: {{ object.fee_waiver_reason }}
+Will handle registration: {{ object.handle_registration|yesno }}
+Will distribute surveys: {{ object.distribute_surveys|yesno }}
+Agreed to follow code of conduct: {{ object.follow_code_of_conduct|yesno }}
+------------------------------------------
+
+{% if link %}
+You can view the submission here:
+{{ link_domain}}{{ link }}
+{% endif %}
