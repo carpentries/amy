@@ -1428,6 +1428,11 @@ class Task(models.Model):
     event      = models.ForeignKey(Event)
     person     = models.ForeignKey(Person)
     role       = models.ForeignKey(Role)
+    title      = models.CharField(
+        max_length=STR_LONG,
+        blank=True,
+    )
+    url        = models.URLField(blank=True)
 
     objects = TaskManager()
 
