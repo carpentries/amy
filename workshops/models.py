@@ -1121,6 +1121,7 @@ class Task(models.Model):
 
     class Meta:
         unique_together = ("event", "person", "role")
+        ordering = ("role__name", "event")
 
     def __str__(self):
         return '{0}/{1}={2}'.format(self.event, self.person, self.role)
