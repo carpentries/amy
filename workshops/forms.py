@@ -19,8 +19,9 @@ from workshops.models import (
     Award, Event, Lesson, Person, Task, Airport, Host,
     EventRequest, ProfileUpdateRequest, TodoItem, Membership,
     InvoiceRequest, EventSubmission, Language,
-    TrainingRequest)
-
+    TrainingRequest,
+    DCSelfOrganizedEventRequest,
+)
 from workshops import lookups
 
 
@@ -663,9 +664,9 @@ class SWCEventRequestForm(forms.ModelForm):
 
     class Meta:
         model = EventRequest
-        exclude = ('active', 'created_at', 'data_types', 'data_types_other',
-                   'attendee_data_analysis_level', 'fee_waiver_request',
-                   'assigned_to')
+        exclude = ('active', 'created_at', 'last_updated_at', 'assigned_to',
+                   'data_types', 'data_types_other',
+                   'attendee_data_analysis_level', 'fee_waiver_request')
         widgets = {
             'approx_attendees': forms.RadioSelect(),
             'attendee_domains': forms.CheckboxSelectMultiple(),
@@ -691,8 +692,8 @@ class DCEventRequestForm(SWCEventRequestForm):
     )
 
     class Meta(SWCEventRequestForm.Meta):
-        exclude = ('active', 'created_at', 'admin_fee_payment',
-                   'attendee_computing_levels', 'assigned_to')
+        exclude = ('active', 'created_at', 'last_updated_at', 'assigned_to',
+                   'admin_fee_payment', 'attendee_computing_levels')
         widgets = {
             'approx_attendees': forms.RadioSelect(),
             'attendee_domains': forms.CheckboxSelectMultiple(),
@@ -706,17 +707,49 @@ class DCEventRequestForm(SWCEventRequestForm):
 class EventSubmitFormNoCaptcha(forms.ModelForm):
     class Meta:
         model = EventSubmission
-        exclude = ('active', 'assigned_to', )
+        exclude = ('active', 'created_at', 'last_updated_at', 'assigned_to')
 
 
 class EventSubmitForm(EventSubmitFormNoCaptcha):
     captcha = ReCaptchaField()
 
 
+class DCSelfOrganizedEventRequestFormNoCaptcha(forms.ModelForm):
+    # the easiest way to make these fields required without rewriting their
+    # verbose names or help texts
+    handle_registration = DCSelfOrganizedEventRequest._meta \
+        .get_field('handle_registration').formfield(required=True)
+    distribute_surveys = DCSelfOrganizedEventRequest._meta \
+        .get_field('distribute_surveys').formfield(required=True)
+    follow_code_of_conduct = DCSelfOrganizedEventRequest._meta \
+        .get_field('follow_code_of_conduct').formfield(required=True)
+
+    class Meta:
+        model = DCSelfOrganizedEventRequest
+        exclude = ('created_at', 'last_updated_at', 'assigned_to')
+        widgets = {
+            'instructor_status': forms.RadioSelect(),
+            'is_partner': forms.RadioSelect(),
+            'domains': forms.CheckboxSelectMultiple(),
+            'topics': forms.CheckboxSelectMultiple(),
+            'attendee_academic_levels': forms.CheckboxSelectMultiple(),
+            'attendee_data_analysis_level': forms.CheckboxSelectMultiple(),
+            'payment': forms.RadioSelect(),
+        }
+
+
+class DCSelfOrganizedEventRequestForm(
+        DCSelfOrganizedEventRequestFormNoCaptcha):
+    captcha = ReCaptchaField()
+
+    class Meta(DCSelfOrganizedEventRequestFormNoCaptcha.Meta):
+        exclude = ('active', 'created_at', 'last_updated_at', 'assigned_to')
+
+
 class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):
     class Meta:
         model = ProfileUpdateRequest
-        exclude = ('active', 'created_at')
+        exclude = ('active', 'created_at', 'last_updated_at')
         widgets = {
             'domains': forms.CheckboxSelectMultiple(),
             'lessons': forms.CheckboxSelectMultiple(),

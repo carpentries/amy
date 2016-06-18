@@ -101,6 +101,13 @@ urlpatterns = [
     url(r'^swc/request/confirm/$', views.SWCEventRequestConfirm.as_view(), name='swc_workshop_request_confirm'),
     url(r'^dc/request/$', views.DCEventRequest.as_view(), name='dc_workshop_request'),
     url(r'^dc/request/confirm/$', views.DCEventRequestConfirm.as_view(), name='dc_workshop_request_confirm'),
+    url(r'^dc/request_selforganized/$', views.DCSelfOrganizedEventRequest.as_view(), name='dc_workshop_selforganized_request'),
+    url(r'^dc/request_selforganized/confirm/$', views.DCSelfOrganizedEventRequestConfirm.as_view(), name='dc_workshop_selforganized_request_confirm'),
+    url(r'^dc_selforganized_requests/$', views.AllDCSelfOrganizedEventRequests.as_view(), name='all_dcselforganizedeventrequests'),
+    url(r'^dc_selforganized_request/(?P<request_id>\d+)/?$', views.DCSelfOrganizedEventRequestDetails.as_view(), name='dcselforganizedeventrequest_details'),
+    url(r'^dc_selforganized_request/(?P<request_id>\d+)/edit$', views.DCSelfOrganizedEventRequestChange.as_view(), name='dcselforganizedeventrequest_edit'),
+    url(r'^dc_selforganized_request/(?P<request_id>\d+)/assign$', views.dcselforganizedeventrequest_assign, name='dcselforganizedeventrequest_assign'),
+    url(r'^dc_selforganized_request/(?P<request_id>\d+)/assign/(?P<person_id>[\w\.-]+)$', views.dcselforganizedeventrequest_assign, name='dcselforganizedeventrequest_assign'),
 
     url(r'^submissions/$', views.AllEventSubmissions.as_view(), name='all_eventsubmissions'),
     url(r'^submission/(?P<submission_id>\d+)/?$', views.EventSubmissionDetails.as_view(), name='eventsubmission_details'),

@@ -52,7 +52,9 @@ from workshops.models import (
     TodoItemQuerySet,
     InvoiceRequest,
     EventSubmission as EventSubmissionModel,
-    TrainingRequest)
+    TrainingRequest,
+    DCSelfOrganizedEventRequest as DCSelfOrganizedEventRequestModel,
+)
 from workshops.forms import (
     SearchForm, DebriefForm, WorkshopStaffForm, PersonForm, PersonBulkAddForm,
     EventForm, TaskForm, TaskFullForm, bootstrap_helper, bootstrap_helper_get,
@@ -65,7 +67,9 @@ from workshops.forms import (
     TodoFormSet, EventsSelectionForm, EventsMergeForm, InvoiceRequestForm,
     InvoiceRequestUpdateForm, EventSubmitForm, EventSubmitFormNoCaptcha,
     PersonsMergeForm, PersonCreateForm,
-    TrainingRequestForm, BootstrapHelperWiderLabels)
+    TrainingRequestForm, BootstrapHelperWiderLabels,
+    DCSelfOrganizedEventRequestForm, DCSelfOrganizedEventRequestFormNoCaptcha,
+)
 from workshops.util import (
     upload_person_task_csv, verify_upload_person_task,
     create_uploaded_persons_tasks, InternalError,
@@ -86,7 +90,7 @@ from workshops.util import (
 from workshops.filters import (
     EventFilter, HostFilter, PersonFilter, TaskFilter, AirportFilter,
     EventRequestFilter, BadgeAwardsFilter, InvoiceRequestFilter,
-    EventSubmissionFilter,
+    EventSubmissionFilter, DCSelfOrganizedEventRequestFilter,
 )
 
 from api.views import ReportsViewSet
@@ -2674,7 +2678,7 @@ class EventSubmissionDetails(LoginRequiredMixin, DetailView):
 
 class EventSubmissionFix(LoginRequiredMixin, PermissionRequiredMixin,
                          UpdateViewContext):
-    permission_required = 'change_eventsubmission'
+    permission_required = 'workshops.change_eventsubmission'
     model = EventSubmissionModel
     form_class = EventSubmitFormNoCaptcha
     pk_url_kwarg = 'submission_id'
@@ -2733,6 +2737,127 @@ def eventsubmission_assign(request, submission_id, person_id=None):
     submission = get_object_or_404(EventSubmissionModel, pk=submission_id)
     assign(request, submission, person_id)
     return redirect(submission.get_absolute_url())
+
+
+class DCSelfOrganizedEventRequest(EmailSendMixin, CreateViewContext):
+    "Display form for requesting self-organized workshops for Data Carpentry."
+    model = DCSelfOrganizedEventRequestModel
+    form_class = DCSelfOrganizedEventRequestForm
+    # we're reusing DC templates for normal workshop requests
+    template_name = 'forms/workshop_dc_request.html'
+    success_url = reverse_lazy('dc_workshop_selforganized_request_confirm')
+    email_fail_silently = False
+    email_kwargs = {
+        'to': settings.REQUEST_NOTIFICATIONS_RECIPIENTS,
+    }
+
+    def get_success_message(self, *args, **kwargs):
+        """Don't display a success message."""
+        return ''
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Request a self-organized Data Carpentry workshop'
+        context['form_helper'] = bootstrap_helper_wider_labels
+        return context
+
+    def get_subject(self):
+        return ('DC: new self-organized workshop request from {} @ {}'
+                .format(self.object.name, self.object.organization))
+
+    def get_body(self):
+        link = self.object.get_absolute_url()
+        link_domain = settings.SITE_URL
+        body_txt = get_template('mailing/dc_self_organized.txt') \
+            .render({
+                'object': self.object,
+                'link': link,
+                'link_domain': link_domain,
+            })
+        body_html = get_template('mailing/dc_self_organized.html') \
+            .render({
+                'object': self.object,
+                'link': link,
+                'link_domain': link_domain,
+            })
+        return body_txt, body_html
+
+
+class DCSelfOrganizedEventRequestConfirm(TemplateView):
+    """Display confirmation of a received self-organized workshop request."""
+    # we're reusing DC templates for normal workshop requests
+    template_name = 'forms/workshop_dc_request_confirm.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Thanks for your submission'
+        return context
+
+
+class AllDCSelfOrganizedEventRequests(LoginRequiredMixin, FilteredListView):
+    context_object_name = 'requests'
+    template_name = 'workshops/all_dcselforganizedeventrequests.html'
+    filter_class = DCSelfOrganizedEventRequestFilter
+    queryset = DCSelfOrganizedEventRequestModel.objects.all()
+
+    def get_filter_data(self):
+        data = self.request.GET.copy()
+        data['active'] = data.get('active', 'true')
+        return data
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Data Carpentry self-organized workshop requests'
+        return context
+
+
+class DCSelfOrganizedEventRequestDetails(LoginRequiredMixin, DetailView):
+    context_object_name = 'object'
+    template_name = 'workshops/dcselforganizedeventrequest.html'
+    queryset = DCSelfOrganizedEventRequestModel.objects.all()
+    pk_url_kwarg = 'request_id'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'DC self-organized workshop request #{}'.format(
+            self.get_object().pk)
+
+        person_lookup_form = AdminLookupForm()
+        if self.object.assigned_to:
+            person_lookup_form = AdminLookupForm(
+                initial={'person': self.object.assigned_to}
+            )
+
+        person_lookup_helper = BootstrapHelper()
+        person_lookup_helper.form_action = reverse(
+            'dcselforganizedeventrequest_assign', args=[self.object.pk])
+
+        context['person_lookup_form'] = person_lookup_form
+        context['person_lookup_helper'] = person_lookup_helper
+        return context
+
+
+class DCSelfOrganizedEventRequestChange(LoginRequiredMixin,
+                                        PermissionRequiredMixin,
+                                        UpdateViewContext):
+    permission_required = 'workshops.change_dcselforganizedeventrequest'
+    model = DCSelfOrganizedEventRequestModel
+    form_class = DCSelfOrganizedEventRequestFormNoCaptcha
+    pk_url_kwarg = 'request_id'
+    template_name = 'workshops/generic_form.html'
+
+
+@login_required
+@permission_required(['workshops.change_dcselforganizedeventrequest'],
+                     raise_exception=True)
+def dcselforganizedeventrequest_assign(request, request_id, person_id=None):
+    """Set eventrequest.assigned_to. See `assign` docstring for more
+    information."""
+    event_req = get_object_or_404(DCSelfOrganizedEventRequestModel,
+                                  pk=request_id)
+    assign(request, event_req, person_id)
+    return redirect(reverse('dcselforganizedeventrequest_details',
+                            args=[event_req.pk]))
 
 #------------------------------------------------------------
 

@@ -18,6 +18,7 @@ from reversion import revisions as reversion
 STR_SHORT   =  10         # length of short strings
 STR_MED     =  40         # length of medium strings
 STR_LONG    = 100         # length of long strings
+STR_LONGEST = 255  # length of the longest strings
 STR_REG_KEY =  20         # length of Eventbrite registration key
 
 #------------------------------------------------------------
@@ -27,6 +28,26 @@ class AssignmentMixin(models.Model):
     """This abstract model acts as a mix-in, so it adds
     "assigned to admin [...]" field to any inheriting model."""
     assigned_to = models.ForeignKey("Person", null=True, blank=True,)
+
+    class Meta:
+        abstract = True
+
+
+class ActiveMixin(models.Model):
+    """This mixin adds 'active' field for marking model instances as active or
+    inactive (e.g. closed or in 'not have to worry about it' state)."""
+    active = models.BooleanField(default=True)
+
+    class Meta:
+        abstract = True
+
+
+class CreatedUpdatedMixin(models.Model):
+    """This mixin provides two fields for storing instance creation time and
+    last update time. It's faster than checking model revisions (and they
+    aren't always enabled for some models)."""
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_updated_at = models.DateTimeField(auto_now=True, null=True)
 
     class Meta:
         abstract = True
@@ -328,9 +349,7 @@ class Person(AbstractBaseUser, PermissionsMixin):
         super().save(*args, **kwargs)
 
 
-class ProfileUpdateRequest(models.Model):
-    active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
     personal = models.CharField(
         max_length=STR_LONG,
         verbose_name='Personal (first) name',
@@ -430,7 +449,7 @@ class ProfileUpdateRequest(models.Model):
         blank=True,
     )
     domains_other = models.CharField(
-        max_length=255,
+        max_length=STR_LONGEST,
         verbose_name='Other areas of expertise',
         blank=True, default='',
     )
@@ -441,7 +460,7 @@ class ProfileUpdateRequest(models.Model):
         blank=False,
     )
     lessons_other = models.CharField(
-        max_length=255,
+        max_length=STR_LONGEST,
         verbose_name='Other topics/lessons you\'re comfortable teaching',
         help_text='Please include lesson URLs.',
         blank=True, default='',
@@ -664,17 +683,19 @@ class Event(AssignmentMixin, models.Model):
         default='unknown', blank=False,
     )
     notes      = models.TextField(default="", blank=True)
-    contact = models.CharField(max_length=255, default="", blank=True)
+    contact = models.CharField(max_length=STR_LONGEST, default="", blank=True)
     country = CountryField(
         null=True, blank=True,
         help_text=PUBLISHED_HELP_TEXT +
                   '<br />Use <b>Online</b> for online events.',
     )
     venue = models.CharField(
-        max_length=255, default='', blank=True, help_text=PUBLISHED_HELP_TEXT,
+        max_length=STR_LONGEST, default='', blank=True,
+        help_text=PUBLISHED_HELP_TEXT,
     )
     address = models.CharField(
-        max_length=255, default='', blank=True, help_text=PUBLISHED_HELP_TEXT,
+        max_length=STR_LONGEST, default='', blank=True,
+        help_text=PUBLISHED_HELP_TEXT,
     )
     latitude = models.FloatField(
         null=True, blank=True, help_text=PUBLISHED_HELP_TEXT,
@@ -875,9 +896,8 @@ class Event(AssignmentMixin, models.Model):
         super(Event, self).save(*args, **kwargs)
 
 
-class EventRequest(AssignmentMixin, models.Model):
-    active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+class EventRequest(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
+                   models.Model):
     name = models.CharField(max_length=STR_MED)
     email = models.EmailField()
     affiliation = models.CharField(max_length=STR_LONG,
@@ -892,7 +912,7 @@ class EventRequest(AssignmentMixin, models.Model):
         blank=True, default='',
     )
     preferred_date = models.CharField(
-        max_length=255,
+        max_length=STR_LONGEST,
         help_text='Please indicate when you would like to run the workshop. '
                   'A range of at least a month is most helpful, although if '
                   'you have specific dates you need the workshop, we will try '
@@ -1057,9 +1077,8 @@ class EventRequest(AssignmentMixin, models.Model):
         )
 
 
-class EventSubmission(AssignmentMixin, models.Model):
-    active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+class EventSubmission(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
+                      models.Model):
     url = models.URLField(
         null=False, blank=False,
         verbose_name='Link to the workshop\'s website')
@@ -1083,6 +1102,165 @@ class EventSubmission(AssignmentMixin, models.Model):
         return reverse('eventsubmission_details', args=[self.pk])
 
 
+class DCSelfOrganizedEventRequest(AssignmentMixin, ActiveMixin,
+                                  CreatedUpdatedMixin, models.Model):
+    """Should someone want to run a self-organized Data Carpentry event, they
+    have to fill this specific form first. See
+    https://github.com/swcarpentry/amy/issues/761"""
+
+    name = models.CharField(
+        max_length=STR_LONGEST,
+    )
+    email = models.EmailField()
+    organization = models.CharField(
+        max_length=STR_LONGEST,
+        verbose_name='University or organization affiliation',
+    )
+    INSTRUCTOR_CHOICES = [
+        ('', 'None'),
+        ('incomplete', 'Have gone through instructor training, but haven\'t '
+                       'yet completed checkout'),
+        ('dc', 'Certified Data Carpentry instructor'),
+        ('swc', 'Certified Software Carpentry instructor'),
+        ('both', 'Certified Software and Data Carpentry instructor'),
+    ]
+    instructor_status = models.CharField(
+        max_length=STR_MED, choices=INSTRUCTOR_CHOICES,
+        verbose_name='Your Software and Data Carpentry instructor status',
+        blank=True,
+    )
+    PARTNER_CHOICES = [
+        ('y', 'Yes'),
+        ('n', 'No'),
+        ('u', 'Unsure'),
+        ('', 'Other (enter below)'),
+    ]
+    is_partner = models.CharField(
+        max_length=1,
+        choices=PARTNER_CHOICES,
+        blank=True,
+        verbose_name='Is your organization a Data Carpentry or Software '
+                     'Carpentry Partner'
+    )
+    is_partner_other = models.CharField(
+        max_length=STR_LONG,
+        default='', blank=True,
+        verbose_name='Other (is your organization a Partner?)',
+    )
+    location = models.CharField(
+        max_length=STR_LONGEST,
+        verbose_name='Location',
+        help_text='City, Province or State',
+    )
+    country = CountryField()
+    associated_conference = models.CharField(
+        max_length=STR_LONG,
+        default='', blank=True,
+        verbose_name='Associated conference',
+        help_text='If the workshop is to be associated with a conference or '
+                  'meeting, which one?',
+    )
+    dates = models.CharField(
+        max_length=STR_LONGEST,
+        verbose_name='Planned workshop dates',
+        help_text='Preferably in YYYY-MM-DD to YYYY-MM-DD format',
+    )
+
+    # workshop domain(s)
+    domains = models.ManyToManyField(
+        'DCWorkshopDomain',
+        blank=False,
+        verbose_name='Domain for the workshop',
+        help_text='Set of lessons you\'re going to teach',
+    )
+    domains_other = models.CharField(
+        max_length=STR_LONGEST,
+        blank=True, default='',
+        verbose_name='Other domains for the workshop',
+        help_text='If none of the fields above works for you.',
+    )
+
+    # Lesson topics to be taught during the workshop
+    topics = models.ManyToManyField(
+        'DCWorkshopTopic',
+        blank=False,
+        verbose_name='Topics to be taught',
+        help_text='A Data Carpentry workshop must include a Data Carpentry '
+                  'lesson on data organization and the other modules in the '
+                  'same domain from the Data Carpentry curriculum (see <a '
+                  'href="http://www.datacarpentry.org/workshops/">http://www.'
+                  'datacarpentry.org/workshops/</a>). If you do want to '
+                  'include materials not in our curriculum, please note that '
+                  'below and we\'ll get in touch.'
+    )
+    topics_other = models.CharField(
+        max_length=STR_LONGEST,
+        blank=True, default='',
+        verbose_name='Other topics to be taught',
+        help_text='If none of the fields above works for you.',
+    )
+
+    # questions about attendees' experience levels
+    attendee_academic_levels = models.ManyToManyField(
+        'AcademicLevel',
+        help_text='If you know the academic level(s) of your attendees, '
+                  'indicate them here.',
+        verbose_name='Attendees\' academic level',
+    )
+    attendee_data_analysis_level = models.ManyToManyField(
+        'DataAnalysisLevel',
+        help_text='If you know, indicate learner\'s general level of data '
+                  'analysis experience',
+        verbose_name='Attendees\' level of data analysis experience',
+    )
+
+    # payments
+    PAYMENT_CHOICES = [
+        ('per_participant', 'I will contribute $25/participant through '
+                            'registration fees'),
+        ('invoice', 'I will contribute $500 via an invoice'),
+        ('credit_card', 'I will contribute $500 via a credit card payment'),
+        ('fee_waiver', 'I would like to request a fee waiver'),
+    ]
+    payment = models.CharField(
+        max_length=STR_MED,
+        blank=False, choices=PAYMENT_CHOICES,
+        default='per_participant',
+        verbose_name='Payment choice',
+        help_text='Self-organized workshops for non-Partner organizations are '
+                  '$500 or $25/participant for a workshop licensing fee (<a '
+                  'href="http://www.datacarpentry.org/self-organized-workshops'
+                  '/">http://www.datacarpentry.org/self-organized-workshops/'
+                  '</a>). Fee waivers are available and generally granted upon'
+                  ' request.',
+    )
+    fee_waiver_reason = models.CharField(
+        max_length=STR_LONGEST,
+        default='', blank=True,
+        verbose_name='Reason for requesting a fee waiver',
+    )
+
+    # confirmations
+    handle_registration = models.BooleanField(
+        default=False, blank=False,
+        verbose_name='I confirm that I will handle registration for this'
+                     ' workshop',
+    )
+    distribute_surveys = models.BooleanField(
+        default=False, blank=False,
+        verbose_name='I confirm that I will distribute the Data Carpentry '
+                     'surveys to workshop participants',
+    )
+    follow_code_of_conduct = models.BooleanField(
+        default=False, blank=False,
+        verbose_name='I confirm that I will follow the Data Carpentry Code of'
+                     ' Conduct',
+    )
+
+    def get_absolute_url(self):
+        return reverse('dcselforganizedeventrequest_details', args=[self.pk])
+
+
 class AcademicLevel(models.Model):
     name = models.CharField(max_length=STR_MED, null=False, blank=False)
 
@@ -1093,7 +1271,7 @@ class AcademicLevel(models.Model):
 class ComputingExperienceLevel(models.Model):
     # it's a long field because we need to store reasoning too, for example:
     # "Novice (uses a spreadsheet for data analysis rather than writing code)"
-    name = models.CharField(max_length=255, null=False, blank=False)
+    name = models.CharField(max_length=STR_LONGEST, null=False, blank=False)
 
     def __str__(self):
         return self.name
@@ -1101,7 +1279,24 @@ class ComputingExperienceLevel(models.Model):
 
 class DataAnalysisLevel(models.Model):
     # ComputingExperienceLevel's sibling
-    name = models.CharField(max_length=255, null=False, blank=False)
+    name = models.CharField(max_length=STR_LONGEST, null=False, blank=False)
+
+    def __str__(self):
+        return self.name
+
+
+class DCWorkshopTopic(models.Model):
+    """Single lesson topic used in a workshop."""
+    name = models.CharField(max_length=STR_LONGEST, null=False, blank=False)
+
+    def __str__(self):
+        return self.name
+
+
+class DCWorkshopDomain(models.Model):
+    """Single domain used in a workshop (it corresponds to a set of lessons
+    Data Carpentry prepared)."""
+    name = models.CharField(max_length=STR_LONGEST, null=False, blank=False)
 
     def __str__(self):
         return self.name
@@ -1289,7 +1484,8 @@ class TodoItem(models.Model):
     completed = models.BooleanField(default=False)
     title = models.CharField(max_length=STR_LONG, default='', blank=False)
     due = models.DateField(blank=True, null=True)
-    additional = models.CharField(max_length=255, default='', blank=True)
+    additional = models.CharField(max_length=STR_LONGEST, default='',
+                                  blank=True)
 
     objects = TodoItemQuerySet.as_manager()
 
@@ -1477,9 +1673,7 @@ def build_choice_field_with_other_option(choices, default, verbose_name=None):
 
 
 @reversion.register
-class TrainingRequest(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-
+class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
     personal = models.CharField(
         max_length=STR_LONG,
         verbose_name='Personal name',
@@ -1531,7 +1725,7 @@ class TrainingRequest(models.Model):
         blank=True,
     )
     domains_other = models.CharField(
-        max_length=255,
+        max_length=STR_LONGEST,
         verbose_name='Other areas of expertise',
         blank=True, default='',
     )
