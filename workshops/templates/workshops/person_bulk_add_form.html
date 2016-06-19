@@ -1,13 +1,10 @@
 {% extends "base_nav_fixed.html" %}
 
 {% block content %}
+{% load crispy_forms_tags %}
 {% load staticfiles %}
+
 <p><a href="{% url 'person_bulk_add_template' %}">BulkPersonAddTemplate.csv</a> is a blank template of a well-formed .CSV file.</p>
-<form action="" method="post" enctype="multipart/form-data"
-      accept-charset="{{charset}}">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <input type="submit" value="Submit" />
-</form>
+{% crispy form form_helper %}
 
 {% endblock %}

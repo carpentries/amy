@@ -19,6 +19,11 @@ class EventLookup(ModelLookup):
 
 
 @login_required
+class PyDataEventLookup(EventLookup):
+    filters = {'tags': models.Tag.objects.filter(name='PyData')}
+
+
+@login_required
 class HostLookup(ModelLookup):
     model = models.Host
     search_fields = (
@@ -113,6 +118,7 @@ class LanguageLookup(ModelLookup):
 
 
 registry.register(EventLookup)
+registry.register(PyDataEventLookup)
 registry.register(HostLookup)
 registry.register(PersonLookup)
 registry.register(AdminLookup)

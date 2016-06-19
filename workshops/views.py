@@ -534,7 +534,7 @@ def person_bulk_add_template(request):
 def person_bulk_add(request):
     if request.method == 'POST':
         form = PersonBulkAddForm(request.POST, request.FILES)
-        if form.is_valid():
+        if form.is_valid() and request.FILES.get('file', None):
             charset = request.FILES['file'].charset or settings.DEFAULT_CHARSET
             stream = io.TextIOWrapper(request.FILES['file'].file, charset)
             try:
@@ -560,6 +560,25 @@ def person_bulk_add(request):
                     # the data
                     request.session['bulk-add-people'] = persons_tasks
                     return redirect('person_bulk_add_confirmation')
+        elif form.is_valid() and form.cleaned_data['event']:
+            event = form.cleaned_data['event']
+            try:
+                r = requests.get(event.url + '/api/speaker/')
+                persons_tasks = r.json()
+            except requests.exceptions.HTTPError as e:
+                error_messages.append(
+                    'Request for "{0}" returned status code {1}'
+                    .format(event.url, e.response.status_code)
+                )
+            except (requests.exceptions.ConnectionError,
+                    requests.exceptions.Timeout):
+                error_messages.append("Network connection error.")
+            else:
+                for person in persons_tasks:
+                    person['event'] = event.slug
+                    person['role'] = 'instructor'
+                request.session['bulk-add-people'] = persons_tasks
+                return redirect('person_bulk_add_confirmation')
 
     else:
         form = PersonBulkAddForm()
@@ -567,6 +586,7 @@ def person_bulk_add(request):
     context = {
         'title': 'Bulk Add People',
         'form': form,
+        'form_helper': bootstrap_helper,
         'charset': settings.DEFAULT_CHARSET,
     }
     return render(request, 'workshops/person_bulk_add_form.html', context)
