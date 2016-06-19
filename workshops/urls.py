@@ -1,5 +1,7 @@
-from django.conf.urls import url
-from workshops import views
+from django.conf.urls import url, include
+
+from workshops import views, app_settings
+
 
 urlpatterns = [
     url(r'^$', views.dashboard, name='dashboard'),
@@ -138,3 +140,6 @@ urlpatterns = [
     url(r'^todo/(?P<todo_id>\d+)/edit', views.TodoItemUpdate.as_view(), name='todo_edit'),
     url(r'^todo/(?P<todo_id>\d+)/delete', views.todo_delete, name='todo_delete'),
 ]
+
+if app_settings.PYDATA_ENABLED:
+    urlpatterns.insert(0, url(r'^', include('workshops.pydata.urls')))
