@@ -132,6 +132,8 @@
     <th width="25">DC?</th>
     <th width="25">SWC?</th>
     <th>person</th>
+    <th>title</th>
+    <th>url</th>
     <th>role</th>
   </tr>
   {% for t in tasks %}
@@ -139,6 +141,8 @@
     <td class="text-center">{% if t.person_is_dc_instructor %}{% bootstrap_tag "DC" %}{% endif %}</td>
     <td class="text-center">{% if t.person_is_swc_instructor %}{% bootstrap_tag "SWC" %}{% endif %}</td>
     <td><a href="{{ t.person.get_absolute_url }}">{{ t.person.get_full_name }}</a>{% if t.person.email and t.person.may_contact %} &lt;{{ t.person.email|urlize }}&gt;{% endif %}</td>
+    <td><a href="{% url 'task_details' t.pk %}">{{ t.title|default:"—" }}</a></td>
+    <td>{{ t.url|default:"—"|urlize_newtab }}</td>
     <td>{{ t.role.name }}</td>
   </tr>
   {% endfor %}

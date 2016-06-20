@@ -2,6 +2,7 @@
 
 {% load crispy_forms_tags %}
 {% load selectable_tags %}
+{% load links %}
 
 {% block content %}
   <button type="button" class="btn btn-default" id="update_url_button">Update from URL</button>
@@ -15,12 +16,16 @@
   <table class="table table-striped">
   <tr>
     <th>person</th>
+    <th>title</th>
+    <th>url</th>
     <th>role</th>
     <th>actions</th>
   </tr>
   {% for t in tasks %}
   <tr>
     <td><a href="{{ t.person.get_absolute_url }}">{{ t.person.get_full_name }}</a>{% if t.person.email and t.person.may_contact %} &lt;{{ t.person.email|urlize }}&gt;{% endif %}</td>
+    <td><a href="{% url 'task_details' t.pk %}">{{ t.title|default:"—" }}</a></td>
+    <td>{{ t.url|default:"—"|urlize_newtab }}</td>
     <td>{{ t.role.name }}</td>
     <td><a onclick='return confirm("Are you sure you wish to remove \"{{ t.person.get_full_name }}\" from {{ object.get_ident }}?")' href="{% url 'task_delete' object.get_ident t.id %}" class='btn btn-danger'>Delete</a></td>
   </tr>
