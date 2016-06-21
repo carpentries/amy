@@ -2,8 +2,6 @@ from django.conf.urls import include, url
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
 
-from workshops import github_auth
-
 urlpatterns = [
     url(r'^workshops/admin/', include(admin.site.urls)),
     url(r'^workshops/', include('workshops.urls')),

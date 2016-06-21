@@ -7,12 +7,7 @@ from django.db import migrations
 
 def forward(apps, schema_editor):
     Group = apps.get_model('auth', 'Group')
-    Person = apps.get_model('workshops', 'Person')
-
-    group = Group.objects.get_or_create(name='Admins')
-    for p in Person.objects.all():
-        p.groups.add(group)
-        p.save()
+    Group.objects.get_or_create(name='administrators')
 
 
 class Migration(migrations.Migration):

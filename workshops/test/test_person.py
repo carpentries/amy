@@ -419,14 +419,13 @@ class TestPersonPassword(TestBase):
     """
 
     def setUp(self):
-        admins, _ = Group.objects.get_or_create(name='Admins')
+        admins, _ = Group.objects.get_or_create(name='administrators')
 
         # create a superuser
         self.admin = Person.objects.create_superuser(
             username='admin', personal='Super', family='User',
             email='sudo@example.org', password='admin',
         )
-        self.admin.groups.add(admins)
 
         # create a normal user
         self.user = Person.objects.create_user(

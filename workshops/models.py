@@ -343,11 +343,6 @@ class Person(AbstractBaseUser, PermissionsMixin):
         """
         return self.is_superuser
 
-    @property
-    def is_admin(self):
-        is_admin = self.groups.filter(name='Admins').exists()
-        return is_admin or self.is_staff or self.is_superuser
-
     def clean(self):
         """This will be called by the ModelForm.is_valid(). No saving to the
         database."""
@@ -367,6 +362,14 @@ class Person(AbstractBaseUser, PermissionsMixin):
         self.twitter = self.twitter or None
         self.url = self.url or None
         super().save(*args, **kwargs)
+
+
+def is_admin(user):
+    if user is None or user.is_anonymous():
+        return False
+    else:
+        is_admin = user.groups.filter(name='administrators').exists()
+        return is_admin or user.is_staff or user.is_superuser
 
 
 class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):

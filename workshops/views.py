@@ -25,7 +25,7 @@ from django.shortcuts import redirect, render, get_object_or_404
 from django.template.loader import get_template
 from django.views.generic import ListView, DetailView, TemplateView
 from django.views.generic.edit import CreateView, UpdateView, ModelFormMixin
-from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.decorators import permission_required
 
 from reversion.models import Revision
 from reversion.revisions import get_for_object
@@ -52,7 +52,7 @@ from workshops.models import (
     EventSubmission as EventSubmissionModel,
     TrainingRequest,
     DCSelfOrganizedEventRequest as DCSelfOrganizedEventRequestModel,
-)
+    is_admin)
 from workshops.forms import (
     SearchForm, DebriefForm, WorkshopStaffForm, PersonForm, PersonBulkAddForm,
     EventForm, TaskForm, TaskFullForm, bootstrap_helper, bootstrap_helper_get,
@@ -83,8 +83,8 @@ from workshops.util import (
     merge_objects,
     create_username,
     only_for_admins,
-    OnlyForAdminsMixin
-)
+    OnlyForAdminsMixin,
+    only_for_logged_in, login_not_required, LoginNotRequiredMixin)
 
 from workshops.filters import (
     EventFilter, HostFilter, PersonFilter, TaskFilter, AirportFilter,
@@ -211,9 +211,9 @@ class EmailSendMixin():
 #------------------------------------------------------------
 
 
-@login_required
+@only_for_logged_in
 def dispatch(request):
-    if request.user and request.user.is_admin:
+    if request.user and is_admin(request.user):
         return redirect(reverse('admin-dashboard'))
     else:
         return redirect(reverse('trainee-dashboard'))
@@ -2181,7 +2181,7 @@ def object_changes(request, revision_id):
 # ------------------------------------------------------------
 
 
-class SWCEventRequest(EmailSendMixin, CreateViewContext):
+class SWCEventRequest(LoginNotRequiredMixin, EmailSendMixin, CreateViewContext):
     model = EventRequest
     form_class = SWCEventRequestForm
     page_title = 'Request a Software Carpentry Workshop'
@@ -2242,7 +2242,7 @@ class SWCEventRequest(EmailSendMixin, CreateViewContext):
         return result
 
 
-class SWCEventRequestConfirm(TemplateView):
+class SWCEventRequestConfirm(LoginNotRequiredMixin, TemplateView):
     """Display confirmation of received workshop request."""
     template_name = 'forms/workshop_swc_request_confirm.html'
 
@@ -2365,6 +2365,7 @@ def eventrequest_assign(request, request_id, person_id=None):
     return redirect(reverse('eventrequest_details', args=[event_req.pk]))
 
 
+@login_not_required
 def profileupdaterequest_create(request):
     """
     Profile update request form. Accessible to all users (no login required).
@@ -2589,7 +2590,7 @@ def profileupdaterequest_accept(request, request_id, person_id=None):
     return redirect(person.get_absolute_url())
 
 
-class EventSubmission(EmailSendMixin, CreateViewContext):
+class EventSubmission(LoginNotRequiredMixin, EmailSendMixin, CreateViewContext):
     """Display form for submitting existing workshops."""
     model = EventSubmissionModel
     form_class = EventSubmitForm
@@ -2632,7 +2633,7 @@ class EventSubmission(EmailSendMixin, CreateViewContext):
         return body_txt, body_html
 
 
-class EventSubmissionConfirm(TemplateView):
+class EventSubmissionConfirm(LoginNotRequiredMixin, TemplateView):
     """Display confirmation of received workshop submission."""
     template_name = 'forms/event_submission_confirm.html'
 
@@ -2748,7 +2749,8 @@ def eventsubmission_assign(request, submission_id, person_id=None):
     return redirect(submission.get_absolute_url())
 
 
-class DCSelfOrganizedEventRequest(EmailSendMixin, CreateViewContext):
+class DCSelfOrganizedEventRequest(LoginNotRequiredMixin, EmailSendMixin,
+                                  CreateViewContext):
     "Display form for requesting self-organized workshops for Data Carpentry."
     model = DCSelfOrganizedEventRequestModel
     form_class = DCSelfOrganizedEventRequestForm
@@ -2792,7 +2794,7 @@ class DCSelfOrganizedEventRequest(EmailSendMixin, CreateViewContext):
         return body_txt, body_html
 
 
-class DCSelfOrganizedEventRequestConfirm(TemplateView):
+class DCSelfOrganizedEventRequestConfirm(LoginNotRequiredMixin, TemplateView):
     """Display confirmation of a received self-organized workshop request."""
     # we're reusing DC templates for normal workshop requests
     template_name = 'forms/workshop_dc_request_confirm.html'
@@ -2856,7 +2858,7 @@ class DCSelfOrganizedEventRequestChange(OnlyForAdminsMixin,
     template_name = 'workshops/generic_form.html'
 
 
-@login_required
+@only_for_admins
 @permission_required(['workshops.change_dcselforganizedeventrequest'],
                      raise_exception=True)
 def dcselforganizedeventrequest_assign(request, request_id, person_id=None):
@@ -3070,6 +3072,7 @@ def duplicates(request):
     return render(request, 'workshops/duplicates.html', context)
 
 
+@login_not_required
 def trainingrequest_create(request):
     """ A form to let all users (no login required) to request Instructor Training. """
 
@@ -3126,7 +3129,7 @@ class TrainingRequestDetails(OnlyForAdminsMixin, DetailView):
 # ------------------------------------------------------------
 # Views for trainees
 
-@login_required
+@only_for_logged_in
 def trainee_dashboard(request):
     context = {
         'title': 'Your profile',
@@ -3135,7 +3138,7 @@ def trainee_dashboard(request):
     return render(request, 'workshops/trainee_dashboard.html', context)
 
 
-@login_required
+@only_for_logged_in
 def autoupdate_profile(request):
     user = request.user
     form = AutoUpdateProfileForm(instance=user)

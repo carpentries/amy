@@ -1,16 +1,14 @@
 # coding: utf-8
-from collections import namedtuple, defaultdict
 import csv
 import datetime
-from django.contrib.auth.mixins import UserPassesTestMixin
-
-from selectable.decorators import results_decorator
-
-from django.contrib.auth.decorators import user_passes_test
-from itertools import chain
 import re
-import yaml
+from collections import namedtuple, defaultdict
+from itertools import chain
 
+import requests
+import yaml
+from django.contrib.auth.decorators import user_passes_test, login_required
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import (
     EmptyPage, PageNotAnInteger, Paginator as DjangoPaginator,
@@ -22,10 +20,9 @@ from django.http import Http404
 from django.http.response import HttpResponse
 from django.http.response import HttpResponseForbidden
 from django.shortcuts import render
-import requests
+from selectable.decorators import results_decorator
 
-from workshops.models import Event, Role, Person, Task, Award, Badge
-
+from workshops.models import Event, Role, Person, Task, Badge, is_admin
 
 ITEMS_PER_PAGE = 25
 
@@ -877,7 +874,25 @@ def merge_objects(object_a, object_b, easy_fields, difficult_fields,
 
 
 def only_for_admins(f):
-    f = user_passes_test(lambda user: user is not None and user.is_admin)(f)
+    assert not hasattr(f, 'access'), \
+        'You already used some access control decorator on this view.'
+    f = user_passes_test(is_admin)(f)
+    f.access = 'only_for_admins'
+    return f
+
+
+def only_for_logged_in(f):
+    assert not hasattr(f, 'access'), \
+        'You already used some access control decorator on this view.'
+    f = login_required(f)
+    f.access = 'only_for_logged_in'
+    return f
+
+
+def login_not_required(f):
+    assert not hasattr(f, 'access'), \
+        'You already used some access control decorator on this view.'
+    f.access = 'login_not_required'
     return f
 
 
@@ -886,7 +901,7 @@ def lookup_only_for_admins(request):
     user = getattr(request, 'user', None)
     if user is None or not user.is_authenticated():
         return HttpResponse(status=401)  # Unauthorized
-    elif not user.is_admin:
+    elif not is_admin(user):
         return HttpResponseForbidden()
     else:
         return None
@@ -894,4 +909,8 @@ def lookup_only_for_admins(request):
 
 class OnlyForAdminsMixin(UserPassesTestMixin):
     def test_func(self):
-        return self.request.user is not None and self.request.user.is_admin
+        return is_admin(self.request.user)
+
+
+class LoginNotRequiredMixin(object):
+    pass
