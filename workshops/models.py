@@ -368,8 +368,8 @@ def is_admin(user):
     if user is None or user.is_anonymous():
         return False
     else:
-        is_admin = user.groups.filter(name='administrators').exists()
-        return is_admin or user.is_staff or user.is_superuser
+        has_admin_group = user.groups.filter(name='administrators').exists()
+        return has_admin_group or user.is_superuser
 
 
 class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):

@@ -1024,8 +1024,8 @@ class TrainingRequestForm(forms.ModelForm):
 class AutoUpdateProfileForm(forms.ModelForm):
     username = forms.CharField(disabled=True)
 
-    ERROR_MSG = ("This GitHub account is already associated with different "
-                 "AMY account. Log out and log in using your GitHub account.")
+    ERROR_MSG = ('This GitHub account is already associated with different '
+                 'AMY account. Log out and log in using your GitHub account.')
     github = forms.CharField(error_messages={'unique': ERROR_MSG})
 
     class Meta:

@@ -8,7 +8,8 @@ from rest_framework.views import APIView
 from amy import urls
 from workshops.models import Person
 from workshops.test import TestBase
-from workshops.util import OnlyForAdminsMixin, LoginNotRequiredMixin
+from workshops.util import OnlyForAdminsMixin, LoginNotRequiredMixin, \
+    admin_required, login_required, login_not_required
 
 
 def get_resolved_urls(url_patterns):
@@ -29,31 +30,31 @@ def get_view_by_name(name):
     try:
         return next(v.callback for v in views if v.name == name)
     except StopIteration:
-        raise ValueError("No view named '{}'".format(name))
+        raise ValueError('No view named {}'.format(name))
 
 
 class TestViews(TestBase):
     def setUp(self):
         super().setUp()
 
-        admins = Group.objects.get(name="administrators")
+        admins = Group.objects.get(name='administrators')
 
         # superuser who doesn't belong to Admin group
         self.admin = Person.objects.create_superuser(
-            username="superuser", personal="Super", family="User",
-            email="superuser@example.org", password="superuser")
+            username='superuser', personal='Super', family='User',
+            email='superuser@example.org', password='superuser')
         assert admins not in self.admin.groups.all()
 
         # user with access to admin dashboard
         self.mentor = Person.objects.create_user(
-            username="admin", personal="Bob", family="Admin",
-            email="admin@example.org", password="admin")
+            username='admin', personal='Bob', family='Admin',
+            email='admin@example.org', password='admin')
         self.mentor.groups.add(admins)
 
         # user with access only to trainee dashboard
         self.trainee = Person.objects.create_user(
-            username="trainee", personal="Bob", family="Trainee",
-            email="trainee@example.org", password="trainee")
+            username='trainee', personal='Bob', family='Trainee',
+            email='trainee@example.org', password='trainee')
         assert admins not in self.trainee.groups.all()
 
     def assert_accessible(self, url, user=None):
@@ -71,17 +72,17 @@ class TestViews(TestBase):
         self.client.logout()
 
         if response.status_code != 403:
-            login_url = "{}?next={}".format(reverse('login'), url)
+            login_url = '{}?next={}'.format(reverse('login'), url)
             self.assertRedirects(response, login_url)
 
     def test_function_based_view_restricted_to_admins(self):
         """
-        Test that a view decorated with "@only_for_admins" is accessible only
+        Test that a view decorated with @admin_required is accessible only
         for Admins.
         """
         view_name = 'admin-dashboard'
         view = get_view_by_name(view_name)
-        assert view.access == 'only_for_admins'
+        assert view._access_control_list == [admin_required]
         url = reverse(view_name)
 
         self.assert_accessible(url, user='superuser')
@@ -91,12 +92,12 @@ class TestViews(TestBase):
 
     def test_function_based_view_restricted_to_authorized_users(self):
         """
-        Test that a view decorated with "@only_for_logged_in" is accessible
+        Test that a view decorated with @login_required is accessible
         only for Admins and Trainees.
         """
         view_name = 'trainee-dashboard'
         view = get_view_by_name(view_name)
-        assert view.access == 'only_for_logged_in'
+        assert view._access_control_list == [login_required]
         url = reverse(view_name)
 
         self.assert_accessible(url, user='superuser')
@@ -106,12 +107,12 @@ class TestViews(TestBase):
 
     def test_function_based_view_accessible_to_unauthorized_users(self):
         """
-        Test that a view decorated with "@login_not_required" is accessible to
+        Test that a view decorated with @login_not_required is accessible to
         everyone.
         """
-        view_name = 'login'
+        view_name = 'training_request'
         view = get_view_by_name(view_name)
-        assert not hasattr(view, 'access')
+        assert view._access_control_list == [login_not_required]
         url = reverse(view_name)
 
         self.assert_accessible(url, user='superuser')
@@ -172,10 +173,10 @@ class TestViews(TestBase):
         Test that all views have explicitly defined access control:
 
         - In the case of function based views, test if the view is decorated
-          with an access control decorator like `login_not_required`.
+          with an access control decorator like @login_not_required.
 
         - In the case of class based views, test if the view have access control
-          mixin like `LoginNotRequiredMixin`.
+          mixin like LoginNotRequiredMixin.
 
         Ignores:
 
@@ -187,22 +188,22 @@ class TestViews(TestBase):
 
         """
 
-        all_views = get_resolved_urls(urls.urlpatterns)
+        all_urls = get_resolved_urls(urls.urlpatterns)
 
         # ignore views listed on IGNORED_VIEWS list
-        all_views = [v for v in all_views
-                     if not hasattr(v, 'name') or v.name not in self.IGNORED_VIEWS]
+        all_urls = [u for u in all_urls
+                    if not hasattr(u, 'name') or u.name not in self.IGNORED_VIEWS]
 
-        for v in all_views:
-            with self.subTest(view=v):
-                access = getattr(v.callback, 'access', None)
-                model_admin = getattr(v.callback, 'model_admin', None)
-                admin_site = getattr(v.callback, 'admin_site', None)
+        for url in all_urls:
+            with self.subTest(view=url):
+                acl = getattr(url.callback, '_access_control_list', None)
+                model_admin = getattr(url.callback, 'model_admin', None)
+                admin_site = getattr(url.callback, 'admin_site', None)
 
                 # v.callback is always a function, even when the view is
                 # class based. We try to find the class implementing the view.
-                view_class = getattr(v.callback, 'view_class', None)
-                cls = getattr(v.callback, 'cls', None)
+                view_class = getattr(url.callback, 'view_class', None)
+                cls = getattr(url.callback, 'cls', None)
                 class_ = view_class or cls or None
 
                 is_function_based_view = (model_admin is None and
@@ -210,18 +211,18 @@ class TestViews(TestBase):
                                           class_ is None)
 
                 if is_function_based_view:
-                    self.assertTrue(access is not None,
-                                    "You have a function based view with"
-                                    "no access control decorator. This view is"
-                                    "probably accessible to every user. If "
-                                    "this is what you want, use "
-                                    "@login_not_required decorator.")
-                    self.assertIn(access, ['only_for_admins',
-                                           'only_for_logged_in',
-                                           'login_not_required'])
+                    self.assertTrue(acl is not None,
+                                    'You have a function based view with '
+                                    'no access control decorator. This view is '
+                                    'probably accessible to every user. If '
+                                    'this is what you want, use '
+                                    '@login_not_required decorator.')
+                    self.assertEqual(len(acl), 1,
+                                     'You have more than one access control '
+                                     'decorator defined in this view.')
 
                 else:  # class based view
-                    self.assertTrue(access is None,
+                    self.assertTrue(acl is None,
                                     'It looks like you used access control '
                                     'decorator on a class based view. Use '
                                     'mixin instead.')
@@ -245,10 +246,10 @@ class TestViews(TestBase):
 
                         self.assertNotEqual(
                             len(found), 0,
-                            "This view lacks access control mixin and is "
-                            "probably accessible to every user. If this is "
-                            "what you want, use LoginNotRequiredMixin.")
+                            'This view lacks access control mixin and is '
+                            'probably accessible to every user. If this is '
+                            'what you want, use LoginNotRequiredMixin.')
                         self.assertEqual(
                             len(found), 1,
-                            "You have more than one access control mixin "
-                            "defined in this view.")
+                            'You have more than one access control mixin '
+                            'defined in this view.')

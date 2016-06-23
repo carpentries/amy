@@ -10,7 +10,7 @@ class NoPersonAssociatedWithGithubAccount(SocialAuthBaseException):
     pass
 
 
-def find_user_or_abort(request, details=None, **kwargs):
+def find_user_or_abort(details=None, **kwargs):
     username = details['username']
     try:
         user = Person.objects.get(github=username, is_active=True)
@@ -20,7 +20,7 @@ def find_user_or_abort(request, details=None, **kwargs):
         raise NoPersonAssociatedWithGithubAccount
 
 
-class GithubAuthMiddleware(object):
+class GithubAuthMiddleware():
     def process_exception(self, request, exception):
         if isinstance(exception, NoPersonAssociatedWithGithubAccount):
             messages.error(request,

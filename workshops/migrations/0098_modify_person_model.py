@@ -51,7 +51,7 @@ class Migration(migrations.Migration):
             name='lessons',
             field=models.ManyToManyField(blank=True, help_text='Please check all that apply.',
                                          through='workshops.Qualification', to='workshops.Lesson',
-                                         verbose_name="Topic and lessons you're comfortable teaching"),
+                                         verbose_name='Topic and lessons you\'re comfortable teaching'),
         ),
         migrations.AlterField(
             model_name='person',

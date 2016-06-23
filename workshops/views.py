@@ -82,9 +82,9 @@ from workshops.util import (
     assign,
     merge_objects,
     create_username,
-    only_for_admins,
+    admin_required,
     OnlyForAdminsMixin,
-    only_for_logged_in, login_not_required, LoginNotRequiredMixin)
+    login_required, login_not_required, LoginNotRequiredMixin)
 
 from workshops.filters import (
     EventFilter, HostFilter, PersonFilter, TaskFilter, AirportFilter,
@@ -211,7 +211,7 @@ class EmailSendMixin():
 #------------------------------------------------------------
 
 
-@only_for_logged_in
+@login_required
 def dispatch(request):
     if request.user and is_admin(request.user):
         return redirect(reverse('admin-dashboard'))
@@ -219,9 +219,9 @@ def dispatch(request):
         return redirect(reverse('trainee-dashboard'))
 
 
-@only_for_admins
+@admin_required
 def admin_dashboard(request):
-    '''Home page for admins.'''
+    """Home page for admins."""
 
     current_events = (
         Event.objects.upcoming_events() | Event.objects.ongoing_events()
@@ -273,7 +273,7 @@ def admin_dashboard(request):
     return render(request, 'workshops/admin_dashboard.html', context)
 
 
-@only_for_admins
+@admin_required
 def changes_log(request):
     log = Revision.objects.all().select_related('user') \
                                 .prefetch_related('version_set') \
@@ -287,7 +287,7 @@ def changes_log(request):
 #------------------------------------------------------------
 
 
-@only_for_admins
+@admin_required
 def all_hosts(request):
     '''List all hosts.'''
 
@@ -300,7 +300,7 @@ def all_hosts(request):
     return render(request, 'workshops/all_hosts.html', context)
 
 
-@only_for_admins
+@admin_required
 def host_details(request, host_domain):
     '''List details of a particular host.'''
     host = get_object_or_404(Host, domain=host_domain)
@@ -329,7 +329,7 @@ class HostUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
     template_name = 'workshops/generic_form.html'
 
 
-@only_for_admins
+@admin_required
 @permission_required('workshops.delete_host', raise_exception=True)
 def host_delete(request, host_domain):
     """Delete specific host."""
@@ -342,7 +342,7 @@ def host_delete(request, host_domain):
         return failed_to_delete(request, host, e.protected_objects)
 
 
-@only_for_admins
+@admin_required
 @permission_required(['workshops.add_membership', 'workshops.change_host'],
                      raise_exception=True)
 def membership_create(request, host_domain):
@@ -379,7 +379,7 @@ class MembershipUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
         return reverse('host_details', args=[self.object.host.domain])
 
 
-@only_for_admins
+@admin_required
 @permission_required('workshops.delete_membership', raise_exception=True)
 def membership_delete(request, membership_id):
     """Delete specific membership."""
@@ -398,7 +398,7 @@ def membership_delete(request, membership_id):
 AIRPORT_FIELDS = ['iata', 'fullname', 'country', 'latitude', 'longitude']
 
 
-@only_for_admins
+@admin_required
 def all_airports(request):
     '''List all airports.'''
     filter = AirportFilter(request.GET, queryset=Airport.objects.all())
@@ -410,7 +410,7 @@ def all_airports(request):
     return render(request, 'workshops/all_airports.html', context)
 
 
-@only_for_admins
+@admin_required
 def airport_details(request, airport_iata):
     '''List details of a particular airport.'''
     airport = get_object_or_404(Airport, iata=airport_iata)
@@ -437,7 +437,7 @@ class AirportUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
     template_name = 'workshops/generic_form.html'
 
 
-@only_for_admins
+@admin_required
 @permission_required('workshops.delete_airport', raise_exception=True)
 def airport_delete(request, airport_iata):
     """Delete specific airport."""
@@ -452,7 +452,7 @@ def airport_delete(request, airport_iata):
 #------------------------------------------------------------
 
 
-@only_for_admins
+@admin_required
 def all_persons(request):
     '''List all persons.'''
 
@@ -479,7 +479,7 @@ def all_persons(request):
     return render(request, 'workshops/all_persons.html', context)
 
 
-@only_for_admins
+@admin_required
 def person_details(request, person_id):
     '''List details of a particular person.'''
     try:
@@ -522,7 +522,7 @@ def person_details(request, person_id):
     return render(request, 'workshops/person.html', context)
 
 
-@only_for_admins
+@admin_required
 def person_bulk_add_template(request):
     ''' Dynamically generate a CSV template that can be used to bulk-upload
     people.
@@ -537,7 +537,7 @@ def person_bulk_add_template(request):
     return response
 
 
-@only_for_admins
+@admin_required
 @permission_required('workshops.add_person', raise_exception=True)
 def person_bulk_add(request):
     if request.method == 'POST':
@@ -580,7 +580,7 @@ def person_bulk_add(request):
     return render(request, 'workshops/person_bulk_add_form.html', context)
 
 
-@only_for_admins
+@admin_required
 @permission_required('workshops.add_person', raise_exception=True)
 def person_bulk_add_confirmation(request):
     """
@@ -721,7 +721,7 @@ class PersonCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
         return response
 
 
-@only_for_admins
+@admin_required
 @permission_required(['workshops.change_person', 'workshops.add_award',
                       'workshops.add_task'],
                      raise_exception=True)
@@ -830,7 +830,7 @@ def person_edit(request, person_id):
     return render(request, 'workshops/person_edit_form.html', context)
 
 
-@only_for_admins
+@admin_required
 @permission_required('workshops.delete_person', raise_exception=True)
 def person_delete(request, person_id):
     """Delete specific person."""
@@ -853,7 +853,7 @@ class PersonPermissions(OnlyForAdminsMixin, PermissionRequiredMixin,
     template_name = 'workshops/generic_form.html'
 
 
-@only_for_admins
+@admin_required
 def person_password(request, person_id):
     user = get_object_or_404(Person, pk=person_id)
 
@@ -895,7 +895,7 @@ def person_password(request, person_id):
     })
 
 
-@only_for_admins
+@admin_required
 @permission_required(['workshops.delete_person', 'workshops.change_person'],
                      raise_exception=True)
 def persons_merge(request):
@@ -980,7 +980,7 @@ def persons_merge(request):
 
 #------------------------------------------------------------
 
-@only_for_admins
+@admin_required
 def all_events(request):
     '''List all events.'''
     filter = EventFilter(
@@ -996,7 +996,7 @@ def all_events(request):
     return render(request, 'workshops/all_events.html', context)
 
 
-@only_for_admins
+@admin_required
 def event_details(request, event_ident):
     '''List details of a particular event.'''
     try:
@@ -1070,7 +1070,7 @@ def event_details(request, event_ident):
     return render(request, 'workshops/event.html', context)
 
 
-@only_for_admins
+@admin_required
 def validate_event(request, event_ident):
     '''Check the event's home page *or* the specified URL (for testing).'''
     try:
@@ -1121,7 +1121,7 @@ class EventCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
     template_name = 'workshops/event_create_form.html'
 
 
-@only_for_admins
+@admin_required
 @permission_required(['workshops.change_event', 'workshops.add_task'],
                      raise_exception=True)
 def event_edit(request, event_ident):
@@ -1196,7 +1196,7 @@ def event_edit(request, event_ident):
     return render(request, 'workshops/event_edit_form.html', context)
 
 
-@only_for_admins
+@admin_required
 @permission_required('workshops.delete_event', raise_exception=True)
 def event_delete(request, event_ident):
     """Delete event, its tasks and related awards."""
@@ -1213,7 +1213,7 @@ def event_delete(request, event_ident):
         return failed_to_delete(request, event, e.protected_objects)
 
 
-@only_for_admins
+@admin_required
 def event_import(request):
     """Read metadata from remote URL and return them as JSON.
 
@@ -1247,7 +1247,7 @@ def event_import(request):
         return HttpResponseBadRequest('Missing or wrong "url" parameter.')
 
 
-@only_for_admins
+@admin_required
 @permission_required('workshops.change_event', raise_exception=True)
 def event_assign(request, event_ident, person_id=None):
     """Set event.assigned_to. See `assign` docstring for more information."""
@@ -1262,7 +1262,7 @@ def event_assign(request, event_ident, person_id=None):
         raise Http404("No event found matching the query.")
 
 
-@only_for_admins
+@admin_required
 @permission_required(['workshops.delete_event', 'workshops.change_event'],
                      raise_exception=True)
 def events_merge(request):
@@ -1346,7 +1346,7 @@ def events_merge(request):
     return render(request, 'workshops/events_merge.html', context)
 
 
-@only_for_admins
+@admin_required
 @permission_required('workshops.add_invoicerequest', raise_exception=True)
 def event_invoice(request, event_ident):
     try:
@@ -1382,7 +1382,7 @@ def event_invoice(request, event_ident):
     return render(request, 'workshops/event_invoice.html', context)
 
 
-@only_for_admins
+@admin_required
 def events_metadata_changed(request):
     """List events with metadata changed."""
     events = Event.objects.active().filter(metadata_changed=True)
@@ -1412,7 +1412,7 @@ def events_metadata_changed(request):
     return render(request, 'workshops/events_metadata_changed.html', context)
 
 
-@only_for_admins
+@admin_required
 @permission_required('workshops.change_event', raise_exception=True)
 def event_review_metadata_changes(request, event_ident):
     """Review changes made to metadata on event's website."""
@@ -1439,7 +1439,7 @@ def event_review_metadata_changes(request, event_ident):
                   context)
 
 
-@only_for_admins
+@admin_required
 @permission_required('workshops.change_event', raise_exception=True)
 def event_accept_metadata_changes(request, event_ident):
     """Review changes made to metadata on event's website."""
@@ -1488,7 +1488,7 @@ def event_accept_metadata_changes(request, event_ident):
     return redirect(reverse('event_details', args=[event.get_ident()]))
 
 
-@only_for_admins
+@admin_required
 @permission_required('workshops.change_event', raise_exception=True)
 def event_dismiss_metadata_changes(request, event_ident):
     """Review changes made to metadata on event's website."""
@@ -1552,7 +1552,7 @@ class InvoiceRequestUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
 
 # ------------------------------------------------------------
 
-@only_for_admins
+@admin_required
 def all_tasks(request):
     '''List all tasks.'''
 
@@ -1569,7 +1569,7 @@ def all_tasks(request):
     return render(request, 'workshops/all_tasks.html', context)
 
 
-@only_for_admins
+@admin_required
 def task_details(request, task_id):
     '''List details of a particular task.'''
     task = get_object_or_404(Task, pk=task_id)
@@ -1578,7 +1578,7 @@ def task_details(request, task_id):
     return render(request, 'workshops/task.html', context)
 
 
-@only_for_admins
+@admin_required
 @permission_required('workshops.delete_task', raise_exception=True)
 def task_delete(request, task_id, event_ident=None):
     '''Delete a task. This is used on the event edit page'''
@@ -1611,7 +1611,7 @@ class TaskUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
 #------------------------------------------------------------
 
 
-@only_for_admins
+@admin_required
 @permission_required('workshops.delete_award', raise_exception=True)
 def award_delete(request, award_id, person_id=None):
     """Delete an award. This is used on the person edit page."""
@@ -1631,7 +1631,7 @@ def award_delete(request, award_id, person_id=None):
 
 #------------------------------------------------------------
 
-@only_for_admins
+@admin_required
 def all_badges(request):
     '''List all badges.'''
 
@@ -1641,7 +1641,7 @@ def all_badges(request):
     return render(request, 'workshops/all_badges.html', context)
 
 
-@only_for_admins
+@admin_required
 def badge_details(request, badge_name):
     '''List details of a particular badge, list people who were awarded it.'''
 
@@ -1661,7 +1661,7 @@ def badge_details(request, badge_name):
     return render(request, 'workshops/badge.html', context)
 
 
-@only_for_admins
+@admin_required
 @permission_required('workshops.add_award', raise_exception=True)
 def badge_award(request, badge_name):
     """Award a badge to someone (== create a new Award)."""
@@ -1692,7 +1692,7 @@ def badge_award(request, badge_name):
 
 #------------------------------------------------------------
 
-@only_for_admins
+@admin_required
 def all_trainings(request):
     '''List all Instructor Trainings.'''
 
@@ -1717,7 +1717,7 @@ def all_trainings(request):
 #------------------------------------------------------------
 
 
-@only_for_admins
+@admin_required
 def workshop_staff(request):
     '''Search for workshop staff.'''
     instructor_badges = Badge.objects.instructor_badges()
@@ -1840,7 +1840,7 @@ def workshop_staff(request):
 #------------------------------------------------------------
 
 
-@only_for_admins
+@admin_required
 def search(request):
     '''Search the database by term.'''
 
@@ -1921,7 +1921,7 @@ def search(request):
 
 #------------------------------------------------------------
 
-@only_for_admins
+@admin_required
 def instructors_by_date(request):
     '''Show who taught between begin_date and end_date.'''
 
@@ -1954,7 +1954,7 @@ def instructors_by_date(request):
 
 #------------------------------------------------------------
 
-@only_for_admins
+@admin_required
 def export_badges(request):
     title = 'Badges'
     json_link = reverse('api:export-badges', kwargs={'format': 'json'})
@@ -1967,7 +1967,7 @@ def export_badges(request):
     return render(request, 'workshops/export.html', context)
 
 
-@only_for_admins
+@admin_required
 def export_instructors(request):
     title = 'Instructor Locations'
     json_link = reverse('api:export-instructors', kwargs={'format': 'json'})
@@ -1980,7 +1980,7 @@ def export_instructors(request):
     return render(request, 'workshops/export.html', context)
 
 
-@only_for_admins
+@admin_required
 def export_members(request):
     title = 'SCF Members'
     json_link = reverse('api:export-members', kwargs={'format': 'json'})
@@ -1994,7 +1994,7 @@ def export_members(request):
 
 #------------------------------------------------------------
 
-@only_for_admins
+@admin_required
 def workshops_over_time(request):
     '''Export JSON of count of workshops vs. time.'''
     context = {
@@ -2004,7 +2004,7 @@ def workshops_over_time(request):
     return render(request, 'workshops/time_series.html', context)
 
 
-@only_for_admins
+@admin_required
 def learners_over_time(request):
     '''Export JSON of count of learners vs. time.'''
     context = {
@@ -2014,7 +2014,7 @@ def learners_over_time(request):
     return render(request, 'workshops/time_series.html', context)
 
 
-@only_for_admins
+@admin_required
 def instructors_over_time(request):
     '''Export JSON of count of instructors vs. time.'''
     context = {
@@ -2024,7 +2024,7 @@ def instructors_over_time(request):
     return render(request, 'workshops/time_series.html', context)
 
 
-@only_for_admins
+@admin_required
 def instructor_num_taught(request):
     '''Export JSON of how often instructors have taught.'''
     context = {
@@ -2034,7 +2034,7 @@ def instructor_num_taught(request):
     return render(request, 'workshops/instructor_num_taught.html', context)
 
 
-@only_for_admins
+@admin_required
 def all_activity_over_time(request):
     """Display number of workshops (of differend kinds), instructors and
     learners over some specific period of time."""
@@ -2047,7 +2047,7 @@ def all_activity_over_time(request):
     return render(request, 'workshops/all_activity_over_time.html', context)
 
 
-@only_for_admins
+@admin_required
 def workshop_issues(request):
     '''Display workshops in the database whose records need attention.'''
 
@@ -2106,7 +2106,7 @@ def workshop_issues(request):
     return render(request, 'workshops/workshop_issues.html', context)
 
 
-@only_for_admins
+@admin_required
 def instructor_issues(request):
     '''Display instructors in the database who need attention.'''
 
@@ -2146,7 +2146,7 @@ def instructor_issues(request):
 #------------------------------------------------------------
 
 
-@only_for_admins
+@admin_required
 def object_changes(request, revision_id):
     revision = get_object_or_404(Revision, pk=revision_id)
 
@@ -2264,7 +2264,7 @@ class DCEventRequestConfirm(SWCEventRequestConfirm):
     template_name = 'forms/workshop_dc_request_confirm.html'
 
 
-@only_for_admins
+@admin_required
 def all_eventrequests(request):
     """List all event requests."""
 
@@ -2312,7 +2312,7 @@ class EventRequestDetails(OnlyForAdminsMixin, DetailView):
         return context
 
 
-@only_for_admins
+@admin_required
 @permission_required('workshops.change_eventrequest', raise_exception=True)
 def eventrequest_discard(request, request_id):
     """Discard EventRequest, ie. set it to inactive."""
@@ -2325,7 +2325,7 @@ def eventrequest_discard(request, request_id):
     return redirect(reverse('all_eventrequests'))
 
 
-@only_for_admins
+@admin_required
 @permission_required(['workshops.change_eventrequest', 'workshops.add_event'],
                      raise_exception=True)
 def eventrequest_accept(request, request_id):
@@ -2355,7 +2355,7 @@ def eventrequest_accept(request, request_id):
     return render(request, 'workshops/eventrequest_accept.html', context)
 
 
-@only_for_admins
+@admin_required
 @permission_required(['workshops.change_eventrequest'], raise_exception=True)
 def eventrequest_assign(request, request_id, person_id=None):
     """Set eventrequest.assigned_to. See `assign` docstring for more
@@ -2422,7 +2422,7 @@ class AllClosedProfileUpdateRequests(AllProfileUpdateRequests):
     active_requests = False
 
 
-@only_for_admins
+@admin_required
 def profileupdaterequest_details(request, request_id):
     update_request = get_object_or_404(ProfileUpdateRequest,
                                        pk=request_id)
@@ -2491,7 +2491,7 @@ class ProfileUpdateRequestFix(OnlyForAdminsMixin, PermissionRequiredMixin,
     template_name = 'workshops/generic_form.html'
 
 
-@only_for_admins
+@admin_required
 @permission_required('workshops.change_profileupdaterequest',
                      raise_exception=True)
 def profileupdaterequest_discard(request, request_id):
@@ -2506,7 +2506,7 @@ def profileupdaterequest_discard(request, request_id):
     return redirect(reverse('all_profileupdaterequests'))
 
 
-@only_for_admins
+@admin_required
 @permission_required('workshops.change_profileupdaterequest',
                      raise_exception=True)
 def profileupdaterequest_accept(request, request_id, person_id=None):
@@ -2695,7 +2695,7 @@ class EventSubmissionFix(OnlyForAdminsMixin, PermissionRequiredMixin,
     template_name = 'workshops/generic_form.html'
 
 
-@only_for_admins
+@admin_required
 @permission_required(['workshops.change_eventsubmission',
                       'workshops.add_event'], raise_exception=True)
 def eventsubmission_accept(request, submission_id):
@@ -2725,7 +2725,7 @@ def eventsubmission_accept(request, submission_id):
     return render(request, 'workshops/eventsubmission_accept.html', context)
 
 
-@only_for_admins
+@admin_required
 @permission_required('workshops.change_eventsubmission', raise_exception=True)
 def eventsubmission_discard(request, submission_id):
     """Discard EventSubmission, ie. set it to inactive."""
@@ -2739,7 +2739,7 @@ def eventsubmission_discard(request, submission_id):
     return redirect(reverse('all_eventsubmissions'))
 
 
-@only_for_admins
+@admin_required
 @permission_required(['workshops.change_eventrequest'], raise_exception=True)
 def eventsubmission_assign(request, submission_id, person_id=None):
     """Set eventsubmission.assigned_to. See `assign` docstring for more
@@ -2858,7 +2858,7 @@ class DCSelfOrganizedEventRequestChange(OnlyForAdminsMixin,
     template_name = 'workshops/generic_form.html'
 
 
-@only_for_admins
+@admin_required
 @permission_required(['workshops.change_dcselforganizedeventrequest'],
                      raise_exception=True)
 def dcselforganizedeventrequest_assign(request, request_id, person_id=None):
@@ -2873,7 +2873,7 @@ def dcselforganizedeventrequest_assign(request, request_id, person_id=None):
 #------------------------------------------------------------
 
 
-@only_for_admins
+@admin_required
 @permission_required('workshops.add_todoitem', raise_exception=True)
 def todos_add(request, event_ident):
     """Add a standard TodoItems for a specific event."""
@@ -2964,7 +2964,7 @@ def todos_add(request, event_ident):
     return render(request, 'workshops/todos_add.html', context)
 
 
-@only_for_admins
+@admin_required
 @permission_required('workshops.change_todoitem', raise_exception=True)
 def todo_mark_completed(request, todo_id):
     todo = get_object_or_404(TodoItem, pk=todo_id)
@@ -2975,7 +2975,7 @@ def todo_mark_completed(request, todo_id):
     return HttpResponse()
 
 
-@only_for_admins
+@admin_required
 @permission_required('workshops.change_todoitem', raise_exception=True)
 def todo_mark_incompleted(request, todo_id):
     todo = get_object_or_404(TodoItem, pk=todo_id)
@@ -3013,7 +3013,7 @@ class TodoItemUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
         return response
 
 
-@only_for_admins
+@admin_required
 @permission_required('workshops.delete_todoitem', raise_exception=True)
 def todo_delete(request, todo_id):
     """Delete a TodoItem. This is used on the event details page."""
@@ -3029,7 +3029,7 @@ def todo_delete(request, todo_id):
 
 # ------------------------------------------------------------
 
-@only_for_admins
+@admin_required
 def duplicates(request):
     """Find possible duplicates amongst persons.
 
@@ -3129,7 +3129,7 @@ class TrainingRequestDetails(OnlyForAdminsMixin, DetailView):
 # ------------------------------------------------------------
 # Views for trainees
 
-@only_for_logged_in
+@login_required
 def trainee_dashboard(request):
     context = {
         'title': 'Your profile',
@@ -3138,7 +3138,7 @@ def trainee_dashboard(request):
     return render(request, 'workshops/trainee_dashboard.html', context)
 
 
-@only_for_logged_in
+@login_required
 def autoupdate_profile(request):
     user = request.user
     form = AutoUpdateProfileForm(instance=user)

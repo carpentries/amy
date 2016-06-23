@@ -3,11 +3,15 @@ import csv
 import datetime
 import re
 from collections import namedtuple, defaultdict
+from functools import wraps
 from itertools import chain
 
 import requests
 import yaml
-from django.contrib.auth.decorators import user_passes_test, login_required
+from django.contrib.auth.decorators import (
+    user_passes_test,
+    login_required as django_login_required
+)
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import (
@@ -873,27 +877,34 @@ def merge_objects(object_a, object_b, easy_fields, difficult_fields,
         return base_obj.save(), integrity_errors
 
 
-def only_for_admins(f):
-    assert not hasattr(f, 'access'), \
-        'You already used some access control decorator on this view.'
-    f = user_passes_test(is_admin)(f)
-    f.access = 'only_for_admins'
-    return f
+def access_control_decorator(decorator):
+    """Every function-based view should be decorated with one of access control
+    decorators, even if the view is accessible to everyone, including
+    unauthorized users (in that case, use @login_not_required)."""
+    @wraps(decorator)
+    def decorated_access_control_decorator(view):
+        acl = getattr(view, '_access_control_list', [])
+        view = decorator(view)
+        view._access_control_list = acl + [decorated_access_control_decorator]
+        return view
+    return decorated_access_control_decorator
 
 
-def only_for_logged_in(f):
-    assert not hasattr(f, 'access'), \
-        'You already used some access control decorator on this view.'
-    f = login_required(f)
-    f.access = 'only_for_logged_in'
-    return f
+@access_control_decorator
+def admin_required(view):
+    return user_passes_test(is_admin)(view)
 
 
-def login_not_required(f):
-    assert not hasattr(f, 'access'), \
-        'You already used some access control decorator on this view.'
-    f.access = 'login_not_required'
-    return f
+@access_control_decorator
+def login_required(view):
+    return django_login_required(view)
+
+
+@access_control_decorator
+def login_not_required(view):
+    # @access_control_decorator adds _access_control_list to `view`,
+    # so @login_not_required is *not* no-op.
+    return view
 
 
 @results_decorator

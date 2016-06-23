@@ -209,10 +209,11 @@ AUTHENTICATION_BACKENDS = (
 SOCIAL_AUTH_ADMIN_USER_SEARCH_FIELDS = ['github']
 SOCIAL_AUTH_GITHUB_KEY = os.environ.get('SOCIAL_AUTH_GITHUB_KEY', '').strip()
 SOCIAL_AUTH_GITHUB_SECRET = os.environ.get('SOCIAL_AUTH_GITHUB_SECRET', '').strip()
-if not SOCIAL_AUTH_GITHUB_KEY or not SOCIAL_AUTH_GITHUB_SECRET:
+if not DEBUG and not (SOCIAL_AUTH_GITHUB_KEY and SOCIAL_AUTH_GITHUB_SECRET):
     print('Logging using github account will *not* work, '
           'because you didn\'t set SOCIAL_AUTH_GITHUB_KEY and/or '
-          'SOCIAL_AUTH_GITHUB_SECRET environment variables.')
+          'SOCIAL_AUTH_GITHUB_SECRET environment variables.',
+          file=sys.stderr)
 
 
 SOCIAL_AUTH_PIPELINE = (
