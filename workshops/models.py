@@ -332,7 +332,10 @@ class Person(AbstractBaseUser, PermissionsMixin):
         """This will be called by the ModelForm.is_valid(). No saving to the
         database."""
         # lowercase the email
-        self.email = self.email.lower()
+        try:
+            self.email = self.email.lower()
+        except AttributeError:
+            self.email = None
 
     def save(self, *args, **kwargs):
         # save empty string as NULL to the database - otherwise there are
