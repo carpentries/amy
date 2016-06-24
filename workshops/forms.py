@@ -1026,7 +1026,8 @@ class AutoUpdateProfileForm(forms.ModelForm):
 
     ERROR_MSG = ('This GitHub account is already associated with different '
                  'AMY account. Log out and log in using your GitHub account.')
-    github = forms.CharField(error_messages={'unique': ERROR_MSG})
+    github = forms.CharField(error_messages={'unique': ERROR_MSG},
+                             required=False)
 
     class Meta:
         model = Person

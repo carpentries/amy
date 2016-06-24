@@ -1,11 +1,13 @@
+from django.contrib.auth.models import Group
+
 from django.core.urlresolvers import reverse
 
-from ..models import Event, Host, Tag
+from ..models import Event, Host, Tag, Person
 from .base import TestBase
 
 
 class TestAdminDashboard(TestBase):
-    "Tests for the admin dashboard"
+    """ Tests for the admin dashboard. """
 
     def setUp(self):
         self._setUpEvents()
@@ -44,3 +46,59 @@ class TestAdminDashboard(TestBase):
         response = self.client.get(reverse('admin-dashboard'))
         self.assertNotIn(stalled, response.context['unpublished_events'])
         self.assertNotIn(completed, response.context['unpublished_events'])
+
+
+class TestTraineeDashboard(TestBase):
+    """ Tests for trainee dashboard. """
+    def setUp(self):
+        self.user = Person.objects.create_user(
+            username='user', personal='', family='',
+            email='user@example.org', password='pass')
+        self.client.login(username='user', password='pass')
+
+    def test_dashboard_loads(self):
+        rv = self.client.get(reverse('trainee-dashboard'))
+        self.assertEqual(rv.status_code, 200)
+        content = rv.content.decode('utf-8')
+        self.assertIn("Log out", content)
+        self.assertIn("Update your profile", content)
+
+
+class TestDispatch(TestBase):
+    """ Test that the right dashboard (trainee or admin dashboard) is displayed
+    after logging in."""
+
+    def test_superuser_logs_in(self):
+        Person.objects.create_superuser(
+            username='admin', personal='', family='',
+            email='admin@example.org', password='pass')
+
+        rv = self.client.post(reverse('login'),
+                              {'username':'admin', 'password':'pass'},
+                              follow=True)
+
+        self.assertEqual(rv.resolver_match.view_name, 'admin-dashboard')
+
+    def test_mentor_logs_in(self):
+        mentor = Person.objects.create_user(
+            username='user', personal='', family='',
+            email='mentor@example.org', password='pass')
+        admins = Group.objects.get(name='administrators')
+        mentor.groups.add(admins)
+
+        rv = self.client.post(reverse('login'),
+                              {'username': 'user', 'password': 'pass'},
+                              follow=True)
+
+        self.assertEqual(rv.resolver_match.view_name, 'admin-dashboard')
+
+    def test_trainee_logs_in(self):
+        self.trainee = Person.objects.create_user(
+            username='trainee', personal='', family='',
+            email='trainee@example.org', password='pass')
+
+        rv = self.client.post(reverse('login'),
+                              {'username': 'trainee', 'password': 'pass'},
+                              follow=True)
+
+        self.assertEqual(rv.resolver_match.view_name, 'trainee-dashboard')
