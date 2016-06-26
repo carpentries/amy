@@ -968,7 +968,32 @@ class TrainingRequestForm(forms.ModelForm):
 
     class Meta:
         model = TrainingRequest
-        exclude = ()
+        fields = (
+            'personal',
+            'family',
+            'email',
+            'occupation',
+            'occupation_other',
+            'affiliation',
+            'location',
+            'country',
+            'domains',
+            'domains_other',
+            'gender',
+            'gender_other',
+            'previous_involvement',
+            'previous_training',
+            'previous_training_other',
+            'previous_experience',
+            'previous_experience_other',
+            'programming_language_usage_frequency',
+            'reason',
+            'teaching_frequency_expectation',
+            'teaching_frequency_expectation_other',
+            'max_travelling_frequency',
+            'max_travelling_frequency_other',
+            'additional_skills',
+        )
         widgets = {
             'occupation': forms.RadioSelect(),
             'domains':  forms.CheckboxSelectMultiple(),
