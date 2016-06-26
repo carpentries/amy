@@ -453,6 +453,11 @@ class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         verbose_name='Other areas of expertise',
         blank=True, default='',
     )
+    languages = models.ManyToManyField(
+        'Language',
+        verbose_name='Languages you can teach in',
+        blank=True,
+    )
     lessons = models.ManyToManyField(
         'Lesson',
         verbose_name='Topic and lessons you\'re comfortable teaching',

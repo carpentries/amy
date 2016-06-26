@@ -11,7 +11,7 @@ from django.contrib.auth.models import Permission, Group
 from ..forms import PersonForm, PersonCreateForm, PersonsMergeForm
 from ..models import (
     Person, Task, Qualification, Award, Role, Event, KnowledgeDomain, Badge,
-    Lesson, Host
+    Lesson, Host, Language,
 )
 from .base import TestBase
 
@@ -525,6 +525,8 @@ class TestPersonMerging(TestBase):
             event=Event.objects.get(slug='ends-tomorrow-ongoing'),
             role=Role.objects.get(name='instructor'),
         )
+        self.person_a.languages.set([Language.objects.first(),
+                                     Language.objects.last()])
 
         self.person_b = Person.objects.create(
             personal='Jayden', middle='', family='Deckow',
@@ -540,6 +542,7 @@ class TestPersonMerging(TestBase):
                                        awarded=datetime.date(2016, 2, 16))
         Qualification.objects.create(person=self.person_b, lesson=self.sql)
         self.person_b.domains = [KnowledgeDomain.objects.last()]
+        self.person_b.languages.set([Language.objects.last()])
 
         self.strategy = {
             'person_a': self.person_a.pk,
@@ -563,6 +566,7 @@ class TestPersonMerging(TestBase):
             'award_set': 'obj_a',
             'qualification_set': 'obj_b',
             'domains': 'combine',
+            'languages': 'combine',
             'task_set': 'obj_b',
             'is_active': 'obj_a',
         }
@@ -604,6 +608,7 @@ class TestPersonMerging(TestBase):
             'award_set': 'combine',
             'qualification_set': 'combine',
             'domains': 'combine',
+            'languages': 'combine',
             'task_set': 'combine',
         }
         data = hidden.copy()
@@ -673,6 +678,8 @@ class TestPersonMerging(TestBase):
             'lessons': set([self.sql]),
             'domains': set([KnowledgeDomain.objects.first(),
                             KnowledgeDomain.objects.last()]),
+            'languages': set([Language.objects.first(),
+                              Language.objects.last()]),
             'task_set': set(Task.objects.none()),
         }
 

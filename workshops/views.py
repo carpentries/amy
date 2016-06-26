@@ -942,7 +942,7 @@ def persons_merge(request):
 
             # M2M relationships
             difficult = ('award_set', 'qualification_set', 'domains',
-                         'task_set')
+                         'languages', 'task_set')
 
             try:
                 _, integrity_errors = merge_objects(obj_a, obj_b, easy,
@@ -1303,7 +1303,7 @@ def events_merge(request):
             # non-M2M-relationships:
             easy = (
                 'slug', 'completed', 'assigned_to', 'start', 'end', 'host',
-                'administrator', 'url', 'reg_key', 'admin_fee',
+                'administrator', 'url', 'language', 'reg_key', 'admin_fee',
                 'invoice_status', 'attendance', 'contact', 'country', 'venue',
                 'address', 'latitude', 'longitude', 'learners_pre',
                 'learners_post', 'instructors_pre', 'instructors_post',
@@ -2552,6 +2552,7 @@ def profileupdaterequest_accept(request, request_id, person_id=None):
         person.save()
 
     person.domains = list(profileupdate.domains.all())
+    person.languages.set(profileupdate.languages.all())
 
     # Since Person.lessons uses a intermediate model Qualification, we ought to
     # operate on Qualification objects instead of using Person.lessons as a

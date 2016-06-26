@@ -539,6 +539,9 @@ class PersonsMergeForm(forms.Form):
     domains = forms.ChoiceField(
         choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
     )
+    languages = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )
     task_set = forms.ChoiceField(
         choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
     )
@@ -747,6 +750,14 @@ class DCSelfOrganizedEventRequestForm(
 
 
 class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):
+    languages = selectable.AutoCompleteSelectMultipleField(
+        lookup_class=lookups.LanguageLookup,
+        label='Languages you can teach in',
+        required=False,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectMultipleWidget,
+    )
+
     class Meta:
         model = ProfileUpdateRequest
         exclude = ('active', 'created_at', 'last_updated_at')
@@ -858,6 +869,9 @@ class EventsMergeForm(forms.Form):
         choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
     )
     url = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    language = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
     reg_key = forms.ChoiceField(
