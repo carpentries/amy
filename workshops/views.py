@@ -2552,6 +2552,7 @@ def profileupdaterequest_accept(request, request_id, person_id=None):
         person.save()
 
     person.domains = list(profileupdate.domains.all())
+    person.languages.set(profileupdate.languages.all())
 
     # Since Person.lessons uses a intermediate model Qualification, we ought to
     # operate on Qualification objects instead of using Person.lessons as a

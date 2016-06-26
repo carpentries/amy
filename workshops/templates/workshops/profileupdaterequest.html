@@ -94,6 +94,24 @@
         {% endif %}
         </td>
     </tr>
+    <tr><th>Languages:</th>
+        <td>
+          <ul>
+          {% for language in new.languages.all %}
+            <li>{{ language }}</li>
+          {% endfor %}
+          </ul>
+        </td>
+        <td>
+        {% if old %}
+          <ul>
+          {% for language in old.languages.all %}
+            <li>{{ language }}</li>
+          {% endfor %}
+          </ul>
+        {% endif %}
+        </td>
+    </tr>
     <tr><th>Lessons:</th>
         <td>
           <ul>

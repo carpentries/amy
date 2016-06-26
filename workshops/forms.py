@@ -750,6 +750,14 @@ class DCSelfOrganizedEventRequestForm(
 
 
 class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):
+    languages = selectable.AutoCompleteSelectMultipleField(
+        lookup_class=lookups.LanguageLookup,
+        label='Languages you can teach in',
+        required=False,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectMultipleWidget,
+    )
+
     class Meta:
         model = ProfileUpdateRequest
         exclude = ('active', 'created_at', 'last_updated_at')
