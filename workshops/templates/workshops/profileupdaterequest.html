@@ -2,6 +2,7 @@
 
 {% load crispy_forms_tags %}
 {% load links %}
+{% load tags %}
 
 {% block content %}
 {% if new.active %}
@@ -135,7 +136,11 @@
     </tr>
     <tr><th>Has instructor badge:</th>
         <td><em>Not available since it applies to people from database only</em></td>
-        <td>{% if old %}{{ old.has_instructor_badge|yesno }}{% endif %}</td></tr>
+        <td>{% if old %}
+        {% for badge in old.badges.instructor_badges.all %}
+        {% bootstrap_tag badge.name|cut:"-instructor"|upper %}
+        {% endfor %}
+        {% endif %}</td></tr>
     <tr><th>Note from the user:</th>
         <td><pre>{{ new.notes|default:"—" }}</pre></td>
         <td><pre>{% if old %}{{ old.notes|default:"—" }}{% endif %}</pre></td></tr>
