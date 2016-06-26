@@ -380,6 +380,36 @@ class TestPerson(TestBase):
         person.refresh_from_db()
         self.assertEqual(person.email, 'm.curie@sorbonne.fr')
 
+    def test_edit_permission_of_person_without_email(self):
+        """
+        Creating a person without email id and then changing
+        the permissions for that person.
+        """
+        p = Person.objects.create(personal='P1', family='P1')
+        response = self.client.get(reverse('person_details',
+                                           args=[str(p.id)]))
+        assert response.status_code == 200
+
+        user_permissions = Permission.objects \
+            .filter(content_type__app_label='admin')
+        user_permissions_ids = user_permissions.values_list('id', flat=True) \
+            .order_by('id')
+
+        groups = Group.objects.all()
+        groups_ids = groups.values_list('id', flat=True).order_by('id')
+
+        data = {
+            'is_superuser': True,
+            'user_permissions': user_permissions_ids,
+            'groups': groups_ids,
+        }
+
+        response = self.client.post(
+            reverse('person_permissions', args=[str(p.id)]),
+            data,
+        )
+        assert response.status_code == 302
+
 
 class TestPersonPassword(TestBase):
     """Separate tests for testing password setting.
