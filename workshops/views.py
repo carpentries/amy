@@ -1303,7 +1303,7 @@ def events_merge(request):
             # non-M2M-relationships:
             easy = (
                 'slug', 'completed', 'assigned_to', 'start', 'end', 'host',
-                'administrator', 'url', 'reg_key', 'admin_fee',
+                'administrator', 'url', 'language', 'reg_key', 'admin_fee',
                 'invoice_status', 'attendance', 'contact', 'country', 'venue',
                 'address', 'latitude', 'longitude', 'learners_pre',
                 'learners_post', 'instructors_pre', 'instructors_post',

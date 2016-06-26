@@ -542,6 +542,7 @@ class TestEventMerging(TestBase):
         self._setUpInstructors()
         self._setUpUsersAndLogin()
         self._setUpTags()
+        self._setUpLanguages()
 
         today = date.today()
         tomorrow = today + timedelta(days=1)
@@ -553,7 +554,8 @@ class TestEventMerging(TestBase):
             slug='event-a', completed=True, assigned_to=self.harry,
             start=today, end=tomorrow,
             host=self.host_alpha, administrator=self.host_alpha,
-            url='http://reichel.com/event-a', reg_key='123456',
+            url='http://reichel.com/event-a', language=self.french,
+            reg_key='123456',
             admin_fee=2500, invoice_status='not-invoiced',
             attendance=30, contact='moore.buna@schuppe.info', country='US',
             venue='Modi', address='876 Dot Fork',
@@ -575,7 +577,8 @@ class TestEventMerging(TestBase):
             slug='event-b', completed=False, assigned_to=self.hermione,
             start=today, end=tomorrow + timedelta(days=1),
             host=self.host_beta, administrator=self.host_beta,
-            url='http://www.cummings.biz/event-b', reg_key='654321',
+            url='http://www.cummings.biz/event-b', language=self.english,
+            reg_key='654321',
             admin_fee=2500, invoice_status='not-invoiced',
             attendance=40, contact='haleigh.schneider@hotmail.com',
             country='GB', venue='Nisi', address='59747 Fernanda Cape',
@@ -605,6 +608,7 @@ class TestEventMerging(TestBase):
             'host': 'obj_b',
             'administrator': 'obj_a',
             'url': 'obj_b',
+            'language': 'obj_b',
             'reg_key': 'obj_a',
             'admin_fee': 'obj_b',
             'invoice_status': 'obj_a',
@@ -649,6 +653,7 @@ class TestEventMerging(TestBase):
             'host': 'combine',
             'administrator': 'combine',
             'url': 'combine',
+            'language': 'combine',
             'reg_key': 'combine',
             'admin_fee': 'combine',
             'invoice_status': 'combine',
@@ -714,6 +719,7 @@ class TestEventMerging(TestBase):
             'host': self.event_b.host,
             'administrator': self.event_a.administrator,
             'url': self.event_b.url,
+            'language': self.event_b.language,
             'reg_key': self.event_a.reg_key,
             'admin_fee': self.event_b.admin_fee,
             'invoice_status': self.event_a.invoice_status,

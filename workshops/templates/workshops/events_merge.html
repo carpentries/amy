@@ -74,6 +74,11 @@
       <th>{% include "workshops/merge_radio.html" with field=form.url %}</th>
     </tr>
     <tr>
+      <th>Language</th>
+      <td>{{ obj_a.language|default:"—" }}</td><td>{{ obj_b.language|default:"—" }}</td>
+      <th>{% include "workshops/merge_radio.html" with field=form.language %}</th>
+    </tr>
+    <tr>
       <th>Eventbrite key</th>
       <td>{{ obj_a.reg_key|default:"—" }}</td><td>{{ obj_b.reg_key|default:"—" }}</td>
       <th>{% include "workshops/merge_radio.html" with field=form.reg_key %}</th>
