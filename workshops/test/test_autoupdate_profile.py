@@ -31,7 +31,7 @@ class TestAutoUpdateProfile(TestBase):
             'gender': Person.UNDISCLOSED,
             'may_contact': True,
             'airport': self.airport_0_0.pk,
-            'github': '',
+            'github': 'changed',
             'twitter': '',
             'url': '',
             'username': 'changed',
@@ -46,6 +46,7 @@ class TestAutoUpdateProfile(TestBase):
         self.assertNotIn('Fix errors below', content)
         self.user.refresh_from_db()
         self.assertEqual(self.user.username, 'user')  # username is read-only
+        self.assertEqual(self.user.github, None)  # github is read-only
         self.assertEqual(self.user.family, 'Smith')
         self.assertEqual(set(self.user.lessons.all()),
                          {self.python, self.matlab})

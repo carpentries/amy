@@ -220,11 +220,10 @@ SOCIAL_AUTH_PIPELINE = (
     'social.pipeline.social_auth.social_details',
     'social.pipeline.social_auth.social_uid',
     'social.pipeline.social_auth.auth_allowed',
+    'social.pipeline.social_auth.social_user',
 
-    # The default pipeline includes 'social.pipeline.social_auth.social_user'
-    # here, which finds out in UserSocialAuth table what Person is associated
-    # with given GitHub account. However, we implement our custom way:
-    'workshops.github_auth.find_user_or_abort',
+    # If we can't find Person associated with given github account, abort.
+    'workshops.github_auth.abort_if_no_user_found',
 
     # The default pipeline includes 'social.pipeline.user.create_user' here,
     # but we don't want to register a new Person when somebody logs in
@@ -235,6 +234,11 @@ SOCIAL_AUTH_PIPELINE = (
 )
 
 SOCIAL_AUTH_USER_MODEL = 'workshops.Person'
+
+# Github API token (optional). Setting this token reduces limits and quotes
+# on Github API.
+
+GITHUB_API_TOKEN = os.environ.get('GITHUB_API_TOKEN', None)
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.7/topics/i18n/

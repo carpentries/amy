@@ -1,22 +1,20 @@
+from django.conf import settings
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.shortcuts import redirect
+from github import Github
+from github.GithubException import UnknownObjectException, GithubException
 from social.exceptions import SocialAuthBaseException
 
-from workshops.models import Person
+# from workshops.models import Person
 
 
 class NoPersonAssociatedWithGithubAccount(SocialAuthBaseException):
     pass
 
 
-def find_user_or_abort(details=None, **kwargs):
-    username = details['username']
-    try:
-        user = Person.objects.get(github=username, is_active=True)
-        return {'user': user}
-    except Person.DoesNotExist:
-        # This exception is caught by GithubAuthMiddleware
+def abort_if_no_user_found(user=None, **kwargs):
+    if user is None:
         raise NoPersonAssociatedWithGithubAccount
 
 
@@ -26,3 +24,19 @@ class GithubAuthMiddleware():
             messages.error(request,
                            'No account is associated with your GitHub account.')
             return redirect(reverse('login'))
+
+
+def github_username_to_uid(username):
+    """ Raises ValueError if there is no user with given username.
+
+    Raises GithubException in the case of IO issues.
+    """
+
+    g = Github(settings.GITHUB_API_TOKEN)
+    try:
+        user = g.get_user(username)
+    except UnknownObjectException as e:
+        msg = 'There is no github user with login "{}"'.format(username)
+        raise ValueError(msg) from e
+    else:
+        return user.id

@@ -35,7 +35,38 @@
   <tr><td>gender:</td><td id="gender">{{ person.get_gender_display|default:"—" }}</td></tr>
   <tr><td>airport:</td><td id="airport">{% if person.airport %}<a href="{{ person.airport.get_absolute_url }}">{{ person.airport }}</a>{% else %}—{% endif %}</td></tr>
   <tr><td>affiliation:</td><td>{{ person.affiliation|default:"—" }}</td></tr>
-  <tr><td>github:</td><td id="github">{% if person.github %}<a href="https://github.com/{{ person.github }}" target="_blank">{{ person.github }}</a>{% else %}—{% endif %}</td></tr>
+  <tr><td>github:</td>
+      <td>
+        {% if person.github %}
+          <a href="https://github.com/{{ person.github }}" target="_blank">{{ person.github }}</a>
+          {% if is_valid_github_account == 'unknown' %}
+            <i class="glyphicon glyphicon-question-sign" style="color: orange; font-size: 14pt;"
+               title="We could not find out if there exists GitHub account with this username due to some errors with GitHub API."></i>
+          {% elif is_valid_github_account %}
+            <i class="glyphicon glyphicon-ok-sign" style="color: green; font-size: 14pt;"
+               title="There exists GitHub account with this username."></i>
+          {% else %}
+            <i class="glyphicon glyphicon-remove-sign" style="color: red; font-size: 14pt;"
+               title="There is no GitHub account with this username. Maybe it's misspelled?"></i>
+          {% endif %}
+          {% if is_usersocialauth_in_sync == 'unknown' %}
+            <i class="glyphicon glyphicon-question-sign" style="color: orange; font-size: 14pt;"
+               title="We could not find out if UserSocialAuth table is in sync due to some errors with GitHub API."></i>
+          {% elif is_usersocialauth_in_sync %}
+            <i class="glyphicon glyphicon-ok-sign" style="color: green; font-size: 14pt;"
+               title="UserSocialAuth table is in sync."></i>
+          {% else %}
+            <i class="glyphicon glyphicon-remove-sign" style="color: red; font-size: 14pt;"
+               title="UserSocialAuth table is not in sync."></i>
+            <form method="POST" action="{% url 'sync_usersocialauth' person.id %}" style="display: inline;">
+              {% csrf_token %}
+              <input type="submit" name="submit" value="Sync UserSocialAuth" class="btn btn-primary" />
+            </form>
+          {% endif %}
+        {% else %}
+          —
+        {% endif %}
+      </td></tr>
   <tr><td>twitter:</td><td id="twitter">{% if person.twitter %}<a href="https://twitter.com/{{ person.twitter }}" target="_blank">{{ person.twitter }}</a>{% else %}—{% endif %}</td></tr>
   <tr><td>url:</td><td id="url">{{ person.url|default:""|urlize_newtab|default:"—" }}</td></tr>
   <tr><td>occupation:</td><td>{{ person.occupation|default:"—" }}</td></tr>

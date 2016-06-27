@@ -1,5 +1,6 @@
 import datetime
 import re
+from social.apps.django_app.default.models import UserSocialAuth
 from urllib.parse import urlencode
 
 from django.contrib.auth.models import (
@@ -14,6 +15,7 @@ from django_countries.fields import CountryField
 from reversion import revisions as reversion
 
 #------------------------------------------------------------
+from workshops import github_auth
 
 STR_SHORT   =  10         # length of short strings
 STR_MED     =  40         # length of medium strings
@@ -337,11 +339,64 @@ class Person(AbstractBaseUser, PermissionsMixin):
         return reverse('person_details', args=[str(self.id)])
 
     @property
+    def github_usersocialauth(self):
+        """ List of all associated GitHub accounts with this Person. Returns
+        list of UserSocialAuth. """
+        return self.social_auth.filter(provider='github')
+
+    def get_github_uid(self):
+        """ May raise GithubException in the case of IO issues.
+
+        Returns uid (int) of Github account with username == Person.github.
+        If there is no account with such username, returns None.
+        """
+
+        if self.github and self.is_active:
+            try:
+                github_uid = github_auth.github_username_to_uid(self.github)
+            except ValueError:
+                github_uid = None
+        else:
+            github_uid = None
+
+        return github_uid
+
+    def check_if_usersocialauth_is_in_sync(self):
+        """ May raise GithubException in the case of IO issues. """
+
+        github_uid = self.get_github_uid()
+
+        uids_from_person = set() if github_uid is None else {str(github_uid)}
+        uids_from_usersocialauth = {u.uid for u in self.github_usersocialauth}
+        return uids_from_person == uids_from_usersocialauth
+
+    def synchronize_usersocialauth(self):
+        """ May raise GithubException in the case of IO issues.
+
+        Disconnect all GitHub account associated with this Person and
+        associates the account with username == Person.github, if there is
+        such GitHub account.
+        """
+
+        github_uid = self.get_github_uid()
+
+        self.github_usersocialauth.delete()
+        if github_uid is not None:
+            UserSocialAuth.objects.create(provider='github',
+                                          user=self,
+                                          uid=github_uid,
+                                          extra_data={})
+
+    @property
     def is_staff(self):
         """
         Required for logging into admin panel at '/admin/'.
         """
         return self.is_superuser
+
+    @property
+    def is_admin(self):
+        return is_admin(self)
 
     def clean(self):
         """This will be called by the ModelForm.is_valid(). No saving to the

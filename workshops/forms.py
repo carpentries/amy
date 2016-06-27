@@ -1022,12 +1022,12 @@ class TrainingRequestForm(forms.ModelForm):
 
 
 class AutoUpdateProfileForm(forms.ModelForm):
-    username = forms.CharField(disabled=True)
-
-    ERROR_MSG = ('This GitHub account is already associated with different '
-                 'AMY account. Log out and log in using your GitHub account.')
-    github = forms.CharField(error_messages={'unique': ERROR_MSG},
-                             required=False)
+    username = forms.CharField(disabled=True, required=False)
+    github = forms.CharField(
+        disabled=True, required=False,
+        help_text='If you want to change your github username, please email '
+                  'us at <a href="mailto:admin@software-carpentry.org">'
+                  'admin@software-carpentry.org</a>.')
 
     class Meta:
         model = Person
@@ -1049,6 +1049,7 @@ class AutoUpdateProfileForm(forms.ModelForm):
         ]
         readonly_fields = (
             'username',
+            'github',
         )
         widgets = {
             'occupation': forms.RadioSelect(),

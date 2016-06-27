@@ -2,6 +2,8 @@ import csv
 import datetime
 import io
 import re
+from django.views.decorators.http import require_POST
+
 import requests
 
 from django.contrib import messages
@@ -26,10 +28,12 @@ from django.template.loader import get_template
 from django.views.generic import ListView, DetailView, TemplateView
 from django.views.generic.edit import CreateView, UpdateView, ModelFormMixin
 from django.contrib.auth.decorators import permission_required
+from github.GithubException import GithubException
 
 from reversion.models import Revision
 from reversion.revisions import get_for_object
 
+from workshops import github_auth
 from workshops.management.commands.check_for_workshop_websites_updates import (
     Command as WebsiteUpdatesCommand)
 from workshops.models import (
@@ -510,6 +514,18 @@ def person_details(request, person_id):
     lessons = person.lessons.all()
     domains = person.domains.all()
     languages = person.languages.all()
+    try:
+        is_usersocialauth_in_sync = person.check_if_usersocialauth_is_in_sync()
+    except GithubException:
+        is_usersocialauth_in_sync = 'unknown'
+    try:
+        github_auth.github_username_to_uid(person.github)
+    except ValueError:
+        is_valid_github_account = False
+    except GithubException:
+        is_valid_github_account = 'unknown'
+    else:
+        is_valid_github_account = True
     context = {
         'title': 'Person {0}'.format(person),
         'person': person,
@@ -518,6 +534,8 @@ def person_details(request, person_id):
         'lessons': lessons,
         'domains': domains,
         'languages': languages,
+        'is_usersocialauth_in_sync': is_usersocialauth_in_sync,
+        'is_valid_github_account': is_valid_github_account,
     }
     return render(request, 'workshops/person.html', context)
 
@@ -977,6 +995,28 @@ def persons_merge(request):
     }
     return render(request, 'workshops/persons_merge.html', context)
 
+@require_POST
+@admin_required
+def sync_usersocialauth(request, person_id):
+    person_id = int(person_id)
+    try:
+        person = Person.objects.get(pk=person_id)
+    except Person.DoesNotExist:
+        messages.error(request,
+                       'Cannot sync UserSocialAuth table for person #{} '
+                       '-- there is no Person with such id.'.format(person_id))
+        return redirect(reverse('persons'))
+    else:
+        try:
+            person.synchronize_usersocialauth()
+        except GithubException:
+            messages.error(request,
+                           'Cannot sync UserSocialAuth table for person #{} '
+                           'due to errors with GitHub API.'.format(person_id))
+        else:
+            messages.success(request, 'Sync UserSocialAuth successfully.')
+        finally:
+            return redirect(reverse('person_details', args=(person_id,)))
 
 #------------------------------------------------------------
 

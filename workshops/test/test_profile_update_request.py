@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.core.urlresolvers import reverse
 
 from .base import TestBase
@@ -171,6 +173,7 @@ class TestProfileUpdateRequest(TestBase):
                          set(Lesson.objects.all()[0:2]))
 
 
+@patch('workshops.github_auth.github_username_to_uid', lambda username: None)
 class TestProfileUpdateRequestsViews(TestBase):
     def setUp(self):
         self._setUpAirports()
