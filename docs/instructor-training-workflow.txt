@@ -1,0 +1,174 @@
+- [use cases] are in square brackets
+- {web pages} are in curly braces
+- <database objects> are in angle brackets
+
+## Individual application for training.
+
+* [user registers self][a]: user match by email address or GitHub ID.
+  - User fills in {single user application form} on AMY with name, email address, GitHub ID, etc.
+  - AMY matches to pre-existing <Person> using email or GitHub ID.
+  - <Training Application> created, connected to pre-existing <Person>, and added to <Training Application List>.
+
+* [user registers self][b]: no user match.
+  - User fills in form on AMY with name, email address, GitHub ID, etc.
+  - AMY does *not* match email or GitHub ID.
+  - AMY creates new <Person>.
+  - <Training Application> created, connected to newly-created <Person>, and added to <Training Application List>.
+
+## Administrator registers someone for training.
+
+* [admin registers user][a]: user is already in database.
+  - Administrator looks up email address or GitHub ID.
+  - Administrator => [user registers self][a].
+
+* [admin registers user][b]: user is *not* already in database.
+  - Administrator creates <Person>.
+  - Administrator => [admin registers user][a].
+
+## Group application for training.
+
+* [user registers group]: individual user registers a group of friends or colleagues.
+  - User fills in {group application form} with:
+    - Their own name, email address, institution.
+    - Names and email addresses of group members
+  - User and others are sent unique links to fill in full application form.
+  - Each user => [user registers self], but application is linked to <Group Training Application>.
+
+* [admin registers group]: admin does group registration (e.g., has been sent names and email addresses by partner).
+  - Admin either:
+    - Fills in {group registration form} with names and email addresses of group members.
+    - Fills in {group registration form} via bulk upload from CSV file.
+  - Admin matches users already in database to <Person> records as per existing bulk upload.
+  - AMY creates new <Person> records for unmatched users as per existing bulk upload.
+  - AMY creates <Group Training Application>.
+  - AMY:
+    - Creates one new <Training Application> record for each <Person>.
+    - Connects the <Training Application> to the <Person>.
+    - Connects the <Training Application> to the <Group Training Application>.
+    - Adds the <Training Application> to <Training Application List>.
+
+## Reviewing training queue.
+
+* [admin reviews training queue]: to see who's waiting and how long.
+  - Admin goes to {training queue display}.
+  - Admin selects filtering and sorting criteria (if any).
+  - Admin pages through display showing both <Training Application>s and <Group Training Application>s.
+
+## Setting up training course.
+
+* [admin creates training event]: and assigns people to it.
+  - Admin creates new <Event>.
+  - Admin goes to {training queue display}.
+  - Admin selects <Event>.
+  - Admin selects some mix of <Training Application> and <Group Training Application>.
+  - AMY creates <Task>s to add all the selected <Person>s to the <Event>.
+  - AMY connects the <Training Application> and <Group Training Application> to the <Event>.
+  - AMY moves <Training Application>s and <Group Training Application>s to <Assigned Application List>.
+  - AMY provides single-click "send to all" email link to admin to inform trainees.
+  - AMY creates <Training Progress> record for each <Person>.
+
+## Administering training course applications.
+
+* [admin removes people from training event][a]: and discards applications
+  - Admin goes to {assigned training application display}.
+  - Admin selects <Training Application>s and <Group Training Application>s.
+  - Admin removes them from training event.
+  - AMY deletes associated <Task>s.
+
+* [admin removes people from training event][b]: but keeps applications
+  - => [admin removes people from training event][a]
+  - AMY moves <Training Application>s and <Group Training Application>s back to <Training Application List>.
+
+## Reviewing training progress.
+
+* [admin views training progress]: both past and present.
+  - Admin views {training progress page}.
+  - Admin selects filtering and sorting criteria (if any).
+
+## Tracking submission of written work.
+
+* [trainee reports submission of written work]: such as pull request or comment on lesson.
+  - Trainee views their own {training progress}.
+  - Trainee enters URL of written work.
+  - AMY updates <Training Task> associated with <Person> and <Event>.
+  - AMY adds <Training Progress> to <Training Progress Review List>.
+
+* [trainer reports submission of written work]: on behalf of trainee.
+  - Trainer looks up <Training Progress> associated with trainee.
+  - Trainer enters URL of written work in <Training Task>.
+
+* [trainer reports submission of written work]: on behalf of trainee.
+  - Trainer looks up <Training Progress> associated with trainee.
+  - Trainer enters URL of written work in <Training Task>.
+  - AMY adds <Training Progress> to <Training Progress Review List>.
+
+* [trainer reports completion of written work]: on behalf of trainee.
+  - Trainer looks up <Training Progress> associated with trainee.
+  - Trainer enters URL of written work in <Training Task>.
+  - Trainer marks <Training Task> as complete.
+
+## Tracking participation in interactive work.
+
+* [trainer reports successful completion of interactive work]: such as discussion session or lesson demo.
+  - Trainer views {training progress} for trainee.
+  - Trainer selects <Training Task>.
+  - Trainer:
+    - Enters date of interactive event.
+    - Adds comments (if any).
+  - Trainer indicates whether <Training Task> is now complete.
+
+Note: each <Training Task> may accumulate multiple date+comment pairs, one for each attempt to pass that task.
+
+## Completing training work.
+
+* [trainer changes completion status of work for trainee]
+  - Trainer looks up <Training Progress> associated with trainee.
+  - Trainer changes "completed" status of work item(s).
+  => [training automatically completed]
+
+* [trainer finds work to review]
+  - Trainer views {training progress display}.
+  - Trainer selects <Training Progress>.
+  - Trainer => [trainer changes completion status of work for trainee].
+
+## Completing training.
+
+* [training automatically completed]: triggered by changes in <Training Task>s.
+  - AMY records change to <Training Task> and all <Training Task>s for <Person> now complete.
+  - AMY displays {badge creation form}.
+  - Admin confirms creation of badge.
+  - AMY moves <Training Progress> to <Past Training Progress List>.
+
+## Ending training.
+
+* [trainer ends training]: because trainee has gone silent, failed a work item, etc.
+  - Trainer views {training progress display}.
+  - Trainer selects <Training Progress>.
+  - Trainer marks <Training Progress> as "unsuccessful".
+  - AMY moves <Training Progress> to <Past Training Progress List>.
+
+* [admin ends training course]: because it has timed out.
+  - Admin selects training <Event>.
+  - Admin marks <Event> as "stalled".
+  - AMY marks all associated <Training Progress>es as "unsuccessful".
+  - AMY moves <Training Progress>es to <Past Training Progress List>.
+
+## Creating certificates.
+
+* [admin creates certificate]: for trainers who don't yet have them.
+  - Admin goes to {certificate creation form}.
+  - Admin selects <Person>s who:
+    - Have an instructor badge.
+    - Do not yet have a PDF certificate.
+  - Admin adjusts information in form.
+    - Changes name of instructor(s) awarding certificates.
+    - Changes date of award.
+  - AMY generates PDF certificates.
+  - User views/downloads certificate on {certificate display}.
+
+## Questions
+
+- How to display a mix of both <Training Application>s and <Group Training Application>s?
+- How to select from a mix of both <Training Application>s and <Group Training Application>s?
+- What to do if Admin deletes <Task> from training <Event> directly rather than via [admin removes people from training event]?
+- What workflow *should* we use for marking training events as closed/stalled?
