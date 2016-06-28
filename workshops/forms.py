@@ -1010,7 +1010,7 @@ class TrainingRequestForm(forms.ModelForm):
         )
         widgets = {
             'occupation': forms.RadioSelect(),
-            'domains':  forms.CheckboxSelectMultiple(),
+            'domains': forms.CheckboxSelectMultiple(),
             'gender': forms.RadioSelect(),
             'previous_involvement': forms.CheckboxSelectMultiple(),
             'previous_training': forms.RadioSelect(),
@@ -1018,4 +1018,50 @@ class TrainingRequestForm(forms.ModelForm):
             'programming_language_usage_frequency': forms.RadioSelect(),
             'teaching_frequency_expectation': forms.RadioSelect(),
             'max_travelling_frequency': forms.RadioSelect(),
+        }
+
+
+class AutoUpdateProfileForm(forms.ModelForm):
+    username = forms.CharField(disabled=True, required=False)
+    github = forms.CharField(
+        disabled=True, required=False,
+        help_text='If you want to change your github username, please email '
+                  'us at <a href="mailto:admin@software-carpentry.org">'
+                  'admin@software-carpentry.org</a>.')
+
+    languages = selectable.AutoCompleteSelectMultipleField(
+        lookup_class=lookups.LanguageLookup,
+        label='Languages',
+        required=False,
+        widget=selectable.AutoComboboxSelectMultipleWidget,
+    )
+
+    class Meta:
+        model = Person
+        fields = [
+            'personal',
+            'middle',
+            'family',
+            'email',
+            'gender',
+            'may_contact',
+            'airport',
+            'github',
+            'twitter',
+            'url',
+            'username',
+            'affiliation',
+            'domains',
+            'lessons',
+            'languages',
+        ]
+        readonly_fields = (
+            'username',
+            'github',
+        )
+        widgets = {
+            'occupation': forms.RadioSelect(),
+            'gender': forms.RadioSelect(),
+            'domains': forms.CheckboxSelectMultiple(),
+            'lessons': forms.CheckboxSelectMultiple(),
         }

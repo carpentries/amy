@@ -10,13 +10,13 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="{% url 'dashboard' %}">AMY</a>
+          <a class="navbar-brand" href="{% url 'admin-dashboard' %}">AMY</a>
         </div>
 
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse" id="navbar-collapse-1">
           <ul class="nav navbar-nav">
-            {% navbar_element "Dashboard" "dashboard" %}
+            {% navbar_element "Dashboard" "admin-dashboard" %}
             {% navbar_element "Events" "all_events" %}
             {% navbar_element "Hosts" "all_hosts" %}
             {% navbar_element "Persons" "all_persons" %}

@@ -1095,7 +1095,8 @@ class TestPaginatorSections(TestCase):
 class TestAssignUtil(TestCase):
     def setUp(self):
         """Set up RequestFactory for making fast fake requests."""
-        Person.objects.create_user('test_user', 'User', 'Test', 'user@test')
+        Person.objects.create_user(username='test_user', email='user@test',
+                                   personal='User', family='Test')
         self.factory = RequestFactory()
         self.event = Event.objects.create(
             slug='event-for-assignment', host=Host.objects.first())

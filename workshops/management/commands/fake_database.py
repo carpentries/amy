@@ -258,9 +258,12 @@ class Command(BaseCommand):
         third_event.save()
 
         # persons
-        bob = Person.objects.create(username='bob-trainee')
-        alice = Person.objects.create(username='alice-trainee')
-        john = Person.objects.create(username='john-trainee')
+        bob = Person.objects.create(username='bob-trainee',
+                                    personal='Bob', family='Smith')
+        alice = Person.objects.create(username='alice-trainee',
+                                      personal='Alice', family='Smith')
+        john = Person.objects.create(username='john-trainee',
+                                     personal='Alice', family='Smith')
 
         # tasks
         Task.objects.create(event=first_event, person=bob, role=learner)

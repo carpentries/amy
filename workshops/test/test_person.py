@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import datetime
+from unittest.mock import patch
 from urllib.parse import urlencode
 
 from django.contrib.auth import authenticate
@@ -16,6 +17,7 @@ from ..models import (
 from .base import TestBase
 
 
+@patch('workshops.github_auth.github_username_to_uid', lambda username: None)
 class TestPerson(TestBase):
     '''Test cases for persons.'''
 
@@ -35,6 +37,7 @@ class TestPerson(TestBase):
         response = self.client.get(reverse('person_details', args=[str(self.hermione.id)]))
         doc = self._check_status_code_and_parse(response, 200)
         self._check_person(doc, self.hermione)
+
 
     def test_display_person_correctly_with_some_fields(self):
         response = self.client.get(reverse('person_details', args=[str(self.ironman.id)]))
@@ -89,7 +92,6 @@ class TestPerson(TestBase):
                   ('gender', person.get_gender_display()),
                   ('may_contact', 'yes' if person.may_contact else 'no'),
                   ('airport', person.airport),
-                  ('github', person.github),
                   ('twitter', person.twitter),
                   ('url', person.url))
         for (key, value) in fields:
@@ -419,6 +421,8 @@ class TestPersonPassword(TestBase):
     """
 
     def setUp(self):
+        admins, _ = Group.objects.get_or_create(name='administrators')
+
         # create a superuser
         self.admin = Person.objects.create_superuser(
             username='admin', personal='Super', family='User',
@@ -430,6 +434,7 @@ class TestPersonPassword(TestBase):
             username='user', personal='Typical', family='User',
             email='undo@example.org', password='user',
         )
+        self.user.groups.add(admins)
 
     def test_edit_password_by_superuser(self):
         self.client.login(username='admin', password='admin')
