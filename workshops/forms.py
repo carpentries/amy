@@ -1010,7 +1010,7 @@ class TrainingRequestForm(forms.ModelForm):
         )
         widgets = {
             'occupation': forms.RadioSelect(),
-            'domains':  forms.CheckboxSelectMultiple(),
+            'domains': forms.CheckboxSelectMultiple(),
             'gender': forms.RadioSelect(),
             'previous_involvement': forms.CheckboxSelectMultiple(),
             'previous_training': forms.RadioSelect(),
@@ -1029,6 +1029,13 @@ class AutoUpdateProfileForm(forms.ModelForm):
                   'us at <a href="mailto:admin@software-carpentry.org">'
                   'admin@software-carpentry.org</a>.')
 
+    languages = selectable.AutoCompleteSelectMultipleField(
+        lookup_class=lookups.LanguageLookup,
+        label='Languages',
+        required=False,
+        widget=selectable.AutoComboboxSelectMultipleWidget,
+    )
+
     class Meta:
         model = Person
         fields = [
@@ -1046,6 +1053,7 @@ class AutoUpdateProfileForm(forms.ModelForm):
             'affiliation',
             'domains',
             'lessons',
+            'languages',
         ]
         readonly_fields = (
             'username',

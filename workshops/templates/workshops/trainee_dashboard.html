@@ -21,12 +21,12 @@
   <tr><th>affiliation</th><td>{{ user.affiliation|default:"—" }}</td></tr>
   <tr><th>occupation</th><td>{{ user.occupation|default:"—" }}</td></tr>
   <tr><th>orcid</th><td>{{ user.orcid|default:"—" }}</td></tr>
-  <tr><th>knowledge domains</th><td>
+  <tr><th>areas of expertise</th><td>
       <ul>
         {% for domain in user.domains.all %}
           <li>{{ domain }}</li>
         {% empty %}
-          <li>No knowledge domain.</li>
+          <li>No areas of expertise.</li>
         {% endfor %}
       </ul>
   </td></tr>
@@ -36,6 +36,15 @@
           <li>{{ lesson }}</li>
         {% empty %}
           <li>No lesson chosen.</li>
+        {% endfor %}
+      </ul>
+  </td></tr>
+  <tr><th>languages</th><td>
+      <ul>
+        {% for language in user.languages.all %}
+          <li>{{ language }}</li>
+        {% empty %}
+          <li>No languages.</li>
         {% endfor %}
       </ul>
   </td></tr>

@@ -3180,22 +3180,23 @@ def trainee_dashboard(request):
 
 @login_required
 def autoupdate_profile(request):
-    user = request.user
-    form = AutoUpdateProfileForm(instance=user)
+    person = request.user
+    form = AutoUpdateProfileForm(instance=person)
 
     if request.method == 'POST':
-        form = AutoUpdateProfileForm(request.POST, instance=user)
+        form = AutoUpdateProfileForm(request.POST, instance=person)
 
-        if form.is_valid() and form.instance == user:
-            user = form.save(commit=False)
-
+        if form.is_valid() and form.instance == person:
             # save lessons
-            user.lessons.clear()
+            person.lessons.clear()
             for lesson in form.cleaned_data['lessons']:
-                q = Qualification(lesson=lesson, person=user)
+                q = Qualification(lesson=lesson, person=person)
                 q.save()
 
-            user.save()
+            # don't save related lessons
+            del form.cleaned_data['lessons']
+
+            person = form.save()
 
             return redirect(reverse('trainee-dashboard'))
         else:
