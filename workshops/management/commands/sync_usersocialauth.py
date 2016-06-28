@@ -9,12 +9,13 @@ class Command(BaseCommand):
             'in Person.github for given Persons.')
 
     def add_arguments(self, parser):
-        parser.add_argument('usernames', nargs='+', type=str)
+        parser.add_argument('username', nargs='+', type=str,
+                            help='Username in AMY database')
 
     def handle(self, *args, **options):
         '''Main entry point.'''
 
-        usernames = options['usernames']
+        usernames = options['username']
         for username in usernames:
             try:
                 person = Person.objects.get(username=username)
