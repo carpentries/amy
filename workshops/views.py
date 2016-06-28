@@ -514,18 +514,12 @@ def person_details(request, person_id):
     lessons = person.lessons.all()
     domains = person.domains.all()
     languages = person.languages.all()
+
     try:
         is_usersocialauth_in_sync = person.check_if_usersocialauth_is_in_sync()
     except GithubException:
         is_usersocialauth_in_sync = 'unknown'
-    try:
-        github_auth.github_username_to_uid(person.github)
-    except ValueError:
-        is_valid_github_account = False
-    except GithubException:
-        is_valid_github_account = 'unknown'
-    else:
-        is_valid_github_account = True
+
     context = {
         'title': 'Person {0}'.format(person),
         'person': person,
@@ -535,7 +529,6 @@ def person_details(request, person_id):
         'domains': domains,
         'languages': languages,
         'is_usersocialauth_in_sync': is_usersocialauth_in_sync,
-        'is_valid_github_account': is_valid_github_account,
     }
     return render(request, 'workshops/person.html', context)
 
@@ -995,7 +988,7 @@ def persons_merge(request):
     }
     return render(request, 'workshops/persons_merge.html', context)
 
-@require_POST
+
 @admin_required
 def sync_usersocialauth(request, person_id):
     person_id = int(person_id)

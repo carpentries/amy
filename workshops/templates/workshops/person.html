@@ -39,34 +39,18 @@
       <td>
         {% if person.github %}
           <a href="https://github.com/{{ person.github }}" target="_blank">{{ person.github }}</a>
-          {% if is_valid_github_account == 'unknown' %}
-            <i class="glyphicon glyphicon-question-sign" style="color: orange; font-size: 14pt;"
-               title="We could not find out if there exists GitHub account with this username due to some errors with GitHub API."></i>
-          {% elif is_valid_github_account %}
-            <i class="glyphicon glyphicon-ok-sign" style="color: green; font-size: 14pt;"
-               title="There exists GitHub account with this username."></i>
-          {% else %}
-            <i class="glyphicon glyphicon-remove-sign" style="color: red; font-size: 14pt;"
-               title="There is no GitHub account with this username. Maybe it's misspelled?"></i>
-          {% endif %}
           {% if is_usersocialauth_in_sync == 'unknown' %}
-            <i class="glyphicon glyphicon-question-sign" style="color: orange; font-size: 14pt;"
-               title="We could not find out if UserSocialAuth table is in sync due to some errors with GitHub API."></i>
-          {% elif is_usersocialauth_in_sync %}
-            <i class="glyphicon glyphicon-ok-sign" style="color: green; font-size: 14pt;"
-               title="UserSocialAuth table is in sync."></i>
+            <a id="socialauth_sync_btn" href="#" class="btn btn-warning btn-xs pull-right" data-toggle="popover" data-trigger="focus" title="Unknown error" data-content="Cannot check if person can log in due to errors in GitHub API access">Allow logging in with GitHub</a>
+          {% elif is_usersocialauth_in_sync == True %}
+            <a id="socialauth_sync_btn" href="#" class="btn btn-success btn-xs pull-right" data-toggle="popover" data-trigger="focus" title="Synchronized" data-content="Person can use their GitHub account to log in">Logging in allowed</a>
           {% else %}
-            <i class="glyphicon glyphicon-remove-sign" style="color: red; font-size: 14pt;"
-               title="UserSocialAuth table is not in sync."></i>
-            <form method="POST" action="{% url 'sync_usersocialauth' person.id %}" style="display: inline;">
-              {% csrf_token %}
-              <input type="submit" name="submit" value="Sync UserSocialAuth" class="btn btn-primary" />
-            </form>
+            <a href="{% url 'sync_usersocialauth' person.id %}" class="btn btn-primary btn-xs pull-right">Allow logging in with GitHub</a>
           {% endif %}
         {% else %}
           —
         {% endif %}
       </td></tr>
+  <tr><td>can login with:</td><td>{% for auth in person.social_auth.all %}{{ auth.provider|title }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</td></tr>
   <tr><td>twitter:</td><td id="twitter">{% if person.twitter %}<a href="https://twitter.com/{{ person.twitter }}" target="_blank">{{ person.twitter }}</a>{% else %}—{% endif %}</td></tr>
   <tr><td>url:</td><td id="url">{{ person.url|default:""|urlize_newtab|default:"—" }}</td></tr>
   <tr><td>occupation:</td><td>{{ person.occupation|default:"—" }}</td></tr>
@@ -180,4 +164,10 @@
     {% endif %}
   </div>
 </div>
+{% endblock %}
+
+{% block extrajs %}
+<script type="text/javascript">
+  $('#socialauth_sync_btn').popover({placement: "left", html: true});
+</script>
 {% endblock %}
