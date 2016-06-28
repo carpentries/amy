@@ -6,8 +6,6 @@ from github import Github
 from github.GithubException import UnknownObjectException, GithubException
 from social.exceptions import SocialAuthBaseException
 
-# from workshops.models import Person
-
 
 class NoPersonAssociatedWithGithubAccount(SocialAuthBaseException):
     pass

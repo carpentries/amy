@@ -489,7 +489,7 @@ def person_details(request, person_id):
     try:
         person = Person.objects.annotate(
             num_taught=Count(
-                 Case(
+                Case(
                     When(task__role__name='instructor', then=Value(1)),
                     output_field=IntegerField()
                 )
@@ -503,7 +503,7 @@ def person_details(request, person_id):
             num_learner=Count(
                 Case(
                     When(task__role__name='learner', then=Value(1)),
-                     output_field=IntegerField()
+                    output_field=IntegerField()
                 )
             )
         ).get(id=person_id)
@@ -3208,4 +3208,3 @@ def autoupdate_profile(request):
         'form_helper': bootstrap_helper,
     }
     return render(request, 'workshops/generic_form_nonav.html', context)
-

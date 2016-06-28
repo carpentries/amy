@@ -14,7 +14,6 @@ from django.utils import timezone
 from django_countries.fields import CountryField
 from reversion import revisions as reversion
 
-#------------------------------------------------------------
 from workshops import github_auth
 
 STR_SHORT   =  10         # length of short strings
@@ -382,10 +381,10 @@ class Person(AbstractBaseUser, PermissionsMixin):
 
         self.github_usersocialauth.delete()
         if github_uid is not None:
-            UserSocialAuth.objects.create(provider='github',
-                                          user=self,
-                                          uid=github_uid,
-                                          extra_data={})
+            return UserSocialAuth.objects.create(provider='github', user=self,
+                                                 uid=github_uid, extra_data={})
+        else:
+            return False
 
     @property
     def is_staff(self):
