@@ -2,7 +2,7 @@ from django.core.urlresolvers import reverse
 from django.core import mail
 
 from .base import TestBase
-from ..models import EventRequest, Event, Host
+from ..models import EventRequest, Event, Organization
 from ..forms import SWCEventRequestForm, DCEventRequestForm
 
 
@@ -185,7 +185,7 @@ class TestEventRequestsViews(TestBase):
         event exists after ER is accepted."""
         data = {
             'slug': '2016-06-30-test-event',
-            'host_1': Host.objects.first().pk,
+            'host_1': Organization.objects.first().pk,
             'tags': [1],
             'invoice_status': 'unknown',
         }

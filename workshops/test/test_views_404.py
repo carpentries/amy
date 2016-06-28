@@ -59,7 +59,7 @@ class TestViewsFor404ing(TestBase):
         rv = self.client.get(url)
         self.assertEqual(rv.status_code, 404)
 
-    def test_host_details(self):
-        url = reverse('host_details', args=['non-existing-host'])
+    def test_organization_details(self):
+        url = reverse('organization_details', args=['non-existing-org'])
         rv = self.client.get(url)
         self.assertEqual(rv.status_code, 404)

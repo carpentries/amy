@@ -12,7 +12,7 @@ from django.contrib.auth.models import Permission, Group
 from ..forms import PersonForm, PersonCreateForm, PersonsMergeForm
 from ..models import (
     Person, Task, Qualification, Award, Role, Event, KnowledgeDomain, Badge,
-    Lesson, Host, Language,
+    Lesson, Organization, Language,
 )
 from .base import TestBase
 
@@ -255,7 +255,7 @@ class TestPerson(TestBase):
         Additionally check on_delete behavior for Task, Qualification, and
         Award."""
         role = Role.objects.create(name='instructor')
-        event = Event.objects.create(slug='test-event', host=self.host_alpha)
+        event = Event.objects.create(slug='test-event', host=self.org_alpha)
         people = [self.hermione, self.harry, self.ron]
 
         for person in people:

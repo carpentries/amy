@@ -1,7 +1,7 @@
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 
-from ..models import Event, Host, Sponsorship
+from ..models import Event, Organization, Sponsorship
 from .base import TestBase
 
 
@@ -11,14 +11,14 @@ class TestSponsorshipModel(TestBase):
         super().setUp()
         self.event = Event.objects.create(
             slug='2016-07-05-test-event',
-            host=self.host_alpha,
+            host=self.org_alpha,
         )
 
     def test_positive_amount_field(self):
         '''Check that we cannot add negative amount of sponsorship'''
         with self.assertRaises(ValidationError):
             Sponsorship.objects.create(
-                organization=self.host_beta,
+                organization=self.org_beta,
                 event=self.event,
                 amount=-500,
             ).full_clean()
@@ -26,7 +26,7 @@ class TestSponsorshipModel(TestBase):
     def test_sponsorship_without_amount(self):
         '''Check that we can have blank amount field'''
         Sponsorship.objects.create(
-            organization=self.host_beta,
+            organization=self.org_beta,
             event=self.event,
         ).full_clean()
 
@@ -34,7 +34,7 @@ class TestSponsorshipModel(TestBase):
     def test_sponsorship_can_be_deleted_and_related_objects_are_intact(self):
         '''Check that the event and organization aren't deleted'''
         sponsorship = Sponsorship.objects.create(
-            organization=self.host_beta,
+            organization=self.org_beta,
             event=self.event,
             amount=-500,
         )
@@ -43,7 +43,7 @@ class TestSponsorshipModel(TestBase):
             sponsorship.refresh_from_db()
         # Raise ObjectDoesNotExist if deleted
         self.event.refresh_from_db()
-        self.host_beta.refresh_from_db()
+        self.org_beta.refresh_from_db()
 
 
 class TestSponsorshipViews(TestBase):
@@ -52,10 +52,10 @@ class TestSponsorshipViews(TestBase):
         super().setUp()
         self.event = Event.objects.create(
             slug='2016-07-05-test-event',
-            host=self.host_alpha,
+            host=self.org_alpha,
         )
         self.sponsorship = Sponsorship.objects.create(
-            organization=self.host_alpha,
+            organization=self.org_alpha,
             event=self.event,
         )
         self._setUpUsersAndLogin()
@@ -78,7 +78,7 @@ class TestSponsorshipViews(TestBase):
     def test_add_sponsor_with_amount(self):
         '''Check that we can add a sponsor from `event_edit` view'''
         payload = {
-            'sponsor-organization': self.host_beta.pk,
+            'sponsor-organization': self.org_beta.pk,
             'sponsor-event': self.event.pk,
             'sponsor-amount': 100.00,
         }
@@ -99,7 +99,7 @@ class TestSponsorshipViews(TestBase):
     def test_add_sponsor_without_amount(self):
         '''Check that we can add a sponsor w/o amount from `event_edit` view'''
         payload = {
-            'sponsor-organization': self.host_beta.pk,
+            'sponsor-organization': self.org_beta.pk,
             'sponsor-event': self.event.pk,
         }
         response = self.client.post(

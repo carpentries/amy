@@ -6,7 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models, migrations
 
 from workshops.models import (
-    Airport, Award, Badge, Event, Host, KnowledgeDomain, Lesson, Person,
+    Airport, Award, Badge, Event, Organization, KnowledgeDomain, Lesson, Person,
     Qualification, Role, Tag, Task,
 )
 
@@ -15,7 +15,7 @@ def add_permission_groups(apps, schema_editor):
     # create 'administrators' group with all permissions for CRUD
     auth_ct = ContentType.objects.get_for_models(Permission, Group)
     workshops_ct = ContentType.objects.get_for_models(
-        Airport, Award, Badge, Event, Host, KnowledgeDomain, Lesson, Person,
+        Airport, Award, Badge, Event, Organization, KnowledgeDomain, Lesson, Person,
         Qualification, Role, Tag, Task,
     )
     auth_ct.update(workshops_ct)

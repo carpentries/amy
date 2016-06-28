@@ -12,7 +12,7 @@ from api.views import (
 )
 from workshops.models import (
     Event,
-    Host,
+    Organization,
 )
 from workshops.util import universal_date_format
 
@@ -29,7 +29,7 @@ class TestListingPublishedEvents(APITestCase):
         future = datetime.date(2030, 3, 25)
         delta_2d = datetime.timedelta(days=2)
         delta_1d = datetime.timedelta(days=1)
-        host = Host.objects.create(domain='host.edu', fullname='Host EDU')
+        host = Organization.objects.create(domain='host.edu', fullname='Organization EDU')
 
         # past event
         self.event1 = Event.objects.create(

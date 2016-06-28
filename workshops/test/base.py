@@ -20,7 +20,7 @@ from ..models import \
     Lesson, \
     Person, \
     Qualification, \
-    Host, \
+    Organization, \
     Role, \
     Tag, \
     Language
@@ -36,7 +36,7 @@ class TestBase(TestCase):
     def setUp(self):
         '''Create standard objects.'''
 
-        self._setUpHosts()
+        self._setUpOrganizations()
         self._setUpAirports()
         self._setUpLessons()
         self._setUpBadges()
@@ -54,16 +54,16 @@ class TestBase(TestCase):
         self.matlab, _ = Lesson.objects.get_or_create(name='swc/matlab')
         self.r, _ = Lesson.objects.get_or_create(name='swc/r')
 
-    def _setUpHosts(self):
-        '''Set up host objects.'''
+    def _setUpOrganizations(self):
+        '''Set up organization objects.'''
 
-        self.host_alpha = Host.objects.create(domain='alpha.edu',
-                                              fullname='Alpha Host',
+        self.org_alpha = Organization.objects.create(domain='alpha.edu',
+                                              fullname='Alpha Organization',
                                               country='Azerbaijan',
                                               notes='')
 
-        self.host_beta = Host.objects.create(domain='beta.com',
-                                             fullname='Beta Host',
+        self.org_beta = Organization.objects.create(domain='beta.com',
+                                             fullname='Beta Organization',
                                              country='Brazil',
                                              notes='Notes\nabout\nBrazil\n')
 
@@ -226,8 +226,8 @@ class TestBase(TestCase):
         today = datetime.date.today()
 
         # Create a test host
-        test_host = Host.objects.create(domain='example.com',
-                                        fullname='Test Host')
+        test_host = Organization.objects.create(domain='example.com',
+                                        fullname='Test Organization')
 
         # Create one new published event for each day in the next 10 days.
         for t in range(1, 11):

@@ -28,7 +28,7 @@ from ..models import (
     Badge,
     Tag,
     Person,
-    Host,
+    Organization,
     Event,
     Task,
 )
@@ -95,7 +95,7 @@ class TestFakeDatabaseCommand(TestCase):
     def test_database_populated(self):
         """Make sure the database is getting populated."""
         self.assertFalse(Person.objects.exists())
-        self.assertFalse(Host.objects.exclude(domain='self-organized')
+        self.assertFalse(Organization.objects.exclude(domain='self-organized')
                                      .exists())
         self.assertFalse(Event.objects.exists())
         self.assertFalse(Task.objects.exists())
@@ -103,7 +103,7 @@ class TestFakeDatabaseCommand(TestCase):
         call_command('fake_database', seed=self.seed)
 
         self.assertTrue(Person.objects.exists())
-        self.assertTrue(Host.objects.exclude(domain='self-organized').exists())
+        self.assertTrue(Organization.objects.exclude(domain='self-organized').exists())
         self.assertTrue(Event.objects.exists())
         self.assertTrue(Task.objects.exists())
 
@@ -122,10 +122,10 @@ class TestInstructorsActivityCommand(TestBase):
         self._setUpNonInstructors()
 
         # add one event that some instructors took part in
-        self._setUpHosts()
+        self._setUpOrganizations()
         self.event = Event.objects.create(
             slug='event-with-tasks',
-            host=self.host_alpha,
+            host=self.org_alpha,
             start=date(2015, 8, 30),
         )
         self._setUpRoles()
@@ -225,7 +225,7 @@ class TestWebsiteUpdatesCommand(TestBase):
         self.faker = Faker()
         self.faker.seed(self.seed)
 
-        self.fake_cmd.fake_hosts(self.faker)
+        self.fake_cmd.fake_organizations(self.faker)
 
         self.mocked_event_page = """
 <html><head>
@@ -408,7 +408,7 @@ class TestWebsiteUpdatesCommand(TestBase):
         """Make sure metadata changes are detected."""
         hash_ = 'abcdefghijklmnopqrstuvwxyz'
         e = Event.objects.create(
-            slug='with-changes', host=Host.objects.first(),
+            slug='with-changes', host=Organization.objects.first(),
             url='https://swcarpentry.github.io/workshop-template/',
             repository_last_commit_hash=hash_,
             repository_metadata='',
@@ -450,7 +450,7 @@ class TestWebsiteUpdatesCommand(TestBase):
     def test_initialization(self, mock):
         """Make sure events are initialized to sane values."""
         e = Event.objects.create(
-            slug='with-changes', host=Host.objects.first(),
+            slug='with-changes', host=Organization.objects.first(),
             url='https://swcarpentry.github.io/workshop-template/',
             repository_last_commit_hash='', repository_metadata='',
             metadata_changed=False, metadata_all_changes='')

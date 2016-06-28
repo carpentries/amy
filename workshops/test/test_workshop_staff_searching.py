@@ -3,7 +3,7 @@ import unittest
 from django.core.urlresolvers import reverse
 
 from .base import TestBase
-from ..models import Task, Role, Event, Tag, Host
+from ..models import Task, Role, Event, Tag, Organization
 
 
 class TestLocateWorkshopStaff(TestBase):
@@ -255,10 +255,10 @@ class TestLocateWorkshopStaff(TestBase):
 
         TTT = Tag.objects.get(name='TTT')
         stalled = Tag.objects.get(name='stalled')
-        e1 = Event.objects.create(slug='TTT-event', host=Host.objects.first())
+        e1 = Event.objects.create(slug='TTT-event', host=Organization.objects.first())
         e1.tags = [TTT]
         e2 = Event.objects.create(slug='stalled-TTT-event',
-                                  host=Host.objects.first())
+                                  host=Organization.objects.first())
         e2.tags = [TTT, stalled]
 
         learner = Role.objects.get(name='learner')
@@ -300,10 +300,10 @@ class TestLocateWorkshopStaff(TestBase):
 
         TTT = Tag.objects.get(name='TTT')
         stalled = Tag.objects.get(name='stalled')
-        e1 = Event.objects.create(slug='TTT-event', host=Host.objects.first())
+        e1 = Event.objects.create(slug='TTT-event', host=Organization.objects.first())
         e1.tags = [TTT]
         e2 = Event.objects.create(slug='stalled-TTT-event',
-                                  host=Host.objects.first())
+                                  host=Organization.objects.first())
         e2.tags = [TTT, stalled]
 
         learner = Role.objects.get(name='learner')

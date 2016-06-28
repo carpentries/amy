@@ -55,8 +55,8 @@ class CreatedUpdatedMixin(models.Model):
 
 
 @reversion.register
-class Host(models.Model):
-    '''Represent a workshop's host.'''
+class Organization(models.Model):
+    '''Represent an organization, academic or business.'''
 
     domain     = models.CharField(max_length=STR_LONG, unique=True)
     fullname   = models.CharField(max_length=STR_LONG, unique=True)
@@ -67,7 +67,7 @@ class Host(models.Model):
         return self.domain
 
     def get_absolute_url(self):
-        return reverse('host_details', args=[str(self.domain)])
+        return reverse('organization_details', args=[str(self.domain)])
 
     class Meta:
         ordering = ('domain', )
@@ -75,7 +75,7 @@ class Host(models.Model):
 
 @reversion.register
 class Membership(models.Model):
-    """Represent a details of Host's membership."""
+    """Represent a details of Organization's membership."""
 
     MEMBERSHIP_CHOICES = (
         ('partner', 'Partner'),
@@ -110,11 +110,11 @@ class Membership(models.Model):
         help_text="Imposed number of self-organized workshops per year",
     )
     notes = models.TextField(default="", blank=True)
-    host = models.ForeignKey(Host, null=False, blank=False,
+    organization = models.ForeignKey(Organization, null=False, blank=False,
                              on_delete=models.PROTECT)
 
     def __str__(self):
-        return "{} Membership of <{}>".format(self.variant, str(self.host))
+        return "{} Membership of <{}>".format(self.variant, str(self.organization))
 
     @property
     def workshops_without_admin_fee_per_year_completed(self):
@@ -125,7 +125,7 @@ class Membership(models.Model):
                           Q(administrator__domain='self-organized'))
         no_fee = Q(admin_fee=0) | Q(admin_fee=None)
 
-        return Event.objects.filter(host=self.host, start__year=year) \
+        return Event.objects.filter(host=self.organization, start__year=year) \
                             .filter(no_fee) \
                             .exclude(self_organized).count()
 
@@ -144,7 +144,7 @@ class Membership(models.Model):
         self_organized = (Q(administrator=None) |
                           Q(administrator__domain='self-organized'))
 
-        return Event.objects.filter(host=self.host, start__year=year) \
+        return Event.objects.filter(host=self.organization, start__year=year) \
                             .filter(self_organized).count()
 
     @property
@@ -163,7 +163,7 @@ class Sponsorship(models.Model):
     '''Represent sponsorship from a host for an event.'''
 
     organization = models.ForeignKey(
-        'Host',
+        'Organization',
         on_delete=models.CASCADE,
         help_text='Organization sponsoring the event'
     )
@@ -739,7 +739,7 @@ class Event(AssignmentMixin, models.Model):
     WEBSITE_FORMAT = 'https://{name}.github.io/{repo}/'
     PUBLISHED_HELP_TEXT = 'Required in order for this event to be "published".'
 
-    host = models.ForeignKey(Host, on_delete=models.PROTECT,
+    host = models.ForeignKey(Organization, on_delete=models.PROTECT,
                              help_text='Organization hosting the event.')
     tags = models.ManyToManyField(
         Tag,
@@ -750,12 +750,12 @@ class Event(AssignmentMixin, models.Model):
                   '</ul>',
     )
     administrator = models.ForeignKey(
-        Host, related_name='administrator', null=True, blank=True,
+        Organization, related_name='administrator', null=True, blank=True,
         on_delete=models.PROTECT,
         help_text='Organization responsible for administrative work.'
     )
     sponsors = models.ManyToManyField(
-        Host, related_name='sponsored_events', blank=True,
+        Organization, related_name='sponsored_events', blank=True,
         through=Sponsorship,
     )
     start = models.DateField(
@@ -1655,7 +1655,7 @@ class InvoiceRequest(models.Model):
         help_text='YYYY-MM-DD')
 
     organization = models.ForeignKey(
-        Host, on_delete=models.PROTECT, verbose_name='Organization to invoice',
+        Organization, on_delete=models.PROTECT, verbose_name='Organization to invoice',
         help_text='e.g. University of Florida Ecology Department')
 
     INVOICE_REASON = (

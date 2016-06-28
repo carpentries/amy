@@ -26,7 +26,7 @@ from workshops.models import (
     Event,
     TodoItem,
     Tag,
-    Host,
+    Organization,
     Task,
     Award,
     Person,
@@ -43,7 +43,7 @@ from .serializers import (
     InstructorsOverTimeSerializer,
     InstructorNumTaughtSerializer,
     InstructorsByTimePeriodSerializer,
-    HostSerializer,
+    OrganizationSerializer,
     EventSerializer,
     TaskSerializer,
     TodoSerializer,
@@ -104,7 +104,7 @@ class ApiRoot(APIView):
                                    format=format),
             'event-list': reverse('api:event-list', request=request,
                                   format=format),
-            'host-list': reverse('api:host-list', request=request,
+            'organization-list': reverse('api:organization-list', request=request,
                                  format=format),
         })
 
@@ -376,7 +376,7 @@ class ReportsViewSet(ViewSet):
         dc_tag = Tag.objects.get(name='DC')
         wise_tag = Tag.objects.get(name='WiSE')
         TTT_tag = Tag.objects.get(name='TTT')
-        self_organized_host = Host.objects.get(domain='self-organized')
+        self_organized_host = Organization.objects.get(domain='self-organized')
 
         # count workshops: SWC, DC, total (SWC and/or DC), self-organized,
         # WiSE, TTT
@@ -506,11 +506,11 @@ class ReportsViewSet(ViewSet):
 # ----------------------
 
 
-class HostViewSet(viewsets.ReadOnlyModelViewSet):
+class OrganizationViewSet(viewsets.ReadOnlyModelViewSet):
     """List many hosts or retrieve only one."""
     permission_classes = (IsAuthenticated, )
-    queryset = Host.objects.all()
-    serializer_class = HostSerializer
+    queryset = Organization.objects.all()
+    serializer_class = OrganizationSerializer
     lookup_field = 'domain'
     lookup_value_regex = r'[^/]+'  # the default one doesn't work with domains
     pagination_class = StandardResultsSetPagination

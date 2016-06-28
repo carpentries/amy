@@ -15,7 +15,7 @@ from workshops.models import (
     Person,
     Award,
     Qualification,
-    Host,
+    Organization,
     Event,
     Task,
 )
@@ -126,11 +126,11 @@ class Command(BaseCommand):
             add_qualifications=False,
         )
 
-    def fake_hosts(self, faker, count=5):
-        """Add some hosts for events."""
+    def fake_organizations(self, faker, count=5):
+        """Add some organizations that host events."""
         countries = list(Countries)
         for i in range(count):
-            Host.objects.create(
+            Organization.objects.create(
                 domain=faker.domain_name(),
                 fullname=faker.company(),
                 country=random.choice(countries)[0],
@@ -139,7 +139,7 @@ class Command(BaseCommand):
     def fake_current_events(self, faker, count=5):
         """Ongoing and upcoming events."""
         twodays = timedelta(days=2)
-        hosts = list(Host.objects.exclude(domain='self-organized'))
+        organizations = list(Organization.objects.exclude(domain='self-organized'))
         countries = list(Countries)
 
         for i in range(count):
@@ -150,7 +150,7 @@ class Command(BaseCommand):
                 start=start,
                 end=start + twodays,
                 url=faker.url(),
-                host=random.choice(hosts),
+                host=random.choice(organizations),
                 # needed in order for event to be published
                 country=random.choice(countries)[0],
                 venue=faker.word().title(),
@@ -163,7 +163,7 @@ class Command(BaseCommand):
         """Preferably in the past, and with 'uninvoiced' status."""
         twodays = timedelta(days=2)
         countries = list(Countries)
-        hosts = list(Host.objects.exclude(domain='self-organized'))
+        organizations = list(Organization.objects.exclude(domain='self-organized'))
 
         for i in range(count):
             start = faker.date_time_this_year(before_now=True,
@@ -173,7 +173,7 @@ class Command(BaseCommand):
                 start=start,
                 end=start + twodays,
                 url=faker.url(),
-                host=random.choice(hosts),
+                host=random.choice(organizations),
                 # needed in order for event to be published
                 country=random.choice(countries)[0],
                 venue=faker.word().title(),
@@ -188,7 +188,7 @@ class Command(BaseCommand):
         """Events with missing location data (which is required for publishing
         them)."""
         twodays = timedelta(days=2)
-        hosts = list(Host.objects.exclude(domain='self-organized'))
+        organizations = list(Organization.objects.exclude(domain='self-organized'))
 
         for i in range(count):
             start = faker.date_time_this_year(before_now=True,
@@ -198,13 +198,13 @@ class Command(BaseCommand):
                 start=start,
                 end=start + twodays,
                 url=faker.url(),
-                host=random.choice(hosts),
+                host=random.choice(organizations),
             )
 
     def fake_self_organized_events(self, faker, count=5):
         """Full-blown events with 'self-organized' host."""
         twodays = timedelta(days=2)
-        self_organized = Host.objects.get(domain='self-organized')
+        self_organized = Organization.objects.get(domain='self-organized')
         countries = list(Countries)
         invoice_statuses = Event.INVOICED_CHOICES
 
@@ -237,7 +237,7 @@ class Command(BaseCommand):
             Task.objects.create(event=event, person=person, role=role)
 
     def fake_trainees(self, faker):
-        host = Host.objects.all()[0]
+        host = Organization.objects.all()[0]
         tag = Tag.objects.get(name='TTT')
         learner = Role.objects.get(name='learner')
         swc_instructor = Badge.objects.get(name='swc-instructor')
@@ -288,7 +288,7 @@ class Command(BaseCommand):
         self.fake_badges(faker)
         self.fake_instructors(faker)
         self.fake_noninstructors(faker)
-        self.fake_hosts(faker)
+        self.fake_organizations(faker)
         self.fake_current_events(faker)
         self.fake_uninvoiced_events(faker)
         self.fake_unpublished_events(faker)

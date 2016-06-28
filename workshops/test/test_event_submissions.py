@@ -3,7 +3,7 @@ from django.core.urlresolvers import reverse
 
 from .base import TestBase
 from ..forms import EventSubmitForm
-from ..models import EventSubmission, Host, Tag
+from ..models import EventSubmission, Organization, Tag
 
 
 class TestEventSubmitForm(TestBase):
@@ -67,7 +67,7 @@ class TestEventSubmitForm(TestBase):
         self.assertEqual(self.submission.active, True)
         minimal_event = {
             'slug': '1970-01-01-first-event',
-            'host': Host.objects.first().pk,
+            'host': Organization.objects.first().pk,
             'tags': [Tag.objects.first().pk],
             'invoice_status': 'not-invoiced',
         }

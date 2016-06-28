@@ -16,7 +16,7 @@ from django_countries.fields import CountryField
 from selectable import forms as selectable
 
 from workshops.models import (
-    Award, Event, Lesson, Person, Task, Airport, Host,
+    Award, Event, Lesson, Person, Task, Airport, Organization,
     EventRequest, ProfileUpdateRequest, TodoItem, Membership,
     Sponsorship, InvoiceRequest, EventSubmission, Language,
     TrainingRequest,
@@ -218,7 +218,7 @@ class SearchForm(forms.Form):
 
     term = forms.CharField(label='term',
                            max_length=100)
-    in_hosts = forms.BooleanField(label='in hosts',
+    in_organizations = forms.BooleanField(label='in organizations',
                                   required=False,
                                   initial=True)
     in_events = forms.BooleanField(label='in events',
@@ -246,7 +246,7 @@ class DebriefForm(forms.Form):
 
 class EventForm(forms.ModelForm):
     host = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.HostLookup,
+        lookup_class=lookups.OrganizationLookup,
         label='Host',
         required=True,
         help_text=Event._meta.get_field('host').help_text,
@@ -254,7 +254,7 @@ class EventForm(forms.ModelForm):
     )
 
     administrator = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.HostLookup,
+        lookup_class=lookups.OrganizationLookup,
         label='Administrator',
         required=False,
         help_text=Event._meta.get_field('administrator').help_text,
@@ -627,9 +627,9 @@ class PersonTaskForm(forms.ModelForm):
         widgets = {'person': HiddenInput}
 
 
-class HostForm(forms.ModelForm):
+class OrganizationForm(forms.ModelForm):
     domain = forms.CharField(
-        max_length=Host._meta.get_field('domain').max_length,
+        max_length=Organization._meta.get_field('domain').max_length,
         validators=[
             RegexValidator(
                 '[^\w\.-]+', inverse_match=True,
@@ -639,7 +639,7 @@ class HostForm(forms.ModelForm):
     )
 
     class Meta:
-        model = Host
+        model = Organization
         fields = ['domain', 'fullname', 'country', 'notes']
 
 
@@ -652,7 +652,7 @@ class MembershipForm(forms.ModelForm):
 
 class SponsorshipForm(forms.ModelForm):
     organization = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.HostLookup,
+        lookup_class=lookups.OrganizationLookup,
         label='Organization',
         required=True,
         help_text=Sponsorship._meta.get_field('organization').help_text,

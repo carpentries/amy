@@ -18,7 +18,7 @@
           <ul class="nav navbar-nav">
             {% navbar_element "Dashboard" "admin-dashboard" %}
             {% navbar_element "Events" "all_events" %}
-            {% navbar_element "Hosts" "all_hosts" %}
+            {% navbar_element "Organizations" "all_organizations" %}
             {% navbar_element "Persons" "all_persons" %}
             <li class="dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">More <span class="caret"></span></a>
@@ -71,7 +71,7 @@
           </ul>
           <form class="navbar-form navbar-left" role="search" method="post" action="{% url "search" %}">
             {% csrf_token %}
-            <input type="hidden" name="in_hosts" value="on" />
+            <input type="hidden" name="in_organizations" value="on" />
             <input type="hidden" name="in_events" value="on" />
             <input type="hidden" name="in_persons" value="on" />
             <input type="hidden" name="in_airports" value="on" />
@@ -85,7 +85,7 @@
               <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> <span class="caret"></span></a>
               <ul class="dropdown-menu" role="menu">
                 {% navbar_element_permed "New event" "event_add" "workshops.add_event" %}
-                {% navbar_element_permed "New host" "host_add" "workshops.add_host" %}
+                {% navbar_element_permed "New organization" "organization_add" "workshops.add_organization" %}
                 {% navbar_element_permed "New person" "person_add" "workshops.add_person" %}
                 {% navbar_element_permed "New airport" "airport_add" "workshops.add_airport" %}
                 <li class="divider"></li>

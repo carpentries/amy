@@ -16,7 +16,7 @@ from workshops.models import (
     Award,
     Person,
     Role,
-    Host,
+    Organization,
     Task,
     Event,
 )
@@ -46,7 +46,7 @@ class TestReportingInstructorNumTaught(BaseReportingTest):
             name='dc-instructor'
         )
         # set up an event
-        host = Host.objects.create(domain='host.edu', fullname='Host EDU')
+        host = Organization.objects.create(domain='host.edu', fullname='Organization EDU')
         event = Event.objects.create(slug='event1', host=host)
         instructor = Person.objects.create(
             username='harrypotter', personal='Harry', family='Potter',

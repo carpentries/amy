@@ -16,10 +16,10 @@ class TestInstructorIssues(TestBase):
         learner, _ = Role.objects.get_or_create(name='learner')
 
         # add two TTT events, one stalled and one normal
-        e1 = Event.objects.create(slug='ttt-stalled', host=self.host_alpha)
+        e1 = Event.objects.create(slug='ttt-stalled', host=self.org_alpha)
         e1.tags = [TTT, stalled]
 
-        e2 = Event.objects.create(slug='ttt-not-stalled', host=self.host_alpha)
+        e2 = Event.objects.create(slug='ttt-not-stalled', host=self.org_alpha)
         e2.tags.add(TTT)
 
         Task.objects.create(event=e1, person=self.spiderman, role=learner)

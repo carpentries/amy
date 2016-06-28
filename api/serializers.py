@@ -7,7 +7,7 @@ from workshops.models import (
     Event,
     TodoItem,
     Tag,
-    Host,
+    Organization,
     Task,
     Award,
 )
@@ -141,11 +141,11 @@ class InstructorsByTimePeriodSerializer(serializers.ModelSerializer):
 # ----------------------
 
 
-class HostSerializer(serializers.ModelSerializer):
+class OrganizationSerializer(serializers.ModelSerializer):
     country = serializers.CharField()
 
     class Meta:
-        model = Host
+        model = Organization
         fields = ('domain', 'fullname', 'country', 'notes')
 
 
@@ -222,9 +222,9 @@ class EventSerializer(serializers.ModelSerializer):
     end = serializers.DateField(format=None)
 
     host = serializers.HyperlinkedRelatedField(
-        read_only=True, view_name='api:host-detail', lookup_field='domain')
+        read_only=True, view_name='api:organization-detail', lookup_field='domain')
     administrator = serializers.HyperlinkedRelatedField(
-        read_only=True, view_name='api:host-detail', lookup_field='domain')
+        read_only=True, view_name='api:organization-detail', lookup_field='domain')
     tags = serializers.SlugRelatedField(
         many=True, read_only=True, slug_field='name')
     tasks = serializers.HyperlinkedIdentityField(
