@@ -762,7 +762,7 @@ class Event(AssignmentMixin, models.Model):
         max_length=STR_MED,
         choices=INVOICED_CHOICES,
         verbose_name='Invoice status',
-        default='unknown', blank=False,
+        default='not-invoiced', blank=False,
     )
     notes      = models.TextField(default="", blank=True)
     contact = models.CharField(max_length=STR_LONGEST, default="", blank=True)
