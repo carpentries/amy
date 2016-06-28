@@ -18,7 +18,9 @@ from selectable import forms as selectable
 from workshops.models import (
     Award, Event, Lesson, Person, Task, Airport, Host,
     EventRequest, ProfileUpdateRequest, TodoItem, Membership,
-    InvoiceRequest, EventSubmission,
+    InvoiceRequest, EventSubmission, Language,
+    TrainingRequest,
+    DCSelfOrganizedEventRequest,
 )
 from workshops import lookups
 
@@ -107,6 +109,12 @@ class WorkshopStaffForm(forms.Form):
             lookup_class=lookups.AirportLookup,
         ),
     )
+    languages = selectable.AutoCompleteSelectMultipleField(
+        lookup_class=lookups.LanguageLookup,
+        label='Languages',
+        required=False,
+        widget=selectable.AutoComboboxSelectMultipleWidget,
+    )
 
     country = forms.MultipleChoiceField(choices=[])
 
@@ -166,6 +174,7 @@ class WorkshopStaffForm(forms.Form):
             'was_helper',
             'was_organizer',
             'is_in_progress_trainee',
+            'languages',
             'gender',
             'lessons',
             FormActions(
@@ -262,6 +271,14 @@ class EventForm(forms.ModelForm):
         widget=selectable.AutoComboboxSelectWidget,
     )
 
+    language = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.LanguageLookup,
+        label='Language',
+        required=False,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
     country = CountryField().formfield(
         required=False,
         help_text=Event._meta.get_field('country').help_text,
@@ -327,8 +344,8 @@ class EventForm(forms.ModelForm):
         model = Event
         # reorder fields, don't display 'deleted' field
         fields = ('slug', 'completed', 'start', 'end', 'host', 'administrator',
-                  'tags', 'url', 'reg_key', 'admin_fee', 'invoice_status',
-                  'attendance', 'contact', 'notes',
+                  'tags', 'url', 'language', 'reg_key', 'admin_fee',
+                  'invoice_status', 'attendance', 'contact', 'notes',
                   'country', 'venue', 'address', 'latitude', 'longitude',
                   'learners_pre', 'learners_post', 'instructors_pre',
                   'instructors_post', 'learners_longterm')
@@ -391,6 +408,13 @@ class PersonForm(forms.ModelForm):
         help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
+    languages = selectable.AutoCompleteSelectMultipleField(
+        lookup_class=lookups.LanguageLookup,
+        label='Languages',
+        required=False,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectMultipleWidget,
+    )
 
     class Meta:
         model = Person
@@ -400,7 +424,7 @@ class PersonForm(forms.ModelForm):
         fields = ['username', 'personal', 'middle', 'family', 'may_contact',
                   'email', 'gender', 'airport', 'affiliation', 'github',
                   'twitter', 'url', 'occupation', 'orcid', 'notes', 'lessons',
-                  'domains']
+                  'domains', 'languages']
 
 
 class PersonCreateForm(PersonForm):
@@ -513,6 +537,9 @@ class PersonsMergeForm(forms.Form):
         label='Lessons',
     )
     domains = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    languages = forms.ChoiceField(
         choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
     )
     task_set = forms.ChoiceField(
@@ -630,12 +657,19 @@ class SWCEventRequestForm(forms.ModelForm):
                   '-to-admin-fee.html" target="_blank">Look up administration '
                   'fees</a>.',
     )
+    language = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.LanguageLookup,
+        label='Language',
+        required=False,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
 
     class Meta:
         model = EventRequest
-        exclude = ('active', 'created_at', 'data_types', 'data_types_other',
-                   'attendee_data_analysis_level', 'fee_waiver_request',
-                   'assigned_to')
+        exclude = ('active', 'created_at', 'last_updated_at', 'assigned_to',
+                   'data_types', 'data_types_other',
+                   'attendee_data_analysis_level', 'fee_waiver_request')
         widgets = {
             'approx_attendees': forms.RadioSelect(),
             'attendee_domains': forms.CheckboxSelectMultiple(),
@@ -661,8 +695,8 @@ class DCEventRequestForm(SWCEventRequestForm):
     )
 
     class Meta(SWCEventRequestForm.Meta):
-        exclude = ('active', 'created_at', 'admin_fee_payment',
-                   'attendee_computing_levels', 'assigned_to')
+        exclude = ('active', 'created_at', 'last_updated_at', 'assigned_to',
+                   'admin_fee_payment', 'attendee_computing_levels')
         widgets = {
             'approx_attendees': forms.RadioSelect(),
             'attendee_domains': forms.CheckboxSelectMultiple(),
@@ -676,17 +710,57 @@ class DCEventRequestForm(SWCEventRequestForm):
 class EventSubmitFormNoCaptcha(forms.ModelForm):
     class Meta:
         model = EventSubmission
-        exclude = ('active', 'assigned_to', )
+        exclude = ('active', 'created_at', 'last_updated_at', 'assigned_to')
 
 
 class EventSubmitForm(EventSubmitFormNoCaptcha):
     captcha = ReCaptchaField()
 
 
+class DCSelfOrganizedEventRequestFormNoCaptcha(forms.ModelForm):
+    # the easiest way to make these fields required without rewriting their
+    # verbose names or help texts
+    handle_registration = DCSelfOrganizedEventRequest._meta \
+        .get_field('handle_registration').formfield(required=True)
+    distribute_surveys = DCSelfOrganizedEventRequest._meta \
+        .get_field('distribute_surveys').formfield(required=True)
+    follow_code_of_conduct = DCSelfOrganizedEventRequest._meta \
+        .get_field('follow_code_of_conduct').formfield(required=True)
+
+    class Meta:
+        model = DCSelfOrganizedEventRequest
+        exclude = ('created_at', 'last_updated_at', 'assigned_to')
+        widgets = {
+            'instructor_status': forms.RadioSelect(),
+            'is_partner': forms.RadioSelect(),
+            'domains': forms.CheckboxSelectMultiple(),
+            'topics': forms.CheckboxSelectMultiple(),
+            'attendee_academic_levels': forms.CheckboxSelectMultiple(),
+            'attendee_data_analysis_level': forms.CheckboxSelectMultiple(),
+            'payment': forms.RadioSelect(),
+        }
+
+
+class DCSelfOrganizedEventRequestForm(
+        DCSelfOrganizedEventRequestFormNoCaptcha):
+    captcha = ReCaptchaField()
+
+    class Meta(DCSelfOrganizedEventRequestFormNoCaptcha.Meta):
+        exclude = ('active', 'created_at', 'last_updated_at', 'assigned_to')
+
+
 class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):
+    languages = selectable.AutoCompleteSelectMultipleField(
+        lookup_class=lookups.LanguageLookup,
+        label='Languages you can teach in',
+        required=False,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectMultipleWidget,
+    )
+
     class Meta:
         model = ProfileUpdateRequest
-        exclude = ('active', 'created_at')
+        exclude = ('active', 'created_at', 'last_updated_at')
         widgets = {
             'domains': forms.CheckboxSelectMultiple(),
             'lessons': forms.CheckboxSelectMultiple(),
@@ -797,6 +871,9 @@ class EventsMergeForm(forms.Form):
     url = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
+    language = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
     reg_key = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
@@ -878,3 +955,113 @@ class InvoiceRequestUpdateForm(forms.ModelForm):
         fields = (
             'status', 'sent_date', 'paid_date', 'notes'
         )
+
+
+class TrainingRequestForm(forms.ModelForm):
+    agreed_to_code_of_conduct = forms.BooleanField(
+        required=True,
+        initial=False,
+        label='I agree to abide by Software Carpentry\'s Code of Conduct',
+        help_text='The Code of Conduct can be found at http://software-carpentry.org/conduct/',
+    )
+    agreed_to_complete_training = forms.BooleanField(
+        required=True,
+        initial=False,
+        label='I agree to complete this training within three months of the Training Course',
+        help_text='The completion steps are described '
+                  'at http://swcarpentry.github.io/instructor-training/checkout/ '
+                  'and take a total of approximately two hours.',
+    )
+    agreed_to_teach_workshops = forms.BooleanField(
+        required=True,
+        initial=False,
+        label='I agree to help teach a Software Carpentry or Data Carpentry '
+              'workshop within 12 months of this Training Course',
+    )
+    captcha = ReCaptchaField()
+
+    class Meta:
+        model = TrainingRequest
+        fields = (
+            'personal',
+            'family',
+            'email',
+            'occupation',
+            'occupation_other',
+            'affiliation',
+            'location',
+            'country',
+            'domains',
+            'domains_other',
+            'gender',
+            'gender_other',
+            'previous_involvement',
+            'previous_training',
+            'previous_training_other',
+            'previous_experience',
+            'previous_experience_other',
+            'programming_language_usage_frequency',
+            'reason',
+            'teaching_frequency_expectation',
+            'teaching_frequency_expectation_other',
+            'max_travelling_frequency',
+            'max_travelling_frequency_other',
+            'additional_skills',
+        )
+        widgets = {
+            'occupation': forms.RadioSelect(),
+            'domains': forms.CheckboxSelectMultiple(),
+            'gender': forms.RadioSelect(),
+            'previous_involvement': forms.CheckboxSelectMultiple(),
+            'previous_training': forms.RadioSelect(),
+            'previous_experience': forms.RadioSelect(),
+            'programming_language_usage_frequency': forms.RadioSelect(),
+            'teaching_frequency_expectation': forms.RadioSelect(),
+            'max_travelling_frequency': forms.RadioSelect(),
+        }
+
+
+class AutoUpdateProfileForm(forms.ModelForm):
+    username = forms.CharField(disabled=True, required=False)
+    github = forms.CharField(
+        disabled=True, required=False,
+        help_text='If you want to change your github username, please email '
+                  'us at <a href="mailto:admin@software-carpentry.org">'
+                  'admin@software-carpentry.org</a>.')
+
+    languages = selectable.AutoCompleteSelectMultipleField(
+        lookup_class=lookups.LanguageLookup,
+        label='Languages',
+        required=False,
+        widget=selectable.AutoComboboxSelectMultipleWidget,
+    )
+
+    class Meta:
+        model = Person
+        fields = [
+            'personal',
+            'middle',
+            'family',
+            'email',
+            'gender',
+            'may_contact',
+            'airport',
+            'github',
+            'twitter',
+            'url',
+            'username',
+            'affiliation',
+            'domains',
+            'lessons',
+            'languages',
+        ]
+        readonly_fields = (
+            'username',
+            'github',
+        )
+        widgets = {
+            'occupation': forms.RadioSelect(),
+            'gender': forms.RadioSelect(),
+            'domains': forms.CheckboxSelectMultiple(),
+            'lessons': forms.CheckboxSelectMultiple(),
+        }

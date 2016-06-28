@@ -542,6 +542,7 @@ class TestEventMerging(TestBase):
         self._setUpInstructors()
         self._setUpUsersAndLogin()
         self._setUpTags()
+        self._setUpLanguages()
 
         today = date.today()
         tomorrow = today + timedelta(days=1)
@@ -553,7 +554,8 @@ class TestEventMerging(TestBase):
             slug='event-a', completed=True, assigned_to=self.harry,
             start=today, end=tomorrow,
             host=self.host_alpha, administrator=self.host_alpha,
-            url='http://reichel.com/event-a', reg_key='123456',
+            url='http://reichel.com/event-a', language=self.french,
+            reg_key='123456',
             admin_fee=2500, invoice_status='not-invoiced',
             attendance=30, contact='moore.buna@schuppe.info', country='US',
             venue='Modi', address='876 Dot Fork',
@@ -575,7 +577,8 @@ class TestEventMerging(TestBase):
             slug='event-b', completed=False, assigned_to=self.hermione,
             start=today, end=tomorrow + timedelta(days=1),
             host=self.host_beta, administrator=self.host_beta,
-            url='http://www.cummings.biz/event-b', reg_key='654321',
+            url='http://www.cummings.biz/event-b', language=self.english,
+            reg_key='654321',
             admin_fee=2500, invoice_status='not-invoiced',
             attendance=40, contact='haleigh.schneider@hotmail.com',
             country='GB', venue='Nisi', address='59747 Fernanda Cape',
@@ -605,6 +608,7 @@ class TestEventMerging(TestBase):
             'host': 'obj_b',
             'administrator': 'obj_a',
             'url': 'obj_b',
+            'language': 'obj_b',
             'reg_key': 'obj_a',
             'admin_fee': 'obj_b',
             'invoice_status': 'obj_a',
@@ -649,6 +653,7 @@ class TestEventMerging(TestBase):
             'host': 'combine',
             'administrator': 'combine',
             'url': 'combine',
+            'language': 'combine',
             'reg_key': 'combine',
             'admin_fee': 'combine',
             'invoice_status': 'combine',
@@ -714,6 +719,7 @@ class TestEventMerging(TestBase):
             'host': self.event_b.host,
             'administrator': self.event_a.administrator,
             'url': self.event_b.url,
+            'language': self.event_b.language,
             'reg_key': self.event_a.reg_key,
             'admin_fee': self.event_b.admin_fee,
             'invoice_status': self.event_a.invoice_status,
@@ -788,7 +794,7 @@ class TestEventImport(TestBase):
 
 class TestEventReviewingRepoChanges(TestBase):
     """Ensure views used for reviewing, accepting and dismissing changes made
-    to event's meta tags work correctly."""
+    to event's metadata work correctly."""
 
     def setUp(self):
         self._setUpUsersAndLogin()
@@ -796,7 +802,7 @@ class TestEventReviewingRepoChanges(TestBase):
 
         self.cmd = WebsiteUpdatesCommand()
 
-        self.tags = {
+        self.metadata = {
             'slug': '2015-07-13-test',
             'language': 'US',
             'start': date(2015, 7, 13),
@@ -811,23 +817,23 @@ class TestEventReviewingRepoChanges(TestBase):
             'helpers': ['Peter Parker', 'Tony Stark', 'Natasha Romanova'],
             'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
         }
-        self.tags_serialized = self.cmd.serialize(self.tags)
+        self.metadata_serialized = self.cmd.serialize(self.metadata)
 
         # create event with some changes detected
         self.event = Event.objects.create(
             slug='event-for-changes', start=date(2016, 4, 20),
             end=date(2016, 4, 22), host=Host.objects.first(),
-            tags_changed=True)
+            metadata_changed=True)
 
-        # add tags to the session
+        # add metadata to the session
         session = self.client.session
-        session['tags_from_event_website'] = self.tags_serialized
+        session['metadata_from_event_website'] = self.metadata_serialized
         session.save()
 
-    def test_showing_all_events_with_changed_metatags(self):
-        """Ensure `events_tag_changed` only shows events with changed
-        metatags."""
-        url = reverse('events_tag_changed')
+    def test_showing_all_events_with_changed_metadata(self):
+        """Ensure `events_metadata_changed` only shows events with changed
+        metadata."""
+        url = reverse('events_metadata_changed')
         rv = self.client.get(url)
         self.assertEqual(rv.status_code, 200)
 
@@ -836,10 +842,10 @@ class TestEventReviewingRepoChanges(TestBase):
     def test_accepting_changes(self):
         """Ensure `event_review_repo_changes_accept`:
         * updates changed values in event
-        * dismisses notification about changed tags
-        * removes tags from session
+        * dismisses notification about changed metadata
+        * removes metadata from session
         * redirects to the event details page."""
-        url = reverse('event_review_repo_changes_accept',
+        url = reverse('event_accept_metadata_changes',
                       args=[self.event.get_ident()])
         rv = self.client.get(url, follow=False)
 
@@ -848,27 +854,27 @@ class TestEventReviewingRepoChanges(TestBase):
 
         self.event.refresh_from_db()
 
-        self.assertEqual(self.event.tags_changed, False)
-        self.assertEqual(self.event.tag_changes_detected, '')
-        self.assertEqual(self.event.repository_tags, self.tags_serialized)
-        for tag, value in self.tags.items():
-            if tag not in ('slug', 'instructors', 'helpers', 'language'):
-                self.assertEqual(getattr(self.event, tag), value)
+        self.assertEqual(self.event.metadata_changed, False)
+        self.assertEqual(self.event.metadata_all_changes, '')
+        self.assertEqual(self.event.repository_metadata, self.metadata_serialized)
+        for key, value in self.metadata.items():
+            if key not in ('slug', 'instructors', 'helpers', 'language'):
+                self.assertEqual(getattr(self.event, key), value)
 
     def test_accepting_changes_no_session_data(self):
         """Ensure `event_review_repo_changes_accept` throws 404 when specific
-        session key 'tags_from_event_website' is unavailable."""
+        session key 'metadata_from_event_website' is unavailable."""
         session = self.client.session
-        del session['tags_from_event_website']
+        del session['metadata_from_event_website']
         session.save()
 
-        url = reverse('event_review_repo_changes_accept',
+        url = reverse('event_accept_metadata_changes',
                       args=[self.event.get_ident()])
         rv = self.client.get(url, follow=False)
         self.assertEqual(rv.status_code, 404)
 
     def test_dismissing_changes(self):
-        url = reverse('event_review_repo_changes_dismiss',
+        url = reverse('event_dismiss_metadata_changes',
                       args=[self.event.get_ident()])
         rv = self.client.get(url, follow=False)
 
@@ -877,8 +883,8 @@ class TestEventReviewingRepoChanges(TestBase):
 
         self.event.refresh_from_db()
 
-        self.assertEqual(self.event.tags_changed, False)
-        self.assertEqual(self.event.tag_changes_detected, '')
-        for tag, value in self.tags.items():
-            if tag not in ('slug', 'instructors', 'helpers', 'language'):
-                self.assertNotEqual(getattr(self.event, tag), value)
+        self.assertEqual(self.event.metadata_changed, False)
+        self.assertEqual(self.event.metadata_all_changes, '')
+        for key, value in self.metadata.items():
+            if key not in ('slug', 'instructors', 'helpers', 'language'):
+                self.assertNotEqual(getattr(self.event, key), value)

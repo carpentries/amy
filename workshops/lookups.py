@@ -3,22 +3,22 @@ import operator
 import re
 
 from django.contrib.auth.models import Group
-from django.db.models import Q
+from django.db.models import Q, Count
 
 from selectable.base import ModelLookup
 from selectable.registry import registry
-from selectable.decorators import login_required
 
 from workshops import models
+from workshops.util import lookup_only_for_admins
 
 
-@login_required
+@lookup_only_for_admins
 class EventLookup(ModelLookup):
     model = models.Event
     search_fields = ('slug__icontains', )
 
 
-@login_required
+@lookup_only_for_admins
 class HostLookup(ModelLookup):
     model = models.Host
     search_fields = (
@@ -27,7 +27,7 @@ class HostLookup(ModelLookup):
     )
 
 
-@login_required
+@lookup_only_for_admins
 class PersonLookup(ModelLookup):
     model = models.Person
     search_fields = (
@@ -64,7 +64,7 @@ class PersonLookup(ModelLookup):
         return qs
 
 
-@login_required
+@lookup_only_for_admins
 class AdminLookup(ModelLookup):
     """The same as PersonLookup, but allows only to select administrators.
 
@@ -87,7 +87,7 @@ class AdminLookup(ModelLookup):
         return results
 
 
-@login_required
+@lookup_only_for_admins
 class AirportLookup(ModelLookup):
     model = models.Airport
     search_fields = (
@@ -96,8 +96,25 @@ class AirportLookup(ModelLookup):
     )
 
 
+class LanguageLookup(ModelLookup):
+    model = models.Language
+    search_fields = (
+        'name__icontains',
+        'subtag__icontains',
+    )
+
+    def get_query(self, request, term):
+        # Order the languages by their decreasing popularity
+        results = super().get_query(request, term)
+        if 'subtag' in request.GET.keys():
+            return results.filter(subtag__iexact=term)
+        return results.annotate(person_count=Count('person'))\
+                .order_by('-person_count')
+
+
 registry.register(EventLookup)
 registry.register(HostLookup)
 registry.register(PersonLookup)
 registry.register(AdminLookup)
 registry.register(AirportLookup)
+registry.register(LanguageLookup)

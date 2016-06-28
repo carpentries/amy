@@ -14,6 +14,7 @@ from workshops.models import (
     Award,
     InvoiceRequest,
     EventSubmission,
+    DCSelfOrganizedEventRequest,
 )
 
 EMPTY_SELECTION = (None, '---------')
@@ -99,7 +100,7 @@ class EventFilter(FilterSetWithoutHelpText):
         ('unpublished_events', 'Unpublished'),
         ('published_events', 'Published'),
         ('uninvoiced_events', 'Uninvoiced'),
-        ('tags_changed', 'Detected changes in tags'),
+        ('metadata_changed', 'Detected changes in metadata'),
     ]
     status = EventStateFilter(choices=STATUS_CHOICES)
 
@@ -291,6 +292,33 @@ class EventSubmissionFilter(FilterSetWithoutHelpText):
 
     class Meta:
         model = EventSubmission
+        fields = [
+            'active',
+            'assigned_to',
+        ]
+        order_by = [
+            '-created_at', 'created_at',
+        ]
+
+
+def filter_active_dcselforganizedeventrequest(qs, value):
+    if value == 'true':
+        return qs.filter(active=True)
+    elif value == 'false':
+        return qs.filter(active=False)
+    return qs
+
+
+class DCSelfOrganizedEventRequestFilter(FilterSetWithoutHelpText):
+    active = django_filters.ChoiceFilter(
+        choices=(('', 'All'), ('true', 'Open'), ('false', 'Closed')),
+        label='Status', action=filter_active_dcselforganizedeventrequest,
+        widget=django.forms.widgets.RadioSelect,
+    )
+    assigned_to = ForeignKeyAllValuesFilter(Person)
+
+    class Meta:
+        model = DCSelfOrganizedEventRequest
         fields = [
             'active',
             'assigned_to',

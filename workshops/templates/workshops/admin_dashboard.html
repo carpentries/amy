@@ -10,12 +10,12 @@
   <div class="col-xs-12" id="timeline"></div>
 </div>
 
-{% if updated_metatags %}
+{% if updated_metadata %}
 <div class="row">
   <div class="col-xs-12">
     <div class="alert alert-warning alert-dismissible" role="alert">
       <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-      <strong>Attention!</strong> {{ updated_metatags }} of your events had data on website updated. <a href="{% url 'events_tag_changed' %}">See more</a>
+      <strong>Attention!</strong> {{ updated_metadata }} of your events had data on website updated. <a href="{% url 'events_metadata_changed' %}">See more</a>
     </div>
   </div>
 </div>

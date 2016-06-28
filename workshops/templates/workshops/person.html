@@ -35,7 +35,22 @@
   <tr><td>gender:</td><td id="gender">{{ person.get_gender_display|default:"—" }}</td></tr>
   <tr><td>airport:</td><td id="airport">{% if person.airport %}<a href="{{ person.airport.get_absolute_url }}">{{ person.airport }}</a>{% else %}—{% endif %}</td></tr>
   <tr><td>affiliation:</td><td>{{ person.affiliation|default:"—" }}</td></tr>
-  <tr><td>github:</td><td id="github">{% if person.github %}<a href="https://github.com/{{ person.github }}" target="_blank">{{ person.github }}</a>{% else %}—{% endif %}</td></tr>
+  <tr><td>github:</td>
+      <td>
+        {% if person.github %}
+          <a href="https://github.com/{{ person.github }}" target="_blank">{{ person.github }}</a>
+          {% if is_usersocialauth_in_sync == 'unknown' %}
+            <a id="socialauth_sync_btn" href="#" class="btn btn-warning btn-xs pull-right" data-toggle="popover" data-trigger="focus" title="Unknown error" data-content="Cannot check if person can log in due to errors in GitHub API access">Allow logging in with GitHub</a>
+          {% elif is_usersocialauth_in_sync == True %}
+            <a id="socialauth_sync_btn" href="#" class="btn btn-success btn-xs pull-right" data-toggle="popover" data-trigger="focus" title="Synchronized" data-content="Person can use their GitHub account to log in">Logging in allowed</a>
+          {% else %}
+            <a href="{% url 'sync_usersocialauth' person.id %}" class="btn btn-primary btn-xs pull-right">Allow logging in with GitHub</a>
+          {% endif %}
+        {% else %}
+          —
+        {% endif %}
+      </td></tr>
+  <tr><td>can login with:</td><td>{% for auth in person.social_auth.all %}{{ auth.provider|title }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</td></tr>
   <tr><td>twitter:</td><td id="twitter">{% if person.twitter %}<a href="https://twitter.com/{{ person.twitter }}" target="_blank">{{ person.twitter }}</a>{% else %}—{% endif %}</td></tr>
   <tr><td>url:</td><td id="url">{{ person.url|default:""|urlize_newtab|default:"—" }}</td></tr>
   <tr><td>occupation:</td><td>{{ person.occupation|default:"—" }}</td></tr>
@@ -73,6 +88,17 @@
       </li>
       {% endfor %}
     </ul>
+    <ul>
+      {% if person.num_taught %}
+      <li> Has taught {{ person.num_taught }} time{{ person.num_taught|pluralize }}</li>
+      {% endif %}
+      {% if person.num_helper %}
+      <li> Has helped {{ person.num_helper }} time{{ person.num_helper|pluralize }}</li>
+      {% endif %}
+      {% if person.num_learner %}
+      <li> Has learned {{ person.num_learner }} time{{ person.num_learner|pluralize }}</li>
+      {% endif %}
+    </ul>
     {% else %}
     <h5>No tasks.</h5>
     {% endif %}
@@ -99,6 +125,17 @@
     </ul>
     {% else %}
     <h5>No lessons.</h5>
+    {% endif %}
+
+    {% if languages %}
+    <h5>Languages:</h5>
+    <ul>
+      {% for lang in languages %}
+      <li>{{ lang }}</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <h5>No language preference.</h5>
     {% endif %}
   </div>
 </div>
@@ -127,4 +164,10 @@
     {% endif %}
   </div>
 </div>
+{% endblock %}
+
+{% block extrajs %}
+<script type="text/javascript">
+  $('#socialauth_sync_btn').popover({placement: "left", html: true});
+</script>
 {% endblock %}

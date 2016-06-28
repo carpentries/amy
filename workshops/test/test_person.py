@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import datetime
+from unittest.mock import patch
 from urllib.parse import urlencode
 
 from django.contrib.auth import authenticate
@@ -11,11 +12,12 @@ from django.contrib.auth.models import Permission, Group
 from ..forms import PersonForm, PersonCreateForm, PersonsMergeForm
 from ..models import (
     Person, Task, Qualification, Award, Role, Event, KnowledgeDomain, Badge,
-    Lesson, Host
+    Lesson, Host, Language,
 )
 from .base import TestBase
 
 
+@patch('workshops.github_auth.github_username_to_uid', lambda username: None)
 class TestPerson(TestBase):
     '''Test cases for persons.'''
 
@@ -35,6 +37,7 @@ class TestPerson(TestBase):
         response = self.client.get(reverse('person_details', args=[str(self.hermione.id)]))
         doc = self._check_status_code_and_parse(response, 200)
         self._check_person(doc, self.hermione)
+
 
     def test_display_person_correctly_with_some_fields(self):
         response = self.client.get(reverse('person_details', args=[str(self.ironman.id)]))
@@ -89,7 +92,6 @@ class TestPerson(TestBase):
                   ('gender', person.get_gender_display()),
                   ('may_contact', 'yes' if person.may_contact else 'no'),
                   ('airport', person.airport),
-                  ('github', person.github),
                   ('twitter', person.twitter),
                   ('url', person.url))
         for (key, value) in fields:
@@ -380,6 +382,36 @@ class TestPerson(TestBase):
         person.refresh_from_db()
         self.assertEqual(person.email, 'm.curie@sorbonne.fr')
 
+    def test_edit_permission_of_person_without_email(self):
+        """
+        Creating a person without email id and then changing
+        the permissions for that person.
+        """
+        p = Person.objects.create(personal='P1', family='P1')
+        response = self.client.get(reverse('person_details',
+                                           args=[str(p.id)]))
+        assert response.status_code == 200
+
+        user_permissions = Permission.objects \
+            .filter(content_type__app_label='admin')
+        user_permissions_ids = user_permissions.values_list('id', flat=True) \
+            .order_by('id')
+
+        groups = Group.objects.all()
+        groups_ids = groups.values_list('id', flat=True).order_by('id')
+
+        data = {
+            'is_superuser': True,
+            'user_permissions': user_permissions_ids,
+            'groups': groups_ids,
+        }
+
+        response = self.client.post(
+            reverse('person_permissions', args=[str(p.id)]),
+            data,
+        )
+        assert response.status_code == 302
+
 
 class TestPersonPassword(TestBase):
     """Separate tests for testing password setting.
@@ -389,6 +421,8 @@ class TestPersonPassword(TestBase):
     """
 
     def setUp(self):
+        admins, _ = Group.objects.get_or_create(name='administrators')
+
         # create a superuser
         self.admin = Person.objects.create_superuser(
             username='admin', personal='Super', family='User',
@@ -400,6 +434,7 @@ class TestPersonPassword(TestBase):
             username='user', personal='Typical', family='User',
             email='undo@example.org', password='user',
         )
+        self.user.groups.add(admins)
 
     def test_edit_password_by_superuser(self):
         self.client.login(username='admin', password='admin')
@@ -525,6 +560,8 @@ class TestPersonMerging(TestBase):
             event=Event.objects.get(slug='ends-tomorrow-ongoing'),
             role=Role.objects.get(name='instructor'),
         )
+        self.person_a.languages.set([Language.objects.first(),
+                                     Language.objects.last()])
 
         self.person_b = Person.objects.create(
             personal='Jayden', middle='', family='Deckow',
@@ -540,6 +577,7 @@ class TestPersonMerging(TestBase):
                                        awarded=datetime.date(2016, 2, 16))
         Qualification.objects.create(person=self.person_b, lesson=self.sql)
         self.person_b.domains = [KnowledgeDomain.objects.last()]
+        self.person_b.languages.set([Language.objects.last()])
 
         self.strategy = {
             'person_a': self.person_a.pk,
@@ -563,6 +601,7 @@ class TestPersonMerging(TestBase):
             'award_set': 'obj_a',
             'qualification_set': 'obj_b',
             'domains': 'combine',
+            'languages': 'combine',
             'task_set': 'obj_b',
             'is_active': 'obj_a',
         }
@@ -604,6 +643,7 @@ class TestPersonMerging(TestBase):
             'award_set': 'combine',
             'qualification_set': 'combine',
             'domains': 'combine',
+            'languages': 'combine',
             'task_set': 'combine',
         }
         data = hidden.copy()
@@ -673,6 +713,8 @@ class TestPersonMerging(TestBase):
             'lessons': set([self.sql]),
             'domains': set([KnowledgeDomain.objects.first(),
                             KnowledgeDomain.objects.last()]),
+            'languages': set([Language.objects.first(),
+                              Language.objects.last()]),
             'task_set': set(Task.objects.none()),
         }
 
@@ -705,3 +747,17 @@ class TestPersonMerging(TestBase):
         for key, value in assertions.items():
             self.assertEqual(set(getattr(self.person_b, key).all()), value,
                              key)
+
+    def test_merging_m2m_with_similar_attributes(self):
+        """Regression test: merging people with the same M2M objects, e.g. when
+        both people have task 'learner' in event 'ABCD', would result in unique
+        constraint violation and cause IntegrityError."""
+        self.person_b.task_set.create(
+            event=Event.objects.get(slug='ends-tomorrow-ongoing'),
+            role=Role.objects.get(name='instructor'),
+        )
+
+        self.strategy['task_set'] = 'combine'
+
+        rv = self.client.post(self.url, data=self.strategy)
+        self.assertEqual(rv.status_code, 302)

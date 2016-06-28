@@ -11,11 +11,16 @@ from .models import (
     Badge,
 )
 
+
+class RoleAdmin(admin.ModelAdmin):
+    list_display = ('name', 'verbose_name')
+
+
 admin.site.register(Tag)
 admin.site.register(AcademicLevel)
 admin.site.register(ComputingExperienceLevel)
 admin.site.register(DataAnalysisLevel)
-admin.site.register(Role)
+admin.site.register(Role, RoleAdmin)
 admin.site.register(Lesson)
 admin.site.register(KnowledgeDomain)
 admin.site.register(Badge)

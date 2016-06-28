@@ -10,13 +10,13 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="{% url 'dashboard' %}">AMY</a>
+          <a class="navbar-brand" href="{% url 'admin-dashboard' %}">AMY</a>
         </div>
 
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="collapse navbar-collapse" id="navbar-collapse-1">
           <ul class="nav navbar-nav">
-            {% navbar_element "Dashboard" "dashboard" %}
+            {% navbar_element "Dashboard" "admin-dashboard" %}
             {% navbar_element "Events" "all_events" %}
             {% navbar_element "Hosts" "all_hosts" %}
             {% navbar_element "Persons" "all_persons" %}
@@ -27,10 +27,7 @@
                 {% navbar_element "Badges" "all_badges" %}
                 {% navbar_element "Trainings" "all_trainings" %}
                 {% navbar_element "Airports" "all_airports" %}
-                {% navbar_element "Workshop requests" "all_eventrequests" %}
-                {% navbar_element "Workshop submissions" "all_eventsubmissions" %}
-                {% navbar_element "Profile update requests" "all_profileupdaterequests" %}
-                {% navbar_element "Invoice requests" "all_invoicerequests" %}
+                {% navbar_element "Events with changed metadata" "events_metadata_changed" %}
                 <li class="divider"></li>
                 {% navbar_element_permed "Bulk add persons" "person_bulk_add" "workshops.add_person" %}
                 {% navbar_element_permed "Merge persons" "persons_merge" "workshops.delete_person" %}
@@ -58,6 +55,17 @@
                 {% navbar_element "Workshop issues" "workshop_issues" %}
                 {% navbar_element "Instructor issues" "instructor_issues" %}
                 {% navbar_element "Find duplicates" "duplicates" %}
+              </ul>
+            </li>
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Requests / forms <span class="caret"></span></a>
+              <ul class="dropdown-menu" role="menu">
+                {% navbar_element "Training requests" "all_trainingrequests" %}
+                {% navbar_element "Workshop requests" "all_eventrequests" %}
+                {% navbar_element "Workshop submissions" "all_eventsubmissions" %}
+                {% navbar_element "DC self-organized workshop requests" "all_dcselforganizedeventrequests" %}
+                {% navbar_element "Profile update requests" "all_profileupdaterequests" %}
+                {% navbar_element "Invoice requests" "all_invoicerequests" %}
               </ul>
             </li>
           </ul>

@@ -1,11 +1,18 @@
 # coding: utf-8
-from collections import namedtuple, defaultdict
 import csv
 import datetime
-from itertools import chain
 import re
-import yaml
+from collections import namedtuple, defaultdict
+from functools import wraps
+from itertools import chain
 
+import requests
+import yaml
+from django.contrib.auth.decorators import (
+    user_passes_test,
+    login_required as django_login_required
+)
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import (
     EmptyPage, PageNotAnInteger, Paginator as DjangoPaginator,
@@ -14,11 +21,12 @@ from django.core.validators import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.http import Http404
+from django.http.response import HttpResponse
+from django.http.response import HttpResponseForbidden
 from django.shortcuts import render
-import requests
+from selectable.decorators import results_decorator
 
-from workshops.models import Event, Role, Person, Task, Award, Badge
-
+from workshops.models import Event, Role, Person, Task, Badge, is_admin
 
 ITEMS_PER_PAGE = 25
 
@@ -27,7 +35,7 @@ SIMPLE_EMAIL = re.compile(r'^\S+@\S+\.\S+$')
 
 NUM_TRIES = 100
 
-ALLOWED_TAG_NAMES = [
+ALLOWED_METADATA_NAMES = [
     'slug', 'startdate', 'enddate', 'country', 'venue', 'address',
     'latlng', 'language', 'eventbrite', 'instructor', 'helper', 'contact',
 ]
@@ -421,19 +429,19 @@ def get_pagination_items(request, all_objects):
     return result
 
 
-def fetch_event_tags(event_url):
-    """Handle tags from any event site (works with rendered <meta> tags and
-    YAML tags in `index.html`)."""
+def fetch_event_metadata(event_url):
+    """Handle metadata from any event site (works with rendered <meta> metadata and
+    YAML metadata in `index.html`)."""
     # fetch page
     response = requests.get(event_url)
     response.raise_for_status()  # assert it's 200 OK
     content = response.text
 
-    # find tags
-    tags = find_tags_on_event_website(content)
+    # find metadata
+    metadata = find_metadata_on_event_website(content)
 
-    if 'slug' not in tags:
-        # there are no HTML tags, so let's try the old method
+    if 'slug' not in metadata:
+        # there are no HTML metadata, so let's try the old method
         index_url, repository = generate_url_to_event_index(event_url)
 
         # fetch page
@@ -442,18 +450,18 @@ def fetch_event_tags(event_url):
         if response.status_code == 200:
             # don't throw errors for pages we fall back to
             content = response.text
-            tags = find_tags_on_event_index(content)
+            metadata = find_metadata_on_event_homepage(content)
 
-            # add 'slug' tag if missing
-            if 'slug' not in tags:
-                tags['slug'] = repository
+            # add 'slug' metadata if missing
+            if 'slug' not in metadata:
+                metadata['slug'] = repository
 
     # leave normalization or validation to the caller function
-    return tags
+    return metadata
 
 
 class WrongWorkshopURL(ValueError):
-    """Raised when we fall back to reading tags from event's YAML front matter,
+    """Raised when we fall back to reading metadata from event's YAML front matter,
     which requires a link to GitHub raw hosted file, but we can't get that link
     because provided URL doesn't match Event.WEBSITE_REGEX
     (see `generate_url_to_event_index` below)."""
@@ -476,62 +484,62 @@ def generate_url_to_event_index(website_url):
     raise WrongWorkshopURL()
 
 
-def find_tags_on_event_index(content):
-    """Given workshop's raw `index.html`, find and take YAML tags that
+def find_metadata_on_event_homepage(content):
+    """Given workshop's raw `index.html`, find and take YAML metadata that
     have workshop-related data."""
     try:
         first, header, last = content.split('---')
-        tags = yaml.load(header.strip())
+        metadata = yaml.load(header.strip())
 
-        # get tags to the form returned by `find_tags_on_event_website`
+        # get metadata to the form returned by `find_metadata_on_event_website`
         # because YAML tries to interpret values from index's header
-        filtered_tags = {key: value for key, value in tags.items()
-                         if key in ALLOWED_TAG_NAMES}
-        for key, value in filtered_tags.items():
+        filtered_metadata = {key: value for key, value in metadata.items()
+                         if key in ALLOWED_METADATA_NAMES}
+        for key, value in filtered_metadata.items():
             if isinstance(value, int):
-                filtered_tags[key] = str(value)
+                filtered_metadata[key] = str(value)
             elif isinstance(value, datetime.date):
-                filtered_tags[key] = '{:%Y-%m-%d}'.format(value)
+                filtered_metadata[key] = '{:%Y-%m-%d}'.format(value)
             elif isinstance(value, list):
-                filtered_tags[key] = ', '.join(value)
+                filtered_metadata[key] = ', '.join(value)
 
-        return filtered_tags
+        return filtered_metadata
 
     except (ValueError, yaml.scanner.ScannerError):
         # can't unpack or header is not YML format
         return dict()
 
 
-def find_tags_on_event_website(content):
-    """Given website content, find and take <meta> tags that have
+def find_metadata_on_event_website(content):
+    """Given website content, find and take <meta> metadata that have
     workshop-related data."""
 
     R = r'<meta name="(?P<name>[\w-]+)" content="(?P<content>.+)" />$'
     regexp = re.compile(R, re.M)
 
     return {name: content for name, content in regexp.findall(content)
-            if name in ALLOWED_TAG_NAMES}
+            if name in ALLOWED_METADATA_NAMES}
 
 
-def parse_tags_from_event_website(tags):
-    """Simple preprocessing of the tags from event website."""
+def parse_metadata_from_event_website(metadata):
+    """Simple preprocessing of the metadata from event website."""
     # no compatibility with old-style names
-    country = tags.get('country', '').upper()[0:2]
+    country = metadata.get('country', '').upper()[0:2]
     if len(country) < 2:
         country = ''
-    language = tags.get('language', '').upper()[0:2]
+    language = metadata.get('language', '').upper()[0:2]
     if len(language) < 2:
         language = ''
 
     try:
-        latitude, _ = tags.get('latlng', '').split(',')
+        latitude, _ = metadata.get('latlng', '').split(',')
         latitude = float(latitude.strip())
     except (ValueError, AttributeError):
         # value error: can't convert string to float
         # attribute error: object doesn't have "split" or "strip" methods
         latitude = None
     try:
-        _, longitude = tags.get('latlng', '').split(',')
+        _, longitude = metadata.get('latlng', '').split(',')
         longitude = float(longitude.strip())
     except (ValueError, AttributeError):
         # value error: can't convert string to float
@@ -539,7 +547,7 @@ def parse_tags_from_event_website(tags):
         longitude = None
 
     try:
-        reg_key = tags.get('eventbrite', '')
+        reg_key = metadata.get('eventbrite', '')
         reg_key = int(reg_key)
     except (ValueError, TypeError):
         # value error: can't convert string to int
@@ -547,42 +555,42 @@ def parse_tags_from_event_website(tags):
         reg_key = None
 
     try:
-        start = tags.get('startdate', '')
+        start = metadata.get('startdate', '')
         start = datetime.datetime.strptime(start, '%Y-%m-%d').date()
     except ValueError:
         start = None
 
     try:
-        end = tags.get('enddate', '')
+        end = metadata.get('enddate', '')
         end = datetime.datetime.strptime(end, '%Y-%m-%d').date()
     except ValueError:
         end = None
 
     # Split string of comma-separated names into a list, but return empty list
     # instead of [''] when there are no instructors/helpers.
-    instructors = (tags.get('instructor') or '').split('|')
+    instructors = (metadata.get('instructor') or '').split('|')
     instructors = [instr.strip() for instr in instructors if instr]
-    helpers = (tags.get('helper') or '').split('|')
+    helpers = (metadata.get('helper') or '').split('|')
     helpers = [helper.strip() for helper in helpers if helper]
 
     return {
-        'slug': tags.get('slug', ''),
+        'slug': metadata.get('slug', ''),
         'language': language,
         'start': start,
         'end': end,
         'country': country,
-        'venue': tags.get('venue', ''),
-        'address': tags.get('address', ''),
+        'venue': metadata.get('venue', ''),
+        'address': metadata.get('address', ''),
         'latitude': latitude,
         'longitude': longitude,
         'reg_key': reg_key,
         'instructors': instructors,
         'helpers': helpers,
-        'contact': tags.get('contact', ''),
+        'contact': metadata.get('contact', ''),
     }
 
 
-def validate_tags_from_event_website(tags):
+def validate_metadata_from_event_website(metadata):
     errors = []
 
     Requirement = namedtuple(
@@ -615,23 +623,26 @@ def validate_tags_from_event_website(tags):
         name_ = ('{display} ({name})'.format(**d_)
                  if requirement.display
                  else '{name}'.format(**d_))
-        type_ = 'required' if requirement.required else 'optional'
-        value_ = tags.get(requirement.name)
+        required_ = requirement.required
+        type_ = 'required' if required_ else 'optional'
+        value_ = metadata.get(requirement.name)
 
-        if not value_:
-            errors.append('Missing {} tag {}.'.format(type_, name_))
+        if value_ is None:
+            errors.append('Missing {} metadata {}.'.format(type_, name_))
 
         if value_ == 'FIXME':
-            errors.append('Placeholder value "FIXME" for {} tag {}.'
+            errors.append('Placeholder value "FIXME" for {} metadata {}.'
                           .format(type_, name_))
         else:
             try:
-                if not re.match(requirement.match_format, value_):
-                    errors.append(
-                        'Invalid value "{}" for {} tag {}: should be in '
-                        'format "{}".'
-                        .format(value_, type_, name_, requirement.match_format)
-                    )
+                if required_ or value_:
+                    if not re.match(requirement.match_format, value_):
+                        errors.append(
+                            'Invalid value "{}" for {} metadata {}: should be'
+                            ' in format "{}".'
+                            .format(value_, type_, name_,
+                                    requirement.match_format)
+                        )
             except (re.error, TypeError):
                 pass
 
@@ -794,6 +805,11 @@ def merge_objects(object_a, object_b, easy_fields, difficult_fields,
         base_obj = object_b
         merging_obj = object_a
 
+    # used to catch all IntegrityErrors caused by violated database constraints
+    # when adding two similar entries by the manager (see below for more
+    # details)
+    integrity_errors = []
+
     with transaction.atomic():
         for attr in easy_fields:
             value = choices.get(attr)
@@ -844,10 +860,68 @@ def merge_objects(object_a, object_b, easy_fields, difficult_fields,
                 manager.set(list(related_b.all()))
 
             elif value == 'combine':
-                # remove duplicates
-                manager.add(*list(related_a.all() |
-                                  related_b.all()))
+                summed = related_a.all() | related_b.all()
+
+                # some entries may cause IntegrityError (violation of
+                # uniqueness constraint) because they are duplicates *after*
+                # being added by the manager
+                for element in summed:
+                    try:
+                        with transaction.atomic():
+                            manager.add(element)
+                    except IntegrityError as e:
+                        integrity_errors.append(str(e))
 
         merging_obj.delete()
 
-        return base_obj.save()
+        return base_obj.save(), integrity_errors
+
+
+def access_control_decorator(decorator):
+    """Every function-based view should be decorated with one of access control
+    decorators, even if the view is accessible to everyone, including
+    unauthorized users (in that case, use @login_not_required)."""
+    @wraps(decorator)
+    def decorated_access_control_decorator(view):
+        acl = getattr(view, '_access_control_list', [])
+        view = decorator(view)
+        view._access_control_list = acl + [decorated_access_control_decorator]
+        return view
+    return decorated_access_control_decorator
+
+
+@access_control_decorator
+def admin_required(view):
+    return user_passes_test(is_admin)(view)
+
+
+@access_control_decorator
+def login_required(view):
+    return django_login_required(view)
+
+
+@access_control_decorator
+def login_not_required(view):
+    # @access_control_decorator adds _access_control_list to `view`,
+    # so @login_not_required is *not* no-op.
+    return view
+
+
+@results_decorator
+def lookup_only_for_admins(request):
+    user = getattr(request, 'user', None)
+    if user is None or not user.is_authenticated():
+        return HttpResponse(status=401)  # Unauthorized
+    elif not is_admin(user):
+        return HttpResponseForbidden()
+    else:
+        return None
+
+
+class OnlyForAdminsMixin(UserPassesTestMixin):
+    def test_func(self):
+        return is_admin(self.request.user)
+
+
+class LoginNotRequiredMixin(object):
+    pass

@@ -5,6 +5,7 @@ import os
 import re
 import itertools
 import xml.etree.ElementTree as ET
+from unittest.mock import patch
 
 from django.conf import settings
 from django.contrib.auth.models import Group, Permission
@@ -21,7 +22,8 @@ from ..models import \
     Qualification, \
     Host, \
     Role, \
-    Tag
+    Tag, \
+    Language
 
 from ..util import universal_date_format
 
@@ -84,6 +86,19 @@ class TestBase(TestCase):
             iata='DDD', fullname='Airport 55x105',
             country='CM',
             latitude=55.0, longitude=105.0)
+
+    def _setUpLanguages(self):
+        '''Set up language objects.'''
+
+        self.english, _ = Language.objects.get_or_create(
+            name='English',
+        )
+        self.french, _ = Language.objects.get_or_create(
+            name='French',
+        )
+        self.latin, _ = Language.objects.get_or_create(
+            name='Latin',
+        )
 
     def _setUpBadges(self):
         '''Set up badge objects.'''
@@ -295,9 +310,12 @@ class TestBase(TestCase):
         are currently in the database.  This is an auxiliary method for adding
         them to the tests, should one need them."""
         Role.objects.bulk_create([
-            Role(name='helper'), Role(name='instructor'), Role(name='host'),
-            Role(name='learner'), Role(name='organizer'), Role(name='tutor'),
-            Role(name='debriefed'),
+            Role(name='helper'),
+            Role(name='instructor'),
+            Role(name='host', verbose_name='Host'),
+            Role(name='learner'),
+            Role(name='organizer'),
+            Role(name='tutor'),
         ])
 
     def _parse(self, response, save_to=None):
@@ -317,7 +335,7 @@ class TestBase(TestCase):
             with open(save_to, 'w') as writer:
                 writer.write(content)
 
-        # Report unfilled tags.
+        # Report undefined variables in templates.
         STRING_IF_INVALID = \
             settings.TEMPLATES[0]['OPTIONS']['string_if_invalid']
         if STRING_IF_INVALID in content:

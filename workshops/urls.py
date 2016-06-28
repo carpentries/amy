@@ -2,7 +2,9 @@ from django.conf.urls import url
 from workshops import views
 
 urlpatterns = [
-    url(r'^$', views.dashboard, name='dashboard'),
+    url(r'^$', views.dispatch, name='dispatch'),
+    url(r'^admin-dashboard/$', views.admin_dashboard, name='admin-dashboard'),
+    url(r'^trainee-dashboard/$', views.trainee_dashboard, name='trainee-dashboard'),
 
     url(r'^log/$', views.changes_log, name='changes_log'),
 
@@ -33,6 +35,7 @@ urlpatterns = [
     url(r'^persons/bulkadd/template',views.person_bulk_add_template, name='person_bulk_add_template'),
     url(r'^persons/bulkadd/confirm$',views.person_bulk_add_confirmation, name='person_bulk_add_confirmation'),
     url(r'^persons/merge/$', views.persons_merge, name='persons_merge'),
+    url(r'^persons/sync_usersocialauth/(?P<person_id>\d+)/?', views.sync_usersocialauth, name='sync_usersocialauth'),
 
     url(r'^events/?$', views.all_events, name='all_events'),
     url(r'^event/(?P<event_ident>[\w-]+)/?$', views.event_details, name='event_details'),
@@ -42,10 +45,10 @@ urlpatterns = [
     url(r'^event/(?P<event_ident>[\w-]+)/delete$', views.event_delete, name='event_delete'),
     url(r'^events/add/$', views.EventCreate.as_view(), name='event_add'),
     url(r'^event/(?P<event_ident>[\w-]+)/validate/?$', views.validate_event, name='validate_event'),
-    url(r'^events/tag_changed/?$', views.events_tag_changed, name='events_tag_changed'),
-    url(r'^event/(?P<event_ident>[\w-]+)/review_tag_changes/?$', views.event_review_repo_changes, name='event_review_repo_changes'),
-    url(r'^event/(?P<event_ident>[\w-]+)/review_tag_changes/accept/?$', views.event_review_repo_changes_accept, name='event_review_repo_changes_accept'),
-    url(r'^event/(?P<event_ident>[\w-]+)/review_tag_changes/dismiss/?$', views.event_review_repo_changes_dismiss, name='event_review_repo_changes_dismiss'),
+    url(r'^events/metadata_changed/?$', views.events_metadata_changed, name='events_metadata_changed'),
+    url(r'^event/(?P<event_ident>[\w-]+)/review_metadata_changes/?$', views.event_review_metadata_changes, name='event_review_metadata_changes'),
+    url(r'^event/(?P<event_ident>[\w-]+)/review_metadata_changes/accept/?$', views.event_accept_metadata_changes, name='event_accept_metadata_changes'),
+    url(r'^event/(?P<event_ident>[\w-]+)/review_metadata_changes/dismiss/?$', views.event_dismiss_metadata_changes, name='event_dismiss_metadata_changes'),
     url(r'^events/import/?$', views.event_import, name='event_import'),
     url(r'^events/merge/?$', views.events_merge, name='events_merge'),
 
@@ -101,6 +104,13 @@ urlpatterns = [
     url(r'^swc/request/confirm/$', views.SWCEventRequestConfirm.as_view(), name='swc_workshop_request_confirm'),
     url(r'^dc/request/$', views.DCEventRequest.as_view(), name='dc_workshop_request'),
     url(r'^dc/request/confirm/$', views.DCEventRequestConfirm.as_view(), name='dc_workshop_request_confirm'),
+    url(r'^dc/request_selforganized/$', views.DCSelfOrganizedEventRequest.as_view(), name='dc_workshop_selforganized_request'),
+    url(r'^dc/request_selforganized/confirm/$', views.DCSelfOrganizedEventRequestConfirm.as_view(), name='dc_workshop_selforganized_request_confirm'),
+    url(r'^dc_selforganized_requests/$', views.AllDCSelfOrganizedEventRequests.as_view(), name='all_dcselforganizedeventrequests'),
+    url(r'^dc_selforganized_request/(?P<request_id>\d+)/?$', views.DCSelfOrganizedEventRequestDetails.as_view(), name='dcselforganizedeventrequest_details'),
+    url(r'^dc_selforganized_request/(?P<request_id>\d+)/edit$', views.DCSelfOrganizedEventRequestChange.as_view(), name='dcselforganizedeventrequest_edit'),
+    url(r'^dc_selforganized_request/(?P<request_id>\d+)/assign$', views.dcselforganizedeventrequest_assign, name='dcselforganizedeventrequest_assign'),
+    url(r'^dc_selforganized_request/(?P<request_id>\d+)/assign/(?P<person_id>[\w\.-]+)$', views.dcselforganizedeventrequest_assign, name='dcselforganizedeventrequest_assign'),
 
     url(r'^submissions/$', views.AllEventSubmissions.as_view(), name='all_eventsubmissions'),
     url(r'^submission/(?P<submission_id>\d+)/?$', views.EventSubmissionDetails.as_view(), name='eventsubmission_details'),
@@ -120,6 +130,11 @@ urlpatterns = [
     url(r'^profile_update/(?P<request_id>\d+)/accept/?$', views.profileupdaterequest_accept, name='profileupdaterequest_accept'),
     url(r'^profile_update/(?P<request_id>\d+)/accept/(?P<person_id>[\w\.-]+)/?$', views.profileupdaterequest_accept, name='profileupdaterequest_accept'),
     url(r'^update_profile/$', views.profileupdaterequest_create, name='profileupdate_request'),
+    url(r'^autoupdate_profile/$', views.autoupdate_profile, name='autoupdate_profile'),
+
+    url(r'^request_training/$', views.trainingrequest_create, name='training_request'),
+    url(r'^training_requests/$', views.TrainingRequestListView.as_view(), name='all_trainingrequests'),
+    url(r'^training_requests/(?P<request_id>\d+)/?$', views.TrainingRequestDetails.as_view(), name='trainingrequest_details'),
 
     url(r'^todos/(?P<event_ident>[\w-]+)/add$', views.todos_add, name='todos_add'),
     url(r'^todo/(?P<todo_id>\d+)/completed', views.todo_mark_completed, name='todo_mark_completed'),

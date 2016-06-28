@@ -13,8 +13,8 @@ from rest_framework.utils.encoders import JSONEncoder
 
 from workshops.models import Event
 from workshops.util import (
-    fetch_event_tags,
-    parse_tags_from_event_website,
+    fetch_event_metadata,
+    parse_metadata_from_event_website,
     WrongWorkshopURL,
 )
 
@@ -122,16 +122,16 @@ class Command(BaseCommand):
             return groups['name'], groups['repo']
         raise WrongWorkshopURL()
 
-    def get_event_tags(self, event_url):
+    def get_event_metadata(self, event_url):
         """Get metadata from event (location, instructors, helpers, etc.)."""
-        tags = fetch_event_tags(event_url)
-        # normalize the tags
-        tags = parse_tags_from_event_website(tags)
-        return tags
+        metadata = fetch_event_metadata(event_url)
+        # normalize the metadata
+        metadata = parse_metadata_from_event_website(metadata)
+        return metadata
 
-    def empty_tags(self):
-        """Prepare basic, empty tags."""
-        return parse_tags_from_event_website({})
+    def empty_metadata(self):
+        """Prepare basic, empty metadata."""
+        return parse_metadata_from_event_website({})
 
     def serialize(self, obj):
         """Serialize object to be put in the database."""
@@ -150,25 +150,25 @@ class Command(BaseCommand):
         branch = repo.get_branch('gh-pages')
         return branch
 
-    def detect_changes(self, branch, event, save_tags=False):
-        """Detect changes made to event's meta tags."""
+    def detect_changes(self, branch, event, save_metadata=False):
+        """Detect changes made to event's metadata."""
         changes = []
 
         # compare commit hashes
         if branch.commit.sha != event.repository_last_commit_hash:
-            # Hashes differ? Update commit hash and compare stored tags
+            # Hashes differ? Update commit hash and compare stored metadata
             event.repository_last_commit_hash = branch.commit.sha
 
-            tags_new = self.get_event_tags(event.url)
+            metadata_new = self.get_event_metadata(event.url)
 
             try:
-                tags_old = self.deserialize(event.repository_tags)
+                metadata_old = self.deserialize(event.repository_metadata)
             except json.decoder.JSONDecodeError:
                 # this means that the value in DB is pretty much useless
                 # so let's set it to the default value
-                tags_old = self.empty_tags()
+                metadata_old = self.empty_metadata()
 
-            tags_to_check = (
+            metadata_to_check = (
                 ('instructors', 'Instructors changed'),
                 ('helpers', 'Helpers changed'),
                 ('start', 'Start date changed'),
@@ -183,30 +183,31 @@ class Command(BaseCommand):
             )
 
             changed = False
-            # look for changed tags
-            for tag, reason in tags_to_check:
-                if tags_new[tag] != tags_old[tag]:
+            # look for changed metadata
+            for key, reason in metadata_to_check:
+                if metadata_new[key] != metadata_old[key]:
                     changes.append(reason)
                     changed = True
 
             if changed:
-                if save_tags:
-                    # we may not want to update the tags
-                    event.repository_tags = self.serialize(tags_new)
+                if save_metadata:
+                    # we may not want to update the metadata
+                    event.repository_metadata = self.serialize(metadata_new)
 
-                event.tag_changes_detected = "\n".join(changes)
-                event.tags_changed = True
+                event.metadata_all_changes = "\n".join(changes)
+                event.metadata_changed = True
+
             event.save()
 
         return changes
 
     def init(self, branch, event):
-        """Load initial data into event's repository and tag information."""
+        """Load initial data into event's repository and metadata information."""
         event.repository_last_commit_hash = branch.commit.sha
-        tags = self.get_event_tags(event.url)
-        event.repository_tags = self.serialize(tags)
-        event.tag_changes_detected = ''
-        event.tags_changed = False
+        metadata = self.get_event_metadata(event.url)
+        event.repository_metadata = self.serialize(metadata)
+        event.metadata_all_changes = ''
+        event.metadata_changed = False
         event.save()
 
     def handle(self, *args, **options):
