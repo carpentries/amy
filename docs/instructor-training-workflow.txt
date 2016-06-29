@@ -115,8 +115,6 @@
     - Adds comments (if any).
   - Trainer indicates whether <Training Task> is now complete.
 
-Note: each <Training Task> may accumulate multiple date+comment pairs, one for each attempt to pass that task.
-
 ## Completing training work.
 
 * [trainer changes completion status of work for trainee]
@@ -170,6 +168,7 @@ Note: each <Training Task> may accumulate multiple date+comment pairs, one for e
 - What workflow *should* we use for marking training events as closed/stalled?
 - Do we only allow feedback loop/multiple tries for interactive work (discussions and demos), but *not* for written work?  That's how the workflows are written now...
 - Can we support group applications by providing one extra free-text field in the application called "Group Name", and asking people who want to co-apply to fill it in with the same value?  We can then sort/filter/group by that value to find people in the same group.
+- Should each <Training Task> accumulate multiple date+comment pairs (one for each attempt to pass that task), or should people have multiple <Training Task> objects of a particular type (e.g., "demo"), N-1 of which are "fail", the last of which is "pass"?
 
 --------------------
 
