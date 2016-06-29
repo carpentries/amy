@@ -302,7 +302,8 @@ class TestBase(TestCase):
         self.num_uninvoiced_events = 0
         self.num_upcoming = 0
         for e in Event.objects.all():
-            if e.invoice_status == 'not-invoiced' and e.start < today:
+            e.is_past_event = e.start < today and (e.end is None or e.end < today)
+            if e.invoice_status == 'not-invoiced' and e.is_past_event:
                 self.num_uninvoiced_events += 1
             if e.url and (e.start > today):
                 self.num_upcoming += 1
