@@ -1,3 +1,5 @@
+## Notation
+
 - [use cases] are in square brackets
 - {web pages} are in curly braces
 - <database objects> are in angle brackets
@@ -7,15 +9,29 @@
 * [user registers self][a]: user match by email address or GitHub ID.
   - User fills in {single user application form} on AMY with name, email address, GitHub ID, etc.
   - AMY matches to pre-existing <Person> using email or GitHub ID.
-  - <Training Application> created, connected to pre-existing <Person>, and added to <Training Application List>.
+  - <Training Application> created, connected to pre-existing <Person>, marked "Pending", and added to <Training Application List>.
 
 * [user registers self][b]: no user match.
   - User fills in form on AMY with name, email address, GitHub ID, etc.
   - AMY does *not* match email or GitHub ID.
-  - AMY creates new <Person>.
-  - <Training Application> created, connected to newly-created <Person>, and added to <Training Application List>.
+  - <Training Application> created, marked "Pending", and added to <Training Application List> *without* <Person> object.
 
-## Administrator registers someone for training.
+## Administrator approves individual for training.
+
+* [admin approves training][a]: user record already in database.
+  - Admin views <Training Application List>.
+  - Admin selects <Training Application> marked "Pending" that has been matched with <Person>.
+  - Admin approves <Training Application>.
+  - AMY clears <Training Application>'s "Pending" flag.
+
+* [admin approves training][b]: no user record in database.
+  - Admin views <Training Application List>.
+  - Admin selects <Training Application>.
+  - Admin approves <Training Application>.
+  - AMY clears <Training Application>'s "Pending" flag.
+  - AMY creates <Person> record and associates with <Training Application>.
+
+## Administrator registers individual for training.
 
 * [admin registers user][a]: user is already in database.
   - Administrator looks up email address or GitHub ID.
@@ -25,34 +41,12 @@
   - Administrator creates <Person>.
   - Administrator => [admin registers user][a].
 
-## Group application for training.
-
-* [user registers group]: individual user registers a group of friends or colleagues.
-  - User fills in {group application form} with:
-    - Their own name, email address, institution.
-    - Names and email addresses of group members
-  - User and others are sent unique links to fill in full application form.
-  - Each user => [user registers self], but application is linked to <Group Training Application>.
-
-* [admin registers group]: admin does group registration (e.g., has been sent names and email addresses by partner).
-  - Admin either:
-    - Fills in {group registration form} with names and email addresses of group members.
-    - Fills in {group registration form} via bulk upload from CSV file.
-  - Admin matches users already in database to <Person> records as per existing bulk upload.
-  - AMY creates new <Person> records for unmatched users as per existing bulk upload.
-  - AMY creates <Group Training Application>.
-  - AMY:
-    - Creates one new <Training Application> record for each <Person>.
-    - Connects the <Training Application> to the <Person>.
-    - Connects the <Training Application> to the <Group Training Application>.
-    - Adds the <Training Application> to <Training Application List>.
-
 ## Reviewing training queue.
 
 * [admin reviews training queue]: to see who's waiting and how long.
   - Admin goes to {training queue display}.
   - Admin selects filtering and sorting criteria (if any).
-  - Admin pages through display showing both <Training Application>s and <Group Training Application>s.
+  - Admin pages through display showing both <Training Application>s.
 
 ## Setting up training course.
 
@@ -60,10 +54,10 @@
   - Admin creates new <Event>.
   - Admin goes to {training queue display}.
   - Admin selects <Event>.
-  - Admin selects some mix of <Training Application> and <Group Training Application>.
+  - Admin selects some <Training Application>s.
   - AMY creates <Task>s to add all the selected <Person>s to the <Event>.
-  - AMY connects the <Training Application> and <Group Training Application> to the <Event>.
-  - AMY moves <Training Application>s and <Group Training Application>s to <Assigned Application List>.
+  - AMY connects the <Training Application>s to the <Event>.
+  - AMY moves <Training Application>s to <Assigned Application List>.
   - AMY provides single-click "send to all" email link to admin to inform trainees.
   - AMY creates <Training Progress> record for each <Person>.
 
@@ -71,17 +65,21 @@
 
 * [admin removes people from training event][a]: and discards applications
   - Admin goes to {assigned training application display}.
-  - Admin selects <Training Application>s and <Group Training Application>s.
+  - Admin selects <Training Application>s.
   - Admin removes them from training event.
   - AMY deletes associated <Task>s.
+  - AMY deletes <Training Application>s.
 
 * [admin removes people from training event][b]: but keeps applications
-  - => [admin removes people from training event][a]
-  - AMY moves <Training Application>s and <Group Training Application>s back to <Training Application List>.
+  - Admin goes to {assigned training application display}.
+  - Admin selects <Training Application>s.
+  - Admin removes them from training event.
+  - AMY deletes associated <Task>s.
+  - AMY moves <Training Application>s back to <Training Application List>.
 
 ## Reviewing training progress.
 
-* [admin views training progress]: both past and present.
+* [admin views training progress]: to see who's done what.
   - Admin views {training progress page}.
   - Admin selects filtering and sorting criteria (if any).
 
@@ -168,7 +166,47 @@ Note: each <Training Task> may accumulate multiple date+comment pairs, one for e
 
 ## Questions
 
-- How to display a mix of both <Training Application>s and <Group Training Application>s?
-- How to select from a mix of both <Training Application>s and <Group Training Application>s?
 - What to do if Admin deletes <Task> from training <Event> directly rather than via [admin removes people from training event]?
 - What workflow *should* we use for marking training events as closed/stalled?
+- Do we only allow feedback loop/multiple tries for interactive work (discussions and demos), but *not* for written work?  That's how the workflows are written now...
+- Can we support group applications by providing one extra free-text field in the application called "Group Name", and asking people who want to co-apply to fill it in with the same value?  We can then sort/filter/group by that value to find people in the same group.
+
+--------------------
+
+Please ignore this section for now - we'll think about groups after we have individual tracking sorted.
+
+## Group application for training.
+
+* [user registers group]: individual user registers a group of friends or colleagues.
+  - User fills in {group application form} with:
+    - Their own name, email address, institution.
+    - Names and email addresses of group members
+  - AMY creates <Group Training Application>, marks it "Pending", adds it to <Training Application List>.
+
+* [admin registers group]: admin does group registration (e.g., has been sent names and email addresses by partner).
+  - Admin either:
+    - Fills in {group registration form} with names and email addresses of group members.
+    - Fills in {group registration form} via bulk upload from CSV file.
+  - Admin matches users already in database to <Person> records as per existing bulk upload.
+  - AMY creates new <Person> records for unmatched users as per existing bulk upload.
+  - AMY creates <Group Training Application>.
+  - AMY:
+    - Creates one new <Training Application> record for each <Person>.
+    - Connects the <Training Application> to the <Person>.
+    - Connects the <Training Application> to the <Group Training Application>.
+    - Adds the <Training Application> to <Training Application List>.
+
+## Administrator approves group for training.
+
+* [admin approves group]: to trigger next stage of application process.
+  - Admin reviews <Training Application List>.
+  - Admin selects <Group Training Application> marked "Pending".
+  - Admin approves <Group Training Application>.
+  - AMY clears <Group Training Application>'s "Pending" flag.
+  - Individuals listed in <Group Training Application> are sent unique link to register for training.
+  - Each user => [user registers self], but application is linked to <Group Training Application>.
+
+Questions:
+
+- How to display a mix of both <Training Application>s and <Group Training Application>s?
+- How to select from a mix of both <Training Application>s and <Group Training Application>s?
