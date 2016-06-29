@@ -9,10 +9,10 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 """
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-import os
 import json
-
+import os
 import sys
+
 from django.utils.translation import ugettext_lazy as _
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
@@ -87,9 +87,8 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'debug': DEBUG,
-
-            # default processors + a request processor + amy-version
             'context_processors': [
+                # default processors + request processor
                 'django.contrib.auth.context_processors.auth',
                 'django.template.context_processors.debug',
                 'django.template.context_processors.i18n',
@@ -98,7 +97,11 @@ TEMPLATES = [
                 'django.template.context_processors.static',
                 'django.template.context_processors.tz',
                 'django.contrib.messages.context_processors.messages',
+                # AMY version
                 'workshops.context_processors.version',
+                # GitHub auth
+                'social.apps.django_app.context_processors.backends',
+                'social.apps.django_app.context_processors.login_redirect',
             ],
 
             # Warn viewers of invalid template strings
@@ -133,6 +136,7 @@ INSTALLED_APPS = (
     'api',
     'captcha',
     'compressor',
+    'social.apps.django_app.default',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
@@ -146,6 +150,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'workshops.github_auth.GithubAuthMiddleware',
 )
 
 ROOT_URLCONF = 'amy.urls'
@@ -195,6 +200,45 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': VALIDATION + 'NumericPasswordValidator',
     },
 ]
+
+# GitHub Auth
+AUTHENTICATION_BACKENDS = (
+    'social.backends.github.GithubOAuth2',
+    'django.contrib.auth.backends.ModelBackend',
+)
+SOCIAL_AUTH_ADMIN_USER_SEARCH_FIELDS = ['github']
+SOCIAL_AUTH_GITHUB_KEY = os.environ.get('SOCIAL_AUTH_GITHUB_KEY', '').strip()
+SOCIAL_AUTH_GITHUB_SECRET = os.environ.get('SOCIAL_AUTH_GITHUB_SECRET', '').strip()
+if not DEBUG and not (SOCIAL_AUTH_GITHUB_KEY and SOCIAL_AUTH_GITHUB_SECRET):
+    print('Logging using github account will *not* work, '
+          'because you didn\'t set SOCIAL_AUTH_GITHUB_KEY and/or '
+          'SOCIAL_AUTH_GITHUB_SECRET environment variables.',
+          file=sys.stderr)
+
+
+SOCIAL_AUTH_PIPELINE = (
+    'social.pipeline.social_auth.social_details',
+    'social.pipeline.social_auth.social_uid',
+    'social.pipeline.social_auth.auth_allowed',
+    'social.pipeline.social_auth.social_user',
+
+    # If we can't find Person associated with given github account, abort.
+    'workshops.github_auth.abort_if_no_user_found',
+
+    # The default pipeline includes 'social.pipeline.user.create_user' here,
+    # but we don't want to register a new Person when somebody logs in
+    # using GitHub account that is not associated with any Person.
+
+    'social.pipeline.social_auth.associate_user',
+    'social.pipeline.social_auth.load_extra_data',
+)
+
+SOCIAL_AUTH_USER_MODEL = 'workshops.Person'
+
+# Github API token (optional). Setting this token reduces limits and quotes
+# on Github API.
+
+GITHUB_API_TOKEN = os.environ.get('GITHUB_API_TOKEN', None)
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.7/topics/i18n/

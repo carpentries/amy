@@ -40,4 +40,7 @@ urlpatterns = [
 
     # REST API v1
     url(r'^api/v1/', include('api.urls')),
+
+    # Login with GitHub credentials
+    url('', include('social.apps.django_app.urls', namespace='social')),
 ]

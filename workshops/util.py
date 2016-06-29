@@ -1,11 +1,18 @@
 # coding: utf-8
-from collections import namedtuple, defaultdict
 import csv
 import datetime
-from itertools import chain
 import re
-import yaml
+from collections import namedtuple, defaultdict
+from functools import wraps
+from itertools import chain
 
+import requests
+import yaml
+from django.contrib.auth.decorators import (
+    user_passes_test,
+    login_required as django_login_required
+)
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import (
     EmptyPage, PageNotAnInteger, Paginator as DjangoPaginator,
@@ -14,11 +21,12 @@ from django.core.validators import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.http import Http404
+from django.http.response import HttpResponse
+from django.http.response import HttpResponseForbidden
 from django.shortcuts import render
-import requests
+from selectable.decorators import results_decorator
 
-from workshops.models import Event, Role, Person, Task, Award, Badge
-
+from workshops.models import Event, Role, Person, Task, Badge, is_admin
 
 ITEMS_PER_PAGE = 25
 
@@ -867,3 +875,53 @@ def merge_objects(object_a, object_b, easy_fields, difficult_fields,
         merging_obj.delete()
 
         return base_obj.save(), integrity_errors
+
+
+def access_control_decorator(decorator):
+    """Every function-based view should be decorated with one of access control
+    decorators, even if the view is accessible to everyone, including
+    unauthorized users (in that case, use @login_not_required)."""
+    @wraps(decorator)
+    def decorated_access_control_decorator(view):
+        acl = getattr(view, '_access_control_list', [])
+        view = decorator(view)
+        view._access_control_list = acl + [decorated_access_control_decorator]
+        return view
+    return decorated_access_control_decorator
+
+
+@access_control_decorator
+def admin_required(view):
+    return user_passes_test(is_admin)(view)
+
+
+@access_control_decorator
+def login_required(view):
+    return django_login_required(view)
+
+
+@access_control_decorator
+def login_not_required(view):
+    # @access_control_decorator adds _access_control_list to `view`,
+    # so @login_not_required is *not* no-op.
+    return view
+
+
+@results_decorator
+def lookup_only_for_admins(request):
+    user = getattr(request, 'user', None)
+    if user is None or not user.is_authenticated():
+        return HttpResponse(status=401)  # Unauthorized
+    elif not is_admin(user):
+        return HttpResponseForbidden()
+    else:
+        return None
+
+
+class OnlyForAdminsMixin(UserPassesTestMixin):
+    def test_func(self):
+        return is_admin(self.request.user)
+
+
+class LoginNotRequiredMixin(object):
+    pass

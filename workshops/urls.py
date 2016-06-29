@@ -2,7 +2,9 @@ from django.conf.urls import url
 from workshops import views
 
 urlpatterns = [
-    url(r'^$', views.dashboard, name='dashboard'),
+    url(r'^$', views.dispatch, name='dispatch'),
+    url(r'^admin-dashboard/$', views.admin_dashboard, name='admin-dashboard'),
+    url(r'^trainee-dashboard/$', views.trainee_dashboard, name='trainee-dashboard'),
 
     url(r'^log/$', views.changes_log, name='changes_log'),
 
@@ -33,6 +35,7 @@ urlpatterns = [
     url(r'^persons/bulkadd/template',views.person_bulk_add_template, name='person_bulk_add_template'),
     url(r'^persons/bulkadd/confirm$',views.person_bulk_add_confirmation, name='person_bulk_add_confirmation'),
     url(r'^persons/merge/$', views.persons_merge, name='persons_merge'),
+    url(r'^persons/sync_usersocialauth/(?P<person_id>\d+)/?', views.sync_usersocialauth, name='sync_usersocialauth'),
 
     url(r'^events/?$', views.all_events, name='all_events'),
     url(r'^event/(?P<event_ident>[\w-]+)/?$', views.event_details, name='event_details'),
@@ -127,6 +130,7 @@ urlpatterns = [
     url(r'^profile_update/(?P<request_id>\d+)/accept/?$', views.profileupdaterequest_accept, name='profileupdaterequest_accept'),
     url(r'^profile_update/(?P<request_id>\d+)/accept/(?P<person_id>[\w\.-]+)/?$', views.profileupdaterequest_accept, name='profileupdaterequest_accept'),
     url(r'^update_profile/$', views.profileupdaterequest_create, name='profileupdate_request'),
+    url(r'^autoupdate_profile/$', views.autoupdate_profile, name='autoupdate_profile'),
 
     url(r'^request_training/$', views.trainingrequest_create, name='training_request'),
     url(r'^training_requests/$', views.TrainingRequestListView.as_view(), name='all_trainingrequests'),
