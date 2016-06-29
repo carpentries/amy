@@ -962,14 +962,17 @@ class TrainingRequestForm(forms.ModelForm):
         required=True,
         initial=False,
         label='I agree to abide by Software Carpentry\'s Code of Conduct',
-        help_text='The Code of Conduct can be found at http://software-carpentry.org/conduct/',
+        help_text='The Code of Conduct can be found at '
+                  '<a href="http://software-carpentry.org/conduct/">'
+                  'http://software-carpentry.org/conduct/</a>',
     )
     agreed_to_complete_training = forms.BooleanField(
         required=True,
         initial=False,
         label='I agree to complete this training within three months of the Training Course',
-        help_text='The completion steps are described '
-                  'at http://swcarpentry.github.io/instructor-training/checkout/ '
+        help_text='The completion steps are described at '
+                  '<a href="http://swcarpentry.github.io/instructor-training/checkout/">'
+                  'http://swcarpentry.github.io/instructor-training/checkout/</a> '
                   'and take a total of approximately two hours.',
     )
     agreed_to_teach_workshops = forms.BooleanField(
