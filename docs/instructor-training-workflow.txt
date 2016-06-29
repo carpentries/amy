@@ -91,41 +91,41 @@
   - AMY updates <Training Task> associated with <Person> and <Event>.
   - AMY adds <Training Progress> to <Training Progress Review List>.
 
-* [trainer reports submission of written work]: on behalf of trainee.
-  - Trainer looks up <Training Progress> associated with trainee.
-  - Trainer enters URL of written work in <Training Task>.
+* [admin reports submission of written work]: on behalf of trainee.
+  - Admin looks up <Training Progress> associated with trainee.
+  - Admin enters URL of written work in <Training Task>.
 
-* [trainer reports submission of written work]: on behalf of trainee.
-  - Trainer looks up <Training Progress> associated with trainee.
-  - Trainer enters URL of written work in <Training Task>.
+* [admin reports submission of written work]: on behalf of trainee.
+  - Admin looks up <Training Progress> associated with trainee.
+  - Admin enters URL of written work in <Training Task>.
   - AMY adds <Training Progress> to <Training Progress Review List>.
 
-* [trainer reports completion of written work]: on behalf of trainee.
-  - Trainer looks up <Training Progress> associated with trainee.
-  - Trainer enters URL of written work in <Training Task>.
-  - Trainer marks <Training Task> as complete.
+* [admin reports completion of written work]: on behalf of trainee.
+  - Admin looks up <Training Progress> associated with trainee.
+  - Admin enters URL of written work in <Training Task>.
+  - Admin marks <Training Task> as complete.
 
 ## Tracking participation in interactive work.
 
-* [trainer reports successful completion of interactive work]: such as discussion session or lesson demo.
-  - Trainer views {training progress} for trainee.
-  - Trainer selects <Training Task>.
-  - Trainer:
+* [admin reports successful completion of interactive work]: such as discussion session or lesson demo.
+  - Admin views {training progress} for trainee.
+  - Admin selects <Training Task>.
+  - Admin:
     - Enters date of interactive event.
     - Adds comments (if any).
-  - Trainer indicates whether <Training Task> is now complete.
+  - Admin indicates whether <Training Task> is now complete.
 
 ## Completing training work.
 
-* [trainer changes completion status of work for trainee]
-  - Trainer looks up <Training Progress> associated with trainee.
-  - Trainer changes "completed" status of work item(s).
+* [admin changes completion status of work for trainee]
+  - Admin looks up <Training Progress> associated with trainee.
+  - Admin changes "completed" status of work item(s).
   => [training automatically completed]
 
-* [trainer finds work to review]
-  - Trainer views {training progress display}.
-  - Trainer selects <Training Progress>.
-  - Trainer => [trainer changes completion status of work for trainee].
+* [admin finds work to review]
+  - Admin views {training progress display}.
+  - Admin selects <Training Progress>.
+  - Admin => [admin changes completion status of work for trainee].
 
 ## Completing training.
 
@@ -137,10 +137,10 @@
 
 ## Ending training.
 
-* [trainer ends training]: because trainee has gone silent, failed a work item, etc.
-  - Trainer views {training progress display}.
-  - Trainer selects <Training Progress>.
-  - Trainer marks <Training Progress> as "unsuccessful".
+* [admin ends training]: because trainee has gone silent, failed a work item, etc.
+  - Admin views {training progress display}.
+  - Admin selects <Training Progress>.
+  - Admin marks <Training Progress> as "unsuccessful".
   - AMY moves <Training Progress> to <Past Training Progress List>.
 
 * [admin ends training course]: because it has timed out.
