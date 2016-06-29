@@ -118,7 +118,7 @@ class TestBase(TestCase):
         '''Set up person objects representing instructors.'''
 
         self.hermione = Person.objects.create(
-            personal='Hermione', middle=None, family='Granger',
+            personal='Hermione', family='Granger',
             email='hermione@granger.co.uk', gender='F', may_contact=True,
             airport=self.airport_0_0, github='herself', twitter='herself',
             url='http://hermione.org', username="granger_hermione")
@@ -134,10 +134,10 @@ class TestBase(TestCase):
         Qualification.objects.create(person=self.hermione, lesson=self.sql)
 
         self.harry = Person.objects.create(
-            personal='Harry', middle=None, family='Potter',
+            personal='Harry', family='Potter',
             email='harry@hogwarts.edu', gender='M', may_contact=True,
             airport=self.airport_0_50, github='hpotter', twitter=None,
-            url=None, username="potter_harry")
+            username="potter_harry")
 
         # Harry is additionally a qualified Data Carpentry instructor
         Award.objects.create(person=self.harry,
@@ -149,7 +149,7 @@ class TestBase(TestCase):
         Qualification.objects.create(person=self.harry, lesson=self.sql)
 
         self.ron = Person.objects.create(
-            personal='Ron', middle=None, family='Weasley',
+            personal='Ron', family='Weasley',
             email='rweasley@ministry.gov.uk', gender='M', may_contact=False,
             airport=self.airport_50_100, github=None, twitter=None,
             url='http://geocities.com/ron_weas', username="weasley_ron")
@@ -168,12 +168,12 @@ class TestBase(TestCase):
             username="spiderman", airport=self.airport_55_105)
 
         self.ironman = Person.objects.create(
-            personal='Tony', middle=None, family='Stark', email='me@stark.com',
+            personal='Tony', family='Stark', email='me@stark.com',
             gender='M', may_contact=True, username="ironman",
             airport=self.airport_50_100)
 
         self.blackwidow = Person.objects.create(
-            personal='Natasha', middle=None, family='Romanova', email=None,
+            personal='Natasha', family='Romanova', email=None,
             gender='F', may_contact=False, username="blackwidow",
             airport=self.airport_0_50)
 

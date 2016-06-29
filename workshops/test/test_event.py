@@ -298,6 +298,7 @@ class TestEventViews(TestBase):
         response = self.client.post(
             reverse('event_add'),
             {
+                'slug': '2012-12-21-event-final',
                 'host': host.id,
                 'tags': [self.test_tag.id],
                 'administrator': host.id,
@@ -305,8 +306,8 @@ class TestEventViews(TestBase):
             })
         if response.status_code == 302:
             url = response['location']
-            event_id = int(url.rsplit('/', 1)[1])
-            event = Event.objects.get(id=event_id)
+            event_slug = url.rsplit('/', 1)[1]
+            event = Event.objects.get(slug=event_slug)
             assert event.host == host, (
                 'New event has wrong host: {} != {}'.format(event.host, host))
             tags = list(event.tags.all())
@@ -316,26 +317,6 @@ class TestEventViews(TestBase):
         else:
             self._check_status_code_and_parse(response, 200)
             assert False, 'expected 302 redirect after post'
-
-    def test_add_two_minimal_events(self):
-        host = Host.objects.get(fullname='Test Host')
-        url = reverse('event_add')
-        data = {
-                'host': host.id,
-                'tags': [self.test_tag.id],
-                'administrator': host.id,
-                'invoice_status': 'unknown',
-            }
-        response = self.client.post(url, data)
-        assert response.status_code == 302, (
-            'expected 302 redirect after first post, got {}'.format(
-            response.status_code))
-        response = self.client.post(url, data)
-        if response.status_code != 302:
-            self._check_status_code_and_parse(response, 200)
-            assert response.status_code == 302, (
-                'expected 302 redirect after second post, got {}'.format(
-                    response.status_code))
 
     def test_unique_slug(self):
         """Ensure events with the same slugs are prohibited.
@@ -347,12 +328,9 @@ class TestEventViews(TestBase):
             Event.objects.create(host=self.test_host,
                                  slug='testing-unique-slug')
 
-    def test_unique_empty_slug(self):
-        """Ensure events with no slugs are saved to the DB.
-
-        This is a regression test introduces with one change from
-        https://github.com/swcarpentry/amy/issues/427
-        (saving empty slug strings to the DB should result in NULL values)."""
+    def test_unique_non_empty_slug(self):
+        """Ensure events with no slugs are *not* saved to the DB.
+        """
         data = {
             'host': self.test_host.id,
             'tags': [self.test_tag.id],
@@ -360,10 +338,7 @@ class TestEventViews(TestBase):
             'invoice_status': 'unknown',
         }
         response = self.client.post(reverse('event_add'), data)
-        assert response.status_code == 302
-
-        response = self.client.post(reverse('event_add'), data)
-        assert response.status_code == 302
+        assert response.status_code == 200
 
     def test_start_date_gte_end_date(self):
         """Ensure event's start date is earlier than it's end date.

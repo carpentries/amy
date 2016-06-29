@@ -128,7 +128,7 @@ class TestListingPublishedEvents(APITestCase):
                 'country': 'US',
                 'url': 'https://user.github.io/repository/',
                 'contact': 'sb@sth.edu',
-                'eventbrite_id': None,
+                'eventbrite_id': '',
                 'tags': [],
             },
             {
@@ -143,7 +143,7 @@ class TestListingPublishedEvents(APITestCase):
                 'country': 'US',
                 'url': 'https://user.github.io/repository/',
                 'contact': 'sb@sth.edu',
-                'eventbrite_id': None,
+                'eventbrite_id': '',
                 'tags': [],
             },
         ]
