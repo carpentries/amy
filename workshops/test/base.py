@@ -51,6 +51,8 @@ class TestBase(TestCase):
         # '0012_auto_20150612_0807.py'
         self.git, _ = Lesson.objects.get_or_create(name='swc/git')
         self.sql, _ = Lesson.objects.get_or_create(name='dc/sql')
+        self.matlab, _ = Lesson.objects.get_or_create(name='swc/matlab')
+        self.r, _ = Lesson.objects.get_or_create(name='swc/r')
 
     def _setUpHosts(self):
         '''Set up host objects.'''
