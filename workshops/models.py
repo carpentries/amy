@@ -98,7 +98,7 @@ class Membership(models.Model):
         ('other', 'Other'),
     )
     contribution_type = models.CharField(
-        max_length=STR_MED, null=True, blank=True,
+        max_length=STR_MED, blank=True,
         choices=CONTRIBUTION_CHOICES,
     )
     workshops_without_admin_fee_per_year = models.PositiveIntegerField(
@@ -245,7 +245,7 @@ class Person(AbstractBaseUser, PermissionsMixin):
 
     personal    = models.CharField(max_length=STR_LONG,
                                    verbose_name='Personal (first) name')
-    middle      = models.CharField(max_length=STR_LONG, null=True, blank=True,
+    middle      = models.CharField(max_length=STR_LONG, blank=True,
                                    verbose_name='Middle name')
     family      = models.CharField(max_length=STR_LONG,
                                    verbose_name='Family (last) name')
@@ -259,7 +259,7 @@ class Person(AbstractBaseUser, PermissionsMixin):
                                    verbose_name='GitHub username')
     twitter     = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True,
                                    verbose_name='Twitter username')
-    url         = models.CharField(max_length=STR_LONG, null=True, blank=True,
+    url         = models.CharField(max_length=STR_LONG, blank=True,
                                    verbose_name='Personal website')
     username = models.CharField(
         max_length=STR_MED, unique=True,
@@ -321,7 +321,7 @@ class Person(AbstractBaseUser, PermissionsMixin):
 
     def get_full_name(self):
         middle = ''
-        if self.middle is not None:
+        if self.middle:
             middle = ' {0}'.format(self.middle)
         return '{0}{1} {2}'.format(self.personal, middle, self.family)
 
@@ -330,7 +330,7 @@ class Person(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         result = self.get_full_name()
-        if self.email is not None:
+        if self.email:
             result += ' <' + self.email + '>'
         return result
 
@@ -408,13 +408,12 @@ class Person(AbstractBaseUser, PermissionsMixin):
         # issues with UNIQUE constraint failing
         self.personal = self.personal.strip()
         self.family = self.family.strip()
-        self.middle = self.middle.strip() if self.middle else None
+        self.middle = self.middle.strip()
         self.email = self.email.strip() if self.email else None
         self.gender = self.gender or None
         self.airport = self.airport or None
         self.github = self.github or None
         self.twitter = self.twitter or None
-        self.url = self.url or None
         super().save(*args, **kwargs)
 
 
@@ -422,8 +421,8 @@ def is_admin(user):
     if user is None or user.is_anonymous():
         return False
     else:
-        has_admin_group = user.groups.filter(name='administrators').exists()
-        return has_admin_group or user.is_superuser
+        return (user.is_superuser or
+                user.groups.filter(name='administrators').exists())
 
 
 class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
@@ -732,7 +731,7 @@ class Event(AssignmentMixin, models.Model):
         help_text=PUBLISHED_HELP_TEXT,
     )
     end        = models.DateField(null=True, blank=True)
-    slug       = models.CharField(max_length=STR_LONG, null=True, blank=True, unique=True)
+    slug       = models.SlugField(max_length=STR_LONG, unique=True)
     language = models.ForeignKey(
         Language, on_delete=models.SET_NULL,
         null=True, blank=True,
@@ -745,7 +744,7 @@ class Event(AssignmentMixin, models.Model):
                   '<br />Use link to the event\'s <b>website</b>, ' +
                   'not repository.',
     )
-    reg_key    = models.CharField(max_length=STR_REG_KEY, null=True, blank=True, verbose_name="Eventbrite key")
+    reg_key    = models.CharField(max_length=STR_REG_KEY, blank=True, verbose_name="Eventbrite key")
     attendance = models.PositiveIntegerField(null=True, blank=True)
     admin_fee  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)])
     INVOICED_CHOICES = (
@@ -762,7 +761,7 @@ class Event(AssignmentMixin, models.Model):
         max_length=STR_MED,
         choices=INVOICED_CHOICES,
         verbose_name='Invoice status',
-        default='unknown', blank=False,
+        default='not-invoiced', blank=False,
     )
     notes      = models.TextField(default="", blank=True)
     contact = models.CharField(max_length=STR_LONGEST, default="", blank=True)
@@ -1116,7 +1115,7 @@ class EventRequest(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
         verbose_name='How will instructors\' travel and accommodations be '
                      'managed?',
         choices=TRAVEL_REIMBURSEMENT_CHOICES,
-        null=True, blank=True, default=None,
+        blank=True, default='',
     )
     travel_reimbursement_other = models.CharField(
         max_length=STR_LONG,
