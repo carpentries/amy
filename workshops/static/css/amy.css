@@ -200,3 +200,7 @@ table tr label {
     margin-top: 0;
     margin-bottom: 0;
 }
+
+table ul {
+    padding-left: 15px;
+}
