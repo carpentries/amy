@@ -975,7 +975,7 @@ class TrainingRequestForm(forms.ModelForm):
     agreed_to_teach_workshops = forms.BooleanField(
         required=True,
         initial=False,
-        label='I agree to help teach a Software Carpentry or Data Carpentry '
+        label='I agree to teach a Software Carpentry or Data Carpentry '
               'workshop within 12 months of this Training Course',
     )
     captcha = ReCaptchaField()
