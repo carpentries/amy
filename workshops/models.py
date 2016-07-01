@@ -1764,6 +1764,15 @@ def build_choice_field_with_other_option(choices, default, verbose_name=None):
 
 @reversion.register
 class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
+    group_name = models.CharField(
+        blank=True, default='', null=False,
+        max_length=STR_LONG,
+        verbose_name='Group name',
+        help_text='If you are part of a group that is applying for an '
+                  'instructor training together, please enter the name of your'
+                  ' group here and on every group member\'s application.',
+    )
+
     personal = models.CharField(
         max_length=STR_LONG,
         verbose_name='Personal name',
@@ -1913,3 +1922,8 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
                      'or interests that we should know about?',
         null=False, blank=True, default='',
     )
+
+    comment = models.TextField(
+        default='', null=False, blank=True,
+        help_text='What else do you want us to know?',
+        verbose_name='Anything else?')
