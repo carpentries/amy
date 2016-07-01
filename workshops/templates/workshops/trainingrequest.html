@@ -6,8 +6,10 @@
 {% last_modified req %}
 
 <table class="table table-striped">
-  <tr><th>created_at</th>
+  <tr><th>created at</th>
       <td>{{ req.created_at }}</td></tr>
+  <tr><th>group name</th>
+      <td>{{ req.group_name }}</td></tr>
   <tr><th>personal name</th>
       <td>{{ req.personal }}</td></tr>
   <tr><th>family name</th>
@@ -34,7 +36,7 @@
       <td>{{ req.domains_other|default:"—" }}</td></tr>
   <tr><th>gender</th>
       <td>{{ req.get_gender_display }} {{ req.gender_other }}</td></tr>
-  <tr><th>previous_involvement</th>
+  <tr><th>previous involvement</th>
       <td><ul>
           {% for involvement in req.previous_involvement.all %}
             <li>{{ involvement }}</li>
@@ -54,6 +56,8 @@
       <td>{{ req.get_max_travelling_frequency_display }} {{ req.max_travelling_frequency_other }}</td></tr>
   <tr><th>additional skills</th>
       <td><pre>{{ req.additional_skills|default:"—" }}</pre></td></tr>
+  <tr><th>additional notes</th>
+      <td><pre>{{ req.comment|default:"—" }}</pre></td></tr>
 
 </table>
 

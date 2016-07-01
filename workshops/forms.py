@@ -983,6 +983,7 @@ class TrainingRequestForm(forms.ModelForm):
     class Meta:
         model = TrainingRequest
         fields = (
+            'group_name',
             'personal',
             'family',
             'email',
@@ -1007,6 +1008,7 @@ class TrainingRequestForm(forms.ModelForm):
             'max_travelling_frequency',
             'max_travelling_frequency_other',
             'additional_skills',
+            'comment',
         )
         widgets = {
             'occupation': forms.RadioSelect(),
