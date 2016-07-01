@@ -731,7 +731,16 @@ class Event(AssignmentMixin, models.Model):
         help_text=PUBLISHED_HELP_TEXT,
     )
     end        = models.DateField(null=True, blank=True)
-    slug       = models.SlugField(max_length=STR_LONG, unique=True)
+    slug = models.SlugField(
+        max_length=STR_LONG, unique=True,
+        help_text='Use <code>YYYY-MM-DD-location</code> format, where '
+                  '<code>location</code> is either an organization, or city, '
+                  'or both. If the specific date is unknown, use '
+                  '<code>xx</code> instead, for example: <code>2016-12-xx'
+                  '-Krakow</code> means that the event is supposed to run '
+                  'sometime in December 2016 in Kraków. Use only latin '
+                  'characters.',
+    )
     language = models.ForeignKey(
         Language, on_delete=models.SET_NULL,
         null=True, blank=True,
