@@ -245,16 +245,6 @@ class DebriefForm(forms.Form):
 
 
 class EventForm(forms.ModelForm):
-    slug = forms.CharField(
-        max_length=Event._meta.get_field('slug').max_length,
-        required=not Event._meta.get_field('slug').blank,
-        validators=[
-            RegexValidator(
-                '[^\w-]+', inverse_match=True,
-                message='Only alphanumeric characters and "-" are allowed.')
-        ],
-    )
-
     host = selectable.AutoCompleteSelectField(
         lookup_class=lookups.HostLookup,
         label='Host',
@@ -289,6 +279,7 @@ class EventForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['slug'].widget.attrs['placeholder'] = 'YYYY-MM-DD-location'
         self.fields['start'].widget.attrs['placeholder'] = 'YYYY-MM-DD'
         self.fields['end'].widget.attrs['placeholder'] = 'YYYY-MM-DD'
 
@@ -327,7 +318,13 @@ class EventForm(forms.ModelForm):
         except ValueError:
             pass
         else:
-            raise forms.ValidationError("Slug must not be an integer-value.")
+            raise forms.ValidationError('Slug must not be an integer-value.')
+
+        match = re.match('(\d{4}|x{4})-(\d{2}|x{2})-(\d{2}|x{2})-.+', data)
+        if not match:
+            raise forms.ValidationError('Slug must be in "YYYY-MM-DD-location"'
+                                        ' format, where "YYYY", "MM", "DD" can'
+                                        ' be unspecified (ie. "xx").')
 
         return data
 
@@ -986,6 +983,7 @@ class TrainingRequestForm(forms.ModelForm):
     class Meta:
         model = TrainingRequest
         fields = (
+            'group_name',
             'personal',
             'family',
             'email',
@@ -1010,6 +1008,7 @@ class TrainingRequestForm(forms.ModelForm):
             'max_travelling_frequency',
             'max_travelling_frequency_other',
             'additional_skills',
+            'comment',
         )
         widgets = {
             'occupation': forms.RadioSelect(),

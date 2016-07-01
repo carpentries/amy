@@ -731,7 +731,16 @@ class Event(AssignmentMixin, models.Model):
         help_text=PUBLISHED_HELP_TEXT,
     )
     end        = models.DateField(null=True, blank=True)
-    slug       = models.SlugField(max_length=STR_LONG, unique=True)
+    slug = models.SlugField(
+        max_length=STR_LONG, unique=True,
+        help_text='Use <code>YYYY-MM-DD-location</code> format, where '
+                  '<code>location</code> is either an organization, or city, '
+                  'or both. If the specific date is unknown, use '
+                  '<code>xx</code> instead, for example: <code>2016-12-xx'
+                  '-Krakow</code> means that the event is supposed to run '
+                  'sometime in December 2016 in Kraków. Use only latin '
+                  'characters.',
+    )
     language = models.ForeignKey(
         Language, on_delete=models.SET_NULL,
         null=True, blank=True,
@@ -1755,6 +1764,15 @@ def build_choice_field_with_other_option(choices, default, verbose_name=None):
 
 @reversion.register
 class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
+    group_name = models.CharField(
+        blank=True, default='', null=False,
+        max_length=STR_LONG,
+        verbose_name='Group name',
+        help_text='If you are part of a group that is applying for an '
+                  'instructor training together, please enter the name of your'
+                  ' group here and on every group member\'s application.',
+    )
+
     personal = models.CharField(
         max_length=STR_LONG,
         verbose_name='Personal name',
@@ -1904,3 +1922,8 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
                      'or interests that we should know about?',
         null=False, blank=True, default='',
     )
+
+    comment = models.TextField(
+        default='', null=False, blank=True,
+        help_text='What else do you want us to know?',
+        verbose_name='Anything else?')

@@ -11,6 +11,7 @@ class TestTrainingRequestForm(TestBase):
 
     def test_request_added(self):
         data = {
+            'group': 'coolprogrammers',
             'personal': 'John',
             'family': 'Smith',
             'email': 'john@smith.com',
@@ -35,6 +36,7 @@ class TestTrainingRequestForm(TestBase):
             'max_travelling_frequency': 'yearly',
             'max_travelling_frequency_other': '',
             'addition_skills': '',
+            'comment': '',
             'agreed_to_code_of_conduct': 'on',
             'agreed_to_complete_training': 'on',
             'agreed_to_teach_workshops': 'on',
