@@ -184,7 +184,7 @@ class TestEventRequestsViews(TestBase):
         """Ensure a backlink from Event to EventRequest that created the
         event exists after ER is accepted."""
         data = {
-            'slug': 'test-event',
+            'slug': '2016-06-30-test-event',
             'host_1': Host.objects.first().pk,
             'tags': [1],
             'invoice_status': 'unknown',
@@ -193,8 +193,8 @@ class TestEventRequestsViews(TestBase):
             reverse('eventrequest_accept', args=[self.er1.pk]),
             data)
         assert rv.status_code == 302, rv.status_code
-        self.assertEqual(Event.objects.get(slug='test-event').request,
-                         self.er1)
+        request = Event.objects.get(slug='2016-06-30-test-event').request
+        self.assertEqual(request, self.er1)
 
     def test_inactive_request_accept(self):
         rv = self.client.get(reverse('eventrequest_accept',

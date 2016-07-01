@@ -348,7 +348,7 @@ class TestEventViews(TestBase):
         data = {
             'host': self.test_host.id,
             'tags': [self.test_tag.id],
-            'slug': 'test-event',
+            'slug': '2016-06-30-test-event',
             'start': date(2015, 7, 20),
             'end': date(2015, 7, 19),
             'invoice_status': 'unknown',
@@ -361,7 +361,7 @@ class TestEventViews(TestBase):
         data = {
             'host': self.test_host.id,
             'tags': [self.test_tag.id],
-            'slug': 'test-event',
+            'slug': '2016-06-30-test-event',
             'start': date(2015, 7, 20),
             'end': date(2015, 7, 20),
             'invoice_status': 'unknown',
@@ -372,7 +372,7 @@ class TestEventViews(TestBase):
         data = {
             'host': self.test_host.id,
             'tags': [self.test_tag.id],
-            'slug': 'test-event2',
+            'slug': '2016-06-30-test-event2',
             'start': date(2015, 7, 20),
             'end': date(2015, 7, 21),
             'invoice_status': 'unknown',
@@ -390,7 +390,7 @@ class TestEventViews(TestBase):
         data = {
             'host': self.test_host.id,
             'tags': [self.test_tag.id],
-            'slug': 'test-event',
+            'slug': '2016-06-30-test-event',
             'admin_fee': -1200,
             'invoice_status': 'unknown',
         }
@@ -411,7 +411,7 @@ class TestEventViews(TestBase):
         self.assertNotIn('admin_fee', f.errors)
         self.assertNotIn('attendance', f.errors)
 
-        data['slug'] = 'test-event2'
+        data['slug'] = '2016-06-30-test-event2'
         data['admin_fee'] = 1200
         data['attendance'] = 36
         f = EventForm(data)
@@ -432,27 +432,100 @@ class TestEventViews(TestBase):
         event.refresh_from_db()
         assert event.attendance == 1
 
-    def test_slug_against_illegal_characters(self):
-        """Regression test: disallow events with slugs with wrong characters.
+    def test_slug_illegal_characters(self):
+        """Disallow slugs with wrong characters.
 
-        Only [\w-] are allowed."""
+        Slug allows only: latin characters, numbers, dashes and underscores.
+        Slug format should follow: YYYY-MM-DD-location, where YYYY, MM, DD can
+        be unspecified (== 'xx')."""
         data = {
             'slug': '',
             'host_1': Host.objects.all()[0].pk,
-            'tags': Tag.objects.all(),
+            'tags': [Tag.objects.first().pk],
+            'invoice_status': 'unknown',
         }
-        for slug in ['a/b', 'a b', 'a!b', 'a.b', 'a\\b', 'a?b']:
+
+        # disallow illegal characters
+        for slug_suffix in ['a/b', 'a b', 'a!b', 'a.b', 'a\\b', 'a?b', 'aób']:
+            with self.subTest(slug_suffix=slug_suffix):
+                data['slug'] = '2016-06-30-{}'.format(slug_suffix)
+                f = EventForm(data)
+                self.assertEqual(f.is_valid(), False)
+                self.assertIn('slug', f.errors)
+
+    def test_slug_illegal_formats(self):
+        """Disallow slugs with wrong formats.
+
+        Slug format should follow: YYYY-MM-DD-location, where YYYY, MM, DD can
+        be unspecified (== 'xx')."""
+        data = {
+            'slug': '',
+            'host_1': Host.objects.all()[0].pk,
+            'tags': [Tag.objects.first().pk],
+            'invoice_status': 'unknown',
+        }
+
+        # disallow invalid formats
+        formats = [
+            '20166-06-30-Krakow',
+            '2016-006-30-Krakow',
+            '2016-06-300-Krakow',
+            '201-06-30-Krakow',
+            '2016-6-30-Krakow',
+            '2016-06-3-Krakow',
+            'SWC-2016-06-300-Krakow',
+            '',
+            'xxxxx-xx-xx-Krakow',
+            'xxxx-xxx-xx-Krakow',
+            'xxxx-xx-xxx-Krakow',
+            'xxx-xx-xx-Krakow',
+            'xxxx-x-xx-Krakow',
+            'xxxx-xx-x-Krakow',
+        ]
+        for slug in formats:
             with self.subTest(slug=slug):
                 data['slug'] = slug
                 f = EventForm(data)
                 self.assertEqual(f.is_valid(), False)
                 self.assertIn('slug', f.errors)
 
-        # allow dashes in the slugs
-        data['slug'] = 'a-b'
-        f = EventForm(data)
-        self.assertEqual(f.is_valid(), False)
-        self.assertNotIn('slug', f.errors)
+    def test_slug_valid_formats(self):
+        """Allow slugs with wrong formats.
+
+        Slug format should follow: YYYY-MM-DD-location, where YYYY, MM, DD can
+        be unspecified (== 'xx')."""
+        data = {
+            'slug': '',
+            'host_1': Host.objects.all()[0].pk,
+            'tags': [Tag.objects.first().pk],
+            'invoice_status': 'unknown',
+        }
+
+        # allow correct formats
+        formats = [
+            '2016-06-30-Krakow',
+            '2016-06-xx-Krakow',
+            '2016-xx-30-Krakow',
+            'xxxx-06-30-Krakow',
+            '2016-xx-xx-Krakow',
+            'xxxx-06-xx-Krakow',
+            'xxxx-xx-30-Krakow',
+            'xxxx-xx-xx-Krakow',
+            '2016-06-30-Krakow-multiple-words',
+            '2016-06-xx-Krakow-multiple-words',
+            '2016-xx-30-Krakow-multiple-words',
+            'xxxx-06-30-Krakow-multiple-words',
+            '2016-xx-xx-Krakow-multiple-words',
+            'xxxx-06-xx-Krakow-multiple-words',
+            'xxxx-xx-30-Krakow-multiple-words',
+            'xxxx-xx-xx-Krakow-multiple-words',
+        ]
+        for slug in formats:
+            with self.subTest(slug=slug):
+                data['slug'] = slug
+                f = EventForm(data)
+                self.assertEqual(f.is_valid(), True)
+                self.assertNotIn('slug', f.errors)
 
     def test_display_of_event_without_start_date(self):
         """A bug prevented events without start date to throw a 404.
