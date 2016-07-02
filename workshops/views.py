@@ -3121,7 +3121,7 @@ def trainingrequest_create(request):
             # TODO: email notification?
 
             context = {
-                'title': 'Thank you for an instructor training.',
+                'title': 'Thank you for applying for an instructor training.',
             }
             return render(request,
                           'forms/trainingrequest_confirm.html',
