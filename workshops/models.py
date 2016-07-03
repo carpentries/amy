@@ -159,6 +159,33 @@ class Membership(models.Model):
 #------------------------------------------------------------
 
 
+class Sponsorship(models.Model):
+    '''Represent sponsorship from a host for an event.'''
+
+    organization = models.ForeignKey(
+        'Host',
+        on_delete=models.CASCADE,
+        help_text='Organization sponsoring the event'
+    )
+    event = models.ForeignKey(
+        'Event',
+        on_delete=models.CASCADE,
+    )
+    amount = models.DecimalField(
+        max_digits=8, decimal_places=2,
+        blank=True, null=True,
+        validators=[MinValueValidator(0)],
+        verbose_name='Sponsorship amount',
+        help_text='e.g. 1992.33'
+    )
+
+    def __str__(self):
+        return '{}: {}'.format(self.organization, self.amount)
+
+
+#------------------------------------------------------------
+
+
 @reversion.register
 class Airport(models.Model):
     '''Represent an airport (used to locate instructors).'''
