@@ -754,6 +754,10 @@ class Event(AssignmentMixin, models.Model):
         on_delete=models.PROTECT,
         help_text='Organization responsible for administrative work.'
     )
+    sponsors = models.ManyToManyField(
+        Host, related_name='sponsored_events', blank=True,
+        through=Sponsorship,
+    )
     start = models.DateField(
         null=True, blank=True,
         help_text=PUBLISHED_HELP_TEXT,
