@@ -46,6 +46,7 @@ from workshops.models import (
     Role,
     Host,
     Membership,
+    Sponsorship,
     Tag,
     Task,
     EventRequest,
@@ -68,7 +69,7 @@ from workshops.forms import (
     AdminLookupForm, ProfileUpdateRequestFormNoCaptcha, MembershipForm,
     TodoFormSet, EventsSelectionForm, EventsMergeForm, InvoiceRequestForm,
     InvoiceRequestUpdateForm, EventSubmitForm, EventSubmitFormNoCaptcha,
-    PersonsMergeForm, PersonCreateForm,
+    PersonsMergeForm, PersonCreateForm, SponsorshipForm,
     TrainingRequestForm, BootstrapHelperWiderLabels, AutoUpdateProfileForm,
     DCSelfOrganizedEventRequestForm, DCSelfOrganizedEventRequestFormNoCaptcha)
 from workshops.util import (
@@ -1183,6 +1184,9 @@ def event_edit(request, event_ident):
     task_form = TaskForm(prefix='task', initial={
         'event': event,
     })
+    sponsor_form = SponsorshipForm(prefix='sponsor',
+        initial={'event':event}
+    )
 
     if request.method == 'POST':
         # check which form was submitted
@@ -1209,7 +1213,20 @@ def event_edit(request, event_ident):
 
             else:
                 messages.error(request, 'Fix errors below.')
+        if 'sponsor-event' in request.POST:
+            sponsor_form = SponsorshipForm(request.POST, prefix='sponsor')
 
+            if sponsor_form.is_valid():
+                sponsor = sponsor_form.save()
+
+                messages.success(
+                    request,
+                    '{} was added as a new sponsor.'.format(sponsor.organization),
+                )
+                # to reset the form values
+                return redirect(request.path)
+            else:
+                messages.error(request, 'Fix errors below.')
         else:
             event_form = EventForm(request.POST, prefix='event',
                                    instance=event)
@@ -1238,6 +1255,7 @@ def event_edit(request, event_ident):
                'model': Event,
                'tasks': tasks,
                'task_form': task_form,
+               'sponsor_form': sponsor_form,
                'form_helper': bootstrap_helper,
                'form_helper_with_add': bootstrap_helper_with_add,
                }
