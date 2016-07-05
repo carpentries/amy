@@ -1578,6 +1578,14 @@ def event_dismiss_metadata_changes(request, event_ident):
     return redirect(reverse('event_details', args=[event.get_ident()]))
 
 
+class SponsorshipDelete(OnlyForAdminsMixin, PermissionRequiredMixin, DeleteViewContext):
+    model = Sponsorship
+    permission_required = 'workshops.delete_sponsorship'
+
+    def get_success_url(self):
+        return reverse_lazy('event_edit',args=[self.get_object().event.slug])
+
+
 class AllInvoiceRequests(OnlyForAdminsMixin, FilteredListView):
     context_object_name = 'requests'
     template_name = 'workshops/all_invoicerequests.html'
