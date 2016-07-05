@@ -93,10 +93,9 @@ body {
 
 /* when using nav-tab (http://getbootstrap.com/javascript/#tabs) move the
    crispy form down a few notches */
-div[role="tabpanel"] form {
+.tab-content {
     padding-top: 10px;
 }
-
 /* Overwriting Bootstrap styles for horizontal forms. The checkboxes and radios
    were shifted to the left too much, while singular checkbox questions were
    okay. */
