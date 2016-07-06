@@ -261,6 +261,14 @@ class EventForm(forms.ModelForm):
         widget=selectable.AutoComboboxSelectWidget,
     )
 
+    assigned_to = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.AdminLookup,
+        label='Assigned to',
+        required=False,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
     language = selectable.AutoCompleteSelectField(
         lookup_class=lookups.LanguageLookup,
         label='Language',
@@ -341,11 +349,11 @@ class EventForm(forms.ModelForm):
         model = Event
         # reorder fields, don't display 'deleted' field
         fields = ('slug', 'completed', 'start', 'end', 'host', 'administrator',
-                  'tags', 'url', 'language', 'reg_key', 'admin_fee',
-                  'invoice_status', 'attendance', 'contact', 'notes',
-                  'country', 'venue', 'address', 'latitude', 'longitude',
-                  'learners_pre', 'learners_post', 'instructors_pre',
-                  'instructors_post', 'learners_longterm')
+                  'assigned_to', 'tags', 'url', 'language', 'reg_key',
+                  'admin_fee', 'invoice_status', 'attendance', 'contact',
+                  'notes', 'country', 'venue', 'address', 'latitude',
+                  'longitude', 'learners_pre', 'learners_post',
+                  'instructors_pre', 'instructors_post', 'learners_longterm')
         # WARNING: don't change put any fields between 'country' and
         #          'longitude' that don't relate to the venue of the event
 
