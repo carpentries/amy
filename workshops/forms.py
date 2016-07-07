@@ -958,24 +958,26 @@ class TrainingRequestForm(forms.ModelForm):
     agreed_to_code_of_conduct = forms.BooleanField(
         required=True,
         initial=False,
-        label='I agree to abide by Software Carpentry\'s Code of Conduct',
+        label='*I agree to abide by Software and Data Carpentry\'s Code of Conduct',
         help_text='The Code of Conduct can be found at '
-                  '<a href="http://software-carpentry.org/conduct/">'
-                  'http://software-carpentry.org/conduct/</a>',
+                  '<a href="http://software-carpentry.org/conduct/" target="_blank">'
+                  'http://software-carpentry.org/conduct/</a>'
+                  'and <a href="http://datacarpentry.org/code-of-conduct/" target="_blank">'
+                  'http://datacarpentry.org/code-of-conduct/</a>',
     )
     agreed_to_complete_training = forms.BooleanField(
         required=True,
         initial=False,
-        label='I agree to complete this training within three months of the Training Course',
+        label='*I agree to complete this training within three months of the Training Course',
         help_text='The completion steps are described at '
-                  '<a href="http://swcarpentry.github.io/instructor-training/checkout/">'
+                  '<a href="http://swcarpentry.github.io/instructor-training/checkout/" target="_blank">'
                   'http://swcarpentry.github.io/instructor-training/checkout/</a> '
-                  'and take a total of approximately two hours.',
+                  'and take a total of approximately 8-10 hours.',
     )
     agreed_to_teach_workshops = forms.BooleanField(
         required=True,
         initial=False,
-        label='I agree to teach a Software Carpentry or Data Carpentry '
+        label='*I agree to teach a Software Carpentry or Data Carpentry '
               'workshop within 12 months of this Training Course',
     )
     captcha = ReCaptchaField()
@@ -987,6 +989,7 @@ class TrainingRequestForm(forms.ModelForm):
             'personal',
             'family',
             'email',
+            'github',
             'occupation',
             'occupation_other',
             'affiliation',
@@ -999,8 +1002,10 @@ class TrainingRequestForm(forms.ModelForm):
             'previous_involvement',
             'previous_training',
             'previous_training_other',
+            'previous_training_explanation',
             'previous_experience',
             'previous_experience_other',
+            'previous_experience_explanation',
             'programming_language_usage_frequency',
             'reason',
             'teaching_frequency_expectation',
