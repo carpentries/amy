@@ -783,7 +783,7 @@ def person_edit(request, person_id):
                 )
 
                 # to reset the form values
-                return redirect(request.path)
+                return redirect('{}#awards'.format(request.path))
 
             else:
                 messages.error(request, 'Fix errors in the award form.',
@@ -807,7 +807,7 @@ def person_edit(request, person_id):
                 )
 
                 # to reset the form values
-                return redirect(request.path)
+                return redirect('{}#tasks'.format(request.path))
 
             else:
                 messages.error(request, 'Fix errors in the task form.',
