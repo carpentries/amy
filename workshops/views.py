@@ -1209,7 +1209,7 @@ def event_edit(request, event_ident):
                 update_event_attendance_from_tasks(event)
 
                 # to reset the form values
-                return redirect(request.path)
+                return redirect('{}#tasks'.format(request.path))
 
             else:
                 messages.error(request, 'Fix errors below.')
@@ -1224,7 +1224,7 @@ def event_edit(request, event_ident):
                     '{} was added as a new sponsor.'.format(sponsor.organization),
                 )
                 # to reset the form values
-                return redirect(request.path)
+                return redirect('{}#sponsors'.format(request.path))
             else:
                 messages.error(request, 'Fix errors below.')
         else:

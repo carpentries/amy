@@ -74,6 +74,10 @@
 {% endblock %}
 
 {% block extrajs %}
-{{event_form.media}}
-{{task_form.media}}
+{{ event_form.media }}
+{{ task_form.media }}
+{{ sponsor_form.media }}
+<script type="text/javascript">
+  $('.nav-tabs').stickyTabs();
+</script>
 {% endblock extrajs %}
