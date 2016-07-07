@@ -249,7 +249,7 @@ class Person(AbstractBaseUser, PermissionsMixin):
                                    verbose_name='Middle name')
     family      = models.CharField(max_length=STR_LONG,
                                    verbose_name='Family (last) name')
-    email       = models.CharField(max_length=STR_LONG, unique=True, null=True, blank=True,
+    email       = models.CharField(max_length=STR_LONG, unique=False, null=True, blank=True,
                                    verbose_name='Email address')
     gender      = models.CharField(max_length=1, choices=GENDER_CHOICES, null=False, default=UNDISCLOSED)
     may_contact = models.BooleanField(default=True)
