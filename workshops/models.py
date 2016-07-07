@@ -422,7 +422,8 @@ def is_admin(user):
         return False
     else:
         return (user.is_superuser or
-                user.groups.filter(name='administrators').exists())
+                user.groups.filter(Q(name='administrators') |
+                                   Q(name='steering committee')).exists())
 
 
 class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
