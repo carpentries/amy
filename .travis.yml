@@ -6,6 +6,7 @@ install:
   - pip install -r requirements.txt
   - pip install coveralls
 script:
-  coverage run --source=amy,api,workshops manage.py test
+  - python manage.py makemigrations --dry-run -e; export STATUS_CODE=$?; if [[ "$STATUS_CODE" == "0" ]]; then exit 1; fi
+  - coverage run --source=amy,api,workshops manage.py test
 after_success:
   coveralls
