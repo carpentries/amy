@@ -1524,6 +1524,9 @@ class KnowledgeDomain(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        ordering = ['name']
+
 # ------------------------------------------------------------
 
 
@@ -1775,12 +1778,12 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
 
     personal = models.CharField(
         max_length=STR_LONG,
-        verbose_name='Personal name',
+        verbose_name='Personal (given) name',
         blank=False,
     )
     family = models.CharField(
         max_length=STR_LONG,
-        verbose_name='Family name',
+        verbose_name='Family name (surname)',
         blank=False,
     )
 
@@ -1788,13 +1791,18 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         verbose_name='Email address',
         blank=False,
     )
+    github = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='GitHub username',
+        null=True, blank=True,
+    )
 
     occupation = models.CharField(
         max_length=STR_MED,
         choices=ProfileUpdateRequest.OCCUPATION_CHOICES,
         verbose_name='What is your current occupation/career stage?',
         help_text='Please choose the one that best describes you.',
-        null=False, blank=True, default='undisclosed',
+        blank=True, default='undisclosed',
     )
     occupation_other = models.CharField(
         max_length=STR_LONG,
@@ -1804,14 +1812,14 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
 
     affiliation = models.CharField(
         max_length=STR_LONG,
-        verbose_name='Institutional Affiliation',
+        verbose_name='Affiliation',
         null=False, blank=False,
     )
 
     location = models.CharField(
         max_length=STR_LONG,
         verbose_name='Location',
-        help_text='please give city, province or state',
+        help_text='please give city, and province or state if applicable',
         blank=False,
     )
     country = CountryField()
@@ -1851,6 +1859,7 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         ('none', 'None'),
         ('hours', 'A few hours'),
         ('days', 'A few days'),
+        ('course', 'A certification or short course'),
         ('full', 'A full degree'),
         ('other', 'Other (enter below)')
     )
@@ -1858,6 +1867,10 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         choices=PREVIOUS_TRAINING_CHOICES,
         verbose_name='Previous training in teaching',
         default='none',
+    )
+    previous_training_explanation = models.TextField(
+        verbose_name='Explanation of your previous training in teaching',
+        null=True, blank=True,
     )
 
     PREVIOUS_EXPERIENCE_CHOICES = (
@@ -1871,19 +1884,23 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         default='none',
         verbose_name='Previous experience in teaching'
     )
+    previous_experience_explanation = models.TextField(
+        verbose_name='Explanation of your previous experience in teaching',
+        null=True, blank=True,
+    )
 
     PROGRAMMING_LANGUAGE_USAGE_FREQUENCY_CHOICES = (
-        ('all-time', 'Every waking moment'),
-        ('hourly', 'Hourly'),
-        ('daily', 'Daily'),
-        ('weekly', 'Weekly'),
-        ('not-much', 'Not much'),
+        ('daily', 'Every day'),
+        ('weekly', 'A few times a week'),
+        ('monthly', 'A few times a month'),
+        ('yearly', 'A few times a year'),
+        ('not-much', 'Never or almost never'),
     )
     programming_language_usage_frequency = models.CharField(
         max_length=STR_MED,
         choices=PROGRAMMING_LANGUAGE_USAGE_FREQUENCY_CHOICES,
         verbose_name='How frequently do you use Python, R or Matlab?',
-        null=False, blank=False, default='all-time',
+        null=False, blank=False, default='daily',
     )
 
     reason = models.TextField(
@@ -1900,7 +1917,7 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
     )
     teaching_frequency_expectation, teaching_frequency_expectation_other = build_choice_field_with_other_option(
         choices=TEACHING_FREQUENCY_EXPECTATION_CHOICES,
-        verbose_name='How often would you expect to teach classes on Software '
+        verbose_name='How often would you expect to teach on Software '
                      'or Data Carpentry Workshops after this training?',
         default='not-at-all',
     )
