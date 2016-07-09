@@ -16,6 +16,8 @@
       <td>{{ req.family}}</td></tr>
   <tr><th>email</th>
       <td>{{ req.email|urlize }}</td></tr>
+  <tr><th>github</th>
+      <td>{{ req.github|default:"—" }}</td></tr>
   <tr><th>occupation</th>
       <td>{{ req.get_occupation_display }} {{ req.occupation_other }}</td></tr>
   <tr><th>affiliation</th>
@@ -45,7 +47,13 @@
           {% endfor %}
           </ul></td></tr>
   <tr><th>previous training in teaching</th>
+      <td>{{ req.get_previous_training_display }} {{ req.previous_training_other }}</td></tr>
+  <tr><th>explanation of previous training in teaching</th>
+      <td><pre>{{ req.previous_training_explanation|default:"—" }}</pre></td></tr>
+  <tr><th>previous experience in teaching</th>
       <td>{{ req.get_previous_experience_display }} {{ req.previous_experience_other }}</td></tr>
+  <tr><th>explanation of previous experience in teaching</th>
+      <td><pre>{{ req.previous_experience_explanation|default:"—" }}</pre></td></tr>
   <tr><th>programming language usage frequency</th>
       <td>{{ req.get_programming_language_usage_frequency_display }}</td></tr>
   <tr><th>Why do you want to attend this training course?</th>
