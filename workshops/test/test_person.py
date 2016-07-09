@@ -1,7 +1,8 @@
 # coding: utf-8
 
 import datetime
-from unittest.mock import patch, MagicMock
+from social.apps.django_app.default.models import UserSocialAuth
+from unittest.mock import patch
 from urllib.parse import urlencode
 
 from django.contrib.auth import authenticate
@@ -763,16 +764,81 @@ class TestPersonMerging(TestBase):
         self.assertEqual(rv.status_code, 302)
 
 
-class TestSyncUserSocialAuthView(TestBase):
-    def setUp(self):
-        self._setUpUsersAndLogin()
+def github_username_to_uid_mock(username):
+    username2uid = {
+        'username': '1',
+        'changed': '2',
+        'changedagain': '3',
+    }
+    return username2uid[username]
+
+
+class TestPersonAndUserSocialAuth(TestBase):
+    """ Test Person.synchronize_usersocialauth and Person.save."""
+
+    @patch('workshops.github_auth.github_username_to_uid',
+           github_username_to_uid_mock)
+    def test_basic(self):
+        user = Person.objects.create_user(
+            username='user', personal='Typical', family='User',
+            email='undo@example.org', password='user',
+        )
+
+        # Syncing UserSocialAuth for a user without GitHub username should
+        # not create any UserSocialAuth record.
+        user.github = ''
+        user.save()
+        user.synchronize_usersocialauth()
+
+        got = UserSocialAuth.objects.values_list('provider', 'uid', 'user')
+        expected = []
+        self.assertSequenceEqual(got, expected)
+
+        # UserSocialAuth record should be created for a user with GitHub
+        # username.
+        user.github = 'username'
+        user.save()
+        user.synchronize_usersocialauth()
+
+        got = UserSocialAuth.objects.values_list('provider', 'uid', 'user')
+        expected = [('github', '1', user.pk)]
+        self.assertSequenceEqual(got, expected)
+
+        # When GitHub username is changed, Person.save should take care of
+        # clearing UserSocialAuth table.
+        user.github = 'changed'
+        user.save()
+
+        expected = []
+        got = UserSocialAuth.objects.values_list('provider', 'uid', 'user')
+        self.assertSequenceEqual(got, expected)
+
+        # Syncing UserSocialAuth should result in a new UserSocialAuth record.
+        user.synchronize_usersocialauth()
+
+        got = UserSocialAuth.objects.values_list('provider', 'uid', 'user')
+        expected = [('github', '2', user.pk)]
+        self.assertSequenceEqual(got, expected)
+
+        # Syncing UserSocialAuth after changing GitHub username without
+        # saving should also result in updated UserSocialAuth.
+        user.github = 'changedagain'
+        # no user.save()
+        user.synchronize_usersocialauth()
+
+        got = UserSocialAuth.objects.values_list('provider', 'uid', 'user')
+        expected = [('github', '3', user.pk)]
+        self.assertSequenceEqual(got, expected)
 
     def test_errors_are_not_hidden(self):
         """ Test that errors occuring in synchronize_usersocialauth are not
         hidden, that is you're not redirected to any other view. Regression
         for #890. """
+
+        self._setUpUsersAndLogin()
         with patch.object(Person, 'synchronize_usersocialauth',
                           side_effect=NotImplementedError):
             with self.assertRaises(NotImplementedError):
                 self.client.get(reverse('sync_usersocialauth',
                                         args=(self.admin.pk,)))
+
