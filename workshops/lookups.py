@@ -2,7 +2,7 @@ from functools import reduce
 import operator
 import re
 
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission
 from django.db.models import Q, Count
 
 from selectable.base import ModelLookup
@@ -112,9 +112,18 @@ class LanguageLookup(ModelLookup):
                 .order_by('-person_count')
 
 
+@lookup_only_for_admins
+class PermissionLookup(ModelLookup):
+    model = Permission
+    search_fields = (
+        'name__icontains',
+    )
+
+
 registry.register(EventLookup)
 registry.register(HostLookup)
 registry.register(PersonLookup)
 registry.register(AdminLookup)
 registry.register(AirportLookup)
 registry.register(LanguageLookup)
+registry.register(PermissionLookup)
