@@ -2,6 +2,7 @@
 
 {% load crispy_forms_tags %}
 {% load pagination %}
+{% load links %}
 
 {% block sidebar %}
     <h3>Filter</h3>
@@ -19,6 +20,8 @@
         <tr>
             <th>event</th>
             <th>person</th>
+            <th>title</th>
+            <th>url</th>
             <th>role</th>
             <th class="additional-links"></th>
         </tr>
@@ -26,6 +29,8 @@
         <tr>
             <td><a href="{{ task.event.get_absolute_url }}">{{ task.event }}</a></td>
             <td><a href="{{ task.person.get_absolute_url }}">{{ task.person.get_full_name }}</a>{% if task.person.email and task.person.may_contact %} &lt;{{ task.person.email|urlize }}&gt;{% endif %}</td>
+            <td>{{ task.title|default:"—" }}</td>
+            <td>{{ task.url|default:"—"|urlize_newtab }}</td>
             <td>{{ task.role }}</td>
             <td>
                 <a href="{% url 'task_details' task.id %}" title="View {{ task }}"><span class="glyphicon glyphicon-info-sign"></span></a>
