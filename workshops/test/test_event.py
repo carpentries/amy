@@ -328,6 +328,24 @@ class TestEventViews(TestBase):
             Event.objects.create(host=self.test_host,
                                  slug='testing-unique-slug')
 
+    def test_assign_to_field_populated(self):
+        """Ensure that we can assign an admin to an event
+        from the `event_add` view."""
+        data = {
+            'slug': '2016-07-09-test',
+            'host': self.test_host.id,
+            'tags': [self.test_tag.id],
+            'assigned_to': self.admin.pk,
+            'invoice_status': 'unknown',
+        }
+        response = self.client.post(reverse('event_add'), data, follow=True)
+        event = Event.objects.get(slug='2016-07-09-test')
+        self.assertRedirects(
+            response,
+            reverse('event_details', kwargs={'event_ident': event.slug}),
+        )
+        self.assertEqual(event.assigned_to, self.admin)
+
     def test_unique_non_empty_slug(self):
         """Ensure events with no slugs are *not* saved to the DB.
         """
