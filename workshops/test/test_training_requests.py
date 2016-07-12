@@ -15,6 +15,7 @@ class TestTrainingRequestForm(TestBase):
             'personal': 'John',
             'family': 'Smith',
             'email': 'john@smith.com',
+            'github': '',
             'occupation': '',
             'occupation_other': 'unemployed',
             'affiliation': 'AGH University of Science and Technology',
@@ -27,9 +28,11 @@ class TestTrainingRequestForm(TestBase):
             'previous_involvement': [Role.objects.get(name='host').id],
             'previous_training': 'none',
             'previous_training_other': '',
+            'previous_training_explanation': '',
             'previous_experience': 'none',
             'previous_experience_other': '',
-            'programming_language_usage_frequency': 'hourly',
+            'previous_experience_explanation': '',
+            'programming_language_usage_frequency': 'daily',
             'reason': 'Just for fun.',
             'teaching_frequency_expectation': 'often',
             'teaching_frequency_expectation_other': '',
@@ -46,6 +49,7 @@ class TestTrainingRequestForm(TestBase):
                               follow=True)
         self.assertEqual(rv.status_code, 200)
         content = rv.content.decode('utf-8')
+        self._save_html(content)
         self.assertNotIn('Fix errors below', content)
         self.assertEqual(TrainingRequest.objects.all().count(), 1)
 
@@ -66,7 +70,7 @@ class TestTrainingRequestViews(TestBase):
             gender=Person.MALE,
             previous_training='none',
             previous_experience='none',
-            programming_language_usage_frequency='hourly',
+            programming_language_usage_frequency='daily',
             reason='Just for fun.',
             teaching_frequency_expectation='often',
             max_travelling_frequency='yearly',
