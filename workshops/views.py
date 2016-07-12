@@ -1008,8 +1008,7 @@ def sync_usersocialauth(request, person_id):
                            'due to errors with GitHub API.'.format(person_id))
         else:
             messages.success(request, 'Sync UserSocialAuth successfully.')
-        finally:
-            return redirect(reverse('person_details', args=(person_id,)))
+        return redirect(reverse('person_details', args=(person_id,)))
 
 #------------------------------------------------------------
 

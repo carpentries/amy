@@ -1,7 +1,7 @@
 # coding: utf-8
 
 import datetime
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from urllib.parse import urlencode
 
 from django.contrib.auth import authenticate
@@ -761,3 +761,18 @@ class TestPersonMerging(TestBase):
 
         rv = self.client.post(self.url, data=self.strategy)
         self.assertEqual(rv.status_code, 302)
+
+
+class TestSyncUserSocialAuthView(TestBase):
+    def setUp(self):
+        self._setUpUsersAndLogin()
+
+    def test_errors_are_not_hidden(self):
+        """ Test that errors occuring in synchronize_usersocialauth are not
+        hidden, that is you're not redirected to any other view. Regression
+        for #890. """
+        with patch.object(Person, 'synchronize_usersocialauth',
+                          side_effect=NotImplementedError):
+            with self.assertRaises(NotImplementedError):
+                self.client.get(reverse('sync_usersocialauth',
+                                        args=(self.admin.pk,)))
