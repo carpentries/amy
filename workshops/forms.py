@@ -18,7 +18,7 @@ from selectable import forms as selectable
 from workshops.models import (
     Award, Event, Lesson, Person, Task, Airport, Host,
     EventRequest, ProfileUpdateRequest, TodoItem, Membership,
-    InvoiceRequest, EventSubmission, Language,
+    Sponsorship, InvoiceRequest, EventSubmission, Language,
     TrainingRequest,
     DCSelfOrganizedEventRequest,
 )
@@ -648,6 +648,21 @@ class MembershipForm(forms.ModelForm):
         model = Membership
         fields = '__all__'
         widgets = {'host': HiddenInput, }
+
+
+class SponsorshipForm(forms.ModelForm):
+    organization = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.HostLookup,
+        label='Organization',
+        required=True,
+        help_text=Sponsorship._meta.get_field('organization').help_text,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+    class Meta:
+        model = Sponsorship
+        fields = '__all__'
+        widgets = {'event': HiddenInput, }
 
 
 class SWCEventRequestForm(forms.ModelForm):

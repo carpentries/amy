@@ -25,7 +25,7 @@ from django.db.models import Count, Q, F, Model, ProtectedError, Sum
 from django.db.models import Case, When, Value, IntegerField
 from django.shortcuts import redirect, render, get_object_or_404
 from django.template.loader import get_template
-from django.views.generic import ListView, DetailView, TemplateView
+from django.views.generic import ListView, DetailView, TemplateView, DeleteView
 from django.views.generic.edit import CreateView, UpdateView, ModelFormMixin
 from django.contrib.auth.decorators import permission_required
 from github.GithubException import GithubException
@@ -46,6 +46,7 @@ from workshops.models import (
     Role,
     Host,
     Membership,
+    Sponsorship,
     Tag,
     Task,
     EventRequest,
@@ -68,7 +69,7 @@ from workshops.forms import (
     AdminLookupForm, ProfileUpdateRequestFormNoCaptcha, MembershipForm,
     TodoFormSet, EventsSelectionForm, EventsMergeForm, InvoiceRequestForm,
     InvoiceRequestUpdateForm, EventSubmitForm, EventSubmitFormNoCaptcha,
-    PersonsMergeForm, PersonCreateForm,
+    PersonsMergeForm, PersonCreateForm, SponsorshipForm,
     TrainingRequestForm, BootstrapHelperWiderLabels, AutoUpdateProfileForm,
     DCSelfOrganizedEventRequestForm, DCSelfOrganizedEventRequestFormNoCaptcha)
 from workshops.util import (
@@ -154,6 +155,22 @@ class UpdateViewContext(SuccessMessageMixin, UpdateView):
     def get_success_message(self, cleaned_data):
         "Format self.success_message, used by messages framework from Django."
         return self.success_message.format(cleaned_data, name=str(self.object))
+
+
+class DeleteViewContext(DeleteView):
+    """
+    Class-based view for deleting objects that extends default template context
+    by adding proper page title.
+    """
+    success_message = '{} was deleted successfully.'
+
+    def delete(self, request, *args, **kwargs):
+        '''Workaround for https://code.djangoproject.com/ticket/21926'''
+        messages.success(
+            self.request,
+            self.success_message.format(self.get_object())
+        )
+        return super().delete(request, *args, **kwargs)
 
 
 class FilteredListView(ListView):
@@ -766,7 +783,7 @@ def person_edit(request, person_id):
                 )
 
                 # to reset the form values
-                return redirect(request.path)
+                return redirect('{}#awards'.format(request.path))
 
             else:
                 messages.error(request, 'Fix errors in the award form.',
@@ -790,7 +807,7 @@ def person_edit(request, person_id):
                 )
 
                 # to reset the form values
-                return redirect(request.path)
+                return redirect('{}#tasks'.format(request.path))
 
             else:
                 messages.error(request, 'Fix errors in the task form.',
@@ -1167,6 +1184,9 @@ def event_edit(request, event_ident):
     task_form = TaskForm(prefix='task', initial={
         'event': event,
     })
+    sponsor_form = SponsorshipForm(prefix='sponsor',
+        initial={'event':event}
+    )
 
     if request.method == 'POST':
         # check which form was submitted
@@ -1189,11 +1209,24 @@ def event_edit(request, event_ident):
                 update_event_attendance_from_tasks(event)
 
                 # to reset the form values
-                return redirect(request.path)
+                return redirect('{}#tasks'.format(request.path))
 
             else:
                 messages.error(request, 'Fix errors below.')
+        if 'sponsor-event' in request.POST:
+            sponsor_form = SponsorshipForm(request.POST, prefix='sponsor')
 
+            if sponsor_form.is_valid():
+                sponsor = sponsor_form.save()
+
+                messages.success(
+                    request,
+                    '{} was added as a new sponsor.'.format(sponsor.organization),
+                )
+                # to reset the form values
+                return redirect('{}#sponsors'.format(request.path))
+            else:
+                messages.error(request, 'Fix errors below.')
         else:
             event_form = EventForm(request.POST, prefix='event',
                                    instance=event)
@@ -1222,6 +1255,7 @@ def event_edit(request, event_ident):
                'model': Event,
                'tasks': tasks,
                'task_form': task_form,
+               'sponsor_form': sponsor_form,
                'form_helper': bootstrap_helper,
                'form_helper_with_add': bootstrap_helper_with_add,
                }
@@ -1542,6 +1576,14 @@ def event_dismiss_metadata_changes(request, event_ident):
                      'Changes to {} were dismissed.'.format(event.get_ident()))
 
     return redirect(reverse('event_details', args=[event.get_ident()]))
+
+
+class SponsorshipDelete(OnlyForAdminsMixin, PermissionRequiredMixin, DeleteViewContext):
+    model = Sponsorship
+    permission_required = 'workshops.delete_sponsorship'
+
+    def get_success_url(self):
+        return reverse_lazy('event_edit',args=[self.get_object().event.slug])
 
 
 class AllInvoiceRequests(OnlyForAdminsMixin, FilteredListView):
