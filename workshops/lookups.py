@@ -19,8 +19,8 @@ class EventLookup(ModelLookup):
 
 
 @lookup_only_for_admins
-class HostLookup(ModelLookup):
-    model = models.Host
+class OrganizationLookup(ModelLookup):
+    model = models.Organization
     search_fields = (
         'domain__icontains',
         'fullname__icontains'
@@ -113,7 +113,7 @@ class LanguageLookup(ModelLookup):
 
 
 registry.register(EventLookup)
-registry.register(HostLookup)
+registry.register(OrganizationLookup)
 registry.register(PersonLookup)
 registry.register(AdminLookup)
 registry.register(AirportLookup)

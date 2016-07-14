@@ -8,13 +8,13 @@ urlpatterns = [
 
     url(r'^log/$', views.changes_log, name='changes_log'),
 
-    url(r'^hosts/?$', views.all_hosts, name='all_hosts'),
-    url(r'^host/(?P<host_domain>[\w\.-]+)/?$', views.host_details, name='host_details'),
-    url(r'^host/(?P<host_domain>[\w\.-]+)/edit$', views.HostUpdate.as_view(), name='host_edit'),
-    url(r'^host/(?P<host_domain>[\w\.-]+)/delete$', views.host_delete, name='host_delete'),
-    url(r'^hosts/add/$', views.HostCreate.as_view(), name='host_add'),
+    url(r'^organizations/?$', views.all_organizations, name='all_organizations'),
+    url(r'^organization/(?P<org_domain>[\w\.-]+)/?$', views.organization_details, name='organization_details'),
+    url(r'^organization/(?P<org_domain>[\w\.-]+)/edit$', views.OrganizationUpdate.as_view(), name='organization_edit'),
+    url(r'^organization/(?P<org_domain>[\w\.-]+)/delete$', views.organization_delete, name='organization_delete'),
+    url(r'^organizations/add/$', views.OrganizationCreate.as_view(), name='organization_add'),
 
-    url(r'membership/(?P<host_domain>[\w\.-]+)/add', views.membership_create, name='membership_add'),
+    url(r'membership/(?P<org_domain>[\w\.-]+)/add', views.membership_create, name='membership_add'),
     url(r'membership/(?P<membership_id>\d+)/edit', views.MembershipUpdate.as_view(), name='membership_edit'),
     url(r'membership/(?P<membership_id>\d+)/delete', views.membership_delete, name='membership_delete'),
 

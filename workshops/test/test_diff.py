@@ -9,19 +9,19 @@ from .base import TestBase
 class TestRevisions(TestBase):
     def setUp(self):
         self._setUpUsersAndLogin()
-        self._setUpHosts()
+        self._setUpOrganizations()
         self.tag1, _ = Tag.objects.get_or_create(pk=1)
         self.tag2, _ = Tag.objects.get_or_create(pk=2)
 
         with create_revision():
-            self.event = Event.objects.create(host=self.host_alpha,
+            self.event = Event.objects.create(host=self.org_alpha,
                                               slug='event')
             self.event.tags.add(self.tag1)
             self.event.save()
 
         with create_revision():
             self.event.slug = 'better-event'
-            self.event.host = self.host_beta
+            self.event.host = self.org_beta
             self.event.tags.add(self.tag2)
             self.event.save()
 
@@ -51,16 +51,16 @@ class TestRevisions(TestBase):
         # Red label for removed host
         self.assertContains(rv,
             '<a class="label label-danger" href="{}">-{}</a>'.format(
-                self.host_alpha.get_absolute_url(),
-                self.host_alpha
+                self.org_alpha.get_absolute_url(),
+                self.org_alpha
             ),
             html=True
         )
         # Green label for assigned host
         self.assertContains(rv,
             '<a class="label label-success" href="{}">+{}</a>'.format(
-                self.host_beta.get_absolute_url(),
-                self.host_beta
+                self.org_beta.get_absolute_url(),
+                self.org_beta
             ),
             html=True
         )

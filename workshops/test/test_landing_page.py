@@ -2,7 +2,7 @@ from django.contrib.auth.models import Group
 
 from django.core.urlresolvers import reverse
 
-from ..models import Event, Host, Tag, Person
+from ..models import Event, Organization, Tag, Person
 from .base import TestBase
 
 
@@ -32,12 +32,12 @@ class TestAdminDashboard(TestBase):
         dashboard."""
         stalled_tag = Tag.objects.get(name='stalled')
         stalled = Event.objects.create(
-            slug='stalled-event', host=Host.objects.first(),
+            slug='stalled-event', host=Organization.objects.first(),
         )
         stalled.tags.add(stalled_tag)
         completed = Event.objects.create(slug='completed-event',
                                          completed=True,
-                                         host=Host.objects.first())
+                                         host=Organization.objects.first())
 
         # stalled event appears in unfiltered list of events
         self.assertIn(stalled, Event.objects.unpublished_events())

@@ -133,8 +133,8 @@ class TestTodoManager(TestBase):
     """Test for TodoItemQuerySet as a manager."""
 
     def setUp(self):
-        super()._setUpHosts()
-        e = Event.objects.create(slug='event-with-todos', host=self.host_alpha)
+        super()._setUpOrganizations()
+        e = Event.objects.create(slug='event-with-todos', host=self.org_alpha)
         self.today = date(2015, 12, 31)
         self.current = TodoItem.objects.create(event=e, title='Current',
                                                due=date(2015, 12, 30))

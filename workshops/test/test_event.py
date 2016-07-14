@@ -8,7 +8,7 @@ from django.db.utils import IntegrityError
 
 from ..management.commands.check_for_workshop_websites_updates import (
     Command as WebsiteUpdatesCommand)
-from ..models import (Event, Host, Tag, Role, Task, Award, Badge, TodoItem)
+from ..models import (Event, Organization, Tag, Role, Task, Award, Badge, TodoItem)
 from ..forms import EventForm, EventsMergeForm
 from .base import TestBase
 
@@ -34,14 +34,14 @@ class TestEvent(TestBase):
         """Ensure that events from 'Online' country (W3) get some location data
         forced upon `save()`."""
         e = Event.objects.create(slug='online-event', country='W3',
-                                 host=Host.objects.first())
+                                 host=Organization.objects.first())
         self.assertEqual(e.venue, 'Internet')
         self.assertEqual(e.address, 'Internet')
         self.assertAlmostEqual(e.latitude, -48.876667)
         self.assertAlmostEqual(e.longitude, -123.393333)
 
         e = Event.objects.create(slug='offline-event', country='US',
-                                 host=Host.objects.first())
+                                 host=Organization.objects.first())
         self.assertNotEqual(e.venue, 'Internet')
         self.assertNotEqual(e.address, 'Internet')
         self.assertIsNone(e.latitude)
@@ -104,7 +104,7 @@ class TestEvent(TestBase):
             country='US', venue='University',
             address='Phenomenal Street',
             url='http://url/',
-            host=Host.objects.all().first(),
+            host=Organization.objects.all().first(),
         )
         self.assertNotIn(event_considered_published,
                          Event.objects.unpublished_events())
@@ -162,7 +162,7 @@ class TestEvent(TestBase):
         Award.objects.get(pk=award.pk)
 
     def test_repository_website_url(self):
-        test_host = Host.objects.all()[0]
+        test_host = Organization.objects.all()[0]
         links = [
             'http://user-name.github.com/repo-name',
             'http://user-name.github.io/repo-name',
@@ -189,7 +189,7 @@ class TestEvent(TestBase):
             assert event.website_url == WEBSITE
 
     def test_wrong_repository_website_urls(self):
-        test_host = Host.objects.all()[0]
+        test_host = Organization.objects.all()[0]
         link = 'http://en.wikipedia.org/'
         event = Event.objects.create(
             slug='test-event',
@@ -211,8 +211,8 @@ class TestEventViews(TestBase):
         self.learner = Role.objects.get_or_create(name='learner')[0]
 
         # Create a test host
-        self.test_host = Host.objects.create(domain='example.com',
-                                             fullname='Test Host')
+        self.test_host = Organization.objects.create(domain='example.com',
+                                             fullname='Test Organization')
 
         # Create a test tag
         self.test_tag = Tag.objects.create(name='Test Tag',
@@ -294,7 +294,7 @@ class TestEventViews(TestBase):
         assert view_events.number == 5
 
     def test_add_minimal_event(self):
-        host = Host.objects.get(fullname='Test Host')
+        host = Organization.objects.get(fullname='Test Organization')
         response = self.client.post(
             reverse('event_add'),
             {
@@ -458,8 +458,8 @@ class TestEventViews(TestBase):
         be unspecified (== 'xx')."""
         data = {
             'slug': '',
-            'host_1': Host.objects.all()[0].pk,
-            'tags': [Tag.objects.first().pk],
+            'host_1': Organization.objects.all()[0].pk,
+            'tags': Tag.objects.all(),
             'invoice_status': 'unknown',
         }
 
@@ -478,7 +478,7 @@ class TestEventViews(TestBase):
         be unspecified (== 'xx')."""
         data = {
             'slug': '',
-            'host_1': Host.objects.all()[0].pk,
+            'host_1': Organization.objects.all()[0].pk,
             'tags': [Tag.objects.first().pk],
             'invoice_status': 'unknown',
         }
@@ -514,7 +514,7 @@ class TestEventViews(TestBase):
         be unspecified (== 'xx')."""
         data = {
             'slug': '',
-            'host_1': Host.objects.all()[0].pk,
+            'host_1': Organization.objects.all()[0].pk,
             'tags': [Tag.objects.first().pk],
             'invoice_status': 'unknown',
         }
@@ -564,8 +564,8 @@ class TestEventNotes(TestBase):
         self._setUpUsersAndLogin()
 
         # a test host is required for all new events
-        self.test_host = Host.objects.create(domain='example.com',
-                                             fullname='Test Host')
+        self.test_host = Organization.objects.create(domain='example.com',
+                                             fullname='Test Organization')
 
         # prepare a lifespan of all events
         self.event_start = datetime.now() + timedelta(days=-1)
@@ -600,7 +600,7 @@ class TestEventNotes(TestBase):
 
 class TestEventMerging(TestBase):
     def setUp(self):
-        self._setUpHosts()
+        self._setUpOrganizations()
         self._setUpAirports()
         self._setUpBadges()
         self._setUpLessons()
@@ -619,7 +619,7 @@ class TestEventMerging(TestBase):
         self.event_a = Event.objects.create(
             slug='event-a', completed=True, assigned_to=self.harry,
             start=today, end=tomorrow,
-            host=self.host_alpha, administrator=self.host_alpha,
+            host=self.org_alpha, administrator=self.org_alpha,
             url='http://reichel.com/event-a', language=self.french,
             reg_key='123456',
             admin_fee=2500, invoice_status='not-invoiced',
@@ -642,7 +642,7 @@ class TestEventMerging(TestBase):
         self.event_b = Event.objects.create(
             slug='event-b', completed=False, assigned_to=self.hermione,
             start=today, end=tomorrow + timedelta(days=1),
-            host=self.host_beta, administrator=self.host_beta,
+            host=self.org_beta, administrator=self.org_beta,
             url='http://www.cummings.biz/event-b', language=self.english,
             reg_key='654321',
             admin_fee=2500, invoice_status='not-invoiced',
@@ -864,7 +864,7 @@ class TestEventReviewingRepoChanges(TestBase):
 
     def setUp(self):
         self._setUpUsersAndLogin()
-        self._setUpHosts()
+        self._setUpOrganizations()
 
         self.cmd = WebsiteUpdatesCommand()
 
@@ -888,7 +888,7 @@ class TestEventReviewingRepoChanges(TestBase):
         # create event with some changes detected
         self.event = Event.objects.create(
             slug='event-for-changes', start=date(2016, 4, 20),
-            end=date(2016, 4, 22), host=Host.objects.first(),
+            end=date(2016, 4, 22), host=Organization.objects.first(),
             metadata_changed=True)
 
         # add metadata to the session

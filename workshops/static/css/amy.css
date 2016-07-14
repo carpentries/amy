@@ -53,7 +53,7 @@ input.autocomboboxwidget {
     margin: 0px 0px 10px;
 }
 
-/* event, host and person notes are displayed in <pre> */
+/* event, organization and person notes are displayed in <pre> */
 pre {
     white-space: pre-wrap;
 }

@@ -18,21 +18,21 @@ class TestInstructorsByDate(TestBase):
 
         # set up some testing Events
         self.e1 = Event.objects.create(
-            host=self.host_alpha,
+            host=self.org_alpha,
             slug="in-range",
             start=self.today,
             end=self.tomorrow,
         )
 
         self.e2 = Event.objects.create(
-            host=self.host_alpha,
+            host=self.org_alpha,
             slug="out-of-range1",
             start=self.yesterday,
             end=self.tomorrow,
         )
 
         self.e3 = Event.objects.create(
-            host=self.host_alpha,
+            host=self.org_alpha,
             slug="out-of-range2",
             start=self.today,
             end=self.after_tomorrow,

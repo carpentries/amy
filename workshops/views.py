@@ -44,7 +44,7 @@ from workshops.models import (
     Qualification,
     Person,
     Role,
-    Host,
+    Organization,
     Membership,
     Sponsorship,
     Tag,
@@ -63,7 +63,7 @@ from workshops.forms import (
     EventForm, TaskForm, TaskFullForm, bootstrap_helper, bootstrap_helper_get,
     bootstrap_helper_with_add, BadgeAwardForm, PersonAwardForm,
     PersonPermissionsForm, bootstrap_helper_filter, PersonsSelectionForm,
-    PersonTaskForm, HostForm, SWCEventRequestForm, DCEventRequestForm,
+    PersonTaskForm, OrganizationForm, SWCEventRequestForm, DCEventRequestForm,
     ProfileUpdateRequestForm, PersonLookupForm, bootstrap_helper_wider_labels,
     SimpleTodoForm, bootstrap_helper_inline_formsets, BootstrapHelper,
     AdminLookupForm, ProfileUpdateRequestFormNoCaptcha, MembershipForm,
@@ -92,7 +92,7 @@ from workshops.util import (
     login_required, login_not_required, LoginNotRequiredMixin)
 
 from workshops.filters import (
-    EventFilter, HostFilter, PersonFilter, TaskFilter, AirportFilter,
+    EventFilter, OrganizationFilter, PersonFilter, TaskFilter, AirportFilter,
     EventRequestFilter, BadgeAwardsFilter, InvoiceRequestFilter,
     EventSubmissionFilter, DCSelfOrganizedEventRequestFilter,
 )
@@ -309,66 +309,68 @@ def changes_log(request):
 
 
 @admin_required
-def all_hosts(request):
-    '''List all hosts.'''
-
-    filter = HostFilter(request.GET, queryset=Host.objects.all())
-    hosts = get_pagination_items(request, filter)
-    context = {'title' : 'All Hosts',
-               'all_hosts' : hosts,
+def all_organizations(request):
+    '''List all organization.'''
+    filter = OrganizationFilter(
+        request.GET,
+        queryset=Organization.objects.all()
+    )
+    organizations = get_pagination_items(request, filter)
+    context = {'title' : 'All Organizations',
+               'all_organizations' : organizations,
                'filter': filter,
                'form_helper': bootstrap_helper_filter}
-    return render(request, 'workshops/all_hosts.html', context)
+    return render(request, 'workshops/all_organizations.html', context)
 
 
 @admin_required
-def host_details(request, host_domain):
-    '''List details of a particular host.'''
-    host = get_object_or_404(Host, domain=host_domain)
-    events = Event.objects.filter(host=host)
-    context = {'title' : 'Host {0}'.format(host),
-               'host' : host,
+def organization_details(request, org_domain):
+    '''List details of a particular organization.'''
+    organization = get_object_or_404(Organization, domain=org_domain)
+    events = Event.objects.filter(host=organization)
+    context = {'title' : 'Organization {0}'.format(organization),
+               'organization' : organization,
                'events' : events}
-    return render(request, 'workshops/host.html', context)
+    return render(request, 'workshops/organization.html', context)
 
 
-class HostCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
+class OrganizationCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
                  CreateViewContext):
-    permission_required = 'workshops.add_host'
-    model = Host
-    form_class = HostForm
+    permission_required = 'workshops.add_organization'
+    model = Organization
+    form_class = OrganizationForm
     template_name = 'workshops/generic_form.html'
 
 
-class HostUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
+class OrganizationUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
                  UpdateViewContext):
-    permission_required = 'workshops.change_host'
-    model = Host
-    form_class = HostForm
+    permission_required = 'workshops.change_organization'
+    model = Organization
+    form_class = OrganizationForm
     slug_field = 'domain'
-    slug_url_kwarg = 'host_domain'
+    slug_url_kwarg = 'org_domain'
     template_name = 'workshops/generic_form.html'
 
 
 @admin_required
-@permission_required('workshops.delete_host', raise_exception=True)
-def host_delete(request, host_domain):
-    """Delete specific host."""
+@permission_required('workshops.delete_organization', raise_exception=True)
+def organization_delete(request, org_domain):
+    """Delete specific organization."""
     try:
-        host = get_object_or_404(Host, domain=host_domain)
-        host.delete()
-        messages.success(request, 'Host was deleted successfully.')
-        return redirect(reverse('all_hosts'))
+        organization = get_object_or_404(Organization, domain=org_domain)
+        organization.delete()
+        messages.success(request, 'Organization was deleted successfully.')
+        return redirect(reverse('all_organizations'))
     except ProtectedError as e:
-        return failed_to_delete(request, host, e.protected_objects)
+        return failed_to_delete(request, organization, e.protected_objects)
 
 
 @admin_required
-@permission_required(['workshops.add_membership', 'workshops.change_host'],
-                     raise_exception=True)
-def membership_create(request, host_domain):
-    host = get_object_or_404(Host, domain=host_domain)
-    form = MembershipForm(initial={'host': host})
+@permission_required(['workshops.add_membership',
+                      'workshops.change_organization'], raise_exception=True)
+def membership_create(request, org_domain):
+    organization = get_object_or_404(Organization, domain=org_domain)
+    form = MembershipForm(initial={'organization': organization})
 
     if request.method == "POST":
         form = MembershipForm(request.POST)
@@ -376,12 +378,14 @@ def membership_create(request, host_domain):
             form.save()
 
             messages.success(request,
-                             'Membership was successfully added to the host')
+                'Membership was successfully added to the organization')
 
-            return redirect(reverse('host_details', args=[host.domain]))
+            return redirect(
+                reverse('organization_details', args=[organization.domain])
+            )
 
     context = {
-        'title': 'New membership for host {}'.format(host),
+        'title': 'New membership for organization {}'.format(organization),
         'form': form,
         'form_helper': bootstrap_helper,
     }
@@ -397,7 +401,10 @@ class MembershipUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
     template_name = 'workshops/generic_form.html'
 
     def get_success_url(self):
-        return reverse('host_details', args=[self.object.host.domain])
+        return reverse(
+            'organization_details',
+            args=[self.object.organization.domain],
+        )
 
 
 @admin_required
@@ -406,12 +413,14 @@ def membership_delete(request, membership_id):
     """Delete specific membership."""
     try:
         membership = get_object_or_404(Membership, pk=membership_id)
-        host = membership.host
+        organization = membership.organization
         membership.delete()
         messages.success(request, 'Membership was deleted successfully.')
-        return redirect(reverse('host_details', args=[host.domain]))
+        return redirect(
+            reverse('organization_details', args=[organization.domain])
+        )
     except ProtectedError as e:
-        return failed_to_delete(request, host, e.protected_objects)
+        return failed_to_delete(request, organization, e.protected_objects)
 
 
 #------------------------------------------------------------
@@ -1918,7 +1927,7 @@ def workshop_staff(request):
 def search(request):
     '''Search the database by term.'''
 
-    term, hosts, events, persons, airports = '', None, None, None, None
+    term, organizations, events, persons, airports = '', None, None, None, None
 
     if request.method == 'POST':
         form = SearchForm(request.POST)
@@ -1927,13 +1936,13 @@ def search(request):
             tokens = re.split('\s+', term)
             results = list()
 
-            if form.cleaned_data['in_hosts']:
-                hosts = Host.objects.filter(
+            if form.cleaned_data['in_organizations']:
+                organizations = Organization.objects.filter(
                     Q(domain__contains=term) |
                     Q(fullname__contains=term) |
                     Q(notes__contains=term)) \
                     .order_by('fullname')
-                results += list(hosts)
+                results += list(organizations)
 
             if form.cleaned_data['in_events']:
                 events = Event.objects.filter(
@@ -1987,7 +1996,7 @@ def search(request):
                'form': form,
                'form_helper': bootstrap_helper,
                'term' : term,
-               'hosts' : hosts,
+               'organizations' : organizations,
                'events' : events,
                'persons' : persons,
                'airports' : airports}

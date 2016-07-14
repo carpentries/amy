@@ -23,7 +23,7 @@ tasks_router = routers.NestedSimpleRouter(router, 'events', lookup='event')
 tasks_router.register('tasks', views.TaskViewSet, base_name='event-tasks')
 todos_router = routers.NestedSimpleRouter(router, 'events', lookup='event')
 todos_router.register('todos', views.TodoViewSet, base_name='event-todos')
-router.register('hosts', views.HostViewSet)
+router.register('organizations', views.OrganizationViewSet)
 router.register('airports', views.AirportViewSet)
 
 urlpatterns = [

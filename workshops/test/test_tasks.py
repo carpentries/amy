@@ -4,8 +4,7 @@ from datetime import datetime
 from django.core.urlresolvers import reverse
 
 from .base import TestBase
-from ..models import Task, Event, Role, Person, Host
-from ..forms import TaskForm
+from ..models import Task, Event, Role, Person, Organization
 
 
 class TestTask(TestBase):
@@ -14,8 +13,8 @@ class TestTask(TestBase):
     def setUp(self):
         self.fixtures = {}
 
-        test_host = Host.objects.create(domain='example.com',
-                                        fullname='Test Host')
+        test_host = Organization.objects.create(domain='example.com',
+                                        fullname='Test Organization')
 
         test_person_1 = Person.objects.create(personal='Test',
                                               family='Person1',

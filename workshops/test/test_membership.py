@@ -2,14 +2,14 @@ from datetime import timedelta, date
 import itertools
 
 from .base import TestBase
-from ..models import Membership, Host, Event
+from ..models import Membership, Organization, Event
 
 
 class TestMembership(TestBase):
     def setUp(self):
         super().setUp()
 
-        # let's add a membership for one of the hosts
+        # let's add a membership for one of the organizations
         self.current = Membership.objects.create(
             variant='partner',
             agreement_start=date(2015, 1, 1),
@@ -17,12 +17,12 @@ class TestMembership(TestBase):
             contribution_type='financial',
             workshops_without_admin_fee_per_year=10,
             self_organized_workshops_per_year=20,
-            host=self.host_beta,
+            organization=self.org_beta,
         )
 
-        self_organized_admin = Host.objects.get(domain='self-organized')
+        self_organized_admin = Organization.objects.get(domain='self-organized')
 
-        # let's add a few events for that host
+        # let's add a few events for that organization
         type_ = itertools.cycle(['self-organized', 'no-fee', 'self-organized'])
         for i in range(20):
             next_type = next(type_)
@@ -30,7 +30,7 @@ class TestMembership(TestBase):
             if next_type == 'self-organized':
                 Event.objects.create(
                     slug='event-under-umbrella{}'.format(i),
-                    host=self.host_beta,
+                    host=self.org_beta,
                     # create each event starts roughly month later
                     start=date(2015, 1, 1) + i * timedelta(days=31),
                     end=date(2015, 1, 2) + i * timedelta(days=31),
@@ -40,12 +40,12 @@ class TestMembership(TestBase):
             elif next_type == 'no-fee':
                 Event.objects.create(
                     slug='event-under-umbrella{}'.format(i),
-                    host=self.host_beta,
+                    host=self.org_beta,
                     # create each event starts roughly month later
                     start=date(2015, 1, 1) + i * timedelta(days=31),
                     end=date(2015, 1, 2) + i * timedelta(days=31),
                     # just to satisfy the criteria
-                    administrator=self.host_beta,
+                    administrator=self.org_beta,
                     admin_fee=0,
                 )
         # above code should create 11 events that start in 2015:
@@ -62,11 +62,11 @@ class TestMembership(TestBase):
             contribution_type='financial',
             workshops_without_admin_fee_per_year=10,
             self_organized_workshops_per_year=20,
-            host=self.host_beta,
+            organization=self.org_beta,
         )
 
-        self.assertIn(self.current, self.host_beta.membership_set.all())
-        self.assertIn(overlapping, self.host_beta.membership_set.all())
+        self.assertIn(self.current, self.org_beta.membership_set.all())
+        self.assertIn(overlapping, self.org_beta.membership_set.all())
 
     def test_workshops_without_admin_fee(self):
         """Ensure we calculate properly number of workshops per year."""

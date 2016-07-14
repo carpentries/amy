@@ -9,7 +9,7 @@ from workshops.models import (
     Event,
     Task,
     TodoItem,
-    Host,
+    Organization,
     Airport,
     Role,
 )
@@ -25,8 +25,8 @@ class TestAPIStructure(APITestCase):
         self.admin.save()
 
         self.event = Event.objects.create(slug='test-event',
-                                          host=Host.objects.first(),
-                                          administrator=Host.objects.first(),
+                                          host=Organization.objects.first(),
+                                          administrator=Organization.objects.first(),
                                           assigned_to=self.admin)
 
         self.award = Award.objects.create(
@@ -49,14 +49,14 @@ class TestAPIStructure(APITestCase):
         # → events
         #   → tasks
         #   → todos
-        # → hosts
+        # → organizations
         # → airports
         # → reports
         index = self.client.get(reverse('api:root'))
         index_links = {
             'person-list': reverse('api:person-list'),
             'event-list': reverse('api:event-list'),
-            'host-list': reverse('api:host-list'),
+            'organization-list': reverse('api:organization-list'),
             'airport-list': reverse('api:airport-list'),
             'reports-list': reverse('api:reports-list'),
         }
@@ -118,8 +118,8 @@ class TestAPIStructure(APITestCase):
         event = self.client.get(reverse('api:event-detail',
                                         args=[self.event.slug]))
         event_links = {
-            'host': reverse('api:host-detail', args=[self.event.host.domain]),
-            'administrator': reverse('api:host-detail',
+            'host': reverse('api:organization-detail', args=[self.event.host.domain]),
+            'administrator': reverse('api:organization-detail',
                                      args=[self.event.administrator.domain]),
             'tasks': reverse('api:event-tasks-list', args=[self.event.slug]),
             'todos': reverse('api:event-todos-list', args=[self.event.slug]),

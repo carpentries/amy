@@ -5,7 +5,7 @@ from django_countries import Countries
 
 from workshops.models import (
     Event,
-    Host,
+    Organization,
     Person,
     Airport,
     EventRequest,
@@ -88,8 +88,8 @@ class FilterSetWithoutHelpText(django_filters.FilterSet):
 
 class EventFilter(FilterSetWithoutHelpText):
     assigned_to = ForeignKeyAllValuesFilter(Person)
-    host = ForeignKeyAllValuesFilter(Host)
-    administrator = ForeignKeyAllValuesFilter(Host)
+    host = ForeignKeyAllValuesFilter(Organization)
+    administrator = ForeignKeyAllValuesFilter(Organization)
 
     STATUS_CHOICES = [
         ('', 'All'),
@@ -155,11 +155,11 @@ class EventRequestFilter(FilterSetWithoutHelpText):
         order_by = ['-created_at', 'created_at']
 
 
-class HostFilter(FilterSetWithoutHelpText):
+class OrganizationFilter(FilterSetWithoutHelpText):
     country = AllCountriesFilter()
 
     class Meta:
-        model = Host
+        model = Organization
         fields = [
             'country',
         ]
