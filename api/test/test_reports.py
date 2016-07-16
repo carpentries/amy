@@ -20,6 +20,7 @@ from workshops.models import (
     Task,
     Event,
 )
+from workshops.test.base import TestBase
 
 
 class BaseReportingTest(APITestCase):
@@ -131,3 +132,21 @@ class TestCSVYAMLListSerialization(BaseReportingTest):
         result = rvs.listify(self.iterable, mock_request,
                              format=format_)
         self.assertNotEqual(type(result), type(list()))
+
+    def test_embedded_iterator_listified(self):
+        """Regression: test if advanced structure, generated e.g. by
+        `all_activity_over_time` report, doesn't raise RepresenterError when
+        used with YAML renderer."""
+        t = TestBase()
+        t.setUp()
+        t._setUpTags()
+
+        format_ = 'yaml'
+        self.assertIn(format_, self.formats)
+
+        rvs = ReportsViewSet()
+        mock_request = MagicMock()
+        mock_request.query_params = QueryDict()
+        data = rvs.all_activity_over_time(mock_request, format=format_).data
+        self.assertEqual(type(data['missing']['attendance']), type([]))
+        self.assertEqual(type(data['missing']['instructors']), type([]))

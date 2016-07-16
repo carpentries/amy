@@ -368,8 +368,8 @@ class ReportsViewSet(ViewSet):
     def all_activity_over_time(self, request, format=None):
         """Workshops, instructors, and missing data in specific periods."""
         start, end = self._default_start_end_dates(
-            start=self.request.query_params.get('start', None),
-            end=self.request.query_params.get('end', None))
+            start=request.query_params.get('start', None),
+            end=request.query_params.get('end', None))
 
         events_qs = Event.objects.filter(start__gte=start, start__lte=end)
         swc_tag = Tag.objects.get(name='SWC')
