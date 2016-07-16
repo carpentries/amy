@@ -449,8 +449,12 @@ class ReportsViewSet(ViewSet):
                 'DC': dc_total_learners,
             },
             'missing': {
-                'attendance': missing_attendance,
-                'instructors': missing_instructors,
+                # qs.values_list returns an iterator, so we need to listify it
+                # for YAML
+                'attendance': self.listify(missing_attendance, request,
+                                           format),
+                'instructors': self.listify(missing_instructors, request,
+                                            format),
             }
         })
 
