@@ -11,3 +11,25 @@
 {{ block.super }}
 {% include "pydata/sponsor_import_modal.html" %}
 {% endblock sponsor_tab %}
+
+{% block sponsor_list %}
+<table class="table table-striped">
+<tr>
+  <th>organization</th>
+  <th>level</th>
+  <th>actions</th>
+</tr>
+{% for sponsorship in object.sponsorship_set.all %}
+<tr>
+  <td><a href="{{ sponsorship.organization.get_absolute_url }}">{{ sponsorship.organization }}</a>
+  <td>{{ sponsorship.level }}</td>
+  <td>
+    <form action="{% url 'sponsorship_delete' pk=sponsorship.id %}" onsubmit='return confirm("Are you sure you wish to remove \"{{ sponsorship }}\" from {{ object }}?")' method="POST">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Delete</button>
+    </form>
+  </td>
+</tr>
+{% endfor %}
+</table>
+{% endblock sponsor_list %}
