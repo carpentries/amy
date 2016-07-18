@@ -40,6 +40,7 @@
 </div>
 <div class="row">
   <div class="col-md-12">
+    {% block edit-actions %}
     <p class="edit-object pull-left">
       {% if perms.workshops.change_event %}
       <a href="{% url 'event_edit' event.slug %}" class="btn btn-primary">Edit</a>
@@ -50,6 +51,7 @@
     <p class="pull-right">
       <a href="#" class="btn btn-default" id="preview_event">Show preview</a>
     </p>
+    {% endblock edit-actions %}
   </div>
 </div>
 
@@ -151,6 +153,7 @@
 <p>No tasks.</p>
 {% endif %}
 
+{% block sponsorships %}
 {% with sponsorships=event.sponsorship_set.all %}
 {% if sponsorships %}
 <h3>Sponsors</h3>
@@ -176,6 +179,7 @@
 <p>No sponsors.</p>
 {% endif %}
 {% endwith %}
+{% endblock sponsorships %}
 
 <div class="clearfix">
   <p class="edit-object pull-left">

@@ -1,4 +1,7 @@
-from django.apps import apps, AppConfig
+import re
+
+from django import forms
+from django.apps import AppConfig
 from django.utils.functional import curry
 
 
@@ -10,7 +13,10 @@ class PyDataConfig(AppConfig):
     def ready(self):
         from . import checks
 
-        Sponsorship = apps.get_model('workshops', 'Sponsorship')
+        from workshops.forms import PersonForm, TaskForm, SponsorshipForm
+        from workshops.models import Person, Task, Organization, Sponsorship
+        from workshops.views import EventCreate, PersonCreate
+
         # Add choices to the `amount` field
         Sponsorship.LEVELS = (
             (0, 'Founding'),
@@ -21,15 +27,60 @@ class PyDataConfig(AppConfig):
             (1500, 'Supporting'),
             (1, 'Community'),
         )
+
+        # Add choices to `amount` field
+        # Django migration system complains about missing migrations
         amount_field = Sponsorship._meta.get_field('amount')
         amount_field.choices = Sponsorship.LEVELS
-        amount_field.verbose_name = 'Sponsorship level'
 
-        # Add an attribute to sponsorship object to return the level text
-        # Mimics `get_amount_choice` method
-        # See https://github.com/django/django/blob/49b4596cb4744e4b68d56e6a540a3e15c1582963/django/db/models/fields/__init__.py#L702
+        # Add method `get_amount_display` to Sponsorship to return the level
         setattr(
             Sponsorship,
-            'level',
-            curry(Sponsorship._get_FIELD_display, field=amount_field),
+            'get_amount_display',
+            curry(Sponsorship._get_FIELD_display, field=amount_field)
         )
+
+        # Override the `__str__` method to display level instead of amount
+        def __str__(self):
+            return '{}: {}'.format(self.organization, self.get_amount_display())
+        Sponsorship.add_to_class('__str__', __str__)
+
+        # Add a regex to obtain URL of conference and `pk` of sponsor instance
+        Sponsorship.PROFILE_REGEX = re.compile(r'^(?P<url>.+?(?=/sponsors))/sponsors/(?P<id>\d+)/?') # noqa
+
+        # Add "Import from URL" button to SponsorshipForm
+        class Media:
+            js = ('import_sponsor.js', )
+        SponsorshipForm.Media = Media
+
+        # Add a dropdown to the `amount` field on SponsorshipForm
+        SponsorshipForm.base_fields['amount'] = forms.ChoiceField(
+            choices=Sponsorship.LEVELS,
+        )
+
+        # Add a regex to obtain URL of conference and `pk` of presentation
+        Task.PRESENTATION_REGEX = re.compile(r'^(?P<url>.+?(?=/schedule))/schedule/presentation/(?P<id>\d+)/?') # noqa
+
+        # Add "Import from URL" button to TaskForm
+        class Media:
+            js = ('import_task.js', )
+        TaskForm.Media = Media
+
+        # Add a regex to obtain URL of conference and `pk` of speaker
+        Person.PROFILE_REGEX = re.compile(r'^(?P<url>.+?(?=/speaker))/speaker/profile/(?P<id>[^/]+)/?') # noqa
+
+        # Add "Import from URL" button to PersonForm on PersonCreate view
+        PersonCreate.template_name = 'pydata/person_create_form.html'
+
+        class Media:
+            js = ('import_person.js', )
+        PersonForm.Media = Media
+
+        # Prepopulate fields on EventCreate view
+        def get_initial(self):
+            numfocus = Organization.objects.get(fullname='NumFOCUS')
+            return {
+                'administrator': numfocus,
+                'assigned_to': self.request.user,
+            }
+        EventCreate.get_initial = get_initial

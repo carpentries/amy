@@ -1,4 +1,4 @@
-from django.apps import apps as camelot_apps
+from django.conf import settings
 from django.core.checks import register, Error, Tags
 
 from amy.urls import urlpatterns
@@ -49,7 +49,6 @@ def check_pydata_urls_included_before_workshop_urls(**kwargs):
 @register(Tags.templates)
 def check_pydata_installed_before_workshops(**kwargs):
     errors = []
-    from django.conf import settings
     if settings.INSTALLED_APPS.index('pydata') > \
        settings.INSTALLED_APPS.index('workshops'):
         errors.append(
@@ -58,5 +57,19 @@ def check_pydata_installed_before_workshops(**kwargs):
                 hint=('Add `pydata` to INSTALLED_APPS before the `workshops` app.'),
                 id='amy.E003',
             ),
+        )
+    return errors
+
+
+@register(Tags.security)
+def check_pydata_username_password_in_settings(**kwargs):
+    errors = []
+    if not hasattr(settings, 'PYDATA_USERNAME_SECRET'):
+        errors.append(
+            Error('`PYDATA_USERNAME_SECRET` is missing in settings.py'),
+        )
+    if not hasattr(settings, 'PYDATA_PASSWORD_SECRET'):
+        errors.append(
+            Error('`PYDATA_PASSWORD_SECRET` is missing in settings.py'),
         )
     return errors

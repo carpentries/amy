@@ -1,0 +1,5 @@
+{% extends "pydata/bulk-import/base.html" %}
+
+{% block panel-heading %}
+{{ subform.personal.value|default:"" }} {{ subform.family.value|default:"" }}
+{% endblock panel-heading %}

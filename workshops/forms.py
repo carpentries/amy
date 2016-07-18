@@ -395,6 +395,7 @@ class EventForm(forms.ModelForm):
                   'notes', 'country', 'venue', 'address', 'latitude',
                   'longitude', 'learners_pre', 'learners_post',
                   'instructors_pre', 'instructors_post', 'learners_longterm')
+
         # WARNING: don't change put any fields between 'country' and
         #          'longitude' that don't relate to the venue of the event
 
@@ -709,6 +710,7 @@ class MembershipForm(forms.ModelForm):
 
 
 class SponsorshipForm(forms.ModelForm):
+
     organization = selectable.AutoCompleteSelectField(
         lookup_class=lookups.OrganizationLookup,
         label='Organization',
@@ -872,6 +874,18 @@ class ProfileUpdateRequestForm(ProfileUpdateRequestFormNoCaptcha):
     captcha = ReCaptchaField()
 
     helper = BootstrapHelper(wider_labels=True)
+
+
+class EventLookupForm(forms.Form):
+    event = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.EventLookup,
+        label='Event',
+        required=True,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+    helper = bootstrap_helper
 
 
 class PersonLookupForm(forms.Form):
