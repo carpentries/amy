@@ -19,8 +19,8 @@ def check_pydata_urls_included_in_urlpatterns(**kwargs):
     else:
         errors.append(
             Error(
-                "`pydata.urls` not included in amy.urls.",
-                hint=("Include `pydata.urls` in amy.urls."),
+                '`pydata.urls` not included in amy.urls.',
+                hint=('Include `pydata.urls` in amy.urls.'),
                 id='amy.E001',
             )
         )
@@ -38,9 +38,25 @@ def check_pydata_urls_included_before_workshop_urls(**kwargs):
     if url.urlconf_module == workshops_urls:
         errors.append(
             Error(
-                "`pydata.urls` not included before `workshops.urls`.",
-                hint=("Include `pydata.urls` before `workshops_urls`."),
+                '`pydata.urls` not included before `workshops.urls`.',
+                hint=('Include `pydata.urls` before `workshops_urls`.'),
                 id='amy.E002',
             )
+        )
+    return errors
+
+
+@register(Tags.templates)
+def check_pydata_installed_before_workshops(**kwargs):
+    errors = []
+    from django.conf import settings
+    if settings.INSTALLED_APPS.index('pydata') > \
+       settings.INSTALLED_APPS.index('workshops'):
+        errors.append(
+            Error(
+                '`pydata` installed after `workshops` app.',
+                hint=('Add `pydata` to INSTALLED_APPS before the `workshops` app.'),
+                id='amy.E003',
+            ),
         )
     return errors
