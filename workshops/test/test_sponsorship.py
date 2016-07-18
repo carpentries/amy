@@ -75,8 +75,28 @@ class TestSponsorshipViews(TestBase):
         self.assertEqual(rv.status_code, 200)
         self.assertIn(self.sponsorship, rv.context['object'].sponsorship_set.all())
 
+    def test_add_sponsor_minimal(self):
+        '''Check that we can add a sponsor w/ minimal parameters'''
+        payload = {
+            'sponsor-organization': self.org_beta.pk,
+            'sponsor-event': self.event.pk,
+        }
+        response = self.client.post(
+            reverse('event_edit', kwargs={'event_ident': self.event.slug}),
+            payload,
+            follow=True
+        )
+        self.assertRedirects(
+            response,
+            '{}#sponsors'.format(
+                reverse('event_edit', kwargs={'event_ident': self.event.slug}),
+            )
+        )
+        self.assertTrue(response.context['object'].sponsorship_set.all())
+        self.assertEqual(response.context['object'].sponsors.count(), 2)
+
     def test_add_sponsor_with_amount(self):
-        '''Check that we can add a sponsor from `event_edit` view'''
+        '''Check that we can add a sponsor with amount'''
         payload = {
             'sponsor-organization': self.org_beta.pk,
             'sponsor-event': self.event.pk,
@@ -95,12 +115,17 @@ class TestSponsorshipViews(TestBase):
         )
         self.assertTrue(response.context['object'].sponsorship_set.all())
         self.assertEqual(response.context['object'].sponsors.count(), 2)
+        self.assertIn(
+            100.00,
+            response.context['object'].sponsorship_set.values_list('amount', flat=True)
+        )
 
-    def test_add_sponsor_without_amount(self):
-        '''Check that we can add a sponsor w/o amount from `event_edit` view'''
+    def test_add_sponsor_with_contact(self):
+        '''Check that we can add a sponsor with a contact person'''
         payload = {
             'sponsor-organization': self.org_beta.pk,
             'sponsor-event': self.event.pk,
+            'sponsor-contact': self.harry.pk,
         }
         response = self.client.post(
             reverse('event_edit', kwargs={'event_ident': self.event.slug}),
@@ -115,6 +140,10 @@ class TestSponsorshipViews(TestBase):
         )
         self.assertTrue(response.context['object'].sponsorship_set.all())
         self.assertEqual(response.context['object'].sponsors.count(), 2)
+        self.assertIn(
+            self.harry.pk,
+            response.context['object'].sponsorship_set.values_list('contact', flat=True)
+        )
 
     def test_delete_sponsor(self):
         '''Check that we can delete a sponsor from `sponsor_delete` view'''
