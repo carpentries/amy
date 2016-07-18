@@ -1,0 +1,13 @@
+{% extends "workshops:workshops/event_edit_form.html" %}
+
+{% block task_tab %}
+<button type="button" class="btn btn-default" id="import_task_button">Import a presentation</button>
+{{ block.super }}
+{% include "pydata/task_import_modal.html" %}
+{% endblock task_tab %}
+
+{% block sponsor_tab %}
+<button type="button" class="btn btn-default" id="import_sponsor_button">Import a sponsor</button>
+{{ block.super }}
+{% include "pydata/sponsor_import_modal.html" %}
+{% endblock sponsor_tab %}

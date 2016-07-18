@@ -1,0 +1,10 @@
+{% extends "base_nav_fixed.html" %}
+
+{% load crispy_forms_tags %}
+{% load selectable_tags %}
+
+{% block content %}
+<button type="button" class="btn btn-default" id="import_url_button">Import a speaker</button>
+{% crispy form form_helper %}
+{% include "pydata/person_import_modal.html" %}
+{% endblock content %}

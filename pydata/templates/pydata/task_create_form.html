@@ -1,0 +1,10 @@
+{% extends "base_nav_fixed.html" %}
+
+{% load crispy_forms_tags %}
+{% load selectable_tags %}
+
+{% block content %}
+<button type="button" class="btn btn-default" id="import_task_button">Import a presentation</button>
+{% crispy form form_helper %}
+{% include "pydata/task_import_modal.html" %}
+{% endblock %}
