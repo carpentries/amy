@@ -178,6 +178,11 @@ class Sponsorship(models.Model):
         verbose_name='Sponsorship amount',
         help_text='e.g. 1992.33'
     )
+    contact = models.ForeignKey(
+        'Person',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+    )
 
     def __str__(self):
         return '{}: {}'.format(self.organization, self.amount)
