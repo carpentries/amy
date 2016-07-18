@@ -57,10 +57,10 @@ before starting work on new features.
     $ make dev_database
     ~~~
     
-5.  Create an administrator account:
+5.  Create an administrator account (username: `admin`, password: `admin`):
 
     ~~~
-    $ python3 manage.py createsuperuser
+    $ python3 manage.py create_superuser
     ~~~
 
 6.  Start a local Django development server by running:
