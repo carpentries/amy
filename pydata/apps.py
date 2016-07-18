@@ -1,3 +1,5 @@
+import re
+
 from django.apps import apps, AppConfig
 from django.utils.functional import curry
 
@@ -33,3 +35,51 @@ class PyDataConfig(AppConfig):
             'level',
             curry(Sponsorship._get_FIELD_display, field=amount_field),
         )
+
+        # Add "Import from URL" button to SponsorshipForm
+        from workshops.forms import SponsorshipForm
+
+        class Media:
+            js = ('import_sponsor.js', )
+
+        SponsorshipForm.Media = Media
+
+        setattr(
+            Sponsorship,
+            'PROFILE_REGEX',
+            re.compile(r'^(?P<url>.+?(?=/sponsors))/sponsors/(?P<id>[^/]+)/?'),
+        )
+
+        Task = apps.get_model('workshops', 'Task')
+        setattr(
+            Task,
+            'PRESENTATION_REGEX',
+            re.compile(r'^(?P<url>.+?(?=/schedule))/schedule/presentation/(?P<id>[^/]+)/?'),
+        )
+
+        Person = apps.get_model('workshops', 'Person')
+        setattr(
+            Person,
+            'PROFILE_REGEX',
+            re.compile(r'^(?P<url>.+?(?=/speaker))/speaker/profile/(?P<id>[^/]+)/?'),
+        )
+
+        # Add "Import from URL" button to PersonForm on PersonCreate view
+        from workshops.forms import PersonForm
+        from workshops.views import PersonCreate
+
+        class Media:
+            js = ('import_person.js', )
+
+        PersonForm.Media = Media
+        PersonCreate.template_name = 'pydata/person_create_form.html'
+
+        # Add "Import from URL" button to TaskForm on TaskCreate view
+        from workshops.forms import TaskForm
+        from workshops.views import TaskCreate
+
+        class Media:
+            js = ('import_task.js', )
+
+        TaskForm.Media = Media
+        TaskCreate.template_name = 'pydata/task_create_form.html'
