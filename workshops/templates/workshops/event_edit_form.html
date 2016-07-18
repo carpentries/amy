@@ -61,7 +61,7 @@
     </tr>
     {% for sponsorship in object.sponsorship_set.all %}
     <tr>
-      <td><a href="{{ sponsor.organization.get_absolute_url }}">{{ sponsorship.organization }}</a>
+      <td><a href="{{ sponsorship.organization.get_absolute_url }}">{{ sponsorship.organization }}</a>
       <td>{{ sponsorship.amount|default:"—" }}</td>
       <td>
         <form action="{% url 'sponsorship_delete' pk=sponsorship.id %}" onsubmit='return confirm("Are you sure you wish to remove \"{{ sponsorship }}\" from {{ object }}?")' method="POST">
