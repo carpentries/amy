@@ -177,8 +177,15 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'TEST': {},
     }
 }
+if '--keepdb' in sys.argv:
+    # By default, Django uses in-memory sqlite3 database, which is much
+    # faster than sqlite3 database in a file. However, we may want to keep
+    # database between test launches, so that we avoid the overhead of
+    # applying migrations on each test launch.
+    DATABASES['default']['TEST']['NAME'] = 'test_db.sqlite3'
 
 # Authentication
 AUTH_USER_MODEL = 'workshops.Person'
