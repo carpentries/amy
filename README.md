@@ -1,6 +1,6 @@
 ![](workshops/static/amy-logo.png)
 
-![](https://travis-ci.org/swcarpentry/amy.svg?branch=master)
+[![Build Status](https://travis-ci.org/swcarpentry/amy.svg?branch=master)](https://travis-ci.org/swcarpentry/amy)
 
 AMY is a web-based workshop administration application for [Software
 Carpentry][swc] and related projects.  Its target audience is workshop
