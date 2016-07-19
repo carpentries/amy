@@ -126,7 +126,7 @@
 
 {% if tasks %}
 <h3>Tasks</h3>
-{% if all_emails %}<p><a href="mailto:{{ all_emails|join:',' }}" class="btn btn-primary">Mail everyone</a></p>{% endif %}
+{% if all_emails %}<p><a href="mailto:?bcc={{ all_emails|join:',' }}" class="btn btn-primary">Mail everyone</a></p>{% endif %}
 <table class="table table-striped">
   <tr>
     <th width="25">DC?</th>

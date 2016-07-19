@@ -22,7 +22,7 @@
     {% endfor %}
     </table>
     <p><a href="{% url 'api:reports-instructors-by-time' %}?start={{ start_date|date:'Y-m-d' }}&amp;end={{ end_date|date:'Y-m-d' }}&amp;format=csv">Download as CSV</a></p>
-    {% if emails %}<p><a class="btn btn-primary" href="mailto:{{ emails|join:',' }}">Send email</a></p>{% endif %}
+    {% if emails %}<p><a class="btn btn-primary" href="mailto:?bcc={{ emails|join:',' }}">Send email</a></p>{% endif %}
 {% else %}
     <p>No instructors for debrief section.</p>
 {% endif %}
