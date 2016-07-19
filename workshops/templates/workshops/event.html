@@ -13,7 +13,7 @@
   <h4>Event's website updated</h4>
   <p>This event's repository was updated by the repository owner. Changes detected:</p>
   <p>{{ event.metadata_all_changes |linebreaksbr }}</p>
-  <p><a class="btn btn-warning" href="{% url 'event_review_metadata_changes' event.get_ident %}">Review changes</a></p>
+  <p><a class="btn btn-warning" href="{% url 'event_review_metadata_changes' event.slug %}">Review changes</a></p>
 </div>
 {% endif %}
 
@@ -31,9 +31,9 @@
       <a href="#" id="change_assignment"><span class="glyphicon glyphicon-cog"></span></a>
       Assignee:
       {% if event.assigned_to %}
-        <a href="{{ event.assigned_to.get_absolute_url }}">{{ event.assigned_to.get_full_name }}</a> (<a href="{% url 'event_assign' event.get_ident %}" id="clear-assignment">clear</a>).
+        <a href="{{ event.assigned_to.get_absolute_url }}">{{ event.assigned_to.get_full_name }}</a> (<a href="{% url 'event_assign' event.slug %}" id="clear-assignment">clear</a>).
       {% else %}
-        no one (<a href="{% url 'event_assign' event.get_ident user.pk %}" id="assign-yourself">assign yourself</a>).
+        no one (<a href="{% url 'event_assign' event.slug user.pk %}" id="assign-yourself">assign yourself</a>).
       {% endif %}
     </p>
   </div>
@@ -42,9 +42,9 @@
   <div class="col-md-12">
     <p class="edit-object pull-left">
       {% if perms.workshops.change_event %}
-      <a href="{% url 'event_edit' event.get_ident %}" class="btn btn-primary">Edit</a>
+      <a href="{% url 'event_edit' event.slug %}" class="btn btn-primary">Edit</a>
       {% else %}
-      <a href="{% url 'event_edit' event.get_ident %}" class="btn btn-primary disabled">Edit</a>
+      <a href="{% url 'event_edit' event.slug %}" class="btn btn-primary disabled">Edit</a>
       {% endif %}
     </p>
     <p class="pull-right">
@@ -174,16 +174,16 @@
 <div class="clearfix">
   <p class="edit-object pull-left">
     {% if perms.workshops.change_event %}
-    <a href="{% url 'event_edit' event.get_ident %}" class="btn btn-primary">Edit</a>
+    <a href="{% url 'event_edit' event.slug %}" class="btn btn-primary">Edit</a>
     {% else %}
-    <a href="{% url 'event_edit' event.get_ident %}" class="btn btn-primary disabled">Edit</a>
+    <a href="{% url 'event_edit' event.slug %}" class="btn btn-primary disabled">Edit</a>
     {% endif %}
   </p>
   <p class="delete-object pull-right">
     {% if perms.workshops.change_event %}
-    <a href="{% url 'event_delete' event.get_ident %}" onclick='return confirm("Are you sure you wish to remove \"{{ event }}\"?")' class="btn btn-danger">Delete event</a>
+    <a href="{% url 'event_delete' event.slug %}" onclick='return confirm("Are you sure you wish to remove \"{{ event }}\"?")' class="btn btn-danger">Delete event</a>
     {% else %}
-    <a href="{% url 'event_delete' event.get_ident %}" class="btn btn-danger disabled">Delete event</a>
+    <a href="{% url 'event_delete' event.slug %}" class="btn btn-danger disabled">Delete event</a>
     {% endif %}
   </p>
 </div>
@@ -191,7 +191,7 @@
 <h3 id="todos">TODOs</h3>
 {% if perms.workshops.add_todoitem %}
 <p>
-  <a href="{% url 'todos_add' event.get_ident %}" class="btn btn-primary">Add standard TODOs</a>
+  <a href="{% url 'todos_add' event.slug %}" class="btn btn-primary">Add standard TODOs</a>
 </p>
 {% endif %}
 {% if todos %}
@@ -253,7 +253,7 @@
     return false;
   });
   $('#validation_modal').on('show.bs.modal', function() {
-    $('#validation_modal .modal-body').load("{% url 'validate_event' event.get_ident %} #validation");
+    $('#validation_modal .modal-body').load("{% url 'validate_event' event.slug %} #validation");
   });
   $('#preview_event').click(function() {
     $('#preview_modal').modal();

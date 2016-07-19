@@ -41,8 +41,8 @@
           {% if not event.slug %}
             —
           {% else %}
-            <a href="{% url 'event_details' event.get_ident %}">
-            {{ event.get_ident }}
+            <a href="{% url 'event_details' event.slug %}">
+            {{ event.slug }}
             </a>
           {% endif %}
         </td>
@@ -60,10 +60,10 @@
           {{ event.completed|yesno }}
         </td>
         <td>
-          <a href="{% url 'event_details' event.get_ident %}" title="View {{ event.get_ident }}"><span class="glyphicon glyphicon-info-sign"></span></a>
+          <a href="{% url 'event_details' event.slug %}" title="View {{ event.slug }}"><span class="glyphicon glyphicon-info-sign"></span></a>
           &nbsp;
           {% if perms.workshops.edit_event %}
-          <a href="{% url 'event_edit' event.get_ident %}" title="Edit {{ event.get_ident }}"><span class="glyphicon glyphicon-pencil"></span></a>
+          <a href="{% url 'event_edit' event.slug %}" title="Edit {{ event.slug }}"><span class="glyphicon glyphicon-pencil"></span></a>
           {% endif %}
         </td>
       </tr>

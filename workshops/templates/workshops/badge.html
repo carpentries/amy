@@ -35,7 +35,7 @@
     <tr>
       <td><a href="{{ award.person.get_absolute_url }}">{{ award.person.get_full_name }}</a>{% if award.person.email and award.person.may_contact %} &lt;{{ award.person.email|urlize }}&gt;{% endif %}</td>
       <td>{{ award.awarded }}</td>
-      <td>{% if award.event %}<a href="{% url 'event_details' award.event.get_ident %}">{{ award.event }}</a>{% else %}—{% endif %}</td>
+      <td>{% if award.event %}<a href="{% url 'event_details' award.event.slug %}">{{ award.event }}</a>{% else %}—{% endif %}</td>
       <td>{% if award.awarded_by %}<a href="{{ award.awarded_by.get_absolute_url }}">{{ award.awarded_by.get_full_name }}</a>{% else %}—{% endif %}</td>
       <td>
         <a onclick='return confirm("Are you sure you wish to drop award \"{{ award.badge.title }}\" from \"{{ award.person }}\"?")' href="{% url 'award_delete' award_id=award.pk %}" class='btn btn-danger'>Delete</a>

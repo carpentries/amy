@@ -18,5 +18,5 @@
     <p>Validated file: <a href="{{ page }}">{{ page }}</a></p>
   {% endif %}
 </div>
-<p><a href="{% url 'event_details' event.get_ident %}" class="btn btn-primary">return to event</a></p>
+<p><a href="{% url 'event_details' event.slug %}" class="btn btn-primary">return to event</a></p>
 {% endblock %}

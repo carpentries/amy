@@ -49,7 +49,7 @@ Thanks for your help.{% endfilter %}">
       <td><a href="{% url 'person_details' person_training.grouper.id %}">{{ person_training.grouper.get_full_name }}</a></td>
       <td>
         {% for e in person_training.list %}
-          <a href="{% url 'event_details' e.event.get_ident %}">{{ e.event }}</a>{% if not forloop.last %}, {% endif %}
+          <a href="{% url 'event_details' e.event.slug %}">{{ e.event }}</a>{% if not forloop.last %}, {% endif %}
         {% endfor %}
       </td>
       <td>
@@ -85,7 +85,7 @@ Thanks for your help.{% endfilter %}">
       <td><a href="{% url 'person_details' person_training.grouper.id %}">{{ person_training.grouper.get_full_name }}</a></td>
       <td>
         {% for e in person_training.list %}
-          <a href="{% url 'event_details' e.event.get_ident %}">{{ e.event }}</a>{% if not forloop.last %}, {% endif %}
+          <a href="{% url 'event_details' e.event.slug %}">{{ e.event }}</a>{% if not forloop.last %}, {% endif %}
         {% endfor %}
       </td>
     </tr>
