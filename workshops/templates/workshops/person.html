@@ -84,7 +84,7 @@
     <ul>
       {% for t in tasks %}
       <li>
-        {{ t.role }} during <a href="{{ t.event.get_absolute_url }}">{{ t.event.get_ident }}</a> (<a href="{{ t.get_absolute_url }}">show task</a>)
+        {{ t.role }} during <a href="{{ t.event.get_absolute_url }}">{{ t.event.slug }}</a> (<a href="{{ t.get_absolute_url }}">show task</a>)
       </li>
       {% endfor %}
     </ul>

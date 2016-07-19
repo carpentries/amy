@@ -24,7 +24,7 @@
     <tbody>
     {% for req in requests %}
       <tr>
-        <td><a href="{{ req.event.get_absolute_url }}">{{ req.event.get_ident }}</a></td>
+        <td><a href="{{ req.event.get_absolute_url }}">{{ req.event.slug }}</a></td>
         <td><a href="{{ req.organization.get_absolute_url }}">{{ req.organization }}</a></td>
         <td>{{ req.contact_name }} &lt;{{ req.contact_email|urlize_newtab }}&gt;</td>
         <td>{{ req.get_status_display }}</td>

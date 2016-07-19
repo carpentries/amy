@@ -39,7 +39,7 @@
     <table class="table table-striped">
     {% for event in current_events %}
     <tr>
-      <td><a href="{{ event.get_absolute_url }}">{{ event.get_ident }}</a></td>
+      <td><a href="{{ event.get_absolute_url }}">{{ event.slug }}</a></td>
     </tr>
     {% endfor %}
     </table>
@@ -49,7 +49,7 @@
     <table class="table table-striped">
     {% for event in uninvoiced_events %}
     <tr>
-      <td><a href="{{ event.get_absolute_url }}">{{ event.get_ident }}</a></td>
+      <td><a href="{{ event.get_absolute_url }}">{{ event.slug }}</a></td>
     </tr>
     {% endfor %}
     </table>
@@ -88,8 +88,8 @@
           {% if not event.slug %}
           —
           {% else %}
-          <a href="{% url 'event_details' event.get_ident %}">
-            {{ event.get_ident }}
+          <a href="{% url 'event_details' event.slug %}">
+            {{ event.slug }}
           </a>
           {% endif %}
         </td>

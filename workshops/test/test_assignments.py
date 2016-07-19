@@ -18,7 +18,7 @@ class TestAssignments(TestBase):
         assert event.assigned_to is None
 
         self.client.get(reverse('event_assign',
-                                args=[event.get_ident(), user.pk]))
+                                args=[event.slug, user.pk]))
         event.refresh_from_db()
         assert event.assigned_to == user
 
@@ -50,7 +50,7 @@ class TestAssignments(TestBase):
         fake_user_pk = 0
 
         self.client.post(
-            reverse('event_assign', args=[event.get_ident(), fake_user_pk]),
+            reverse('event_assign', args=[event.slug, fake_user_pk]),
             {'person_1': user.pk},
         )
         event.refresh_from_db()
@@ -86,7 +86,7 @@ class TestAssignments(TestBase):
         event.save()
 
         assert event.assigned_to == user
-        self.client.get(reverse('event_assign', args=[event.get_ident()]))
+        self.client.get(reverse('event_assign', args=[event.slug]))
         event.refresh_from_db()
         assert event.assigned_to is None
 

@@ -122,7 +122,7 @@ class TestEvent(TestBase):
         event.task_set = [t1, t2, t3]
         event.save()
 
-        rv = self.client.get(reverse('event_delete', args=[event.pk, ]))
+        rv = self.client.get(reverse('event_delete', args=[event.slug, ]))
         assert rv.status_code == 302
 
         with self.assertRaises(Event.DoesNotExist):
@@ -148,7 +148,7 @@ class TestEvent(TestBase):
                                      awarded=date.today(),
                                      event=event)
 
-        rv = self.client.get(reverse('event_delete', args=[event.pk, ]))
+        rv = self.client.get(reverse('event_delete', args=[event.slug, ]))
         assert rv.status_code == 200
 
         content = rv.content.decode('utf-8')
@@ -342,7 +342,7 @@ class TestEventViews(TestBase):
         event = Event.objects.get(slug='2016-07-09-test')
         self.assertRedirects(
             response,
-            reverse('event_details', kwargs={'event_ident': event.slug}),
+            reverse('event_details', kwargs={'slug': event.slug}),
         )
         self.assertEqual(event.assigned_to, self.admin)
 
@@ -446,7 +446,7 @@ class TestEventViews(TestBase):
             'task-event': event.pk,
             'task-person_1': self.spiderman.pk,
         }
-        self.client.post(reverse('event_edit', args=[event.pk]), data)
+        self.client.post(reverse('event_edit', args=[event.slug]), data)
         event.refresh_from_db()
         assert event.attendance == 1
 
@@ -553,7 +553,7 @@ class TestEventViews(TestBase):
         datetime."""
         event = Event.objects.create(slug='regression_event_0',
                                      host=self.test_host)
-        rv = self.client.get(reverse('event_details', args=[event.pk]))
+        rv = self.client.get(reverse('event_details', args=[event.slug]))
         assert rv.status_code == 200
 
 
@@ -912,7 +912,7 @@ class TestEventReviewingRepoChanges(TestBase):
         * removes metadata from session
         * redirects to the event details page."""
         url = reverse('event_accept_metadata_changes',
-                      args=[self.event.get_ident()])
+                      args=[self.event.slug])
         rv = self.client.get(url, follow=False)
 
         # check for redirect to event's details page
@@ -935,13 +935,13 @@ class TestEventReviewingRepoChanges(TestBase):
         session.save()
 
         url = reverse('event_accept_metadata_changes',
-                      args=[self.event.get_ident()])
+                      args=[self.event.slug])
         rv = self.client.get(url, follow=False)
         self.assertEqual(rv.status_code, 404)
 
     def test_dismissing_changes(self):
         url = reverse('event_dismiss_metadata_changes',
-                      args=[self.event.get_ident()])
+                      args=[self.event.slug])
         rv = self.client.get(url, follow=False)
 
         # check for redirect to event's details page

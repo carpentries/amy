@@ -42,7 +42,7 @@
     <td>{{ e.tags.all | join:", " }}</td>
     <td>{{ e.start }}</td>
     <td>{{ e.end }}</td>
-    <td><a href="{% url 'event_details' e.get_ident %}">{{ e.get_ident }}</a></td>
+    <td><a href="{% url 'event_details' e.slug %}">{{ e.slug }}</a></td>
     <td>{{ e.url|urlize_newtab }}</td>
   </tr>
   {% endfor %}

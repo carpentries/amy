@@ -1055,10 +1055,10 @@ def all_events(request):
 
 
 @admin_required
-def event_details(request, event_ident):
+def event_details(request, slug):
     '''List details of a particular event.'''
     try:
-        event = Event.get_by_ident(event_ident)
+        event = Event.objects.get(slug=slug)
     except Event.DoesNotExist:
         raise Http404('Event matching query does not exist.')
 
@@ -1093,11 +1093,11 @@ def event_details(request, event_ident):
                 request,
                 'New TODO {todo} was added to the event {event}.'.format(
                     todo=str(todo),
-                    event=event.get_ident(),
+                    event=event.slug,
                 ),
                 extra_tags='newtodo',
             )
-            return redirect(reverse(event_details, args=[event_ident, ]))
+            return redirect(reverse(event_details, args=[slug, ]))
         else:
             messages.error(request, 'Fix errors in the TODO form.',
                            extra_tags='todos')
@@ -1110,7 +1110,7 @@ def event_details(request, event_ident):
 
     person_lookup_helper = BootstrapHelper()
     person_lookup_helper.form_action = reverse('event_assign',
-                                               args=[event_ident])
+                                               args=[slug])
     context = {
         'title': 'Event {0}'.format(event),
         'event': event,
@@ -1129,10 +1129,10 @@ def event_details(request, event_ident):
 
 
 @admin_required
-def validate_event(request, event_ident):
+def validate_event(request, slug):
     '''Check the event's home page *or* the specified URL (for testing).'''
     try:
-        event = Event.get_by_ident(event_ident)
+        event = Event.objects.get(slug=slug)
     except Event.DoesNotExist:
         raise Http404('Event matching query does not exist.')
 
@@ -1182,9 +1182,9 @@ class EventCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
 @admin_required
 @permission_required(['workshops.change_event', 'workshops.add_task'],
                      raise_exception=True)
-def event_edit(request, event_ident):
+def event_edit(request, slug):
     try:
-        event = Event.get_by_ident(event_ident)
+        event = Event.objects.get(slug=slug)
         tasks = event.task_set.order_by('role__name')
     except ObjectDoesNotExist:
         raise Http404("No event found matching the query.")
@@ -1258,7 +1258,7 @@ def event_edit(request, event_ident):
             else:
                 messages.error(request, 'Fix errors below.')
 
-    context = {'title': 'Edit Event {0}'.format(event.get_ident()),
+    context = {'title': 'Edit Event {0}'.format(event.slug),
                'event_form': event_form,
                'object': event,
                'model': Event,
@@ -1273,10 +1273,10 @@ def event_edit(request, event_ident):
 
 @admin_required
 @permission_required('workshops.delete_event', raise_exception=True)
-def event_delete(request, event_ident):
+def event_delete(request, slug):
     """Delete event, its tasks and related awards."""
     try:
-        event = Event.get_by_ident(event_ident)
+        event = Event.objects.get(slug=slug)
         event.delete()
 
         messages.success(request,
@@ -1324,14 +1324,14 @@ def event_import(request):
 
 @admin_required
 @permission_required('workshops.change_event', raise_exception=True)
-def event_assign(request, event_ident, person_id=None):
+def event_assign(request, slug, person_id=None):
     """Set event.assigned_to. See `assign` docstring for more information."""
     try:
-        event = Event.get_by_ident(event_ident)
+        event = Event.objects.get(slug=slug)
 
         assign(request, event, person_id)
 
-        return redirect(reverse('event_details', args=[event.get_ident()]))
+        return redirect(reverse('event_details', args=[event.slug]))
 
     except Event.DoesNotExist:
         raise Http404("No event found matching the query.")
@@ -1423,9 +1423,9 @@ def events_merge(request):
 
 @admin_required
 @permission_required('workshops.add_invoicerequest', raise_exception=True)
-def event_invoice(request, event_ident):
+def event_invoice(request, slug):
     try:
-        event = Event.get_by_ident(event_ident)
+        event = Event.objects.get(slug=slug)
     except ObjectDoesNotExist:
         raise Http404("No event found matching the query.")
 
@@ -1441,14 +1441,14 @@ def event_invoice(request, event_ident):
             form.save()
             messages.success(request,
                              'Successfully added an invoice request for {}.'
-                             .format(event.get_ident()))
+                             .format(event.slug))
             return redirect(reverse('event_details',
-                                    args=[event.get_ident()]))
+                                    args=[event.slug]))
         else:
             messages.error(request, 'Fix errors below.')
 
     context = {
-        'title_left': 'Event {}'.format(event.get_ident()),
+        'title_left': 'Event {}'.format(event.slug),
         'title_right': 'New invoice request',
         'event': event,
         'form': form,
@@ -1489,10 +1489,10 @@ def events_metadata_changed(request):
 
 @admin_required
 @permission_required('workshops.change_event', raise_exception=True)
-def event_review_metadata_changes(request, event_ident):
+def event_review_metadata_changes(request, slug):
     """Review changes made to metadata on event's website."""
     try:
-        event = Event.get_by_ident(event_ident)
+        event = Event.objects.get(slug=slug)
     except Event.DoesNotExist:
         raise Http404('No event found matching the query.')
 
@@ -1516,10 +1516,10 @@ def event_review_metadata_changes(request, event_ident):
 
 @admin_required
 @permission_required('workshops.change_event', raise_exception=True)
-def event_accept_metadata_changes(request, event_ident):
+def event_accept_metadata_changes(request, slug):
     """Review changes made to metadata on event's website."""
     try:
-        event = Event.get_by_ident(event_ident)
+        event = Event.objects.get(slug=slug)
     except Event.DoesNotExist:
         raise Http404('No event found matching the query.')
 
@@ -1558,17 +1558,17 @@ def event_accept_metadata_changes(request, event_ident):
     del request.session['metadata_from_event_website']
 
     messages.success(request,
-                     'Successfully updated {}.'.format(event.get_ident()))
+                     'Successfully updated {}.'.format(event.slug))
 
-    return redirect(reverse('event_details', args=[event.get_ident()]))
+    return redirect(reverse('event_details', args=[event.slug]))
 
 
 @admin_required
 @permission_required('workshops.change_event', raise_exception=True)
-def event_dismiss_metadata_changes(request, event_ident):
+def event_dismiss_metadata_changes(request, slug):
     """Review changes made to metadata on event's website."""
     try:
-        event = Event.get_by_ident(event_ident)
+        event = Event.objects.get(slug=slug)
     except Event.DoesNotExist:
         raise Http404('No event found matching the query.')
 
@@ -1582,9 +1582,9 @@ def event_dismiss_metadata_changes(request, event_ident):
         del request.session['metadata_from_event_website']
 
     messages.success(request,
-                     'Changes to {} were dismissed.'.format(event.get_ident()))
+                     'Changes to {} were dismissed.'.format(event.slug))
 
-    return redirect(reverse('event_details', args=[event.get_ident()]))
+    return redirect(reverse('event_details', args=[event.slug]))
 
 
 class SponsorshipDelete(OnlyForAdminsMixin, PermissionRequiredMixin, DeleteViewContext):
@@ -1663,15 +1663,15 @@ def task_details(request, task_id):
 
 @admin_required
 @permission_required('workshops.delete_task', raise_exception=True)
-def task_delete(request, task_id, event_ident=None):
+def task_delete(request, task_id, slug=None):
     '''Delete a task. This is used on the event edit page'''
     t = get_object_or_404(Task, pk=task_id)
     t.delete()
 
     messages.success(request, 'Task was deleted successfully.')
 
-    if event_ident:
-        return redirect(event_edit, event_ident)
+    if slug:
+        return redirect(event_edit, slug)
     return redirect(all_tasks)
 
 
@@ -2427,7 +2427,7 @@ def eventrequest_accept(request, request_id):
             eventrequest.active = False
             eventrequest.save()
             return redirect(reverse('event_details',
-                                    args=[event.get_ident()]))
+                                    args=[event.slug]))
         else:
             messages.error(request, 'Fix errors below.')
 
@@ -2796,7 +2796,7 @@ def eventsubmission_accept(request, submission_id):
             submission.active = False
             submission.save()
             return redirect(reverse('event_details',
-                                    args=[event.get_ident()]))
+                                    args=[event.slug]))
         else:
             messages.error(request, 'Fix errors below.')
 
@@ -2958,10 +2958,10 @@ def dcselforganizedeventrequest_assign(request, request_id, person_id=None):
 
 @admin_required
 @permission_required('workshops.add_todoitem', raise_exception=True)
-def todos_add(request, event_ident):
+def todos_add(request, slug):
     """Add a standard TodoItems for a specific event."""
     try:
-        event = Event.get_by_ident(event_ident)
+        event = Event.objects.get(slug=slug)
     except Event.DoesNotExist:
         raise Http404('Event matching query does not exist.')
 
@@ -3034,7 +3034,7 @@ def todos_add(request, event_ident):
             formset.save()
             messages.success(request, 'Successfully added a bunch of TODOs.',
                              extra_tags='todos')
-            return redirect(reverse(event_details, args=(event.get_ident(), )))
+            return redirect(reverse(event_details, args=(event.slug, )))
         else:
             messages.error(request, 'Fix errors below.')
 
@@ -3078,7 +3078,7 @@ class TodoItemUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
     template_name = 'workshops/generic_form.html'
 
     def get_success_url(self):
-        return reverse('event_details', args=[self.object.event.get_ident()])
+        return reverse('event_details', args=[self.object.event.slug])
 
     def form_valid(self, form):
         """Overwrite default way of showing the success message, because we
@@ -3101,13 +3101,13 @@ class TodoItemUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
 def todo_delete(request, todo_id):
     """Delete a TodoItem. This is used on the event details page."""
     todo = get_object_or_404(TodoItem, pk=todo_id)
-    event_ident = todo.event.get_ident()
+    slug = todo.event.slug
     todo.delete()
 
     messages.success(request, 'TODO was deleted successfully.',
                      extra_tags='todos')
 
-    return redirect(event_details, event_ident)
+    return redirect(event_details, slug)
 
 
 # ------------------------------------------------------------

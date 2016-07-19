@@ -873,10 +873,10 @@ class Event(AssignmentMixin, models.Model):
     objects = EventQuerySet.as_manager()
 
     def __str__(self):
-        return self.get_ident()
+        return self.slug
 
     def get_absolute_url(self):
-        return reverse('event_details', args=[self.get_ident()])
+        return reverse('event_details', args=[self.slug])
 
     @property
     def repository_url(self):
@@ -986,23 +986,6 @@ class Event(AssignmentMixin, models.Model):
                 return '{:%b %d}-{:%b %d, %Y}'.format(date1, date2)
         else:
             return '{:%b %d, %Y}-{:%b %d, %Y}'.format(date1, date2)
-
-    def get_ident(self):
-        if self.slug:
-            return str(self.slug)
-        return str(self.id)
-
-    @staticmethod
-    def get_by_ident(ident):
-        '''
-        Select event that matches given identifier.
-        If ident is an int, search for matching primary-key;
-        otherwise get matching slug. May throw DoesNotExist error.
-        '''
-        try:
-            return Event.objects.get(pk=int(ident))
-        except ValueError:
-            return Event.objects.get(slug=ident)
 
     def save(self, *args, **kwargs):
         self.slug = self.slug or None

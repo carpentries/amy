@@ -37,7 +37,7 @@
       <td><a href="{% url 'task_details' t.pk %}">{{ t.title|default:"—" }}</a></td>
       <td>{{ t.url|default:"—"|urlize_newtab }}</td>
       <td>{{ t.role.name }}</td>
-      <td><a onclick='return confirm("Are you sure you wish to remove \"{{ t.person.get_full_name }}\" from {{ object.get_ident }}?")' href="{% url 'task_delete' object.get_ident t.id %}" class='btn btn-danger'>Delete</a></td>
+      <td><a onclick='return confirm("Are you sure you wish to remove \"{{ t.person.get_full_name }}\" from {{ object.slug }}?")' href="{% url 'task_delete' object.slug t.id %}" class='btn btn-danger'>Delete</a></td>
     </tr>
     {% endfor %}
     </table>

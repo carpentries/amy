@@ -318,22 +318,13 @@ class EventForm(forms.ModelForm):
             0, Div(HTML('Survey results'), css_class='panel-heading'))
 
     def clean_slug(self):
-        # Ensure slug is not an integer value for Event.get_by_ident
+        # Ensure slug is in "YYYY-MM-DD-location" format
         data = self.cleaned_data['slug']
-
-        try:
-            int(data)
-        except ValueError:
-            pass
-        else:
-            raise forms.ValidationError('Slug must not be an integer-value.')
-
         match = re.match('(\d{4}|x{4})-(\d{2}|x{2})-(\d{2}|x{2})-.+', data)
         if not match:
             raise forms.ValidationError('Slug must be in "YYYY-MM-DD-location"'
                                         ' format, where "YYYY", "MM", "DD" can'
                                         ' be unspecified (ie. "xx").')
-
         return data
 
     def clean_end(self):
