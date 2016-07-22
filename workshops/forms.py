@@ -27,12 +27,6 @@ from workshops.models import (
     TrainingProgress,
 )
 
-AUTOCOMPLETE_HELP_TEXT = (
-    "Autocomplete field; type characters to view available options, "
-    "then select desired item from list."
-)
-
-
 class BootstrapHelper(FormHelper):
     """Layout and behavior for crispy-displayed forms."""
     html5_required = True
@@ -321,7 +315,6 @@ class EventForm(forms.ModelForm):
         lookup_class=lookups.AdminLookup,
         label='Assigned to',
         required=False,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -329,7 +322,6 @@ class EventForm(forms.ModelForm):
         lookup_class=lookups.LanguageLookup,
         label='Language',
         required=False,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -418,7 +410,6 @@ class TaskForm(forms.ModelForm):
         lookup_class=lookups.PersonLookup,
         label='Person',
         required=True,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -436,7 +427,6 @@ class TaskFullForm(TaskForm):
         lookup_class=lookups.EventLookup,
         label='Event',
         required=True,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -451,14 +441,12 @@ class PersonForm(forms.ModelForm):
         lookup_class=lookups.AirportLookup,
         label='Airport',
         required=False,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
     languages = selectable.AutoCompleteSelectMultipleField(
         lookup_class=lookups.LanguageLookup,
         label='Languages',
         required=False,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectMultipleWidget,
     )
 
@@ -502,7 +490,6 @@ class PersonsSelectionForm(forms.Form):
         lookup_class=lookups.PersonLookup,
         label='Person From',
         required=True,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -510,7 +497,6 @@ class PersonsSelectionForm(forms.Form):
         lookup_class=lookups.PersonLookup,
         label='Person To',
         required=True,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -606,7 +592,6 @@ class BadgeAwardForm(forms.ModelForm):
         lookup_class=lookups.PersonLookup,
         label='Person',
         required=True,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -614,7 +599,6 @@ class BadgeAwardForm(forms.ModelForm):
         lookup_class=lookups.EventLookup,
         label='Event',
         required=False,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -622,7 +606,6 @@ class BadgeAwardForm(forms.ModelForm):
         lookup_class=lookups.PersonLookup,
         label='Awarded by',
         required=False,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -640,7 +623,6 @@ class PersonAwardForm(forms.ModelForm):
         lookup_class=lookups.EventLookup,
         label='Event',
         required=False,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -648,7 +630,6 @@ class PersonAwardForm(forms.ModelForm):
         lookup_class=lookups.PersonLookup,
         label='Awarded by',
         required=False,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -666,7 +647,6 @@ class PersonTaskForm(forms.ModelForm):
         lookup_class=lookups.EventLookup,
         label='Event',
         required=True,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -719,7 +699,6 @@ class SponsorshipForm(forms.ModelForm):
         lookup_class=lookups.PersonLookup,
         label='Contact',
         required=False,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -747,7 +726,6 @@ class SWCEventRequestForm(forms.ModelForm):
         lookup_class=lookups.LanguageLookup,
         label='Language',
         required=False,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -846,7 +824,6 @@ class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):
         lookup_class=lookups.LanguageLookup,
         label='Languages you can teach in',
         required=False,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectMultipleWidget,
     )
 
@@ -877,7 +854,6 @@ class EventLookupForm(forms.Form):
         lookup_class=lookups.EventLookup,
         label='Event',
         required=True,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -889,7 +865,6 @@ class PersonLookupForm(forms.Form):
         lookup_class=lookups.PersonLookup,
         label='Person',
         required=True,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -901,7 +876,6 @@ class AdminLookupForm(forms.Form):
         lookup_class=lookups.AdminLookup,
         label='Administrator',
         required=True,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -926,7 +900,6 @@ class EventsSelectionForm(forms.Form):
         lookup_class=lookups.EventLookup,
         label='Event A',
         required=True,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -934,7 +907,6 @@ class EventsSelectionForm(forms.Form):
         lookup_class=lookups.EventLookup,
         label='Event B',
         required=True,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
