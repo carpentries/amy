@@ -21,27 +21,27 @@
         <tr>
         {% with i=forloop.counter0 %}
             <td class="editable">
-                <span>{{ entry.personal|default:"&mdash;" }}</span>
+                <span>{{ entry.personal|default:"—" }}</span>
                 <input type="text" name="personal" value="{{ entry.personal|default:"" }}" class="hidden">
             </td>
             <td class="editable">
-                <span>{{ entry.family|default:"&mdash;" }}</span>
+                <span>{{ entry.family|default:"—" }}</span>
                 <input type="text" name="family" value="{{ entry.family|default:"" }}" class="hidden">
             </td>
             <td {% if not entry.person_exists %}class="editable"{% endif %}>
-                <span>{{ entry.username|default:"&mdash;" }}</span>
+                <span>{{ entry.username|default:"—" }}</span>
                 <input type="text" name="username" value="{{ entry.username|default:"" }}" class="hidden">
             </td>
             <td class="editable">
-                <span>{{ entry.email|default:"&mdash;" }}</span>
+                <span>{{ entry.email|default:"—" }}</span>
                 <input type="text" name="email" value="{{ entry.email|default:"" }}" class="hidden">
             </td>
             <td class="editable">
-                <span>{{ entry.event|default:"&mdash;" }}</span>
+                <span>{{ entry.event|default:"—" }}</span>
                 <input type="text" name="event" value="{{ entry.event|default:"" }}" class="hidden">
             </td>
             <td class="editable">
-                <span>{{ entry.role|default:"&mdash;" }}</span>
+                <span>{{ entry.role|default:"—" }}</span>
                 <input type="text" name="role" value="{{ entry.role|default:"" }}" class="hidden">
                 </td>
             <td class="text-danger">
