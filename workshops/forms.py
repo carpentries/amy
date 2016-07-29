@@ -650,6 +650,14 @@ class SponsorshipForm(forms.ModelForm):
         widget=selectable.AutoComboboxSelectWidget,
     )
 
+    contact = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.PersonLookup,
+        label='Contact',
+        required=False,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
     class Meta:
         model = Sponsorship
         fields = '__all__'

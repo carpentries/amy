@@ -157,12 +157,18 @@
 <table class="table table-striped">
   <tr>
     <th>organization</th>
-    <th>sponsorship amount</th>
+    <th>amount</th>
+    <th>contact</th>
   </tr>
   {% for sponsorship in sponsorships %}
   <tr>
     <td><a href="{{ sponsorship.organization.get_absolute_url }}">{{ sponsorship.organization }}</a></td>
     <td>{{ sponsorship.amount|default:"—" }}</td>
+    <td>
+    {% if sponsorship.contact %}
+        <a href="{{ sponsorship.contact.get_absolute_url }}">{{ sponsorship.contact }}</a>
+    {% else %}—{% endif %}
+    </td>
   </tr>
   {% endfor %}
 </table>
