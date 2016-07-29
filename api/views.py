@@ -368,8 +368,8 @@ class ReportsViewSet(ViewSet):
     def all_activity_over_time(self, request, format=None):
         """Workshops, instructors, and missing data in specific periods."""
         start, end = self._default_start_end_dates(
-            start=self.request.query_params.get('start', None),
-            end=self.request.query_params.get('end', None))
+            start=request.query_params.get('start', None),
+            end=request.query_params.get('end', None))
 
         events_qs = Event.objects.filter(start__gte=start, start__lte=end)
         swc_tag = Tag.objects.get(name='SWC')
@@ -449,8 +449,12 @@ class ReportsViewSet(ViewSet):
                 'DC': dc_total_learners,
             },
             'missing': {
-                'attendance': missing_attendance,
-                'instructors': missing_instructors,
+                # qs.values_list returns an iterator, so we need to listify it
+                # for YAML
+                'attendance': self.listify(missing_attendance, request,
+                                           format),
+                'instructors': self.listify(missing_instructors, request,
+                                            format),
             }
         })
 
