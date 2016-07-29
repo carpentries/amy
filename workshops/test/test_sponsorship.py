@@ -82,14 +82,14 @@ class TestSponsorshipViews(TestBase):
             'sponsor-event': self.event.pk,
         }
         response = self.client.post(
-            reverse('event_edit', kwargs={'event_ident': self.event.slug}),
+            reverse('event_edit', kwargs={'slug': self.event.slug}),
             payload,
             follow=True
         )
         self.assertRedirects(
             response,
             '{}#sponsors'.format(
-                reverse('event_edit', kwargs={'event_ident': self.event.slug}),
+                reverse('event_edit', kwargs={'slug': self.event.slug}),
             )
         )
         self.assertTrue(response.context['object'].sponsorship_set.all())
