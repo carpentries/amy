@@ -106,9 +106,7 @@ $('#update_url_form').submit(function(e) {
         }
         // append notes
         var today = new Date();
-        var today_str = "\n\n---------\nUPDATE " +
-          today.getFullYear() + "-" + today.getMonth() + "-" + today.getDay() +
-          ":\n";
+        var today_str = "\n\n---------\nUPDATE " + today.yyyymmdd() + ":\n";
         $("#id_event-notes").val(
           $("#id_event-notes").val() + today_str +
           "INSTRUCTORS: " + data.instructors.join(", ") + "\n\n" +
