@@ -436,6 +436,14 @@ class Person(AbstractBaseUser, PermissionsMixin):
         self.email = self.email.lower() if self.email else None
 
     def save(self, *args, **kwargs):
+        # If GitHub username has changed, clear UserSocialAuth table for this
+        # person.
+        if self.pk is not None:
+            orig = Person.objects.get(pk=self.pk)
+            github_username_has_changed = orig.github != self.github
+            if github_username_has_changed:
+                UserSocialAuth.objects.filter(user=self).delete()
+
         # save empty string as NULL to the database - otherwise there are
         # issues with UNIQUE constraint failing
         self.personal = self.personal.strip()

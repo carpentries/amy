@@ -1,7 +1,8 @@
 # coding: utf-8
 
 import datetime
-from unittest.mock import patch, MagicMock
+from social.apps.django_app.default.models import UserSocialAuth
+from unittest.mock import patch
 from urllib.parse import urlencode
 
 from django.contrib.auth import authenticate
@@ -9,24 +10,24 @@ from django.core.urlresolvers import reverse
 from django.core.validators import ValidationError
 from django.contrib.auth.models import Permission, Group
 
-from ..forms import PersonForm, PersonCreateForm, PersonsMergeForm
+from ..forms import PersonForm, PersonsMergeForm
 from ..models import (
     Person, Task, Qualification, Award, Role, Event, KnowledgeDomain, Badge,
-    Lesson, Organization, Language,
+    Language,
 )
 from .base import TestBase
 
 
 @patch('workshops.github_auth.github_username_to_uid', lambda username: None)
 class TestPerson(TestBase):
-    '''Test cases for persons.'''
+    """ Test cases for persons. """
 
     def setUp(self):
         super().setUp()
         self._setUpUsersAndLogin()
 
     def test_login_with_email(self):
-        """Make sure we can login with user's email too, not only with the
+        """ Make sure we can login with user's email too, not only with the
         username."""
         self.client.logout()
         email = 'sudo@example.org'  # admin's email
@@ -34,13 +35,14 @@ class TestPerson(TestBase):
         self.assertEqual(user, self.admin)
 
     def test_display_person_correctly_with_all_fields(self):
-        response = self.client.get(reverse('person_details', args=[str(self.hermione.id)]))
+        response = self.client.get(
+            reverse('person_details', args=[str(self.hermione.id)]))
         doc = self._check_status_code_and_parse(response, 200)
         self._check_person(doc, self.hermione)
 
-
     def test_display_person_correctly_with_some_fields(self):
-        response = self.client.get(reverse('person_details', args=[str(self.ironman.id)]))
+        response = self.client.get(
+            reverse('person_details', args=[str(self.ironman.id)]))
         doc = self._check_status_code_and_parse(response, 200)
         self._check_person(doc, self.ironman)
 
@@ -77,7 +79,8 @@ class TestPerson(TestBase):
         if response.status_code == 302:
             new_person = Person.objects.get(id=person.id)
             assert new_person.email == new_email, \
-                'Incorrect edited email: got {0}, expected {1}'.format(new_person.email, new_email)
+                'Incorrect edited email: got {0}, expected {1}'.format(
+                    new_person.email, new_email)
 
         # Report errors.
         else:
@@ -85,7 +88,7 @@ class TestPerson(TestBase):
             assert False, 'expected 302 redirect after post'
 
     def _check_person(self, doc, person):
-        '''Check fields of person against document.'''
+        """ Check fields of person against document. """
         fields = (('personal', person.personal),
                   ('family', person.family),
                   ('email', person.email),
@@ -119,7 +122,7 @@ class TestPerson(TestBase):
                     .format(key, value, type(value), node.text)
 
     def _get_field(self, doc, key):
-        '''Get field from person display.'''
+        """ Get field from person display. """
         xpath = ".//td[@id='{0}']".format(key)
         return self._get_1(doc, xpath, key)
 
@@ -160,7 +163,8 @@ class TestPerson(TestBase):
         if response.status_code == 302:
             new_person = Person.objects.get(id=self.hermione.id)
             assert new_person.notes == note, \
-                'Incorrect edited notes: got {0}, expected {1}'.format(new_person.notes, note)
+                'Incorrect edited notes: got {0}, expected {1}'.format(
+                    new_person.notes, note)
 
         # Report errors.
         else:
@@ -183,7 +187,8 @@ class TestPerson(TestBase):
 
         rv = self.client.post(url, data=values)
         assert rv.status_code == 302, \
-            'After awarding a badge we should be redirected to the same page, got {} instead'.format(rv.status_code)
+            'After awarding a badge we should be redirected to the same ' \
+            'page, got {} instead'.format(rv.status_code)
         # we actually can't test if it redirects to the same url…
 
         # make sure the award was recorded in the database
@@ -215,7 +220,7 @@ class TestPerson(TestBase):
         assert role == self.spiderman.task_set.all()[0].role
 
     def test_edit_person_permissions(self):
-        "Make sure we can set up user permissions correctly."
+        """ Make sure we can set up user permissions correctly. """
 
         # make sure Hermione does not have any perms, nor groups
         assert not self.hermione.is_superuser
@@ -284,7 +289,7 @@ class TestPerson(TestBase):
 
     def test_editing_qualifications(self):
         """Make sure we can edit user lessons without any issues."""
-        assert set(self.hermione.lessons.all()) == set([self.git, self.sql])
+        assert set(self.hermione.lessons.all()) == {self.git, self.sql}
 
         url, values = self._get_initial_form_index(0, 'person_edit',
                                                    self.hermione.id)
@@ -292,10 +297,11 @@ class TestPerson(TestBase):
 
         response = self.client.post(url, values)
         assert response.status_code == 302
-        assert set(self.hermione.lessons.all()) == set([self.git, ])
+        assert set(self.hermione.lessons.all()) == {self.git}
 
     def test_person_add_lessons(self):
-        "Check if it's still possible to add lessons via PersonCreate view."
+        """ Check if it's still possible to add lessons via PersonCreate
+        view. """
         data = {
             'username': 'test',
             'personal': 'Test',
@@ -710,11 +716,10 @@ class TestPersonMerging(TestBase):
             # instead testing awards, let's simply test badges
             'badges': set(Badge.objects.filter(name='swc-instructor')),
             # we're saving/combining qualifications, but it affects lessons
-            'lessons': set([self.sql]),
-            'domains': set([KnowledgeDomain.objects.first(),
-                            KnowledgeDomain.objects.last()]),
-            'languages': set([Language.objects.first(),
-                              Language.objects.last()]),
+            'lessons': {self.sql},
+            'domains': {KnowledgeDomain.objects.first(),
+                        KnowledgeDomain.objects.last()},
+            'languages': {Language.objects.first(), Language.objects.last()},
             'task_set': set(Task.objects.none()),
         }
 
@@ -734,9 +739,9 @@ class TestPersonMerging(TestBase):
             # instead testing awards, let's simply test badges
             'badges': set(Badge.objects.filter(name='swc-instructor')),
             # we're saving/combining qualifications, but it affects lessons
-            'lessons': set([self.sql, self.git]),
-            'domains': set([KnowledgeDomain.objects.first(),
-                            KnowledgeDomain.objects.last()]),
+            'lessons': {self.sql, self.git},
+            'domains': {KnowledgeDomain.objects.first(),
+                        KnowledgeDomain.objects.last()},
         }
         self.strategy['qualification_set'] = 'obj_a'
 
@@ -763,16 +768,81 @@ class TestPersonMerging(TestBase):
         self.assertEqual(rv.status_code, 302)
 
 
-class TestSyncUserSocialAuthView(TestBase):
-    def setUp(self):
-        self._setUpUsersAndLogin()
+def github_username_to_uid_mock(username):
+    username2uid = {
+        'username': '1',
+        'changed': '2',
+        'changedagain': '3',
+    }
+    return username2uid[username]
+
+
+class TestPersonAndUserSocialAuth(TestBase):
+    """ Test Person.synchronize_usersocialauth and Person.save."""
+
+    @patch('workshops.github_auth.github_username_to_uid',
+           github_username_to_uid_mock)
+    def test_basic(self):
+        user = Person.objects.create_user(
+            username='user', personal='Typical', family='User',
+            email='undo@example.org', password='user',
+        )
+
+        # Syncing UserSocialAuth for a user without GitHub username should
+        # not create any UserSocialAuth record.
+        user.github = ''
+        user.save()
+        user.synchronize_usersocialauth()
+
+        got = UserSocialAuth.objects.values_list('provider', 'uid', 'user')
+        expected = []
+        self.assertSequenceEqual(got, expected)
+
+        # UserSocialAuth record should be created for a user with GitHub
+        # username.
+        user.github = 'username'
+        user.save()
+        user.synchronize_usersocialauth()
+
+        got = UserSocialAuth.objects.values_list('provider', 'uid', 'user')
+        expected = [('github', '1', user.pk)]
+        self.assertSequenceEqual(got, expected)
+
+        # When GitHub username is changed, Person.save should take care of
+        # clearing UserSocialAuth table.
+        user.github = 'changed'
+        user.save()
+
+        expected = []
+        got = UserSocialAuth.objects.values_list('provider', 'uid', 'user')
+        self.assertSequenceEqual(got, expected)
+
+        # Syncing UserSocialAuth should result in a new UserSocialAuth record.
+        user.synchronize_usersocialauth()
+
+        got = UserSocialAuth.objects.values_list('provider', 'uid', 'user')
+        expected = [('github', '2', user.pk)]
+        self.assertSequenceEqual(got, expected)
+
+        # Syncing UserSocialAuth after changing GitHub username without
+        # saving should also result in updated UserSocialAuth.
+        user.github = 'changedagain'
+        # no user.save()
+        user.synchronize_usersocialauth()
+
+        got = UserSocialAuth.objects.values_list('provider', 'uid', 'user')
+        expected = [('github', '3', user.pk)]
+        self.assertSequenceEqual(got, expected)
 
     def test_errors_are_not_hidden(self):
         """ Test that errors occuring in synchronize_usersocialauth are not
         hidden, that is you're not redirected to any other view. Regression
         for #890. """
+
+        self._setUpUsersAndLogin()
         with patch.object(Person, 'synchronize_usersocialauth',
                           side_effect=NotImplementedError):
             with self.assertRaises(NotImplementedError):
                 self.client.get(reverse('sync_usersocialauth',
                                         args=(self.admin.pk,)))
+
