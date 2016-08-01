@@ -298,6 +298,17 @@ class TestBase(TestCase):
                              host=test_host,
                              admin_fee=100)
 
+        # create a full-blown event that got cancelled
+        e = Event.objects.create(start=event_start, end=event_end,
+                                 slug='starts-today-cancelled',
+                                 url='http://example.org/cancelled-event',
+                                 latitude=-10.0, longitude=10.0,
+                                 country='US', venue='University',
+                                 address='Phenomenal Street',
+                                 host=test_host)
+        tags = Tag.objects.filter(name__in=['SWC', 'cancelled'])
+        e.tags.set(tags)
+
         # Record some statistics about events.
         self.num_uninvoiced_events = 0
         self.num_upcoming = 0

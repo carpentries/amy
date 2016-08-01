@@ -701,8 +701,8 @@ class EventQuerySet(models.query.QuerySet):
 
     def unpublished_conditional(self):
         """Return conditional for events without: start OR country OR venue OR
-        url (ie. unpublished events). This will be used in
-        `self.published_events`, too."""
+        url OR are marked as 'cancelled' (ie. unpublished events). This will be
+        used in `self.published_events`, too."""
         unknown_start = Q(start__isnull=True)
         no_country = Q(country__isnull=True)
         no_venue = Q(venue__exact='')
@@ -710,9 +710,10 @@ class EventQuerySet(models.query.QuerySet):
         no_latitude = Q(latitude__isnull=True)
         no_longitude = Q(longitude__isnull=True)
         no_url = Q(url__isnull=True)
+        cancelled = Q(tags__name='cancelled')
         return (
             unknown_start | no_country | no_venue | no_address | no_latitude |
-            no_longitude | no_url
+            no_longitude | no_url | cancelled
         )
 
     def unpublished_events(self):
@@ -761,6 +762,8 @@ class Event(AssignmentMixin, models.Model):
                   'the host or TTT events that aren\'t running.</li>'
                   '<li><i>unresponsive</i> – for events whose hosts and/or '
                   'organizers aren\'t going to send us attendance data.</li>'
+                  '<li><i>cancelled</i> — for events that were supposed to '
+                  'happen, but due to some circumstances got cancelled.</li>'
                   '</ul>',
     )
     administrator = models.ForeignKey(
