@@ -194,6 +194,8 @@ class DeleteViewContext(DeleteView):
     """
     Class-based view for deleting objects that extends default template context
     by adding proper page title.
+
+    GET requests are not allowed (returns 405)
     """
     success_message = '{} was deleted successfully.'
 
@@ -204,6 +206,9 @@ class DeleteViewContext(DeleteView):
             self.success_message.format(self.get_object())
         )
         return super().delete(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        return self.http_method_not_allowed(request, *args, **kwargs)
 
 
 class FilteredListView(ListView):
