@@ -196,6 +196,8 @@ class DeleteViewContext(DeleteView):
     by adding proper page title.
 
     GET requests are not allowed (returns 405)
+
+    ProtectedErrors are handled.
     """
     success_message = '{} was deleted successfully.'
 
@@ -205,7 +207,11 @@ class DeleteViewContext(DeleteView):
             self.request,
             self.success_message.format(self.get_object())
         )
-        return super().delete(request, *args, **kwargs)
+        try:
+            return super().delete(request, *args, **kwargs)
+        except ProtectedError as e:
+            return failed_to_delete(self.request, self.object,
+                                    e.protected_objects)
 
     def get(self, request, *args, **kwargs):
         return self.http_method_not_allowed(request, *args, **kwargs)
