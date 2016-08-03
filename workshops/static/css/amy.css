@@ -203,3 +203,8 @@ table tr label {
 table ul {
     padding-left: 15px;
 }
+
+/* Make question signs blue by default, so they look like a link. */
+.glyphicon-question-sign {
+    color: rgb(51, 122, 183);
+}
