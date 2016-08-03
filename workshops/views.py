@@ -273,6 +273,16 @@ class EmailSendMixin:
         self.send_email(email)
         return results
 
+
+class RedirectSupportMixin:
+    def get_success_url(self):
+        default_url = super().get_success_url()
+        next_url = self.request.GET.get('next', None)
+        if next_url is not None and is_safe_url(next_url):
+            return next_url
+        else:
+            return default_url
+
 #------------------------------------------------------------
 
 
