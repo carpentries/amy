@@ -8,7 +8,8 @@ from django.db.utils import IntegrityError
 
 from ..management.commands.check_for_workshop_websites_updates import (
     Command as WebsiteUpdatesCommand)
-from ..models import (Event, Organization, Tag, Role, Task, Award, Badge, TodoItem)
+from ..models import (Event, Organization, Tag, Role, Task, Award, Badge,
+                      TodoItem)
 from ..forms import EventForm, EventsMergeForm
 from .base import TestBase
 

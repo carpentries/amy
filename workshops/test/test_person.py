@@ -835,9 +835,9 @@ class TestPersonAndUserSocialAuth(TestBase):
         self.assertSequenceEqual(got, expected)
 
     def test_errors_are_not_hidden(self):
-        """ Test that errors occuring in synchronize_usersocialauth are not
+        """Test that errors occuring in synchronize_usersocialauth are not
         hidden, that is you're not redirected to any other view. Regression
-        for #890. """
+        for #890."""
 
         self._setUpUsersAndLogin()
         with patch.object(Person, 'synchronize_usersocialauth',

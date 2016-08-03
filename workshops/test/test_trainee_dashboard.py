@@ -5,7 +5,7 @@ from workshops.test import TestBase
 
 
 class TestTraineeDashboard(TestBase):
-    """ Tests for trainee dashboard. """
+    """Tests for trainee dashboard."""
     def setUp(self):
         self.user = Person.objects.create_user(
             username='user', personal='', family='',

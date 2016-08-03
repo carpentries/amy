@@ -1,13 +1,12 @@
 from django.contrib.auth.models import Group
-
 from django.core.urlresolvers import reverse
 
-from ..models import Event, Organization, Tag, Person
 from .base import TestBase
+from ..models import Event, Organization, Tag, Person
 
 
 class TestAdminDashboard(TestBase):
-    """ Tests for the admin dashboard. """
+    """Tests for the admin dashboard."""
 
     def setUp(self):
         self._setUpEvents()
@@ -15,8 +14,7 @@ class TestAdminDashboard(TestBase):
 
     def test_has_upcoming_events(self):
         """Test that the admin dashboard is passed some
-        upcoming_events in the context.
-        """
+        upcoming_events in the context."""
 
         response = self.client.get(reverse('admin-dashboard'))
 
@@ -49,7 +47,7 @@ class TestAdminDashboard(TestBase):
 
 
 class TestDispatch(TestBase):
-    """ Test that the right dashboard (trainee or admin dashboard) is displayed
+    """Test that the right dashboard (trainee or admin dashboard) is displayed
     after logging in."""
 
     def test_superuser_logs_in(self):

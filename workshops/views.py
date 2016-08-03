@@ -2,40 +2,88 @@ import csv
 import datetime
 import io
 import re
-from django.views.decorators.http import require_POST
 
 import requests
-
+from django.conf import settings
 from django.contrib import messages
-from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.forms import SetPasswordForm, PasswordChangeForm
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.core.urlresolvers import reverse, reverse_lazy
+from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import (
     ObjectDoesNotExist,
     PermissionDenied,
 )
 from django.core.mail import EmailMultiAlternatives
-from django.conf import settings
+from django.core.urlresolvers import reverse, reverse_lazy
+from django.db import IntegrityError
+from django.db.models import Case, When, Value, IntegerField
+from django.db.models import Count, Q, F, Model, ProtectedError, Sum
 from django.http import Http404, HttpResponse, JsonResponse
 from django.http import HttpResponseBadRequest
-from django.db import IntegrityError
-from django.db.models import Count, Q, F, Model, ProtectedError, Sum
-from django.db.models import Case, When, Value, IntegerField
 from django.shortcuts import redirect, render, get_object_or_404
 from django.template.loader import get_template
+from django.utils.http import is_safe_url
 from django.views.generic import ListView, DetailView, TemplateView, DeleteView
 from django.views.generic.edit import CreateView, UpdateView, ModelFormMixin
-from django.contrib.auth.decorators import permission_required
 from github.GithubException import GithubException
-
 from reversion.models import Revision
 from reversion.revisions import get_for_object
 
-from workshops import github_auth
+from api.views import ReportsViewSet
+from workshops.filters import (
+    EventFilter, OrganizationFilter, PersonFilter, TaskFilter, AirportFilter,
+    EventRequestFilter, BadgeAwardsFilter, InvoiceRequestFilter,
+    EventSubmissionFilter, DCSelfOrganizedEventRequestFilter,
+)
+from workshops.forms import (
+    SearchForm,
+    DebriefForm,
+    WorkshopStaffForm,
+    PersonForm,
+    PersonBulkAddForm,
+    EventForm,
+    TaskForm,
+    TaskFullForm,
+    BadgeAwardForm,
+    PersonAwardForm,
+    PersonPermissionsForm,
+    PersonsSelectionForm,
+    PersonTaskForm,
+    OrganizationForm,
+    SWCEventRequestForm,
+    DCEventRequestForm,
+    ProfileUpdateRequestForm,
+    PersonLookupForm,
+    SimpleTodoForm,
+    BootstrapHelper,
+    AdminLookupForm,
+    ProfileUpdateRequestFormNoCaptcha,
+    MembershipForm,
+    TodoFormSet,
+    EventsSelectionForm,
+    EventsMergeForm,
+    InvoiceRequestForm,
+    InvoiceRequestUpdateForm,
+    EventSubmitForm,
+    EventSubmitFormNoCaptcha,
+    PersonsMergeForm,
+    PersonCreateForm,
+    SponsorshipForm,
+    TrainingRequestForm,
+    AutoUpdateProfileForm,
+    DCSelfOrganizedEventRequestForm,
+    DCSelfOrganizedEventRequestFormNoCaptcha,
+    bootstrap_helper,
+    bootstrap_helper_inline_formsets,
+    bootstrap_helper_with_add,
+    bootstrap_helper_filter,
+    bootstrap_helper_get, bootstrap_helper_wider_labels,
+    BootstrapHelperWiderLabels)
 from workshops.management.commands.check_for_workshop_websites_updates import (
-    Command as WebsiteUpdatesCommand)
+    Command as WebsiteUpdatesCommand,
+)
 from workshops.models import (
     Airport,
     Award,
@@ -57,24 +105,13 @@ from workshops.models import (
     EventSubmission as EventSubmissionModel,
     TrainingRequest,
     DCSelfOrganizedEventRequest as DCSelfOrganizedEventRequestModel,
-    is_admin)
-from workshops.forms import (
-    SearchForm, DebriefForm, WorkshopStaffForm, PersonForm, PersonBulkAddForm,
-    EventForm, TaskForm, TaskFullForm, bootstrap_helper, bootstrap_helper_get,
-    bootstrap_helper_with_add, BadgeAwardForm, PersonAwardForm,
-    PersonPermissionsForm, bootstrap_helper_filter, PersonsSelectionForm,
-    PersonTaskForm, OrganizationForm, SWCEventRequestForm, DCEventRequestForm,
-    ProfileUpdateRequestForm, PersonLookupForm, bootstrap_helper_wider_labels,
-    SimpleTodoForm, bootstrap_helper_inline_formsets, BootstrapHelper,
-    AdminLookupForm, ProfileUpdateRequestFormNoCaptcha, MembershipForm,
-    TodoFormSet, EventsSelectionForm, EventsMergeForm, InvoiceRequestForm,
-    InvoiceRequestUpdateForm, EventSubmitForm, EventSubmitFormNoCaptcha,
-    PersonsMergeForm, PersonCreateForm, SponsorshipForm,
-    TrainingRequestForm, BootstrapHelperWiderLabels, AutoUpdateProfileForm,
-    DCSelfOrganizedEventRequestForm, DCSelfOrganizedEventRequestFormNoCaptcha)
+    is_admin,
+)
 from workshops.util import (
-    upload_person_task_csv, verify_upload_person_task,
-    create_uploaded_persons_tasks, InternalError,
+    upload_person_task_csv,
+    verify_upload_person_task,
+    create_uploaded_persons_tasks,
+    InternalError,
     update_event_attendance_from_tasks,
     WrongWorkshopURL,
     fetch_event_metadata,
@@ -89,15 +126,11 @@ from workshops.util import (
     create_username,
     admin_required,
     OnlyForAdminsMixin,
-    login_required, login_not_required, LoginNotRequiredMixin)
-
-from workshops.filters import (
-    EventFilter, OrganizationFilter, PersonFilter, TaskFilter, AirportFilter,
-    EventRequestFilter, BadgeAwardsFilter, InvoiceRequestFilter,
-    EventSubmissionFilter, DCSelfOrganizedEventRequestFilter,
+    login_required,
+    login_not_required,
+    LoginNotRequiredMixin,
 )
 
-from api.views import ReportsViewSet
 
 # ------------------------------------------------------------
 
@@ -197,7 +230,7 @@ class FilteredListView(ListView):
         return context
 
 
-class EmailSendMixin():
+class EmailSendMixin:
     email_fail_silently = True
     email_kwargs = None
 
@@ -1587,7 +1620,8 @@ def event_dismiss_metadata_changes(request, slug):
     return redirect(reverse('event_details', args=[event.slug]))
 
 
-class SponsorshipDelete(OnlyForAdminsMixin, PermissionRequiredMixin, DeleteViewContext):
+class SponsorshipDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
+                        DeleteViewContext):
     model = Sponsorship
     permission_required = 'workshops.delete_sponsorship'
 
@@ -3157,7 +3191,8 @@ def duplicates(request):
 
 @login_not_required
 def trainingrequest_create(request):
-    """ A form to let all users (no login required) to request Instructor Training. """
+    """A form to let all users (no login required) to request Instructor
+    Training."""
 
     form = TrainingRequestForm()
     page_title = 'Apply for Instructor Training'

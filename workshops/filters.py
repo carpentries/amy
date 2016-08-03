@@ -1,8 +1,11 @@
-import django.forms.widgets
+import re
 
 import django_filters
+from django.db.models import Q
+from django.forms import widgets
 from django_countries import Countries
 
+from workshops.forms import bootstrap_helper_filter
 from workshops.models import (
     Event,
     Organization,
@@ -135,13 +138,13 @@ class EventRequestFilter(FilterSetWithoutHelpText):
     active = django_filters.ChoiceFilter(
         choices=(('all', 'All'), ('true', 'Open'), ('false', 'Closed')),
         label='Status', action=filter_active_eventrequest,
-        widget=django.forms.widgets.RadioSelect,
+        widget=widgets.RadioSelect,
     )
     workshop_type = django_filters.ChoiceFilter(
         choices=(('', 'All'), ('swc', 'Software-Carpentry'),
                  ('dc', 'Data-Carpentry')),
         label='Workshop type',
-        widget=django.forms.widgets.RadioSelect,
+        widget=widgets.RadioSelect,
     )
 
     class Meta:
@@ -259,7 +262,7 @@ class InvoiceRequestFilter(FilterSetWithoutHelpText):
     STATUS_CHOICES = (('', 'All'),) + InvoiceRequest.STATUS_CHOICES
     status = django_filters.ChoiceFilter(
         choices=STATUS_CHOICES,
-        widget=django.forms.widgets.RadioSelect,
+        widget=widgets.RadioSelect,
     )
 
     class Meta:
@@ -286,7 +289,7 @@ class EventSubmissionFilter(FilterSetWithoutHelpText):
     active = django_filters.ChoiceFilter(
         choices=(('', 'All'), ('true', 'Open'), ('false', 'Closed')),
         label='Status', action=filter_active_eventsubmission,
-        widget=django.forms.widgets.RadioSelect,
+        widget=widgets.RadioSelect,
     )
     assigned_to = ForeignKeyAllValuesFilter(Person)
 
@@ -313,7 +316,7 @@ class DCSelfOrganizedEventRequestFilter(FilterSetWithoutHelpText):
     active = django_filters.ChoiceFilter(
         choices=(('', 'All'), ('true', 'Open'), ('false', 'Closed')),
         label='Status', action=filter_active_dcselforganizedeventrequest,
-        widget=django.forms.widgets.RadioSelect,
+        widget=widgets.RadioSelect,
     )
     assigned_to = ForeignKeyAllValuesFilter(Person)
 

@@ -5,25 +5,25 @@ import os
 import re
 import itertools
 import xml.etree.ElementTree as ET
-from unittest.mock import patch
 
 from django.conf import settings
 from django.contrib.auth.models import Group, Permission
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 
-from ..models import \
-    Airport, \
-    Award, \
-    Badge, \
-    Event, \
-    Lesson, \
-    Person, \
-    Qualification, \
-    Organization, \
-    Role, \
-    Tag, \
-    Language
+from ..models import (
+    Airport,
+    Award,
+    Badge,
+    Event,
+    Lesson,
+    Person,
+    Qualification,
+    Organization,
+    Role,
+    Tag,
+    Language,
+)
 
 from ..util import universal_date_format
 

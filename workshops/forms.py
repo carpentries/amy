@@ -1,29 +1,29 @@
 import re
 
+from captcha.fields import ReCaptchaField
+from crispy_forms.bootstrap import FormActions
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Div, HTML, Submit
 from django import forms
+from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.forms import (
     HiddenInput, CheckboxSelectMultiple, TextInput, modelformset_factory,
     RadioSelect,
+    URLField,
 )
-
-from captcha.fields import ReCaptchaField
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Div, HTML, Submit
-from crispy_forms.bootstrap import FormActions
 from django_countries import Countries
 from django_countries.fields import CountryField
 from selectable import forms as selectable
 
+from workshops import lookups
 from workshops.models import (
     Award, Event, Lesson, Person, Task, Airport, Organization,
     EventRequest, ProfileUpdateRequest, TodoItem, Membership,
-    Sponsorship, InvoiceRequest, EventSubmission, Language,
+    Sponsorship, InvoiceRequest, EventSubmission,
     TrainingRequest,
     DCSelfOrganizedEventRequest,
 )
-from workshops import lookups
-
 
 AUTOCOMPLETE_HELP_TEXT = (
     "Autocomplete field; type characters to view available options, "
