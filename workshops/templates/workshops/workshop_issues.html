@@ -22,10 +22,10 @@
     <table class="table table-striped">
       <tr>
         <th>Event</th>
-        <th>Attendance <a href="#" data-toggle="tooltip" title="Number of attendees is missing">[?]</a></th>
-        <th>Instructors <a href="#" data-toggle="tooltip" title="No instructors assigned to the event">[?]</a></th>
-        <th>Location <a href="#" data-toggle="tooltip" title="Country, venue, address or lat/long are missing">[?]</a></th>
-        <th>Dates <a href="#" data-toggle="tooltip" title="Start date is in future of end date">[?]</a></th>
+        <th>Attendance <span class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="Number of attendees is missing"></span></th>
+        <th>Instructors <span class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="No instructors assigned to the event"></span></th>
+        <th>Location <span class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="Country, venue, address or lat/long are missing"></span></th>
+        <th>Dates <span class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="Start date is in future of end date"></span></th>
       </tr>
       {% for event in events %}
       <tr>
