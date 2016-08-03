@@ -1592,7 +1592,7 @@ class SponsorshipDelete(OnlyForAdminsMixin, PermissionRequiredMixin, DeleteViewC
     permission_required = 'workshops.delete_sponsorship'
 
     def get_success_url(self):
-        return reverse_lazy('event_edit',args=[self.get_object().event.slug])
+        return reverse('event_edit',args=[self.get_object().event.slug]) + '#sponsors'
 
 
 class AllInvoiceRequests(OnlyForAdminsMixin, FilteredListView):
