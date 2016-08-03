@@ -74,6 +74,19 @@ class TestDispatch(TestBase):
 
         self.assertEqual(rv.resolver_match.view_name, 'admin-dashboard')
 
+    def test_steering_committee_member_logs_in(self):
+        mentor = Person.objects.create_user(
+            username='user', personal='', family='',
+            email='user@example.org', password='pass')
+        steering_committee= Group.objects.get(name='steering committee')
+        mentor.groups.add(steering_committee)
+
+        rv = self.client.post(reverse('login'),
+                              {'username': 'user', 'password': 'pass'},
+                              follow=True)
+
+        self.assertEqual(rv.resolver_match.view_name, 'admin-dashboard')
+
     def test_trainee_logs_in(self):
         self.trainee = Person.objects.create_user(
             username='trainee', personal='', family='',
