@@ -75,6 +75,7 @@ from workshops.forms import (
     AutoUpdateProfileForm,
     DCSelfOrganizedEventRequestForm,
     DCSelfOrganizedEventRequestFormNoCaptcha,
+    SendHomeworkForm,
     bootstrap_helper,
     bootstrap_helper_inline_formsets,
 )
@@ -103,6 +104,8 @@ from workshops.models import (
     TrainingRequest,
     DCSelfOrganizedEventRequest as DCSelfOrganizedEventRequestModel,
     is_admin,
+    TrainingProgress,
+    TrainingRequirement,
 )
 from workshops.util import (
     upload_person_task_csv,
@@ -126,6 +129,7 @@ from workshops.util import (
     login_required,
     login_not_required,
     LoginNotRequiredMixin,
+    homework2state,
 )
 
 
@@ -3231,11 +3235,72 @@ class TrainingRequestDetails(OnlyForAdminsMixin, DetailView):
 # ------------------------------------------------------------
 # Views for trainees
 
+
 @login_required
 def trainee_dashboard(request):
+    swc_form = SendHomeworkForm(submit_name='swc-submit')
+    dc_form = SendHomeworkForm(submit_name='dc-submit')
+
+    # Add information about instructor training progress to request.user.
+    progresses = request.user.trainingprogress_set.filter(discarded=False)
+    request.user.training_passed = progresses.filter(
+        requirement__name='Training', state='p').exists()
+    last_swc_homework = progresses.filter(
+        requirement__name='SWC Homework').order_by('-created_at').first()
+    request.user.swc_homework_state = homework2state(last_swc_homework)
+    last_dc_homework = progresses.filter(
+        requirement__name='DC Homework').order_by('-created_at').first()
+    request.user.dc_homework_state = homework2state(last_dc_homework)
+    request.user.discussion_passed = progresses.filter(
+        requirement__name='Discussion', state='p').exists()
+    request.user.swc_demo_passed = progresses.filter(
+        requirement__name='SWC Demo', state='p').exists()
+    request.user.dc_demo_passed = progresses.filter(
+        requirement__name='DC Demo', state='p').exists()
+
+    # Add information about awarded instructor badges to request.user.
+    request.user.is_swc_instructor = request.user.award_set.filter(
+        badge__name='swc-instructor').exists()
+    request.user.is_dc_instructor = request.user.award_set.filter(
+        badge__name='dc-instructor').exists()
+
+    if request.method == 'POST' and 'swc-submit' in request.POST:
+        requirement = TrainingRequirement.objects.get(name='SWC Homework')
+        progress = TrainingProgress(trainee=request.user,
+                                    state='n',  # not-evaluated yet
+                                    requirement=requirement)
+        swc_form = SendHomeworkForm(data=request.POST, instance=progress,
+                                    submit_name='swc-submit')
+        dc_form = SendHomeworkForm(submit_name='dc-submit')
+
+        if swc_form.is_valid():
+            swc_form.save()
+            messages.success(request, 'Your homework submission will be '
+                                      'evaluated soon.')
+            return redirect(reverse('trainee-dashboard'))
+
+    elif request.method == 'POST' and 'dc-submit' in request.POST:
+        requirement = TrainingRequirement.objects.get(name='DC Homework')
+        progress = TrainingProgress(trainee=request.user,
+                                    state='n',  # not-evaluated yet
+                                    requirement=requirement)
+        swc_form = SendHomeworkForm(submit_name='swc-submit')
+        dc_form = SendHomeworkForm(data=request.POST, instance=progress,
+                                    submit_name='dc-submit')
+
+        if dc_form.is_valid():
+            dc_form.save()
+            messages.success(request, 'Your homework submission will be '
+                                      'evaluated soon.')
+            return redirect(reverse('trainee-dashboard'))
+
+    else:  # GET request
+        pass
+
     context = {
         'title': 'Your profile',
-        'user': request.user,
+        'swc_form': swc_form,
+        'dc_form': dc_form,
     }
     return render(request, 'workshops/trainee_dashboard.html', context)
 

@@ -13,7 +13,8 @@ from django.contrib.auth.models import Permission, Group
 from ..forms import PersonForm, PersonsMergeForm
 from ..models import (
     Person, Task, Qualification, Award, Role, Event, KnowledgeDomain, Badge,
-    Language,
+    Organization, Language,
+    Tag, TrainingRequirement, TrainingProgress
 )
 from .base import TestBase
 
@@ -846,3 +847,96 @@ class TestPersonAndUserSocialAuth(TestBase):
                 self.client.get(reverse('sync_usersocialauth',
                                         args=(self.admin.pk,)))
 
+
+class TestGetMissingSWCInstructorRequirements(TestBase):
+    def setUp(self):
+        self.person = Person.objects.create(username='person')
+        self.training = TrainingRequirement.objects.get(name='Training')
+        self.swc_homework = TrainingRequirement.objects.get(name='SWC Homework')
+        self.dc_homework = TrainingRequirement.objects.get(name='DC Homework')
+        self.discussion = TrainingRequirement.objects.get(name='Discussion')
+        self.swc_demo = TrainingRequirement.objects.get(name='SWC Demo')
+        self.dc_demo = TrainingRequirement.objects.get(name='DC Demo')
+
+    def test_all_requirements_satisfied(self):
+        TrainingProgress.objects.create(trainee=self.person, state='p',
+                                        requirement=self.training)
+        TrainingProgress.objects.create(trainee=self.person, state='p',
+                                        requirement=self.swc_homework)
+        TrainingProgress.objects.create(trainee=self.person, state='p',
+                                        requirement=self.discussion)
+        TrainingProgress.objects.create(trainee=self.person, state='p',
+                                        requirement=self.swc_demo)
+
+        self.assertEqual(self.person.get_missing_swc_instructor_requirements(),
+                         set())
+
+    def test_some_requirements_are_fulfilled(self):
+        TrainingProgress.objects.create(trainee=self.person, state='p',
+                                        requirement=self.swc_homework)
+        TrainingProgress.objects.create(trainee=self.person, state='p',
+                                        requirement=self.dc_demo)
+        # Not passed progress should be ignored.
+        TrainingProgress.objects.create(trainee=self.person, state='f',
+                                        requirement=self.swc_demo)
+        TrainingProgress.objects.create(trainee=self.person, state='n',
+                                        requirement=self.discussion)
+        # Passed discarded progress should be ignored.
+        TrainingProgress.objects.create(trainee=self.person, state='p',
+                                        requirement=self.training,
+                                        discarded=True)
+
+        self.assertEqual(self.person.get_missing_swc_instructor_requirements(),
+                         {'Training', 'Discussion', 'SWC Demo'})
+
+    def test_none_requirement_is_fulfilled(self):
+        self.assertEqual(self.person.get_missing_swc_instructor_requirements(),
+                         {'Training', 'SWC Homework', 'Discussion', 'SWC Demo'})
+
+
+class TestGetMissingDCInstructorRequirements(TestBase):
+    def setUp(self):
+        self.person = Person.objects.create(username='person')
+        self.training = TrainingRequirement.objects.get(name='Training')
+        self.swc_homework = TrainingRequirement.objects.get(name='SWC Homework')
+        self.dc_homework = TrainingRequirement.objects.get(name='DC Homework')
+        self.discussion = TrainingRequirement.objects.get(name='Discussion')
+        self.swc_demo = TrainingRequirement.objects.get(name='SWC Demo')
+        self.dc_demo = TrainingRequirement.objects.get(name='DC Demo')
+
+    def test_all_requirements_satisfied(self):
+        TrainingProgress.objects.create(trainee=self.person, state='p',
+                                        requirement=self.training)
+
+        TrainingProgress.objects.create(trainee=self.person, state='p',
+                                        requirement=self.dc_homework)
+        TrainingProgress.objects.create(trainee=self.person, state='p',
+                                        requirement=self.discussion)
+        TrainingProgress.objects.create(trainee=self.person, state='p',
+                                        requirement=self.dc_demo)
+
+        self.assertEqual(self.person.get_missing_dc_instructor_requirements(),
+                         set())
+
+    def test_some_requirements_are_fulfilled(self):
+        TrainingProgress.objects.create(trainee=self.person, state='p',
+                                        requirement=self.dc_homework)
+
+        TrainingProgress.objects.create(trainee=self.person, state='p',
+                                        requirement=self.swc_demo)
+        # Not passed progress should be ignored.
+        TrainingProgress.objects.create(trainee=self.person, state='f',
+                                        requirement=self.dc_demo)
+        TrainingProgress.objects.create(trainee=self.person, state='n',
+                                        requirement=self.discussion)
+        # Passed discarded progress should be ignored.
+        TrainingProgress.objects.create(trainee=self.person, state='p',
+                                        requirement=self.training,
+                                        discarded=True)
+
+        self.assertEqual(self.person.get_missing_dc_instructor_requirements(),
+                         {'Training', 'Discussion', 'DC Demo'})
+
+    def test_none_requirement_is_fulfilled(self):
+        self.assertEqual(self.person.get_missing_dc_instructor_requirements(),
+                         {'Training', 'DC Homework', 'Discussion', 'DC Demo'})

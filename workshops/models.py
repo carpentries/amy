@@ -426,6 +426,38 @@ class Person(AbstractBaseUser, PermissionsMixin):
     def is_admin(self):
         return is_admin(self)
 
+    def get_missing_swc_instructor_requirements(self):
+        """Returns set of requirements' names (list of strings) that are not
+        passed yet by the trainee and are mandatory to become SWC Instructor.
+        """
+        requirements = [
+            'Training',
+            'SWC Homework',
+            'Discussion',
+            'SWC Demo'
+        ]
+        passed = self.trainingprogress_set\
+                     .filter(discarded=False, state='p',
+                             requirement__name__in=requirements) \
+                     .values_list('requirement__name', flat=True)
+        return set(requirements) - set(passed)
+
+    def get_missing_dc_instructor_requirements(self):
+        """Returns set of requirements' names (list of strings) that are not
+        passed yet by the trainee and are mandatory to become DC Instructor."""
+
+        requirements = [
+            'Training',
+            'DC Homework',
+            'Discussion',
+            'DC Demo'
+        ]
+        passed = self.trainingprogress_set \
+            .filter(discarded=False, state='p',
+                    requirement__name__in=requirements) \
+            .values_list('requirement__name', flat=True)
+        return set(requirements) - set(passed)
+
     def clean(self):
         """This will be called by the ModelForm.is_valid(). No saving to the
         database."""

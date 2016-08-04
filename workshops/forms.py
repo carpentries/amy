@@ -23,6 +23,7 @@ from workshops.models import (
     Sponsorship, InvoiceRequest, EventSubmission,
     TrainingRequest,
     DCSelfOrganizedEventRequest,
+    TrainingProgress,
 )
 
 AUTOCOMPLETE_HELP_TEXT = (
@@ -1184,3 +1185,17 @@ class AutoUpdateProfileForm(forms.ModelForm):
             'domains': forms.CheckboxSelectMultiple(),
             'lessons': forms.CheckboxSelectMultiple(),
         }
+
+
+class SendHomeworkForm(forms.ModelForm):
+    url = URLField(label='URL')
+
+    def __init__(self, submit_name, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = BootstrapHelper(submit_name=submit_name)
+
+    class Meta:
+        model = TrainingProgress
+        fields = [
+            'url',
+        ]
