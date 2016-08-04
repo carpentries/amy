@@ -458,6 +458,13 @@ class Person(AbstractBaseUser, PermissionsMixin):
             .values_list('requirement__name', flat=True)
         return set(requirements) - set(passed)
 
+    def get_training_tasks(self):
+        """Returns Tasks related to Instuctor Training events at which this
+        person was trained."""
+        return Task.objects.filter(person=self,
+                                   role__name='learner',
+                                   event__tags__name='TTT')
+
     def clean(self):
         """This will be called by the ModelForm.is_valid(). No saving to the
         database."""

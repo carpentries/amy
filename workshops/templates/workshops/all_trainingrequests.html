@@ -1,28 +1,128 @@
-{% extends "base_nav_fixed.html" %}
+{% extends "base_nav_fluid_sidebar.html" %}
 
+{% load crispy_forms_tags %}
 {% load pagination %}
+{% load tags %}
+{% load training_request %}
 
 {% block content %}
-{% if requests %}
+  {% if requests %}
+    <form role="form" class="form-horizontal" method="post">
+    {% if form.errors.requests or match_form.errors.requests %}
+      <div class="alert alert-danger" role="alert">You didn't select any request.</div>
+    {% elif form.errors or match_form.errors %}
+      <div class="alert alert-danger" role="alert">Fix errors below and try again.</div>
+    {% endif %}
     <table class="table table-striped">
+      <tr>
+        <th width="10px">
+          <input type="checkbox" select-all-checkbox />
+        </th>
+        <th>Submitter</th>
+        {% if request.GET.affiliation or request.GET.location %}
+          <th>
+            Affiliation
+            <span class="glyphicon glyphicon-question-sign"
+                  data-toggle="popover" data-html="true"
+                  data-content="<p>If two lines are presented:
+                                <ul><li>the first line shows affiliation from training request,</li>
+                                <li>and the second line shows affiliation from trainee's profile</li></ul></p>
+                                "></span>
+          </th>
+          <th>Location</th>
+        {% endif %}
+        <th>Created at</th>
+        <th>Matched Trainee</th>
+        <th>Matched Training</th>
+        <th width="50px">
+          State
+          <span class="glyphicon glyphicon-question-sign"
+                data-toggle="popover" data-html="true"
+                data-content="<p>
+                              <span class='label label-warning'>Pending</span>
+                              <span class='label label-success'>Accepted</span>
+                              <span class='label label-danger'>Discarded</span>
+                              </p>
+                              <p>Click one of
+                              <a href='#'><span class='glyphicon glyphicon-info-sign'></span></a>
+                              icons below to start accepting request.</p>
+                             "></span>
+        </th>
+        <th class="additional-links"></th>
+      </tr>
+      {% for req in requests %}
         <tr>
-            <th>#</th>
-            <th>submitter</th>
-            <th>created at</th>
-            <th class="additional-links"></th>
-        </tr>
-    {% for request in requests %}
-        <tr>
-            <td><a href="{% url 'trainingrequest_details' request.id%}">{{ request.id }}</a></td>
-            <td>{{ request.personal }} {{ request.family }} &lt;{{ request.email|urlize }}&gt;</td>
-            <td>{{ request.created_at }}</td>
+          <td>
+            <input type="checkbox" name="requests" value="{{ req.pk }}"
+                   respond-to-select-all-checkbox
+                   email="{% if req.person %}{{ req.person.email }}{% endif %}"
+                   {% if req in form.cleaned_data.requests or req in match_form.cleaned_data.requests %}checked {% endif %}
+            />
+          </td>
+          <td>{{ req.personal }} {{ req.family }}</td>
+          {% if request.GET.affiliation or request.GET.location %}
             <td>
-                <a href="{% url 'trainingrequest_details' request.id %}" title="View"><span class="glyphicon glyphicon-info-sign"></span></a>
+              {{ req.affiliation }}
+              {% if req.person %}
+                 <br />
+                {{ req.person.affiliation }}
+              {% endif %}
             </td>
+            <td>{{ req.location }}</td>
+          {% endif %}
+          <td>{{ req.created_at }}</td>
+          <td>
+            {% if req.person %}
+              <a href="{% url 'person_details' req.person.pk %}">
+                {{ req.person.get_full_name }}
+              </a>
+              {% if req.person.email %}
+                &lt;{{ req.person.email|urlize }}&gt;
+              {% endif %}
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            {% if req.person %}
+              {% for task in req.person.get_training_tasks %}
+                <a href="{% url 'event_details' task.event.slug %}">{{ task.event }}</a><br />
+              {% empty %}
+                —
+              {% endfor %}
+            {% else %}
+              —
+            {% endif %}
+          </td>
+          <td>
+            {% if req.state == 'p' %}
+              <span class="{% training_request_label req %}"
+                    data-toggle="popover" data-html="true"
+                    data-content='
+                      Click
+                      <a href="#"><span class="glyphicon glyphicon-info-sign"></span></a>
+                      icon on the right side to start accepting this request.
+                    '>
+                {{ req.get_state_display }}
+              </span>
+            {% else %}
+              <span class="{% training_request_label req %}">
+                {{ req.get_state_display }}
+              </span>
+            {% endif %}
+          </td>
+          <td>
+            <a href="{% url 'trainingrequest_details' req.id %}?next={{ request.get_full_path|urlencode }}" title="View"><span class="glyphicon glyphicon-info-sign"></span></a>
+            &nbsp;
+            <a href="{% url 'trainingrequest_edit' req.id %}?next={{ request.get_full_path|urlencode }}" title="Edit"><span class="glyphicon glyphicon-pencil"></span></a>
+          </td>
         </tr>
-    {% endfor %}
+      {% endfor %}
     </table>
     {% pagination requests %}
+
+    <h2>Actions</h2>
+    {% crispy form %}
+    {% crispy match_form %}
+    </form>
 {% else %}
     <p>No training requests.</p>
 {% endif %}

@@ -18,6 +18,7 @@ from workshops.models import (
     InvoiceRequest,
     EventSubmission,
     DCSelfOrganizedEventRequest,
+    TrainingRequest,
 )
 
 EMPTY_SELECTION = (None, '---------')
@@ -218,6 +219,106 @@ class PersonFilter(AMYFilterSet):
         elif order_value == '-lastname':
             return ['-family', '-middle', '-personal']
         return super().get_order_by(order_value)
+
+
+def filter_matched(queryset, choice):
+    if choice == '':
+        return queryset
+    elif choice == 'u':  # unmatched
+        return queryset.filter(person=None)
+    elif choice == 'p':  # matched trainee, unmatched training
+        return queryset.filter(person__isnull=False)\
+                       .exclude(person__task__role__name='learner',
+                                person__task__event__tags__name='TTT')\
+                       .distinct()
+    else:  # choice == 't' <==> matched trainee and training
+        return queryset.filter(person__task__role__name='learner',
+                               person__task__event__tags__name='TTT')\
+                       .distinct()
+
+
+def filter_by_person(queryset, name):
+    if name == '':
+        return queryset
+    else:
+        tokens = re.split('\s+', name)  # 'Greg Wilson' -> ['Greg', 'Wilson']
+        # Each token must match email address or github username or personal or
+        # family name.
+        for token in tokens:
+            queryset = queryset.filter(
+                Q(personal__icontains=token) |
+                Q(family__icontains=token) |
+                Q(email__icontains=token) |
+                Q(person__personal__icontains=token) |
+                Q(person__family__icontains=token) |
+                Q(person__email__icontains=token)
+            )
+        return queryset
+
+
+def filter_affiliation(queryset, affiliation):
+    if affiliation == '':
+        return queryset
+    else:
+        return queryset.filter(Q(affiliation__icontains=affiliation) |
+                               Q(person__affiliation__icontains=affiliation)) \
+                       .distinct()
+
+
+class TrainingRequestFilter(AMYFilterSet):
+    search = django_filters.CharFilter(
+        label='Name or Email',
+        action=filter_by_person,
+    )
+
+    state = django_filters.ChoiceFilter(
+        choices=(('', 'All'),) + TrainingRequest.STATES,
+    )
+
+    matched = django_filters.ChoiceFilter(
+        label='Is Matched?',
+        choices=(
+            ('', 'Unknown'),
+            ('u', 'Unmatched'),
+            ('p', 'Matched trainee, unmatched training'),
+            ('t', 'Matched trainee and training'),
+        ),
+        action=filter_matched,
+    )
+
+    affiliation = django_filters.CharFilter(
+        action=filter_affiliation,
+    )
+
+    location = django_filters.CharFilter(lookup_type='icontains')
+
+    class Meta:
+        model = TrainingRequest
+        fields = [
+            'search',
+            'state',
+            'matched',
+            'affiliation',
+            'location',
+        ]
+        order_by = ['created_at',
+                    '-created_at',
+                    'trainee firstname',
+                    '-trainee firstname',
+                    'trainee lastname',
+                    '-trainee lastname']
+
+    def get_order_by(self, order_value):
+        if order_value == 'trainee firstname':
+            return ['personal', 'family']
+        elif order_value == '-trainee firstname':
+            return ['-personal', '-family']
+        elif order_value == 'trainee lastname':
+            return ['family', 'personal']
+        elif order_value == '-trainee lastname':
+            return ['-family', '-personal']
+        else:
+            return super().get_order_by(order_value)
 
 
 class TaskFilter(AMYFilterSet):

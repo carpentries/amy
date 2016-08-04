@@ -1318,6 +1318,95 @@ class BulkDiscardProgressesForm(forms.Form):
         model = TrainingProgress
 
 
+class BulkChangeTrainingRequestForm(forms.Form):
+    """Form used to bulk discard training requests or bulk unmatch trainees
+    from trainings."""
+
+    requests = forms.ModelMultipleChoiceField(
+        queryset=TrainingRequest.objects.all())
+
+    helper = BootstrapHelper(add_submit_button=False,
+                             form_tag=False,
+                             display_labels=False)
+    helper.layout = Layout(
+        # no 'requests' -- you should take care of generating it manually in
+        # the template where this form is used
+
+        # We use formnovalidate on submit buttons to disable browser
+        # validation. This is necessary because this form is used along with
+        # BulkMatchTrainingRequestForm, which have required fields. Both
+        # forms live inside the same <form> tag. Without this attribute,
+        # when you click one of the following submit buttons, the browser
+        # reports missing values in required fields in
+        # BulkMatchTrainingRequestForm.
+        FormActions(
+            Submit('discard', 'Discard selected requests',
+                   formnovalidate='formnovalidate'),
+            Submit('unmatch', 'Unmatch selected trainees from training',
+                   formnovalidate='formnovalidate'),
+            HTML('<a bulk-email-on-click class="btn btn-primary">'
+                 'Mail selected trainees</a>&nbsp;'),
+            HTML('<a class="btn btn-primary" href="{% url \'download_trainingrequests\' %}">'
+                 'Download all requests as CSV</a>&nbsp;'),
+            HTML('<a href="{% url \'training_request\' %}" class="btn btn-success">'
+                 'Create new request</a>'),
+        )
+    )
+
+    # When set to True, the form is valid only if every request is matched to
+    # one person. Set to True when 'unmatch' button is clicked, because
+    # unmatching makes sense only if each selected TrainingRequest is matched
+    # with one person.
+    check_person_matched = False
+
+    def clean(self):
+        super().clean()
+        unmatched_request_exists = any(
+            r.person is None for r in self.cleaned_data.get('requests', []))
+        if self.check_person_matched and unmatched_request_exists:
+            raise ValidationError('Select only requests matched to a person.')
+
+
+class BulkMatchTrainingRequestForm(forms.Form):
+    requests = forms.ModelMultipleChoiceField(
+        queryset=TrainingRequest.objects.all())
+
+    event = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.TTTEventLookup,
+        label='Training',
+        required=True,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+    helper = BootstrapHelper(add_submit_button=False,
+                             form_tag=False)
+    helper.layout = Layout(
+        'event',
+    )
+    helper.add_input(
+        Submit(
+           'match',
+            'Match selected trainees to chosen training',
+            **{
+                'data-toggle': 'popover',
+                'data-html': 'true',
+                'data-content': 'If you want to <strong>re</strong>match '
+                                'trainees to other training, first '
+                                '<strong>unmatch</strong> them!',
+            }
+        )
+    )
+
+    def clean(self):
+        super().clean()
+
+        if any(r.person is None for r in self.cleaned_data['requests']):
+            raise ValidationError('Some of the requests are not matched '
+                                  'to a trainee yet. Before matching them to '
+                                  'a training, you need to accept them '
+                                  'and match with a trainee.')
+
+
 class SendHomeworkForm(forms.ModelForm):
     url = URLField(label='URL')
 

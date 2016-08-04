@@ -419,6 +419,34 @@ class TestPerson(TestBase):
         )
         assert response.status_code == 302
 
+    def test_get_training_tasks(self):
+        p1 = Person.objects.create(username='p1')
+        p2 = Person.objects.create(username='p2')
+        org = Organization.objects.create(domain='example.com',
+                                          fullname='Test Organization')
+        ttt, _ = Tag.objects.get_or_create(name='TTT')
+        learner, _ = Role.objects.get_or_create(name='learner')
+        other_role, _ = Role.objects.get_or_create(name='other role')
+        e1 = Event.objects.create(slug='training', host=org)
+        e1.tags.add(ttt)
+        e2 = Event.objects.create(slug='workshop', host=org)
+        e3 = Event.objects.create(slug='second-training', host=org)
+        e3.tags.add(ttt)
+
+        t1 = Task.objects.create(person=p1, event=e1, role=learner)
+
+        # Tasks with event missing 'TTT' tag are ignored
+        t2 = Task.objects.create(person=p1, event=e2, role=learner)
+
+        # Tasks with role different than 'learner' are ignored
+        t3 = Task.objects.create(person=p1, event=e3, role=other_role)
+
+        # Tasks belonging to other people should be ignored
+        t4 = Task.objects.create(person=p2, event=e1, role=learner)
+
+        self.assertEqual(set(p1.get_training_tasks()),
+                         {t1})
+
 
 class TestPersonPassword(TestBase):
     """Separate tests for testing password setting.

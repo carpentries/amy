@@ -36,7 +36,7 @@ from workshops.filters import (
     EventFilter, OrganizationFilter, PersonFilter, TaskFilter, AirportFilter,
     EventRequestFilter, BadgeAwardsFilter, InvoiceRequestFilter,
     EventSubmissionFilter, DCSelfOrganizedEventRequestFilter,
-)
+    TrainingRequestFilter)
 from workshops.forms import (
     SearchForm,
     DebriefForm,
@@ -79,7 +79,7 @@ from workshops.forms import (
     SendHomeworkForm,
     bootstrap_helper,
     bootstrap_helper_inline_formsets,
-)
+    BulkChangeTrainingRequestForm, BulkMatchTrainingRequestForm)
 from workshops.management.commands.check_for_workshop_websites_updates import (
     Command as WebsiteUpdatesCommand,
 )
@@ -3211,15 +3211,80 @@ def trainingrequest_create(request):
     return render(request, 'forms/trainingrequest.html', context)
 
 
-class TrainingRequestListView(OnlyForAdminsMixin, ListView):
-    context_object_name = 'requests'
-    template_name = 'workshops/all_trainingrequests.html'
-    queryset = TrainingRequest.objects.all().order_by('-created_at')
+@admin_required
+def all_trainingrequests(request):
+    filter = TrainingRequestFilter(
+        request.GET,
+        queryset=TrainingRequest.objects.all()
+    )
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'All training requests'
-        return context
+    requests = get_pagination_items(request, filter)
+
+    if request.method == 'POST' and 'match' in request.POST:
+        # Bulk match people associated with selected TrainingRequests to
+        # trainings.
+        form = BulkChangeTrainingRequestForm()
+        match_form = BulkMatchTrainingRequestForm(request.POST)
+
+        if match_form.is_valid():
+            # Perform bulk match
+            for r in match_form.cleaned_data['requests']:
+                Task.objects.get_or_create(
+                    person=r.person,
+                    role=Role.objects.get(name='learner'),
+                    event=match_form.cleaned_data['event'])
+
+            messages.success(request, 'Successfully matched selected '
+                                      'people to training.')
+
+            # Raw uri contains GET parameters from django filters. We use it
+            # to preserve filter settings.
+            return redirect(request.get_raw_uri())
+
+    elif request.method == 'POST' and 'discard' in request.POST:
+        # Bulk discard selected TrainingRequests.
+        form = BulkChangeTrainingRequestForm(request.POST)
+        match_form = BulkMatchTrainingRequestForm()
+
+        if form.is_valid():
+            # Perform bulk discard
+            for r in form.cleaned_data['requests']:
+                r.state = 'd'
+                r.save()
+
+            messages.success(request, 'Successfully discarded selected '
+                                      'requests.')
+
+            return redirect(request.get_raw_uri())
+
+    elif request.method == 'POST' and 'unmatch' in request.POST:
+        # Bulk unmatch people associated with selected TrainingRequests from
+        # trainings.
+        form = BulkChangeTrainingRequestForm(request.POST)
+        match_form = BulkMatchTrainingRequestForm()
+
+        form.check_person_matched = True
+        if form.is_valid():
+            # Perform bulk unmatch
+            for r in form.cleaned_data['requests']:
+                r.person.get_training_tasks().delete()
+
+            messages.success(request, 'Successfully unmatched selected '
+                                      'people from trainings.')
+
+            return redirect(request.get_raw_uri())
+
+    else:  # GET request
+        form = BulkChangeTrainingRequestForm()
+        match_form = BulkMatchTrainingRequestForm()
+
+    context = {'title': 'Training Requests',
+               'requests': requests,
+               'filter': filter,
+               'form': form,
+               'match_form': match_form}
+
+    return render(request, 'workshops/all_trainingrequests.html', context)
 
 
 class TrainingRequestDetails(OnlyForAdminsMixin, DetailView):
@@ -3335,6 +3400,82 @@ def autoupdate_profile(request):
         'form': form,
     }
     return render(request, 'workshops/generic_form_nonav.html', context)
+
+# ------------------------------------------------------------
+# Instructor Training related views
+
+
+@admin_required
+def download_trainingrequests(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = \
+        'attachment; filename="training_requests.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow([
+        'State',
+        'Matched Trainee',
+        'Group Name',
+        'Personal',
+        'Family',
+        'Email',
+        'GitHub username',
+        'Occupation',
+        'Occupation (other)',
+        'Affiliation',
+        'Location',
+        'Country',
+        'Expertise areas',
+        'Expertise areas (other)',
+        'Gender',
+        'Gender (other)',
+        'Previous Involvement',
+        'Previous Training in Teaching',
+        'Previous Training (other)',
+        'Previous Training (explanation)',
+        'Programming Language Usage',
+        'Reason',
+        'Teaching Frequency Expectation',
+        'Teaching Frequency Expectation (other)',
+        'Max Travelling Frequency',
+        'Max Travelling Frequency (other)',
+        'Additional Skills',
+        'Comment',
+    ])
+    for req in TrainingRequest.objects.all():
+        writer.writerow([
+            req.get_state_display(),
+            '—' if req.person is None else req.person.get_full_name(),
+            req.group_name,
+            req.personal,
+            req.family,
+            req.email,
+            req.github,
+            req.get_occupation_display(),
+            req.occupation_other,
+            req.affiliation,
+            req.location,
+            req.country,
+            ';'.join(d.name for d in req.domains.all()),
+            req.domains_other,
+            req.get_gender_display(),
+            req.gender_other,
+            ';'.join(inv.name for inv in req.previous_involvement.all()),
+            req.get_previous_training_display(),
+            req.previous_training_other,
+            req.previous_training_explanation,
+            req.get_programming_language_usage_frequency_display(),
+            req.reason,
+            req.get_teaching_frequency_expectation_display(),
+            req.teaching_frequency_expectation_other,
+            req.get_max_travelling_frequency_display(),
+            req.max_travelling_frequency_other,
+            req.additional_skills,
+            req.comment,
+        ])
+
+    return response
+
 
 
 class TrainingProgressCreate(RedirectSupportMixin,

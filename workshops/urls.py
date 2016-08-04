@@ -135,7 +135,8 @@ urlpatterns = [
     url(r'^autoupdate_profile/$', views.autoupdate_profile, name='autoupdate_profile'),
 
     url(r'^request_training/$', views.trainingrequest_create, name='training_request'),
-    url(r'^training_requests/$', views.TrainingRequestListView.as_view(), name='all_trainingrequests'),
+    url(r'^training_requests/$', views.all_trainingrequests, name='all_trainingrequests'),
+    url(r'^training_requests/csv/$', views.download_trainingrequests, name='download_trainingrequests'),
     url(r'^training_requests/(?P<request_id>\d+)/?$', views.TrainingRequestDetails.as_view(), name='trainingrequest_details'),
 
     url(r'^training_progress/(?P<pk>\d+)/edit$', views.TrainingProgressUpdate.as_view(), name='trainingprogress_edit'),
