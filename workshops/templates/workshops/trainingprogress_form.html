@@ -1,0 +1,15 @@
+{% extends "base_nav_fixed.html" %}
+
+{% load crispy_forms_tags %}
+{% load selectable_tags %}
+
+{% block content %}
+<form action="delete?next={{ request.GET.next|urlencode }}" method="POST" id="delete-form">
+  {% csrf_token %}
+</form>
+{% crispy form %}
+{% endblock %}
+
+{% block extrajs %}
+{{ form.media }}
+{% endblock extrajs %}

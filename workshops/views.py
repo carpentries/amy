@@ -75,6 +75,7 @@ from workshops.forms import (
     AutoUpdateProfileForm,
     DCSelfOrganizedEventRequestForm,
     DCSelfOrganizedEventRequestFormNoCaptcha,
+    TrainingProgressForm,
     SendHomeworkForm,
     bootstrap_helper,
     bootstrap_helper_inline_formsets,
@@ -3334,3 +3335,45 @@ def autoupdate_profile(request):
         'form': form,
     }
     return render(request, 'workshops/generic_form_nonav.html', context)
+
+
+class TrainingProgressCreate(RedirectSupportMixin,
+                             OnlyForAdminsMixin,
+                             CreateViewContext):
+    model = TrainingProgress
+    form_class = TrainingProgressForm
+
+    def get_initial(self):
+        initial = super().get_initial()
+
+        initial['evaluated_by'] = self.request.user
+
+        # Set trainee_id from URL argument, if exists.
+        trainee_id = self.kwargs.get('trainee_id', None)
+        if trainee_id is not None:
+            try:
+                trainee = Person.objects.get(pk=trainee_id)
+            except Person.DoesNotExist:
+                messages.warning(self.request, 'No such trainee.')
+            else:
+                initial['trainee'] = trainee
+
+        return initial
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form'].helper = context['form'].create_helper
+        return context
+
+
+class TrainingProgressUpdate(RedirectSupportMixin, OnlyForAdminsMixin,
+                             UpdateViewContext):
+    model = TrainingProgress
+    form_class = TrainingProgressForm
+    template_name = 'workshops/generic_form.html'
+
+
+class TrainingProgressDelete(RedirectSupportMixin, OnlyForAdminsMixin,
+                             DeleteViewContext):
+    model = TrainingProgress
+    success_url = reverse_lazy('all_trainees')

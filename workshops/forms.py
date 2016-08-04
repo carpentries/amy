@@ -1187,6 +1187,137 @@ class AutoUpdateProfileForm(forms.ModelForm):
         }
 
 
+class TrainingProgressForm(forms.ModelForm):
+    trainee = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.PersonLookup,
+        label='Trainee',
+        required=True,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+    evaluated_by = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.AdminLookup,
+        label='Evaluated by',
+        required=False,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+    event = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.TTTEventLookup,
+        label='Event',
+        required=False,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+    # helper used in edit view
+    helper = BootstrapHelper(duplicate_buttons_on_top=True,
+                             submit_label='Update',
+                             add_delete_button=True,
+                             additional_form_class='training-progress')
+
+    # helper used in create view
+    create_helper = BootstrapHelper(duplicate_buttons_on_top=True,
+                                    submit_label='Add',
+                                    additional_form_class='training-progress')
+
+    class Meta:
+        model = TrainingProgress
+        fields = [
+            'trainee',
+            'evaluated_by',
+            'requirement',
+            'state',
+            'discarded',
+            'event',
+            'url',
+            'notes',
+        ]
+        widgets = {
+            'state': RadioSelect,
+        }
+
+
+class BulkAddTrainingProgressForm(forms.ModelForm):
+    event = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.TTTEventLookup,
+        label='Training',
+        required=False,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+    trainees = forms.ModelMultipleChoiceField(queryset=Person.objects.all())
+
+    helper = BootstrapHelper(additional_form_class='training-progress',
+                             submit_label='Add',
+                             form_tag=False)
+    helper.layout = Layout(
+        # no 'trainees' -- you should take care of generating it manually in
+        # the template where this form is used
+
+        'requirement',
+        'state',
+        'event',
+        'url',
+        'notes',
+    )
+
+    class Meta:
+        model = TrainingProgress
+        fields = [
+            # no 'trainees'
+            'requirement',
+            'state',
+            'event',
+            'url',
+            'notes',
+        ]
+        widgets = {
+            'state': RadioSelect,
+            'notes': TextInput,
+        }
+
+
+class BulkDiscardProgressesForm(forms.Form):
+    """Form used to bulk discard all TrainingProgresses associated with
+    selected trainees."""
+
+    trainees = forms.ModelMultipleChoiceField(queryset=Person.objects.all())
+
+    helper = BootstrapHelper(add_submit_button=False,
+                             form_tag=False,
+                             display_labels=False)
+
+    SUBMIT_POPOVER = '''<p>Discarded progress will be displayed in the following
+    way: <span class='label label-default'><strike> Discarded
+    </strike></span>.</p>
+
+    <p>If you want to permanently remove records from system,
+    click one of the progress labels and, then, click "delete" button.</p>'''
+
+    helper.layout = Layout(
+        # no 'trainees' -- you should take care of generating it manually in
+        # the template where this form is used
+
+        # We use formnovalidate on submit button to disable browser
+        # validation. This is necessary because this form is used along with
+        # BulkAddTrainingProgressForm, which have required fields. Both forms
+        # live inside the same <form> tag. Without this attribute, when you
+        # click the following submit button, the browser reports missing
+        # values in required fields in BulkAddTrainingProgressForm.
+        Submit('discard',
+               'Discard all progress of selected trainees',
+               formnovalidate='formnovalidate',
+               **{
+                   'data-toggle': 'popover',
+                   'data-html': 'true',
+                   'data-content': SUBMIT_POPOVER,
+               }),
+        HTML('&nbsp;<a bulk-email-on-click class="btn btn-primary">'
+             'Mail selected trainees</a>'),
+    )
+
+    class Meta:
+        model = TrainingProgress
+
+
 class SendHomeworkForm(forms.ModelForm):
     url = URLField(label='URL')
 

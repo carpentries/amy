@@ -97,3 +97,61 @@ class TestTrainingProgressValidation(TestBase):
                                              evaluated_by=None)
         p1.full_clean()
         p2.full_clean()
+
+
+class TestCRUDViews(TestBase):
+    def setUp(self):
+        self._setUpUsersAndLogin()
+        self._setUpAirports()
+        self._setUpNonInstructors()
+
+        self.requirement = TrainingRequirement.objects.create(name='Discussion')
+        self.progress = TrainingProgress.objects.create(
+            requirement=self.requirement,
+            state='p',
+            evaluated_by=self.admin,
+            trainee=self.ironman,
+        )
+
+    def test_create_view_loads(self):
+        rv = self.client.get(reverse('trainingprogress_add'))
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.context['form'].initial['evaluated_by'], self.admin)
+
+    def test_create_view_works_with_initial_trainee(self):
+        rv = self.client.get(reverse('trainingprogress_add',
+                                     args=[self.ironman.pk]))
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.context['form'].initial['evaluated_by'], self.admin)
+        self.assertEqual(rv.context['form'].initial['trainee'], self.ironman)
+
+    def test_create_view_works(self):
+        data = {
+            'requirement': self.requirement.pk,
+            'state': 'p',
+            'evaluated_by': self.admin.pk,
+            'trainee': self.ironman.pk,
+        }
+        rv = self.client.post(reverse('trainingprogress_add'), data,
+                              follow=True)
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.resolver_match.view_name, 'trainingprogress_edit')
+        self.assertEqual(len(TrainingProgress.objects.all()), 2)
+
+    def test_edit_view_loads(self):
+        rv = self.client.get(reverse('trainingprogress_edit',
+                                     args=[self.progress.pk]))
+        self.assertEqual(rv.status_code, 200)
+
+    def test_delete_view_get_request_not_allowed(self):
+        rv = self.client.get(reverse('trainingprogress_delete',
+                                     args=[self.progress.pk]))
+        self.assertEqual(rv.status_code, 405)
+
+    def test_delete_view_works(self):
+        rv = self.client.post(reverse('trainingprogress_delete',
+                                      args=[self.progress.pk]),
+                              follow=True)
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.resolver_match.view_name, 'all_trainees')
+        self.assertEqual(set(TrainingProgress.objects.all()), set())
