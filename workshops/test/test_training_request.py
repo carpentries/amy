@@ -1,7 +1,18 @@
+from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
+from django.template import Context
+from django.template import Template
 
 from .base import TestBase
-from ..models import Person, Role, TrainingRequest
+from ..models import (
+    Person,
+    Role,
+    TrainingRequest,
+    Organization,
+    Event,
+    Tag,
+    Task,
+)
 
 
 class TestTrainingRequestForm(TestBase):
@@ -54,10 +65,54 @@ class TestTrainingRequestForm(TestBase):
         self.assertEqual(TrainingRequest.objects.all().count(), 1)
 
 
-class TestTrainingRequestViews(TestBase):
+def create_training_request(state, person):
+    return TrainingRequest.objects.create(
+        personal='John',
+        family='Smith',
+        email='john@smith.com',
+        occupation='',
+        affiliation='AGH University of Science and Technology',
+        location='Cracow',
+        country='PL',
+        gender=Person.MALE,
+        previous_training='none',
+        previous_experience='none',
+        programming_language_usage_frequency='daily',
+        reason='Just for fun.',
+        teaching_frequency_expectation='often',
+        max_travelling_frequency='yearly',
+        state=state,
+        person=person,
+    )
+
+
+class TestTrainingRequestModel(TestBase):
     def setUp(self):
         self._setUpUsersAndLogin()
+
+    def test_valid_pending_request(self):
+        req = create_training_request(state='p', person=None)
+        req.full_clean()
+
+    def test_valid_accepted_request(self):
+        req = create_training_request(state='a', person=self.admin)
+        req.full_clean()
+
+    def test_pending_request_must_not_be_matched(self):
+        req = create_training_request(state='p', person=self.admin)
+        with self.assertRaises(ValidationError):
+            req.full_clean()
+
+    def test_accepted_request_must_be_matched_to_a_trainee(self):
+        req = create_training_request(state='a', person=None)
+        with self.assertRaises(ValidationError):
+            req.full_clean()
+
+
+class TestTrainingRequestsListView(TestBase):
+    def setUp(self):
         self._setUpRoles()
+        self._setUpUsersAndLogin()
 
         self.req = TrainingRequest.objects.create(
             personal='John',

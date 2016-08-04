@@ -1801,6 +1801,18 @@ def build_choice_field_with_other_option(choices, default, verbose_name=None):
 
 @reversion.register
 class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
+    STATES = (
+        ('p', 'Pending'),  # initial state
+        ('a', 'Accepted'),  # state after matching a Person record
+        ('d', 'Discarded'),
+    )
+    state = models.CharField(choices=STATES, default='p', max_length=1)
+
+    person = models.ForeignKey(Person, null=True, blank=True,
+                               verbose_name='Matched Trainee')
+
+    # no association with Event
+
     group_name = models.CharField(
         blank=True, default='', null=False,
         max_length=STR_LONG,
@@ -1978,3 +1990,97 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         default='', null=False, blank=True,
         help_text='What else do you want us to know?',
         verbose_name='Anything else?')
+
+    def clean(self):
+        super().clean()
+
+        if self.state == 'a' and self.person is None:
+            raise ValidationError({'person': 'Accepted training request must '
+                                             'be matched to a person.'})
+
+        if self.state == 'p' and self.person is not None:
+            raise ValidationError({'person': 'Pending training requests cannot '
+                                             'be matched to a person.'})
+
+    def get_absolute_url(self):
+        return reverse('trainingrequest_details', args=[self.pk])
+
+
+@reversion.register
+class TrainingRequirement(models.Model):
+    name = models.CharField(max_length=STR_MED)
+
+    # Determines whether TrainingProgress.url is required (True) or must be
+    # null (False).
+    url_required = models.BooleanField(default=False)
+
+    # Determines whether TrainingProgress.event is required (True) or must be
+    # null (False).
+    event_required = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ['name']
+
+
+@reversion.register
+class TrainingProgress(CreatedUpdatedMixin, models.Model):
+    trainee = models.ForeignKey(Person, on_delete=models.PROTECT)
+
+    # Mentor/examiner who evaluates homework / session. May be null when a
+    # trainee submits their homework.
+    evaluated_by = models.ForeignKey(Person,
+                                     on_delete=models.PROTECT,
+                                     null=True, blank=True,
+                                     related_name='+')
+    requirement = models.ForeignKey(TrainingRequirement,
+                                    on_delete=models.PROTECT,
+                                    verbose_name='Type')
+
+    STATES = (
+        ('n', 'Not evaluated yet'),
+        ('f', 'Failed'),
+        ('p', 'Passed'),
+    )
+    state = models.CharField(choices=STATES, default='p', max_length=1)
+
+    # When we end training and trainee has gone silent, or passed their
+    # deadline, we set this field to True.
+    discarded = models.BooleanField(
+        default=False,
+        verbose_name='Discarded',
+        help_text='Check when the trainee has gone silent or passed their '
+                  'training deadline. Discarded items are not permanently '
+                  'deleted permanently from AMY. If you want to remove this '
+                  'record, click red "delete" button.')
+
+    event = models.ForeignKey(Event, null=True, blank=True,
+                              verbose_name='Training',
+                              limit_choices_to=Q(tags__name='TTT'))
+    url = models.URLField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+
+    def get_absolute_url(self):
+        return reverse('trainingprogress_edit', args=[str(self.id)])
+
+    def clean(self):
+        if self.requirement.url_required and not self.url:
+            msg = 'In the case of {}, this field is required.'.format(self.requirement)
+            raise ValidationError({'url': msg})
+        elif not self.requirement.url_required and self.url:
+            msg = 'In the case of {}, this field must be left empty.'.format(self.requirement)
+            raise ValidationError({'url': msg})
+
+        if self.requirement.event_required and not self.event:
+            msg = 'In the case of {}, this field is required.'.format(self.requirement)
+            raise ValidationError({'event': msg})
+        elif not self.requirement.event_required and self.event:
+            msg = 'In the case of {}, this field must be left empty.'.format(self.requirement)
+            raise ValidationError({'event': msg})
+
+        super().clean()
+
+    class Meta:
+        ordering = ['created_at']

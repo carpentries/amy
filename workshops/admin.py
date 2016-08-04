@@ -9,6 +9,8 @@ from .models import (
     Lesson,
     KnowledgeDomain,
     Badge,
+    TrainingRequirement,
+    TrainingRequest,
 )
 
 
@@ -24,3 +26,5 @@ admin.site.register(Role, RoleAdmin)
 admin.site.register(Lesson)
 admin.site.register(KnowledgeDomain)
 admin.site.register(Badge)
+admin.site.register(TrainingRequirement)
+admin.site.register(TrainingRequest)
