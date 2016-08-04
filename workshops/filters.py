@@ -221,6 +221,116 @@ class PersonFilter(AMYFilterSet):
         return super().get_order_by(order_value)
 
 
+def filter_all_persons(queryset, all_persons):
+    """Filter only trainees when all_persons==False."""
+    if all_persons:
+        return queryset
+    else:
+        return queryset.filter(
+            task__role__name='learner',
+            task__event__tags__name='TTT').distinct()
+
+
+def filter_trainees_by_trainee_name_or_email(queryset, name):
+    if name:
+        tokens = re.split('\s+', name)  # 'Greg Wilson' -> ['Greg', 'Wilson']
+        # Each token must match email address or github username or personal or
+        # family name.
+        for token in tokens:
+            queryset = queryset.filter(Q(personal__icontains=token) |
+                                       Q(family__icontains=token) |
+                                       Q(email__icontains=token))
+        return queryset
+    else:
+        return queryset
+
+
+def filter_trainees_by_unevaluated_homework_presence(queryset, flag):
+    if flag:  # return only trainees with an unevaluated homework
+        return queryset.filter(trainingprogress__state='n').distinct()
+    else:
+        return queryset
+
+
+def filter_trainees_by_training_request_presence(queryset, flag):
+    if flag is None:
+        return queryset
+    elif flag is True:  # return only trainees who submitted training request
+        return queryset.filter(trainingrequest__isnull=False).distinct()
+    else:  # return only trainees who did not submit training request
+        return queryset.filter(trainingrequest__isnull=True)
+
+
+def filter_trainees_by_training(queryset, training):
+    if training is None:
+        return queryset
+    else:
+        return queryset.filter(task__role__name='learner',
+                               task__event=training).distinct()
+
+
+class TraineeFilter(AMYFilterSet):
+    search = django_filters.CharFilter(
+        action=filter_trainees_by_trainee_name_or_email,
+        label='Name or Email')
+
+    all_persons = django_filters.BooleanFilter(
+        label='Include all people, not only trainees',
+        action=filter_all_persons,
+        widget=widgets.CheckboxInput)
+
+    homework = django_filters.BooleanFilter(
+        label='Only trainees with unevaluated homework',
+        widget=widgets.CheckboxInput,
+        action=filter_trainees_by_unevaluated_homework_presence,
+    )
+
+    training_request = django_filters.BooleanFilter(
+        label='Is training request present?',
+        action=filter_trainees_by_training_request_presence,
+    )
+
+    is_swc_instructor = django_filters.BooleanFilter(
+        label='Is SWC Instructor?',
+        name='is_swc_instructor',
+    )
+
+    is_dc_instructor = django_filters.BooleanFilter(
+        label='Is DC Instructor?',
+        name='is_dc_instructor',
+    )
+
+    training = django_filters.ModelChoiceFilter(
+        queryset=Event.objects.ttt(),
+        action=filter_trainees_by_training,
+    )
+
+    class Meta:
+        model = Person
+        fields = [
+            'search',
+            'all_persons',
+            'homework',
+            'is_swc_instructor',
+            'is_dc_instructor',
+            'training',
+        ]
+        order_by = ["-last_login", "lastname", "-lastname", "firstname", "-firstname",
+                    "email", "-email"]
+
+    def get_order_by(self, order_value):
+        if order_value == 'firstname':
+            return ['personal', 'middle', 'family']
+        elif order_value == '-firstname':
+            return ['-personal', '-middle', '-family']
+        elif order_value == 'lastname':
+            return ['family', 'middle', 'personal']
+        elif order_value == '-lastname':
+            return ['-family', '-middle', '-personal']
+        else:
+            return super().get_order_by(order_value)
+
+
 def filter_matched(queryset, choice):
     if choice == '':
         return queryset

@@ -777,6 +777,10 @@ class EventQuerySet(models.query.QuerySet):
         """Return events for which remote metatags have been updated."""
         return self.filter(metadata_changed=True)
 
+    def ttt(self):
+        """Return only TTT events."""
+        return self.filter(tags__name='TTT')
+
 
 @reversion.register
 class Event(AssignmentMixin, models.Model):

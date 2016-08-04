@@ -201,6 +201,22 @@ class TestEvent(TestBase):
         assert event.website_url == link
 
 
+class TestEventManager(TestBase):
+    def test_ttt(self):
+        org = Organization.objects.create(domain='example.com',
+                                          fullname='Test Organization')
+        ttt_tag = Tag.objects.create(name='TTT')
+        first = Event.objects.create(slug='first', host=org)
+        second = Event.objects.create(slug='second', host=org)
+        second.tags.add(ttt_tag)
+        third = Event.objects.create(slug='third', host=org)
+        third.tags.add(ttt_tag)
+
+        got = set(Event.objects.ttt())
+        expected = {second, third}
+        self.assertEqual(got, expected)
+
+
 class TestEventViews(TestBase):
     "Tests for the event views"
 

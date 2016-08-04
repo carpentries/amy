@@ -1,0 +1,159 @@
+{% extends "base_nav_fluid_sidebar.html" %}
+
+{% load crispy_forms_tags %}
+{% load pagination %}
+{% load tags %}
+{% load training_progress %}
+
+{% block content %}
+
+<form role="form" class="form-horizontal training-progress" method="post">
+{% if form.errors.trainees or discard_form.errors.trainees %}
+  <div class="alert alert-danger" role="alert">Select at least one trainee.</div>
+{% elif form.errors or discard_form.errors %}
+  <div class="alert alert-danger" role="alert">Fix errors below and try again.</div>
+{% endif %}
+
+<div class="alert alert- alert-dismissible" role="alert">
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+  <strong>Warning!</strong> Better check yourself, you're not looking too good.
+</div>
+
+<p>Hint: This list is ordered by last login time by default. You can ask trainees participating in your discussion/demo session to login into AMY and, then, they will appear at the top of this list.</p>
+
+{% if all_trainees %}
+  <table class="table table-striped">
+    <tr>
+      <th width="10px">
+        <input type="checkbox" select-all-checkbox />
+      </th>
+      <th>Name</th>
+      <th>
+        Progress
+        <span class="glyphicon glyphicon-question-sign"
+              data-toggle="popover" data-html="true"
+              data-content="<p>
+                            <span class='label label-success'>Passed</span>
+                            <span class='label label-warning'>Not evaluated</span>
+                            <span class='label label-danger'>Failed</span>
+                            <span class='label label-default'><strike>Discarded</strike></span></p>
+                            <p>Click one of labels below to edit or delete it.</p>
+                           "></span>
+      </th>
+      <th>Training</th>
+      <th>Training requests</th>
+      <th width="90px">
+        Eligible
+        <span class="glyphicon glyphicon-question-sign"
+              data-toggle="popover" data-html="true"
+              data-content="<span class='label label-default'>Not eligible to be certified</span><br />
+                            <span class='label label-success'>Eligible to be certified</span><br />
+                            <span class='label label-primary'>Certified</span>
+                           "></span>
+      </th>
+      <th class="additional-links"></th>
+    </tr>
+    {% for trainee in all_trainees %}
+      <tr>
+        <td>
+          <input type="checkbox" name="trainees" value="{{ trainee.pk }}"
+                 respond-to-select-all-checkbox
+                 email="{{ trainee.email|default:'' }}"
+                 {% if trainee in form.cleaned_data.trainees or trainee in discard_form.cleaned_data.trainees %}checked {% endif %}
+          />
+        </td>
+        <td>
+          <a href="{% url 'person_details' trainee.id %}">
+            {{ trainee.get_full_name }}
+          </a>
+          {% if trainee.email %} &lt;{{ trainee.email|urlize }}&gt; {% endif %}
+        </td>
+        <td>
+          {% for progress in trainee.trainingprogress_set.all %}
+            <a href="{% url 'trainingprogress_edit' progress.id %}?next={{ request.get_full_path|urlencode }}"
+               class="{% progress_label progress %}"
+               data-toggle="popover"
+               data-content="{% progress_description progress %}<br />Click to edit or delete."
+               data-html="true">
+              {% if progress.discarded %}<strike>{% endif %}
+                {{ progress.requirement }}
+              {% if progress.discarded %}</strike>{% endif %}
+            </a>
+            &nbsp;
+          {% endfor %}
+          <a href="{% url 'trainingprogress_add' trainee.id %}?next={{ request.get_full_path|urlencode }}"
+             class="label label-default"
+             data-toggle="popover" data-content="Click to add new progress">+</a>
+        </td>
+        <td>
+          {% for task in trainee.get_training_tasks %}
+            <a href="{% url 'event_details' task.event.slug %}">{{ task.event }}</a><br />
+          {% empty %}
+            —
+          {% endfor %}
+        </td>
+        <td>
+          {% for req in trainee.trainingrequest_set.all %}
+            <a href="{% url 'trainingrequest_details' req.pk %}">{{ req.created_at }}</a><br />
+          {% endfor %}
+        </td>
+        <td>
+          {% if trainee.is_swc_instructor %}
+            <span class="label label-primary" data-toggle="popover"
+                  data-content="This person is SWC instructor">SWC</span>
+          {% elif trainee.get_missing_swc_instructor_requirements %}
+            <span class="label label-default" data-toggle="popover" data-html="true"
+                  data-content="
+                    Not eligible to be certified as Software Carpentry Instructor. Needs to pass:
+                      <ul>
+                        {% for requirement in trainee.get_missing_swc_instructor_requirements %}
+                          <li>{{ requirement }}</li>
+                        {% endfor %}
+                      </ul>
+                  ">SWC</span>
+          {% else %}
+            <span class="label label-success" data-toggle="popover"
+                  data-content="Eligible to be certified as Software Carpentry Instructor.">SWC</span>
+          {% endif %}
+          {% if trainee.is_dc_instructor %}
+            <span class="label label-primary" data-toggle="popover"
+                  data-content="This person is DC Instructor.">DC</span>
+          {% elif trainee.get_missing_dc_instructor_requirements %}
+            <span class="label label-default" data-toggle="popover" data-html="true"
+                  data-content="
+                    Not eligible to be certified as Data Carpentry Instructor. Needs to pass:
+                    <ul>
+                      {% for requirement in trainee.get_missing_dc_instructor_requirements %}
+                        <li>{{ requirement }}</li>
+                      {% endfor %}
+                    </ul>
+                  ">DC</span>
+          {% else %}
+            <span class="label label-success" data-toggle="popover"
+                  data-content="Eligible to be certified as Data Carpentry Instructor.">DC</span>
+          {% endif %}
+        </td>
+        <td>
+          <a href="{% url 'person_details' trainee.pk %}" title="View {{ trainee.get_full_name }}"><span class="glyphicon glyphicon-info-sign"></span></a>
+          &nbsp;
+          {% if perms.workshops.change_person %}
+          <a href="{% url 'person_edit' trainee.pk %}" title="Edit {{ trainee.get_full_name }}"><span class="glyphicon glyphicon-pencil"></span></a>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </table>
+    {% pagination all_trainees %}
+
+    {% crispy discard_form %}
+
+    <h2>Add Progress to Selected Trainees</h2>
+    {% crispy form %}
+
+{% else %}
+    <p>No trainees.</p>
+{% endif %}
+
+</form>
+
+{% endblock %}

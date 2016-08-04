@@ -36,7 +36,8 @@ from workshops.filters import (
     EventFilter, OrganizationFilter, PersonFilter, TaskFilter, AirportFilter,
     EventRequestFilter, BadgeAwardsFilter, InvoiceRequestFilter,
     EventSubmissionFilter, DCSelfOrganizedEventRequestFilter,
-    TrainingRequestFilter)
+    TraineeFilter, TrainingRequestFilter,
+)
 from workshops.forms import (
     SearchForm,
     DebriefForm,
@@ -76,11 +77,13 @@ from workshops.forms import (
     DCSelfOrganizedEventRequestForm,
     DCSelfOrganizedEventRequestFormNoCaptcha,
     TrainingProgressForm,
+    BulkAddTrainingProgressForm,
     BulkChangeTrainingRequestForm,
     BulkMatchTrainingRequestForm,
     AcceptTrainingRequestForm,
     TrainingRequestUpdateForm,
     SendHomeworkForm,
+    BulkDiscardProgressesForm,
     bootstrap_helper,
     bootstrap_helper_inline_formsets,
     BulkChangeTrainingRequestForm, BulkMatchTrainingRequestForm)
@@ -3600,3 +3603,81 @@ class TrainingProgressDelete(RedirectSupportMixin, OnlyForAdminsMixin,
                              DeleteViewContext):
     model = TrainingProgress
     success_url = reverse_lazy('all_trainees')
+
+
+@admin_required
+def all_trainees(request):
+    filter = TraineeFilter(
+        request.GET,
+        # notes are too large, so we defer them
+        queryset=Person.objects.defer('notes').annotate(
+            is_swc_instructor=Sum(Case(When(badges__name='swc-instructor',
+                                            then=1),
+                                       default=0,
+                                       output_field=IntegerField())),
+            is_dc_instructor=Sum(Case(When(badges__name='dc-instructor',
+                                           then=1),
+                                      default=0,
+                                      output_field=IntegerField())),
+        )
+    )
+    trainees = get_pagination_items(request, filter)
+
+    if request.method == 'POST' and 'discard' in request.POST:
+        # Bulk discard progress of selected trainees
+        form = BulkAddTrainingProgressForm()
+        discard_form = BulkDiscardProgressesForm(request.POST)
+        if discard_form.is_valid():
+            for trainee in discard_form.cleaned_data['trainees']:
+                TrainingProgress.objects.filter(trainee=trainee)\
+                                        .update(discarded=True)
+            messages.success(request, 'Successfully discarded progress of '
+                                      'all selected trainees.')
+
+            # Raw uri contains GET parameters from django filters. We use it
+            # to preserve filter settings.
+            return redirect(request.get_raw_uri())
+
+    elif request.method == 'POST' and 'submit' in request.POST:
+        # Bulk add progress to selected trainees
+        instance = TrainingProgress(evaluated_by=request.user)
+        form = BulkAddTrainingProgressForm(request.POST, instance=instance)
+        discard_form = BulkDiscardProgressesForm()
+        if form.is_valid():
+            for trainee in form.cleaned_data['trainees']:
+                TrainingProgress.objects.create(
+                    trainee=trainee,
+                    evaluated_by=request.user,
+                    requirement=form.cleaned_data['requirement'],
+                    state=form.cleaned_data['state'],
+                    discarded=False,
+                    event=form.cleaned_data['event'],
+                    url=form.cleaned_data['url'],
+                    notes=form.cleaned_data['notes'],
+                )
+            messages.success(request, 'Successfully changed progress of '
+                                      'all selected trainees.')
+
+            return redirect(request.get_raw_uri())
+
+    else:  # GET request
+        # If the user filters by training, we want to set initial values for
+        # "requirement" and "training" fields.
+        training_id = request.GET.get('training', None) or None
+        try:
+            initial = {
+                'event': Event.objects.get(pk=training_id),
+                'requirement': TrainingRequirement.objects.get(name='Training')
+            }
+        except Event.DoesNotExist:  # or there is no `training` GET parameter
+            initial = None
+
+        form = BulkAddTrainingProgressForm(initial=initial)
+        discard_form = BulkDiscardProgressesForm()
+
+    context = {'title': 'Trainees',
+               'all_trainees': trainees,
+               'filter': filter,
+               'form': form,
+               'discard_form': discard_form}
+    return render(request, 'workshops/all_trainees.html', context)

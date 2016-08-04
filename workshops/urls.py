@@ -1,4 +1,5 @@
 from django.conf.urls import url
+
 from workshops import views
 
 urlpatterns = [
@@ -139,6 +140,8 @@ urlpatterns = [
     url(r'^training_requests/csv/$', views.download_trainingrequests, name='download_trainingrequests'),
     url(r'^training_request/(?P<request_id>\d+)/?$', views.trainingrequest_details, name='trainingrequest_details'),
     url(r'^training_request/(?P<pk>\d+)/edit/??$', views.TrainingRequestUpdate.as_view(), name='trainingrequest_edit'),
+
+    url(r'^trainees/?$', views.all_trainees, name='all_trainees'),
 
     url(r'^training_progress/(?P<pk>\d+)/edit$', views.TrainingProgressUpdate.as_view(), name='trainingprogress_edit'),
     url(r'^training_progress/(?P<pk>\d+)/delete$', views.TrainingProgressDelete.as_view(), name='trainingprogress_delete'),
