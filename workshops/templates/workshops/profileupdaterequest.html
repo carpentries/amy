@@ -15,13 +15,13 @@
   <div class="alert alert-danger" role="alert">
     <p><strong>Error:</strong> No-one matches this email ({{ new.email }}) or name ({{ new.personal }} {{ new.family }}). Look up possible match yourself using search option and then point to that person below.</p>
   </div>
-  {% crispy person_form form_helper %}
+  {% crispy person_form %}
   {% endif %}
   {% if person_selected %}
   <div class="alert alert-warning" role="alert">
     <p><strong>Re-select:</strong> You can change your selection below.</p>
   </div>
-  {% crispy person_form form_helper %}
+  {% crispy person_form %}
   {% endif %}
 {% else %}
   <div class="alert alert-warning" role="alert">

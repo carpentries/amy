@@ -33,30 +33,85 @@ AUTOCOMPLETE_HELP_TEXT = (
 
 class BootstrapHelper(FormHelper):
     """Layout and behavior for crispy-displayed forms."""
-    form_class = 'form-horizontal'
-    label_class = 'col-lg-2'
-    field_class = 'col-lg-8'
     html5_required = True
 
-    def __init__(self, form=None):
+    def __init__(self,
+                 form=None,
+                 duplicate_buttons_on_top=False,
+                 submit_label='Submit',
+                 submit_name='submit',
+                 use_get_method=False,
+                 wider_labels=False,
+                 add_submit_button=True,
+                 add_delete_button=False,
+                 additional_form_class='',
+                 form_tag=True,
+                 display_labels=True,
+                 form_action=None):
+        """
+        `duplicate_buttons_on_top` -- Whether submit buttons should be
+        displayed on both top and bottom of the form.
+
+        `use_get_method` -- Force form to use GET instead of default POST.
+
+        `wider_labels` -- SWCEventRequestForm and DCEventRequestForm have
+        long labels, so this flag (set to True) is used to address that issue.
+
+        `add_delete_button` -- displays additional red "delete" button.
+        If you want to use it, you need to include in your template the
+        following code:
+
+            <form action="delete?next={{ request.GET.next|urlencode }}" method="POST" id="delete-form">
+              {% csrf_token %}
+            </form>
+
+        This is necessary, because delete button must be reassigned from the
+        form using this helper to "delete-form". This reassignment is done
+        via HTML5 "form" attribute on the "delete" button.
+
+        `display_labels` -- Set to False, when your form has only submit
+        buttons and you want these buttons to be aligned to left.
+        """
+
         super().__init__(form)
 
         self.attrs['role'] = 'form'
-        self.inputs.append(Submit('submit', 'Submit'))
 
+        self.duplicate_buttons_on_top = duplicate_buttons_on_top
 
-class BootstrapHelperGet(BootstrapHelper):
-    """Force form to use GET instead of default POST."""
-    form_method = 'get'
+        self.submit_label = submit_label
 
+        if use_get_method:
+            self.form_method = 'get'
 
-class BootstrapHelperWithAdd(BootstrapHelper):
-    """Change form's 'Submit' to 'Add'."""
+        if wider_labels:
+            assert display_labels
+            self.label_class = 'col-lg-3'
+            self.field_class = 'col-lg-7'
+        elif display_labels:
+            self.label_class = 'col-lg-2'
+            self.field_class = 'col-lg-8'
+        else:
+            self.label_class = ''
+            self.field_class = 'col-lg-12'
 
-    def __init__(self, form=None):
-        super().__init__(form)
+        if add_submit_button:
+            self.add_input(Submit(submit_name, submit_label))
 
-        self.inputs[-1] = Submit('submit', 'Add')
+        if add_delete_button:
+            self.add_input(Submit(
+                'delete', 'Delete',
+                onclick='return confirm("Are you sure you want to delete it?");',
+                form='delete-form',
+                css_class='btn-danger',
+                style='float: right;'))
+
+        self.form_class = 'form-horizontal ' + additional_form_class
+
+        self.form_tag = form_tag
+
+        if form_action is not None:
+            self.form_action = form_action
 
 
 class BootstrapHelperFilter(FormHelper):
@@ -70,23 +125,13 @@ class BootstrapHelperFilter(FormHelper):
         self.inputs.append(Submit('', 'Submit'))
 
 
-class BootstrapHelperWiderLabels(BootstrapHelper):
-    """SWCEventRequestForm and DCEventRequestForm have long labels, so this
-    helper is used to address that issue."""
-    label_class = 'col-lg-3'
-    field_class = 'col-lg-7'
-
-
 class BootstrapHelperFormsetInline(BootstrapHelper):
     """For use in inline formsets."""
     template = 'bootstrap/table_inline_formset.html'
 
 
 bootstrap_helper = BootstrapHelper()
-bootstrap_helper_get = BootstrapHelperGet()
-bootstrap_helper_with_add = BootstrapHelperWithAdd()
 bootstrap_helper_filter = BootstrapHelperFilter()
-bootstrap_helper_wider_labels = BootstrapHelperWiderLabels()
 bootstrap_helper_inline_formsets = BootstrapHelperFormsetInline()
 
 
@@ -231,6 +276,8 @@ class SearchForm(forms.Form):
                                      required=False,
                                      initial=True)
 
+    helper = bootstrap_helper
+
 
 class DebriefForm(forms.Form):
     '''Represent general debrief form.'''
@@ -242,6 +289,8 @@ class DebriefForm(forms.Form):
         label='End date as YYYY-MD-DD',
         input_formats=['%Y-%m-%d', ]
     )
+
+    helper = BootstrapHelper(use_get_method=True)
 
 
 class EventForm(forms.ModelForm):
@@ -375,6 +424,8 @@ class TaskForm(forms.ModelForm):
         widget=selectable.AutoComboboxSelectWidget,
     )
 
+    helper = BootstrapHelper(submit_label='Add')
+
     class Meta:
         model = Task
         fields = '__all__'
@@ -412,6 +463,8 @@ class PersonForm(forms.ModelForm):
         help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectMultipleWidget,
     )
+
+    helper = bootstrap_helper
 
     class Meta:
         model = Person
@@ -462,6 +515,8 @@ class PersonsSelectionForm(forms.Form):
         help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
+
+    helper = BootstrapHelper(use_get_method=True)
 
 
 class PersonsMergeForm(forms.Form):
@@ -573,6 +628,8 @@ class BadgeAwardForm(forms.ModelForm):
         widget=selectable.AutoComboboxSelectWidget,
     )
 
+    helper = bootstrap_helper
+
     class Meta:
         model = Award
         fields = '__all__'
@@ -597,6 +654,8 @@ class PersonAwardForm(forms.ModelForm):
         widget=selectable.AutoComboboxSelectWidget,
     )
 
+    helper = BootstrapHelper(submit_label='Add')
+
     class Meta:
         model = Award
         fields = '__all__'
@@ -612,6 +671,8 @@ class PersonTaskForm(forms.ModelForm):
         help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
+
+    helper = BootstrapHelper(submit_label='Add')
 
     class Meta:
         model = Task
@@ -630,12 +691,16 @@ class OrganizationForm(forms.ModelForm):
         ],
     )
 
+    helper = bootstrap_helper
+
     class Meta:
         model = Organization
         fields = ['domain', 'fullname', 'country', 'notes']
 
 
 class MembershipForm(forms.ModelForm):
+    helper = bootstrap_helper
+
     class Meta:
         model = Membership
         fields = '__all__'
@@ -658,6 +723,8 @@ class SponsorshipForm(forms.ModelForm):
         help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
+
+    helper = BootstrapHelper(submit_label='Add')
 
     class Meta:
         model = Sponsorship
@@ -684,6 +751,8 @@ class SWCEventRequestForm(forms.ModelForm):
         help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
+
+    helper = BootstrapHelper(wider_labels=True)
 
     class Meta:
         model = EventRequest
@@ -736,6 +805,8 @@ class EventSubmitFormNoCaptcha(forms.ModelForm):
 class EventSubmitForm(EventSubmitFormNoCaptcha):
     captcha = ReCaptchaField()
 
+    helper = BootstrapHelper(wider_labels=True)
+
 
 class DCSelfOrganizedEventRequestFormNoCaptcha(forms.ModelForm):
     # the easiest way to make these fields required without rewriting their
@@ -764,6 +835,8 @@ class DCSelfOrganizedEventRequestFormNoCaptcha(forms.ModelForm):
 class DCSelfOrganizedEventRequestForm(
         DCSelfOrganizedEventRequestFormNoCaptcha):
     captcha = ReCaptchaField()
+
+    helper = BootstrapHelper(wider_labels=True)
 
     class Meta(DCSelfOrganizedEventRequestFormNoCaptcha.Meta):
         exclude = ('active', 'created_at', 'last_updated_at', 'assigned_to')
@@ -797,6 +870,8 @@ class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):
 class ProfileUpdateRequestForm(ProfileUpdateRequestFormNoCaptcha):
     captcha = ReCaptchaField()
 
+    helper = BootstrapHelper(wider_labels=True)
+
 
 class PersonLookupForm(forms.Form):
     person = selectable.AutoCompleteSelectField(
@@ -806,6 +881,8 @@ class PersonLookupForm(forms.Form):
         help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
+
+    helper = BootstrapHelper(use_get_method=True)
 
 
 class AdminLookupForm(forms.Form):
@@ -817,8 +894,12 @@ class AdminLookupForm(forms.Form):
         widget=selectable.AutoComboboxSelectWidget,
     )
 
+    helper = bootstrap_helper
+
 
 class SimpleTodoForm(forms.ModelForm):
+    helper = bootstrap_helper
+
     class Meta:
         model = TodoItem
         fields = ('title', 'due', 'additional', 'completed', 'event')
@@ -845,6 +926,8 @@ class EventsSelectionForm(forms.Form):
         help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
+
+    helper = BootstrapHelper(use_get_method=True)
 
 
 class EventsMergeForm(forms.Form):
@@ -951,6 +1034,8 @@ class EventsMergeForm(forms.Form):
 
 
 class InvoiceRequestForm(forms.ModelForm):
+    helper = bootstrap_helper
+
     class Meta:
         model = InvoiceRequest
         fields = (
@@ -1004,6 +1089,8 @@ class TrainingRequestForm(forms.ModelForm):
               'workshop within 12 months of this Training Course',
     )
     captcha = ReCaptchaField()
+
+    helper = BootstrapHelper(wider_labels=True)
 
     class Meta:
         model = TrainingRequest
@@ -1065,6 +1152,8 @@ class AutoUpdateProfileForm(forms.ModelForm):
         required=False,
         widget=selectable.AutoComboboxSelectMultipleWidget,
     )
+
+    helper = bootstrap_helper
 
     class Meta:
         model = Person

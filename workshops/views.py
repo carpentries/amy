@@ -77,10 +77,7 @@ from workshops.forms import (
     DCSelfOrganizedEventRequestFormNoCaptcha,
     bootstrap_helper,
     bootstrap_helper_inline_formsets,
-    bootstrap_helper_with_add,
-    bootstrap_helper_filter,
-    bootstrap_helper_get, bootstrap_helper_wider_labels,
-    BootstrapHelperWiderLabels)
+)
 from workshops.management.commands.check_for_workshop_websites_updates import (
     Command as WebsiteUpdatesCommand,
 )
@@ -156,7 +153,11 @@ class CreateViewContext(SuccessMessageMixin, CreateView):
         else:
             context['title'] = 'New object'
 
-        context['form_helper'] = bootstrap_helper
+        form = context['form']
+        if not hasattr(form, 'helper'):
+            # This is a default helper if no other is available.
+            form.helper = BootstrapHelper(submit_label='Add')
+
         return context
 
     def get_success_message(self, cleaned_data):
@@ -186,7 +187,11 @@ class UpdateViewContext(SuccessMessageMixin, UpdateView):
         # edited
         context['title'] = str(self.object)
 
-        context['form_helper'] = bootstrap_helper
+        form = context['form']
+        if not hasattr(form, 'helper'):
+            # This is a default helper if no other is available.
+            form.helper = BootstrapHelper(submit_label='Update')
+
         return context
 
     def get_success_message(self, cleaned_data):
@@ -241,7 +246,6 @@ class FilteredListView(ListView):
         """Enhance context by adding a filter to it."""
         context = super().get_context_data(**kwargs)
         context['filter'] = self.filter
-        context['form_helper'] = bootstrap_helper_filter
         return context
 
 
@@ -376,8 +380,7 @@ def all_organizations(request):
     organizations = get_pagination_items(request, filter)
     context = {'title' : 'All Organizations',
                'all_organizations' : organizations,
-               'filter': filter,
-               'form_helper': bootstrap_helper_filter}
+               'filter': filter}
     return render(request, 'workshops/all_organizations.html', context)
 
 
@@ -443,7 +446,6 @@ def membership_create(request, org_domain):
     context = {
         'title': 'New membership for organization {}'.format(organization),
         'form': form,
-        'form_helper': bootstrap_helper,
     }
     return render(request, 'workshops/generic_form.html', context)
 
@@ -490,8 +492,7 @@ def all_airports(request):
     airports = get_pagination_items(request, filter)
     context = {'title' : 'All Airports',
                'all_airports' : airports,
-               'filter': filter,
-               'form_helper': bootstrap_helper_filter}
+               'filter': filter}
     return render(request, 'workshops/all_airports.html', context)
 
 
@@ -557,8 +558,7 @@ def all_persons(request):
 
     context = {'title' : 'All Persons',
                'all_persons' : persons,
-               'filter': filter,
-               'form_helper': bootstrap_helper_filter}
+               'filter': filter}
     return render(request, 'workshops/all_persons.html', context)
 
 
@@ -904,7 +904,6 @@ def person_edit(request, person_id):
             else:
                 messages.error(request, 'Fix errors below.')
 
-    # two separate forms on one page
     context = {'title': 'Edit Person {0}'.format(str(person)),
                'person_form': person_form,
                'object': person,
@@ -913,8 +912,6 @@ def person_edit(request, person_id):
                'award_form': award_form,
                'tasks': tasks,
                'task_form': task_form,
-               'form_helper': bootstrap_helper,
-               'form_helper_with_add': bootstrap_helper_with_add,
                }
     return render(request, 'workshops/person_edit_form.html', context)
 
@@ -974,11 +971,11 @@ def person_password(request, person_id):
     else:
         form = Form(user)
 
+    form.helper = bootstrap_helper
     return render(request, 'workshops/generic_form.html', {
         'form': form,
         'model': Person,
         'object': user,
-        'form_helper': bootstrap_helper,
         'title': 'Change password',
     })
 
@@ -998,9 +995,8 @@ def persons_merge(request):
         context = {
             'title': 'Merge Persons',
             'form': PersonsSelectionForm(),
-            'form_helper': bootstrap_helper_get,
         }
-        return render(request, 'workshops/merge_form.html', context)
+        return render(request, 'workshops/generic_form.html', context)
 
     obj_a = get_object_or_404(Person, pk=obj_a_pk)
     obj_b = get_object_or_404(Person, pk=obj_b_pk)
@@ -1100,8 +1096,7 @@ def all_events(request):
     events = get_pagination_items(request, filter)
     context = {'title' : 'All Events',
                'all_events' : events,
-               'filter': filter,
-               'form_helper': bootstrap_helper_filter}
+               'filter': filter}
     return render(request, 'workshops/all_events.html', context)
 
 
@@ -1159,9 +1154,8 @@ def event_details(request, slug):
             initial={'person': event.assigned_to}
         )
 
-    person_lookup_helper = BootstrapHelper()
-    person_lookup_helper.form_action = reverse('event_assign',
-                                               args=[slug])
+    person_lookup_form.helper = BootstrapHelper(
+        form_action=reverse('event_assign', args=[slug]))
     context = {
         'title': 'Event {0}'.format(event),
         'event': event,
@@ -1174,7 +1168,6 @@ def event_details(request, slug):
         'helper': bootstrap_helper,
         'today': datetime.date.today(),
         'person_lookup_form': person_lookup_form,
-        'person_lookup_helper': person_lookup_helper,
     }
     return render(request, 'workshops/event.html', context)
 
@@ -1316,8 +1309,6 @@ def event_edit(request, slug):
                'tasks': tasks,
                'task_form': task_form,
                'sponsor_form': sponsor_form,
-               'form_helper': bootstrap_helper,
-               'form_helper_with_add': bootstrap_helper_with_add,
                }
     return render(request, 'workshops/event_edit_form.html', context)
 
@@ -1404,9 +1395,8 @@ def events_merge(request):
         context = {
             'title': 'Merge Events',
             'form': EventsSelectionForm(),
-            'form_helper': bootstrap_helper_get,
         }
-        return render(request, 'workshops/merge_form.html', context)
+        return render(request, 'workshops/generic_form.html', context)
 
     obj_a = get_object_or_404(Event, slug=obj_a_slug)
     obj_b = get_object_or_404(Event, slug=obj_b_slug)
@@ -1503,7 +1493,6 @@ def event_invoice(request, slug):
         'title_right': 'New invoice request',
         'event': event,
         'form': form,
-        'form_helper': bootstrap_helper,
     }
     return render(request, 'workshops/event_invoice.html', context)
 
@@ -1698,8 +1687,7 @@ def all_tasks(request):
     tasks = get_pagination_items(request, filter)
     context = {'title' : 'All Tasks',
                'all_tasks' : tasks,
-               'filter': filter,
-               'form_helper': bootstrap_helper_filter}
+               'filter': filter}
     return render(request, 'workshops/all_tasks.html', context)
 
 
@@ -1788,8 +1776,7 @@ def badge_details(request, badge_name):
     context = {'title': 'Badge {0}'.format(badge),
                'badge': badge,
                'awards': awards,
-               'filter': filter,
-               'form_helper': bootstrap_helper_filter}
+               'filter': filter}
     return render(request, 'workshops/badge.html', context)
 
 
@@ -1817,7 +1804,6 @@ def badge_award(request, badge_name):
         'title': 'Badge {0}'.format(badge),
         'badge': badge,
         'form': form,
-        'form_helper': bootstrap_helper,
     }
     return render(request, 'workshops/generic_form.html', context)
 
@@ -1890,14 +1876,14 @@ def workshop_staff(request):
         )
     )
 
-    form = WorkshopStaffForm()
+    filter_form = WorkshopStaffForm()
 
     lessons = list()
 
     if 'submit' in request.GET:
-        form = WorkshopStaffForm(request.GET)
-        if form.is_valid():
-            data = form.cleaned_data
+        filter_form = WorkshopStaffForm(request.GET)
+        if filter_form.is_valid():
+            data = filter_form.cleaned_data
 
             if data['lessons']:
                 lessons = data['lessons']
@@ -1960,7 +1946,7 @@ def workshop_staff(request):
     people = get_pagination_items(request, people)
     context = {
         'title': 'Find Workshop Staff',
-        'form': form,
+        'filter_form': filter_form,
         'persons': people,
         'lessons': lessons,
         'instructor_badges': instructor_badges,
@@ -2043,7 +2029,6 @@ def search(request):
 
     context = {'title' : 'Search',
                'form': form,
-               'form_helper': bootstrap_helper,
                'term' : term,
                'organizations' : organizations,
                'events' : events,
@@ -2077,7 +2062,6 @@ def instructors_by_date(request):
 
     context = {'title': 'List of instructors by time period',
                'form': form,
-               'form_helper': bootstrap_helper_get,
                'all_tasks': tasks,
                'emails': emails,
                'start_date': start_date,
@@ -2332,7 +2316,6 @@ class SWCEventRequest(LoginNotRequiredMixin, EmailSendMixin, CreateViewContext):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = self.page_title
-        context['form_helper'] = bootstrap_helper_wider_labels
         return context
 
     def get_subject(self):
@@ -2414,7 +2397,6 @@ def all_eventrequests(request):
         'title': 'Workshop requests',
         'requests': eventrequests,
         'filter': filter,
-        'form_helper': bootstrap_helper_filter,
     }
     return render(request, 'workshops/all_eventrequests.html', context)
 
@@ -2435,12 +2417,10 @@ class EventRequestDetails(OnlyForAdminsMixin, DetailView):
                 initial={'person': self.object.assigned_to}
             )
 
-        person_lookup_helper = BootstrapHelper()
-        person_lookup_helper.form_action = reverse('eventrequest_assign',
-                                                   args=[self.object.pk])
+        person_lookup_form.helper = BootstrapHelper(
+            form_action=reverse('eventrequest_assign', args=[self.object.pk]))
 
         context['person_lookup_form'] = person_lookup_form
-        context['person_lookup_helper'] = person_lookup_helper
         return context
 
 
@@ -2505,7 +2485,6 @@ def profileupdaterequest_create(request):
     This one is used when instructors want to change their information.
     """
     form = ProfileUpdateRequestForm()
-    form_helper = bootstrap_helper_wider_labels
     page_title = 'Update Instructor Profile'
 
     if request.method == 'POST':
@@ -2528,7 +2507,6 @@ def profileupdaterequest_create(request):
     context = {
         'title': page_title,
         'form': form,
-        'form_helper': form_helper,
     }
     return render(request, 'forms/profileupdate.html', context)
 
@@ -2608,7 +2586,6 @@ def profileupdaterequest_details(request, request_id):
         'old': person,
         'person_form': form,
         'person_selected': person_selected,
-        'form_helper': bootstrap_helper_get,
         'airport': airport,
     }
     return render(request, 'workshops/profileupdaterequest.html', context)
@@ -2739,7 +2716,6 @@ class EventSubmission(LoginNotRequiredMixin, EmailSendMixin, CreateViewContext):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Tell us about your workshop'
-        context['form_helper'] = bootstrap_helper_wider_labels
         return context
 
     def get_subject(self):
@@ -2808,12 +2784,11 @@ class EventSubmissionDetails(OnlyForAdminsMixin, DetailView):
                 initial={'person': self.object.assigned_to}
             )
 
-        person_lookup_helper = BootstrapHelper()
-        person_lookup_helper.form_action = reverse('eventsubmission_assign',
-                                                   args=[self.object.pk])
+        person_lookup_form.helper = BootstrapHelper(
+            form_action=reverse('eventsubmission_assign',
+                                args=[self.object.pk]))
 
         context['person_lookup_form'] = person_lookup_form
-        context['person_lookup_helper'] = person_lookup_helper
         return context
 
 
@@ -2899,7 +2874,6 @@ class DCSelfOrganizedEventRequest(LoginNotRequiredMixin, EmailSendMixin,
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Request a self-organized Data Carpentry workshop'
-        context['form_helper'] = bootstrap_helper_wider_labels
         return context
 
     def get_subject(self):
@@ -2969,12 +2943,11 @@ class DCSelfOrganizedEventRequestDetails(OnlyForAdminsMixin, DetailView):
                 initial={'person': self.object.assigned_to}
             )
 
-        person_lookup_helper = BootstrapHelper()
-        person_lookup_helper.form_action = reverse(
-            'dcselforganizedeventrequest_assign', args=[self.object.pk])
+        person_lookup_form.helper = BootstrapHelper(
+            form_action=reverse('dcselforganizedeventrequest_assign',
+                                args=[self.object.pk]))
 
         context['person_lookup_form'] = person_lookup_form
-        context['person_lookup_helper'] = person_lookup_helper
         return context
 
 
@@ -3084,10 +3057,11 @@ def todos_add(request, slug):
         else:
             messages.error(request, 'Fix errors below.')
 
+    formset.helper = bootstrap_helper_inline_formsets
+
     context = {
         'title': 'Add standard TODOs to the event',
         'formset': formset,
-        'helper': bootstrap_helper_inline_formsets,
         'event': event,
     }
     return render(request, 'workshops/todos_add.html', context)
@@ -3228,7 +3202,6 @@ def trainingrequest_create(request):
     context = {
         'title': page_title,
         'form': form,
-        'form_helper': BootstrapHelperWiderLabels(form),
     }
     return render(request, 'forms/trainingrequest.html', context)
 
@@ -3294,6 +3267,5 @@ def autoupdate_profile(request):
     context = {
         'title': 'Update Your Profile',
         'form': form,
-        'form_helper': bootstrap_helper,
     }
     return render(request, 'workshops/generic_form_nonav.html', context)

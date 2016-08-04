@@ -3,11 +3,6 @@
 {% load crispy_forms_tags %}
 {% load pagination %}
 
-{% block sidebar %}
-    <h3>Filter</h3>
-    {% crispy filter.form form_helper %}
-{% endblock %}
-
 {% block content %}
     {% if perms.workshops.add_airport %}
     <p><a href="{% url 'airport_add' %}" class="btn btn-success">New airport</a></p>

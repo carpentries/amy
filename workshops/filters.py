@@ -73,8 +73,15 @@ class EventStateFilter(django_filters.ChoiceFilter):
             return qs
 
 
-class FilterSetWithoutHelpText(django_filters.FilterSet):
-    """Because of some stupidity this got merged to django-filters:
+class AMYFilterSet(django_filters.FilterSet):
+    """
+    This base class serves two roles:
+
+    1. It sets FormHelper.
+
+    2. It solves the following bug:
+
+    Because of some stupidity this got merged to django-filters:
     https://github.com/alex/django-filter/commit/90d244b
 
     What it does is it adds a help_text to ALL filters!!!
@@ -88,8 +95,11 @@ class FilterSetWithoutHelpText(django_filters.FilterSet):
         for key in self.filters.items():
             self.filters[key[0]].extra.update({'help_text': ''})
 
+        # Set default FormHelper
+        self.form.helper = bootstrap_helper_filter
 
-class EventFilter(FilterSetWithoutHelpText):
+
+class EventFilter(AMYFilterSet):
     assigned_to = ForeignKeyAllValuesFilter(Person)
     host = ForeignKeyAllValuesFilter(Organization)
     administrator = ForeignKeyAllValuesFilter(Organization)
@@ -132,7 +142,7 @@ def filter_active_eventrequest(qs, value):
     return qs
 
 
-class EventRequestFilter(FilterSetWithoutHelpText):
+class EventRequestFilter(AMYFilterSet):
     assigned_to = ForeignKeyAllValuesFilter(Person)
     country = AllCountriesFilter()
     active = django_filters.ChoiceFilter(
@@ -158,7 +168,7 @@ class EventRequestFilter(FilterSetWithoutHelpText):
         order_by = ['-created_at', 'created_at']
 
 
-class OrganizationFilter(FilterSetWithoutHelpText):
+class OrganizationFilter(AMYFilterSet):
     country = AllCountriesFilter()
 
     class Meta:
@@ -184,7 +194,7 @@ def filter_taught_workshops(queryset, values):
                    .distinct()
 
 
-class PersonFilter(FilterSetWithoutHelpText):
+class PersonFilter(AMYFilterSet):
     taught_workshops = django_filters.ModelMultipleChoiceFilter(
         queryset=Tag.objects.all(), label='Taught at workshops of type',
         action=filter_taught_workshops,
@@ -210,7 +220,7 @@ class PersonFilter(FilterSetWithoutHelpText):
         return super().get_order_by(order_value)
 
 
-class TaskFilter(FilterSetWithoutHelpText):
+class TaskFilter(AMYFilterSet):
     class Meta:
         model = Task
         fields = [
@@ -230,7 +240,7 @@ class TaskFilter(FilterSetWithoutHelpText):
         ]
 
 
-class AirportFilter(FilterSetWithoutHelpText):
+class AirportFilter(AMYFilterSet):
     fullname = django_filters.CharFilter(lookup_type='icontains')
 
     class Meta:
@@ -241,7 +251,7 @@ class AirportFilter(FilterSetWithoutHelpText):
         order_by = ["iata", "-iata", "fullname", "-fullname"]
 
 
-class BadgeAwardsFilter(FilterSetWithoutHelpText):
+class BadgeAwardsFilter(AMYFilterSet):
     awarded_after = django_filters.DateFilter(name='awarded',
                                               lookup_type='gte')
     awarded_before = django_filters.DateFilter(name='awarded',
@@ -258,7 +268,7 @@ class BadgeAwardsFilter(FilterSetWithoutHelpText):
         ]
 
 
-class InvoiceRequestFilter(FilterSetWithoutHelpText):
+class InvoiceRequestFilter(AMYFilterSet):
     STATUS_CHOICES = (('', 'All'),) + InvoiceRequest.STATUS_CHOICES
     status = django_filters.ChoiceFilter(
         choices=STATUS_CHOICES,
@@ -285,7 +295,7 @@ def filter_active_eventsubmission(qs, value):
     return qs
 
 
-class EventSubmissionFilter(FilterSetWithoutHelpText):
+class EventSubmissionFilter(AMYFilterSet):
     active = django_filters.ChoiceFilter(
         choices=(('', 'All'), ('true', 'Open'), ('false', 'Closed')),
         label='Status', action=filter_active_eventsubmission,
@@ -312,7 +322,7 @@ def filter_active_dcselforganizedeventrequest(qs, value):
     return qs
 
 
-class DCSelfOrganizedEventRequestFilter(FilterSetWithoutHelpText):
+class DCSelfOrganizedEventRequestFilter(AMYFilterSet):
     active = django_filters.ChoiceFilter(
         choices=(('', 'All'), ('true', 'Open'), ('false', 'Closed')),
         label='Status', action=filter_active_dcselforganizedeventrequest,
