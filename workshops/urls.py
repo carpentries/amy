@@ -138,6 +138,7 @@ urlpatterns = [
     url(r'^training_requests/$', views.all_trainingrequests, name='all_trainingrequests'),
     url(r'^training_requests/csv/$', views.download_trainingrequests, name='download_trainingrequests'),
     url(r'^training_request/(?P<request_id>\d+)/?$', views.trainingrequest_details, name='trainingrequest_details'),
+    url(r'^training_request/(?P<pk>\d+)/edit/??$', views.TrainingRequestUpdate.as_view(), name='trainingrequest_edit'),
 
     url(r'^training_progress/(?P<pk>\d+)/edit$', views.TrainingProgressUpdate.as_view(), name='trainingprogress_edit'),
     url(r'^training_progress/(?P<pk>\d+)/delete$', views.TrainingProgressDelete.as_view(), name='trainingprogress_delete'),

@@ -1139,6 +1139,34 @@ class TrainingRequestForm(forms.ModelForm):
         }
 
 
+class TrainingRequestUpdateForm(forms.ModelForm):
+    person = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.PersonLookup,
+        label='Matched Trainee',
+        required=False,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+    helper = BootstrapHelper(duplicate_buttons_on_top=True,
+                             submit_label='Update')
+
+    class Meta:
+        model = TrainingRequest
+        exclude = ()
+        widgets = {
+            'occupation': forms.RadioSelect(),
+            'domains': forms.CheckboxSelectMultiple(),
+            'gender': forms.RadioSelect(),
+            'previous_involvement': forms.CheckboxSelectMultiple(),
+            'previous_training': forms.RadioSelect(),
+            'previous_experience': forms.RadioSelect(),
+            'programming_language_usage_frequency': forms.RadioSelect(),
+            'teaching_frequency_expectation': forms.RadioSelect(),
+            'max_travelling_frequency': forms.RadioSelect(),
+            'state': forms.RadioSelect()
+        }
+
+
 class AutoUpdateProfileForm(forms.ModelForm):
     username = forms.CharField(disabled=True, required=False)
     github = forms.CharField(

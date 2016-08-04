@@ -79,6 +79,7 @@ from workshops.forms import (
     BulkChangeTrainingRequestForm,
     BulkMatchTrainingRequestForm,
     AcceptTrainingRequestForm,
+    TrainingRequestUpdateForm,
     SendHomeworkForm,
     bootstrap_helper,
     bootstrap_helper_inline_formsets,
@@ -3551,6 +3552,12 @@ def download_trainingrequests(request):
 
     return response
 
+
+class TrainingRequestUpdate(RedirectSupportMixin,
+                            OnlyForAdminsMixin,
+                            UpdateViewContext):
+    model = TrainingRequest
+    form_class = TrainingRequestUpdateForm
 
 
 class TrainingProgressCreate(RedirectSupportMixin,
