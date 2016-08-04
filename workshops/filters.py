@@ -1,8 +1,11 @@
-import django.forms.widgets
+import re
 
 import django_filters
+from django.db.models import Q
+from django.forms import widgets
 from django_countries import Countries
 
+from workshops.forms import bootstrap_helper_filter
 from workshops.models import (
     Event,
     Organization,
@@ -15,6 +18,7 @@ from workshops.models import (
     InvoiceRequest,
     EventSubmission,
     DCSelfOrganizedEventRequest,
+    TrainingRequest,
 )
 
 EMPTY_SELECTION = (None, '---------')
@@ -70,8 +74,15 @@ class EventStateFilter(django_filters.ChoiceFilter):
             return qs
 
 
-class FilterSetWithoutHelpText(django_filters.FilterSet):
-    """Because of some stupidity this got merged to django-filters:
+class AMYFilterSet(django_filters.FilterSet):
+    """
+    This base class serves two roles:
+
+    1. It sets FormHelper.
+
+    2. It solves the following bug:
+
+    Because of some stupidity this got merged to django-filters:
     https://github.com/alex/django-filter/commit/90d244b
 
     What it does is it adds a help_text to ALL filters!!!
@@ -85,8 +96,11 @@ class FilterSetWithoutHelpText(django_filters.FilterSet):
         for key in self.filters.items():
             self.filters[key[0]].extra.update({'help_text': ''})
 
+        # Set default FormHelper
+        self.form.helper = bootstrap_helper_filter
 
-class EventFilter(FilterSetWithoutHelpText):
+
+class EventFilter(AMYFilterSet):
     assigned_to = ForeignKeyAllValuesFilter(Person)
     host = ForeignKeyAllValuesFilter(Organization)
     administrator = ForeignKeyAllValuesFilter(Organization)
@@ -129,19 +143,19 @@ def filter_active_eventrequest(qs, value):
     return qs
 
 
-class EventRequestFilter(FilterSetWithoutHelpText):
+class EventRequestFilter(AMYFilterSet):
     assigned_to = ForeignKeyAllValuesFilter(Person)
     country = AllCountriesFilter()
     active = django_filters.ChoiceFilter(
         choices=(('all', 'All'), ('true', 'Open'), ('false', 'Closed')),
         label='Status', action=filter_active_eventrequest,
-        widget=django.forms.widgets.RadioSelect,
+        widget=widgets.RadioSelect,
     )
     workshop_type = django_filters.ChoiceFilter(
         choices=(('', 'All'), ('swc', 'Software-Carpentry'),
                  ('dc', 'Data-Carpentry')),
         label='Workshop type',
-        widget=django.forms.widgets.RadioSelect,
+        widget=widgets.RadioSelect,
     )
 
     class Meta:
@@ -155,7 +169,7 @@ class EventRequestFilter(FilterSetWithoutHelpText):
         order_by = ['-created_at', 'created_at']
 
 
-class OrganizationFilter(FilterSetWithoutHelpText):
+class OrganizationFilter(AMYFilterSet):
     country = AllCountriesFilter()
 
     class Meta:
@@ -181,7 +195,7 @@ def filter_taught_workshops(queryset, values):
                    .distinct()
 
 
-class PersonFilter(FilterSetWithoutHelpText):
+class PersonFilter(AMYFilterSet):
     taught_workshops = django_filters.ModelMultipleChoiceFilter(
         queryset=Tag.objects.all(), label='Taught at workshops of type',
         action=filter_taught_workshops,
@@ -207,7 +221,217 @@ class PersonFilter(FilterSetWithoutHelpText):
         return super().get_order_by(order_value)
 
 
-class TaskFilter(FilterSetWithoutHelpText):
+def filter_all_persons(queryset, all_persons):
+    """Filter only trainees when all_persons==False."""
+    if all_persons:
+        return queryset
+    else:
+        return queryset.filter(
+            task__role__name='learner',
+            task__event__tags__name='TTT').distinct()
+
+
+def filter_trainees_by_trainee_name_or_email(queryset, name):
+    if name:
+        tokens = re.split('\s+', name)  # 'Greg Wilson' -> ['Greg', 'Wilson']
+        # Each token must match email address or github username or personal or
+        # family name.
+        for token in tokens:
+            queryset = queryset.filter(Q(personal__icontains=token) |
+                                       Q(family__icontains=token) |
+                                       Q(email__icontains=token))
+        return queryset
+    else:
+        return queryset
+
+
+def filter_trainees_by_unevaluated_homework_presence(queryset, flag):
+    if flag:  # return only trainees with an unevaluated homework
+        return queryset.filter(trainingprogress__state='n').distinct()
+    else:
+        return queryset
+
+
+def filter_trainees_by_training_request_presence(queryset, flag):
+    if flag is None:
+        return queryset
+    elif flag is True:  # return only trainees who submitted training request
+        return queryset.filter(trainingrequest__isnull=False).distinct()
+    else:  # return only trainees who did not submit training request
+        return queryset.filter(trainingrequest__isnull=True)
+
+
+def filter_trainees_by_training(queryset, training):
+    if training is None:
+        return queryset
+    else:
+        return queryset.filter(task__role__name='learner',
+                               task__event=training).distinct()
+
+
+class TraineeFilter(AMYFilterSet):
+    search = django_filters.CharFilter(
+        action=filter_trainees_by_trainee_name_or_email,
+        label='Name or Email')
+
+    all_persons = django_filters.BooleanFilter(
+        label='Include all people, not only trainees',
+        action=filter_all_persons,
+        widget=widgets.CheckboxInput)
+
+    homework = django_filters.BooleanFilter(
+        label='Only trainees with unevaluated homework',
+        widget=widgets.CheckboxInput,
+        action=filter_trainees_by_unevaluated_homework_presence,
+    )
+
+    training_request = django_filters.BooleanFilter(
+        label='Is training request present?',
+        action=filter_trainees_by_training_request_presence,
+    )
+
+    is_swc_instructor = django_filters.BooleanFilter(
+        label='Is SWC Instructor?',
+        name='is_swc_instructor',
+    )
+
+    is_dc_instructor = django_filters.BooleanFilter(
+        label='Is DC Instructor?',
+        name='is_dc_instructor',
+    )
+
+    training = django_filters.ModelChoiceFilter(
+        queryset=Event.objects.ttt(),
+        action=filter_trainees_by_training,
+    )
+
+    class Meta:
+        model = Person
+        fields = [
+            'search',
+            'all_persons',
+            'homework',
+            'is_swc_instructor',
+            'is_dc_instructor',
+            'training',
+        ]
+        order_by = ["-last_login", "lastname", "-lastname", "firstname", "-firstname",
+                    "email", "-email"]
+
+    def get_order_by(self, order_value):
+        if order_value == 'firstname':
+            return ['personal', 'middle', 'family']
+        elif order_value == '-firstname':
+            return ['-personal', '-middle', '-family']
+        elif order_value == 'lastname':
+            return ['family', 'middle', 'personal']
+        elif order_value == '-lastname':
+            return ['-family', '-middle', '-personal']
+        else:
+            return super().get_order_by(order_value)
+
+
+def filter_matched(queryset, choice):
+    if choice == '':
+        return queryset
+    elif choice == 'u':  # unmatched
+        return queryset.filter(person=None)
+    elif choice == 'p':  # matched trainee, unmatched training
+        return queryset.filter(person__isnull=False)\
+                       .exclude(person__task__role__name='learner',
+                                person__task__event__tags__name='TTT')\
+                       .distinct()
+    else:  # choice == 't' <==> matched trainee and training
+        return queryset.filter(person__task__role__name='learner',
+                               person__task__event__tags__name='TTT')\
+                       .distinct()
+
+
+def filter_by_person(queryset, name):
+    if name == '':
+        return queryset
+    else:
+        tokens = re.split('\s+', name)  # 'Greg Wilson' -> ['Greg', 'Wilson']
+        # Each token must match email address or github username or personal or
+        # family name.
+        for token in tokens:
+            queryset = queryset.filter(
+                Q(personal__icontains=token) |
+                Q(family__icontains=token) |
+                Q(email__icontains=token) |
+                Q(person__personal__icontains=token) |
+                Q(person__family__icontains=token) |
+                Q(person__email__icontains=token)
+            )
+        return queryset
+
+
+def filter_affiliation(queryset, affiliation):
+    if affiliation == '':
+        return queryset
+    else:
+        return queryset.filter(Q(affiliation__icontains=affiliation) |
+                               Q(person__affiliation__icontains=affiliation)) \
+                       .distinct()
+
+
+class TrainingRequestFilter(AMYFilterSet):
+    search = django_filters.CharFilter(
+        label='Name or Email',
+        action=filter_by_person,
+    )
+
+    state = django_filters.ChoiceFilter(
+        choices=(('', 'All'),) + TrainingRequest.STATES,
+    )
+
+    matched = django_filters.ChoiceFilter(
+        label='Is Matched?',
+        choices=(
+            ('', 'Unknown'),
+            ('u', 'Unmatched'),
+            ('p', 'Matched trainee, unmatched training'),
+            ('t', 'Matched trainee and training'),
+        ),
+        action=filter_matched,
+    )
+
+    affiliation = django_filters.CharFilter(
+        action=filter_affiliation,
+    )
+
+    location = django_filters.CharFilter(lookup_type='icontains')
+
+    class Meta:
+        model = TrainingRequest
+        fields = [
+            'search',
+            'state',
+            'matched',
+            'affiliation',
+            'location',
+        ]
+        order_by = ['created_at',
+                    '-created_at',
+                    'trainee firstname',
+                    '-trainee firstname',
+                    'trainee lastname',
+                    '-trainee lastname']
+
+    def get_order_by(self, order_value):
+        if order_value == 'trainee firstname':
+            return ['personal', 'family']
+        elif order_value == '-trainee firstname':
+            return ['-personal', '-family']
+        elif order_value == 'trainee lastname':
+            return ['family', 'personal']
+        elif order_value == '-trainee lastname':
+            return ['-family', '-personal']
+        else:
+            return super().get_order_by(order_value)
+
+
+class TaskFilter(AMYFilterSet):
     class Meta:
         model = Task
         fields = [
@@ -227,7 +451,7 @@ class TaskFilter(FilterSetWithoutHelpText):
         ]
 
 
-class AirportFilter(FilterSetWithoutHelpText):
+class AirportFilter(AMYFilterSet):
     fullname = django_filters.CharFilter(lookup_type='icontains')
 
     class Meta:
@@ -238,7 +462,7 @@ class AirportFilter(FilterSetWithoutHelpText):
         order_by = ["iata", "-iata", "fullname", "-fullname"]
 
 
-class BadgeAwardsFilter(FilterSetWithoutHelpText):
+class BadgeAwardsFilter(AMYFilterSet):
     awarded_after = django_filters.DateFilter(name='awarded',
                                               lookup_type='gte')
     awarded_before = django_filters.DateFilter(name='awarded',
@@ -255,11 +479,11 @@ class BadgeAwardsFilter(FilterSetWithoutHelpText):
         ]
 
 
-class InvoiceRequestFilter(FilterSetWithoutHelpText):
+class InvoiceRequestFilter(AMYFilterSet):
     STATUS_CHOICES = (('', 'All'),) + InvoiceRequest.STATUS_CHOICES
     status = django_filters.ChoiceFilter(
         choices=STATUS_CHOICES,
-        widget=django.forms.widgets.RadioSelect,
+        widget=widgets.RadioSelect,
     )
 
     class Meta:
@@ -282,11 +506,11 @@ def filter_active_eventsubmission(qs, value):
     return qs
 
 
-class EventSubmissionFilter(FilterSetWithoutHelpText):
+class EventSubmissionFilter(AMYFilterSet):
     active = django_filters.ChoiceFilter(
         choices=(('', 'All'), ('true', 'Open'), ('false', 'Closed')),
         label='Status', action=filter_active_eventsubmission,
-        widget=django.forms.widgets.RadioSelect,
+        widget=widgets.RadioSelect,
     )
     assigned_to = ForeignKeyAllValuesFilter(Person)
 
@@ -309,11 +533,11 @@ def filter_active_dcselforganizedeventrequest(qs, value):
     return qs
 
 
-class DCSelfOrganizedEventRequestFilter(FilterSetWithoutHelpText):
+class DCSelfOrganizedEventRequestFilter(AMYFilterSet):
     active = django_filters.ChoiceFilter(
         choices=(('', 'All'), ('true', 'Open'), ('false', 'Closed')),
         label='Status', action=filter_active_dcselforganizedeventrequest,
-        widget=django.forms.widgets.RadioSelect,
+        widget=widgets.RadioSelect,
     )
     assigned_to = ForeignKeyAllValuesFilter(Person)
 

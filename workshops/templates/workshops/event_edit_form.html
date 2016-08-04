@@ -21,7 +21,7 @@
     </div>
   </div>
   <div role="tabpanel" class="tab-pane" id="tasks">
-    {% crispy task_form form_helper_with_add %}
+    {% crispy task_form %}
     {% if tasks %}
     <table class="table table-striped">
     <tr>
@@ -46,7 +46,7 @@
     {% endif %}
   </div>
   <div role="tabpanel" class="tab-pane" id="sponsors">
-    {% crispy sponsor_form form_helper_with_add %}
+    {% crispy sponsor_form %}
     {% if object.sponsorship_set.all %}
     <table class="table table-striped">
     <tr>

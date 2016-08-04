@@ -1,4 +1,5 @@
 from django.conf.urls import url
+
 from workshops import views
 
 urlpatterns = [
@@ -135,8 +136,16 @@ urlpatterns = [
     url(r'^autoupdate_profile/$', views.autoupdate_profile, name='autoupdate_profile'),
 
     url(r'^request_training/$', views.trainingrequest_create, name='training_request'),
-    url(r'^training_requests/$', views.TrainingRequestListView.as_view(), name='all_trainingrequests'),
-    url(r'^training_requests/(?P<request_id>\d+)/?$', views.TrainingRequestDetails.as_view(), name='trainingrequest_details'),
+    url(r'^training_requests/$', views.all_trainingrequests, name='all_trainingrequests'),
+    url(r'^training_requests/csv/$', views.download_trainingrequests, name='download_trainingrequests'),
+    url(r'^training_request/(?P<request_id>\d+)/?$', views.trainingrequest_details, name='trainingrequest_details'),
+    url(r'^training_request/(?P<pk>\d+)/edit/??$', views.TrainingRequestUpdate.as_view(), name='trainingrequest_edit'),
+
+    url(r'^trainees/?$', views.all_trainees, name='all_trainees'),
+
+    url(r'^training_progress/(?P<pk>\d+)/edit$', views.TrainingProgressUpdate.as_view(), name='trainingprogress_edit'),
+    url(r'^training_progress/(?P<pk>\d+)/delete$', views.TrainingProgressDelete.as_view(), name='trainingprogress_delete'),
+    url(r'^training_progresses/add/(?P<trainee_id>\d+)?$', views.TrainingProgressCreate.as_view(), name='trainingprogress_add'),
 
     url(r'^todos/(?P<slug>[\w-]+)/add$', views.todos_add, name='todos_add'),
     url(r'^todo/(?P<todo_id>\d+)/completed', views.todo_mark_completed, name='todo_mark_completed'),

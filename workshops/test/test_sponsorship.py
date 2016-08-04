@@ -153,7 +153,7 @@ class TestSponsorshipViews(TestBase):
         )
         self.assertRedirects(
             response,
-            reverse('event_edit', kwargs={'slug': self.event.slug})
+            reverse('event_edit', kwargs={'slug': self.event.slug}) + '#sponsors',
         )
         self.assertFalse(response.context['object'].sponsorship_set.all())
         self.assertEqual(response.context['object'].sponsors.count(), 0)

@@ -925,3 +925,19 @@ class OnlyForAdminsMixin(UserPassesTestMixin):
 
 class LoginNotRequiredMixin(object):
     pass
+
+
+def homework2state(homework):
+    """ Return "none", "not-evaluated" or "passed".
+
+    `homework` -- None or TrainingProgress representing a homework."""
+
+    if homework is None:
+        return 'none'
+    elif homework.state == 'n':
+        return 'not-evaluated'
+    elif homework.state == 'p':
+        return 'passed'
+    else:  # failed homework
+        assert homework.state == 'f'
+        return 'none'

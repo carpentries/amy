@@ -40,9 +40,9 @@
         {% if person.github %}
           <a href="https://github.com/{{ person.github }}" target="_blank">{{ person.github }}</a>
           {% if is_usersocialauth_in_sync == 'unknown' %}
-            <a id="socialauth_sync_btn" href="#" class="btn btn-warning btn-xs pull-right" data-toggle="popover" data-trigger="focus" title="Unknown error" data-content="Cannot check if person can log in due to errors in GitHub API access">Allow logging in with GitHub</a>
+            <a id="socialauth_sync_btn" href="#" class="btn btn-warning btn-xs pull-right" data-toggle="popover" data-html="true" title="Unknown error" data-content="Cannot check if person can log in due to errors in GitHub API access">Allow logging in with GitHub</a>
           {% elif is_usersocialauth_in_sync == True %}
-            <a id="socialauth_sync_btn" href="#" class="btn btn-success btn-xs pull-right" data-toggle="popover" data-trigger="focus" title="Synchronized" data-content="Person can use their GitHub account to log in">Logging in allowed</a>
+            <a id="socialauth_sync_btn" href="#" class="btn btn-success btn-xs pull-right" data-toggle="popover" data-html="true" title="Synchronized" data-content="Person can use their GitHub account to log in">Logging in allowed</a>
           {% else %}
             <a href="{% url 'sync_usersocialauth' person.id %}" class="btn btn-primary btn-xs pull-right">Allow logging in with GitHub</a>
           {% endif %}
@@ -164,10 +164,4 @@
     {% endif %}
   </div>
 </div>
-{% endblock %}
-
-{% block extrajs %}
-<script type="text/javascript">
-  $('#socialauth_sync_btn').popover({placement: "left", html: true});
-</script>
 {% endblock %}

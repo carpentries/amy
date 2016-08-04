@@ -13,7 +13,8 @@ from django.contrib.auth.models import Permission, Group
 from ..forms import PersonForm, PersonsMergeForm
 from ..models import (
     Person, Task, Qualification, Award, Role, Event, KnowledgeDomain, Badge,
-    Language,
+    Organization, Language,
+    Tag, TrainingRequirement, TrainingProgress
 )
 from .base import TestBase
 
@@ -417,6 +418,34 @@ class TestPerson(TestBase):
             data,
         )
         assert response.status_code == 302
+
+    def test_get_training_tasks(self):
+        p1 = Person.objects.create(username='p1')
+        p2 = Person.objects.create(username='p2')
+        org = Organization.objects.create(domain='example.com',
+                                          fullname='Test Organization')
+        ttt, _ = Tag.objects.get_or_create(name='TTT')
+        learner, _ = Role.objects.get_or_create(name='learner')
+        other_role, _ = Role.objects.get_or_create(name='other role')
+        e1 = Event.objects.create(slug='training', host=org)
+        e1.tags.add(ttt)
+        e2 = Event.objects.create(slug='workshop', host=org)
+        e3 = Event.objects.create(slug='second-training', host=org)
+        e3.tags.add(ttt)
+
+        t1 = Task.objects.create(person=p1, event=e1, role=learner)
+
+        # Tasks with event missing 'TTT' tag are ignored
+        t2 = Task.objects.create(person=p1, event=e2, role=learner)
+
+        # Tasks with role different than 'learner' are ignored
+        t3 = Task.objects.create(person=p1, event=e3, role=other_role)
+
+        # Tasks belonging to other people should be ignored
+        t4 = Task.objects.create(person=p2, event=e1, role=learner)
+
+        self.assertEqual(set(p1.get_training_tasks()),
+                         {t1})
 
 
 class TestPersonPassword(TestBase):
@@ -835,9 +864,9 @@ class TestPersonAndUserSocialAuth(TestBase):
         self.assertSequenceEqual(got, expected)
 
     def test_errors_are_not_hidden(self):
-        """ Test that errors occuring in synchronize_usersocialauth are not
+        """Test that errors occuring in synchronize_usersocialauth are not
         hidden, that is you're not redirected to any other view. Regression
-        for #890. """
+        for #890."""
 
         self._setUpUsersAndLogin()
         with patch.object(Person, 'synchronize_usersocialauth',
@@ -846,3 +875,96 @@ class TestPersonAndUserSocialAuth(TestBase):
                 self.client.get(reverse('sync_usersocialauth',
                                         args=(self.admin.pk,)))
 
+
+class TestGetMissingSWCInstructorRequirements(TestBase):
+    def setUp(self):
+        self.person = Person.objects.create(username='person')
+        self.training = TrainingRequirement.objects.get(name='Training')
+        self.swc_homework = TrainingRequirement.objects.get(name='SWC Homework')
+        self.dc_homework = TrainingRequirement.objects.get(name='DC Homework')
+        self.discussion = TrainingRequirement.objects.get(name='Discussion')
+        self.swc_demo = TrainingRequirement.objects.get(name='SWC Demo')
+        self.dc_demo = TrainingRequirement.objects.get(name='DC Demo')
+
+    def test_all_requirements_satisfied(self):
+        TrainingProgress.objects.create(trainee=self.person, state='p',
+                                        requirement=self.training)
+        TrainingProgress.objects.create(trainee=self.person, state='p',
+                                        requirement=self.swc_homework)
+        TrainingProgress.objects.create(trainee=self.person, state='p',
+                                        requirement=self.discussion)
+        TrainingProgress.objects.create(trainee=self.person, state='p',
+                                        requirement=self.swc_demo)
+
+        self.assertEqual(self.person.get_missing_swc_instructor_requirements(),
+                         set())
+
+    def test_some_requirements_are_fulfilled(self):
+        TrainingProgress.objects.create(trainee=self.person, state='p',
+                                        requirement=self.swc_homework)
+        TrainingProgress.objects.create(trainee=self.person, state='p',
+                                        requirement=self.dc_demo)
+        # Not passed progress should be ignored.
+        TrainingProgress.objects.create(trainee=self.person, state='f',
+                                        requirement=self.swc_demo)
+        TrainingProgress.objects.create(trainee=self.person, state='n',
+                                        requirement=self.discussion)
+        # Passed discarded progress should be ignored.
+        TrainingProgress.objects.create(trainee=self.person, state='p',
+                                        requirement=self.training,
+                                        discarded=True)
+
+        self.assertEqual(self.person.get_missing_swc_instructor_requirements(),
+                         {'Training', 'Discussion', 'SWC Demo'})
+
+    def test_none_requirement_is_fulfilled(self):
+        self.assertEqual(self.person.get_missing_swc_instructor_requirements(),
+                         {'Training', 'SWC Homework', 'Discussion', 'SWC Demo'})
+
+
+class TestGetMissingDCInstructorRequirements(TestBase):
+    def setUp(self):
+        self.person = Person.objects.create(username='person')
+        self.training = TrainingRequirement.objects.get(name='Training')
+        self.swc_homework = TrainingRequirement.objects.get(name='SWC Homework')
+        self.dc_homework = TrainingRequirement.objects.get(name='DC Homework')
+        self.discussion = TrainingRequirement.objects.get(name='Discussion')
+        self.swc_demo = TrainingRequirement.objects.get(name='SWC Demo')
+        self.dc_demo = TrainingRequirement.objects.get(name='DC Demo')
+
+    def test_all_requirements_satisfied(self):
+        TrainingProgress.objects.create(trainee=self.person, state='p',
+                                        requirement=self.training)
+
+        TrainingProgress.objects.create(trainee=self.person, state='p',
+                                        requirement=self.dc_homework)
+        TrainingProgress.objects.create(trainee=self.person, state='p',
+                                        requirement=self.discussion)
+        TrainingProgress.objects.create(trainee=self.person, state='p',
+                                        requirement=self.dc_demo)
+
+        self.assertEqual(self.person.get_missing_dc_instructor_requirements(),
+                         set())
+
+    def test_some_requirements_are_fulfilled(self):
+        TrainingProgress.objects.create(trainee=self.person, state='p',
+                                        requirement=self.dc_homework)
+
+        TrainingProgress.objects.create(trainee=self.person, state='p',
+                                        requirement=self.swc_demo)
+        # Not passed progress should be ignored.
+        TrainingProgress.objects.create(trainee=self.person, state='f',
+                                        requirement=self.dc_demo)
+        TrainingProgress.objects.create(trainee=self.person, state='n',
+                                        requirement=self.discussion)
+        # Passed discarded progress should be ignored.
+        TrainingProgress.objects.create(trainee=self.person, state='p',
+                                        requirement=self.training,
+                                        discarded=True)
+
+        self.assertEqual(self.person.get_missing_dc_instructor_requirements(),
+                         {'Training', 'Discussion', 'DC Demo'})
+
+    def test_none_requirement_is_fulfilled(self):
+        self.assertEqual(self.person.get_missing_dc_instructor_requirements(),
+                         {'Training', 'DC Homework', 'Discussion', 'DC Demo'})

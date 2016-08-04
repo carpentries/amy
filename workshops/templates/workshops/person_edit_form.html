@@ -14,10 +14,10 @@
 
 <div class="tab-content">
   <div role="tabpanel" class="tab-pane active" id="person">
-    {% crispy person_form form_helper %}
+    {% crispy person_form %}
   </div>
   <div role="tabpanel" class="tab-pane" id="awards">
-    {% crispy award_form form_helper_with_add %}
+    {% crispy award_form %}
     {% if awards %}
     <table class="table table-striped">
       <thead>
@@ -48,7 +48,7 @@
     {% endif %}
   </div>
   <div role="tabpanel" class="tab-pane" id="tasks">
-    {% crispy task_form form_helper_with_add %}
+    {% crispy task_form %}
     {% if tasks %}
     <ul>
       {% for task in tasks %}

@@ -13,7 +13,7 @@ from workshops.util import OnlyForAdminsMixin, LoginNotRequiredMixin, \
 
 
 def get_resolved_urls(url_patterns):
-    """ Copy-pasted from
+    """Copy-pasted from
     http://stackoverflow.com/questions/1275486/django-how-can-i-see-a-list-of-urlpatterns"""
     url_patterns_resolved = []
     for entry in url_patterns:
