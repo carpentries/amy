@@ -142,6 +142,8 @@ class CreateViewContext(SuccessMessageMixin, CreateView):
     """
     success_message = '{name} was created successfully.'
 
+    template_name = 'workshops/generic_form.html'
+
     def get_context_data(self, **kwargs):
         context = super(CreateViewContext, self).get_context_data(**kwargs)
 
@@ -168,6 +170,8 @@ class UpdateViewContext(SuccessMessageMixin, UpdateView):
     by adding proper page title.
     """
     success_message = '{name} was updated successfully.'
+
+    template_name = 'workshops/generic_form.html'
 
     def get_context_data(self, **kwargs):
         context = super(UpdateViewContext, self).get_context_data(**kwargs)
@@ -393,7 +397,6 @@ class OrganizationCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
     permission_required = 'workshops.add_organization'
     model = Organization
     form_class = OrganizationForm
-    template_name = 'workshops/generic_form.html'
 
 
 class OrganizationUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
@@ -403,7 +406,6 @@ class OrganizationUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
     form_class = OrganizationForm
     slug_field = 'domain'
     slug_url_kwarg = 'org_domain'
-    template_name = 'workshops/generic_form.html'
 
 
 @admin_required
@@ -452,7 +454,6 @@ class MembershipUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
     model = Membership
     form_class = MembershipForm
     pk_url_kwarg = 'membership_id'
-    template_name = 'workshops/generic_form.html'
 
     def get_success_url(self):
         return reverse(
@@ -508,7 +509,6 @@ class AirportCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
     permission_required = 'workshops.add_airport'
     model = Airport
     fields = AIRPORT_FIELDS
-    template_name = 'workshops/generic_form.html'
 
 
 class AirportUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
@@ -518,7 +518,6 @@ class AirportUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
     fields = AIRPORT_FIELDS
     slug_field = 'iata'
     slug_url_kwarg = 'airport_iata'
-    template_name = 'workshops/generic_form.html'
 
 
 @admin_required
@@ -780,7 +779,6 @@ class PersonCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
     permission_required = 'workshops.add_person'
     model = Person
     form_class = PersonCreateForm
-    template_name = 'workshops/generic_form.html'
 
     def form_valid(self, form):
         """Person.lessons uses an intermediary model so we need to manually add
@@ -941,7 +939,6 @@ class PersonPermissions(OnlyForAdminsMixin, PermissionRequiredMixin,
     model = Person
     form_class = PersonPermissionsForm
     pk_url_kwarg = 'person_id'
-    template_name = 'workshops/generic_form.html'
 
 
 @admin_required
@@ -1685,7 +1682,6 @@ class InvoiceRequestUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
     model = InvoiceRequest
     form_class = InvoiceRequestUpdateForm
     pk_url_kwarg = 'request_id'
-    template_name = 'workshops/generic_form.html'
 
 
 # ------------------------------------------------------------
@@ -1735,7 +1731,6 @@ class TaskCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
     permission_required = 'workshops.add_task'
     model = Task
     form_class = TaskFullForm
-    template_name = 'workshops/generic_form.html'
 
 
 class TaskUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
@@ -1744,7 +1739,6 @@ class TaskUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
     model = Task
     form_class = TaskFullForm
     pk_url_kwarg = 'task_id'
-    template_name = 'workshops/generic_form.html'
 
 #------------------------------------------------------------
 
@@ -2626,7 +2620,6 @@ class ProfileUpdateRequestFix(OnlyForAdminsMixin, PermissionRequiredMixin,
     model = ProfileUpdateRequest
     form_class = ProfileUpdateRequestFormNoCaptcha
     pk_url_kwarg = 'request_id'
-    template_name = 'workshops/generic_form.html'
 
 
 @admin_required
@@ -2830,7 +2823,6 @@ class EventSubmissionFix(OnlyForAdminsMixin, PermissionRequiredMixin,
     model = EventSubmissionModel
     form_class = EventSubmitFormNoCaptcha
     pk_url_kwarg = 'submission_id'
-    template_name = 'workshops/generic_form.html'
 
 
 @admin_required
@@ -2993,7 +2985,6 @@ class DCSelfOrganizedEventRequestChange(OnlyForAdminsMixin,
     model = DCSelfOrganizedEventRequestModel
     form_class = DCSelfOrganizedEventRequestFormNoCaptcha
     pk_url_kwarg = 'request_id'
-    template_name = 'workshops/generic_form.html'
 
 
 @admin_required
@@ -3130,7 +3121,6 @@ class TodoItemUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
     model = TodoItem
     form_class = SimpleTodoForm
     pk_url_kwarg = 'todo_id'
-    template_name = 'workshops/generic_form.html'
 
     def get_success_url(self):
         return reverse('event_details', args=[self.object.event.slug])
