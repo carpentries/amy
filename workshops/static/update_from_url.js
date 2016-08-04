@@ -11,7 +11,7 @@ $('#update_url_form').submit(function(e) {
   var url = $(this).find(':input[name=url]').val();
 
   // load data from URL
-  $.post("/workshops/events/import/", $(this).find(":input"), function(data) {
+  $.get("/workshops/events/import/", $(this).find(":input"), function(data) {
     var action = $('#update_url_form input[type=radio]:checked').val();
 
     $("#event_update_url").parent().removeClass('has-error');
