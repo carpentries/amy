@@ -76,6 +76,9 @@ from workshops.forms import (
     DCSelfOrganizedEventRequestForm,
     DCSelfOrganizedEventRequestFormNoCaptcha,
     TrainingProgressForm,
+    BulkChangeTrainingRequestForm,
+    BulkMatchTrainingRequestForm,
+    AcceptTrainingRequestForm,
     SendHomeworkForm,
     bootstrap_helper,
     bootstrap_helper_inline_formsets,
@@ -3287,16 +3290,88 @@ def all_trainingrequests(request):
     return render(request, 'workshops/all_trainingrequests.html', context)
 
 
-class TrainingRequestDetails(OnlyForAdminsMixin, DetailView):
-    context_object_name = 'req'
-    template_name = 'workshops/trainingrequest.html'
-    pk_url_kwarg = 'request_id'
-    queryset = TrainingRequest.objects.all()
+def _accept_training_request(form, training_request, request):
+    assert form.action in ('match', 'create')
+    try:
+        if form.action == 'create':
+            training_request.person = Person.objects.create_user(
+                username=create_username(training_request.personal,
+                                         training_request.family),
+                personal=training_request.personal,
+                family=training_request.family,
+                email=training_request.email,
+            )
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'Training request #{}'.format(self.get_object().pk)
-        return context
+    except IntegrityError as e:
+        # email address is not unique
+        messages.error(request, 'Could not create a new person -- '
+                                'there already exists a person with '
+                                'exact email address.')
+        return False
+
+    else:
+        if form.action == 'create':
+            training_request.person.gender = training_request.gender
+            training_request.person.github = training_request.github
+            training_request.person.affiliation = training_request.affiliation
+            training_request.person.domains = training_request.domains.all()
+            training_request.person.occupation = (
+                training_request.get_occupation_display() or
+                training_request.occupation_other)
+
+        else:
+            assert form.action == 'match'
+            training_request.person = form.cleaned_data['person']
+
+        training_request.person.may_contact = True
+        training_request.person.is_active = True
+        training_request.person.save()
+        training_request.person.synchronize_usersocialauth()
+
+        training_request.state = 'a'  # accepted
+        training_request.save()
+
+        messages.success(request, 'Request accepted.')
+
+        return True
+
+
+@admin_required
+def trainingrequest_details(request, request_id):
+    req = get_object_or_404(TrainingRequest, pk=int(request_id))
+
+    if request.method == 'POST':
+        form = AcceptTrainingRequestForm(request.POST)
+
+        if form.is_valid():
+            ok = _accept_training_request(form, req, request)
+            if ok:
+                next_url = request.GET.get('next', None)
+                if next_url is not None and is_safe_url(next_url):
+                    return redirect(next_url)
+                else:
+                    return redirect('trainingrequest_details', req.pk)
+
+    else:  # GET request
+        # Provide initial value for form.person
+        if req.person is not None:
+            person = req.person
+        else:
+            # No person is matched to the TrainingRequest yet. Suggest a
+            # person from existing records.
+            person = Person.objects.filter(Q(email__iexact=req.email) |
+                                           Q(personal__iexact=req.personal,
+                                             family__iexact=req.family)) \
+                                   .first()  # may return None
+        form = AcceptTrainingRequestForm(initial={'person': person})
+
+    context = {
+        'title': 'Training request #{}'.format(req.pk),
+        'req': req,
+        'form': form,
+    }
+    return render(request, 'workshops/trainingrequest.html', context)
+
 
 # ------------------------------------------------------------
 # Views for trainees

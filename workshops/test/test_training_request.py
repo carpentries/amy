@@ -285,6 +285,40 @@ class TestDownloadCSVView(TestBase):
         self.assertEqual(got, expected)
 
 
+class TestAcceptingTrainingRequest(TestBase):
+    def setUp(self):
+        self._setUpUsersAndLogin()
+        self._setUpRoles()
+
+    def test_detailed_view_of_pending_request(self):
+        """Accept Request form should be displayed only for pending requests."""
+        req = create_training_request(state='p', person=None)
+        rv = self.client.get(reverse('trainingrequest_details', args=[req.pk]))
+        self.assertEqual(rv.status_code, 200)
+        self.assertContains(rv, 'Accept Request')
+
+    def test_detailed_view_of_accepted_request(self):
+        """Accept Request form should be displayed only for pending requests."""
+        req = create_training_request(state='a', person=self.admin)
+        rv = self.client.get(reverse('trainingrequest_details', args=[req.pk]))
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotContains(rv, 'Accept Request')
+
+    def test_person_is_suggested(self):
+        req = create_training_request(state='p', person=None)
+        p = Person.objects.create_user(username='john_smith', personal='john',
+                                       family='smith', email='asdf@gmail.com')
+        rv = self.client.get(reverse('trainingrequest_details', args=[req.pk]))
+
+        self.assertEqual(rv.context['form'].initial['person'], p)
+
+    def test_new_person(self):
+        req = create_training_request(state='p', person=None)
+        rv = self.client.get(reverse('trainingrequest_details', args=[req.pk]))
+
+        self.assertEqual(rv.context['form'].initial['person'], None)
+
+
 class TestTrainingRequestTemplateTags(TestBase):
     def test_pending_request(self):
         self._test(state='p', expected='label label-warning')

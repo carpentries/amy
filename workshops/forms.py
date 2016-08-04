@@ -1407,6 +1407,49 @@ class BulkMatchTrainingRequestForm(forms.Form):
                                   'and match with a trainee.')
 
 
+class AcceptTrainingRequestForm(forms.ModelForm):
+    person = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.PersonLookup,
+        label='Trainee Account',
+        required=False,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+    helper = BootstrapHelper(add_submit_button=False)
+    helper.layout = Layout(
+        'person',
+
+        FormActions(
+            Submit('match-selected-person',
+                   'Accept & match to selected trainee account'),
+            HTML('&nbsp;<strong>OR</strong>&nbsp;&nbsp;'),
+            Submit('create-new-person',
+                   'Accept & create new trainee account'),
+        )
+    )
+
+    def clean(self):
+        super().clean()
+
+        if 'match-selected-person' in self.data:
+            self.person_required = True
+            self.action = 'match'
+        elif 'create-new-person' in self.data:
+            self.person_required = False
+            self.action = 'create'
+        else:
+            raise ValidationError('Unknown action.')
+
+        if self.person_required and self.cleaned_data['person'] is None:
+            raise ValidationError({'person': 'No person was selected.'})
+
+    class Meta:
+        model = TrainingRequest
+        fields = [
+            'person',
+        ]
+
+
 class SendHomeworkForm(forms.ModelForm):
     url = URLField(label='URL')
 
