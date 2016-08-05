@@ -158,9 +158,16 @@
     <a href="{% url 'person_password' person.id %}" class="btn btn-default disabled">Change password</a>
     {% endif %}
     {% if perms.workshops.delete_person %}
-    <a href="{% url 'person_delete' person.id %}" onclick='return confirm("Are you sure you wish to remove \"{{ person }}\"?")' class="btn btn-danger">Delete person</a>
+    {% comment %}
+    To ensure that the form-button is a part of the btn-group,
+    add css class "btn-group" to the form tag.
+    {% endcomment %}
+    <form class="btn-group" action="{% url 'person_delete' person.pk %}" onsubmit='return confirm("Are you sure you wish to remove  \"{{ person }}\"?")' method="POST">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Delete person</button>
+    </form>
     {% else %}
-    <a href="{% url 'person_delete' person.id %}" class="btn btn-danger disabled">Delete person</a>
+    <button class="btn btn-danger disabled">Delete person</button>
     {% endif %}
   </div>
 </div>

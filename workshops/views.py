@@ -952,18 +952,12 @@ def person_edit(request, person_id):
     return render(request, 'workshops/person_edit_form.html', context)
 
 
-@admin_required
-@permission_required('workshops.delete_person', raise_exception=True)
-def person_delete(request, person_id):
-    """Delete specific person."""
-    try:
-        person = get_object_or_404(Person, pk=person_id)
-        person.delete()
-
-        messages.success(request, 'Person was deleted successfully.')
-        return redirect(reverse('all_persons'))
-    except ProtectedError as e:
-        return failed_to_delete(request, person, e.protected_objects)
+class PersonDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
+                   DeleteViewContext):
+    model = Person
+    permission_required = 'workshops.delete_person'
+    success_url = reverse_lazy('all_persons')
+    pk_url_kwarg = 'person_id'
 
 
 class PersonPermissions(OnlyForAdminsMixin, PermissionRequiredMixin,
