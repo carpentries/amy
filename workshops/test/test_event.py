@@ -123,7 +123,7 @@ class TestEvent(TestBase):
         event.task_set = [t1, t2, t3]
         event.save()
 
-        rv = self.client.get(reverse('event_delete', args=[event.slug, ]))
+        rv = self.client.post(reverse('event_delete', args=[event.slug, ]))
         assert rv.status_code == 302
 
         with self.assertRaises(Event.DoesNotExist):
@@ -149,7 +149,7 @@ class TestEvent(TestBase):
                                      awarded=date.today(),
                                      event=event)
 
-        rv = self.client.get(reverse('event_delete', args=[event.slug, ]))
+        rv = self.client.post(reverse('event_delete', args=[event.slug, ]))
         assert rv.status_code == 200
 
         content = rv.content.decode('utf-8')

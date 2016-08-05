@@ -1349,21 +1349,11 @@ def event_edit(request, slug):
     return render(request, 'workshops/event_edit_form.html', context)
 
 
-@admin_required
-@permission_required('workshops.delete_event', raise_exception=True)
-def event_delete(request, slug):
-    """Delete event, its tasks and related awards."""
-    try:
-        event = Event.objects.get(slug=slug)
-        event.delete()
-
-        messages.success(request,
-                         'Event and its tasks were deleted successfully.')
-        return redirect(reverse('all_events'))
-    except ObjectDoesNotExist:
-        raise Http404("No event found matching the query.")
-    except ProtectedError as e:
-        return failed_to_delete(request, event, e.protected_objects)
+class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
+                  DeleteViewContext):
+    model = Event
+    permission_required = 'workshops.delete_event'
+    success_url = reverse_lazy('all_events')
 
 
 @admin_required
