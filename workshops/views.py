@@ -557,17 +557,13 @@ class AirportUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
     slug_url_kwarg = 'airport_iata'
 
 
-@admin_required
-@permission_required('workshops.delete_airport', raise_exception=True)
-def airport_delete(request, airport_iata):
-    """Delete specific airport."""
-    try:
-        airport = get_object_or_404(Airport, iata=airport_iata)
-        airport.delete()
-        messages.success(request, 'Airport was deleted successfully.')
-        return redirect(reverse('all_airports'))
-    except ProtectedError as e:
-        return failed_to_delete(request, airport, e.protected_objects)
+class AirportDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
+                    DeleteViewContext):
+    model = Airport
+    slug_field = 'iata'
+    slug_url_kwarg = 'airport_iata'
+    permission_required = 'workshops.delete_airport'
+    success_url = reverse_lazy('all_airports')
 
 #------------------------------------------------------------
 

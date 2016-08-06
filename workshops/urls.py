@@ -22,7 +22,7 @@ urlpatterns = [
     url(r'^airports/?$', views.all_airports, name='all_airports'),
     url(r'^airport/(?P<airport_iata>\w+)/?$', views.airport_details, name='airport_details'),
     url(r'^airport/(?P<airport_iata>\w+)/edit$', views.AirportUpdate.as_view(), name='airport_edit'),
-    url(r'^airport/(?P<airport_iata>\w+)/delete$', views.airport_delete, name='airport_delete'),
+    url(r'^airport/(?P<airport_iata>\w+)/delete$', views.AirportDelete.as_view(), name='airport_delete'),
     url(r'^airports/add/$', views.AirportCreate.as_view(), name='airport_add'),
 
     url(r'^persons/?$', views.all_persons, name='all_persons'),
