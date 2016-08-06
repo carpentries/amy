@@ -66,8 +66,7 @@ urlpatterns = [
 
     url(r'^sponsorship/(?P<pk>\d+)/delete$', views.SponsorshipDelete.as_view(), name='sponsorship_delete'),
 
-    url(r'^award/(?P<award_id>\d+)/delete$', views.award_delete, name='award_delete'),
-    url(r'^person/(?P<person_id>[\w\.-]+)/award/(?P<award_id>\d+)/delete$', views.award_delete, name='award_delete'),
+    url(r'^award/(?P<pk>\d+)/delete$', views.AwardDelete.as_view(), name='award_delete'),
 
     url(r'^badges/?$', views.all_badges, name='all_badges'),
     url(r'^badge/(?P<badge_name>[\w\.=-]+)/?$', views.badge_details, name='badge_details'),
