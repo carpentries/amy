@@ -21,7 +21,7 @@ from django.db import IntegrityError
 from django.db.models import Case, When, Value, IntegerField
 from django.db.models import Count, Q, F, Model, ProtectedError, Sum
 from django.http import Http404, HttpResponse, JsonResponse
-from django.http import HttpResponseBadRequest
+from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import redirect, render, get_object_or_404
 from django.template.loader import get_template
 from django.utils.http import is_safe_url
@@ -222,19 +222,26 @@ class DeleteViewContext(DeleteView):
     by adding proper page title.
 
     GET requests are not allowed (returns 405)
-
+    Allows for custom redirection based on `next` param in POST
     ProtectedErrors are handled.
     """
     success_message = '{} was deleted successfully.'
 
     def delete(self, request, *args, **kwargs):
-        '''Workaround for https://code.djangoproject.com/ticket/21926'''
-        messages.success(
-            self.request,
-            self.success_message.format(self.get_object())
-        )
+        # Workaround for https://code.djangoproject.com/ticket/21926
+        # Replicates the `delete` method of DeleteMixin
+        self.object = self.get_object()
+        if request.POST.get('next', None):
+            success_url = request.POST['next']
+        else:
+            success_url = self.get_success_url()
         try:
-            return super().delete(request, *args, **kwargs)
+            self.object.delete()
+            messages.success(
+                self.request,
+                self.success_message.format(self.object)
+            )
+            return HttpResponseRedirect(success_url)
         except ProtectedError as e:
             return failed_to_delete(self.request, self.object,
                                     e.protected_objects)
