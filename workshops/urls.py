@@ -149,5 +149,5 @@ urlpatterns = [
     url(r'^todo/(?P<todo_id>\d+)/completed', views.todo_mark_completed, name='todo_mark_completed'),
     url(r'^todo/(?P<todo_id>\d+)/incompleted', views.todo_mark_incompleted, name='todo_mark_incompleted'),
     url(r'^todo/(?P<todo_id>\d+)/edit', views.TodoItemUpdate.as_view(), name='todo_edit'),
-    url(r'^todo/(?P<todo_id>\d+)/delete', views.todo_delete, name='todo_delete'),
+    url(r'^todo/(?P<todo_id>\d+)/delete', views.TodoDelete.as_view(), name='todo_delete'),
 ]

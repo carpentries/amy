@@ -3114,19 +3114,14 @@ class TodoItemUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
         return response
 
 
-@admin_required
-@permission_required('workshops.delete_todoitem', raise_exception=True)
-def todo_delete(request, todo_id):
-    """Delete a TodoItem. This is used on the event details page."""
-    todo = get_object_or_404(TodoItem, pk=todo_id)
-    slug = todo.event.slug
-    todo.delete()
+class TodoDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
+                 DeleteViewContext):
+    model = TodoItem
+    permission_required = 'workshops.delete_todoitem'
+    pk_url_kwarg = 'todo_id'
 
-    messages.success(request, 'TODO was deleted successfully.',
-                     extra_tags='todos')
-
-    return redirect(event_details, slug)
-
+    def get_success_url(self):
+        return reverse('event_details', args=[self.get_object().event.slug]) + '#todos'
 
 # ------------------------------------------------------------
 
