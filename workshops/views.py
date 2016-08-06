@@ -496,21 +496,14 @@ class MembershipUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
         )
 
 
-@admin_required
-@permission_required('workshops.delete_membership', raise_exception=True)
-def membership_delete(request, membership_id):
-    """Delete specific membership."""
-    try:
-        membership = get_object_or_404(Membership, pk=membership_id)
-        organization = membership.organization
-        membership.delete()
-        messages.success(request, 'Membership was deleted successfully.')
-        return redirect(
-            reverse('organization_details', args=[organization.domain])
-        )
-    except ProtectedError as e:
-        return failed_to_delete(request, organization, e.protected_objects)
+class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
+                       DeleteViewContext):
+    model = Membership
+    permission_required = 'workshops.delete_membership'
+    pk_url_kwarg = 'membership_id'
 
+    def get_success_url(self):
+        return reverse('organization_details', args=[self.get_object().organization.domain])
 
 #------------------------------------------------------------
 

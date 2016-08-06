@@ -102,13 +102,22 @@
     <td>{{ membership.self_organized_workshops_per_year_completed|default:"—" }}</td>
     <td>{{ membership.self_organized_workshops_per_year_remaining|default:"—" }}</td>
     <td>
-      {% if perms.workshops.edit_membership %}
-      <a href="{% url 'membership_edit' membership.pk %}" title="Edit {{ membership }}"><span class="glyphicon glyphicon-pencil"></span></a>
-      {% endif %}
-      &nbsp;
-      {% if perms.workshops.delete_membership %}
-      <a href="{% url 'membership_delete' membership.pk %}" title="View {{ membership }}" onclick='return confirm("Are you sure you wish to remove \"{{ membership }}\"?")'><span class="glyphicon glyphicon-remove"></span></a>
-      {% endif %}
+      {% comment %}
+      Include the other glyphicon within the form as a way of stacking them together horizontally.
+      Else, the form tag is rendered below the other glyphicon.
+      {% endcomment %}
+      <form action="{% url 'membership_delete' membership.pk %}" onsubmit='return confirm("Are you sure you wish to remove \"{{ membership }}\"?")' method="POST">
+        {% csrf_token %}
+        {% if perms.workshops.edit_membership %}
+        <a href="{% url 'membership_edit' membership.pk %}" title="Edit {{ membership }}"><span class="glyphicon glyphicon-pencil"></span></a>
+        {% endif %}
+        {% if perms.workshops.delete_membership %}
+        <label class="space2 glyphicon glyphicon-remove" title="Delete {{ membership }}" style="cursor:pointer">
+          <input type="submit" class="hidden" />
+        </label>
+        {% endif %}
+      </form>
+    </td>
   </tr>
   {% endfor %}
 </table>
