@@ -59,13 +59,16 @@
     <a href="{% url 'organization_edit' organization.domain %}" class="btn btn-primary disabled">Edit</a>
     {% endif %}
   </p>
-  <p class="delete-object pull-right">
+  <div class="delete-object pull-right">
     {% if perms.workshops.delete_organization %}
-    <a href="{% url 'organization_delete' organization.domain %}" onclick='return confirm("Are you sure you wish to remove \"{{ organization }}\"?")' class="btn btn-danger">Delete organization</a>
+    <form action="{% url 'organization_delete' organization.domain %}" onsubmit='return confirm("Are you sure you wish to remove  \"{{ organization }}\"?")' method="POST">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Delete organization</button>
+    </form>
     {% else %}
-    <a href="{% url 'organization_delete' organization.domain %}" class="btn btn-danger disabled">Delete organization</a>
+    <button class="btn btn-danger disabled">Delete organization</button>
     {% endif %}
-  </p>
+  </div>
 </div>
 
 <h3>Memberships</h3>

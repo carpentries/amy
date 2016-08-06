@@ -447,17 +447,13 @@ class OrganizationUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
     slug_url_kwarg = 'org_domain'
 
 
-@admin_required
-@permission_required('workshops.delete_organization', raise_exception=True)
-def organization_delete(request, org_domain):
-    """Delete specific organization."""
-    try:
-        organization = get_object_or_404(Organization, domain=org_domain)
-        organization.delete()
-        messages.success(request, 'Organization was deleted successfully.')
-        return redirect(reverse('all_organizations'))
-    except ProtectedError as e:
-        return failed_to_delete(request, organization, e.protected_objects)
+class OrganizationDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
+                         DeleteViewContext):
+    model = Organization
+    slug_field = 'domain'
+    slug_url_kwarg = 'org_domain'
+    permission_required = 'workshops.delete_organization'
+    success_url = reverse_lazy('all_organizations')
 
 
 @admin_required
