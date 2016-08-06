@@ -61,8 +61,7 @@ urlpatterns = [
     url(r'^tasks/?$', views.all_tasks, name='all_tasks'),
     url(r'^task/(?P<task_id>\d+)/?$', views.task_details, name='task_details'),
     url(r'^task/(?P<task_id>\d+)/edit$', views.TaskUpdate.as_view(), name='task_edit'),
-    url(r'^task/(?P<task_id>\d+)/delete$', views.task_delete, name='task_delete'),
-    url(r'^event/(?P<slug>[\w-]+)/task/(?P<task_id>\d+)/delete$', views.task_delete, name='task_delete'),
+    url(r'^task/(?P<task_id>\d+)/delete$', views.TaskDelete.as_view(), name='task_delete'),
     url(r'^tasks/add/$', views.TaskCreate.as_view(), name='task_add'),
 
     url(r'^sponsorship/(?P<pk>\d+)/delete$', views.SponsorshipDelete.as_view(), name='sponsorship_delete'),

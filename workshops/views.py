@@ -1717,20 +1717,6 @@ def task_details(request, task_id):
     return render(request, 'workshops/task.html', context)
 
 
-@admin_required
-@permission_required('workshops.delete_task', raise_exception=True)
-def task_delete(request, task_id, slug=None):
-    '''Delete a task. This is used on the event edit page'''
-    t = get_object_or_404(Task, pk=task_id)
-    t.delete()
-
-    messages.success(request, 'Task was deleted successfully.')
-
-    if slug:
-        return redirect(event_edit, slug)
-    return redirect(all_tasks)
-
-
 class TaskCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
                  CreateViewContext):
     permission_required = 'workshops.add_task'
@@ -1744,6 +1730,15 @@ class TaskUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
     model = Task
     form_class = TaskFullForm
     pk_url_kwarg = 'task_id'
+
+
+class TaskDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
+                 DeleteViewContext):
+    model = Task
+    permission_required = 'workshops.delete_task'
+    success_url = reverse_lazy('all_tasks')
+    pk_url_kwarg = 'task_id'
+
 
 #------------------------------------------------------------
 
