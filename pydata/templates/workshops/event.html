@@ -1,0 +1,42 @@
+{% extends "workshops:workshops/event.html" %}
+
+{% block edit-actions %}
+<p class="edit-object pull-left">
+  {% if perms.workshops.change_event %}
+  <a href="{% url 'event_edit' event.slug %}" class="btn btn-primary">Edit</a>
+  {% else %}
+  <a href="{% url 'event_edit' event.slug %}" class="btn btn-primary disabled">Edit</a>
+  {% endif %}
+</p>
+<p class="pull-right">
+  <a href="{% url 'bulk_import_person' slug=event.slug %}" class="btn btn-default">Bulk Import</a>
+</p>
+{% endblock edit-actions %}
+
+{% block sponsorships %}
+{% with sponsorships=event.sponsorship_set.all %}
+{% if sponsorships %}
+<h3>Sponsors</h3>
+<table class="table table-striped">
+  <tr>
+    <th>organization</th>
+    <th>level</th>
+    <th>contact</th>
+  </tr>
+  {% for sponsorship in sponsorships %}
+  <tr>
+    <td><a href="{{ sponsorship.organization.get_absolute_url }}">{{ sponsorship.organization }}</a></td>
+    <td>{{ sponsorship.get_amount_display }}</td>
+    <td>
+    {% if sponsorship.contact %}
+      <a href="{{ sponsorship.contact.get_absolute_url }}">{{ sponsorship.contact }}</a>
+    {% else %}—{% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p>No sponsors.</p>
+{% endif %}
+{% endwith %}
+{% endblock %}

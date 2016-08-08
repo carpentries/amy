@@ -85,12 +85,14 @@
             <li class="dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> <span class="caret"></span></a>
               <ul class="dropdown-menu" role="menu">
+              {% block right-dropdown %}
                 {% navbar_element_permed "New event" "event_add" "workshops.add_event" %}
                 {% navbar_element_permed "New organization" "organization_add" "workshops.add_organization" %}
                 {% navbar_element_permed "New person" "person_add" "workshops.add_person" %}
                 {% navbar_element_permed "New airport" "airport_add" "workshops.add_airport" %}
                 <li class="divider"></li>
                 {% navbar_element_permed "Bulk add people" "person_bulk_add" "workshops.add_person" %}
+              {% endblock right-dropdown %}
               </ul>
             </li>
             <li class="dropdown">

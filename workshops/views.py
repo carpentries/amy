@@ -26,7 +26,12 @@ from django.shortcuts import redirect, render, get_object_or_404
 from django.template.loader import get_template
 from django.utils.http import is_safe_url
 from django.views.generic import ListView, DetailView, TemplateView, DeleteView
-from django.views.generic.edit import CreateView, UpdateView, ModelFormMixin
+from django.views.generic.edit import (
+    CreateView,
+    UpdateView,
+    ModelFormMixin,
+    FormView,
+)
 from github.GithubException import GithubException
 from reversion.models import Revision
 from reversion.revisions import get_for_object
@@ -236,6 +241,18 @@ class DeleteViewContext(DeleteView):
 
     def get(self, request, *args, **kwargs):
         return self.http_method_not_allowed(request, *args, **kwargs)
+
+
+class FormViewContext(FormView):
+    """
+    Class-based view to allow displaying of forms with bootstrap form helper.
+    """
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context['title'] = self.title
+        return context
 
 
 class FilteredListView(ListView):
@@ -1349,10 +1366,7 @@ def event_import(request):
     This is used to read metadata from workshop website and then fill up fields
     on event_create form."""
 
-    # TODO: remove POST support completely
-    url = request.POST.get('url', '').strip()
-    if not url:
-        url = request.GET.get('url', '').strip()
+    url = request.GET.get('url', '').strip()
 
     try:
         metadata = fetch_event_metadata(url)
