@@ -1,0 +1,9 @@
+[
+{
+  "model": "workshops.role",
+  "fields": {
+    "name": "presenter",
+    "verbose_name": "Presented a talk at an event"
+  }
+}
+]

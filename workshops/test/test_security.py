@@ -13,7 +13,7 @@ from workshops.util import OnlyForAdminsMixin, LoginNotRequiredMixin, \
 
 
 def get_resolved_urls(url_patterns):
-    """ Copy-pasted from
+    """Copy-pasted from
     http://stackoverflow.com/questions/1275486/django-how-can-i-see-a-list-of-urlpatterns"""
     url_patterns_resolved = []
     for entry in url_patterns:
@@ -37,8 +37,9 @@ class TestViews(TestBase):
     def setUp(self):
         super().setUp()
 
-        admins = Group.objects.get(name='administrators')
-        steering_committee = Group.objects.get(name='steering committee')
+        admins, _ = Group.objects.get_or_create(name='administrators')
+        steering_committee, _ = Group.objects.get_or_create(name='steering committee')
+        invoicing_group, _ = Group.objects.get_or_create(name='invoicing')
 
         # superuser who doesn't belong to Admin group should have access to
         # admin dashboard
@@ -60,6 +61,13 @@ class TestViews(TestBase):
         )
         self.committee.groups.add(steering_committee)
 
+        # members of invoicing group should have access to admin dashboard too
+        self.invoicing = Person.objects.create_user(
+            username='invoicing', personal='Bob', family='Invoicing',
+            email='invoicing@example.org', password='invoicing',
+        )
+        self.invoicing.groups.add(invoicing_group)
+
         # user with access only to trainee dashboard
         self.trainee = Person.objects.create_user(
             username='trainee', personal='Bob', family='Trainee',
@@ -68,7 +76,7 @@ class TestViews(TestBase):
         assert steering_committee not in self.trainee.groups.all()
 
     def assert_accessible(self, url, user=None):
-        if user:
+        if user is not None:
             self.client.login(username=user, password=user)
         response = self.client.get(url)
         self.client.logout()
@@ -81,6 +89,7 @@ class TestViews(TestBase):
         response = self.client.get(url)
         self.client.logout()
 
+        # We should get 403 page (forbidden) or be redirected to login page.
         if response.status_code != 403:
             login_url = '{}?next={}'.format(reverse('login'), url)
             self.assertRedirects(response, login_url)
@@ -98,6 +107,7 @@ class TestViews(TestBase):
         self.assert_accessible(url, user='superuser')
         self.assert_accessible(url, user='admin')
         self.assert_accessible(url, user='committee')
+        self.assert_accessible(url, user='invoicing')
         self.assert_inaccessible(url, user='trainee')
         self.assert_inaccessible(url, user=None)
 
@@ -114,6 +124,7 @@ class TestViews(TestBase):
         self.assert_accessible(url, user='superuser')
         self.assert_accessible(url, user='admin')
         self.assert_accessible(url, user='committee')
+        self.assert_accessible(url, user='invoicing')
         self.assert_accessible(url, user='trainee')
         self.assert_inaccessible(url, user=None)
 
@@ -130,6 +141,7 @@ class TestViews(TestBase):
         self.assert_accessible(url, user='superuser')
         self.assert_accessible(url, user='admin')
         self.assert_accessible(url, user='committee')
+        self.assert_accessible(url, user='invoicing')
         self.assert_accessible(url, user='trainee')
         self.assert_accessible(url, user=None)
 
@@ -145,6 +157,7 @@ class TestViews(TestBase):
         self.assert_accessible(url, user='superuser')
         self.assert_accessible(url, user='admin')
         self.assert_accessible(url, user='committee')
+        self.assert_accessible(url, user='invoicing')
         self.assert_inaccessible(url, user='trainee')
         self.assert_inaccessible(url, user=None)
 
@@ -160,6 +173,7 @@ class TestViews(TestBase):
         self.assert_accessible(url, user='superuser')
         self.assert_accessible(url, user='admin')
         self.assert_accessible(url, user='committee')
+        self.assert_accessible(url, user='invoicing')
         self.assert_accessible(url, user='trainee')
         self.assert_accessible(url, user=None)
 

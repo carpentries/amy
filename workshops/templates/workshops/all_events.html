@@ -1,14 +1,8 @@
 {% extends "base_nav_fluid_sidebar.html" %}
 
-{% load crispy_forms_tags %}
 {% load links %}
 {% load pagination %}
 {% load tags %}
-
-{% block sidebar %}
-    <h3>Filter</h3>
-    {% crispy filter.form form_helper %}
-{% endblock %}
 
 {% block content %}
   {% if perms.workshops.add_event %}
@@ -41,8 +35,8 @@
           {% if not event.slug %}
             —
           {% else %}
-            <a href="{% url 'event_details' event.get_ident %}">
-            {{ event.get_ident }}
+            <a href="{% url 'event_details' event.slug %}">
+            {{ event.slug }}
             </a>
           {% endif %}
         </td>
@@ -53,17 +47,17 @@
         {% with num_instructors=event.task_set.instructors.count %}
         <td {% if num_instructors == 0 %}class="warning"{% endif %}>{{ num_instructors }}</td>
         {% endwith %}
-        <td><a href="{% url 'host_details' event.host.domain %}">{{ event.host }}</a></td>
+        <td><a href="{% url 'organization_details' event.host.domain %}">{{ event.host }}</a></td>
         <td>{{ event.start }} &ndash; {{ event.end }}</td>
         <td>{{ event.get_invoice_status_display }}</td>
         <td>
           {{ event.completed|yesno }}
         </td>
         <td>
-          <a href="{% url 'event_details' event.get_ident %}" title="View {{ event.get_ident }}"><span class="glyphicon glyphicon-info-sign"></span></a>
+          <a href="{% url 'event_details' event.slug %}" title="View {{ event.slug }}"><span class="glyphicon glyphicon-info-sign"></span></a>
           &nbsp;
           {% if perms.workshops.edit_event %}
-          <a href="{% url 'event_edit' event.get_ident %}" title="Edit {{ event.get_ident }}"><span class="glyphicon glyphicon-pencil"></span></a>
+          <a href="{% url 'event_edit' event.slug %}" title="Edit {{ event.slug }}"><span class="glyphicon glyphicon-pencil"></span></a>
           {% endif %}
         </td>
       </tr>

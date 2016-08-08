@@ -8,6 +8,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
+        ('workshops', '0102_task_title'),
         ('workshops', '0102_merge'),
         ('workshops', '0102_profileupdaterequest_languages'),
     ]

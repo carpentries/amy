@@ -1,11 +1,45 @@
 {% extends "base_nav_fixed.html" %}
 
 {% load revisions %}
+{% load crispy_forms_tags %}
+{% load training_request %}
 
 {% block content %}
+
+{% if form.errors %}
+<div class="alert alert-danger" role="alert">Fix errors below and try again.</div>
+{% endif %}
+
 {% last_modified req %}
 
+{% if req.state == 'p' %}
+  <h2>Accept Request</h2>
+  {% if form.initial.person %}
+    <p>It looks like the submitter has already an account. Click "accept &amp; match to selected trainee account" unless the following account doesn't match submitter.</p>
+  {% else %}
+    <p>It looks like we don't have any account for the request's submitter. Click "accept &amp; create new trainee account" unless you can find this submitter's account.</p>
+  {% endif %}
+  {% crispy form %}
+{% endif %}
+
+<h2>Request details</h2>
+<div class="edit-object">
+  <a href="{% url 'trainingrequest_edit' req.id %}" class="btn btn-primary">Edit</a>
+</div>
 <table class="table table-striped">
+  <tr><th>state</th>
+      <td><span class="{% training_request_label req %}">
+            {{ req.get_state_display }}
+          </span>
+      </td></tr>
+  <tr><th>matched person</th>
+      <td>
+        {% if req.person %}
+          <a href="{% url 'person_details' req.person.pk %}">
+            {{ req.person.get_full_name }}</a>
+          {% if req.person.email %}&lt;{{ req.person.email|urlize }}&gt;{% endif %}
+        {% else %}—{% endif %}
+      </td></tr>
   <tr><th>created at</th>
       <td>{{ req.created_at }}</td></tr>
   <tr><th>group name</th>
@@ -66,7 +100,6 @@
       <td><pre>{{ req.additional_skills|default:"—" }}</pre></td></tr>
   <tr><th>additional notes</th>
       <td><pre>{{ req.comment|default:"—" }}</pre></td></tr>
-
 </table>
 
 {% endblock %}

@@ -84,8 +84,12 @@ if DEBUG:
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'APP_DIRS': True,
         'OPTIONS': {
+            'loaders': [
+                'app_namespace.Loader',
+                'django.template.loaders.filesystem.Loader',
+                'django.template.loaders.app_directories.Loader',
+            ],
             'debug': DEBUG,
             'context_processors': [
                 # default processors + request processor

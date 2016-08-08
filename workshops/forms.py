@@ -1,29 +1,30 @@
 import re
 
+from captcha.fields import ReCaptchaField
+from crispy_forms.bootstrap import FormActions
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Div, HTML, Submit
 from django import forms
+from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.forms import (
     HiddenInput, CheckboxSelectMultiple, TextInput, modelformset_factory,
     RadioSelect,
+    URLField,
 )
-
-from captcha.fields import ReCaptchaField
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Div, HTML, Submit
-from crispy_forms.bootstrap import FormActions
 from django_countries import Countries
 from django_countries.fields import CountryField
 from selectable import forms as selectable
 
+from workshops import lookups
 from workshops.models import (
-    Award, Event, Lesson, Person, Task, Airport, Host,
+    Award, Event, Lesson, Person, Task, Airport, Organization,
     EventRequest, ProfileUpdateRequest, TodoItem, Membership,
-    InvoiceRequest, EventSubmission, Language,
+    Sponsorship, InvoiceRequest, EventSubmission,
     TrainingRequest,
     DCSelfOrganizedEventRequest,
+    TrainingProgress,
 )
-from workshops import lookups
-
 
 AUTOCOMPLETE_HELP_TEXT = (
     "Autocomplete field; type characters to view available options, "
@@ -33,30 +34,85 @@ AUTOCOMPLETE_HELP_TEXT = (
 
 class BootstrapHelper(FormHelper):
     """Layout and behavior for crispy-displayed forms."""
-    form_class = 'form-horizontal'
-    label_class = 'col-lg-2'
-    field_class = 'col-lg-8'
     html5_required = True
 
-    def __init__(self, form=None):
+    def __init__(self,
+                 form=None,
+                 duplicate_buttons_on_top=False,
+                 submit_label='Submit',
+                 submit_name='submit',
+                 use_get_method=False,
+                 wider_labels=False,
+                 add_submit_button=True,
+                 add_delete_button=False,
+                 additional_form_class='',
+                 form_tag=True,
+                 display_labels=True,
+                 form_action=None):
+        """
+        `duplicate_buttons_on_top` -- Whether submit buttons should be
+        displayed on both top and bottom of the form.
+
+        `use_get_method` -- Force form to use GET instead of default POST.
+
+        `wider_labels` -- SWCEventRequestForm and DCEventRequestForm have
+        long labels, so this flag (set to True) is used to address that issue.
+
+        `add_delete_button` -- displays additional red "delete" button.
+        If you want to use it, you need to include in your template the
+        following code:
+
+            <form action="delete?next={{ request.GET.next|urlencode }}" method="POST" id="delete-form">
+              {% csrf_token %}
+            </form>
+
+        This is necessary, because delete button must be reassigned from the
+        form using this helper to "delete-form". This reassignment is done
+        via HTML5 "form" attribute on the "delete" button.
+
+        `display_labels` -- Set to False, when your form has only submit
+        buttons and you want these buttons to be aligned to left.
+        """
+
         super().__init__(form)
 
         self.attrs['role'] = 'form'
-        self.inputs.append(Submit('submit', 'Submit'))
 
+        self.duplicate_buttons_on_top = duplicate_buttons_on_top
 
-class BootstrapHelperGet(BootstrapHelper):
-    """Force form to use GET instead of default POST."""
-    form_method = 'get'
+        self.submit_label = submit_label
 
+        if use_get_method:
+            self.form_method = 'get'
 
-class BootstrapHelperWithAdd(BootstrapHelper):
-    """Change form's 'Submit' to 'Add'."""
+        if wider_labels:
+            assert display_labels
+            self.label_class = 'col-lg-3'
+            self.field_class = 'col-lg-7'
+        elif display_labels:
+            self.label_class = 'col-lg-2'
+            self.field_class = 'col-lg-8'
+        else:
+            self.label_class = ''
+            self.field_class = 'col-lg-12'
 
-    def __init__(self, form=None):
-        super().__init__(form)
+        if add_submit_button:
+            self.add_input(Submit(submit_name, submit_label))
 
-        self.inputs[-1] = Submit('submit', 'Add')
+        if add_delete_button:
+            self.add_input(Submit(
+                'delete', 'Delete',
+                onclick='return confirm("Are you sure you want to delete it?");',
+                form='delete-form',
+                css_class='btn-danger',
+                style='float: right;'))
+
+        self.form_class = 'form-horizontal ' + additional_form_class
+
+        self.form_tag = form_tag
+
+        if form_action is not None:
+            self.form_action = form_action
 
 
 class BootstrapHelperFilter(FormHelper):
@@ -70,23 +126,13 @@ class BootstrapHelperFilter(FormHelper):
         self.inputs.append(Submit('', 'Submit'))
 
 
-class BootstrapHelperWiderLabels(BootstrapHelper):
-    """SWCEventRequestForm and DCEventRequestForm have long labels, so this
-    helper is used to address that issue."""
-    label_class = 'col-lg-3'
-    field_class = 'col-lg-7'
-
-
 class BootstrapHelperFormsetInline(BootstrapHelper):
     """For use in inline formsets."""
     template = 'bootstrap/table_inline_formset.html'
 
 
 bootstrap_helper = BootstrapHelper()
-bootstrap_helper_get = BootstrapHelperGet()
-bootstrap_helper_with_add = BootstrapHelperWithAdd()
 bootstrap_helper_filter = BootstrapHelperFilter()
-bootstrap_helper_wider_labels = BootstrapHelperWiderLabels()
 bootstrap_helper_inline_formsets = BootstrapHelperFormsetInline()
 
 
@@ -218,7 +264,7 @@ class SearchForm(forms.Form):
 
     term = forms.CharField(label='term',
                            max_length=100)
-    in_hosts = forms.BooleanField(label='in hosts',
+    in_organizations = forms.BooleanField(label='in organizations',
                                   required=False,
                                   initial=True)
     in_events = forms.BooleanField(label='in events',
@@ -230,6 +276,8 @@ class SearchForm(forms.Form):
     in_airports = forms.BooleanField(label='in airports',
                                      required=False,
                                      initial=True)
+
+    helper = bootstrap_helper
 
 
 class DebriefForm(forms.Form):
@@ -243,10 +291,12 @@ class DebriefForm(forms.Form):
         input_formats=['%Y-%m-%d', ]
     )
 
+    helper = BootstrapHelper(use_get_method=True)
+
 
 class EventForm(forms.ModelForm):
     host = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.HostLookup,
+        lookup_class=lookups.OrganizationLookup,
         label='Host',
         required=True,
         help_text=Event._meta.get_field('host').help_text,
@@ -254,10 +304,18 @@ class EventForm(forms.ModelForm):
     )
 
     administrator = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.HostLookup,
+        lookup_class=lookups.OrganizationLookup,
         label='Administrator',
         required=False,
         help_text=Event._meta.get_field('administrator').help_text,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+    assigned_to = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.AdminLookup,
+        label='Assigned to',
+        required=False,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -310,22 +368,13 @@ class EventForm(forms.ModelForm):
             0, Div(HTML('Survey results'), css_class='panel-heading'))
 
     def clean_slug(self):
-        # Ensure slug is not an integer value for Event.get_by_ident
+        # Ensure slug is in "YYYY-MM-DD-location" format
         data = self.cleaned_data['slug']
-
-        try:
-            int(data)
-        except ValueError:
-            pass
-        else:
-            raise forms.ValidationError('Slug must not be an integer-value.')
-
         match = re.match('(\d{4}|x{4})-(\d{2}|x{2})-(\d{2}|x{2})-.+', data)
         if not match:
             raise forms.ValidationError('Slug must be in "YYYY-MM-DD-location"'
                                         ' format, where "YYYY", "MM", "DD" can'
                                         ' be unspecified (ie. "xx").')
-
         return data
 
     def clean_end(self):
@@ -341,11 +390,12 @@ class EventForm(forms.ModelForm):
         model = Event
         # reorder fields, don't display 'deleted' field
         fields = ('slug', 'completed', 'start', 'end', 'host', 'administrator',
-                  'tags', 'url', 'language', 'reg_key', 'admin_fee',
-                  'invoice_status', 'attendance', 'contact', 'notes',
-                  'country', 'venue', 'address', 'latitude', 'longitude',
-                  'learners_pre', 'learners_post', 'instructors_pre',
-                  'instructors_post', 'learners_longterm')
+                  'assigned_to', 'tags', 'url', 'language', 'reg_key',
+                  'admin_fee', 'invoice_status', 'attendance', 'contact',
+                  'notes', 'country', 'venue', 'address', 'latitude',
+                  'longitude', 'learners_pre', 'learners_post',
+                  'instructors_pre', 'instructors_post', 'learners_longterm')
+
         # WARNING: don't change put any fields between 'country' and
         #          'longitude' that don't relate to the venue of the event
 
@@ -360,6 +410,7 @@ class EventForm(forms.ModelForm):
         # thanks to this, {{ form.media }} in the template will generate
         # a <link href=""> (for CSS files) or <script src=""> (for JS files)
         js = (
+            'date_yyyymmdd.js',
             'import_from_url.js', 'update_from_url.js',
             'online_country.js',
         )
@@ -374,6 +425,8 @@ class TaskForm(forms.ModelForm):
         help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
+
+    helper = BootstrapHelper(submit_label='Add')
 
     class Meta:
         model = Task
@@ -412,6 +465,8 @@ class PersonForm(forms.ModelForm):
         help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectMultipleWidget,
     )
+
+    helper = bootstrap_helper
 
     class Meta:
         model = Person
@@ -462,6 +517,8 @@ class PersonsSelectionForm(forms.Form):
         help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
+
+    helper = BootstrapHelper(use_get_method=True)
 
 
 class PersonsMergeForm(forms.Form):
@@ -573,6 +630,8 @@ class BadgeAwardForm(forms.ModelForm):
         widget=selectable.AutoComboboxSelectWidget,
     )
 
+    helper = bootstrap_helper
+
     class Meta:
         model = Award
         fields = '__all__'
@@ -597,6 +656,8 @@ class PersonAwardForm(forms.ModelForm):
         widget=selectable.AutoComboboxSelectWidget,
     )
 
+    helper = BootstrapHelper(submit_label='Add')
+
     class Meta:
         model = Award
         fields = '__all__'
@@ -613,15 +674,17 @@ class PersonTaskForm(forms.ModelForm):
         widget=selectable.AutoComboboxSelectWidget,
     )
 
+    helper = BootstrapHelper(submit_label='Add')
+
     class Meta:
         model = Task
         fields = '__all__'
         widgets = {'person': HiddenInput}
 
 
-class HostForm(forms.ModelForm):
+class OrganizationForm(forms.ModelForm):
     domain = forms.CharField(
-        max_length=Host._meta.get_field('domain').max_length,
+        max_length=Organization._meta.get_field('domain').max_length,
         validators=[
             RegexValidator(
                 '[^\w\.-]+', inverse_match=True,
@@ -630,16 +693,46 @@ class HostForm(forms.ModelForm):
         ],
     )
 
+    helper = bootstrap_helper
+
     class Meta:
-        model = Host
+        model = Organization
         fields = ['domain', 'fullname', 'country', 'notes']
 
 
 class MembershipForm(forms.ModelForm):
+    helper = bootstrap_helper
+
     class Meta:
         model = Membership
         fields = '__all__'
         widgets = {'host': HiddenInput, }
+
+
+class SponsorshipForm(forms.ModelForm):
+
+    organization = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.OrganizationLookup,
+        label='Organization',
+        required=True,
+        help_text=Sponsorship._meta.get_field('organization').help_text,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+    contact = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.PersonLookup,
+        label='Contact',
+        required=False,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+    helper = BootstrapHelper(submit_label='Add')
+
+    class Meta:
+        model = Sponsorship
+        fields = '__all__'
+        widgets = {'event': HiddenInput, }
 
 
 class SWCEventRequestForm(forms.ModelForm):
@@ -661,6 +754,8 @@ class SWCEventRequestForm(forms.ModelForm):
         help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
+
+    helper = BootstrapHelper(wider_labels=True)
 
     class Meta:
         model = EventRequest
@@ -713,6 +808,8 @@ class EventSubmitFormNoCaptcha(forms.ModelForm):
 class EventSubmitForm(EventSubmitFormNoCaptcha):
     captcha = ReCaptchaField()
 
+    helper = BootstrapHelper(wider_labels=True)
+
 
 class DCSelfOrganizedEventRequestFormNoCaptcha(forms.ModelForm):
     # the easiest way to make these fields required without rewriting their
@@ -741,6 +838,8 @@ class DCSelfOrganizedEventRequestFormNoCaptcha(forms.ModelForm):
 class DCSelfOrganizedEventRequestForm(
         DCSelfOrganizedEventRequestFormNoCaptcha):
     captcha = ReCaptchaField()
+
+    helper = BootstrapHelper(wider_labels=True)
 
     class Meta(DCSelfOrganizedEventRequestFormNoCaptcha.Meta):
         exclude = ('active', 'created_at', 'last_updated_at', 'assigned_to')
@@ -774,6 +873,20 @@ class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):
 class ProfileUpdateRequestForm(ProfileUpdateRequestFormNoCaptcha):
     captcha = ReCaptchaField()
 
+    helper = BootstrapHelper(wider_labels=True)
+
+
+class EventLookupForm(forms.Form):
+    event = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.EventLookup,
+        label='Event',
+        required=True,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+    helper = bootstrap_helper
+
 
 class PersonLookupForm(forms.Form):
     person = selectable.AutoCompleteSelectField(
@@ -783,6 +896,8 @@ class PersonLookupForm(forms.Form):
         help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
+
+    helper = BootstrapHelper(use_get_method=True)
 
 
 class AdminLookupForm(forms.Form):
@@ -794,8 +909,12 @@ class AdminLookupForm(forms.Form):
         widget=selectable.AutoComboboxSelectWidget,
     )
 
+    helper = bootstrap_helper
+
 
 class SimpleTodoForm(forms.ModelForm):
+    helper = bootstrap_helper
+
     class Meta:
         model = TodoItem
         fields = ('title', 'due', 'additional', 'completed', 'event')
@@ -822,6 +941,8 @@ class EventsSelectionForm(forms.Form):
         help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
+
+    helper = BootstrapHelper(use_get_method=True)
 
 
 class EventsMergeForm(forms.Form):
@@ -928,6 +1049,8 @@ class EventsMergeForm(forms.Form):
 
 
 class InvoiceRequestForm(forms.ModelForm):
+    helper = bootstrap_helper
+
     class Meta:
         model = InvoiceRequest
         fields = (
@@ -982,6 +1105,8 @@ class TrainingRequestForm(forms.ModelForm):
     )
     captcha = ReCaptchaField()
 
+    helper = BootstrapHelper(wider_labels=True)
+
     class Meta:
         model = TrainingRequest
         fields = (
@@ -1028,6 +1153,34 @@ class TrainingRequestForm(forms.ModelForm):
         }
 
 
+class TrainingRequestUpdateForm(forms.ModelForm):
+    person = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.PersonLookup,
+        label='Matched Trainee',
+        required=False,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+    helper = BootstrapHelper(duplicate_buttons_on_top=True,
+                             submit_label='Update')
+
+    class Meta:
+        model = TrainingRequest
+        exclude = ()
+        widgets = {
+            'occupation': forms.RadioSelect(),
+            'domains': forms.CheckboxSelectMultiple(),
+            'gender': forms.RadioSelect(),
+            'previous_involvement': forms.CheckboxSelectMultiple(),
+            'previous_training': forms.RadioSelect(),
+            'previous_experience': forms.RadioSelect(),
+            'programming_language_usage_frequency': forms.RadioSelect(),
+            'teaching_frequency_expectation': forms.RadioSelect(),
+            'max_travelling_frequency': forms.RadioSelect(),
+            'state': forms.RadioSelect()
+        }
+
+
 class AutoUpdateProfileForm(forms.ModelForm):
     username = forms.CharField(disabled=True, required=False)
     github = forms.CharField(
@@ -1042,6 +1195,8 @@ class AutoUpdateProfileForm(forms.ModelForm):
         required=False,
         widget=selectable.AutoComboboxSelectMultipleWidget,
     )
+
+    helper = bootstrap_helper
 
     class Meta:
         model = Person
@@ -1072,3 +1227,280 @@ class AutoUpdateProfileForm(forms.ModelForm):
             'domains': forms.CheckboxSelectMultiple(),
             'lessons': forms.CheckboxSelectMultiple(),
         }
+
+
+class TrainingProgressForm(forms.ModelForm):
+    trainee = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.PersonLookup,
+        label='Trainee',
+        required=True,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+    evaluated_by = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.AdminLookup,
+        label='Evaluated by',
+        required=False,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+    event = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.TTTEventLookup,
+        label='Event',
+        required=False,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+    # helper used in edit view
+    helper = BootstrapHelper(duplicate_buttons_on_top=True,
+                             submit_label='Update',
+                             add_delete_button=True,
+                             additional_form_class='training-progress')
+
+    # helper used in create view
+    create_helper = BootstrapHelper(duplicate_buttons_on_top=True,
+                                    submit_label='Add',
+                                    additional_form_class='training-progress')
+
+    class Meta:
+        model = TrainingProgress
+        fields = [
+            'trainee',
+            'evaluated_by',
+            'requirement',
+            'state',
+            'discarded',
+            'event',
+            'url',
+            'notes',
+        ]
+        widgets = {
+            'state': RadioSelect,
+        }
+
+
+class BulkAddTrainingProgressForm(forms.ModelForm):
+    event = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.TTTEventLookup,
+        label='Training',
+        required=False,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+    trainees = forms.ModelMultipleChoiceField(queryset=Person.objects.all())
+
+    helper = BootstrapHelper(additional_form_class='training-progress',
+                             submit_label='Add',
+                             form_tag=False)
+    helper.layout = Layout(
+        # no 'trainees' -- you should take care of generating it manually in
+        # the template where this form is used
+
+        'requirement',
+        'state',
+        'event',
+        'url',
+        'notes',
+    )
+
+    class Meta:
+        model = TrainingProgress
+        fields = [
+            # no 'trainees'
+            'requirement',
+            'state',
+            'event',
+            'url',
+            'notes',
+        ]
+        widgets = {
+            'state': RadioSelect,
+            'notes': TextInput,
+        }
+
+
+class BulkDiscardProgressesForm(forms.Form):
+    """Form used to bulk discard all TrainingProgresses associated with
+    selected trainees."""
+
+    trainees = forms.ModelMultipleChoiceField(queryset=Person.objects.all())
+
+    helper = BootstrapHelper(add_submit_button=False,
+                             form_tag=False,
+                             display_labels=False)
+
+    SUBMIT_POPOVER = '''<p>Discarded progress will be displayed in the following
+    way: <span class='label label-default'><strike> Discarded
+    </strike></span>.</p>
+
+    <p>If you want to permanently remove records from system,
+    click one of the progress labels and, then, click "delete" button.</p>'''
+
+    helper.layout = Layout(
+        # no 'trainees' -- you should take care of generating it manually in
+        # the template where this form is used
+
+        # We use formnovalidate on submit button to disable browser
+        # validation. This is necessary because this form is used along with
+        # BulkAddTrainingProgressForm, which have required fields. Both forms
+        # live inside the same <form> tag. Without this attribute, when you
+        # click the following submit button, the browser reports missing
+        # values in required fields in BulkAddTrainingProgressForm.
+        Submit('discard',
+               'Discard all progress of selected trainees',
+               formnovalidate='formnovalidate',
+               **{
+                   'data-toggle': 'popover',
+                   'data-html': 'true',
+                   'data-content': SUBMIT_POPOVER,
+               }),
+        HTML('&nbsp;<a bulk-email-on-click class="btn btn-primary">'
+             'Mail selected trainees</a>'),
+    )
+
+    class Meta:
+        model = TrainingProgress
+
+
+class BulkChangeTrainingRequestForm(forms.Form):
+    """Form used to bulk discard training requests or bulk unmatch trainees
+    from trainings."""
+
+    requests = forms.ModelMultipleChoiceField(
+        queryset=TrainingRequest.objects.all())
+
+    helper = BootstrapHelper(add_submit_button=False,
+                             form_tag=False,
+                             display_labels=False)
+    helper.layout = Layout(
+        # no 'requests' -- you should take care of generating it manually in
+        # the template where this form is used
+
+        # We use formnovalidate on submit buttons to disable browser
+        # validation. This is necessary because this form is used along with
+        # BulkMatchTrainingRequestForm, which have required fields. Both
+        # forms live inside the same <form> tag. Without this attribute,
+        # when you click one of the following submit buttons, the browser
+        # reports missing values in required fields in
+        # BulkMatchTrainingRequestForm.
+        FormActions(
+            Submit('discard', 'Discard selected requests',
+                   formnovalidate='formnovalidate'),
+            Submit('unmatch', 'Unmatch selected trainees from training',
+                   formnovalidate='formnovalidate'),
+            HTML('<a bulk-email-on-click class="btn btn-primary">'
+                 'Mail selected trainees</a>&nbsp;'),
+            HTML('<a class="btn btn-primary" href="{% url \'download_trainingrequests\' %}">'
+                 'Download all requests as CSV</a>&nbsp;'),
+            HTML('<a href="{% url \'training_request\' %}" class="btn btn-success">'
+                 'Create new request</a>'),
+        )
+    )
+
+    # When set to True, the form is valid only if every request is matched to
+    # one person. Set to True when 'unmatch' button is clicked, because
+    # unmatching makes sense only if each selected TrainingRequest is matched
+    # with one person.
+    check_person_matched = False
+
+    def clean(self):
+        super().clean()
+        unmatched_request_exists = any(
+            r.person is None for r in self.cleaned_data.get('requests', []))
+        if self.check_person_matched and unmatched_request_exists:
+            raise ValidationError('Select only requests matched to a person.')
+
+
+class BulkMatchTrainingRequestForm(forms.Form):
+    requests = forms.ModelMultipleChoiceField(
+        queryset=TrainingRequest.objects.all())
+
+    event = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.TTTEventLookup,
+        label='Training',
+        required=True,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+    helper = BootstrapHelper(add_submit_button=False,
+                             form_tag=False)
+    helper.layout = Layout(
+        'event',
+    )
+    helper.add_input(
+        Submit(
+           'match',
+            'Match selected trainees to chosen training',
+            **{
+                'data-toggle': 'popover',
+                'data-html': 'true',
+                'data-content': 'If you want to <strong>re</strong>match '
+                                'trainees to other training, first '
+                                '<strong>unmatch</strong> them!',
+            }
+        )
+    )
+
+    def clean(self):
+        super().clean()
+
+        if any(r.person is None for r in self.cleaned_data['requests']):
+            raise ValidationError('Some of the requests are not matched '
+                                  'to a trainee yet. Before matching them to '
+                                  'a training, you need to accept them '
+                                  'and match with a trainee.')
+
+
+class AcceptTrainingRequestForm(forms.ModelForm):
+    person = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.PersonLookup,
+        label='Trainee Account',
+        required=False,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
+    helper = BootstrapHelper(add_submit_button=False)
+    helper.layout = Layout(
+        'person',
+
+        FormActions(
+            Submit('match-selected-person',
+                   'Accept & match to selected trainee account'),
+            HTML('&nbsp;<strong>OR</strong>&nbsp;&nbsp;'),
+            Submit('create-new-person',
+                   'Accept & create new trainee account'),
+        )
+    )
+
+    def clean(self):
+        super().clean()
+
+        if 'match-selected-person' in self.data:
+            self.person_required = True
+            self.action = 'match'
+        elif 'create-new-person' in self.data:
+            self.person_required = False
+            self.action = 'create'
+        else:
+            raise ValidationError('Unknown action.')
+
+        if self.person_required and self.cleaned_data['person'] is None:
+            raise ValidationError({'person': 'No person was selected.'})
+
+    class Meta:
+        model = TrainingRequest
+        fields = [
+            'person',
+        ]
+
+
+class SendHomeworkForm(forms.ModelForm):
+    url = URLField(label='URL')
+
+    def __init__(self, submit_name, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = BootstrapHelper(submit_name=submit_name)
+
+    class Meta:
+        model = TrainingProgress
+        fields = [
+            'url',
+        ]

@@ -4,7 +4,7 @@ from datetime import datetime
 from django.core.urlresolvers import reverse
 
 from .base import TestBase
-from ..models import Task, Event, Role, Person, Host
+from ..models import Task, Event, Role, Person, Organization
 
 
 class TestTask(TestBase):
@@ -13,8 +13,8 @@ class TestTask(TestBase):
     def setUp(self):
         self.fixtures = {}
 
-        test_host = Host.objects.create(domain='example.com',
-                                        fullname='Test Host')
+        test_host = Organization.objects.create(domain='example.com',
+                                        fullname='Test Organization')
 
         test_person_1 = Person.objects.create(personal='Test',
                                               family='Person1',
@@ -69,6 +69,47 @@ class TestTask(TestBase):
         correct_task = self.fixtures['test_task_1']
         response = self.client.get(reverse('task_details', args=[str(correct_task.id)]))
         assert response.context['task'].pk == correct_task.pk
+
+    def test_add_task_with_correct_url(self):
+        '''Ensure that task can be saved with correct URL field'''
+        task = self.fixtures['test_task_1']
+        payload = {
+            'event': task.event.pk,
+            'person': task.person.pk,
+            'role': task.role.pk,
+            'title': 'Task title',
+            'url': 'http://example.org',
+        }
+        response = self.client.post(
+            reverse('task_edit', kwargs={'task_id':task.pk}),
+            payload,
+            follow=True
+        )
+        self.assertRedirects(
+            response,
+            reverse('task_details', kwargs={'task_id':task.pk})
+        )
+        task.refresh_from_db()
+        self.assertEqual(task.url, 'http://example.org')
+        self.assertEqual(response.context['task'].url, 'http://example.org')
+
+    def test_add_task_with_incorrect_url(self):
+        '''Ensure that a task object cannot be saved with incorrect URL field'''
+        task = self.fixtures['test_task_1']
+        payload = {
+            'event': task.event.pk,
+            'person': task.person.pk,
+            'role': task.role.pk,
+            'title': 'Task title',
+            'url': 'htp://example.org',
+        }
+        response = self.client.post(
+            reverse('task_edit', kwargs={'task_id':task.pk}),
+            payload,
+        )
+        self.assertEqual(response.status_code, 200)
+        task.refresh_from_db()
+        self.assertEqual(task.url, '')
 
     def test_task_edit_view_reachable_from_event_person_and_role_of_task(self):
         correct_task = self.fixtures['test_task_1']

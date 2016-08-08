@@ -11,7 +11,7 @@ from django.test import TestCase, RequestFactory
 
 import requests_mock
 
-from ..models import Host, Event, Role, Person, Task, Badge, Award
+from ..models import Organization, Event, Role, Person, Task, Badge, Award
 from ..util import (
     upload_person_task_csv,
     verify_upload_person_task,
@@ -115,8 +115,8 @@ class CSVBulkUploadTestBase(TestBase):
     """
     def setUp(self):
         super(CSVBulkUploadTestBase, self).setUp()
-        test_host = Host.objects.create(domain='example.com',
-                                        fullname='Test Host')
+        test_host = Organization.objects.create(domain='example.com',
+                                        fullname='Test Organization')
 
         Role.objects.create(name='Instructor')
         Role.objects.create(name='learner')
@@ -866,20 +866,20 @@ class TestMembership(TestBase):
 
         # Set up events in the past, at present, and in future.
         past = Event.objects.create(
-            host=self.host_alpha,
+            host=self.org_alpha,
             slug="in-past",
             start=today - three_years,
             end=tomorrow - three_years
         )
 
         present = Event.objects.create(
-            host=self.host_alpha,
+            host=self.org_alpha,
             slug="at-present",
             start=today - one_month
         )
 
         future = Event.objects.create(
-            host=self.host_alpha,
+            host=self.org_alpha,
             slug="in-future",
             start=today + one_month,
             end=tomorrow + one_month
@@ -1099,7 +1099,7 @@ class TestAssignUtil(TestCase):
                                    personal='User', family='Test')
         self.factory = RequestFactory()
         self.event = Event.objects.create(
-            slug='event-for-assignment', host=Host.objects.first())
+            slug='event-for-assignment', host=Organization.objects.first())
 
     def test_no_integer_pk(self):
         """Ensure we fail with 404 when person PK is string, not integer."""

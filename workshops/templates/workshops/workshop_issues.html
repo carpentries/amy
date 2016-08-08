@@ -22,15 +22,15 @@
     <table class="table table-striped">
       <tr>
         <th>Event</th>
-        <th>Attendance <a href="#" data-toggle="tooltip" title="Number of attendees is missing">[?]</a></th>
-        <th>Instructors <a href="#" data-toggle="tooltip" title="No instructors assigned to the event">[?]</a></th>
-        <th>Location <a href="#" data-toggle="tooltip" title="Country, venue, address or lat/long are missing">[?]</a></th>
-        <th>Dates <a href="#" data-toggle="tooltip" title="Start date is in future of end date">[?]</a></th>
+        <th>Attendance <span class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="Number of attendees is missing"></span></th>
+        <th>Instructors <span class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="No instructors assigned to the event"></span></th>
+        <th>Location <span class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="Country, venue, address or lat/long are missing"></span></th>
+        <th>Dates <span class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="Start date is in future of end date"></span></th>
       </tr>
       {% for event in events %}
       <tr>
         <td>
-          <a href="{% url 'event_details' event.get_ident %}">{{ event }}</a>
+          <a href="{% url 'event_details' event.slug %}">{{ event }}</a>
         </td>
         <td>
           {% if event.missing_attendance_ %}
@@ -46,9 +46,9 @@
         <td>
           {% if event.no_instructors_ %}
             {% if event.mailto %}
-              <a href="mailto:{{event.mailto}}?subject={% filter urlencode %}Missing instructors for workshop {{event.get_ident}}{% endfilter %}&body={% filter urlencode %}Hi,
+              <a href="mailto:{{event.mailto}}?subject={% filter urlencode %}Missing instructors for workshop {{event.slug}}{% endfilter %}&body={% filter urlencode %}Hi,
 
-Can you please send us list of instructors who taught at {{ event.get_ident }} workshop?
+Can you please send us list of instructors who taught at {{ event.slug }} workshop?
 
 Thanks for your help.{% endfilter %}">
               <span class="glyphicon glyphicon-envelope"></span>
@@ -61,9 +61,9 @@ Thanks for your help.{% endfilter %}">
         <td>
           {% if event.missing_location_ %}
             {% if event.mailto %}
-              <a href="mailto:{{event.mailto}}?subject={% filter urlencode %}Missing location for workshop {{event.get_ident}}{% endfilter %}&body={% filter urlencode %}Hi,
+              <a href="mailto:{{event.mailto}}?subject={% filter urlencode %}Missing location for workshop {{event.slug}}{% endfilter %}&body={% filter urlencode %}Hi,
 
-Can you please send us the location where the {{ event.get_ident }} workshop took place? We need a country, address, venue, and latitude/longitude.
+Can you please send us the location where the {{ event.slug }} workshop took place? We need a country, address, venue, and latitude/longitude.
 
 Thanks for your help.{% endfilter %}">
               <span class="glyphicon glyphicon-envelope"></span>
@@ -76,9 +76,9 @@ Thanks for your help.{% endfilter %}">
         <td>
           {% if event.bad_dates_ %}
             {% if event.mailto %}
-              <a href="mailto:{{event.mailto}}?subject={% filter urlencode %}Bad dates for workshop {{ event.get_ident }}{% endfilter %}&body={% filter urlencode %}Hi,
+              <a href="mailto:{{event.mailto}}?subject={% filter urlencode %}Bad dates for workshop {{ event.slug }}{% endfilter %}&body={% filter urlencode %}Hi,
 
-Can you please confirm the start and end dates for the workshop {{ event.get_ident }}?
+Can you please confirm the start and end dates for the workshop {{ event.slug }}?
 
 Thanks for your help.{% endfilter %}">
               <span class="glyphicon glyphicon-envelope"></span>
@@ -96,12 +96,4 @@ Thanks for your help.{% endfilter %}">
     {% endif %}
   </div>
 </div>
-{% endblock %}
-
-{% block extrajs %}
-<script type="text/javascript">
-$(function () {
-  $('[data-toggle="tooltip"]').tooltip();
-});
-</script>
 {% endblock %}

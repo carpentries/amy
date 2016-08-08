@@ -1,7 +1,7 @@
 from datetime import date
 
 from .base import TestBase
-from ..models import InvoiceRequest, Event, Host
+from ..models import InvoiceRequest, Event, Organization
 from ..forms import InvoiceRequestForm
 
 
@@ -13,7 +13,7 @@ class TestInvoiceRequestForm(TestBase):
         """Test submitting a minimalistic form ends up in
         Event.invoicerequest_set."""
         event = Event.objects.create(
-            slug='invoiceable-event', host=Host.objects.first(),
+            slug='invoiceable-event', host=Organization.objects.first(),
             start='2016-02-09', admin_fee=2500,
             venue='School of Science',
         )
@@ -45,7 +45,7 @@ class TestInvoiceRequest(TestBase):
         """Test if InvoiceRequest long status representation is fine."""
         day = date(2016, 2, 9)
         event = Event.objects.create(
-            slug='invoiceable-event', host=Host.objects.first(),
+            slug='invoiceable-event', host=Organization.objects.first(),
             start=day, admin_fee=2500,
             venue='School of Science',
         )

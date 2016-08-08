@@ -5,10 +5,10 @@
   <tr><td>completed:</td><td colspan="2">{{ event.completed|yesno }}</td></tr>
   <tr class="{% if event.start > event.end %}bg-danger{% endif %}"><td>start date:</td><td colspan="2">{{ event.start|default:"—" }}</td></tr>
   <tr class="{% if event.start > event.end %}bg-danger{% endif %}"><td>end date: </td><td colspan="2">{{ event.end|default:"—" }}</td></tr>
-  <tr><td>host:</td><td colspan="2"><a href="{% url 'host_details' event.host.domain %}">{{ event.host }}</a></td></tr>
+  <tr><td>host:</td><td colspan="2"><a href="{% url 'organization_details' event.host.domain %}">{{ event.host }}</a></td></tr>
   <tr><td>administrator:</td><td colspan="2">{% if event.administrator %}<a href="{{ event.administrator.get_absolute_url }}">{{ event.administrator }}</a>{% else %}—{% endif %}</td></tr>
   <tr><td>tags:</td><td colspan="2">{% for tag in event.tags.all %}{% bootstrap_tag tag.name %}{% endfor %}</td></tr>
-  <tr class="{% if not event.url %}bg-danger{% endif %}"><td>Website URL:</td><td colspan="2">{{ event.website_url|default:"—"|urlize_newtab }} {% if event.url %}<a href="{% url 'validate_event' event.get_ident %}" class="btn btn-primary btn-xs pull-right" id="validate_event">validate event</a>{% else %}<a class="btn btn-danger btn-xs pull-right" id="error_event_url" href="#" data-toggle="popover" data-trigger="focus" title="Validation error" data-content="Cannot validate an event without URL pointing to the GitHub repository, e.g.: <code>https://github.com/swcarpentry/2015-05-24-training</code>">Error</a>{% endif %}</td></tr>
+  <tr class="{% if not event.url %}bg-danger{% endif %}"><td>Website URL:</td><td colspan="2">{{ event.website_url|default:"—"|urlize_newtab }} {% if event.url %}<a href="{% url 'validate_event' event.slug %}" class="btn btn-primary btn-xs pull-right" id="validate_event">validate event</a>{% else %}<a class="btn btn-danger btn-xs pull-right" id="error_event_url" href="#" data-toggle="popover" title="Validation error" data-content="Cannot validate an event without URL pointing to the GitHub repository, e.g.: <code>https://github.com/swcarpentry/2015-05-24-training</code>" data-html="true">Error</a>{% endif %}</td></tr>
   <tr><td>Language:</td><td colspan="2">{{ event.language|default:"—" }}</td></tr>
   <tr><td>Eventbrite key:</td><td colspan="2">{% if event.reg_key %}<a href="https://www.eventbrite.com/myevent?eid={{ event.reg_key }}" title="Go to Eventbrite's page for this event" target="_blank">{{ event.reg_key }}</a>{% else %}—{% endif %}</td></tr>
   <tr><td>admin fee:</td><td colspan="2">{{ event.admin_fee|default_if_none:"—" }}</td></tr>
@@ -17,7 +17,7 @@
     <td colspan="2">
       {{ event.get_invoice_status_display }}
       {% if event.uninvoiced %}
-      <a href="{% url 'event_invoice' event.get_ident %}" class="btn btn-primary btn-xs pull-right">Invoice</a>
+      <a href="{% url 'event_invoice' event.slug %}" class="btn btn-primary btn-xs pull-right">Invoice</a>
       {% else %}
       <a href="#" class="btn btn-primary btn-xs pull-right disabled">Invoice</a>
       {% endif %}
@@ -62,7 +62,7 @@
   </tr>
   <tr class="{% if not event.venue %}bg-danger{% endif %}"><td>Venue:</td><td>{{ event.venue|default:"—" }}</td></tr>
   <tr class="{% if not event.address %}bg-danger{% endif %}"><td>Address:</td><td>{{ event.address|default:"—" }}</td></tr>
-  <tr class="{% if not event.latitude or not event.longitude %}bg-danger{% endif %}"><td>Lat/long:</td><td>{{ event.latitude|default:"—" }} / {{ event.longitude|default:"—" }} {% if event.latitude and event.longitude %}<a href="{% url 'workshop_staff' %}?latitude={{ event.latitude }}&amp;longitude={{ event.longitude }}&amp;submit=Submit" class="btn btn-primary btn-xs pull-right" id="find_closest_instructors">find closest instructors</a>{% else %}<a class="btn btn-danger btn-xs pull-right" id="error_closest_instructors" href="#" data-toggle="popover" data-trigger="focus" title="Search error" data-content="Cannot search for closest instructors without latitude and longitude of event's location.">Error</a>{% endif %}</td></tr>
+  <tr class="{% if not event.latitude or not event.longitude %}bg-danger{% endif %}"><td>Lat/long:</td><td>{{ event.latitude|default:"—" }} / {{ event.longitude|default:"—" }} {% if event.latitude and event.longitude %}<a href="{% url 'workshop_staff' %}?latitude={{ event.latitude }}&amp;longitude={{ event.longitude }}&amp;submit=Submit" class="btn btn-primary btn-xs pull-right" id="find_closest_instructors">find closest instructors</a>{% else %}<a class="btn btn-danger btn-xs pull-right" id="error_closest_instructors" href="#" data-toggle="popover" title="Search error" data-content="Cannot search for closest instructors without latitude and longitude of event's location.">Error</a>{% endif %}</td></tr>
 
   <tr>
     <td rowspan="5">survey results:</td>

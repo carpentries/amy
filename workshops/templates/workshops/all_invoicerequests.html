@@ -1,13 +1,7 @@
 {% extends "base_nav_fluid_sidebar.html" %}
 
-{% load crispy_forms_tags %}
 {% load pagination %}
 {% load links %}
-
-{% block sidebar %}
-    <h3>Filter</h3>
-    {% crispy filter.form form_helper %}
-{% endblock %}
 
 {% block content %}
   {% if requests %}
@@ -24,7 +18,7 @@
     <tbody>
     {% for req in requests %}
       <tr>
-        <td><a href="{{ req.event.get_absolute_url }}">{{ req.event.get_ident }}</a></td>
+        <td><a href="{{ req.event.get_absolute_url }}">{{ req.event.slug }}</a></td>
         <td><a href="{{ req.organization.get_absolute_url }}">{{ req.organization }}</a></td>
         <td>{{ req.contact_name }} &lt;{{ req.contact_email|urlize_newtab }}&gt;</td>
         <td>{{ req.get_status_display }}</td>

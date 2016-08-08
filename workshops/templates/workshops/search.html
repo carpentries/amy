@@ -2,17 +2,17 @@
 
 {% load crispy_forms_tags %}
 {% block content %}
-  {% crispy form form_helper %}
+  {% crispy form %}
 
 <div class="container">
   <div class="row">
 
     <div class="col-sm-3">
-      <h2>Hosts</h2>
-      {% if hosts %}
+      <h2>Organizations</h2>
+      {% if organizations %}
       <ul>
-	{% for host in hosts %}
-	<li><a class="searchresult" href="{% url 'host_details' host.domain %}">{{ host.domain }}</a></li>
+	{% for organization in organizations %}
+	<li><a class="searchresult" href="{% url 'organization_details' organization.domain %}">{{ organization.domain }}</a></li>
 	{% endfor %}
       </ul>
       {% endif %}
@@ -23,7 +23,7 @@
       {% if events %}
       <ul>
 	{% for e in events %}
-	<li><a class="searchresult" href="{% url 'event_details' e.get_ident %}">{{ e.get_ident }}</a></li>
+	<li><a class="searchresult" href="{% url 'event_details' e.slug %}">{{ e.slug }}</a></li>
 	{% endfor %}
       </ul>
       {% endif %}

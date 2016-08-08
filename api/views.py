@@ -26,7 +26,7 @@ from workshops.models import (
     Event,
     TodoItem,
     Tag,
-    Host,
+    Organization,
     Task,
     Award,
     Person,
@@ -43,7 +43,7 @@ from .serializers import (
     InstructorsOverTimeSerializer,
     InstructorNumTaughtSerializer,
     InstructorsByTimePeriodSerializer,
-    HostSerializer,
+    OrganizationSerializer,
     EventSerializer,
     TaskSerializer,
     TodoSerializer,
@@ -104,7 +104,7 @@ class ApiRoot(APIView):
                                    format=format),
             'event-list': reverse('api:event-list', request=request,
                                   format=format),
-            'host-list': reverse('api:host-list', request=request,
+            'organization-list': reverse('api:organization-list', request=request,
                                  format=format),
         })
 
@@ -368,15 +368,15 @@ class ReportsViewSet(ViewSet):
     def all_activity_over_time(self, request, format=None):
         """Workshops, instructors, and missing data in specific periods."""
         start, end = self._default_start_end_dates(
-            start=self.request.query_params.get('start', None),
-            end=self.request.query_params.get('end', None))
+            start=request.query_params.get('start', None),
+            end=request.query_params.get('end', None))
 
         events_qs = Event.objects.filter(start__gte=start, start__lte=end)
         swc_tag = Tag.objects.get(name='SWC')
         dc_tag = Tag.objects.get(name='DC')
         wise_tag = Tag.objects.get(name='WiSE')
         TTT_tag = Tag.objects.get(name='TTT')
-        self_organized_host = Host.objects.get(domain='self-organized')
+        self_organized_host = Organization.objects.get(domain='self-organized')
 
         # count workshops: SWC, DC, total (SWC and/or DC), self-organized,
         # WiSE, TTT
@@ -449,8 +449,12 @@ class ReportsViewSet(ViewSet):
                 'DC': dc_total_learners,
             },
             'missing': {
-                'attendance': missing_attendance,
-                'instructors': missing_instructors,
+                # qs.values_list returns an iterator, so we need to listify it
+                # for YAML
+                'attendance': self.listify(missing_attendance, request,
+                                           format),
+                'instructors': self.listify(missing_instructors, request,
+                                            format),
             }
         })
 
@@ -506,11 +510,11 @@ class ReportsViewSet(ViewSet):
 # ----------------------
 
 
-class HostViewSet(viewsets.ReadOnlyModelViewSet):
+class OrganizationViewSet(viewsets.ReadOnlyModelViewSet):
     """List many hosts or retrieve only one."""
     permission_classes = (IsAuthenticated, )
-    queryset = Host.objects.all()
-    serializer_class = HostSerializer
+    queryset = Organization.objects.all()
+    serializer_class = OrganizationSerializer
     lookup_field = 'domain'
     lookup_value_regex = r'[^/]+'  # the default one doesn't work with domains
     pagination_class = StandardResultsSetPagination

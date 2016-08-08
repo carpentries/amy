@@ -13,7 +13,7 @@
   <h4>Event's website updated</h4>
   <p>This event's repository was updated by the repository owner. Changes detected:</p>
   <p>{{ event.metadata_all_changes |linebreaksbr }}</p>
-  <p><a class="btn btn-warning" href="{% url 'event_review_metadata_changes' event.get_ident %}">Review changes</a></p>
+  <p><a class="btn btn-warning" href="{% url 'event_review_metadata_changes' event.slug %}">Review changes</a></p>
 </div>
 {% endif %}
 
@@ -31,25 +31,27 @@
       <a href="#" id="change_assignment"><span class="glyphicon glyphicon-cog"></span></a>
       Assignee:
       {% if event.assigned_to %}
-        <a href="{{ event.assigned_to.get_absolute_url }}">{{ event.assigned_to.get_full_name }}</a> (<a href="{% url 'event_assign' event.get_ident %}" id="clear-assignment">clear</a>).
+        <a href="{{ event.assigned_to.get_absolute_url }}">{{ event.assigned_to.get_full_name }}</a> (<a href="{% url 'event_assign' event.slug %}" id="clear-assignment">clear</a>).
       {% else %}
-        no one (<a href="{% url 'event_assign' event.get_ident user.pk %}" id="assign-yourself">assign yourself</a>).
+        no one (<a href="{% url 'event_assign' event.slug user.pk %}" id="assign-yourself">assign yourself</a>).
       {% endif %}
     </p>
   </div>
 </div>
 <div class="row">
   <div class="col-md-12">
+    {% block edit-actions %}
     <p class="edit-object pull-left">
       {% if perms.workshops.change_event %}
-      <a href="{% url 'event_edit' event.get_ident %}" class="btn btn-primary">Edit</a>
+      <a href="{% url 'event_edit' event.slug %}" class="btn btn-primary">Edit</a>
       {% else %}
-      <a href="{% url 'event_edit' event.get_ident %}" class="btn btn-primary disabled">Edit</a>
+      <a href="{% url 'event_edit' event.slug %}" class="btn btn-primary disabled">Edit</a>
       {% endif %}
     </p>
     <p class="pull-right">
       <a href="#" class="btn btn-default" id="preview_event">Show preview</a>
     </p>
+    {% endblock edit-actions %}
   </div>
 </div>
 
@@ -82,7 +84,7 @@
         <h4 class="modal-title" id="assignment_modal_label">Assignment</h4>
       </div>
       <div class="modal-body">
-        {% crispy person_lookup_form person_lookup_helper %}
+        {% crispy person_lookup_form %}
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
@@ -132,6 +134,8 @@
     <th width="25">DC?</th>
     <th width="25">SWC?</th>
     <th>person</th>
+    <th>title</th>
+    <th>url</th>
     <th>role</th>
   </tr>
   {% for t in tasks %}
@@ -139,6 +143,8 @@
     <td class="text-center">{% if t.person_is_dc_instructor %}{% bootstrap_tag "DC" %}{% endif %}</td>
     <td class="text-center">{% if t.person_is_swc_instructor %}{% bootstrap_tag "SWC" %}{% endif %}</td>
     <td><a href="{{ t.person.get_absolute_url }}">{{ t.person.get_full_name }}</a>{% if t.person.email and t.person.may_contact %} &lt;{{ t.person.email|urlize }}&gt;{% endif %}</td>
+    <td><a href="{% url 'task_details' t.pk %}">{{ t.title|default:"—" }}</a></td>
+    <td>{{ t.url|default:"—"|urlize_newtab }}</td>
     <td>{{ t.role.name }}</td>
   </tr>
   {% endfor %}
@@ -146,19 +152,48 @@
 {% else %}
 <p>No tasks.</p>
 {% endif %}
+
+{% block sponsorships %}
+{% with sponsorships=event.sponsorship_set.all %}
+{% if sponsorships %}
+<h3>Sponsors</h3>
+<table class="table table-striped">
+  <tr>
+    <th>organization</th>
+    <th>amount</th>
+    <th>contact</th>
+  </tr>
+  {% for sponsorship in sponsorships %}
+  <tr>
+    <td><a href="{{ sponsorship.organization.get_absolute_url }}">{{ sponsorship.organization }}</a></td>
+    <td>{{ sponsorship.amount|default:"—" }}</td>
+    <td>
+    {% if sponsorship.contact %}
+        <a href="{{ sponsorship.contact.get_absolute_url }}">{{ sponsorship.contact }}</a>
+    {% else %}—{% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p>No sponsors.</p>
+{% endif %}
+{% endwith %}
+{% endblock sponsorships %}
+
 <div class="clearfix">
   <p class="edit-object pull-left">
     {% if perms.workshops.change_event %}
-    <a href="{% url 'event_edit' event.get_ident %}" class="btn btn-primary">Edit</a>
+    <a href="{% url 'event_edit' event.slug %}" class="btn btn-primary">Edit</a>
     {% else %}
-    <a href="{% url 'event_edit' event.get_ident %}" class="btn btn-primary disabled">Edit</a>
+    <a href="{% url 'event_edit' event.slug %}" class="btn btn-primary disabled">Edit</a>
     {% endif %}
   </p>
   <p class="delete-object pull-right">
     {% if perms.workshops.change_event %}
-    <a href="{% url 'event_delete' event.get_ident %}" onclick='return confirm("Are you sure you wish to remove \"{{ event }}\"?")' class="btn btn-danger">Delete event</a>
+    <a href="{% url 'event_delete' event.slug %}" onclick='return confirm("Are you sure you wish to remove \"{{ event }}\"?")' class="btn btn-danger">Delete event</a>
     {% else %}
-    <a href="{% url 'event_delete' event.get_ident %}" class="btn btn-danger disabled">Delete event</a>
+    <a href="{% url 'event_delete' event.slug %}" class="btn btn-danger disabled">Delete event</a>
     {% endif %}
   </p>
 </div>
@@ -166,7 +201,7 @@
 <h3 id="todos">TODOs</h3>
 {% if perms.workshops.add_todoitem %}
 <p>
-  <a href="{% url 'todos_add' event.get_ident %}" class="btn btn-primary">Add standard TODOs</a>
+  <a href="{% url 'todos_add' event.slug %}" class="btn btn-primary">Add standard TODOs</a>
 </p>
 {% endif %}
 {% if todos %}
@@ -217,8 +252,6 @@
 <script type="text/javascript">
   var gmap = null;
 
-  $('#error_event_url').popover({placement: "left", html: true});
-  $('#error_closest_instructors').popover({placement: "left", html: true});
   $('#change_assignment').click(function() {
     $('#assignment_modal').modal();
     return false;
@@ -228,7 +261,7 @@
     return false;
   });
   $('#validation_modal').on('show.bs.modal', function() {
-    $('#validation_modal .modal-body').load("{% url 'validate_event' event.get_ident %} #validation");
+    $('#validation_modal .modal-body').load("{% url 'validate_event' event.slug %} #validation");
   });
   $('#preview_event').click(function() {
     $('#preview_modal').modal();

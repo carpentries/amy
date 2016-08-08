@@ -4,7 +4,28 @@
 {% load selectable_tags %}
 
 {% block content %}
-{% crispy form form_helper %}
+
+  {% comment %}
+    This "delete-form" form is necessary if you include "delete" button
+    in crispy form. The "delete" button should look like that:
+
+      <input type="submit"
+             value="Delete"
+             class="btn btn-primary btn-danger"
+             form="delete-form" <!-- Reattaches this button from crispy form to our "delete-form". This is supported by HTML5. -->
+             onclick="return confirm(&quot;Are you sure you want to delete it?&quot;);" />
+
+    or use:
+
+      BootstrapHelper(add_delete_button=True)
+
+  {% endcomment %}
+  <form action="delete{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}" method="POST" id="delete-form">
+    {% csrf_token %}
+  </form>
+
+  {% crispy form %}
+
 {% endblock %}
 
 {% block extrajs %}

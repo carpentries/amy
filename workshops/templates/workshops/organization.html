@@ -4,25 +4,25 @@
 {% load revisions %}
 
 {% block content %}
-{% last_modified host %}
+{% last_modified organization %}
 
 <p class="edit-object">
-  {% if perms.workshops.change_host %}
-  <a href="{% url 'host_edit' host.domain %}" class="btn btn-primary">Edit</a>
+  {% if perms.workshops.change_organization %}
+  <a href="{% url 'organization_edit' organization.domain %}" class="btn btn-primary">Edit</a>
   {% else %}
-  <a href="{% url 'host_edit' host.domain %}" class="btn btn-primary disabled">Edit</a>
+  <a href="{% url 'organization_edit' organization.domain %}" class="btn btn-primary disabled">Edit</a>
   {% endif %}
 </p>
 <table class="table table-striped">
-  <tr><td>full name:</td><td>{{ host.fullname }}</td></tr>
-  <tr><td>domain:</td><td><a href="http://{{ host.domain }}" target="_blank">{{ host.domain }}</a></td></tr>
-  <tr><td>country:</td><td>{{ host.country.name|default:"—" }} <img src="{{ host.country.flag }}" alt="{{ host.country }}" class="country-flag" /></td></tr>
+  <tr><td>full name:</td><td>{{ organization.fullname }}</td></tr>
+  <tr><td>domain:</td><td><a href="http://{{ organization.domain }}" target="_blank">{{ organization.domain }}</a></td></tr>
+  <tr><td>country:</td><td>{{ organization.country.name|default:"—" }} <img src="{{ organization.country.flag }}" alt="{{ organization.country }}" class="country-flag" /></td></tr>
 </table>
 
-{% if host.notes %}
+{% if organization.notes %}
 <p>Notes:</p>
 <pre>
-{{ host.notes }}
+{{ organization.notes }}
 </pre>
 {% else %}
 <p>No notes.</p>
@@ -42,7 +42,7 @@
     <td>{{ e.tags.all | join:", " }}</td>
     <td>{{ e.start }}</td>
     <td>{{ e.end }}</td>
-    <td><a href="{% url 'event_details' e.get_ident %}">{{ e.get_ident }}</a></td>
+    <td><a href="{% url 'event_details' e.slug %}">{{ e.slug }}</a></td>
     <td>{{ e.url|urlize_newtab }}</td>
   </tr>
   {% endfor %}
@@ -53,31 +53,31 @@
 
 <div class="clearfix">
   <p class="edit-object pull-left">
-    {% if perms.workshops.change_host %}
-    <a href="{% url 'host_edit' host.domain %}" class="btn btn-primary">Edit</a>
+    {% if perms.workshops.change_organization %}
+    <a href="{% url 'organization_edit' organization.domain %}" class="btn btn-primary">Edit</a>
     {% else %}
-    <a href="{% url 'host_edit' host.domain %}" class="btn btn-primary disabled">Edit</a>
+    <a href="{% url 'organization_edit' organization.domain %}" class="btn btn-primary disabled">Edit</a>
     {% endif %}
   </p>
   <p class="delete-object pull-right">
-    {% if perms.workshops.delete_host %}
-    <a href="{% url 'host_delete' host.domain %}" onclick='return confirm("Are you sure you wish to remove \"{{ host }}\"?")' class="btn btn-danger">Delete host</a>
+    {% if perms.workshops.delete_organization %}
+    <a href="{% url 'organization_delete' organization.domain %}" onclick='return confirm("Are you sure you wish to remove \"{{ organization }}\"?")' class="btn btn-danger">Delete organization</a>
     {% else %}
-    <a href="{% url 'host_delete' host.domain %}" class="btn btn-danger disabled">Delete host</a>
+    <a href="{% url 'organization_delete' organization.domain %}" class="btn btn-danger disabled">Delete organization</a>
     {% endif %}
   </p>
 </div>
 
 <h3>Memberships</h3>
-{% if host.membership_set.all %}
+{% if organization.membership_set.all %}
 <table class="table table-striped">
   <tr>
     <th>Variant</th>
     <th>Agreement start</th>
     <th>Agreement end</th>
     <th>Contribution type</th>
-    <th colspan="3">Workshops w/o admin fee <a href="#" data-toggle="tooltip" title="Per year, counted for year of agreement start">[?]</a></th>
-    <th colspan="3">Self-organized workshops <a href="#" data-toggle="tooltip" title="Per year, counted for year of agreement start">[?]</a></th>
+    <th colspan="3">Workshops w/o admin fee <span class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="Per year, counted for year of agreement start"></span></th>
+    <th colspan="3">Self-organized workshops <span class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="Per year, counted for year of agreement start"></span></th>
     <th class="additional-links"></th>
   </tr>
   <tr>
@@ -86,7 +86,7 @@
     <th><small>Imposed</small></th><th><small>Completed</small></th><th><small>Remaining</small></th>
     <th></th>
   </tr>
-  {% for membership in host.membership_set.all %}
+  {% for membership in organization.membership_set.all %}
   <tr>
     <td>{{ membership.get_variant_display }}</td>
     <td>{{ membership.agreement_start }}</td>
@@ -110,19 +110,11 @@
   {% endfor %}
 </table>
 {% else %}
-<p>No memberships for this host.</p>
+<p>No memberships for this organization.</p>
 {% endif %}
-{% if perms.workshops.add_membership and perms.workshops.change_host %}
-<a href="{% url 'membership_add' host.domain %}" class="btn btn-default">Add a membership</a>
+{% if perms.workshops.add_membership and perms.workshops.change_organization %}
+<a href="{% url 'membership_add' organization.domain %}" class="btn btn-default">Add a membership</a>
 {% else %}
 <a href="#" class="btn btn-default disabled">Add a membership</a>
 {% endif %}
-{% endblock %}
-
-{% block extrajs %}
-<script type="text/javascript">
-$(function () {
-  $('[data-toggle="tooltip"]').tooltip()
-})
-</script>
 {% endblock %}

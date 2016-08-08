@@ -26,7 +26,7 @@
       {% for event in events.all %}
       <tr>
         <td>{% if event.assigned_to %}<a href="{{ event.assigned_to.get_absolute_url }}">{{ event.assigned_to.get_short_name }}</a>{% else %}—{% endif %}</td>
-        <td>{% if not event.slug %}—{% else %}<a href="{{ event.get_absolute_url }}">{{ event.get_ident }}</a>{% endif %}</td>
+        <td>{% if not event.slug %}—{% else %}<a href="{{ event.get_absolute_url }}">{{ event.slug }}</a>{% endif %}</td>
       </tr>
       {% endfor %}
     </tbody>

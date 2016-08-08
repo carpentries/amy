@@ -25,10 +25,11 @@ class GithubAuthMiddleware():
 
 
 def github_username_to_uid(username):
-    """ Raises ValueError if there is no user with given username.
+    """ Returns int.
 
-    Raises GithubException in the case of IO issues.
-    """
+    Raises ValueError if there is no user with given username.
+
+    Raises GithubException in the case of IO issues."""
 
     g = Github(settings.GITHUB_API_TOKEN)
     try:

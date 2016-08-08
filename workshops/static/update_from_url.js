@@ -11,7 +11,7 @@ $('#update_url_form').submit(function(e) {
   var url = $(this).find(':input[name=url]').val();
 
   // load data from URL
-  $.post("/workshops/events/import/", $(this).find(":input"), function(data) {
+  $.get("/workshops/events/import/", $(this).find(":input"), function(data) {
     var action = $('#update_url_form input[type=radio]:checked').val();
 
     $("#event_update_url").parent().removeClass('has-error');
@@ -106,9 +106,7 @@ $('#update_url_form').submit(function(e) {
         }
         // append notes
         var today = new Date();
-        var today_str = "\n\n---------\nUPDATE " +
-          today.getFullYear() + "-" + today.getMonth() + "-" + today.getDay() +
-          ":\n";
+        var today_str = "\n\n---------\nUPDATE " + today.yyyymmdd() + ":\n";
         $("#id_event-notes").val(
           $("#id_event-notes").val() + today_str +
           "INSTRUCTORS: " + data.instructors.join(", ") + "\n\n" +

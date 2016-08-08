@@ -1,18 +1,19 @@
 import datetime
 import re
-from social.apps.django_app.default.models import UserSocialAuth
 from urllib.parse import urlencode
 
 from django.contrib.auth.models import (
-    AbstractBaseUser, BaseUserManager, PermissionsMixin)
+    AbstractBaseUser, BaseUserManager, PermissionsMixin,
+)
+from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
 from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
-
 from django_countries.fields import CountryField
 from reversion import revisions as reversion
+from social.apps.django_app.default.models import UserSocialAuth
 
 from workshops import github_auth
 
@@ -55,8 +56,8 @@ class CreatedUpdatedMixin(models.Model):
 
 
 @reversion.register
-class Host(models.Model):
-    '''Represent a workshop's host.'''
+class Organization(models.Model):
+    '''Represent an organization, academic or business.'''
 
     domain     = models.CharField(max_length=STR_LONG, unique=True)
     fullname   = models.CharField(max_length=STR_LONG, unique=True)
@@ -67,7 +68,7 @@ class Host(models.Model):
         return self.domain
 
     def get_absolute_url(self):
-        return reverse('host_details', args=[str(self.domain)])
+        return reverse('organization_details', args=[str(self.domain)])
 
     class Meta:
         ordering = ('domain', )
@@ -75,7 +76,7 @@ class Host(models.Model):
 
 @reversion.register
 class Membership(models.Model):
-    """Represent a details of Host's membership."""
+    """Represent a details of Organization's membership."""
 
     MEMBERSHIP_CHOICES = (
         ('partner', 'Partner'),
@@ -110,11 +111,11 @@ class Membership(models.Model):
         help_text="Imposed number of self-organized workshops per year",
     )
     notes = models.TextField(default="", blank=True)
-    host = models.ForeignKey(Host, null=False, blank=False,
+    organization = models.ForeignKey(Organization, null=False, blank=False,
                              on_delete=models.PROTECT)
 
     def __str__(self):
-        return "{} Membership of <{}>".format(self.variant, str(self.host))
+        return "{} Membership of <{}>".format(self.variant, str(self.organization))
 
     @property
     def workshops_without_admin_fee_per_year_completed(self):
@@ -125,7 +126,7 @@ class Membership(models.Model):
                           Q(administrator__domain='self-organized'))
         no_fee = Q(admin_fee=0) | Q(admin_fee=None)
 
-        return Event.objects.filter(host=self.host, start__year=year) \
+        return Event.objects.filter(host=self.organization, start__year=year) \
                             .filter(no_fee) \
                             .exclude(self_organized).count()
 
@@ -144,7 +145,7 @@ class Membership(models.Model):
         self_organized = (Q(administrator=None) |
                           Q(administrator__domain='self-organized'))
 
-        return Event.objects.filter(host=self.host, start__year=year) \
+        return Event.objects.filter(host=self.organization, start__year=year) \
                             .filter(self_organized).count()
 
     @property
@@ -154,6 +155,38 @@ class Membership(models.Model):
         a = self.self_organized_workshops_per_year
         b = self.self_organized_workshops_per_year_completed
         return a - b
+
+
+#------------------------------------------------------------
+
+
+class Sponsorship(models.Model):
+    '''Represent sponsorship from a host for an event.'''
+
+    organization = models.ForeignKey(
+        'Organization',
+        on_delete=models.CASCADE,
+        help_text='Organization sponsoring the event'
+    )
+    event = models.ForeignKey(
+        'Event',
+        on_delete=models.CASCADE,
+    )
+    amount = models.DecimalField(
+        max_digits=8, decimal_places=2,
+        blank=True, null=True,
+        validators=[MinValueValidator(0)],
+        verbose_name='Sponsorship amount',
+        help_text='e.g. 1992.33'
+    )
+    contact = models.ForeignKey(
+        'Person',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+    )
+
+    def __str__(self):
+        return '{}: {}'.format(self.organization, self.amount)
 
 
 #------------------------------------------------------------
@@ -339,16 +372,15 @@ class Person(AbstractBaseUser, PermissionsMixin):
 
     @property
     def github_usersocialauth(self):
-        """ List of all associated GitHub accounts with this Person. Returns
-        list of UserSocialAuth. """
+        """List of all associated GitHub accounts with this Person. Returns
+        list of UserSocialAuth."""
         return self.social_auth.filter(provider='github')
 
     def get_github_uid(self):
-        """ May raise GithubException in the case of IO issues.
+        """May raise GithubException in the case of IO issues.
 
         Returns uid (int) of Github account with username == Person.github.
-        If there is no account with such username, returns None.
-        """
+        If there is no account with such username, returns None."""
 
         if self.github and self.is_active:
             try:
@@ -361,7 +393,7 @@ class Person(AbstractBaseUser, PermissionsMixin):
         return github_uid
 
     def check_if_usersocialauth_is_in_sync(self):
-        """ May raise GithubException in the case of IO issues. """
+        """May raise GithubException in the case of IO issues."""
 
         github_uid = self.get_github_uid()
 
@@ -370,12 +402,11 @@ class Person(AbstractBaseUser, PermissionsMixin):
         return uids_from_person == uids_from_usersocialauth
 
     def synchronize_usersocialauth(self):
-        """ May raise GithubException in the case of IO issues.
+        """May raise GithubException in the case of IO issues.
 
         Disconnect all GitHub account associated with this Person and
         associates the account with username == Person.github, if there is
-        such GitHub account.
-        """
+        such GitHub account."""
 
         github_uid = self.get_github_uid()
 
@@ -388,14 +419,51 @@ class Person(AbstractBaseUser, PermissionsMixin):
 
     @property
     def is_staff(self):
-        """
-        Required for logging into admin panel at '/admin/'.
-        """
+        """Required for logging into admin panel at '/admin/'."""
         return self.is_superuser
 
     @property
     def is_admin(self):
         return is_admin(self)
+
+    def get_missing_swc_instructor_requirements(self):
+        """Returns set of requirements' names (list of strings) that are not
+        passed yet by the trainee and are mandatory to become SWC Instructor.
+        """
+        requirements = [
+            'Training',
+            'SWC Homework',
+            'Discussion',
+            'SWC Demo'
+        ]
+        passed = self.trainingprogress_set\
+                     .filter(discarded=False, state='p',
+                             requirement__name__in=requirements) \
+                     .values_list('requirement__name', flat=True)
+        return set(requirements) - set(passed)
+
+    def get_missing_dc_instructor_requirements(self):
+        """Returns set of requirements' names (list of strings) that are not
+        passed yet by the trainee and are mandatory to become DC Instructor."""
+
+        requirements = [
+            'Training',
+            'DC Homework',
+            'Discussion',
+            'DC Demo'
+        ]
+        passed = self.trainingprogress_set \
+            .filter(discarded=False, state='p',
+                    requirement__name__in=requirements) \
+            .values_list('requirement__name', flat=True)
+        return set(requirements) - set(passed)
+
+    def get_training_tasks(self):
+        """Returns Tasks related to Instuctor Training events at which this
+        person was trained."""
+        return Task.objects.filter(person=self,
+                                   role__name='learner',
+                                   event__tags__name='TTT')
 
     def clean(self):
         """This will be called by the ModelForm.is_valid(). No saving to the
@@ -404,6 +472,14 @@ class Person(AbstractBaseUser, PermissionsMixin):
         self.email = self.email.lower() if self.email else None
 
     def save(self, *args, **kwargs):
+        # If GitHub username has changed, clear UserSocialAuth table for this
+        # person.
+        if self.pk is not None:
+            orig = Person.objects.get(pk=self.pk)
+            github_username_has_changed = orig.github != self.github
+            if github_username_has_changed:
+                UserSocialAuth.objects.filter(user=self).delete()
+
         # save empty string as NULL to the database - otherwise there are
         # issues with UNIQUE constraint failing
         self.personal = self.personal.strip()
@@ -423,7 +499,8 @@ def is_admin(user):
     else:
         return (user.is_superuser or
                 user.groups.filter(Q(name='administrators') |
-                                   Q(name='steering committee')).exists())
+                                   Q(name='steering committee') |
+                                   Q(name='invoicing')).exists())
 
 
 class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
@@ -660,8 +737,8 @@ class EventQuerySet(models.query.QuerySet):
 
     def unpublished_conditional(self):
         """Return conditional for events without: start OR country OR venue OR
-        url (ie. unpublished events). This will be used in
-        `self.published_events`, too."""
+        url OR are marked as 'cancelled' (ie. unpublished events). This will be
+        used in `self.published_events`, too."""
         unknown_start = Q(start__isnull=True)
         no_country = Q(country__isnull=True)
         no_venue = Q(venue__exact='')
@@ -669,9 +746,10 @@ class EventQuerySet(models.query.QuerySet):
         no_latitude = Q(latitude__isnull=True)
         no_longitude = Q(longitude__isnull=True)
         no_url = Q(url__isnull=True)
+        cancelled = Q(tags__name='cancelled')
         return (
             unknown_start | no_country | no_venue | no_address | no_latitude |
-            no_longitude | no_url
+            no_longitude | no_url | cancelled
         )
 
     def unpublished_events(self):
@@ -699,6 +777,10 @@ class EventQuerySet(models.query.QuerySet):
         """Return events for which remote metatags have been updated."""
         return self.filter(metadata_changed=True)
 
+    def ttt(self):
+        """Return only TTT events."""
+        return self.filter(tags__name='TTT')
+
 
 @reversion.register
 class Event(AssignmentMixin, models.Model):
@@ -712,7 +794,7 @@ class Event(AssignmentMixin, models.Model):
     WEBSITE_FORMAT = 'https://{name}.github.io/{repo}/'
     PUBLISHED_HELP_TEXT = 'Required in order for this event to be "published".'
 
-    host = models.ForeignKey(Host, on_delete=models.PROTECT,
+    host = models.ForeignKey(Organization, on_delete=models.PROTECT,
                              help_text='Organization hosting the event.')
     tags = models.ManyToManyField(
         Tag,
@@ -720,12 +802,18 @@ class Event(AssignmentMixin, models.Model):
                   'the host or TTT events that aren\'t running.</li>'
                   '<li><i>unresponsive</i> – for events whose hosts and/or '
                   'organizers aren\'t going to send us attendance data.</li>'
+                  '<li><i>cancelled</i> — for events that were supposed to '
+                  'happen, but due to some circumstances got cancelled.</li>'
                   '</ul>',
     )
     administrator = models.ForeignKey(
-        Host, related_name='administrator', null=True, blank=True,
+        Organization, related_name='administrator', null=True, blank=True,
         on_delete=models.PROTECT,
         help_text='Organization responsible for administrative work.'
+    )
+    sponsors = models.ManyToManyField(
+        Organization, related_name='sponsored_events', blank=True,
+        through=Sponsorship,
     )
     start = models.DateField(
         null=True, blank=True,
@@ -842,10 +930,10 @@ class Event(AssignmentMixin, models.Model):
     objects = EventQuerySet.as_manager()
 
     def __str__(self):
-        return self.get_ident()
+        return self.slug
 
     def get_absolute_url(self):
-        return reverse('event_details', args=[self.get_ident()])
+        return reverse('event_details', args=[self.slug])
 
     @property
     def repository_url(self):
@@ -955,23 +1043,6 @@ class Event(AssignmentMixin, models.Model):
                 return '{:%b %d}-{:%b %d, %Y}'.format(date1, date2)
         else:
             return '{:%b %d, %Y}-{:%b %d, %Y}'.format(date1, date2)
-
-    def get_ident(self):
-        if self.slug:
-            return str(self.slug)
-        return str(self.id)
-
-    @staticmethod
-    def get_by_ident(ident):
-        '''
-        Select event that matches given identifier.
-        If ident is an int, search for matching primary-key;
-        otherwise get matching slug. May throw DoesNotExist error.
-        '''
-        try:
-            return Event.objects.get(pk=int(ident))
-        except ValueError:
-            return Event.objects.get(slug=ident)
 
     def save(self, *args, **kwargs):
         self.slug = self.slug or None
@@ -1429,6 +1500,11 @@ class Task(models.Model):
     event      = models.ForeignKey(Event)
     person     = models.ForeignKey(Person)
     role       = models.ForeignKey(Role)
+    title      = models.CharField(
+        max_length=STR_LONG,
+        blank=True,
+    )
+    url        = models.URLField(blank=True)
 
     objects = TaskManager()
 
@@ -1619,7 +1695,7 @@ class InvoiceRequest(models.Model):
         help_text='YYYY-MM-DD')
 
     organization = models.ForeignKey(
-        Host, on_delete=models.PROTECT, verbose_name='Organization to invoice',
+        Organization, on_delete=models.PROTECT, verbose_name='Organization to invoice',
         help_text='e.g. University of Florida Ecology Department')
 
     INVOICE_REASON = (
@@ -1768,6 +1844,18 @@ def build_choice_field_with_other_option(choices, default, verbose_name=None):
 
 @reversion.register
 class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
+    STATES = (
+        ('p', 'Pending'),  # initial state
+        ('a', 'Accepted'),  # state after matching a Person record
+        ('d', 'Discarded'),
+    )
+    state = models.CharField(choices=STATES, default='p', max_length=1)
+
+    person = models.ForeignKey(Person, null=True, blank=True,
+                               verbose_name='Matched Trainee')
+
+    # no association with Event
+
     group_name = models.CharField(
         blank=True, default='', null=False,
         max_length=STR_LONG,
@@ -1945,3 +2033,97 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         default='', null=False, blank=True,
         help_text='What else do you want us to know?',
         verbose_name='Anything else?')
+
+    def clean(self):
+        super().clean()
+
+        if self.state == 'a' and self.person is None:
+            raise ValidationError({'person': 'Accepted training request must '
+                                             'be matched to a person.'})
+
+        if self.state == 'p' and self.person is not None:
+            raise ValidationError({'person': 'Pending training requests cannot '
+                                             'be matched to a person.'})
+
+    def get_absolute_url(self):
+        return reverse('trainingrequest_details', args=[self.pk])
+
+
+@reversion.register
+class TrainingRequirement(models.Model):
+    name = models.CharField(max_length=STR_MED)
+
+    # Determines whether TrainingProgress.url is required (True) or must be
+    # null (False).
+    url_required = models.BooleanField(default=False)
+
+    # Determines whether TrainingProgress.event is required (True) or must be
+    # null (False).
+    event_required = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ['name']
+
+
+@reversion.register
+class TrainingProgress(CreatedUpdatedMixin, models.Model):
+    trainee = models.ForeignKey(Person, on_delete=models.PROTECT)
+
+    # Mentor/examiner who evaluates homework / session. May be null when a
+    # trainee submits their homework.
+    evaluated_by = models.ForeignKey(Person,
+                                     on_delete=models.PROTECT,
+                                     null=True, blank=True,
+                                     related_name='+')
+    requirement = models.ForeignKey(TrainingRequirement,
+                                    on_delete=models.PROTECT,
+                                    verbose_name='Type')
+
+    STATES = (
+        ('n', 'Not evaluated yet'),
+        ('f', 'Failed'),
+        ('p', 'Passed'),
+    )
+    state = models.CharField(choices=STATES, default='p', max_length=1)
+
+    # When we end training and trainee has gone silent, or passed their
+    # deadline, we set this field to True.
+    discarded = models.BooleanField(
+        default=False,
+        verbose_name='Discarded',
+        help_text='Check when the trainee has gone silent or passed their '
+                  'training deadline. Discarded items are not permanently '
+                  'deleted permanently from AMY. If you want to remove this '
+                  'record, click red "delete" button.')
+
+    event = models.ForeignKey(Event, null=True, blank=True,
+                              verbose_name='Training',
+                              limit_choices_to=Q(tags__name='TTT'))
+    url = models.URLField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+
+    def get_absolute_url(self):
+        return reverse('trainingprogress_edit', args=[str(self.id)])
+
+    def clean(self):
+        if self.requirement.url_required and not self.url:
+            msg = 'In the case of {}, this field is required.'.format(self.requirement)
+            raise ValidationError({'url': msg})
+        elif not self.requirement.url_required and self.url:
+            msg = 'In the case of {}, this field must be left empty.'.format(self.requirement)
+            raise ValidationError({'url': msg})
+
+        if self.requirement.event_required and not self.event:
+            msg = 'In the case of {}, this field is required.'.format(self.requirement)
+            raise ValidationError({'event': msg})
+        elif not self.requirement.event_required and self.event:
+            msg = 'In the case of {}, this field must be left empty.'.format(self.requirement)
+            raise ValidationError({'event': msg})
+
+        super().clean()
+
+    class Meta:
+        ordering = ['created_at']

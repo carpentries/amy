@@ -53,7 +53,7 @@ input.autocomboboxwidget {
     margin: 0px 0px 10px;
 }
 
-/* event, host and person notes are displayed in <pre> */
+/* event, organization and person notes are displayed in <pre> */
 pre {
     white-space: pre-wrap;
 }
@@ -93,10 +93,9 @@ body {
 
 /* when using nav-tab (http://getbootstrap.com/javascript/#tabs) move the
    crispy form down a few notches */
-div[role="tabpanel"] form {
+.tab-content {
     padding-top: 10px;
 }
-
 /* Overwriting Bootstrap styles for horizontal forms. The checkboxes and radios
    were shifted to the left too much, while singular checkbox questions were
    okay. */
@@ -203,4 +202,9 @@ table tr label {
 
 table ul {
     padding-left: 15px;
+}
+
+/* Make question signs blue by default, so they look like a link. */
+.glyphicon-question-sign {
+    color: rgb(51, 122, 183);
 }

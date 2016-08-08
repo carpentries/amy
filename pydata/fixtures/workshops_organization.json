@@ -1,0 +1,11 @@
+[
+{
+  "model": "workshops.organization",
+  "fields": {
+    "domain": "numfocus.org",
+    "fullname": "NumFOCUS",
+    "country": "US",
+    "notes": ""
+  }
+}
+]

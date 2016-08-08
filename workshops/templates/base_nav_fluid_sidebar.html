@@ -1,10 +1,15 @@
 {% extends 'base_nav_fluid.html' %}
+{% load crispy_forms_tags %}
+
 {% block fluid-messages %}col-sm-10 col-sm-offset-2{% endblock %}
 
 {% block main %}
       <div class="row">
         <div class="col-sm-2 col-md-2 sidebar">
-        {% block sidebar %}{% endblock %}
+        {% block sidebar %}
+          <h3>Filter</h3>
+          {% crispy filter.form %}
+        {% endblock %}
         </div>
         <div class="col-sm-10 col-md-10 col-sm-offset-2 col-md-offset-2 main">
         {% block title %}{% if title %}<h1>{{ title }}</h1>{% endif %}{% endblock %}

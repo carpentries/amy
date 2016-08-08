@@ -2,7 +2,7 @@ from datetime import timedelta, date
 
 from django.core.urlresolvers import reverse
 
-from ..models import Event, Host, Role, Person
+from ..models import Event, Organization, Role, Person
 from .base import TestBase
 
 
@@ -23,10 +23,10 @@ class TestIssuesViews(TestBase):
         """Test if workshop issues collects events from past only."""
         past = Event.objects.create(
             slug='event-in-past', start=self.yesterday,
-            host=Host.objects.first())
+            host=Organization.objects.first())
         future = Event.objects.create(
             slug='event-in-future', start=self.tomorrow,
-            host=Host.objects.first())
+            host=Organization.objects.first())
 
         rv = self.client.get(self.url)
         self.assertIn(past, rv.context['events'])
@@ -36,10 +36,10 @@ class TestIssuesViews(TestBase):
         """Test if workshop issues collects active events only."""
         inactive = Event.objects.create(
             slug='inactive-event', start=self.yesterday,
-            completed=True, host=Host.objects.first())
+            completed=True, host=Organization.objects.first())
         active = Event.objects.create(
             slug='active-event', start=self.yesterday,
-            completed=False, host=Host.objects.first())
+            completed=False, host=Organization.objects.first())
 
         rv = self.client.get(self.url)
         self.assertNotIn(inactive, rv.context['events'])
@@ -51,14 +51,14 @@ class TestIssuesViews(TestBase):
         attendance = Event.objects.create(
             slug='event-with-attendance',
             start=self.weekago, end=self.yesterday,
-            attendance=36, host=Host.objects.first(),
+            attendance=36, host=Organization.objects.first(),
             country='US', address='A', venue='B', latitude=89, longitude=179)
         attendance.task_set.create(person=Person.objects.first(),
                                    role=self.instructor_role)
         no_attendance = Event.objects.create(
             slug='event-with-no-attendance',
             start=self.weekago, end=self.yesterday,
-            attendance=0, host=Host.objects.first(),
+            attendance=0, host=Organization.objects.first(),
             country='US', address='A', venue='B', latitude=89, longitude=179)
         no_attendance.task_set.create(person=Person.objects.first(),
                                       role=self.instructor_role)
@@ -72,14 +72,14 @@ class TestIssuesViews(TestBase):
         location = Event.objects.create(
             slug='event-with-location',
             start=self.weekago, end=self.yesterday,
-            attendance=36, host=Host.objects.first(),
+            attendance=36, host=Organization.objects.first(),
             country='US', address='A', venue='B', latitude=89, longitude=179)
         location.task_set.create(person=Person.objects.first(),
                                  role=self.instructor_role)
         no_location = Event.objects.create(
             slug='event-with-no-location',
             start=self.weekago, end=self.yesterday,
-            attendance=36, host=Host.objects.first(),
+            attendance=36, host=Organization.objects.first(),
             country='US', address='', venue='B', latitude=89, longitude=179)
         no_location.task_set.create(person=Person.objects.first(),
                                     role=self.instructor_role)
@@ -93,14 +93,14 @@ class TestIssuesViews(TestBase):
         okay = Event.objects.create(
             slug='event-with-okay-dates',
             start=self.weekago, end=self.yesterday,
-            attendance=36, host=Host.objects.first(),
+            attendance=36, host=Organization.objects.first(),
             country='US', address='A', venue='B', latitude=89, longitude=179)
         okay.task_set.create(person=Person.objects.first(),
                              role=self.instructor_role)
         invalid_dates = Event.objects.create(
             slug='event-with-invalid-dates',
             start=self.yesterday, end=self.weekago,
-            attendance=36, host=Host.objects.first(),
+            attendance=36, host=Organization.objects.first(),
             country='US', address='A', venue='B', latitude=89, longitude=179)
         invalid_dates.task_set.create(person=Person.objects.first(),
                                       role=self.instructor_role)
@@ -114,14 +114,14 @@ class TestIssuesViews(TestBase):
         instructor = Event.objects.create(
             slug='event-with-instructor',
             start=self.weekago, end=self.yesterday,
-            attendance=36, host=Host.objects.first(),
+            attendance=36, host=Organization.objects.first(),
             country='US', address='A', venue='B', latitude=89, longitude=179)
         instructor.task_set.create(person=Person.objects.first(),
                                    role=self.instructor_role)
         no_instructors = Event.objects.create(
             slug='event-with-no-instructors',
             start=self.weekago, end=self.yesterday,
-            attendance=36, host=Host.objects.first(),
+            attendance=36, host=Organization.objects.first(),
             country='US', address='A', venue='B', latitude=89, longitude=179)
 
         rv = self.client.get(self.url)

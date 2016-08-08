@@ -1,4 +1,5 @@
 from django.conf.urls import url
+
 from workshops import views
 
 urlpatterns = [
@@ -8,13 +9,13 @@ urlpatterns = [
 
     url(r'^log/$', views.changes_log, name='changes_log'),
 
-    url(r'^hosts/?$', views.all_hosts, name='all_hosts'),
-    url(r'^host/(?P<host_domain>[\w\.-]+)/?$', views.host_details, name='host_details'),
-    url(r'^host/(?P<host_domain>[\w\.-]+)/edit$', views.HostUpdate.as_view(), name='host_edit'),
-    url(r'^host/(?P<host_domain>[\w\.-]+)/delete$', views.host_delete, name='host_delete'),
-    url(r'^hosts/add/$', views.HostCreate.as_view(), name='host_add'),
+    url(r'^organizations/?$', views.all_organizations, name='all_organizations'),
+    url(r'^organization/(?P<org_domain>[\w\.-]+)/?$', views.organization_details, name='organization_details'),
+    url(r'^organization/(?P<org_domain>[\w\.-]+)/edit$', views.OrganizationUpdate.as_view(), name='organization_edit'),
+    url(r'^organization/(?P<org_domain>[\w\.-]+)/delete$', views.organization_delete, name='organization_delete'),
+    url(r'^organizations/add/$', views.OrganizationCreate.as_view(), name='organization_add'),
 
-    url(r'membership/(?P<host_domain>[\w\.-]+)/add', views.membership_create, name='membership_add'),
+    url(r'membership/(?P<org_domain>[\w\.-]+)/add', views.membership_create, name='membership_add'),
     url(r'membership/(?P<membership_id>\d+)/edit', views.MembershipUpdate.as_view(), name='membership_edit'),
     url(r'membership/(?P<membership_id>\d+)/delete', views.membership_delete, name='membership_delete'),
 
@@ -38,21 +39,21 @@ urlpatterns = [
     url(r'^persons/sync_usersocialauth/(?P<person_id>\d+)/?', views.sync_usersocialauth, name='sync_usersocialauth'),
 
     url(r'^events/?$', views.all_events, name='all_events'),
-    url(r'^event/(?P<event_ident>[\w-]+)/?$', views.event_details, name='event_details'),
-    url(r'^event/(?P<event_ident>[\w-]+)/assign$', views.event_assign, name='event_assign'),
-    url(r'^event/(?P<event_ident>[\w-]+)/assign/(?P<person_id>[\w\.-]+)$', views.event_assign, name='event_assign'),
-    url(r'^event/(?P<event_ident>[\w-]+)/edit$', views.event_edit, name='event_edit'),
-    url(r'^event/(?P<event_ident>[\w-]+)/delete$', views.event_delete, name='event_delete'),
+    url(r'^event/(?P<slug>[\w-]+)/?$', views.event_details, name='event_details'),
+    url(r'^event/(?P<slug>[\w-]+)/assign$', views.event_assign, name='event_assign'),
+    url(r'^event/(?P<slug>[\w-]+)/assign/(?P<person_id>[\w\.-]+)$', views.event_assign, name='event_assign'),
+    url(r'^event/(?P<slug>[\w-]+)/edit$', views.event_edit, name='event_edit'),
+    url(r'^event/(?P<slug>[\w-]+)/delete$', views.event_delete, name='event_delete'),
     url(r'^events/add/$', views.EventCreate.as_view(), name='event_add'),
-    url(r'^event/(?P<event_ident>[\w-]+)/validate/?$', views.validate_event, name='validate_event'),
+    url(r'^event/(?P<slug>[\w-]+)/validate/?$', views.validate_event, name='validate_event'),
     url(r'^events/metadata_changed/?$', views.events_metadata_changed, name='events_metadata_changed'),
-    url(r'^event/(?P<event_ident>[\w-]+)/review_metadata_changes/?$', views.event_review_metadata_changes, name='event_review_metadata_changes'),
-    url(r'^event/(?P<event_ident>[\w-]+)/review_metadata_changes/accept/?$', views.event_accept_metadata_changes, name='event_accept_metadata_changes'),
-    url(r'^event/(?P<event_ident>[\w-]+)/review_metadata_changes/dismiss/?$', views.event_dismiss_metadata_changes, name='event_dismiss_metadata_changes'),
+    url(r'^event/(?P<slug>[\w-]+)/review_metadata_changes/?$', views.event_review_metadata_changes, name='event_review_metadata_changes'),
+    url(r'^event/(?P<slug>[\w-]+)/review_metadata_changes/accept/?$', views.event_accept_metadata_changes, name='event_accept_metadata_changes'),
+    url(r'^event/(?P<slug>[\w-]+)/review_metadata_changes/dismiss/?$', views.event_dismiss_metadata_changes, name='event_dismiss_metadata_changes'),
     url(r'^events/import/?$', views.event_import, name='event_import'),
     url(r'^events/merge/?$', views.events_merge, name='events_merge'),
 
-    url(r'^event/(?P<event_ident>[\w-]+)/invoice$', views.event_invoice, name='event_invoice'),
+    url(r'^event/(?P<slug>[\w-]+)/invoice$', views.event_invoice, name='event_invoice'),
     url(r'^invoices/?$', views.AllInvoiceRequests.as_view(), name='all_invoicerequests'),
     url(r'^invoice/(?P<request_id>\d+)/?$', views.InvoiceRequestDetails.as_view(), name='invoicerequest_details'),
     url(r'^invoice/(?P<request_id>\d+)/edit$', views.InvoiceRequestUpdate.as_view(), name='invoicerequest_edit'),
@@ -61,8 +62,10 @@ urlpatterns = [
     url(r'^task/(?P<task_id>\d+)/?$', views.task_details, name='task_details'),
     url(r'^task/(?P<task_id>\d+)/edit$', views.TaskUpdate.as_view(), name='task_edit'),
     url(r'^task/(?P<task_id>\d+)/delete$', views.task_delete, name='task_delete'),
-    url(r'^event/(?P<event_ident>[\w-]+)/task/(?P<task_id>\d+)/delete$', views.task_delete, name='task_delete'),
+    url(r'^event/(?P<slug>[\w-]+)/task/(?P<task_id>\d+)/delete$', views.task_delete, name='task_delete'),
     url(r'^tasks/add/$', views.TaskCreate.as_view(), name='task_add'),
+
+    url(r'^sponsorship/(?P<pk>\d+)/delete$', views.SponsorshipDelete.as_view(), name='sponsorship_delete'),
 
     url(r'^award/(?P<award_id>\d+)/delete$', views.award_delete, name='award_delete'),
     url(r'^person/(?P<person_id>[\w\.-]+)/award/(?P<award_id>\d+)/delete$', views.award_delete, name='award_delete'),
@@ -133,10 +136,18 @@ urlpatterns = [
     url(r'^autoupdate_profile/$', views.autoupdate_profile, name='autoupdate_profile'),
 
     url(r'^request_training/$', views.trainingrequest_create, name='training_request'),
-    url(r'^training_requests/$', views.TrainingRequestListView.as_view(), name='all_trainingrequests'),
-    url(r'^training_requests/(?P<request_id>\d+)/?$', views.TrainingRequestDetails.as_view(), name='trainingrequest_details'),
+    url(r'^training_requests/$', views.all_trainingrequests, name='all_trainingrequests'),
+    url(r'^training_requests/csv/$', views.download_trainingrequests, name='download_trainingrequests'),
+    url(r'^training_request/(?P<request_id>\d+)/?$', views.trainingrequest_details, name='trainingrequest_details'),
+    url(r'^training_request/(?P<pk>\d+)/edit/??$', views.TrainingRequestUpdate.as_view(), name='trainingrequest_edit'),
 
-    url(r'^todos/(?P<event_ident>[\w-]+)/add$', views.todos_add, name='todos_add'),
+    url(r'^trainees/?$', views.all_trainees, name='all_trainees'),
+
+    url(r'^training_progress/(?P<pk>\d+)/edit$', views.TrainingProgressUpdate.as_view(), name='trainingprogress_edit'),
+    url(r'^training_progress/(?P<pk>\d+)/delete$', views.TrainingProgressDelete.as_view(), name='trainingprogress_delete'),
+    url(r'^training_progresses/add/(?P<trainee_id>\d+)?$', views.TrainingProgressCreate.as_view(), name='trainingprogress_add'),
+
+    url(r'^todos/(?P<slug>[\w-]+)/add$', views.todos_add, name='todos_add'),
     url(r'^todo/(?P<todo_id>\d+)/completed', views.todo_mark_completed, name='todo_mark_completed'),
     url(r'^todo/(?P<todo_id>\d+)/incompleted', views.todo_mark_incompleted, name='todo_mark_incompleted'),
     url(r'^todo/(?P<todo_id>\d+)/edit', views.TodoItemUpdate.as_view(), name='todo_edit'),

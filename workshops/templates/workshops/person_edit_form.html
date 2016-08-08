@@ -14,10 +14,10 @@
 
 <div class="tab-content">
   <div role="tabpanel" class="tab-pane active" id="person">
-    {% crispy person_form form_helper %}
+    {% crispy person_form %}
   </div>
   <div role="tabpanel" class="tab-pane" id="awards">
-    {% crispy award_form form_helper_with_add %}
+    {% crispy award_form %}
     {% if awards %}
     <table class="table table-striped">
       <thead>
@@ -48,7 +48,7 @@
     {% endif %}
   </div>
   <div role="tabpanel" class="tab-pane" id="tasks">
-    {% crispy task_form form_helper_with_add %}
+    {% crispy task_form %}
     {% if tasks %}
     <ul>
       {% for task in tasks %}
@@ -72,13 +72,7 @@
       format: "yyyy-mm-dd",
       todayHighlight: true
     });
-
-    // change tabs if django messages indicates so
-    ['awards', 'tasks'].forEach(function(label) {
-      if ($(".alert").hasClass(label)) {
-        $('ul[role="tablist"] a[href="#' + label + '"]').tab('show');
-      }
-    });
+    $('.nav-tabs').stickyTabs();
   });
 </script>
 {% endblock extrajs %}
