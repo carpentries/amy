@@ -92,12 +92,12 @@
     <td>{{ membership.agreement_start }}</td>
     <td>{{ membership.agreement_end }}</td>
     <td>{{ membership.get_contribution_type_display }}</td>
-    <td>{{ membership.workshops_without_admin_fee_per_year }}</td>
-    <td>{{ membership.workshops_without_admin_fee_per_year_completed }}</td>
-    <td>{{ membership.workshops_without_admin_fee_per_year_remaining }}</td>
-    <td>{{ membership.self_organized_workshops_per_year }}</td>
-    <td>{{ membership.self_organized_workshops_per_year_completed }}</td>
-    <td>{{ membership.self_organized_workshops_per_year_remaining }}</td>
+    <td>{{ membership.workshops_without_admin_fee_per_year|default:"—" }}</td>
+    <td>{{ membership.workshops_without_admin_fee_per_year_completed|default:"—" }}</td>
+    <td>{{ membership.workshops_without_admin_fee_per_year_remaining|default:"—" }}</td>
+    <td>{{ membership.self_organized_workshops_per_year|default:"—" }}</td>
+    <td>{{ membership.self_organized_workshops_per_year_completed|default:"—" }}</td>
+    <td>{{ membership.self_organized_workshops_per_year_remaining|default:"—" }}</td>
     <td>
       {% if perms.workshops.edit_membership %}
       <a href="{% url 'membership_edit' membership.pk %}" title="Edit {{ membership }}"><span class="glyphicon glyphicon-pencil"></span></a>

@@ -134,6 +134,8 @@ class Membership(models.Model):
     def workshops_without_admin_fee_per_year_remaining(self):
         """Count remaining workshops w/o admin fee for the year agreement
         started."""
+        if not self.workshops_without_admin_fee_per_year:
+            return None
         a = self.workshops_without_admin_fee_per_year
         b = self.workshops_without_admin_fee_per_year_completed
         return a - b
@@ -152,6 +154,8 @@ class Membership(models.Model):
     def self_organized_workshops_per_year_remaining(self):
         """Count remaining self-organized workshops for the year agreement
         started."""
+        if not self.self_organized_workshops_per_year:
+            return None
         a = self.self_organized_workshops_per_year
         b = self.self_organized_workshops_per_year_completed
         return a - b
