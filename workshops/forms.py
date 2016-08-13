@@ -3,7 +3,7 @@ import re
 from captcha.fields import ReCaptchaField
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Div, HTML, Submit, Reset, Fieldset, Field
+from crispy_forms.layout import Layout, Div, HTML, Submit, Reset, Field
 from crispy_forms.bootstrap import AccordionGroup, Accordion
 from django import forms
 from django.core.exceptions import ValidationError
