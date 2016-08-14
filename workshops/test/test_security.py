@@ -40,6 +40,7 @@ class TestViews(TestBase):
         admins, _ = Group.objects.get_or_create(name='administrators')
         steering_committee, _ = Group.objects.get_or_create(name='steering committee')
         invoicing_group, _ = Group.objects.get_or_create(name='invoicing')
+        trainer_group, _ = Group.objects.get_or_create(name='trainers')
 
         # superuser who doesn't belong to Admin group should have access to
         # admin dashboard
@@ -67,6 +68,13 @@ class TestViews(TestBase):
             email='invoicing@example.org', password='invoicing',
         )
         self.invoicing.groups.add(invoicing_group)
+
+        # trainers should have access to admin dashboard too
+        self.trainer = Person.objects.create_user(
+            username='trainer', personal='Bob', family='Trainer',
+            email='trainer@example.org', password='trainer',
+        )
+        self.trainer.groups.add(trainer_group)
 
         # user with access only to trainee dashboard
         self.trainee = Person.objects.create_user(
@@ -108,6 +116,7 @@ class TestViews(TestBase):
         self.assert_accessible(url, user='admin')
         self.assert_accessible(url, user='committee')
         self.assert_accessible(url, user='invoicing')
+        self.assert_accessible(url, user='trainer')
         self.assert_inaccessible(url, user='trainee')
         self.assert_inaccessible(url, user=None)
 
@@ -125,6 +134,7 @@ class TestViews(TestBase):
         self.assert_accessible(url, user='admin')
         self.assert_accessible(url, user='committee')
         self.assert_accessible(url, user='invoicing')
+        self.assert_accessible(url, user='trainer')
         self.assert_accessible(url, user='trainee')
         self.assert_inaccessible(url, user=None)
 
@@ -142,6 +152,7 @@ class TestViews(TestBase):
         self.assert_accessible(url, user='admin')
         self.assert_accessible(url, user='committee')
         self.assert_accessible(url, user='invoicing')
+        self.assert_accessible(url, user='trainer')
         self.assert_accessible(url, user='trainee')
         self.assert_accessible(url, user=None)
 
@@ -158,6 +169,7 @@ class TestViews(TestBase):
         self.assert_accessible(url, user='admin')
         self.assert_accessible(url, user='committee')
         self.assert_accessible(url, user='invoicing')
+        self.assert_accessible(url, user='trainer')
         self.assert_inaccessible(url, user='trainee')
         self.assert_inaccessible(url, user=None)
 
@@ -174,6 +186,7 @@ class TestViews(TestBase):
         self.assert_accessible(url, user='admin')
         self.assert_accessible(url, user='committee')
         self.assert_accessible(url, user='invoicing')
+        self.assert_accessible(url, user='trainer')
         self.assert_accessible(url, user='trainee')
         self.assert_accessible(url, user=None)
 
