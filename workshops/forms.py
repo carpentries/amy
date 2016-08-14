@@ -1454,7 +1454,7 @@ class BulkMatchTrainingRequestForm(forms.Form):
                                   'and match with a trainee.')
 
 
-class AcceptTrainingRequestForm(forms.ModelForm):
+class AcceptTrainingRequestForm(forms.Form):
     person = selectable.AutoCompleteSelectField(
         lookup_class=lookups.PersonLookup,
         label='Trainee Account',
@@ -1491,7 +1491,6 @@ class AcceptTrainingRequestForm(forms.ModelForm):
             raise ValidationError({'person': 'No person was selected.'})
 
     class Meta:
-        model = TrainingRequest
         fields = [
             'person',
         ]

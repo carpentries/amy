@@ -285,7 +285,7 @@ class TestDownloadCSVView(TestBase):
         self.assertEqual(got, expected)
 
 
-class TestAcceptingTrainingRequest(TestBase):
+class TestAcceptingTrainingRequestAndDetailedView(TestBase):
     def setUp(self):
         self._setUpUsersAndLogin()
         self._setUpRoles()
@@ -317,6 +317,30 @@ class TestAcceptingTrainingRequest(TestBase):
         rv = self.client.get(reverse('trainingrequest_details', args=[req.pk]))
 
         self.assertEqual(rv.context['form'].initial['person'], None)
+
+    def test_matching_with_existing_account_works(self):
+        """Regression test for [#949].
+
+        [#949] https://github.com/swcarpentry/amy/pull/949/"""
+
+        req = create_training_request(state='p', person=None)
+        rv = self.client.post(reverse('trainingrequest_details', args=[req.pk]),
+                              data={'person_1': self.admin.pk,
+                                    'match-selected-person': ''},
+                              follow=True)
+        self.assertEqual(rv.status_code, 200)
+        req.refresh_from_db()
+        self.assertEqual(req.state, 'a')
+        self.assertEqual(req.person, self.admin)
+
+    def test_matching_with_new_account_works(self):
+        req = create_training_request(state='p', person=None)
+        rv = self.client.post(reverse('trainingrequest_details', args=[req.pk]),
+                              data={'create-new-person': ''},
+                              follow=True)
+        self.assertEqual(rv.status_code, 200)
+        req.refresh_from_db()
+        self.assertEqual(req.state, 'a')
 
 
 class TestTrainingRequestTemplateTags(TestBase):
