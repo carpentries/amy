@@ -96,7 +96,7 @@ class TimelineTodoSerializer(serializers.ModelSerializer):
 
         return '<a href="{url}">{event}</a><br><small>{todo}</small>'.format(
             url=obj.event.get_absolute_url(),
-            event=obj.event.get_ident(),
+            event=obj.event.slug,
             todo=obj.title,
         )
 
