@@ -185,6 +185,9 @@ class Sponsorship(models.Model):
         null=True, blank=True,
     )
 
+    class Meta:
+        unique_together = ('organization', 'event', 'amount')
+
     def __str__(self):
         return '{}: {}'.format(self.organization, self.amount)
 
