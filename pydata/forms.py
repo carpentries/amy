@@ -20,7 +20,8 @@ class BaseModelAddFormSet(forms.models.BaseModelFormSet):
     validate_max = False
     validate_min = False
 
-    helper = BootstrapHelper(form_tag=False, add_submit_button=False)
+    helper = BootstrapHelper(
+        form_tag=False, add_submit_button=False, add_reset_button=False)
 
     def __init__(self, *args, **kwargs):
         # Override the default form helper
