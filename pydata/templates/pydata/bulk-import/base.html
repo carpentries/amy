@@ -12,7 +12,7 @@
     <div class="panel panel-default {% if subform.errors %}panel-danger{% else %}panel-primary{% endif %}">
       <div class="panel-heading accordion-toggle collapsed" role="tab">
         <h3 class="panel-title">
-          <a data-toggle="collapse" data-parent="#accordion" data-target="#accordian-{{ forloop.counter }}" href="#">
+          <a data-toggle="collapse" data-parent="#accordion" href="#accordian-{{ forloop.counter }}">
             {% block panel-heading %}
             {% endblock panel-heading %}
           </a>
