@@ -79,6 +79,7 @@ class PersonAPIClient(BaseAPIClient):
     model = Person
 
     def parse(self, speaker):
+        speaker['name'] = speaker['name'].strip()
         personal = speaker['name'].rsplit(' ', 1)[0]
         family = speaker['name'].rsplit(' ', 1)[-1]
         return Person(
