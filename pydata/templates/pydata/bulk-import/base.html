@@ -4,7 +4,7 @@
 {% load selectable_tags %}
 
 {% block content %}
-<form role="form" class="form-horizontal" method="post">
+<form role="form" class="form-horizontal" method="post" novalidate>
   <div class="panel-group" id="accordion" role="tablist">
   {% csrf_token %}
   {{ form.management_form }}
