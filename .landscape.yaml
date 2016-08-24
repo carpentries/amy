@@ -1,5 +1,0 @@
-strictness: medium
-uses:
-  - django
-python-targets:
-  - 3
