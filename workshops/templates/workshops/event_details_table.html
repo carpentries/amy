@@ -63,28 +63,6 @@
   <tr class="{% if not event.venue %}bg-danger{% endif %}"><td>Venue:</td><td>{{ event.venue|default:"—" }}</td></tr>
   <tr class="{% if not event.address %}bg-danger{% endif %}"><td>Address:</td><td>{{ event.address|default:"—" }}</td></tr>
   <tr class="{% if not event.latitude or not event.longitude %}bg-danger{% endif %}"><td>Lat/long:</td><td>{{ event.latitude|default:"—" }} / {{ event.longitude|default:"—" }} {% if event.latitude and event.longitude %}<a href="{% url 'workshop_staff' %}?latitude={{ event.latitude }}&amp;longitude={{ event.longitude }}&amp;submit=Submit" class="btn btn-primary btn-xs pull-right" id="find_closest_instructors">find closest instructors</a>{% else %}<a class="btn btn-danger btn-xs pull-right" id="error_closest_instructors" href="#" data-toggle="popover" title="Search error" data-content="Cannot search for closest instructors without latitude and longitude of event's location.">Error</a>{% endif %}</td></tr>
-
-  <tr>
-    <td rowspan="5">survey results:</td>
-    <td>pre workshop for learners:</td>
-    <td>{{ event.learners_pre|default:"—"|urlize_newtab }}</td>
-  </tr>
-  <tr>
-    <td>post workshop for learners:</td>
-    <td>{{ event.learners_post|default:"—"|urlize_newtab }}</td>
-  </tr>
-  <tr>
-    <td>pre workshop for instructors:</td>
-    <td>{{ event.instructors_pre|default:"—"|urlize_newtab }}</td>
-  </tr>
-  <tr>
-    <td>post workshop for instructors:</td>
-    <td>{{ event.instructors_post|default:"—"|urlize_newtab }}</td>
-  </tr>
-  <tr>
-    <td>long-term for learners:</td>
-    <td>{{ event.learners_longterm|default:"—"|urlize_newtab }}</td>
-  </tr>
   <tr><td>Event request</td><td colspan="2">{% if event.request %}<a href="{{ event.request.get_absolute_url }}">{{ event.request }}</a>{% else %}—{% endif %}</td></tr>
   <tr><td>Notes</td><td colspan="2"><pre>{{ event.notes }}</pre></td></tr>
 </table>
