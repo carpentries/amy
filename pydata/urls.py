@@ -17,7 +17,7 @@ urlpatterns = [
         views.SponsorshipImport.as_view(),
         name='sponsorship_import'),
 
-    url(r'^bulk-import/?', include([
+    url(r'^bulk-import/', include([
         url(r'^$',
             views.BulkImportEventSelect.as_view(),
             name='bulk_import_select'),
