@@ -12,7 +12,7 @@
       </tr>
       {% for training in all_trainings %}
       <tr>
-        <td><a href="{% url 'event_details' training.event %}">{{ training.event__slug }}</a></td>
+        <td><a href="{% url 'event_details' training.event__slug %}">{{ training.event__slug }}</a></td>
         <td>{{ training.trainees }}</td>
         <td>{{ training.finished }}</td>
       </tr>
