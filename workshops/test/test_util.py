@@ -7,7 +7,7 @@ from django.contrib.auth.models import Group
 from django.contrib.sessions.serializers import JSONSerializer
 from django.core.urlresolvers import reverse
 from django.http import Http404
-from django.test import TestCase, RequestFactory
+from django.test import RequestFactory
 
 import requests_mock
 
@@ -33,7 +33,7 @@ from ..util import (
 from .base import TestBase
 
 
-class UploadPersonTaskCSVTestCase(TestCase):
+class UploadPersonTaskCSVTestCase(TestBase):
 
     def compute_from_string(self, csv_str):
         ''' wrap up buffering the raw string & parsing '''
@@ -412,7 +412,7 @@ Harry,Potter,harry@hogwarts.edu,foobar,learner
         self.assertEqual(1, foobar.attendance)
 
 
-class TestHandlingEventMetadata(TestCase):
+class TestHandlingEventMetadata(TestBase):
     maxDiff = None
 
     html_content = """
@@ -935,7 +935,7 @@ class TestMembership(TestBase):
         self.assertEqual(len(members), 1)
 
 
-class TestAssignmentSelection(TestCase):
+class TestAssignmentSelection(TestBase):
     def setUp(self):
         """Set up RequestFactory and some users with different levels of
         privileges."""
@@ -998,7 +998,7 @@ class TestAssignmentSelection(TestCase):
         self.assertTrue(is_admin)
 
 
-class TestUsernameGeneration(TestCase):
+class TestUsernameGeneration(TestBase):
     def setUp(self):
         Person.objects.create_user(username='potter_harry', personal='Harry',
                                    family='Potter', email='hp@ministry.gov')
@@ -1034,7 +1034,7 @@ class TestUsernameGeneration(TestCase):
         self.assertEqual(username, 'blanking-crush_andy')
 
 
-class TestPaginatorSections(TestCase):
+class TestPaginatorSections(TestBase):
     def make_paginator(self, num_pages, page_index=None):
         # there's no need to initialize with real values
         p = Paginator(object_list=None, per_page=1)
@@ -1092,7 +1092,7 @@ class TestPaginatorSections(TestCase):
         )
 
 
-class TestAssignUtil(TestCase):
+class TestAssignUtil(TestBase):
     def setUp(self):
         """Set up RequestFactory for making fast fake requests."""
         Person.objects.create_user(username='test_user', email='user@test',

@@ -5,12 +5,11 @@ from unittest.mock import MagicMock
 from django.core.urlresolvers import reverse
 from django.http import QueryDict
 from rest_framework import status
-from rest_framework.test import APITestCase
 
+from api.test.base import APITestBase
 from api.views import (
     ReportsViewSet,
 )
-from api.serializers import InstructorNumTaughtSerializer
 from workshops.models import (
     Badge,
     Award,
@@ -23,7 +22,7 @@ from workshops.models import (
 from workshops.test.base import TestBase
 
 
-class BaseReportingTest(APITestCase):
+class BaseReportingTest(APITestBase):
 
     def setUp(self):
         self.login()

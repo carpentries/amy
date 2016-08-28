@@ -1,21 +1,21 @@
 import datetime
 
 from django.core.urlresolvers import reverse
-from rest_framework.test import APITestCase
+
+from api.test.base import APITestBase
 from workshops.models import (
     Person,
     Award,
     Badge,
     Event,
     Task,
-    TodoItem,
     Organization,
     Airport,
     Role,
 )
 
 
-class TestAPIStructure(APITestCase):
+class TestAPIStructure(APITestBase):
     def setUp(self):
         self.admin = Person.objects.create_superuser(
             username='admin', personal='Super', family='User',

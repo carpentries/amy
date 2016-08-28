@@ -1,9 +1,11 @@
 import cgi
-import traceback
+import contextlib
 import datetime
+import itertools
 import os
 import re
-import itertools
+import sys
+import traceback
 import xml.etree.ElementTree as ET
 
 from django.conf import settings
@@ -24,11 +26,25 @@ from ..models import (
     Tag,
     Language,
 )
-
 from ..util import universal_date_format
 
 
-class TestBase(TestCase):
+@contextlib.contextmanager
+def dummy_subTest():
+    yield
+
+
+class DummySubTestWhenTestsLaunchedInParallelMixin:
+    def subTest(self, *args, **kwargs):
+        # If you launch tests in parallel, subTest is not supported yet. To
+        # fix that, we provide a dummy subTest implementation in that case.
+        if '--parallel' in sys.argv:
+            return dummy_subTest()
+        else:
+            return super().subTest(*args, **kwargs)
+
+
+class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin, TestCase):
     '''Base class for AMY test cases.'''
 
     ERR_DIR = 'htmlerror' # where to save error HTML files

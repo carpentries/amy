@@ -4,8 +4,8 @@ from unittest.mock import patch
 
 from django.core.urlresolvers import reverse
 from rest_framework import status
-from rest_framework.test import APITestCase
 
+from api.test.base import APITestBase
 from api.views import (
     ExportBadgesView,
     ExportInstructorLocationsView,
@@ -21,7 +21,7 @@ from workshops.models import (
 from workshops.util import universal_date_format
 
 
-class BaseExportingTest(APITestCase):
+class BaseExportingTest(APITestBase):
     def setUp(self):
         # remove all existing badges (this will be rolled back anyway)
         # including swc-instructor and dc-instructor introduced by migration
