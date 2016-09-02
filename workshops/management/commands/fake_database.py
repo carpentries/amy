@@ -234,7 +234,13 @@ class Command(BaseCommand):
         all_possible = itertools.product(events, persons, roles)
 
         for event, person, role in random.sample(list(all_possible), count):
-            Task.objects.create(event=event, person=person, role=role)
+            Task.objects.create(
+                event=event,
+                person=person,
+                role=role,
+                title=faker.sentence(nb_words=4, variable_nb_words=True),
+                url=faker.url(),
+            )
 
     def fake_trainees(self, faker):
         host = Organization.objects.all()[0]
