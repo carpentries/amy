@@ -1,6 +1,8 @@
 from datetime import timedelta, date
 import itertools
 
+from django.core.urlresolvers import reverse
+
 from .base import TestBase
 from ..models import Membership, Organization, Event
 
@@ -8,6 +10,7 @@ from ..models import Membership, Organization, Event
 class TestMembership(TestBase):
     def setUp(self):
         super().setUp()
+        self._setUpUsersAndLogin()
 
         # let's add a membership for one of the organizations
         self.current = Membership.objects.create(
@@ -85,3 +88,18 @@ class TestMembership(TestBase):
             self.current.self_organized_workshops_per_year_completed, 8)
         self.assertEqual(
             self.current.self_organized_workshops_per_year_remaining, 12)
+
+    def test_delete_membership(self):
+        '''Test that we can delete membership instance'''
+        response = self.client.post(
+            reverse('membership_delete', args=[self.current.pk]),
+            follow=True
+        )
+        self.assertRedirects(
+            response,
+            reverse('organization_details', args=[self.current.organization.domain]),
+        )
+        self.assertFalse(response.context['organization'].membership_set.all())
+        self.assertEqual(response.context['organization'].membership_set.count(), 0)
+        with self.assertRaises(Membership.DoesNotExist):
+            self.current.refresh_from_db()

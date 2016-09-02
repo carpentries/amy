@@ -131,7 +131,7 @@ class TestTask(TestBase):
     def test_delete_task(self):
         """Make sure deleted task is longer accessible."""
         for task in Task.objects.all():
-            rv = self.client.get(reverse('task_delete', args=[task.pk, ]))
+            rv = self.client.post(reverse('task_delete', args=[task.pk, ]))
             assert rv.status_code == 302
 
             with self.assertRaises(Task.DoesNotExist):

@@ -29,7 +29,7 @@ class TestAirport(TestBase):
         ]
 
         for iata in L1[:3]:
-            rv = self.client.get(reverse('airport_delete', args=[iata, ]))
+            rv = self.client.post(reverse('airport_delete', args=[iata, ]))
             content = rv.content.decode('utf-8')
             assert 'Failed to delete' in content
 
@@ -37,7 +37,7 @@ class TestAirport(TestBase):
             Person.objects.get(pk=person_pk).delete()
 
         for iata in L1:
-            rv = self.client.get(reverse('airport_delete', args=[iata, ]))
+            rv = self.client.post(reverse('airport_delete', args=[iata, ]))
             assert rv.status_code == 302
 
             with self.assertRaises(Airport.DoesNotExist):
