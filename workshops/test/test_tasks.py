@@ -2,6 +2,7 @@ from itertools import product
 from datetime import datetime
 
 from django.core.urlresolvers import reverse
+from django.db import IntegrityError
 
 from .base import TestBase
 from ..models import Task, Event, Role, Person, Organization
@@ -110,6 +111,29 @@ class TestTask(TestBase):
         self.assertEqual(response.status_code, 200)
         task.refresh_from_db()
         self.assertEqual(task.url, '')
+
+    def test_add_duplicate_task(self):
+        '''Ensure that duplicate tasks with empty url field cannot exist'''
+        task_1 = self.fixtures['test_task_1']
+        with self.assertRaises(IntegrityError):
+            Task.objects.create(
+                event=task_1.event,
+                person=task_1.person,
+                role=task_1.role,
+            )
+
+    def test_add_duplicate_task_with_url(self):
+        '''Ensure that duplicate tasks cannot exist'''
+        task_1 = self.fixtures['test_task_1']
+        task_1.url = 'http://example.org'
+        task_1.save()
+        with self.assertRaises(IntegrityError):
+            Task.objects.create(
+                event=task_1.event,
+                person=task_1.person,
+                role=task_1.role,
+                url=task_1.url,
+            )
 
     def test_task_edit_view_reachable_from_event_person_and_role_of_task(self):
         correct_task = self.fixtures['test_task_1']
