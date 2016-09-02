@@ -1518,6 +1518,8 @@ class Task(models.Model):
         ordering = ("role__name", "event")
 
     def __str__(self):
+        if self.title:
+            return self.title
         return '{0}/{1}={2}'.format(self.event, self.person, self.role)
 
     def get_absolute_url(self):
