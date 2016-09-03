@@ -395,3 +395,71 @@ Harry,Potter,harry@hogwarts.edu,foobar,learner
 
         foobar.refresh_from_db()
         self.assertEqual(1, foobar.attendance)
+
+
+class BulkUploadRemoveEntryViewTestCase(CSVBulkUploadTestBase):
+    def setUp(self):
+        super().setUp()
+        Role.objects.create(name='Helper')
+        self.csv = """personal,family,email,event,role
+Harry,Potter,harry@hogwarts.edu,foobar,learner
+Hermione,Granger,hermione@hogwarts.edu,foobar,learner
+Ron,Weasley,ron@hogwarts.edu,foobar,learner
+"""
+
+    def test_removing_entry0(self):
+        """Make sure entries are removed by the view."""
+        data, _ = upload_person_task_csv(StringIO(self.csv))
+
+        # self.client is authenticated user so we have access to the session
+        store = self.client.session
+        store['bulk-add-people'] = data
+        store.save()
+
+        self.client.get(reverse('person_bulk_add_remove_entry', args=[0]))
+
+        # need to recreate session
+        store = self.client.session
+        data = store['bulk-add-people']
+
+        self.assertEqual(2, len(data))
+        self.assertEqual(data[0]['personal'], 'Hermione')
+        self.assertEqual(data[1]['personal'], 'Ron')
+
+    def test_removing_entry1(self):
+        """Make sure entries are removed by the view."""
+        data, _ = upload_person_task_csv(StringIO(self.csv))
+
+        # self.client is authenticated user so we have access to the session
+        store = self.client.session
+        store['bulk-add-people'] = data
+        store.save()
+
+        self.client.get(reverse('person_bulk_add_remove_entry', args=[1]))
+
+        # need to recreate session
+        store = self.client.session
+        data = store['bulk-add-people']
+
+        self.assertEqual(2, len(data))
+        self.assertEqual(data[0]['personal'], 'Harry')
+        self.assertEqual(data[1]['personal'], 'Ron')
+
+    def test_removing_entry2(self):
+        """Make sure entries are removed by the view."""
+        data, _ = upload_person_task_csv(StringIO(self.csv))
+
+        # self.client is authenticated user so we have access to the session
+        store = self.client.session
+        store['bulk-add-people'] = data
+        store.save()
+
+        self.client.get(reverse('person_bulk_add_remove_entry', args=[2]))
+
+        # need to recreate session
+        store = self.client.session
+        data = store['bulk-add-people']
+
+        self.assertEqual(2, len(data))
+        self.assertEqual(data[0]['personal'], 'Harry')
+        self.assertEqual(data[1]['personal'], 'Hermione')
