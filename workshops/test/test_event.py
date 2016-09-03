@@ -323,7 +323,7 @@ class TestEventViews(TestBase):
             })
         if response.status_code == 302:
             url = response['location']
-            event_slug = url.rsplit('/', 1)[1]
+            event_slug = url.rstrip('/').rsplit('/', 1)[1]
             event = Event.objects.get(slug=event_slug)
             assert event.host == host, (
                 'New event has wrong host: {} != {}'.format(event.host, host))
