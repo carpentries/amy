@@ -1809,7 +1809,7 @@ def all_trainings(request):
         .values('event').annotate(finished=Count('person'))
     finished = {f['event']: f['finished'] for f in finished}
 
-    trainings = Task.objects.filter(role=learner).filter(event__tags=ttt).order_by('event__start') \
+    trainings = Task.objects.filter(role=learner).filter(event__tags=ttt).order_by('-event__start') \
         .values('event', 'event__slug').annotate(trainees=Count('person'))
     for t in trainings:
         event_id = t['event']
