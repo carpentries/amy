@@ -3312,8 +3312,8 @@ def _accept_training_request(form, training_request, request):
 
 
 @admin_required
-def trainingrequest_details(request, request_id):
-    req = get_object_or_404(TrainingRequest, pk=int(request_id))
+def trainingrequest_details(request, pk):
+    req = get_object_or_404(TrainingRequest, pk=int(pk))
 
     if request.method == 'POST':
         form = AcceptTrainingRequestForm(request.POST)
