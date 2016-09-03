@@ -1508,19 +1508,18 @@ class Task(models.Model):
     event      = models.ForeignKey(Event)
     person     = models.ForeignKey(Person)
     role       = models.ForeignKey(Role)
-    title      = models.CharField(
-        max_length=STR_LONG,
-        blank=True,
-    )
+    title      = models.CharField(max_length=STR_LONG, blank=True)
     url        = models.URLField(blank=True)
 
     objects = TaskManager()
 
     class Meta:
-        unique_together = ("event", "person", "role")
+        unique_together = ('event', 'person', 'role', 'url')
         ordering = ("role__name", "event")
 
     def __str__(self):
+        if self.title:
+            return self.title
         return '{0}/{1}={2}'.format(self.event, self.person, self.role)
 
     def get_absolute_url(self):
