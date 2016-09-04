@@ -701,7 +701,8 @@ def person_bulk_add_confirmation(request):
 
     # if the session is empty, add message and redirect
     if not persons_tasks:
-        messages.warning(request, "Could not locate CSV data, please try the upload again.")
+        messages.warning(request, "Could not locate CSV data, please try the "
+                                  "upload again.")
         return redirect('person_bulk_add')
 
     if request.method == 'POST':
@@ -793,6 +794,30 @@ def person_bulk_add_confirmation(request):
                    'any_errors': any_errors}
         return render(request, 'workshops/person_bulk_add_results.html',
                       context)
+
+
+@admin_required
+@permission_required('workshops.add_person', raise_exception=True)
+def person_bulk_add_remove_entry(request, entry_id):
+    "Remove specific entry from the session-saved list of people to be added."
+    persons_tasks = request.session.get('bulk-add-people')
+
+    if persons_tasks:
+        entry_id = int(entry_id)
+        try:
+            del persons_tasks[entry_id]
+            request.session['bulk-add-people'] = persons_tasks
+
+        except IndexError:
+            messages.warning(request, 'Could not find specified entry #{}'
+                                      .format(entry_id))
+
+        return redirect(person_bulk_add_confirmation)
+
+    else:
+        messages.warning(request, 'Could not locate CSV data, please try the '
+                                  'upload again.')
+        return redirect('person_bulk_add')
 
 
 class PersonCreate(OnlyForAdminsMixin, PermissionRequiredMixin,

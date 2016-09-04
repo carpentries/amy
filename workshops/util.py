@@ -238,6 +238,9 @@ def create_uploaded_persons_tasks(data):
     with transaction.atomic():
         for row in data:
             try:
+                row_repr = ('{personal} {family} {username} <{email}>, '
+                            '{role} at {event}').format(**row)
+
                 fields = {key: row[key] for key in Person.PERSON_UPLOAD_FIELDS}
                 fields['username'] = row['username']
 
@@ -271,10 +274,12 @@ def create_uploaded_persons_tasks(data):
                         tasks_created.append(t)
 
             except IntegrityError as e:
-                raise IntegrityError('{0} (for {1})'.format(str(e), row))
+
+                raise IntegrityError('{0} (for "{1}")'.format(str(e), row_repr))
 
             except ObjectDoesNotExist as e:
-                raise ObjectDoesNotExist('{0} (for {1})'.format(str(e), row))
+                raise ObjectDoesNotExist('{0} (for "{1}")'.format(str(e),
+                                                                row_repr))
 
     for event in events:
         # if event.attendance is lower than number of learners, then
