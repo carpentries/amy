@@ -1356,7 +1356,7 @@ class DCSelfOrganizedEventRequest(AssignmentMixin, ActiveMixin,
         blank=False,
         verbose_name='Topics to be taught',
         help_text='A Data Carpentry workshop must include a Data Carpentry '
-                  'lesson on data organization and the other modules in the '
+                  'lesson on data organization and three other modules in the '
                   'same domain from the Data Carpentry curriculum (see <a '
                   'href="http://www.datacarpentry.org/workshops/">http://www.'
                   'datacarpentry.org/workshops/</a>). If you do want to '

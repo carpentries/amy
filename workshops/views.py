@@ -2887,7 +2887,7 @@ class DCSelfOrganizedEventRequest(LoginNotRequiredMixin, EmailSendMixin,
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Request a self-organized Data Carpentry workshop'
+        context['title'] = 'Register a self-organized Data Carpentry workshop'
         return context
 
     def get_subject(self):
