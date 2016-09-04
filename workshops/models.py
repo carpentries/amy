@@ -764,13 +764,13 @@ class EventQuerySet(models.query.QuerySet):
         """Return events considered as unpublished (see
         `unpublished_conditional` above)."""
         conditional = self.unpublished_conditional()
-        return self.filter(conditional).order_by('slug', 'id')
+        return self.filter(conditional).order_by('slug', 'id').distinct()
 
     def published_events(self):
         """Return events considered as published (see `unpublished_conditional`
         above)."""
         conditional = self.unpublished_conditional()
-        return self.exclude(conditional).order_by('-start', 'id')
+        return self.exclude(conditional).order_by('-start', 'id').distinct()
 
     def uninvoiced_events(self):
         '''Return a queryset for events that have not yet been invoiced.
@@ -787,7 +787,7 @@ class EventQuerySet(models.query.QuerySet):
 
     def ttt(self):
         """Return only TTT events."""
-        return self.filter(tags__name='TTT')
+        return self.filter(tags__name='TTT').distinct()
 
 
 @reversion.register

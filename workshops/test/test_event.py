@@ -110,6 +110,25 @@ class TestEvent(TestBase):
         self.assertNotIn(event_considered_published,
                          Event.objects.unpublished_events())
 
+    def test_unpublished_events_displayed_once(self):
+        """Regression test: unpublished events can't be displayed more than
+        once on the dashboard.  Refer to #977."""
+        self._setUpTags()
+        unpublished_event = Event.objects.create(
+            slug='2016-10-20-unpublished',
+            start=date(2016, 10, 20),
+            end=date(2016, 10, 21),
+            host=Organization.objects.first(),
+            administrator=Organization.objects.first(),
+        )
+        unpublished_event.tags = Tag.objects.filter(name__in=['TTT', 'online'])
+
+        unpublished = Event.objects.unpublished_events().select_related('host')
+        self.assertIn(unpublished_event, unpublished)
+        self.assertEqual(
+            1, len(unpublished.filter(slug='2016-10-20-unpublished'))
+        )
+
     def test_delete_event(self):
         """Make sure deleted event and its tasks are no longer accessible."""
         event = Event.objects.get(slug="starts-today-ongoing")
