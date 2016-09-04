@@ -9,7 +9,8 @@
   {% csrf_token %}
   {{ form.management_form }}
   {% for subform in form %}
-    <div class="panel panel-default {% if subform.errors %}panel-danger{% else %}panel-primary{% endif %}">
+    <div class="panel panel-default {% if subform.errors %}panel-danger {% else %}panel-primary {% endif %}
+      {% if subform.DELETE.value == True %}hide {% endif %}">
       <div class="panel-heading accordion-toggle collapsed" role="tab">
         <h3 class="panel-title">
           <a data-toggle="collapse" data-parent="#accordion" href="#accordian-{{ forloop.counter }}">
