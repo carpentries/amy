@@ -2191,8 +2191,9 @@ def workshop_issues(request):
             )
         )
     )
+    no_attendance = Q(attendance=None) | Q(attendance=0)
     events = events.filter(
-        Q(attendance=None) | Q(attendance=0) |
+        (no_attendance & ~Q(tags__name='unresponsive')) |
         Q(country=None) |
         Q(venue=None) | Q(venue__exact='') |
         Q(address=None) | Q(address__exact='') |
