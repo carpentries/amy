@@ -32,7 +32,11 @@
       <td>{% if award.event %}<a href="{% url 'event_details' award.event.slug %}">{{ award.event }}</a>{% else %}—{% endif %}</td>
       <td>{% if award.awarded_by %}<a href="{{ award.awarded_by.get_absolute_url }}">{{ award.awarded_by.get_full_name }}</a>{% else %}—{% endif %}</td>
       <td>
-        <a onclick='return confirm("Are you sure you wish to drop award \"{{ award.badge.title }}\" from \"{{ award.person }}\"?")' href="{% url 'award_delete' award_id=award.pk %}" class='btn btn-danger'>Delete</a>
+        <form action="{% url 'award_delete' pk=award.id %}" onsubmit='return confirm("Are you sure you wish to drop award \"{{ award.badge.title }}\" from \"{{ award.person }}\"?")' method="POST">
+          {% csrf_token %}
+          <input name="next" value="{% url 'badge_details' badge_name=award.badge.name %}" type="hidden" />
+          <button type="submit" class="btn btn-danger">Delete</button>
+        </form>
       </td>
     </tr>
     {% endfor %}

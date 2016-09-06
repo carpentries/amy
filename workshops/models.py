@@ -134,6 +134,8 @@ class Membership(models.Model):
     def workshops_without_admin_fee_per_year_remaining(self):
         """Count remaining workshops w/o admin fee for the year agreement
         started."""
+        if not self.workshops_without_admin_fee_per_year:
+            return None
         a = self.workshops_without_admin_fee_per_year
         b = self.workshops_without_admin_fee_per_year_completed
         return a - b
@@ -152,6 +154,8 @@ class Membership(models.Model):
     def self_organized_workshops_per_year_remaining(self):
         """Count remaining self-organized workshops for the year agreement
         started."""
+        if not self.self_organized_workshops_per_year:
+            return None
         a = self.self_organized_workshops_per_year
         b = self.self_organized_workshops_per_year_completed
         return a - b
@@ -184,6 +188,9 @@ class Sponsorship(models.Model):
         on_delete=models.SET_NULL,
         null=True, blank=True,
     )
+
+    class Meta:
+        unique_together = ('organization', 'event', 'amount')
 
     def __str__(self):
         return '{}: {}'.format(self.organization, self.amount)
@@ -757,13 +764,13 @@ class EventQuerySet(models.query.QuerySet):
         """Return events considered as unpublished (see
         `unpublished_conditional` above)."""
         conditional = self.unpublished_conditional()
-        return self.filter(conditional).order_by('slug', 'id')
+        return self.filter(conditional).order_by('slug', 'id').distinct()
 
     def published_events(self):
         """Return events considered as published (see `unpublished_conditional`
         above)."""
         conditional = self.unpublished_conditional()
-        return self.exclude(conditional).order_by('-start', 'id')
+        return self.exclude(conditional).order_by('-start', 'id').distinct()
 
     def uninvoiced_events(self):
         '''Return a queryset for events that have not yet been invoiced.
@@ -780,7 +787,7 @@ class EventQuerySet(models.query.QuerySet):
 
     def ttt(self):
         """Return only TTT events."""
-        return self.filter(tags__name='TTT')
+        return self.filter(tags__name='TTT').distinct()
 
 
 @reversion.register
@@ -1349,7 +1356,7 @@ class DCSelfOrganizedEventRequest(AssignmentMixin, ActiveMixin,
         blank=False,
         verbose_name='Topics to be taught',
         help_text='A Data Carpentry workshop must include a Data Carpentry '
-                  'lesson on data organization and the other modules in the '
+                  'lesson on data organization and three other modules in the '
                   'same domain from the Data Carpentry curriculum (see <a '
                   'href="http://www.datacarpentry.org/workshops/">http://www.'
                   'datacarpentry.org/workshops/</a>). If you do want to '
@@ -1501,19 +1508,18 @@ class Task(models.Model):
     event      = models.ForeignKey(Event)
     person     = models.ForeignKey(Person)
     role       = models.ForeignKey(Role)
-    title      = models.CharField(
-        max_length=STR_LONG,
-        blank=True,
-    )
+    title      = models.CharField(max_length=STR_LONG, blank=True)
     url        = models.URLField(blank=True)
 
     objects = TaskManager()
 
     class Meta:
-        unique_together = ("event", "person", "role")
+        unique_together = ('event', 'person', 'role', 'url')
         ordering = ("role__name", "event")
 
     def __str__(self):
+        if self.title:
+            return self.title
         return '{0}/{1}={2}'.format(self.event, self.person, self.role)
 
     def get_absolute_url(self):

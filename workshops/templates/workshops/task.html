@@ -20,10 +20,15 @@
   {% else %}
   <p class="edit-object pull-left"><a href="{% url 'task_edit' task.id %}" class="btn btn-primary disabled">Edit</a></p>
   {% endif %}
-  {% if perms.workshops.delete_task %}
-  <p class="delete-object pull-right"><a href="{% url 'task_delete' task.id %}" onclick='return confirm("Are you sure you wish to remove \"{{ task }}\"?")' class="btn btn-danger">Delete task</a></p>
-  {% else %}
-  <p class="delete-object pull-right"><a href="{% url 'task_delete' task.id %}" class="btn btn-danger disabled">Delete task</a></p>
-  {% endif %}
+  <div class="delete-object pull-right">
+    {% if perms.workshops.delete_task %}
+      <form action="{% url 'task_delete' task.id %}" onsubmit='return confirm("Are you sure you wish to remove \"{{ task }}\"?")' method="POST">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Delete task</button>
+      </form>
+    {% else %}
+    <button class="btn btn-danger disabled">Delete task</button>
+    {% endif %}
+  </div>
 </div>
 {% endblock %}

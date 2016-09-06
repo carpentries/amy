@@ -272,7 +272,7 @@ class TestPerson(TestBase):
             qualifications = person.qualification_set.all()
             tasks = person.task_set.all()
 
-            rv = self.client.get(reverse('person_delete', args=[person.pk, ]))
+            rv = self.client.post(reverse('person_delete', args=[person.pk, ]))
             assert rv.status_code == 302
 
             with self.assertRaises(Person.DoesNotExist):

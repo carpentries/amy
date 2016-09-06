@@ -110,6 +110,25 @@ class TestEvent(TestBase):
         self.assertNotIn(event_considered_published,
                          Event.objects.unpublished_events())
 
+    def test_unpublished_events_displayed_once(self):
+        """Regression test: unpublished events can't be displayed more than
+        once on the dashboard.  Refer to #977."""
+        self._setUpTags()
+        unpublished_event = Event.objects.create(
+            slug='2016-10-20-unpublished',
+            start=date(2016, 10, 20),
+            end=date(2016, 10, 21),
+            host=Organization.objects.first(),
+            administrator=Organization.objects.first(),
+        )
+        unpublished_event.tags = Tag.objects.filter(name__in=['TTT', 'online'])
+
+        unpublished = Event.objects.unpublished_events().select_related('host')
+        self.assertIn(unpublished_event, unpublished)
+        self.assertEqual(
+            1, len(unpublished.filter(slug='2016-10-20-unpublished'))
+        )
+
     def test_delete_event(self):
         """Make sure deleted event and its tasks are no longer accessible."""
         event = Event.objects.get(slug="starts-today-ongoing")
@@ -123,7 +142,7 @@ class TestEvent(TestBase):
         event.task_set = [t1, t2, t3]
         event.save()
 
-        rv = self.client.get(reverse('event_delete', args=[event.slug, ]))
+        rv = self.client.post(reverse('event_delete', args=[event.slug, ]))
         assert rv.status_code == 302
 
         with self.assertRaises(Event.DoesNotExist):
@@ -149,7 +168,7 @@ class TestEvent(TestBase):
                                      awarded=date.today(),
                                      event=event)
 
-        rv = self.client.get(reverse('event_delete', args=[event.slug, ]))
+        rv = self.client.post(reverse('event_delete', args=[event.slug, ]))
         assert rv.status_code == 200
 
         content = rv.content.decode('utf-8')
@@ -323,7 +342,7 @@ class TestEventViews(TestBase):
             })
         if response.status_code == 302:
             url = response['location']
-            event_slug = url.rsplit('/', 1)[1]
+            event_slug = url.rstrip('/').rsplit('/', 1)[1]
             event = Event.objects.get(slug=event_slug)
             assert event.host == host, (
                 'New event has wrong host: {} != {}'.format(event.host, host))

@@ -58,22 +58,7 @@ class TestBadge(TestBase):
         award = person.award_set.all()[0]
         badge = award.badge
         # test first URL
-        rv = self.client.get(
-            reverse('award_delete',
-                    kwargs=dict(award_id=award.pk, person_id=person.pk)),
-        )
-        assert rv.status_code == 302
-        assert award not in badge.award_set.all()  # award really removed
-        assert badge not in person.badges.all()  # badge not avail. via Awards
-
-        person = self.ron
-        award = person.award_set.all()[0]
-        badge = award.badge
-        # test second URL
-        rv = self.client.get(
-            reverse('award_delete',
-                    kwargs=dict(award_id=award.pk)),
-        )
+        rv = self.client.post(reverse('award_delete', args=[award.pk, ]))
         assert rv.status_code == 302
         assert award not in badge.award_set.all()  # award really removed
         assert badge not in person.badges.all()  # badge not avail. via Awards

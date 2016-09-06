@@ -2,7 +2,7 @@ from datetime import timedelta, date
 
 from django.core.urlresolvers import reverse
 
-from ..models import Event, Organization, Role, Person
+from ..models import Event, Organization, Role, Person, Tag
 from .base import TestBase
 
 
@@ -10,6 +10,7 @@ class TestIssuesViews(TestBase):
     def setUp(self):
         super()._setUpUsersAndLogin()
         super()._setUpRoles()
+        super()._setUpTags()
 
         self.url = reverse('workshop_issues')
         self.today = date.today()
@@ -62,9 +63,19 @@ class TestIssuesViews(TestBase):
             country='US', address='A', venue='B', latitude=89, longitude=179)
         no_attendance.task_set.create(person=Person.objects.first(),
                                       role=self.instructor_role)
+        no_attendance_unresponsive = Event.objects.create(
+            slug='unresponsive-event-with-no-attendance',
+            start=self.weekago, end=self.yesterday,
+            attendance=0, host=Organization.objects.first(),
+            country='US', address='A', venue='B', latitude=89, longitude=179)
+        no_attendance_unresponsive.task_set.create(
+            person=Person.objects.first(), role=self.instructor_role)
+        no_attendance_unresponsive.tags.add(
+            Tag.objects.get(name='unresponsive'))
 
         rv = self.client.get(self.url)
         self.assertNotIn(attendance, rv.context['events'])
+        self.assertNotIn(no_attendance_unresponsive, rv.context['events'])
         self.assertIn(no_attendance, rv.context['events'])
 
     def test_workshop_issues_no_location(self):

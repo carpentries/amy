@@ -128,7 +128,7 @@
 
 {% if tasks %}
 <h3>Tasks</h3>
-{% if all_emails %}<p><a href="mailto:{{ all_emails|join:',' }}" class="btn btn-primary">Mail everyone</a></p>{% endif %}
+{% if all_emails %}<p><a href="mailto:?bcc={{ all_emails|join:',' }}" class="btn btn-primary">Mail everyone</a></p>{% endif %}
 <table class="table table-striped">
   <tr>
     <th width="25">DC?</th>
@@ -182,20 +182,23 @@
 {% endblock sponsorships %}
 
 <div class="clearfix">
-  <p class="edit-object pull-left">
+  <div class="edit-object pull-left">
     {% if perms.workshops.change_event %}
     <a href="{% url 'event_edit' event.slug %}" class="btn btn-primary">Edit</a>
     {% else %}
     <a href="{% url 'event_edit' event.slug %}" class="btn btn-primary disabled">Edit</a>
     {% endif %}
-  </p>
-  <p class="delete-object pull-right">
+  </div>
+  <div class="delete-object pull-right">
     {% if perms.workshops.change_event %}
-    <a href="{% url 'event_delete' event.slug %}" onclick='return confirm("Are you sure you wish to remove \"{{ event }}\"?")' class="btn btn-danger">Delete event</a>
+    <form action="{% url 'event_delete' slug=event.slug %}" onsubmit='return confirm("Are you sure you wish to remove  \"{{ event }}\"?")' method="POST">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Delete event</button>
+    </form>
     {% else %}
-    <a href="{% url 'event_delete' event.slug %}" class="btn btn-danger disabled">Delete event</a>
+    <button class="btn btn-danger disabled">Delete event</button>
     {% endif %}
-  </p>
+  </div>
 </div>
 
 <h3 id="todos">TODOs</h3>
@@ -228,9 +231,18 @@
       </td>
       <td>{{ todo.additional|default:"—"|urlize_newtab }}</td>
       <td>
-        <input type="checkbox" class="completness-indicator" {% if todo.completed %}checked="checked"{% endif %} data-todo-id="{{ todo.id }}">
-        <a href="{% url 'todo_edit' todo.pk %}"><span class="space1 glyphicon glyphicon-pencil"></span></a>
-        <a href="{% url 'todo_delete' todo.pk %}" onclick='return confirm("Are you sure you wish to remove \"{{ todo }}\"?")'><span class="space2 glyphicon glyphicon-remove"></span></a>
+        {% comment %}
+        Include the other glyphicons within the form as a way of stacking them together horizontally.
+        Else, the form tag is rendered below the other glyphicon.
+        {% endcomment %}
+        <form action="{% url 'todo_delete' todo.pk %}" onsubmit='return confirm("Are you sure you wish to remove \"{{ todo }}\"?")' method="POST">
+          {% csrf_token %}
+          <input type="checkbox" class="completness-indicator" {% if todo.completed %}checked="checked"{% endif %} data-todo-id="{{ todo.id }}">
+          <a href="{% url 'todo_edit' todo.pk %}"><span class="space1 glyphicon glyphicon-pencil"></span></a>
+          <label class="space2 glyphicon glyphicon-remove" style="cursor:pointer">
+            <input type="submit" class="hidden" />
+          </label>
+        </form>
       </td>
     </tr>
   {% endfor %}
@@ -284,7 +296,7 @@
 
     $(".completness-indicator").click(function() {
       var todo_id = $(this).attr("data-todo-id");
-      var row = $(this).parent().parent();
+      var row = $(this).parent().parent().parent();
       if ($(this).is("input:checked")) {
         // mark as complete
         var url = "/workshops/todo/" + todo_id + "/completed";

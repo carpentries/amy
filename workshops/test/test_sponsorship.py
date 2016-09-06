@@ -1,5 +1,6 @@
-from django.core.urlresolvers import reverse
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.core.urlresolvers import reverse
+from django.db import IntegrityError
 
 from ..models import Event, Organization, Sponsorship
 from .base import TestBase
@@ -45,6 +46,20 @@ class TestSponsorshipModel(TestBase):
         self.event.refresh_from_db()
         self.org_beta.refresh_from_db()
 
+    def test_unique_together_constraint(self):
+        '''Check that no two sponsorships with same values can exist'''
+        sponsorship = Sponsorship.objects.create(
+            organization=self.org_beta,
+            event=self.event,
+            amount=500,
+        )
+        with self.assertRaises(IntegrityError):
+            sponsorship = Sponsorship.objects.create(
+                organization=self.org_beta,
+                event=self.event,
+                amount=500,
+            )
+
 
 class TestSponsorshipViews(TestBase):
 
@@ -57,6 +72,7 @@ class TestSponsorshipViews(TestBase):
         self.sponsorship = Sponsorship.objects.create(
             organization=self.org_alpha,
             event=self.event,
+            amount=100.00,
         )
         self._setUpUsersAndLogin()
 
@@ -143,6 +159,25 @@ class TestSponsorshipViews(TestBase):
         self.assertIn(
             self.harry.pk,
             response.context['object'].sponsorship_set.values_list('contact', flat=True)
+        )
+
+    def test_add_duplicate_sponsorship_instance(self):
+        '''Check that we cannot successfully submit duplicates'''
+        payload = {
+            'sponsor-organization': self.sponsorship.organization.pk,
+            'sponsor-event': self.sponsorship.event.pk,
+            'sponsor-amount': self.sponsorship.amount,
+        }
+        response = self.client.post(
+            reverse('event_edit', kwargs={'slug': self.event.slug}),
+            payload,
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertFormError(response,
+            form='sponsor_form',
+            field=None,
+            errors='Sponsorship with this Organization, Event and Sponsorship amount already exists.',
         )
 
     def test_delete_sponsor(self):

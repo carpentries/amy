@@ -35,14 +35,14 @@ class TestOrganization(TestBase):
                              slug='test-event')
 
         for org_domain in [self.org_alpha.domain, self.org_beta.domain]:
-            rv = self.client.get(reverse('organization_delete', args=[org_domain, ]))
+            rv = self.client.post(reverse('organization_delete', args=[org_domain, ]))
             content = rv.content.decode('utf-8')
             assert 'Failed to delete' in content
 
         Event.objects.get(slug='test-event').delete()
 
         for org_domain in [self.org_alpha.domain, self.org_beta.domain]:
-            rv = self.client.get(reverse('organization_delete', args=[org_domain, ]))
+            rv = self.client.post(reverse('organization_delete', args=[org_domain, ]))
             assert rv.status_code == 302
 
             with self.assertRaises(Organization.DoesNotExist):

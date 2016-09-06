@@ -3,7 +3,8 @@ import re
 from captcha.fields import ReCaptchaField
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Div, HTML, Submit, Reset
+from crispy_forms.layout import Layout, Div, HTML, Submit, Reset, Field
+from crispy_forms.bootstrap import AccordionGroup, Accordion
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
@@ -25,12 +26,6 @@ from workshops.models import (
     DCSelfOrganizedEventRequest,
     TrainingProgress,
 )
-
-AUTOCOMPLETE_HELP_TEXT = (
-    "Autocomplete field; type characters to view available options, "
-    "then select desired item from list."
-)
-
 
 class BootstrapHelper(FormHelper):
     """Layout and behavior for crispy-displayed forms."""
@@ -320,7 +315,6 @@ class EventForm(forms.ModelForm):
         lookup_class=lookups.AdminLookup,
         label='Assigned to',
         required=False,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -328,7 +322,6 @@ class EventForm(forms.ModelForm):
         lookup_class=lookups.LanguageLookup,
         label='Language',
         required=False,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -340,37 +333,34 @@ class EventForm(forms.ModelForm):
     admin_fee = forms.DecimalField(min_value=0, decimal_places=2,
                                    required=False, widget=TextInput)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['slug'].widget.attrs['placeholder'] = 'YYYY-MM-DD-location'
-        self.fields['start'].widget.attrs['placeholder'] = 'YYYY-MM-DD'
-        self.fields['end'].widget.attrs['placeholder'] = 'YYYY-MM-DD'
-
-        self.helper = BootstrapHelper(self)
-
-        idx_start = self.helper['country'].slice[0][0][0]
-        idx_end = self.helper['longitude'].slice[0][0][0]
-        # wrap all venue fields within <div class='panel-body'>
-        self.helper[idx_start:idx_end + 1] \
-            .wrap_together(Div, css_class='panel-body')
-        # wrap <div class='panel-body'> within <div class='panel panel-…'>
-        self.helper[idx_start].wrap_together(Div,
-                                             css_class='panel panel-default')
-        # add <div class='panel-heading'>Loc. details</div> inside "div.panel"
-        self.helper.layout[idx_start].insert(0, Div(HTML('Location details'),
-                                                    css_class='panel-heading'))
-
-        id_learners_pre = self.helper['learners_pre'].slice[0][0][0]
-        id_learners_longterm = self.helper['learners_longterm'].slice[0][0][0]
-        # wrap all survey fields within <div class='panel-body'>
-        self.helper[id_learners_pre:id_learners_longterm + 1] \
-            .wrap_together(Div, css_class='panel-body')
-        # wrap <div class='panel-body'> within <div class='panel panel-…'>
-        self.helper[id_learners_pre].wrap_together(
-            Div, css_class='panel panel-default')
-        # add <div class='panel-heading'>Venue details</div> inside "div.panel"
-        self.helper.layout[id_learners_pre].insert(
-            0, Div(HTML('Survey results'), css_class='panel-heading'))
+    helper = BootstrapHelper()
+    helper.layout = Layout(
+        Field('slug', placeholder='YYYY-MM-DD-location'),
+        'completed',
+        Field('start', placeholder='YYYY-MM-DD'),
+        Field('end', placeholder='YYYY-MM-DD'),
+        'host',
+        'administrator',
+        'assigned_to',
+        'tags',
+        'url',
+        'language',
+        'reg_key',
+        'admin_fee',
+        'invoice_status',
+        'attendance',
+        'contact',
+        'notes',
+        Accordion(
+            AccordionGroup('Location details',
+                'country',
+                'venue',
+                'address',
+                'latitude',
+                'longitude',
+            ),
+        ),
+    )
 
     def clean_slug(self):
         # Ensure slug is in "YYYY-MM-DD-location" format
@@ -393,17 +383,10 @@ class EventForm(forms.ModelForm):
 
     class Meta:
         model = Event
-        # reorder fields, don't display 'deleted' field
         fields = ('slug', 'completed', 'start', 'end', 'host', 'administrator',
-                  'assigned_to', 'tags', 'url', 'language', 'reg_key',
+                  'assigned_to', 'tags', 'url', 'language', 'reg_key', 'venue',
                   'admin_fee', 'invoice_status', 'attendance', 'contact',
-                  'notes', 'country', 'venue', 'address', 'latitude',
-                  'longitude', 'learners_pre', 'learners_post',
-                  'instructors_pre', 'instructors_post', 'learners_longterm')
-
-        # WARNING: don't change put any fields between 'country' and
-        #          'longitude' that don't relate to the venue of the event
-
+                  'notes', 'country', 'address', 'latitude', 'longitude', )
         widgets = {
             'attendance': TextInput,
             'latitude': TextInput,
@@ -427,7 +410,6 @@ class TaskForm(forms.ModelForm):
         lookup_class=lookups.PersonLookup,
         label='Person',
         required=True,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -445,7 +427,6 @@ class TaskFullForm(TaskForm):
         lookup_class=lookups.EventLookup,
         label='Event',
         required=True,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -460,14 +441,12 @@ class PersonForm(forms.ModelForm):
         lookup_class=lookups.AirportLookup,
         label='Airport',
         required=False,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
     languages = selectable.AutoCompleteSelectMultipleField(
         lookup_class=lookups.LanguageLookup,
         label='Languages',
         required=False,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectMultipleWidget,
     )
 
@@ -511,7 +490,6 @@ class PersonsSelectionForm(forms.Form):
         lookup_class=lookups.PersonLookup,
         label='Person From',
         required=True,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -519,7 +497,6 @@ class PersonsSelectionForm(forms.Form):
         lookup_class=lookups.PersonLookup,
         label='Person To',
         required=True,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -615,7 +592,6 @@ class BadgeAwardForm(forms.ModelForm):
         lookup_class=lookups.PersonLookup,
         label='Person',
         required=True,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -623,7 +599,6 @@ class BadgeAwardForm(forms.ModelForm):
         lookup_class=lookups.EventLookup,
         label='Event',
         required=False,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -631,7 +606,6 @@ class BadgeAwardForm(forms.ModelForm):
         lookup_class=lookups.PersonLookup,
         label='Awarded by',
         required=False,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -649,7 +623,6 @@ class PersonAwardForm(forms.ModelForm):
         lookup_class=lookups.EventLookup,
         label='Event',
         required=False,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -657,7 +630,6 @@ class PersonAwardForm(forms.ModelForm):
         lookup_class=lookups.PersonLookup,
         label='Awarded by',
         required=False,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -675,7 +647,6 @@ class PersonTaskForm(forms.ModelForm):
         lookup_class=lookups.EventLookup,
         label='Event',
         required=True,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -728,7 +699,6 @@ class SponsorshipForm(forms.ModelForm):
         lookup_class=lookups.PersonLookup,
         label='Contact',
         required=False,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -756,7 +726,6 @@ class SWCEventRequestForm(forms.ModelForm):
         lookup_class=lookups.LanguageLookup,
         label='Language',
         required=False,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -855,7 +824,6 @@ class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):
         lookup_class=lookups.LanguageLookup,
         label='Languages you can teach in',
         required=False,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectMultipleWidget,
     )
 
@@ -886,7 +854,6 @@ class EventLookupForm(forms.Form):
         lookup_class=lookups.EventLookup,
         label='Event',
         required=True,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -898,7 +865,6 @@ class PersonLookupForm(forms.Form):
         lookup_class=lookups.PersonLookup,
         label='Person',
         required=True,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -910,7 +876,6 @@ class AdminLookupForm(forms.Form):
         lookup_class=lookups.AdminLookup,
         label='Administrator',
         required=True,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -935,7 +900,6 @@ class EventsSelectionForm(forms.Form):
         lookup_class=lookups.EventLookup,
         label='Event A',
         required=True,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 
@@ -943,7 +907,6 @@ class EventsSelectionForm(forms.Form):
         lookup_class=lookups.EventLookup,
         label='Event B',
         required=True,
-        help_text=AUTOCOMPLETE_HELP_TEXT,
         widget=selectable.AutoComboboxSelectWidget,
     )
 

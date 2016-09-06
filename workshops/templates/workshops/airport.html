@@ -19,10 +19,15 @@
   {% else %}
   <p class="edit-object pull-left"><a href="{% url 'airport_edit' airport.iata %}" class=" btn btn-primary disabled">Edit</a></p>
   {% endif %}
-  {% if perms.workshops.delete_airport %}
-  <p class="delete-object pull-right"><a href="{% url 'airport_delete' airport.iata %}" onclick='return confirm("Are you sure you wish to remove \"{{ airport }}\"?")' class="btn btn-danger">Delete airport</a></p>
-  {% else %}
-  <p class="delete-object pull-right"><a href="{% url 'airport_delete' airport.iata %}" class="btn btn-danger disabled">Delete airport</a></p>
-  {% endif %}
+  <div class="delete-object pull-right">
+    {% if perms.workshops.delete_airport %}
+    <form action="{% url 'airport_delete' iata=airport.iata %}" onsubmit='return confirm("Are you sure you wish to remove  \"{{ airport }}\"?")' method="POST">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Delete airport</button>
+    </form>
+    {% else %}
+    <button class="btn btn-danger disabled">Delete airport</button>
+    {% endif %}
+  </div>
 </div>
 {% endblock %}

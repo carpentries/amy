@@ -1,15 +1,14 @@
 from django.conf import settings
 from django.core.checks import register, Error, Tags
 
-from amy.urls import urlpatterns
-from workshops import urls as workshops_urls
-
-from . import urls as pydata_urls
-
 
 @register(Tags.urls)
 def check_pydata_urls_included_in_urlpatterns(**kwargs):
     '''Check that `pydata.urls` is included in amy.urls'''
+    from amy.urls import urlpatterns
+    from workshops import urls as workshops_urls
+    from . import urls as pydata_urls
+
     errors = []
     for url in urlpatterns:
         if hasattr(url, 'urlconf_module') and \
@@ -30,6 +29,10 @@ def check_pydata_urls_included_in_urlpatterns(**kwargs):
 @register(Tags.urls)
 def check_pydata_urls_included_before_workshop_urls(**kwargs):
     '''Check that `pydata.urls` is included before `workshops.urls`'''
+    from amy.urls import urlpatterns
+    from workshops import urls as workshops_urls
+    from . import urls as pydata_urls
+
     errors = []
     for url in urlpatterns:
         if hasattr(url, 'urlconf_module') and \

@@ -21,7 +21,7 @@ from django.db import IntegrityError
 from django.db.models import Case, When, Value, IntegerField
 from django.db.models import Count, Q, F, Model, ProtectedError, Sum
 from django.http import Http404, HttpResponse, JsonResponse
-from django.http import HttpResponseBadRequest
+from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import redirect, render, get_object_or_404
 from django.template.loader import get_template
 from django.utils.http import is_safe_url
@@ -222,19 +222,26 @@ class DeleteViewContext(DeleteView):
     by adding proper page title.
 
     GET requests are not allowed (returns 405)
-
+    Allows for custom redirection based on `next` param in POST
     ProtectedErrors are handled.
     """
     success_message = '{} was deleted successfully.'
 
     def delete(self, request, *args, **kwargs):
-        '''Workaround for https://code.djangoproject.com/ticket/21926'''
-        messages.success(
-            self.request,
-            self.success_message.format(self.get_object())
-        )
+        # Workaround for https://code.djangoproject.com/ticket/21926
+        # Replicates the `delete` method of DeleteMixin
+        self.object = self.get_object()
+        if request.POST.get('next', None):
+            success_url = request.POST['next']
+        else:
+            success_url = self.get_success_url()
         try:
-            return super().delete(request, *args, **kwargs)
+            self.object.delete()
+            messages.success(
+                self.request,
+                self.success_message.format(self.object)
+            )
+            return HttpResponseRedirect(success_url)
         except ProtectedError as e:
             return failed_to_delete(self.request, self.object,
                                     e.protected_objects)
@@ -440,17 +447,13 @@ class OrganizationUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
     slug_url_kwarg = 'org_domain'
 
 
-@admin_required
-@permission_required('workshops.delete_organization', raise_exception=True)
-def organization_delete(request, org_domain):
-    """Delete specific organization."""
-    try:
-        organization = get_object_or_404(Organization, domain=org_domain)
-        organization.delete()
-        messages.success(request, 'Organization was deleted successfully.')
-        return redirect(reverse('all_organizations'))
-    except ProtectedError as e:
-        return failed_to_delete(request, organization, e.protected_objects)
+class OrganizationDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
+                         DeleteViewContext):
+    model = Organization
+    slug_field = 'domain'
+    slug_url_kwarg = 'org_domain'
+    permission_required = 'workshops.delete_organization'
+    success_url = reverse_lazy('all_organizations')
 
 
 @admin_required
@@ -493,21 +496,14 @@ class MembershipUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
         )
 
 
-@admin_required
-@permission_required('workshops.delete_membership', raise_exception=True)
-def membership_delete(request, membership_id):
-    """Delete specific membership."""
-    try:
-        membership = get_object_or_404(Membership, pk=membership_id)
-        organization = membership.organization
-        membership.delete()
-        messages.success(request, 'Membership was deleted successfully.')
-        return redirect(
-            reverse('organization_details', args=[organization.domain])
-        )
-    except ProtectedError as e:
-        return failed_to_delete(request, organization, e.protected_objects)
+class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
+                       DeleteViewContext):
+    model = Membership
+    permission_required = 'workshops.delete_membership'
+    pk_url_kwarg = 'membership_id'
 
+    def get_success_url(self):
+        return reverse('organization_details', args=[self.get_object().organization.domain])
 
 #------------------------------------------------------------
 
@@ -550,17 +546,13 @@ class AirportUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
     slug_url_kwarg = 'airport_iata'
 
 
-@admin_required
-@permission_required('workshops.delete_airport', raise_exception=True)
-def airport_delete(request, airport_iata):
-    """Delete specific airport."""
-    try:
-        airport = get_object_or_404(Airport, iata=airport_iata)
-        airport.delete()
-        messages.success(request, 'Airport was deleted successfully.')
-        return redirect(reverse('all_airports'))
-    except ProtectedError as e:
-        return failed_to_delete(request, airport, e.protected_objects)
+class AirportDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
+                    DeleteViewContext):
+    model = Airport
+    slug_field = 'iata'
+    slug_url_kwarg = 'airport_iata'
+    permission_required = 'workshops.delete_airport'
+    success_url = reverse_lazy('all_airports')
 
 #------------------------------------------------------------
 
@@ -709,7 +701,8 @@ def person_bulk_add_confirmation(request):
 
     # if the session is empty, add message and redirect
     if not persons_tasks:
-        messages.warning(request, "Could not locate CSV data, please try the upload again.")
+        messages.warning(request, "Could not locate CSV data, please try the "
+                                  "upload again.")
         return redirect('person_bulk_add')
 
     if request.method == 'POST':
@@ -801,6 +794,30 @@ def person_bulk_add_confirmation(request):
                    'any_errors': any_errors}
         return render(request, 'workshops/person_bulk_add_results.html',
                       context)
+
+
+@admin_required
+@permission_required('workshops.add_person', raise_exception=True)
+def person_bulk_add_remove_entry(request, entry_id):
+    "Remove specific entry from the session-saved list of people to be added."
+    persons_tasks = request.session.get('bulk-add-people')
+
+    if persons_tasks:
+        entry_id = int(entry_id)
+        try:
+            del persons_tasks[entry_id]
+            request.session['bulk-add-people'] = persons_tasks
+
+        except IndexError:
+            messages.warning(request, 'Could not find specified entry #{}'
+                                      .format(entry_id))
+
+        return redirect(person_bulk_add_confirmation)
+
+    else:
+        messages.warning(request, 'Could not locate CSV data, please try the '
+                                  'upload again.')
+        return redirect('person_bulk_add')
 
 
 class PersonCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
@@ -945,18 +962,12 @@ def person_edit(request, person_id):
     return render(request, 'workshops/person_edit_form.html', context)
 
 
-@admin_required
-@permission_required('workshops.delete_person', raise_exception=True)
-def person_delete(request, person_id):
-    """Delete specific person."""
-    try:
-        person = get_object_or_404(Person, pk=person_id)
-        person.delete()
-
-        messages.success(request, 'Person was deleted successfully.')
-        return redirect(reverse('all_persons'))
-    except ProtectedError as e:
-        return failed_to_delete(request, person, e.protected_objects)
+class PersonDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
+                   DeleteViewContext):
+    model = Person
+    permission_required = 'workshops.delete_person'
+    success_url = reverse_lazy('all_persons')
+    pk_url_kwarg = 'person_id'
 
 
 class PersonPermissions(OnlyForAdminsMixin, PermissionRequiredMixin,
@@ -1342,21 +1353,11 @@ def event_edit(request, slug):
     return render(request, 'workshops/event_edit_form.html', context)
 
 
-@admin_required
-@permission_required('workshops.delete_event', raise_exception=True)
-def event_delete(request, slug):
-    """Delete event, its tasks and related awards."""
-    try:
-        event = Event.objects.get(slug=slug)
-        event.delete()
-
-        messages.success(request,
-                         'Event and its tasks were deleted successfully.')
-        return redirect(reverse('all_events'))
-    except ObjectDoesNotExist:
-        raise Http404("No event found matching the query.")
-    except ProtectedError as e:
-        return failed_to_delete(request, event, e.protected_objects)
+class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
+                  DeleteViewContext):
+    model = Event
+    permission_required = 'workshops.delete_event'
+    success_url = reverse_lazy('all_events')
 
 
 @admin_required
@@ -1726,20 +1727,6 @@ def task_details(request, task_id):
     return render(request, 'workshops/task.html', context)
 
 
-@admin_required
-@permission_required('workshops.delete_task', raise_exception=True)
-def task_delete(request, task_id, slug=None):
-    '''Delete a task. This is used on the event edit page'''
-    t = get_object_or_404(Task, pk=task_id)
-    t.delete()
-
-    messages.success(request, 'Task was deleted successfully.')
-
-    if slug:
-        return redirect(event_edit, slug)
-    return redirect(all_tasks)
-
-
 class TaskCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
                  CreateViewContext):
     permission_required = 'workshops.add_task'
@@ -1754,25 +1741,25 @@ class TaskUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
     form_class = TaskFullForm
     pk_url_kwarg = 'task_id'
 
+
+class TaskDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
+                 DeleteViewContext):
+    model = Task
+    permission_required = 'workshops.delete_task'
+    success_url = reverse_lazy('all_tasks')
+    pk_url_kwarg = 'task_id'
+
+
 #------------------------------------------------------------
 
 
-@admin_required
-@permission_required('workshops.delete_award', raise_exception=True)
-def award_delete(request, award_id, person_id=None):
-    """Delete an award. This is used on the person edit page."""
-    award = get_object_or_404(Award, pk=award_id)
-    badge_name = award.badge.name
-    award.delete()
+class AwardDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
+                 DeleteViewContext):
+    model = Award
+    permission_required = 'workshops.delete_award'
 
-    messages.success(request, 'Award was deleted successfully.',
-                     extra_tags='awards')
-
-    if person_id:
-        # if a second form of URL, then return back to person edit page
-        return redirect(person_edit, person_id)
-
-    return redirect(reverse(badge_details, args=[badge_name]))
+    def get_success_url(self):
+        return reverse('person_edit', args=[self.get_object().person.pk]) + '#awards'
 
 
 #------------------------------------------------------------
@@ -1847,7 +1834,7 @@ def all_trainings(request):
         .values('event').annotate(finished=Count('person'))
     finished = {f['event']: f['finished'] for f in finished}
 
-    trainings = Task.objects.filter(role=learner).filter(event__tags=ttt).order_by('event__start') \
+    trainings = Task.objects.filter(role=learner).filter(event__tags=ttt).order_by('-event__start') \
         .values('event', 'event__slug').annotate(trainees=Count('person'))
     for t in trainings:
         event_id = t['event']
@@ -2204,8 +2191,9 @@ def workshop_issues(request):
             )
         )
     )
+    no_attendance = Q(attendance=None) | Q(attendance=0)
     events = events.filter(
-        Q(attendance=None) | Q(attendance=0) |
+        (no_attendance & ~Q(tags__name='unresponsive')) |
         Q(country=None) |
         Q(venue=None) | Q(venue__exact='') |
         Q(address=None) | Q(address__exact='') |
@@ -2899,7 +2887,7 @@ class DCSelfOrganizedEventRequest(LoginNotRequiredMixin, EmailSendMixin,
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Request a self-organized Data Carpentry workshop'
+        context['title'] = 'Register a self-organized Data Carpentry workshop'
         return context
 
     def get_subject(self):
@@ -3141,19 +3129,14 @@ class TodoItemUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
         return response
 
 
-@admin_required
-@permission_required('workshops.delete_todoitem', raise_exception=True)
-def todo_delete(request, todo_id):
-    """Delete a TodoItem. This is used on the event details page."""
-    todo = get_object_or_404(TodoItem, pk=todo_id)
-    slug = todo.event.slug
-    todo.delete()
+class TodoDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
+                 DeleteViewContext):
+    model = TodoItem
+    permission_required = 'workshops.delete_todoitem'
+    pk_url_kwarg = 'todo_id'
 
-    messages.success(request, 'TODO was deleted successfully.',
-                     extra_tags='todos')
-
-    return redirect(event_details, slug)
-
+    def get_success_url(self):
+        return reverse('event_details', args=[self.get_object().event.slug]) + '#todos'
 
 # ------------------------------------------------------------
 
@@ -3355,8 +3338,8 @@ def _accept_training_request(form, training_request, request):
 
 
 @admin_required
-def trainingrequest_details(request, request_id):
-    req = get_object_or_404(TrainingRequest, pk=int(request_id))
+def trainingrequest_details(request, pk):
+    req = get_object_or_404(TrainingRequest, pk=int(pk))
 
     if request.method == 'POST':
         form = AcceptTrainingRequestForm(request.POST)

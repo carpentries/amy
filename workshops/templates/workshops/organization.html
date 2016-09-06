@@ -59,13 +59,16 @@
     <a href="{% url 'organization_edit' organization.domain %}" class="btn btn-primary disabled">Edit</a>
     {% endif %}
   </p>
-  <p class="delete-object pull-right">
+  <div class="delete-object pull-right">
     {% if perms.workshops.delete_organization %}
-    <a href="{% url 'organization_delete' organization.domain %}" onclick='return confirm("Are you sure you wish to remove \"{{ organization }}\"?")' class="btn btn-danger">Delete organization</a>
+    <form action="{% url 'organization_delete' organization.domain %}" onsubmit='return confirm("Are you sure you wish to remove  \"{{ organization }}\"?")' method="POST">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Delete organization</button>
+    </form>
     {% else %}
-    <a href="{% url 'organization_delete' organization.domain %}" class="btn btn-danger disabled">Delete organization</a>
+    <button class="btn btn-danger disabled">Delete organization</button>
     {% endif %}
-  </p>
+  </div>
 </div>
 
 <h3>Memberships</h3>
@@ -92,20 +95,29 @@
     <td>{{ membership.agreement_start }}</td>
     <td>{{ membership.agreement_end }}</td>
     <td>{{ membership.get_contribution_type_display }}</td>
-    <td>{{ membership.workshops_without_admin_fee_per_year }}</td>
-    <td>{{ membership.workshops_without_admin_fee_per_year_completed }}</td>
-    <td>{{ membership.workshops_without_admin_fee_per_year_remaining }}</td>
-    <td>{{ membership.self_organized_workshops_per_year }}</td>
-    <td>{{ membership.self_organized_workshops_per_year_completed }}</td>
-    <td>{{ membership.self_organized_workshops_per_year_remaining }}</td>
+    <td>{{ membership.workshops_without_admin_fee_per_year|default:"—" }}</td>
+    <td>{{ membership.workshops_without_admin_fee_per_year_completed|default:"—" }}</td>
+    <td>{{ membership.workshops_without_admin_fee_per_year_remaining|default:"—" }}</td>
+    <td>{{ membership.self_organized_workshops_per_year|default:"—" }}</td>
+    <td>{{ membership.self_organized_workshops_per_year_completed|default:"—" }}</td>
+    <td>{{ membership.self_organized_workshops_per_year_remaining|default:"—" }}</td>
     <td>
-      {% if perms.workshops.edit_membership %}
-      <a href="{% url 'membership_edit' membership.pk %}" title="Edit {{ membership }}"><span class="glyphicon glyphicon-pencil"></span></a>
-      {% endif %}
-      &nbsp;
-      {% if perms.workshops.delete_membership %}
-      <a href="{% url 'membership_delete' membership.pk %}" title="View {{ membership }}" onclick='return confirm("Are you sure you wish to remove \"{{ membership }}\"?")'><span class="glyphicon glyphicon-remove"></span></a>
-      {% endif %}
+      {% comment %}
+      Include the other glyphicon within the form as a way of stacking them together horizontally.
+      Else, the form tag is rendered below the other glyphicon.
+      {% endcomment %}
+      <form action="{% url 'membership_delete' membership.pk %}" onsubmit='return confirm("Are you sure you wish to remove \"{{ membership }}\"?")' method="POST">
+        {% csrf_token %}
+        {% if perms.workshops.edit_membership %}
+        <a href="{% url 'membership_edit' membership.pk %}" title="Edit {{ membership }}"><span class="glyphicon glyphicon-pencil"></span></a>
+        {% endif %}
+        {% if perms.workshops.delete_membership %}
+        <label class="space2 glyphicon glyphicon-remove" title="Delete {{ membership }}" style="cursor:pointer">
+          <input type="submit" class="hidden" />
+        </label>
+        {% endif %}
+      </form>
+    </td>
   </tr>
   {% endfor %}
 </table>

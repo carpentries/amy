@@ -4,6 +4,11 @@ htmlerror
 *.pyc
 db.sqlite3
 db.sqlite3.bak
+# in-file test database used when --keepdb flag is set
+test_db.sqlite3
+test_db.sqlite3.bak
+# clones of in-file test database created while launching tests in parallel
+test_db*
 
 # coverage reports
 .coverage
