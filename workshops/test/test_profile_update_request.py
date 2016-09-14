@@ -26,6 +26,7 @@ class TestProfileUpdateRequest(TestBase):
             'orcid': '', 'website': '', 'gender': 'M',
             'domains': [1, 2],  # IDs
             'lessons': [1, 2],  # IDs
+            'privacy_consent': True,
         }
         rv = self.client.post(reverse('profileupdate_request'), data)
         assert rv.status_code == 200

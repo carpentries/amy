@@ -41,7 +41,8 @@ class TestDCSelfOrganizedEventRequestForm(TestBase):
             'dates', 'domains', 'domains_other', 'topics', 'topics_other',
             'attendee_academic_levels', 'attendee_data_analysis_level',
             'payment', 'fee_waiver_reason', 'handle_registration',
-            'distribute_surveys', 'follow_code_of_conduct', 'captcha',
+            'distribute_surveys', 'follow_code_of_conduct', 'privacy_consent',
+            'captcha',
         ]
         self.assertEqual(fields_left, fields_right)
 
@@ -69,6 +70,7 @@ class TestDCSelfOrganizedEventRequestForm(TestBase):
             'attendee_academic_levels': [AcademicLevel.objects.first().pk],
             'attendee_data_analysis_level':
                 [DataAnalysisLevel.objects.first().pk],
+            'privacy_consent': True,
         }
         rv = self.client.post(reverse('dc_workshop_selforganized_request'),
                               data, follow=True)
@@ -99,6 +101,7 @@ class TestDCSelfOrganizedEventRequestForm(TestBase):
             'attendee_academic_levels': [AcademicLevel.objects.first().pk],
             'attendee_data_analysis_level':
                 [DataAnalysisLevel.objects.first().pk],
+            'privacy_consent': True,
         }
         rv = self.client.post(reverse('dc_workshop_selforganized_request'),
                               data, follow=True)
