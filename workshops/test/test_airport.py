@@ -9,6 +9,11 @@ class TestAirport(TestBase):
         super().setUp()
         self._setUpUsersAndLogin()
 
+    def test_airport_details(self):
+        """Regression test: ensure airport details page renders correctly."""
+        rv = self.client.get(reverse('airport_details', args=['AAA']))
+        self.assertEqual(rv.status_code, 200)
+
     def test_airport_delete(self):
         """Make sure deleted airport is longer accessible.
 
