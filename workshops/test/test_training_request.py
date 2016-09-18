@@ -54,6 +54,7 @@ class TestTrainingRequestForm(TestBase):
             'agreed_to_code_of_conduct': 'on',
             'agreed_to_complete_training': 'on',
             'agreed_to_teach_workshops': 'on',
+            'privacy_consent': True,
             'recaptcha_response_field': 'PASSED',
         }
         rv = self.client.post(reverse('training_request'), data,

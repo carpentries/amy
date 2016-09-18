@@ -20,7 +20,7 @@ class TestEventSubmitForm(TestBase):
         fields_left = list(form.fields.keys())
         fields_right = [
             'url', 'contact_name', 'contact_email',
-            'self_organized', 'notes', 'captcha',
+            'self_organized', 'notes', 'privacy_consent', 'captcha',
         ]
         self.assertEqual(fields_left, fields_right)
 
@@ -34,6 +34,7 @@ class TestEventSubmitForm(TestBase):
             'self_organized': True,
             'url': 'http://example.org/2016-02-13-Howart',
             'notes': '',
+            'privacy_consent': True,
         }
         rv = self.client.post(reverse('event_submit'), data,
                               follow=True)
@@ -50,6 +51,7 @@ class TestEventSubmitForm(TestBase):
             'self_organized': True,
             'url': 'http://example.org/2016-02-13-Hogwart',
             'notes': '',
+            'privacy_consent': True,
         }
         rv = self.client.post(reverse('event_submit'), data,
                               follow=True)

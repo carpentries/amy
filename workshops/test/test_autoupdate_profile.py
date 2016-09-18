@@ -47,6 +47,7 @@ class TestAutoUpdateProfile(TestBase):
             'languages_1': [self.latin.pk, self.french.pk],
             'domains': [self.chemistry.pk],
             'lessons': [self.git.pk, self.matlab.pk],
+            'privacy_consent': True,
         }
 
         rv = self.client.post(reverse('autoupdate_profile'), data, follow=True)
