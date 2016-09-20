@@ -1419,7 +1419,7 @@ class BulkMatchTrainingRequestForm(forms.Form):
     def clean(self):
         super().clean()
 
-        if any(r.person is None for r in self.cleaned_data['requests']):
+        if any(r.person is None for r in self.cleaned_data.get('requests', [])):
             raise ValidationError('Some of the requests are not matched '
                                   'to a trainee yet. Before matching them to '
                                   'a training, you need to accept them '
