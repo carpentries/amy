@@ -21,7 +21,7 @@ class TestSWCEventRequestForm(TestBase):
             'attendee_academic_levels', 'attendee_computing_levels',
             'cover_travel_accomodation', 'understand_admin_fee',
             'travel_reimbursement', 'travel_reimbursement_other',
-            'admin_fee_payment', 'comment', 'captcha',
+            'admin_fee_payment', 'comment', 'captcha', 'privacy_consent',
         ])
         assert fields_left == fields_right
 
@@ -42,6 +42,7 @@ class TestSWCEventRequestForm(TestBase):
             'understand_admin_fee': True,
             'travel_reimbursement': 'book', 'travel_reimbursement_other': '',
             'admin_fee_payment': 'self-organized', 'comment': '',
+            'privacy_consent': True,
         }
         rv = self.client.post(reverse('swc_workshop_request'), data,
                               follow=True)
@@ -88,7 +89,7 @@ class TestDCEventRequestForm(TestBase):
             'attendee_data_analysis_level', 'cover_travel_accomodation',
             'understand_admin_fee', 'fee_waiver_request',
             'travel_reimbursement', 'travel_reimbursement_other',
-            'comment', 'captcha',
+            'comment', 'privacy_consent', 'captcha',
         ])
         assert fields_left == fields_right
 
@@ -110,6 +111,7 @@ class TestDCEventRequestForm(TestBase):
             'understand_admin_fee': True, 'fee_waiver_request': True,
             'travel_reimbursement': 'book', 'travel_reimbursement_other': '',
             'comment': '',
+            'privacy_consent': True,
         }
         rv = self.client.post(reverse('dc_workshop_request'), data,
                               follow=True)

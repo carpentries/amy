@@ -136,6 +136,14 @@ bootstrap_helper_filter = BootstrapHelperFilter()
 bootstrap_helper_inline_formsets = BootstrapHelperFormsetInline()
 
 
+class PrivacyConsentMixin(forms.Form):
+    privacy_consent = forms.BooleanField(
+        label='*I have read and agree to <a href='
+              '"https://software-carpentry.org/privacy/" target="_blank">'
+              'the Software Carpentry Foundation\'s data privacy policy</a>.',
+        required=True)
+
+
 class WorkshopStaffForm(forms.Form):
     '''Represent instructor matching form.'''
 
@@ -710,7 +718,7 @@ class SponsorshipForm(forms.ModelForm):
         widgets = {'event': HiddenInput, }
 
 
-class SWCEventRequestForm(forms.ModelForm):
+class SWCEventRequestForm(PrivacyConsentMixin, forms.ModelForm):
     captcha = ReCaptchaField()
     workshop_type = forms.CharField(initial='swc', widget=forms.HiddenInput())
     understand_admin_fee = forms.BooleanField(
@@ -779,7 +787,7 @@ class EventSubmitFormNoCaptcha(forms.ModelForm):
         exclude = ('active', 'created_at', 'last_updated_at', 'assigned_to')
 
 
-class EventSubmitForm(EventSubmitFormNoCaptcha):
+class EventSubmitForm(EventSubmitFormNoCaptcha, PrivacyConsentMixin):
     captcha = ReCaptchaField()
 
     helper = BootstrapHelper(wider_labels=True)
@@ -810,7 +818,7 @@ class DCSelfOrganizedEventRequestFormNoCaptcha(forms.ModelForm):
 
 
 class DCSelfOrganizedEventRequestForm(
-        DCSelfOrganizedEventRequestFormNoCaptcha):
+        DCSelfOrganizedEventRequestFormNoCaptcha, PrivacyConsentMixin):
     captcha = ReCaptchaField()
 
     helper = BootstrapHelper(wider_labels=True)
@@ -843,7 +851,8 @@ class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):
         return re.sub('^@+', '', twitter_handle)
 
 
-class ProfileUpdateRequestForm(ProfileUpdateRequestFormNoCaptcha):
+class ProfileUpdateRequestForm(ProfileUpdateRequestFormNoCaptcha,
+                               PrivacyConsentMixin):
     captcha = ReCaptchaField()
 
     helper = BootstrapHelper(wider_labels=True)
@@ -1045,7 +1054,7 @@ class InvoiceRequestUpdateForm(forms.ModelForm):
         )
 
 
-class TrainingRequestForm(forms.ModelForm):
+class TrainingRequestForm(PrivacyConsentMixin, forms.ModelForm):
     agreed_to_code_of_conduct = forms.BooleanField(
         required=True,
         initial=False,
@@ -1149,7 +1158,7 @@ class TrainingRequestUpdateForm(forms.ModelForm):
         }
 
 
-class AutoUpdateProfileForm(forms.ModelForm):
+class AutoUpdateProfileForm(PrivacyConsentMixin, forms.ModelForm):
     username = forms.CharField(disabled=True, required=False)
     github = forms.CharField(
         disabled=True, required=False,
@@ -1410,7 +1419,7 @@ class BulkMatchTrainingRequestForm(forms.Form):
     def clean(self):
         super().clean()
 
-        if any(r.person is None for r in self.cleaned_data['requests']):
+        if any(r.person is None for r in self.cleaned_data.get('requests', [])):
             raise ValidationError('Some of the requests are not matched '
                                   'to a trainee yet. Before matching them to '
                                   'a training, you need to accept them '
