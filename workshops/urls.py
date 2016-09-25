@@ -158,7 +158,7 @@ urlpatterns = [
         url(r'^assign/(?P<person_id>[\w\.-]+)/$', views.eventsubmission_assign, name='eventsubmission_assign'),
     ])),
     url(r'^submit/$', views.EventSubmission.as_view(), name='event_submit'),
-    url(r'^submit/confirm/$', views.EventSubmissionConfirm.as_view(), name='event_submission_confirm'),
+    # url(r'^submit/confirm/$', views.EventSubmissionConfirm.as_view(), name='event_submission_confirm'),
 
     url(r'^profile_updates/$', views.AllProfileUpdateRequests.as_view(), name='all_profileupdaterequests'),
     url(r'^profile_updates/closed/$', views.AllClosedProfileUpdateRequests.as_view(), name='all_closed_profileupdaterequests'),
