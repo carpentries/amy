@@ -1215,7 +1215,6 @@ class EventRequest(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
 
     ADMIN_FEE_PAYMENT_CHOICES = (
         ('NP1', 'Non-profit / non-partner: US$2500'),
-        ('partner', 'Partner: US$1250'),
         ('FP1', 'For-profit: US$10,000'),
         ('self-organized', 'Self-organized: no fee (please let us know if you '
                            'wish to make a donation)'),
