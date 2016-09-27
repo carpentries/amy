@@ -25,7 +25,7 @@
                 width: 800,
                 height: 600,
                 target: document.getElementById('chart'),
-                interpolate: 'linear',
+                interpolate: d3.curveLinear,
                 x_accessor: 'date',
                 y_accessor: 'count'
             });
