@@ -97,35 +97,41 @@
             <span class="label label-primary" data-toggle="popover"
                   data-content="This person is SWC instructor">SWC</span>
           {% elif trainee.get_missing_swc_instructor_requirements %}
-            <span class="label label-default" data-toggle="popover" data-html="true"
-                  data-content="
-                    Not eligible to be certified as Software Carpentry Instructor. Needs to pass:
-                      <ul>
-                        {% for requirement in trainee.get_missing_swc_instructor_requirements %}
-                          <li>{{ requirement }}</li>
-                        {% endfor %}
-                      </ul>
-                  ">SWC</span>
+            <a class="label label-default" data-toggle="popover" data-html="true"
+               data-content="
+                 Not eligible to be certified as Software Carpentry Instructor. Needs to pass:
+                   <ul>
+                     {% for requirement in trainee.get_missing_swc_instructor_requirements %}
+                       <li>{{ requirement }}</li>
+                     {% endfor %}
+                   </ul>
+                 Click to start awarding the badge.
+               "
+               href="{% url 'person_edit' trainee.pk %}?badge=swc-instructor&amp;find-training&amp;next={{ request.get_full_path|urlencode }}#awards">SWC</a>
           {% else %}
-            <span class="label label-success" data-toggle="popover"
-                  data-content="Eligible to be certified as Software Carpentry Instructor.">SWC</span>
+          <a class="label label-success" data-toggle="popover"
+                 data-content="Eligible to be certified as Software Carpentry Instructor. Click to start awarding the badge."
+                 href="{% url 'person_edit' trainee.pk %}?badge=swc-instructor&amp;find-training&amp;next={{ request.get_full_path|urlencode }}#awards">SWC</a>
           {% endif %}
           {% if trainee.is_dc_instructor %}
-            <span class="label label-primary" data-toggle="popover"
-                  data-content="This person is DC Instructor.">DC</span>
-          {% elif trainee.get_missing_dc_instructor_requirements %}
-            <span class="label label-default" data-toggle="popover" data-html="true"
-                  data-content="
-                    Not eligible to be certified as Data Carpentry Instructor. Needs to pass:
-                    <ul>
-                      {% for requirement in trainee.get_missing_dc_instructor_requirements %}
-                        <li>{{ requirement }}</li>
-                      {% endfor %}
-                    </ul>
-                  ">DC</span>
+              <span class="label label-primary" data-toggle="popover"
+                    data-content="This person is DC Instructor.">DC</span>
+            {% elif trainee.get_missing_dc_instructor_requirements %}
+              <a class="label label-default" data-toggle="popover" data-html="true"
+                 data-content="
+                   Not eligible to be certified as Data Carpentry Instructor. Needs to pass:
+                   <ul>
+                     {% for requirement in trainee.get_missing_dc_instructor_requirements %}
+                       <li>{{ requirement }}</li>
+                     {% endfor %}
+                   </ul>
+                   Click to start awarding the badge.
+                 "
+                 href="{% url 'person_edit' trainee.pk %}?badge=dc-instructor&amp;find-training&amp;next={{ request.get_full_path|urlencode }}#awards">DC</a>
           {% else %}
-            <span class="label label-success" data-toggle="popover"
-                  data-content="Eligible to be certified as Data Carpentry Instructor.">DC</span>
+          <a class="label label-success" data-toggle="popover"
+                 data-content="Eligible to be certified as Data Carpentry Instructor. Click to start awarding the badge."
+                 href="{% url 'person_edit' trainee.pk %}?badge=dc-instructor&amp;find-training&amp;next={{ request.get_full_path|urlencode }}#awards">DC</a>
           {% endif %}
         </td>
         <td>

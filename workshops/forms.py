@@ -464,7 +464,7 @@ class PersonForm(forms.ModelForm):
         widget=selectable.AutoComboboxSelectMultipleWidget,
     )
 
-    helper = bootstrap_helper
+    helper = BootstrapHelper(form_id='person-edit-form')
 
     class Meta:
         model = Person
@@ -647,7 +647,7 @@ class PersonAwardForm(forms.ModelForm):
         widget=selectable.AutoComboboxSelectWidget,
     )
 
-    helper = BootstrapHelper(submit_label='Add')
+    helper = BootstrapHelper(submit_label='Add', form_id='person-awards-form')
 
     class Meta:
         model = Award
@@ -664,7 +664,7 @@ class PersonTaskForm(forms.ModelForm):
         widget=selectable.AutoComboboxSelectWidget,
     )
 
-    helper = BootstrapHelper(submit_label='Add')
+    helper = BootstrapHelper(submit_label='Add', form_id='person-tasks-form')
 
     class Meta:
         model = Task
@@ -1338,9 +1338,6 @@ class BulkDiscardProgressesForm(forms.Form):
         HTML('&nbsp;<a bulk-email-on-click class="btn btn-primary">'
              'Mail selected trainees</a>'),
     )
-
-    class Meta:
-        model = TrainingProgress
 
 
 class BulkChangeTrainingRequestForm(forms.Form):

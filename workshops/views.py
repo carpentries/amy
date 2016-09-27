@@ -143,6 +143,8 @@ from workshops.util import (
     login_not_required,
     LoginNotRequiredMixin,
     homework2state,
+    redirect_with_next_support,
+    dict_without_Nones,
 )
 
 
@@ -862,103 +864,119 @@ class PersonCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
                      raise_exception=True)
 def person_edit(request, person_id):
     person = get_object_or_404(Person, id=person_id)
-    awards = person.award_set.order_by('badge__name')
-    tasks = person.task_set.order_by('-event__slug')
 
     person_form = PersonForm(prefix='person', instance=person)
-    award_form = PersonAwardForm(prefix='award', initial={
-        'awarded': datetime.date.today(),
-        'person': person,
-    })
     task_form = PersonTaskForm(prefix='task', initial={'person': person})
 
-    if request.method == 'POST':
-        # check which form was submitted
-        if 'award-badge' in request.POST:
-            award_form = PersonAwardForm(request.POST, prefix='award')
+    # Determine initial badge in PersonAwardForm
+    try:
+        badge = Badge.objects.get(name=request.GET['badge'])
+    except (KeyError, Badge.DoesNotExist):
+        badge = None
 
-            if award_form.is_valid():
-                award = award_form.save()
+    # Determine initial event in PersonAwardForm
+    if 'find-training' in request.GET:
+        tasks = person.get_training_tasks()
+        if tasks.count() == 1:
+            event = tasks[0].event
+        else:
+            event = None
+    else:
+        event = None
 
-                messages.success(
-                    request,
-                    '{person} was awarded {badge} badge.'.format(
-                        person=str(person),
-                        badge=award.badge.title,
-                    ),
-                    extra_tags='awards',
-                )
+    # PersonAwardForm
+    award_form = PersonAwardForm(prefix='award', initial=dict_without_Nones(
+        awarded=datetime.date.today(),
+        person=person,
+        badge=badge,
+        event=event,
+    ))
 
-                # to reset the form values
-                return redirect('{}#awards'.format(request.path))
+    # Determine which form was sent (if any)
+    if request.method == 'POST' and 'award-badge' in request.POST:
+        award_form = PersonAwardForm(request.POST, prefix='award')
 
-            else:
-                messages.error(request, 'Fix errors in the award form.',
-                               extra_tags='awards')
+        if award_form.is_valid():
+            award = award_form.save()
 
-        elif 'task-role' in request.POST:
-            task_form = PersonTaskForm(request.POST, prefix='task')
+            messages.success(
+                request,
+                '{person} was awarded {badge} badge.'.format(
+                    person=str(person),
+                    badge=award.badge.title,
+                ),
+                extra_tags='awards',
+            )
 
-            if task_form.is_valid():
-                task = task_form.save()
-
-                messages.success(
-                    request,
-                    '{person} was added a role {role} during {event} event.'
-                    .format(
-                        person=str(person),
-                        role=task.role.name,
-                        event=task.event.slug,
-                    ),
-                    extra_tags='tasks',
-                )
-
-                # to reset the form values
-                return redirect('{}#tasks'.format(request.path))
-
-            else:
-                messages.error(request, 'Fix errors in the task form.',
-                               extra_tags='tasks')
+            return redirect_with_next_support(
+                request, '{}#awards'.format(request.path))
 
         else:
-            person_form = PersonForm(request.POST, prefix='person',
-                                     instance=person)
-            if person_form.is_valid():
-                lessons = person_form.cleaned_data['lessons']
+            messages.error(request, 'Fix errors in the award form.',
+                           extra_tags='awards')
 
-                # remove existing Qualifications for user
-                Qualification.objects.filter(person=person).delete()
+    elif request.method == 'POST' and 'task-role' in request.POST:
+        task_form = PersonTaskForm(request.POST, prefix='task')
 
-                # add new Qualifications
-                for lesson in lessons:
-                    Qualification.objects.create(person=person, lesson=lesson)
+        if task_form.is_valid():
+            task = task_form.save()
 
-                # don't save related lessons
-                del person_form.cleaned_data['lessons']
+            messages.success(
+                request,
+                '{person} was added a role {role} during {event} event.'
+                .format(
+                    person=str(person),
+                    role=task.role.name,
+                    event=task.event.slug,
+                ),
+                extra_tags='tasks',
+            )
 
-                person = person_form.save()
+            return redirect('{}#tasks'.format(request.path))
 
-                messages.success(
-                    request,
-                    '{name} was updated successfully.'.format(
-                        name=str(person),
-                    ),
-                )
+        else:
+            messages.error(request, 'Fix errors in the task form.',
+                           extra_tags='tasks')
 
-                return redirect(person)
+    elif request.method == 'POST':
+        person_form = PersonForm(request.POST, prefix='person',
+                                 instance=person)
+        if person_form.is_valid():
+            lessons = person_form.cleaned_data['lessons']
 
-            else:
-                messages.error(request, 'Fix errors below.')
+            # remove existing Qualifications for user
+            Qualification.objects.filter(person=person).delete()
 
-    context = {'title': 'Edit Person {0}'.format(str(person)),
-               'person_form': person_form,
-               'object': person,
-               'model': Person,
-               'awards': awards,
-               'award_form': award_form,
-               'tasks': tasks,
-               'task_form': task_form,
-               }
+            # add new Qualifications
+            for lesson in lessons:
+                Qualification.objects.create(person=person, lesson=lesson)
+
+            # don't save related lessons
+            del person_form.cleaned_data['lessons']
+
+            person = person_form.save()
+
+            messages.success(
+                request,
+                '{name} was updated successfully.'.format(
+                    name=str(person),
+                ),
+            )
+
+            return redirect(person)
+
+        else:
+            messages.error(request, 'Fix errors below.')
+
+    context = {
+        'title': 'Edit Person {0}'.format(str(person)),
+        'person_form': person_form,
+        'object': person,
+        'awards': person.award_set.order_by('badge__name'),
+        'award_form': award_form,
+        'tasks': person.task_set.order_by('-event__slug'),
+        'task_form': task_form,
+    }
     return render(request, 'workshops/person_edit_form.html', context)
 
 
@@ -3347,11 +3365,8 @@ def trainingrequest_details(request, pk):
         if form.is_valid():
             ok = _accept_training_request(form, req, request)
             if ok:
-                next_url = request.GET.get('next', None)
-                if next_url is not None and is_safe_url(next_url):
-                    return redirect(next_url)
-                else:
-                    return redirect('trainingrequest_details', req.pk)
+                return redirect_with_next_support(
+                    request, 'trainingrequest_details', req.pk)
 
     else:  # GET request
         # Provide initial value for form.person

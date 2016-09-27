@@ -447,6 +447,48 @@ class TestPerson(TestBase):
         self.assertEqual(set(p1.get_training_tasks()),
                          {t1})
 
+    def test_awarding_instructor_badge_workflow(self):
+        """Test that you can click "SWC" and "DC" labels in "eligible"
+        column in trainees list view. When you click them, you're moved to
+        the view where you can edit person's awards. "Award" and "event"
+        field should be prefilled in. Also test if you're moved back to
+        trainees view after adding the badge."""
+
+        trainee = Person.objects.create_user(
+            username='trainee', personal='Bob',
+            family='Smith', email='bob.smith@example.com')
+        host = Organization.objects.create(domain='example.com',
+                                           fullname='Test Organization')
+        ttt, _ = Tag.objects.get_or_create(name='TTT')
+        learner, _ = Role.objects.get_or_create(name='learner')
+        training = Event.objects.create(slug='2016-08-10-training', host=host)
+        training.tags.add(ttt)
+        Task.objects.create(person=trainee, event=training, role=learner)
+
+        trainees = self.app.get(reverse('all_trainees'), user='admin')
+
+        # Test workflow starting from clicking at "SWC" label
+        swc_res = trainees.click('^SWC$')
+        self.assertSelected(swc_res.forms['person-awards-form']['award-badge'],
+                            'Software Carpentry Instructor')
+        self.assertEqual(swc_res.forms['person-awards-form']['award-event_0'].value,
+                         '2016-08-10-training')
+        swc_res = swc_res.forms['person-awards-form'].submit().follow()
+        self.assertIn("Bob Smith &lt;bob.smith@example.com&gt; was awarded "
+                      "Software Carpentry Instructor badge.", swc_res)
+        self.assertEqual(trainees.request.url, swc_res.request.url)
+
+        # Test workflow starting from clicking at "DC" label
+        dc_res = trainees.click('^DC$')
+        self.assertSelected(dc_res.forms['person-awards-form']['award-badge'],
+                            'Data Carpentry Instructor')
+        self.assertEqual(dc_res.forms['person-awards-form']['award-event_0'].value,
+                         '2016-08-10-training')
+        dc_res = dc_res.forms['person-awards-form'].submit().follow()
+        self.assertIn("Bob Smith &lt;bob.smith@example.com&gt; was awarded "
+                      "Data Carpentry Instructor badge.", dc_res)
+        self.assertEqual(trainees.request.url, dc_res.request.url)
+
 
 class TestPersonPassword(TestBase):
     """Separate tests for testing password setting.
