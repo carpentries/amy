@@ -19,3 +19,4 @@ pygithub>=1.26,<=1.27
 python-social-auth>=0.2.19,<0.3
 Requests-OAuthlib>=0.6.1,<0.7
 django-app-namespace-template-loader>=0.4
+django-webtest==1.8.0

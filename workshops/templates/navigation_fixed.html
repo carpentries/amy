@@ -70,7 +70,7 @@
               </ul>
             </li>
           </ul>
-          <form class="navbar-form navbar-left" role="search" method="post" action="{% url "search" %}">
+          <form class="navbar-form navbar-left" id="search-form" role="search" method="post" action="{% url "search" %}">
             {% csrf_token %}
             <input type="hidden" name="in_organizations" value="on" />
             <input type="hidden" name="in_events" value="on" />

@@ -8,10 +8,11 @@ import sys
 import traceback
 import xml.etree.ElementTree as ET
 
+import webtest
 from django.conf import settings
 from django.contrib.auth.models import Group, Permission
 from django.core.urlresolvers import reverse
-from django.test import TestCase
+from django_webtest import WebTest
 
 from ..models import (
     Airport,
@@ -44,7 +45,8 @@ class DummySubTestWhenTestsLaunchedInParallelMixin:
             return super().subTest(*args, **kwargs)
 
 
-class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin, TestCase):
+class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
+               WebTest):  # Support for functional tests (django-webtest)
     '''Base class for AMY test cases.'''
 
     ERR_DIR = 'htmlerror' # where to save error HTML files
@@ -527,3 +529,20 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin, TestCase):
         assert callers, 'Internal error: unable to find caller'
         caller = callers[-1]
         return caller
+
+    ### Web-test helpers
+
+    def assertSelected(self, field, expected):
+        if not isinstance(field, webtest.forms.Select):
+            raise TypeError
+
+        expected_value = field._get_value_for_text(expected)
+        got_value = field.value
+
+        # field.options is a list of (value, selected?, verbose name) triples
+        selected = [o[2] for o in field.options if o[1]]
+
+        self.assertEqual(
+            expected_value, got_value,
+            msg='Expected "{}" to be selected '
+                'while {} is/are selected.'.format(expected, selected))

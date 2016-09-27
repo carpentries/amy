@@ -44,7 +44,8 @@ class BootstrapHelper(FormHelper):
                  additional_form_class='',
                  form_tag=True,
                  display_labels=True,
-                 form_action=None):
+                 form_action=None,
+                 form_id=None):
         """
         `duplicate_buttons_on_top` -- Whether submit buttons should be
         displayed on both top and bottom of the form.
@@ -114,11 +115,16 @@ class BootstrapHelper(FormHelper):
         if form_action is not None:
             self.form_action = form_action
 
+        if form_id is not None:
+            self.form_id = form_id
+
+
 
 class BootstrapHelperFilter(FormHelper):
     """A differently shaped forms (more space-efficient) for use in sidebar as
     filter forms."""
     form_method = 'get'
+    form_id = 'filter-form'
 
     def __init__(self, form=None):
         super().__init__(form)
