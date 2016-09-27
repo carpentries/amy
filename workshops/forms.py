@@ -3,7 +3,7 @@ import re
 from captcha.fields import ReCaptchaField
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Div, HTML, Submit, Reset, Field
+from crispy_forms.layout import Layout, Div, HTML, Submit, Button, Field
 from crispy_forms.bootstrap import AccordionGroup, Accordion
 from django import forms
 from django.core.exceptions import ValidationError
@@ -40,7 +40,7 @@ class BootstrapHelper(FormHelper):
                  wider_labels=False,
                  add_submit_button=True,
                  add_delete_button=False,
-                 add_reset_button=True,
+                 add_cancel_button=True,
                  additional_form_class='',
                  form_tag=True,
                  display_labels=True,
@@ -103,9 +103,11 @@ class BootstrapHelper(FormHelper):
                 css_class='btn-danger',
                 style='float: right;'))
 
-        if add_reset_button:
-            self.add_input(
-                Reset('reset', 'Reset', css_class='pull-right btn-danger'))
+        if add_cancel_button:
+            self.add_input(Button(
+                'cancel', 'Cancel',
+                css_class='btn-default pull-right',
+                onclick='window.history.back()'))
 
         self.form_class = 'form-horizontal ' + additional_form_class
 
@@ -285,7 +287,7 @@ class SearchForm(forms.Form):
                                      required=False,
                                      initial=True)
 
-    helper = BootstrapHelper(add_reset_button=False)
+    helper = BootstrapHelper(add_cancel_button=False)
 
 
 class DebriefForm(forms.Form):
