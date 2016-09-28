@@ -61,7 +61,7 @@
           <a href="{% url 'person_details' trainee.id %}">
             {{ trainee.get_full_name }}
           </a>
-          {% if trainee.email %} &lt;{{ trainee.email|urlize }}&gt; {% endif %}
+          {% if trainee.email %}<br /> &lt;{{ trainee.email|urlize }}&gt; {% endif %}
         </td>
         <td>
           {% for progress in trainee.trainingprogress_set.all %}
