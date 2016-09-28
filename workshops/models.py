@@ -2054,6 +2054,9 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
     def get_absolute_url(self):
         return reverse('trainingrequest_details', args=[self.pk])
 
+    def __str__(self):
+        return "Training request #{}".format(self.pk)
+
 
 @reversion.register
 class TrainingRequirement(models.Model):
