@@ -89,7 +89,7 @@
         </td>
         <td>
           {% for req in trainee.trainingrequest_set.all %}
-            <a href="{% url 'trainingrequest_details' req.pk %}">{{ req.created_at }}</a><br />
+            <a href="{% url 'trainingrequest_details' req.pk %}">{{ req.created_at|date:'Y-m-d H:i' }}</a><br />
           {% endfor %}
         </td>
         <td>
