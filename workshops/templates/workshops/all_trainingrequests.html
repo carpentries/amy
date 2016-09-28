@@ -59,7 +59,10 @@
                    {% if req in form.cleaned_data.requests or req in match_form.cleaned_data.requests %}checked {% endif %}
             />
           </td>
-          <td>{{ req.personal }} {{ req.family }}</td>
+          <td>
+            {{ req.personal }} {{ req.family }}<br />
+            &lt;{{ req.email|urlize }}&gt;
+          </td>
           {% if request.GET.affiliation or request.GET.location %}
             <td>
               {{ req.affiliation }}
@@ -77,7 +80,7 @@
                 {{ req.person.get_full_name }}
               </a>
               {% if req.person.email %}
-                &lt;{{ req.person.email|urlize }}&gt;
+                <br />&lt;{{ req.person.email|urlize }}&gt;
               {% endif %}
             {% else %}—{% endif %}
           </td>
