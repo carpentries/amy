@@ -70,7 +70,7 @@
             </td>
             <td>{{ req.location }}</td>
           {% endif %}
-          <td>{{ req.created_at }}</td>
+          <td>{{ req.created_at|date:'Y-m-d H:i' }}</td>
           <td>
             {% if req.person %}
               <a href="{% url 'person_details' req.person.pk %}">
