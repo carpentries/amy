@@ -60,7 +60,6 @@
       <tr>
         <th>#I</th>
         <th>dates</th>
-        <th>ID</th>
         <th>domain</th>
         <th>slug</th>
       </tr>
@@ -73,11 +72,6 @@
         {% endwith %}
         <td>
           {% if event.start %}✓{% endif %}
-        </td>
-        <td>
-          <a href="{{ event.get_absolute_url }}">
-            {{ event.id }}
-          </a>
         </td>
         <td>
           <a href="{% url 'organization_details' event.host.domain %}">
