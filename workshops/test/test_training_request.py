@@ -139,8 +139,10 @@ class TestTrainingRequestsListView(TestBase):
     def test_view_loads(self):
         rv = self.client.get(reverse('all_trainingrequests'))
         self.assertEqual(rv.status_code, 200)
+        # By default, only pending and accepted requests are displayed,
+        # therefore, self.first_req is missing.
         self.assertEqual(set(rv.context['requests']),
-                         {self.first_req, self.second_req, self.third_req})
+                         {self.second_req, self.third_req})
 
     def test_successful_bulk_discard(self):
         data = {

@@ -375,6 +375,13 @@ def filter_affiliation(queryset, affiliation):
                        .distinct()
 
 
+def filter_training_requests_by_state(queryset, choice):
+    if choice == '':
+        return queryset.exclude(state='d')
+    else:
+        return queryset.filter(state=choice)
+
+
 class TrainingRequestFilter(AMYFilterSet):
     search = django_filters.CharFilter(
         label='Name or Email',
@@ -382,7 +389,9 @@ class TrainingRequestFilter(AMYFilterSet):
     )
 
     state = django_filters.ChoiceFilter(
-        choices=(('', 'All'),) + TrainingRequest.STATES,
+        label='State',
+        choices=[('', 'Pending or accepted')] + TrainingRequest.STATES,
+        action=filter_training_requests_by_state,
     )
 
     matched = django_filters.ChoiceFilter(

@@ -1850,11 +1850,11 @@ def build_choice_field_with_other_option(choices, default, verbose_name=None):
 
 @reversion.register
 class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
-    STATES = (
+    STATES = [
         ('p', 'Pending'),  # initial state
         ('a', 'Accepted'),  # state after matching a Person record
         ('d', 'Discarded'),
-    )
+    ]
     state = models.CharField(choices=STATES, default='p', max_length=1)
 
     person = models.ForeignKey(Person, null=True, blank=True,
