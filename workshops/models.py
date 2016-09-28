@@ -2043,13 +2043,10 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
     def clean(self):
         super().clean()
 
-        if self.state == 'a' and self.person is None:
-            raise ValidationError({'person': 'Accepted training request must '
-                                             'be matched to a person.'})
-
-        if self.state == 'p' and self.person is not None:
-            raise ValidationError({'person': 'Pending training requests cannot '
-                                             'be matched to a person.'})
+        if self.state == 'p' and self.person is not None \
+                and self.person.get_training_tasks().exists():
+            raise ValidationError({'state': 'Pending training request cannot '
+                                            'be matched with a training.'})
 
     def get_absolute_url(self):
         return reverse('trainingrequest_details', args=[self.pk])

@@ -1428,7 +1428,8 @@ class BulkMatchTrainingRequestForm(forms.Form):
                                   'and match with a trainee.')
 
 
-class AcceptTrainingRequestForm(forms.Form):
+class MatchTrainingRequestForm(forms.Form):
+    """Form used to match a training request to a Person."""
     person = selectable.AutoCompleteSelectField(
         lookup_class=lookups.PersonLookup,
         label='Trainee Account',
@@ -1442,10 +1443,10 @@ class AcceptTrainingRequestForm(forms.Form):
 
         FormActions(
             Submit('match-selected-person',
-                   'Accept & match to selected trainee account'),
+                   'Match to selected trainee account'),
             HTML('&nbsp;<strong>OR</strong>&nbsp;&nbsp;'),
             Submit('create-new-person',
-                   'Accept & create new trainee account'),
+                   'Create new trainee account'),
         )
     )
 
