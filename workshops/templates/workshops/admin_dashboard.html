@@ -2,6 +2,7 @@
 
 {% load compress %}
 {% load static %}
+{% load tags %}
 
 {% block content %}
 
@@ -34,11 +35,18 @@
 {% endif %}
 
 <div class="row">
-  <div class="col-xs-3">
+  <div class="col-xs-4">
     <h3>Current</h3>
     <table class="table table-striped">
     {% for event in current_events %}
     <tr>
+      {% for tag in carpentries %}
+        <td class="text-center" width="25px">
+          {% if tag in event.tags.all %}
+            {% bootstrap_tag tag.name %}
+          {% endif %}
+        </td>
+      {% endfor %}
       <td><a href="{{ event.get_absolute_url }}">{{ event.slug }}</a></td>
     </tr>
     {% endfor %}
@@ -54,7 +62,7 @@
     {% endfor %}
     </table>
   </div>
-  <div class="col-xs-6">
+  <div class="col-xs-5">
     <h3>Unpublished</h3>
     <table class="table table-striped">
       <tr>
