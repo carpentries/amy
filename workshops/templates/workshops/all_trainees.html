@@ -3,7 +3,6 @@
 {% load crispy_forms_tags %}
 {% load pagination %}
 {% load tags %}
-{% load training_progress %}
 
 {% block content %}
 
@@ -64,21 +63,7 @@
           {% if trainee.email %} &lt;{{ trainee.email|urlize }}&gt; {% endif %}
         </td>
         <td>
-          {% for progress in trainee.trainingprogress_set.all %}
-            <a href="{% url 'trainingprogress_edit' progress.id %}?next={{ request.get_full_path|urlencode }}"
-               class="{% progress_label progress %}"
-               data-toggle="popover"
-               data-content="{% progress_description progress %}<br />Click to edit or delete."
-               data-html="true">
-              {% if progress.discarded %}<strike>{% endif %}
-                {{ progress.requirement }}
-              {% if progress.discarded %}</strike>{% endif %}
-            </a>
-            &nbsp;
-          {% endfor %}
-          <a href="{% url 'trainingprogress_add' trainee.id %}?next={{ request.get_full_path|urlencode }}"
-             class="label label-default"
-             data-toggle="popover" data-content="Click to add new progress">+</a>
+          {% include "workshops/training_progresses_inline.html" with person=trainee %}
         </td>
         <td>
           {% for task in trainee.get_training_tasks %}
