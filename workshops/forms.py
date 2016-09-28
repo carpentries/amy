@@ -1437,7 +1437,8 @@ class MatchTrainingRequestForm(forms.Form):
         widget=selectable.AutoComboboxSelectWidget,
     )
 
-    helper = BootstrapHelper(add_submit_button=False)
+    helper = BootstrapHelper(add_submit_button=False,
+                             add_cancel_button=False)
     helper.layout = Layout(
         'person',
 
