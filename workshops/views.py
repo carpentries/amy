@@ -39,7 +39,7 @@ from reversion.revisions import get_for_object
 
 from api.views import ReportsViewSet
 from workshops.filters import (
-    EventFilter, OrganizationFilter, PersonFilter, TaskFilter, AirportFilter,
+    EventFilter, OrganizationFilter, MembershipFilter, PersonFilter, TaskFilter, AirportFilter,
     EventRequestFilter, BadgeAwardsFilter, InvoiceRequestFilter,
     EventSubmissionFilter, DCSelfOrganizedEventRequestFilter,
     TraineeFilter, TrainingRequestFilter,
@@ -458,6 +458,20 @@ class OrganizationDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
     slug_url_kwarg = 'org_domain'
     permission_required = 'workshops.delete_organization'
     success_url = reverse_lazy('all_organizations')
+
+
+@admin_required
+def all_memberships(request):
+    '''List all memberships.'''
+    filter = MembershipFilter(
+        request.GET,
+        queryset=Membership.objects.all()
+    )
+    memberships = get_pagination_items(request, filter)
+    context = {'title' : 'All Memberships',
+               'all_memberships' : memberships,
+               'filter': filter}
+    return render(request, 'workshops/all_memberships.html', context)
 
 
 @admin_required

@@ -1,0 +1,37 @@
+{% extends "base_nav_fluid_sidebar.html" %}
+
+{% load pagination %}
+
+{% block content %}
+{% if all_memberships %}
+    <table class="table table-striped">
+        <tr>
+            <th>organization</th>
+            <th>kind</th>
+            <th>start date</th>
+            <th>end date</th>
+            <th>contribution</th>
+            <th class="additional-links"></th>
+        </tr>
+    {% for membership in all_memberships %}
+        <tr>
+            <td><a href="{{ membership.organization.get_absolute_url }}">{{ membership.organization.fullname }}</a></td>
+            <td>{{ membership.variant }}</td>
+            <td>{{ membership.agreement_start }}</td>
+            <td>{{ membership.agreement_end }}</td>
+            <td>{{ membership.contribution_type }}</td>
+            <td>
+                <a href="{{ membership.get_absolute_url }}" title="View {{ membership }}"><span class="glyphicon glyphicon-info-sign"></span></a>
+                &nbsp;
+                {% if perms.workshops.change_membership %}
+                <a href="{% url 'membership_edit' membership.pk %}" title="Edit {{ membership }}"><span class="glyphicon glyphicon-pencil"></span></a>
+                {% endif %}
+            </td>
+        </tr>
+    {% endfor %}
+    </table>
+    {% pagination all_memberships %}
+{% else %}
+    <p>No memberships.</p>
+{% endif %}
+{% endblock %}

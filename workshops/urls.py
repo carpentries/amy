@@ -21,6 +21,9 @@ urlpatterns = [
         url(r'^membership/add/$', views.membership_create, name='membership_add'),
     ])),
 
+    url(r'^memberships/', include([
+        url(r'^$', views.all_memberships, name='all_memberships')
+    ])),
     url(r'^membership/(?P<membership_id>\d+)/', include([
         url(r'^edit/$', views.MembershipUpdate.as_view(), name='membership_edit'),
         url(r'^delete/$', views.MembershipDelete.as_view(), name='membership_delete'),
