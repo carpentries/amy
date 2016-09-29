@@ -121,6 +121,9 @@ class Membership(models.Model):
     def __str__(self):
         return "{} Membership of <{}>".format(self.variant, str(self.organization))
 
+    def get_absolute_url(self):
+        return reverse('membership_details', args=[self.id])
+
     @property
     def workshops_without_admin_fee_per_year_completed(self):
         """Count workshops without admin fee hosted the year agreement

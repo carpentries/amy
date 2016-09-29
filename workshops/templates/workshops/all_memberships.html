@@ -3,6 +3,11 @@
 {% load pagination %}
 
 {% block content %}
+    {% if perms.workshops.add_membership %}
+    <p><a href="{% url 'membership_add' %}" class="btn btn-success">New membership</a></p>
+    {% else %}
+    <p><a href="{% url 'membership_add' %}" class="btn btn-success disabled">New membership</a></p>
+    {% endif %}
 {% if all_memberships %}
     <table class="table table-striped">
         <tr>
@@ -31,6 +36,11 @@
     {% endfor %}
     </table>
     {% pagination all_memberships %}
+    {% if perms.workshops.add_membership %}
+    <p><a href="{% url 'membership_add' %}" class="btn btn-success">New membership</a></p>
+    {% else %}
+    <p><a href="{% url 'membership_add' %}" class="btn btn-success disabled">New membership</a></p>
+    {% endif %}
 {% else %}
     <p>No memberships.</p>
 {% endif %}

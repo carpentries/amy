@@ -22,9 +22,11 @@ urlpatterns = [
     ])),
 
     url(r'^memberships/', include([
-        url(r'^$', views.all_memberships, name='all_memberships')
+        url(r'^$', views.all_memberships, name='all_memberships'),
+        url(r'^add/$', views.MembershipCreate.as_view(), name='membership_add'),
     ])),
     url(r'^membership/(?P<membership_id>\d+)/', include([
+        url(r'^$', views.membership_details, name='membership_details'),
         url(r'^edit/$', views.MembershipUpdate.as_view(), name='membership_edit'),
         url(r'^delete/$', views.MembershipDelete.as_view(), name='membership_delete'),
     ])),
