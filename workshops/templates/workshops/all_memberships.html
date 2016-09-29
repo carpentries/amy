@@ -1,0 +1,29 @@
+{% extends "base_nav_fluid_sidebar.html" %}
+
+{% load pagination %}
+
+{% block content %}
+{% if all_memberships %}
+    <table class="table table-striped">
+        <tr>
+            <th>organization</th>
+            <th>kind</th>
+            <th>start date</th>
+            <th>end date</th>
+	    <th>contribution</th>
+        </tr>
+    {% for membership in all_memberships %}
+        <tr>
+            <td><a href="{% url 'organization_details' membership.organization.domain %}">{{ membership.organization.fullname }}</a></td>
+	    <td>{{ membership.variant }}</td>
+	    <td>{{ membership.agreement_start }}</td>
+	    <td>{{ membership.agreement_end }}</td>
+	    <td>{{ membership.contribution_type }}</td>
+        </tr>
+    {% endfor %}
+    </table>
+    {% pagination all_memberships %}
+{% else %}
+    <p>No memberships.</p>
+{% endif %}
+{% endblock %}

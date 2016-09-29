@@ -9,6 +9,7 @@ from workshops.forms import bootstrap_helper_filter
 from workshops.models import (
     Event,
     Organization,
+    Membership,
     Person,
     Airport,
     EventRequest,
@@ -200,6 +201,12 @@ def filter_taught_workshops(queryset, values):
     return queryset.filter(task__role__name='instructor',
                            task__event__tags__in=values) \
                    .distinct()
+
+
+class MembershipFilter(AMYFilterSet):
+
+    class Meta:
+        model = Membership
 
 
 class PersonFilter(AMYFilterSet):
