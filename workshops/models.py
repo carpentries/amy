@@ -82,6 +82,10 @@ class Membership(models.Model):
         ('partner', 'Partner'),
         ('affiliate', 'Affiliate'),
         ('sponsor', 'Sponsor'),
+        ('bronze', 'Bronze'),
+        ('silver', 'Silver'),
+        ('gold', 'Gold'),
+        ('platinum', 'Platinum'),
     )
     variant = models.CharField(
         max_length=STR_MED, null=False, blank=False,
