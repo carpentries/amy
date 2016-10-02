@@ -23,7 +23,8 @@ from django.db.models import Q
 from django.http import Http404
 from django.http.response import HttpResponse
 from django.http.response import HttpResponseForbidden
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.utils.http import is_safe_url
 from selectable.decorators import results_decorator
 
 from workshops.models import Event, Role, Person, Task, Badge, is_admin
@@ -946,3 +947,20 @@ def homework2state(homework):
     else:  # failed homework
         assert homework.state == 'f'
         return 'none'
+
+
+def redirect_with_next_support(request, *args, **kwargs):
+    """Works in the same way as `redirect` except when there is GET parameter
+    named "next". In that case, user is redirected to the URL from that
+    parameter. If you have a class-based view, use RedirectSupportMixin that
+    does the same. """
+
+    next_url = request.GET.get('next', None)
+    if next_url is not None and is_safe_url(next_url):
+        return redirect(next_url)
+    else:
+        return redirect(*args, **kwargs)
+
+
+def dict_without_Nones(**keys):
+    return {k: v for k, v in keys.items() if v is not None}

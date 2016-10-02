@@ -44,7 +44,8 @@ class BootstrapHelper(FormHelper):
                  additional_form_class='',
                  form_tag=True,
                  display_labels=True,
-                 form_action=None):
+                 form_action=None,
+                 form_id=None):
         """
         `duplicate_buttons_on_top` -- Whether submit buttons should be
         displayed on both top and bottom of the form.
@@ -116,11 +117,16 @@ class BootstrapHelper(FormHelper):
         if form_action is not None:
             self.form_action = form_action
 
+        if form_id is not None:
+            self.form_id = form_id
+
+
 
 class BootstrapHelperFilter(FormHelper):
     """A differently shaped forms (more space-efficient) for use in sidebar as
     filter forms."""
     form_method = 'get'
+    form_id = 'filter-form'
 
     def __init__(self, form=None):
         super().__init__(form)
@@ -460,7 +466,7 @@ class PersonForm(forms.ModelForm):
         widget=selectable.AutoComboboxSelectMultipleWidget,
     )
 
-    helper = bootstrap_helper
+    helper = BootstrapHelper(form_id='person-edit-form')
 
     class Meta:
         model = Person
@@ -643,7 +649,7 @@ class PersonAwardForm(forms.ModelForm):
         widget=selectable.AutoComboboxSelectWidget,
     )
 
-    helper = BootstrapHelper(submit_label='Add')
+    helper = BootstrapHelper(submit_label='Add', form_id='person-awards-form')
 
     class Meta:
         model = Award
@@ -660,7 +666,7 @@ class PersonTaskForm(forms.ModelForm):
         widget=selectable.AutoComboboxSelectWidget,
     )
 
-    helper = BootstrapHelper(submit_label='Add')
+    helper = BootstrapHelper(submit_label='Add', form_id='person-tasks-form')
 
     class Meta:
         model = Task
@@ -1334,9 +1340,6 @@ class BulkDiscardProgressesForm(forms.Form):
         HTML('&nbsp;<a bulk-email-on-click class="btn btn-primary">'
              'Mail selected trainees</a>'),
     )
-
-    class Meta:
-        model = TrainingProgress
 
 
 class BulkChangeTrainingRequestForm(forms.Form):
