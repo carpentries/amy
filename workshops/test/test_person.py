@@ -900,8 +900,12 @@ class TestGetMissingSWCInstructorRequirements(TestBase):
                          set())
 
     def test_some_requirements_are_fulfilled(self):
+        # Homework was accepted, the second time.
+        TrainingProgress.objects.create(trainee=self.person, state='f',
+                                        requirement=self.swc_homework)
         TrainingProgress.objects.create(trainee=self.person, state='p',
                                         requirement=self.swc_homework)
+        # Dc-demo records should be ignored
         TrainingProgress.objects.create(trainee=self.person, state='p',
                                         requirement=self.dc_demo)
         # Not passed progress should be ignored.
@@ -947,9 +951,12 @@ class TestGetMissingDCInstructorRequirements(TestBase):
                          set())
 
     def test_some_requirements_are_fulfilled(self):
+        # Homework was accepted, the second time.
+        TrainingProgress.objects.create(trainee=self.person, state='f',
+                                        requirement=self.dc_homework)
         TrainingProgress.objects.create(trainee=self.person, state='p',
                                         requirement=self.dc_homework)
-
+        # Swc-demo should be ignored
         TrainingProgress.objects.create(trainee=self.person, state='p',
                                         requirement=self.swc_demo)
         # Not passed progress should be ignored.
