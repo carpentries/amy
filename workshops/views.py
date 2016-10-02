@@ -2730,7 +2730,10 @@ def profileupdaterequest_accept(request, request_id, person_id=None):
     return redirect(person.get_absolute_url())
 
 
-class EventSubmission(LoginNotRequiredMixin, EmailSendMixin, CreateViewContext):
+# This form is disabled as per @maneesha's request
+# class EventSubmission(LoginNotRequiredMixin, EmailSendMixin,
+#                       CreateViewContext):
+class EventSubmission(LoginNotRequiredMixin, TemplateView):
     """Display form for submitting existing workshops."""
     model = EventSubmissionModel
     form_class = EventSubmitForm

@@ -1,3 +1,5 @@
+import unittest
+
 from django.core import mail
 from django.core.urlresolvers import reverse
 
@@ -24,6 +26,7 @@ class TestEventSubmitForm(TestBase):
         ]
         self.assertEqual(fields_left, fields_right)
 
+    @unittest.skip('Event submission disabled as per @maneesha\'s request.')
     def test_submission_added(self):
         """Test if the submitted form adds a new event submission."""
         self.assertEqual(len(EventSubmission.objects.all()), 1)
@@ -42,6 +45,7 @@ class TestEventSubmitForm(TestBase):
         self.assertNotIn('form', rv.context)
         self.assertEqual(len(EventSubmission.objects.all()), 2)
 
+    @unittest.skip('Event submission disabled as per @maneesha\'s request.')
     def test_submission_sends_email(self):
         """Test if the submitted form results in email sent."""
         data = {
