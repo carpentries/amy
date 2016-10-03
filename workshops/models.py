@@ -2052,7 +2052,16 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         return reverse('trainingrequest_details', args=[self.pk])
 
     def __str__(self):
-        return "Training request #{}".format(self.pk)
+        return (
+            '{state} training request by {personal} {family} <{email}>'
+            .format(
+                state=self.get_state_display(),
+                personal=self.personal,
+                family=self.family,
+                email=self.email,
+                timestamp=self.created_at,
+            )
+        )
 
 
 @reversion.register
