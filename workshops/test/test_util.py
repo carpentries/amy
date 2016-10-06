@@ -99,6 +99,8 @@ Other content.
             'http://swcarpentry.github.io/workshop-template',
             'https://swcarpentry.github.com/workshop-template',
             'http://swcarpentry.github.com/workshop-template/',
+            'http://github.com/swcarpentry/workshop-template',
+            'https://github.com/swcarpentry/workshop-template',
         ]
         expected_url = ('https://raw.githubusercontent.com/swcarpentry/'
                         'workshop-template/gh-pages/index.html')

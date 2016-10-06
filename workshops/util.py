@@ -473,8 +473,7 @@ class WrongWorkshopURL(ValueError):
     (see `generate_url_to_event_index` below)."""
 
     def __str__(self):
-        return ('Event\'s URL doesn\'t match Github website format '
-                '"http://user.github.io/2015-12-08-workshop".')
+        return 'Event\'s URL doesn\'t match Github website or repo format.'
 
 
 def generate_url_to_event_index(website_url):
@@ -482,11 +481,11 @@ def generate_url_to_event_index(website_url):
     file in GitHub repository."""
     template = ('https://raw.githubusercontent.com/{name}/{repo}'
                 '/gh-pages/index.html')
-    regex = Event.WEBSITE_REGEX
 
-    results = regex.match(website_url)
-    if results:
-        return template.format(**results.groupdict()), results.group('repo')
+    for regex in [Event.WEBSITE_REGEX, Event.REPO_REGEX]:
+        results = regex.match(website_url)
+        if results:
+            return template.format(**results.groupdict()), results.group('repo')
     raise WrongWorkshopURL()
 
 
