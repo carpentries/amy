@@ -1,7 +1,7 @@
 import datetime
 from itertools import accumulate
 
-from django.db.models import Count, Sum, Case, F, When, Value, IntegerField
+from django.db.models import Count, Sum, Case, F, When, Value, IntegerField, Min
 from rest_framework import viewsets
 from rest_framework.decorators import list_route
 from rest_framework.filters import DjangoFilterBackend
@@ -312,9 +312,15 @@ class ReportsViewSet(ViewSet):
     def instructors_over_time(self, request, format=None):
         """Cumulative number of instructor appearances on workshops over
         time."""
+
         badges = Badge.objects.instructor_badges()
-        qs = self.queryset2.filter(badge__in=badges) \
-                           .annotate(count=Count('person__id')).distinct()
+
+        qs = Person.objects.filter(badges__in=badges)  \
+                           .annotate(date=Min('award__awarded'),
+                                     count=Value(1,
+                                                 output_field=IntegerField())) \
+                           .order_by('date')
+
         serializer = InstructorsOverTimeSerializer(qs, many=True)
 
         # run a cumulative generator over the data
