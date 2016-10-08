@@ -187,11 +187,12 @@ def filter_taught_workshops(queryset, values):
     support `action` parameter as supposed, ie. with
     `action='filter_taught_workshops'` it doesn't call the method; instead it
     tries calling a string, which results in error."""
+
     if not values:
         return queryset
 
-    return queryset.filter(task__role__name='instructor') \
-                   .filter(task__event__tags__in=values) \
+    return queryset.filter(task__role__name='instructor',
+                           task__event__tags__in=values) \
                    .distinct()
 
 
