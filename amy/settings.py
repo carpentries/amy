@@ -141,11 +141,13 @@ INSTALLED_APPS = (
     'captcha',
     'compressor',
     'social.apps.django_app.default',
+    'debug_toolbar',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
 MIDDLEWARE_CLASSES = (
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'reversion.middleware.RevisionMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -340,3 +342,14 @@ if DEBUG and 'test' in sys.argv:
     PASSWORD_HASHERS = (
         'django.contrib.auth.hashers.MD5PasswordHasher',
     )
+
+# Debug Toolbar
+DEBUG_TOOLBAR_PATCH_SETTINGS = False
+INTERNAL_IPS = ['127.0.0.1', '::1']
+DEBUG_TOOLBAR_CONFIG = {
+    # Disable all panels (except for timer) by default in order not to slow
+    # down page loading.
+    'DISABLE_PANELS': [
+        'debug_toolbar.panels.sql.SQLPanel',
+    ],
+}
