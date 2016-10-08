@@ -689,6 +689,7 @@ def person_bulk_add(request):
         'title': 'Bulk Add People',
         'form': form,
         'charset': settings.DEFAULT_CHARSET,
+        'roles': Role.objects.all()
     }
     return render(request, 'workshops/person_bulk_add_form.html', context)
 
