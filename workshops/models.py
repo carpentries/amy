@@ -1850,11 +1850,11 @@ def build_choice_field_with_other_option(choices, default, verbose_name=None):
 
 @reversion.register
 class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
-    STATES = (
+    STATES = [
         ('p', 'Pending'),  # initial state
         ('a', 'Accepted'),  # state after matching a Person record
         ('d', 'Discarded'),
-    )
+    ]
     state = models.CharField(choices=STATES, default='p', max_length=1)
 
     person = models.ForeignKey(Person, null=True, blank=True,
@@ -2043,16 +2043,16 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
     def clean(self):
         super().clean()
 
-        if self.state == 'a' and self.person is None:
-            raise ValidationError({'person': 'Accepted training request must '
-                                             'be matched to a person.'})
-
-        if self.state == 'p' and self.person is not None:
-            raise ValidationError({'person': 'Pending training requests cannot '
-                                             'be matched to a person.'})
+        if self.state == 'p' and self.person is not None \
+                and self.person.get_training_tasks().exists():
+            raise ValidationError({'state': 'Pending training request cannot '
+                                            'be matched with a training.'})
 
     def get_absolute_url(self):
         return reverse('trainingrequest_details', args=[self.pk])
+
+    def __str__(self):
+        return "Training request #{}".format(self.pk)
 
 
 @reversion.register

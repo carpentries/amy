@@ -61,7 +61,7 @@
           <a href="{% url 'person_details' trainee.id %}">
             {{ trainee.get_full_name }}
           </a>
-          {% if trainee.email %} &lt;{{ trainee.email|urlize }}&gt; {% endif %}
+          {% if trainee.email %}<br /> &lt;{{ trainee.email|urlize }}&gt; {% endif %}
         </td>
         <td>
           {% for progress in trainee.trainingprogress_set.all %}
@@ -89,7 +89,7 @@
         </td>
         <td>
           {% for req in trainee.trainingrequest_set.all %}
-            <a href="{% url 'trainingrequest_details' req.pk %}">{{ req.created_at }}</a><br />
+            <a href="{% url 'trainingrequest_details' req.pk %}">{{ req.created_at|date:'Y-m-d H:i' }}</a><br />
           {% endfor %}
         </td>
         <td>

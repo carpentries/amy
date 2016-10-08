@@ -85,7 +85,7 @@ from workshops.forms import (
     BulkAddTrainingProgressForm,
     BulkChangeTrainingRequestForm,
     BulkMatchTrainingRequestForm,
-    AcceptTrainingRequestForm,
+    MatchTrainingRequestForm,
     TrainingRequestUpdateForm,
     SendHomeworkForm,
     BulkDiscardProgressesForm,
@@ -3312,7 +3312,7 @@ def all_trainingrequests(request):
     return render(request, 'workshops/all_trainingrequests.html', context)
 
 
-def _accept_training_request(form, training_request, request):
+def _match_training_request_to_person(form, training_request, request):
     assert form.action in ('match', 'create')
     try:
         if form.action == 'create':
@@ -3349,11 +3349,9 @@ def _accept_training_request(form, training_request, request):
         training_request.person.is_active = True
         training_request.person.save()
         training_request.person.synchronize_usersocialauth()
-
-        training_request.state = 'a'  # accepted
         training_request.save()
 
-        messages.success(request, 'Request accepted.')
+        messages.success(request, 'Request matched with the person.')
 
         return True
 
@@ -3363,10 +3361,10 @@ def trainingrequest_details(request, pk):
     req = get_object_or_404(TrainingRequest, pk=int(pk))
 
     if request.method == 'POST':
-        form = AcceptTrainingRequestForm(request.POST)
+        form = MatchTrainingRequestForm(request.POST)
 
         if form.is_valid():
-            ok = _accept_training_request(form, req, request)
+            ok = _match_training_request_to_person(form, req, request)
             if ok:
                 return redirect_with_next_support(
                     request, 'trainingrequest_details', req.pk)
@@ -3382,7 +3380,7 @@ def trainingrequest_details(request, pk):
                                            Q(personal__iexact=req.personal,
                                              family__iexact=req.family)) \
                                    .first()  # may return None
-        form = AcceptTrainingRequestForm(initial={'person': person})
+        form = MatchTrainingRequestForm(initial={'person': person})
 
     context = {
         'title': 'Training request #{}'.format(req.pk),

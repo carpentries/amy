@@ -12,12 +12,12 @@
 
 {% last_modified req %}
 
-{% if req.state == 'p' %}
-  <h2>Accept Request</h2>
+{% if not req.person %}
+  <h2>Match Request to AMY account</h2>
   {% if form.initial.person %}
-    <p>It looks like the submitter has already an account. Click "accept &amp; match to selected trainee account" unless the following account doesn't match submitter.</p>
+    <p>It looks like the submitter has already an account. Click "match to selected trainee account" unless the following account doesn't match submitter.</p>
   {% else %}
-    <p>It looks like we don't have any account for the request's submitter. Click "accept &amp; create new trainee account" unless you can find this submitter's account.</p>
+    <p>It looks like we don't have any account for the request's submitter. Click "create new trainee account" unless you can find this submitter's account.</p>
   {% endif %}
   {% crispy form %}
 {% endif %}

@@ -59,7 +59,10 @@
                    {% if req in form.cleaned_data.requests or req in match_form.cleaned_data.requests %}checked {% endif %}
             />
           </td>
-          <td>{{ req.personal }} {{ req.family }}</td>
+          <td>
+            {{ req.personal }} {{ req.family }}<br />
+            &lt;{{ req.email|urlize }}&gt;
+          </td>
           {% if request.GET.affiliation or request.GET.location %}
             <td>
               {{ req.affiliation }}
@@ -70,14 +73,14 @@
             </td>
             <td>{{ req.location }}</td>
           {% endif %}
-          <td>{{ req.created_at }}</td>
+          <td>{{ req.created_at|date:'Y-m-d H:i' }}</td>
           <td>
             {% if req.person %}
               <a href="{% url 'person_details' req.person.pk %}">
                 {{ req.person.get_full_name }}
               </a>
               {% if req.person.email %}
-                &lt;{{ req.person.email|urlize }}&gt;
+                <br />&lt;{{ req.person.email|urlize }}&gt;
               {% endif %}
             {% else %}—{% endif %}
           </td>
