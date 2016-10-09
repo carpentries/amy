@@ -1994,7 +1994,8 @@ def workshop_staff(request):
 def search(request):
     '''Search the database by term.'''
 
-    term, organizations, events, persons, airports = '', None, None, None, None
+    term = ''
+    organizations = events = persons = airports = training_requests = None
 
     if request.method == 'POST':
         form = SearchForm(request.POST)
@@ -2051,6 +2052,18 @@ def search(request):
                     .order_by('iata')
                 results += list(airports)
 
+            if form.cleaned_data['in_training_requests']:
+                training_requests = TrainingRequest.objects.filter(
+                    Q(group_name__contains=term) |
+                    Q(family__contains=term) |
+                    Q(email__contains=term) |
+                    Q(github__contains=term) |
+                    Q(affiliation__contains=term) |
+                    Q(location__contains=term) |
+                    Q(comment__contains=term)
+                )
+                results += list(training_requests)
+
             # only 1 record found? Let's move to it immediately
             if len(results) == 1:
                 return redirect(results[0].get_absolute_url())
@@ -2059,13 +2072,16 @@ def search(request):
     else:
         form = SearchForm()
 
-    context = {'title' : 'Search',
-               'form': form,
-               'term' : term,
-               'organizations' : organizations,
-               'events' : events,
-               'persons' : persons,
-               'airports' : airports}
+    context = {
+        'title': 'Search',
+        'form': form,
+        'term': term,
+        'organizations' : organizations,
+        'events': events,
+        'persons': persons,
+        'airports': airports,
+        'training_requests': training_requests,
+    }
     return render(request, 'workshops/search.html', context)
 
 #------------------------------------------------------------

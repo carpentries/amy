@@ -6,7 +6,6 @@
 
 <div class="container">
   <div class="row">
-
     <div class="col-sm-3">
       <h2>Organizations</h2>
       {% if organizations %}
@@ -50,7 +49,19 @@
       </ul>
       {% endif %}
     </div>
+  </div>
 
+  <div class="row">
+    <div class="col-sm-3">
+      <h2>Training requests</h2>
+      {% if training_requests %}
+      <ul>
+  {% for r in training_requests %}
+  <li><a class="searchresult" href="{{ r.get_absolute_url }}">{{ r }}</a></li>
+  {% endfor %}
+      </ul>
+      {% endif %}
+    </div>
   </div>
 </div>
 

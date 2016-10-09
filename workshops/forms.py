@@ -292,6 +292,9 @@ class SearchForm(forms.Form):
     in_airports = forms.BooleanField(label='in airports',
                                      required=False,
                                      initial=True)
+    in_training_requests = forms.BooleanField(label='in training requests',
+                                              required=False,
+                                              initial=True)
 
     helper = BootstrapHelper(add_cancel_button=False)
 
