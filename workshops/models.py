@@ -2053,7 +2053,7 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
 
     def __str__(self):
         return (
-            '{state} training request by {personal} {family} <{email}>'
+            '{personal} {family} <{email}> - {state}'
             .format(
                 state=self.get_state_display(),
                 personal=self.personal,
