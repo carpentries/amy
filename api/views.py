@@ -9,7 +9,7 @@ from rest_framework.generics import ListAPIView
 from rest_framework.metadata import SimpleMetadata
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import (
-    IsAuthenticatedOrReadOnly, IsAuthenticated
+    IsAuthenticatedOrReadOnly, IsAuthenticated, BasePermission
 )
 from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
 from rest_framework.response import Response
@@ -30,6 +30,7 @@ from workshops.models import (
     Task,
     Award,
     Person,
+    is_admin,
 )
 from workshops.util import get_members, default_membership_cutoff
 
@@ -53,6 +54,12 @@ from .serializers import (
 )
 
 from .filters import EventFilter, TaskFilter, PersonFilter
+
+
+class IsAdmin(BasePermission):
+    """This permission allows only admin users to view the API content."""
+    def has_permission(self, request, view):
+        return is_admin(request.user)
 
 
 class QueryMetadata(SimpleMetadata):
@@ -130,7 +137,7 @@ class ExportInstructorLocationsView(ListAPIView):
 
 class ExportMembersView(ListAPIView):
     """Show everyone who qualifies as an SCF member."""
-    permission_classes = (IsAuthenticated, )
+    permission_classes = (IsAuthenticated, IsAdmin)
     paginator = None  # disable pagination
 
     renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES + [CSVRenderer, ]
@@ -213,7 +220,7 @@ class PublishedEvents(ListAPIView):
 
 
 class UserTodoItems(ListAPIView):
-    permission_classes = (IsAuthenticated, )
+    permission_classes = (IsAuthenticated, IsAdmin)
     paginator = None
     serializer_class = TimelineTodoSerializer
 
@@ -231,7 +238,7 @@ class ReportsViewSet(ViewSet):
     This is implemented as a ViewSet, but actions like create/list/retrieve/etc
     are missing, because we want to still have the power and simplicity of
     a router."""
-    permission_classes = (IsAuthenticated, )
+    permission_classes = (IsAuthenticated, IsAdmin)
     queryset1 = Event.objects.past_events().order_by('start')
     queryset2 = Award.objects.order_by('awarded')
 
@@ -512,7 +519,7 @@ class ReportsViewSet(ViewSet):
 
 class OrganizationViewSet(viewsets.ReadOnlyModelViewSet):
     """List many hosts or retrieve only one."""
-    permission_classes = (IsAuthenticated, )
+    permission_classes = (IsAuthenticated, IsAdmin)
     queryset = Organization.objects.all()
     serializer_class = OrganizationSerializer
     lookup_field = 'domain'
@@ -522,7 +529,7 @@ class OrganizationViewSet(viewsets.ReadOnlyModelViewSet):
 
 class EventViewSet(viewsets.ReadOnlyModelViewSet):
     """List many events or retrieve only one."""
-    permission_classes = (IsAuthenticated, )
+    permission_classes = (IsAuthenticated, IsAdmin)
     queryset = Event.objects.all().select_related('host', 'administrator') \
                                   .prefetch_related('tags')
     serializer_class = EventSerializer
@@ -534,7 +541,7 @@ class EventViewSet(viewsets.ReadOnlyModelViewSet):
 
 class TaskViewSet(viewsets.ReadOnlyModelViewSet):
     """List tasks belonging to specific event."""
-    permission_classes = (IsAuthenticated, )
+    permission_classes = (IsAuthenticated, IsAdmin)
     serializer_class = TaskSerializer
     pagination_class = StandardResultsSetPagination
     filter_backends = (DjangoFilterBackend, )
@@ -559,7 +566,7 @@ class TaskViewSet(viewsets.ReadOnlyModelViewSet):
 
 class TodoViewSet(viewsets.ReadOnlyModelViewSet):
     """List todos belonging to specific event."""
-    permission_classes = (IsAuthenticated, )
+    permission_classes = (IsAuthenticated, IsAdmin)
     serializer_class = TodoSerializer
     _event_slug = None
 
@@ -580,7 +587,7 @@ class TodoViewSet(viewsets.ReadOnlyModelViewSet):
 
 class PersonViewSet(viewsets.ReadOnlyModelViewSet):
     """List many people or retrieve only one person."""
-    permission_classes = (IsAuthenticated, )
+    permission_classes = (IsAuthenticated, IsAdmin)
     queryset = Person.objects.all().select_related('airport') \
                      .prefetch_related('badges', 'domains', 'lessons')
     serializer_class = PersonSerializer
@@ -591,7 +598,7 @@ class PersonViewSet(viewsets.ReadOnlyModelViewSet):
 
 class AwardViewSet(viewsets.ReadOnlyModelViewSet):
     """List awards belonging to specific person."""
-    permission_classes = (IsAuthenticated, )
+    permission_classes = (IsAuthenticated, IsAdmin)
     serializer_class = AwardSerializer
     _person_pk = None
 
@@ -612,7 +619,7 @@ class AwardViewSet(viewsets.ReadOnlyModelViewSet):
 
 class PersonTaskViewSet(viewsets.ReadOnlyModelViewSet):
     """List tasks done by specific person."""
-    permission_classes = (IsAuthenticated, )
+    permission_classes = (IsAuthenticated, IsAdmin)
     serializer_class = TaskSerializer
     _person_pk = None
 
@@ -633,7 +640,7 @@ class PersonTaskViewSet(viewsets.ReadOnlyModelViewSet):
 
 class AirportViewSet(viewsets.ReadOnlyModelViewSet):
     """List many airports or retrieve only one."""
-    permission_classes = (IsAuthenticated, )
+    permission_classes = (IsAuthenticated, IsAdmin)
     queryset = Airport.objects.all()
     serializer_class = AirportSerializer
     lookup_field = 'iata'
