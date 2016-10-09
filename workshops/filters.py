@@ -187,11 +187,12 @@ def filter_taught_workshops(queryset, values):
     support `action` parameter as supposed, ie. with
     `action='filter_taught_workshops'` it doesn't call the method; instead it
     tries calling a string, which results in error."""
+
     if not values:
         return queryset
 
-    return queryset.filter(task__role__name='instructor') \
-                   .filter(task__event__tags__in=values) \
+    return queryset.filter(task__role__name='instructor',
+                           task__event__tags__in=values) \
                    .distinct()
 
 
@@ -375,6 +376,13 @@ def filter_affiliation(queryset, affiliation):
                        .distinct()
 
 
+def filter_training_requests_by_state(queryset, choice):
+    if choice == '':
+        return queryset.exclude(state='d')
+    else:
+        return queryset.filter(state=choice)
+
+
 class TrainingRequestFilter(AMYFilterSet):
     search = django_filters.CharFilter(
         label='Name or Email',
@@ -382,7 +390,9 @@ class TrainingRequestFilter(AMYFilterSet):
     )
 
     state = django_filters.ChoiceFilter(
-        choices=(('', 'All'),) + TrainingRequest.STATES,
+        label='State',
+        choices=[('', 'Pending or accepted')] + TrainingRequest.STATES,
+        action=filter_training_requests_by_state,
     )
 
     matched = django_filters.ChoiceFilter(

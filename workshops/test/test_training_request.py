@@ -89,23 +89,44 @@ def create_training_request(state, person):
 
 class TestTrainingRequestModel(TestBase):
     def setUp(self):
+        # create admin account
         self._setUpUsersAndLogin()
+
+        # create trainee account
+        self._setUpRoles()
+        self._setUpTags()
+
+        self.trainee = Person.objects.create_user(
+            username='trainee', personal='Bob',
+            family='Smith', email='bob@smith.com')
+        org = Organization.objects.create(domain='example.com',
+                                          fullname='Test Organization')
+        training = Event.objects.create(slug='training', host=org)
+        training.tags.add(Tag.objects.get(name='TTT'))
+        learner = Role.objects.get(name='learner')
+        Task.objects.create(person=self.trainee, event=training, role=learner)
+
+    def test_accepted_request_are_always_valid(self):
+        """Accepted training requests are valid regardless of whether they
+        are matched to a training."""
+        req = create_training_request(state='a', person=None)
+        req.full_clean()
+
+        req = create_training_request(state='a', person=self.admin)
+        req.full_clean()
+
+        req = create_training_request(state='a', person=self.trainee)
+        req.full_clean()
 
     def test_valid_pending_request(self):
         req = create_training_request(state='p', person=None)
         req.full_clean()
 
-    def test_valid_accepted_request(self):
-        req = create_training_request(state='a', person=self.admin)
+        req = create_training_request(state='p', person=self.admin)
         req.full_clean()
 
     def test_pending_request_must_not_be_matched(self):
-        req = create_training_request(state='p', person=self.admin)
-        with self.assertRaises(ValidationError):
-            req.full_clean()
-
-    def test_accepted_request_must_be_matched_to_a_trainee(self):
-        req = create_training_request(state='a', person=None)
+        req = create_training_request(state='p', person=self.trainee)
         with self.assertRaises(ValidationError):
             req.full_clean()
 
@@ -139,8 +160,10 @@ class TestTrainingRequestsListView(TestBase):
     def test_view_loads(self):
         rv = self.client.get(reverse('all_trainingrequests'))
         self.assertEqual(rv.status_code, 200)
+        # By default, only pending and accepted requests are displayed,
+        # therefore, self.first_req is missing.
         self.assertEqual(set(rv.context['requests']),
-                         {self.first_req, self.second_req, self.third_req})
+                         {self.second_req, self.third_req})
 
     def test_successful_bulk_discard(self):
         data = {
@@ -201,8 +224,8 @@ class TestTrainingRequestsListView(TestBase):
                                                   task__role__name='learner')),
                          {self.first_training})
 
-    def test_matching_to_training_fails_in_the_case_of_pending_requests(self):
-        """Pending requests that are not matched with any trainee cannot be
+    def test_matching_to_training_fails_in_the_case_of_unmatched_persons(self):
+        """Requests that are not matched with any trainee account cannot be
         matched with a training. """
 
         data = {
@@ -221,7 +244,7 @@ class TestTrainingRequestsListView(TestBase):
         msg = 'Fix errors below and try again.'
         self.assertContains(rv, msg)
         msg = ('Some of the requests are not matched to a trainee yet. Before '
-              'matching them to a training, you need to accept them '
+               'matching them to a training, you need to accept them '
                'and match with a trainee.')
         self.assertContains(rv, msg)
         # Check that Spiderman is not matched to second_training even though
@@ -247,8 +270,8 @@ class TestTrainingRequestsListView(TestBase):
                                                   task__role__name='learner')),
                          set())
 
-    def test_unmatching_fails_in_the_case_of_pending_requests(self):
-        """Pending requests that are not matched with any trainee cannot be
+    def test_unmatching_fails_when_no_matched_trainee(self):
+        """Requests that are not matched with any trainee cannot be
         unmatched from a training."""
 
         data = {
@@ -286,24 +309,26 @@ class TestDownloadCSVView(TestBase):
         self.assertEqual(got, expected)
 
 
-class TestAcceptingTrainingRequestAndDetailedView(TestBase):
+class TestMatchingTrainingRequestAndDetailedView(TestBase):
     def setUp(self):
         self._setUpUsersAndLogin()
         self._setUpRoles()
 
     def test_detailed_view_of_pending_request(self):
-        """Accept Request form should be displayed only for pending requests."""
+        """Match Request form should be displayed only when no account is
+        matched. """
         req = create_training_request(state='p', person=None)
         rv = self.client.get(reverse('trainingrequest_details', args=[req.pk]))
         self.assertEqual(rv.status_code, 200)
-        self.assertContains(rv, 'Accept Request')
+        self.assertContains(rv, 'Match Request to AMY account')
 
     def test_detailed_view_of_accepted_request(self):
-        """Accept Request form should be displayed only for pending requests."""
-        req = create_training_request(state='a', person=self.admin)
+        """Match Request form should be displayed only when no account is
+        matched. """
+        req = create_training_request(state='p', person=self.admin)
         rv = self.client.get(reverse('trainingrequest_details', args=[req.pk]))
         self.assertEqual(rv.status_code, 200)
-        self.assertNotContains(rv, 'Accept Request')
+        self.assertNotContains(rv, 'Match Request to AMY account')
 
     def test_person_is_suggested(self):
         req = create_training_request(state='p', person=None)
@@ -331,7 +356,7 @@ class TestAcceptingTrainingRequestAndDetailedView(TestBase):
                               follow=True)
         self.assertEqual(rv.status_code, 200)
         req.refresh_from_db()
-        self.assertEqual(req.state, 'a')
+        self.assertEqual(req.state, 'p')
         self.assertEqual(req.person, self.admin)
 
     def test_matching_with_new_account_works(self):
@@ -341,7 +366,7 @@ class TestAcceptingTrainingRequestAndDetailedView(TestBase):
                               follow=True)
         self.assertEqual(rv.status_code, 200)
         req.refresh_from_db()
-        self.assertEqual(req.state, 'a')
+        self.assertEqual(req.state, 'p')
 
 
 class TestTrainingRequestTemplateTags(TestBase):

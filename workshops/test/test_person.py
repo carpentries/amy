@@ -10,6 +10,7 @@ from django.core.urlresolvers import reverse
 from django.core.validators import ValidationError
 from django.contrib.auth.models import Permission, Group
 
+from workshops.filters import filter_taught_workshops
 from ..forms import PersonForm, PersonsMergeForm
 from ..models import (
     Person, Task, Qualification, Award, Role, Event, KnowledgeDomain, Badge,
@@ -1017,3 +1018,51 @@ class TestGetMissingDCInstructorRequirements(TestBase):
     def test_none_requirement_is_fulfilled(self):
         self.assertEqual(self.person.get_missing_dc_instructor_requirements(),
                          {'Training', 'DC Homework', 'Discussion', 'DC Demo'})
+
+
+class TestFilterTaughtWorkshops(TestBase):
+    def setUp(self):
+        self._setUpAirports()
+        self._setUpBadges()
+        self._setUpLessons()
+        self._setUpTags()
+        self._setUpRoles()
+        self._setUpInstructors()
+        self._setUpNonInstructors()
+
+    def test_bug_975(self):
+        test_host = Organization.objects.create(domain='example.com',
+                                                fullname='Test Organization')
+        ttt = Tag.objects.get(name='TTT')
+        swc = Tag.objects.get(name='SWC')
+
+        e1 = Event.objects.create(slug='ttt-event', host=test_host)
+        e1.tags.add(ttt)
+        e2 = Event.objects.create(slug='swc-event', host=test_host)
+        e2.tags.add(swc)
+        e3 = Event.objects.create(slug='second-ttt-event', host=test_host)
+        e3.tags.add(ttt)
+
+        Task.objects.create(role=Role.objects.get(name='instructor'),
+                            person=self.hermione, event=e1)
+        Task.objects.create(role=Role.objects.get(name='learner'),
+                            person=self.harry, event=e1)
+        Task.objects.create(role=Role.objects.get(name='instructor'),
+                            person=self.ron, event=e2)
+        Task.objects.create(role=Role.objects.get(name='learner'),
+                            person=self.spiderman, event=e2)
+        Task.objects.create(role=Role.objects.get(name='instructor'),
+                            person=self.hermione, event=e3)
+
+        qs = Person.objects.all()
+        filtered = filter_taught_workshops(qs, [ttt.pk])
+
+        # - Hermione should be listed only once even though she was an
+        # instructor at two TTT events.
+        #
+        # - Harry should not be listed, because he was a learner, not an
+        # instructor.
+        #
+        # - Ron and Spiderman should not be listed, because they didn't
+        # participated in a TTT event.
+        self.assertSequenceEqual(filtered, [self.hermione])
