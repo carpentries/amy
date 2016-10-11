@@ -13,6 +13,7 @@ import json
 import os
 import sys
 
+from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import ugettext_lazy as _
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
@@ -190,10 +191,20 @@ MESSAGE_TAGS = {
 # Database
 # https://docs.djangoproject.com/en/1.7/ref/settings/#databases
 
+if DEBUG:
+    DB_FILENAME = os.environ.get('AMY_DB_FILENAME', 'db.sqlite3')
+else:
+    try:
+        DB_FILENAME = os.environ['AMY_DB_FILENAME']
+    except KeyError as ex:
+        raise ImproperlyConfigured(
+            'You must specify AMY_DB_FILENAME environment variable '
+            'when DEBUG is False.') from ex
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'NAME': os.path.join(BASE_DIR, DB_FILENAME),
         'TEST': {},
     }
 }
