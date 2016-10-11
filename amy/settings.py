@@ -346,10 +346,3 @@ if DEBUG and 'test' in sys.argv:
 # Debug Toolbar
 DEBUG_TOOLBAR_PATCH_SETTINGS = False
 INTERNAL_IPS = ['127.0.0.1', '::1']
-DEBUG_TOOLBAR_CONFIG = {
-    # Disable all panels (except for timer) by default in order not to slow
-    # down page loading.
-    'DISABLE_PANELS': [
-        'debug_toolbar.panels.sql.SQLPanel',
-    ],
-}
