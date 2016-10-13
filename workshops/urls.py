@@ -1,4 +1,5 @@
 from django.conf.urls import url, include
+from django.views.generic import RedirectView
 
 from workshops import views
 
@@ -186,4 +187,36 @@ urlpatterns = [
         url(r'^edit/$', views.TodoItemUpdate.as_view(), name='todo_edit'),
         url(r'^delete/$', views.TodoDelete.as_view(), name='todo_delete'),
     ])),
+
+    # redirects for the old forms
+    url(r'^swc/request/$',
+        RedirectView.as_view(pattern_name='swc_workshop_request', permanent=True),
+        name='old_swc_workshop_request'),
+    url(r'^swc/request/confirm/$',
+        RedirectView.as_view(pattern_name='swc_workshop_request_confirm', permanent=True),
+        name='old_swc_workshop_request_confirm'),
+    url(r'^dc/request/$',
+        RedirectView.as_view(pattern_name='dc_workshop_request', permanent=True),
+        name='old_dc_workshop_request'),
+    url(r'^dc/request/confirm/$',
+        RedirectView.as_view(pattern_name='dc_workshop_request_confirm', permanent=True),
+        name='old_dc_workshop_request_confirm'),
+    url(r'^dc/request_selforganized/$',
+        RedirectView.as_view(pattern_name='dc_workshop_selforganized_request', permanent=True),
+        name='old_dc_workshop_selforganized_request'),
+    url(r'^dc/request_selforganized/confirm/$',
+        RedirectView.as_view(pattern_name='dc_workshop_selforganized_request_confirm', permanent=True),
+        name='old_dc_workshop_selforganized_request_confirm'),
+    url(r'^submit/$',
+        RedirectView.as_view(pattern_name='event_submit', permanent=True),
+        name='old_event_submit'),
+    # url(r'^submit/confirm/$',
+    #     RedirectView.as_view(pattern_name='event_submission_confirm', permanent=True),
+    #     name='old_event_submission_confirm'),
+    url(r'^update_profile/$',
+        RedirectView.as_view(pattern_name='profileupdate_request', permanent=True),
+        name='old_profileupdate_request'),
+    url(r'^request_training/$',
+        RedirectView.as_view(pattern_name='training_request', permanent=True),
+        name='old_training_request'),
 ]
