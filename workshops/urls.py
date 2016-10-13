@@ -134,12 +134,6 @@ urlpatterns = [
         url(r'^assign/$', views.eventrequest_assign, name='eventrequest_assign'),
         url(r'^assign/(?P<person_id>[\w\.-]+)/$', views.eventrequest_assign, name='eventrequest_assign'),
     ])),
-    url(r'^swc/request/$', views.SWCEventRequest.as_view(), name='swc_workshop_request'),
-    url(r'^swc/request/confirm/$', views.SWCEventRequestConfirm.as_view(), name='swc_workshop_request_confirm'),
-    url(r'^dc/request/$', views.DCEventRequest.as_view(), name='dc_workshop_request'),
-    url(r'^dc/request/confirm/$', views.DCEventRequestConfirm.as_view(), name='dc_workshop_request_confirm'),
-    url(r'^dc/request_selforganized/$', views.DCSelfOrganizedEventRequest.as_view(), name='dc_workshop_selforganized_request'),
-    url(r'^dc/request_selforganized/confirm/$', views.DCSelfOrganizedEventRequestConfirm.as_view(), name='dc_workshop_selforganized_request_confirm'),
     url(r'^dc_selforganized_requests/$', views.AllDCSelfOrganizedEventRequests.as_view(), name='all_dcselforganizedeventrequests'),
     url(r'^dc_selforganized_request/(?P<request_id>\d+)/', include([
         url(r'^$', views.DCSelfOrganizedEventRequestDetails.as_view(), name='dcselforganizedeventrequest_details'),
@@ -157,8 +151,6 @@ urlpatterns = [
         url(r'^assign/$', views.eventsubmission_assign, name='eventsubmission_assign'),
         url(r'^assign/(?P<person_id>[\w\.-]+)/$', views.eventsubmission_assign, name='eventsubmission_assign'),
     ])),
-    url(r'^submit/$', views.EventSubmission.as_view(), name='event_submit'),
-    # url(r'^submit/confirm/$', views.EventSubmissionConfirm.as_view(), name='event_submission_confirm'),
 
     url(r'^profile_updates/$', views.AllProfileUpdateRequests.as_view(), name='all_profileupdaterequests'),
     url(r'^profile_updates/closed/$', views.AllClosedProfileUpdateRequests.as_view(), name='all_closed_profileupdaterequests'),
@@ -169,10 +161,8 @@ urlpatterns = [
         url(r'^accept/$', views.profileupdaterequest_accept, name='profileupdaterequest_accept'),
         url(r'^accept/(?P<person_id>[\w\.-]+)/$', views.profileupdaterequest_accept, name='profileupdaterequest_accept'),
     ])),
-    url(r'^update_profile/$', views.profileupdaterequest_create, name='profileupdate_request'),
     url(r'^autoupdate_profile/$', views.autoupdate_profile, name='autoupdate_profile'),
 
-    url(r'^request_training/$', views.trainingrequest_create, name='training_request'),
     url(r'^training_requests/$', views.all_trainingrequests, name='all_trainingrequests'),
     url(r'^training_requests/csv/$', views.download_trainingrequests, name='download_trainingrequests'),
     url(r'^training_request/(?P<pk>\d+)/', include([
