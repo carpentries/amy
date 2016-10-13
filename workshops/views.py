@@ -346,7 +346,8 @@ def admin_dashboard(request):
 
     current_events = (
         Event.objects.upcoming_events() | Event.objects.ongoing_events()
-    ).active()
+    ).active().prefetch_related('tags')
+
     uninvoiced_events = Event.objects.active().uninvoiced_events()
     unpublished_events = Event.objects.active().unpublished_events() \
                                       .select_related('host')
@@ -390,6 +391,7 @@ def admin_dashboard(request):
         'todos_start_date': TodoItemQuerySet.current_week_dates()[0],
         'todos_end_date': TodoItemQuerySet.next_week_dates()[1],
         'updated_metadata': updated_metadata,
+        'carpentries': Tag.objects.carpentries(),
     }
     return render(request, 'workshops/admin_dashboard.html', context)
 

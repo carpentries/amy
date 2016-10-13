@@ -657,6 +657,11 @@ class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
 
 #------------------------------------------------------------
 
+class TagQuerySet(models.query.QuerySet):
+    def carpentries(self):
+        return Tag.objects.filter(name__in=['SWC', 'DC', 'LC']).order_by('id')
+
+
 class Tag(models.Model):
     '''Label for grouping events.'''
 
@@ -665,6 +670,8 @@ class Tag(models.Model):
 
     def __str__(self):
         return self.name
+
+    objects = TagQuerySet.as_manager()
 
 #------------------------------------------------------------
 
