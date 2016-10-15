@@ -5,7 +5,7 @@ from django.template.loader import get_template
 from django.views.generic import TemplateView
 
 from workshops.forms import (
-	SWCEventRequestForm,
+    SWCEventRequestForm,
     DCEventRequestForm,
     EventSubmitForm,
     DCSelfOrganizedEventRequestForm,
@@ -13,7 +13,7 @@ from workshops.forms import (
     ProfileUpdateRequestForm,
 )
 from workshops.models import (
-	EventRequest,
+    EventRequest,
     EventSubmission as EventSubmissionModel,
     DCSelfOrganizedEventRequest as DCSelfOrganizedEventRequestModel,
 )
@@ -21,9 +21,9 @@ from workshops.util import (
     login_not_required,
 )
 from workshops.views import (
-	LoginNotRequiredMixin,
-	EmailSendMixin,
-	CreateViewContext,
+    LoginNotRequiredMixin,
+    EmailSendMixin,
+    CreateViewContext,
 )
 
 
