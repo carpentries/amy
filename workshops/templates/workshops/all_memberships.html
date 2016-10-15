@@ -15,15 +15,15 @@
             <th>kind</th>
             <th>start date</th>
             <th>end date</th>
-	    <th>contribution</th>
+            <th>contribution</th>
         </tr>
     {% for membership in all_memberships %}
         <tr>
-            <td><a href="{% url 'organization_details' membership.organization.domain %}">{{ membership.organization.fullname }}</a></td>
-	    <td>{{ membership.variant }}</td>
-	    <td>{{ membership.agreement_start }}</td>
-	    <td>{{ membership.agreement_end }}</td>
-	    <td>{{ membership.contribution_type }}</td>
+            <td><a href="{{ membership.get_absolute_url }}">{{ membership.organization.fullname }}</a></td>
+            <td>{{ membership.variant }}</td>
+            <td>{{ membership.agreement_start }}</td>
+            <td>{{ membership.agreement_end }}</td>
+            <td>{{ membership.contribution_type }}</td>
         </tr>
     {% endfor %}
     </table>
