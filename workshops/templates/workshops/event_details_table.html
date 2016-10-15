@@ -17,7 +17,7 @@
     <td colspan="2">
       {{ event.get_invoice_status_display }}
       {% if event.uninvoiced %}
-      <a href="{% url 'event_invoice' event.slug %}" class="btn btn-primary btn-xs pull-right">Invoice</a>
+      <a href="{# Disabled as per @maneesha's request {% url 'event_invoice' event.slug %}#}#" class="btn btn-primary btn-xs pull-right" id="invoice_btn">Invoice</a>
       {% else %}
       <a href="#" class="btn btn-primary btn-xs pull-right disabled">Invoice</a>
       {% endif %}
