@@ -18,12 +18,12 @@ urlpatterns = [
         url(r'^$', views.organization_details, name='organization_details'),
         url(r'^edit/$', views.OrganizationUpdate.as_view(), name='organization_edit'),
         url(r'^delete/$', views.OrganizationDelete.as_view(), name='organization_delete'),
-        url(r'^membership/add/$', views.membership_create, name='membership_add'),
     ])),
 
     url(r'^memberships/', include([
         url(r'^$', views.all_memberships, name='all_memberships'),
         url(r'^add/$', views.MembershipCreate.as_view(), name='membership_add'),
+        url(r'^add/(?P<org_domain>[\w\.-]+)/$', views.MembershipCreate.as_view(), name='membership_add'),
     ])),
     url(r'^membership/(?P<membership_id>\d+)/', include([
         url(r'^$', views.membership_details, name='membership_details'),

@@ -487,32 +487,6 @@ def membership_details(request, membership_id):
     return render(request, 'workshops/membership.html', context)
 
 
-@admin_required
-@permission_required(['workshops.add_membership',
-                      'workshops.change_organization'], raise_exception=True)
-def membership_create(request, org_domain):
-    organization = get_object_or_404(Organization, domain=org_domain)
-    form = MembershipForm(initial={'organization': organization})
-
-    if request.method == "POST":
-        form = MembershipForm(request.POST)
-        if form.is_valid():
-            form.save()
-
-            messages.success(request,
-                'Membership was successfully added to the organization')
-
-            return redirect(
-                reverse('organization_details', args=[organization.domain])
-            )
-
-    context = {
-        'title': 'New membership for organization {}'.format(organization),
-        'form': form,
-    }
-    return render(request, 'workshops/generic_form.html', context)
-
-
 class MembershipCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
                        CreateViewContext):
     permission_required = [
