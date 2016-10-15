@@ -518,6 +518,25 @@ class MembershipCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
     permission_required = 'workshops.add_membership'
     model = Membership
     form_class = MembershipForm
+    org_domain = None
+
+    def get(self, request, org_domain=None, *args, **kwargs):
+        self.org_domain = org_domain
+        return super().get(request, org_domain, *args, **kwargs)
+
+    def post(self, request, org_domain=None, *args, **kwargs):
+        self.org_domain = org_domain
+        return super().post(request, org_domain, *args, **kwargs)
+
+    def get_initial(self):
+        initials = super().get_initial()
+
+        if self.org_domain:
+            organization = get_object_or_404(Organization,
+                                             domain=self.org_domain)
+            initials.update({'organization': organization})
+
+        return initials
 
 
 class MembershipUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
