@@ -14,13 +14,37 @@
   {% endif %}
 </p>
 <table class="table table-striped">
-  <tr><td>organization:</td><td><a href="{% url 'organization_details' membership.organization.domain %}">{{ membership.organization.fullname }}</a></td></tr>
-  <tr><td>kind:</td><td>{{ membership.variant }}</td></tr>
-  <tr><td>start date:</td><td>{{ membership.agreement_start }}</td></tr>
-  <tr><td>end date:</td><td>{{ membership.agreement_end }}</td></tr>
-  <tr><td>contribution type:</td><td>{{ membership.contribution_type }}</td></tr>
-  <tr><td>workshops without fee per year:</td><td>{{ membership.workshops_without_admin_fee_per_year }}</td></tr>
-  <tr><td>self-organized workshops per year:</td><td>{{ membership.self_organized_workshops_per_year }}</td></tr>
+  <tr><td colspan="2">organization:</td><td><a href="{% url 'organization_details' membership.organization.domain %}">{{ membership.organization.fullname }}</a></td></tr>
+  <tr><td colspan="2">kind:</td><td>{{ membership.variant }}</td></tr>
+  <tr><td colspan="2">start date:</td><td>{{ membership.agreement_start }}</td></tr>
+  <tr><td colspan="2">end date:</td><td>{{ membership.agreement_end }}</td></tr>
+  <tr><td colspan="2">contribution type:</td><td>{{ membership.contribution_type }}</td></tr>
+  <tr>
+    <td rowspan="3" width="30%">workshops without fee per year:</td>
+    <td>Imposed</td>
+    <td>{{ membership.workshops_without_admin_fee_per_year|default:"—" }}</td>
+  </tr>
+  <tr>
+    <td>Completed</td>
+    <td>{{ membership.workshops_without_admin_fee_per_year_completed|default:"—" }}</td>
+  </tr>
+  <tr>
+    <td>Remaining</td>
+    <td>{{ membership.workshops_without_admin_fee_per_year_remaining|default:"—" }}</td>
+  </tr>
+  <tr>
+    <td rowspan="3">self-organized workshops per year:</td>
+    <td>Imposed</td>
+    <td>{{ membership.self_organized_workshops_per_year|default:"—" }}</td>
+  </tr>
+  <tr>
+    <td>Completed</td>
+    <td>{{ membership.self_organized_workshops_per_year_completed|default:"—" }}</td>
+  </tr>
+  <tr>
+    <td>Remaining</td>
+    <td>{{ membership.self_organized_workshops_per_year_remaining|default:"—" }}</td>
+  </tr>
 </table>
 
 {% if organization.notes %}
