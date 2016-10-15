@@ -85,7 +85,7 @@ class Membership(models.Model):
         ('bronze', 'Bronze'),
         ('silver', 'Silver'),
         ('gold', 'Gold'),
-        ('platinum', 'Platinum')
+        ('platinum', 'Platinum'),
     )
     variant = models.CharField(
         max_length=STR_MED, null=False, blank=False,
