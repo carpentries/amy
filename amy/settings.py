@@ -138,6 +138,7 @@ INSTALLED_APPS = (
     'reversion',
     'rest_framework',
     'api',
+    'extforms',
     'captcha',
     'compressor',
     'social.apps.django_app.default',
