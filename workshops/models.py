@@ -9,7 +9,7 @@ from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
 from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, F, IntegerField, Sum, Case, When
 from django.utils import timezone
 from django_countries.fields import CountryField
 from reversion import revisions as reversion
@@ -263,6 +263,33 @@ class PersonManager(BaseUserManager):
         else:
             return super().get_by_natural_key(username)
 
+    def annotate_with_instructor_eligibility(self):
+        def passed(requirement):
+            return Sum(Case(When(trainingprogress__requirement__name=requirement,
+                                 trainingprogress__state='p',
+                                 trainingprogress__discarded=False,
+                                 then=1),
+                            default=0,
+                            output_field=IntegerField()))
+
+        return self.annotate(
+            passed_training=passed('Training'),
+            passed_swc_homework=passed('SWC Homework'),
+            passed_dc_homework=passed('DC Homework'),
+            passed_discussion=passed('Discussion'),
+            passed_swc_demo=passed('SWC Demo'),
+            passed_dc_demo=passed('DC Demo'),
+        ).annotate(
+            swc_eligible=(F('passed_training') *
+                          F('passed_swc_homework') *
+                          F('passed_discussion') *
+                          F('passed_swc_demo')),
+            dc_eligible=(F('passed_training') *
+                         F('passed_dc_homework') *
+                         F('passed_discussion') *
+                         F('passed_dc_demo')),
+        )
+
 
 @reversion.register
 class Person(AbstractBaseUser, PermissionsMixin):
@@ -437,33 +464,34 @@ class Person(AbstractBaseUser, PermissionsMixin):
         """Returns set of requirements' names (list of strings) that are not
         passed yet by the trainee and are mandatory to become SWC Instructor.
         """
-        requirements = [
-            'Training',
-            'SWC Homework',
-            'Discussion',
-            'SWC Demo'
+
+        fields = [
+            ('passed_training', 'Training'),
+            ('passed_swc_homework', 'SWC Homework'),
+            ('passed_discussion', 'Discussion'),
+            ('passed_swc_demo', 'SWC Demo'),
         ]
-        passed = self.trainingprogress_set\
-                     .filter(discarded=False, state='p',
-                             requirement__name__in=requirements) \
-                     .values_list('requirement__name', flat=True)
-        return set(requirements) - set(passed)
+        try:
+            return [name for field, name in fields if not getattr(self, field)]
+        except AttributeError as e:
+            raise Exception('Did you forget to call '
+                            'annotate_with_instructor_eligibility()?') from e
 
     def get_missing_dc_instructor_requirements(self):
         """Returns set of requirements' names (list of strings) that are not
         passed yet by the trainee and are mandatory to become DC Instructor."""
 
-        requirements = [
-            'Training',
-            'DC Homework',
-            'Discussion',
-            'DC Demo'
+        fields = [
+            ('passed_training', 'Training'),
+            ('passed_dc_homework', 'DC Homework'),
+            ('passed_discussion', 'Discussion'),
+            ('passed_dc_demo', 'DC Demo'),
         ]
-        passed = self.trainingprogress_set \
-            .filter(discarded=False, state='p',
-                    requirement__name__in=requirements) \
-            .values_list('requirement__name', flat=True)
-        return set(requirements) - set(passed)
+        try:
+            return [name for field, name in fields if not getattr(self, field)]
+        except AttributeError as e:
+            raise Exception('Did you forget to call '
+                            'annotate_with_instructor_eligibility()?') from e
 
     def get_training_tasks(self):
         """Returns Tasks related to Instuctor Training events at which this

@@ -262,6 +262,25 @@ def filter_trainees_by_training_request_presence(queryset, flag):
         return queryset.filter(trainingrequest__isnull=True)
 
 
+def filter_trainees_by_instructor_status(queryset, choice):
+    if choice == '':
+        return queryset
+    elif choice == 'swc-and-dc':
+        return queryset.filter(is_swc_instructor=True, is_dc_instructor=True)
+    elif choice == 'swc-or-dc':
+        return queryset.filter(Q(is_swc_instructor=True) |
+                               Q(is_dc_instructor=True))
+    elif choice == 'swc':
+        return queryset.filter(is_swc_instructor=True)
+    elif choice == 'dc':
+        return queryset.filter(is_dc_instructor=True)
+    elif choice == 'eligible':
+        return queryset.filter(Q(swc_eligible=True, is_swc_instructor=False) |
+                               Q(dc_eligible=True, is_dc_instructor=False))
+    else:  # choice == 'no'
+        return queryset.filter(is_swc_instructor=False, is_dc_instructor=False)
+
+
 def filter_trainees_by_training(queryset, training):
     if training is None:
         return queryset
@@ -291,14 +310,18 @@ class TraineeFilter(AMYFilterSet):
         action=filter_trainees_by_training_request_presence,
     )
 
-    is_swc_instructor = django_filters.BooleanFilter(
-        label='Is SWC Instructor?',
-        name='is_swc_instructor',
-    )
-
-    is_dc_instructor = django_filters.BooleanFilter(
-        label='Is DC Instructor?',
-        name='is_dc_instructor',
+    is_instructor = django_filters.ChoiceFilter(
+        label='Is SWC/DC instructor?',
+        action=filter_trainees_by_instructor_status,
+        choices=[
+            ('', 'Unknown'),
+            ('swc-and-dc', 'Both SWC and DC'),
+            ('swc-or-dc', 'SWC or DC '),
+            ('swc', 'SWC instructor'),
+            ('dc', 'DC instructor'),
+            ('eligible', 'No, but eligible to be certified'),
+            ('no', 'No'),
+        ]
     )
 
     training = django_filters.ModelChoiceFilter(
@@ -312,8 +335,7 @@ class TraineeFilter(AMYFilterSet):
             'search',
             'all_persons',
             'homework',
-            'is_swc_instructor',
-            'is_dc_instructor',
+            'is_instructor',
             'training',
         ]
         order_by = ["-last_login", "lastname", "-lastname", "firstname", "-firstname",

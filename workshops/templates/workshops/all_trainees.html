@@ -94,29 +94,29 @@
                "
                href="{% url 'person_edit' trainee.pk %}?badge=swc-instructor&amp;find-training&amp;next={{ request.get_full_path|urlencode }}#awards">SWC</a>
           {% else %}
-          <a class="label label-success" data-toggle="popover"
-                 data-content="Eligible to be certified as Software Carpentry Instructor. Click to start awarding the badge."
-                 href="{% url 'person_edit' trainee.pk %}?badge=swc-instructor&amp;find-training&amp;next={{ request.get_full_path|urlencode }}#awards">SWC</a>
+            <a class="label label-success" data-toggle="popover" data-html="true"
+               data-content="<p>Eligible to be certified as Software Carpentry Instructor.</p><p>Click to start awarding the badge.</p>"
+               href="{% url 'person_edit' trainee.pk %}?badge=swc-instructor&amp;find-training&amp;next={{ request.get_full_path|urlencode }}#awards">SWC</a>
           {% endif %}
           {% if trainee.is_dc_instructor %}
               <span class="label label-primary" data-toggle="popover"
                     data-content="This person is DC Instructor.">DC</span>
-            {% elif trainee.get_missing_dc_instructor_requirements %}
-              <a class="label label-default" data-toggle="popover" data-html="true"
-                 data-content="
-                   Not eligible to be certified as Data Carpentry Instructor. Needs to pass:
-                   <ul>
-                     {% for requirement in trainee.get_missing_dc_instructor_requirements %}
-                       <li>{{ requirement }}</li>
-                     {% endfor %}
-                   </ul>
-                   Click to start awarding the badge.
-                 "
-                 href="{% url 'person_edit' trainee.pk %}?badge=dc-instructor&amp;find-training&amp;next={{ request.get_full_path|urlencode }}#awards">DC</a>
+          {% elif trainee.get_missing_dc_instructor_requirements %}
+            <a class="label label-default" data-toggle="popover" data-html="true"
+               data-content="
+                 Not eligible to be certified as Data Carpentry Instructor. Needs to pass:
+                 <ul>
+                   {% for requirement in trainee.get_missing_dc_instructor_requirements %}
+                     <li>{{ requirement }}</li>
+                   {% endfor %}
+                 </ul>
+                 Click to start awarding the badge.
+               "
+               href="{% url 'person_edit' trainee.pk %}?badge=dc-instructor&amp;find-training&amp;next={{ request.get_full_path|urlencode }}#awards">DC</a>
           {% else %}
-          <a class="label label-success" data-toggle="popover"
-                 data-content="Eligible to be certified as Data Carpentry Instructor. Click to start awarding the badge."
-                 href="{% url 'person_edit' trainee.pk %}?badge=dc-instructor&amp;find-training&amp;next={{ request.get_full_path|urlencode }}#awards">DC</a>
+            <a class="label label-success" data-toggle="popover" data-html="true"
+               data-content="<p>Eligible to be certified as Data Carpentry Instructor.</p><p>Click to start awarding the badge.</p>"
+               href="{% url 'person_edit' trainee.pk %}?badge=dc-instructor&amp;find-training&amp;next={{ request.get_full_path|urlencode }}#awards">DC</a>
           {% endif %}
         </td>
         <td>

@@ -76,8 +76,6 @@ from workshops.forms import (
     DCSelfOrganizedEventRequestFormNoCaptcha,
     TrainingProgressForm,
     BulkAddTrainingProgressForm,
-    BulkChangeTrainingRequestForm,
-    BulkMatchTrainingRequestForm,
     MatchTrainingRequestForm,
     TrainingRequestUpdateForm,
     SendHomeworkForm,
@@ -135,7 +133,6 @@ from workshops.util import (
     login_required,
     login_not_required,
     LoginNotRequiredMixin,
-    homework2state,
     redirect_with_next_support,
     dict_without_Nones,
 )
@@ -3154,21 +3151,18 @@ def trainee_dashboard(request):
     dc_form = SendHomeworkForm(submit_name='dc-submit')
 
     # Add information about instructor training progress to request.user.
+    request.user = Person.objects.annotate_with_instructor_eligibility() \
+                                 .get(pk=request.user.pk)
+
     progresses = request.user.trainingprogress_set.filter(discarded=False)
-    request.user.training_passed = progresses.filter(
-        requirement__name='Training', state='p').exists()
     last_swc_homework = progresses.filter(
         requirement__name='SWC Homework').order_by('-created_at').first()
-    request.user.swc_homework_state = homework2state(last_swc_homework)
+    request.user.swc_homework_in_evaluation = (
+        last_swc_homework is not None and last_swc_homework.state == 'n')
     last_dc_homework = progresses.filter(
         requirement__name='DC Homework').order_by('-created_at').first()
-    request.user.dc_homework_state = homework2state(last_dc_homework)
-    request.user.discussion_passed = progresses.filter(
-        requirement__name='Discussion', state='p').exists()
-    request.user.swc_demo_passed = progresses.filter(
-        requirement__name='SWC Demo', state='p').exists()
-    request.user.dc_demo_passed = progresses.filter(
-        requirement__name='DC Demo', state='p').exists()
+    request.user.dc_homework_in_evaluation = (
+        last_dc_homework is not None and last_dc_homework.state == 'n')
 
     # Add information about awarded instructor badges to request.user.
     request.user.is_swc_instructor = request.user.award_set.filter(
@@ -3376,16 +3370,18 @@ class TrainingProgressDelete(RedirectSupportMixin, OnlyForAdminsMixin,
 def all_trainees(request):
     filter = TraineeFilter(
         request.GET,
-        # notes are too large, so we defer them
-        queryset=Person.objects.defer('notes').annotate(
-            is_swc_instructor=Sum(Case(When(badges__name='swc-instructor',
-                                            then=1),
-                                       default=0,
-                                       output_field=IntegerField())),
-            is_dc_instructor=Sum(Case(When(badges__name='dc-instructor',
-                                           then=1),
-                                      default=0,
-                                      output_field=IntegerField())),
+        queryset=Person.objects \
+            .annotate_with_instructor_eligibility() \
+            .defer('notes')  # notes are too large, so we defer them \
+            .annotate(
+                is_swc_instructor=Sum(Case(When(badges__name='swc-instructor',
+                                                then=1),
+                                           default=0,
+                                           output_field=IntegerField())),
+                is_dc_instructor=Sum(Case(When(badges__name='dc-instructor',
+                                               then=1),
+                                          default=0,
+                                          output_field=IntegerField())),
         )
     )
     trainees = get_pagination_items(request, filter)

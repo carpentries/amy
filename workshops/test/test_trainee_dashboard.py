@@ -82,8 +82,10 @@ class TestInstructorStatus(TestBase):
                 trainee=self.admin,
                 requirement=TrainingRequirement.objects.get(name=requirement))
 
-        assert self.admin.get_missing_swc_instructor_requirements() == set()
-        assert self.admin.get_missing_dc_instructor_requirements() == set()
+        admin = Person.objects.annotate_with_instructor_eligibility() \
+                              .get(username='admin')
+        assert admin.get_missing_swc_instructor_requirements() == []
+        assert admin.get_missing_dc_instructor_requirements() == []
 
         rv = self.client.get(reverse('trainee-dashboard'))
 

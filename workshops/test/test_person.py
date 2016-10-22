@@ -939,8 +939,9 @@ class TestGetMissingSWCInstructorRequirements(TestBase):
         TrainingProgress.objects.create(trainee=self.person, state='p',
                                         requirement=self.swc_demo)
 
-        self.assertEqual(self.person.get_missing_swc_instructor_requirements(),
-                         set())
+        person = Person.objects.annotate_with_instructor_eligibility() \
+                               .get(username='person')
+        self.assertEqual(person.get_missing_swc_instructor_requirements(), [])
 
     def test_some_requirements_are_fulfilled(self):
         # Homework was accepted, the second time.
@@ -961,12 +962,16 @@ class TestGetMissingSWCInstructorRequirements(TestBase):
                                         requirement=self.training,
                                         discarded=True)
 
-        self.assertEqual(self.person.get_missing_swc_instructor_requirements(),
-                         {'Training', 'Discussion', 'SWC Demo'})
+        person = Person.objects.annotate_with_instructor_eligibility() \
+            .get(username='person')
+        self.assertEqual(person.get_missing_swc_instructor_requirements(),
+                         ['Training', 'Discussion', 'SWC Demo'])
 
     def test_none_requirement_is_fulfilled(self):
-        self.assertEqual(self.person.get_missing_swc_instructor_requirements(),
-                         {'Training', 'SWC Homework', 'Discussion', 'SWC Demo'})
+        person = Person.objects.annotate_with_instructor_eligibility() \
+                               .get(username='person')
+        self.assertEqual(person.get_missing_swc_instructor_requirements(),
+                         ['Training', 'SWC Homework', 'Discussion', 'SWC Demo'])
 
 
 class TestGetMissingDCInstructorRequirements(TestBase):
@@ -990,8 +995,9 @@ class TestGetMissingDCInstructorRequirements(TestBase):
         TrainingProgress.objects.create(trainee=self.person, state='p',
                                         requirement=self.dc_demo)
 
-        self.assertEqual(self.person.get_missing_dc_instructor_requirements(),
-                         set())
+        person = Person.objects.annotate_with_instructor_eligibility() \
+                               .get(username='person')
+        self.assertEqual(person.get_missing_dc_instructor_requirements(), [])
 
     def test_some_requirements_are_fulfilled(self):
         # Homework was accepted, the second time.
@@ -1012,12 +1018,16 @@ class TestGetMissingDCInstructorRequirements(TestBase):
                                         requirement=self.training,
                                         discarded=True)
 
-        self.assertEqual(self.person.get_missing_dc_instructor_requirements(),
-                         {'Training', 'Discussion', 'DC Demo'})
+        person = Person.objects.annotate_with_instructor_eligibility() \
+                               .get(username='person')
+        self.assertEqual(person.get_missing_dc_instructor_requirements(),
+                         ['Training', 'Discussion', 'DC Demo'])
 
     def test_none_requirement_is_fulfilled(self):
-        self.assertEqual(self.person.get_missing_dc_instructor_requirements(),
-                         {'Training', 'DC Homework', 'Discussion', 'DC Demo'})
+        person = Person.objects.annotate_with_instructor_eligibility() \
+                               .get(username='person')
+        self.assertEqual(person.get_missing_dc_instructor_requirements(),
+                         ['Training', 'DC Homework', 'Discussion', 'DC Demo'])
 
 
 class TestFilterTaughtWorkshops(TestBase):
