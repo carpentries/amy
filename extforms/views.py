@@ -19,9 +19,9 @@ from workshops.models import (
 )
 from workshops.util import (
     login_not_required,
+    LoginNotRequiredMixin,
 )
 from workshops.views import (
-    LoginNotRequiredMixin,
     EmailSendMixin,
     CreateViewContext,
 )
