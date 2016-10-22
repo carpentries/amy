@@ -31,6 +31,9 @@
           </th>
           <th>Location</th>
         {% endif %}
+        {% if request.GET.group_name %}
+          <th>Group</th>
+        {% endif %}
         <th>Created at</th>
         <th>Matched Trainee</th>
         <th>Matched Training</th>
@@ -72,6 +75,9 @@
               {% endif %}
             </td>
             <td>{{ req.location }}</td>
+          {% endif %}
+          {% if request.GET.group_name %}
+            <td>{{ req.group_name }}</td>
           {% endif %}
           <td>{{ req.created_at|date:'Y-m-d H:i' }}</td>
           <td>
