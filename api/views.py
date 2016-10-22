@@ -260,11 +260,13 @@ class ReportsViewSet(ViewSet):
             prev_ = next(it)
         except StopIteration:
             return
+        next_ = None
         for next_ in it:
             if prev_['date'] != next_['date']:
                 yield prev_
             prev_ = next_
-        yield next_
+        if next_ is not None:
+            yield next_
 
     def listify(self, iterable, request, format=None):
         """Some renderers require lists instead of any iterables for rendering.
