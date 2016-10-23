@@ -1,5 +1,6 @@
 {% extends "base_nav_fixed.html" %}
 
+{% load crispy_forms_tags %}
 {% load static %}
 
 {% block content %}
@@ -9,110 +10,55 @@
       <a href="{{ api_endpoint }}">API link</a>.
     </p>
 
-    <form class="form-inline" action="{{ api_endpoint }}" method="GET" id="form">
-      <div class="form-group">
-        <label for="id_start">Start date:</label>
-        <input type="date" class="form-control dateinput" id="id_start" name="start" value="{{ start|date:"Y-m-d" }}">
-      </div>
-      <div class="form-group">
-        <label for="id_end">End date:</label>
-        <input type="date" class="form-control dateinput" id="id_end" name="end" value="{{ end|date:"Y-m-d" }}">
-      </div>
-      <input type="hidden" name="format" value="json" />
-      <input type="submit" class="btn btn-default" value="Submit" />
-    </form>
+    {% crispy form %}
 
-    <h3>Results</h3>
-    <dl>
-      <dt>Number of SWC workshops:</dt>
-      <dd id="workshops_SWC">None</dd>
-      <dt>Number of DC workshops:</dt>
-      <dd id="workshops_DC">None</dd>
-      <dt>Number of SWC or DC workshops:</dt>
-      <dd id="workshops_SWCDC">None</dd>
-      <dt>Number of TTT workshops:</dt>
-      <dd id="workshops_TTT">None</dd>
-      <dt>Number of WiSE workshops:</dt>
-      <dd id="workshops_WiSE">None</dd>
-      <dt>Number of self-organized workshops:</dt>
-      <dd id="workshops_self-organized">None</dd>
+    {% if data %}
+      <h3>Results</h3>
 
-      <dt>Total number of instructors in SWC workshops:</dt>
-      <dd id="instructors_SWC_total">None</dd>
-      <dt>Number of unique instructors in SWC workshops:</dt>
-      <dd id="instructors_SWC_unique">None</dd>
+      <dl>
+        <dt>Number of SWC workshops:</dt>
+        <dd>{{ data.workshops.SWC }}</dd>
+        <dt>Number of DC workshops:</dt>
+        <dd>{{ data.workshops.DC }}</dd>
+        <dt>Number of SWC or DC workshops:</dt>
+        <dd>{{ data.workshops.SWC_or_DC }}</dd>
+        <dt>Number of TTT workshops:</dt>
+        <dd>{{ data.workshops.TTT }}</dd>
+        <dt>Number of WiSE workshops:</dt>
+        <dd>{{ data.workshops.WiSE }}</dd>
+        <dt>Number of self-organized workshops:</dt>
+        <dd>{{ data.workshops.self_organized }}</dd>
 
-      <dt>Total number of instructors in DC workshops:</dt>
-      <dd id="instructors_DC_total">None</dd>
-      <dt>Number of unique instructors in DC workshops:</dt>
-      <dd id="instructors_DC_unique">None</dd>
+        <dt>Total number of instructors in SWC workshops:</dt>
+        <dd>{{ data.instructors.SWC.total }}</dd>
+        <dt>Number of unique instructors in SWC workshops:</dt>
+        <dd>{{ data.instructors.SWC.unique }}</dd>
 
-      <dt>Total number of learners in SWC workshops:</dt>
-      <dd id="learners_SWC">None</dd>
-      <dt>Total number of learners in DC workshops:</dt>
-      <dd id="learners_DC">None</dd>
+        <dt>Total number of instructors in DC workshops:</dt>
+        <dd>{{ data.instructors.DC.total }}</dd>
+        <dt>Number of unique instructors in DC workshops:</dt>
+        <dd>{{ data.instructors.DC.unique }}</dd>
 
-      <dt>Workshops with missing instructors:</dt>
-      <dd id="missing_instructors">None</dd>
-      <dt>Workshops with missing attendance:</dt>
-      <dd id="missing_attendance">None</dd>
-    </dl>
+        <dt>Total number of learners in SWC workshops:</dt>
+        <dd>{{ data.learners.SWC }}</dd>
+        <dt>Total number of learners in DC workshops:</dt>
+        <dd>{{ data.learners.DC }}</dd>
+
+        <dt>Workshops with missing instructors:</dt>
+        <dd>
+          {% for slug in data.missing.instructors %}
+            <a href="{% url 'event_details' slug %}">{{ slug }}</a>,
+          {% endfor %}
+        </dd>
+        <dt>Workshops with missing attendance:</dt>
+        <dd>
+          {% for slug in data.missing.attendance %}
+            <a href="{% url 'event_details' slug %}">{{ slug }}</a>,
+          {% endfor %}
+        </dd>
+      </dl>
+
+    {% endif %}
   </div>
 </div>
-{% endblock %}
-
-{% block extrajs %}
-  <script type="text/javascript">
-    $(document).ready(function() {
-      $('#form').submit(function(e) {
-        var form = $(e.target);
-        $.ajax({
-          type: form.attr('method'),
-          url: form.attr('action'),
-          data: form.serialize(),
-          success: function(data) {
-            // go through level 1 of our structure
-            for (var name in data) {
-
-              // ignore elements 'start' and 'end'
-              if (!(name == "start" || name == "end")) {
-
-                // go through level 2 of our structure
-                for (var subname in data[name]) {
-
-                  var content = '', element = '';
-
-                  if (!(data[name][subname] instanceof Array || typeof data[name][subname] == 'string' || typeof data[name][subname] == 'number')) {
-                    // TL;DR: JavaScript sucks. Instead of checking if we're
-                    // dealing with object here I check if we're dealing with
-                    // something that isn't an Array, a string or a number --
-                    // because for example an Array is an Object in JavaScript!
-
-                    // go through level 3 of our structure
-                    for (var subsubname in data[name][subname]) {
-                      content = data[name][subname][subsubname];
-                      element = '#' + Array(name, subname, subsubname).join('_');
-                      $(element).text(content);
-                    }
-                  } else {
-
-                    // some subelements have arrays as their values
-                    if (data[name][subname] instanceof Array) {
-                      content = data[name][subname].join(', ');
-                    } else {
-                      content = data[name][subname];
-                    }
-
-                    element = '#' + Array(name, subname.replace(',', '')).join('_');
-                    $(element).text(content);
-                  }
-                }
-              }
-            }
-          }
-        });
-        return false;
-      }).submit();
-    });
-  </script>
 {% endblock %}
