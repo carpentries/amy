@@ -19,6 +19,7 @@ from workshops.models import (
     EventSubmission,
     DCSelfOrganizedEventRequest,
     TrainingRequest,
+    Membership,
 )
 
 EMPTY_SELECTION = (None, '---------')
@@ -171,6 +172,11 @@ class EventRequestFilter(AMYFilterSet):
 
 class OrganizationFilter(AMYFilterSet):
     country = AllCountriesFilter()
+
+    membership__variant = django_filters.MultipleChoiceFilter(
+        label='Memberships (current or past)',
+        choices=Membership.MEMBERSHIP_CHOICES,
+    )
 
     class Meta:
         model = Organization
