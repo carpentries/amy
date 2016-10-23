@@ -59,7 +59,7 @@ class TestInvoiceRequest(TestBase):
         )
 
         tests = [
-            ('not-invoiced', 'Not invoiced'),
+            ('not-invoiced', 'Invoice not requested'),
             ('sent', 'Sent out on 2016-02-09'),
             ('paid', 'Paid on 2016-02-09'),
         ]
