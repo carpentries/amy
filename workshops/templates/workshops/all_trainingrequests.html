@@ -60,7 +60,7 @@
             />
           </td>
           <td>
-            {{ req.personal }} {{ req.family }}<br />
+            {{ req.personal }} {{ req.middle }} {{ req.family }}<br />
             &lt;{{ req.email|urlize }}&gt;
           </td>
           {% if request.GET.affiliation or request.GET.location %}

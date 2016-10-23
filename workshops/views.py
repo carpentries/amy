@@ -2572,6 +2572,7 @@ def profileupdaterequest_accept(request, request_id, person_id=None):
             raise PermissionDenied
 
     person.personal = profileupdate.personal
+    person.middle = profileupdate.middle
     person.family = profileupdate.family
     person.email = profileupdate.email
     person.affiliation = profileupdate.affiliation
@@ -3085,6 +3086,7 @@ def _match_training_request_to_person(form, training_request, request):
 
     else:
         if form.action == 'create':
+            training_request.person.middle = training_request.middle
             training_request.person.gender = training_request.gender
             training_request.person.github = training_request.github
             training_request.person.affiliation = training_request.affiliation
@@ -3130,6 +3132,7 @@ def trainingrequest_details(request, pk):
             # person from existing records.
             person = Person.objects.filter(Q(email__iexact=req.email) |
                                            Q(personal__iexact=req.personal,
+                                             middle__iexact=req.middle,
                                              family__iexact=req.family)) \
                                    .first()  # may return None
         form = MatchTrainingRequestForm(initial={'person': person})

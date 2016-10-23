@@ -380,9 +380,11 @@ def filter_by_person(queryset, name):
         for token in tokens:
             queryset = queryset.filter(
                 Q(personal__icontains=token) |
+                Q(middle__icontains=token) |
                 Q(family__icontains=token) |
                 Q(email__icontains=token) |
                 Q(person__personal__icontains=token) |
+                Q(person__middle__icontains=token) |
                 Q(person__family__icontains=token) |
                 Q(person__email__icontains=token)
             )

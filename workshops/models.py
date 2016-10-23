@@ -549,6 +549,11 @@ class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         verbose_name='Personal (first) name',
         blank=False,
     )
+    middle = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Middle name',
+        blank=True,
+    )
     family = models.CharField(
         max_length=STR_LONG,
         verbose_name='Family (last) name',
@@ -1914,6 +1919,11 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         max_length=STR_LONG,
         verbose_name='Personal (given) name',
         blank=False,
+    )
+    middle = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Middle name',
+        blank=True,
     )
     family = models.CharField(
         max_length=STR_LONG,
