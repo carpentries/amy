@@ -332,7 +332,11 @@ class Person(AbstractBaseUser, PermissionsMixin):
         max_length=STR_MED, unique=True,
         validators=[RegexValidator(r'^[\w\-_]+$', flags=re.A)],
     )
-    notes = models.TextField(default="", blank=True)
+    user_notes = models.TextField(
+        default='', blank=True,
+        verbose_name='Notes provided by the user in update profile form.')
+    notes = models.TextField(default="", blank=True,
+                             verbose_name='Admin notes')
     affiliation = models.CharField(
         max_length=STR_LONG, default='', blank=True,
         help_text='What university, company, lab, or other organization are '

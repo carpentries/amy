@@ -2587,6 +2587,7 @@ def profileupdaterequest_accept(request, request_id, person_id=None):
         person.occupation = profileupdate.get_occupation_display()
     person.orcid = profileupdate.orcid
     person.gender = profileupdate.gender
+    person.user_notes = profileupdate.notes
 
     # we need person to exist in the database in order to set domains and
     # lessons
