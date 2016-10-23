@@ -1277,7 +1277,8 @@ class BulkAddTrainingProgressForm(forms.ModelForm):
 
     helper = BootstrapHelper(additional_form_class='training-progress',
                              submit_label='Add',
-                             form_tag=False)
+                             form_tag=False,
+                             add_cancel_button=False)
     helper.layout = Layout(
         # no 'trainees' -- you should take care of generating it manually in
         # the template where this form is used
@@ -1313,7 +1314,8 @@ class BulkDiscardProgressesForm(forms.Form):
 
     helper = BootstrapHelper(add_submit_button=False,
                              form_tag=False,
-                             display_labels=False)
+                             display_labels=False,
+                             add_cancel_button=False)
 
     SUBMIT_POPOVER = '''<p>Discarded progress will be displayed in the following
     way: <span class='label label-default'><strike> Discarded
@@ -1354,7 +1356,8 @@ class BulkChangeTrainingRequestForm(forms.Form):
 
     helper = BootstrapHelper(add_submit_button=False,
                              form_tag=False,
-                             display_labels=False)
+                             display_labels=False,
+                             add_cancel_button=False)
     helper.layout = Layout(
         # no 'requests' -- you should take care of generating it manually in
         # the template where this form is used
@@ -1406,7 +1409,8 @@ class BulkMatchTrainingRequestForm(forms.Form):
     )
 
     helper = BootstrapHelper(add_submit_button=False,
-                             form_tag=False)
+                             form_tag=False,
+                             add_cancel_button=False)
     helper.layout = Layout(
         'event',
     )
