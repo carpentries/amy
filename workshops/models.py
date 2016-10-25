@@ -890,13 +890,14 @@ class Event(AssignmentMixin, models.Model):
     admin_fee  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)])
     INVOICED_CHOICES = (
         ('unknown', 'Unknown'),
-        ('invoiced', 'Invoiced'),
-        ('not-invoiced', 'Not invoiced'),
+        ('invoiced', 'Invoice requested'),
+        ('not-invoiced', 'Invoice not requested'),
         ('na-historic', 'Not applicable for historical reasons'),
         ('na-member', 'Not applicable because of membership'),
         ('na-self-org', 'Not applicable because self-organized'),
         ('na-waiver', 'Not applicable because waiver granted'),
         ('na-other', 'Not applicable because other arrangements made'),
+        ('paid', 'Paid'),
     )
     invoice_status = models.CharField(
         max_length=STR_MED,
@@ -1719,7 +1720,7 @@ class TodoItem(models.Model):
 @reversion.register
 class InvoiceRequest(models.Model):
     STATUS_CHOICES = (
-        ('not-invoiced', 'Not invoiced'),
+        ('not-invoiced', 'Invoice not requested'),
         ('sent', 'Sent out'),
         ('paid', 'Paid'),
     )
