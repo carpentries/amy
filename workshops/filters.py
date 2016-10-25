@@ -411,6 +411,11 @@ class TrainingRequestFilter(AMYFilterSet):
         action=filter_by_person,
     )
 
+    group_name = django_filters.CharFilter(
+        name='group_name',
+        lookup_type='icontains',
+        label='Group')
+
     state = django_filters.ChoiceFilter(
         label='State',
         choices=[('', 'Pending or accepted')] + TrainingRequest.STATES,
@@ -438,6 +443,7 @@ class TrainingRequestFilter(AMYFilterSet):
         model = TrainingRequest
         fields = [
             'search',
+            'group_name',
             'state',
             'matched',
             'affiliation',
