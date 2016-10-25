@@ -18,8 +18,10 @@ from django.core.exceptions import (
 from django.core.mail import EmailMultiAlternatives
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.db import IntegrityError
-from django.db.models import Case, When, Value, IntegerField
-from django.db.models import Count, Q, F, Model, ProtectedError, Sum
+from django.db.models import (
+    Case, When, Value, IntegerField, Count, Q, F, Model, ProtectedError, Sum,
+    Prefetch,
+)
 from django.http import Http404, HttpResponse, JsonResponse
 from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import redirect, render, get_object_or_404
@@ -403,9 +405,17 @@ def changes_log(request):
 @admin_required
 def all_organizations(request):
     '''List all organization.'''
+    now = datetime.datetime.now()
     filter = OrganizationFilter(
         request.GET,
-        queryset=Organization.objects.all()
+        queryset=Organization.objects.prefetch_related(Prefetch(
+            'membership_set',
+            to_attr='current_memberships',
+            queryset=Membership.objects.filter(
+                agreement_start__lte=now,
+                agreement_end__gte=now,
+            )
+        ))
     )
     organizations = get_pagination_items(request, filter)
     context = {'title' : 'All Organizations',
