@@ -696,6 +696,13 @@ class OrganizationForm(forms.ModelForm):
 
 
 class MembershipForm(forms.ModelForm):
+    organization = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.OrganizationLookup,
+        label='Organization',
+        required=True,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
     helper = bootstrap_helper
 
     class Meta:
