@@ -171,6 +171,15 @@ class CreateViewContext(SuccessMessageMixin, CreateView):
 
         return context
 
+    def get_form(self, **kwargs):
+        form = super(CreateViewContext, self).get_form(**kwargs)
+        for field in self.request.GET:
+            try:
+                form.fields[field].disabled = True
+            except KeyError:
+                pass
+        return form
+
     def get_initial(self):
         return self.request.GET.dict()
 
