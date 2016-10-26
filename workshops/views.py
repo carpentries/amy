@@ -171,6 +171,9 @@ class CreateViewContext(SuccessMessageMixin, CreateView):
 
         return context
 
+    def get_initial(self):
+        return self.request.GET.dict()
+
     def get_success_message(self, cleaned_data):
         "Format self.success_message, used by messages framework from Django."
         return self.success_message.format(cleaned_data, name=str(self.object))

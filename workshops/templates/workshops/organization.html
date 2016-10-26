@@ -128,7 +128,7 @@
 <p>No memberships for this organization.</p>
 {% endif %}
 {% if perms.workshops.add_membership and perms.workshops.change_organization %}
-<a href="{% url 'membership_add' organization.domain %}" class="btn btn-default">Add a membership</a>
+<a href="{% url 'membership_add' %}?organization={{ organization.pk }}" class="btn btn-default">Add a membership</a>
 {% else %}
 <a href="#" class="btn btn-default disabled">Add a membership</a>
 {% endif %}
