@@ -515,7 +515,10 @@ def membership_create(request, org_domain):
 
 class MembershipCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
                  CreateViewContext):
-    permission_required = 'workshops.add_membership'
+    permission_required = [
+        'workshops.add_membership',
+        'workshops.change_organization',
+    ]
     model = Membership
     form_class = MembershipForm
     org_domain = None
