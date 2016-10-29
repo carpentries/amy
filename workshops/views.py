@@ -26,7 +26,7 @@ from django.http import Http404, HttpResponse, JsonResponse
 from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import redirect, render, get_object_or_404
 from django.utils.http import is_safe_url
-from django.views.generic import ListView, DetailView, TemplateView, DeleteView
+from django.views.generic import ListView, DetailView, DeleteView
 from django.views.generic.edit import (
     CreateView,
     UpdateView,
@@ -84,7 +84,9 @@ from workshops.forms import (
     BulkDiscardProgressesForm,
     bootstrap_helper,
     bootstrap_helper_inline_formsets,
-    BulkChangeTrainingRequestForm, BulkMatchTrainingRequestForm)
+    BulkChangeTrainingRequestForm,
+    BulkMatchTrainingRequestForm,
+)
 from workshops.management.commands.check_for_workshop_websites_updates import (
     Command as WebsiteUpdatesCommand,
 )
@@ -133,8 +135,6 @@ from workshops.util import (
     admin_required,
     OnlyForAdminsMixin,
     login_required,
-    login_not_required,
-    LoginNotRequiredMixin,
     redirect_with_next_support,
     dict_without_Nones,
 )
