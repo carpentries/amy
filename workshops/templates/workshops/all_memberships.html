@@ -19,7 +19,7 @@
         </tr>
     {% for membership in all_memberships %}
         <tr>
-            <td><a href="{{ membership.get_absolute_url }}">{{ membership.organization.fullname }}</a></td>
+            <td><a href="{% url 'membership_details' membership.id %}"></a>{{ membership.organization.fullname }}</a></td>
             <td>{{ membership.variant }}</td>
             <td>{{ membership.agreement_start }}</td>
             <td>{{ membership.agreement_end }}</td>
