@@ -1,24 +1,38 @@
-{% extends "base_nav_fluid_twocolumn.html" %}
+{% extends "base_nav_fixed.html" %}
 
-{% load crispy_forms_tags %}
+{% block content %}
+<p>Please contact <a href="mailto:admin@software-carpentry.org">admin@software-carpentry.org</a> if you need to submit an invoice. Include the following information in your email:</p>
 
-{% block content-left %}
-{% include "workshops/event_details_table.html" with event=event %}
-<h4>Tasks</h4>
-{% if event.task_set.all %}
-<table class="table table-striped">
-  {% for task in event.task_set.all %}
-  <tr>
-    <td><a href="{{ task.person.get_absolute_url }}" target="_blank">{{ task.person }}</a></td>
-    <td>{{ task.role }}</td>
-  </tr>
-  {% endfor %}
-</table>
-{% else %}
-<p>No tasks.</p>
-{% endif %}
+<ul>
+  <li>Link to workshop page in AMY</li>
+  <li>Purpose of invoice</li>
+  <li>Amount of invoice in US Dollars</li>
+  <li>Name, email, phone, and mailing address of person who should receive in invoice</li>
+</ul>
 {% endblock %}
 
-{% block content-right %}
-{% crispy form %}
-{% endblock %}
+{# Disabled as per @maneesha's request #}
+{# {% extends "base_nav_fluid_twocolumn.html" %} #}
+{#  #}
+{# {% load crispy_forms_tags %} #}
+{#  #}
+{# {% block content-left %} #}
+{# {% include "workshops/event_details_table.html" with event=event %} #}
+{# <h4>Tasks</h4> #}
+{# {% if event.task_set.all %} #}
+{# <table class="table table-striped"> #}
+{#   {% for task in event.task_set.all %} #}
+{#   <tr> #}
+{#     <td><a href="{{ task.person.get_absolute_url }}" target="_blank">{{ task.person }}</a></td> #}
+{#     <td>{{ task.role }}</td> #}
+{#   </tr> #}
+{#   {% endfor %} #}
+{# </table> #}
+{# {% else %} #}
+{# <p>No tasks.</p> #}
+{# {% endif %} #}
+{# {% endblock %} #}
+{#  #}
+{# {% block content-right %} #}
+{# {% crispy form %} #}
+{# {% endblock %} #}
