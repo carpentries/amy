@@ -82,6 +82,10 @@ class Membership(models.Model):
         ('partner', 'Partner'),
         ('affiliate', 'Affiliate'),
         ('sponsor', 'Sponsor'),
+        ('bronze', 'Bronze'),
+        ('silver', 'Silver'),
+        ('gold', 'Gold'),
+        ('platinum', 'Platinum'),
     )
     variant = models.CharField(
         max_length=STR_MED, null=False, blank=False,
@@ -116,6 +120,9 @@ class Membership(models.Model):
 
     def __str__(self):
         return "{} Membership of <{}>".format(self.variant, str(self.organization))
+
+    def get_absolute_url(self):
+        return reverse('membership_details', args=[self.id])
 
     @property
     def workshops_without_admin_fee_per_year_completed(self):

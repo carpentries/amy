@@ -39,7 +39,7 @@ from reversion.revisions import get_for_object
 
 from api.views import ReportsViewSet
 from workshops.filters import (
-    EventFilter, OrganizationFilter, PersonFilter, TaskFilter, AirportFilter,
+    EventFilter, OrganizationFilter, MembershipFilter, PersonFilter, TaskFilter, AirportFilter,
     EventRequestFilter, BadgeAwardsFilter, InvoiceRequestFilter,
     EventSubmissionFilter, DCSelfOrganizedEventRequestFilter,
     TraineeFilter, TrainingRequestFilter,
@@ -170,6 +170,18 @@ class CreateViewContext(SuccessMessageMixin, CreateView):
             form.helper = BootstrapHelper(submit_label='Add')
 
         return context
+
+    def get_form(self, **kwargs):
+        form = super(CreateViewContext, self).get_form(**kwargs)
+        for field in self.request.GET:
+            try:
+                form.fields[field].disabled = True
+            except KeyError:
+                pass
+        return form
+
+    def get_initial(self):
+        return self.request.GET.dict()
 
     def get_success_message(self, cleaned_data):
         "Format self.success_message, used by messages framework from Django."
@@ -399,6 +411,7 @@ def changes_log(request):
     }
     return render(request, 'workshops/changes_log.html', context)
 
+
 #------------------------------------------------------------
 
 
@@ -460,30 +473,40 @@ class OrganizationDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
     success_url = reverse_lazy('all_organizations')
 
 
+#------------------------------------------------------------
+
+
 @admin_required
-@permission_required(['workshops.add_membership',
-                      'workshops.change_organization'], raise_exception=True)
-def membership_create(request, org_domain):
-    organization = get_object_or_404(Organization, domain=org_domain)
-    form = MembershipForm(initial={'organization': organization})
+def all_memberships(request):
+    '''List all memberships.'''
+    filter = MembershipFilter(
+        request.GET,
+        queryset=Membership.objects.all()
+    )
+    memberships = get_pagination_items(request, filter)
+    context = {'title' : 'All Memberships',
+               'all_memberships' : memberships,
+               'filter': filter}
+    return render(request, 'workshops/all_memberships.html', context)
 
-    if request.method == "POST":
-        form = MembershipForm(request.POST)
-        if form.is_valid():
-            form.save()
 
-            messages.success(request,
-                'Membership was successfully added to the organization')
+@admin_required
+def membership_details(request, membership_id):
+    '''List details of a particular membership.'''
+    membership = get_object_or_404(Membership, id=membership_id)
+    context = {'title' : '{0}'.format(membership),
+               'membership' : membership}
+    return render(request, 'workshops/membership.html', context)
 
-            return redirect(
-                reverse('organization_details', args=[organization.domain])
-            )
 
-    context = {
-        'title': 'New membership for organization {}'.format(organization),
-        'form': form,
-    }
-    return render(request, 'workshops/generic_form.html', context)
+class MembershipCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
+                       CreateViewContext):
+    permission_required = [
+        'workshops.add_membership',
+        'workshops.change_organization',
+    ]
+    model = Membership
+    form_class = MembershipForm
 
 
 class MembershipUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
