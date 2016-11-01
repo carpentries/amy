@@ -39,7 +39,7 @@ from reversion.revisions import get_for_object
 
 from api.views import ReportsViewSet
 from workshops.filters import (
-    EventFilter, OrganizationFilter, PersonFilter, TaskFilter, AirportFilter,
+    EventFilter, OrganizationFilter, MembershipFilter, PersonFilter, TaskFilter, AirportFilter,
     EventRequestFilter, BadgeAwardsFilter, InvoiceRequestFilter,
     EventSubmissionFilter, DCSelfOrganizedEventRequestFilter,
     TraineeFilter, TrainingRequestFilter,
@@ -399,6 +399,7 @@ def changes_log(request):
     }
     return render(request, 'workshops/changes_log.html', context)
 
+
 #------------------------------------------------------------
 
 
@@ -460,44 +461,59 @@ class OrganizationDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
     success_url = reverse_lazy('all_organizations')
 
 
-@admin_required
-@permission_required(['workshops.add_membership',
-                      'workshops.change_organization'], raise_exception=True)
-def membership_create(request, org_domain):
-    organization = get_object_or_404(Organization, domain=org_domain)
-    form = MembershipForm(initial={'organization': organization})
+#------------------------------------------------------------
 
-    if request.method == "POST":
-        form = MembershipForm(request.POST)
-        if form.is_valid():
-            form.save()
 
-            messages.success(request,
-                'Membership was successfully added to the organization')
+class AllMemberships(OnlyForAdminsMixin, FilteredListView):
+    context_object_name = 'all_memberships'
+    template_name = 'workshops/all_memberships.html'
+    filter_class = MembershipFilter
+    queryset = Membership.objects.all()
 
-            return redirect(
-                reverse('organization_details', args=[organization.domain])
-            )
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'All Memberships'
+        return context
 
-    context = {
-        'title': 'New membership for organization {}'.format(organization),
-        'form': form,
-    }
-    return render(request, 'workshops/generic_form.html', context)
+
+class MembershipDetails(OnlyForAdminsMixin, DetailView):
+    queryset = Membership.objects.all()
+    context_object_name = 'membership'
+    template_name = 'workshops/membership.html'
+    pk_url_kwarg = 'membership_id'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = '{0}'.format(self.object)
+        return context
+
+
+class MembershipCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
+                       CreateViewContext):
+    permission_required = [
+        'workshops.add_membership',
+        'workshops.change_organization',
+    ]
+    model = Membership
+    form_class = MembershipForm
+
+    def get_initial(self):
+        initials = super().get_initial()
+        org_domain = self.kwargs.get('org_domain', None)
+
+        if org_domain is not None:
+            organization = get_object_or_404(Organization, domain=org_domain)
+            initials.update({'organization': organization})
+
+        return initials
 
 
 class MembershipUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                       UpdateViewContext):
+                       RedirectSupportMixin, UpdateViewContext):
     permission_required = 'workshops.change_membership'
     model = Membership
     form_class = MembershipForm
     pk_url_kwarg = 'membership_id'
-
-    def get_success_url(self):
-        return reverse(
-            'organization_details',
-            args=[self.object.organization.domain],
-        )
 
 
 class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
@@ -507,7 +523,8 @@ class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
     pk_url_kwarg = 'membership_id'
 
     def get_success_url(self):
-        return reverse('organization_details', args=[self.get_object().organization.domain])
+        return reverse('organization_details', args=[
+            self.get_object().organization.domain])
 
 #------------------------------------------------------------
 
