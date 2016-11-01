@@ -340,7 +340,11 @@ class Person(AbstractBaseUser, PermissionsMixin):
         max_length=STR_MED, unique=True,
         validators=[RegexValidator(r'^[\w\-_]+$', flags=re.A)],
     )
-    notes = models.TextField(default="", blank=True)
+    user_notes = models.TextField(
+        default='', blank=True,
+        verbose_name='Notes provided by the user in update profile form.')
+    notes = models.TextField(default="", blank=True,
+                             verbose_name='Admin notes')
     affiliation = models.CharField(
         max_length=STR_LONG, default='', blank=True,
         help_text='What university, company, lab, or other organization are '
@@ -552,6 +556,11 @@ class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         max_length=STR_LONG,
         verbose_name='Personal (first) name',
         blank=False,
+    )
+    middle = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Middle name',
+        blank=True,
     )
     family = models.CharField(
         max_length=STR_LONG,
@@ -1919,6 +1928,11 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         max_length=STR_LONG,
         verbose_name='Personal (given) name',
         blank=False,
+    )
+    middle = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Middle name',
+        blank=True,
     )
     family = models.CharField(
         max_length=STR_LONG,

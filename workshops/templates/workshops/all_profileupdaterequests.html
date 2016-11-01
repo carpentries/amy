@@ -17,7 +17,7 @@
     <tbody>
     {% for req in requests %}
       <tr>
-        <td>{{ req.personal }} {{ req.family }}</td>
+        <td>{{ req.personal }} {{ req.middle }} {{ req.family }}</td>
         <td>{{ req.email|urlize }}</td>
         <td><a href="{{ req.get_absolute_url }}"><span class="glyphicon glyphicon-info-sign"></span></a></td>
       </tr>

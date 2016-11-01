@@ -40,6 +40,9 @@
     <tr><th>Personal:</th>
         <td>{{ new.personal }}</td>
         <td>{% if old %}{{ old.personal|default:"—" }}{% endif %}</td></tr>
+    <tr><th>Middle:</th>
+        <td>{{ new.middle }}</td>
+        <td>{% if old %}{{ old.middle|default:"—" }}{% endif %}</td></tr>
     <tr><th>Family:</th>
         <td>{{ new.family }}</td>
         <td>{% if old %}{{ old.family|default:"—" }}{% endif %}</td></tr>

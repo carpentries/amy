@@ -58,6 +58,7 @@
   <tr><td>Instructor Training progress</td><td>
     {% include "workshops/training_progresses_inline.html" with person=person %}
   </td></tr>
+  <tr><td>Notes from the user:</td><td><pre>{{ person.user_notes|default:"—" }}</pre></td></tr>
 </table>
 
 {% if person.notes %}
