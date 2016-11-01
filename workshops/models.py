@@ -103,7 +103,7 @@ class Membership(models.Model):
         ('other', 'Other'),
     )
     contribution_type = models.CharField(
-        max_length=STR_MED, blank=True,
+        max_length=STR_MED, null=False, blank=False,
         choices=CONTRIBUTION_CHOICES,
     )
     workshops_without_admin_fee_per_year = models.PositiveIntegerField(
