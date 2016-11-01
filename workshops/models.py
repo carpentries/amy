@@ -65,7 +65,7 @@ class Organization(models.Model):
     notes      = models.TextField(default="", blank=True)
 
     def __str__(self):
-        return self.domain
+        return "{} <{}>".format(self.fullname, self.domain)
 
     def get_absolute_url(self):
         return reverse('organization_details', args=[str(self.domain)])
@@ -119,7 +119,8 @@ class Membership(models.Model):
                              on_delete=models.PROTECT)
 
     def __str__(self):
-        return "{} Membership of <{}>".format(self.variant, str(self.organization))
+        return "{} membership: {}".format(self.variant.title(),
+                                          self.organization)
 
     def get_absolute_url(self):
         return reverse('membership_details', args=[self.id])

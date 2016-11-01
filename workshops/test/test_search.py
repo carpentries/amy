@@ -33,7 +33,7 @@ class TestSearchOrganization(TestBase):
         assert response.status_code == 200
         content = response.content.decode('utf-8')
         # no way for us to check the url…
-        assert str(self.org_alpha) in content
+        assert str(self.org_alpha.domain) in content
 
     def test_search_for_organization_by_full_domain(self):
         response = self.client.post(reverse('search'),
@@ -43,7 +43,7 @@ class TestSearchOrganization(TestBase):
         assert response.status_code == 200
         content = response.content.decode('utf-8')
         # no way for us to check the url…
-        assert str(self.org_beta) in content
+        assert str(self.org_beta.domain) in content
 
     def test_search_for_organization_with_multiple_matches(self):
         response = self.client.post(reverse('search'),
@@ -74,7 +74,7 @@ class TestSearchOrganization(TestBase):
                             'Expected two search results',
                             expected=2)
         texts = set([n.text for n in nodes])
-        assert texts == {str(self.org_alpha), str(self.hermione)}, \
+        assert texts == {str(self.org_alpha.domain), str(self.hermione)}, \
             'Wrong names {0} in search result'.format(texts)
 
     def test_search_for_training_requests(self):

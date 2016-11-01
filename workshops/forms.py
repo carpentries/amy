@@ -698,6 +698,13 @@ class OrganizationForm(forms.ModelForm):
 class MembershipForm(forms.ModelForm):
     helper = bootstrap_helper
 
+    organization = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.OrganizationLookup,
+        label='Organization',
+        required=True,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
     class Meta:
         model = Membership
         fields = '__all__'
@@ -705,7 +712,6 @@ class MembershipForm(forms.ModelForm):
 
 
 class SponsorshipForm(forms.ModelForm):
-
     organization = selectable.AutoCompleteSelectField(
         lookup_class=lookups.OrganizationLookup,
         label='Organization',

@@ -204,9 +204,25 @@ def filter_taught_workshops(queryset, values):
 
 
 class MembershipFilter(AMYFilterSet):
+    organization_name = django_filters.CharFilter(
+        label='Organization name',
+        name='organization__fullname',
+        lookup_type='icontains',
+    )
+
+    MEMBERSHIP_CHOICES = (('', 'Any'),) + Membership.MEMBERSHIP_CHOICES
+    variant = django_filters.ChoiceFilter(choices=MEMBERSHIP_CHOICES)
+
+    CONTRIBUTION_CHOICES = (('', 'Any'),) + Membership.CONTRIBUTION_CHOICES
+    contribution_type = django_filters.ChoiceFilter(choices=CONTRIBUTION_CHOICES)
 
     class Meta:
         model = Membership
+        fields = [
+            'organization_name',
+            'variant',
+            'contribution_type',
+        ]
 
 
 class PersonFilter(AMYFilterSet):

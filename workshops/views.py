@@ -464,96 +464,56 @@ class OrganizationDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
 #------------------------------------------------------------
 
 
-@admin_required
-def all_memberships(request):
-    '''List all memberships.'''
-    filter = MembershipFilter(
-        request.GET,
-        queryset=Membership.objects.all()
-    )
-    memberships = get_pagination_items(request, filter)
-    context = {'title' : 'All Memberships',
-               'all_memberships' : memberships,
-               'filter': filter}
-    return render(request, 'workshops/all_memberships.html', context)
+class AllMemberships(OnlyForAdminsMixin, FilteredListView):
+    context_object_name = 'all_memberships'
+    template_name = 'workshops/all_memberships.html'
+    filter_class = MembershipFilter
+    queryset = Membership.objects.all()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'All Memberships'
+        return context
 
 
-@admin_required
-def membership_details(request, membership_id):
-    '''List details of a particular membership.'''
-    membership = get_object_or_404(Membership, id=membership_id)
-    context = {'title' : '{0}'.format(membership),
-               'membership' : membership}
-    return render(request, 'workshops/membership.html', context)
+class MembershipDetails(OnlyForAdminsMixin, DetailView):
+    queryset = Membership.objects.all()
+    context_object_name = 'membership'
+    template_name = 'workshops/membership.html'
+    pk_url_kwarg = 'membership_id'
 
-
-@admin_required
-@permission_required(['workshops.add_membership',
-                      'workshops.change_organization'], raise_exception=True)
-def membership_create(request, org_domain):
-    organization = get_object_or_404(Organization, domain=org_domain)
-    form = MembershipForm(initial={'organization': organization})
-
-    if request.method == "POST":
-        form = MembershipForm(request.POST)
-        if form.is_valid():
-            form.save()
-
-            messages.success(request,
-                'Membership was successfully added to the organization')
-
-            return redirect(
-                reverse('organization_details', args=[organization.domain])
-            )
-
-    context = {
-        'title': 'New membership for organization {}'.format(organization),
-        'form': form,
-    }
-    return render(request, 'workshops/generic_form.html', context)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = '{0}'.format(self.object)
+        return context
 
 
 class MembershipCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                 CreateViewContext):
+                       CreateViewContext):
     permission_required = [
         'workshops.add_membership',
         'workshops.change_organization',
     ]
     model = Membership
     form_class = MembershipForm
-    org_domain = None
-
-    def get(self, request, org_domain=None, *args, **kwargs):
-        self.org_domain = org_domain
-        return super().get(request, org_domain, *args, **kwargs)
-
-    def post(self, request, org_domain=None, *args, **kwargs):
-        self.org_domain = org_domain
-        return super().post(request, org_domain, *args, **kwargs)
 
     def get_initial(self):
         initials = super().get_initial()
+        org_domain = self.kwargs.get('org_domain', None)
 
-        if self.org_domain:
-            organization = get_object_or_404(Organization,
-                                             domain=self.org_domain)
+        if org_domain is not None:
+            organization = get_object_or_404(Organization, domain=org_domain)
             initials.update({'organization': organization})
 
         return initials
 
 
 class MembershipUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                       UpdateViewContext):
+                       RedirectSupportMixin, UpdateViewContext):
     permission_required = 'workshops.change_membership'
     model = Membership
     form_class = MembershipForm
     pk_url_kwarg = 'membership_id'
-
-    def get_success_url(self):
-        return reverse(
-            'organization_details',
-            args=[self.object.organization.domain],
-        )
 
 
 class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
@@ -563,7 +523,8 @@ class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
     pk_url_kwarg = 'membership_id'
 
     def get_success_url(self):
-        return reverse('organization_details', args=[self.get_object().organization.domain])
+        return reverse('organization_details', args=[
+            self.get_object().organization.domain])
 
 #------------------------------------------------------------
 

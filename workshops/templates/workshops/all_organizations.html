@@ -32,11 +32,11 @@
             </td>
             <td>{{ organization.notes|truncatechars:40 }}</td>
             <td>
-                <a href="{% url 'organization_details' organization.domain %}" title="View {{ organization.fullname }}"><span class="glyphicon glyphicon-info-sign"></span></a>
+              <a href="{% url 'organization_details' organization.domain %}" title="View {{ organization.fullname }}"><span class="glyphicon glyphicon-info-sign"></span></a>
                 &nbsp;
-                {% if perms.workshops.change_organization %}
+              {% if perms.workshops.change_organization %}
                 <a href="{% url 'organization_edit' organization.domain %}" title="Edit {{ organization.fullname }}"><span class="glyphicon glyphicon-pencil"></span></a>
-                {% endif %}
+              {% endif %}
             </td>
         </tr>
     {% endfor %}
