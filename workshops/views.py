@@ -19,7 +19,16 @@ from django.core.mail import EmailMultiAlternatives
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.db import IntegrityError
 from django.db.models import (
-    Case, When, Value, IntegerField, Count, Q, F, Model, ProtectedError, Sum,
+    Case,
+    When,
+    Value,
+    IntegerField,
+    Count,
+    Q,
+    F,
+    Model,
+    ProtectedError,
+    Sum,
     Prefetch,
 )
 from django.http import Http404, HttpResponse, JsonResponse

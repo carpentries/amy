@@ -3,7 +3,9 @@ import re
 from urllib.parse import urlencode
 
 from django.contrib.auth.models import (
-    AbstractBaseUser, BaseUserManager, PermissionsMixin,
+    AbstractBaseUser,
+    BaseUserManager,
+    PermissionsMixin,
 )
 from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
