@@ -239,11 +239,7 @@ class AllOrganizations(OnlyForAdminsMixin, AMYListView):
             agreement_end__gte=Now(),
         )
     ))
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'All Organizations'
-        return context
+    title = 'All Organizations'
 
 
 @admin_required
@@ -290,11 +286,7 @@ class AllMemberships(OnlyForAdminsMixin, AMYListView):
     template_name = 'workshops/all_memberships.html'
     filter_class = MembershipFilter
     queryset = Membership.objects.all()
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'All Memberships'
-        return context
+    title = 'All Memberships'
 
 
 class MembershipDetails(OnlyForAdminsMixin, DetailView):
@@ -357,11 +349,7 @@ class AllAirports(OnlyForAdminsMixin, AMYListView):
     queryset = Airport.objects.all()
     filter_class = AirportFilter
     template_name = 'workshops/all_airports.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'All Airports'
-        return context
+    title = 'All Airports'
 
 
 @admin_required
@@ -414,11 +402,7 @@ class AllPersons(OnlyForAdminsMixin, AMYListView):
                                   default=0,
                                   output_field=IntegerField())),
     )
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'All Persons'
-        return context
+    title = 'All Persons'
 
 
 @admin_required
@@ -987,11 +971,7 @@ class AllEvents(OnlyForAdminsMixin, AMYListView):
     # notes are too large, so we defer them
     queryset = Event.objects.defer('notes').prefetch_related('host', 'tags')
     filter_class = EventFilter
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'All Events'
-        return context
+    title = 'All Events'
 
 
 @admin_required
@@ -1527,16 +1507,12 @@ class AllInvoiceRequests(OnlyForAdminsMixin, AMYListView):
     template_name = 'workshops/all_invoicerequests.html'
     filter_class = InvoiceRequestFilter
     queryset = InvoiceRequest.objects.all()
+    title = 'Invoice requests'
 
     def get_filter_data(self):
         data = self.request.GET.copy()
         data['status'] = data.get('status', '')
         return data
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'Invoice requests'
-        return context
 
 
 class InvoiceRequestDetails(OnlyForAdminsMixin, DetailView):
@@ -1568,11 +1544,7 @@ class AllTasks(OnlyForAdminsMixin, AMYListView):
     filter_class = TaskFilter
     queryset = Task.objects.select_related('event', 'person', 'role') \
                            .defer('person__notes', 'event__notes')
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'All Tasks'
-        return context
+    title = 'All Tasks'
 
 
 @admin_required
@@ -1628,11 +1600,7 @@ class AllBadges(OnlyForAdminsMixin, AMYListView):
                             .annotate(num_awarded=Count('award'))
     template_name = 'workshops/all_badges.html'
     filter_class = None
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'All Badges'
-        return context
+    title = 'All Badges'
 
 
 @admin_required
@@ -1699,11 +1667,7 @@ class AllTrainings(OnlyForAdminsMixin, AMYListView):
                             output_field=IntegerField()),
                        distinct=True),
     ).exclude(trainees=0).order_by('-start')
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'All Instructor Trainings'
-        return context
+    title = 'All Instructor Trainings'
 
 
 #------------------------------------------------------------
@@ -2193,6 +2157,7 @@ class AllEventRequests(OnlyForAdminsMixin, AMYListView):
     template_name = 'workshops/all_eventrequests.html'
     filter_class = EventRequestFilter
     queryset = EventRequest.objects.all()
+    title = 'Workshop requests'
 
     def get_filter_data(self):
         # Set initial value for the "active" radio select.  That's a hack,
@@ -2201,11 +2166,6 @@ class AllEventRequests(OnlyForAdminsMixin, AMYListView):
         data['active'] = data.get('active', 'true')
         data['workshop_type'] = data.get('workshop_type', '')
         return data
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'Workshop requests'
-        return context
 
 
 class EventRequestDetails(OnlyForAdminsMixin, DetailView):
@@ -2478,16 +2438,12 @@ class AllEventSubmissions(OnlyForAdminsMixin, AMYListView):
     template_name = 'workshops/all_eventsubmissions.html'
     filter_class = EventSubmissionFilter
     queryset = EventSubmissionModel.objects.all()
+    title = 'Workshop submissions'
 
     def get_filter_data(self):
         data = self.request.GET.copy()
         data['active'] = data.get('active', 'true')
         return data
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'Workshop submissions'
-        return context
 
 
 class EventSubmissionDetails(OnlyForAdminsMixin, DetailView):
@@ -2582,16 +2538,12 @@ class AllDCSelfOrganizedEventRequests(OnlyForAdminsMixin, AMYListView):
     template_name = 'workshops/all_dcselforganizedeventrequests.html'
     filter_class = DCSelfOrganizedEventRequestFilter
     queryset = DCSelfOrganizedEventRequestModel.objects.all()
+    title = 'Data Carpentry self-organized workshop requests'
 
     def get_filter_data(self):
         data = self.request.GET.copy()
         data['active'] = data.get('active', 'true')
         return data
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'Data Carpentry self-organized workshop requests'
-        return context
 
 
 class DCSelfOrganizedEventRequestDetails(OnlyForAdminsMixin, DetailView):

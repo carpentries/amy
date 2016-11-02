@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
+from django.core.exceptions import ImproperlyConfigured
 from django.core.mail import EmailMultiAlternatives
 from django.db.models import Model, ProtectedError
 from django.http import HttpResponseRedirect
@@ -132,6 +133,7 @@ class AMYListView(ListView):
     paginator_class = Paginator
     filter_class = None
     queryset = None
+    title = None
 
     def get_filter_data(self):
         """Datasource for the filter."""
@@ -149,9 +151,12 @@ class AMYListView(ListView):
         return paginated
 
     def get_context_data(self, **kwargs):
-        """Enhance context by adding a filter to it."""
+        """Enhance context by adding a filter to it. Add `title` to context."""
         context = super().get_context_data(**kwargs)
         context['filter'] = self.filter
+        if self.title is None:
+            raise ImproperlyConfigured('No title attribute.')
+        context['title'] = self.title
         return context
 
 
