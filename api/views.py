@@ -53,7 +53,12 @@ from .serializers import (
     PersonSerializer,
 )
 
-from .filters import EventFilter, TaskFilter, PersonFilter
+from .filters import (
+    EventFilter,
+    TaskFilter,
+    PersonFilter,
+    InstructorsOverTimeFilter,
+)
 
 
 class IsAdmin(BasePermission):
@@ -317,11 +322,12 @@ class ReportsViewSet(ViewSet):
 
         badges = Badge.objects.instructor_badges()
 
-        qs = Person.objects.filter(badges__in=badges)  \
-                           .annotate(date=Min('award__awarded'),
-                                     count=Value(1,
-                                                 output_field=IntegerField())) \
-                           .order_by('date')
+        qs = Person.objects.filter(badges__in=badges)
+        filter = InstructorsOverTimeFilter(request.GET, queryset=qs)
+        qs = filter.qs.annotate(date=Min('award__awarded'),
+                                count=Value(1,
+                                            output_field=IntegerField())) \
+                      .order_by('date')
 
         serializer = InstructorsOverTimeSerializer(qs, many=True)
 

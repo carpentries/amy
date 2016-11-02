@@ -39,10 +39,19 @@ from reversion.revisions import get_for_object
 
 from api.views import ReportsViewSet
 from workshops.filters import (
-    EventFilter, OrganizationFilter, MembershipFilter, PersonFilter, TaskFilter, AirportFilter,
-    EventRequestFilter, BadgeAwardsFilter, InvoiceRequestFilter,
-    EventSubmissionFilter, DCSelfOrganizedEventRequestFilter,
-    TraineeFilter, TrainingRequestFilter,
+    EventFilter,
+    OrganizationFilter,
+    MembershipFilter,
+    PersonFilter,
+    TaskFilter,
+    AirportFilter,
+    EventRequestFilter,
+    BadgeAwardsFilter,
+    InvoiceRequestFilter,
+    EventSubmissionFilter,
+    DCSelfOrganizedEventRequestFilter,
+    TraineeFilter,
+    TrainingRequestFilter,
 )
 from workshops.forms import (
     SearchForm,
@@ -68,7 +77,6 @@ from workshops.forms import (
     TodoFormSet,
     EventsSelectionForm,
     EventsMergeForm,
-    InvoiceRequestForm,
     InvoiceRequestUpdateForm,
     EventSubmitFormNoCaptcha,
     PersonsMergeForm,
