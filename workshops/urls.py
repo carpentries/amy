@@ -105,7 +105,7 @@ urlpatterns = [
         url(r'^award/$', views.badge_award, name='badge_award'),
     ])),
 
-    url(r'^trainings/$', views.all_trainings, name='all_trainings'),
+    url(r'^trainings/$', views.AllTrainings.as_view(), name='all_trainings'),
 
     url(r'^workshop_staff/$', views.workshop_staff, name='workshop_staff'),
 

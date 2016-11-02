@@ -1684,11 +1684,11 @@ def badge_award(request, badge_name):
 
 #------------------------------------------------------------
 
-@admin_required
-def all_trainings(request):
-    '''List all Instructor Trainings.'''
 
-    trainings = Event.objects.filter(tags__name='TTT').annotate(
+class AllTrainings(OnlyForAdminsMixin, AMYListView):
+    context_object_name = 'all_trainings'
+    template_name = 'workshops/all_trainings.html'
+    queryset = Event.objects.filter(tags__name='TTT').annotate(
         trainees=Count(Case(When(task__role__name='learner',
                                  then=F('task__person__id')),
                             output_field=IntegerField()),
@@ -1700,10 +1700,11 @@ def all_trainings(request):
                        distinct=True),
     ).exclude(trainees=0).order_by('-start')
 
-    trainings = get_pagination_items(request, trainings)
-    context = {'title': 'All Instructor Trainings',
-               'all_trainings': trainings}
-    return render(request, 'workshops/all_trainings.html', context)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'All Instructor Trainings'
+        return context
+
 
 #------------------------------------------------------------
 
