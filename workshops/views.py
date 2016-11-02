@@ -354,15 +354,16 @@ class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
 AIRPORT_FIELDS = ['iata', 'fullname', 'country', 'latitude', 'longitude']
 
 
-@admin_required
-def all_airports(request):
-    '''List all airports.'''
-    filter = AirportFilter(request.GET, queryset=Airport.objects.all())
-    airports = get_pagination_items(request, filter)
-    context = {'title' : 'All Airports',
-               'all_airports' : airports,
-               'filter': filter}
-    return render(request, 'workshops/all_airports.html', context)
+class AllAirports(OnlyForAdminsMixin, FilteredListView):
+    context_object_name = 'all_airports'
+    queryset = Airport.objects.all()
+    filter_class = AirportFilter
+    template_name = 'workshops/all_airports.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'All Airports'
+        return context
 
 
 @admin_required

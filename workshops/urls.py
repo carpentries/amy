@@ -32,7 +32,7 @@ urlpatterns = [
     ])),
 
     url(r'^airports/', include([
-        url(r'^$', views.all_airports, name='all_airports'),
+        url(r'^$', views.AllAirports.as_view(), name='all_airports'),
         url(r'^add/$', views.AirportCreate.as_view(), name='airport_add'),
     ])),
     url(r'^airport/(?P<airport_iata>\w+)/', include([
