@@ -18,7 +18,7 @@ from workshops.models import (
 )
 from workshops.util import OnlyForAdminsMixin
 from workshops.views import FormViewContext
-from workshops.base_views import CreateViewContext, FormViewContext
+from workshops.base_views import AMYCreateView, FormViewContext
 
 from .api import PersonAPIClient, TaskAPIClient, SponsorshipAPIClient
 from .forms import PersonAddFormSet, TaskAddFormSet, SponsorshipAddFormSet
@@ -159,10 +159,10 @@ class BulkImportEventSelect(OnlyForAdminsMixin, FormViewContext):
         )
 
 
-class BaseBulkImport(OnlyForAdminsMixin, CreateViewContext):
+class BaseBulkImport(OnlyForAdminsMixin, AMYCreateView):
     """
     Class-based view for importing instances from PyData API client.
-    Overrides CreateViewContext to populate initial data and a custom
+    Overrides AMYCreateView to populate initial data and a custom
     success message.
     """
     success_message = 'Successfully imported {count} {model}'

@@ -42,7 +42,7 @@ from reversion.revisions import get_for_object
 
 from api.views import ReportsViewSet
 from workshops.base_views import (
-    CreateViewContext,
+    AMYCreateView,
     UpdateViewContext,
     DeleteViewContext,
     AMYListView,
@@ -254,7 +254,7 @@ def organization_details(request, org_domain):
 
 
 class OrganizationCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                 CreateViewContext):
+                         AMYCreateView):
     permission_required = 'workshops.add_organization'
     model = Organization
     form_class = OrganizationForm
@@ -302,7 +302,7 @@ class MembershipDetails(OnlyForAdminsMixin, DetailView):
 
 
 class MembershipCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                       CreateViewContext):
+                       AMYCreateView):
     permission_required = [
         'workshops.add_membership',
         'workshops.change_organization',
@@ -362,7 +362,7 @@ def airport_details(request, airport_iata):
 
 
 class AirportCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                    CreateViewContext):
+                    AMYCreateView):
     permission_required = 'workshops.add_airport'
     model = Airport
     fields = AIRPORT_FIELDS
@@ -644,7 +644,7 @@ def person_bulk_add_remove_entry(request, entry_id):
 
 
 class PersonCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                   CreateViewContext):
+                   AMYCreateView):
     permission_required = 'workshops.add_person'
     model = Person
     form_class = PersonCreateForm
@@ -1090,7 +1090,7 @@ def validate_event(request, slug):
 
 
 class EventCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                  CreateViewContext):
+                  AMYCreateView):
     permission_required = 'workshops.add_event'
     model = Event
     form_class = EventForm
@@ -1557,7 +1557,7 @@ def task_details(request, task_id):
 
 
 class TaskCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                 CreateViewContext):
+                 AMYCreateView):
     permission_required = 'workshops.add_task'
     model = Task
     form_class = TaskFullForm
@@ -3129,7 +3129,7 @@ class TrainingRequestUpdate(RedirectSupportMixin,
 
 class TrainingProgressCreate(RedirectSupportMixin,
                              OnlyForAdminsMixin,
-                             CreateViewContext):
+                             AMYCreateView):
     model = TrainingProgress
     form_class = TrainingProgressForm
 

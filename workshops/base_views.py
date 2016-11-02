@@ -17,7 +17,7 @@ from workshops.forms import BootstrapHelper
 from workshops.util import failed_to_delete, Paginator, get_pagination_items
 
 
-class CreateViewContext(SuccessMessageMixin, CreateView):
+class AMYCreateView(SuccessMessageMixin, CreateView):
     """
     Class-based view for creating objects that extends default template context
     by adding model class used in objects creation.
@@ -27,7 +27,7 @@ class CreateViewContext(SuccessMessageMixin, CreateView):
     template_name = 'workshops/generic_form.html'
 
     def get_context_data(self, **kwargs):
-        context = super(CreateViewContext, self).get_context_data(**kwargs)
+        context = super(AMYCreateView, self).get_context_data(**kwargs)
 
         # self.model is available in CreateView as the model class being
         # used to create new model instance
