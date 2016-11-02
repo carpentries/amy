@@ -44,7 +44,7 @@ from workshops.base_views import (
     CreateViewContext,
     UpdateViewContext,
     DeleteViewContext,
-    FilteredListView,
+    AMYListView,
     RedirectSupportMixin,
 )
 from workshops.filters import (
@@ -287,7 +287,7 @@ class OrganizationDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
 #------------------------------------------------------------
 
 
-class AllMemberships(OnlyForAdminsMixin, FilteredListView):
+class AllMemberships(OnlyForAdminsMixin, AMYListView):
     context_object_name = 'all_memberships'
     template_name = 'workshops/all_memberships.html'
     filter_class = MembershipFilter
@@ -354,7 +354,7 @@ class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
 AIRPORT_FIELDS = ['iata', 'fullname', 'country', 'latitude', 'longitude']
 
 
-class AllAirports(OnlyForAdminsMixin, FilteredListView):
+class AllAirports(OnlyForAdminsMixin, AMYListView):
     context_object_name = 'all_airports'
     queryset = Airport.objects.all()
     filter_class = AirportFilter
@@ -1530,7 +1530,7 @@ class SponsorshipDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
         return reverse('event_edit',args=[self.get_object().event.slug]) + '#sponsors'
 
 
-class AllInvoiceRequests(OnlyForAdminsMixin, FilteredListView):
+class AllInvoiceRequests(OnlyForAdminsMixin, AMYListView):
     context_object_name = 'requests'
     template_name = 'workshops/all_invoicerequests.html'
     filter_class = InvoiceRequestFilter
@@ -2481,7 +2481,7 @@ def profileupdaterequest_accept(request, request_id, person_id=None):
     return redirect(person.get_absolute_url())
 
 
-class AllEventSubmissions(OnlyForAdminsMixin, FilteredListView):
+class AllEventSubmissions(OnlyForAdminsMixin, AMYListView):
     context_object_name = 'submissions'
     template_name = 'workshops/all_eventsubmissions.html'
     filter_class = EventSubmissionFilter
@@ -2585,7 +2585,7 @@ def eventsubmission_assign(request, submission_id, person_id=None):
     return redirect(submission.get_absolute_url())
 
 
-class AllDCSelfOrganizedEventRequests(OnlyForAdminsMixin, FilteredListView):
+class AllDCSelfOrganizedEventRequests(OnlyForAdminsMixin, AMYListView):
     context_object_name = 'requests'
     template_name = 'workshops/all_dcselforganizedeventrequests.html'
     filter_class = DCSelfOrganizedEventRequestFilter

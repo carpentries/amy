@@ -128,7 +128,7 @@ class FormViewContext(FormView):
         return context
 
 
-class FilteredListView(ListView):
+class AMYListView(ListView):
     paginator_class = Paginator
     filter_class = None
     queryset = None
@@ -140,8 +140,11 @@ class FilteredListView(ListView):
     def get_queryset(self):
         """Apply a filter to the queryset. Filter is compatible with pagination
         and queryset. Also, apply pagination."""
-        self.filter = self.filter_class(self.get_filter_data(),
-                                        super().get_queryset())
+        if self.filter_class is None:
+            self.filter = super().get_queryset()
+        else:
+            self.filter = self.filter_class(self.get_filter_data(),
+                                            super().get_queryset())
         paginated = get_pagination_items(self.request, self.filter)
         return paginated
 
