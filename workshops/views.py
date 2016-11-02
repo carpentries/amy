@@ -1631,14 +1631,18 @@ class AwardDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
 
 #------------------------------------------------------------
 
-@admin_required
-def all_badges(request):
-    '''List all badges.'''
 
-    badges = Badge.objects.order_by('name').annotate(num_awarded=Count('award'))
-    context = {'title' : 'All Badges',
-               'all_badges' : badges}
-    return render(request, 'workshops/all_badges.html', context)
+class AllBadges(OnlyForAdminsMixin, AMYListView):
+    context_object_name = 'all_badges'
+    queryset = Badge.objects.order_by('name') \
+                            .annotate(num_awarded=Count('award'))
+    template_name = 'workshops/all_badges.html'
+    filter_class = None
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'All Badges'
+        return context
 
 
 @admin_required

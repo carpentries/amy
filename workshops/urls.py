@@ -99,7 +99,7 @@ urlpatterns = [
 
     url(r'^award/(?P<pk>\d+)/delete/$', views.AwardDelete.as_view(), name='award_delete'),
 
-    url(r'^badges/$', views.all_badges, name='all_badges'),
+    url(r'^badges/$', views.AllBadges.as_view(), name='all_badges'),
     url(r'^badge/(?P<badge_name>[\w\.=-]+)/', include([
         url(r'^$', views.badge_details, name='badge_details'),
         url(r'^award/$', views.badge_award, name='badge_award'),
