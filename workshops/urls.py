@@ -132,7 +132,7 @@ urlpatterns = [
 
     url(r'^revision/(?P<revision_id>[\d]+)/$', views.object_changes, name='object_changes'),
 
-    url(r'^requests/$', views.all_eventrequests, name='all_eventrequests'),
+    url(r'^requests/$', views.AllEventRequests.as_view(), name='all_eventrequests'),
     url(r'^request/(?P<request_id>\d+)/', include([
         url(r'^$', views.EventRequestDetails.as_view(), name='eventrequest_details'),
         url(r'^discard/$', views.eventrequest_discard, name='eventrequest_discard'),

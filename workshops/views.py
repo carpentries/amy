@@ -2188,26 +2188,24 @@ def object_changes(request, revision_id):
 # ------------------------------------------------------------
 
 
-@admin_required
-def all_eventrequests(request):
-    """List all event requests."""
+class AllEventRequests(OnlyForAdminsMixin, AMYListView):
+    context_object_name = 'requests'
+    template_name = 'workshops/all_eventrequests.html'
+    filter_class = EventRequestFilter
+    queryset = EventRequest.objects.all()
 
-    # Set initial value for the "active" radio select.  That's a hack, nothing
-    # else worked...
-    data = request.GET.copy()  # request.GET is immutable
-    data['active'] = data.get('active', 'true')
-    data['workshop_type'] = data.get('workshop_type', '')
-    filter = EventRequestFilter(
-        data,
-        queryset=EventRequest.objects.all(),
-    )
-    eventrequests = get_pagination_items(request, filter)
-    context = {
-        'title': 'Workshop requests',
-        'requests': eventrequests,
-        'filter': filter,
-    }
-    return render(request, 'workshops/all_eventrequests.html', context)
+    def get_filter_data(self):
+        # Set initial value for the "active" radio select.  That's a hack,
+        # nothing else worked...
+        data = super().get_filter_data().copy()
+        data['active'] = data.get('active', 'true')
+        data['workshop_type'] = data.get('workshop_type', '')
+        return data
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Workshop requests'
+        return context
 
 
 class EventRequestDetails(OnlyForAdminsMixin, DetailView):
