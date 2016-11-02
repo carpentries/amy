@@ -1688,18 +1688,17 @@ def badge_award(request, badge_name):
 def all_trainings(request):
     '''List all Instructor Trainings.'''
 
-    learner = Role.objects.get(name='learner')
-    ttt = Tag.objects.get(name='TTT')
-
-    finished = Award.objects.filter(badge__in=Badge.objects.instructor_badges(), event__tags=ttt) \
-        .values('event').annotate(finished=Count('person'))
-    finished = {f['event']: f['finished'] for f in finished}
-
-    trainings = Task.objects.filter(role=learner).filter(event__tags=ttt).order_by('-event__start') \
-        .values('event', 'event__slug').annotate(trainees=Count('person'))
-    for t in trainings:
-        event_id = t['event']
-        t['finished'] = finished.get(event_id, 0)
+    trainings = Event.objects.filter(tags__name='TTT').annotate(
+        trainees=Count(Case(When(task__role__name='learner',
+                                 then=F('task__person__id')),
+                            output_field=IntegerField()),
+                       distinct=True),
+        finished=Count(Case(When(task__role__name='learner',
+                                 task__person__badges__in=Badge.objects.instructor_badges(),
+                                 then=F('task__person__id')),
+                            output_field=IntegerField()),
+                       distinct=True),
+    ).exclude(trainees=0).order_by('-start')
 
     trainings = get_pagination_items(request, trainings)
     context = {'title': 'All Instructor Trainings',
