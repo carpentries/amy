@@ -32,7 +32,7 @@ from django.db.models.functions import Now
 from django.http import Http404, HttpResponse, JsonResponse
 from django.http import HttpResponseBadRequest
 from django.shortcuts import redirect, render, get_object_or_404
-from django.views.generic import ListView, DetailView
+from django.views.generic import ListView
 from django.views.generic.edit import (
     ModelFormMixin,
 )
@@ -47,6 +47,7 @@ from workshops.base_views import (
     AMYDeleteView,
     AMYListView,
     RedirectSupportMixin,
+    AMYDetailView,
 )
 from workshops.filters import (
     EventFilter, OrganizationFilter, MembershipFilter, PersonFilter, TaskFilter, AirportFilter,
@@ -289,7 +290,7 @@ class AllMemberships(OnlyForAdminsMixin, AMYListView):
     title = 'All Memberships'
 
 
-class MembershipDetails(OnlyForAdminsMixin, DetailView):
+class MembershipDetails(OnlyForAdminsMixin, AMYDetailView):
     queryset = Membership.objects.all()
     context_object_name = 'membership'
     template_name = 'workshops/membership.html'
@@ -1515,7 +1516,7 @@ class AllInvoiceRequests(OnlyForAdminsMixin, AMYListView):
         return data
 
 
-class InvoiceRequestDetails(OnlyForAdminsMixin, DetailView):
+class InvoiceRequestDetails(OnlyForAdminsMixin, AMYDetailView):
     context_object_name = 'object'
     template_name = 'workshops/invoicerequest.html'
     queryset = InvoiceRequest.objects.all()
@@ -2167,7 +2168,7 @@ class AllEventRequests(OnlyForAdminsMixin, AMYListView):
         return data
 
 
-class EventRequestDetails(OnlyForAdminsMixin, DetailView):
+class EventRequestDetails(OnlyForAdminsMixin, AMYDetailView):
     queryset = EventRequest.objects.all()
     context_object_name = 'object'
     template_name = 'workshops/eventrequest.html'
@@ -2445,7 +2446,7 @@ class AllEventSubmissions(OnlyForAdminsMixin, AMYListView):
         return data
 
 
-class EventSubmissionDetails(OnlyForAdminsMixin, DetailView):
+class EventSubmissionDetails(OnlyForAdminsMixin, AMYDetailView):
     context_object_name = 'object'
     template_name = 'workshops/eventsubmission.html'
     queryset = EventSubmissionModel.objects.all()
@@ -2545,7 +2546,7 @@ class AllDCSelfOrganizedEventRequests(OnlyForAdminsMixin, AMYListView):
         return data
 
 
-class DCSelfOrganizedEventRequestDetails(OnlyForAdminsMixin, DetailView):
+class DCSelfOrganizedEventRequestDetails(OnlyForAdminsMixin, AMYDetailView):
     context_object_name = 'object'
     template_name = 'workshops/dcselforganizedeventrequest.html'
     queryset = DCSelfOrganizedEventRequestModel.objects.all()

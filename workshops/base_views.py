@@ -11,10 +11,15 @@ from django.views.generic import (
     DeleteView,
     FormView,
     ListView,
+    DetailView,
 )
 
 from workshops.forms import BootstrapHelper
 from workshops.util import failed_to_delete, Paginator, get_pagination_items
+
+
+class AMYDetailView(DetailView):
+    pass
 
 
 class AMYCreateView(SuccessMessageMixin, CreateView):
