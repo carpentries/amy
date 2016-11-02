@@ -60,7 +60,7 @@ urlpatterns = [
     ])),
 
     url(r'^events/', include([
-        url(r'^$', views.all_events, name='all_events'),
+        url(r'^$', views.AllEvents.as_view(), name='all_events'),
         url(r'^add/$', views.EventCreate.as_view(), name='event_add'),
         url(r'^import/$', views.event_import, name='event_import'),
         url(r'^merge/$', views.events_merge, name='events_merge'),

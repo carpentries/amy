@@ -987,19 +987,18 @@ def sync_usersocialauth(request, person_id):
 
 #------------------------------------------------------------
 
-@admin_required
-def all_events(request):
-    '''List all events.'''
-    filter = EventFilter(
-        request.GET,
-        queryset=Event.objects.all().defer('notes')  # notes are too large
-                                    .prefetch_related('host', 'tags'),
-    )
-    events = get_pagination_items(request, filter)
-    context = {'title' : 'All Events',
-               'all_events' : events,
-               'filter': filter}
-    return render(request, 'workshops/all_events.html', context)
+
+class AllEvents(OnlyForAdminsMixin, AMYListView):
+    context_object_name = 'all_events'
+    template_name = 'workshops/all_events.html'
+    # notes are too large, so we defer them
+    queryset = Event.objects.defer('notes').prefetch_related('host', 'tags')
+    filter_class = EventFilter
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'All Events'
+        return context
 
 
 @admin_required
