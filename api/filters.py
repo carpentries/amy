@@ -91,3 +91,16 @@ class InstructorsOverTimeFilter(AMYFilterSet):
             'badges',
         ]
 
+
+class WorkshopsOverTimeFilter(AMYFilterSet):
+    tags = django_filters.ModelMultipleChoiceFilter(
+        queryset=Tag.objects.all(),
+        label='Events with at least one of the following tags:',
+    )
+
+    class Meta:
+        model = Event
+        fields = [
+            'tags',
+        ]
+

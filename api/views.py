@@ -58,6 +58,7 @@ from .filters import (
     TaskFilter,
     PersonFilter,
     InstructorsOverTimeFilter,
+    WorkshopsOverTimeFilter,
 )
 
 
@@ -290,7 +291,10 @@ class ReportsViewSet(ViewSet):
     def workshops_over_time(self, request, format=None):
         """Cumulative number of workshops run by Software Carpentry over
         time."""
-        qs = self.queryset1.annotate(count=Count('id'))
+        qs = self.queryset1
+        qs = WorkshopsOverTimeFilter(request.GET, queryset=qs).qs
+        qs = qs.annotate(count=Count('id'))
+
         serializer = WorkshopsOverTimeSerializer(qs, many=True)
 
         # run a cumulative generator over the data
