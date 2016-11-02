@@ -59,6 +59,7 @@ from .filters import (
     PersonFilter,
     InstructorsOverTimeFilter,
     WorkshopsOverTimeFilter,
+    LearnersOverTimeFilter,
 )
 
 
@@ -308,7 +309,10 @@ class ReportsViewSet(ViewSet):
     def learners_over_time(self, request, format=None):
         """Cumulative number of learners attending Software-Carpentry workshops
         over time."""
-        qs = self.queryset1.annotate(count=Sum('attendance'))
+        qs = self.queryset1
+        qs = LearnersOverTimeFilter(request.GET, queryset=qs).qs
+        qs = qs.annotate(count=Sum('attendance'))
+
         # we reuse the serializer because it works here too
         serializer = WorkshopsOverTimeSerializer(qs, many=True)
 
