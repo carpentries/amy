@@ -17,7 +17,8 @@ from workshops.models import (
     Task,
 )
 from workshops.util import OnlyForAdminsMixin
-from workshops.views import FormViewContext, CreateViewContext
+from workshops.views import FormViewContext
+from workshops.base_views import CreateViewContext, FormViewContext
 
 from .api import PersonAPIClient, TaskAPIClient, SponsorshipAPIClient
 from .forms import PersonAddFormSet, TaskAddFormSet, SponsorshipAddFormSet

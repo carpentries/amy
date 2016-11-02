@@ -10,12 +10,10 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.forms import SetPasswordForm, PasswordChangeForm
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import (
     ObjectDoesNotExist,
     PermissionDenied,
 )
-from django.core.mail import EmailMultiAlternatives
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.db import IntegrityError
 from django.db.models import (
@@ -26,27 +24,29 @@ from django.db.models import (
     Count,
     Q,
     F,
-    Model,
     ProtectedError,
     Sum,
     Prefetch,
 )
 from django.http import Http404, HttpResponse, JsonResponse
-from django.http import HttpResponseBadRequest, HttpResponseRedirect
+from django.http import HttpResponseBadRequest
 from django.shortcuts import redirect, render, get_object_or_404
-from django.utils.http import is_safe_url
-from django.views.generic import ListView, DetailView, DeleteView
+from django.views.generic import ListView, DetailView
 from django.views.generic.edit import (
-    CreateView,
-    UpdateView,
     ModelFormMixin,
-    FormView,
 )
 from github.GithubException import GithubException
 from reversion.models import Revision
 from reversion.revisions import get_for_object
 
 from api.views import ReportsViewSet
+from workshops.base_views import (
+    CreateViewContext,
+    UpdateViewContext,
+    DeleteViewContext,
+    FilteredListView,
+    RedirectSupportMixin,
+)
 from workshops.filters import (
     EventFilter, OrganizationFilter, MembershipFilter, PersonFilter, TaskFilter, AirportFilter,
     EventRequestFilter, BadgeAwardsFilter, InvoiceRequestFilter,
@@ -77,7 +77,6 @@ from workshops.forms import (
     TodoFormSet,
     EventsSelectionForm,
     EventsMergeForm,
-    InvoiceRequestForm,
     InvoiceRequestUpdateForm,
     EventSubmitFormNoCaptcha,
     PersonsMergeForm,
@@ -136,7 +135,6 @@ from workshops.util import (
     validate_metadata_from_event_website,
     assignment_selection,
     get_pagination_items,
-    Paginator,
     failed_to_delete,
     assign,
     merge_objects,
@@ -147,190 +145,6 @@ from workshops.util import (
     redirect_with_next_support,
     dict_without_Nones,
 )
-
-
-# ------------------------------------------------------------
-
-
-class CreateViewContext(SuccessMessageMixin, CreateView):
-    """
-    Class-based view for creating objects that extends default template context
-    by adding model class used in objects creation.
-    """
-    success_message = '{name} was created successfully.'
-
-    template_name = 'workshops/generic_form.html'
-
-    def get_context_data(self, **kwargs):
-        context = super(CreateViewContext, self).get_context_data(**kwargs)
-
-        # self.model is available in CreateView as the model class being
-        # used to create new model instance
-        context['model'] = self.model
-
-        if self.model and issubclass(self.model, Model):
-            context['title'] = 'New {}'.format(self.model._meta.verbose_name)
-        else:
-            context['title'] = 'New object'
-
-        form = context['form']
-        if not hasattr(form, 'helper'):
-            # This is a default helper if no other is available.
-            form.helper = BootstrapHelper(submit_label='Add')
-
-        return context
-
-    def get_success_message(self, cleaned_data):
-        "Format self.success_message, used by messages framework from Django."
-        return self.success_message.format(cleaned_data, name=str(self.object))
-
-
-class UpdateViewContext(SuccessMessageMixin, UpdateView):
-    """
-    Class-based view for updating objects that extends default template context
-    by adding proper page title.
-    """
-    success_message = '{name} was updated successfully.'
-
-    template_name = 'workshops/generic_form.html'
-
-    def get_context_data(self, **kwargs):
-        context = super(UpdateViewContext, self).get_context_data(**kwargs)
-
-        # self.model is available in UpdateView as the model class being
-        # used to update model instance
-        context['model'] = self.model
-
-        context['view'] = self
-
-        # self.object is available in UpdateView as the object being currently
-        # edited
-        context['title'] = str(self.object)
-
-        form = context['form']
-        if not hasattr(form, 'helper'):
-            # This is a default helper if no other is available.
-            form.helper = BootstrapHelper(submit_label='Update')
-
-        return context
-
-    def get_success_message(self, cleaned_data):
-        "Format self.success_message, used by messages framework from Django."
-        return self.success_message.format(cleaned_data, name=str(self.object))
-
-
-class DeleteViewContext(DeleteView):
-    """
-    Class-based view for deleting objects that extends default template context
-    by adding proper page title.
-
-    GET requests are not allowed (returns 405)
-    Allows for custom redirection based on `next` param in POST
-    ProtectedErrors are handled.
-    """
-    success_message = '{} was deleted successfully.'
-
-    def delete(self, request, *args, **kwargs):
-        # Workaround for https://code.djangoproject.com/ticket/21926
-        # Replicates the `delete` method of DeleteMixin
-        self.object = self.get_object()
-        if request.POST.get('next', None):
-            success_url = request.POST['next']
-        else:
-            success_url = self.get_success_url()
-        try:
-            self.object.delete()
-            messages.success(
-                self.request,
-                self.success_message.format(self.object)
-            )
-            return HttpResponseRedirect(success_url)
-        except ProtectedError as e:
-            return failed_to_delete(self.request, self.object,
-                                    e.protected_objects)
-
-    def get(self, request, *args, **kwargs):
-        return self.http_method_not_allowed(request, *args, **kwargs)
-
-
-class FormViewContext(FormView):
-    """
-    Class-based view to allow displaying of forms with bootstrap form helper.
-    """
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        context['title'] = self.title
-        return context
-
-
-class FilteredListView(ListView):
-    paginator_class = Paginator
-    filter_class = None
-    queryset = None
-
-    def get_filter_data(self):
-        """Datasource for the filter."""
-        return self.request.GET
-
-    def get_queryset(self):
-        """Apply a filter to the queryset. Filter is compatible with pagination
-        and queryset."""
-        self.filter = self.filter_class(self.get_filter_data(),
-                                        super().get_queryset())
-        return self.filter
-
-    def get_context_data(self, **kwargs):
-        """Enhance context by adding a filter to it."""
-        context = super().get_context_data(**kwargs)
-        context['filter'] = self.filter
-        return context
-
-
-class EmailSendMixin:
-    email_fail_silently = True
-    email_kwargs = None
-
-    def get_subject(self):
-        """Generate email subject."""
-        return ""
-
-    def get_body(self):
-        """Generate email body (in TXT and HTML versions)."""
-        return "", ""
-
-    def prepare_email(self):
-        """Set up email contents."""
-        subject = self.get_subject()
-        body_txt, body_html = self.get_body()
-        email = EmailMultiAlternatives(subject, body_txt,
-                                       **self.email_kwargs)
-        email.attach_alternative(body_html, 'text/html')
-        return email
-
-    def send_email(self, email):
-        """Send a prepared email out."""
-        return email.send(fail_silently=self.email_fail_silently)
-
-    def form_valid(self, form):
-        """Once form is valid, send the email."""
-        results = super().form_valid(form)
-        email = self.prepare_email()
-        self.send_email(email)
-        return results
-
-
-class RedirectSupportMixin:
-    def get_success_url(self):
-        default_url = super().get_success_url()
-        next_url = self.request.GET.get('next', None)
-        if next_url is not None and is_safe_url(next_url):
-            return next_url
-        else:
-            return default_url
-
-#------------------------------------------------------------
 
 
 @login_required

@@ -21,9 +21,9 @@ from workshops.util import (
     login_not_required,
     LoginNotRequiredMixin,
 )
-from workshops.views import (
-    EmailSendMixin,
+from workshops.base_views import (
     CreateViewContext,
+    EmailSendMixin,
 )
 
 
