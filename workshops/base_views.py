@@ -13,7 +13,7 @@ from django.views.generic import (
 )
 
 from workshops.forms import BootstrapHelper
-from workshops.util import failed_to_delete, Paginator
+from workshops.util import failed_to_delete, Paginator, get_pagination_items
 
 
 class CreateViewContext(SuccessMessageMixin, CreateView):
@@ -140,10 +140,11 @@ class FilteredListView(ListView):
 
     def get_queryset(self):
         """Apply a filter to the queryset. Filter is compatible with pagination
-        and queryset."""
+        and queryset. Also, apply pagination."""
         self.filter = self.filter_class(self.get_filter_data(),
                                         super().get_queryset())
-        return self.filter
+        paginated = get_pagination_items(self.request, self.filter)
+        return paginated
 
     def get_context_data(self, **kwargs):
         """Enhance context by adding a filter to it."""
