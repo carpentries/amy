@@ -28,6 +28,7 @@ from django.db.models import (
     Sum,
     Prefetch,
 )
+from django.db.models.functions import Now
 from django.http import Http404, HttpResponse, JsonResponse
 from django.http import HttpResponseBadRequest
 from django.shortcuts import redirect, render, get_object_or_404
@@ -226,26 +227,23 @@ def changes_log(request):
 #------------------------------------------------------------
 
 
-@admin_required
-def all_organizations(request):
-    '''List all organization.'''
-    now = datetime.datetime.now()
-    filter = OrganizationFilter(
-        request.GET,
-        queryset=Organization.objects.prefetch_related(Prefetch(
-            'membership_set',
-            to_attr='current_memberships',
-            queryset=Membership.objects.filter(
-                agreement_start__lte=now,
-                agreement_end__gte=now,
-            )
-        ))
-    )
-    organizations = get_pagination_items(request, filter)
-    context = {'title' : 'All Organizations',
-               'all_organizations' : organizations,
-               'filter': filter}
-    return render(request, 'workshops/all_organizations.html', context)
+class AllOrganizations(OnlyForAdminsMixin, AMYListView):
+    context_object_name = 'all_organizations'
+    template_name = 'workshops/all_organizations.html'
+    filter_class = OrganizationFilter
+    queryset = Organization.objects.prefetch_related(Prefetch(
+        'membership_set',
+        to_attr='current_memberships',
+        queryset=Membership.objects.filter(
+            agreement_start__lte=Now(),
+            agreement_end__gte=Now(),
+        )
+    ))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'All Organizations'
+        return context
 
 
 @admin_required
