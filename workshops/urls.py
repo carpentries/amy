@@ -86,7 +86,7 @@ urlpatterns = [
     ])),
 
     url(r'^tasks/', include([
-        url(r'^$', views.all_tasks, name='all_tasks'),
+        url(r'^$', views.AllTasks.as_view(), name='all_tasks'),
         url(r'^add/$', views.TaskCreate.as_view(), name='task_add'),
     ])),
     url(r'^task/(?P<task_id>\d+)/', include([

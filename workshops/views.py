@@ -1566,20 +1566,18 @@ class InvoiceRequestUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
 
 # ------------------------------------------------------------
 
-@admin_required
-def all_tasks(request):
-    '''List all tasks.'''
 
-    filter = TaskFilter(
-        request.GET,
-        queryset=Task.objects.all().select_related('event', 'person', 'role')
-                                   .defer('person__notes', 'event__notes')
-    )
-    tasks = get_pagination_items(request, filter)
-    context = {'title' : 'All Tasks',
-               'all_tasks' : tasks,
-               'filter': filter}
-    return render(request, 'workshops/all_tasks.html', context)
+class AllTasks(OnlyForAdminsMixin, AMYListView):
+    context_object_name = 'all_tasks'
+    template_name = 'workshops/all_tasks.html'
+    filter_class = TaskFilter
+    queryset = Task.objects.select_related('event', 'person', 'role') \
+                           .defer('person__notes', 'event__notes')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'All Tasks'
+        return context
 
 
 @admin_required
