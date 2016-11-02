@@ -150,7 +150,7 @@ from workshops.util import (
 
 @login_required
 def dispatch(request):
-    if request.user and is_admin(request.user):
+    if is_admin(request.user):
         return redirect(reverse('admin-dashboard'))
     else:
         return redirect(reverse('trainee-dashboard'))
