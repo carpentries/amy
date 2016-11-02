@@ -43,7 +43,7 @@ from reversion.revisions import get_for_object
 from api.views import ReportsViewSet
 from workshops.base_views import (
     AMYCreateView,
-    UpdateViewContext,
+    AMYUpdateView,
     DeleteViewContext,
     AMYListView,
     RedirectSupportMixin,
@@ -261,7 +261,7 @@ class OrganizationCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
 
 
 class OrganizationUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                 UpdateViewContext):
+                         AMYUpdateView):
     permission_required = 'workshops.change_organization'
     model = Organization
     form_class = OrganizationForm
@@ -322,7 +322,7 @@ class MembershipCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
 
 
 class MembershipUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                       RedirectSupportMixin, UpdateViewContext):
+                       RedirectSupportMixin, AMYUpdateView):
     permission_required = 'workshops.change_membership'
     model = Membership
     form_class = MembershipForm
@@ -369,7 +369,7 @@ class AirportCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
 
 
 class AirportUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                    UpdateViewContext):
+                    AMYUpdateView):
     permission_required = 'workshops.change_airport'
     model = Airport
     fields = AIRPORT_FIELDS
@@ -810,7 +810,7 @@ class PersonDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
 
 
 class PersonPermissions(OnlyForAdminsMixin, PermissionRequiredMixin,
-                        UpdateViewContext):
+                        AMYUpdateView):
     permission_required = 'workshops.change_person'
     model = Person
     form_class = PersonPermissionsForm
@@ -1528,7 +1528,7 @@ class InvoiceRequestDetails(OnlyForAdminsMixin, DetailView):
 
 
 class InvoiceRequestUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                           UpdateViewContext):
+                           AMYUpdateView):
     permission_required = 'workshops.change_invoicerequest'
     model = InvoiceRequest
     form_class = InvoiceRequestUpdateForm
@@ -1564,7 +1564,7 @@ class TaskCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
 
 
 class TaskUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                 UpdateViewContext):
+                 AMYUpdateView):
     permission_required = 'workshops.change_task'
     model = Task
     form_class = TaskFullForm
@@ -2324,7 +2324,7 @@ def profileupdaterequest_details(request, request_id):
 
 
 class ProfileUpdateRequestFix(OnlyForAdminsMixin, PermissionRequiredMixin,
-                              UpdateViewContext):
+                              AMYUpdateView):
     permission_required = 'workshops.change_profileupdaterequest'
     model = ProfileUpdateRequest
     form_class = ProfileUpdateRequestFormNoCaptcha
@@ -2471,7 +2471,7 @@ class EventSubmissionDetails(OnlyForAdminsMixin, DetailView):
 
 
 class EventSubmissionFix(OnlyForAdminsMixin, PermissionRequiredMixin,
-                         UpdateViewContext):
+                         AMYUpdateView):
     permission_required = 'workshops.change_eventsubmission'
     model = EventSubmissionModel
     form_class = EventSubmitFormNoCaptcha
@@ -2572,7 +2572,7 @@ class DCSelfOrganizedEventRequestDetails(OnlyForAdminsMixin, DetailView):
 
 class DCSelfOrganizedEventRequestChange(OnlyForAdminsMixin,
                                         PermissionRequiredMixin,
-                                        UpdateViewContext):
+                                        AMYUpdateView):
     permission_required = 'workshops.change_dcselforganizedeventrequest'
     model = DCSelfOrganizedEventRequestModel
     form_class = DCSelfOrganizedEventRequestFormNoCaptcha
@@ -2709,7 +2709,7 @@ def todo_mark_incompleted(request, todo_id):
 
 
 class TodoItemUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                     UpdateViewContext):
+                     AMYUpdateView):
     permission_required = 'workshops.change_todoitem'
     model = TodoItem
     form_class = SimpleTodoForm
@@ -3122,7 +3122,7 @@ def download_trainingrequests(request):
 
 class TrainingRequestUpdate(RedirectSupportMixin,
                             OnlyForAdminsMixin,
-                            UpdateViewContext):
+                            AMYUpdateView):
     model = TrainingRequest
     form_class = TrainingRequestUpdateForm
 
@@ -3157,7 +3157,7 @@ class TrainingProgressCreate(RedirectSupportMixin,
 
 
 class TrainingProgressUpdate(RedirectSupportMixin, OnlyForAdminsMixin,
-                             UpdateViewContext):
+                             AMYUpdateView):
     model = TrainingProgress
     form_class = TrainingProgressForm
     template_name = 'workshops/generic_form.html'

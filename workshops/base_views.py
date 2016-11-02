@@ -50,7 +50,7 @@ class AMYCreateView(SuccessMessageMixin, CreateView):
         return self.success_message.format(cleaned_data, name=str(self.object))
 
 
-class UpdateViewContext(SuccessMessageMixin, UpdateView):
+class AMYUpdateView(SuccessMessageMixin, UpdateView):
     """
     Class-based view for updating objects that extends default template context
     by adding proper page title.
@@ -60,7 +60,7 @@ class UpdateViewContext(SuccessMessageMixin, UpdateView):
     template_name = 'workshops/generic_form.html'
 
     def get_context_data(self, **kwargs):
-        context = super(UpdateViewContext, self).get_context_data(**kwargs)
+        context = super(AMYUpdateView, self).get_context_data(**kwargs)
 
         # self.model is available in UpdateView as the model class being
         # used to update model instance
