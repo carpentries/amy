@@ -42,7 +42,7 @@ urlpatterns = [
     ])),
 
     url(r'^persons/', include([
-        url(r'^$', views.all_persons, name='all_persons'),
+        url(r'^$', views.AllPersons.as_view(), name='all_persons'),
         url(r'^add/$', views.PersonCreate.as_view(), name='person_add'),
         url(r'^bulkadd/$',views.person_bulk_add, name='person_bulk_add'),
         url(r'^bulkadd/template/$',views.person_bulk_add_template, name='person_bulk_add_template'),

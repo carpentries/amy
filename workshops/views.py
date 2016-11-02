@@ -400,30 +400,25 @@ class AirportDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
 #------------------------------------------------------------
 
 
-@admin_required
-def all_persons(request):
-    '''List all persons.'''
-
-    filter = PersonFilter(
-        request.GET,
-        # notes are too large, so we defer them
-        queryset=Person.objects.defer('notes').annotate(
-            is_swc_instructor=Sum(Case(When(badges__name='swc-instructor',
-                                            then=1),
-                                       default=0,
-                                       output_field=IntegerField())),
-            is_dc_instructor=Sum(Case(When(badges__name='dc-instructor',
-                                           then=1),
-                                      default=0,
-                                      output_field=IntegerField())),
-        )
+class AllPersons(OnlyForAdminsMixin, AMYListView):
+    context_object_name = 'all_persons'
+    template_name = 'workshops/all_persons.html'
+    filter_class = PersonFilter
+    queryset = Person.objects.defer('notes').annotate(
+        is_swc_instructor=Sum(Case(When(badges__name='swc-instructor',
+                                        then=1),
+                                   default=0,
+                                   output_field=IntegerField())),
+        is_dc_instructor=Sum(Case(When(badges__name='dc-instructor',
+                                       then=1),
+                                  default=0,
+                                  output_field=IntegerField())),
     )
-    persons = get_pagination_items(request, filter)
 
-    context = {'title' : 'All Persons',
-               'all_persons' : persons,
-               'filter': filter}
-    return render(request, 'workshops/all_persons.html', context)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'All Persons'
+        return context
 
 
 @admin_required
