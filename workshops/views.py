@@ -1599,7 +1599,6 @@ class AllBadges(OnlyForAdminsMixin, AMYListView):
     queryset = Badge.objects.order_by('name') \
                             .annotate(num_awarded=Count('award'))
     template_name = 'workshops/all_badges.html'
-    filter_class = None
     title = 'All Badges'
 
 
