@@ -246,8 +246,8 @@ class ReportsViewSet(ViewSet):
     are missing, because we want to still have the power and simplicity of
     a router."""
     permission_classes = (IsAuthenticated, IsAdmin)
-    queryset1 = Event.objects.past_events().order_by('start')
-    queryset2 = Award.objects.order_by('awarded')
+    event_queryset = Event.objects.past_events().order_by('start')
+    award_queryset = Award.objects.order_by('awarded')
 
     renderer_classes = (BrowsableAPIRenderer, JSONRenderer, CSVRenderer,
                         YAMLRenderer)
@@ -290,9 +290,9 @@ class ReportsViewSet(ViewSet):
 
     @list_route(methods=['GET'])
     def workshops_over_time(self, request, format=None):
-        """Cumulative number of workshops run by Software Carpentry over
-        time."""
-        qs = self.queryset1
+        """Cumulative number of workshops run by Software Carpentry and other
+        carpentries over time."""
+        qs = self.event_queryset
         qs = WorkshopsOverTimeFilter(request.GET, queryset=qs).qs
         qs = qs.annotate(count=Count('id'))
 
@@ -307,9 +307,9 @@ class ReportsViewSet(ViewSet):
 
     @list_route(methods=['GET'])
     def learners_over_time(self, request, format=None):
-        """Cumulative number of learners attending Software-Carpentry workshops
-        over time."""
-        qs = self.queryset1
+        """Cumulative number of learners attending Software-Carpentry and other
+        carpentries' workshops over time."""
+        qs = self.event_queryset
         qs = LearnersOverTimeFilter(request.GET, queryset=qs).qs
         qs = qs.annotate(count=Sum('attendance'))
 
