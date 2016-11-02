@@ -15,7 +15,7 @@ urlpatterns = [
         url(r'^add/$', views.OrganizationCreate.as_view(), name='organization_add'),
     ])),
     url(r'^organization/(?P<org_domain>[\w\.-]+)/', include([
-        url(r'^$', views.organization_details, name='organization_details'),
+        url(r'^$', views.OrganizationDetails.as_view(), name='organization_details'),
         url(r'^edit/$', views.OrganizationUpdate.as_view(), name='organization_edit'),
         url(r'^delete/$', views.OrganizationDelete.as_view(), name='organization_delete'),
     ])),

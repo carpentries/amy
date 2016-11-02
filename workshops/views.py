@@ -243,15 +243,17 @@ class AllOrganizations(OnlyForAdminsMixin, AMYListView):
     title = 'All Organizations'
 
 
-@admin_required
-def organization_details(request, org_domain):
-    '''List details of a particular organization.'''
-    organization = get_object_or_404(Organization, domain=org_domain)
-    events = Event.objects.filter(host=organization)
-    context = {'title' : 'Organization {0}'.format(organization),
-               'organization' : organization,
-               'events' : events}
-    return render(request, 'workshops/organization.html', context)
+class OrganizationDetails(OnlyForAdminsMixin, AMYDetailView):
+    queryset = Organization.objects.all()
+    context_object_name = 'organization'
+    template_name = 'workshops/organization.html'
+    slug_field = 'domain'
+    slug_url_kwarg = 'org_domain'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Organization {0}'.format(self.object)
+        return context
 
 
 class OrganizationCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
