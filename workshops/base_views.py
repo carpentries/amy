@@ -84,7 +84,7 @@ class AMYUpdateView(SuccessMessageMixin, UpdateView):
         return self.success_message.format(cleaned_data, name=str(self.object))
 
 
-class DeleteViewContext(DeleteView):
+class AMYDeleteView(DeleteView):
     """
     Class-based view for deleting objects that extends default template context
     by adding proper page title.

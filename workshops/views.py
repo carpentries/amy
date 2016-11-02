@@ -44,7 +44,7 @@ from api.views import ReportsViewSet
 from workshops.base_views import (
     AMYCreateView,
     AMYUpdateView,
-    DeleteViewContext,
+    AMYDeleteView,
     AMYListView,
     RedirectSupportMixin,
 )
@@ -270,7 +270,7 @@ class OrganizationUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
 
 
 class OrganizationDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
-                         DeleteViewContext):
+                         AMYDeleteView):
     model = Organization
     slug_field = 'domain'
     slug_url_kwarg = 'org_domain'
@@ -330,7 +330,7 @@ class MembershipUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
 
 
 class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
-                       DeleteViewContext):
+                       AMYDeleteView):
     model = Membership
     permission_required = 'workshops.delete_membership'
     pk_url_kwarg = 'membership_id'
@@ -378,7 +378,7 @@ class AirportUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
 
 
 class AirportDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
-                    DeleteViewContext):
+                    AMYDeleteView):
     model = Airport
     slug_field = 'iata'
     slug_url_kwarg = 'airport_iata'
@@ -802,7 +802,7 @@ def person_edit(request, person_id):
 
 
 class PersonDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
-                   DeleteViewContext):
+                   AMYDeleteView):
     model = Person
     permission_required = 'workshops.delete_person'
     success_url = reverse_lazy('all_persons')
@@ -1188,7 +1188,7 @@ def event_edit(request, slug):
 
 
 class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
-                  DeleteViewContext):
+                  AMYDeleteView):
     model = Event
     permission_required = 'workshops.delete_event'
     success_url = reverse_lazy('all_events')
@@ -1494,7 +1494,7 @@ def event_dismiss_metadata_changes(request, slug):
 
 
 class SponsorshipDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
-                        DeleteViewContext):
+                        AMYDeleteView):
     model = Sponsorship
     permission_required = 'workshops.delete_sponsorship'
 
@@ -1572,7 +1572,7 @@ class TaskUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
 
 
 class TaskDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
-                 DeleteViewContext):
+                 AMYDeleteView):
     model = Task
     permission_required = 'workshops.delete_task'
     success_url = reverse_lazy('all_tasks')
@@ -1583,7 +1583,7 @@ class TaskDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
 
 
 class AwardDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
-                 DeleteViewContext):
+                  AMYDeleteView):
     model = Award
     permission_required = 'workshops.delete_award'
 
@@ -2735,7 +2735,7 @@ class TodoItemUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
 
 
 class TodoDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
-                 DeleteViewContext):
+                 AMYDeleteView):
     model = TodoItem
     permission_required = 'workshops.delete_todoitem'
     pk_url_kwarg = 'todo_id'
@@ -3164,7 +3164,7 @@ class TrainingProgressUpdate(RedirectSupportMixin, OnlyForAdminsMixin,
 
 
 class TrainingProgressDelete(RedirectSupportMixin, OnlyForAdminsMixin,
-                             DeleteViewContext):
+                             AMYDeleteView):
     model = TrainingProgress
     success_url = reverse_lazy('all_trainees')
 
