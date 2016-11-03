@@ -1,4 +1,5 @@
 import re
+import unittest
 
 from django import forms
 from django.apps import AppConfig
@@ -15,7 +16,17 @@ class PyDataConfig(AppConfig):
 
         from workshops.forms import PersonForm, TaskForm, SponsorshipForm
         from workshops.models import Person, Task, Organization, Sponsorship
+        from workshops.test.base import TestBase
+        from workshops.test.test_sponsorship import TestSponsorshipViews
         from workshops.views import EventCreate, PersonCreate
+
+        # Add fixtures within pydata app to testing database
+        TestBase.fixtures = [
+            'workshops_organization.json', 'workshops_role.json']
+
+        # Test for adding sponsor w/o amount should fail
+        TestSponsorshipViews.test_add_sponsor_minimal = unittest.expectedFailure(
+            TestSponsorshipViews.test_add_sponsor_minimal)
 
         # Add choices to the `amount` field
         Sponsorship.LEVELS = (
