@@ -1,13 +1,33 @@
 sudo: false
+
 language: python
+
 cache: pip 
+
 python:
   - 3.5
+
+env:
+  - AMY_ENABLE_PYDATA=true
+    AMY_PYDATA_USERNAME=username
+    AMY_PYDATA_PASSWORD=password
+  - CHECK_MIGRATION=true
+
 install:
   - pip install -r requirements.txt
   - pip install coveralls
+
+before_script:
+  - if [[ $CHECK_MIGRATION == true ]]; then
+      python manage.py makemigrations --dry-run -e;
+      export STATUS_CODE=$?;
+      if [[ "$STATUS_CODE" == "0" ]]; then
+        exit 1;
+      fi;
+    fi;
+
 script:
-  - python manage.py makemigrations --dry-run -e; export STATUS_CODE=$?; if [[ "$STATUS_CODE" == "0" ]]; then exit 1; fi
   - coverage run --source=amy,api,workshops manage.py test
+
 after_success:
   coveralls
