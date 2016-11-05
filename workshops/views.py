@@ -37,12 +37,26 @@ from github.GithubException import GithubException
 from reversion.models import Revision
 from reversion.revisions import get_for_object
 
+from api.filters import (
+    InstructorsOverTimeFilter,
+    WorkshopsOverTimeFilter,
+    LearnersOverTimeFilter,
+)
 from api.views import ReportsViewSet
 from workshops.filters import (
-    EventFilter, OrganizationFilter, MembershipFilter, PersonFilter, TaskFilter, AirportFilter,
-    EventRequestFilter, BadgeAwardsFilter, InvoiceRequestFilter,
-    EventSubmissionFilter, DCSelfOrganizedEventRequestFilter,
-    TraineeFilter, TrainingRequestFilter,
+    EventFilter,
+    OrganizationFilter,
+    MembershipFilter,
+    PersonFilter,
+    TaskFilter,
+    AirportFilter,
+    EventRequestFilter,
+    BadgeAwardsFilter,
+    InvoiceRequestFilter,
+    EventSubmissionFilter,
+    DCSelfOrganizedEventRequestFilter,
+    TraineeFilter,
+    TrainingRequestFilter,
 )
 from workshops.forms import (
     SearchForm,
@@ -68,7 +82,6 @@ from workshops.forms import (
     TodoFormSet,
     EventsSelectionForm,
     EventsMergeForm,
-    InvoiceRequestForm,
     InvoiceRequestUpdateForm,
     EventSubmitFormNoCaptcha,
     PersonsMergeForm,
@@ -2185,8 +2198,11 @@ def export_members(request):
 @admin_required
 def workshops_over_time(request):
     '''Export JSON of count of workshops vs. time.'''
+    endpoint = '{}?{}'.format(reverse('api:reports-workshops-over-time'),
+                              request.GET.urlencode())
     context = {
-        'api_endpoint': reverse('api:reports-workshops-over-time'),
+        'api_endpoint': endpoint,
+        'filter': WorkshopsOverTimeFilter(request.GET),
         'title': 'Workshops over time',
     }
     return render(request, 'workshops/time_series.html', context)
@@ -2195,8 +2211,11 @@ def workshops_over_time(request):
 @admin_required
 def learners_over_time(request):
     '''Export JSON of count of learners vs. time.'''
+    endpoint = '{}?{}'.format(reverse('api:reports-learners-over-time'),
+                              request.GET.urlencode())
     context = {
-        'api_endpoint': reverse('api:reports-learners-over-time'),
+        'api_endpoint': endpoint,
+        'filter': LearnersOverTimeFilter(request.GET),
         'title': 'Learners over time',
     }
     return render(request, 'workshops/time_series.html', context)
@@ -2205,8 +2224,11 @@ def learners_over_time(request):
 @admin_required
 def instructors_over_time(request):
     '''Export JSON of count of instructors vs. time.'''
+    endpoint = '{}?{}'.format(reverse('api:reports-instructors-over-time'),
+                              request.GET.urlencode())
     context = {
-        'api_endpoint': reverse('api:reports-instructors-over-time'),
+        'api_endpoint': endpoint,
+        'filter': InstructorsOverTimeFilter(request.GET),
         'title': 'Instructors over time',
     }
     return render(request, 'workshops/time_series.html', context)

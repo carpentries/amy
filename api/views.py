@@ -53,7 +53,14 @@ from .serializers import (
     PersonSerializer,
 )
 
-from .filters import EventFilter, TaskFilter, PersonFilter
+from .filters import (
+    EventFilter,
+    TaskFilter,
+    PersonFilter,
+    InstructorsOverTimeFilter,
+    WorkshopsOverTimeFilter,
+    LearnersOverTimeFilter,
+)
 
 
 class IsAdmin(BasePermission):
@@ -239,8 +246,8 @@ class ReportsViewSet(ViewSet):
     are missing, because we want to still have the power and simplicity of
     a router."""
     permission_classes = (IsAuthenticated, IsAdmin)
-    queryset1 = Event.objects.past_events().order_by('start')
-    queryset2 = Award.objects.order_by('awarded')
+    event_queryset = Event.objects.past_events().order_by('start')
+    award_queryset = Award.objects.order_by('awarded')
 
     renderer_classes = (BrowsableAPIRenderer, JSONRenderer, CSVRenderer,
                         YAMLRenderer)
@@ -283,9 +290,12 @@ class ReportsViewSet(ViewSet):
 
     @list_route(methods=['GET'])
     def workshops_over_time(self, request, format=None):
-        """Cumulative number of workshops run by Software Carpentry over
-        time."""
-        qs = self.queryset1.annotate(count=Count('id'))
+        """Cumulative number of workshops run by Software Carpentry and other
+        carpentries over time."""
+        qs = self.event_queryset
+        qs = WorkshopsOverTimeFilter(request.GET, queryset=qs).qs
+        qs = qs.annotate(count=Count('id'))
+
         serializer = WorkshopsOverTimeSerializer(qs, many=True)
 
         # run a cumulative generator over the data
@@ -297,9 +307,12 @@ class ReportsViewSet(ViewSet):
 
     @list_route(methods=['GET'])
     def learners_over_time(self, request, format=None):
-        """Cumulative number of learners attending Software-Carpentry workshops
-        over time."""
-        qs = self.queryset1.annotate(count=Sum('attendance'))
+        """Cumulative number of learners attending Software-Carpentry and other
+        carpentries' workshops over time."""
+        qs = self.event_queryset
+        qs = LearnersOverTimeFilter(request.GET, queryset=qs).qs
+        qs = qs.annotate(count=Sum('attendance'))
+
         # we reuse the serializer because it works here too
         serializer = WorkshopsOverTimeSerializer(qs, many=True)
 
@@ -317,11 +330,12 @@ class ReportsViewSet(ViewSet):
 
         badges = Badge.objects.instructor_badges()
 
-        qs = Person.objects.filter(badges__in=badges)  \
-                           .annotate(date=Min('award__awarded'),
-                                     count=Value(1,
-                                                 output_field=IntegerField())) \
-                           .order_by('date')
+        qs = Person.objects.filter(badges__in=badges)
+        filter = InstructorsOverTimeFilter(request.GET, queryset=qs)
+        qs = filter.qs.annotate(date=Min('award__awarded'),
+                                count=Value(1,
+                                            output_field=IntegerField())) \
+                      .order_by('date')
 
         serializer = InstructorsOverTimeSerializer(qs, many=True)
 

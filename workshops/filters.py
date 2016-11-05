@@ -9,7 +9,6 @@ from workshops.forms import bootstrap_helper_filter
 from workshops.models import (
     Event,
     Organization,
-    Membership,
     Person,
     Airport,
     EventRequest,
