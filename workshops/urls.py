@@ -51,7 +51,7 @@ urlpatterns = [
         url(r'^merge/$', views.persons_merge, name='persons_merge'),
     ])),
     url(r'^person/(?P<person_id>\d+)/', include([
-        url(r'^$', views.person_details, name='person_details'),
+        url(r'^$', views.PersonDetails.as_view(), name='person_details'),
         url(r'^edit/$', views.person_edit, name='person_edit'),
         url(r'^delete/$', views.PersonDelete.as_view(), name='person_delete'),
         url(r'^permissions/$', views.PersonPermissions.as_view(), name='person_permissions'),

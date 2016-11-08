@@ -72,6 +72,7 @@
 
 <div class="row">
   <div class="col-sm-6">
+    {% with awards=person.award_set.all %}
     {% if awards %}
     <h5>Awards:</h5>
     <ul>
@@ -82,7 +83,9 @@
     {% else %}
     <h5>No awards.</h5>
     {% endif %}
+    {% endwith %}
 
+    {% with tasks=person.task_set.all %}
     {% if tasks %}
     <h5>Tasks:</h5>
     <ul>
@@ -106,9 +109,11 @@
     {% else %}
     <h5>No tasks.</h5>
     {% endif %}
+    {% endwith %}
   </div>
 
   <div class="col-sm-6">
+    {% with domains=person.domains.all %}
     {% if domains %}
     <h5>Knowledge domains:</h5>
     <ul>
@@ -119,7 +124,9 @@
     {% else %}
     <h5>No knowledge domains.</h5>
     {% endif %}
+    {% endwith %}
 
+    {% with lessons=person.lessons.all %}
     {% if lessons %}
     <h5>Lessons:</h5>
     <ul>
@@ -130,7 +137,9 @@
     {% else %}
     <h5>No lessons.</h5>
     {% endif %}
+    {% endwith %}
 
+    {% with languages=person.languages.all %}
     {% if languages %}
     <h5>Languages:</h5>
     <ul>
@@ -141,6 +150,7 @@
     {% else %}
     <h5>No language preference.</h5>
     {% endif %}
+    {% endwith %}
   </div>
 </div>
 
