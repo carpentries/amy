@@ -101,7 +101,7 @@ urlpatterns = [
 
     url(r'^badges/$', views.AllBadges.as_view(), name='all_badges'),
     url(r'^badge/(?P<badge_name>[\w\.=-]+)/', include([
-        url(r'^$', views.badge_details, name='badge_details'),
+        url(r'^$', views.BadgeDetails.as_view(), name='badge_details'),
         url(r'^award/$', views.badge_award, name='badge_award'),
     ])),
 

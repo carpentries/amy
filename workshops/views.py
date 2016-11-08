@@ -1609,23 +1609,28 @@ class AllBadges(OnlyForAdminsMixin, AMYListView):
     title = 'All Badges'
 
 
-@admin_required
-def badge_details(request, badge_name):
-    '''List details of a particular badge, list people who were awarded it.'''
+class BadgeDetails(OnlyForAdminsMixin, AMYDetailView):
+    queryset = Badge.objects.all()
+    context_object_name = 'badge'
+    template_name = 'workshops/badge.html'
+    slug_field = 'name'
+    slug_url_kwarg = 'badge_name'
 
-    badge = get_object_or_404(Badge, name=badge_name)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
 
-    filter = BadgeAwardsFilter(
-        request.GET,
-        queryset=badge.award_set.select_related('event', 'person', 'badge')
-    )
-    awards = get_pagination_items(request, filter)
+        context['title'] = 'Airport {0}'.format(self.object)
+        filter = BadgeAwardsFilter(
+            self.request.GET,
+            queryset=self.object.award_set.select_related(
+                'event', 'person', 'badge')
+        )
+        context['filter'] = filter
 
-    context = {'title': 'Badge {0}'.format(badge),
-               'badge': badge,
-               'awards': awards,
-               'filter': filter}
-    return render(request, 'workshops/badge.html', context)
+        awards = get_pagination_items(self.request, filter)
+        context['awards'] = awards
+
+        return context
 
 
 @admin_required
