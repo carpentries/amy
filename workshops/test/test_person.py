@@ -10,6 +10,7 @@ from django.core.urlresolvers import reverse
 from django.core.validators import ValidationError
 from django.contrib.auth.models import Permission, Group
 
+from workshops.filters import filter_taught_workshops
 from ..forms import PersonForm, PersonsMergeForm
 from ..models import (
     Person, Task, Qualification, Award, Role, Event, KnowledgeDomain, Badge,
@@ -446,6 +447,48 @@ class TestPerson(TestBase):
 
         self.assertEqual(set(p1.get_training_tasks()),
                          {t1})
+
+    def test_awarding_instructor_badge_workflow(self):
+        """Test that you can click "SWC" and "DC" labels in "eligible"
+        column in trainees list view. When you click them, you're moved to
+        the view where you can edit person's awards. "Award" and "event"
+        field should be prefilled in. Also test if you're moved back to
+        trainees view after adding the badge."""
+
+        trainee = Person.objects.create_user(
+            username='trainee', personal='Bob',
+            family='Smith', email='bob.smith@example.com')
+        host = Organization.objects.create(domain='example.com',
+                                           fullname='Test Organization')
+        ttt, _ = Tag.objects.get_or_create(name='TTT')
+        learner, _ = Role.objects.get_or_create(name='learner')
+        training = Event.objects.create(slug='2016-08-10-training', host=host)
+        training.tags.add(ttt)
+        Task.objects.create(person=trainee, event=training, role=learner)
+
+        trainees = self.app.get(reverse('all_trainees'), user='admin')
+
+        # Test workflow starting from clicking at "SWC" label
+        swc_res = trainees.click('^SWC$')
+        self.assertSelected(swc_res.forms['person-awards-form']['award-badge'],
+                            'Software Carpentry Instructor')
+        self.assertEqual(swc_res.forms['person-awards-form']['award-event_0'].value,
+                         '2016-08-10-training')
+        swc_res = swc_res.forms['person-awards-form'].submit().follow()
+        self.assertIn("Bob Smith &lt;bob.smith@example.com&gt; was awarded "
+                      "Software Carpentry Instructor badge.", swc_res)
+        self.assertEqual(trainees.request.url, swc_res.request.url)
+
+        # Test workflow starting from clicking at "DC" label
+        dc_res = trainees.click('^DC$')
+        self.assertSelected(dc_res.forms['person-awards-form']['award-badge'],
+                            'Data Carpentry Instructor')
+        self.assertEqual(dc_res.forms['person-awards-form']['award-event_0'].value,
+                         '2016-08-10-training')
+        dc_res = dc_res.forms['person-awards-form'].submit().follow()
+        self.assertIn("Bob Smith &lt;bob.smith@example.com&gt; was awarded "
+                      "Data Carpentry Instructor badge.", dc_res)
+        self.assertEqual(trainees.request.url, dc_res.request.url)
 
 
 class TestPersonPassword(TestBase):
@@ -896,12 +939,17 @@ class TestGetMissingSWCInstructorRequirements(TestBase):
         TrainingProgress.objects.create(trainee=self.person, state='p',
                                         requirement=self.swc_demo)
 
-        self.assertEqual(self.person.get_missing_swc_instructor_requirements(),
-                         set())
+        person = Person.objects.annotate_with_instructor_eligibility() \
+                               .get(username='person')
+        self.assertEqual(person.get_missing_swc_instructor_requirements(), [])
 
     def test_some_requirements_are_fulfilled(self):
+        # Homework was accepted, the second time.
+        TrainingProgress.objects.create(trainee=self.person, state='f',
+                                        requirement=self.swc_homework)
         TrainingProgress.objects.create(trainee=self.person, state='p',
                                         requirement=self.swc_homework)
+        # Dc-demo records should be ignored
         TrainingProgress.objects.create(trainee=self.person, state='p',
                                         requirement=self.dc_demo)
         # Not passed progress should be ignored.
@@ -914,12 +962,16 @@ class TestGetMissingSWCInstructorRequirements(TestBase):
                                         requirement=self.training,
                                         discarded=True)
 
-        self.assertEqual(self.person.get_missing_swc_instructor_requirements(),
-                         {'Training', 'Discussion', 'SWC Demo'})
+        person = Person.objects.annotate_with_instructor_eligibility() \
+            .get(username='person')
+        self.assertEqual(person.get_missing_swc_instructor_requirements(),
+                         ['Training', 'Discussion', 'SWC Demo'])
 
     def test_none_requirement_is_fulfilled(self):
-        self.assertEqual(self.person.get_missing_swc_instructor_requirements(),
-                         {'Training', 'SWC Homework', 'Discussion', 'SWC Demo'})
+        person = Person.objects.annotate_with_instructor_eligibility() \
+                               .get(username='person')
+        self.assertEqual(person.get_missing_swc_instructor_requirements(),
+                         ['Training', 'SWC Homework', 'Discussion', 'SWC Demo'])
 
 
 class TestGetMissingDCInstructorRequirements(TestBase):
@@ -943,13 +995,17 @@ class TestGetMissingDCInstructorRequirements(TestBase):
         TrainingProgress.objects.create(trainee=self.person, state='p',
                                         requirement=self.dc_demo)
 
-        self.assertEqual(self.person.get_missing_dc_instructor_requirements(),
-                         set())
+        person = Person.objects.annotate_with_instructor_eligibility() \
+                               .get(username='person')
+        self.assertEqual(person.get_missing_dc_instructor_requirements(), [])
 
     def test_some_requirements_are_fulfilled(self):
+        # Homework was accepted, the second time.
+        TrainingProgress.objects.create(trainee=self.person, state='f',
+                                        requirement=self.dc_homework)
         TrainingProgress.objects.create(trainee=self.person, state='p',
                                         requirement=self.dc_homework)
-
+        # Swc-demo should be ignored
         TrainingProgress.objects.create(trainee=self.person, state='p',
                                         requirement=self.swc_demo)
         # Not passed progress should be ignored.
@@ -962,9 +1018,61 @@ class TestGetMissingDCInstructorRequirements(TestBase):
                                         requirement=self.training,
                                         discarded=True)
 
-        self.assertEqual(self.person.get_missing_dc_instructor_requirements(),
-                         {'Training', 'Discussion', 'DC Demo'})
+        person = Person.objects.annotate_with_instructor_eligibility() \
+                               .get(username='person')
+        self.assertEqual(person.get_missing_dc_instructor_requirements(),
+                         ['Training', 'Discussion', 'DC Demo'])
 
     def test_none_requirement_is_fulfilled(self):
-        self.assertEqual(self.person.get_missing_dc_instructor_requirements(),
-                         {'Training', 'DC Homework', 'Discussion', 'DC Demo'})
+        person = Person.objects.annotate_with_instructor_eligibility() \
+                               .get(username='person')
+        self.assertEqual(person.get_missing_dc_instructor_requirements(),
+                         ['Training', 'DC Homework', 'Discussion', 'DC Demo'])
+
+
+class TestFilterTaughtWorkshops(TestBase):
+    def setUp(self):
+        self._setUpAirports()
+        self._setUpBadges()
+        self._setUpLessons()
+        self._setUpTags()
+        self._setUpRoles()
+        self._setUpInstructors()
+        self._setUpNonInstructors()
+
+    def test_bug_975(self):
+        test_host = Organization.objects.create(domain='example.com',
+                                                fullname='Test Organization')
+        ttt = Tag.objects.get(name='TTT')
+        swc = Tag.objects.get(name='SWC')
+
+        e1 = Event.objects.create(slug='ttt-event', host=test_host)
+        e1.tags.add(ttt)
+        e2 = Event.objects.create(slug='swc-event', host=test_host)
+        e2.tags.add(swc)
+        e3 = Event.objects.create(slug='second-ttt-event', host=test_host)
+        e3.tags.add(ttt)
+
+        Task.objects.create(role=Role.objects.get(name='instructor'),
+                            person=self.hermione, event=e1)
+        Task.objects.create(role=Role.objects.get(name='learner'),
+                            person=self.harry, event=e1)
+        Task.objects.create(role=Role.objects.get(name='instructor'),
+                            person=self.ron, event=e2)
+        Task.objects.create(role=Role.objects.get(name='learner'),
+                            person=self.spiderman, event=e2)
+        Task.objects.create(role=Role.objects.get(name='instructor'),
+                            person=self.hermione, event=e3)
+
+        qs = Person.objects.all()
+        filtered = filter_taught_workshops(qs, [ttt.pk])
+
+        # - Hermione should be listed only once even though she was an
+        # instructor at two TTT events.
+        #
+        # - Harry should not be listed, because he was a learner, not an
+        # instructor.
+        #
+        # - Ron and Spiderman should not be listed, because they didn't
+        # participated in a TTT event.
+        self.assertSequenceEqual(filtered, [self.hermione])

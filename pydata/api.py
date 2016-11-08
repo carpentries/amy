@@ -4,6 +4,7 @@ from urllib.parse import urljoin, urlparse
 
 import requests
 from django.conf import settings
+from django.db.models import Q
 
 from workshops.models import (
     Person,
@@ -118,14 +119,18 @@ class SponsorshipAPIClient(BaseAPIClient):
     model = Sponsorship
 
     def parse(self, sponsor):
+        domain = urlparse(sponsor['external_url']).netloc
+        organization = Organization.objects.filter(
+            Q(fullname=sponsor['name']) | Q(domain=domain)
+        ).first()
+        if not organization:
+            organization = Organization.objects.create(
+                fullname=sponsor['name'],
+                domain=domain,
+                notes=sponsor['annotation'],
+            )
         return Sponsorship(
-            organization=Organization.objects.get_or_create(
-                domain=urlparse(sponsor['external_url']).netloc,
-                defaults={
-                    'fullname': sponsor['name'],
-                    'notes': sponsor['annotation'],
-                },
-            )[0],
+            organization=organization,
             event=self.event,
             amount=sponsor['level']['cost'],
             contact=Person.objects.get_or_create(

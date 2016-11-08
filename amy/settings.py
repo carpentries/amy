@@ -138,14 +138,17 @@ INSTALLED_APPS = (
     'reversion',
     'rest_framework',
     'api',
+    'extforms',
     'captcha',
     'compressor',
     'social.apps.django_app.default',
+    'debug_toolbar',
 )
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
 MIDDLEWARE_CLASSES = (
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'reversion.middleware.RevisionMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -340,3 +343,7 @@ if DEBUG and 'test' in sys.argv:
     PASSWORD_HASHERS = (
         'django.contrib.auth.hashers.MD5PasswordHasher',
     )
+
+# Debug Toolbar
+DEBUG_TOOLBAR_PATCH_SETTINGS = False
+INTERNAL_IPS = ['127.0.0.1', '::1']

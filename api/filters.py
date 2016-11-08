@@ -1,6 +1,7 @@
 import django_filters
 from rest_framework import filters
 
+from workshops.filters import AMYFilterSet
 from workshops.models import Event, Task, Tag, Person, Badge
 
 
@@ -75,3 +76,44 @@ class PersonFilter(filters.FilterSet):
         elif order_value == '-lastname':
             return ['-family', '-middle', '-personal']
         return super().get_order_by(order_value)
+
+
+class InstructorsOverTimeFilter(AMYFilterSet):
+    badges = django_filters.ModelMultipleChoiceFilter(
+        queryset=Badge.objects.instructor_badges(),
+        label='Badges',
+        lookup_type='in',
+    )
+
+    class Meta:
+        model = Person
+        fields = [
+            'badges',
+        ]
+
+
+class WorkshopsOverTimeFilter(AMYFilterSet):
+    tags = django_filters.ModelMultipleChoiceFilter(
+        queryset=Tag.objects.all(),
+        label='Events with at least one of the following tags:',
+    )
+
+    class Meta:
+        model = Event
+        fields = [
+            'tags',
+        ]
+
+
+class LearnersOverTimeFilter(AMYFilterSet):
+    tags = django_filters.ModelMultipleChoiceFilter(
+        queryset=Tag.objects.all(),
+        label='Events with all the following tags:',
+        conjoined=True,
+    )
+
+    class Meta:
+        model = Event
+        fields = [
+            'tags',
+        ]

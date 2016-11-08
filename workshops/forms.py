@@ -3,13 +3,16 @@ import re
 from captcha.fields import ReCaptchaField
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Div, HTML, Submit, Reset, Field
+from crispy_forms.layout import Layout, Div, HTML, Submit, Button, Field
 from crispy_forms.bootstrap import AccordionGroup, Accordion
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.forms import (
-    HiddenInput, CheckboxSelectMultiple, TextInput, modelformset_factory,
+    HiddenInput,
+    CheckboxSelectMultiple,
+    TextInput,
+    modelformset_factory,
     RadioSelect,
     URLField,
 )
@@ -19,9 +22,20 @@ from selectable import forms as selectable
 
 from workshops import lookups
 from workshops.models import (
-    Award, Event, Lesson, Person, Task, Airport, Organization,
-    EventRequest, ProfileUpdateRequest, TodoItem, Membership,
-    Sponsorship, InvoiceRequest, EventSubmission,
+    Award,
+    Event,
+    Lesson,
+    Person,
+    Task,
+    Airport,
+    Organization,
+    EventRequest,
+    ProfileUpdateRequest,
+    TodoItem,
+    Membership,
+    Sponsorship,
+    InvoiceRequest,
+    EventSubmission,
     TrainingRequest,
     DCSelfOrganizedEventRequest,
     TrainingProgress,
@@ -40,11 +54,12 @@ class BootstrapHelper(FormHelper):
                  wider_labels=False,
                  add_submit_button=True,
                  add_delete_button=False,
-                 add_reset_button=True,
+                 add_cancel_button=True,
                  additional_form_class='',
                  form_tag=True,
                  display_labels=True,
-                 form_action=None):
+                 form_action=None,
+                 form_id=None):
         """
         `duplicate_buttons_on_top` -- Whether submit buttons should be
         displayed on both top and bottom of the form.
@@ -103,9 +118,11 @@ class BootstrapHelper(FormHelper):
                 css_class='btn-danger',
                 style='float: right;'))
 
-        if add_reset_button:
-            self.add_input(
-                Reset('reset', 'Reset', css_class='pull-right btn-danger'))
+        if add_cancel_button:
+            self.add_input(Button(
+                'cancel', 'Cancel',
+                css_class='btn-default pull-right',
+                onclick='window.history.back()'))
 
         self.form_class = 'form-horizontal ' + additional_form_class
 
@@ -114,11 +131,16 @@ class BootstrapHelper(FormHelper):
         if form_action is not None:
             self.form_action = form_action
 
+        if form_id is not None:
+            self.form_id = form_id
+
+
 
 class BootstrapHelperFilter(FormHelper):
     """A differently shaped forms (more space-efficient) for use in sidebar as
     filter forms."""
     form_method = 'get'
+    form_id = 'filter-form'
 
     def __init__(self, form=None):
         super().__init__(form)
@@ -284,8 +306,11 @@ class SearchForm(forms.Form):
     in_airports = forms.BooleanField(label='in airports',
                                      required=False,
                                      initial=True)
+    in_training_requests = forms.BooleanField(label='in training requests',
+                                              required=False,
+                                              initial=True)
 
-    helper = BootstrapHelper(add_reset_button=False)
+    helper = BootstrapHelper(add_cancel_button=False)
 
 
 class DebriefForm(forms.Form):
@@ -458,7 +483,7 @@ class PersonForm(forms.ModelForm):
         widget=selectable.AutoComboboxSelectMultipleWidget,
     )
 
-    helper = bootstrap_helper
+    helper = BootstrapHelper(form_id='person-edit-form')
 
     class Meta:
         model = Person
@@ -641,7 +666,7 @@ class PersonAwardForm(forms.ModelForm):
         widget=selectable.AutoComboboxSelectWidget,
     )
 
-    helper = BootstrapHelper(submit_label='Add')
+    helper = BootstrapHelper(submit_label='Add', form_id='person-awards-form')
 
     class Meta:
         model = Award
@@ -658,7 +683,7 @@ class PersonTaskForm(forms.ModelForm):
         widget=selectable.AutoComboboxSelectWidget,
     )
 
-    helper = BootstrapHelper(submit_label='Add')
+    helper = BootstrapHelper(submit_label='Add', form_id='person-tasks-form')
 
     class Meta:
         model = Task
@@ -687,6 +712,13 @@ class OrganizationForm(forms.ModelForm):
 class MembershipForm(forms.ModelForm):
     helper = bootstrap_helper
 
+    organization = selectable.AutoCompleteSelectField(
+        lookup_class=lookups.OrganizationLookup,
+        label='Organization',
+        required=True,
+        widget=selectable.AutoComboboxSelectWidget,
+    )
+
     class Meta:
         model = Membership
         fields = '__all__'
@@ -694,7 +726,6 @@ class MembershipForm(forms.ModelForm):
 
 
 class SponsorshipForm(forms.ModelForm):
-
     organization = selectable.AutoCompleteSelectField(
         lookup_class=lookups.OrganizationLookup,
         label='Organization',
@@ -1266,7 +1297,8 @@ class BulkAddTrainingProgressForm(forms.ModelForm):
 
     helper = BootstrapHelper(additional_form_class='training-progress',
                              submit_label='Add',
-                             form_tag=False)
+                             form_tag=False,
+                             add_cancel_button=False)
     helper.layout = Layout(
         # no 'trainees' -- you should take care of generating it manually in
         # the template where this form is used
@@ -1302,7 +1334,8 @@ class BulkDiscardProgressesForm(forms.Form):
 
     helper = BootstrapHelper(add_submit_button=False,
                              form_tag=False,
-                             display_labels=False)
+                             display_labels=False,
+                             add_cancel_button=False)
 
     SUBMIT_POPOVER = '''<p>Discarded progress will be displayed in the following
     way: <span class='label label-default'><strike> Discarded
@@ -1333,9 +1366,6 @@ class BulkDiscardProgressesForm(forms.Form):
              'Mail selected trainees</a>'),
     )
 
-    class Meta:
-        model = TrainingProgress
-
 
 class BulkChangeTrainingRequestForm(forms.Form):
     """Form used to bulk discard training requests or bulk unmatch trainees
@@ -1346,7 +1376,8 @@ class BulkChangeTrainingRequestForm(forms.Form):
 
     helper = BootstrapHelper(add_submit_button=False,
                              form_tag=False,
-                             display_labels=False)
+                             display_labels=False,
+                             add_cancel_button=False)
     helper.layout = Layout(
         # no 'requests' -- you should take care of generating it manually in
         # the template where this form is used
@@ -1398,7 +1429,8 @@ class BulkMatchTrainingRequestForm(forms.Form):
     )
 
     helper = BootstrapHelper(add_submit_button=False,
-                             form_tag=False)
+                             form_tag=False,
+                             add_cancel_button=False)
     helper.layout = Layout(
         'event',
     )
@@ -1426,7 +1458,8 @@ class BulkMatchTrainingRequestForm(forms.Form):
                                   'and match with a trainee.')
 
 
-class AcceptTrainingRequestForm(forms.Form):
+class MatchTrainingRequestForm(forms.Form):
+    """Form used to match a training request to a Person."""
     person = selectable.AutoCompleteSelectField(
         lookup_class=lookups.PersonLookup,
         label='Trainee Account',
@@ -1434,16 +1467,17 @@ class AcceptTrainingRequestForm(forms.Form):
         widget=selectable.AutoComboboxSelectWidget,
     )
 
-    helper = BootstrapHelper(add_submit_button=False)
+    helper = BootstrapHelper(add_submit_button=False,
+                             add_cancel_button=False)
     helper.layout = Layout(
         'person',
 
         FormActions(
             Submit('match-selected-person',
-                   'Accept & match to selected trainee account'),
+                   'Match to selected trainee account'),
             HTML('&nbsp;<strong>OR</strong>&nbsp;&nbsp;'),
             Submit('create-new-person',
-                   'Accept & create new trainee account'),
+                   'Create new trainee account'),
         )
     )
 
@@ -1480,3 +1514,16 @@ class SendHomeworkForm(forms.ModelForm):
         fields = [
             'url',
         ]
+
+
+class AllActivityOverTimeForm(forms.Form):
+    start = forms.DateField(
+        label='Begin date as YYYY-MM-DD',
+        input_formats=['%Y-%m-%d', ],
+    )
+    end = forms.DateField(
+        label='End date as YYYY-MD-DD',
+        input_formats=['%Y-%m-%d', ],
+    )
+
+    helper = BootstrapHelper(use_get_method=True)

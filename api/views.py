@@ -1,7 +1,7 @@
 import datetime
 from itertools import accumulate
 
-from django.db.models import Count, Sum, Case, F, When, Value, IntegerField
+from django.db.models import Count, Sum, Case, F, When, Value, IntegerField, Min
 from rest_framework import viewsets
 from rest_framework.decorators import list_route
 from rest_framework.filters import DjangoFilterBackend
@@ -53,7 +53,20 @@ from .serializers import (
     PersonSerializer,
 )
 
-from .filters import EventFilter, TaskFilter, PersonFilter
+from .filters import (
+    EventFilter,
+    TaskFilter,
+    PersonFilter,
+    InstructorsOverTimeFilter,
+    WorkshopsOverTimeFilter,
+    LearnersOverTimeFilter,
+)
+
+
+class IsAdmin(BasePermission):
+    """This permission allows only admin users to view the API content."""
+    def has_permission(self, request, view):
+        return is_admin(request.user)
 
 
 class IsAdmin(BasePermission):
@@ -239,8 +252,8 @@ class ReportsViewSet(ViewSet):
     are missing, because we want to still have the power and simplicity of
     a router."""
     permission_classes = (IsAuthenticated, IsAdmin)
-    queryset1 = Event.objects.past_events().order_by('start')
-    queryset2 = Award.objects.order_by('awarded')
+    event_queryset = Event.objects.past_events().order_by('start')
+    award_queryset = Award.objects.order_by('awarded')
 
     renderer_classes = (BrowsableAPIRenderer, JSONRenderer, CSVRenderer,
                         YAMLRenderer)
@@ -260,11 +273,13 @@ class ReportsViewSet(ViewSet):
             prev_ = next(it)
         except StopIteration:
             return
+        next_ = None
         for next_ in it:
             if prev_['date'] != next_['date']:
                 yield prev_
             prev_ = next_
-        yield next_
+        if next_ is not None:
+            yield next_
 
     def listify(self, iterable, request, format=None):
         """Some renderers require lists instead of any iterables for rendering.
@@ -281,9 +296,12 @@ class ReportsViewSet(ViewSet):
 
     @list_route(methods=['GET'])
     def workshops_over_time(self, request, format=None):
-        """Cumulative number of workshops run by Software Carpentry over
-        time."""
-        qs = self.queryset1.annotate(count=Count('id'))
+        """Cumulative number of workshops run by Software Carpentry and other
+        carpentries over time."""
+        qs = self.event_queryset
+        qs = WorkshopsOverTimeFilter(request.GET, queryset=qs).qs
+        qs = qs.annotate(count=Count('id'))
+
         serializer = WorkshopsOverTimeSerializer(qs, many=True)
 
         # run a cumulative generator over the data
@@ -295,9 +313,12 @@ class ReportsViewSet(ViewSet):
 
     @list_route(methods=['GET'])
     def learners_over_time(self, request, format=None):
-        """Cumulative number of learners attending Software-Carpentry workshops
-        over time."""
-        qs = self.queryset1.annotate(count=Sum('attendance'))
+        """Cumulative number of learners attending Software-Carpentry and other
+        carpentries' workshops over time."""
+        qs = self.event_queryset
+        qs = LearnersOverTimeFilter(request.GET, queryset=qs).qs
+        qs = qs.annotate(count=Sum('attendance'))
+
         # we reuse the serializer because it works here too
         serializer = WorkshopsOverTimeSerializer(qs, many=True)
 
@@ -312,9 +333,16 @@ class ReportsViewSet(ViewSet):
     def instructors_over_time(self, request, format=None):
         """Cumulative number of instructor appearances on workshops over
         time."""
+
         badges = Badge.objects.instructor_badges()
-        qs = self.queryset2.filter(badge__in=badges) \
-                           .annotate(count=Count('person__id')).distinct()
+
+        qs = Person.objects.filter(badges__in=badges)
+        filter = InstructorsOverTimeFilter(request.GET, queryset=qs)
+        qs = filter.qs.annotate(date=Min('award__awarded'),
+                                count=Value(1,
+                                            output_field=IntegerField())) \
+                      .order_by('date')
+
         serializer = InstructorsOverTimeSerializer(qs, many=True)
 
         # run a cumulative generator over the data
@@ -378,6 +406,14 @@ class ReportsViewSet(ViewSet):
             start=request.query_params.get('start', None),
             end=request.query_params.get('end', None))
 
+        data = self.get_all_activity_over_time(start, end)
+        data['missing']['attendance'] = self.listify(
+            data['missing']['attendance'], request, format=format)
+        data['missing']['instructors'] = self.listify(
+            data['missing']['instructors'], request, format=format)
+        return Response(data)
+
+    def get_all_activity_over_time(self, start, end):
         events_qs = Event.objects.filter(start__gte=start, start__lte=end)
         swc_tag = Tag.objects.get(name='SWC')
         dc_tag = Tag.objects.get(name='DC')
@@ -414,10 +450,6 @@ class ReportsViewSet(ViewSet):
         dc_total_learners = dc_total_learners['count']
 
         # Workshops missing any of this data.
-        # There's no point in using hyperlinks here, because it would:
-        # a) require using reverse() unless we somehow managed to switch to
-        #    serializer for this view
-        # b) make JS part even harder (what is available right now just works)
         missing_attendance = events_qs.filter(attendance=None) \
                                       .values_list('slug', flat=True)
         missing_instructors = events_qs.annotate(
@@ -430,16 +462,26 @@ class ReportsViewSet(ViewSet):
             )
         ).filter(instructors=0).values_list('slug', flat=True)
 
-        return Response({
+        return {
             'start': start,
             'end': end,
             'workshops': {
                 'SWC': swc_workshops.count(),
                 'DC': dc_workshops.count(),
+                # This dictionary is traversed in a template where we cannot
+                # write "{{ data.workshops.SWC,DC }}", because commas are
+                # disallowed in templates. Therefore, we include
+                # swc_dc_workshops twice, under two different keys:
+                # - 'SWC,DC' - for backward compatibility,
+                # - 'SWC_or_DC' - so that you can access it in a template.
                 'SWC,DC': swc_dc_workshops,
+                'SWC_or_DC': swc_dc_workshops,
                 'WiSE': wise_workshops,
                 'TTT': ttt_workshops,
+                # We include self_organized_workshops twice, under two
+                # different keys, for the same reason as swc_dc_workshops.
                 'self-organized': self_organized_workshops,
+                'self_organized': self_organized_workshops,
             },
             'instructors': {
                 'SWC': {
@@ -456,14 +498,10 @@ class ReportsViewSet(ViewSet):
                 'DC': dc_total_learners,
             },
             'missing': {
-                # qs.values_list returns an iterator, so we need to listify it
-                # for YAML
-                'attendance': self.listify(missing_attendance, request,
-                                           format),
-                'instructors': self.listify(missing_instructors, request,
-                                            format),
+                'attendance': missing_attendance,
+                'instructors': missing_instructors,
             }
-        })
+        }
 
     def instructors_by_time_queryset(self, start, end):
         """Just a queryset to be reused in other view."""

@@ -107,7 +107,7 @@ class WorkshopsOverTimeSerializer(serializers.Serializer):
 
 
 class InstructorsOverTimeSerializer(serializers.Serializer):
-    date = serializers.DateField(format=None, source='awarded')
+    date = serializers.DateField(format=None)
     count = serializers.IntegerField()
 
 

@@ -1,0 +1,47 @@
+{% extends "base_nav_fluid_sidebar.html" %}
+
+{% load pagination %}
+
+{% block content %}
+  {% if perms.workshops.add_membership %}
+    <p><a href="{% url 'membership_add' %}" class="btn btn-success">New membership</a></p>
+  {% else %}
+    <p><a href="{% url 'membership_add' %}" class="btn btn-success disabled">New membership</a></p>
+  {% endif %}
+  {% if all_memberships %}
+    <table class="table table-striped">
+      <tr>
+        <th>organization</th>
+        <th>kind</th>
+        <th>start date</th>
+        <th>end date</th>
+        <th>contribution</th>
+        <th class="additional-links"></th>
+      </tr>
+      {% for membership in all_memberships %}
+        <tr>
+          <td>{{ membership.organization.fullname }}</td>
+          <td>{{ membership.get_variant_display }}</td>
+          <td>{{ membership.agreement_start|date:'Y-m-d' }}</td>
+          <td>{{ membership.agreement_end|date:'Y-m-d'}}</td>
+          <td>{{ membership.get_contribution_type_display }}</td>
+          <td>
+            <a href="{% url 'membership_details' membership.pk %}" title="View membership"><span class="glyphicon glyphicon-info-sign"></span></a>
+            &nbsp;
+            {% if perms.workshops.change_membership %}
+              <a href="{% url 'membership_edit' membership.pk %}" title="Edit membership"><span class="glyphicon glyphicon-pencil"></span></a>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </table>
+    {% pagination all_memberships %}
+    {% if perms.workshops.add_membership %}
+      <p><a href="{% url 'membership_add' %}" class="btn btn-success">New membership</a></p>
+    {% else %}
+      <p><a href="{% url 'membership_add' %}" class="btn btn-success disabled">New membership</a></p>
+    {% endif %}
+  {% else %}
+    <p>No memberships.</p>
+  {% endif %}
+{% endblock %}

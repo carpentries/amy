@@ -19,6 +19,7 @@ from workshops.models import (
     EventSubmission,
     DCSelfOrganizedEventRequest,
     TrainingRequest,
+    Membership,
 )
 
 EMPTY_SELECTION = (None, '---------')
@@ -172,6 +173,11 @@ class EventRequestFilter(AMYFilterSet):
 class OrganizationFilter(AMYFilterSet):
     country = AllCountriesFilter()
 
+    membership__variant = django_filters.MultipleChoiceFilter(
+        label='Memberships (current or past)',
+        choices=Membership.MEMBERSHIP_CHOICES,
+    )
+
     class Meta:
         model = Organization
         fields = [
@@ -187,12 +193,35 @@ def filter_taught_workshops(queryset, values):
     support `action` parameter as supposed, ie. with
     `action='filter_taught_workshops'` it doesn't call the method; instead it
     tries calling a string, which results in error."""
+
     if not values:
         return queryset
 
-    return queryset.filter(task__role__name='instructor') \
-                   .filter(task__event__tags__in=values) \
+    return queryset.filter(task__role__name='instructor',
+                           task__event__tags__in=values) \
                    .distinct()
+
+
+class MembershipFilter(AMYFilterSet):
+    organization_name = django_filters.CharFilter(
+        label='Organization name',
+        name='organization__fullname',
+        lookup_type='icontains',
+    )
+
+    MEMBERSHIP_CHOICES = (('', 'Any'),) + Membership.MEMBERSHIP_CHOICES
+    variant = django_filters.ChoiceFilter(choices=MEMBERSHIP_CHOICES)
+
+    CONTRIBUTION_CHOICES = (('', 'Any'),) + Membership.CONTRIBUTION_CHOICES
+    contribution_type = django_filters.ChoiceFilter(choices=CONTRIBUTION_CHOICES)
+
+    class Meta:
+        model = Membership
+        fields = [
+            'organization_name',
+            'variant',
+            'contribution_type',
+        ]
 
 
 class PersonFilter(AMYFilterSet):
@@ -261,6 +290,25 @@ def filter_trainees_by_training_request_presence(queryset, flag):
         return queryset.filter(trainingrequest__isnull=True)
 
 
+def filter_trainees_by_instructor_status(queryset, choice):
+    if choice == '':
+        return queryset
+    elif choice == 'swc-and-dc':
+        return queryset.filter(is_swc_instructor=True, is_dc_instructor=True)
+    elif choice == 'swc-or-dc':
+        return queryset.filter(Q(is_swc_instructor=True) |
+                               Q(is_dc_instructor=True))
+    elif choice == 'swc':
+        return queryset.filter(is_swc_instructor=True)
+    elif choice == 'dc':
+        return queryset.filter(is_dc_instructor=True)
+    elif choice == 'eligible':
+        return queryset.filter(Q(swc_eligible=True, is_swc_instructor=False) |
+                               Q(dc_eligible=True, is_dc_instructor=False))
+    else:  # choice == 'no'
+        return queryset.filter(is_swc_instructor=False, is_dc_instructor=False)
+
+
 def filter_trainees_by_training(queryset, training):
     if training is None:
         return queryset
@@ -290,14 +338,18 @@ class TraineeFilter(AMYFilterSet):
         action=filter_trainees_by_training_request_presence,
     )
 
-    is_swc_instructor = django_filters.BooleanFilter(
-        label='Is SWC Instructor?',
-        name='is_swc_instructor',
-    )
-
-    is_dc_instructor = django_filters.BooleanFilter(
-        label='Is DC Instructor?',
-        name='is_dc_instructor',
+    is_instructor = django_filters.ChoiceFilter(
+        label='Is SWC/DC instructor?',
+        action=filter_trainees_by_instructor_status,
+        choices=[
+            ('', 'Unknown'),
+            ('swc-and-dc', 'Both SWC and DC'),
+            ('swc-or-dc', 'SWC or DC '),
+            ('swc', 'SWC instructor'),
+            ('dc', 'DC instructor'),
+            ('eligible', 'No, but eligible to be certified'),
+            ('no', 'No'),
+        ]
     )
 
     training = django_filters.ModelChoiceFilter(
@@ -311,8 +363,7 @@ class TraineeFilter(AMYFilterSet):
             'search',
             'all_persons',
             'homework',
-            'is_swc_instructor',
-            'is_dc_instructor',
+            'is_instructor',
             'training',
         ]
         order_by = ["-last_login", "lastname", "-lastname", "firstname", "-firstname",
@@ -357,9 +408,11 @@ def filter_by_person(queryset, name):
         for token in tokens:
             queryset = queryset.filter(
                 Q(personal__icontains=token) |
+                Q(middle__icontains=token) |
                 Q(family__icontains=token) |
                 Q(email__icontains=token) |
                 Q(person__personal__icontains=token) |
+                Q(person__middle__icontains=token) |
                 Q(person__family__icontains=token) |
                 Q(person__email__icontains=token)
             )
@@ -375,14 +428,28 @@ def filter_affiliation(queryset, affiliation):
                        .distinct()
 
 
+def filter_training_requests_by_state(queryset, choice):
+    if choice == '':
+        return queryset.exclude(state='d')
+    else:
+        return queryset.filter(state=choice)
+
+
 class TrainingRequestFilter(AMYFilterSet):
     search = django_filters.CharFilter(
         label='Name or Email',
         action=filter_by_person,
     )
 
+    group_name = django_filters.CharFilter(
+        name='group_name',
+        lookup_type='icontains',
+        label='Group')
+
     state = django_filters.ChoiceFilter(
-        choices=(('', 'All'),) + TrainingRequest.STATES,
+        label='State',
+        choices=[('', 'Pending or accepted')] + TrainingRequest.STATES,
+        action=filter_training_requests_by_state,
     )
 
     matched = django_filters.ChoiceFilter(
@@ -406,6 +473,7 @@ class TrainingRequestFilter(AMYFilterSet):
         model = TrainingRequest
         fields = [
             'search',
+            'group_name',
             'state',
             'matched',
             'affiliation',

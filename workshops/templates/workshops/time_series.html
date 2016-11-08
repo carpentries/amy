@@ -1,4 +1,4 @@
-{% extends "base_nav_fixed.html" %}
+{% extends "base_nav_fluid_sidebar.html" %}
 
 {% load static %}
 
@@ -17,7 +17,7 @@
     <script src="{% static 'metrics-graphics/dist/metricsgraphics.js' %}"></script>
 
     <script type="text/javascript">
-        d3.json('{{ api_endpoint }}?format=json', function(data) {
+        d3.json('{{ api_endpoint }}&format=json', function(data) {
             data = MG.convert.date(data, 'date');
             MG.data_graphic({
                 title: "{{ title }}",
@@ -25,7 +25,7 @@
                 width: 800,
                 height: 600,
                 target: document.getElementById('chart'),
-                interpolate: 'linear',
+                interpolate: d3.curveLinear,
                 x_accessor: 'date',
                 y_accessor: 'count'
             });

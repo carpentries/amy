@@ -3,7 +3,6 @@
 {% load crispy_forms_tags %}
 {% load pagination %}
 {% load tags %}
-{% load training_progress %}
 
 {% block content %}
 
@@ -61,24 +60,10 @@
           <a href="{% url 'person_details' trainee.id %}">
             {{ trainee.get_full_name }}
           </a>
-          {% if trainee.email %} &lt;{{ trainee.email|urlize }}&gt; {% endif %}
+          {% if trainee.email %}<br /> &lt;{{ trainee.email|urlize }}&gt; {% endif %}
         </td>
         <td>
-          {% for progress in trainee.trainingprogress_set.all %}
-            <a href="{% url 'trainingprogress_edit' progress.id %}?next={{ request.get_full_path|urlencode }}"
-               class="{% progress_label progress %}"
-               data-toggle="popover"
-               data-content="{% progress_description progress %}<br />Click to edit or delete."
-               data-html="true">
-              {% if progress.discarded %}<strike>{% endif %}
-                {{ progress.requirement }}
-              {% if progress.discarded %}</strike>{% endif %}
-            </a>
-            &nbsp;
-          {% endfor %}
-          <a href="{% url 'trainingprogress_add' trainee.id %}?next={{ request.get_full_path|urlencode }}"
-             class="label label-default"
-             data-toggle="popover" data-content="Click to add new progress">+</a>
+          {% include "workshops/training_progresses_inline.html" with person=trainee %}
         </td>
         <td>
           {% for task in trainee.get_training_tasks %}
@@ -89,7 +74,7 @@
         </td>
         <td>
           {% for req in trainee.trainingrequest_set.all %}
-            <a href="{% url 'trainingrequest_details' req.pk %}">{{ req.created_at }}</a><br />
+            <a href="{% url 'trainingrequest_details' req.pk %}">{{ req.created_at|date:'Y-m-d H:i' }}</a><br />
           {% endfor %}
         </td>
         <td>
@@ -97,35 +82,41 @@
             <span class="label label-primary" data-toggle="popover"
                   data-content="This person is SWC instructor">SWC</span>
           {% elif trainee.get_missing_swc_instructor_requirements %}
-            <span class="label label-default" data-toggle="popover" data-html="true"
-                  data-content="
-                    Not eligible to be certified as Software Carpentry Instructor. Needs to pass:
-                      <ul>
-                        {% for requirement in trainee.get_missing_swc_instructor_requirements %}
-                          <li>{{ requirement }}</li>
-                        {% endfor %}
-                      </ul>
-                  ">SWC</span>
+            <a class="label label-default" data-toggle="popover" data-html="true"
+               data-content="
+                 Not eligible to be certified as Software Carpentry Instructor. Needs to pass:
+                   <ul>
+                     {% for requirement in trainee.get_missing_swc_instructor_requirements %}
+                       <li>{{ requirement }}</li>
+                     {% endfor %}
+                   </ul>
+                 Click to start awarding the badge.
+               "
+               href="{% url 'person_edit' trainee.pk %}?badge=swc-instructor&amp;find-training&amp;next={{ request.get_full_path|urlencode }}#awards">SWC</a>
           {% else %}
-            <span class="label label-success" data-toggle="popover"
-                  data-content="Eligible to be certified as Software Carpentry Instructor.">SWC</span>
+            <a class="label label-success" data-toggle="popover" data-html="true"
+               data-content="<p>Eligible to be certified as Software Carpentry Instructor.</p><p>Click to start awarding the badge.</p>"
+               href="{% url 'person_edit' trainee.pk %}?badge=swc-instructor&amp;find-training&amp;next={{ request.get_full_path|urlencode }}#awards">SWC</a>
           {% endif %}
           {% if trainee.is_dc_instructor %}
-            <span class="label label-primary" data-toggle="popover"
-                  data-content="This person is DC Instructor.">DC</span>
+              <span class="label label-primary" data-toggle="popover"
+                    data-content="This person is DC Instructor.">DC</span>
           {% elif trainee.get_missing_dc_instructor_requirements %}
-            <span class="label label-default" data-toggle="popover" data-html="true"
-                  data-content="
-                    Not eligible to be certified as Data Carpentry Instructor. Needs to pass:
-                    <ul>
-                      {% for requirement in trainee.get_missing_dc_instructor_requirements %}
-                        <li>{{ requirement }}</li>
-                      {% endfor %}
-                    </ul>
-                  ">DC</span>
+            <a class="label label-default" data-toggle="popover" data-html="true"
+               data-content="
+                 Not eligible to be certified as Data Carpentry Instructor. Needs to pass:
+                 <ul>
+                   {% for requirement in trainee.get_missing_dc_instructor_requirements %}
+                     <li>{{ requirement }}</li>
+                   {% endfor %}
+                 </ul>
+                 Click to start awarding the badge.
+               "
+               href="{% url 'person_edit' trainee.pk %}?badge=dc-instructor&amp;find-training&amp;next={{ request.get_full_path|urlencode }}#awards">DC</a>
           {% else %}
-            <span class="label label-success" data-toggle="popover"
-                  data-content="Eligible to be certified as Data Carpentry Instructor.">DC</span>
+            <a class="label label-success" data-toggle="popover" data-html="true"
+               data-content="<p>Eligible to be certified as Data Carpentry Instructor.</p><p>Click to start awarding the badge.</p>"
+               href="{% url 'person_edit' trainee.pk %}?badge=dc-instructor&amp;find-training&amp;next={{ request.get_full_path|urlencode }}#awards">DC</a>
           {% endif %}
         </td>
         <td>

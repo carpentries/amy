@@ -1,4 +1,5 @@
 from django.conf.urls import url, include
+from django.views.generic import RedirectView
 
 from workshops import views
 
@@ -10,33 +11,38 @@ urlpatterns = [
     url(r'^log/$', views.changes_log, name='changes_log'),
 
     url(r'^organizations/', include([
-        url(r'^$', views.all_organizations, name='all_organizations'),
+        url(r'^$', views.AllOrganizations.as_view(), name='all_organizations'),
         url(r'^add/$', views.OrganizationCreate.as_view(), name='organization_add'),
     ])),
     url(r'^organization/(?P<org_domain>[\w\.-]+)/', include([
-        url(r'^$', views.organization_details, name='organization_details'),
+        url(r'^$', views.OrganizationDetails.as_view(), name='organization_details'),
         url(r'^edit/$', views.OrganizationUpdate.as_view(), name='organization_edit'),
         url(r'^delete/$', views.OrganizationDelete.as_view(), name='organization_delete'),
-        url(r'^membership/add/$', views.membership_create, name='membership_add'),
     ])),
 
+    url(r'^memberships/', include([
+        url(r'^$', views.AllMemberships.as_view(), name='all_memberships'),
+        url(r'^add/$', views.MembershipCreate.as_view(), name='membership_add'),
+        url(r'^add/(?P<org_domain>[\w\.-]+)/$', views.MembershipCreate.as_view(), name='membership_add'),
+    ])),
     url(r'^membership/(?P<membership_id>\d+)/', include([
+        url(r'^$', views.MembershipDetails.as_view(), name='membership_details'),
         url(r'^edit/$', views.MembershipUpdate.as_view(), name='membership_edit'),
         url(r'^delete/$', views.MembershipDelete.as_view(), name='membership_delete'),
     ])),
 
     url(r'^airports/', include([
-        url(r'^$', views.all_airports, name='all_airports'),
+        url(r'^$', views.AllAirports.as_view(), name='all_airports'),
         url(r'^add/$', views.AirportCreate.as_view(), name='airport_add'),
     ])),
     url(r'^airport/(?P<airport_iata>\w+)/', include([
-        url(r'^$', views.airport_details, name='airport_details'),
+        url(r'^$', views.AirportDetails.as_view(), name='airport_details'),
         url(r'^edit/$', views.AirportUpdate.as_view(), name='airport_edit'),
         url(r'^delete/$', views.AirportDelete.as_view(), name='airport_delete'),
     ])),
 
     url(r'^persons/', include([
-        url(r'^$', views.all_persons, name='all_persons'),
+        url(r'^$', views.AllPersons.as_view(), name='all_persons'),
         url(r'^add/$', views.PersonCreate.as_view(), name='person_add'),
         url(r'^bulkadd/$',views.person_bulk_add, name='person_bulk_add'),
         url(r'^bulkadd/template/$',views.person_bulk_add_template, name='person_bulk_add_template'),
@@ -45,7 +51,7 @@ urlpatterns = [
         url(r'^merge/$', views.persons_merge, name='persons_merge'),
     ])),
     url(r'^person/(?P<person_id>\d+)/', include([
-        url(r'^$', views.person_details, name='person_details'),
+        url(r'^$', views.PersonDetails.as_view(), name='person_details'),
         url(r'^edit/$', views.person_edit, name='person_edit'),
         url(r'^delete/$', views.PersonDelete.as_view(), name='person_delete'),
         url(r'^permissions/$', views.PersonPermissions.as_view(), name='person_permissions'),
@@ -54,7 +60,7 @@ urlpatterns = [
     ])),
 
     url(r'^events/', include([
-        url(r'^$', views.all_events, name='all_events'),
+        url(r'^$', views.AllEvents.as_view(), name='all_events'),
         url(r'^add/$', views.EventCreate.as_view(), name='event_add'),
         url(r'^import/$', views.event_import, name='event_import'),
         url(r'^merge/$', views.events_merge, name='events_merge'),
@@ -80,7 +86,7 @@ urlpatterns = [
     ])),
 
     url(r'^tasks/', include([
-        url(r'^$', views.all_tasks, name='all_tasks'),
+        url(r'^$', views.AllTasks.as_view(), name='all_tasks'),
         url(r'^add/$', views.TaskCreate.as_view(), name='task_add'),
     ])),
     url(r'^task/(?P<task_id>\d+)/', include([
@@ -93,13 +99,13 @@ urlpatterns = [
 
     url(r'^award/(?P<pk>\d+)/delete/$', views.AwardDelete.as_view(), name='award_delete'),
 
-    url(r'^badges/$', views.all_badges, name='all_badges'),
+    url(r'^badges/$', views.AllBadges.as_view(), name='all_badges'),
     url(r'^badge/(?P<badge_name>[\w\.=-]+)/', include([
-        url(r'^$', views.badge_details, name='badge_details'),
+        url(r'^$', views.BadgeDetails.as_view(), name='badge_details'),
         url(r'^award/$', views.badge_award, name='badge_award'),
     ])),
 
-    url(r'^trainings/$', views.all_trainings, name='all_trainings'),
+    url(r'^trainings/$', views.AllTrainings.as_view(), name='all_trainings'),
 
     url(r'^workshop_staff/$', views.workshop_staff, name='workshop_staff'),
 
@@ -126,7 +132,7 @@ urlpatterns = [
 
     url(r'^revision/(?P<revision_id>[\d]+)/$', views.object_changes, name='object_changes'),
 
-    url(r'^requests/$', views.all_eventrequests, name='all_eventrequests'),
+    url(r'^requests/$', views.AllEventRequests.as_view(), name='all_eventrequests'),
     url(r'^request/(?P<request_id>\d+)/', include([
         url(r'^$', views.EventRequestDetails.as_view(), name='eventrequest_details'),
         url(r'^discard/$', views.eventrequest_discard, name='eventrequest_discard'),
@@ -134,12 +140,6 @@ urlpatterns = [
         url(r'^assign/$', views.eventrequest_assign, name='eventrequest_assign'),
         url(r'^assign/(?P<person_id>[\w\.-]+)/$', views.eventrequest_assign, name='eventrequest_assign'),
     ])),
-    url(r'^swc/request/$', views.SWCEventRequest.as_view(), name='swc_workshop_request'),
-    url(r'^swc/request/confirm/$', views.SWCEventRequestConfirm.as_view(), name='swc_workshop_request_confirm'),
-    url(r'^dc/request/$', views.DCEventRequest.as_view(), name='dc_workshop_request'),
-    url(r'^dc/request/confirm/$', views.DCEventRequestConfirm.as_view(), name='dc_workshop_request_confirm'),
-    url(r'^dc/request_selforganized/$', views.DCSelfOrganizedEventRequest.as_view(), name='dc_workshop_selforganized_request'),
-    url(r'^dc/request_selforganized/confirm/$', views.DCSelfOrganizedEventRequestConfirm.as_view(), name='dc_workshop_selforganized_request_confirm'),
     url(r'^dc_selforganized_requests/$', views.AllDCSelfOrganizedEventRequests.as_view(), name='all_dcselforganizedeventrequests'),
     url(r'^dc_selforganized_request/(?P<request_id>\d+)/', include([
         url(r'^$', views.DCSelfOrganizedEventRequestDetails.as_view(), name='dcselforganizedeventrequest_details'),
@@ -157,8 +157,6 @@ urlpatterns = [
         url(r'^assign/$', views.eventsubmission_assign, name='eventsubmission_assign'),
         url(r'^assign/(?P<person_id>[\w\.-]+)/$', views.eventsubmission_assign, name='eventsubmission_assign'),
     ])),
-    url(r'^submit/$', views.EventSubmission.as_view(), name='event_submit'),
-    url(r'^submit/confirm/$', views.EventSubmissionConfirm.as_view(), name='event_submission_confirm'),
 
     url(r'^profile_updates/$', views.AllProfileUpdateRequests.as_view(), name='all_profileupdaterequests'),
     url(r'^profile_updates/closed/$', views.AllClosedProfileUpdateRequests.as_view(), name='all_closed_profileupdaterequests'),
@@ -169,10 +167,8 @@ urlpatterns = [
         url(r'^accept/$', views.profileupdaterequest_accept, name='profileupdaterequest_accept'),
         url(r'^accept/(?P<person_id>[\w\.-]+)/$', views.profileupdaterequest_accept, name='profileupdaterequest_accept'),
     ])),
-    url(r'^update_profile/$', views.profileupdaterequest_create, name='profileupdate_request'),
     url(r'^autoupdate_profile/$', views.autoupdate_profile, name='autoupdate_profile'),
 
-    url(r'^request_training/$', views.trainingrequest_create, name='training_request'),
     url(r'^training_requests/$', views.all_trainingrequests, name='all_trainingrequests'),
     url(r'^training_requests/csv/$', views.download_trainingrequests, name='download_trainingrequests'),
     url(r'^training_request/(?P<pk>\d+)/', include([
@@ -196,4 +192,36 @@ urlpatterns = [
         url(r'^edit/$', views.TodoItemUpdate.as_view(), name='todo_edit'),
         url(r'^delete/$', views.TodoDelete.as_view(), name='todo_delete'),
     ])),
+
+    # redirects for the old forms
+    url(r'^swc/request/$',
+        RedirectView.as_view(pattern_name='swc_workshop_request', permanent=True),
+        name='old_swc_workshop_request'),
+    url(r'^swc/request/confirm/$',
+        RedirectView.as_view(pattern_name='swc_workshop_request_confirm', permanent=True),
+        name='old_swc_workshop_request_confirm'),
+    url(r'^dc/request/$',
+        RedirectView.as_view(pattern_name='dc_workshop_request', permanent=True),
+        name='old_dc_workshop_request'),
+    url(r'^dc/request/confirm/$',
+        RedirectView.as_view(pattern_name='dc_workshop_request_confirm', permanent=True),
+        name='old_dc_workshop_request_confirm'),
+    url(r'^dc/request_selforganized/$',
+        RedirectView.as_view(pattern_name='dc_workshop_selforganized_request', permanent=True),
+        name='old_dc_workshop_selforganized_request'),
+    url(r'^dc/request_selforganized/confirm/$',
+        RedirectView.as_view(pattern_name='dc_workshop_selforganized_request_confirm', permanent=True),
+        name='old_dc_workshop_selforganized_request_confirm'),
+    url(r'^submit/$',
+        RedirectView.as_view(pattern_name='event_submit', permanent=True),
+        name='old_event_submit'),
+    # url(r'^submit/confirm/$',
+    #     RedirectView.as_view(pattern_name='event_submission_confirm', permanent=True),
+    #     name='old_event_submission_confirm'),
+    url(r'^update_profile/$',
+        RedirectView.as_view(pattern_name='profileupdate_request', permanent=True),
+        name='old_profileupdate_request'),
+    url(r'^request_training/$',
+        RedirectView.as_view(pattern_name='training_request', permanent=True),
+        name='old_training_request'),
 ]

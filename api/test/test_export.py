@@ -16,7 +16,7 @@ from workshops.models import (
     Award,
     Person,
     Airport,
-    Role
+    Role,
 )
 from workshops.util import universal_date_format
 

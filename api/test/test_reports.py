@@ -149,3 +149,42 @@ class TestCSVYAMLListSerialization(BaseReportingTest):
         data = rvs.all_activity_over_time(mock_request, format=format_).data
         self.assertEqual(type(data['missing']['attendance']), type([]))
         self.assertEqual(type(data['missing']['instructors']), type([]))
+
+
+class TestNotCountingInstructorsTwice(BaseReportingTest):
+    def setUp(self):
+        super().setUp()
+
+        # Get instructor badges
+        swc_instructor, _ = Badge.objects.get_or_create(name='swc-instructor')
+        dc_instructor, _ = Badge.objects.get_or_create(name='dc-instructor')
+
+        # Create instructors
+        instructor = Person.objects.create(
+            username='harrypotter', personal='Harry', family='Potter',
+            email='user1@name.org',
+        )
+        another_instructor = Person.objects.create(
+            username='bobsmith', personal='Bob', family='Smith',
+            email='bob.smith@name.org',
+        )
+
+        # Award badges (harrypotter is a double-instructor)
+        Award.objects.create(person=instructor, badge=swc_instructor,
+                             awarded=datetime.date(2016, 10, 3))
+        Award.objects.create(person=instructor, badge=dc_instructor,
+                             awarded=datetime.date(2016, 10, 2))
+        Award.objects.create(person=another_instructor, badge=dc_instructor,
+                             awarded=datetime.date(2016, 10, 4))
+
+    def test_instructors_over_time(self):
+        """Make sure we don't count double-instructor twice. Regression against
+        #978."""
+        url = reverse('api:reports-instructors-over-time')
+        response = self.client.get(url, {'format': 'json'})
+        content = response.content.decode('utf-8')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(json.loads(content), [
+            {'count': 1, 'date': '2016-10-02'},
+            {'count': 2, 'date': '2016-10-04'},
+        ])

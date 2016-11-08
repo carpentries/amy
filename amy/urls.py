@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.conf.urls import include, url
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
@@ -41,6 +42,16 @@ urlpatterns = [
     # REST API v1
     url(r'^api/v1/', include('api.urls')),
 
+    # external, anonuser-accessible forms
+    url(r'^forms/', include('extforms.urls')),
+
     # Login with GitHub credentials
     url('', include('social.apps.django_app.urls', namespace='social')),
 ]
+
+
+if settings.DEBUG:
+    import debug_toolbar
+    urlpatterns += [
+        url(r'^__debug__/', include(debug_toolbar.urls)),
+    ]

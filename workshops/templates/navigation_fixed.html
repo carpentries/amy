@@ -26,6 +26,7 @@
                 {% navbar_element "Trainees" "all_trainees" %}
                 {% navbar_element "Tasks" "all_tasks" %}
                 {% navbar_element "Badges" "all_badges" %}
+                {% navbar_element "Memberships" "all_memberships" %}
                 {% navbar_element "Trainings" "all_trainings" %}
                 {% navbar_element "Airports" "all_airports" %}
                 {% navbar_element "Events with changed metadata" "events_metadata_changed" %}
@@ -70,12 +71,13 @@
               </ul>
             </li>
           </ul>
-          <form class="navbar-form navbar-left" role="search" method="post" action="{% url "search" %}">
+          <form class="navbar-form navbar-left" id="search-form" role="search" method="post" action="{% url "search" %}">
             {% csrf_token %}
             <input type="hidden" name="in_organizations" value="on" />
             <input type="hidden" name="in_events" value="on" />
             <input type="hidden" name="in_persons" value="on" />
             <input type="hidden" name="in_airports" value="on" />
+            <input type="hidden" name="in_training_requests" value="on" />
             <div class="form-group">
               <input type="text" class="form-control" placeholder="Search" name="term" />
             </div>

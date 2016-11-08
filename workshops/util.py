@@ -15,7 +15,9 @@ from django.contrib.auth.decorators import (
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import (
-    EmptyPage, PageNotAnInteger, Paginator as DjangoPaginator,
+    EmptyPage,
+    PageNotAnInteger,
+    Paginator as DjangoPaginator,
 )
 from django.core.validators import ValidationError
 from django.db import IntegrityError, transaction
@@ -23,10 +25,18 @@ from django.db.models import Q
 from django.http import Http404
 from django.http.response import HttpResponse
 from django.http.response import HttpResponseForbidden
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.utils.http import is_safe_url
 from selectable.decorators import results_decorator
 
-from workshops.models import Event, Role, Person, Task, Badge, is_admin
+from workshops.models import (
+    Event,
+    Role,
+    Person,
+    Task,
+    Badge,
+    is_admin,
+)
 
 ITEMS_PER_PAGE = 25
 
@@ -472,8 +482,7 @@ class WrongWorkshopURL(ValueError):
     (see `generate_url_to_event_index` below)."""
 
     def __str__(self):
-        return ('Event\'s URL doesn\'t match Github website format '
-                '"http://user.github.io/2015-12-08-workshop".')
+        return 'Event\'s URL doesn\'t match Github website or repo format.'
 
 
 def generate_url_to_event_index(website_url):
@@ -481,11 +490,11 @@ def generate_url_to_event_index(website_url):
     file in GitHub repository."""
     template = ('https://raw.githubusercontent.com/{name}/{repo}'
                 '/gh-pages/index.html')
-    regex = Event.WEBSITE_REGEX
 
-    results = regex.match(website_url)
-    if results:
-        return template.format(**results.groupdict()), results.group('repo')
+    for regex in [Event.WEBSITE_REGEX, Event.REPO_REGEX]:
+        results = regex.match(website_url)
+        if results:
+            return template.format(**results.groupdict()), results.group('repo')
     raise WrongWorkshopURL()
 
 
@@ -932,17 +941,19 @@ class LoginNotRequiredMixin(object):
     pass
 
 
-def homework2state(homework):
-    """ Return "none", "not-evaluated" or "passed".
 
-    `homework` -- None or TrainingProgress representing a homework."""
+def redirect_with_next_support(request, *args, **kwargs):
+    """Works in the same way as `redirect` except when there is GET parameter
+    named "next". In that case, user is redirected to the URL from that
+    parameter. If you have a class-based view, use RedirectSupportMixin that
+    does the same. """
 
-    if homework is None:
-        return 'none'
-    elif homework.state == 'n':
-        return 'not-evaluated'
-    elif homework.state == 'p':
-        return 'passed'
-    else:  # failed homework
-        assert homework.state == 'f'
-        return 'none'
+    next_url = request.GET.get('next', None)
+    if next_url is not None and is_safe_url(next_url):
+        return redirect(next_url)
+    else:
+        return redirect(*args, **kwargs)
+
+
+def dict_without_Nones(**keys):
+    return {k: v for k, v in keys.items() if v is not None}

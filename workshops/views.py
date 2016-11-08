@@ -10,38 +10,64 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.forms import SetPasswordForm, PasswordChangeForm
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import (
     ObjectDoesNotExist,
     PermissionDenied,
 )
-from django.core.mail import EmailMultiAlternatives
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.db import IntegrityError
-from django.db.models import Case, When, Value, IntegerField
-from django.db.models import Count, Q, F, Model, ProtectedError, Sum
+from django.db.models import (
+    Case,
+    When,
+    Value,
+    IntegerField,
+    Count,
+    Q,
+    F,
+    ProtectedError,
+    Sum,
+    Prefetch,
+)
+from django.db.models.functions import Now
 from django.http import Http404, HttpResponse, JsonResponse
-from django.http import HttpResponseBadRequest, HttpResponseRedirect
+from django.http import HttpResponseBadRequest
 from django.shortcuts import redirect, render, get_object_or_404
-from django.template.loader import get_template
-from django.utils.http import is_safe_url
-from django.views.generic import ListView, DetailView, TemplateView, DeleteView
+from django.views.generic import ListView
 from django.views.generic.edit import (
-    CreateView,
-    UpdateView,
     ModelFormMixin,
-    FormView,
 )
 from github.GithubException import GithubException
 from reversion.models import Revision
 from reversion.revisions import get_for_object
 
+from api.filters import (
+    InstructorsOverTimeFilter,
+    WorkshopsOverTimeFilter,
+    LearnersOverTimeFilter,
+)
 from api.views import ReportsViewSet
+from workshops.base_views import (
+    AMYCreateView,
+    AMYUpdateView,
+    AMYDeleteView,
+    AMYListView,
+    RedirectSupportMixin,
+    AMYDetailView,
+)
 from workshops.filters import (
-    EventFilter, OrganizationFilter, PersonFilter, TaskFilter, AirportFilter,
-    EventRequestFilter, BadgeAwardsFilter, InvoiceRequestFilter,
-    EventSubmissionFilter, DCSelfOrganizedEventRequestFilter,
-    TraineeFilter, TrainingRequestFilter,
+    EventFilter,
+    OrganizationFilter,
+    MembershipFilter,
+    PersonFilter,
+    TaskFilter,
+    AirportFilter,
+    EventRequestFilter,
+    BadgeAwardsFilter,
+    InvoiceRequestFilter,
+    EventSubmissionFilter,
+    DCSelfOrganizedEventRequestFilter,
+    TraineeFilter,
+    TrainingRequestFilter,
 )
 from workshops.forms import (
     SearchForm,
@@ -58,9 +84,6 @@ from workshops.forms import (
     PersonsSelectionForm,
     PersonTaskForm,
     OrganizationForm,
-    SWCEventRequestForm,
-    DCEventRequestForm,
-    ProfileUpdateRequestForm,
     PersonLookupForm,
     SimpleTodoForm,
     BootstrapHelper,
@@ -70,28 +93,25 @@ from workshops.forms import (
     TodoFormSet,
     EventsSelectionForm,
     EventsMergeForm,
-    InvoiceRequestForm,
     InvoiceRequestUpdateForm,
-    EventSubmitForm,
     EventSubmitFormNoCaptcha,
     PersonsMergeForm,
     PersonCreateForm,
     SponsorshipForm,
-    TrainingRequestForm,
     AutoUpdateProfileForm,
-    DCSelfOrganizedEventRequestForm,
     DCSelfOrganizedEventRequestFormNoCaptcha,
     TrainingProgressForm,
     BulkAddTrainingProgressForm,
-    BulkChangeTrainingRequestForm,
-    BulkMatchTrainingRequestForm,
-    AcceptTrainingRequestForm,
+    MatchTrainingRequestForm,
     TrainingRequestUpdateForm,
     SendHomeworkForm,
     BulkDiscardProgressesForm,
     bootstrap_helper,
     bootstrap_helper_inline_formsets,
-    BulkChangeTrainingRequestForm, BulkMatchTrainingRequestForm)
+    BulkChangeTrainingRequestForm,
+    BulkMatchTrainingRequestForm,
+    AllActivityOverTimeForm,
+)
 from workshops.management.commands.check_for_workshop_websites_updates import (
     Command as WebsiteUpdatesCommand,
 )
@@ -132,7 +152,6 @@ from workshops.util import (
     validate_metadata_from_event_website,
     assignment_selection,
     get_pagination_items,
-    Paginator,
     failed_to_delete,
     assign,
     merge_objects,
@@ -140,199 +159,14 @@ from workshops.util import (
     admin_required,
     OnlyForAdminsMixin,
     login_required,
-    login_not_required,
-    LoginNotRequiredMixin,
-    homework2state,
+    redirect_with_next_support,
+    dict_without_Nones,
 )
-
-
-# ------------------------------------------------------------
-
-
-class CreateViewContext(SuccessMessageMixin, CreateView):
-    """
-    Class-based view for creating objects that extends default template context
-    by adding model class used in objects creation.
-    """
-    success_message = '{name} was created successfully.'
-
-    template_name = 'workshops/generic_form.html'
-
-    def get_context_data(self, **kwargs):
-        context = super(CreateViewContext, self).get_context_data(**kwargs)
-
-        # self.model is available in CreateView as the model class being
-        # used to create new model instance
-        context['model'] = self.model
-
-        if self.model and issubclass(self.model, Model):
-            context['title'] = 'New {}'.format(self.model._meta.verbose_name)
-        else:
-            context['title'] = 'New object'
-
-        form = context['form']
-        if not hasattr(form, 'helper'):
-            # This is a default helper if no other is available.
-            form.helper = BootstrapHelper(submit_label='Add')
-
-        return context
-
-    def get_success_message(self, cleaned_data):
-        "Format self.success_message, used by messages framework from Django."
-        return self.success_message.format(cleaned_data, name=str(self.object))
-
-
-class UpdateViewContext(SuccessMessageMixin, UpdateView):
-    """
-    Class-based view for updating objects that extends default template context
-    by adding proper page title.
-    """
-    success_message = '{name} was updated successfully.'
-
-    template_name = 'workshops/generic_form.html'
-
-    def get_context_data(self, **kwargs):
-        context = super(UpdateViewContext, self).get_context_data(**kwargs)
-
-        # self.model is available in UpdateView as the model class being
-        # used to update model instance
-        context['model'] = self.model
-
-        context['view'] = self
-
-        # self.object is available in UpdateView as the object being currently
-        # edited
-        context['title'] = str(self.object)
-
-        form = context['form']
-        if not hasattr(form, 'helper'):
-            # This is a default helper if no other is available.
-            form.helper = BootstrapHelper(submit_label='Update')
-
-        return context
-
-    def get_success_message(self, cleaned_data):
-        "Format self.success_message, used by messages framework from Django."
-        return self.success_message.format(cleaned_data, name=str(self.object))
-
-
-class DeleteViewContext(DeleteView):
-    """
-    Class-based view for deleting objects that extends default template context
-    by adding proper page title.
-
-    GET requests are not allowed (returns 405)
-    Allows for custom redirection based on `next` param in POST
-    ProtectedErrors are handled.
-    """
-    success_message = '{} was deleted successfully.'
-
-    def delete(self, request, *args, **kwargs):
-        # Workaround for https://code.djangoproject.com/ticket/21926
-        # Replicates the `delete` method of DeleteMixin
-        self.object = self.get_object()
-        if request.POST.get('next', None):
-            success_url = request.POST['next']
-        else:
-            success_url = self.get_success_url()
-        try:
-            self.object.delete()
-            messages.success(
-                self.request,
-                self.success_message.format(self.object)
-            )
-            return HttpResponseRedirect(success_url)
-        except ProtectedError as e:
-            return failed_to_delete(self.request, self.object,
-                                    e.protected_objects)
-
-    def get(self, request, *args, **kwargs):
-        return self.http_method_not_allowed(request, *args, **kwargs)
-
-
-class FormViewContext(FormView):
-    """
-    Class-based view to allow displaying of forms with bootstrap form helper.
-    """
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        context['title'] = self.title
-        return context
-
-
-class FilteredListView(ListView):
-    paginator_class = Paginator
-    filter_class = None
-    queryset = None
-
-    def get_filter_data(self):
-        """Datasource for the filter."""
-        return self.request.GET
-
-    def get_queryset(self):
-        """Apply a filter to the queryset. Filter is compatible with pagination
-        and queryset."""
-        self.filter = self.filter_class(self.get_filter_data(),
-                                        super().get_queryset())
-        return self.filter
-
-    def get_context_data(self, **kwargs):
-        """Enhance context by adding a filter to it."""
-        context = super().get_context_data(**kwargs)
-        context['filter'] = self.filter
-        return context
-
-
-class EmailSendMixin:
-    email_fail_silently = True
-    email_kwargs = None
-
-    def get_subject(self):
-        """Generate email subject."""
-        return ""
-
-    def get_body(self):
-        """Generate email body (in TXT and HTML versions)."""
-        return "", ""
-
-    def prepare_email(self):
-        """Set up email contents."""
-        subject = self.get_subject()
-        body_txt, body_html = self.get_body()
-        email = EmailMultiAlternatives(subject, body_txt,
-                                       **self.email_kwargs)
-        email.attach_alternative(body_html, 'text/html')
-        return email
-
-    def send_email(self, email):
-        """Send a prepared email out."""
-        return email.send(fail_silently=self.email_fail_silently)
-
-    def form_valid(self, form):
-        """Once form is valid, send the email."""
-        results = super().form_valid(form)
-        email = self.prepare_email()
-        self.send_email(email)
-        return results
-
-
-class RedirectSupportMixin:
-    def get_success_url(self):
-        default_url = super().get_success_url()
-        next_url = self.request.GET.get('next', None)
-        if next_url is not None and is_safe_url(next_url):
-            return next_url
-        else:
-            return default_url
-
-#------------------------------------------------------------
 
 
 @login_required
 def dispatch(request):
-    if request.user and is_admin(request.user):
+    if is_admin(request.user):
         return redirect(reverse('admin-dashboard'))
     else:
         return redirect(reverse('trainee-dashboard'))
@@ -344,7 +178,8 @@ def admin_dashboard(request):
 
     current_events = (
         Event.objects.upcoming_events() | Event.objects.ongoing_events()
-    ).active()
+    ).active().prefetch_related('tags')
+
     uninvoiced_events = Event.objects.active().uninvoiced_events()
     unpublished_events = Event.objects.active().unpublished_events() \
                                       .select_related('host')
@@ -388,6 +223,7 @@ def admin_dashboard(request):
         'todos_start_date': TodoItemQuerySet.current_week_dates()[0],
         'todos_end_date': TodoItemQuerySet.next_week_dates()[1],
         'updated_metadata': updated_metadata,
+        'carpentries': Tag.objects.carpentries(),
     }
     return render(request, 'workshops/admin_dashboard.html', context)
 
@@ -403,43 +239,47 @@ def changes_log(request):
     }
     return render(request, 'workshops/changes_log.html', context)
 
+
 #------------------------------------------------------------
 
 
-@admin_required
-def all_organizations(request):
-    '''List all organization.'''
-    filter = OrganizationFilter(
-        request.GET,
-        queryset=Organization.objects.all()
-    )
-    organizations = get_pagination_items(request, filter)
-    context = {'title' : 'All Organizations',
-               'all_organizations' : organizations,
-               'filter': filter}
-    return render(request, 'workshops/all_organizations.html', context)
+class AllOrganizations(OnlyForAdminsMixin, AMYListView):
+    context_object_name = 'all_organizations'
+    template_name = 'workshops/all_organizations.html'
+    filter_class = OrganizationFilter
+    queryset = Organization.objects.prefetch_related(Prefetch(
+        'membership_set',
+        to_attr='current_memberships',
+        queryset=Membership.objects.filter(
+            agreement_start__lte=Now(),
+            agreement_end__gte=Now(),
+        )
+    ))
+    title = 'All Organizations'
 
 
-@admin_required
-def organization_details(request, org_domain):
-    '''List details of a particular organization.'''
-    organization = get_object_or_404(Organization, domain=org_domain)
-    events = Event.objects.filter(host=organization)
-    context = {'title' : 'Organization {0}'.format(organization),
-               'organization' : organization,
-               'events' : events}
-    return render(request, 'workshops/organization.html', context)
+class OrganizationDetails(OnlyForAdminsMixin, AMYDetailView):
+    queryset = Organization.objects.all()
+    context_object_name = 'organization'
+    template_name = 'workshops/organization.html'
+    slug_field = 'domain'
+    slug_url_kwarg = 'org_domain'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Organization {0}'.format(self.object)
+        return context
 
 
 class OrganizationCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                 CreateViewContext):
+                         AMYCreateView):
     permission_required = 'workshops.add_organization'
     model = Organization
     form_class = OrganizationForm
 
 
 class OrganizationUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                 UpdateViewContext):
+                         AMYUpdateView):
     permission_required = 'workshops.change_organization'
     model = Organization
     form_class = OrganizationForm
@@ -448,7 +288,7 @@ class OrganizationUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
 
 
 class OrganizationDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
-                         DeleteViewContext):
+                         AMYDeleteView):
     model = Organization
     slug_field = 'domain'
     slug_url_kwarg = 'org_domain'
@@ -456,89 +296,102 @@ class OrganizationDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
     success_url = reverse_lazy('all_organizations')
 
 
-@admin_required
-@permission_required(['workshops.add_membership',
-                      'workshops.change_organization'], raise_exception=True)
-def membership_create(request, org_domain):
-    organization = get_object_or_404(Organization, domain=org_domain)
-    form = MembershipForm(initial={'organization': organization})
+#------------------------------------------------------------
 
-    if request.method == "POST":
-        form = MembershipForm(request.POST)
-        if form.is_valid():
-            form.save()
 
-            messages.success(request,
-                'Membership was successfully added to the organization')
+class AllMemberships(OnlyForAdminsMixin, AMYListView):
+    context_object_name = 'all_memberships'
+    template_name = 'workshops/all_memberships.html'
+    filter_class = MembershipFilter
+    queryset = Membership.objects.all()
+    title = 'All Memberships'
 
-            return redirect(
-                reverse('organization_details', args=[organization.domain])
-            )
 
-    context = {
-        'title': 'New membership for organization {}'.format(organization),
-        'form': form,
-    }
-    return render(request, 'workshops/generic_form.html', context)
+class MembershipDetails(OnlyForAdminsMixin, AMYDetailView):
+    queryset = Membership.objects.all()
+    context_object_name = 'membership'
+    template_name = 'workshops/membership.html'
+    pk_url_kwarg = 'membership_id'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = '{0}'.format(self.object)
+        return context
+
+
+class MembershipCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
+                       AMYCreateView):
+    permission_required = [
+        'workshops.add_membership',
+        'workshops.change_organization',
+    ]
+    model = Membership
+    form_class = MembershipForm
+
+    def get_initial(self):
+        initials = super().get_initial()
+        org_domain = self.kwargs.get('org_domain', None)
+
+        if org_domain is not None:
+            organization = get_object_or_404(Organization, domain=org_domain)
+            initials.update({'organization': organization})
+
+        return initials
 
 
 class MembershipUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                       UpdateViewContext):
+                       RedirectSupportMixin, AMYUpdateView):
     permission_required = 'workshops.change_membership'
     model = Membership
     form_class = MembershipForm
     pk_url_kwarg = 'membership_id'
 
-    def get_success_url(self):
-        return reverse(
-            'organization_details',
-            args=[self.object.organization.domain],
-        )
-
 
 class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
-                       DeleteViewContext):
+                       AMYDeleteView):
     model = Membership
     permission_required = 'workshops.delete_membership'
     pk_url_kwarg = 'membership_id'
 
     def get_success_url(self):
-        return reverse('organization_details', args=[self.get_object().organization.domain])
+        return reverse('organization_details', args=[
+            self.get_object().organization.domain])
 
 #------------------------------------------------------------
 
 AIRPORT_FIELDS = ['iata', 'fullname', 'country', 'latitude', 'longitude']
 
 
-@admin_required
-def all_airports(request):
-    '''List all airports.'''
-    filter = AirportFilter(request.GET, queryset=Airport.objects.all())
-    airports = get_pagination_items(request, filter)
-    context = {'title' : 'All Airports',
-               'all_airports' : airports,
-               'filter': filter}
-    return render(request, 'workshops/all_airports.html', context)
+class AllAirports(OnlyForAdminsMixin, AMYListView):
+    context_object_name = 'all_airports'
+    queryset = Airport.objects.all()
+    filter_class = AirportFilter
+    template_name = 'workshops/all_airports.html'
+    title = 'All Airports'
 
 
-@admin_required
-def airport_details(request, airport_iata):
-    '''List details of a particular airport.'''
-    airport = get_object_or_404(Airport, iata=airport_iata)
-    context = {'title' : 'Airport {0}'.format(airport),
-               'airport' : airport}
-    return render(request, 'workshops/airport.html', context)
+class AirportDetails(OnlyForAdminsMixin, AMYDetailView):
+    queryset = Airport.objects.all()
+    context_object_name = 'airport'
+    template_name = 'workshops/airport.html'
+    slug_url_kwarg = 'airport_iata'
+    slug_field = 'iata'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Airport {0}'.format(self.object)
+        return context
 
 
 class AirportCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                    CreateViewContext):
+                    AMYCreateView):
     permission_required = 'workshops.add_airport'
     model = Airport
     fields = AIRPORT_FIELDS
 
 
 class AirportUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                    UpdateViewContext):
+                    AMYUpdateView):
     permission_required = 'workshops.change_airport'
     model = Airport
     fields = AIRPORT_FIELDS
@@ -547,7 +400,7 @@ class AirportUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
 
 
 class AirportDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
-                    DeleteViewContext):
+                    AMYDeleteView):
     model = Airport
     slug_field = 'iata'
     slug_url_kwarg = 'airport_iata'
@@ -557,80 +410,61 @@ class AirportDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
 #------------------------------------------------------------
 
 
-@admin_required
-def all_persons(request):
-    '''List all persons.'''
+class AllPersons(OnlyForAdminsMixin, AMYListView):
+    context_object_name = 'all_persons'
+    template_name = 'workshops/all_persons.html'
+    filter_class = PersonFilter
+    queryset = Person.objects.defer('notes').annotate(
+        is_swc_instructor=Sum(Case(When(badges__name='swc-instructor',
+                                        then=1),
+                                   default=0,
+                                   output_field=IntegerField())),
+        is_dc_instructor=Sum(Case(When(badges__name='dc-instructor',
+                                       then=1),
+                                  default=0,
+                                  output_field=IntegerField())),
+    )
+    title = 'All Persons'
 
-    filter = PersonFilter(
-        request.GET,
-        # notes are too large, so we defer them
-        queryset=Person.objects.defer('notes').annotate(
-            is_swc_instructor=Sum(Case(When(badges__name='swc-instructor',
-                                            then=1),
-                                       default=0,
-                                       output_field=IntegerField())),
-            is_dc_instructor=Sum(Case(When(badges__name='dc-instructor',
-                                           then=1),
-                                      default=0,
-                                      output_field=IntegerField())),
+
+class PersonDetails(OnlyForAdminsMixin, AMYDetailView):
+    context_object_name = 'person'
+    template_name = 'workshops/person.html'
+    pk_url_kwarg = 'person_id'
+    queryset = Person.objects.annotate(
+        num_taught=Count(
+            Case(
+                When(task__role__name='instructor', then=Value(1)),
+                output_field=IntegerField()
+            )
+        ),
+        num_helper=Count(
+            Case(
+                When(task__role__name='helper', then=Value(1)),
+                output_field=IntegerField()
+            )
+        ),
+        num_learner=Count(
+            Case(
+                When(task__role__name='learner', then=Value(1)),
+                output_field=IntegerField()
+            )
         )
     )
-    persons = get_pagination_items(request, filter)
 
-    context = {'title' : 'All Persons',
-               'all_persons' : persons,
-               'filter': filter}
-    return render(request, 'workshops/all_persons.html', context)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
 
+        context['title'] = 'Person {0}'.format(self.object)
 
-@admin_required
-def person_details(request, person_id):
-    '''List details of a particular person.'''
-    try:
-        person = Person.objects.annotate(
-            num_taught=Count(
-                Case(
-                    When(task__role__name='instructor', then=Value(1)),
-                    output_field=IntegerField()
-                )
-            ),
-            num_helper=Count(
-                Case(
-                    When(task__role__name='helper', then=Value(1)),
-                    output_field=IntegerField()
-                )
-            ),
-            num_learner=Count(
-                Case(
-                    When(task__role__name='learner', then=Value(1)),
-                    output_field=IntegerField()
-                )
-            )
-        ).get(id=person_id)
-    except Person.DoesNotExist:
-        raise Http404('Person matching query does not exist.')
-    awards = person.award_set.all()
-    tasks = person.task_set.all()
-    lessons = person.lessons.all()
-    domains = person.domains.all()
-    languages = person.languages.all()
+        try:
+            is_usersocialauth_in_sync = \
+                self.object.check_if_usersocialauth_is_in_sync()
+        except GithubException:
+            is_usersocialauth_in_sync = 'unknown'
+        context['is_usersocialauth_in_sync'] = is_usersocialauth_in_sync
 
-    try:
-        is_usersocialauth_in_sync = person.check_if_usersocialauth_is_in_sync()
-    except GithubException:
-        is_usersocialauth_in_sync = 'unknown'
-
-    context = {
-        'title': 'Person {0}'.format(person),
-        'person': person,
-        'awards': awards,
-        'tasks': tasks,
-        'lessons': lessons,
-        'domains': domains,
-        'languages': languages,
-        'is_usersocialauth_in_sync': is_usersocialauth_in_sync,
-    }
-    return render(request, 'workshops/person.html', context)
+        return context
 
 
 @admin_required
@@ -687,6 +521,7 @@ def person_bulk_add(request):
         'title': 'Bulk Add People',
         'form': form,
         'charset': settings.DEFAULT_CHARSET,
+        'roles': Role.objects.all()
     }
     return render(request, 'workshops/person_bulk_add_form.html', context)
 
@@ -821,7 +656,7 @@ def person_bulk_add_remove_entry(request, entry_id):
 
 
 class PersonCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                   CreateViewContext):
+                   AMYCreateView):
     permission_required = 'workshops.add_person'
     model = Person
     form_class = PersonCreateForm
@@ -862,108 +697,124 @@ class PersonCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
                      raise_exception=True)
 def person_edit(request, person_id):
     person = get_object_or_404(Person, id=person_id)
-    awards = person.award_set.order_by('badge__name')
-    tasks = person.task_set.order_by('-event__slug')
 
     person_form = PersonForm(prefix='person', instance=person)
-    award_form = PersonAwardForm(prefix='award', initial={
-        'awarded': datetime.date.today(),
-        'person': person,
-    })
     task_form = PersonTaskForm(prefix='task', initial={'person': person})
 
-    if request.method == 'POST':
-        # check which form was submitted
-        if 'award-badge' in request.POST:
-            award_form = PersonAwardForm(request.POST, prefix='award')
+    # Determine initial badge in PersonAwardForm
+    try:
+        badge = Badge.objects.get(name=request.GET['badge'])
+    except (KeyError, Badge.DoesNotExist):
+        badge = None
 
-            if award_form.is_valid():
-                award = award_form.save()
+    # Determine initial event in PersonAwardForm
+    if 'find-training' in request.GET:
+        tasks = person.get_training_tasks()
+        if tasks.count() == 1:
+            event = tasks[0].event
+        else:
+            event = None
+    else:
+        event = None
 
-                messages.success(
-                    request,
-                    '{person} was awarded {badge} badge.'.format(
-                        person=str(person),
-                        badge=award.badge.title,
-                    ),
-                    extra_tags='awards',
-                )
+    # PersonAwardForm
+    award_form = PersonAwardForm(prefix='award', initial=dict_without_Nones(
+        awarded=datetime.date.today(),
+        person=person,
+        badge=badge,
+        event=event,
+    ))
 
-                # to reset the form values
-                return redirect('{}#awards'.format(request.path))
+    # Determine which form was sent (if any)
+    if request.method == 'POST' and 'award-badge' in request.POST:
+        award_form = PersonAwardForm(request.POST, prefix='award')
 
-            else:
-                messages.error(request, 'Fix errors in the award form.',
-                               extra_tags='awards')
+        if award_form.is_valid():
+            award = award_form.save()
 
-        elif 'task-role' in request.POST:
-            task_form = PersonTaskForm(request.POST, prefix='task')
+            messages.success(
+                request,
+                '{person} was awarded {badge} badge.'.format(
+                    person=str(person),
+                    badge=award.badge.title,
+                ),
+                extra_tags='awards',
+            )
 
-            if task_form.is_valid():
-                task = task_form.save()
-
-                messages.success(
-                    request,
-                    '{person} was added a role {role} during {event} event.'
-                    .format(
-                        person=str(person),
-                        role=task.role.name,
-                        event=task.event.slug,
-                    ),
-                    extra_tags='tasks',
-                )
-
-                # to reset the form values
-                return redirect('{}#tasks'.format(request.path))
-
-            else:
-                messages.error(request, 'Fix errors in the task form.',
-                               extra_tags='tasks')
+            return redirect_with_next_support(
+                request, '{}#awards'.format(request.path))
 
         else:
-            person_form = PersonForm(request.POST, prefix='person',
-                                     instance=person)
-            if person_form.is_valid():
-                lessons = person_form.cleaned_data['lessons']
+            messages.error(request, 'Fix errors in the award form.',
+                           extra_tags='awards')
 
-                # remove existing Qualifications for user
-                Qualification.objects.filter(person=person).delete()
+    elif request.method == 'POST' and 'task-role' in request.POST:
+        task_form = PersonTaskForm(request.POST, prefix='task')
 
-                # add new Qualifications
-                for lesson in lessons:
-                    Qualification.objects.create(person=person, lesson=lesson)
+        if task_form.is_valid():
+            task = task_form.save()
 
-                # don't save related lessons
-                del person_form.cleaned_data['lessons']
+            messages.success(
+                request,
+                '{person} was added a role {role} during {event} event.'
+                .format(
+                    person=str(person),
+                    role=task.role.name,
+                    event=task.event.slug,
+                ),
+                extra_tags='tasks',
+            )
 
-                person = person_form.save()
+            return redirect('{}#tasks'.format(request.path))
 
-                messages.success(
-                    request,
-                    '{name} was updated successfully.'.format(
-                        name=str(person),
-                    ),
-                )
+        else:
+            messages.error(request, 'Fix errors in the task form.',
+                           extra_tags='tasks')
 
-                return redirect(person)
+    elif request.method == 'POST':
+        person_form = PersonForm(request.POST, prefix='person',
+                                 instance=person)
+        if person_form.is_valid():
+            lessons = person_form.cleaned_data['lessons']
 
-            else:
-                messages.error(request, 'Fix errors below.')
+            # remove existing Qualifications for user
+            Qualification.objects.filter(person=person).delete()
 
-    context = {'title': 'Edit Person {0}'.format(str(person)),
-               'person_form': person_form,
-               'object': person,
-               'model': Person,
-               'awards': awards,
-               'award_form': award_form,
-               'tasks': tasks,
-               'task_form': task_form,
-               }
+            # add new Qualifications
+            for lesson in lessons:
+                Qualification.objects.create(person=person, lesson=lesson)
+
+            # don't save related lessons
+            del person_form.cleaned_data['lessons']
+
+            person = person_form.save()
+
+            messages.success(
+                request,
+                '{name} was updated successfully.'.format(
+                    name=str(person),
+                ),
+            )
+
+            return redirect(person)
+
+        else:
+            messages.error(request, 'Fix errors below.')
+
+    context = {
+        'title': 'Edit Person {0}'.format(str(person)),
+        'person_form': person_form,
+        'object': person,
+        'awards': person.award_set.order_by('badge__name'),
+        'award_form': award_form,
+        'tasks': person.task_set.order_by('-event__slug'),
+        'task_form': task_form,
+    }
     return render(request, 'workshops/person_edit_form.html', context)
 
 
 class PersonDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
-                   DeleteViewContext):
+                   AMYDeleteView):
     model = Person
     permission_required = 'workshops.delete_person'
     success_url = reverse_lazy('all_persons')
@@ -971,7 +822,7 @@ class PersonDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
 
 
 class PersonPermissions(OnlyForAdminsMixin, PermissionRequiredMixin,
-                        UpdateViewContext):
+                        AMYUpdateView):
     permission_required = 'workshops.change_person'
     model = Person
     form_class = PersonPermissionsForm
@@ -1125,19 +976,14 @@ def sync_usersocialauth(request, person_id):
 
 #------------------------------------------------------------
 
-@admin_required
-def all_events(request):
-    '''List all events.'''
-    filter = EventFilter(
-        request.GET,
-        queryset=Event.objects.all().defer('notes')  # notes are too large
-                                    .prefetch_related('host', 'tags'),
-    )
-    events = get_pagination_items(request, filter)
-    context = {'title' : 'All Events',
-               'all_events' : events,
-               'filter': filter}
-    return render(request, 'workshops/all_events.html', context)
+
+class AllEvents(OnlyForAdminsMixin, AMYListView):
+    context_object_name = 'all_events'
+    template_name = 'workshops/all_events.html'
+    # notes are too large, so we defer them
+    queryset = Event.objects.defer('notes').prefetch_related('host', 'tags')
+    filter_class = EventFilter
+    title = 'All Events'
 
 
 @admin_required
@@ -1256,7 +1102,7 @@ def validate_event(request, slug):
 
 
 class EventCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                  CreateViewContext):
+                  AMYCreateView):
     permission_required = 'workshops.add_event'
     model = Event
     form_class = EventForm
@@ -1354,7 +1200,7 @@ def event_edit(request, slug):
 
 
 class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
-                  DeleteViewContext):
+                  AMYDeleteView):
     model = Event
     permission_required = 'workshops.delete_event'
     success_url = reverse_lazy('all_events')
@@ -1489,37 +1335,42 @@ def events_merge(request):
     return render(request, 'workshops/events_merge.html', context)
 
 
+# disabled as per @maneesha's request (disabled in HTML template)
+# see https://github.com/swcarpentry/amy/issues/1040
 @admin_required
 @permission_required('workshops.add_invoicerequest', raise_exception=True)
 def event_invoice(request, slug):
-    try:
-        event = Event.objects.get(slug=slug)
-    except ObjectDoesNotExist:
-        raise Http404("No event found matching the query.")
+    # try:
+    #     event = Event.objects.get(slug=slug)
+    # except ObjectDoesNotExist:
+    #     raise Http404("No event found matching the query.")
 
-    form = InvoiceRequestForm(initial=dict(
-        organization=event.host, date=event.start, event=event,
-        event_location=event.venue, amount=event.admin_fee,
-    ))
+    # form = InvoiceRequestForm(initial=dict(
+    #     organization=event.host, date=event.start, event=event,
+    #     event_location=event.venue, amount=event.admin_fee,
+    # ))
 
-    if request.method == 'POST':
-        form = InvoiceRequestForm(request.POST)
+    # if request.method == 'POST':
+    #     form = InvoiceRequestForm(request.POST)
 
-        if form.is_valid():
-            form.save()
-            messages.success(request,
-                             'Successfully added an invoice request for {}.'
-                             .format(event.slug))
-            return redirect(reverse('event_details',
-                                    args=[event.slug]))
-        else:
-            messages.error(request, 'Fix errors below.')
+    #     if form.is_valid():
+    #         form.save()
+    #         messages.success(request,
+    #                          'Successfully added an invoice request for {}.'
+    #                          .format(event.slug))
+    #         return redirect(reverse('event_details',
+    #                                 args=[event.slug]))
+    #     else:
+    #         messages.error(request, 'Fix errors below.')
 
+    # context = {
+    #     'title_left': 'Event {}'.format(event.slug),
+    #     'title_right': 'New invoice request',
+    #     'event': event,
+    #     'form': form,
+    # }
     context = {
-        'title_left': 'Event {}'.format(event.slug),
-        'title_right': 'New invoice request',
-        'event': event,
-        'form': form,
+        'title': 'Invoice',
     }
     return render(request, 'workshops/event_invoice.html', context)
 
@@ -1655,7 +1506,7 @@ def event_dismiss_metadata_changes(request, slug):
 
 
 class SponsorshipDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
-                        DeleteViewContext):
+                        AMYDeleteView):
     model = Sponsorship
     permission_required = 'workshops.delete_sponsorship'
 
@@ -1663,24 +1514,20 @@ class SponsorshipDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
         return reverse('event_edit',args=[self.get_object().event.slug]) + '#sponsors'
 
 
-class AllInvoiceRequests(OnlyForAdminsMixin, FilteredListView):
+class AllInvoiceRequests(OnlyForAdminsMixin, AMYListView):
     context_object_name = 'requests'
     template_name = 'workshops/all_invoicerequests.html'
     filter_class = InvoiceRequestFilter
     queryset = InvoiceRequest.objects.all()
+    title = 'Invoice requests'
 
     def get_filter_data(self):
         data = self.request.GET.copy()
         data['status'] = data.get('status', '')
         return data
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'Invoice requests'
-        return context
 
-
-class InvoiceRequestDetails(OnlyForAdminsMixin, DetailView):
+class InvoiceRequestDetails(OnlyForAdminsMixin, AMYDetailView):
     context_object_name = 'object'
     template_name = 'workshops/invoicerequest.html'
     queryset = InvoiceRequest.objects.all()
@@ -1693,7 +1540,7 @@ class InvoiceRequestDetails(OnlyForAdminsMixin, DetailView):
 
 
 class InvoiceRequestUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                           UpdateViewContext):
+                           AMYUpdateView):
     permission_required = 'workshops.change_invoicerequest'
     model = InvoiceRequest
     form_class = InvoiceRequestUpdateForm
@@ -1702,20 +1549,14 @@ class InvoiceRequestUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
 
 # ------------------------------------------------------------
 
-@admin_required
-def all_tasks(request):
-    '''List all tasks.'''
 
-    filter = TaskFilter(
-        request.GET,
-        queryset=Task.objects.all().select_related('event', 'person', 'role')
-                                   .defer('person__notes', 'event__notes')
-    )
-    tasks = get_pagination_items(request, filter)
-    context = {'title' : 'All Tasks',
-               'all_tasks' : tasks,
-               'filter': filter}
-    return render(request, 'workshops/all_tasks.html', context)
+class AllTasks(OnlyForAdminsMixin, AMYListView):
+    context_object_name = 'all_tasks'
+    template_name = 'workshops/all_tasks.html'
+    filter_class = TaskFilter
+    queryset = Task.objects.select_related('event', 'person', 'role') \
+                           .defer('person__notes', 'event__notes')
+    title = 'All Tasks'
 
 
 @admin_required
@@ -1728,14 +1569,14 @@ def task_details(request, task_id):
 
 
 class TaskCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                 CreateViewContext):
+                 AMYCreateView):
     permission_required = 'workshops.add_task'
     model = Task
     form_class = TaskFullForm
 
 
 class TaskUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                 UpdateViewContext):
+                 AMYUpdateView):
     permission_required = 'workshops.change_task'
     model = Task
     form_class = TaskFullForm
@@ -1743,7 +1584,7 @@ class TaskUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
 
 
 class TaskDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
-                 DeleteViewContext):
+                 AMYDeleteView):
     model = Task
     permission_required = 'workshops.delete_task'
     success_url = reverse_lazy('all_tasks')
@@ -1754,7 +1595,7 @@ class TaskDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
 
 
 class AwardDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
-                 DeleteViewContext):
+                  AMYDeleteView):
     model = Award
     permission_required = 'workshops.delete_award'
 
@@ -1764,33 +1605,37 @@ class AwardDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
 
 #------------------------------------------------------------
 
-@admin_required
-def all_badges(request):
-    '''List all badges.'''
 
-    badges = Badge.objects.order_by('name').annotate(num_awarded=Count('award'))
-    context = {'title' : 'All Badges',
-               'all_badges' : badges}
-    return render(request, 'workshops/all_badges.html', context)
+class AllBadges(OnlyForAdminsMixin, AMYListView):
+    context_object_name = 'all_badges'
+    queryset = Badge.objects.order_by('name') \
+                            .annotate(num_awarded=Count('award'))
+    template_name = 'workshops/all_badges.html'
+    title = 'All Badges'
 
 
-@admin_required
-def badge_details(request, badge_name):
-    '''List details of a particular badge, list people who were awarded it.'''
+class BadgeDetails(OnlyForAdminsMixin, AMYDetailView):
+    queryset = Badge.objects.all()
+    context_object_name = 'badge'
+    template_name = 'workshops/badge.html'
+    slug_field = 'name'
+    slug_url_kwarg = 'badge_name'
 
-    badge = get_object_or_404(Badge, name=badge_name)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
 
-    filter = BadgeAwardsFilter(
-        request.GET,
-        queryset=badge.award_set.select_related('event', 'person', 'badge')
-    )
-    awards = get_pagination_items(request, filter)
+        context['title'] = 'Airport {0}'.format(self.object)
+        filter = BadgeAwardsFilter(
+            self.request.GET,
+            queryset=self.object.award_set.select_related(
+                'event', 'person', 'badge')
+        )
+        context['filter'] = filter
 
-    context = {'title': 'Badge {0}'.format(badge),
-               'badge': badge,
-               'awards': awards,
-               'filter': filter}
-    return render(request, 'workshops/badge.html', context)
+        awards = get_pagination_items(self.request, filter)
+        context['awards'] = awards
+
+        return context
 
 
 @admin_required
@@ -1823,27 +1668,23 @@ def badge_award(request, badge_name):
 
 #------------------------------------------------------------
 
-@admin_required
-def all_trainings(request):
-    '''List all Instructor Trainings.'''
 
-    learner = Role.objects.get(name='learner')
-    ttt = Tag.objects.get(name='TTT')
+class AllTrainings(OnlyForAdminsMixin, AMYListView):
+    context_object_name = 'all_trainings'
+    template_name = 'workshops/all_trainings.html'
+    queryset = Event.objects.filter(tags__name='TTT').annotate(
+        trainees=Count(Case(When(task__role__name='learner',
+                                 then=F('task__person__id')),
+                            output_field=IntegerField()),
+                       distinct=True),
+        finished=Count(Case(When(task__role__name='learner',
+                                 task__person__badges__in=Badge.objects.instructor_badges(),
+                                 then=F('task__person__id')),
+                            output_field=IntegerField()),
+                       distinct=True),
+    ).exclude(trainees=0).order_by('-start')
+    title = 'All Instructor Trainings'
 
-    finished = Award.objects.filter(badge__in=Badge.objects.instructor_badges(), event__tags=ttt) \
-        .values('event').annotate(finished=Count('person'))
-    finished = {f['event']: f['finished'] for f in finished}
-
-    trainings = Task.objects.filter(role=learner).filter(event__tags=ttt).order_by('-event__start') \
-        .values('event', 'event__slug').annotate(trainees=Count('person'))
-    for t in trainings:
-        event_id = t['event']
-        t['finished'] = finished.get(event_id, 0)
-
-    trainings = get_pagination_items(request, trainings)
-    context = {'title': 'All Instructor Trainings',
-               'all_trainings': trainings}
-    return render(request, 'workshops/all_trainings.html', context)
 
 #------------------------------------------------------------
 
@@ -1975,7 +1816,8 @@ def workshop_staff(request):
 def search(request):
     '''Search the database by term.'''
 
-    term, organizations, events, persons, airports = '', None, None, None, None
+    term = ''
+    organizations = events = persons = airports = training_requests = None
 
     if request.method == 'POST':
         form = SearchForm(request.POST)
@@ -2032,6 +1874,18 @@ def search(request):
                     .order_by('iata')
                 results += list(airports)
 
+            if form.cleaned_data['in_training_requests']:
+                training_requests = TrainingRequest.objects.filter(
+                    Q(group_name__contains=term) |
+                    Q(family__contains=term) |
+                    Q(email__contains=term) |
+                    Q(github__contains=term) |
+                    Q(affiliation__contains=term) |
+                    Q(location__contains=term) |
+                    Q(comment__contains=term)
+                )
+                results += list(training_requests)
+
             # only 1 record found? Let's move to it immediately
             if len(results) == 1:
                 return redirect(results[0].get_absolute_url())
@@ -2040,13 +1894,16 @@ def search(request):
     else:
         form = SearchForm()
 
-    context = {'title' : 'Search',
-               'form': form,
-               'term' : term,
-               'organizations' : organizations,
-               'events' : events,
-               'persons' : persons,
-               'airports' : airports}
+    context = {
+        'title': 'Search',
+        'form': form,
+        'term': term,
+        'organizations' : organizations,
+        'events': events,
+        'persons': persons,
+        'airports': airports,
+        'training_requests': training_requests,
+    }
     return render(request, 'workshops/search.html', context)
 
 #------------------------------------------------------------
@@ -2126,8 +1983,11 @@ def export_members(request):
 @admin_required
 def workshops_over_time(request):
     '''Export JSON of count of workshops vs. time.'''
+    endpoint = '{}?{}'.format(reverse('api:reports-workshops-over-time'),
+                              request.GET.urlencode())
     context = {
-        'api_endpoint': reverse('api:reports-workshops-over-time'),
+        'api_endpoint': endpoint,
+        'filter': WorkshopsOverTimeFilter(request.GET),
         'title': 'Workshops over time',
     }
     return render(request, 'workshops/time_series.html', context)
@@ -2136,8 +1996,11 @@ def workshops_over_time(request):
 @admin_required
 def learners_over_time(request):
     '''Export JSON of count of learners vs. time.'''
+    endpoint = '{}?{}'.format(reverse('api:reports-learners-over-time'),
+                              request.GET.urlencode())
     context = {
-        'api_endpoint': reverse('api:reports-learners-over-time'),
+        'api_endpoint': endpoint,
+        'filter': LearnersOverTimeFilter(request.GET),
         'title': 'Learners over time',
     }
     return render(request, 'workshops/time_series.html', context)
@@ -2146,8 +2009,11 @@ def learners_over_time(request):
 @admin_required
 def instructors_over_time(request):
     '''Export JSON of count of instructors vs. time.'''
+    endpoint = '{}?{}'.format(reverse('api:reports-instructors-over-time'),
+                              request.GET.urlencode())
     context = {
-        'api_endpoint': reverse('api:reports-instructors-over-time'),
+        'api_endpoint': endpoint,
+        'filter': InstructorsOverTimeFilter(request.GET),
         'title': 'Instructors over time',
     }
     return render(request, 'workshops/time_series.html', context)
@@ -2167,11 +2033,28 @@ def instructor_num_taught(request):
 def all_activity_over_time(request):
     """Display number of workshops (of differend kinds), instructors and
     learners over some specific period of time."""
+
+    if 'submit' in request.GET:
+        form = AllActivityOverTimeForm(request.GET)
+
+        if form.is_valid():
+            data = ReportsViewSet().get_all_activity_over_time(
+                start=form.cleaned_data['start'],
+                end=form.cleaned_data['end'],
+            )
+        else:
+            data = None
+    else:
+        form = AllActivityOverTimeForm(initial={
+            'start': datetime.date.today() - datetime.timedelta(days=365),
+            'end': datetime.date.today(),
+        })
+        data = None
+
     context = {
-        'api_endpoint': reverse('api:reports-all-activity-over-time'),
         'title': 'All activity over time',
-        'start': datetime.date.today() - datetime.timedelta(days=365),
-        'end': datetime.date.today(),
+        'form': form,
+        'data': data,
     }
     return render(request, 'workshops/all_activity_over_time.html', context)
 
@@ -2311,111 +2194,23 @@ def object_changes(request, revision_id):
 # ------------------------------------------------------------
 
 
-class SWCEventRequest(LoginNotRequiredMixin, EmailSendMixin, CreateViewContext):
-    model = EventRequest
-    form_class = SWCEventRequestForm
-    page_title = 'Request a Software Carpentry Workshop'
-    template_name = 'forms/workshop_swc_request.html'
-    success_url = reverse_lazy('swc_workshop_request_confirm')
-    email_fail_silently = False
-    email_kwargs = {
-        'to': settings.REQUEST_NOTIFICATIONS_RECIPIENTS,
-        'reply_to': None,
-    }
+class AllEventRequests(OnlyForAdminsMixin, AMYListView):
+    context_object_name = 'requests'
+    template_name = 'workshops/all_eventrequests.html'
+    filter_class = EventRequestFilter
+    queryset = EventRequest.objects.all()
+    title = 'Workshop requests'
 
-    def get_success_message(self, *args, **kwargs):
-        """Don't display a success message."""
-        return ''
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = self.page_title
-        return context
-
-    def get_subject(self):
-        subject = (
-            '[{tag}] New workshop request: {affiliation}, {country}'
-        ).format(
-            tag=self.object.workshop_type.upper(),
-            country=self.object.country.name,
-            affiliation=self.object.affiliation,
-        )
-        return subject
-
-    def get_body(self):
-        link = self.object.get_absolute_url()
-        link_domain = settings.SITE_URL
-
-        body_txt = get_template(
-            'mailing/eventrequest.txt'
-        ).render({
-            'object': self.object,
-            'link': link,
-            'link_domain': link_domain,
-        })
-
-        body_html = get_template(
-            'mailing/eventrequest.html'
-        ).render({
-            'object': self.object,
-            'link': link,
-            'link_domain': link_domain,
-        })
-        return body_txt, body_html
-
-    def form_valid(self, form):
-        """Send email to admins if the form is valid."""
-        data = form.cleaned_data
-        self.email_kwargs['reply_to'] = (data['email'], )
-        result = super().form_valid(form)
-        return result
+    def get_filter_data(self):
+        # Set initial value for the "active" radio select.  That's a hack,
+        # nothing else worked...
+        data = super().get_filter_data().copy()
+        data['active'] = data.get('active', 'true')
+        data['workshop_type'] = data.get('workshop_type', '')
+        return data
 
 
-class SWCEventRequestConfirm(LoginNotRequiredMixin, TemplateView):
-    """Display confirmation of received workshop request."""
-    template_name = 'forms/workshop_swc_request_confirm.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'Thank you for requesting a workshop'
-        return context
-
-
-class DCEventRequest(SWCEventRequest):
-    form_class = DCEventRequestForm
-    page_title = 'Request a Data Carpentry Workshop'
-    template_name = 'forms/workshop_dc_request.html'
-    success_url = reverse_lazy('dc_workshop_request_confirm')
-
-
-class DCEventRequestConfirm(SWCEventRequestConfirm):
-    """Display confirmation of received workshop request."""
-    template_name = 'forms/workshop_dc_request_confirm.html'
-
-
-@admin_required
-def all_eventrequests(request):
-    """List all event requests."""
-
-    # Set initial value for the "active" radio select.  That's a hack, nothing
-    # else worked...
-    data = request.GET.copy()  # request.GET is immutable
-    data['active'] = data.get('active', 'true')
-    data['workshop_type'] = data.get('workshop_type', '')
-    filter = EventRequestFilter(
-        data,
-        queryset=EventRequest.objects.all(),
-    )
-    eventrequests = get_pagination_items(request, filter)
-    context = {
-        'title': 'Workshop requests',
-        'requests': eventrequests,
-        'filter': filter,
-    }
-    return render(request, 'workshops/all_eventrequests.html', context)
-
-
-class EventRequestDetails(OnlyForAdminsMixin, DetailView):
+class EventRequestDetails(OnlyForAdminsMixin, AMYDetailView):
     queryset = EventRequest.objects.all()
     context_object_name = 'object'
     template_name = 'workshops/eventrequest.html'
@@ -2491,58 +2286,23 @@ def eventrequest_assign(request, request_id, person_id=None):
     return redirect(reverse('eventrequest_details', args=[event_req.pk]))
 
 
-@login_not_required
-def profileupdaterequest_create(request):
-    """
-    Profile update request form. Accessible to all users (no login required).
-
-    This one is used when instructors want to change their information.
-    """
-    form = ProfileUpdateRequestForm()
-    page_title = 'Update Instructor Profile'
-
-    if request.method == 'POST':
-        form = ProfileUpdateRequestForm(request.POST)
-
-        if form.is_valid():
-            form.save()
-
-            # TODO: email notification?
-
-            context = {
-                'title': 'Thank you for updating your instructor profile',
-            }
-            return render(request,
-                          'forms/profileupdate_confirm.html',
-                          context)
-        else:
-            messages.error(request, 'Fix errors below.')
-
-    context = {
-        'title': page_title,
-        'form': form,
-    }
-    return render(request, 'forms/profileupdate.html', context)
-
-
-class AllProfileUpdateRequests(OnlyForAdminsMixin, ListView):
-    active_requests = True
+class AllProfileUpdateRequests(OnlyForAdminsMixin, AMYListView):
     context_object_name = 'requests'
     template_name = 'workshops/all_profileupdaterequests.html'
-
-    def get_queryset(self):
-        return ProfileUpdateRequest.objects \
-                                   .filter(active=self.active_requests) \
-                                   .order_by('-created_at')
+    title = 'Instructor profile update requests'
+    queryset = ProfileUpdateRequest.objects.filter(active=True) \
+                                           .order_by('-created_at')
+    active_requests = True
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Instructor profile update requests'
         context['active_requests'] = self.active_requests
         return context
 
 
 class AllClosedProfileUpdateRequests(AllProfileUpdateRequests):
+    queryset = ProfileUpdateRequest.objects.filter(active=False) \
+                                           .order_by('-created_at')
     active_requests = False
 
 
@@ -2606,7 +2366,7 @@ def profileupdaterequest_details(request, request_id):
 
 
 class ProfileUpdateRequestFix(OnlyForAdminsMixin, PermissionRequiredMixin,
-                              UpdateViewContext):
+                              AMYUpdateView):
     permission_required = 'workshops.change_profileupdaterequest'
     model = ProfileUpdateRequest
     form_class = ProfileUpdateRequestFormNoCaptcha
@@ -2661,6 +2421,7 @@ def profileupdaterequest_accept(request, request_id, person_id=None):
             raise PermissionDenied
 
     person.personal = profileupdate.personal
+    person.middle = profileupdate.middle
     person.family = profileupdate.family
     person.email = profileupdate.email
     person.affiliation = profileupdate.affiliation
@@ -2676,6 +2437,7 @@ def profileupdaterequest_accept(request, request_id, person_id=None):
         person.occupation = profileupdate.get_occupation_display()
     person.orcid = profileupdate.orcid
     person.gender = profileupdate.gender
+    person.user_notes = profileupdate.notes
 
     # we need person to exist in the database in order to set domains and
     # lessons
@@ -2712,76 +2474,20 @@ def profileupdaterequest_accept(request, request_id, person_id=None):
     return redirect(person.get_absolute_url())
 
 
-class EventSubmission(LoginNotRequiredMixin, EmailSendMixin, CreateViewContext):
-    """Display form for submitting existing workshops."""
-    model = EventSubmissionModel
-    form_class = EventSubmitForm
-    template_name = 'forms/event_submit.html'
-    success_url = reverse_lazy('event_submission_confirm')
-    email_fail_silently = False
-    email_kwargs = {
-        'to': settings.REQUEST_NOTIFICATIONS_RECIPIENTS,
-    }
-
-    def get_success_message(self, *args, **kwargs):
-        """Don't display a success message."""
-        return ''
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'Tell us about your workshop'
-        return context
-
-    def get_subject(self):
-        return ('New workshop submission from {}'
-                .format(self.object.contact_name))
-
-    def get_body(self):
-        link = self.object.get_absolute_url()
-        link_domain = settings.SITE_URL
-        body_txt = get_template('mailing/event_submission.txt') \
-            .render({
-                'object': self.object,
-                'link': link,
-                'link_domain': link_domain,
-            })
-        body_html = get_template('mailing/event_submission.html') \
-            .render({
-                'object': self.object,
-                'link': link,
-                'link_domain': link_domain,
-            })
-        return body_txt, body_html
-
-
-class EventSubmissionConfirm(LoginNotRequiredMixin, TemplateView):
-    """Display confirmation of received workshop submission."""
-    template_name = 'forms/event_submission_confirm.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'Thanks for your submission'
-        return context
-
-
-class AllEventSubmissions(OnlyForAdminsMixin, FilteredListView):
+class AllEventSubmissions(OnlyForAdminsMixin, AMYListView):
     context_object_name = 'submissions'
     template_name = 'workshops/all_eventsubmissions.html'
     filter_class = EventSubmissionFilter
     queryset = EventSubmissionModel.objects.all()
+    title = 'Workshop submissions'
 
     def get_filter_data(self):
         data = self.request.GET.copy()
         data['active'] = data.get('active', 'true')
         return data
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'Workshop submissions'
-        return context
 
-
-class EventSubmissionDetails(OnlyForAdminsMixin, DetailView):
+class EventSubmissionDetails(OnlyForAdminsMixin, AMYDetailView):
     context_object_name = 'object'
     template_name = 'workshops/eventsubmission.html'
     queryset = EventSubmissionModel.objects.all()
@@ -2807,7 +2513,7 @@ class EventSubmissionDetails(OnlyForAdminsMixin, DetailView):
 
 
 class EventSubmissionFix(OnlyForAdminsMixin, PermissionRequiredMixin,
-                         UpdateViewContext):
+                         AMYUpdateView):
     permission_required = 'workshops.change_eventsubmission'
     model = EventSubmissionModel
     form_class = EventSubmitFormNoCaptcha
@@ -2868,79 +2574,20 @@ def eventsubmission_assign(request, submission_id, person_id=None):
     return redirect(submission.get_absolute_url())
 
 
-class DCSelfOrganizedEventRequest(LoginNotRequiredMixin, EmailSendMixin,
-                                  CreateViewContext):
-    "Display form for requesting self-organized workshops for Data Carpentry."
-    model = DCSelfOrganizedEventRequestModel
-    form_class = DCSelfOrganizedEventRequestForm
-    # we're reusing DC templates for normal workshop requests
-    template_name = 'forms/workshop_dc_request.html'
-    success_url = reverse_lazy('dc_workshop_selforganized_request_confirm')
-    email_fail_silently = False
-    email_kwargs = {
-        'to': settings.REQUEST_NOTIFICATIONS_RECIPIENTS,
-    }
-
-    def get_success_message(self, *args, **kwargs):
-        """Don't display a success message."""
-        return ''
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'Register a self-organized Data Carpentry workshop'
-        return context
-
-    def get_subject(self):
-        return ('DC: new self-organized workshop request from {} @ {}'
-                .format(self.object.name, self.object.organization))
-
-    def get_body(self):
-        link = self.object.get_absolute_url()
-        link_domain = settings.SITE_URL
-        body_txt = get_template('mailing/dc_self_organized.txt') \
-            .render({
-                'object': self.object,
-                'link': link,
-                'link_domain': link_domain,
-            })
-        body_html = get_template('mailing/dc_self_organized.html') \
-            .render({
-                'object': self.object,
-                'link': link,
-                'link_domain': link_domain,
-            })
-        return body_txt, body_html
-
-
-class DCSelfOrganizedEventRequestConfirm(LoginNotRequiredMixin, TemplateView):
-    """Display confirmation of a received self-organized workshop request."""
-    # we're reusing DC templates for normal workshop requests
-    template_name = 'forms/workshop_dc_request_confirm.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'Thanks for your submission'
-        return context
-
-
-class AllDCSelfOrganizedEventRequests(OnlyForAdminsMixin, FilteredListView):
+class AllDCSelfOrganizedEventRequests(OnlyForAdminsMixin, AMYListView):
     context_object_name = 'requests'
     template_name = 'workshops/all_dcselforganizedeventrequests.html'
     filter_class = DCSelfOrganizedEventRequestFilter
     queryset = DCSelfOrganizedEventRequestModel.objects.all()
+    title = 'Data Carpentry self-organized workshop requests'
 
     def get_filter_data(self):
         data = self.request.GET.copy()
         data['active'] = data.get('active', 'true')
         return data
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'Data Carpentry self-organized workshop requests'
-        return context
 
-
-class DCSelfOrganizedEventRequestDetails(OnlyForAdminsMixin, DetailView):
+class DCSelfOrganizedEventRequestDetails(OnlyForAdminsMixin, AMYDetailView):
     context_object_name = 'object'
     template_name = 'workshops/dcselforganizedeventrequest.html'
     queryset = DCSelfOrganizedEventRequestModel.objects.all()
@@ -2967,7 +2614,7 @@ class DCSelfOrganizedEventRequestDetails(OnlyForAdminsMixin, DetailView):
 
 class DCSelfOrganizedEventRequestChange(OnlyForAdminsMixin,
                                         PermissionRequiredMixin,
-                                        UpdateViewContext):
+                                        AMYUpdateView):
     permission_required = 'workshops.change_dcselforganizedeventrequest'
     model = DCSelfOrganizedEventRequestModel
     form_class = DCSelfOrganizedEventRequestFormNoCaptcha
@@ -3104,7 +2751,7 @@ def todo_mark_incompleted(request, todo_id):
 
 
 class TodoItemUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                     UpdateViewContext):
+                     AMYUpdateView):
     permission_required = 'workshops.change_todoitem'
     model = TodoItem
     form_class = SimpleTodoForm
@@ -3130,7 +2777,7 @@ class TodoItemUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
 
 
 class TodoDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
-                 DeleteViewContext):
+                 AMYDeleteView):
     model = TodoItem
     permission_required = 'workshops.delete_todoitem'
     pk_url_kwarg = 'todo_id'
@@ -3181,38 +2828,6 @@ def duplicates(request):
     }
 
     return render(request, 'workshops/duplicates.html', context)
-
-
-@login_not_required
-def trainingrequest_create(request):
-    """A form to let all users (no login required) to request Instructor
-    Training."""
-
-    form = TrainingRequestForm()
-    page_title = 'Apply for Instructor Training'
-
-    if request.method == 'POST':
-        form = TrainingRequestForm(request.POST)
-
-        if form.is_valid():
-            form.save()
-
-            # TODO: email notification?
-
-            context = {
-                'title': 'Thank you for applying for an instructor training.',
-            }
-            return render(request,
-                          'forms/trainingrequest_confirm.html',
-                          context)
-        else:
-            messages.error(request, 'Fix errors below.')
-
-    context = {
-        'title': page_title,
-        'form': form,
-    }
-    return render(request, 'forms/trainingrequest.html', context)
 
 
 @admin_required
@@ -3291,7 +2906,7 @@ def all_trainingrequests(request):
     return render(request, 'workshops/all_trainingrequests.html', context)
 
 
-def _accept_training_request(form, training_request, request):
+def _match_training_request_to_person(form, training_request, request):
     assert form.action in ('match', 'create')
     try:
         if form.action == 'create':
@@ -3312,6 +2927,7 @@ def _accept_training_request(form, training_request, request):
 
     else:
         if form.action == 'create':
+            training_request.person.middle = training_request.middle
             training_request.person.gender = training_request.gender
             training_request.person.github = training_request.github
             training_request.person.affiliation = training_request.affiliation
@@ -3328,11 +2944,9 @@ def _accept_training_request(form, training_request, request):
         training_request.person.is_active = True
         training_request.person.save()
         training_request.person.synchronize_usersocialauth()
-
-        training_request.state = 'a'  # accepted
         training_request.save()
 
-        messages.success(request, 'Request accepted.')
+        messages.success(request, 'Request matched with the person.')
 
         return True
 
@@ -3342,16 +2956,13 @@ def trainingrequest_details(request, pk):
     req = get_object_or_404(TrainingRequest, pk=int(pk))
 
     if request.method == 'POST':
-        form = AcceptTrainingRequestForm(request.POST)
+        form = MatchTrainingRequestForm(request.POST)
 
         if form.is_valid():
-            ok = _accept_training_request(form, req, request)
+            ok = _match_training_request_to_person(form, req, request)
             if ok:
-                next_url = request.GET.get('next', None)
-                if next_url is not None and is_safe_url(next_url):
-                    return redirect(next_url)
-                else:
-                    return redirect('trainingrequest_details', req.pk)
+                return redirect_with_next_support(
+                    request, 'trainingrequest_details', req.pk)
 
     else:  # GET request
         # Provide initial value for form.person
@@ -3362,9 +2973,10 @@ def trainingrequest_details(request, pk):
             # person from existing records.
             person = Person.objects.filter(Q(email__iexact=req.email) |
                                            Q(personal__iexact=req.personal,
+                                             middle__iexact=req.middle,
                                              family__iexact=req.family)) \
                                    .first()  # may return None
-        form = AcceptTrainingRequestForm(initial={'person': person})
+        form = MatchTrainingRequestForm(initial={'person': person})
 
     context = {
         'title': 'Training request #{}'.format(req.pk),
@@ -3384,21 +2996,18 @@ def trainee_dashboard(request):
     dc_form = SendHomeworkForm(submit_name='dc-submit')
 
     # Add information about instructor training progress to request.user.
+    request.user = Person.objects.annotate_with_instructor_eligibility() \
+                                 .get(pk=request.user.pk)
+
     progresses = request.user.trainingprogress_set.filter(discarded=False)
-    request.user.training_passed = progresses.filter(
-        requirement__name='Training', state='p').exists()
     last_swc_homework = progresses.filter(
         requirement__name='SWC Homework').order_by('-created_at').first()
-    request.user.swc_homework_state = homework2state(last_swc_homework)
+    request.user.swc_homework_in_evaluation = (
+        last_swc_homework is not None and last_swc_homework.state == 'n')
     last_dc_homework = progresses.filter(
         requirement__name='DC Homework').order_by('-created_at').first()
-    request.user.dc_homework_state = homework2state(last_dc_homework)
-    request.user.discussion_passed = progresses.filter(
-        requirement__name='Discussion', state='p').exists()
-    request.user.swc_demo_passed = progresses.filter(
-        requirement__name='SWC Demo', state='p').exists()
-    request.user.dc_demo_passed = progresses.filter(
-        requirement__name='DC Demo', state='p').exists()
+    request.user.dc_homework_in_evaluation = (
+        last_dc_homework is not None and last_dc_homework.state == 'n')
 
     # Add information about awarded instructor badges to request.user.
     request.user.is_swc_instructor = request.user.award_set.filter(
@@ -3555,14 +3164,14 @@ def download_trainingrequests(request):
 
 class TrainingRequestUpdate(RedirectSupportMixin,
                             OnlyForAdminsMixin,
-                            UpdateViewContext):
+                            AMYUpdateView):
     model = TrainingRequest
     form_class = TrainingRequestUpdateForm
 
 
 class TrainingProgressCreate(RedirectSupportMixin,
                              OnlyForAdminsMixin,
-                             CreateViewContext):
+                             AMYCreateView):
     model = TrainingProgress
     form_class = TrainingProgressForm
 
@@ -3590,14 +3199,14 @@ class TrainingProgressCreate(RedirectSupportMixin,
 
 
 class TrainingProgressUpdate(RedirectSupportMixin, OnlyForAdminsMixin,
-                             UpdateViewContext):
+                             AMYUpdateView):
     model = TrainingProgress
     form_class = TrainingProgressForm
     template_name = 'workshops/generic_form.html'
 
 
 class TrainingProgressDelete(RedirectSupportMixin, OnlyForAdminsMixin,
-                             DeleteViewContext):
+                             AMYDeleteView):
     model = TrainingProgress
     success_url = reverse_lazy('all_trainees')
 
@@ -3606,16 +3215,18 @@ class TrainingProgressDelete(RedirectSupportMixin, OnlyForAdminsMixin,
 def all_trainees(request):
     filter = TraineeFilter(
         request.GET,
-        # notes are too large, so we defer them
-        queryset=Person.objects.defer('notes').annotate(
-            is_swc_instructor=Sum(Case(When(badges__name='swc-instructor',
-                                            then=1),
-                                       default=0,
-                                       output_field=IntegerField())),
-            is_dc_instructor=Sum(Case(When(badges__name='dc-instructor',
-                                           then=1),
-                                      default=0,
-                                      output_field=IntegerField())),
+        queryset=Person.objects \
+            .annotate_with_instructor_eligibility() \
+            .defer('notes')  # notes are too large, so we defer them \
+            .annotate(
+                is_swc_instructor=Sum(Case(When(badges__name='swc-instructor',
+                                                then=1),
+                                           default=0,
+                                           output_field=IntegerField())),
+                is_dc_instructor=Sum(Case(When(badges__name='dc-instructor',
+                                               then=1),
+                                          default=0,
+                                          output_field=IntegerField())),
         )
     )
     trainees = get_pagination_items(request, filter)

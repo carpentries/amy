@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.shortcuts import redirect
 from github import Github
-from github.GithubException import UnknownObjectException, GithubException
+from github.GithubException import UnknownObjectException
 from social.exceptions import SocialAuthBaseException
 
 

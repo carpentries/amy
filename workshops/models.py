@@ -3,13 +3,15 @@ import re
 from urllib.parse import urlencode
 
 from django.contrib.auth.models import (
-    AbstractBaseUser, BaseUserManager, PermissionsMixin,
+    AbstractBaseUser,
+    BaseUserManager,
+    PermissionsMixin,
 )
 from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
 from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, F, IntegerField, Sum, Case, When
 from django.utils import timezone
 from django_countries.fields import CountryField
 from reversion import revisions as reversion
@@ -65,7 +67,7 @@ class Organization(models.Model):
     notes      = models.TextField(default="", blank=True)
 
     def __str__(self):
-        return self.domain
+        return "{} <{}>".format(self.fullname, self.domain)
 
     def get_absolute_url(self):
         return reverse('organization_details', args=[str(self.domain)])
@@ -82,6 +84,10 @@ class Membership(models.Model):
         ('partner', 'Partner'),
         ('affiliate', 'Affiliate'),
         ('sponsor', 'Sponsor'),
+        ('bronze', 'Bronze'),
+        ('silver', 'Silver'),
+        ('gold', 'Gold'),
+        ('platinum', 'Platinum'),
     )
     variant = models.CharField(
         max_length=STR_MED, null=False, blank=False,
@@ -99,7 +105,7 @@ class Membership(models.Model):
         ('other', 'Other'),
     )
     contribution_type = models.CharField(
-        max_length=STR_MED, blank=True,
+        max_length=STR_MED, null=False, blank=False,
         choices=CONTRIBUTION_CHOICES,
     )
     workshops_without_admin_fee_per_year = models.PositiveIntegerField(
@@ -115,7 +121,11 @@ class Membership(models.Model):
                              on_delete=models.PROTECT)
 
     def __str__(self):
-        return "{} Membership of <{}>".format(self.variant, str(self.organization))
+        return "{} membership: {}".format(self.variant.title(),
+                                          self.organization)
+
+    def get_absolute_url(self):
+        return reverse('membership_details', args=[self.id])
 
     @property
     def workshops_without_admin_fee_per_year_completed(self):
@@ -263,6 +273,33 @@ class PersonManager(BaseUserManager):
         else:
             return super().get_by_natural_key(username)
 
+    def annotate_with_instructor_eligibility(self):
+        def passed(requirement):
+            return Sum(Case(When(trainingprogress__requirement__name=requirement,
+                                 trainingprogress__state='p',
+                                 trainingprogress__discarded=False,
+                                 then=1),
+                            default=0,
+                            output_field=IntegerField()))
+
+        return self.annotate(
+            passed_training=passed('Training'),
+            passed_swc_homework=passed('SWC Homework'),
+            passed_dc_homework=passed('DC Homework'),
+            passed_discussion=passed('Discussion'),
+            passed_swc_demo=passed('SWC Demo'),
+            passed_dc_demo=passed('DC Demo'),
+        ).annotate(
+            swc_eligible=(F('passed_training') *
+                          F('passed_swc_homework') *
+                          F('passed_discussion') *
+                          F('passed_swc_demo')),
+            dc_eligible=(F('passed_training') *
+                         F('passed_dc_homework') *
+                         F('passed_discussion') *
+                         F('passed_dc_demo')),
+        )
+
 
 @reversion.register
 class Person(AbstractBaseUser, PermissionsMixin):
@@ -305,7 +342,11 @@ class Person(AbstractBaseUser, PermissionsMixin):
         max_length=STR_MED, unique=True,
         validators=[RegexValidator(r'^[\w\-_]+$', flags=re.A)],
     )
-    notes = models.TextField(default="", blank=True)
+    user_notes = models.TextField(
+        default='', blank=True,
+        verbose_name='Notes provided by the user in update profile form.')
+    notes = models.TextField(default="", blank=True,
+                             verbose_name='Admin notes')
     affiliation = models.CharField(
         max_length=STR_LONG, default='', blank=True,
         help_text='What university, company, lab, or other organization are '
@@ -437,33 +478,34 @@ class Person(AbstractBaseUser, PermissionsMixin):
         """Returns set of requirements' names (list of strings) that are not
         passed yet by the trainee and are mandatory to become SWC Instructor.
         """
-        requirements = [
-            'Training',
-            'SWC Homework',
-            'Discussion',
-            'SWC Demo'
+
+        fields = [
+            ('passed_training', 'Training'),
+            ('passed_swc_homework', 'SWC Homework'),
+            ('passed_discussion', 'Discussion'),
+            ('passed_swc_demo', 'SWC Demo'),
         ]
-        passed = self.trainingprogress_set\
-                     .filter(discarded=False, state='p',
-                             requirement__name__in=requirements) \
-                     .values_list('requirement__name', flat=True)
-        return set(requirements) - set(passed)
+        try:
+            return [name for field, name in fields if not getattr(self, field)]
+        except AttributeError as e:
+            raise Exception('Did you forget to call '
+                            'annotate_with_instructor_eligibility()?') from e
 
     def get_missing_dc_instructor_requirements(self):
         """Returns set of requirements' names (list of strings) that are not
         passed yet by the trainee and are mandatory to become DC Instructor."""
 
-        requirements = [
-            'Training',
-            'DC Homework',
-            'Discussion',
-            'DC Demo'
+        fields = [
+            ('passed_training', 'Training'),
+            ('passed_dc_homework', 'DC Homework'),
+            ('passed_discussion', 'Discussion'),
+            ('passed_dc_demo', 'DC Demo'),
         ]
-        passed = self.trainingprogress_set \
-            .filter(discarded=False, state='p',
-                    requirement__name__in=requirements) \
-            .values_list('requirement__name', flat=True)
-        return set(requirements) - set(passed)
+        try:
+            return [name for field, name in fields if not getattr(self, field)]
+        except AttributeError as e:
+            raise Exception('Did you forget to call '
+                            'annotate_with_instructor_eligibility()?') from e
 
     def get_training_tasks(self):
         """Returns Tasks related to Instuctor Training events at which this
@@ -516,6 +558,11 @@ class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         max_length=STR_LONG,
         verbose_name='Personal (first) name',
         blank=False,
+    )
+    middle = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Middle name',
+        blank=True,
     )
     family = models.CharField(
         max_length=STR_LONG,
@@ -657,6 +704,11 @@ class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
 
 #------------------------------------------------------------
 
+class TagQuerySet(models.query.QuerySet):
+    def carpentries(self):
+        return Tag.objects.filter(name__in=['SWC', 'DC', 'LC']).order_by('id')
+
+
 class Tag(models.Model):
     '''Label for grouping events.'''
 
@@ -665,6 +717,8 @@ class Tag(models.Model):
 
     def __str__(self):
         return self.name
+
+    objects = TagQuerySet.as_manager()
 
 #------------------------------------------------------------
 
@@ -855,13 +909,14 @@ class Event(AssignmentMixin, models.Model):
     admin_fee  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)])
     INVOICED_CHOICES = (
         ('unknown', 'Unknown'),
-        ('invoiced', 'Invoiced'),
-        ('not-invoiced', 'Not invoiced'),
+        ('invoiced', 'Invoice requested'),
+        ('not-invoiced', 'Invoice not requested'),
         ('na-historic', 'Not applicable for historical reasons'),
         ('na-member', 'Not applicable because of membership'),
         ('na-self-org', 'Not applicable because self-organized'),
         ('na-waiver', 'Not applicable because waiver granted'),
         ('na-other', 'Not applicable because other arrangements made'),
+        ('paid', 'Paid'),
     )
     invoice_status = models.CharField(
         max_length=STR_MED,
@@ -1215,7 +1270,6 @@ class EventRequest(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
 
     ADMIN_FEE_PAYMENT_CHOICES = (
         ('NP1', 'Non-profit / non-partner: US$2500'),
-        ('partner', 'Partner: US$1250'),
         ('FP1', 'For-profit: US$10,000'),
         ('self-organized', 'Self-organized: no fee (please let us know if you '
                            'wish to make a donation)'),
@@ -1685,7 +1739,7 @@ class TodoItem(models.Model):
 @reversion.register
 class InvoiceRequest(models.Model):
     STATUS_CHOICES = (
-        ('not-invoiced', 'Not invoiced'),
+        ('not-invoiced', 'Invoice not requested'),
         ('sent', 'Sent out'),
         ('paid', 'Paid'),
     )
@@ -1851,11 +1905,11 @@ def build_choice_field_with_other_option(choices, default, verbose_name=None):
 
 @reversion.register
 class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
-    STATES = (
+    STATES = [
         ('p', 'Pending'),  # initial state
         ('a', 'Accepted'),  # state after matching a Person record
         ('d', 'Discarded'),
-    )
+    ]
     state = models.CharField(choices=STATES, default='p', max_length=1)
 
     person = models.ForeignKey(Person, null=True, blank=True,
@@ -1876,6 +1930,11 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         max_length=STR_LONG,
         verbose_name='Personal (given) name',
         blank=False,
+    )
+    middle = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Middle name',
+        blank=True,
     )
     family = models.CharField(
         max_length=STR_LONG,
@@ -2044,16 +2103,25 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
     def clean(self):
         super().clean()
 
-        if self.state == 'a' and self.person is None:
-            raise ValidationError({'person': 'Accepted training request must '
-                                             'be matched to a person.'})
-
-        if self.state == 'p' and self.person is not None:
-            raise ValidationError({'person': 'Pending training requests cannot '
-                                             'be matched to a person.'})
+        if self.state == 'p' and self.person is not None \
+                and self.person.get_training_tasks().exists():
+            raise ValidationError({'state': 'Pending training request cannot '
+                                            'be matched with a training.'})
 
     def get_absolute_url(self):
         return reverse('trainingrequest_details', args=[self.pk])
+
+    def __str__(self):
+        return (
+            '{personal} {family} <{email}> - {state}'
+            .format(
+                state=self.get_state_display(),
+                personal=self.personal,
+                family=self.family,
+                email=self.email,
+                timestamp=self.created_at,
+            )
+        )
 
 
 @reversion.register

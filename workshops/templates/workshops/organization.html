@@ -28,6 +28,8 @@
 <p>No notes.</p>
 {% endif %}
 
+<h2>Events</h2>
+{% with events=organization.event_set.all %}
 {% if events %}
 <table class="table table-striped">
   <tr>
@@ -50,6 +52,7 @@
 {% else %}
 <p>No events.</p>
 {% endif %}
+{% endwith %}
 
 <div class="clearfix">
   <p class="edit-object pull-left">
@@ -71,27 +74,26 @@
   </div>
 </div>
 
-<h3>Memberships</h3>
+<h2>Memberships</h2>
 {% if organization.membership_set.all %}
 <table class="table table-striped">
   <tr>
-    <th>Variant</th>
-    <th>Agreement start</th>
-    <th>Agreement end</th>
-    <th>Contribution type</th>
+    <th rowspan="2">Variant</th>
+    <th rowspan="2">Agreement start</th>
+    <th rowspan="2">Agreement end</th>
+    <th rowspan="2">Contribution type</th>
     <th colspan="3">Workshops w/o admin fee <span class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="Per year, counted for year of agreement start"></span></th>
     <th colspan="3">Self-organized workshops <span class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="Per year, counted for year of agreement start"></span></th>
     <th class="additional-links"></th>
   </tr>
   <tr>
-    <th></th><th></th><th></th><th></th>
     <th><small>Imposed</small></th><th><small>Completed</small></th><th><small>Remaining</small></th>
     <th><small>Imposed</small></th><th><small>Completed</small></th><th><small>Remaining</small></th>
     <th></th>
   </tr>
   {% for membership in organization.membership_set.all %}
   <tr>
-    <td>{{ membership.get_variant_display }}</td>
+    <td><a href="{{ membership.get_absolute_url }}">{{ membership.get_variant_display }}</a></td>
     <td>{{ membership.agreement_start }}</td>
     <td>{{ membership.agreement_end }}</td>
     <td>{{ membership.get_contribution_type_display }}</td>
@@ -102,31 +104,23 @@
     <td>{{ membership.self_organized_workshops_per_year_completed|default:"—" }}</td>
     <td>{{ membership.self_organized_workshops_per_year_remaining|default:"—" }}</td>
     <td>
-      {% comment %}
-      Include the other glyphicon within the form as a way of stacking them together horizontally.
-      Else, the form tag is rendered below the other glyphicon.
-      {% endcomment %}
-      <form action="{% url 'membership_delete' membership.pk %}" onsubmit='return confirm("Are you sure you wish to remove \"{{ membership }}\"?")' method="POST">
-        {% csrf_token %}
-        {% if perms.workshops.edit_membership %}
-        <a href="{% url 'membership_edit' membership.pk %}" title="Edit {{ membership }}"><span class="glyphicon glyphicon-pencil"></span></a>
-        {% endif %}
-        {% if perms.workshops.delete_membership %}
-        <label class="space2 glyphicon glyphicon-remove" title="Delete {{ membership }}" style="cursor:pointer">
-          <input type="submit" class="hidden" />
-        </label>
-        {% endif %}
-      </form>
+      <a href="{% url 'membership_details' membership.pk %}" title="View membership"><span class="glyphicon glyphicon-info-sign"></span></a>
+      &nbsp;
+      {% if perms.workshops.change_membership %}
+      <a href="{% url 'membership_edit' membership.pk %}?next={{ request.get_full_path|urlencode }}" title="Edit membership"><span class="glyphicon glyphicon-pencil"></span></a>
+      {% endif %}
     </td>
   </tr>
   {% endfor %}
 </table>
 {% else %}
-<p>No memberships for this organization.</p>
+  <p>No memberships for this organization.</p>
 {% endif %}
+
 {% if perms.workshops.add_membership and perms.workshops.change_organization %}
-<a href="{% url 'membership_add' organization.domain %}" class="btn btn-default">Add a membership</a>
+  <a href="{% url 'membership_add' organization.domain %}" class="btn btn-success">Add a membership</a>
 {% else %}
-<a href="#" class="btn btn-default disabled">Add a membership</a>
+  <a href="#" class="btn btn-success disabled">Add a membership</a>
 {% endif %}
+
 {% endblock %}
