@@ -1,13 +1,38 @@
 sudo: false
+
 language: python
+
 cache: pip 
+
 python:
   - 3.5
+
+env:
+  - PYDATA=true
+  - PYDATA=false CHECK_MIGRATION=true
+
+before_install:
+  - git config --global user.email "you@example.com"
+  - git config --global user.name "Your Name"
+  - if [[ $PYDATA == true ]]; then
+      git pull -q --no-edit origin deploy-pydata;
+    fi;
+
 install:
   - pip install -r requirements.txt
   - pip install coveralls
+
+before_script:
+  - if [[ $CHECK_MIGRATION == true ]]; then
+      python manage.py makemigrations --dry-run -e;
+      export STATUS_CODE=$?;
+      if [[ "$STATUS_CODE" == "0" ]]; then
+        exit 1;
+      fi;
+    fi;
+
 script:
-  - python manage.py makemigrations --dry-run -e; export STATUS_CODE=$?; if [[ "$STATUS_CODE" == "0" ]]; then exit 1; fi
   - coverage run --source=amy,api,workshops manage.py test
+
 after_success:
   coveralls
