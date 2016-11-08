@@ -2246,24 +2246,23 @@ def eventrequest_assign(request, request_id, person_id=None):
     return redirect(reverse('eventrequest_details', args=[event_req.pk]))
 
 
-class AllProfileUpdateRequests(OnlyForAdminsMixin, ListView):
-    active_requests = True
+class AllProfileUpdateRequests(OnlyForAdminsMixin, AMYListView):
     context_object_name = 'requests'
     template_name = 'workshops/all_profileupdaterequests.html'
-
-    def get_queryset(self):
-        return ProfileUpdateRequest.objects \
-                                   .filter(active=self.active_requests) \
-                                   .order_by('-created_at')
+    title = 'Instructor profile update requests'
+    queryset = ProfileUpdateRequest.objects.filter(active=True) \
+                                           .order_by('-created_at')
+    active_requests = True
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Instructor profile update requests'
         context['active_requests'] = self.active_requests
         return context
 
 
 class AllClosedProfileUpdateRequests(AllProfileUpdateRequests):
+    queryset = ProfileUpdateRequest.objects.filter(active=False) \
+                                           .order_by('-created_at')
     active_requests = False
 
 
