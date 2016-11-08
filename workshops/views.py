@@ -355,13 +355,17 @@ class AllAirports(OnlyForAdminsMixin, AMYListView):
     title = 'All Airports'
 
 
-@admin_required
-def airport_details(request, airport_iata):
-    '''List details of a particular airport.'''
-    airport = get_object_or_404(Airport, iata=airport_iata)
-    context = {'title' : 'Airport {0}'.format(airport),
-               'airport' : airport}
-    return render(request, 'workshops/airport.html', context)
+class AirportDetails(OnlyForAdminsMixin, AMYDetailView):
+    queryset = Airport.objects.all()
+    context_object_name = 'airport'
+    template_name = 'workshops/airport.html'
+    slug_url_kwarg = 'airport_iata'
+    slug_field = 'iata'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Airport {0}'.format(self.object)
+        return context
 
 
 class AirportCreate(OnlyForAdminsMixin, PermissionRequiredMixin,

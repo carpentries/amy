@@ -36,7 +36,7 @@ urlpatterns = [
         url(r'^add/$', views.AirportCreate.as_view(), name='airport_add'),
     ])),
     url(r'^airport/(?P<airport_iata>\w+)/', include([
-        url(r'^$', views.airport_details, name='airport_details'),
+        url(r'^$', views.AirportDetails.as_view(), name='airport_details'),
         url(r'^edit/$', views.AirportUpdate.as_view(), name='airport_edit'),
         url(r'^delete/$', views.AirportDelete.as_view(), name='airport_delete'),
     ])),
