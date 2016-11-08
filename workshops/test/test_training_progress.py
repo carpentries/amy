@@ -219,11 +219,12 @@ class TestCRUDViews(TestBase):
         self.assertEqual(rv.context['form'].initial['evaluated_by'], self.admin)
 
     def test_create_view_works_with_initial_trainee(self):
-        rv = self.client.get(reverse('trainingprogress_add',
-                                     args=[self.ironman.pk]))
+        rv = self.client.get(reverse('trainingprogress_add'), {
+            'trainee': self.ironman.pk
+        })
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.context['form'].initial['evaluated_by'], self.admin)
-        self.assertEqual(rv.context['form'].initial['trainee'], self.ironman)
+        self.assertEqual(int(rv.context['form'].initial['trainee']), self.ironman.pk)
 
     def test_create_view_works(self):
         data = {
