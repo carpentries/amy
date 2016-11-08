@@ -17,8 +17,7 @@ from workshops.models import (
     Task,
 )
 from workshops.util import OnlyForAdminsMixin
-from workshops.views import FormViewContext
-from workshops.base_views import AMYCreateView, FormViewContext
+from workshops.base_views import AMYCreateView, AMYFormView
 
 from .api import PersonAPIClient, TaskAPIClient, SponsorshipAPIClient
 from .forms import PersonAddFormSet, TaskAddFormSet, SponsorshipAddFormSet
@@ -145,7 +144,7 @@ class SponsorshipImport(BaseImport):
         return Sponsorship.PROFILE_REGEX.match(url)
 
 
-class BulkImportEventSelect(OnlyForAdminsMixin, FormViewContext):
+class BulkImportEventSelect(OnlyForAdminsMixin, AMYFormView):
     form_class = EventLookupForm
     template_name = 'workshops/generic_form.html'
     title = 'Bulk import a Conference'

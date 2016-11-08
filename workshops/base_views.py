@@ -123,7 +123,7 @@ class AMYDeleteView(DeleteView):
         return self.http_method_not_allowed(request, *args, **kwargs)
 
 
-class FormViewContext(FormView):
+class AMYFormView(FormView):
     """
     Class-based view to allow displaying of forms with bootstrap form helper.
     """
