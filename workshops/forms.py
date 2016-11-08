@@ -1514,3 +1514,16 @@ class SendHomeworkForm(forms.ModelForm):
         fields = [
             'url',
         ]
+
+
+class AllActivityOverTimeForm(forms.Form):
+    start = forms.DateField(
+        label='Begin date as YYYY-MM-DD',
+        input_formats=['%Y-%m-%d', ],
+    )
+    end = forms.DateField(
+        label='End date as YYYY-MD-DD',
+        input_formats=['%Y-%m-%d', ],
+    )
+
+    helper = BootstrapHelper(use_get_method=True)

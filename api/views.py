@@ -400,6 +400,14 @@ class ReportsViewSet(ViewSet):
             start=request.query_params.get('start', None),
             end=request.query_params.get('end', None))
 
+        data = self.get_all_activity_over_time(start, end)
+        data['missing']['attendance'] = self.listify(
+            data['missing']['attendance'], request, format=format)
+        data['missing']['instructors'] = self.listify(
+            data['missing']['instructors'], request, format=format)
+        return Response(data)
+
+    def get_all_activity_over_time(self, start, end):
         events_qs = Event.objects.filter(start__gte=start, start__lte=end)
         swc_tag = Tag.objects.get(name='SWC')
         dc_tag = Tag.objects.get(name='DC')
@@ -436,10 +444,6 @@ class ReportsViewSet(ViewSet):
         dc_total_learners = dc_total_learners['count']
 
         # Workshops missing any of this data.
-        # There's no point in using hyperlinks here, because it would:
-        # a) require using reverse() unless we somehow managed to switch to
-        #    serializer for this view
-        # b) make JS part even harder (what is available right now just works)
         missing_attendance = events_qs.filter(attendance=None) \
                                       .values_list('slug', flat=True)
         missing_instructors = events_qs.annotate(
@@ -452,16 +456,26 @@ class ReportsViewSet(ViewSet):
             )
         ).filter(instructors=0).values_list('slug', flat=True)
 
-        return Response({
+        return {
             'start': start,
             'end': end,
             'workshops': {
                 'SWC': swc_workshops.count(),
                 'DC': dc_workshops.count(),
+                # This dictionary is traversed in a template where we cannot
+                # write "{{ data.workshops.SWC,DC }}", because commas are
+                # disallowed in templates. Therefore, we include
+                # swc_dc_workshops twice, under two different keys:
+                # - 'SWC,DC' - for backward compatibility,
+                # - 'SWC_or_DC' - so that you can access it in a template.
                 'SWC,DC': swc_dc_workshops,
+                'SWC_or_DC': swc_dc_workshops,
                 'WiSE': wise_workshops,
                 'TTT': ttt_workshops,
+                # We include self_organized_workshops twice, under two
+                # different keys, for the same reason as swc_dc_workshops.
                 'self-organized': self_organized_workshops,
+                'self_organized': self_organized_workshops,
             },
             'instructors': {
                 'SWC': {
@@ -478,14 +492,10 @@ class ReportsViewSet(ViewSet):
                 'DC': dc_total_learners,
             },
             'missing': {
-                # qs.values_list returns an iterator, so we need to listify it
-                # for YAML
-                'attendance': self.listify(missing_attendance, request,
-                                           format),
-                'instructors': self.listify(missing_instructors, request,
-                                            format),
+                'attendance': missing_attendance,
+                'instructors': missing_instructors,
             }
-        })
+        }
 
     def instructors_by_time_queryset(self, start, end):
         """Just a queryset to be reused in other view."""

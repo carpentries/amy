@@ -110,6 +110,7 @@ from workshops.forms import (
     bootstrap_helper_inline_formsets,
     BulkChangeTrainingRequestForm,
     BulkMatchTrainingRequestForm,
+    AllActivityOverTimeForm,
 )
 from workshops.management.commands.check_for_workshop_websites_updates import (
     Command as WebsiteUpdatesCommand,
@@ -2032,11 +2033,28 @@ def instructor_num_taught(request):
 def all_activity_over_time(request):
     """Display number of workshops (of differend kinds), instructors and
     learners over some specific period of time."""
+
+    if 'submit' in request.GET:
+        form = AllActivityOverTimeForm(request.GET)
+
+        if form.is_valid():
+            data = ReportsViewSet().get_all_activity_over_time(
+                start=form.cleaned_data['start'],
+                end=form.cleaned_data['end'],
+            )
+        else:
+            data = None
+    else:
+        form = AllActivityOverTimeForm(initial={
+            'start': datetime.date.today() - datetime.timedelta(days=365),
+            'end': datetime.date.today(),
+        })
+        data = None
+
     context = {
-        'api_endpoint': reverse('api:reports-all-activity-over-time'),
         'title': 'All activity over time',
-        'start': datetime.date.today() - datetime.timedelta(days=365),
-        'end': datetime.date.today(),
+        'form': form,
+        'data': data,
     }
     return render(request, 'workshops/all_activity_over_time.html', context)
 
