@@ -29,6 +29,7 @@
 {% endif %}
 
 <h2>Events</h2>
+{% with events=organization.event_set.all %}
 {% if events %}
 <table class="table table-striped">
   <tr>
@@ -51,6 +52,7 @@
 {% else %}
 <p>No events.</p>
 {% endif %}
+{% endwith %}
 
 <div class="clearfix">
   <p class="edit-object pull-left">

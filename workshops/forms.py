@@ -9,7 +9,10 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.forms import (
-    HiddenInput, CheckboxSelectMultiple, TextInput, modelformset_factory,
+    HiddenInput,
+    CheckboxSelectMultiple,
+    TextInput,
+    modelformset_factory,
     RadioSelect,
     URLField,
 )
@@ -19,9 +22,20 @@ from selectable import forms as selectable
 
 from workshops import lookups
 from workshops.models import (
-    Award, Event, Lesson, Person, Task, Airport, Organization,
-    EventRequest, ProfileUpdateRequest, TodoItem, Membership,
-    Sponsorship, InvoiceRequest, EventSubmission,
+    Award,
+    Event,
+    Lesson,
+    Person,
+    Task,
+    Airport,
+    Organization,
+    EventRequest,
+    ProfileUpdateRequest,
+    TodoItem,
+    Membership,
+    Sponsorship,
+    InvoiceRequest,
+    EventSubmission,
     TrainingRequest,
     DCSelfOrganizedEventRequest,
     TrainingProgress,

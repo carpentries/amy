@@ -21,13 +21,13 @@ from workshops.util import (
     login_not_required,
     LoginNotRequiredMixin,
 )
-from workshops.views import (
+from workshops.base_views import (
+    AMYCreateView,
     EmailSendMixin,
-    CreateViewContext,
 )
 
 
-class SWCEventRequest(LoginNotRequiredMixin, EmailSendMixin, CreateViewContext):
+class SWCEventRequest(LoginNotRequiredMixin, EmailSendMixin, AMYCreateView):
     model = EventRequest
     form_class = SWCEventRequestForm
     page_title = 'Request a Software Carpentry Workshop'
@@ -145,7 +145,7 @@ def profileupdaterequest_create(request):
 
 # This form is disabled as per @maneesha's request
 # class EventSubmission(LoginNotRequiredMixin, EmailSendMixin,
-#                       CreateViewContext):
+#                       AMYCreateView):
 class EventSubmission(LoginNotRequiredMixin, TemplateView):
     """Display form for submitting existing workshops."""
     model = EventSubmissionModel
@@ -199,7 +199,7 @@ class EventSubmissionConfirm(LoginNotRequiredMixin, TemplateView):
 
 
 class DCSelfOrganizedEventRequest(LoginNotRequiredMixin, EmailSendMixin,
-                                  CreateViewContext):
+                                  AMYCreateView):
     "Display form for requesting self-organized workshops for Data Carpentry."
     model = DCSelfOrganizedEventRequestModel
     form_class = DCSelfOrganizedEventRequestForm

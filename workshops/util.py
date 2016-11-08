@@ -15,7 +15,9 @@ from django.contrib.auth.decorators import (
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import (
-    EmptyPage, PageNotAnInteger, Paginator as DjangoPaginator,
+    EmptyPage,
+    PageNotAnInteger,
+    Paginator as DjangoPaginator,
 )
 from django.core.validators import ValidationError
 from django.db import IntegrityError, transaction
@@ -27,7 +29,14 @@ from django.shortcuts import render, redirect
 from django.utils.http import is_safe_url
 from selectable.decorators import results_decorator
 
-from workshops.models import Event, Role, Person, Task, Badge, is_admin
+from workshops.models import (
+    Event,
+    Role,
+    Person,
+    Task,
+    Badge,
+    is_admin,
+)
 
 ITEMS_PER_PAGE = 25
 

@@ -11,11 +11,11 @@ urlpatterns = [
     url(r'^log/$', views.changes_log, name='changes_log'),
 
     url(r'^organizations/', include([
-        url(r'^$', views.all_organizations, name='all_organizations'),
+        url(r'^$', views.AllOrganizations.as_view(), name='all_organizations'),
         url(r'^add/$', views.OrganizationCreate.as_view(), name='organization_add'),
     ])),
     url(r'^organization/(?P<org_domain>[\w\.-]+)/', include([
-        url(r'^$', views.organization_details, name='organization_details'),
+        url(r'^$', views.OrganizationDetails.as_view(), name='organization_details'),
         url(r'^edit/$', views.OrganizationUpdate.as_view(), name='organization_edit'),
         url(r'^delete/$', views.OrganizationDelete.as_view(), name='organization_delete'),
     ])),
@@ -32,17 +32,17 @@ urlpatterns = [
     ])),
 
     url(r'^airports/', include([
-        url(r'^$', views.all_airports, name='all_airports'),
+        url(r'^$', views.AllAirports.as_view(), name='all_airports'),
         url(r'^add/$', views.AirportCreate.as_view(), name='airport_add'),
     ])),
     url(r'^airport/(?P<airport_iata>\w+)/', include([
-        url(r'^$', views.airport_details, name='airport_details'),
+        url(r'^$', views.AirportDetails.as_view(), name='airport_details'),
         url(r'^edit/$', views.AirportUpdate.as_view(), name='airport_edit'),
         url(r'^delete/$', views.AirportDelete.as_view(), name='airport_delete'),
     ])),
 
     url(r'^persons/', include([
-        url(r'^$', views.all_persons, name='all_persons'),
+        url(r'^$', views.AllPersons.as_view(), name='all_persons'),
         url(r'^add/$', views.PersonCreate.as_view(), name='person_add'),
         url(r'^bulkadd/$',views.person_bulk_add, name='person_bulk_add'),
         url(r'^bulkadd/template/$',views.person_bulk_add_template, name='person_bulk_add_template'),
@@ -51,7 +51,7 @@ urlpatterns = [
         url(r'^merge/$', views.persons_merge, name='persons_merge'),
     ])),
     url(r'^person/(?P<person_id>\d+)/', include([
-        url(r'^$', views.person_details, name='person_details'),
+        url(r'^$', views.PersonDetails.as_view(), name='person_details'),
         url(r'^edit/$', views.person_edit, name='person_edit'),
         url(r'^delete/$', views.PersonDelete.as_view(), name='person_delete'),
         url(r'^permissions/$', views.PersonPermissions.as_view(), name='person_permissions'),
@@ -60,7 +60,7 @@ urlpatterns = [
     ])),
 
     url(r'^events/', include([
-        url(r'^$', views.all_events, name='all_events'),
+        url(r'^$', views.AllEvents.as_view(), name='all_events'),
         url(r'^add/$', views.EventCreate.as_view(), name='event_add'),
         url(r'^import/$', views.event_import, name='event_import'),
         url(r'^merge/$', views.events_merge, name='events_merge'),
@@ -86,7 +86,7 @@ urlpatterns = [
     ])),
 
     url(r'^tasks/', include([
-        url(r'^$', views.all_tasks, name='all_tasks'),
+        url(r'^$', views.AllTasks.as_view(), name='all_tasks'),
         url(r'^add/$', views.TaskCreate.as_view(), name='task_add'),
     ])),
     url(r'^task/(?P<task_id>\d+)/', include([
@@ -99,13 +99,13 @@ urlpatterns = [
 
     url(r'^award/(?P<pk>\d+)/delete/$', views.AwardDelete.as_view(), name='award_delete'),
 
-    url(r'^badges/$', views.all_badges, name='all_badges'),
+    url(r'^badges/$', views.AllBadges.as_view(), name='all_badges'),
     url(r'^badge/(?P<badge_name>[\w\.=-]+)/', include([
-        url(r'^$', views.badge_details, name='badge_details'),
+        url(r'^$', views.BadgeDetails.as_view(), name='badge_details'),
         url(r'^award/$', views.badge_award, name='badge_award'),
     ])),
 
-    url(r'^trainings/$', views.all_trainings, name='all_trainings'),
+    url(r'^trainings/$', views.AllTrainings.as_view(), name='all_trainings'),
 
     url(r'^workshop_staff/$', views.workshop_staff, name='workshop_staff'),
 
@@ -132,7 +132,7 @@ urlpatterns = [
 
     url(r'^revision/(?P<revision_id>[\d]+)/$', views.object_changes, name='object_changes'),
 
-    url(r'^requests/$', views.all_eventrequests, name='all_eventrequests'),
+    url(r'^requests/$', views.AllEventRequests.as_view(), name='all_eventrequests'),
     url(r'^request/(?P<request_id>\d+)/', include([
         url(r'^$', views.EventRequestDetails.as_view(), name='eventrequest_details'),
         url(r'^discard/$', views.eventrequest_discard, name='eventrequest_discard'),
