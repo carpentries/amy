@@ -117,7 +117,8 @@ TEMPLATES = [
 ALLOWED_HOSTS = [
     'amy.software-carpentry.org',
 ]
-
+if DEBUG:
+    ALLOWED_HOSTS.append('127.0.0.1')
 
 # Application definition
 
