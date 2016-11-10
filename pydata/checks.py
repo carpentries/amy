@@ -68,7 +68,7 @@ def check_pydata_installed_before_workshops(**kwargs):
 def check_pydata_username_password_in_settings(**kwargs):
     errors = []
     try:
-        if settings.PYDATA_USERNAME_SECRET == None:
+        if settings.PYDATA_USERNAME_SECRET is None:
             errors.append(
                 Error('`PYDATA_USERNAME_SECRET` is undefined in settings.py'),
             )
@@ -77,7 +77,7 @@ def check_pydata_username_password_in_settings(**kwargs):
             Error('`PYDATA_USERNAME_SECRET` is missing in settings.py'),
         )
     try:
-        if settings.PYDATA_PASSWORD_SECRET == None:
+        if settings.PYDATA_PASSWORD_SECRET is None:
             errors.append(
                 Error('`PYDATA_PASSWORD_SECRET` is undefined in settings.py'),
             )
