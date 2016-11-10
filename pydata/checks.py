@@ -67,11 +67,21 @@ def check_pydata_installed_before_workshops(**kwargs):
 @register(Tags.security)
 def check_pydata_username_password_in_settings(**kwargs):
     errors = []
-    if not hasattr(settings, 'PYDATA_USERNAME_SECRET'):
+    try:
+        if settings.PYDATA_USERNAME_SECRET == None:
+            errors.append(
+                Error('`PYDATA_USERNAME_SECRET` is undefined in settings.py'),
+            )
+    except AttributeError:
         errors.append(
             Error('`PYDATA_USERNAME_SECRET` is missing in settings.py'),
         )
-    if not hasattr(settings, 'PYDATA_PASSWORD_SECRET'):
+    try:
+        if settings.PYDATA_PASSWORD_SECRET == None:
+            errors.append(
+                Error('`PYDATA_PASSWORD_SECRET` is undefined in settings.py'),
+            )
+    except AttributeError:
         errors.append(
             Error('`PYDATA_PASSWORD_SECRET` is missing in settings.py'),
         )
