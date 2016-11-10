@@ -5,6 +5,12 @@ from django.contrib.auth import views as auth_views
 
 urlpatterns = [
     url(r'^workshops/admin/', include(admin.site.urls)),
+]
+if settings.ENABLE_PYDATA:
+    urlpatterns += [
+        url(r'^workshops/', include('pydata.urls')),
+    ]
+urlpatterns += [
     url(r'^workshops/', include('workshops.urls')),
     # url(r'^account/', include('django.contrib.auth.urls')),
 
