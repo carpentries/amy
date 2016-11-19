@@ -118,7 +118,7 @@
 {% endif %}
 
 {% if perms.workshops.add_membership and perms.workshops.change_organization %}
-  <a href="{% url 'membership_add' organization.domain %}" class="btn btn-success">Add a membership</a>
+  <a href="{% url 'membership_add' %}?organization={{ organization.pk }}" class="btn btn-success">Add a membership</a>
 {% else %}
   <a href="#" class="btn btn-success disabled">Add a membership</a>
 {% endif %}

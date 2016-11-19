@@ -23,7 +23,6 @@ urlpatterns = [
     url(r'^memberships/', include([
         url(r'^$', views.AllMemberships.as_view(), name='all_memberships'),
         url(r'^add/$', views.MembershipCreate.as_view(), name='membership_add'),
-        url(r'^add/(?P<org_domain>[\w\.-]+)/$', views.MembershipCreate.as_view(), name='membership_add'),
     ])),
     url(r'^membership/(?P<membership_id>\d+)/', include([
         url(r'^$', views.MembershipDetails.as_view(), name='membership_details'),
@@ -179,7 +178,6 @@ urlpatterns = [
     url(r'^trainees/$', views.all_trainees, name='all_trainees'),
 
     url(r'^training_progresses/add/$', views.TrainingProgressCreate.as_view(), name='trainingprogress_add'),
-    url(r'^training_progresses/add/(?P<trainee_id>\d+)/$', views.TrainingProgressCreate.as_view(), name='trainingprogress_add'),
     url(r'^training_progress/(?P<pk>\d+)/', include([
         url(r'^edit/$', views.TrainingProgressUpdate.as_view(), name='trainingprogress_edit'),
         url(r'^delete/$', views.TrainingProgressDelete.as_view(), name='trainingprogress_delete'),
