@@ -37,6 +37,7 @@ from workshops.util import get_members, default_membership_cutoff
 from .serializers import (
     PersonNameEmailUsernameSerializer,
     ExportBadgesSerializer,
+    ExportBadgesByPersonSerializer,
     ExportInstructorLocationsSerializer,
     ExportEventSerializer,
     TimelineTodoSerializer,
@@ -100,6 +101,9 @@ class ApiRoot(APIView):
         return Response({
             'export-badges': reverse('api:export-badges', request=request,
                                      format=format),
+            'export-badges-by-person': reverse('api:export-badges-by-person',
+                                               request=request,
+                                               format=format),
             'export-instructors': reverse('api:export-instructors',
                                           request=request, format=format),
             'export-members': reverse('api:export-members', request=request,
@@ -130,6 +134,15 @@ class ExportBadgesView(ListAPIView):
 
     queryset = Badge.objects.prefetch_related('award_set')
     serializer_class = ExportBadgesSerializer
+
+
+class ExportBadgesByPersonView(ListAPIView):
+    """List all badges and people who have them grouped by person."""
+    permission_classes = (IsAuthenticatedOrReadOnly, )
+    paginator = None  # disable pagination
+
+    queryset = Person.objects.prefetch_related('badges')
+    serializer_class = ExportBadgesByPersonSerializer
 
 
 class ExportInstructorLocationsView(ListAPIView):
