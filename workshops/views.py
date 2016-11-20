@@ -544,12 +544,14 @@ def person_bulk_add_confirmation(request):
                           roles)
         for k, record in enumerate(data_update):
             personal, family, username, email, event, role = record
+            existing_person_id = persons_tasks[k].get('existing_person_id')
             # "field or None" converts empty strings to None values
             persons_tasks[k] = {
                 'personal': personal,
                 'family': family,
                 'username': username,
-                'email': email or None
+                'email': email or None,
+                'existing_person_id': existing_person_id,
             }
             # when user wants to drop related event they will send empty string
             # so we should unconditionally accept new value for event even if
@@ -626,6 +628,32 @@ def person_bulk_add_remove_entry(request, entry_id):
         entry_id = int(entry_id)
         try:
             del persons_tasks[entry_id]
+            request.session['bulk-add-people'] = persons_tasks
+
+        except IndexError:
+            messages.warning(request, 'Could not find specified entry #{}'
+                                      .format(entry_id))
+
+        return redirect(person_bulk_add_confirmation)
+
+    else:
+        messages.warning(request, 'Could not locate CSV data, please try the '
+                                  'upload again.')
+        return redirect('person_bulk_add')
+
+
+@admin_required
+@permission_required('workshops.add_person', raise_exception=True)
+def person_bulk_add_match_person(request, entry_id, person_id):
+    """Save information about matched person in the session-saved data."""
+    persons_tasks = request.session.get('bulk-add-people')
+
+    if persons_tasks:
+        entry_id = int(entry_id)
+        person_id = int(person_id)
+
+        try:
+            persons_tasks[entry_id]['existing_person_id'] = person_id
             request.session['bulk-add-people'] = persons_tasks
 
         except IndexError:

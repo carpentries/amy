@@ -55,7 +55,7 @@
                     {% endfor %}
                 {% endif %}
                 </select>
-                </td>
+            </td>
             <td class="text-danger">
             {% if entry.errors %}
                 <ul>
@@ -70,6 +70,13 @@
                 <ul>
                 {% for info in entry.info %}
                     <li>{{ info }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+            {% if entry.similar_persons %}
+                <ul>
+                {% for person in entry.similar_persons %}
+                    <li>Matching person: <a href="{% url 'person_details' person.id %}">{{ person.personal }} {{ person.middle }} {{ person.family }} &lt;{{ person.email|default:"—" }}&gt;</a>. <a href="{% url 'person_bulk_add_match_person' i person.id %}">Use that person</a>.</li>
                 {% endfor %}
                 </ul>
             {% endif %}

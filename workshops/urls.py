@@ -47,6 +47,7 @@ urlpatterns = [
         url(r'^bulkadd/template/$',views.person_bulk_add_template, name='person_bulk_add_template'),
         url(r'^bulkadd/confirm/$',views.person_bulk_add_confirmation, name='person_bulk_add_confirmation'),
         url(r'^bulkadd/(?P<entry_id>\d+)/remove/$',views.person_bulk_add_remove_entry, name='person_bulk_add_remove_entry'),
+        url(r'^bulkadd/(?P<entry_id>\d+)/match_person/(?P<person_id>\d+)$',views.person_bulk_add_match_person, name='person_bulk_add_match_person'),
         url(r'^merge/$', views.persons_merge, name='persons_merge'),
     ])),
     url(r'^person/(?P<person_id>\d+)/', include([

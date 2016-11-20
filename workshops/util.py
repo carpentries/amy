@@ -137,47 +137,38 @@ def verify_upload_person_task(data):
         email = item.get('email', None)
         personal = item.get('personal', None)
         family = item.get('family', None)
+        person_id = item.get('existing_person_id', None)
         person = None
 
-        if email:
+        if person_id:
             try:
-                # check if first and last name matches person in the database
-                person = Person.objects.get(email__iexact=email)
-
-                for which, actual, uploaded in (
-                        ('personal', person.personal, personal),
-                        ('family', person.family, family)
-                ):
-                    if (actual == uploaded) or (not actual and not uploaded):
-                        pass
-                    else:
-                        errors.append('{0} mismatch: database "{1}" '
-                                      'vs uploaded "{2}".'
-                                      .format(which, actual, uploaded))
-
-            except Person.DoesNotExist:
-                # in this case we need to add a new person
-                pass
-
+                person = Person.objects.get(id=int(person_id))
+            except (ValueError, TypeError, Person.DoesNotExist):
+                person = None
+                info.append('Could not match selected person. New record will '
+                            'be created.')
             else:
-                if existing_event and person and existing_role:
-                    # person, their role and a corresponding event exist, so
-                    # let's check if the task exists
-                    try:
-                        Task.objects.get(event=existing_event, person=person,
-                                         role=existing_role)
-                    except Task.DoesNotExist:
-                        info.append('Task will be created.')
-                    else:
-                        info.append('Task already exists.')
-        else:
+                info.append('Existing record for person will be used.')
+
+        if not email and not person:
             info.append('It\'s highly recommended to add an email address.')
 
         if person:
+            for which, actual, uploaded in (
+                    ('personal', person.personal, personal),
+                    ('family', person.family, family),
+                    ('email', person.email, email),
+            ):
+                if (actual == uploaded) or (not actual and not uploaded):
+                    pass
+                else:
+                    errors.append('{0} mismatch: database "{1}" '
+                                  'vs uploaded "{2}".'
+                                  .format(which, actual, uploaded))
+
             # force username from existing record
             item['username'] = person.username
-            item['person_exists'] = True
-
+            item['person_exists'] = True  # TODO: potentially can be removed
         else:
             # force a newly created username
             if not item.get('username'):
@@ -186,26 +177,24 @@ def verify_upload_person_task(data):
 
             info.append('Person and task will be created.')
 
+        # let's check if there's someone else named this way
+        similar_persons = Person.objects.filter(
+            Q(personal=personal, family=family) |
+            Q(email=email) & ~Q(email='') & Q(email__isnull=False)
+        )
+        # need to cast to list, otherwise it won't JSON-ify
+        item['similar_persons'] = list(similar_persons.values())
+
+        if existing_event and person and existing_role:
+            # person, their role and a corresponding event exist, so
+            # let's check if the task exists
             try:
-                # let's check if there's someone else named this way
-                similar_person = Person.objects.get(personal=personal,
-                                                    family=family)
-
-            except Person.DoesNotExist:
-                pass
-
-            except Person.MultipleObjectsReturned:
-                persons = [
-                    str(person) for person in
-                    Person.objects.filter(personal=personal, family=family)
-                ]
-                info.append('There\'s a couple of matching persons in the '
-                            'database: {}. '
-                            'Use email to merge.'.format(', '.join(persons)))
-
+                Task.objects.get(event=existing_event, person=person,
+                                 role=existing_role)
+            except Task.DoesNotExist:
+                info.append('Task will be created.')
             else:
-                info.append('There\'s a matching person in the database: {}. '
-                            'Use their email to merge.'.format(similar_person))
+                info.append('Task already exists.')
 
         # let's check what Person model validators want to say
         try:
