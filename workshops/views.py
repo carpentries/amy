@@ -570,12 +570,6 @@ def person_bulk_add_confirmation(request):
                                      "Please make sure to fix all errors "
                                      "listed below.")
 
-            context = {'title': 'Confirm uploaded data',
-                       'persons_tasks': persons_tasks,
-                       'any_errors': any_errors}
-            return render(request, 'workshops/person_bulk_add_results.html',
-                          context)
-
         # there must be "confirm" and no "cancel" in POST in order to save
         elif (request.POST.get('confirm', None) and
               not request.POST.get('cancel', None)):
@@ -591,12 +585,6 @@ def person_bulk_add_confirmation(request):
                                      "Please make sure to fix all errors "
                                      "listed below.".format(e))
                 any_errors = verify_upload_person_task(persons_tasks)
-                context = {'title': 'Confirm uploaded data',
-                           'persons_tasks': persons_tasks,
-                           'any_errors': any_errors}
-                return render(request,
-                              'workshops/person_bulk_add_results.html',
-                              context, status=400)
 
             else:
                 request.session['bulk-add-people'] = None
@@ -616,11 +604,11 @@ def person_bulk_add_confirmation(request):
         # alters persons_tasks via reference
         any_errors = verify_upload_person_task(persons_tasks)
 
-        context = {'title': 'Confirm uploaded data',
-                   'persons_tasks': persons_tasks,
-                   'any_errors': any_errors}
-        return render(request, 'workshops/person_bulk_add_results.html',
-                      context)
+    context = {'title': 'Confirm uploaded data',
+               'persons_tasks': persons_tasks,
+               'any_errors': any_errors}
+    return render(request, 'workshops/person_bulk_add_results.html',
+                  context)
 
 
 @admin_required
