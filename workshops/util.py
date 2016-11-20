@@ -154,21 +154,12 @@ def verify_upload_person_task(data):
             info.append('It\'s highly recommended to add an email address.')
 
         if person:
-            for which, actual, uploaded in (
-                    ('personal', person.personal, personal),
-                    ('family', person.family, family),
-                    ('email', person.email, email),
-            ):
-                if (actual == uploaded) or (not actual and not uploaded):
-                    pass
-                else:
-                    errors.append('{0} mismatch: database "{1}" '
-                                  'vs uploaded "{2}".'
-                                  .format(which, actual, uploaded))
-
-            # force username from existing record
+            # force details from existing record
+            item['personal'] = person.personal
+            item['family'] = person.family
+            item['email'] = person.email
             item['username'] = person.username
-            item['person_exists'] = True  # TODO: potentially can be removed
+            item['person_exists'] = True
         else:
             # force a newly created username
             if not item.get('username'):
@@ -243,14 +234,16 @@ def create_uploaded_persons_tasks(data):
                 fields = {key: row[key] for key in Person.PERSON_UPLOAD_FIELDS}
                 fields['username'] = row['username']
 
-                if fields['email']:
-                    # we should use existing Person or create one
-                    p, created = Person.objects.get_or_create(
-                        email__iexact=fields['email'], defaults=fields
-                    )
+                if row['person_exists'] and row['existing_person_id']:
+                    # we should use existing Person
+                    p = Person.objects.get(pk=row['existing_person_id'])
 
-                    if created:
-                        persons_created.append(p)
+                elif row['person_exists'] and not row['existing_person_id']:
+                    # we should use existing Person
+                    p = Person.objects.get(
+                        personal=fields['personal'], family=fields['family'],
+                        username=fields['username'], email=fields['email'],
+                    )
 
                 else:
                     # we should create a new Person without any email provided
@@ -262,7 +255,7 @@ def create_uploaded_persons_tasks(data):
                     e = Event.objects.get(slug=row['event'])
                     r = Role.objects.get(name=row['role'])
 
-                    # is the number of learners attending the event changed,
+                    # if the number of learners attending the event changed,
                     # we should update ``event.attendance``
                     if row['role'] == 'learner':
                         events.add(e)
@@ -273,12 +266,12 @@ def create_uploaded_persons_tasks(data):
                         tasks_created.append(t)
 
             except IntegrityError as e:
-
-                raise IntegrityError('{0} (for "{1}")'.format(str(e), row_repr))
+                raise IntegrityError('{0} (for "{1}")'.format(str(e),
+                                                              row_repr))
 
             except ObjectDoesNotExist as e:
                 raise ObjectDoesNotExist('{0} (for "{1}")'.format(str(e),
-                                                                row_repr))
+                                                                  row_repr))
 
     for event in events:
         # if event.attendance is lower than number of learners, then
