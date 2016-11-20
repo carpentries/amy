@@ -65,7 +65,7 @@
             </td>
             <td>
             {% if persons_tasks|length > 1 %}
-            <a href="{% url 'person_bulk_add_remove_entry' i %}"><span class="glyphicon glyphicon-remove"></span></a>
+            <a href="{% url 'person_bulk_add_remove_entry' i %}" title='Remove this entry'><span class="glyphicon glyphicon-remove"></span></a>
             {% endif %}
             </td>
         {% endwith %}
