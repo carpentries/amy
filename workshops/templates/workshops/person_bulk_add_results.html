@@ -43,7 +43,18 @@
             </td>
             <td class="editable">
                 <span>{{ entry.role|default:"—" }}</span>
-                <input type="text" name="role" value="{{ entry.role|default:"" }}" class="hidden">
+                <select name="role" class="hidden">
+                {% if entry.role in possible_roles %}
+                    {% for role in possible_roles %}
+                    <option value="{{ role }}" {% if role == entry.role %}selected="selected"{% endif %}>{{ role }}</option>
+                    {% endfor %}
+                {% else %}
+                    <option selected="selected" value="{{ entry.role }}">{{ entry.role }}</option>
+                    {% for role in possible_roles %}
+                    <option value="{{ role }}">{{ role }}</option>
+                    {% endfor %}
+                {% endif %}
+                </select>
                 </td>
             <td class="text-danger">
             {% if entry.errors %}
@@ -100,8 +111,10 @@
             var cell = $(e.currentTarget).parent();
             var span = $(cell).find("span");
             var input = $(cell).find("input");
+            var select = $(cell).find("select");
             $(span).addClass("hidden");
             $(input).removeClass("hidden");
+            $(select).removeClass("hidden");
         }
     });
 

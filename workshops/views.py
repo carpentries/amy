@@ -604,9 +604,14 @@ def person_bulk_add_confirmation(request):
         # alters persons_tasks via reference
         any_errors = verify_upload_person_task(persons_tasks)
 
-    context = {'title': 'Confirm uploaded data',
-               'persons_tasks': persons_tasks,
-               'any_errors': any_errors}
+    roles = Role.objects.all().values_list('name', flat=True)
+
+    context = {
+        'title': 'Confirm uploaded data',
+        'persons_tasks': persons_tasks,
+        'any_errors': any_errors,
+        'possible_roles': roles,
+    }
     return render(request, 'workshops/person_bulk_add_results.html',
                   context)
 
