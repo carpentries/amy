@@ -1934,15 +1934,27 @@ def instructors_by_date(request):
 
 @admin_required
 def export_badges(request):
-    title = 'Badges'
-    json_link = reverse('api:export-badges', kwargs={'format': 'json'})
-    yaml_link = reverse('api:export-badges', kwargs={'format': 'yaml'})
+    title = 'Export Badges'
+
+    badges_api_link = reverse('api:export-badges')
+    badges_json_link = reverse('api:export-badges', kwargs={'format': 'json'})
+    badges_yaml_link = reverse('api:export-badges', kwargs={'format': 'yaml'})
+
+    by_person_api_link = reverse('api:export-badges-by-person')
+    by_person_json_link = reverse('api:export-badges-by-person',
+                                  kwargs={'format': 'json'})
+    by_person_yaml_link = reverse('api:export-badges-by-person',
+                                  kwargs={'format': 'yaml'})
     context = {
         'title': title,
-        'json_link': json_link,
-        'yaml_link': yaml_link,
+        'badges_api_link': badges_api_link,
+        'badges_json_link': badges_json_link,
+        'badges_yaml_link': badges_yaml_link,
+        'by_person_api_link': by_person_api_link,
+        'by_person_json_link': by_person_json_link,
+        'by_person_yaml_link': by_person_yaml_link,
     }
-    return render(request, 'workshops/export.html', context)
+    return render(request, 'workshops/export_badges.html', context)
 
 
 @admin_required
