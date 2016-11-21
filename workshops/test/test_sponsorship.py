@@ -72,7 +72,7 @@ class TestSponsorshipViews(TestBase):
         self.sponsorship = Sponsorship.objects.create(
             organization=self.org_alpha,
             event=self.event,
-            amount=100.00,
+            amount=1500,
         )
         self._setUpUsersAndLogin()
 
@@ -116,7 +116,7 @@ class TestSponsorshipViews(TestBase):
         payload = {
             'sponsor-organization': self.org_beta.pk,
             'sponsor-event': self.event.pk,
-            'sponsor-amount': 100.00,
+            'sponsor-amount': 1500,
         }
         response = self.client.post(
             reverse('event_edit', kwargs={'slug': self.event.slug}),
@@ -132,7 +132,7 @@ class TestSponsorshipViews(TestBase):
         self.assertTrue(response.context['object'].sponsorship_set.all())
         self.assertEqual(response.context['object'].sponsors.count(), 2)
         self.assertIn(
-            100.00,
+            1500,
             response.context['object'].sponsorship_set.values_list('amount', flat=True)
         )
 
@@ -142,6 +142,7 @@ class TestSponsorshipViews(TestBase):
             'sponsor-organization': self.org_beta.pk,
             'sponsor-event': self.event.pk,
             'sponsor-contact': self.harry.pk,
+            'sponsor-amount': 1500,
         }
         response = self.client.post(
             reverse('event_edit', kwargs={'slug': self.event.slug}),

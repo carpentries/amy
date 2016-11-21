@@ -206,3 +206,19 @@ class RedirectSupportMixin:
             return next_url
         else:
             return default_url
+
+
+class PrepopulationSupportMixin:
+
+    def get_initial(self):
+        return {
+            field: self.request.GET.get(field) for field in self.populate_fields
+        }
+
+    def get_form(self, *args, **kwargs):
+        """Disable fields that are pre-populated."""
+        form = super().get_form(*args, **kwargs)
+        for field in self.populate_fields:
+            if field in self.request.GET:
+                form.fields[field].disabled = True
+        return form

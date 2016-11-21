@@ -12,6 +12,6 @@
   </a>
   &nbsp;
 {% endfor %}
-<a href="{% url 'trainingprogress_add' person.id %}?next={{ request.get_full_path|urlencode }}"
+<a href="{% url 'trainingprogress_add' %}?trainee={{ person.id|urlencode }}&amp;next={{ request.get_full_path|urlencode }}"
    class="label label-default"
    data-toggle="popover" data-content="Click to add new progress">+</a>

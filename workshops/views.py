@@ -52,6 +52,7 @@ from workshops.base_views import (
     AMYDeleteView,
     AMYListView,
     RedirectSupportMixin,
+    PrepopulationSupportMixin,
     AMYDetailView,
 )
 from workshops.filters import (
@@ -320,23 +321,14 @@ class MembershipDetails(OnlyForAdminsMixin, AMYDetailView):
 
 
 class MembershipCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                       AMYCreateView):
+                       PrepopulationSupportMixin, AMYCreateView):
     permission_required = [
         'workshops.add_membership',
         'workshops.change_organization',
     ]
     model = Membership
     form_class = MembershipForm
-
-    def get_initial(self):
-        initials = super().get_initial()
-        org_domain = self.kwargs.get('org_domain', None)
-
-        if org_domain is not None:
-            organization = get_object_or_404(Organization, domain=org_domain)
-            initials.update({'organization': organization})
-
-        return initials
+    populate_fields = ['organization']
 
 
 class MembershipUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
@@ -3170,26 +3162,16 @@ class TrainingRequestUpdate(RedirectSupportMixin,
 
 
 class TrainingProgressCreate(RedirectSupportMixin,
+                             PrepopulationSupportMixin,
                              OnlyForAdminsMixin,
                              AMYCreateView):
     model = TrainingProgress
     form_class = TrainingProgressForm
+    populate_fields = ['trainee']
 
     def get_initial(self):
         initial = super().get_initial()
-
         initial['evaluated_by'] = self.request.user
-
-        # Set trainee_id from URL argument, if exists.
-        trainee_id = self.kwargs.get('trainee_id', None)
-        if trainee_id is not None:
-            try:
-                trainee = Person.objects.get(pk=trainee_id)
-            except Person.DoesNotExist:
-                messages.warning(self.request, 'No such trainee.')
-            else:
-                initial['trainee'] = trainee
-
         return initial
 
     def get_context_data(self, **kwargs):

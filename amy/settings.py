@@ -33,6 +33,13 @@ else:
     SECRET_KEY = None
 SECRET_KEY = os.environ.get('AMY_SECRET_KEY', SECRET_KEY)
 
+# settings for PyData application
+ENABLE_PYDATA = json.loads(os.environ.get('AMY_ENABLE_PYDATA', 'false'))
+
+if ENABLE_PYDATA:
+    PYDATA_USERNAME_SECRET = os.environ.get('AMY_PYDATA_USERNAME')
+    PYDATA_PASSWORD_SECRET = os.environ.get('AMY_PYDATA_PASSWORD')
+
 # be sure to put these values in your envvars, even for development
 RECAPTCHA_PUBLIC_KEY = os.environ.get('AMY_RECAPTCHA_PUBLIC_KEY', None)
 RECAPTCHA_PRIVATE_KEY = os.environ.get('AMY_RECAPTCHA_PRIVATE_KEY', None)
@@ -117,16 +124,23 @@ TEMPLATES = [
 ALLOWED_HOSTS = [
     'amy.software-carpentry.org',
 ]
-
+if DEBUG:
+    ALLOWED_HOSTS.append('127.0.0.1')
 
 # Application definition
 
-INSTALLED_APPS = (
+INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+]
+if ENABLE_PYDATA:
+    INSTALLED_APPS += [
+        'pydata',
+    ]
+INSTALLED_APPS += [
     'workshops',
     # this should be after 'workshops' because templates in
     # 'templates/registration/' clash
@@ -143,7 +157,7 @@ INSTALLED_APPS = (
     'compressor',
     'social.apps.django_app.default',
     'debug_toolbar',
-)
+]
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
