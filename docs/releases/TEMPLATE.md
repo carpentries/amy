@@ -1,6 +1,6 @@
 # AMY release vX.Y.Z
 
-Major/Minor AMY [vX.Y.Z][] was released.
+Major/Minor AMY [vX.Y.Z][] was released on YYYY-MM-DD.
 
 Thanks to ... ... ... for doing excellent job.
 
