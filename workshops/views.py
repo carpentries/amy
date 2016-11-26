@@ -1616,7 +1616,7 @@ class BadgeDetails(OnlyForAdminsMixin, AMYDetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        context['title'] = 'Airport {0}'.format(self.object)
+        context['title'] = 'Badge {0}'.format(self.object)
         filter = BadgeAwardsFilter(
             self.request.GET,
             queryset=self.object.award_set.select_related(
