@@ -1592,7 +1592,7 @@ class AwardDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
     permission_required = 'workshops.delete_award'
 
     def get_success_url(self):
-        return reverse('person_edit', args=[self.get_object().person.pk]) + '#awards'
+        return reverse('badge_details', args=[self.get_object().badge.name])
 
 
 #------------------------------------------------------------
