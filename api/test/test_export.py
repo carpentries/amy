@@ -133,14 +133,6 @@ class TestExportingBadgesByPerson(BaseExportingTest):
                     },
                 ],
             },
-            {
-                'username': 'user2',
-                'email': 'user2@name.org',
-                'personal': 'User2',
-                'middle': '',
-                'family': 'Name',
-                'badges': [],
-            },
         ]
 
     def test_serialization(self):
