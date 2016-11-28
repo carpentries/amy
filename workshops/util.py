@@ -174,7 +174,9 @@ def verify_upload_person_task(data):
             Q(email=email) & ~Q(email='') & Q(email__isnull=False)
         )
         # need to cast to list, otherwise it won't JSON-ify
-        item['similar_persons'] = list(similar_persons.values())
+        item['similar_persons'] = list(similar_persons.values(
+            'id', 'personal', 'middle', 'family', 'email', 'username',
+        ))
 
         if existing_event and person and existing_role:
             # person, their role and a corresponding event exist, so
