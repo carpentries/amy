@@ -44,16 +44,12 @@
             <td class="editable">
                 <span>{{ entry.role|default:"—" }}</span>
                 <select name="role" class="hidden">
-                {% if entry.role in possible_roles %}
-                    {% for role in possible_roles %}
-                    <option value="{{ role }}" {% if role == entry.role %}selected="selected"{% endif %}>{{ role }}</option>
-                    {% endfor %}
-                {% else %}
+                {% if entry.role not in possible_roles %}
                     <option selected="selected" value="{{ entry.role }}">{{ entry.role }}</option>
-                    {% for role in possible_roles %}
-                    <option value="{{ role }}">{{ role }}</option>
-                    {% endfor %}
                 {% endif %}
+                {% for role in possible_roles %}
+                    <option value="{{ role }}" {% if role == entry.role %}selected="selected"{% endif %}>{{ role }}</option>
+                {% endfor %}
                 </select>
             </td>
             <td class="text-danger">
