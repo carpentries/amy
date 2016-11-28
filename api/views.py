@@ -132,7 +132,7 @@ class ExportBadgesView(ListAPIView):
     permission_classes = (IsAuthenticatedOrReadOnly, )
     paginator = None  # disable pagination
 
-    queryset = Badge.objects.prefetch_related('award_set')
+    queryset = Badge.objects.prefetch_related('award_set', 'award_set__person')
     serializer_class = ExportBadgesSerializer
 
 
@@ -141,7 +141,7 @@ class ExportBadgesByPersonView(ListAPIView):
     permission_classes = (IsAuthenticatedOrReadOnly, )
     paginator = None  # disable pagination
 
-    queryset = Person.objects.prefetch_related('badges')
+    queryset = Person.objects.exclude(badges=None).prefetch_related('badges')
     serializer_class = ExportBadgesByPersonSerializer
 
 
