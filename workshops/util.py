@@ -155,9 +155,9 @@ def verify_upload_person_task(data):
 
         if person:
             # force details from existing record
-            item['personal'] = person.personal
-            item['family'] = person.family
-            item['email'] = person.email
+            item['personal'] = personal = person.personal
+            item['family'] = family = person.family
+            item['email'] = email = person.email
             item['username'] = person.username
             item['person_exists'] = True
         else:
