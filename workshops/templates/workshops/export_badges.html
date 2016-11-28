@@ -4,22 +4,14 @@
 <h3>Group by badge name</h3>
 <a href="{{ badges_api_link }}">API link.</a>
 <p>
-  {% if badges_json_link %}
   <a href="{{ badges_json_link }}" class="btn btn-primary btn-lg">Download JSON</a>
-  {% endif %}
-  {% if badges_yaml_link %}
   <a href="{{ badges_yaml_link }}" class="btn btn-primary btn-lg">Download YAML</a>
-  {% endif %}
 </p>
 
 <h3>Group by person</h3>
 <a href="{{ by_person_api_link }}">API link.</a>
 <p>
-  {% if by_person_json_link %}
   <a href="{{ by_person_json_link }}" class="btn btn-primary btn-lg">Download JSON</a>
-  {% endif %}
-  {% if by_person_yaml_link %}
   <a href="{{ by_person_yaml_link }}" class="btn btn-primary btn-lg">Download YAML</a>
-  {% endif %}
 </p>
 {% endblock %}
