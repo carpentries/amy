@@ -797,9 +797,7 @@ def person_edit(request, person_id):
         'title': 'Edit Person {0}'.format(str(person)),
         'person_form': person_form,
         'object': person,
-        'awards': person.award_set.order_by('badge__name'),
         'award_form': award_form,
-        'tasks': person.task_set.order_by('-event__slug'),
         'task_form': task_form,
     }
     return render(request, 'workshops/person_edit_form.html', context)
