@@ -1576,7 +1576,7 @@ class TaskUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
 
 
 class TaskDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
-                 AMYDeleteView):
+                 RedirectSupportMixin, AMYDeleteView):
     model = Task
     permission_required = 'workshops.delete_task'
     success_url = reverse_lazy('all_tasks')
@@ -1586,13 +1586,22 @@ class TaskDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
 #------------------------------------------------------------
 
 
-class AwardDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
-                  AMYDeleteView):
+class MockAwardDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
+                      AMYDeleteView):
     model = Award
     permission_required = 'workshops.delete_award'
 
     def get_success_url(self):
         return reverse('badge_details', args=[self.get_object().badge.name])
+
+
+class AwardDelete(RedirectSupportMixin, MockAwardDelete):
+    # Modify the MRO to look like:
+    # AwardDelete < RedirectSupportMixin < MockAwardDelete
+    #
+    # This ensures that `super()` when called from `get_success_url` method of
+    # RedirectSupportMixin returns MockAwardDelete
+    pass
 
 
 #------------------------------------------------------------
