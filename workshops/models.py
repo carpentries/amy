@@ -1235,6 +1235,23 @@ class EventRequest(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
         # verbose_name a.k.a. label and help_text were moved to the
         # SWCEventRequestForm and DCEventRequestForm
     )
+
+    ADMIN_FEE_PAYMENT_CHOICES = (
+        ('NP1', 'Non-profit / non-partner: US$2500'),
+        ('FP1', 'For-profit: US$10,000'),
+        ('self-organized', 'Self-organized: no fee (please let us know if you '
+                           'wish to make a donation)'),
+        ('waiver', 'Waiver requested (please give details in '
+                   '"Anything else")'),
+    )
+    admin_fee_payment = models.CharField(
+        max_length=STR_MED,
+        choices=ADMIN_FEE_PAYMENT_CHOICES,
+        verbose_name='Which of the following applies to your payment for the '
+                     'administrative fee?',
+        blank=False,
+        default='NP1',
+    )
     fee_waiver_request = models.BooleanField(
         help_text='Waiver\'s of the administrative fee are available on '
                   'a needs basis. If you are interested in submitting a waiver'
@@ -1266,23 +1283,6 @@ class EventRequest(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
         verbose_name='Other propositions for managing instructors\' travel and'
                      ' accommodations',
         blank=True,
-    )
-
-    ADMIN_FEE_PAYMENT_CHOICES = (
-        ('NP1', 'Non-profit / non-partner: US$2500'),
-        ('FP1', 'For-profit: US$10,000'),
-        ('self-organized', 'Self-organized: no fee (please let us know if you '
-                           'wish to make a donation)'),
-        ('waiver', 'Waiver requested (please give details in '
-                   '"Anything else")'),
-    )
-    admin_fee_payment = models.CharField(
-        max_length=STR_MED,
-        choices=ADMIN_FEE_PAYMENT_CHOICES,
-        verbose_name='Which of the following applies to your payment for the '
-                     'administrative fee?',
-        blank=False,
-        default='NP1',
     )
     comment = models.TextField(
         help_text='What else do you want us to know about your workshop? About'
