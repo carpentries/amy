@@ -177,16 +177,6 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
             has_errors = verify_upload_person_task(bad_data)
             self.assertFalse(has_errors)
 
-    def test_verify_name_matching_existing_user(self):
-        bad_data = self.make_data()
-        bad_data[0]['email'] = 'harry@hogwarts.edu'
-        has_errors = verify_upload_person_task(bad_data)
-        self.assertTrue(has_errors)
-        errors = bad_data[0]['errors']
-        self.assertEqual(len(errors), 2)
-        self.assertTrue('personal' in errors[0])
-        self.assertTrue('family' in errors[1])
-
     def test_verify_existing_user_has_workshop_role_provided(self):
         bad_data = [
             {
@@ -214,6 +204,9 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
                 'email': 'harry@hogwarts.edu',
                 'event': '',
                 'role': '',
+                'existing_person_id': Person.objects
+                                            .get(email='harry@hogwarts.edu')
+                                            .pk,
             }
         ]
         verify_upload_person_task(data)
@@ -229,10 +222,41 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
                 'email': 'h.frotter@hogwarts.edu',
                 'event': '',
                 'role': '',
+                'existing_person_id': None,
             }
         ]
         verify_upload_person_task(data)
         self.assertEqual('supplied_username', data[0]['username'])
+
+    def test_matched_similar_persons(self):
+        """Ensure function finds matching persons."""
+        data = [
+            {
+                'personal': 'Harry',
+                'family': 'Potter',
+                'username': 'supplied_username',
+                'email': 'h.frotter@hogwarts.edu',
+                'event': '',
+                'role': '',
+            },
+            {
+                'personal': 'Romuald',
+                'family': 'Weazel',
+                'username': '',
+                'email': 'rweasley@ministry.gov.uk',
+                'event': '',
+                'role': '',
+            }
+        ]
+        verify_upload_person_task(data)
+
+        self.assertEqual(len(data[0]['similar_persons']), 1)
+        self.assertEqual(len(data[1]['similar_persons']), 1)
+
+        self.assertEqual(data[0]['similar_persons'][0]['username'],
+                         'potter_harry')
+        self.assertEqual(data[1]['similar_persons'][0]['username'],
+                         'weasley_ron')
 
 
 class BulkUploadUsersViewTestCase(CSVBulkUploadTestBase):
@@ -284,6 +308,10 @@ class BulkUploadUsersViewTestCase(CSVBulkUploadTestBase):
 Harry,Potter,harry@hogwarts.edu,foobar,Helper
 """
         data, _ = upload_person_task_csv(StringIO(csv))
+
+        # simulate user clicking "Use this user" next to matched person
+        data[0]['existing_person_id'] = \
+            Person.objects.get(email='harry@hogwarts.edu').pk
 
         # self.client is authenticated user so we have access to the session
         store = self.client.session
@@ -375,6 +403,10 @@ Harry,Potter,harry@hogwarts.edu,foobar,learner
 """
         data, _ = upload_person_task_csv(StringIO(csv))
 
+        # simulate user clicking "Use this user" next to matched person
+        data[0]['existing_person_id'] = \
+            Person.objects.get(email='harry@hogwarts.edu').pk
+
         # self.client is authenticated user so we have access to the session
         store = self.client.session
         store['bulk-add-people'] = data
@@ -463,3 +495,14 @@ Ron,Weasley,ron@hogwarts.edu,foobar,learner
         self.assertEqual(2, len(data))
         self.assertEqual(data[0]['personal'], 'Harry')
         self.assertEqual(data[1]['personal'], 'Hermione')
+
+
+class BulkUploadMatchPersonViewTestCase(CSVBulkUploadTestBase):
+    def setUp(self):
+        super().setUp()
+        Role.objects.create(name='Helper')
+        self.csv = """personal,family,email,event,role
+Harry,Potter,harry@hogwarts.edu,foobar,learner
+Hermione,Granger,hermione@hogwarts.edu,foobar,learner
+Ron,Weasley,ron@hogwarts.edu,foobar,learner
+"""
