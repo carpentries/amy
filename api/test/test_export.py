@@ -8,6 +8,7 @@ from rest_framework import status
 from api.test.base import APITestBase
 from api.views import (
     ExportBadgesView,
+    ExportBadgesByPersonView,
     ExportInstructorLocationsView,
     ExportMembersView,
 )
@@ -83,6 +84,66 @@ class TestExportingBadges(BaseExportingTest):
     def test_view(self):
         # test only JSON output
         url = reverse('api:export-badges')
+        response = self.client.get(url, format='json')
+        content = response.content.decode('utf-8')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(json.loads(content), self.expecting)
+
+
+class TestExportingBadgesByPerson(BaseExportingTest):
+    def setUp(self):
+        super().setUp()
+
+        today = datetime.date.today()
+
+        # set up two users one with badges, one without any
+        self.user1 = Person.objects.create_user(
+            username='user1', email='user1@name.org',
+            personal='User1', family='Name')
+        self.user2 = Person.objects.create_user(
+            username='user2', email='user2@name.org',
+            personal='User2', family='Name')
+        self.badge1 = Badge.objects.create(name='badge1', title='Badge1',
+                                           criteria='')
+        self.badge2 = Badge.objects.create(name='badge2', title='Badge2',
+                                           criteria='')
+        Award.objects.create(person=self.user1, badge=self.badge1,
+                             awarded=today)
+        Award.objects.create(person=self.user1, badge=self.badge2,
+                             awarded=today)
+
+        # make sure we *do* get users without badges
+        self.expecting = [
+            {
+                'username': 'user1',
+                'email': 'user1@name.org',
+                'personal': 'User1',
+                'middle': '',
+                'family': 'Name',
+                'badges': [
+                    {
+                        'name': 'badge1',
+                        'title': 'Badge1',
+                        'criteria': '',
+                    },
+                    {
+                        'name': 'badge2',
+                        'title': 'Badge2',
+                        'criteria': '',
+                    },
+                ],
+            },
+        ]
+
+    def test_serialization(self):
+        view = ExportBadgesByPersonView()
+        serializer = view.get_serializer_class()
+        response = serializer(view.get_queryset(), many=True)
+        self.assertEqual(response.data, self.expecting)
+
+    def test_view(self):
+        # test only JSON output
+        url = reverse('api:export-badges-by-person')
         response = self.client.get(url, format='json')
         content = response.content.decode('utf-8')
         self.assertEqual(response.status_code, status.HTTP_200_OK)

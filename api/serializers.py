@@ -47,6 +47,20 @@ class ExportBadgesSerializer(serializers.ModelSerializer):
         fields = ('name', 'persons')
 
 
+class BadgeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Badge
+        fields = ('name', 'title', 'criteria')
+
+
+class ExportBadgesByPersonSerializer(serializers.ModelSerializer):
+    badges = BadgeSerializer(many=True)
+    class Meta:
+        model = Person
+        fields = ('username', 'personal', 'middle', 'family', 'email',
+                  'badges')
+
+
 class ExportInstructorLocationsSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='fullname')
     instructors = PersonUsernameSerializer(many=True, source='person_set')
