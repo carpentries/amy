@@ -114,7 +114,7 @@ class Membership(models.Model):
     )
     self_organized_workshops_per_year = models.PositiveIntegerField(
         null=True, blank=True,
-        help_text="Imposed number of self-organized workshops per year",
+        help_text="Expected number of self-organized workshops per year",
     )
     notes = models.TextField(default="", blank=True)
     organization = models.ForeignKey(Organization, null=False, blank=False,

@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
                 ('agreement_end', models.DateField(blank=True, default=django.utils.timezone.now, null=True)),
                 ('contribution_type', models.CharField(blank=True, choices=[('financial', 'Financial'), ('person-days', 'Person-days'), ('other', 'Other')], max_length=40, null=True)),
                 ('workshops_without_admin_fee_per_year', models.PositiveIntegerField(help_text='Acceptable number of workshops without admin fee per year', blank=True, null=True)),
-                ('self_organized_workshops_per_year', models.PositiveIntegerField(help_text='Imposed number of self-organized workshops per year', blank=True, null=True)),
+                ('self_organized_workshops_per_year', models.PositiveIntegerField(help_text='Expected number of self-organized workshops per year', blank=True, null=True)),
                 ('notes', models.TextField(blank=True, default='')),
             ],
         ),
