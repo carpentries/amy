@@ -2,6 +2,7 @@
 
 {% load crispy_forms_tags %}
 {% load selectable_tags %}
+{% load order_by %}
 
 {% block content %}
 <div>
@@ -18,7 +19,7 @@
   </div>
   <div role="tabpanel" class="tab-pane" id="awards">
     {% crispy award_form %}
-    {% if awards %}
+    {% if object.award_set %}
     <table class="table table-striped">
       <thead>
         <tr>
@@ -30,7 +31,7 @@
         </tr>
       </thead>
       <tbody>
-        {% for award in awards %}
+        {% for award in object.award_set|order_by:'badge__name' %}
         <tr>
           <td><a href="{{ award.badge.get_absolute_url }}">{{ award.badge.title }}</a></td>
           <td>{{ award.awarded }}</td>
@@ -53,9 +54,9 @@
   </div>
   <div role="tabpanel" class="tab-pane" id="tasks">
     {% crispy task_form %}
-    {% if tasks %}
+    {% if object.task_set %}
     <ul>
-      {% for task in tasks %}
+      {% for task in object.task_set|order_by:'-event__slug' %}
       <li>{{ task.role.name }} during <a href="{{ task.event.get_absolute_url }}">{{ task.event }}</a> (<a href="{{ task.get_absolute_url }}">show task</a>)</li>
       {% endfor %}
     </ul>
