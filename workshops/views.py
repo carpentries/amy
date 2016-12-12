@@ -32,6 +32,7 @@ from django.db.models.functions import Now
 from django.http import Http404, HttpResponse, JsonResponse
 from django.http import HttpResponseBadRequest
 from django.shortcuts import redirect, render, get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView
 from django.views.generic.edit import (
     ModelFormMixin,
@@ -1825,6 +1826,7 @@ def workshop_staff(request):
 #------------------------------------------------------------
 
 
+@csrf_exempt
 @admin_required
 def search(request):
     '''Search the database by term.'''
@@ -1832,8 +1834,8 @@ def search(request):
     term = ''
     organizations = events = persons = airports = training_requests = None
 
-    if request.method == 'POST':
-        form = SearchForm(request.POST)
+    if request.method == 'GET':
+        form = SearchForm(request.GET)
         if form.is_valid():
             term = form.cleaned_data['term']
             tokens = re.split('\s+', term)
@@ -1903,7 +1905,7 @@ def search(request):
             if len(results) == 1:
                 return redirect(results[0].get_absolute_url())
 
-    # if a GET (or any other method) we'll create a blank form
+    # if empty GET, we'll create a blank form
     else:
         form = SearchForm()
 
