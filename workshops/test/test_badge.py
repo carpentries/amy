@@ -57,8 +57,15 @@ class TestBadge(TestBase):
         person = self.hermione
         award = person.award_set.all()[0]
         badge = award.badge
-        # test first URL
-        rv = self.client.post(reverse('award_delete', args=[award.pk, ]))
-        assert rv.status_code == 302
+
+        rv = self.client.post(
+            '{}?next={}'.format(
+                reverse('award_delete', args=[award.pk]),
+                reverse('admin-dashboard'),
+            ),
+            follow=True
+        )
+        self.assertRedirects(rv, reverse('admin-dashboard'))
+
         assert award not in badge.award_set.all()  # award really removed
         assert badge not in person.badges.all()  # badge not avail. via Awards

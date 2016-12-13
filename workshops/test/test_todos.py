@@ -99,16 +99,9 @@ class TestTodoItemViews(TestBase):
             event=event, completed=False, title="Test TODO3",
             due=date.today(), additional="",
         )
-
         assert todo in event.todoitem_set.all()
 
-        rv = self.client.post(
-            reverse('todo_delete', args=[todo.pk]),
-            {'next': reverse('admin-dashboard')},
-            follow=True
-        )
-        self.assertRedirects(rv, reverse('admin-dashboard'))
-
+        rv = self.client.post(reverse('todo_delete', args=[todo.pk]))
         assert event.todoitem_set.all().count() == 0
 
     def test_edited(self):
