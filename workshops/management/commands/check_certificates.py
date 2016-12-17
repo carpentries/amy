@@ -20,7 +20,7 @@ class Command(BaseCommand):
         path_to_root = options['path']
 
         badges = self.get_badges()
-        result = [['which','badge','event','username','person','email','awarded']]
+        result = [['which', 'badge', 'event', 'awarded_by', 'username', 'person', 'email', 'awarded']]
         for (name, badge) in badges:
             db_records = self.get_db_records(badge)
             db_people = db_records.keys()
@@ -41,8 +41,8 @@ class Command(BaseCommand):
     def get_db_records(self, badge):
         '''Get set of usernames of all people with the given badge.'''
 
-        objects = Award.objects.filter(badge=badge).values_list('person__username', 'awarded', 'event__slug')
-        return dict((obj[0], {'awarded': obj[1], 'event': obj[2]}) for obj in objects)
+        objects = Award.objects.filter(badge=badge).values_list('person__username', 'awarded', 'event__slug', 'awarded_by__username')
+        return dict((obj[0], {'awarded': obj[1], 'event': obj[2], 'awarded_by': obj[3]}) for obj in objects)
 
     def get_file_people(self, path):
         '''Get names of all people with the given certificate.'''
@@ -55,13 +55,13 @@ class Command(BaseCommand):
         '''Report missing usernames.'''
         for uid in usernames:
             try:
-                p = Person.objects.get(username=uid)
-                name = p.get_full_name()
-                email = p.email
-                event, awarded = '', ''
+                receiver = Person.objects.get(username=uid)
+                name = receiver.get_full_name()
+                event, awarded, awarded_by = '', '', ''
                 if uid in records:
                     event = records[uid]['event']
                     awarded = records[uid]['awarded']
-                report.append([title, kind, event, uid, p.get_full_name(), p.email, awarded])
-            except Person.DoesNotExist:
-                print('{0}'.format(uid), file=sys.stderr)
+                    awarded_by = Person.objects.get(username=records[uid]['awarded_by']).get_full_name()
+                report.append([title, kind, event, awarded_by, uid, name, receiver.email, awarded])
+            except Person.DoesNotExist as e:
+                print('{0} does not exist: {1}'.format(uid, str(e)), file=sys.stderr)
