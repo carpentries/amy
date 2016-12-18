@@ -1126,86 +1126,29 @@ class EventCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
     template_name = 'workshops/event_create_form.html'
 
 
-@admin_required
-@permission_required(['workshops.change_event', 'workshops.add_task'],
-                     raise_exception=True)
-def event_edit(request, slug):
-    try:
-        event = Event.objects.get(slug=slug)
-        tasks = event.task_set.order_by('role__name')
-    except ObjectDoesNotExist:
-        raise Http404("No event found matching the query.")
+class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
+                  AMYUpdateView):
+    permission_required = [
+        'workshops.change_event',
+        'workshops.add_task',
+        'workshops.add_sponsorship',
+    ]
+    model = Event
+    form_class = EventForm
+    template_name = 'workshops/event_edit_form.html'
 
-    event_form = EventForm(prefix='event', instance=event)
-    task_form = TaskForm(prefix='task', initial={
-        'event': event,
-    })
-    sponsor_form = SponsorshipForm(prefix='sponsor',
-        initial={'event':event}
-    )
-
-    if request.method == 'POST':
-        # check which form was submitted
-        if "task-role" in request.POST:
-            task_form = TaskForm(request.POST, prefix='task')
-
-            if task_form.is_valid():
-                task = task_form.save()
-
-                messages.success(
-                    request,
-                    '{event} was added a new task "{task}".'.format(
-                        event=str(event),
-                        task=str(task),
-                    ),
-                )
-
-                # to reset the form values
-                return redirect('{}#tasks'.format(request.path))
-
-            else:
-                messages.error(request, 'Fix errors below.')
-        if 'sponsor-event' in request.POST:
-            sponsor_form = SponsorshipForm(request.POST, prefix='sponsor')
-
-            if sponsor_form.is_valid():
-                sponsor = sponsor_form.save()
-
-                messages.success(
-                    request,
-                    '{} was added as a new sponsor.'.format(sponsor.organization),
-                )
-                # to reset the form values
-                return redirect('{}#sponsors'.format(request.path))
-            else:
-                messages.error(request, 'Fix errors below.')
-        else:
-            event_form = EventForm(request.POST, prefix='event',
-                                   instance=event)
-            if event_form.is_valid():
-                event = event_form.save()
-
-                messages.success(
-                    request,
-                    '{name} was updated successfully.'.format(
-                        name=str(event),
-                    ),
-                )
-
-                return redirect(event)
-
-            else:
-                messages.error(request, 'Fix errors below.')
-
-    context = {'title': 'Edit Event {0}'.format(event.slug),
-               'event_form': event_form,
-               'object': event,
-               'model': Event,
-               'tasks': tasks,
-               'task_form': task_form,
-               'sponsor_form': sponsor_form,
-               }
-    return render(request, 'workshops/event_edit_form.html', context)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        kwargs = {
+            'initial': {'event': self.object},
+            'widgets': {'event': HiddenInput()},
+        }
+        context.update({
+            'tasks': self.get_object().task_set.order_by('role__name'),
+            'task_form': TaskForm(**kwargs),
+            'sponsor_form': SponsorshipForm(**kwargs),
+        })
+        return context
 
 
 class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin,

@@ -478,13 +478,13 @@ class TestEventViews(TestBase):
         event.save()
 
         data = {
-            'task-role': self.learner.pk,
-            'task-event': event.pk,
-            'task-person_1': self.spiderman.pk,
+            'role': self.learner.pk,
+            'event': event.pk,
+            'person_1': self.spiderman.pk,
         }
-        self.client.post(reverse('event_edit', args=[event.slug]), data)
+        self.client.post(reverse('task_add'), data)
         event.refresh_from_db()
-        assert event.attendance == 1
+        self.assertEqual(event.attendance, 1)
 
     def test_slug_illegal_characters(self):
         """Disallow slugs with wrong characters.
