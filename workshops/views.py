@@ -9,7 +9,10 @@ from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.forms import SetPasswordForm, PasswordChangeForm
-from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.auth.mixins import (
+    PermissionRequiredMixin,
+    UserPassesTestMixin,
+)
 from django.core.exceptions import (
     ObjectDoesNotExist,
     PermissionDenied,
@@ -702,17 +705,18 @@ class PersonCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
         return response
 
 
-class PersonUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
+class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin,
                    AMYUpdateView):
-    permission_required = [
-        'workshops.add_person',
-        'workshops.change_task',
-        'workshops.change_award',
-    ]
     model = Person
     form_class = PersonForm
     pk_url_kwarg = 'person_id'
     template_name = 'workshops/person_edit_form.html'
+
+    def test_func(self):
+        if not (self.request.user.has_perm('workshops.edit_person') or \
+            self.request.user == self.get_object()):
+            raise PermissionDenied
+        return True
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

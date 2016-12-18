@@ -4,6 +4,7 @@ import datetime
 from social.apps.django_app.default.models import UserSocialAuth
 from unittest.mock import patch
 from urllib.parse import urlencode
+import webtest
 
 from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
@@ -1052,3 +1053,26 @@ class TestFilterTaughtWorkshops(TestBase):
         # - Ron and Spiderman should not be listed, because they didn't
         # participated in a TTT event.
         self.assertSequenceEqual(filtered, [self.hermione])
+
+
+class TestPersonUpdateViewPermissions(TestBase):
+
+    def setUp(self):
+        self.trainee = Person.objects.create(username='trainee')
+        self.trainer = Person.objects.create(username='trainer')
+        trainer_group, _ = Group.objects.get_or_create(name='trainers')
+        self.trainer.groups.add(trainer_group)
+
+    def test_trainer_can_edit_self_profile(self):
+        profile_edit = self.app.get(
+            reverse('person_edit', args=[self.trainer.pk]),
+            user='trainer',
+        )
+        self.assertEqual(profile_edit.status_code, 200)
+
+    def test_trainer_cannot_edit_stray_profile(self):
+        with self.assertRaises(webtest.app.AppError):
+            profile_edit = self.app.get(
+                reverse('person_edit', args=[self.trainee.pk]),
+                user='trainer',
+            )
