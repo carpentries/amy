@@ -34,22 +34,16 @@ class TestBadge(TestBase):
 
     def test_badge_award(self):
         """Ensure we can add awards from badge_award page."""
-        url, values = self._get_initial_form('badge_award',
-                                             self.swc_instructor.name)
-        values['person_1'] = self.spiderman.id
-
-        # to override django-selectable behavior
-        values['person_0'] = ''
-        values['event_1'] = ''
-        values['event_0'] = ''
-        values['awarded_by_0'] = ''
-        values['awarded_by_1'] = ''
-
+        swc_badge = self.app.get(
+            reverse('badge_details', args=[self.swc_instructor.name, ]),
+            user='admin'
+        )
+        award_add = swc_badge.click('Award new', index=0)
+        form = award_add.forms[2]
+        self.assertSelected(form['badge'], 'Software Carpentry Instructor')
+        form['person_1'] = self.spiderman.id
         assert self.swc_instructor.award_set.count() == 3
-
-        response = self.client.post(url, values)
-        self.assertEqual(response.status_code, 302)
-
+        form.submit()
         assert self.swc_instructor.award_set.count() == 4
 
     def test_remove_award(self):

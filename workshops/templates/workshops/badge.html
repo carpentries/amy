@@ -10,9 +10,9 @@
 </table>
 
   {% if perms.workshops.add_award %}
-    <p><a href="{% url 'badge_award' badge.name %}" class="btn btn-success">Award new</a></p>
+    <p><a href="{% url 'award_add' %}?badge={{ badge.pk }}" class="btn btn-success">Award new</a></p>
   {% else %}
-    <p><a href="{% url 'badge_award' badge.name %}" class="btn btn-success disabled">Award new</a></p>
+    <p><button class="btn btn-danger disabled">Award new</button></p>
   {% endif %}
 
 {% if awards %}
@@ -43,9 +43,9 @@
   {% pagination awards %}
 
   {% if perms.workshops.add_award %}
-    <p><a href="{% url 'badge_award' badge.name %}" class="btn btn-success">Award new</a></p>
+    <p><a href="{% url 'award_add' %}?badge={{ badge.pk }}" class="btn btn-success">Award new</a></p>
   {% else %}
-    <p><a href="{% url 'badge_award' badge.name %}" class="btn btn-success disabled">Award new</a></p>
+    <p><button class="btn btn-danger disabled">Award new</button></p>
   {% endif %}
 
 {% else %}

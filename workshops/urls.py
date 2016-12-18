@@ -100,13 +100,11 @@ urlpatterns = [
 
     url(r'^sponsorship/(?P<pk>\d+)/delete/$', views.SponsorshipDelete.as_view(), name='sponsorship_delete'),
 
+    url(r'^awards/add/$', views.AwardCreate.as_view(), name='award_add'),
     url(r'^award/(?P<pk>\d+)/delete/$', views.AwardDelete.as_view(), name='award_delete'),
 
     url(r'^badges/$', views.AllBadges.as_view(), name='all_badges'),
-    url(r'^badge/(?P<badge_name>[\w\.=-]+)/', include([
-        url(r'^$', views.BadgeDetails.as_view(), name='badge_details'),
-        url(r'^award/$', views.badge_award, name='badge_award'),
-    ])),
+    url(r'^badge/(?P<badge_name>[\w\.=-]+)/$', views.BadgeDetails.as_view(), name='badge_details'),
 
     url(r'^trainings/$', views.AllTrainings.as_view(), name='all_trainings'),
 

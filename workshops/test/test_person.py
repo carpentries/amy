@@ -470,25 +470,21 @@ class TestPerson(TestBase):
 
         # Test workflow starting from clicking at "SWC" label
         swc_res = trainees.click('^SWC$')
-        self.assertSelected(swc_res.forms[2]['award-badge'],
+        self.assertSelected(swc_res.forms[2]['badge'],
                             'Software Carpentry Instructor')
-        self.assertEqual(swc_res.forms[2]['award-event_0'].value,
+        self.assertEqual(swc_res.forms[2]['event_0'].value,
                          '2016-08-10-training')
-        swc_res = swc_res.forms[2].submit().follow()
-        self.assertIn("Bob Smith &lt;bob.smith@example.com&gt; was awarded "
-                      "Software Carpentry Instructor badge.", swc_res)
-        self.assertEqual(trainees.request.url, swc_res.request.url)
+        self.assertRedirects(swc_res.forms[2].submit(), trainees.request.url)
+        self.assertEqual(trainee.award_set.last().badge, self.swc_instructor)
 
         # Test workflow starting from clicking at "DC" label
         dc_res = trainees.click('^DC$')
-        self.assertSelected(dc_res.forms[2]['award-badge'],
+        self.assertSelected(dc_res.forms[2]['badge'],
                             'Data Carpentry Instructor')
-        self.assertEqual(dc_res.forms[2]['award-event_0'].value,
+        self.assertEqual(dc_res.forms[2]['event_0'].value,
                          '2016-08-10-training')
-        dc_res = dc_res.forms[2].submit().follow()
-        self.assertIn("Bob Smith &lt;bob.smith@example.com&gt; was awarded "
-                      "Data Carpentry Instructor badge.", dc_res)
-        self.assertEqual(trainees.request.url, dc_res.request.url)
+        self.assertRedirects(dc_res.forms[2].submit(), trainees.request.url)
+        self.assertEqual(trainee.award_set.last().badge, self.dc_instructor)
 
 
 class TestPersonPassword(TestBase):

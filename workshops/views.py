@@ -1603,6 +1603,34 @@ class TaskDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
 #------------------------------------------------------------
 
 
+class MockAwardCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
+                      PrepopulationSupportMixin, AMYCreateView):
+    permission_required = 'workshops.add_award'
+    model = Award
+    form_class = AwardForm
+    populate_fields = ['badge', 'person']
+
+    def get_initial(self, **kwargs):
+        initial = super().get_initial(**kwargs)
+
+        # Determine initial event in AwardForm
+        if 'find-training' in self.request.GET:
+            tasks = Person.objects.get(
+                pk=self.request.GET['person']
+            ).get_training_tasks()
+            if tasks.count() == 1:
+                initial.update({'event': tasks[0].event})
+
+        return initial
+
+    def get_success_url(self):
+        return reverse('badge_details', args=[self.object.badge.name])
+
+
+class AwardCreate(RedirectSupportMixin, MockAwardCreate):
+    pass
+
+
 class MockAwardDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
                       AMYDeleteView):
     model = Award
@@ -1654,33 +1682,6 @@ class BadgeDetails(OnlyForAdminsMixin, AMYDetailView):
         context['awards'] = awards
 
         return context
-
-
-@admin_required
-@permission_required('workshops.add_award', raise_exception=True)
-def badge_award(request, badge_name):
-    """Award a badge to someone (== create a new Award)."""
-    badge = get_object_or_404(Badge, name=badge_name)
-
-    initial = {
-        'badge': badge,
-    }
-
-    if request.method == 'GET':
-        form = AwardForm(initial=initial, widgets={'badge': HiddenInput()})
-    elif request.method == 'POST':
-        form = AwardForm(request.POST, initial=initial)
-
-        if form.is_valid():
-            form.save()
-            return redirect(reverse('badge_details', args=[badge.name]))
-
-    context = {
-        'title': 'Badge {0}'.format(badge),
-        'badge': badge,
-        'form': form,
-    }
-    return render(request, 'workshops/generic_form.html', context)
 
 
 #------------------------------------------------------------
@@ -3305,6 +3306,8 @@ def all_trainees(request):
 
     context = {'title': 'Trainees',
                'all_trainees': trainees,
+               'swc': Badge.objects.get(name='swc-instructor'),
+               'dc': Badge.objects.get(name='dc-instructor'),
                'filter': filter,
                'form': form,
                'discard_form': discard_form}
