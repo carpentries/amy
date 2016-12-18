@@ -939,7 +939,7 @@ def persons_merge(request):
 
             # M2M relationships
             difficult = ('award_set', 'qualification_set', 'domains',
-                         'languages', 'task_set')
+                         'languages', 'task_set', 'trainingprogress_set')
 
             try:
                 _, integrity_errors = merge_objects(obj_a, obj_b, easy,

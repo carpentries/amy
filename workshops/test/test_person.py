@@ -619,6 +619,11 @@ class TestPersonMerging(TestBase):
         self._setUpEvents()
         self._setUpUsersAndLogin()
 
+        # create training requirement
+        self.training = TrainingRequirement.objects.get(name='Training')
+        self.homework = TrainingRequirement.objects.get(name='SWC Homework')
+
+        # create first person
         self.person_a = Person.objects.create(
             personal='Kelsi', middle='', family='Purdy',
             username='purdy_kelsi', email='purdy.kelsi@example.com',
@@ -640,7 +645,9 @@ class TestPersonMerging(TestBase):
         )
         self.person_a.languages.set([Language.objects.first(),
                                      Language.objects.last()])
+        self.person_a.trainingprogress_set.create(requirement=self.training)
 
+        # create second person
         self.person_b = Person.objects.create(
             personal='Jayden', middle='', family='Deckow',
             username='deckow_jayden', email='deckow.jayden@example.com',
@@ -656,7 +663,10 @@ class TestPersonMerging(TestBase):
         Qualification.objects.create(person=self.person_b, lesson=self.sql)
         self.person_b.domains = [KnowledgeDomain.objects.last()]
         self.person_b.languages.set([Language.objects.last()])
+        self.person_b.trainingprogress_set.create(requirement=self.training)
+        self.person_b.trainingprogress_set.create(requirement=self.homework)
 
+        # set up a strategy
         self.strategy = {
             'person_a': self.person_a.pk,
             'person_b': self.person_b.pk,
@@ -682,6 +692,7 @@ class TestPersonMerging(TestBase):
             'languages': 'combine',
             'task_set': 'obj_b',
             'is_active': 'obj_a',
+            'trainingprogress_set': 'combine',
         }
         base_url = reverse('persons_merge')
         query = urlencode({
@@ -723,6 +734,7 @@ class TestPersonMerging(TestBase):
             'domains': 'combine',
             'languages': 'combine',
             'task_set': 'combine',
+            'trainingprogress_set': 'combine',
         }
         data = hidden.copy()
         data.update(failing)
@@ -743,8 +755,8 @@ class TestPersonMerging(TestBase):
         """Merging: ensure the base person is selected based on ID form
         field.
 
-        If ID field has a value of 'obj_a', then person A is base event and it
-        won't be removed from the database after the merge. Person B, on the
+        If ID field has a value of 'obj_b', then person B is base event and it
+        won't be removed from the database after the merge. Person A, on the
         other hand, will."""
         rv = self.client.post(self.url, data=self.strategy)
         self.assertEqual(rv.status_code, 302)
@@ -793,6 +805,10 @@ class TestPersonMerging(TestBase):
                         KnowledgeDomain.objects.last()},
             'languages': {Language.objects.first(), Language.objects.last()},
             'task_set': set(Task.objects.none()),
+
+            # Combining similar TrainingProgresses should end up in
+            # a unique constraint violation, shouldn't it?
+            'trainingprogress_set': set(TrainingProgress.objects.all()),
         }
 
         rv = self.client.post(self.url, data=self.strategy)
