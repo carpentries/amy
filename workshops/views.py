@@ -147,7 +147,6 @@ from workshops.util import (
     verify_upload_person_task,
     create_uploaded_persons_tasks,
     InternalError,
-    update_event_attendance_from_tasks,
     WrongWorkshopURL,
     fetch_event_metadata,
     parse_metadata_from_event_website,
@@ -1156,10 +1155,6 @@ def event_edit(request, slug):
                     ),
                 )
 
-                # if event.attendance is lower than number of learners, then
-                # update the attendance
-                update_event_attendance_from_tasks(event)
-
                 # to reset the form values
                 return redirect('{}#tasks'.format(request.path))
 
@@ -1191,10 +1186,6 @@ def event_edit(request, slug):
                         name=str(event),
                     ),
                 )
-
-                # if event.attendance is lower than number of learners, then
-                # update the attendance
-                update_event_attendance_from_tasks(event)
 
                 return redirect(event)
 

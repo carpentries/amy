@@ -275,11 +275,6 @@ def create_uploaded_persons_tasks(data):
                 raise ObjectDoesNotExist('{0} (for "{1}")'.format(str(e),
                                                                   row_repr))
 
-    for event in events:
-        # if event.attendance is lower than number of learners, then
-        # update the attendance
-        update_event_attendance_from_tasks(event)
-
     return persons_created, tasks_created
 
 
@@ -645,16 +640,6 @@ def validate_metadata_from_event_website(metadata):
                 pass
 
     return errors
-
-
-def update_event_attendance_from_tasks(event):
-    """Increase event.attendance if there's more learner tasks belonging to the
-    event."""
-    learners = event.task_set.filter(role__name='learner').count()
-    Event.objects \
-        .filter(pk=event.pk) \
-        .filter(Q(attendance__lt=learners) | Q(attendance__isnull=True)) \
-        .update(attendance=learners)
 
 
 def universal_date_format(date):
