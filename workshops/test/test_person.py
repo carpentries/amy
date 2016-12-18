@@ -755,8 +755,8 @@ class TestPersonMerging(TestBase):
         """Merging: ensure the base person is selected based on ID form
         field.
 
-        If ID field has a value of 'obj_a', then person A is base event and it
-        won't be removed from the database after the merge. Person B, on the
+        If ID field has a value of 'obj_b', then person B is base event and it
+        won't be removed from the database after the merge. Person A, on the
         other hand, will."""
         rv = self.client.post(self.url, data=self.strategy)
         self.assertEqual(rv.status_code, 302)
