@@ -733,7 +733,6 @@ def person_edit(request, person_id):
 
     # PersonAwardForm
     award_form = PersonAwardForm(prefix='award', initial=dict_without_Nones(
-        awarded=datetime.date.today(),
         person=person,
         badge=badge,
         event=event,
@@ -1669,7 +1668,6 @@ def badge_award(request, badge_name):
 
     initial = {
         'badge': badge,
-        'awarded': datetime.date.today()
     }
 
     if request.method == 'GET':

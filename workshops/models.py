@@ -1640,7 +1640,7 @@ class Award(models.Model):
 
     person     = models.ForeignKey(Person)
     badge      = models.ForeignKey(Badge)
-    awarded    = models.DateField()
+    awarded    = models.DateField(default=datetime.date.today)
     event      = models.ForeignKey(Event, null=True, blank=True,
                                    on_delete=models.PROTECT)
     awarded_by = models.ForeignKey(
