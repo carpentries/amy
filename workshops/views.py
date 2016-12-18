@@ -1514,13 +1514,23 @@ def event_dismiss_metadata_changes(request, slug):
     return redirect(reverse('event_details', args=[event.slug]))
 
 
+class SponsorshipCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
+                        AMYCreateView):
+    model = Sponsorship
+    permission_required = 'workshops.add_sponsorship'
+    form_class = SponsorshipForm
+
+    def get_success_url(self):
+        return reverse('event_edit',args=[self.object.event.slug]) + '#sponsors'
+
+
 class SponsorshipDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
                         AMYDeleteView):
     model = Sponsorship
     permission_required = 'workshops.delete_sponsorship'
 
     def get_success_url(self):
-        return reverse('event_edit',args=[self.get_object().event.slug]) + '#sponsors'
+        return reverse('event_edit', args=[self.get_object().event.slug]) + '#sponsors'
 
 
 class AllInvoiceRequests(OnlyForAdminsMixin, AMYListView):

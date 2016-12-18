@@ -98,6 +98,7 @@ urlpatterns = [
         url(r'^delete/$', views.TaskDelete.as_view(), name='task_delete'),
     ])),
 
+    url(r'^sponsorships/add/$', views.SponsorshipCreate.as_view(), name='sponsorship_add'),
     url(r'^sponsorship/(?P<pk>\d+)/delete/$', views.SponsorshipDelete.as_view(), name='sponsorship_delete'),
 
     url(r'^awards/add/$', views.AwardCreate.as_view(), name='award_add'),
