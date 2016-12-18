@@ -56,25 +56,25 @@ class TestPerson(TestBase):
 
     def test_edit_person_empty_family_name(self):
         data = {
-            'person-family': '',  # family name cannot be empty
+            'family': '',  # family name cannot be empty
         }
         f = PersonForm(data)
         self.assertIn('family', f.errors)
 
     def _test_edit_person_email(self, person):
         url, values = self._get_initial_form_index(0, 'person_edit', person.id)
-        assert 'person-email' in values, \
+        assert 'email' in values, \
             'No email address in initial form'
 
         new_email = 'new@new.new'
         assert person.email != new_email, \
             'Would be unable to tell if email had changed'
-        values['person-email'] = new_email
+        values['email'] = new_email
 
-        if values['person-airport_1'] is None:
-            values['person-airport_1'] = ''
-        if values['person-airport_0'] is None:
-            values['person-airport_0'] = ''
+        if values['airport_1'] is None:
+            values['airport_1'] = ''
+        if values['airport_0'] is None:
+            values['airport_0'] = ''
 
         # Django redirects when edit works.
         response = self.client.post(url, values)
@@ -155,10 +155,10 @@ class TestPerson(TestBase):
         url, values = self._get_initial_form_index(0, 'person_edit',
                                                    self.hermione.id)
 
-        assert 'person-notes' in values, 'Notes not present in initial form'
+        assert 'notes' in values, 'Notes not present in initial form'
 
         note = 'Hermione is a very good student.'
-        values['person-notes'] = note
+        values['notes'] = note
 
         # Django redirects when edit works.
         response = self.client.post(url, values)
@@ -174,52 +174,32 @@ class TestPerson(TestBase):
             assert False, 'expected 302 redirect after post'
 
     def test_person_award_badge(self):
-        # make sure person has no awards
-        assert not self.spiderman.award_set.all()
+        """Ensure that we can add an award from `person_edit` view"""
+        url = reverse('person_edit', args=[self.spiderman.pk])
+        person_edit = self.app.get(url, user='admin')
+        award_form = person_edit.forms[2]
+        award_form['badge'] = self.swc_instructor.pk
 
-        # add new award
-        url, values = self._get_initial_form_index(1, 'person_edit',
-                                                   self.spiderman.id)
-        assert 'award-badge' in values
-
-        values['award-badge'] = self.swc_instructor.pk
-        values['award-event_1'] = ''
-        values['award-awarded_by_0'] = ''
-        values['award-awarded_by_1'] = ''
-
-        rv = self.client.post(url, data=values)
-        assert rv.status_code == 302, \
-            'After awarding a badge we should be redirected to the same ' \
-            'page, got {} instead'.format(rv.status_code)
-        # we actually can't test if it redirects to the same url…
-
-        # make sure the award was recorded in the database
-        self.spiderman.refresh_from_db()
-        assert self.swc_instructor == self.spiderman.award_set.all()[0].badge
+        self.assertEqual(self.spiderman.award_set.count(), 0)
+        self.assertRedirects(award_form.submit(), url)
+        self.assertEqual(self.spiderman.award_set.count(), 1)
+        self.assertEqual(self.spiderman.award_set.first().badge, self.swc_instructor)
 
     def test_person_add_task(self):
+        """Ensure that we can add a task from `person_edit` view"""
         self._setUpEvents()  # set up some events for us
-
-        # make sure person has no tasks
-        assert not self.spiderman.task_set.all()
-
-        # add new task
-        url, values = self._get_initial_form_index(2, 'person_edit',
-                                                   self.spiderman.id)
-        assert 'task-role' in values
-
         role = Role.objects.create(name='test_role')
-        values['task-event_1'] = Event.objects.all()[0].pk
-        values['task-role'] = role.pk
-        rv = self.client.post(url, data=values)
-        assert rv.status_code == 302, \
-            'After adding a task we should be redirected to the same page, ' \
-            'got {} instead'.format(rv.status_code)
-        # we actually can't test if it redirects to the same url…
 
-        # make sure the task was recorded in the database
-        self.spiderman.refresh_from_db()
-        assert role == self.spiderman.task_set.all()[0].role
+        url = reverse('person_edit', args=[self.spiderman.pk])
+        person_edit = self.app.get(url, user='admin')
+        task_form = person_edit.forms[4]
+        task_form['event_1'] = Event.objects.first().pk
+        task_form['role'] = role.pk
+
+        self.assertEqual(self.spiderman.task_set.count(), 0)
+        self.assertRedirects(task_form.submit(), url)
+        self.assertEqual(self.spiderman.task_set.count(), 1)
+        self.assertEqual(self.spiderman.task_set.first().role, role)
 
     def test_edit_person_permissions(self):
         """ Make sure we can set up user permissions correctly. """
@@ -295,7 +275,7 @@ class TestPerson(TestBase):
 
         url, values = self._get_initial_form_index(0, 'person_edit',
                                                    self.hermione.id)
-        values['person-lessons'] = [self.git.pk]
+        values['lessons'] = [self.git.pk]
 
         response = self.client.post(url, values)
         assert response.status_code == 302

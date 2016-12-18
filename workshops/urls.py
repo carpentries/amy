@@ -55,7 +55,7 @@ urlpatterns = [
     ])),
     url(r'^person/(?P<person_id>\d+)/', include([
         url(r'^$', views.PersonDetails.as_view(), name='person_details'),
-        url(r'^edit/$', views.person_edit, name='person_edit'),
+        url(r'^edit/$', views.PersonUpdate.as_view(), name='person_edit'),
         url(r'^delete/$', views.PersonDelete.as_view(), name='person_delete'),
         url(r'^permissions/$', views.PersonPermissions.as_view(), name='person_permissions'),
         url(r'^password/$', views.person_password, name='person_password'),
