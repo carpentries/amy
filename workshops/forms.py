@@ -617,6 +617,9 @@ class PersonsMergeForm(forms.Form):
     is_active = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
+    trainingprogress_set = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )
 
 
 class BadgeAwardForm(forms.ModelForm):
