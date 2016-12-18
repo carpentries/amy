@@ -41,6 +41,7 @@ from workshops.models import (
     TrainingProgress,
 )
 
+
 class BootstrapHelper(FormHelper):
     """Layout and behavior for crispy-displayed forms."""
     html5_required = True
@@ -164,6 +165,15 @@ class PrivacyConsentMixin(forms.Form):
               '"https://software-carpentry.org/privacy/" target="_blank">'
               'the Software Carpentry Foundation\'s data privacy policy</a>.',
         required=True)
+
+
+class WidgetOverrideMixin:
+
+    def __init__(self, *args, **kwargs):
+        widgets = kwargs.pop('widgets', {})
+        super().__init__(*args, **kwargs)
+        for field, widget in widgets.items():
+            self.fields[field].widget = widget
 
 
 class WorkshopStaffForm(forms.Form):
@@ -437,35 +447,21 @@ class EventForm(forms.ModelForm):
         )
 
 
-class TaskForm(forms.ModelForm):
-
-    person = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.PersonLookup,
-        label='Person',
-        required=True,
-        widget=selectable.AutoComboboxSelectWidget,
-    )
+class TaskForm(WidgetOverrideMixin, forms.ModelForm):
 
     helper = BootstrapHelper(submit_label='Add')
 
     class Meta:
         model = Task
         fields = '__all__'
-        widgets = {'event': HiddenInput}
-
-
-class TaskFullForm(TaskForm):
-
-    event = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.EventLookup,
-        label='Event',
-        required=True,
-        widget=selectable.AutoComboboxSelectWidget,
-    )
-
-    class Meta:
-        model = Task
-        fields = '__all__'
+        widgets = {
+            'person': selectable.AutoComboboxSelectWidget(
+                lookup_class=lookups.PersonLookup,
+            ),
+            'event': selectable.AutoComboboxSelectWidget(
+                lookup_class=lookups.EventLookup,
+            ),
+        }
 
 
 class PersonForm(forms.ModelForm):
@@ -483,7 +479,7 @@ class PersonForm(forms.ModelForm):
         widget=selectable.AutoComboboxSelectMultipleWidget,
     )
 
-    helper = BootstrapHelper(form_id='person-edit-form')
+    helper = bootstrap_helper
 
     class Meta:
         model = Person
@@ -622,76 +618,24 @@ class PersonsMergeForm(forms.Form):
     )
 
 
-class BadgeAwardForm(forms.ModelForm):
-
-    person = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.PersonLookup,
-        label='Person',
-        required=True,
-        widget=selectable.AutoComboboxSelectWidget,
-    )
-
-    event = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.EventLookup,
-        label='Event',
-        required=False,
-        widget=selectable.AutoComboboxSelectWidget,
-    )
-
-    awarded_by = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.PersonLookup,
-        label='Awarded by',
-        required=False,
-        widget=selectable.AutoComboboxSelectWidget,
-    )
+class AwardForm(WidgetOverrideMixin, forms.ModelForm):
 
     helper = bootstrap_helper
 
     class Meta:
         model = Award
         fields = '__all__'
-        widgets = {'badge': HiddenInput}
-
-
-class PersonAwardForm(forms.ModelForm):
-
-    event = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.EventLookup,
-        label='Event',
-        required=False,
-        widget=selectable.AutoComboboxSelectWidget,
-    )
-
-    awarded_by = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.PersonLookup,
-        label='Awarded by',
-        required=False,
-        widget=selectable.AutoComboboxSelectWidget,
-    )
-
-    helper = BootstrapHelper(submit_label='Add', form_id='person-awards-form')
-
-    class Meta:
-        model = Award
-        fields = '__all__'
-        widgets = {'person': HiddenInput}
-
-
-class PersonTaskForm(forms.ModelForm):
-
-    event = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.EventLookup,
-        label='Event',
-        required=True,
-        widget=selectable.AutoComboboxSelectWidget,
-    )
-
-    helper = BootstrapHelper(submit_label='Add', form_id='person-tasks-form')
-
-    class Meta:
-        model = Task
-        fields = '__all__'
-        widgets = {'person': HiddenInput}
+        widgets = {
+            'person': selectable.AutoComboboxSelectWidget(
+                lookup_class=lookups.PersonLookup,
+            ),
+            'event': selectable.AutoComboboxSelectWidget(
+                lookup_class=lookups.EventLookup,
+            ),
+            'awarded_by': selectable.AutoComboboxSelectWidget(
+                lookup_class=lookups.PersonLookup,
+            ),
+        }
 
 
 class OrganizationForm(forms.ModelForm):
@@ -725,31 +669,26 @@ class MembershipForm(forms.ModelForm):
     class Meta:
         model = Membership
         fields = '__all__'
-        widgets = {'host': HiddenInput, }
 
 
-class SponsorshipForm(forms.ModelForm):
-    organization = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.OrganizationLookup,
-        label='Organization',
-        required=True,
-        help_text=Sponsorship._meta.get_field('organization').help_text,
-        widget=selectable.AutoComboboxSelectWidget,
-    )
-
-    contact = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.PersonLookup,
-        label='Contact',
-        required=False,
-        widget=selectable.AutoComboboxSelectWidget,
-    )
+class SponsorshipForm(WidgetOverrideMixin, forms.ModelForm):
 
     helper = BootstrapHelper(submit_label='Add')
 
     class Meta:
         model = Sponsorship
         fields = '__all__'
-        widgets = {'event': HiddenInput, }
+        widgets = {
+            'organization': selectable.AutoComboboxSelectWidget(
+                lookup_class=lookups.OrganizationLookup,
+            ),
+            'event': selectable.AutoComboboxSelectWidget(
+                lookup_class=lookups.EventLookup,
+            ),
+            'contact': selectable.AutoComboboxSelectWidget(
+                lookup_class=lookups.PersonLookup,
+            )
+        }
 
 
 class SWCEventRequestForm(PrivacyConsentMixin, forms.ModelForm):

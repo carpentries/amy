@@ -1118,6 +1118,12 @@ class Event(AssignmentMixin, models.Model):
             self.latitude = -48.876667
             self.longitude = -123.393333
 
+        # Increase attendance if there's more learner tasks
+        learners = self.task_set.filter(role__name='learner').count()
+        if learners != 0:
+            if not self.attendance or self.attendance < learners:
+                self.attendance = learners
+
         super(Event, self).save(*args, **kwargs)
 
 
@@ -1579,6 +1585,11 @@ class Task(models.Model):
     def get_absolute_url(self):
         return reverse('task_details', kwargs={'task_id': self.id})
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # Trigger an update of the attendance field
+        self.event.save()
+
 #------------------------------------------------------------
 
 class Lesson(models.Model):
@@ -1640,7 +1651,7 @@ class Award(models.Model):
 
     person     = models.ForeignKey(Person)
     badge      = models.ForeignKey(Badge)
-    awarded    = models.DateField()
+    awarded    = models.DateField(default=datetime.date.today)
     event      = models.ForeignKey(Event, null=True, blank=True,
                                    on_delete=models.PROTECT)
     awarded_by = models.ForeignKey(

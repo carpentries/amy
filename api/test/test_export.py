@@ -94,8 +94,6 @@ class TestExportingBadgesByPerson(BaseExportingTest):
     def setUp(self):
         super().setUp()
 
-        today = datetime.date.today()
-
         # set up two users one with badges, one without any
         self.user1 = Person.objects.create_user(
             username='user1', email='user1@name.org',
@@ -107,10 +105,8 @@ class TestExportingBadgesByPerson(BaseExportingTest):
                                            criteria='')
         self.badge2 = Badge.objects.create(name='badge2', title='Badge2',
                                            criteria='')
-        Award.objects.create(person=self.user1, badge=self.badge1,
-                             awarded=today)
-        Award.objects.create(person=self.user1, badge=self.badge2,
-                             awarded=today)
+        Award.objects.create(person=self.user1, badge=self.badge1)
+        Award.objects.create(person=self.user1, badge=self.badge2)
 
         # make sure we *do* get users without badges
         self.expecting = [
@@ -178,11 +174,9 @@ class TestExportingInstructors(BaseExportingTest):
             email='user2@name.org', airport=self.airport1,
         )
         # user1 is only a SWC instructor
-        Award.objects.create(person=self.user1, badge=self.swc_instructor,
-                             awarded=datetime.date.today())
+        Award.objects.create(person=self.user1, badge=self.swc_instructor)
         # user2 is only a DC instructor
-        Award.objects.create(person=self.user2, badge=self.dc_instructor,
-                             awarded=datetime.date.today())
+        Award.objects.create(person=self.user2, badge=self.dc_instructor)
 
         # make sure we *do not* get empty airports
         self.expecting = [
