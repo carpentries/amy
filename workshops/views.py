@@ -29,6 +29,7 @@ from django.db.models import (
     Prefetch,
 )
 from django.db.models.functions import Now
+from django.forms import HiddenInput
 from django.http import Http404, HttpResponse, JsonResponse
 from django.http import HttpResponseBadRequest
 from django.shortcuts import redirect, render, get_object_or_404
@@ -79,12 +80,9 @@ from workshops.forms import (
     PersonBulkAddForm,
     EventForm,
     TaskForm,
-    TaskFullForm,
-    BadgeAwardForm,
-    PersonAwardForm,
+    AwardForm,
     PersonPermissionsForm,
     PersonsSelectionForm,
-    PersonTaskForm,
     OrganizationForm,
     PersonLookupForm,
     SimpleTodoForm,
@@ -712,15 +710,19 @@ def person_edit(request, person_id):
     person = get_object_or_404(Person, id=person_id)
 
     person_form = PersonForm(prefix='person', instance=person)
-    task_form = PersonTaskForm(prefix='task', initial={'person': person})
+    task_form = TaskForm(
+        prefix='task',
+        initial={'person': person},
+        widgets={'person': HiddenInput()},
+    )
 
-    # Determine initial badge in PersonAwardForm
+    # Determine initial badge in AwardForm
     try:
         badge = Badge.objects.get(name=request.GET['badge'])
     except (KeyError, Badge.DoesNotExist):
         badge = None
 
-    # Determine initial event in PersonAwardForm
+    # Determine initial event in AwardForm
     if 'find-training' in request.GET:
         tasks = person.get_training_tasks()
         if tasks.count() == 1:
@@ -730,16 +732,19 @@ def person_edit(request, person_id):
     else:
         event = None
 
-    # PersonAwardForm
-    award_form = PersonAwardForm(prefix='award', initial=dict_without_Nones(
-        person=person,
-        badge=badge,
-        event=event,
-    ))
+    award_form = AwardForm(
+        prefix='award',
+        widgets={'person': HiddenInput()},
+        initial=dict_without_Nones(
+            person=person,
+            badge=badge,
+            event=event,
+        ),
+    )
 
     # Determine which form was sent (if any)
     if request.method == 'POST' and 'award-badge' in request.POST:
-        award_form = PersonAwardForm(request.POST, prefix='award')
+        award_form = AwardForm(request.POST, prefix='award')
 
         if award_form.is_valid():
             award = award_form.save()
@@ -761,7 +766,7 @@ def person_edit(request, person_id):
                            extra_tags='awards')
 
     elif request.method == 'POST' and 'task-role' in request.POST:
-        task_form = PersonTaskForm(request.POST, prefix='task')
+        task_form = TaskForm(request.POST, prefix='task')
 
         if task_form.is_valid():
             task = task_form.save()
@@ -1573,17 +1578,17 @@ def task_details(request, task_id):
 
 
 class TaskCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                 AMYCreateView):
+                 RedirectSupportMixin, AMYCreateView):
     permission_required = 'workshops.add_task'
     model = Task
-    form_class = TaskFullForm
+    form_class = TaskForm
 
 
 class TaskUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
                  AMYUpdateView):
     permission_required = 'workshops.change_task'
     model = Task
-    form_class = TaskFullForm
+    form_class = TaskForm
     pk_url_kwarg = 'task_id'
 
 
@@ -1662,9 +1667,9 @@ def badge_award(request, badge_name):
     }
 
     if request.method == 'GET':
-        form = BadgeAwardForm(initial=initial)
+        form = AwardForm(initial=initial, widgets={'badge': HiddenInput()})
     elif request.method == 'POST':
-        form = BadgeAwardForm(request.POST, initial=initial)
+        form = AwardForm(request.POST, initial=initial)
 
         if form.is_valid():
             form.save()

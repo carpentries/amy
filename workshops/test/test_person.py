@@ -470,22 +470,22 @@ class TestPerson(TestBase):
 
         # Test workflow starting from clicking at "SWC" label
         swc_res = trainees.click('^SWC$')
-        self.assertSelected(swc_res.forms['person-awards-form']['award-badge'],
+        self.assertSelected(swc_res.forms[2]['award-badge'],
                             'Software Carpentry Instructor')
-        self.assertEqual(swc_res.forms['person-awards-form']['award-event_0'].value,
+        self.assertEqual(swc_res.forms[2]['award-event_0'].value,
                          '2016-08-10-training')
-        swc_res = swc_res.forms['person-awards-form'].submit().follow()
+        swc_res = swc_res.forms[2].submit().follow()
         self.assertIn("Bob Smith &lt;bob.smith@example.com&gt; was awarded "
                       "Software Carpentry Instructor badge.", swc_res)
         self.assertEqual(trainees.request.url, swc_res.request.url)
 
         # Test workflow starting from clicking at "DC" label
         dc_res = trainees.click('^DC$')
-        self.assertSelected(dc_res.forms['person-awards-form']['award-badge'],
+        self.assertSelected(dc_res.forms[2]['award-badge'],
                             'Data Carpentry Instructor')
-        self.assertEqual(dc_res.forms['person-awards-form']['award-event_0'].value,
+        self.assertEqual(dc_res.forms[2]['award-event_0'].value,
                          '2016-08-10-training')
-        dc_res = dc_res.forms['person-awards-form'].submit().follow()
+        dc_res = dc_res.forms[2].submit().follow()
         self.assertIn("Bob Smith &lt;bob.smith@example.com&gt; was awarded "
                       "Data Carpentry Instructor badge.", dc_res)
         self.assertEqual(trainees.request.url, dc_res.request.url)

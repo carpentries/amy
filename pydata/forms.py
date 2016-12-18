@@ -1,6 +1,6 @@
 from django import forms
 
-from workshops.forms import TaskFullForm, SponsorshipForm, BootstrapHelper
+from workshops.forms import TaskForm, SponsorshipForm, BootstrapHelper
 from workshops.models import Person, Task, Sponsorship
 
 
@@ -52,7 +52,7 @@ class PersonAddFormSet(BaseModelAddFormSet):
 
 class TaskAddFormSet(BaseModelAddFormSet):
     model = Task
-    form = TaskFullForm
+    form = TaskForm
 
 
 class SponsorshipAddFormSet(BaseModelAddFormSet):
