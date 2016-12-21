@@ -2245,7 +2245,7 @@ def profileupdaterequest_details(request, request_id):
         ).exists()
 
     try:
-        airport = Airport.objects.get(iata=update_request.airport_iata)
+        airport = Airport.objects.get(iata__iexact=update_request.airport_iata)
     except Airport.DoesNotExist:
         airport = None
 
