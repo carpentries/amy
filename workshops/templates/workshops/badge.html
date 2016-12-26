@@ -32,10 +32,17 @@
       <td>{% if award.event %}<a href="{% url 'event_details' award.event.slug %}">{{ award.event }}</a>{% else %}—{% endif %}</td>
       <td>{% if award.awarded_by %}<a href="{{ award.awarded_by.get_absolute_url }}">{{ award.awarded_by.get_full_name }}</a>{% else %}—{% endif %}</td>
       <td>
-        <form action="{% url 'award_delete' pk=award.id %}" onsubmit='return confirm("Are you sure you wish to drop award \"{{ award.badge.title }}\" from \"{{ award.person }}\"?")' method="POST">
-          {% csrf_token %}
-          <button type="submit" class="btn btn-danger">Delete</button>
-        </form>
+        <div class="btn-group">
+          {% if award.badge.has_certificate %}
+            <a class="btn btn-primary" href="{% url 'award_certificate' award.pk %}" target="_blank">Download</a>
+          {% else %}
+            <a class="btn btn-primary disabled">Download</a>
+          {% endif %}
+          <form action="{% url 'award_delete' pk=award.id %}" onsubmit='return confirm("Are you sure you wish to drop award \"{{ award.badge.title }}\" from \"{{ award.person }}\"?")' method="POST" class="btn-group">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Delete</button>
+          </form>
+        </div>
       </td>
     </tr>
     {% endfor %}

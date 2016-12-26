@@ -202,10 +202,10 @@ class TestPerson(TestBase):
         award_form = person_edit.forms[2]
         award_form['badge'] = self.swc_instructor.pk
 
-        self.assertEqual(self.spiderman.award_set.count(), 0)
-        self.assertRedirects(award_form.submit(), url)
         self.assertEqual(self.spiderman.award_set.count(), 1)
-        self.assertEqual(self.spiderman.award_set.first().badge, self.swc_instructor)
+        self.assertRedirects(award_form.submit(), url)
+        self.assertEqual(self.spiderman.award_set.count(), 2)
+        self.assertEqual(self.spiderman.award_set.last().badge, self.swc_instructor)
 
     def test_person_add_task(self):
         """Ensure that we can add a task from `person_edit` view"""
@@ -214,7 +214,7 @@ class TestPerson(TestBase):
 
         url = reverse('person_edit', args=[self.spiderman.pk])
         person_edit = self.app.get(url, user='admin')
-        task_form = person_edit.forms[4]
+        task_form = person_edit.forms[5]
         task_form['event_1'] = Event.objects.first().pk
         task_form['role'] = role.pk
 

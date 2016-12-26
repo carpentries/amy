@@ -141,6 +141,7 @@ class TestTrainingRequestModel(TestBase):
 class TestTrainingRequestsListView(TestBase):
     def setUp(self):
         self._setUpAirports()
+        self._setUpBadges()
         self._setUpNonInstructors()
         self._setUpRoles()
         self._setUpTags()

@@ -12,6 +12,7 @@ from django.core.urlresolvers import reverse
 from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
 from django.db.models import Q, F, IntegerField, Sum, Case, When
+from django.template.loader import get_template, TemplateDoesNotExist
 from django.utils import timezone
 from django_countries.fields import CountryField
 from reversion import revisions as reversion
@@ -1665,6 +1666,18 @@ class Badge(models.Model):
 
     def get_absolute_url(self):
         return reverse('badge_details', args=[self.name])
+
+    @property
+    def certificate(self):
+        return 'workshops/certificates/{}.svg'.format(self.name)
+
+    @property
+    def has_certificate(self):
+        try:
+            get_template(self.certificate)
+            return True
+        except TemplateDoesNotExist:
+            return False
 
 #------------------------------------------------------------
 

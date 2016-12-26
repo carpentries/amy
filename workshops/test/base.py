@@ -135,6 +135,14 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
             name='dc-instructor',
             defaults=dict(title='Data Carpentry Instructor',
                           criteria='Worked hard for this'))
+        self.maintainer, _ = Badge.objects.get_or_create(
+            name='maintainer',
+            defaults=dict(title='Maintainer',
+                          criteria='Worked hard for this'))
+        self.organizer, _ = Badge.objects.get_or_create(
+            name='organizer',
+            defaults=dict(title='Organizer',
+                          criteria='Worked hard for this'))
 
     def _setUpInstructors(self):
         '''Set up person objects representing instructors.'''
@@ -188,11 +196,17 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
             personal='Peter', middle='Q.', family='Parker',
             email='peter@webslinger.net', gender='O', may_contact=True,
             username="spiderman", airport=self.airport_55_105)
+        Award.objects.create(person=self.spiderman,
+                             badge=self.maintainer,
+                             awarded=datetime.date(2014, 6, 6))
 
         self.ironman = Person.objects.create(
             personal='Tony', family='Stark', email='me@stark.com',
             gender='M', may_contact=True, username="ironman",
             airport=self.airport_50_100)
+        Award.objects.create(person=self.ironman,
+                             badge=self.organizer,
+                             awarded=datetime.date(2014, 2, 2))
 
         self.blackwidow = Person.objects.create(
             personal='Natasha', family='Romanova', email=None,
