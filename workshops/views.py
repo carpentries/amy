@@ -443,7 +443,10 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView):
                 output_field=IntegerField()
             )
         )
-    )
+    ).prefetch_related(
+        'award_set__badge', 'award_set__awarded_by', 'award_set__event',
+        'task_set__role', 'task_set__event',
+    ).select_related('airport')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
