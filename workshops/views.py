@@ -183,8 +183,15 @@ def admin_dashboard(request):
     ).active().prefetch_related('tags')
 
     uninvoiced_events = Event.objects.active().uninvoiced_events()
-    unpublished_events = Event.objects.active().unpublished_events() \
-                                      .select_related('host')
+    unpublished_events = Event.objects \
+        .active().unpublished_events().select_related('host').annotate(
+            num_instructors=Count(
+                Case(
+                    When(task__role__name='instructor', then=Value(1)),
+                    output_field=IntegerField()
+                )
+            ),
+        )
 
     assigned_to, is_admin = assignment_selection(request)
 
