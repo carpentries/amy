@@ -91,9 +91,10 @@ class TestEvent(TestBase):
 
     def test_unpublished_events(self):
         """Ensure that events manager finds unpublished events correctly."""
-        expected = Event.objects.exclude(Q(slug__endswith='upcoming')) \
+        expected = Event.objects.exclude(slug__endswith='upcoming') \
                                 .exclude(slug__in=['ends-today-ongoing',
-                                                   'ends-tomorrow-ongoing'])
+                                                   'ends-tomorrow-ongoing']) \
+                                .exclude(slug__endswith='cancelled')
         self.assertEqual(set(Event.objects.unpublished_events()),
                          set(expected))
 
@@ -128,6 +129,26 @@ class TestEvent(TestBase):
         self.assertEqual(
             1, len(unpublished.filter(slug='2016-10-20-unpublished'))
         )
+
+    def test_cancelled_events(self):
+        """Regression test: make sure that cancelled events don't show up in
+        the unpublished, published or uninvoiced events."""
+        self._setUpTags()
+        cancelled_event = Event.objects.create(
+            slug='2017-01-07-cancelled',
+            start=date(2017, 1, 7),
+            end=date(2017, 1, 8),
+            host=Organization.objects.first(),
+            administrator=Organization.objects.first(),
+        )
+        cancelled_event.tags = Tag.objects.filter(name='cancelled')
+
+        published = Event.objects.published_events().select_related('host')
+        uninvoiced = Event.objects.uninvoiced_events().select_related('host')
+        unpublished = Event.objects.unpublished_events().select_related('host')
+        self.assertNotIn(cancelled_event, uninvoiced)
+        self.assertNotIn(cancelled_event, published)
+        self.assertNotIn(cancelled_event, unpublished)
 
     def test_delete_event(self):
         """Make sure deleted event and its tasks are no longer accessible."""
