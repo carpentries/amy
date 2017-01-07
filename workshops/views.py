@@ -3088,7 +3088,7 @@ class TrainingProgressUpdate(RedirectSupportMixin, OnlyForAdminsMixin,
                              AMYUpdateView):
     model = TrainingProgress
     form_class = TrainingProgressForm
-    template_name = 'workshops/generic_form.html'
+    template_name = 'workshops/trainingprogress_form.html'
 
 
 class TrainingProgressDelete(RedirectSupportMixin, OnlyForAdminsMixin,
