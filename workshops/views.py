@@ -728,9 +728,11 @@ class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin,
             'widgets': {'person': HiddenInput()},
         }
         context.update({
-            'awards': self.object.award_set.order_by('badge__name'),
+            'awards': self.object.award_set.select_related('event', 'badge')
+                          .order_by('badge__name'),
             'award_form': AwardForm(**kwargs),
-            'tasks': self.object.task_set.order_by('-event__slug'),
+            'tasks': self.object.task_set.select_related('role', 'event')
+                         .order_by('-event__slug'),
             'task_form': TaskForm(**kwargs),
         })
         return context
