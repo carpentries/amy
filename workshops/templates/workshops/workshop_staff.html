@@ -11,8 +11,10 @@
 
 {% block content %}
   {% if persons %}
+    <form>
     <table class="table table-striped">
       <tr>
+        <th><input type="checkbox" value="Select all" select-all-checkbox /></th>
         <th>instr. badges</th>
         <th>person</th>
         <th>taught</th>
@@ -24,6 +26,7 @@
       </tr>
     {% for p in persons %}
       <tr>
+        <td><input type="checkbox" email="{{ p.email }}" respond-to-select-all-checkbox /></td>
         <td>{% for badge in p.badges.all %}
         {% if badge in instructor_badges %}
           {% bootstrap_tag badge.name|cut:"-instructor"|upper %}
@@ -43,7 +46,8 @@
       </tr>
     {% endfor %}
     </table>
-    <p><a href="mailto:?bcc={{ emails|join:',' }}" class="btn btn-primary">Contact all</a></p>
+    </form>
+    <p><a class="btn btn-primary" bulk-email-on-click>Contact selected</a></p>
     {% pagination persons %}
   {% else %}
     <p>No matches.</p>
