@@ -40,6 +40,7 @@ from workshops.models import (
     TrainingRequest,
     DCSelfOrganizedEventRequest,
     TrainingProgress,
+    Tag,
 )
 
 
@@ -436,7 +437,9 @@ class EventForm(forms.ModelForm):
             'latitude': TextInput,
             'longitude': TextInput,
             'invoice_status': RadioSelect,
-            'tags': SelectMultiple(attrs={'size': 10}),
+            'tags': SelectMultiple(attrs={
+                'size': Tag.ITEMS_VISIBLE_IN_SELECT_WIDGET
+            }),
         }
 
     class Media:
