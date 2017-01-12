@@ -208,3 +208,8 @@ table ul {
 .glyphicon-question-sign {
     color: rgb(51, 122, 183);
 }
+
+/* Make select lists resizable */
+select {
+    resize: vertical;
+}

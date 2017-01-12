@@ -10,6 +10,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.forms import (
     HiddenInput,
+    SelectMultiple,
     CheckboxSelectMultiple,
     TextInput,
     modelformset_factory,
@@ -435,6 +436,7 @@ class EventForm(forms.ModelForm):
             'latitude': TextInput,
             'longitude': TextInput,
             'invoice_status': RadioSelect,
+            'tags': SelectMultiple(attrs={'size': 10}),
         }
 
     class Media:
