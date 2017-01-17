@@ -747,9 +747,14 @@ class Language(models.Model):
 class EventQuerySet(models.query.QuerySet):
     '''Handles finding past, ongoing and upcoming events'''
 
+    def not_cancelled(self):
+        """Exclude cancelled events."""
+        return self.exclude(tags__name='cancelled')
+
     def active(self):
-        """Exclude inactive events (stalled or completed)."""
-        return self.exclude(tags__name='stalled').exclude(completed=True)
+        """Exclude inactive events (stalled, completed or cancelled)."""
+        return self.exclude(tags__name='stalled').exclude(completed=True) \
+                   .not_cancelled()
 
     def past_events(self):
         '''Return past events.
@@ -808,23 +813,24 @@ class EventQuerySet(models.query.QuerySet):
         no_latitude = Q(latitude__isnull=True)
         no_longitude = Q(longitude__isnull=True)
         no_url = Q(url__isnull=True)
-        cancelled = Q(tags__name='cancelled')
         return (
             unknown_start | no_country | no_venue | no_address | no_latitude |
-            no_longitude | no_url | cancelled
+            no_longitude | no_url
         )
 
     def unpublished_events(self):
         """Return events considered as unpublished (see
         `unpublished_conditional` above)."""
         conditional = self.unpublished_conditional()
-        return self.filter(conditional).order_by('slug', 'id').distinct()
+        return self.not_cancelled().filter(conditional) \
+                   .order_by('slug', 'id').distinct()
 
     def published_events(self):
         """Return events considered as published (see `unpublished_conditional`
         above)."""
         conditional = self.unpublished_conditional()
-        return self.exclude(conditional).order_by('-start', 'id').distinct()
+        return self.not_cancelled().exclude(conditional) \
+                   .order_by('-start', 'id').distinct()
 
     def uninvoiced_events(self):
         '''Return a queryset for events that have not yet been invoiced.
