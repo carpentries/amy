@@ -838,8 +838,9 @@ class EventQuerySet(models.query.QuerySet):
         These are marked as uninvoiced, and have occurred.
         Events are sorted oldest first.'''
 
-        return self.past_events().filter(invoice_status='not-invoiced') \
-                                 .order_by('start')
+        return self.not_cancelled().past_events() \
+                   .filter(invoice_status='not-invoiced') \
+                   .order_by('start')
 
     def metadata_changed(self):
         """Return events for which remote metatags have been updated."""
