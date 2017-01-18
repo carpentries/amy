@@ -183,6 +183,10 @@ def admin_dashboard(request):
     ).active().prefetch_related('tags')
 
     uninvoiced_events = Event.objects.active().uninvoiced_events()
+
+    # This annotation may produce wrong number of instructors when 
+    # `unpublished_events` filters out events that contain a specific tag.
+    # The bug was fixed in #1130.
     unpublished_events = Event.objects \
         .active().unpublished_events().select_related('host').annotate(
             num_instructors=Count(
