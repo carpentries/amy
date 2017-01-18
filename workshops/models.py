@@ -712,6 +712,8 @@ class TagQuerySet(models.query.QuerySet):
 class Tag(models.Model):
     '''Label for grouping events.'''
 
+    ITEMS_VISIBLE_IN_SELECT_WIDGET = 10
+
     name       = models.CharField(max_length=STR_MED, unique=True)
     details    = models.CharField(max_length=STR_LONG)
 
