@@ -25,6 +25,28 @@ STR_LONG    = 100         # length of long strings
 STR_LONGEST = 255  # length of the longest strings
 STR_REG_KEY =  20         # length of Eventbrite registration key
 
+
+class NullableGitHubUsernameField(models.CharField):
+    def __init__(self, **kwargs):
+        kwargs.setdefault('max_length', STR_MED)
+        kwargs.setdefault('null', True)
+        kwargs.setdefault('blank', True)
+        kwargs.setdefault('default', '')
+        super().__init__(**kwargs)
+
+    default_validators = [
+        RegexValidator(
+            # The username can contain alphanumeric or hyphens, according to
+            # the second comment here:
+            # http://stackoverflow.com/questions/30281026/regex-parsing
+            # -github-usernames-javascript
+
+            regex=r"^[a-zA-Z0-9-]+$",
+            message="This is not a valid GitHub username.",
+        )
+    ]
+
+
 #------------------------------------------------------------
 
 
@@ -332,8 +354,8 @@ class Person(AbstractBaseUser, PermissionsMixin):
     may_contact = models.BooleanField(default=True)
     airport     = models.ForeignKey(Airport, null=True, blank=True, on_delete=models.PROTECT,
                                     verbose_name='Nearest major airport')
-    github      = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True,
-                                   verbose_name='GitHub username')
+    github      = NullableGitHubUsernameField(unique=True,
+                                              verbose_name='GitHub username')
     twitter     = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True,
                                    verbose_name='Twitter username')
     url         = models.CharField(max_length=STR_LONG, blank=True,
@@ -612,11 +634,9 @@ class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         verbose_name='Other occupation/career stage',
         blank=True, default='',
     )
-    github = models.CharField(
-        max_length=STR_LONG,
+    github = NullableGitHubUsernameField(
         verbose_name='GitHub username',
         help_text='Please provide your username, not a numeric user ID.',
-        blank=True, default='',
     )
     twitter = models.CharField(
         max_length=STR_LONG,
@@ -1964,10 +1984,8 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         verbose_name='Email address',
         blank=False,
     )
-    github = models.CharField(
-        max_length=STR_LONG,
+    github = NullableGitHubUsernameField(
         verbose_name='GitHub username',
-        null=True, blank=True,
     )
 
     occupation = models.CharField(
