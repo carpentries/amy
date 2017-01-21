@@ -15,12 +15,11 @@ function bulk_email() {
              .map(function () { return $(this).attr("email"); });
     blank_email_selected = emails.is(function() { return this == ""; });
     if (blank_email_selected) {
-        alert("We don't know email address of some of the selected trainees. First, unselect them.");
+        alert("We don't know email address of some of the selected persons. First, unselect them.");
     } else if (emails.length == 0) {
-        alert("Select at least one trainee.");
+        alert("Select at least one person.");
     } else {
         href = "mailto:?bcc=" + emails.toArray().join(",");
-        console.log(href);
         window.location.href = href;
     }
 }
@@ -119,7 +118,7 @@ $(document).ready(function() {
 
   Blank emails and checkboxes without email attribute will be ignored.
   */
-  $('[bulk-email-on-click').click(function () {
+  $('[bulk-email-on-click]').click(function () {
     bulk_email();
   });
 
