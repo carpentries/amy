@@ -688,5 +688,6 @@ class AirportViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (IsAuthenticated, IsAdmin)
     queryset = Airport.objects.all()
     serializer_class = AirportSerializer
-    lookup_field = 'iata'
+    lookup_field = 'iata__iexact'
+    lookup_url_kwarg = 'iata'
     pagination_class = StandardResultsSetPagination
