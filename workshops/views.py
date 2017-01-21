@@ -3117,9 +3117,20 @@ class TrainingProgressDelete(RedirectSupportMixin, OnlyForAdminsMixin,
 def all_trainees(request):
     filter = TraineeFilter(
         request.GET,
-        queryset=Person.objects \
-            .annotate_with_instructor_eligibility() \
-            .defer('notes')  # notes are too large, so we defer them \
+        queryset=Person.objects
+            .annotate_with_instructor_eligibility()
+            .defer('notes')  # notes are too large, so we defer them
+            .prefetch_related(
+                Prefetch('task_set',
+                         to_attr='training_tasks',
+                         queryset=Task.objects.filter(role__name='learner',
+                                                      event__tags__name='TTT')),
+                'training_tasks__event',
+                'trainingrequest_set',
+                'trainingprogress_set',
+                'trainingprogress_set__requirement',
+                'trainingprogress_set__evaluated_by',
+            )
             .annotate(
                 is_swc_instructor=Sum(Case(When(badges__name='swc-instructor',
                                                 then=1),
