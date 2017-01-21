@@ -2261,7 +2261,7 @@ def profileupdaterequest_details(request, request_id):
         ).exists()
 
     try:
-        airport = Airport.objects.get(iata=update_request.airport_iata)
+        airport = Airport.objects.get(iata__iexact=update_request.airport_iata)
     except Airport.DoesNotExist:
         airport = None
 
@@ -2314,7 +2314,7 @@ def profileupdaterequest_accept(request, request_id, person_id=None):
     """
     profileupdate = get_object_or_404(ProfileUpdateRequest, active=True,
                                       pk=request_id)
-    airport = get_object_or_404(Airport, iata=profileupdate.airport_iata)
+    airport = get_object_or_404(Airport, iata__iexact=profileupdate.airport_iata)
 
     if person_id is None:
         person = Person()
