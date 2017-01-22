@@ -1107,6 +1107,15 @@ class TrainingRequestForm(PrivacyConsentMixin, forms.ModelForm):
             'max_travelling_frequency': forms.RadioSelect(),
         }
 
+    def __init__(self, *args, initial_group_name=None, **kwargs):
+        initial = kwargs.pop('initial', {})
+        if initial_group_name is not None:
+            initial['group_name'] = initial_group_name
+        super().__init__(*args, initial=initial, **kwargs)
+        if initial_group_name is not None:
+            field = self.fields['group_name']
+            field.widget = field.hidden_widget()
+
 
 class TrainingRequestUpdateForm(forms.ModelForm):
     person = selectable.AutoCompleteSelectField(

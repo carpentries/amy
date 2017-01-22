@@ -52,3 +52,76 @@ class TestTrainingRequestForm(TestBase):
         self._save_html(content)
         self.assertNotIn('Fix errors below', content)
         self.assertEqual(TrainingRequest.objects.all().count(), 1)
+
+
+class GroupNameFieldTestsBase(TestBase):
+    """Tests for [#1005] feature -- Allow pre-population of Group in training
+    request form.
+
+    [#1005]: https://github.com/swcarpentry/amy/issues/1005"""
+
+    url_suffix = ''
+
+    def setUp(self):
+        url = reverse('training_request') + self.url_suffix
+        self.form = self.app.get(url).form
+
+    def fillin_and_submit(self):
+        # fillin the form
+        self.form['personal'] = 'John'
+        self.form['family'] = 'Smith'
+        self.form['email'] = 'john@smith.com'
+        self.form['affiliation'] = 'AGH University of Science and Technology'
+        self.form['location'] = 'Cracow'
+        self.form['country'] = 'PL'
+        self.form['reason'] = 'Just for fun.'
+        self.form['agreed_to_code_of_conduct'] = True
+        self.form['agreed_to_complete_training'] = True
+        self.form['agreed_to_teach_workshops'] = True
+        self.form['privacy_consent'] = True
+        self.form['recaptcha_response_field'] = 'PASSED'
+
+        # submit the form
+        self.rs = self.form.submit()
+
+    def assertSubmissionIsRecorded(self, with_group_name):
+        # the form should be successfully submitted
+        self.assertEqual(self.rs.status_code, 200)
+
+        # submission should be recorded
+        self.assertEqual(TrainingRequest.objects.count(), 1)
+
+        # with right group name
+        request = TrainingRequest.objects.first()
+        self.assertEqual(request.group_name, with_group_name)
+
+
+class WhenGroupNameIsPrefilledIn(GroupNameFieldTestsBase):
+    url_suffix = '?group=asdf qwer'
+
+    def test_then_the_group_name_field_should_be_not_displayed(self):
+        self.assertEqual(self.form['group_name'].attrs.get('type'), 'hidden')
+
+    def test_then_the_prefilled_in_value_should_be_used(self):
+        self.fillin_and_submit()
+        self.assertSubmissionIsRecorded(with_group_name='asdf qwer')
+
+
+class WhenNoGroupNameIsPrefilledIn(GroupNameFieldTestsBase):
+    url_suffix = ''
+
+    def test_group_field_should_be_displayed(self):
+        self.assertNotEqual(self.form['group_name'].attrs.get('type'), 'hidden')
+
+    def test_group_name_field_should_be_optional(self):
+        self.fillin_and_submit()
+        self.assertSubmissionIsRecorded(with_group_name='')
+
+    def test_group_name_provided_by_user_should_be_used(self):
+        self.form['group_name'] = 'asdf'
+        self.fillin_and_submit()
+        self.assertSubmissionIsRecorded(with_group_name='asdf')
+
+
+class WhenEmptyGroupNameIsPrefilledIn(WhenNoGroupNameIsPrefilledIn):
+    url_suffix = '?group='

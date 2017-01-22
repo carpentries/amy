@@ -259,11 +259,13 @@ def trainingrequest_create(request):
     """A form to let all users (no login required) to request Instructor
     Training."""
 
-    form = TrainingRequestForm()
+    group_name = request.GET.get('group', None) or None  # replace empty string with None
+    form = TrainingRequestForm(initial_group_name=group_name)
+
     page_title = 'Apply for Instructor Training'
 
     if request.method == 'POST':
-        form = TrainingRequestForm(request.POST)
+        form = TrainingRequestForm(request.POST, initial_group_name=group_name)
 
         if form.is_valid():
             form.save()
