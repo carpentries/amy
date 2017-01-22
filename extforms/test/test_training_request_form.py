@@ -6,7 +6,6 @@ from workshops.test import TestBase
 
 class TestTrainingRequestForm(TestBase):
     def setUp(self):
-        self._setUpUsersAndLogin()
         self._setUpRoles()
 
     def test_request_added(self):
