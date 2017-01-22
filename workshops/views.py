@@ -2746,7 +2746,12 @@ def duplicates(request):
 def all_trainingrequests(request):
     filter = TrainingRequestFilter(
         request.GET,
-        queryset=TrainingRequest.objects.all()
+        queryset=TrainingRequest.objects.all().prefetch_related(
+            Prefetch('person__task_set',
+                     to_attr='training_tasks',
+                     queryset=Task.objects.filter(role__name='learner',
+                                                  event__tags__name='TTT')),
+        )
     )
 
     requests = get_pagination_items(request, filter)
