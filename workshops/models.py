@@ -2120,6 +2120,8 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         help_text='What else do you want us to know?',
         verbose_name='Anything else?')
 
+    notes = models.TextField(blank=True, help_text='Admin notes')
+
     def clean(self):
         super().clean()
 
