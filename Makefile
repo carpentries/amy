@@ -11,7 +11,6 @@ APP_DB = db.sqlite3
 QUERY = sqlite3 ${APP_DB}
 
 # Error messages.
-E_SITE_PATH = "error: must set SITE_PATH before running command"
 E_CERT_PATH = "error: must set CERT_PATH before running command"
 
 .PHONY: workshops/git_version.py
@@ -66,22 +65,6 @@ workshops/git_version.py :
 			echo 'DIRTY = False' >>$@; \
 		fi \
 	fi
-
-## all-activity : report all instructor activity
-all-activity :
-	@${MANAGE} report_all_instructor_activity
-
-## invoicing    : report financial activity related to invoicing
-invoicing :
-	@${MANAGE} report_invoicing
-
-## incomplete   : report instructors who started training in the past year but haven't completed
-incomplete :
-	@${MANAGE} report_incomplete_instructors
-
-## published    : report all published events
-published :
-	@${MANAGE} report_published_events
 
 ## serve        : run a server
 serve : bower_components workshops/git_version.py

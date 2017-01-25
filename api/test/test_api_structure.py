@@ -30,8 +30,7 @@ class TestAPIStructure(APITestBase):
                                           assigned_to=self.admin)
 
         self.award = Award.objects.create(
-            person=self.admin, badge=Badge.objects.first(),
-            awarded=datetime.date.today(), event=self.event,
+            person=self.admin, badge=Badge.objects.first(), event=self.event,
         )
 
         self.instructor_role = Role.objects.create(name='instructor')

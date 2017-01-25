@@ -14,10 +14,15 @@
 
 <div class="tab-content">
   <div role="tabpanel" class="tab-pane active" id="person">
-    {% crispy person_form %}
+    {% crispy form %}
   </div>
   <div role="tabpanel" class="tab-pane" id="awards">
-    {% crispy award_form %}
+    {% if perms.workshops.add_awards %}
+    <form class="form-horizontal" role="form" method="POST" action="{% url 'award_add' %}?next={{ request.get_full_path|urlencode }}#awards">
+      {% crispy award_form %}
+    </form>
+    {% endif %}
+
     {% if awards %}
     <table class="table table-striped">
       <thead>
@@ -37,10 +42,14 @@
           <td>{% if award.event %}<a href="{{ award.event.get_absolute_url }}">{{ award.event }}</a>{% else %}—{% endif %}</td>
           <td>{% if award.awarded_by %}<a href="{{ award.awarded_by.get_absolute_url }}">{{ award.awarded_by.get_full_name }}</a>{% else %}—{% endif %}</td>
           <td>
+            {% if perms.workshops.delete_award %}
             <form action="{% url 'award_delete' pk=award.id %}?next={{ request.get_full_path|urlencode }}#awards" onsubmit='return confirm("Are you sure you wish to drop award \"{{ award.badge.title }}\" from \"{{ award.person }}\"?")' method="POST">
               {% csrf_token %}
               <button type="submit" class="btn btn-danger">Delete</button>
             </form>
+            {% else %}
+            <button class="btn btn-danger disabled">Delete</button>
+            {% endif %}
           </td>
         </tr>
         {% endfor %}
@@ -51,7 +60,12 @@
     {% endif %}
   </div>
   <div role="tabpanel" class="tab-pane" id="tasks">
-    {% crispy task_form %}
+    {% if perms.workshops.add_tasks %}
+    <form class="form-horizontal" role="form" method="POST" action="{% url 'task_add' %}?next={{ request.get_full_path|urlencode }}#tasks">
+      {% crispy task_form %}
+    </form>
+    {% endif %}
+
     {% if tasks %}
     <ul>
       {% for task in tasks %}
@@ -66,7 +80,7 @@
 {% endblock %}
 
 {% block extrajs %}
-{{ person_form.media }}
+{{ form.media }}
 {{ award_form.media }}
 {{ task_form.media }}
 <script type="text/javascript">

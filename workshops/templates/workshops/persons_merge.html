@@ -133,6 +133,12 @@
       <td>{{ obj_a.is_active|yesno }}</td><td>{{ obj_b.is_active|yesno }}</td>
       <th>{% include "workshops/merge_radio.html" with field=form.is_active %}</th>
     </tr>
+    <tr>
+      <th>Training progresses</th>
+      <td>{% if obj_a.trainingprogress_set.all %}<ul>{% for item in obj_a.trainingprogress_set.all %}<li><a href="{{ item.get_absolute_url }}">{{ item }}</a></li>{% endfor %}</ul>{% else %}—{% endif %}</td>
+      <td>{% if obj_b.trainingprogress_set.all %}<ul>{% for item in obj_b.trainingprogress_set.all %}<li><a href="{{ item.get_absolute_url }}">{{ item }}</a></li>{% endfor %}</ul>{% else %}—{% endif %}</td>
+      <th>{% include "workshops/merge_radio.html" with field=form.trainingprogress_set %}</th>
+    </tr>
   </tbody>
 </table>
 <div class="pull-right">

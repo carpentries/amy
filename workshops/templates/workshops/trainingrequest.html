@@ -100,8 +100,10 @@
       <td>{{ req.get_max_travelling_frequency_display }} {{ req.max_travelling_frequency_other }}</td></tr>
   <tr><th>additional skills</th>
       <td><pre>{{ req.additional_skills|default:"—" }}</pre></td></tr>
-  <tr><th>additional notes</th>
+  <tr><th>additional comments by submitter</th>
       <td><pre>{{ req.comment|default:"—" }}</pre></td></tr>
+  <tr><th>admin notes</th>
+      <td><pre>{{ req.notes|default:"—" }}</pre></td></tr>
 </table>
 
 {% endblock %}

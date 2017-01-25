@@ -114,7 +114,7 @@ class Membership(models.Model):
     )
     self_organized_workshops_per_year = models.PositiveIntegerField(
         null=True, blank=True,
-        help_text="Imposed number of self-organized workshops per year",
+        help_text="Expected number of self-organized workshops per year",
     )
     notes = models.TextField(default="", blank=True)
     organization = models.ForeignKey(Organization, null=False, blank=False,
@@ -712,6 +712,8 @@ class TagQuerySet(models.query.QuerySet):
 class Tag(models.Model):
     '''Label for grouping events.'''
 
+    ITEMS_VISIBLE_IN_SELECT_WIDGET = 10
+
     name       = models.CharField(max_length=STR_MED, unique=True)
     details    = models.CharField(max_length=STR_LONG)
 
@@ -747,9 +749,14 @@ class Language(models.Model):
 class EventQuerySet(models.query.QuerySet):
     '''Handles finding past, ongoing and upcoming events'''
 
+    def not_cancelled(self):
+        """Exclude cancelled events."""
+        return self.exclude(tags__name='cancelled')
+
     def active(self):
-        """Exclude inactive events (stalled or completed)."""
-        return self.exclude(tags__name='stalled').exclude(completed=True)
+        """Exclude inactive events (stalled, completed or cancelled)."""
+        return self.exclude(tags__name='stalled').exclude(completed=True) \
+                   .not_cancelled()
 
     def past_events(self):
         '''Return past events.
@@ -808,23 +815,24 @@ class EventQuerySet(models.query.QuerySet):
         no_latitude = Q(latitude__isnull=True)
         no_longitude = Q(longitude__isnull=True)
         no_url = Q(url__isnull=True)
-        cancelled = Q(tags__name='cancelled')
         return (
             unknown_start | no_country | no_venue | no_address | no_latitude |
-            no_longitude | no_url | cancelled
+            no_longitude | no_url
         )
 
     def unpublished_events(self):
         """Return events considered as unpublished (see
         `unpublished_conditional` above)."""
         conditional = self.unpublished_conditional()
-        return self.filter(conditional).order_by('slug', 'id').distinct()
+        return self.not_cancelled().filter(conditional) \
+                   .order_by('slug', 'id').distinct()
 
     def published_events(self):
         """Return events considered as published (see `unpublished_conditional`
         above)."""
         conditional = self.unpublished_conditional()
-        return self.exclude(conditional).order_by('-start', 'id').distinct()
+        return self.not_cancelled().exclude(conditional) \
+                   .order_by('-start', 'id').distinct()
 
     def uninvoiced_events(self):
         '''Return a queryset for events that have not yet been invoiced.
@@ -832,8 +840,9 @@ class EventQuerySet(models.query.QuerySet):
         These are marked as uninvoiced, and have occurred.
         Events are sorted oldest first.'''
 
-        return self.past_events().filter(invoice_status='not-invoiced') \
-                                 .order_by('start')
+        return self.not_cancelled().past_events() \
+                   .filter(invoice_status='not-invoiced') \
+                   .order_by('start')
 
     def metadata_changed(self):
         """Return events for which remote metatags have been updated."""
@@ -1117,6 +1126,12 @@ class Event(AssignmentMixin, models.Model):
             self.address = 'Internet'
             self.latitude = -48.876667
             self.longitude = -123.393333
+
+        # Increase attendance if there's more learner tasks
+        learners = self.task_set.filter(role__name='learner').count()
+        if learners != 0:
+            if not self.attendance or self.attendance < learners:
+                self.attendance = learners
 
         super(Event, self).save(*args, **kwargs)
 
@@ -1579,6 +1594,11 @@ class Task(models.Model):
     def get_absolute_url(self):
         return reverse('task_details', kwargs={'task_id': self.id})
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # Trigger an update of the attendance field
+        self.event.save()
+
 #------------------------------------------------------------
 
 class Lesson(models.Model):
@@ -1640,7 +1660,7 @@ class Award(models.Model):
 
     person     = models.ForeignKey(Person)
     badge      = models.ForeignKey(Badge)
-    awarded    = models.DateField()
+    awarded    = models.DateField(default=datetime.date.today)
     event      = models.ForeignKey(Event, null=True, blank=True,
                                    on_delete=models.PROTECT)
     awarded_by = models.ForeignKey(
@@ -2099,6 +2119,8 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         default='', null=False, blank=True,
         help_text='What else do you want us to know?',
         verbose_name='Anything else?')
+
+    notes = models.TextField(blank=True, help_text='Admin notes')
 
     def clean(self):
         super().clean()

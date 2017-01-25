@@ -3,7 +3,13 @@ from unittest.mock import patch
 from django.core.urlresolvers import reverse
 
 from .base import TestBase
-from ..models import ProfileUpdateRequest, Person, KnowledgeDomain, Lesson
+from ..models import (
+    ProfileUpdateRequest,
+    Person,
+    KnowledgeDomain,
+    Lesson,
+    Airport,
+)
 
 
 class TestProfileUpdateRequest(TestBase):
@@ -172,6 +178,42 @@ class TestProfileUpdateRequest(TestBase):
                          set(KnowledgeDomain.objects.all()[0:2]))
         self.assertEqual(set(person.lessons.all()),
                          set(Lesson.objects.all()[0:2]))
+
+
+class TestUpdateRequestWithLowercasedAirport(TestBase):
+    """Regression tests for [#1109] bug -- airport IATA code should be case
+    insensitive.
+
+    [#1109]: https://github.com/swcarpentry/amy/issues/1109"""
+
+    def setUp(self):
+        self._setUpAirports()
+        self._setUpLessons()
+        self._setUpBadges()
+        self._setUpInstructors()
+        self._setUpUsersAndLogin()
+
+        self.request = ProfileUpdateRequest.objects.create(
+            personal='Harry', family='Potter', email='harry@potter.com',
+            airport_iata='aaa', affiliation='Hogwarts', active=True,
+        )
+
+    def test_the_airport_is_matched_when_displaying_the_request(self):
+        rv = self.client.get(reverse('profileupdaterequest_details',
+                                     args=[self.request.pk]))
+        self.assertEqual(rv.context['airport'],
+                         Airport.objects.get(iata='AAA'))
+
+    def test_the_aiport_is_matched_when_accepting_the_request(self):
+        expected_airport = Airport.objects.get(iata='AAA')
+
+        person = Person.objects.get(personal='Harry', family='Potter')
+        self.assertNotEqual(person.airport, expected_airport)
+
+        self.client.get(reverse('profileupdaterequest_accept',
+                                args=[self.request.pk, person.pk]))
+        person.refresh_from_db()
+        self.assertEqual(person.airport, expected_airport)
 
 
 @patch('workshops.github_auth.github_username_to_uid', lambda username: None)
