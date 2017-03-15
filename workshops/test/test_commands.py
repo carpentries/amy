@@ -3,6 +3,7 @@
 These commands are run via `./manage.py command`."""
 
 from datetime import date, datetime, time
+from io import StringIO
 import unittest
 from unittest.mock import MagicMock
 
@@ -148,10 +149,10 @@ class TestWebsiteUpdatesCommand(TestBase):
         self.cmd = WebsiteUpdatesCommand()
         self.fake_cmd = FakeDatabaseCommand()
         self.seed = 12345
-        self.faker = Faker()
-        self.faker.seed(self.seed)
+        self.fake_cmd.faker.seed(self.seed)
+        self.fake_cmd.stdout = StringIO()
 
-        self.fake_cmd.fake_organizations(self.faker)
+        self.fake_cmd.fake_organizations()
 
         self.mocked_event_page = """
 <html><head>
@@ -212,7 +213,9 @@ class TestWebsiteUpdatesCommand(TestBase):
 
     def test_getting_events(self):
         """Ensure only active events with URL are returned."""
-        self.fake_cmd.fake_current_events(self.faker, count=6)
+        self.fake_cmd.fake_current_events(count=6, add_tags=False)
+
+        Event.objects.all().update(start=date.today())
 
         # one active event with URL and one without
         e1, e2 = Event.objects.all()[0:2]

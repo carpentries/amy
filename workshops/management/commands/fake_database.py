@@ -81,6 +81,11 @@ class UniqueUrlProvider(BaseProvider):
 class Command(BaseCommand):
     help = 'Add fake data to the database.'
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.faker = Faker()
+        self.faker.add_provider(UniqueUrlProvider)
+
     def add_arguments(self, parser):
         parser.add_argument(
             '--seed', action='store', default=None,
@@ -221,7 +226,7 @@ class Command(BaseCommand):
             occupation_other=self.faker.job() if occupation == '' else '',
             affiliation=person.affiliation,
             location=self.faker.city(),
-            country=self.faker.country(),
+            country=choice(Countries)[0],
             domains_other='',
             gender=person.gender,
             gender_other='',
@@ -346,12 +351,12 @@ class Command(BaseCommand):
                 organization=choice(Organization.objects.all()),
             )
 
-    def fake_current_events(self, count=5):
+    def fake_current_events(self, count=5, **kwargs):
         """Ongoing and upcoming events."""
         self.stdout.write('Generating {} fake current events...'.format(count))
 
         for _ in range(count):
-            self.fake_event()
+            self.fake_event(**kwargs)
 
     def fake_uninvoiced_events(self, count=5):
         """Preferably in the past, and with 'uninvoiced' status."""
@@ -392,7 +397,8 @@ class Command(BaseCommand):
             e.tags.set([Tag.objects.get(name='TTT')])
             e.save()
 
-    def fake_event(self, *, location_data=True, self_organized=False):
+    def fake_event(self, *, location_data=True, self_organized=False,
+                   add_tags=True):
         start = self.faker.date_time_between(start_date='-5y').date()
         city = self.faker.city().replace(' ', '-').lower()
         if self_organized:
@@ -420,7 +426,8 @@ class Command(BaseCommand):
             longitude=uniform(0, 180) if location_data else None,
             metadata_changed=randbool(0.1),
         )
-        e.tags = sample(Tag.objects.exclude(name='TTT'), 2)
+        if add_tags:
+            e.tags = sample(Tag.objects.exclude(name='TTT'), 2)
         return e
 
     def fake_tasks(self, count=120):
@@ -538,12 +545,12 @@ class Command(BaseCommand):
                     DCSelfOrganizedEventRequest.PARTNER_CHOICES)[0],
                 is_partner_other='',
                 location=self.faker.city(),
-                country=choice(Countries),
+                country=choice(Countries)[0],
                 associated_conference='',
                 dates=str(date.date()),
                 domains_other='',
                 topics_other='',
-                payment=choice(DCSelfOrganizedEventRequest.PAYMENT_CHOICES),
+                payment=choice(DCSelfOrganizedEventRequest.PAYMENT_CHOICES)[0],
                 fee_waiver_reason='',
                 handle_registration=True,
                 distribute_surveys=True,
@@ -638,9 +645,6 @@ class Command(BaseCommand):
             )
 
     def handle(self, *args, **options):
-        self.faker = Faker()
-        self.faker.add_provider(UniqueUrlProvider)
-
         seed = options['seed']
         if seed is not None:
             self.faker.seed(seed)
