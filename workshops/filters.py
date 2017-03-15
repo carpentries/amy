@@ -123,6 +123,8 @@ class EventFilter(AMYFilterSet):
         choices=(EMPTY_SELECTION, ) + Event.INVOICED_CHOICES,
     )
 
+    country = AllCountriesFilter()
+
     class Meta:
         model = Event
         fields = [
@@ -132,6 +134,7 @@ class EventFilter(AMYFilterSet):
             'administrator',
             'invoice_status',
             'completed',
+            'country',
         ]
         order_by = ['-slug', 'slug', 'start', '-start', 'end', '-end']
 
