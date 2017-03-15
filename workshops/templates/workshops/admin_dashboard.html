@@ -6,11 +6,6 @@
 
 {% block content %}
 
-<div class="row">
-  <div class="col-xs-12"><h3>Timeline</h3></div>
-  <div class="col-xs-12" id="timeline"></div>
-</div>
-
 {% if updated_metadata %}
 <div class="row">
   <div class="col-xs-12">
@@ -98,28 +93,4 @@
     </table>
   </div>
 </div>
-{% endblock %}
-
-{% block extrajs %}
-{% compress js %}
-<script src="{% static 'vis/dist/vis.js' %}"></script>
-{% endcompress %}
-<script type="text/javascript">
-  $.getJSON("{% url 'api:user-todos' %}", {}, function(data) {
-    var container = document.getElementById('timeline');
-    var items = new vis.DataSet(data);
-    var options = {
-      width: '100%',
-      // height: '30px',
-      clickToUse: true,
-      timeAxis: {
-        scale: 'day',
-        step: 1
-      },
-      start: '{{ todos_start_date|date:'c' }}',
-      end: '{{ todos_end_date|date:'c' }}'
-    };
-    var timeline = new vis.Timeline(container, items, options);
-  });
-</script>
 {% endblock %}
