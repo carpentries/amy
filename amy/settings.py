@@ -158,6 +158,7 @@ INSTALLED_APPS += [
     'compressor',
     'social.apps.django_app.default',
     'debug_toolbar',
+    'django_extensions',
 ]
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
