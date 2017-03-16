@@ -27,7 +27,11 @@
   <body>
     {% block navbar %}{% endblock %}
     <div class="container{% block fluid-content %}{% endblock %}">
-      {% block logo %}{% endblock %}
+      <div class="row">
+        <div class="main">
+          {% block logo %}{% endblock %}
+        </div>
+      </div>
       {% for message in messages %}
       <div class="row">
         <div class="{% block fluid-messages %}col-sm-12{% endblock %}">
