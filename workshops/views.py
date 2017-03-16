@@ -1018,11 +1018,13 @@ def validate_event(request, slug):
     page_url = page_url.strip()
 
     error_messages = []
+    warning_messages = []
 
     try:
         metadata = fetch_event_metadata(page_url)
         # validate metadata
-        error_messages = validate_metadata_from_event_website(metadata)
+        error_messages, warning_messages = \
+            validate_metadata_from_event_website(metadata)
 
     except WrongWorkshopURL as e:
         error_messages.append(str(e))
@@ -1042,6 +1044,7 @@ def validate_event(request, slug):
         'event': event,
         'page': page_url,
         'error_messages': error_messages,
+        'warning_messages': warning_messages,
     }
     return render(request, 'workshops/validate_event.html', context)
 
