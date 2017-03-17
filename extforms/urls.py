@@ -13,5 +13,6 @@ urlpatterns = [
     # disabled as per @maneesha's request
     # url(r'^submit/confirm/$', views.EventSubmissionConfirm.as_view(), name='event_submission_confirm'),
     url(r'^update_profile/$', views.profileupdaterequest_create, name='profileupdate_request'),
-    url(r'^request_training/$', views.trainingrequest_create, name='training_request'),
+    url(r'^request_training/$', views.TrainingRequestCreate.as_view(), name='training_request'),
+    url(r'^request_training/confirm/$', views.TrainingRequestConfirm.as_view(), name='training_request_confirm'),
 ]

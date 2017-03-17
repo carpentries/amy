@@ -17,6 +17,7 @@ from workshops.models import (
     EventRequest,
     EventSubmission as EventSubmissionModel,
     DCSelfOrganizedEventRequest as DCSelfOrganizedEventRequestModel,
+    TrainingRequest,
 )
 from workshops.util import (
     login_not_required,
@@ -254,35 +255,21 @@ class DCSelfOrganizedEventRequestConfirm(LoginNotRequiredMixin, TemplateView):
         return context
 
 
-@login_not_required
-def trainingrequest_create(request):
-    """A form to let all users (no login required) to request Instructor
-    Training."""
+class TrainingRequestCreate(LoginNotRequiredMixin, AMYCreateView):
+    model = TrainingRequest
+    form_class = TrainingRequestForm
+    template_name = 'forms/trainingrequest.html'
+    success_url = reverse_lazy('training_request_confirm')
 
-    group_name = request.GET.get('group', None) or None  # replace empty string with None
-    form = TrainingRequestForm(initial_group_name=group_name)
+    def get_success_message(self, *args, **kwargs):
+        """Don't display a success message."""
+        return ''
 
-    page_title = 'Apply for Instructor Training'
 
-    if request.method == 'POST':
-        form = TrainingRequestForm(request.POST, initial_group_name=group_name)
+class TrainingRequestConfirm(LoginNotRequiredMixin, TemplateView):
+    template_name = 'forms/trainingrequest_confirm.html'
 
-        if form.is_valid():
-            form.save()
-
-            # TODO: email notification?
-
-            context = {
-                'title': 'Thank you for applying for an instructor training.',
-            }
-            return render(request,
-                          'forms/trainingrequest_confirm.html',
-                          context)
-        else:
-            messages.error(request, 'Fix errors below.')
-
-    context = {
-        'title': page_title,
-        'form': form,
-    }
-    return render(request, 'forms/trainingrequest.html', context)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Thank you for applying for an instructor training'
+        return context
