@@ -26,6 +26,7 @@ from workshops.util import (
 from workshops.base_views import (
     AMYCreateView,
     EmailSendMixin,
+    AutoresponderMixin,
 )
 
 
@@ -255,15 +256,27 @@ class DCSelfOrganizedEventRequestConfirm(LoginNotRequiredMixin, TemplateView):
         return context
 
 
-class TrainingRequestCreate(LoginNotRequiredMixin, AMYCreateView):
+class TrainingRequestCreate(
+    LoginNotRequiredMixin,
+    AutoresponderMixin,
+    AMYCreateView,
+):
     model = TrainingRequest
     form_class = TrainingRequestForm
     template_name = 'forms/trainingrequest.html'
     success_url = reverse_lazy('training_request_confirm')
+    email_subject = 'Thank you for your application'
+    email_body_template = 'mailing/training_request.txt'
 
     def get_success_message(self, *args, **kwargs):
         """Don't display a success message."""
         return ''
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        group_name = self.request.GET.get('group', None) or None  # replace empty string with None
+        kwargs['initial_group_name'] = group_name
+        return kwargs
 
 
 class TrainingRequestConfirm(LoginNotRequiredMixin, TemplateView):
