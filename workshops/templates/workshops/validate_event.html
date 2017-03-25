@@ -6,14 +6,27 @@
   <p>No valid URL in event record.</p>
   {% else %}
     {% if error_messages %}
-      <div class="alert alert-danger" role="alert"><strong>Errors found!</strong> Fix errors below:</div>
-      <ul>
-        {% for message in error_messages %}
-        <li>{{ message }}</li>
-        {% endfor %}
-      </ul>
-    {% else %}
-      <div class="alert alert-success" role="alert"><strong>Everythings fine</strong> No errors found.</div>
+      <div class="alert alert-danger" role="alert">
+        <p><strong>Errors found!</strong> Fix errors below:</p>
+        <ul>
+          {% for message in error_messages %}
+          <li>{{ message }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+    {% if warning_messages %}
+      <div class="alert alert-warning" role="alert">
+        <p><strong>Warnings found!</strong></p>
+        <ul>
+          {% for message in warning_messages %}
+          <li>{{ message }}</li>
+          {% endfor %}
+        </ul>     
+      </div>
+    {% endif %}
+    {% if not error_messages and not warning_messages %}
+      <div class="alert alert-success" role="alert"><strong>Everythings fine.</strong> No errors found.</div>
     {% endif %}
     <p>Validated file: <a href="{{ page }}">{{ page }}</a></p>
   {% endif %}

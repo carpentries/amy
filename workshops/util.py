@@ -585,6 +585,7 @@ def parse_metadata_from_event_website(metadata):
 
 def validate_metadata_from_event_website(metadata):
     errors = []
+    warnings = []
 
     Requirement = namedtuple(
         'Requirement',
@@ -621,7 +622,8 @@ def validate_metadata_from_event_website(metadata):
         value_ = metadata.get(requirement.name)
 
         if value_ is None:
-            errors.append('Missing {} metadata {}.'.format(type_, name_))
+            issues = errors if required_ else warnings
+            issues.append('Missing {} metadata {}.'.format(type_, name_))
 
         if value_ == 'FIXME':
             errors.append('Placeholder value "FIXME" for {} metadata {}.'
@@ -639,7 +641,7 @@ def validate_metadata_from_event_website(metadata):
             except (re.error, TypeError):
                 pass
 
-    return errors
+    return errors, warnings
 
 
 def universal_date_format(date):
