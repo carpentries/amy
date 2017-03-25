@@ -300,6 +300,10 @@ class PersonManager(BaseUserManager):
                          F('passed_dc_demo')),
         )
 
+github_username_validator = RegexValidator(r'[, ]+',
+                                           'Spaces or commas are disallowed.',
+                                           inverse_match=True)
+
 
 @reversion.register
 class Person(AbstractBaseUser, PermissionsMixin):
@@ -333,7 +337,9 @@ class Person(AbstractBaseUser, PermissionsMixin):
     airport     = models.ForeignKey(Airport, null=True, blank=True, on_delete=models.PROTECT,
                                     verbose_name='Nearest major airport')
     github      = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True,
-                                   verbose_name='GitHub username')
+                                   verbose_name='GitHub username',
+                                   validators=[github_username_validator],
+                                   help_text='Please put only a single username here.',)
     twitter     = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True,
                                    verbose_name='Twitter username')
     url         = models.CharField(max_length=STR_LONG, blank=True,
@@ -615,7 +621,8 @@ class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
     github = models.CharField(
         max_length=STR_LONG,
         verbose_name='GitHub username',
-        help_text='Please provide your username, not a numeric user ID.',
+        help_text='Please put only a single username here.',
+        validators=[github_username_validator],
         blank=True, default='',
     )
     twitter = models.CharField(
@@ -1969,6 +1976,8 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
     github = models.CharField(
         max_length=STR_LONG,
         verbose_name='GitHub username',
+        validators=[github_username_validator],
+        help_text='Please put only a single username here.',
         null=True, blank=True,
     )
 

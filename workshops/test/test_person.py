@@ -467,6 +467,28 @@ class TestPerson(TestBase):
         self.assertRedirects(dc_res.forms[2].submit(), trainees.request.url)
         self.assertEqual(trainee.award_set.last().badge, self.dc_instructor)
 
+    def test_person_github_username_validation(self):
+        """Ensure GitHub username doesn't allow for spaces or commas."""
+        invalid_usernames = ['Harry James Potter', 'Harry, Hermione, Ron']
+        for key, username in enumerate(invalid_usernames):
+            with self.subTest(username=username):
+                person = Person.objects.create(
+                    personal='Testing', family='Testing',
+                    username='testing{}'.format(key),
+                    github=username,
+                )
+                with self.assertRaises(ValidationError) as cm:
+                    person.clean_fields(exclude=['password'])
+                self.assertIn('github', cm.exception.message_dict)
+
+        valid_username = 'blanking-crush_andy'
+        person = Person.objects.create(
+            personal='Andy', family='Blanking-Crush',
+            username='blanking-crush_andy',
+            github=valid_username,
+        )
+        person.clean_fields(exclude=['password'])
+
 
 class TestPersonPassword(TestBase):
     """Separate tests for testing password setting.
