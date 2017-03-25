@@ -2,14 +2,24 @@ from functools import reduce
 import operator
 import re
 
+from django.conf import settings
 from django.contrib.auth.models import Group
 from django.db.models import Q, Count
 
-from selectable.base import ModelLookup
+from github import Github
+from selectable.base import ModelLookup, LookupBase
 from selectable.registry import registry
 
 from workshops import models
 from workshops.util import lookup_only_for_admins
+
+
+class GitHubUserLookup(LookupBase):
+    gh = Github(settings.GITHUB_API_TOKEN, per_page=10)
+
+    def get_query(self, request, username):
+        users = self.gh.search_users(username).get_page(0)
+        return [user.login for user in users]
 
 
 @lookup_only_for_admins
@@ -121,6 +131,7 @@ class LanguageLookup(ModelLookup):
                 .order_by('-person_count')
 
 
+registry.register(GitHubUserLookup)
 registry.register(EventLookup)
 registry.register(OrganizationLookup)
 registry.register(TTTEventLookup)

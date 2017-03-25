@@ -44,6 +44,11 @@ from workshops.models import (
 )
 
 
+GITHUB_AUTOCOMPLETE_ATTRS = {
+    'data-selectable-options': {'delay': 500, 'minLength': 4}
+}
+
+
 class BootstrapHelper(FormHelper):
     """Layout and behavior for crispy-displayed forms."""
     html5_required = True
@@ -471,19 +476,6 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm):
 
 class PersonForm(forms.ModelForm):
 
-    airport = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.AirportLookup,
-        label='Airport',
-        required=False,
-        widget=selectable.AutoComboboxSelectWidget,
-    )
-    languages = selectable.AutoCompleteSelectMultipleField(
-        lookup_class=lookups.LanguageLookup,
-        label='Languages',
-        required=False,
-        widget=selectable.AutoComboboxSelectMultipleWidget,
-    )
-
     helper = bootstrap_helper
 
     class Meta:
@@ -495,6 +487,18 @@ class PersonForm(forms.ModelForm):
                   'email', 'gender', 'airport', 'affiliation', 'github',
                   'twitter', 'url', 'occupation', 'orcid', 'notes', 'lessons',
                   'domains', 'languages']
+        widgets = {
+            'airport': selectable.AutoComboboxSelectWidget(
+                lookup_class=lookups.AirportLookup,
+            ),
+            'languages': selectable.AutoComboboxSelectMultipleWidget(
+                lookup_class=lookups.LanguageLookup,
+            ),
+            'github': selectable.AutoCompleteSelectWidget(
+                lookup_class=lookups.GitHubUserLookup,
+                attrs=GITHUB_AUTOCOMPLETE_ATTRS,
+            )
+        }
 
 
 class PersonCreateForm(PersonForm):
@@ -821,6 +825,13 @@ class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):
             'lessons': forms.CheckboxSelectMultiple(),
             'occupation': forms.RadioSelect(),
             'gender': forms.RadioSelect(),
+            'languages': selectable.AutoComboboxSelectMultipleWidget(
+                lookup_class=lookups.LanguageLookup,
+            ),
+            'github': selectable.AutoCompleteSelectWidget(
+                lookup_class=lookups.GitHubUserLookup,
+                attrs=GITHUB_AUTOCOMPLETE_ATTRS,
+            ),
         }
 
     def clean_twitter(self):
@@ -1096,6 +1107,10 @@ class TrainingRequestForm(PrivacyConsentMixin, forms.ModelForm):
             'comment',
         )
         widgets = {
+            'github': selectable.AutoCompleteSelectWidget(
+                lookup_class=lookups.GitHubUserLookup,
+                attrs=GITHUB_AUTOCOMPLETE_ATTRS,
+            ),
             'occupation': forms.RadioSelect(),
             'domains': forms.CheckboxSelectMultiple(),
             'gender': forms.RadioSelect(),
