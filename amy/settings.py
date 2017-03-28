@@ -136,6 +136,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'whitenoise.runserver_nostatic', # must be immediately above django.contrib.staticfiles
     'django.contrib.staticfiles',
 ]
 if ENABLE_PYDATA:
@@ -165,6 +166,7 @@ INSTALLED_APPS += [
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
 MIDDLEWARE_CLASSES = (
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # should be above all middlewares, except for django.middleware.security.SecurityMiddleware
     'debug_toolbar.middleware.DebugToolbarMiddleware',
     'reversion.middleware.RevisionMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -382,3 +384,13 @@ if DEBUG and 'test' in sys.argv:
 # Debug Toolbar
 DEBUG_TOOLBAR_PATCH_SETTINGS = False
 INTERNAL_IPS = ['127.0.0.1', '::1']
+
+if DEBUG:
+    # Use default value
+    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+
+else:
+    # Simplified static file serving.
+    # https://warehouse.python.org/project/whitenoise/
+
+    STATICFILES_STORAGE = 'whitenoise.django.GzipManifestStaticFilesStorage'
