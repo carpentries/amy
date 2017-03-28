@@ -3,9 +3,10 @@ import logging
 
 from django.core.management.base import BaseCommand
 from django.core.mail import send_mail
+from django.db.models import Prefetch
 from django.template.loader import get_template
 
-from workshops.models import Badge, Person, Role
+from workshops.models import Badge, Person, Role, Task, Lesson, Award
 
 logger = logging.getLogger()
 
@@ -50,6 +51,7 @@ class Command(BaseCommand):
         instructors = instructors.exclude(email__isnull=True)
         if may_contact_only:
             instructors = instructors.exclude(may_contact=False)
+        instructors = instructors.order_by('id')
 
         # let's get some things faster
         instructors = instructors.select_related('airport') \
