@@ -1,7 +1,17 @@
 import datetime
 from itertools import accumulate
 
-from django.db.models import Count, Sum, Case, F, When, Value, IntegerField, Min
+from django.db.models import (
+    Count, 
+    Sum, 
+    Case, 
+    F, 
+    When, 
+    Value, 
+    IntegerField, 
+    Min, 
+    Prefetch,
+)
 from rest_framework import viewsets
 from rest_framework.decorators import list_route
 from rest_framework.filters import DjangoFilterBackend
@@ -150,8 +160,11 @@ class ExportInstructorLocationsView(ListAPIView):
     permission_classes = (IsAuthenticatedOrReadOnly, )
     paginator = None  # disable pagination
 
-    queryset = Airport.objects.exclude(person=None) \
-                              .prefetch_related('person_set')
+    queryset = Airport.objects.exclude(person=None).prefetch_related(
+        # Make sure that we sort instructors by id. This is default behaviour on
+        # SQLite, but not in PostgreSQL. This is necessary to pass
+        # workshops.test_export.TestExportingInstructors.test_serialization.
+        Prefetch('person_set', queryset=Person.objects.order_by('id')))
     serializer_class = ExportInstructorLocationsSerializer
 
 
