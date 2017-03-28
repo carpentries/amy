@@ -77,12 +77,12 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
 
         self.org_alpha = Organization.objects.create(domain='alpha.edu',
                                               fullname='Alpha Organization',
-                                              country='Azerbaijan',
+                                              country='AZ',  # AZ for Azerbaijan
                                               notes='')
 
         self.org_beta = Organization.objects.create(domain='beta.com',
                                              fullname='Beta Organization',
-                                             country='Brazil',
+                                             country='BR',  # BR for Brazil
                                              notes='Notes\nabout\nBrazil\n')
 
     def _setUpAirports(self):
