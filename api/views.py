@@ -518,7 +518,9 @@ class ReportsViewSet(ViewSet):
             event__end__lte=end,
             role__name='instructor',
             person__may_contact=True,
-        ).exclude(event__tags=tags).order_by('event', 'person', 'role') \
+        # Below, we need to use event__tags__in instead of event__tags,
+        # otherwise it won't work on PostgreSQL.
+        ).exclude(event__tags__in=tags).order_by('event', 'person', 'role') \
          .select_related('person', 'event', 'role')
         return tasks
 
