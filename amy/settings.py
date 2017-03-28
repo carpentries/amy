@@ -85,7 +85,8 @@ if DEBUG:
     # outgoing mails will be stored in `django.core.mail.outbox`
     EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
 
-SITE_URL = 'https://amy.software-carpentry.org'
+# SITE_URL = 'https://amy.software-carpentry.org'
+SITE_URL = 'http://amy-on-heroku.herokuapp.com'
 if DEBUG:
     SITE_URL = 'http://127.0.0.1:8000'
 
@@ -124,7 +125,8 @@ TEMPLATES = [
 ]
 
 ALLOWED_HOSTS = [
-    'amy.software-carpentry.org',
+    # 'amy.software-carpentry.org',
+    'amy-on-heroku.herokuapp.com',
 ]
 if DEBUG:
     ALLOWED_HOSTS.append('127.0.0.1')
