@@ -7,6 +7,9 @@ import json
 from django.db import migrations, models
 
 
+NAME_MAX_LENGTH = 40
+
+
 def populate_languages(apps, schema_editor):
     """Populate the Languages table.
 
@@ -24,7 +27,7 @@ def populate_languages(apps, schema_editor):
             # skip others until we need them
             # https://github.com/swcarpentry/amy/issues/582#issuecomment-159506884
             Language.objects.get_or_create(
-                name=' '.join(language['Description']),
+                name=' '.join(language['Description'])[:NAME_MAX_LENGTH],
                 subtag=language['Subtag']
             )
 
@@ -40,7 +43,7 @@ class Migration(migrations.Migration):
             name='Language',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(help_text='Description of this language tag in English', max_length=40)),
+                ('name', models.CharField(help_text='Description of this language tag in English', max_length=NAME_MAX_LENGTH)),
                 ('subtag', models.CharField(help_text='Primary language subtag.  https://tools.ietf.org/html/rfc5646#section-2.2.1', max_length=10)),
             ],
         ),
