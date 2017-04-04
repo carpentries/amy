@@ -4,6 +4,7 @@ import datetime
 from social.apps.django_app.default.models import UserSocialAuth
 from unittest.mock import patch
 from urllib.parse import urlencode
+import webtest
 
 from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
@@ -56,25 +57,25 @@ class TestPerson(TestBase):
 
     def test_edit_person_empty_family_name(self):
         data = {
-            'person-family': '',  # family name cannot be empty
+            'family': '',  # family name cannot be empty
         }
         f = PersonForm(data)
         self.assertIn('family', f.errors)
 
     def _test_edit_person_email(self, person):
         url, values = self._get_initial_form_index(0, 'person_edit', person.id)
-        assert 'person-email' in values, \
+        assert 'email' in values, \
             'No email address in initial form'
 
         new_email = 'new@new.new'
         assert person.email != new_email, \
             'Would be unable to tell if email had changed'
-        values['person-email'] = new_email
+        values['email'] = new_email
 
-        if values['person-airport_1'] is None:
-            values['person-airport_1'] = ''
-        if values['person-airport_0'] is None:
-            values['person-airport_0'] = ''
+        if values['airport_1'] is None:
+            values['airport_1'] = ''
+        if values['airport_0'] is None:
+            values['airport_0'] = ''
 
         # Django redirects when edit works.
         response = self.client.post(url, values)
@@ -155,10 +156,10 @@ class TestPerson(TestBase):
         url, values = self._get_initial_form_index(0, 'person_edit',
                                                    self.hermione.id)
 
-        assert 'person-notes' in values, 'Notes not present in initial form'
+        assert 'notes' in values, 'Notes not present in initial form'
 
         note = 'Hermione is a very good student.'
-        values['person-notes'] = note
+        values['notes'] = note
 
         # Django redirects when edit works.
         response = self.client.post(url, values)
@@ -174,52 +175,32 @@ class TestPerson(TestBase):
             assert False, 'expected 302 redirect after post'
 
     def test_person_award_badge(self):
-        # make sure person has no awards
-        assert not self.spiderman.award_set.all()
+        """Ensure that we can add an award from `person_edit` view"""
+        url = reverse('person_edit', args=[self.spiderman.pk])
+        person_edit = self.app.get(url, user='admin')
+        award_form = person_edit.forms[2]
+        award_form['badge'] = self.swc_instructor.pk
 
-        # add new award
-        url, values = self._get_initial_form_index(1, 'person_edit',
-                                                   self.spiderman.id)
-        assert 'award-badge' in values
-
-        values['award-badge'] = self.swc_instructor.pk
-        values['award-event_1'] = ''
-        values['award-awarded_by_0'] = ''
-        values['award-awarded_by_1'] = ''
-
-        rv = self.client.post(url, data=values)
-        assert rv.status_code == 302, \
-            'After awarding a badge we should be redirected to the same ' \
-            'page, got {} instead'.format(rv.status_code)
-        # we actually can't test if it redirects to the same url…
-
-        # make sure the award was recorded in the database
-        self.spiderman.refresh_from_db()
-        assert self.swc_instructor == self.spiderman.award_set.all()[0].badge
+        self.assertEqual(self.spiderman.award_set.count(), 0)
+        self.assertRedirects(award_form.submit(), url)
+        self.assertEqual(self.spiderman.award_set.count(), 1)
+        self.assertEqual(self.spiderman.award_set.first().badge, self.swc_instructor)
 
     def test_person_add_task(self):
+        """Ensure that we can add a task from `person_edit` view"""
         self._setUpEvents()  # set up some events for us
-
-        # make sure person has no tasks
-        assert not self.spiderman.task_set.all()
-
-        # add new task
-        url, values = self._get_initial_form_index(2, 'person_edit',
-                                                   self.spiderman.id)
-        assert 'task-role' in values
-
         role = Role.objects.create(name='test_role')
-        values['task-event_1'] = Event.objects.all()[0].pk
-        values['task-role'] = role.pk
-        rv = self.client.post(url, data=values)
-        assert rv.status_code == 302, \
-            'After adding a task we should be redirected to the same page, ' \
-            'got {} instead'.format(rv.status_code)
-        # we actually can't test if it redirects to the same url…
 
-        # make sure the task was recorded in the database
-        self.spiderman.refresh_from_db()
-        assert role == self.spiderman.task_set.all()[0].role
+        url = reverse('person_edit', args=[self.spiderman.pk])
+        person_edit = self.app.get(url, user='admin')
+        task_form = person_edit.forms[4]
+        task_form['event_1'] = Event.objects.first().pk
+        task_form['role'] = role.pk
+
+        self.assertEqual(self.spiderman.task_set.count(), 0)
+        self.assertRedirects(task_form.submit(), url)
+        self.assertEqual(self.spiderman.task_set.count(), 1)
+        self.assertEqual(self.spiderman.task_set.first().role, role)
 
     def test_edit_person_permissions(self):
         """ Make sure we can set up user permissions correctly. """
@@ -295,7 +276,7 @@ class TestPerson(TestBase):
 
         url, values = self._get_initial_form_index(0, 'person_edit',
                                                    self.hermione.id)
-        values['person-lessons'] = [self.git.pk]
+        values['lessons'] = [self.git.pk]
 
         response = self.client.post(url, values)
         assert response.status_code == 302
@@ -470,25 +451,43 @@ class TestPerson(TestBase):
 
         # Test workflow starting from clicking at "SWC" label
         swc_res = trainees.click('^SWC$')
-        self.assertSelected(swc_res.forms['person-awards-form']['award-badge'],
+        self.assertSelected(swc_res.forms[2]['badge'],
                             'Software Carpentry Instructor')
-        self.assertEqual(swc_res.forms['person-awards-form']['award-event_0'].value,
+        self.assertEqual(swc_res.forms[2]['event_0'].value,
                          '2016-08-10-training')
-        swc_res = swc_res.forms['person-awards-form'].submit().follow()
-        self.assertIn("Bob Smith &lt;bob.smith@example.com&gt; was awarded "
-                      "Software Carpentry Instructor badge.", swc_res)
-        self.assertEqual(trainees.request.url, swc_res.request.url)
+        self.assertRedirects(swc_res.forms[2].submit(), trainees.request.url)
+        self.assertEqual(trainee.award_set.last().badge, self.swc_instructor)
 
         # Test workflow starting from clicking at "DC" label
         dc_res = trainees.click('^DC$')
-        self.assertSelected(dc_res.forms['person-awards-form']['award-badge'],
+        self.assertSelected(dc_res.forms[2]['badge'],
                             'Data Carpentry Instructor')
-        self.assertEqual(dc_res.forms['person-awards-form']['award-event_0'].value,
+        self.assertEqual(dc_res.forms[2]['event_0'].value,
                          '2016-08-10-training')
-        dc_res = dc_res.forms['person-awards-form'].submit().follow()
-        self.assertIn("Bob Smith &lt;bob.smith@example.com&gt; was awarded "
-                      "Data Carpentry Instructor badge.", dc_res)
-        self.assertEqual(trainees.request.url, dc_res.request.url)
+        self.assertRedirects(dc_res.forms[2].submit(), trainees.request.url)
+        self.assertEqual(trainee.award_set.last().badge, self.dc_instructor)
+
+    def test_person_github_username_validation(self):
+        """Ensure GitHub username doesn't allow for spaces or commas."""
+        invalid_usernames = ['Harry James Potter', 'Harry, Hermione, Ron']
+        for key, username in enumerate(invalid_usernames):
+            with self.subTest(username=username):
+                person = Person.objects.create(
+                    personal='Testing', family='Testing',
+                    username='testing{}'.format(key),
+                    github=username,
+                )
+                with self.assertRaises(ValidationError) as cm:
+                    person.clean_fields(exclude=['password'])
+                self.assertIn('github', cm.exception.message_dict)
+
+        valid_username = 'blanking-crush_andy'
+        person = Person.objects.create(
+            personal='Andy', family='Blanking-Crush',
+            username='blanking-crush_andy',
+            github=valid_username,
+        )
+        person.clean_fields(exclude=['password'])
 
 
 class TestPersonPassword(TestBase):
@@ -619,6 +618,11 @@ class TestPersonMerging(TestBase):
         self._setUpEvents()
         self._setUpUsersAndLogin()
 
+        # create training requirement
+        self.training = TrainingRequirement.objects.get(name='Training')
+        self.homework = TrainingRequirement.objects.get(name='SWC Homework')
+
+        # create first person
         self.person_a = Person.objects.create(
             personal='Kelsi', middle='', family='Purdy',
             username='purdy_kelsi', email='purdy.kelsi@example.com',
@@ -640,7 +644,9 @@ class TestPersonMerging(TestBase):
         )
         self.person_a.languages.set([Language.objects.first(),
                                      Language.objects.last()])
+        self.person_a.trainingprogress_set.create(requirement=self.training)
 
+        # create second person
         self.person_b = Person.objects.create(
             personal='Jayden', middle='', family='Deckow',
             username='deckow_jayden', email='deckow.jayden@example.com',
@@ -656,7 +662,10 @@ class TestPersonMerging(TestBase):
         Qualification.objects.create(person=self.person_b, lesson=self.sql)
         self.person_b.domains = [KnowledgeDomain.objects.last()]
         self.person_b.languages.set([Language.objects.last()])
+        self.person_b.trainingprogress_set.create(requirement=self.training)
+        self.person_b.trainingprogress_set.create(requirement=self.homework)
 
+        # set up a strategy
         self.strategy = {
             'person_a': self.person_a.pk,
             'person_b': self.person_b.pk,
@@ -682,6 +691,7 @@ class TestPersonMerging(TestBase):
             'languages': 'combine',
             'task_set': 'obj_b',
             'is_active': 'obj_a',
+            'trainingprogress_set': 'combine',
         }
         base_url = reverse('persons_merge')
         query = urlencode({
@@ -723,6 +733,7 @@ class TestPersonMerging(TestBase):
             'domains': 'combine',
             'languages': 'combine',
             'task_set': 'combine',
+            'trainingprogress_set': 'combine',
         }
         data = hidden.copy()
         data.update(failing)
@@ -743,8 +754,8 @@ class TestPersonMerging(TestBase):
         """Merging: ensure the base person is selected based on ID form
         field.
 
-        If ID field has a value of 'obj_a', then person A is base event and it
-        won't be removed from the database after the merge. Person B, on the
+        If ID field has a value of 'obj_b', then person B is base event and it
+        won't be removed from the database after the merge. Person A, on the
         other hand, will."""
         rv = self.client.post(self.url, data=self.strategy)
         self.assertEqual(rv.status_code, 302)
@@ -793,6 +804,10 @@ class TestPersonMerging(TestBase):
                         KnowledgeDomain.objects.last()},
             'languages': {Language.objects.first(), Language.objects.last()},
             'task_set': set(Task.objects.none()),
+
+            # Combining similar TrainingProgresses should end up in
+            # a unique constraint violation, shouldn't it?
+            'trainingprogress_set': set(TrainingProgress.objects.all()),
         }
 
         rv = self.client.post(self.url, data=self.strategy)
@@ -1076,3 +1091,26 @@ class TestFilterTaughtWorkshops(TestBase):
         # - Ron and Spiderman should not be listed, because they didn't
         # participated in a TTT event.
         self.assertSequenceEqual(filtered, [self.hermione])
+
+
+class TestPersonUpdateViewPermissions(TestBase):
+
+    def setUp(self):
+        self.trainee = Person.objects.create(username='trainee')
+        self.trainer = Person.objects.create(username='trainer')
+        trainer_group, _ = Group.objects.get_or_create(name='trainers')
+        self.trainer.groups.add(trainer_group)
+
+    def test_trainer_can_edit_self_profile(self):
+        profile_edit = self.app.get(
+            reverse('person_edit', args=[self.trainer.pk]),
+            user='trainer',
+        )
+        self.assertEqual(profile_edit.status_code, 200)
+
+    def test_trainer_cannot_edit_stray_profile(self):
+        with self.assertRaises(webtest.app.AppError):
+            profile_edit = self.app.get(
+                reverse('person_edit', args=[self.trainee.pk]),
+                user='trainer',
+            )

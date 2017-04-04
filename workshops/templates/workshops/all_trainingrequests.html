@@ -92,7 +92,7 @@
           </td>
           <td>
             {% if req.person %}
-              {% for task in req.person.get_training_tasks %}
+              {% for task in req.person.training_tasks %}
                 <a href="{% url 'event_details' task.event.slug %}">{{ task.event }}</a><br />
               {% empty %}
                 —

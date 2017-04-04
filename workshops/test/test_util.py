@@ -363,15 +363,18 @@ Other content.
             'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
             'eventbrite': 'bigmoney',
         }
-        errors = validate_metadata_from_event_website(metadata)
+        errors, warnings = validate_metadata_from_event_website(metadata)
         assert len(errors) == 7
+        assert not warnings
         assert all([error.startswith('Invalid value') for error in errors])
 
     def test_validating_missing_metadata(self):
         metadata = {}
-        errors = validate_metadata_from_event_website(metadata)
-        assert len(errors) == 12
-        assert all([error.startswith('Missing') for error in errors])
+        errors, warnings = validate_metadata_from_event_website(metadata)
+        assert len(errors) == 9  # There are nine required fields
+        assert len(warnings) == 3  # There are three optional fields
+        assert all([issue.startswith('Missing') 
+                    for issue in (errors + warnings)])
 
     def test_validating_empty_metadata(self):
         metadata = {
@@ -390,7 +393,8 @@ Other content.
         }
         expected_errors = ['slug', 'startdate', 'country', 'latlng',
                            'instructor', 'helper', 'contact']
-        errors = validate_metadata_from_event_website(metadata)
+        errors, warnings = validate_metadata_from_event_website(metadata)
+        assert not warnings
         for error, key in zip(errors, expected_errors):
             self.assertIn(key, error)
 
@@ -409,8 +413,9 @@ Other content.
             'helper': 'FIXME',
             'contact': 'FIXME',
         }
-        errors = validate_metadata_from_event_website(metadata)
+        errors, warnings = validate_metadata_from_event_website(metadata)
         assert len(errors) == 12
+        assert not warnings
         assert all([
             error.startswith('Placeholder value "FIXME"')
             for error in errors
@@ -431,7 +436,8 @@ Other content.
             'helper': 'Peter Parker, Tony Stark, Natasha Romanova',
             'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
         }
-        errors = validate_metadata_from_event_website(metadata)
+        errors, warnings = validate_metadata_from_event_website(metadata)
+        assert not warnings
         assert not errors
 
     def test_no_attribute_error_missing_instructors_helpers(self):

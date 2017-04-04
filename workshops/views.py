@@ -9,7 +9,10 @@ from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.forms import SetPasswordForm, PasswordChangeForm
-from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.auth.mixins import (
+    PermissionRequiredMixin,
+    UserPassesTestMixin,
+)
 from django.core.exceptions import (
     ObjectDoesNotExist,
     PermissionDenied,
@@ -29,9 +32,11 @@ from django.db.models import (
     Prefetch,
 )
 from django.db.models.functions import Now
+from django.forms import HiddenInput
 from django.http import Http404, HttpResponse, JsonResponse
 from django.http import HttpResponseBadRequest
 from django.shortcuts import redirect, render, get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView
 from django.views.generic.edit import (
     ModelFormMixin,
@@ -78,12 +83,9 @@ from workshops.forms import (
     PersonBulkAddForm,
     EventForm,
     TaskForm,
-    TaskFullForm,
-    BadgeAwardForm,
-    PersonAwardForm,
+    AwardForm,
     PersonPermissionsForm,
     PersonsSelectionForm,
-    PersonTaskForm,
     OrganizationForm,
     PersonLookupForm,
     SimpleTodoForm,
@@ -146,7 +148,6 @@ from workshops.util import (
     verify_upload_person_task,
     create_uploaded_persons_tasks,
     InternalError,
-    update_event_attendance_from_tasks,
     WrongWorkshopURL,
     fetch_event_metadata,
     parse_metadata_from_event_website,
@@ -182,8 +183,19 @@ def admin_dashboard(request):
     ).active().prefetch_related('tags')
 
     uninvoiced_events = Event.objects.active().uninvoiced_events()
-    unpublished_events = Event.objects.active().unpublished_events() \
-                                      .select_related('host')
+
+    # This annotation may produce wrong number of instructors when 
+    # `unpublished_events` filters out events that contain a specific tag.
+    # The bug was fixed in #1130.
+    unpublished_events = Event.objects \
+        .active().unpublished_events().select_related('host').annotate(
+            num_instructors=Count(
+                Case(
+                    When(task__role__name='instructor', then=Value(1)),
+                    output_field=IntegerField()
+                )
+            ),
+        )
 
     assigned_to, is_admin = assignment_selection(request)
 
@@ -442,7 +454,10 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView):
                 output_field=IntegerField()
             )
         )
-    )
+    ).prefetch_related(
+        'award_set__badge', 'award_set__awarded_by', 'award_set__event',
+        'task_set__role', 'task_set__event',
+    ).select_related('airport')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -544,12 +559,14 @@ def person_bulk_add_confirmation(request):
                           roles)
         for k, record in enumerate(data_update):
             personal, family, username, email, event, role = record
+            existing_person_id = persons_tasks[k].get('existing_person_id')
             # "field or None" converts empty strings to None values
             persons_tasks[k] = {
                 'personal': personal,
                 'family': family,
                 'username': username,
-                'email': email or None
+                'email': email or None,
+                'existing_person_id': existing_person_id,
             }
             # when user wants to drop related event they will send empty string
             # so we should unconditionally accept new value for event even if
@@ -570,12 +587,6 @@ def person_bulk_add_confirmation(request):
                                      "Please make sure to fix all errors "
                                      "listed below.")
 
-            context = {'title': 'Confirm uploaded data',
-                       'persons_tasks': persons_tasks,
-                       'any_errors': any_errors}
-            return render(request, 'workshops/person_bulk_add_results.html',
-                          context)
-
         # there must be "confirm" and no "cancel" in POST in order to save
         elif (request.POST.get('confirm', None) and
               not request.POST.get('cancel', None)):
@@ -591,12 +602,6 @@ def person_bulk_add_confirmation(request):
                                      "Please make sure to fix all errors "
                                      "listed below.".format(e))
                 any_errors = verify_upload_person_task(persons_tasks)
-                context = {'title': 'Confirm uploaded data',
-                           'persons_tasks': persons_tasks,
-                           'any_errors': any_errors}
-                return render(request,
-                              'workshops/person_bulk_add_results.html',
-                              context, status=400)
 
             else:
                 request.session['bulk-add-people'] = None
@@ -616,11 +621,16 @@ def person_bulk_add_confirmation(request):
         # alters persons_tasks via reference
         any_errors = verify_upload_person_task(persons_tasks)
 
-        context = {'title': 'Confirm uploaded data',
-                   'persons_tasks': persons_tasks,
-                   'any_errors': any_errors}
-        return render(request, 'workshops/person_bulk_add_results.html',
-                      context)
+    roles = Role.objects.all().values_list('name', flat=True)
+
+    context = {
+        'title': 'Confirm uploaded data',
+        'persons_tasks': persons_tasks,
+        'any_errors': any_errors,
+        'possible_roles': roles,
+    }
+    return render(request, 'workshops/person_bulk_add_results.html',
+                  context)
 
 
 @admin_required
@@ -633,6 +643,32 @@ def person_bulk_add_remove_entry(request, entry_id):
         entry_id = int(entry_id)
         try:
             del persons_tasks[entry_id]
+            request.session['bulk-add-people'] = persons_tasks
+
+        except IndexError:
+            messages.warning(request, 'Could not find specified entry #{}'
+                                      .format(entry_id))
+
+        return redirect(person_bulk_add_confirmation)
+
+    else:
+        messages.warning(request, 'Could not locate CSV data, please try the '
+                                  'upload again.')
+        return redirect('person_bulk_add')
+
+
+@admin_required
+@permission_required('workshops.add_person', raise_exception=True)
+def person_bulk_add_match_person(request, entry_id, person_id):
+    """Save information about matched person in the session-saved data."""
+    persons_tasks = request.session.get('bulk-add-people')
+
+    if persons_tasks:
+        entry_id = int(entry_id)
+        person_id = int(person_id)
+
+        try:
+            persons_tasks[entry_id]['existing_person_id'] = person_id
             request.session['bulk-add-people'] = persons_tasks
 
         except IndexError:
@@ -683,126 +719,43 @@ class PersonCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
         return response
 
 
-@admin_required
-@permission_required(['workshops.change_person', 'workshops.add_award',
-                      'workshops.add_task'],
-                     raise_exception=True)
-def person_edit(request, person_id):
-    person = get_object_or_404(Person, id=person_id)
+class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin,
+                   AMYUpdateView):
+    model = Person
+    form_class = PersonForm
+    pk_url_kwarg = 'person_id'
+    template_name = 'workshops/person_edit_form.html'
 
-    person_form = PersonForm(prefix='person', instance=person)
-    task_form = PersonTaskForm(prefix='task', initial={'person': person})
+    def test_func(self):
+        if not (self.request.user.has_perm('workshops.edit_person') or \
+            self.request.user == self.get_object()):
+            raise PermissionDenied
+        return True
 
-    # Determine initial badge in PersonAwardForm
-    try:
-        badge = Badge.objects.get(name=request.GET['badge'])
-    except (KeyError, Badge.DoesNotExist):
-        badge = None
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        kwargs = {
+            'initial': {'person': self.object},
+            'widgets': {'person': HiddenInput()},
+        }
+        context.update({
+            'awards': self.object.award_set.select_related('event', 'badge')
+                          .order_by('badge__name'),
+            'award_form': AwardForm(**kwargs),
+            'tasks': self.object.task_set.select_related('role', 'event')
+                         .order_by('-event__slug'),
+            'task_form': TaskForm(**kwargs),
+        })
+        return context
 
-    # Determine initial event in PersonAwardForm
-    if 'find-training' in request.GET:
-        tasks = person.get_training_tasks()
-        if tasks.count() == 1:
-            event = tasks[0].event
-        else:
-            event = None
-    else:
-        event = None
-
-    # PersonAwardForm
-    award_form = PersonAwardForm(prefix='award', initial=dict_without_Nones(
-        awarded=datetime.date.today(),
-        person=person,
-        badge=badge,
-        event=event,
-    ))
-
-    # Determine which form was sent (if any)
-    if request.method == 'POST' and 'award-badge' in request.POST:
-        award_form = PersonAwardForm(request.POST, prefix='award')
-
-        if award_form.is_valid():
-            award = award_form.save()
-
-            messages.success(
-                request,
-                '{person} was awarded {badge} badge.'.format(
-                    person=str(person),
-                    badge=award.badge.title,
-                ),
-                extra_tags='awards',
-            )
-
-            return redirect_with_next_support(
-                request, '{}#awards'.format(request.path))
-
-        else:
-            messages.error(request, 'Fix errors in the award form.',
-                           extra_tags='awards')
-
-    elif request.method == 'POST' and 'task-role' in request.POST:
-        task_form = PersonTaskForm(request.POST, prefix='task')
-
-        if task_form.is_valid():
-            task = task_form.save()
-
-            messages.success(
-                request,
-                '{person} was added a role {role} during {event} event.'
-                .format(
-                    person=str(person),
-                    role=task.role.name,
-                    event=task.event.slug,
-                ),
-                extra_tags='tasks',
-            )
-
-            return redirect('{}#tasks'.format(request.path))
-
-        else:
-            messages.error(request, 'Fix errors in the task form.',
-                           extra_tags='tasks')
-
-    elif request.method == 'POST':
-        person_form = PersonForm(request.POST, prefix='person',
-                                 instance=person)
-        if person_form.is_valid():
-            lessons = person_form.cleaned_data['lessons']
-
-            # remove existing Qualifications for user
-            Qualification.objects.filter(person=person).delete()
-
-            # add new Qualifications
-            for lesson in lessons:
-                Qualification.objects.create(person=person, lesson=lesson)
-
-            # don't save related lessons
-            del person_form.cleaned_data['lessons']
-
-            person = person_form.save()
-
-            messages.success(
-                request,
-                '{name} was updated successfully.'.format(
-                    name=str(person),
-                ),
-            )
-
-            return redirect(person)
-
-        else:
-            messages.error(request, 'Fix errors below.')
-
-    context = {
-        'title': 'Edit Person {0}'.format(str(person)),
-        'person_form': person_form,
-        'object': person,
-        'awards': person.award_set.order_by('badge__name'),
-        'award_form': award_form,
-        'tasks': person.task_set.order_by('-event__slug'),
-        'task_form': task_form,
-    }
-    return render(request, 'workshops/person_edit_form.html', context)
+    def form_valid(self, form):
+        self.object = form.save(commit=False)
+        # remove existing Qualifications for user
+        Qualification.objects.filter(person=self.object).delete()
+        # add new Qualifications
+        for lesson in form.cleaned_data.pop('lessons'):
+            Qualification.objects.create(person=self.object, lesson=lesson)
+        return super().form_valid(form)
 
 
 class PersonDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
@@ -917,7 +870,7 @@ def persons_merge(request):
 
             # M2M relationships
             difficult = ('award_set', 'qualification_set', 'domains',
-                         'languages', 'task_set')
+                         'languages', 'task_set', 'trainingprogress_set')
 
             try:
                 _, integrity_errors = merge_objects(obj_a, obj_b, easy,
@@ -1065,11 +1018,13 @@ def validate_event(request, slug):
     page_url = page_url.strip()
 
     error_messages = []
+    warning_messages = []
 
     try:
         metadata = fetch_event_metadata(page_url)
         # validate metadata
-        error_messages = validate_metadata_from_event_website(metadata)
+        error_messages, warning_messages = \
+            validate_metadata_from_event_website(metadata)
 
     except WrongWorkshopURL as e:
         error_messages.append(str(e))
@@ -1089,6 +1044,7 @@ def validate_event(request, slug):
         'event': event,
         'page': page_url,
         'error_messages': error_messages,
+        'warning_messages': warning_messages,
     }
     return render(request, 'workshops/validate_event.html', context)
 
@@ -1101,94 +1057,29 @@ class EventCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
     template_name = 'workshops/event_create_form.html'
 
 
-@admin_required
-@permission_required(['workshops.change_event', 'workshops.add_task'],
-                     raise_exception=True)
-def event_edit(request, slug):
-    try:
-        event = Event.objects.get(slug=slug)
-        tasks = event.task_set.order_by('role__name')
-    except ObjectDoesNotExist:
-        raise Http404("No event found matching the query.")
+class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
+                  AMYUpdateView):
+    permission_required = [
+        'workshops.change_event',
+        'workshops.add_task',
+        'workshops.add_sponsorship',
+    ]
+    model = Event
+    form_class = EventForm
+    template_name = 'workshops/event_edit_form.html'
 
-    event_form = EventForm(prefix='event', instance=event)
-    task_form = TaskForm(prefix='task', initial={
-        'event': event,
-    })
-    sponsor_form = SponsorshipForm(prefix='sponsor',
-        initial={'event':event}
-    )
-
-    if request.method == 'POST':
-        # check which form was submitted
-        if "task-role" in request.POST:
-            task_form = TaskForm(request.POST, prefix='task')
-
-            if task_form.is_valid():
-                task = task_form.save()
-
-                messages.success(
-                    request,
-                    '{event} was added a new task "{task}".'.format(
-                        event=str(event),
-                        task=str(task),
-                    ),
-                )
-
-                # if event.attendance is lower than number of learners, then
-                # update the attendance
-                update_event_attendance_from_tasks(event)
-
-                # to reset the form values
-                return redirect('{}#tasks'.format(request.path))
-
-            else:
-                messages.error(request, 'Fix errors below.')
-        if 'sponsor-event' in request.POST:
-            sponsor_form = SponsorshipForm(request.POST, prefix='sponsor')
-
-            if sponsor_form.is_valid():
-                sponsor = sponsor_form.save()
-
-                messages.success(
-                    request,
-                    '{} was added as a new sponsor.'.format(sponsor.organization),
-                )
-                # to reset the form values
-                return redirect('{}#sponsors'.format(request.path))
-            else:
-                messages.error(request, 'Fix errors below.')
-        else:
-            event_form = EventForm(request.POST, prefix='event',
-                                   instance=event)
-            if event_form.is_valid():
-                event = event_form.save()
-
-                messages.success(
-                    request,
-                    '{name} was updated successfully.'.format(
-                        name=str(event),
-                    ),
-                )
-
-                # if event.attendance is lower than number of learners, then
-                # update the attendance
-                update_event_attendance_from_tasks(event)
-
-                return redirect(event)
-
-            else:
-                messages.error(request, 'Fix errors below.')
-
-    context = {'title': 'Edit Event {0}'.format(event.slug),
-               'event_form': event_form,
-               'object': event,
-               'model': Event,
-               'tasks': tasks,
-               'task_form': task_form,
-               'sponsor_form': sponsor_form,
-               }
-    return render(request, 'workshops/event_edit_form.html', context)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        kwargs = {
+            'initial': {'event': self.object},
+            'widgets': {'event': HiddenInput()},
+        }
+        context.update({
+            'tasks': self.get_object().task_set.order_by('role__name'),
+            'task_form': TaskForm(**kwargs),
+            'sponsor_form': SponsorshipForm(**kwargs),
+        })
+        return context
 
 
 class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
@@ -1497,13 +1388,23 @@ def event_dismiss_metadata_changes(request, slug):
     return redirect(reverse('event_details', args=[event.slug]))
 
 
+class SponsorshipCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
+                        AMYCreateView):
+    model = Sponsorship
+    permission_required = 'workshops.add_sponsorship'
+    form_class = SponsorshipForm
+
+    def get_success_url(self):
+        return reverse('event_edit',args=[self.object.event.slug]) + '#sponsors'
+
+
 class SponsorshipDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
                         AMYDeleteView):
     model = Sponsorship
     permission_required = 'workshops.delete_sponsorship'
 
     def get_success_url(self):
-        return reverse('event_edit',args=[self.get_object().event.slug]) + '#sponsors'
+        return reverse('event_edit', args=[self.get_object().event.slug]) + '#sponsors'
 
 
 class AllInvoiceRequests(OnlyForAdminsMixin, AMYListView):
@@ -1561,22 +1462,22 @@ def task_details(request, task_id):
 
 
 class TaskCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                 AMYCreateView):
+                 RedirectSupportMixin, AMYCreateView):
     permission_required = 'workshops.add_task'
     model = Task
-    form_class = TaskFullForm
+    form_class = TaskForm
 
 
 class TaskUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
                  AMYUpdateView):
     permission_required = 'workshops.change_task'
     model = Task
-    form_class = TaskFullForm
+    form_class = TaskForm
     pk_url_kwarg = 'task_id'
 
 
 class TaskDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
-                 AMYDeleteView):
+                 RedirectSupportMixin, AMYDeleteView):
     model = Task
     permission_required = 'workshops.delete_task'
     success_url = reverse_lazy('all_tasks')
@@ -1586,13 +1487,50 @@ class TaskDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
 #------------------------------------------------------------
 
 
-class AwardDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
-                  AMYDeleteView):
+class MockAwardCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
+                      PrepopulationSupportMixin, AMYCreateView):
+    permission_required = 'workshops.add_award'
+    model = Award
+    form_class = AwardForm
+    populate_fields = ['badge', 'person']
+
+    def get_initial(self, **kwargs):
+        initial = super().get_initial(**kwargs)
+
+        # Determine initial event in AwardForm
+        if 'find-training' in self.request.GET:
+            tasks = Person.objects.get(
+                pk=self.request.GET['person']
+            ).get_training_tasks()
+            if tasks.count() == 1:
+                initial.update({'event': tasks[0].event})
+
+        return initial
+
+    def get_success_url(self):
+        return reverse('badge_details', args=[self.object.badge.name])
+
+
+class AwardCreate(RedirectSupportMixin, MockAwardCreate):
+    pass
+
+
+class MockAwardDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
+                      AMYDeleteView):
     model = Award
     permission_required = 'workshops.delete_award'
 
     def get_success_url(self):
-        return reverse('person_edit', args=[self.get_object().person.pk]) + '#awards'
+        return reverse('badge_details', args=[self.get_object().badge.name])
+
+
+class AwardDelete(RedirectSupportMixin, MockAwardDelete):
+    # Modify the MRO to look like:
+    # AwardDelete < RedirectSupportMixin < MockAwardDelete
+    #
+    # This ensures that `super()` when called from `get_success_url` method of
+    # RedirectSupportMixin returns MockAwardDelete
+    pass
 
 
 #------------------------------------------------------------
@@ -1616,7 +1554,7 @@ class BadgeDetails(OnlyForAdminsMixin, AMYDetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        context['title'] = 'Airport {0}'.format(self.object)
+        context['title'] = 'Badge {0}'.format(self.object)
         filter = BadgeAwardsFilter(
             self.request.GET,
             queryset=self.object.award_set.select_related(
@@ -1628,34 +1566,6 @@ class BadgeDetails(OnlyForAdminsMixin, AMYDetailView):
         context['awards'] = awards
 
         return context
-
-
-@admin_required
-@permission_required('workshops.add_award', raise_exception=True)
-def badge_award(request, badge_name):
-    """Award a badge to someone (== create a new Award)."""
-    badge = get_object_or_404(Badge, name=badge_name)
-
-    initial = {
-        'badge': badge,
-        'awarded': datetime.date.today()
-    }
-
-    if request.method == 'GET':
-        form = BadgeAwardForm(initial=initial)
-    elif request.method == 'POST':
-        form = BadgeAwardForm(request.POST, initial=initial)
-
-        if form.is_valid():
-            form.save()
-            return redirect(reverse('badge_details', args=[badge.name]))
-
-    context = {
-        'title': 'Badge {0}'.format(badge),
-        'badge': badge,
-        'form': form,
-    }
-    return render(request, 'workshops/generic_form.html', context)
 
 
 #------------------------------------------------------------
@@ -1804,6 +1714,7 @@ def workshop_staff(request):
 #------------------------------------------------------------
 
 
+@csrf_exempt
 @admin_required
 def search(request):
     '''Search the database by term.'''
@@ -1811,8 +1722,8 @@ def search(request):
     term = ''
     organizations = events = persons = airports = training_requests = None
 
-    if request.method == 'POST':
-        form = SearchForm(request.POST)
+    if request.method == 'GET':
+        form = SearchForm(request.GET)
         if form.is_valid():
             term = form.cleaned_data['term']
             tokens = re.split('\s+', term)
@@ -1882,7 +1793,7 @@ def search(request):
             if len(results) == 1:
                 return redirect(results[0].get_absolute_url())
 
-    # if a GET (or any other method) we'll create a blank form
+    # if empty GET, we'll create a blank form
     else:
         form = SearchForm()
 
@@ -1934,15 +1845,27 @@ def instructors_by_date(request):
 
 @admin_required
 def export_badges(request):
-    title = 'Badges'
-    json_link = reverse('api:export-badges', kwargs={'format': 'json'})
-    yaml_link = reverse('api:export-badges', kwargs={'format': 'yaml'})
+    title = 'Export Badges'
+
+    badges_api_link = reverse('api:export-badges')
+    badges_json_link = reverse('api:export-badges', kwargs={'format': 'json'})
+    badges_yaml_link = reverse('api:export-badges', kwargs={'format': 'yaml'})
+
+    by_person_api_link = reverse('api:export-badges-by-person')
+    by_person_json_link = reverse('api:export-badges-by-person',
+                                  kwargs={'format': 'json'})
+    by_person_yaml_link = reverse('api:export-badges-by-person',
+                                  kwargs={'format': 'yaml'})
     context = {
         'title': title,
-        'json_link': json_link,
-        'yaml_link': yaml_link,
+        'badges_api_link': badges_api_link,
+        'badges_json_link': badges_json_link,
+        'badges_yaml_link': badges_yaml_link,
+        'by_person_api_link': by_person_api_link,
+        'by_person_json_link': by_person_json_link,
+        'by_person_yaml_link': by_person_yaml_link,
     }
-    return render(request, 'workshops/export.html', context)
+    return render(request, 'workshops/export_badges.html', context)
 
 
 @admin_required
@@ -2341,7 +2264,7 @@ def profileupdaterequest_details(request, request_id):
         ).exists()
 
     try:
-        airport = Airport.objects.get(iata=update_request.airport_iata)
+        airport = Airport.objects.get(iata__iexact=update_request.airport_iata)
     except Airport.DoesNotExist:
         airport = None
 
@@ -2394,7 +2317,7 @@ def profileupdaterequest_accept(request, request_id, person_id=None):
     """
     profileupdate = get_object_or_404(ProfileUpdateRequest, active=True,
                                       pk=request_id)
-    airport = get_object_or_404(Airport, iata=profileupdate.airport_iata)
+    airport = get_object_or_404(Airport, iata__iexact=profileupdate.airport_iata)
 
     if person_id is None:
         person = Person()
@@ -2826,7 +2749,12 @@ def duplicates(request):
 def all_trainingrequests(request):
     filter = TrainingRequestFilter(
         request.GET,
-        queryset=TrainingRequest.objects.all()
+        queryset=TrainingRequest.objects.all().prefetch_related(
+            Prefetch('person__task_set',
+                     to_attr='training_tasks',
+                     queryset=Task.objects.filter(role__name='learner',
+                                                  event__tags__name='TTT')),
+        )
     )
 
     requests = get_pagination_items(request, filter)
@@ -3184,7 +3112,7 @@ class TrainingProgressUpdate(RedirectSupportMixin, OnlyForAdminsMixin,
                              AMYUpdateView):
     model = TrainingProgress
     form_class = TrainingProgressForm
-    template_name = 'workshops/generic_form.html'
+    template_name = 'workshops/trainingprogress_form.html'
 
 
 class TrainingProgressDelete(RedirectSupportMixin, OnlyForAdminsMixin,
@@ -3197,9 +3125,20 @@ class TrainingProgressDelete(RedirectSupportMixin, OnlyForAdminsMixin,
 def all_trainees(request):
     filter = TraineeFilter(
         request.GET,
-        queryset=Person.objects \
-            .annotate_with_instructor_eligibility() \
-            .defer('notes')  # notes are too large, so we defer them \
+        queryset=Person.objects
+            .annotate_with_instructor_eligibility()
+            .defer('notes')  # notes are too large, so we defer them
+            .prefetch_related(
+                Prefetch('task_set',
+                         to_attr='training_tasks',
+                         queryset=Task.objects.filter(role__name='learner',
+                                                      event__tags__name='TTT')),
+                'training_tasks__event',
+                'trainingrequest_set',
+                'trainingprogress_set',
+                'trainingprogress_set__requirement',
+                'trainingprogress_set__evaluated_by',
+            )
             .annotate(
                 is_swc_instructor=Sum(Case(When(badges__name='swc-instructor',
                                                 then=1),
@@ -3267,6 +3206,8 @@ def all_trainees(request):
 
     context = {'title': 'Trainees',
                'all_trainees': trainees,
+               'swc': Badge.objects.get(name='swc-instructor'),
+               'dc': Badge.objects.get(name='dc-instructor'),
                'filter': filter,
                'form': form,
                'discard_form': discard_form}

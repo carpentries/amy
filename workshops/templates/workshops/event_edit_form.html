@@ -16,13 +16,15 @@
   <div role="tabpanel" class="tab-pane active" id="event">
     <div class="container">
       <button type="button" class="btn btn-default" id="update_url_button">Update from URL</button>
-      {% crispy event_form %}
+      {% crispy form %}
       {% include "workshops/event_import_update_from_url.html" with update=True %}
     </div>
   </div>
   <div role="tabpanel" class="tab-pane" id="tasks">
     {% block task_tab %}
-    {% crispy task_form %}
+    <form class="form-horizontal" role="form" method="POST" action="{% url 'task_add' %}?next={{ request.get_full_path|urlencode }}#tasks">
+      {% crispy task_form %}
+    </form>
     {% if tasks %}
     <table class="table table-striped">
     <tr>
@@ -39,9 +41,8 @@
       <td>{{ t.url|default:"—"|urlize_newtab }}</td>
       <td>{{ t.role.name }}</td>
       <td>
-        <form action="{% url 'task_delete' t.id %}" onsubmit='return confirm("Are you sure you wish to remove \"{{ t.person.get_full_name }}\" from {{ object.slug }}?")' method="POST">
+        <form action="{% url 'task_delete' t.id %}?next={{ request.get_full_path|urlencode }}#tasks" onsubmit='return confirm("Are you sure you wish to remove \"{{ t.person.get_full_name }}\" from {{ object.slug }}?")' method="POST">
           {% csrf_token %}
-          <input name="next" value="{{ request.path }}#tasks" type="hidden" />
           <button type="submit" class="btn btn-danger">Delete</button>
         </form>
       </td>
@@ -55,7 +56,9 @@
   </div>
   <div role="tabpanel" class="tab-pane" id="sponsors">
     {% block sponsor_tab %}
-    {% crispy sponsor_form %}
+    <form class="form-horizontal" role="form" method="POST" action="{% url 'sponsorship_add' %}">
+      {% crispy sponsor_form %}
+    </form>
 
     {% if object.sponsorship_set.all %}
     {% block sponsor_list %}
@@ -93,7 +96,7 @@
 {% endblock %}
 
 {% block extrajs %}
-{{ event_form.media }}
+{{ form.media }}
 {{ task_form.media }}
 {{ sponsor_form.media }}
 <script type="text/javascript">

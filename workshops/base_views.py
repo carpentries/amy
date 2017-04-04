@@ -104,10 +104,7 @@ class AMYDeleteView(DeleteView):
         # Workaround for https://code.djangoproject.com/ticket/21926
         # Replicates the `delete` method of DeleteMixin
         self.object = self.get_object()
-        if request.POST.get('next', None):
-            success_url = request.POST['next']
-        else:
-            success_url = self.get_success_url()
+        success_url = self.get_success_url()
         try:
             self.object.delete()
             messages.success(

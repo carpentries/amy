@@ -32,6 +32,15 @@ def github_username_to_uid(username):
     Raises GithubException in the case of IO issues."""
 
     g = Github(settings.GITHUB_API_TOKEN)
+
+    # Github.get_user(username) is buggy and raises ConnectionResetError when
+    # username contains spaces (see #1141). Spaces in GitHub usernames are
+    # forbidden, so we safely assume that there is no user with a space in their
+    # username.
+    if ' ' in username:
+        msg = 'There is no github user with login "{}"'.format(username)
+        raise ValueError(msg)
+
     try:
         user = g.get_user(username)
     except UnknownObjectException as e:

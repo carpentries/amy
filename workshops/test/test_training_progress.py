@@ -256,3 +256,16 @@ class TestCRUDViews(TestBase):
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, 'all_trainees')
         self.assertEqual(set(TrainingProgress.objects.all()), set())
+
+    def test_delete_trainingprogress_from_edit_view(self):
+        """Regression test for issue #1085."""
+        trainingprogress_edit = self.app.get(
+            reverse('trainingprogress_edit', args=[self.progress.pk]),
+            user='admin'
+        )
+        self.assertRedirects(
+            trainingprogress_edit.forms['delete-form'].submit(),
+            reverse('all_trainees')
+        )
+        with self.assertRaises(TrainingProgress.DoesNotExist):
+            self.progress.refresh_from_db()

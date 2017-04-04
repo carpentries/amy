@@ -7,7 +7,7 @@
 {% last_modified person %}
 
 <div class="edit-object">
-  {% if perms.workshops.change_person %}
+  {% if perms.workshops.change_person or person == request.user %}
   <a href="{% url 'person_edit' person.id %}" class="btn btn-primary">Edit</a>
   {% else %}
   <a href="{% url 'person_edit' person.id %}" class="btn btn-primary disabled">Edit</a>

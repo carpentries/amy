@@ -40,18 +40,22 @@ urlpatterns = [
         url(r'^delete/$', views.AirportDelete.as_view(), name='airport_delete'),
     ])),
 
+    url(r'^bulk_upload/', include([
+        url(r'^$',views.person_bulk_add, name='person_bulk_add'),
+        url(r'^template/$',views.person_bulk_add_template, name='person_bulk_add_template'),
+        url(r'^confirm/$',views.person_bulk_add_confirmation, name='person_bulk_add_confirmation'),
+        url(r'^(?P<entry_id>\d+)/remove/$',views.person_bulk_add_remove_entry, name='person_bulk_add_remove_entry'),
+        url(r'^(?P<entry_id>\d+)/match_person/(?P<person_id>\d+)$',views.person_bulk_add_match_person, name='person_bulk_add_match_person'),
+    ])),
+
     url(r'^persons/', include([
         url(r'^$', views.AllPersons.as_view(), name='all_persons'),
         url(r'^add/$', views.PersonCreate.as_view(), name='person_add'),
-        url(r'^bulkadd/$',views.person_bulk_add, name='person_bulk_add'),
-        url(r'^bulkadd/template/$',views.person_bulk_add_template, name='person_bulk_add_template'),
-        url(r'^bulkadd/confirm/$',views.person_bulk_add_confirmation, name='person_bulk_add_confirmation'),
-        url(r'^bulkadd/(?P<entry_id>\d+)/remove/$',views.person_bulk_add_remove_entry, name='person_bulk_add_remove_entry'),
         url(r'^merge/$', views.persons_merge, name='persons_merge'),
     ])),
     url(r'^person/(?P<person_id>\d+)/', include([
         url(r'^$', views.PersonDetails.as_view(), name='person_details'),
-        url(r'^edit/$', views.person_edit, name='person_edit'),
+        url(r'^edit/$', views.PersonUpdate.as_view(), name='person_edit'),
         url(r'^delete/$', views.PersonDelete.as_view(), name='person_delete'),
         url(r'^permissions/$', views.PersonPermissions.as_view(), name='person_permissions'),
         url(r'^password/$', views.person_password, name='person_password'),
@@ -69,7 +73,7 @@ urlpatterns = [
         url(r'^$', views.event_details, name='event_details'),
         url(r'^assign/$', views.event_assign, name='event_assign'),
         url(r'^assign/(?P<person_id>[\w\.-]+)/$', views.event_assign, name='event_assign'),
-        url(r'^edit/$', views.event_edit, name='event_edit'),
+        url(r'^edit/$', views.EventUpdate.as_view(), name='event_edit'),
         url(r'^delete/$', views.EventDelete.as_view(), name='event_delete'),
         url(r'^validate/$', views.validate_event, name='validate_event'),
         url(r'^review_metadata_changes/$', views.event_review_metadata_changes, name='event_review_metadata_changes'),
@@ -94,15 +98,14 @@ urlpatterns = [
         url(r'^delete/$', views.TaskDelete.as_view(), name='task_delete'),
     ])),
 
+    url(r'^sponsorships/add/$', views.SponsorshipCreate.as_view(), name='sponsorship_add'),
     url(r'^sponsorship/(?P<pk>\d+)/delete/$', views.SponsorshipDelete.as_view(), name='sponsorship_delete'),
 
+    url(r'^awards/add/$', views.AwardCreate.as_view(), name='award_add'),
     url(r'^award/(?P<pk>\d+)/delete/$', views.AwardDelete.as_view(), name='award_delete'),
 
     url(r'^badges/$', views.AllBadges.as_view(), name='all_badges'),
-    url(r'^badge/(?P<badge_name>[\w\.=-]+)/', include([
-        url(r'^$', views.BadgeDetails.as_view(), name='badge_details'),
-        url(r'^award/$', views.badge_award, name='badge_award'),
-    ])),
+    url(r'^badge/(?P<badge_name>[\w\.=-]+)/$', views.BadgeDetails.as_view(), name='badge_details'),
 
     url(r'^trainings/$', views.AllTrainings.as_view(), name='all_trainings'),
 

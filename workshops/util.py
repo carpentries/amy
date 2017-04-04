@@ -137,47 +137,29 @@ def verify_upload_person_task(data):
         email = item.get('email', None)
         personal = item.get('personal', None)
         family = item.get('family', None)
+        person_id = item.get('existing_person_id', None)
         person = None
 
-        if email:
+        if person_id:
             try:
-                # check if first and last name matches person in the database
-                person = Person.objects.get(email__iexact=email)
-
-                for which, actual, uploaded in (
-                        ('personal', person.personal, personal),
-                        ('family', person.family, family)
-                ):
-                    if (actual == uploaded) or (not actual and not uploaded):
-                        pass
-                    else:
-                        errors.append('{0} mismatch: database "{1}" '
-                                      'vs uploaded "{2}".'
-                                      .format(which, actual, uploaded))
-
-            except Person.DoesNotExist:
-                # in this case we need to add a new person
-                pass
-
+                person = Person.objects.get(id=int(person_id))
+            except (ValueError, TypeError, Person.DoesNotExist):
+                person = None
+                info.append('Could not match selected person. New record will '
+                            'be created.')
             else:
-                if existing_event and person and existing_role:
-                    # person, their role and a corresponding event exist, so
-                    # let's check if the task exists
-                    try:
-                        Task.objects.get(event=existing_event, person=person,
-                                         role=existing_role)
-                    except Task.DoesNotExist:
-                        info.append('Task will be created.')
-                    else:
-                        info.append('Task already exists.')
-        else:
+                info.append('Existing record for person will be used.')
+
+        if not email and not person:
             info.append('It\'s highly recommended to add an email address.')
 
         if person:
-            # force username from existing record
+            # force details from existing record
+            item['personal'] = personal = person.personal
+            item['family'] = family = person.family
+            item['email'] = email = person.email
             item['username'] = person.username
             item['person_exists'] = True
-
         else:
             # force a newly created username
             if not item.get('username'):
@@ -186,26 +168,26 @@ def verify_upload_person_task(data):
 
             info.append('Person and task will be created.')
 
+        # let's check if there's someone else named this way
+        similar_persons = Person.objects.filter(
+            Q(personal=personal, family=family) |
+            Q(email=email) & ~Q(email='') & Q(email__isnull=False)
+        )
+        # need to cast to list, otherwise it won't JSON-ify
+        item['similar_persons'] = list(similar_persons.values(
+            'id', 'personal', 'middle', 'family', 'email', 'username',
+        ))
+
+        if existing_event and person and existing_role:
+            # person, their role and a corresponding event exist, so
+            # let's check if the task exists
             try:
-                # let's check if there's someone else named this way
-                similar_person = Person.objects.get(personal=personal,
-                                                    family=family)
-
-            except Person.DoesNotExist:
-                pass
-
-            except Person.MultipleObjectsReturned:
-                persons = [
-                    str(person) for person in
-                    Person.objects.filter(personal=personal, family=family)
-                ]
-                info.append('There\'s a couple of matching persons in the '
-                            'database: {}. '
-                            'Use email to merge.'.format(', '.join(persons)))
-
+                Task.objects.get(event=existing_event, person=person,
+                                 role=existing_role)
+            except Task.DoesNotExist:
+                info.append('Task will be created.')
             else:
-                info.append('There\'s a matching person in the database: {}. '
-                            'Use their email to merge.'.format(similar_person))
+                info.append('Task already exists.')
 
         # let's check what Person model validators want to say
         try:
@@ -254,14 +236,16 @@ def create_uploaded_persons_tasks(data):
                 fields = {key: row[key] for key in Person.PERSON_UPLOAD_FIELDS}
                 fields['username'] = row['username']
 
-                if fields['email']:
-                    # we should use existing Person or create one
-                    p, created = Person.objects.get_or_create(
-                        email__iexact=fields['email'], defaults=fields
-                    )
+                if row['person_exists'] and row['existing_person_id']:
+                    # we should use existing Person
+                    p = Person.objects.get(pk=row['existing_person_id'])
 
-                    if created:
-                        persons_created.append(p)
+                elif row['person_exists'] and not row['existing_person_id']:
+                    # we should use existing Person
+                    p = Person.objects.get(
+                        personal=fields['personal'], family=fields['family'],
+                        username=fields['username'], email=fields['email'],
+                    )
 
                 else:
                     # we should create a new Person without any email provided
@@ -273,7 +257,7 @@ def create_uploaded_persons_tasks(data):
                     e = Event.objects.get(slug=row['event'])
                     r = Role.objects.get(name=row['role'])
 
-                    # is the number of learners attending the event changed,
+                    # if the number of learners attending the event changed,
                     # we should update ``event.attendance``
                     if row['role'] == 'learner':
                         events.add(e)
@@ -284,17 +268,12 @@ def create_uploaded_persons_tasks(data):
                         tasks_created.append(t)
 
             except IntegrityError as e:
-
-                raise IntegrityError('{0} (for "{1}")'.format(str(e), row_repr))
+                raise IntegrityError('{0} (for "{1}")'.format(str(e),
+                                                              row_repr))
 
             except ObjectDoesNotExist as e:
                 raise ObjectDoesNotExist('{0} (for "{1}")'.format(str(e),
-                                                                row_repr))
-
-    for event in events:
-        # if event.attendance is lower than number of learners, then
-        # update the attendance
-        update_event_attendance_from_tasks(event)
+                                                                  row_repr))
 
     return persons_created, tasks_created
 
@@ -606,6 +585,7 @@ def parse_metadata_from_event_website(metadata):
 
 def validate_metadata_from_event_website(metadata):
     errors = []
+    warnings = []
 
     Requirement = namedtuple(
         'Requirement',
@@ -642,7 +622,8 @@ def validate_metadata_from_event_website(metadata):
         value_ = metadata.get(requirement.name)
 
         if value_ is None:
-            errors.append('Missing {} metadata {}.'.format(type_, name_))
+            issues = errors if required_ else warnings
+            issues.append('Missing {} metadata {}.'.format(type_, name_))
 
         if value_ == 'FIXME':
             errors.append('Placeholder value "FIXME" for {} metadata {}.'
@@ -660,17 +641,7 @@ def validate_metadata_from_event_website(metadata):
             except (re.error, TypeError):
                 pass
 
-    return errors
-
-
-def update_event_attendance_from_tasks(event):
-    """Increase event.attendance if there's more learner tasks belonging to the
-    event."""
-    learners = event.task_set.filter(role__name='learner').count()
-    Event.objects \
-        .filter(pk=event.pk) \
-        .filter(Q(attendance__lt=learners) | Q(attendance__isnull=True)) \
-        .update(attendance=learners)
+    return errors, warnings
 
 
 def universal_date_format(date):

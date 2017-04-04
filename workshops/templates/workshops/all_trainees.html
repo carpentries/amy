@@ -66,7 +66,7 @@
           {% include "workshops/training_progresses_inline.html" with person=trainee %}
         </td>
         <td>
-          {% for task in trainee.get_training_tasks %}
+          {% for task in trainee.training_tasks %}
             <a href="{% url 'event_details' task.event.slug %}">{{ task.event }}</a><br />
           {% empty %}
             —
@@ -92,11 +92,11 @@
                    </ul>
                  Click to start awarding the badge.
                "
-               href="{% url 'person_edit' trainee.pk %}?badge=swc-instructor&amp;find-training&amp;next={{ request.get_full_path|urlencode }}#awards">SWC</a>
+               href="{% url 'award_add' %}?person={{ trainee.pk }}&amp;badge={{ swc.pk }}&amp;find-training&amp;next={{ request.get_full_path|urlencode }}">SWC</a>
           {% else %}
             <a class="label label-success" data-toggle="popover" data-html="true"
                data-content="<p>Eligible to be certified as Software Carpentry Instructor.</p><p>Click to start awarding the badge.</p>"
-               href="{% url 'person_edit' trainee.pk %}?badge=swc-instructor&amp;find-training&amp;next={{ request.get_full_path|urlencode }}#awards">SWC</a>
+               href="{% url 'award_add' %}?person={{ trainee.pk }}&amp;badge={{ swc.pk }}&amp;find-training&amp;next={{ request.get_full_path|urlencode }}">SWC</a>
           {% endif %}
           {% if trainee.is_dc_instructor %}
               <span class="label label-primary" data-toggle="popover"
@@ -112,11 +112,11 @@
                  </ul>
                  Click to start awarding the badge.
                "
-               href="{% url 'person_edit' trainee.pk %}?badge=dc-instructor&amp;find-training&amp;next={{ request.get_full_path|urlencode }}#awards">DC</a>
+               href="{% url 'award_add' %}?person={{ trainee.pk }}&amp;badge={{ dc.pk }}&amp;find-training&amp;next={{ request.get_full_path|urlencode }}#awards">DC</a>
           {% else %}
             <a class="label label-success" data-toggle="popover" data-html="true"
                data-content="<p>Eligible to be certified as Data Carpentry Instructor.</p><p>Click to start awarding the badge.</p>"
-               href="{% url 'person_edit' trainee.pk %}?badge=dc-instructor&amp;find-training&amp;next={{ request.get_full_path|urlencode }}#awards">DC</a>
+               href="{% url 'award_add' %}?person={{ trainee.pk }}&amp;badge={{ dc.pk }}&amp;find-training&amp;next={{ request.get_full_path|urlencode }}#awards">DC</a>
           {% endif %}
         </td>
         <td>

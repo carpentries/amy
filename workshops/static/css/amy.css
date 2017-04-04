@@ -123,13 +123,6 @@ label.last-field {
     margin-bottom: 10px;
 }
 
-/* Move logos on workshop request pages more to the top. The negative margin
-   compensates big body padding required for the top navbar. */
-.workshop-form-logo {
-    margin: -50px 0 40px;
-}
-
-
 /* any element but tr, with class .strikethrough */
 .strikethrough:not(tr) {
     text-decoration: line-through;
@@ -207,4 +200,9 @@ table ul {
 /* Make question signs blue by default, so they look like a link. */
 .glyphicon-question-sign {
     color: rgb(51, 122, 183);
+}
+
+/* Make select lists resizable */
+select {
+    resize: vertical;
 }

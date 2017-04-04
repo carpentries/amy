@@ -114,7 +114,7 @@ class Membership(models.Model):
     )
     self_organized_workshops_per_year = models.PositiveIntegerField(
         null=True, blank=True,
-        help_text="Imposed number of self-organized workshops per year",
+        help_text="Expected number of self-organized workshops per year",
     )
     notes = models.TextField(default="", blank=True)
     organization = models.ForeignKey(Organization, null=False, blank=False,
@@ -300,6 +300,10 @@ class PersonManager(BaseUserManager):
                          F('passed_dc_demo')),
         )
 
+github_username_validator = RegexValidator(r'[, ]+',
+                                           'Spaces or commas are disallowed.',
+                                           inverse_match=True)
+
 
 @reversion.register
 class Person(AbstractBaseUser, PermissionsMixin):
@@ -333,7 +337,9 @@ class Person(AbstractBaseUser, PermissionsMixin):
     airport     = models.ForeignKey(Airport, null=True, blank=True, on_delete=models.PROTECT,
                                     verbose_name='Nearest major airport')
     github      = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True,
-                                   verbose_name='GitHub username')
+                                   verbose_name='GitHub username',
+                                   validators=[github_username_validator],
+                                   help_text='Please put only a single username here.',)
     twitter     = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True,
                                    verbose_name='Twitter username')
     url         = models.CharField(max_length=STR_LONG, blank=True,
@@ -615,7 +621,8 @@ class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
     github = models.CharField(
         max_length=STR_LONG,
         verbose_name='GitHub username',
-        help_text='Please provide your username, not a numeric user ID.',
+        help_text='Please put only a single username here.',
+        validators=[github_username_validator],
         blank=True, default='',
     )
     twitter = models.CharField(
@@ -712,6 +719,8 @@ class TagQuerySet(models.query.QuerySet):
 class Tag(models.Model):
     '''Label for grouping events.'''
 
+    ITEMS_VISIBLE_IN_SELECT_WIDGET = 10
+
     name       = models.CharField(max_length=STR_MED, unique=True)
     details    = models.CharField(max_length=STR_LONG)
 
@@ -747,9 +756,14 @@ class Language(models.Model):
 class EventQuerySet(models.query.QuerySet):
     '''Handles finding past, ongoing and upcoming events'''
 
+    def not_cancelled(self):
+        """Exclude cancelled events."""
+        return self.exclude(tags__name='cancelled')
+
     def active(self):
-        """Exclude inactive events (stalled or completed)."""
-        return self.exclude(tags__name='stalled').exclude(completed=True)
+        """Exclude inactive events (stalled, completed or cancelled)."""
+        return self.exclude(tags__name='stalled').exclude(completed=True) \
+                   .not_cancelled()
 
     def past_events(self):
         '''Return past events.
@@ -808,23 +822,24 @@ class EventQuerySet(models.query.QuerySet):
         no_latitude = Q(latitude__isnull=True)
         no_longitude = Q(longitude__isnull=True)
         no_url = Q(url__isnull=True)
-        cancelled = Q(tags__name='cancelled')
         return (
             unknown_start | no_country | no_venue | no_address | no_latitude |
-            no_longitude | no_url | cancelled
+            no_longitude | no_url
         )
 
     def unpublished_events(self):
         """Return events considered as unpublished (see
         `unpublished_conditional` above)."""
         conditional = self.unpublished_conditional()
-        return self.filter(conditional).order_by('slug', 'id').distinct()
+        return self.not_cancelled().filter(conditional) \
+                   .order_by('slug', 'id').distinct()
 
     def published_events(self):
         """Return events considered as published (see `unpublished_conditional`
         above)."""
         conditional = self.unpublished_conditional()
-        return self.exclude(conditional).order_by('-start', 'id').distinct()
+        return self.not_cancelled().exclude(conditional) \
+                   .order_by('-start', 'id').distinct()
 
     def uninvoiced_events(self):
         '''Return a queryset for events that have not yet been invoiced.
@@ -832,8 +847,9 @@ class EventQuerySet(models.query.QuerySet):
         These are marked as uninvoiced, and have occurred.
         Events are sorted oldest first.'''
 
-        return self.past_events().filter(invoice_status='not-invoiced') \
-                                 .order_by('start')
+        return self.not_cancelled().past_events() \
+                   .filter(invoice_status='not-invoiced') \
+                   .order_by('start')
 
     def metadata_changed(self):
         """Return events for which remote metatags have been updated."""
@@ -1118,6 +1134,12 @@ class Event(AssignmentMixin, models.Model):
             self.latitude = -48.876667
             self.longitude = -123.393333
 
+        # Increase attendance if there's more learner tasks
+        learners = self.task_set.filter(role__name='learner').count()
+        if learners != 0:
+            if not self.attendance or self.attendance < learners:
+                self.attendance = learners
+
         super(Event, self).save(*args, **kwargs)
 
 
@@ -1235,6 +1257,23 @@ class EventRequest(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
         # verbose_name a.k.a. label and help_text were moved to the
         # SWCEventRequestForm and DCEventRequestForm
     )
+
+    ADMIN_FEE_PAYMENT_CHOICES = (
+        ('NP1', 'Non-profit / non-partner: US$2500'),
+        ('FP1', 'For-profit: US$10,000'),
+        ('self-organized', 'Self-organized: no fee (please let us know if you '
+                           'wish to make a donation)'),
+        ('waiver', 'Waiver requested (please give details in '
+                   '"Anything else")'),
+    )
+    admin_fee_payment = models.CharField(
+        max_length=STR_MED,
+        choices=ADMIN_FEE_PAYMENT_CHOICES,
+        verbose_name='Which of the following applies to your payment for the '
+                     'administrative fee?',
+        blank=False,
+        default='NP1',
+    )
     fee_waiver_request = models.BooleanField(
         help_text='Waiver\'s of the administrative fee are available on '
                   'a needs basis. If you are interested in submitting a waiver'
@@ -1266,23 +1305,6 @@ class EventRequest(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
         verbose_name='Other propositions for managing instructors\' travel and'
                      ' accommodations',
         blank=True,
-    )
-
-    ADMIN_FEE_PAYMENT_CHOICES = (
-        ('NP1', 'Non-profit / non-partner: US$2500'),
-        ('FP1', 'For-profit: US$10,000'),
-        ('self-organized', 'Self-organized: no fee (please let us know if you '
-                           'wish to make a donation)'),
-        ('waiver', 'Waiver requested (please give details in '
-                   '"Anything else")'),
-    )
-    admin_fee_payment = models.CharField(
-        max_length=STR_MED,
-        choices=ADMIN_FEE_PAYMENT_CHOICES,
-        verbose_name='Which of the following applies to your payment for the '
-                     'administrative fee?',
-        blank=False,
-        default='NP1',
     )
     comment = models.TextField(
         help_text='What else do you want us to know about your workshop? About'
@@ -1579,6 +1601,11 @@ class Task(models.Model):
     def get_absolute_url(self):
         return reverse('task_details', kwargs={'task_id': self.id})
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # Trigger an update of the attendance field
+        self.event.save()
+
 #------------------------------------------------------------
 
 class Lesson(models.Model):
@@ -1640,7 +1667,7 @@ class Award(models.Model):
 
     person     = models.ForeignKey(Person)
     badge      = models.ForeignKey(Badge)
-    awarded    = models.DateField()
+    awarded    = models.DateField(default=datetime.date.today)
     event      = models.ForeignKey(Event, null=True, blank=True,
                                    on_delete=models.PROTECT)
     awarded_by = models.ForeignKey(
@@ -1949,6 +1976,8 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
     github = models.CharField(
         max_length=STR_LONG,
         verbose_name='GitHub username',
+        validators=[github_username_validator],
+        help_text='Please put only a single username here.',
         null=True, blank=True,
     )
 
@@ -2099,6 +2128,8 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         default='', null=False, blank=True,
         help_text='What else do you want us to know?',
         verbose_name='Anything else?')
+
+    notes = models.TextField(blank=True, help_text='Admin notes')
 
     def clean(self):
         super().clean()

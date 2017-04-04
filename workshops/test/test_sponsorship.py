@@ -94,13 +94,11 @@ class TestSponsorshipViews(TestBase):
     def test_add_sponsor_minimal(self):
         '''Check that we can add a sponsor w/ minimal parameters'''
         payload = {
-            'sponsor-organization': self.org_beta.pk,
-            'sponsor-event': self.event.pk,
+            'organization': self.org_beta.pk,
+            'event': self.event.pk,
         }
         response = self.client.post(
-            reverse('event_edit', kwargs={'slug': self.event.slug}),
-            payload,
-            follow=True
+            reverse('sponsorship_add'), payload, follow=True
         )
         self.assertRedirects(
             response,
@@ -114,14 +112,12 @@ class TestSponsorshipViews(TestBase):
     def test_add_sponsor_with_amount(self):
         '''Check that we can add a sponsor with amount'''
         payload = {
-            'sponsor-organization': self.org_beta.pk,
-            'sponsor-event': self.event.pk,
-            'sponsor-amount': 1500,
+            'organization': self.org_beta.pk,
+            'event': self.event.pk,
+            'amount': 1500,
         }
         response = self.client.post(
-            reverse('event_edit', kwargs={'slug': self.event.slug}),
-            payload,
-            follow=True
+            reverse('sponsorship_add'), payload, follow=True
         )
         self.assertRedirects(
             response,
@@ -139,15 +135,13 @@ class TestSponsorshipViews(TestBase):
     def test_add_sponsor_with_contact(self):
         '''Check that we can add a sponsor with a contact person'''
         payload = {
-            'sponsor-organization': self.org_beta.pk,
-            'sponsor-event': self.event.pk,
-            'sponsor-contact': self.harry.pk,
-            'sponsor-amount': 1500,
+            'organization': self.org_beta.pk,
+            'event': self.event.pk,
+            'contact': self.harry.pk,
+            'amount': 1500,
         }
         response = self.client.post(
-            reverse('event_edit', kwargs={'slug': self.event.slug}),
-            payload,
-            follow=True
+            reverse('sponsorship_add'), payload, follow=True
         )
         self.assertRedirects(
             response,
@@ -165,18 +159,16 @@ class TestSponsorshipViews(TestBase):
     def test_add_duplicate_sponsorship_instance(self):
         '''Check that we cannot successfully submit duplicates'''
         payload = {
-            'sponsor-organization': self.sponsorship.organization.pk,
-            'sponsor-event': self.sponsorship.event.pk,
-            'sponsor-amount': self.sponsorship.amount,
+            'organization': self.sponsorship.organization.pk,
+            'event': self.sponsorship.event.pk,
+            'amount': self.sponsorship.amount,
         }
         response = self.client.post(
-            reverse('event_edit', kwargs={'slug': self.event.slug}),
-            payload,
-            follow=True,
+            reverse('sponsorship_add'), payload, follow=True,
         )
         self.assertEqual(response.status_code, 200)
         self.assertFormError(response,
-            form='sponsor_form',
+            form='form',
             field=None,
             errors='Sponsorship with this Organization, Event and Sponsorship amount already exists.',
         )

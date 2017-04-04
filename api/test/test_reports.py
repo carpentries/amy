@@ -59,11 +59,9 @@ class TestReportingInstructorNumTaught(BaseReportingTest):
             role=instructor_role
         )
         # Award a SWC Badge
-        Award.objects.create(person=instructor, badge=swc_instructor,
-                             awarded=datetime.date.today())
+        Award.objects.create(person=instructor, badge=swc_instructor)
         # Award a DC Badge
-        Award.objects.create(person=instructor, badge=dc_instructor,
-                             awarded=datetime.date.today())
+        Award.objects.create(person=instructor, badge=dc_instructor)
 
         # make sure we *do not* get twice the number expected
         self.expecting = [
