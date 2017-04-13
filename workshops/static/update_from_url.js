@@ -21,13 +21,13 @@ $('#update_url_form').submit(function(e) {
     switch (action) {
       case 'overwrite':
         console.log('overwrite');
-        $("#id_event-slug").val(data.slug);
-        $("#id_event-start").val(data.start);
-        $("#id_event-end").val(data.end);
-        $("#id_event-reg_key").val(data.reg_key);
-        $("#id_event-url").val(url);
+        $("#id_slug").val(data.slug);
+        $("#id_start").val(data.start);
+        $("#id_end").val(data.end);
+        $("#id_reg_key").val(data.reg_key);
+        $("#id_url").val(url);
 
-        var elem = $("#id_event-language_0");
+        var elem = $("#id_language_0");
         // query only using the subtag
         elem.djselectable('option', 'prepareQuery', function(q) { q.subtag = true });
         // select the first results of a search
@@ -41,13 +41,13 @@ $('#update_url_form').submit(function(e) {
         elem.on("autocompleteresponse", null);
         elem.djselectable('close');
 
-        $("#id_event-contact").val(data.contact);
-        $('#id_event-venue').val(data.venue);
-        $('#id_event-address').val(data.address);
-        $('#id_event-country').val(data.country);
-        $('#id_event-latitude').val(data.latitude);
-        $('#id_event-longitude').val(data.longitude);
-        $("#id_event-notes").val(
+        $("#id_contact").val(data.contact);
+        $('#id_venue').val(data.venue);
+        $('#id_address').val(data.address);
+        $('#id_country').val(data.country);
+        $('#id_latitude').val(data.latitude);
+        $('#id_longitude').val(data.longitude);
+        $("#id_notes").val(
           "INSTRUCTORS: " + data.instructors.join(", ") + "\n\n" +
           "HELPERS: " + data.helpers.join(", ")
         );
@@ -56,23 +56,23 @@ $('#update_url_form').submit(function(e) {
       case 'skip':
       default:
         console.log('skip');
-        if ($("#id_event-slug").val() == "") {
-          $("#id_event-slug").val(data.slug);
+        if ($("#id_slug").val() == "") {
+          $("#id_slug").val(data.slug);
         }
-        if ($("#id_event-start").val() == "") {
-          $("#id_event-start").val(data.start);
+        if ($("#id_start").val() == "") {
+          $("#id_start").val(data.start);
         }
-        if ($("#id_event-end").val() == "") {
-          $("#id_event-end").val(data.end);
+        if ($("#id_end").val() == "") {
+          $("#id_end").val(data.end);
         }
-        if ($("#id_event-reg_key").val() == "") {
-          $("#id_event-reg_key").val(data.reg_key);
+        if ($("#id_reg_key").val() == "") {
+          $("#id_reg_key").val(data.reg_key);
         }
-        if ($("#id_event-url").val() == "") {
-          $("#id_event-url").val(url);
+        if ($("#id_url").val() == "") {
+          $("#id_url").val(url);
         }
-        if ($("#id_event-language_0").val() == "") {
-          var elem = $("#id_event-language_0");
+        if ($("#id_language_0").val() == "") {
+          var elem = $("#id_language_0");
           // query only using the subtag
           elem.djselectable('option', 'prepareQuery', function(q) { q.subtag = true });
           // select the first results of a search
@@ -86,29 +86,29 @@ $('#update_url_form').submit(function(e) {
           elem.on("autocompleteresponse", null);
           elem.djselectable('close');
         }
-        if ($("#id_event-contact").val() == "") {
-          $("#id_event-contact").val(data.contact);
+        if ($("#id_contact").val() == "") {
+          $("#id_contact").val(data.contact);
         }
-        if ($("#id_event-venue").val() == "") {
-          $("#id_event-venue").val(data.venue);
+        if ($("#id_venue").val() == "") {
+          $("#id_venue").val(data.venue);
         }
-        if ($("#id_event-address").val() == "") {
-          $("#id_event-address").val(data.address);
+        if ($("#id_address").val() == "") {
+          $("#id_address").val(data.address);
         }
-        if ($("#id_event-country").val() == "") {
-          $("#id_event-country").val(data.country);
+        if ($("#id_country").val() == "") {
+          $("#id_country").val(data.country);
         }
-        if ($("#id_event-latitude").val() == "") {
-          $("#id_event-latitude").val(data.latitude);
+        if ($("#id_latitude").val() == "") {
+          $("#id_latitude").val(data.latitude);
         }
-        if ($("#id_event-longitude").val() == "") {
-          $("#id_event-longitude").val(data.longitude);
+        if ($("#id_longitude").val() == "") {
+          $("#id_longitude").val(data.longitude);
         }
         // append notes
         var today = new Date();
         var today_str = "\n\n---------\nUPDATE " + today.yyyymmdd() + ":\n";
-        $("#id_event-notes").val(
-          $("#id_event-notes").val() + today_str +
+        $("#id_notes").val(
+          $("#id_notes").val() + today_str +
           "INSTRUCTORS: " + data.instructors.join(", ") + "\n\n" +
           "HELPERS: " + data.helpers.join(", ")
         );
