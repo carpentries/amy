@@ -24,8 +24,8 @@ def update_administrator_to_self_organized(apps, schema_editor):
     Event.objects.filter(administrator__isnull=True) \
         .filter(
             Q(invoice_status='na-self-org') |
-            Q(notes__contains='self-organized') |
-            Q(notes__contains='self organized')
+            Q(notes__icontains='self-organized') |
+            Q(notes__icontains='self organized')
         ) \
         .update(administrator=self_org)
 

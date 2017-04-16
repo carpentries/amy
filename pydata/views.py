@@ -66,7 +66,7 @@ class BaseImport(OnlyForAdminsMixin, View):
         try:
             url = request.GET['url']
             conf_url, pk = self.get_pk(url).groups()
-            event = Event.objects.get(url__contains=conf_url)
+            event = Event.objects.get(url__icontains=conf_url)
             client = self.client(event)
             obj = client[pk]
             return JsonResponse(self.serialize(obj))

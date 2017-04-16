@@ -41,6 +41,13 @@ class TestSearchOrganization(TestBase):
         # no way for us to check the url…
         assert str(self.org_alpha.domain) in content
 
+    def test_search_ignores_case(self):
+        response = self.search_for('AlPhA', in_organizations=True)
+        assert response.status_code == 200
+        content = response.content.decode('utf-8')
+        # no way for us to check the url…
+        assert str(self.org_alpha.domain) in content
+
     def test_search_for_organization_by_full_domain(self):
         response = self.search_for('beta.com', in_organizations=True)
         assert response.status_code == 200
