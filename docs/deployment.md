@@ -82,6 +82,8 @@ Execute the following commands on your local machine, not production.
         $ git add workshops/__init__.py bower.json
         $ git commit -m "Bumping version to v1.X+1.0-dev"
 
+    Skip this step if you're releasing minor AMY version (that is, when you increment Y, not X).
+
 10. And push it everywhere:
 
         $ git push upstream develop
