@@ -15,6 +15,7 @@ import sys
 
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import ugettext_lazy as _
+import dj_database_url
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
@@ -84,7 +85,8 @@ if DEBUG:
     # outgoing mails will be stored in `django.core.mail.outbox`
     EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
 
-SITE_URL = 'https://amy.software-carpentry.org'
+# SITE_URL = 'https://amy.software-carpentry.org'
+SITE_URL = 'http://amy-on-heroku.herokuapp.com'
 if DEBUG:
     SITE_URL = 'http://127.0.0.1:8000'
 
@@ -123,7 +125,8 @@ TEMPLATES = [
 ]
 
 ALLOWED_HOSTS = [
-    'amy.software-carpentry.org',
+    # 'amy.software-carpentry.org',
+    'amy-on-heroku.herokuapp.com',
 ]
 if DEBUG:
     ALLOWED_HOSTS.append('127.0.0.1')
@@ -135,6 +138,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'whitenoise.runserver_nostatic', # must be immediately above django.contrib.staticfiles
     'django.contrib.staticfiles',
 ]
 if ENABLE_PYDATA:
@@ -164,6 +168,7 @@ INSTALLED_APPS += [
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
 MIDDLEWARE_CLASSES = (
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # should be above all middlewares, except for django.middleware.security.SecurityMiddleware
     'debug_toolbar.middleware.DebugToolbarMiddleware',
     'reversion.middleware.RevisionMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -192,28 +197,36 @@ MESSAGE_TAGS = {
 # Database
 # https://docs.djangoproject.com/en/1.7/ref/settings/#databases
 
-if DEBUG:
-    DB_FILENAME = os.environ.get('AMY_DB_FILENAME', 'db.sqlite3')
-else:
-    try:
-        DB_FILENAME = os.environ['AMY_DB_FILENAME']
-    except KeyError as ex:
-        raise ImproperlyConfigured(
-            'You must specify AMY_DB_FILENAME environment variable '
-            'when DEBUG is False.') from ex
+if os.environ.get('AMY_DB_FILENAME') is not None:
+    raise ImproperlyConfigured(
+        'AMY_DB_FILENAME environment variable is not used any longer. '
+        'Use DATABASE_URL instead.'
+    )
 
+# By default, local infile db.sqlite3 database is used. If you want to use
+# another sqlite3 database, set env var:
+#
+# $ export DATABASE_URL='sqlite://another-db.sqlite3'
+#
+# or use PostgreSQL database:
+#
+# $ export DATABASE_URL=postgres://username:password@localhost/database_name
+
+DEFAULT_DATABASE_URL = 'sqlite://db.sqlite3'
+db_from_env = dj_database_url.config(
+    conn_max_age=500,
+    default=DEFAULT_DATABASE_URL,
+)
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, DB_FILENAME),
-        'TEST': {},
-    }
+    'default': db_from_env,
 }
-if '--keepdb' in sys.argv:
+
+if 'sqlite3' in DATABASES['default']['ENGINE'] and '--keepdb' in sys.argv:
     # By default, Django uses in-memory sqlite3 database, which is much
     # faster than sqlite3 database in a file. However, we may want to keep
     # database between test launches, so that we avoid the overhead of
     # applying migrations on each test launch.
+    DATABASES['default'].setdefault('TEST', {})
     DATABASES['default']['TEST']['NAME'] = 'test_db.sqlite3'
 
 # Authentication
@@ -373,3 +386,13 @@ if DEBUG and 'test' in sys.argv:
 # Debug Toolbar
 DEBUG_TOOLBAR_PATCH_SETTINGS = False
 INTERNAL_IPS = ['127.0.0.1', '::1']
+
+if DEBUG:
+    # Use default value
+    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+
+else:
+    # Simplified static file serving.
+    # https://warehouse.python.org/project/whitenoise/
+
+    STATICFILES_STORAGE = 'whitenoise.django.GzipManifestStaticFilesStorage'

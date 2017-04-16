@@ -14,11 +14,11 @@ def migrate_language(apps, schema_editor):
     english = Language.objects.get(name='English')
     for request in EventRequest.objects.all():
         # Get the most precisely matching languages
-        language = Language.objects.filter(name__icontains=request.language)\
-                .order_by(Length('name')-len(request.language)).first()
+        language = Language.objects.filter(name__icontains=request.language_old)\
+                .order_by(Length('name')-len(request.language_old)).first()
         if not language:
             language = english
-        request.language_new = language
+        request.language = language
         request.save()
 
 
@@ -29,19 +29,19 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RenameField(
+            model_name='eventrequest',
+            old_name='language',
+            new_name='language_old',
+        ),
         migrations.AddField(
             model_name='eventrequest',
-            name='language_new',
+            name='language',
             field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='workshops.Language', verbose_name='What human language do you want the workshop to be run in?'),
         ),
         migrations.RunPython(migrate_language),
         migrations.RemoveField(
             model_name='eventrequest',
-            name='language',
-        ),
-        migrations.RenameField(
-            model_name='eventrequest',
-            old_name='language_new',
-            new_name='language',
+            name='language_old',
         ),
     ]

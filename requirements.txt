@@ -22,3 +22,7 @@ django-app-namespace-template-loader>=0.4
 django-webtest==1.8.0
 django-debug-toolbar==1.5
 django-extensions>=1.7,<1.8
+dj-database-url>=0.4,<0.5
+psycopg2>=2.7,<2.8
+gunicorn>=19.7,<19.8
+whitenoise>=3.3,<3.4
