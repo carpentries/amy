@@ -58,9 +58,8 @@ Execute the following commands on your local machine, not production.
 6.  Bump version on `master`:
 
         $ echo "__version__ = '$AMY_VERSION'" > workshop/__init__.py  # change version to 1.X.Y
-        $ vim bower.json  # change 'version' to 1.X.Y
-        $ git add workshops/__init__.py bower.json
-        $ git commit -m "Bumping version to $AMY_VERSION"
+        $ git add workshops/__init__.py
+        $ bower version "$AMY_VERSION" -m "Bumping version to %s"
 
 7.  Just to be safe, run tests:
 
