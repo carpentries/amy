@@ -124,7 +124,9 @@ Execute the following commands on your local machine, not production.
 
 7.  Create local database backup:
 
-        $ cp db.sqlite3 db.sqlite3.bak
+        $ cp db.sqlite3 backup-before-upgrade-to-v1.X.Y.sqlite3
+
+    Do not use $AMY_VERSION environment variable because it's not defined here.
 
 8.  Fetch newer AMY source code:
 
