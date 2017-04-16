@@ -49,6 +49,7 @@ Execute the following commands on your local machine, not production.
 4.  Define which version you're going to release (replace X and Y with correct numbers):
 
         $ AMY_VERSION=v1.X.Y
+        $ AMY_NEXT_VERSION=v1.X+1.0-dev
 
 5.  Merge `develop` into `master` branch:
 
@@ -80,10 +81,9 @@ Execute the following commands on your local machine, not production.
 10. Bump version on `develop`:
 
         $ git checkout develop
-        $ vim bower.json  # change version to the next one after 1.X.Y (i.e. 1.X+1.0-dev)
-        $ vim workshop/__init__.py  # change version to the next one
-        $ git add workshops/__init__.py bower.json
-        $ git commit -m "Bumping version to v1.X+1.0-dev"
+        $ echo "__version__ = '$AMY_NEXT_VERSION'" > workshop/__init__.py  # change version to 1.X+1.0
+        $ git add workshops/__init__.py
+        $ bower version "$AMY_NEXT_VERSION" -m "Bumping version to %s"
 
     Skip this step if you're releasing minor AMY version (that is, when you increment Y, not X).
 
