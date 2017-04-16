@@ -322,7 +322,10 @@ class SearchForm(forms.Form):
                                               required=False,
                                               initial=True)
 
-    helper = BootstrapHelper(add_cancel_button=False)
+    helper = BootstrapHelper(
+        add_cancel_button=False,
+        use_get_method=True,
+    )
 
 
 class DebriefForm(forms.Form):
