@@ -56,12 +56,23 @@ class Command(BaseCommand):
         for uid in usernames:
             try:
                 receiver = Person.objects.get(username=uid)
+            except Person.DoesNotExist as e:
+                self.stderr.write('{0} does not exist'.format(username))
+            else:
                 name = receiver.get_full_name()
-                event, awarded, awarded_by = '', '', ''
+
                 if uid in records:
                     event = records[uid]['event']
                     awarded = records[uid]['awarded']
-                    awarded_by = Person.objects.get(username=records[uid]['awarded_by']).get_full_name()
-                report.append([title, kind, event, awarded_by, uid, name, receiver.email, awarded])
-            except Person.DoesNotExist as e:
-                print('{0} does not exist: {1}'.format(uid, str(e)), file=sys.stderr)
+                    username = records[uid]['awarded_by']
+                    try:
+                        awarded_by = Person.objects.get(username=username).get_full_name()
+                    except Person.DoesNotExist as e:
+                        self.stderr.write(
+                            'Person with username={0} who awarded {1} '
+                            'does not exist'.format(username, uid))
+                    else:
+                        report.append([title, kind, event, awarded_by, uid, name, receiver.email, awarded])
+                else:
+                    event, awarded, awarded_by = '', '', ''
+                    report.append([title, kind, event, awarded_by, uid, name, receiver.email, awarded])
