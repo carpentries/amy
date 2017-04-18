@@ -10,6 +10,18 @@ class TestSearchOrganization(TestBase):
         super().setUp()
         self._setUpUsersAndLogin()
 
+    def search_for(self, term,
+                    in_organizations=False,
+                    in_training_request=False,
+                    in_persons=False):
+        search_page = self.app.get(reverse('search'), user='admin')
+        form = search_page.forms['main-form']
+        form['term'] = term
+        form['in_organizations'] = in_organizations
+        form['in_training_requests'] = in_training_request
+        form['in_persons'] = in_persons
+        return form.submit()
+
     def test_search_for_organization_with_no_matches(self):
         response = self.client.get(reverse('search'),
                                    {'term' : 'non.existent',
@@ -46,9 +58,8 @@ class TestSearchOrganization(TestBase):
         assert str(self.org_beta.domain) in content
 
     def test_search_for_organization_with_multiple_matches(self):
-        response = self.client.get(reverse('search'),
-                                   {'term' : 'a', # 'a' is in both 'alpha' and 'beta'
-                                    'in_organizations' : 'on'})
+        # 'a' is in both 'alpha' and 'beta'
+        response = self.search_for('a', in_organizations=True)
         doc = self._check_status_code_and_parse(response, 200)
         nodes = self._get_N(doc,  ".//a[@class='searchresult']",
                             'Expected three search results',

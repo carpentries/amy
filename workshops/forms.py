@@ -47,6 +47,7 @@ from workshops.models import (
 class BootstrapHelper(FormHelper):
     """Layout and behavior for crispy-displayed forms."""
     html5_required = True
+    form_id = 'main-form'
 
     def __init__(self,
                  form=None,
