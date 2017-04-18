@@ -10,45 +10,47 @@ class TestSearchOrganization(TestBase):
         super().setUp()
         self._setUpUsersAndLogin()
 
+    def search_for(self, term,
+                   in_organizations=False,
+                   in_training_requests=False,
+                   in_persons=False):
+        search_page = self.app.get(reverse('search'), user='admin')
+        form = search_page.forms['main-form']
+        form['term'] = term
+        form['in_organizations'] = in_organizations
+        form['in_training_requests'] = in_training_requests
+        form['in_persons'] = in_persons
+        return form.submit().maybe_follow()
+
     def test_search_for_organization_with_no_matches(self):
-        response = self.client.get(reverse('search'),
-                                   {'term' : 'non.existent',
-                                    'in_organizations' : 'on'})
+        response = self.search_for('non.existent', in_organizations=True)
         doc = self._check_status_code_and_parse(response, 200)
         self._check_0(doc, ".//a[@class='searchresult']",
                       'Expected no search results')
 
     def test_search_for_organization_when_host_matching_turned_off(self):
-        response = self.client.get(reverse('search'),
-                                   {'term' : 'Alpha'})
+        response = self.search_for('Alpha')
         doc = self._check_status_code_and_parse(response, 200)
         node = self._check_0(doc, ".//a[@class='searchresult']",
                              'Expected no search results')
 
     def test_search_for_organization_by_partial_name(self):
-        response = self.client.get(reverse('search'),
-                                   {'term' : 'Alpha',
-                                    'in_organizations' : 'on'},
-                                   follow=True)
+        response = self.search_for('Alpha', in_organizations=True)
         assert response.status_code == 200
         content = response.content.decode('utf-8')
         # no way for us to check the url…
         assert str(self.org_alpha.domain) in content
 
     def test_search_for_organization_by_full_domain(self):
-        response = self.client.get(reverse('search'),
-                                   {'term' : 'beta.com',
-                                    'in_organizations' : 'on'},
-                                   follow=True)
+        response = self.search_for('beta.com', in_organizations=True)
         assert response.status_code == 200
         content = response.content.decode('utf-8')
         # no way for us to check the url…
         assert str(self.org_beta.domain) in content
 
     def test_search_for_organization_with_multiple_matches(self):
-        response = self.client.get(reverse('search'),
-                                   {'term' : 'a', # 'a' is in both 'alpha' and 'beta'
-                                    'in_organizations' : 'on'})
+        # 'a' is in both 'alpha' and 'beta'
+        response = self.search_for('a', in_organizations=True)
         doc = self._check_status_code_and_parse(response, 200)
         nodes = self._get_N(doc,  ".//a[@class='searchresult']",
                             'Expected three search results',
@@ -64,11 +66,8 @@ class TestSearchOrganization(TestBase):
         self.org_alpha.notes = 'Hermione Granger'
         self.org_alpha.save()
 
-        response = self.client.get(reverse('search'), {
-            'term': 'Hermione Granger',
-            'in_organizations': 'on',
-            'in_persons': 'on',
-        })
+        response = self.search_for(
+            'Hermione Granger', in_organizations=True, in_persons=True)
         doc = self._check_status_code_and_parse(response, 200)
         nodes = self._get_N(doc, ".//a[@class='searchresult']",
                             'Expected two search results',
@@ -92,27 +91,18 @@ class TestSearchOrganization(TestBase):
             comment='Lorem Ipsum',
         )
 
-        search_options = {
-            'term': 'Leprechaun',
-            'in_training_requests': 'on',
-            'in_persons': 'on',
-        }
-        url = reverse('search')
-
-        response = self.client.get(url, search_options)
+        response = self.search_for(
+            'Leprechaun', in_training_requests=True, in_persons=True)
         self.assertEqual(len(response.context['training_requests']), 1)
 
-        search_options['term'] = 'Krum'
-        response = self.client.get(url, search_options)
+        response = self.search_for(
+            'Krum', in_training_requests=True, in_persons=True)
         self.assertEqual(len(response.context['training_requests']), 1)
 
-        search_options['term'] = 'Lorem'
-        response = self.client.get(url, search_options)
+        response = self.search_for(
+            'Lorem', in_training_requests=True, in_persons=True)
         self.assertEqual(len(response.context['training_requests']), 1)
 
-        search_options['term'] = 'Potter'
-        # otherwise it'd redirect to Harry Potter's profile
-        del search_options['in_persons']
-        response = self.client.get(url, search_options)
+        # do not search in_persons, otherwise it'd redirect to Harry Potter's profile
+        response = self.search_for('Potter', in_training_requests=True)
         self.assertEqual(len(response.context['training_requests']), 0)
-
