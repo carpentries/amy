@@ -184,7 +184,7 @@ def admin_dashboard(request):
 
     uninvoiced_events = Event.objects.active().uninvoiced_events()
 
-    # This annotation may produce wrong number of instructors when 
+    # This annotation may produce wrong number of instructors when
     # `unpublished_events` filters out events that contain a specific tag.
     # The bug was fixed in #1130.
     unpublished_events = Event.objects \
@@ -1731,22 +1731,22 @@ def search(request):
 
             if form.cleaned_data['in_organizations']:
                 organizations = Organization.objects.filter(
-                    Q(domain__contains=term) |
-                    Q(fullname__contains=term) |
-                    Q(notes__contains=term)) \
+                    Q(domain__icontains=term) |
+                    Q(fullname__icontains=term) |
+                    Q(notes__icontains=term)) \
                     .order_by('fullname')
                 results += list(organizations)
 
             if form.cleaned_data['in_events']:
                 events = Event.objects.filter(
-                    Q(slug__contains=term) |
-                    Q(notes__contains=term) |
-                    Q(host__domain__contains=term) |
-                    Q(host__fullname__contains=term) |
-                    Q(url__contains=term) |
-                    Q(contact__contains=term) |
-                    Q(venue__contains=term) |
-                    Q(address__contains=term)
+                    Q(slug__icontains=term) |
+                    Q(notes__icontains=term) |
+                    Q(host__domain__icontains=term) |
+                    Q(host__fullname__icontains=term) |
+                    Q(url__icontains=term) |
+                    Q(contact__icontains=term) |
+                    Q(venue__icontains=term) |
+                    Q(address__icontains=term)
                 ).order_by('-slug')
                 results += list(events)
 
@@ -1756,36 +1756,36 @@ def search(request):
                 if len(tokens) == 2:
                     name1, name2 = tokens
                     complex_q = (
-                        Q(personal__contains=name1) & Q(family__contains=name2)
+                        Q(personal__icontains=name1) & Q(family__icontains=name2)
                     ) | (
-                        Q(personal__contains=name2) & Q(family__contains=name1)
-                    ) | Q(email__contains=term) | Q(github__contains=term)
+                        Q(personal__icontains=name2) & Q(family__icontains=name1)
+                    ) | Q(email__icontains=term) | Q(github__icontains=term)
                     persons = Person.objects.filter(complex_q)
                 else:
                     persons = Person.objects.filter(
-                        Q(personal__contains=term) |
-                        Q(family__contains=term) |
-                        Q(email__contains=term) |
-                        Q(github__contains=term)) \
+                        Q(personal__icontains=term) |
+                        Q(family__icontains=term) |
+                        Q(email__icontains=term) |
+                        Q(github__icontains=term)) \
                         .order_by('family')
                 results += list(persons)
 
             if form.cleaned_data['in_airports']:
                 airports = Airport.objects.filter(
-                    Q(iata__contains=term) |
-                    Q(fullname__contains=term)) \
+                    Q(iata__icontains=term) |
+                    Q(fullname__icontains=term)) \
                     .order_by('iata')
                 results += list(airports)
 
             if form.cleaned_data['in_training_requests']:
                 training_requests = TrainingRequest.objects.filter(
-                    Q(group_name__contains=term) |
-                    Q(family__contains=term) |
-                    Q(email__contains=term) |
-                    Q(github__contains=term) |
-                    Q(affiliation__contains=term) |
-                    Q(location__contains=term) |
-                    Q(comment__contains=term)
+                    Q(group_name__icontains=term) |
+                    Q(family__icontains=term) |
+                    Q(email__icontains=term) |
+                    Q(github__icontains=term) |
+                    Q(affiliation__icontains=term) |
+                    Q(location__icontains=term) |
+                    Q(comment__icontains=term)
                 )
                 results += list(training_requests)
 
