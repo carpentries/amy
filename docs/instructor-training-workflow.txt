@@ -1,0 +1,249 @@
+## Notation
+
+- [use cases] are in square brackets
+- {web pages} are in curly braces
+- <database objects> are in angle brackets
+
+Notes:
+
+- "Admin" may be an administrator *or* a trainer with admin privileges with respect to training tasks.
+- the "Pending" flag indicates a <Training Application> that has not yet been approved or discarded.
+
+## Individual application for training.
+
+* [user registers self]: the normal case of user registration for training.
+  - User fills in form on AMY with name, email address, GitHub username, etc.
+  - <Training Application> created and marked "Pending".
+  ! <Training Application> is *not* tied to a <Person> record at this point.
+
+## Admin approves individual for training.
+
+* [admin approves training for existing person]: user record found in database.
+  - Admin views {training applications}.
+  - Admin selects <Training Application> marked "Pending".
+  - AMY displays potential matches for <Person> (by matching on email, GitHub username, etc.).
+  - Admin selects <Person>.
+  - Admin approves <Training Application>.
+  - AMY clears <Training Application>'s "Pending" flag, marks <Person> as "May Contact", and enables GitHub-based login.
+
+* [admin approves training for new person]: no user record found in database.
+  - Admin views {training applications}.
+  - Admin selects <Training Application> marked "Pending".
+  - Admin requests creation of <Person> record.
+  - AMY creates new <Person> record and binds to <Training Application>.
+  - Admin approves <Training Application>.
+  - AMY clears <Training Application>'s "Pending" flag, marks <Person> as "May Contact", and enables GitHub-based login.
+
+## Admin registers individual for training.
+
+Done as per [user registers self], but with Admin doing all the work.
+
+## Reviewing pending training applications.
+
+* [admin reviews training applications]: to see who's waiting and how long.
+  - Admin goes to {training applications}.
+  - Admin selects filtering and sorting criteria (if any).
+  - Admin pages through display showing <Training Application>s.
+
+## Discarding pending training applications.
+
+* [admin discard training application]: because it's a duplicate or we don't want them.
+  - Admin views {training applications}.
+  - Admin selects one or more <Training Application>s.
+  - Admin selects "delete".
+  - AMY deletes <Training Application>s.
+
+## Setting up training course.
+
+* [admin creates training event]: and assigns people to it.
+  - Admin creates new <Event>.
+  - Admin goes to {training applications}.
+  - Admin selects <Event>.
+  - Admin selects some <Training Application>s.
+  - AMY creates <Task>s to add all the selected <Person>s to the <Event>.
+  - AMY connects the <Training Application>s to the <Event>.
+  - AMY creates <Training Progress> record for each <Person>.
+  ! AMY provides single-click "send to all" email link to admin to inform trainees.
+
+## Administering training course applications.
+
+* [admin discards people from training event]: without recycling their applications.
+  - Admin goes to {assigned training applications}.
+  - Admin selects <Training Application>s.
+  - Admin removes them from training event.
+  - AMY deletes associated <Task>s.
+  - AMY deletes <Training Application>s.
+
+* [admin removes people from training event]: but keeps applications
+  - Admin goes to {assigned training applications}.
+  - Admin selects <Training Application>s.
+  - Admin removes them from training event.
+  - AMY deletes associated <Task>s.
+  - AMY breaks connection between <Training Application>s and <Event>s.
+
+## Reviewing training progress.
+
+* [admin views training progress]: to see who's done what.
+  - Admin views {training progress summary} to view summary of all in-progress training.
+  - Admin selects filtering and sorting criteria (if any).
+
+## Tracking submission of written work.
+
+* [trainee reports submission of written work]: such as pull request or comment on lesson.
+  - Trainee views {individual training progress}.
+  - Trainee enters URL of written work.
+  - AMY updates <Training Task> associated with <Person> and <Event>.
+  - AMY marks <Training Progress> as "Needs Review".
+
+* [admin reports submission of written work]: on behalf of trainee.
+  - Admin looks up <Training Progress> associated with trainee.
+  - Admin enters URL of written work in <Training Task>.
+  - AMY marks <Training Progress> as "Needs Review".
+
+* [admin reports completion of written work]: on behalf of trainee.
+  - Admin looks up <Training Progress> associated with trainee.
+  - Admin enters URL of written work in <Training Task>.
+  - Admin marks <Training Task> as complete.
+
+## Tracking participation in interactive work.
+
+* [admin reports individual completion of interactive work]: such as discussion session or lesson demo.
+  - Admin views {individual training progress} for trainee.
+  - Admin selects <Training Task>.
+  - Admin:
+    - Enters date of interactive event.
+    - Adds comments (if any).
+  - Admin indicates whether <Training Task> is now complete.
+
+* [admin reports bulk completion of interactive work]: for all participants.
+  - Admin views {training task completion}.
+  - Admin selects one or more <Person>s.
+  - Admin selects <Training Task> (e.g., discussion, demo).
+  - AMY marks all <Training Task>s as "Completed".
+
+## Completing training work.
+
+* [admin changes completion status of work for trainee]
+  - Admin looks up <Training Progress> associated with trainee.
+  - Admin changes "Completed" status of work item(s).
+  > [training automatically completed]
+
+* [admin finds work to review]
+  - Admin views {training progress summary}.
+  - Admin selects <Training Progress>.
+  > [admin changes completion status of work for trainee].
+
+## Completing training.
+
+* [training automatically completed]: triggered by changes in <Training Task>s.
+  - AMY records change to <Training Task> and all <Training Task>s for <Person> now complete.
+  - AMY displays {badge creation form}.
+  - Admin confirms creation of badge.
+  - AMY marks <Training Progress> as "Completed".
+  - AMY creates certificate.
+  - AMY mails certificate to <Person>.
+
+## Ending training.
+
+* [admin ends training]: because trainee has gone silent, failed a work item, etc.
+  - Admin views {individual training progress}.
+  - Admin selects <Training Progress>.
+  - Admin marks <Training Progress> as "Unsuccessful".
+  - AMY marks <Training Progress> as "Completed".
+
+* [admin ends training course]: because it has timed out.
+  - Admin selects training <Event>.
+  - Admin marks <Event> as "Stalled".
+  - AMY marks all associated <Training Progress>es as "Unsuccessful".
+  - AMY marks <Training Progress> as "Completed".
+
+## Questions
+
+- What to do if Admin deletes <Task> from training <Event> directly rather than via [admin removes people from training event]?
+- Do we only allow feedback loop/multiple tries for interactive work (discussions and demos), but *not* for written work?  That's how the workflows are written now...
+- Can we support group applications by providing one extra free-text field in the application called "Group Name", and asking people who want to co-apply to fill it in with the same value?  We can then sort/filter/group by that value to find people in the same group.
+- Do we use one <Training Progress> with multiple fields, or have <Training Progress> point at multiple (atomic) <Training Task>s?  This doc assumes the latter.
+- Should each <Training Task> accumulate multiple date+comment pairs (one for each attempt to pass that task), or should people have multiple <Training Task> objects of a particular type (e.g., "demo"), N-1 of which are "fail", the last of which is "pass"?
+- Should we actually delete <Training Application>s that we don't want, or mark as "discarded"?
+
+## Summary
+
+* Database Objects
+  - Event
+  - Group Training Application
+  - Person
+  - Task
+  - Training Application
+  - Training Progress
+  - Training Task
+
+* Pages
+  - assigned training applications
+  - badge creation form
+  - group application form
+  - group registration form
+  - individual training progress
+  - training applications
+  - training progress summary
+  - training task completion
+
+* Use Cases
+  - admin approves group
+  - admin approves training
+  - admin changes completion status of work for trainee
+  - admin creates training event
+  - admin discard training application
+  - admin ends training
+  - admin ends training course
+  - admin finds work to review
+  - admin registers group
+  - admin removes people from training event
+  - admin reports bulk completion of interactive work
+  - admin reports completion of written work
+  - admin reports individual completion of interactive work
+  - admin reports submission of written work
+  - admin reviews training applications
+  - admin views training progress
+  - trainee reports submission of written work
+  - training automatically completed
+  - user registers group
+  - user registers self
+
+--------------------
+
+Please ignore this section for now - we'll think about groups after we have individual tracking sorted.
+
+## Group application for training.
+
+* [user registers group]: individual user registers a group of friends or colleagues.
+  - User fills in {group application form} with:
+    - Their own name, email address, institution.
+    - Names and email addresses of group members
+  - AMY creates <Group Training Application>, marks it "Pending".
+
+* [admin registers group]: admin does group registration (e.g., has been sent names and email addresses by partner).
+  - Admin either:
+    - Fills in {group registration form} with names and email addresses of group members.
+    - Fills in {group registration form} via bulk upload from CSV file.
+  - Admin matches users already in database to <Person> records as per existing bulk upload.
+  - AMY creates new <Person> records for unmatched users as per existing bulk upload.
+  - AMY creates <Group Training Application>.
+  - AMY:
+    - Creates one new <Training Application> record for each <Person>.
+    - Connects the <Training Application> to the <Person>.
+    - Connects the <Training Application> to the <Group Training Application>.
+
+## Admin approves group for training.
+
+* [admin approves group]: to trigger next stage of application process.
+  - Admin reviews <Training Application List>.
+  - Admin selects <Group Training Application> marked "Pending".
+  - Admin approves <Group Training Application>.
+  - AMY clears <Group Training Application>'s "Pending" flag.
+  - Individuals listed in <Group Training Application> are sent unique link to register for training.
+  > [user registers self] for each user, but application is linked to <Group Training Application>.
+
+Questions:
+
+- How to display a mix of both <Training Application>s and <Group Training Application>s?
+- How to select from a mix of both <Training Application>s and <Group Training Application>s?
