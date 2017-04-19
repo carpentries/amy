@@ -527,6 +527,14 @@ class PersonCreateForm(PersonForm):
 
 
 class PersonPermissionsForm(forms.ModelForm):
+    user_permissions = selectable.AutoCompleteSelectMultipleField(
+        lookup_class=lookups.PermissionLookup,
+        label='User permissions',
+        required=False,
+        help_text=AUTOCOMPLETE_HELP_TEXT,
+        widget=selectable.AutoComboboxSelectMultipleWidget,
+    )
+
     class Meta:
         model = Person
         # only display administration-related fields: groups, permissions,
@@ -537,6 +545,9 @@ class PersonPermissionsForm(forms.ModelForm):
             'user_permissions',
             'groups',
         ]
+        widgets = {
+            'groups': CheckboxSelectMultiple,
+        }
 
 
 class PersonsSelectionForm(forms.Form):
