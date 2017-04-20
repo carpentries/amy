@@ -1096,7 +1096,8 @@ def event_import(request):
     This is used to read metadata from workshop website and then fill up fields
     on event_create form."""
 
-    url = request.GET.get('url', '').strip()
+    url = (request.POST.get('url', '').strip() or
+           request.GET.get('url', '').strip())
 
     try:
         metadata = fetch_event_metadata(url)
