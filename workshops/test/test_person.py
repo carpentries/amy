@@ -174,6 +174,26 @@ class TestPerson(TestBase):
             self._check_status_code_and_parse(response, 200)
             assert False, 'expected 302 redirect after post'
 
+    def test_1185_regression(self):
+        """Ensure that admins without superuser privileges,
+        but with 'change_person' permission can edit other people.
+
+        Regression test against
+        https://github.com/swcarpentry/amy/issues/1185."""
+
+        manager = Person.objects.create_user(
+            username='manager', personal='Manager', family='Manager',
+            email='manager@example.org', password='manager')
+        can_change_person = Permission.objects.get(codename='change_person')
+        manager.user_permissions.add(can_change_person)
+        bob = Person.objects.create_user(
+            username='bob', personal='Bob', family='Smith',
+            email='bob@example.org', password='bob')
+
+        bob_edit_url = reverse('person_edit', args=[bob.id])
+        res = self.app.get(bob_edit_url, user='manager')
+        self.assertEqual(res.status_code, 200)
+
     def test_person_award_badge(self):
         """Ensure that we can add an award from `person_edit` view"""
         url = reverse('person_edit', args=[self.spiderman.pk])
