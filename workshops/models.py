@@ -819,7 +819,7 @@ class Language(models.Model):
     https://tools.ietf.org/html/rfc5646
     """
     name = models.CharField(
-        max_length=STR_MED,
+        max_length=STR_LONG,
         help_text='Description of this language tag in English')
     subtag = models.CharField(
         max_length=STR_SHORT,
