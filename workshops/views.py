@@ -727,7 +727,7 @@ class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin,
     template_name = 'workshops/person_edit_form.html'
 
     def test_func(self):
-        if not (self.request.user.has_perm('workshops.edit_person') or \
+        if not (self.request.user.has_perm('workshops.change_person') or \
             self.request.user == self.get_object()):
             raise PermissionDenied
         return True
