@@ -20,7 +20,8 @@
 </table>
 
 <form action="" method="post" enctype="multipart/form-data"
-      accept-charset="{{charset}}">
+      accept-charset="{{charset}}"
+      id="main-form">
     {% csrf_token %}
     {{ form.as_p }}
     <input type="submit" value="Submit" />
