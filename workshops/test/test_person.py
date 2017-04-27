@@ -61,7 +61,7 @@ class TestPerson(TestBase):
             'family': '',  # family name cannot be empty
         }
         f = PersonForm(data)
-        self.assertIn('family', f.errors)
+        self.assertNotIn('family', f.errors)
 
     def _test_edit_person_email(self, person):
         url, values = self._get_initial_form_index(0, 'person_edit', person.id)
