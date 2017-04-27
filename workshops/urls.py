@@ -132,7 +132,7 @@ urlpatterns = [
         url(r'^duplicates/$', views.duplicates, name='duplicates'),
     ])),
 
-    url(r'^revision/(?P<revision_id>[\d]+)/$', views.object_changes, name='object_changes'),
+    url(r'^version/(?P<version_id>[\d]+)/$', views.object_changes, name='object_changes'),
 
     url(r'^requests/$', views.AllEventRequests.as_view(), name='all_eventrequests'),
     url(r'^request/(?P<request_id>\d+)/', include([

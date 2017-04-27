@@ -1,8 +1,8 @@
 from django.core.urlresolvers import reverse
 from reversion.revisions import get_for_object, create_revision
+from reversion import revisions as reversion
 
 from workshops.models import Event, Person, Tag
-
 from .base import TestBase
 
 
@@ -94,3 +94,34 @@ class TestRevisions(TestBase):
             '<a class="label label-success" href="#">+2</a>',
             html=True
         )
+
+
+class TestRegression1083(TestBase):
+    def setUp(self):
+        self._setUpUsersAndLogin()
+
+    def test_regression_1083(self):
+        with reversion.create_revision():
+            alice = Person.objects.create_user(
+                username='alice', personal='Alice', family='Jones',
+                email='alice@jones.pl')
+
+        with reversion.create_revision():
+            bob = Person.objects.create_user(
+                username='bob', personal='Bob', family='Smith',
+                email='bob@smith.pl')
+
+        with reversion.create_revision():
+            alice.family = 'Williams'
+            alice.save()
+            bob.family = 'Brown'
+            bob.save()
+
+        res = self.app.get(reverse('person_details', args=[bob.pk]), user='admin')
+
+        revision = res.click('Last modified on')
+        self.assertIn('Smith', revision)
+        self.assertIn('Brown', revision)
+
+        back_to_person_view = revision.click('View newest')
+        self.assertIn('Brown', back_to_person_view)
