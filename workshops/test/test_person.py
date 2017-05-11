@@ -10,6 +10,7 @@ from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
 from django.core.validators import ValidationError
 from django.contrib.auth.models import Permission, Group
+from webtest.forms import Upload
 
 from workshops.filters import filter_taught_workshops
 from ..forms import PersonForm, PersonsMergeForm
@@ -60,7 +61,7 @@ class TestPerson(TestBase):
             'family': '',  # family name cannot be empty
         }
         f = PersonForm(data)
-        self.assertIn('family', f.errors)
+        self.assertNotIn('family', f.errors)
 
     def _test_edit_person_email(self, person):
         url, values = self._get_initial_form_index(0, 'person_edit', person.id)
@@ -1134,3 +1135,36 @@ class TestPersonUpdateViewPermissions(TestBase):
                 reverse('person_edit', args=[self.trainee.pk]),
                 user='trainer',
             )
+
+
+class TestRegression1076(TestBase):
+    """Family name should be optional."""
+
+    def setUp(self):
+        self._setUpUsersAndLogin()
+        self._setUpRoles()
+        self._setUpEvents()
+
+    def test_family_name_is_optional(self):
+        self.admin.family = ''
+        self.admin.save()  # no error should be raised
+        self.admin.full_clean()  # no error should be raised
+
+    def test_bulk_upload(self):
+        event_slug = Event.objects.first().slug
+        csv = (
+            'personal,family,email,event,role\n'
+            'John,,john@smith.com,{0},learner\n'
+        ).format(event_slug)
+
+        upload_page = self.app.get(reverse('person_bulk_add'), user='admin')
+        upload_form = upload_page.forms['main-form']
+        upload_form['file'] = Upload('people.csv', csv.encode('utf-8'))
+
+        confirm_page = upload_form.submit().maybe_follow()
+        confirm_form = confirm_page.forms['main-form']
+
+        info_page = confirm_form.submit('confirm').maybe_follow()
+        self.assertIn('Successfully created 1 persons and 1 tasks', info_page)
+        john_created = Person.objects.filter(personal='John', family='').exists()
+        self.assertTrue(john_created)
