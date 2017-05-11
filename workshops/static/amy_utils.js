@@ -130,4 +130,18 @@ $(document).ready(function() {
   var selectField = $('form.training-progress #id_requirement')
   selectField.change(updateTrainingProgressForm);
   updateTrainingProgressForm.call(selectField);
+
+  /*
+  When there is any autocomplete field with invalid value, prevent form
+  submission. Focus on the invalid field when user tries to submit the form.
+  */
+
+  $('form').submit(function (event) {
+    var invalidAutocompleteFields = $('.ui-autocomplete-input.ui-state-error');
+    if (invalidAutocompleteFields.length > 0) {
+      var firstInvalidField = invalidAutocompleteFields.first();
+      firstInvalidField.focus();
+      event.preventDefault();  // prevent submission
+    }
+  });
  });
