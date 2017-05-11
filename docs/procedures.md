@@ -10,6 +10,9 @@
 
 4.  Follow Deployment Procedure (see below).
 
+5.  Write to <amy@lists.software-carpentry.org> mailing list.
+    The suggested subject of the new thread is "[Amy] New release v1.X.Y".
+
 # Release Procedure
 
 We assume that you want to release AMY v1.X.Y.
@@ -43,43 +46,48 @@ Execute the following commands on your local machine, not production.
 
     Pushes to your `origin` repository are optional.
 
-4.  Merge `develop` into `master` branch:
+4.  Define which version you're going to release (replace X and Y with correct numbers):
+
+        $ AMY_VERSION=v1.X.Y
+        $ AMY_NEXT_VERSION=v1.X+1.0-dev
+
+5.  Merge `develop` into `master` branch:
 
         $ git checkout master
         $ git merge --no-ff develop  # sometimes there are conflicts in files with release version, but most often we need to edit them and commit
 
-5.  Bump version on `master`:
+6.  Bump version on `master`:
 
-        $ vim bower.json  # change 'version' to 1.X.Y
-        $ vim workshop/__init__.py  # change version to 1.X.Y
-        $ git add workshops/__init__.py bower.json
-        $ git commit -m "Bumping version to v1.X.Y"
+        $ echo "__version__ = '$AMY_VERSION'" > workshop/__init__.py  # change version to 1.X.Y
+        $ git add workshops/__init__.py
+        $ bower version "$AMY_VERSION" -m "Bumping version to %s"
 
-6.  Just to be safe, run tests:
+7.  Just to be safe, run tests:
 
         $ make test
 
-7.  Tag a release. Tag message should be `AMY release v1.X.Y`.
+8.  Tag a release.
 
-        $ git tag -a v1.X.Y -s
+        $ git tag -a "$AMY_VERSION" -s -m "AMY release $AMY_VERSION"
 
     Omit `-s` flag if you cannot create signed tags.
     See [Git documentation](https://git-scm.com/book/tr/v2/Git-Tools-Signing-Your-Work) for more info about signed tags.
 
-8.  Push `master` and the new tag everywhere:
+9.  Push `master` and the new tag everywhere:
 
         $ git push origin master --tags
         $ git push upstream master --tags
 
-9.  Bump version on `develop`:
+10. Bump version on `develop`:
 
         $ git checkout develop
-        $ vim bower.json  # change version to the next one after 1.X.Y (i.e. 1.X+1.0-dev)
-        $ vim workshop/__init__.py  # change version to the next one
-        $ git add workshops/__init__.py bower.json
-        $ git commit -m "Bumping version to v1.X+1.0-dev"
+        $ echo "__version__ = '$AMY_NEXT_VERSION'" > workshop/__init__.py  # change version to 1.X+1.0
+        $ git add workshops/__init__.py
+        $ bower version "$AMY_NEXT_VERSION" -m "Bumping version to %s"
 
-10. And push it everywhere:
+    Skip this step if you're releasing minor AMY version (that is, when you increment Y, not X).
+
+11. And push it everywhere:
 
         $ git push upstream develop
         $ git push origin develop
@@ -116,7 +124,9 @@ Execute the following commands on your local machine, not production.
 
 7.  Create local database backup:
 
-        $ cp db.sqlite3 db.sqlite3.bak
+        $ cp db.sqlite3 backup-before-upgrade-to-v1.X.Y.sqlite3
+
+    Do not use $AMY_VERSION environment variable because it's not defined here.
 
 8.  Fetch newer AMY source code:
 
