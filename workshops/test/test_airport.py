@@ -1,5 +1,3 @@
-import unittest
-
 from django.core.urlresolvers import reverse
 
 from ..models import Airport, Person
@@ -50,7 +48,6 @@ class TestAirport(TestBase):
             with self.assertRaises(Airport.DoesNotExist):
                 Airport.objects.get(iata=iata)
 
-    @unittest.expectedFailure
     def test_airport_ordering(self):
         """Make sure that airports are listed in alphabetical order"""
         first_airport = Airport.objects.all()[0]
