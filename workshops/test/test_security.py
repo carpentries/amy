@@ -143,7 +143,7 @@ class TestViews(TestBase):
         Test that a view decorated with @login_not_required is accessible to
         everyone.
         """
-        view_name = 'training_request'
+        view_name = 'profileupdate_request'
         view = get_view_by_name(view_name)
         assert view._access_control_list == [login_not_required]
         url = reverse(view_name)

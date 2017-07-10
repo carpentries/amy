@@ -1,7 +1,9 @@
+from smtplib import SMTPException
+
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ImproperlyConfigured
-from django.core.mail import EmailMultiAlternatives
+from django.core.mail import EmailMultiAlternatives, EmailMessage
 from django.db.models import Model, ProtectedError
 from django.http import HttpResponseRedirect
 from django.utils.http import is_safe_url
@@ -13,6 +15,7 @@ from django.views.generic import (
     ListView,
     DetailView,
 )
+from django.template.loader import get_template
 
 from workshops.forms import BootstrapHelper
 from workshops.util import failed_to_delete, Paginator, get_pagination_items
@@ -219,3 +222,37 @@ class PrepopulationSupportMixin:
             if field in self.request.GET:
                 form.fields[field].disabled = True
         return form
+
+
+class AutoresponderMixin:
+    """Automatically emails the sender."""
+
+    @property
+    def email_subject(self):
+        raise NotImplementedError
+
+    @property
+    def email_body_template(self):
+        raise NotImplementedError
+
+    def form_valid(self, form):
+        """Send email to form sender if the form is valid."""
+
+        retval = super().form_valid(form)
+
+        body_template = get_template(self.email_body_template)
+        email_body = body_template.render({})
+        recipient = form.cleaned_data['email']
+
+        email = EmailMessage(
+            subject=self.email_subject, 
+            body=email_body,
+            to=[recipient],
+        )
+
+        try:
+            email.send()
+        except SMTPException as e:
+            pass  # fail silently
+
+        return retval

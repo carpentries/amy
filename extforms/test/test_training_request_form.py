@@ -82,7 +82,7 @@ class GroupNameFieldTestsBase(TestBase):
         self.form['recaptcha_response_field'] = 'PASSED'
 
         # submit the form
-        self.rs = self.form.submit()
+        self.rs = self.form.submit().maybe_follow()
 
     def assertSubmissionIsRecorded(self, with_group_name):
         # the form should be successfully submitted
