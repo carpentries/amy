@@ -4,32 +4,20 @@ language: python
 
 cache: pip
 
-services: postgresql
-
 python:
   - 3.5
 
 env:
-  # DB and PYDATA envvars are not used anywhere, they're only to make it easier
-  # to distinguish different builds.
-  - PYDATA=false DB=sqlite3
-    CHECK_MIGRATION=true
-  - PYDATA=false DB=postgres
-    CHECK_MIGRATION=true
-    DATABASE_URL="postgres://postgres:@localhost/testdb"
-  - PYDATA=true DB=sqlite3
-    AMY_ENABLE_PYDATA=true AMY_PYDATA_USERNAME=username AMY_PYDATA_PASSWORD=password
-  - PYDATA=true DB=postgres
-    AMY_ENABLE_PYDATA=true AMY_PYDATA_USERNAME=username AMY_PYDATA_PASSWORD=password
-    DATABASE_URL="postgres://postgres:@localhost/testdb"
+  - AMY_ENABLE_PYDATA=true
+    AMY_PYDATA_USERNAME=username
+    AMY_PYDATA_PASSWORD=password
+  - CHECK_MIGRATION=true
 
 install:
   - pip install -r requirements.txt
   - pip install coveralls
-  - pip install psycopg2
 
 before_script:
-  - psql -c "CREATE DATABASE testdb;" -U postgres
   - if [[ $CHECK_MIGRATION == true ]]; then
       python manage.py makemigrations --dry-run -e;
       export STATUS_CODE=$?;

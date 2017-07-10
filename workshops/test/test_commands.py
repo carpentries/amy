@@ -218,7 +218,7 @@ class TestWebsiteUpdatesCommand(TestBase):
         Event.objects.all().update(start=date.today())
 
         # one active event with URL and one without
-        e1, e2 = Event.objects.order_by('id')[0:2]
+        e1, e2 = Event.objects.all()[0:2]
         e1.completed = False  # completed == !active
         e1.url = 'https://swcarpentry.github.io/workshop-template/'
         e1.save()
@@ -227,7 +227,7 @@ class TestWebsiteUpdatesCommand(TestBase):
         e2.save()
 
         # one inactive event with URL and one without
-        e3, e4 = Event.objects.order_by('id')[2:4]
+        e3, e4 = Event.objects.all()[2:4]
         e3.completed = True
         e3.url = 'https://datacarpentry.github.io/workshop-template/'
         e3.save()
@@ -236,7 +236,7 @@ class TestWebsiteUpdatesCommand(TestBase):
         e4.save()
 
         # both active but one very old
-        e5, e6 = Event.objects.order_by('id')[4:6]
+        e5, e6 = Event.objects.all()[4:6]
         e5.completed = False
         e5.url = 'https://swcarpentry.github.io/workshop-template2/'
         e5.start = date(2014, 1, 1)
