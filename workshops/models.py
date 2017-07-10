@@ -226,6 +226,11 @@ class Airport(models.Model):
     def get_absolute_url(self):
         return reverse('airport_details', args=[str(self.iata)])
 
+    class Meta:
+        ordering = (
+            'iata',
+        )
+
 #------------------------------------------------------------
 
 class PersonManager(BaseUserManager):

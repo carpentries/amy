@@ -47,3 +47,9 @@ class TestAirport(TestBase):
 
             with self.assertRaises(Airport.DoesNotExist):
                 Airport.objects.get(iata=iata)
+
+    def test_airport_ordering(self):
+        """Make sure that airports are listed in alphabetical order.
+        See #1193."""
+        first_airport = Airport.objects.all()[0]
+        assert first_airport.iata == 'AAA'
