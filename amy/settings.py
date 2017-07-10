@@ -15,7 +15,6 @@ import sys
 
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import ugettext_lazy as _
-import dj_database_url
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
@@ -193,36 +192,28 @@ MESSAGE_TAGS = {
 # Database
 # https://docs.djangoproject.com/en/1.7/ref/settings/#databases
 
-if os.environ.get('AMY_DB_FILENAME') is not None:
-    raise ImproperlyConfigured(
-        'AMY_DB_FILENAME environment variable is not used any longer. '
-        'Use DATABASE_URL instead.'
-    )
+if DEBUG:
+    DB_FILENAME = os.environ.get('AMY_DB_FILENAME', 'db.sqlite3')
+else:
+    try:
+        DB_FILENAME = os.environ['AMY_DB_FILENAME']
+    except KeyError as ex:
+        raise ImproperlyConfigured(
+            'You must specify AMY_DB_FILENAME environment variable '
+            'when DEBUG is False.') from ex
 
-# By default, local infile db.sqlite3 database is used. If you want to use
-# another sqlite3 database, set env var:
-#
-# $ export DATABASE_URL='sqlite://another-db.sqlite3'
-#
-# or use PostgreSQL database:
-#
-# $ export DATABASE_URL=postgres://username:password@localhost/database_name
-
-DEFAULT_DATABASE_URL = 'sqlite://db.sqlite3'
-db_from_env = dj_database_url.config(
-    conn_max_age=500,
-    default=DEFAULT_DATABASE_URL,
-)
 DATABASES = {
-    'default': db_from_env,
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, DB_FILENAME),
+        'TEST': {},
+    }
 }
-
-if 'sqlite3' in DATABASES['default']['ENGINE'] and '--keepdb' in sys.argv:
+if '--keepdb' in sys.argv:
     # By default, Django uses in-memory sqlite3 database, which is much
     # faster than sqlite3 database in a file. However, we may want to keep
     # database between test launches, so that we avoid the overhead of
     # applying migrations on each test launch.
-    DATABASES['default'].setdefault('TEST', {})
     DATABASES['default']['TEST']['NAME'] = 'test_db.sqlite3'
 
 # Authentication

@@ -1,17 +1,7 @@
 import datetime
 from itertools import accumulate
 
-from django.db.models import (
-    Count, 
-    Sum, 
-    Case, 
-    F, 
-    When, 
-    Value, 
-    IntegerField, 
-    Min, 
-    Prefetch,
-)
+from django.db.models import Count, Sum, Case, F, When, Value, IntegerField, Min
 from rest_framework import viewsets
 from rest_framework.decorators import list_route
 from rest_framework.filters import DjangoFilterBackend
@@ -160,11 +150,8 @@ class ExportInstructorLocationsView(ListAPIView):
     permission_classes = (IsAuthenticatedOrReadOnly, )
     paginator = None  # disable pagination
 
-    queryset = Airport.objects.exclude(person=None).prefetch_related(
-        # Make sure that we sort instructors by id. This is default behaviour on
-        # SQLite, but not in PostgreSQL. This is necessary to pass
-        # workshops.test_export.TestExportingInstructors.test_serialization.
-        Prefetch('person_set', queryset=Person.objects.order_by('id')))
+    queryset = Airport.objects.exclude(person=None) \
+                              .prefetch_related('person_set')
     serializer_class = ExportInstructorLocationsSerializer
 
 
@@ -531,9 +518,7 @@ class ReportsViewSet(ViewSet):
             event__end__lte=end,
             role__name='instructor',
             person__may_contact=True,
-        # Below, we need to use event__tags__in instead of event__tags,
-        # otherwise it won't work on PostgreSQL.
-        ).exclude(event__tags__in=tags).order_by('event', 'person', 'role') \
+        ).exclude(event__tags=tags).order_by('event', 'person', 'role') \
          .select_related('person', 'event', 'role')
         return tasks
 
