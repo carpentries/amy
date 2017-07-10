@@ -42,7 +42,7 @@ from django.views.generic.edit import (
     ModelFormMixin,
 )
 from github.GithubException import GithubException
-from reversion.models import Revision
+from reversion.models import Version
 from reversion.revisions import get_for_object
 
 from api.filters import (
@@ -2075,11 +2075,8 @@ def instructor_issues(request):
 
 
 @admin_required
-def object_changes(request, revision_id):
-    revision = get_object_or_404(Revision, pk=revision_id)
-
-    # we assume there's only one version per revision
-    current_version = revision.version_set.all()[0]
+def object_changes(request, version_id):
+    current_version = get_object_or_404(Version, pk=version_id)
     obj = current_version.object
 
     try:
@@ -2096,7 +2093,7 @@ def object_changes(request, revision_id):
         'object': obj,
         'previous_version': previous_version,
         'current_version': current_version,
-        'revision': revision,
+        'revision': current_version.revision,
         'title': str(obj),
         'verbose_name': obj._meta.verbose_name,
         'fields': [
