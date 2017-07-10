@@ -88,6 +88,10 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
     def _setUpAirports(self):
         '''Set up airport objects.'''
 
+        self.airport_60_100 = Airport.objects.create(
+            iata='ZZZ', fullname='Airport 60x100',
+            latitude=0.0, longitude=0.0,
+        )
         self.airport_0_0 = Airport.objects.create(
             iata='AAA', fullname='Airport 0x0', country='AL',  # AL for Albania
             latitude=0.0, longitude=0.0,
