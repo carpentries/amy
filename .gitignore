@@ -22,3 +22,6 @@ workshops/git_version.py
 
 # JS, CSS dependencies (installed via bower)
 bower_components
+
+# Jupyter Notebooks
+*.ipynb

@@ -226,6 +226,11 @@ class Airport(models.Model):
     def get_absolute_url(self):
         return reverse('airport_details', args=[str(self.iata)])
 
+    class Meta:
+        ordering = (
+            'iata',
+        )
+
 #------------------------------------------------------------
 
 class PersonManager(BaseUserManager):
@@ -328,7 +333,7 @@ class Person(AbstractBaseUser, PermissionsMixin):
                                    verbose_name='Personal (first) name')
     middle      = models.CharField(max_length=STR_LONG, blank=True,
                                    verbose_name='Middle name')
-    family      = models.CharField(max_length=STR_LONG,
+    family      = models.CharField(max_length=STR_LONG, blank=True, null=True,
                                    verbose_name='Family (last) name')
     email       = models.CharField(max_length=STR_LONG, unique=True, null=True, blank=True,
                                    verbose_name='Email address')
@@ -538,7 +543,8 @@ class Person(AbstractBaseUser, PermissionsMixin):
         # save empty string as NULL to the database - otherwise there are
         # issues with UNIQUE constraint failing
         self.personal = self.personal.strip()
-        self.family = self.family.strip()
+        if self.family is not None:
+            self.family = self.family.strip()
         self.middle = self.middle.strip()
         self.email = self.email.strip() if self.email else None
         self.gender = self.gender or None
