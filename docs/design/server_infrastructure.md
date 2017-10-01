@@ -75,4 +75,26 @@ The standard deployment procedure is documented in a separate file.
 
 ## Database server
 
+There is none. AMY uses SQLite database, so the only database file that's
+important lives in AMY's installation directory.
+
+Plans to migrate to PostgreSQL database server were ceased due to bigger
+development efforts for beginners, but should they be reconsidered, the
+database server may need to be on a separate machine. Backup will require
+adjusting to the new database server.
+
 ## Backup
+
+For now, only the database is being backed-up. There aren't any other assets
+like user-uploaded graphics that would require a regular copy.
+
+Since currently the whole AMY database is contained in a single file, the
+backup process is done with a simple
+`scp amy_server:path_to_db_file ./current_time` command. It copies the
+remote database file into local directory while adjusting file's name to
+contain current timestamp.
+
+There are two backup servers running, both in different locations than AMY
+server. Backup is being made every 1 hour on both, but the offset is
+different: one server backs-up on 1:00, 2:00, 3:00, etc., the other backs-up
+on 1:30, 2:30, 3:30, etc.
