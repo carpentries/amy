@@ -64,6 +64,15 @@
       </ul>
       <p>If you think that you're missing a badge, please email us at <a href="mailto:admin@software-carpentry.org">admin@software-carpentry.org</a></p>
   </td></tr>
+  <tr><th>workshops you taught at</th><td>
+      <ul>
+        {% for workshop in workshops %}
+          <li>{{ workshop.event }}</li>
+        {% empty %}
+          <li>No workshops taught.</li>
+        {% endfor %}
+      </ul>
+  </td></tr>
 </table>
 
 <p><a href="{% url 'autoupdate_profile' %}" class="btn btn-primary">Update your profile</a></p>

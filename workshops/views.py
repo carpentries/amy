@@ -2932,6 +2932,9 @@ def trainee_dashboard(request):
     request.user.is_dc_instructor = request.user.award_set.filter(
         badge__name='dc-instructor').exists()
 
+    # Workshops person taught at
+    workshops = request.user.task_set.filter(role__name='instructor')
+
     if request.method == 'POST' and 'swc-submit' in request.POST:
         requirement = TrainingRequirement.objects.get(name='SWC Homework')
         progress = TrainingProgress(trainee=request.user,
@@ -2969,6 +2972,7 @@ def trainee_dashboard(request):
         'title': 'Your profile',
         'swc_form': swc_form,
         'dc_form': dc_form,
+        'workshops': workshops,
     }
     return render(request, 'workshops/trainee_dashboard.html', context)
 
