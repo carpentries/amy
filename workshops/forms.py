@@ -1201,13 +1201,14 @@ class AutoUpdateProfileForm(PrivacyConsentMixin, forms.ModelForm):
             'domains',
             'lessons',
             'languages',
+            'occupation',
+            'orcid',
         ]
         readonly_fields = (
             'username',
             'github',
         )
         widgets = {
-            'occupation': forms.RadioSelect(),
             'gender': forms.RadioSelect(),
             'domains': forms.CheckboxSelectMultiple(),
             'lessons': forms.CheckboxSelectMultiple(),
