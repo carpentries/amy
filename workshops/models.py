@@ -57,6 +57,40 @@ class CreatedUpdatedMixin(models.Model):
         abstract = True
 
 
+class DataPrivacyAgreementMixin(models.Model):
+    """This mixin provides a data privacy agreement. Instead of being in the
+    forms only (as a additional and required input), we're switching to having
+    this agreement stored in the database."""
+    data_privacy_agreement = models.BooleanField(
+        null=False, blank=False,
+        verbose_name='I have read and agree to <a href='
+                     '"https://software-carpentry.org/privacy/", '
+                     'target="_blank">the Software Carpentry Foundation\'s '
+                     'data privacy policy</a>.'
+    )
+
+    class Meta:
+        abstract = True
+
+
+class COCAgreementMixin(models.Model):
+    """This mixin provides a code-of-conduct agreement. Instead of being in the
+    forms only (as a additional and required input), we're switching to having
+    this agreement stored in the database."""
+    code_of_conduct_agreement = models.BooleanField(
+        null=False, blank=False,
+        verbose_name='I agree to abide by The Carpentries\' Code of Conduct. '
+                     'The Code of Conduct can be found at '
+                     '<a href="http://software-carpentry.org/conduct/">'
+                     'http://software-carpentry.org/conduct/</a> and '
+                     '<a href="http://datacarpentry.org/code-of-conduct/">'
+                     'http://datacarpentry.org/code-of-conduct/</a>.'
+    )
+
+    class Meta:
+        abstract = True
+
+
 @reversion.register
 class Organization(models.Model):
     '''Represent an organization, academic or business.'''
@@ -1939,7 +1973,8 @@ def build_choice_field_with_other_option(choices, default, verbose_name=None,
 
 
 @reversion.register
-class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
+class TrainingRequest(ActiveMixin, CreatedUpdatedMixin,
+        DataPrivacyAgreementMixin, COCAgreementMixin, models.Model):
     STATES = [
         ('p', 'Pending'),  # initial state
         ('a', 'Accepted'),  # state after matching a Person record
@@ -2016,6 +2051,13 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         blank=False,
     )
     country = CountryField()
+    underresourced = models.BooleanField(
+        null=False, default=False, blank=True,
+        verbose_name='This is a small, remote, or under-resourced institution',
+        help_text='The Carpentries strive to make workshops accessible to as '
+                  'many people as possible, in as wide a variety of situations'
+                  ' as possible.'
+    )
 
     domains = models.ManyToManyField(
         'KnowledgeDomain',
@@ -2042,6 +2084,24 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         max_length=STR_LONG,
         verbose_name=' ',
         blank=True, default='',
+    )
+    underrepresented = models.CharField(
+        max_length=STR_LONGEST, blank=True, null=True,
+        verbose_name='I self-identify as a member of a group that is '
+                     'under-represented in research and/or computing, e.g., '
+                     'women, ethnic minorities, LGBTQ, etc.',
+        help_text="Provide details or leave blank if this doesn't apply"
+                  " to you."
+    )
+
+    # new field for teaching-related experience in non-profit or volunteer org.
+    nonprofit_teaching_experience = models.CharField(
+        max_length=STR_LONGEST, blank=True, null=True,
+        verbose_name='I have been an active contributor to other volunteer or'
+                     ' non-profit groups with significant teaching or training'
+                     ' components.',
+        help_text="Provide details or leave blank if this doesn't apply"
+                  " to you."
     )
 
     previous_involvement = models.ManyToManyField(
@@ -2150,6 +2210,22 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         default='', null=False, blank=True,
         help_text='What else do you want us to know?',
         verbose_name='Anything else?')
+
+    # a few agreements
+    training_completion_agreement = models.BooleanField(
+        null=False, blank=False,
+        verbose_name='I agree to complete this training within three months of'
+                     ' the training course. The completion steps are described'
+                     ' at <a href="http://carpentries.github.io/instructor-'
+                     'training/checkout/">http://carpentries.github.io/'
+                     'instructor-training/checkout/</a> and take a total of '
+                     'approximately 8-10 hours.'
+    )
+    workshop_teaching_agreement = models.BooleanField(
+        null=False, blank=False,
+        verbose_name='I agree to teach a Carpentry workshop within 12 months '
+                     'of this Training Course.'
+    )
 
     notes = models.TextField(blank=True, help_text='Admin notes')
 
