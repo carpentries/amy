@@ -1918,7 +1918,8 @@ class InvoiceRequest(models.Model):
 #------------------------------------------------------------
 
 
-def build_choice_field_with_other_option(choices, default, verbose_name=None):
+def build_choice_field_with_other_option(choices, default, verbose_name=None,
+        help_text=None):
     assert default in [c[0] for c in choices]
     assert all(c[0] != '' for c in choices)
 
@@ -1926,6 +1927,7 @@ def build_choice_field_with_other_option(choices, default, verbose_name=None):
         max_length=STR_MED,
         choices=choices,
         verbose_name=verbose_name,
+        help_text=help_text,
         null=False, blank=False, default=default,
     )
     other_field = models.CharField(
@@ -1954,9 +1956,10 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         blank=True, default='', null=False,
         max_length=STR_LONG,
         verbose_name='Group name',
-        help_text='If you are part of a group that is applying for an '
-                  'instructor training together, please enter the name of your'
-                  ' group here and on every group member\'s application.',
+        help_text='If you are applying at the same time as friends or '
+                  'colleagues, pick a name for your group (e.g., the name of '
+                  'your institution) and fill that in, and we will try to put '
+                  'you in the same training class.',
     )
 
     personal = models.CharField(
@@ -2009,7 +2012,7 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
     location = models.CharField(
         max_length=STR_LONG,
         verbose_name='Location',
-        help_text='please give city, and province or state if applicable',
+        help_text='Please give city, and province or state if applicable.',
         blank=False,
     )
     country = CountryField()
@@ -2027,10 +2030,13 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         blank=True, default='',
     )
 
+    # `gender` fields are hidden, and left here for data migration purposes
+    # instead of using `gender` fields, there's a single checkbox for
+    # under-represented minorities
     gender = models.CharField(
         max_length=1,
         choices=ProfileUpdateRequest.GENDER_CHOICES,
-        null=False, blank=False, default=Person.UNDISCLOSED,
+        null=False, blank=True, default=Person.UNDISCLOSED,
     )
     gender_other = models.CharField(
         max_length=STR_LONG,
@@ -2040,7 +2046,8 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
 
     previous_involvement = models.ManyToManyField(
         'Role',
-        verbose_name='Previous involvement with Software Carpentry or Data Carpentry',
+        verbose_name='How often have you been involved with The Carpentries in'
+                     ' the following ways',
         help_text='Please check all that apply.',
         blank=True,
     )
@@ -2048,34 +2055,40 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
     PREVIOUS_TRAINING_CHOICES = (
         ('none', 'None'),
         ('hours', 'A few hours'),
-        ('days', 'A few days'),
+        ('days', 'A few days'),  # need to leave this for past entries
+        ('workshop', 'A workshop'),
         ('course', 'A certification or short course'),
         ('full', 'A full degree'),
         ('other', 'Other (enter below)')
     )
     previous_training, previous_training_other = build_choice_field_with_other_option(
         choices=PREVIOUS_TRAINING_CHOICES,
-        verbose_name='Previous training in teaching',
+        verbose_name='Previous formal training as a teacher or instructor',
         default='none',
     )
     previous_training_explanation = models.TextField(
-        verbose_name='Explanation of your previous training in teaching',
+        verbose_name='Description of your previous training in teaching',
         null=True, blank=True,
     )
 
+    # this part changed a little bit, mostly wording and choices
     PREVIOUS_EXPERIENCE_CHOICES = (
         ('none', 'None'),
-        ('hours', 'Have taught for a few hours'),
-        ('courses', 'Have taught entire courses'),
+        ('hours', 'A few hours'),
+        ('workshop', 'A workshop (full day or longer)'),
+        ('ta', 'Teaching assistant for a full course'),
+        ('courses', 'Primary instructor for a full course'),
         ('other', 'Other (enter below)')
     )
     previous_experience, previous_experience_other = build_choice_field_with_other_option(
         choices=PREVIOUS_EXPERIENCE_CHOICES,
         default='none',
-        verbose_name='Previous experience in teaching'
+        verbose_name='Previous experience in teaching',
+        help_text='Please include teaching experience at any level from grade '
+                  'school to post-secondary education.'
     )
     previous_experience_explanation = models.TextField(
-        verbose_name='Explanation of your previous experience in teaching',
+        verbose_name='Description of your previous experience in teaching',
         null=True, blank=True,
     )
 
@@ -2089,26 +2102,23 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
     programming_language_usage_frequency = models.CharField(
         max_length=STR_MED,
         choices=PROGRAMMING_LANGUAGE_USAGE_FREQUENCY_CHOICES,
-        verbose_name='How frequently do you use Python, R or Matlab?',
+        verbose_name='How frequently do you work with the tools that The '
+                     'Carpentries teach, such as R, Python, MATLAB, Perl, '
+                     'SQL, Git, OpenRefine, and the Unix Shell?',
         null=False, blank=False, default='daily',
-    )
-
-    reason = models.TextField(
-        verbose_name='Why do you want to attend this training course?',
-        null=False, blank=False,
     )
 
     TEACHING_FREQUENCY_EXPECTATION_CHOICES = (
         ('not-at-all', 'Not at all'),
         ('yearly', 'Once a year'),
         ('monthly', 'Several times a year'),
-        ('often', 'Primary occupation'),
+        ('often', 'Primary occupation'),  # need to leave this for past entries
         ('other', 'Other (enter below)'),
     )
     teaching_frequency_expectation, teaching_frequency_expectation_other = build_choice_field_with_other_option(
         choices=TEACHING_FREQUENCY_EXPECTATION_CHOICES,
-        verbose_name='How often would you expect to teach on Software '
-                     'or Data Carpentry Workshops after this training?',
+        verbose_name='How often would you expect to teach Carpentry Workshops'
+                     ' after this training?',
         default='not-at-all',
     )
 
@@ -2124,10 +2134,16 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         default='not-at-all',
     )
 
+    # this should be hidden
     additional_skills = models.TextField(
         verbose_name='Do you have any additional relevant skills '
                      'or interests that we should know about?',
         null=False, blank=True, default='',
+    )
+
+    reason = models.TextField(
+        verbose_name='Why do you want to attend this training course?',
+        null=False, blank=False,
     )
 
     comment = models.TextField(
