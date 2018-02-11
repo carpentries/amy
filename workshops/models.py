@@ -2074,19 +2074,8 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin,
         blank=True, default='',
     )
 
-    # `gender` fields are hidden, and left here for data migration purposes
-    # instead of using `gender` fields, there's a single checkbox for
-    # under-represented minorities
-    gender = models.CharField(
-        max_length=1,
-        choices=ProfileUpdateRequest.GENDER_CHOICES,
-        null=False, blank=True, default=Person.UNDISCLOSED,
-    )
-    gender_other = models.CharField(
-        max_length=STR_LONG,
-        verbose_name=' ',
-        blank=True, default='',
-    )
+    # a single checkbox for under-represented minorities
+    # instead of two "gender" fields
     underrepresented = models.CharField(
         max_length=STR_LONGEST, blank=True, null=True,
         verbose_name='I self-identify as a member of a group that is '
@@ -2117,7 +2106,6 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin,
     PREVIOUS_TRAINING_CHOICES = (
         ('none', 'None'),
         ('hours', 'A few hours'),
-        ('days', 'A few days'),  # need to leave this for past entries
         ('workshop', 'A workshop'),
         ('course', 'A certification or short course'),
         ('full', 'A full degree'),
@@ -2174,7 +2162,6 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin,
         ('not-at-all', 'Not at all'),
         ('yearly', 'Once a year'),
         ('monthly', 'Several times a year'),
-        ('often', 'Primary occupation'),  # need to leave this for past entries
         ('other', 'Other (enter below)'),
     )
     teaching_frequency_expectation, teaching_frequency_expectation_other = build_choice_field_with_other_option(
@@ -2194,13 +2181,6 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin,
         choices=MAX_TRAVELLING_FREQUENCY_CHOICES,
         verbose_name='How frequently would you be able to travel to teach such classes?',
         default='not-at-all',
-    )
-
-    # this should be hidden
-    additional_skills = models.TextField(
-        verbose_name='Do you have any additional relevant skills '
-                     'or interests that we should know about?',
-        null=False, blank=True, default='',
     )
 
     reason = models.TextField(
