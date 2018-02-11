@@ -63,6 +63,7 @@ class DataPrivacyAgreementMixin(models.Model):
     this agreement stored in the database."""
     data_privacy_agreement = models.BooleanField(
         null=False, blank=False,
+        default=False,  # for 'normal' migration purposes
         verbose_name='I have read and agree to <a href='
                      '"https://software-carpentry.org/privacy/", '
                      'target="_blank">the Software Carpentry Foundation\'s '
@@ -79,6 +80,7 @@ class COCAgreementMixin(models.Model):
     this agreement stored in the database."""
     code_of_conduct_agreement = models.BooleanField(
         null=False, blank=False,
+        default=False,  # for 'normal' migration purposes
         verbose_name='I agree to abide by The Carpentries\' Code of Conduct. '
                      'The Code of Conduct can be found at '
                      '<a href="http://software-carpentry.org/conduct/">'
@@ -2214,6 +2216,7 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin,
     # a few agreements
     training_completion_agreement = models.BooleanField(
         null=False, blank=False,
+        default=False,  # for 'normal' migration purposes
         verbose_name='I agree to complete this training within three months of'
                      ' the training course. The completion steps are described'
                      ' at <a href="http://carpentries.github.io/instructor-'
@@ -2223,6 +2226,7 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin,
     )
     workshop_teaching_agreement = models.BooleanField(
         null=False, blank=False,
+        default=False,  # for 'normal' migration purposes
         verbose_name='I agree to teach a Carpentry workshop within 12 months '
                      'of this Training Course.'
     )
