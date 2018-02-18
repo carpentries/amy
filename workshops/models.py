@@ -2237,6 +2237,12 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin,
             )
         )
 
+    def get_underrepresented_display(self):
+        if self.underrepresented:
+            return "Yes: {}".format(self.underrepresented)
+        else:
+            return "No"
+
 
 @reversion.register
 class TrainingRequirement(models.Model):

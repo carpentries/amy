@@ -2845,7 +2845,6 @@ def _match_training_request_to_person(form, training_request, request):
     else:
         if form.action == 'create':
             training_request.person.middle = training_request.middle
-            training_request.person.gender = training_request.gender
             training_request.person.github = training_request.github
             training_request.person.affiliation = training_request.affiliation
             training_request.person.domains = training_request.domains.all()
@@ -3033,8 +3032,7 @@ def download_trainingrequests(request):
         'Country',
         'Expertise areas',
         'Expertise areas (other)',
-        'Gender',
-        'Gender (other)',
+        'Under-represented',
         'Previous Involvement',
         'Previous Training in Teaching',
         'Previous Training (other)',
@@ -3045,7 +3043,6 @@ def download_trainingrequests(request):
         'Teaching Frequency Expectation (other)',
         'Max Travelling Frequency',
         'Max Travelling Frequency (other)',
-        'Additional Skills',
         'Comment',
     ])
     for req in TrainingRequest.objects.all():
@@ -3064,8 +3061,7 @@ def download_trainingrequests(request):
             req.country,
             ';'.join(d.name for d in req.domains.all()),
             req.domains_other,
-            req.get_gender_display(),
-            req.gender_other,
+            req.get_underrepresented_display(),
             ';'.join(inv.name for inv in req.previous_involvement.all()),
             req.get_previous_training_display(),
             req.previous_training_other,
@@ -3076,7 +3072,6 @@ def download_trainingrequests(request):
             req.teaching_frequency_expectation_other,
             req.get_max_travelling_frequency_display(),
             req.max_travelling_frequency_other,
-            req.additional_skills,
             req.comment,
         ])
 
