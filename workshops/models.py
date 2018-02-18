@@ -2049,7 +2049,8 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin,
     location = models.CharField(
         max_length=STR_LONG,
         verbose_name='Location',
-        help_text='Please give city, and province or state if applicable.',
+        help_text='Please give city, and province or state if applicable. Do '
+                  'not share a full mailing address.',
         blank=False,
     )
     country = CountryField()
