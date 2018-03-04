@@ -23,7 +23,7 @@ class TestProfileUpdateRequest(TestBase):
     def test_request_added(self):
         """Test if ProfileUpdateRequest is successfully added."""
         data = {
-            'recaptcha_response_field': 'PASSED',  # to auto-pass RECAPTCHA
+            'g-recaptcha-response': 'PASSED',  # to auto-pass RECAPTCHA
             'personal': 'Harry', 'family': 'Potter',
             'email': 'harry@potter.com', 'airport_iata': 'LON',
             'affiliation': 'Auror at Ministry of Magic',

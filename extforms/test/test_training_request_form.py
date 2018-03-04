@@ -42,7 +42,7 @@ class TestTrainingRequestForm(TestBase):
             'agreed_to_complete_training': 'on',
             'agreed_to_teach_workshops': 'on',
             'privacy_consent': True,
-            'recaptcha_response_field': 'PASSED',
+            'g-recaptcha-response': 'PASSED',
         }
         rv = self.client.post(reverse('training_request'), data,
                               follow=True)
@@ -78,7 +78,7 @@ class GroupNameFieldTestsBase(TestBase):
         self.form['code_of_conduct_agreement'] = True
         self.form['training_completion_agreement'] = True
         self.form['workshop_teaching_agreement'] = True
-        self.form['recaptcha_response_field'] = 'PASSED'
+        self.form['g-recaptcha-response'] = 'PASSED'
 
         # submit the form
         self.rs = self.form.submit().maybe_follow()

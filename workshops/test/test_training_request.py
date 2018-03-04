@@ -56,7 +56,7 @@ class TestTrainingRequestForm(TestBase):
             'code_of_conduct_agreement': 'on',
             'training_completion_agreement': 'on',
             'workshop_teaching_agreement': True,
-            'recaptcha_response_field': 'PASSED',
+            'g-recaptcha-response': 'PASSED',
         }
         rv = self.client.post(reverse('training_request'), data,
                               follow=True)

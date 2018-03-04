@@ -29,7 +29,7 @@ class TestSWCEventRequestForm(TestBase):
         """Ensure the request is successfully added to the pool."""
         data = {
             'workshop_type': 'swc',
-            'recaptcha_response_field': 'PASSED',  # to auto-pass RECAPTCHA
+            'g-recaptcha-response': 'PASSED',  # to auto-pass RECAPTCHA
             'name': 'Harry Potter', 'email': 'harry@potter.com',
             'affiliation': 'Hogwarts', 'location': 'United Kingdom',
             'country': 'GB', 'preferred_date': 'soon',
@@ -97,7 +97,7 @@ class TestDCEventRequestForm(TestBase):
         """Ensure the request is successfully added to the pool."""
         data = {
             'workshop_type': 'dc',
-            'recaptcha_response_field': 'PASSED',  # to auto-pass RECAPTCHA
+            'g-recaptcha-response': 'PASSED',  # to auto-pass RECAPTCHA
             'name': 'Harry Potter', 'email': 'harry@potter.com',
             'affiliation': 'Hogwarts', 'location': 'United Kingdom',
             'country': 'GB', 'preferred_date': 'soon',
