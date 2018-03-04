@@ -179,6 +179,38 @@ class WidgetOverrideMixin:
             self.fields[field].widget = widget
 
 
+class RadioSelectWithOther(forms.RadioSelect):
+    """A RadioSelect widget that should render additional field ('Other').
+
+    We have a number of occurences of two model fields bound together: one
+    containing predefined set of choices, the other being a text input for
+    other input user wants to choose instead of one of our predefined options.
+
+    This widget should help with rendering two widgets in one table row."""
+
+    other_field = None  # to be bound later
+
+    def __init__(self, other_field_name, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.other_field_name = other_field_name
+
+
+class CheckboxSelectMultipleWithOthers(forms.CheckboxSelectMultiple):
+    """A multiple choice widget that should render additional field ('Other').
+
+    We have a number of occurences of two model fields bound together: one
+    containing predefined set of choices, the other being a text input for
+    other input user wants to choose instead of one of our predefined options.
+
+    This widget should help with rendering two widgets in one table row."""
+
+    other_field = None  # to be bound later
+
+    def __init__(self, other_field_name, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.other_field_name = other_field_name
+
+
 class WorkshopStaffForm(forms.Form):
     '''Represent instructor matching form.'''
 
@@ -1101,15 +1133,15 @@ class TrainingRequestForm(forms.ModelForm):
             'workshop_teaching_agreement',
         )
         widgets = {
-            'occupation': forms.RadioSelect(),
-            'domains': forms.CheckboxSelectMultiple(),
+            'occupation': RadioSelectWithOther('occupation_other'),
+            'domains': CheckboxSelectMultipleWithOthers('domains_other'),
             'gender': forms.RadioSelect(),
             'previous_involvement': forms.CheckboxSelectMultiple(),
-            'previous_training': forms.RadioSelect(),
-            'previous_experience': forms.RadioSelect(),
+            'previous_training': RadioSelectWithOther('previous_training_other'),
+            'previous_experience': RadioSelectWithOther('previous_experience_other'),
             'programming_language_usage_frequency': forms.RadioSelect(),
-            'teaching_frequency_expectation': forms.RadioSelect(),
-            'max_travelling_frequency': forms.RadioSelect(),
+            'teaching_frequency_expectation': RadioSelectWithOther('teaching_frequency_expectation_other'),
+            'max_travelling_frequency': RadioSelectWithOther('max_travelling_frequency_other'),
         }
 
     def __init__(self, *args, initial_group_name=None, **kwargs):
@@ -1120,6 +1152,30 @@ class TrainingRequestForm(forms.ModelForm):
         if initial_group_name is not None:
             field = self.fields['group_name']
             field.widget = field.hidden_widget()
+
+        # set up a layout object for the helper
+        self.helper.layout = self.helper.build_default_layout(self)
+
+        # set up RadioSelectWithOther widget so that it can display additional
+        # field inline
+        self['occupation'].field.widget.other_field = self['occupation_other']
+        self['domains'].field.widget.other_field = self['domains_other']
+        self['previous_training'].field.widget.other_field = (
+            self['previous_training_other'])
+        self['previous_experience'].field.widget.other_field = (
+            self['previous_experience_other'])
+        self['teaching_frequency_expectation'].field.widget.other_field = (
+            self['teaching_frequency_expectation_other'])
+        self['max_travelling_frequency'].field.widget.other_field = (
+            self['max_travelling_frequency_other'])
+
+        # remove that additional field
+        self.helper.layout.fields.remove('occupation_other')
+        self.helper.layout.fields.remove('domains_other')
+        self.helper.layout.fields.remove('previous_training_other')
+        self.helper.layout.fields.remove('previous_experience_other')
+        self.helper.layout.fields.remove('teaching_frequency_expectation_other')
+        self.helper.layout.fields.remove('max_travelling_frequency_other')
 
 
 class TrainingRequestUpdateForm(forms.ModelForm):

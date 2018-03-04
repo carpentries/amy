@@ -646,7 +646,7 @@ class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         ('support', 'Support staff (including technical support)'),
         ('librarian', 'Librarian/archivist'),
         ('commerce', 'Commercial software developer '),
-        ('', 'Other (enter below)'),
+        ('', 'Other:'),
     )
     occupation = models.CharField(
         max_length=STR_MED,
@@ -2108,7 +2108,7 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin,
         ('workshop', 'A workshop'),
         ('course', 'A certification or short course'),
         ('full', 'A full degree'),
-        ('other', 'Other (enter below)')
+        ('other', 'Other:')
     )
     previous_training, previous_training_other = build_choice_field_with_other_option(
         choices=PREVIOUS_TRAINING_CHOICES,
@@ -2127,7 +2127,7 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin,
         ('workshop', 'A workshop (full day or longer)'),
         ('ta', 'Teaching assistant for a full course'),
         ('courses', 'Primary instructor for a full course'),
-        ('other', 'Other (enter below)')
+        ('other', 'Other:')
     )
     previous_experience, previous_experience_other = build_choice_field_with_other_option(
         choices=PREVIOUS_EXPERIENCE_CHOICES,
@@ -2161,7 +2161,7 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin,
         ('not-at-all', 'Not at all'),
         ('yearly', 'Once a year'),
         ('monthly', 'Several times a year'),
-        ('other', 'Other (enter below)'),
+        ('other', 'Other:'),
     )
     teaching_frequency_expectation, teaching_frequency_expectation_other = build_choice_field_with_other_option(
         choices=TEACHING_FREQUENCY_EXPECTATION_CHOICES,
@@ -2174,7 +2174,7 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin,
         ('not-at-all', 'Not at all'),
         ('yearly', 'Once a year'),
         ('often', 'Several times a year'),
-        ('other', 'Other (enter below)'),
+        ('other', 'Other:'),
     )
     max_travelling_frequency, max_travelling_frequency_other = build_choice_field_with_other_option(
         choices=MAX_TRAVELLING_FREQUENCY_CHOICES,
