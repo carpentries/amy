@@ -309,7 +309,7 @@ class TestDownloadCSVView(TestBase):
         got = rv.content.decode('utf-8')
         expected = (
             'State,Matched Trainee,Group Name,Personal,Family,Email,GitHub username,Occupation,Occupation (other),Affiliation,Location,Country,Expertise areas,Expertise areas (other),Under-represented,Previous Involvement,Previous Training in Teaching,Previous Training (other),Previous Training (explanation),Programming Language Usage,Reason,Teaching Frequency Expectation,Teaching Frequency Expectation (other),Max Travelling Frequency,Max Travelling Frequency (other),Comment\r\n'
-            'Pending,—,,John,Smith,john@smith.com,,Other (enter below),,AGH University of Science and Technology,Cracow,PL,,,No,,None,,,Every day,Just for fun.,Several times a year,,Once a year,,\r\n'
+            'Pending,—,,John,Smith,john@smith.com,,Other:,,AGH University of Science and Technology,Cracow,PL,,,No,,None,,,Every day,Just for fun.,Several times a year,,Once a year,,\r\n'
         )
         self.assertEqual(got, expected)
 
