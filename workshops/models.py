@@ -1993,10 +1993,8 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin,
         blank=True, default='', null=False,
         max_length=STR_LONG,
         verbose_name='Group name',
-        help_text='If you are applying at the same time as friends or '
-                  'colleagues, pick a name for your group (e.g., the name of '
-                  'your institution) and fill that in, and we will try to put '
-                  'you in the same training class.',
+        help_text='If you are scheduled to receive training at a member site, '
+                  'please enter the group name you were provided.',
     )
 
     personal = models.CharField(
@@ -2202,8 +2200,7 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin,
                      ' the training course. The completion steps are described'
                      ' at <a href="http://carpentries.github.io/instructor-'
                      'training/checkout/">http://carpentries.github.io/'
-                     'instructor-training/checkout/</a> and take a total of '
-                     'approximately 8-10 hours.'
+                     'instructor-training/checkout/</a>.'
     )
     workshop_teaching_agreement = models.BooleanField(
         null=False, blank=False,
