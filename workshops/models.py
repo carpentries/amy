@@ -2096,8 +2096,7 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin,
 
     previous_involvement = models.ManyToManyField(
         'Role',
-        verbose_name='How often have you been involved with The Carpentries in'
-                     ' the following ways',
+        verbose_name='In which of the following ways have you been involved with The Carpentries',
         help_text='Please check all that apply.',
         blank=True,
     )

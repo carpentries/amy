@@ -45,7 +45,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='trainingrequest',
             name='previous_involvement',
-            field=models.ManyToManyField(blank=True, help_text='Please check all that apply.', to='workshops.Role', verbose_name='How often have you been involved with The Carpentries in the following ways'),
+            field=models.ManyToManyField(blank=True, help_text='Please check all that apply.', to='workshops.Role', verbose_name='In which of the following ways have you been involved with The Carpentries'),
         ),
         migrations.AlterField(
             model_name='trainingrequest',
