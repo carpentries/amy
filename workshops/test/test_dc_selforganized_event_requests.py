@@ -50,7 +50,7 @@ class TestDCSelfOrganizedEventRequestForm(TestBase):
         """Test if the submitted form adds a new event submission."""
         self.assertEqual(len(DCSelfOrganizedEventRequest.objects.all()), 1)
         data = {
-            'recaptcha_response_field': 'PASSED',
+            'g-recaptcha-response': 'PASSED',
             'name': 'Harry Potter',
             'email': 'harry@potter.com',
             'organization': 'Hogwarts School of Witchcraft and Wizardry',
@@ -81,7 +81,7 @@ class TestDCSelfOrganizedEventRequestForm(TestBase):
     def test_submission_sends_email(self):
         """Test if the submitted form results in email sent."""
         data = {
-            'recaptcha_response_field': 'PASSED',
+            'g-recaptcha-response': 'PASSED',
             'name': 'Harry Potter',
             'email': 'harry@potter.com',
             'organization': 'Hogwarts School of Witchcraft and Wizardry',

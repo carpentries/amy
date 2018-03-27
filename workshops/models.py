@@ -57,6 +57,42 @@ class CreatedUpdatedMixin(models.Model):
         abstract = True
 
 
+class DataPrivacyAgreementMixin(models.Model):
+    """This mixin provides a data privacy agreement. Instead of being in the
+    forms only (as a additional and required input), we're switching to having
+    this agreement stored in the database."""
+    data_privacy_agreement = models.BooleanField(
+        null=False, blank=False,
+        default=False,  # for 'normal' migration purposes
+        verbose_name='I have read and agree to <a href='
+                     '"https://software-carpentry.org/privacy/", '
+                     'target="_blank">the Software Carpentry Foundation\'s '
+                     'data privacy policy</a>.'
+    )
+
+    class Meta:
+        abstract = True
+
+
+class COCAgreementMixin(models.Model):
+    """This mixin provides a code-of-conduct agreement. Instead of being in the
+    forms only (as a additional and required input), we're switching to having
+    this agreement stored in the database."""
+    code_of_conduct_agreement = models.BooleanField(
+        null=False, blank=False,
+        default=False,  # for 'normal' migration purposes
+        verbose_name='I agree to abide by The Carpentries\' Code of Conduct. '
+                     'The Code of Conduct can be found at '
+                     '<a href="http://software-carpentry.org/conduct/">'
+                     'http://software-carpentry.org/conduct/</a> and '
+                     '<a href="http://datacarpentry.org/code-of-conduct/">'
+                     'http://datacarpentry.org/code-of-conduct/</a>.'
+    )
+
+    class Meta:
+        abstract = True
+
+
 @reversion.register
 class Organization(models.Model):
     '''Represent an organization, academic or business.'''
@@ -610,7 +646,7 @@ class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         ('support', 'Support staff (including technical support)'),
         ('librarian', 'Librarian/archivist'),
         ('commerce', 'Commercial software developer '),
-        ('', 'Other (enter below)'),
+        ('', 'Other:'),
     )
     occupation = models.CharField(
         max_length=STR_MED,
@@ -1918,7 +1954,8 @@ class InvoiceRequest(models.Model):
 #------------------------------------------------------------
 
 
-def build_choice_field_with_other_option(choices, default, verbose_name=None):
+def build_choice_field_with_other_option(choices, default, verbose_name=None,
+        help_text=None):
     assert default in [c[0] for c in choices]
     assert all(c[0] != '' for c in choices)
 
@@ -1926,6 +1963,7 @@ def build_choice_field_with_other_option(choices, default, verbose_name=None):
         max_length=STR_MED,
         choices=choices,
         verbose_name=verbose_name,
+        help_text=help_text,
         null=False, blank=False, default=default,
     )
     other_field = models.CharField(
@@ -1937,7 +1975,8 @@ def build_choice_field_with_other_option(choices, default, verbose_name=None):
 
 
 @reversion.register
-class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
+class TrainingRequest(ActiveMixin, CreatedUpdatedMixin,
+        DataPrivacyAgreementMixin, COCAgreementMixin, models.Model):
     STATES = [
         ('p', 'Pending'),  # initial state
         ('a', 'Accepted'),  # state after matching a Person record
@@ -1954,9 +1993,8 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         blank=True, default='', null=False,
         max_length=STR_LONG,
         verbose_name='Group name',
-        help_text='If you are part of a group that is applying for an '
-                  'instructor training together, please enter the name of your'
-                  ' group here and on every group member\'s application.',
+        help_text='If you are scheduled to receive training at a member site, '
+                  'please enter the group name you were provided.',
     )
 
     personal = models.CharField(
@@ -2009,10 +2047,18 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
     location = models.CharField(
         max_length=STR_LONG,
         verbose_name='Location',
-        help_text='please give city, and province or state if applicable',
+        help_text='Please give city, and province or state if applicable. Do '
+                  'not share a full mailing address.',
         blank=False,
     )
     country = CountryField()
+    underresourced = models.BooleanField(
+        null=False, default=False, blank=True,
+        verbose_name='This is a small, remote, or under-resourced institution',
+        help_text='The Carpentries strive to make workshops accessible to as '
+                  'many people as possible, in as wide a variety of situations'
+                  ' as possible.'
+    )
 
     domains = models.ManyToManyField(
         'KnowledgeDomain',
@@ -2027,20 +2073,30 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         blank=True, default='',
     )
 
-    gender = models.CharField(
-        max_length=1,
-        choices=ProfileUpdateRequest.GENDER_CHOICES,
-        null=False, blank=False, default=Person.UNDISCLOSED,
+    # a single checkbox for under-represented minorities
+    # instead of two "gender" fields
+    underrepresented = models.CharField(
+        max_length=STR_LONGEST, blank=True, null=True,
+        verbose_name='I self-identify as a member of a group that is '
+                     'under-represented in research and/or computing, e.g., '
+                     'women, ethnic minorities, LGBTQ, etc.',
+        help_text="Provide details or leave blank if this doesn't apply"
+                  " to you."
     )
-    gender_other = models.CharField(
-        max_length=STR_LONG,
-        verbose_name=' ',
-        blank=True, default='',
+
+    # new field for teaching-related experience in non-profit or volunteer org.
+    nonprofit_teaching_experience = models.CharField(
+        max_length=STR_LONGEST, blank=True, null=True,
+        verbose_name='I have been an active contributor to other volunteer or'
+                     ' non-profit groups with significant teaching or training'
+                     ' components.',
+        help_text="Provide details or leave blank if this doesn't apply"
+                  " to you."
     )
 
     previous_involvement = models.ManyToManyField(
         'Role',
-        verbose_name='Previous involvement with Software Carpentry or Data Carpentry',
+        verbose_name='In which of the following ways have you been involved with The Carpentries',
         help_text='Please check all that apply.',
         blank=True,
     )
@@ -2048,34 +2104,39 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
     PREVIOUS_TRAINING_CHOICES = (
         ('none', 'None'),
         ('hours', 'A few hours'),
-        ('days', 'A few days'),
+        ('workshop', 'A workshop'),
         ('course', 'A certification or short course'),
         ('full', 'A full degree'),
-        ('other', 'Other (enter below)')
+        ('other', 'Other:')
     )
     previous_training, previous_training_other = build_choice_field_with_other_option(
         choices=PREVIOUS_TRAINING_CHOICES,
-        verbose_name='Previous training in teaching',
+        verbose_name='Previous formal training as a teacher or instructor',
         default='none',
     )
     previous_training_explanation = models.TextField(
-        verbose_name='Explanation of your previous training in teaching',
+        verbose_name='Description of your previous training in teaching',
         null=True, blank=True,
     )
 
+    # this part changed a little bit, mostly wording and choices
     PREVIOUS_EXPERIENCE_CHOICES = (
         ('none', 'None'),
-        ('hours', 'Have taught for a few hours'),
-        ('courses', 'Have taught entire courses'),
-        ('other', 'Other (enter below)')
+        ('hours', 'A few hours'),
+        ('workshop', 'A workshop (full day or longer)'),
+        ('ta', 'Teaching assistant for a full course'),
+        ('courses', 'Primary instructor for a full course'),
+        ('other', 'Other:')
     )
     previous_experience, previous_experience_other = build_choice_field_with_other_option(
         choices=PREVIOUS_EXPERIENCE_CHOICES,
         default='none',
-        verbose_name='Previous experience in teaching'
+        verbose_name='Previous experience in teaching',
+        help_text='Please include teaching experience at any level from grade '
+                  'school to post-secondary education.'
     )
     previous_experience_explanation = models.TextField(
-        verbose_name='Explanation of your previous experience in teaching',
+        verbose_name='Description of your previous experience in teaching',
         null=True, blank=True,
     )
 
@@ -2089,26 +2150,22 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
     programming_language_usage_frequency = models.CharField(
         max_length=STR_MED,
         choices=PROGRAMMING_LANGUAGE_USAGE_FREQUENCY_CHOICES,
-        verbose_name='How frequently do you use Python, R or Matlab?',
+        verbose_name='How frequently do you work with the tools that The '
+                     'Carpentries teach, such as R, Python, MATLAB, Perl, '
+                     'SQL, Git, OpenRefine, and the Unix Shell?',
         null=False, blank=False, default='daily',
-    )
-
-    reason = models.TextField(
-        verbose_name='Why do you want to attend this training course?',
-        null=False, blank=False,
     )
 
     TEACHING_FREQUENCY_EXPECTATION_CHOICES = (
         ('not-at-all', 'Not at all'),
         ('yearly', 'Once a year'),
         ('monthly', 'Several times a year'),
-        ('often', 'Primary occupation'),
-        ('other', 'Other (enter below)'),
+        ('other', 'Other:'),
     )
     teaching_frequency_expectation, teaching_frequency_expectation_other = build_choice_field_with_other_option(
         choices=TEACHING_FREQUENCY_EXPECTATION_CHOICES,
-        verbose_name='How often would you expect to teach on Software '
-                     'or Data Carpentry Workshops after this training?',
+        verbose_name='How often would you expect to teach Carpentry Workshops'
+                     ' after this training?',
         default='not-at-all',
     )
 
@@ -2116,7 +2173,7 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         ('not-at-all', 'Not at all'),
         ('yearly', 'Once a year'),
         ('often', 'Several times a year'),
-        ('other', 'Other (enter below)'),
+        ('other', 'Other:'),
     )
     max_travelling_frequency, max_travelling_frequency_other = build_choice_field_with_other_option(
         choices=MAX_TRAVELLING_FREQUENCY_CHOICES,
@@ -2124,16 +2181,32 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
         default='not-at-all',
     )
 
-    additional_skills = models.TextField(
-        verbose_name='Do you have any additional relevant skills '
-                     'or interests that we should know about?',
-        null=False, blank=True, default='',
+    reason = models.TextField(
+        verbose_name='Why do you want to attend this training course?',
+        null=False, blank=False,
     )
 
     comment = models.TextField(
         default='', null=False, blank=True,
         help_text='What else do you want us to know?',
         verbose_name='Anything else?')
+
+    # a few agreements
+    training_completion_agreement = models.BooleanField(
+        null=False, blank=False,
+        default=False,  # for 'normal' migration purposes
+        verbose_name='I agree to complete this training within three months of'
+                     ' the training course. The completion steps are described'
+                     ' at <a href="http://carpentries.github.io/instructor-'
+                     'training/checkout/">http://carpentries.github.io/'
+                     'instructor-training/checkout/</a>.'
+    )
+    workshop_teaching_agreement = models.BooleanField(
+        null=False, blank=False,
+        default=False,  # for 'normal' migration purposes
+        verbose_name='I agree to teach a Carpentry workshop within 12 months '
+                     'of this Training Course.'
+    )
 
     notes = models.TextField(blank=True, help_text='Admin notes')
 
@@ -2159,6 +2232,12 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
                 timestamp=self.created_at,
             )
         )
+
+    def get_underrepresented_display(self):
+        if self.underrepresented:
+            return "Yes: {}".format(self.underrepresented)
+        else:
+            return "No"
 
 
 @reversion.register

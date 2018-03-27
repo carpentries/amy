@@ -121,6 +121,7 @@ p.help-block-no-margin {
 
 label.last-field {
     margin-bottom: 10px;
+    display: block;
 }
 
 /* any element but tr, with class .strikethrough */

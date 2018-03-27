@@ -36,8 +36,7 @@ class TestTrainingRequestForm(TestBase):
             'country': 'PL',
             'domains': [1, 2],
             'domains_other': '',
-            'gender': Person.MALE,
-            'gender_other': '',
+            'underrepresented': '',
             'previous_involvement': [Role.objects.get(name='host').id],
             'previous_training': 'none',
             'previous_training_other': '',
@@ -47,17 +46,17 @@ class TestTrainingRequestForm(TestBase):
             'previous_experience_explanation': '',
             'programming_language_usage_frequency': 'daily',
             'reason': 'Just for fun.',
-            'teaching_frequency_expectation': 'often',
+            'teaching_frequency_expectation': 'monthly',
             'teaching_frequency_expectation_other': '',
             'max_travelling_frequency': 'yearly',
             'max_travelling_frequency_other': '',
             'addition_skills': '',
             'comment': '',
-            'agreed_to_code_of_conduct': 'on',
-            'agreed_to_complete_training': 'on',
-            'agreed_to_teach_workshops': 'on',
-            'privacy_consent': True,
-            'recaptcha_response_field': 'PASSED',
+            'data_privacy_agreement': 'on',
+            'code_of_conduct_agreement': 'on',
+            'training_completion_agreement': 'on',
+            'workshop_teaching_agreement': True,
+            'g-recaptcha-response': 'PASSED',
         }
         rv = self.client.post(reverse('training_request'), data,
                               follow=True)
@@ -82,12 +81,11 @@ def create_training_request(state, person):
         affiliation='AGH University of Science and Technology',
         location='Cracow',
         country='PL',
-        gender=Person.MALE,
         previous_training='none',
         previous_experience='none',
         programming_language_usage_frequency='daily',
         reason='Just for fun.',
-        teaching_frequency_expectation='often',
+        teaching_frequency_expectation='monthly',
         max_travelling_frequency='yearly',
         state=state,
         person=person,
@@ -310,8 +308,8 @@ class TestDownloadCSVView(TestBase):
         self.assertEqual(rv.status_code, 200)
         got = rv.content.decode('utf-8')
         expected = (
-            'State,Matched Trainee,Group Name,Personal,Family,Email,GitHub username,Occupation,Occupation (other),Affiliation,Location,Country,Expertise areas,Expertise areas (other),Gender,Gender (other),Previous Involvement,Previous Training in Teaching,Previous Training (other),Previous Training (explanation),Programming Language Usage,Reason,Teaching Frequency Expectation,Teaching Frequency Expectation (other),Max Travelling Frequency,Max Travelling Frequency (other),Additional Skills,Comment\r\n'
-            'Pending,—,,John,Smith,john@smith.com,,Other (enter below),,AGH University of Science and Technology,Cracow,PL,,,Male,,,None,,,Every day,Just for fun.,Primary occupation,,Once a year,,,\r\n'
+            'State,Matched Trainee,Group Name,Personal,Family,Email,GitHub username,Occupation,Occupation (other),Affiliation,Location,Country,Expertise areas,Expertise areas (other),Under-represented,Previous Involvement,Previous Training in Teaching,Previous Training (other),Previous Training (explanation),Programming Language Usage,Reason,Teaching Frequency Expectation,Teaching Frequency Expectation (other),Max Travelling Frequency,Max Travelling Frequency (other),Comment\r\n'
+            'Pending,—,,John,Smith,john@smith.com,,Other:,,AGH University of Science and Technology,Cracow,PL,,,No,,None,,,Every day,Just for fun.,Several times a year,,Once a year,,\r\n'
         )
         self.assertEqual(got, expected)
 
