@@ -22,8 +22,7 @@ class TestTrainingRequestForm(TestBase):
             'country': 'PL',
             'domains': [1, 2],
             'domains_other': '',
-            'gender': Person.MALE,
-            'gender_other': '',
+            'underrepresented': '',
             'previous_involvement': [Role.objects.get(name='host').id],
             'previous_training': 'none',
             'previous_training_other': '',
@@ -33,7 +32,7 @@ class TestTrainingRequestForm(TestBase):
             'previous_experience_explanation': '',
             'programming_language_usage_frequency': 'daily',
             'reason': 'Just for fun.',
-            'teaching_frequency_expectation': 'often',
+            'teaching_frequency_expectation': 'monthly',
             'teaching_frequency_expectation_other': '',
             'max_travelling_frequency': 'yearly',
             'max_travelling_frequency_other': '',
@@ -43,7 +42,7 @@ class TestTrainingRequestForm(TestBase):
             'agreed_to_complete_training': 'on',
             'agreed_to_teach_workshops': 'on',
             'privacy_consent': True,
-            'recaptcha_response_field': 'PASSED',
+            'g-recaptcha-response': 'PASSED',
         }
         rv = self.client.post(reverse('training_request'), data,
                               follow=True)
@@ -75,11 +74,11 @@ class GroupNameFieldTestsBase(TestBase):
         self.form['location'] = 'Cracow'
         self.form['country'] = 'PL'
         self.form['reason'] = 'Just for fun.'
-        self.form['agreed_to_code_of_conduct'] = True
-        self.form['agreed_to_complete_training'] = True
-        self.form['agreed_to_teach_workshops'] = True
-        self.form['privacy_consent'] = True
-        self.form['recaptcha_response_field'] = 'PASSED'
+        self.form['data_privacy_agreement'] = True
+        self.form['code_of_conduct_agreement'] = True
+        self.form['training_completion_agreement'] = True
+        self.form['workshop_teaching_agreement'] = True
+        self.form['g-recaptcha-response'] = 'PASSED'
 
         # submit the form
         self.rs = self.form.submit().maybe_follow()

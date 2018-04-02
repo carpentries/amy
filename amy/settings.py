@@ -49,8 +49,13 @@ NOCAPTCHA = True  # nicer input
 
 if DEBUG:
     # 'PASSED' in the form will always pass the RECAPTCHA test
-    NOCAPTCHA = False  # uglier input, but possible to manually enter 'PASSED'
     os.environ['RECAPTCHA_TESTING'] = 'True'
+    # values below are from
+    # https://developers.google.com/recaptcha/docs/faq#id-like-to-run-automated-tests-with-recaptcha-v2-what-should-i-do
+    if not RECAPTCHA_PUBLIC_KEY:
+        RECAPTCHA_PUBLIC_KEY = '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'
+    if not RECAPTCHA_PRIVATE_KEY:
+        RECAPTCHA_PRIVATE_KEY = '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'
 else:
     # ensure the keys are present on production
     assert RECAPTCHA_PUBLIC_KEY, 'RECAPTCHA site key not present'

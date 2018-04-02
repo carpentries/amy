@@ -72,8 +72,8 @@
           </ul></td></tr>
   <tr><th>other areas of expertise</th>
       <td>{{ req.domains_other|default:"—" }}</td></tr>
-  <tr><th>gender</th>
-      <td>{{ req.get_gender_display }} {{ req.gender_other }}</td></tr>
+  <tr><th>under-represented:</th>
+      <td>{% if req.underrepresented %}Yes. Reason: {{ req.underrepresented }}{% else %}No.{% endif %}</td></tr>
   <tr><th>previous involvement</th>
       <td><ul>
           {% for involvement in req.previous_involvement.all %}
@@ -98,8 +98,6 @@
       <td>{{ req.get_teaching_frequency_expectation_display }} {{ req.teaching_frequency_expectation_other}}</td></tr>
   <tr><th>max travelling frequency</th>
       <td>{{ req.get_max_travelling_frequency_display }} {{ req.max_travelling_frequency_other }}</td></tr>
-  <tr><th>additional skills</th>
-      <td><pre>{{ req.additional_skills|default:"—" }}</pre></td></tr>
   <tr><th>additional comments by submitter</th>
       <td><pre>{{ req.comment|default:"—" }}</pre></td></tr>
   <tr><th>admin notes</th>
