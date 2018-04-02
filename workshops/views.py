@@ -3018,6 +3018,7 @@ def download_trainingrequests(request):
 
     writer = csv.writer(response)
     writer.writerow([
+        'Created-on',
         'State',
         'Matched Trainee',
         'Group Name',
@@ -3047,6 +3048,7 @@ def download_trainingrequests(request):
     ])
     for req in TrainingRequest.objects.all():
         writer.writerow([
+            '{:%Y-%m-%d %H:%M}'.format(req.created_at),
             req.get_state_display(),
             '—' if req.person is None else req.person.get_full_name(),
             req.group_name,
