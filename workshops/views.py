@@ -3,6 +3,7 @@ import datetime
 import io
 import re
 
+import cairosvg
 import requests
 from django.conf import settings
 from django.contrib import messages
@@ -13,6 +14,7 @@ from django.contrib.auth.mixins import (
     PermissionRequiredMixin,
     UserPassesTestMixin,
 )
+from django.core.cache import caches
 from django.core.exceptions import (
     ObjectDoesNotExist,
     PermissionDenied,
@@ -36,6 +38,7 @@ from django.forms import HiddenInput
 from django.http import Http404, HttpResponse, JsonResponse
 from django.http import HttpResponseBadRequest
 from django.shortcuts import redirect, render, get_object_or_404
+from django.template.loader import render_to_string
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView
 from django.views.generic.edit import (
@@ -1531,6 +1534,31 @@ class AwardDelete(RedirectSupportMixin, MockAwardDelete):
     # This ensures that `super()` when called from `get_success_url` method of
     # RedirectSupportMixin returns MockAwardDelete
     pass
+
+
+class AwardCertification(OnlyForAdminsMixin, AMYDetailView):
+    queryset = Award.objects.all()
+    cache = caches['default']
+
+    def render_to_response(self, context, **response_kwargs):
+        key = '{}:{}:{}:{}'.format(
+            self.object.badge, self.object.person.get_full_name(),
+            self.object.awarded, self.object.awarded_by,
+        )
+        pdf = self.cache.get(key)
+        if not pdf:
+            pdf = cairosvg.svg2pdf(
+                render_to_string(
+                    self.object.badge.certificate,
+                    self.get_context_data()
+                ).encode('utf-8'),
+                dpi=90,
+            )
+            self.cache.set(key, pdf)
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = 'filename="{} - {}.pdf"'.format(
+            self.object.person, self.object.badge)
+        return response
 
 
 #------------------------------------------------------------

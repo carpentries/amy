@@ -128,6 +128,7 @@ class TestProgressLabelTemplateTag(TestBase):
 class TestProgressDescriptionTemplateTag(TestBase):
     def setUp(self):
         self._setUpAirports()
+        self._setUpBadges()
         self._setUpNonInstructors()
 
     def test_basic(self):
@@ -203,6 +204,7 @@ class TestCRUDViews(TestBase):
     def setUp(self):
         self._setUpUsersAndLogin()
         self._setUpAirports()
+        self._setUpBadges()
         self._setUpNonInstructors()
 
         self.requirement = TrainingRequirement.objects.create(name='Discussion')

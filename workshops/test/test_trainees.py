@@ -8,6 +8,7 @@ class TestTraineesView(TestBase):
     def setUp(self):
         self._setUpUsersAndLogin()
         self._setUpAirports()
+        self._setUpBadges()
         self._setUpNonInstructors()
 
         self.training = TrainingRequirement.objects.get(name='Training')

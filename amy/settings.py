@@ -351,6 +351,17 @@ REST_FRAMEWORK = {
     }
 }
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': '/var/tmp/django_cache',
+        'TIMEOUT': None,
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,
+        },
+    }
+}
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,  # merge with default configuration

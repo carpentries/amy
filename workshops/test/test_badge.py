@@ -1,3 +1,6 @@
+import hashlib
+import unittest
+
 from django.core.urlresolvers import reverse
 
 from .base import TestBase
@@ -63,3 +66,51 @@ class TestBadge(TestBase):
 
         assert award not in badge.award_set.all()  # award really removed
         assert badge not in person.badges.all()  # badge not avail. via Awards
+
+
+class TestCertification(TestBase):
+    SWC_INSTRUCTOR_HARRY = '9fe2bfd6b2c2a80aa1d0f6420883f72e'
+    DC_INSTRUCTOR_HERMIONE = '757a3285a7ececb19c5c2a266cd11b67'
+    MAINTAINER_SPIDERMAN = '5db0dbb577dfd22ff1730190c6ffd791'
+    ORGANIZER_IRONMAN = ''
+
+    def setUp(self):
+        super().setUp()
+        self._setUpUsersAndLogin()
+
+    def test_swc_instructor_certification(self):
+        swc_award = self.harry.award_set.first()
+        certificate = self.client.get(
+            reverse('award_certificate', args=[swc_award.pk]))
+        self.assertEqual(
+            hashlib.md5(certificate.content).hexdigest(),
+            self.SWC_INSTRUCTOR_HARRY
+        )
+
+    def test_dc_instructor_certification(self):
+        dc_award = self.hermione.award_set.last()
+        certificate = self.client.get(
+            reverse('award_certificate', args=[dc_award.pk]))
+        self.assertEqual(
+            hashlib.md5(certificate.content).hexdigest(),
+            self.DC_INSTRUCTOR_HERMIONE
+        )
+
+    def test_maintainer_certification(self):
+        maintainer_award = self.spiderman.award_set.first()
+        certificate = self.client.get(
+            reverse('award_certificate', args=[maintainer_award.pk]))
+        self.assertEqual(
+            hashlib.md5(certificate.content).hexdigest(),
+            self.MAINTAINER_SPIDERMAN,
+        )
+
+    @unittest.expectedFailure
+    def test_organizer_certification(self):
+        organizer_award = self.ironman.award_set.first()
+        certificate = self.client.get(
+            reverse('award_certificate', args=[organizer_award.pk]))
+        self.assertEqual(
+            hashlib.md5(certificate.content).hexdigest(),
+            self.ORGANIZER_IRONMAN,
+        )

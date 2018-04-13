@@ -12,6 +12,7 @@ class TestTodoItemViews(TestBase):
 
     def setUp(self):
         self._setUpAirports()
+        self._setUpBadges()
         self._setUpNonInstructors()
         self._setUpUsersAndLogin()
         self._setUpEvents()

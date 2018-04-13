@@ -4,6 +4,11 @@ language: python
 
 cache: pip
 
+addons:
+  apt:
+    packages:
+      - libcairo2-dev
+
 python:
   - 3.5
 
