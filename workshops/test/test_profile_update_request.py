@@ -179,6 +179,70 @@ class TestProfileUpdateRequest(TestBase):
         self.assertEqual(set(person.lessons.all()),
                          set(Lesson.objects.all()[0:2]))
 
+    def test_database_constraints_when_updating(self):
+        """Ensure unique constraints are checked when processing a profile
+        update.
+
+        This is a regression test for #1237:
+        https://github.com/swcarpentry/amy/issues/1237
+        """
+
+        # Create a profile update for Ron but include Hermione's and Harry's
+        # data. Only Ron doesn't have a GitHub nor Twitter accounts.
+        pr1 = ProfileUpdateRequest.objects.create(
+            active=True,
+            personal='Ron', family='Weasley', airport_iata='AAA',
+            gender='M', github='hpotter',
+        )
+        pr2 = ProfileUpdateRequest.objects.create(
+            active=True,
+            personal='Ron', family='Weasley', airport_iata='AAA',
+            gender='M', twitter='herself',
+        )
+        pr3 = ProfileUpdateRequest.objects.create(
+            active=True,
+            personal='Ron', family='Weasley', airport_iata='AAA',
+            gender='M', email='ron@weasley.com',
+        )
+
+        # ensure no new person was created so far
+        self.assertEqual(
+            Person.objects.filter(username__startswith='weasley_ron').count(),
+            1
+        )
+
+        # now try to accept the profile updates for Ron Weasley
+        rv1 = self.client.get(reverse('profileupdaterequest_accept',
+                                      args=[pr1.pk, self.ron.pk]))
+        self.assertEqual(rv1.status_code, 302)
+        rv2 = self.client.get(reverse('profileupdaterequest_accept',
+                                      args=[pr2.pk, self.ron.pk]))
+        self.assertEqual(rv2.status_code, 302)
+
+        # force create a new person from profile update, ensure no fail
+        rv3 = self.client.get(reverse('profileupdaterequest_accept',
+                                      args=[pr3.pk]))
+        self.assertEqual(rv3.status_code, 302)
+
+        # no update to github or twitter handles
+        self.ron.refresh_from_db()
+        self.assertEqual(self.ron.github, None)
+        self.assertEqual(self.ron.twitter, None)
+
+        # update requests are still active
+        pr1.refresh_from_db()
+        pr2.refresh_from_db()
+        pr3.refresh_from_db()
+        self.assertEqual(pr1.active, True)
+        self.assertEqual(pr2.active, True)
+        self.assertEqual(pr3.active, False)
+
+        # make sure pr3 made a new person
+        self.assertEqual(
+            Person.objects.filter(username__startswith='weasley_ron').count(),
+            2
+        )
+
 
 class TestUpdateRequestWithLowercasedAirport(TestBase):
     """Regression tests for [#1109] bug -- airport IATA code should be case
