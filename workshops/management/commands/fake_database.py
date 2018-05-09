@@ -26,19 +26,19 @@ from workshops.models import (
     Organization,
     Event,
     Task,
-    TrainingRequirement, 
-    TrainingProgress, 
+    TrainingRequirement,
+    TrainingProgress,
     TrainingRequest,
-    ProfileUpdateRequest, 
-    KnowledgeDomain, 
-    Membership, 
+    ProfileUpdateRequest,
+    KnowledgeDomain,
+    Membership,
     EventRequest,
-    AcademicLevel, 
-    ComputingExperienceLevel, 
-    DataAnalysisLevel, 
+    AcademicLevel,
+    ComputingExperienceLevel,
+    DataAnalysisLevel,
     EventSubmission,
-    DCSelfOrganizedEventRequest, 
-    DCWorkshopDomain, 
+    DCSelfOrganizedEventRequest,
+    DCWorkshopDomain,
     DCWorkshopTopic,
     Language,
     InvoiceRequest,
@@ -51,7 +51,7 @@ def randbool(chances_of_true):
 
 
 def sample(population, k=None):
-    """Behaves like random.sample, but if k is omitted, it default to 
+    """Behaves like random.sample, but if k is omitted, it default to
     randint(1, len(population)), so that a non-empty sample is returned."""
 
     population = list(population)
@@ -253,8 +253,8 @@ class Command(BaseCommand):
             workshop_teaching_agreement=randbool(0.5) if training_completion_agreement else False,
             notes=self.faker.text() if randbool(0.3) else '',
         )
-        req.domains = sample(KnowledgeDomain.objects.all())
-        req.previous_involvement = sample(Role.objects.all())
+        req.domains.set(sample(KnowledgeDomain.objects.all()))
+        req.previous_involvement.set(sample(Role.objects.all()))
 
         if person_or_None is None:
             person.delete()
@@ -345,10 +345,10 @@ class Command(BaseCommand):
         for _ in range(count):
             start = self.faker.date_time_between(start_date='-5y').date()
             Membership.objects.create(
-                variant=choice(Membership.MEMBERSHIP_CHOICES),
+                variant=choice(Membership.MEMBERSHIP_CHOICES)[0],
                 agreement_start=start,
                 agreement_end=start + timedelta(days=365),
-                contribution_type=choice(Membership.CONTRIBUTION_CHOICES),
+                contribution_type=choice(Membership.CONTRIBUTION_CHOICES)[0],
                 workshops_without_admin_fee_per_year=randint(5, 15),
                 self_organized_workshops_per_year=randint(5, 15),
                 notes='',
@@ -431,7 +431,7 @@ class Command(BaseCommand):
             metadata_changed=randbool(0.1),
         )
         if add_tags:
-            e.tags = sample(Tag.objects.exclude(name='TTT'), 2)
+            e.tags.set(sample(Tag.objects.exclude(name='TTT'), 2))
         return e
 
     def fake_tasks(self, count=120):
@@ -466,11 +466,11 @@ class Command(BaseCommand):
         for _ in range(count):
             p = Person.objects.order_by('?').first()
             p.id = None
-            
+
             # avoid integrity errors due to unique constraints
             p.username = create_username(p.personal, p.family)
-            p.twitter = None 
-            p.github = None 
+            p.twitter = None
+            p.github = None
             p.email = self.faker.email()
 
             p.save()
@@ -510,12 +510,13 @@ class Command(BaseCommand):
                 travel_reimbursement_other='',
                 comment='',
             )
-            req.attendee_domains = sample(KnowledgeDomain.objects.all())
-            req.attendee_academic_levels = sample(AcademicLevel.objects.all())
-            req.attendee_computing_levels = sample(
-                ComputingExperienceLevel.objects.all())
-            req.attendee_data_analysis_level = sample(
-                DataAnalysisLevel.objects.all())
+            req.attendee_domains.set(sample(KnowledgeDomain.objects.all()))
+            req.attendee_academic_levels.set(sample(
+                AcademicLevel.objects.all()))
+            req.attendee_computing_levels.set(sample(
+                ComputingExperienceLevel.objects.all()))
+            req.attendee_data_analysis_level.set(sample(
+                DataAnalysisLevel.objects.all()))
             req.save()
 
     def fake_workshop_submissions(self, count=10):
@@ -560,11 +561,12 @@ class Command(BaseCommand):
                 distribute_surveys=True,
                 follow_code_of_conduct=True,
             )
-            req.domains = sample(DCWorkshopDomain.objects.all())
-            req.topics = sample(DCWorkshopTopic.objects.all())
-            req.attendee_academic_levels = sample(AcademicLevel.objects.all())
-            req.attendee_data_analysis_level = sample(
-                DataAnalysisLevel.objects.all())
+            req.domains.set(sample(DCWorkshopDomain.objects.all()))
+            req.topics.set(sample(DCWorkshopTopic.objects.all()))
+            req.attendee_academic_levels.set(sample(
+                AcademicLevel.objects.all()))
+            req.attendee_data_analysis_level.set(sample(
+                DataAnalysisLevel.objects.all()))
 
     def fake_profile_update_requests(self, count=20):
         self.stdout.write('Generating {} fake '
@@ -574,14 +576,14 @@ class Command(BaseCommand):
             p = Person.objects.order_by('?').first()  # type: Person
             req = ProfileUpdateRequest.objects.create(
                 active=randbool(0.5),
-                personal=(p.personal if randbool(0.9) 
+                personal=(p.personal if randbool(0.9)
                           else self.faker.first_name()),
                 middle=p.middle,
                 family=p.family if randbool(0.9) else self.faker.last_name(),
                 email=p.email if randbool(0.8) else self.faker.email(),
-                affiliation=(p.affiliation if randbool(0.8) 
+                affiliation=(p.affiliation if randbool(0.8)
                              else self.faker.company()),
-                airport_iata=(p.airport.iata 
+                airport_iata=(p.airport.iata
                               if randbool(0.9) and p.airport is not None
                               else choice(Airport.objects.all()).iata),
                 occupation=choice(ProfileUpdateRequest.OCCUPATION_CHOICES)[0],
@@ -596,12 +598,12 @@ class Command(BaseCommand):
                 lessons_other='',
                 notes='',
             )
-            req.domains = (p.domains.all() if randbool(0.9) else 
-                           sample(KnowledgeDomain.objects.all()))
-            req.languages = (p.languages.all() if randbool(0.9) else 
-                             sample(Language.objects.all()))
-            req.lessons = (p.lessons.all() if randbool(0.9) else 
-                           sample(Lesson.objects.all()))
+            req.domains.set(p.domains.all() if randbool(0.9) else
+                            sample(KnowledgeDomain.objects.all()))
+            req.languages.set(p.languages.all() if randbool(0.9) else
+                              sample(Language.objects.all()))
+            req.lessons.set(p.lessons.all() if randbool(0.9) else
+                            sample(Lesson.objects.all()))
 
     def fake_invoice_requests(self, count=10):
         self.stdout.write('Generating {} fake '
@@ -615,7 +617,7 @@ class Command(BaseCommand):
                 self.faker.date_time_between(start_date=sent_date).date()
                 if status == 'paid' else None)
             org = Organization.objects.order_by('?').first()
-            event = (Event.objects.order_by('?').first() 
+            event = (Event.objects.order_by('?').first()
                      if randbool(0.8) else None)
 
             req = InvoiceRequest.objects.create(
