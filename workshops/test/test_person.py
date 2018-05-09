@@ -1,7 +1,7 @@
 # coding: utf-8
 
 import datetime
-from social.apps.django_app.default.models import UserSocialAuth
+from social_django.models import UserSocialAuth
 from unittest.mock import patch
 from urllib.parse import urlencode
 import webtest

@@ -4,7 +4,7 @@ from django.core.urlresolvers import reverse
 from django.shortcuts import redirect
 from github import Github
 from github.GithubException import UnknownObjectException
-from social.exceptions import SocialAuthBaseException
+from social_core.exceptions import SocialAuthBaseException
 
 
 class NoPersonAssociatedWithGithubAccount(SocialAuthBaseException):

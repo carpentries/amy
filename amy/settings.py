@@ -117,8 +117,8 @@ TEMPLATES = [
                 # AMY version
                 'workshops.context_processors.version',
                 # GitHub auth
-                'social.apps.django_app.context_processors.backends',
-                'social.apps.django_app.context_processors.login_redirect',
+                'social_django.context_processors.backends',
+                'social_django.context_processors.login_redirect',
             ],
 
             # Warn viewers of invalid template strings
@@ -161,7 +161,7 @@ INSTALLED_APPS += [
     'extforms',
     'captcha',
     'compressor',
-    'social.apps.django_app.default',
+    'social_django',
     'debug_toolbar',
     'django_extensions',
 ]
@@ -248,7 +248,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # GitHub Auth
 AUTHENTICATION_BACKENDS = (
-    'social.backends.github.GithubOAuth2',
+    'social_core.backends.github.GithubOAuth2',
     'django.contrib.auth.backends.ModelBackend',
 )
 SOCIAL_AUTH_ADMIN_USER_SEARCH_FIELDS = ['github']
@@ -262,10 +262,10 @@ if not DEBUG and not (SOCIAL_AUTH_GITHUB_KEY and SOCIAL_AUTH_GITHUB_SECRET):
 
 
 SOCIAL_AUTH_PIPELINE = (
-    'social.pipeline.social_auth.social_details',
-    'social.pipeline.social_auth.social_uid',
-    'social.pipeline.social_auth.auth_allowed',
-    'social.pipeline.social_auth.social_user',
+    'social_core.pipeline.social_auth.social_details',
+    'social_core.pipeline.social_auth.social_uid',
+    'social_core.pipeline.social_auth.auth_allowed',
+    'social_core.pipeline.social_auth.social_user',
 
     # If we can't find Person associated with given github account, abort.
     'workshops.github_auth.abort_if_no_user_found',
@@ -274,8 +274,8 @@ SOCIAL_AUTH_PIPELINE = (
     # but we don't want to register a new Person when somebody logs in
     # using GitHub account that is not associated with any Person.
 
-    'social.pipeline.social_auth.associate_user',
-    'social.pipeline.social_auth.load_extra_data',
+    'social_core.pipeline.social_auth.associate_user',
+    'social_core.pipeline.social_auth.load_extra_data',
 )
 
 SOCIAL_AUTH_USER_MODEL = 'workshops.Person'

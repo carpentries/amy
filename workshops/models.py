@@ -15,7 +15,7 @@ from django.db.models import Q, F, IntegerField, Sum, Case, When
 from django.utils import timezone
 from django_countries.fields import CountryField
 from reversion import revisions as reversion
-from social.apps.django_app.default.models import UserSocialAuth
+from social_django.models import UserSocialAuth
 
 from workshops import github_auth
 

@@ -54,7 +54,7 @@ urlpatterns += [
     url(r'^forms/', include('extforms.urls')),
 
     # Login with GitHub credentials
-    url('', include('social.apps.django_app.urls', namespace='social')),
+    url('', include('social_django.urls', namespace='social')),
 ]
 
 
