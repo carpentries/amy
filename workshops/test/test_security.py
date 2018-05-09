@@ -1,7 +1,7 @@
 from django.contrib.admin import ModelAdmin
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth.models import Group
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.views.generic import View, RedirectView
 from rest_framework.views import APIView
 

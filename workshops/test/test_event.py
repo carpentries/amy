@@ -2,9 +2,9 @@ from datetime import datetime, timedelta, date
 from urllib.parse import urlencode
 import sys
 
-from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.db.utils import IntegrityError
+from django.urls import reverse
 
 from ..management.commands.check_for_workshop_websites_updates import (
     Command as WebsiteUpdatesCommand)
@@ -122,7 +122,7 @@ class TestEvent(TestBase):
             host=Organization.objects.first(),
             administrator=Organization.objects.first(),
         )
-        unpublished_event.tags = Tag.objects.filter(name__in=['TTT', 'online'])
+        unpublished_event.tags.set(Tag.objects.filter(name__in=['TTT', 'online']))
 
         unpublished = Event.objects.unpublished_events().select_related('host')
         self.assertIn(unpublished_event, unpublished)
@@ -141,7 +141,7 @@ class TestEvent(TestBase):
             host=Organization.objects.first(),
             administrator=Organization.objects.first(),
         )
-        cancelled_event.tags = Tag.objects.filter(name='cancelled')
+        cancelled_event.tags.set(Tag.objects.filter(name='cancelled'))
 
         published = Event.objects.published_events().select_related('host')
         uninvoiced = Event.objects.uninvoiced_events().select_related('host')
@@ -690,7 +690,7 @@ class TestEventMerging(TestBase):
             learners_longterm='http://reichel.com/learners_longterm',
             notes='Voluptates hic aspernatur non aut.'
         )
-        self.event_a.tags = Tag.objects.filter(name__in=['LC', 'DC'])
+        self.event_a.tags.set(Tag.objects.filter(name__in=['LC', 'DC']))
         self.event_a.task_set.create(person=self.harry,
                                      role=Role.objects.get(name='instructor'))
         self.event_a.todoitem_set.create(completed=False,
@@ -713,7 +713,7 @@ class TestEventMerging(TestBase):
             learners_longterm='http://www.cummings.biz/learners_longterm',
             notes='Est qui iusto sapiente possimus consectetur rerum et.'
         )
-        self.event_b.tags = Tag.objects.filter(name='SWC')
+        self.event_b.tags.set(Tag.objects.filter(name='SWC'))
         # no tasks for this event
         self.event_b.todoitem_set.create(completed=True, title='Test merging',
                                          due=today)

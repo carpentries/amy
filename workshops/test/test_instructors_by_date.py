@@ -1,6 +1,6 @@
 import datetime
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from ..models import Event, Task, Role
 from .base import TestBase

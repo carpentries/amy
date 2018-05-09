@@ -1,6 +1,6 @@
 import unittest
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from .base import TestBase
 from ..models import Task, Role, Event, Tag, Organization
@@ -256,10 +256,10 @@ class TestLocateWorkshopStaff(TestBase):
         TTT = Tag.objects.get(name='TTT')
         stalled = Tag.objects.get(name='stalled')
         e1 = Event.objects.create(slug='TTT-event', host=Organization.objects.first())
-        e1.tags = [TTT]
+        e1.tags.set([TTT])
         e2 = Event.objects.create(slug='stalled-TTT-event',
                                   host=Organization.objects.first())
-        e2.tags = [TTT, stalled]
+        e2.tags.set([TTT, stalled])
 
         learner = Role.objects.get(name='learner')
         # Ron is an instructor, so he should not be available as a trainee

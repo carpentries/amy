@@ -1,8 +1,8 @@
 from django.core import mail
 from django.core.exceptions import ValidationError
-from django.core.urlresolvers import reverse
 from django.template import Context
 from django.template import Template
+from django.urls import reverse
 
 from .base import TestBase
 from ..models import (

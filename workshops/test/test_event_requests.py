@@ -1,5 +1,5 @@
-from django.core.urlresolvers import reverse
 from django.core import mail
+from django.urls import reverse
 
 from .base import TestBase
 from ..models import EventRequest, Event, Organization

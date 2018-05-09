@@ -373,7 +373,7 @@ Other content.
         errors, warnings = validate_metadata_from_event_website(metadata)
         assert len(errors) == 9  # There are nine required fields
         assert len(warnings) == 3  # There are three optional fields
-        assert all([issue.startswith('Missing') 
+        assert all([issue.startswith('Missing')
                     for issue in (errors + warnings)])
 
     def test_validating_empty_metadata(self):
@@ -569,7 +569,7 @@ class TestAssignmentSelection(TestBase):
         self.admin = Person.objects.create_user(
             username='admin', personal='admin', family='admin',
             email='admin@admin', password='admin')
-        self.admin.groups = [Group.objects.get(name='administrators')]
+        self.admin.groups.set([Group.objects.get(name='administrators')])
         self.normal_user = Person.objects.create_user(
             username='user', personal='typical', family='user',
             email='typical@user', password='user')

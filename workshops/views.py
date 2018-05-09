@@ -17,7 +17,6 @@ from django.core.exceptions import (
     ObjectDoesNotExist,
     PermissionDenied,
 )
-from django.core.urlresolvers import reverse, reverse_lazy
 from django.db import IntegrityError, transaction
 from django.db.models import (
     Case,
@@ -36,6 +35,7 @@ from django.forms import HiddenInput
 from django.http import Http404, HttpResponse, JsonResponse
 from django.http import HttpResponseBadRequest
 from django.shortcuts import redirect, render, get_object_or_404
+from django.urls import reverse, reverse_lazy
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView
 from django.views.generic.edit import (
@@ -2368,7 +2368,7 @@ def profileupdaterequest_accept(request, request_id, person_id=None):
                 )
                 return redirect(profileupdate.get_absolute_url())
 
-        person.domains = list(profileupdate.domains.all())
+        person.domains.set(list(profileupdate.domains.all()))
         person.languages.set(profileupdate.languages.all())
 
         try:
@@ -2868,7 +2868,7 @@ def _match_training_request_to_person(form, training_request, request):
             training_request.person.middle = training_request.middle
             training_request.person.github = training_request.github
             training_request.person.affiliation = training_request.affiliation
-            training_request.person.domains = training_request.domains.all()
+            training_request.person.domains.set(training_request.domains.all())
             training_request.person.occupation = (
                 training_request.get_occupation_display() or
                 training_request.occupation_other)

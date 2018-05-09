@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from ..models import Event, TodoItem, TodoItemQuerySet
 from ..forms import TodoFormSet

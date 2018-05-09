@@ -1,4 +1,4 @@
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from ..models import Person, Event, EventRequest
 from .base import TestBase

@@ -1,4 +1,4 @@
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from .base import TestBase
 from ..models import Tag, Event, Task, Role
@@ -17,7 +17,7 @@ class TestInstructorIssues(TestBase):
 
         # add two TTT events, one stalled and one normal
         e1 = Event.objects.create(slug='ttt-stalled', host=self.org_alpha)
-        e1.tags = [TTT, stalled]
+        e1.tags.set([TTT, stalled])
 
         e2 = Event.objects.create(slug='ttt-not-stalled', host=self.org_alpha)
         e2.tags.add(TTT)

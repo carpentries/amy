@@ -11,7 +11,7 @@ import xml.etree.ElementTree as ET
 import webtest
 from django.conf import settings
 from django.contrib.auth.models import Group, Permission
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django_webtest import WebTest
 
 from ..models import (

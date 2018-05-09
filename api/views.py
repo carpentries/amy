@@ -518,7 +518,7 @@ class ReportsViewSet(ViewSet):
             event__end__lte=end,
             role__name='instructor',
             person__may_contact=True,
-        ).exclude(event__tags=tags).order_by('event', 'person', 'role') \
+        ).exclude(event__tags__in=tags).order_by('event', 'person', 'role') \
          .select_related('person', 'event', 'role')
         return tasks
 

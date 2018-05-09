@@ -7,9 +7,9 @@ from urllib.parse import urlencode
 import webtest
 
 from django.contrib.auth import authenticate
-from django.core.urlresolvers import reverse
 from django.core.validators import ValidationError
 from django.contrib.auth.models import Permission, Group
+from django.urls import reverse
 from webtest.forms import Upload
 
 from workshops.filters import filter_taught_workshops
@@ -658,7 +658,7 @@ class TestPersonMerging(TestBase):
                                        awarded=datetime.date(2016, 2, 16))
         Qualification.objects.create(person=self.person_a, lesson=self.git)
         Qualification.objects.create(person=self.person_a, lesson=self.sql)
-        self.person_a.domains = [KnowledgeDomain.objects.first()]
+        self.person_a.domains.set([KnowledgeDomain.objects.first()])
         self.person_a.task_set.create(
             event=Event.objects.get(slug='ends-tomorrow-ongoing'),
             role=Role.objects.get(name='instructor'),
@@ -681,7 +681,7 @@ class TestPersonMerging(TestBase):
         self.person_b.award_set.create(badge=self.dc_instructor,
                                        awarded=datetime.date(2016, 2, 16))
         Qualification.objects.create(person=self.person_b, lesson=self.sql)
-        self.person_b.domains = [KnowledgeDomain.objects.last()]
+        self.person_b.domains.set([KnowledgeDomain.objects.last()])
         self.person_b.languages.set([Language.objects.last()])
         self.person_b.trainingprogress_set.create(requirement=self.training)
         self.person_b.trainingprogress_set.create(requirement=self.homework)

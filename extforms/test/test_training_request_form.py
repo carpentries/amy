@@ -1,4 +1,4 @@
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from workshops.models import Person, Role, TrainingRequest
 from workshops.test import TestBase

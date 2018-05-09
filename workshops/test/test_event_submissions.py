@@ -1,7 +1,7 @@
 import unittest
 
 from django.core import mail
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from .base import TestBase
 from ..forms import EventSubmitForm

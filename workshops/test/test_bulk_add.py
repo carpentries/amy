@@ -4,7 +4,7 @@ import datetime
 from io import StringIO
 
 from django.contrib.sessions.serializers import JSONSerializer
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from ..models import Organization, Event, Role, Person, Task
 from ..util import (

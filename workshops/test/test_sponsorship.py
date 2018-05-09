@@ -1,6 +1,6 @@
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
-from django.core.urlresolvers import reverse
 from django.db import IntegrityError
+from django.urls import reverse
 
 from ..models import Event, Organization, Sponsorship
 from .base import TestBase

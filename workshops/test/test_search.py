@@ -1,4 +1,5 @@
-from django.core.urlresolvers import reverse
+from django.urls import reverse
+
 from ..models import Organization, Person, TrainingRequest
 from .base import TestBase
 

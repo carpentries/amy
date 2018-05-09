@@ -1,6 +1,6 @@
 from datetime import timedelta, date
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from ..models import Event, Organization, Role, Person, Tag
 from .base import TestBase
