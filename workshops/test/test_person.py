@@ -1101,7 +1101,7 @@ class TestFilterTaughtWorkshops(TestBase):
                             person=self.hermione, event=e3)
 
         qs = Person.objects.all()
-        filtered = filter_taught_workshops(qs, [ttt.pk])
+        filtered = filter_taught_workshops(qs, '', [ttt.pk])
 
         # - Hermione should be listed only once even though she was an
         # instructor at two TTT events.

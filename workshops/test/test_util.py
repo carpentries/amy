@@ -661,7 +661,7 @@ class TestPaginatorSections(TestBase):
     def make_paginator(self, num_pages, page_index=None):
         # there's no need to initialize with real values
         p = Paginator(object_list=None, per_page=1)
-        p._num_pages = num_pages
+        p.num_pages = num_pages
         p._page_number = page_index
         return p
 

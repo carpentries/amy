@@ -1562,7 +1562,7 @@ class BadgeDetails(OnlyForAdminsMixin, AMYDetailView):
         )
         context['filter'] = filter
 
-        awards = get_pagination_items(self.request, filter)
+        awards = get_pagination_items(self.request, filter.qs)
         context['awards'] = awards
 
         return context
@@ -2775,7 +2775,7 @@ def all_trainingrequests(request):
         )
     )
 
-    requests = get_pagination_items(request, filter)
+    requests = get_pagination_items(request, filter.qs)
 
     if request.method == 'POST' and 'match' in request.POST:
         # Bulk match people associated with selected TrainingRequests to
@@ -3169,7 +3169,7 @@ def all_trainees(request):
                                           output_field=IntegerField())),
         )
     )
-    trainees = get_pagination_items(request, filter)
+    trainees = get_pagination_items(request, filter.qs)
 
     if request.method == 'POST' and 'discard' in request.POST:
         # Bulk discard progress of selected trainees

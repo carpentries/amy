@@ -77,25 +77,11 @@ class EventStateFilter(django_filters.ChoiceFilter):
 
 class AMYFilterSet(django_filters.FilterSet):
     """
-    This base class serves two roles:
-
-    1. It sets FormHelper.
-
-    2. It solves the following bug:
-
-    Because of some stupidity this got merged to django-filters:
-    https://github.com/alex/django-filter/commit/90d244b
-
-    What it does is it adds a help_text to ALL filters!!!
-    In this class I try to remove it from every field. The solution:
-    https://github.com/alex/django-filter/pull/136#issuecomment-135602792
+    This base class sets FormHelper.
     """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        for key in self.filters.items():
-            self.filters[key[0]].extra.update({'help_text': ''})
 
         # Set default FormHelper
         self.form.helper = bootstrap_helper_filter
@@ -117,7 +103,7 @@ class EventFilter(AMYFilterSet):
         ('uninvoiced_events', 'Uninvoiced'),
         ('metadata_changed', 'Detected changes in metadata'),
     ]
-    status = EventStateFilter(choices=STATUS_CHOICES)
+    state = EventStateFilter(choices=STATUS_CHOICES, label='Status')
 
     invoice_status = django_filters.ChoiceFilter(
         choices=(EMPTY_SELECTION, ) + Event.INVOICED_CHOICES,
@@ -139,7 +125,7 @@ class EventFilter(AMYFilterSet):
         order_by = ['-slug', 'slug', 'start', '-start', 'end', '-end']
 
 
-def filter_active_eventrequest(qs, value):
+def filter_active_eventrequest(qs, name, value):
     if value == 'true':
         return qs.filter(active=True)
     elif value == 'false':
@@ -152,7 +138,7 @@ class EventRequestFilter(AMYFilterSet):
     country = AllCountriesFilter()
     active = django_filters.ChoiceFilter(
         choices=(('all', 'All'), ('true', 'Open'), ('false', 'Closed')),
-        label='Status', action=filter_active_eventrequest,
+        label='Status', method=filter_active_eventrequest,
         widget=widgets.RadioSelect,
     )
     workshop_type = django_filters.ChoiceFilter(
@@ -189,12 +175,12 @@ class OrganizationFilter(AMYFilterSet):
         order_by = ['fullname', '-fullname', 'domain', '-domain', ]
 
 
-def filter_taught_workshops(queryset, values):
+def filter_taught_workshops(queryset, name, values):
     """Limit Persons to only instructors from events with specific tags.
 
     This needs to be in a separate function because django-filters doesn't
     support `action` parameter as supposed, ie. with
-    `action='filter_taught_workshops'` it doesn't call the method; instead it
+    `method='filter_taught_workshops'` it doesn't call the method; instead it
     tries calling a string, which results in error."""
 
     if not values:
@@ -209,7 +195,7 @@ class MembershipFilter(AMYFilterSet):
     organization_name = django_filters.CharFilter(
         label='Organization name',
         name='organization__fullname',
-        lookup_type='icontains',
+        lookup_expr='icontains',
     )
 
     MEMBERSHIP_CHOICES = (('', 'Any'),) + Membership.MEMBERSHIP_CHOICES
@@ -230,7 +216,7 @@ class MembershipFilter(AMYFilterSet):
 class PersonFilter(AMYFilterSet):
     taught_workshops = django_filters.ModelMultipleChoiceFilter(
         queryset=Tag.objects.all(), label='Taught at workshops of type',
-        action=filter_taught_workshops,
+        method=filter_taught_workshops,
     )
 
     class Meta:
@@ -253,7 +239,7 @@ class PersonFilter(AMYFilterSet):
         return super().get_order_by(order_value)
 
 
-def filter_all_persons(queryset, all_persons):
+def filter_all_persons(queryset, name, all_persons):
     """Filter only trainees when all_persons==False."""
     if all_persons:
         return queryset
@@ -263,9 +249,10 @@ def filter_all_persons(queryset, all_persons):
             task__event__tags__name='TTT').distinct()
 
 
-def filter_trainees_by_trainee_name_or_email(queryset, name):
-    if name:
-        tokens = re.split('\s+', name)  # 'Greg Wilson' -> ['Greg', 'Wilson']
+def filter_trainees_by_trainee_name_or_email(queryset, name, value):
+    if value:
+        # 'Harry Potter' -> ['Harry', 'Potter']
+        tokens = re.split('\s+', value)
         # Each token must match email address or github username or personal or
         # family name.
         for token in tokens:
@@ -277,14 +264,14 @@ def filter_trainees_by_trainee_name_or_email(queryset, name):
         return queryset
 
 
-def filter_trainees_by_unevaluated_homework_presence(queryset, flag):
+def filter_trainees_by_unevaluated_homework_presence(queryset, name, flag):
     if flag:  # return only trainees with an unevaluated homework
         return queryset.filter(trainingprogress__state='n').distinct()
     else:
         return queryset
 
 
-def filter_trainees_by_training_request_presence(queryset, flag):
+def filter_trainees_by_training_request_presence(queryset, name, flag):
     if flag is None:
         return queryset
     elif flag is True:  # return only trainees who submitted training request
@@ -293,7 +280,7 @@ def filter_trainees_by_training_request_presence(queryset, flag):
         return queryset.filter(trainingrequest__isnull=True)
 
 
-def filter_trainees_by_instructor_status(queryset, choice):
+def filter_trainees_by_instructor_status(queryset, name, choice):
     if choice == '':
         return queryset
     elif choice == 'swc-and-dc':
@@ -312,7 +299,7 @@ def filter_trainees_by_instructor_status(queryset, choice):
         return queryset.filter(is_swc_instructor=False, is_dc_instructor=False)
 
 
-def filter_trainees_by_training(queryset, training):
+def filter_trainees_by_training(queryset, name, training):
     if training is None:
         return queryset
     else:
@@ -322,28 +309,28 @@ def filter_trainees_by_training(queryset, training):
 
 class TraineeFilter(AMYFilterSet):
     search = django_filters.CharFilter(
-        action=filter_trainees_by_trainee_name_or_email,
+        method=filter_trainees_by_trainee_name_or_email,
         label='Name or Email')
 
     all_persons = django_filters.BooleanFilter(
         label='Include all people, not only trainees',
-        action=filter_all_persons,
+        method=filter_all_persons,
         widget=widgets.CheckboxInput)
 
     homework = django_filters.BooleanFilter(
         label='Only trainees with unevaluated homework',
         widget=widgets.CheckboxInput,
-        action=filter_trainees_by_unevaluated_homework_presence,
+        method=filter_trainees_by_unevaluated_homework_presence,
     )
 
     training_request = django_filters.BooleanFilter(
         label='Is training request present?',
-        action=filter_trainees_by_training_request_presence,
+        method=filter_trainees_by_training_request_presence,
     )
 
     is_instructor = django_filters.ChoiceFilter(
         label='Is SWC/DC instructor?',
-        action=filter_trainees_by_instructor_status,
+        method=filter_trainees_by_instructor_status,
         choices=[
             ('', 'Unknown'),
             ('swc-and-dc', 'Both SWC and DC'),
@@ -357,7 +344,8 @@ class TraineeFilter(AMYFilterSet):
 
     training = django_filters.ModelChoiceFilter(
         queryset=Event.objects.ttt(),
-        action=filter_trainees_by_training,
+        method=filter_trainees_by_training,
+        label='Training',
     )
 
     class Meta:
@@ -385,7 +373,7 @@ class TraineeFilter(AMYFilterSet):
             return super().get_order_by(order_value)
 
 
-def filter_matched(queryset, choice):
+def filter_matched(queryset, name, choice):
     if choice == '':
         return queryset
     elif choice == 'u':  # unmatched
@@ -401,11 +389,12 @@ def filter_matched(queryset, choice):
                        .distinct()
 
 
-def filter_by_person(queryset, name):
-    if name == '':
+def filter_by_person(queryset, name, value):
+    if value == '':
         return queryset
     else:
-        tokens = re.split('\s+', name)  # 'Greg Wilson' -> ['Greg', 'Wilson']
+        # 'Harry Potter' -> ['Harry', 'Potter']
+        tokens = re.split('\s+', value)
         # Each token must match email address or github username or personal or
         # family name.
         for token in tokens:
@@ -422,7 +411,7 @@ def filter_by_person(queryset, name):
         return queryset
 
 
-def filter_affiliation(queryset, affiliation):
+def filter_affiliation(queryset, name, affiliation):
     if affiliation == '':
         return queryset
     else:
@@ -431,8 +420,8 @@ def filter_affiliation(queryset, affiliation):
                        .distinct()
 
 
-def filter_training_requests_by_state(queryset, choice):
-    if choice == '':
+def filter_training_requests_by_state(queryset, name, choice):
+    if choice == 'no_d':
         return queryset.exclude(state='d')
     else:
         return queryset.filter(state=choice)
@@ -441,18 +430,18 @@ def filter_training_requests_by_state(queryset, choice):
 class TrainingRequestFilter(AMYFilterSet):
     search = django_filters.CharFilter(
         label='Name or Email',
-        action=filter_by_person,
+        method=filter_by_person,
     )
 
     group_name = django_filters.CharFilter(
         name='group_name',
-        lookup_type='icontains',
+        lookup_expr='icontains',
         label='Group')
 
     state = django_filters.ChoiceFilter(
         label='State',
-        choices=[('', 'Pending or accepted')] + TrainingRequest.STATES,
-        action=filter_training_requests_by_state,
+        choices=[('no_d', 'Pending or accepted')] + TrainingRequest.STATES,
+        method=filter_training_requests_by_state,
     )
 
     matched = django_filters.ChoiceFilter(
@@ -463,14 +452,14 @@ class TrainingRequestFilter(AMYFilterSet):
             ('p', 'Matched trainee, unmatched training'),
             ('t', 'Matched trainee and training'),
         ),
-        action=filter_matched,
+        method=filter_matched,
     )
 
     affiliation = django_filters.CharFilter(
-        action=filter_affiliation,
+        method=filter_affiliation,
     )
 
-    location = django_filters.CharFilter(lookup_type='icontains')
+    location = django_filters.CharFilter(lookup_expr='icontains')
 
     class Meta:
         model = TrainingRequest
@@ -503,6 +492,11 @@ class TrainingRequestFilter(AMYFilterSet):
 
 
 class TaskFilter(AMYFilterSet):
+    event = django_filters.ModelChoiceFilter(
+        queryset=Event.objects.all(),
+        label='Event',
+    )
+
     class Meta:
         model = Task
         fields = [
@@ -523,7 +517,7 @@ class TaskFilter(AMYFilterSet):
 
 
 class AirportFilter(AMYFilterSet):
-    fullname = django_filters.CharFilter(lookup_type='icontains')
+    fullname = django_filters.CharFilter(lookup_expr='icontains')
 
     class Meta:
         model = Airport
@@ -535,9 +529,9 @@ class AirportFilter(AMYFilterSet):
 
 class BadgeAwardsFilter(AMYFilterSet):
     awarded_after = django_filters.DateFilter(name='awarded',
-                                              lookup_type='gte')
+                                              lookup_expr='gte')
     awarded_before = django_filters.DateFilter(name='awarded',
-                                               lookup_type='lte')
+                                               lookup_expr='lte')
 
     class Meta:
         model = Award
@@ -554,7 +548,11 @@ class InvoiceRequestFilter(AMYFilterSet):
     STATUS_CHOICES = (('', 'All'),) + InvoiceRequest.STATUS_CHOICES
     status = django_filters.ChoiceFilter(
         choices=STATUS_CHOICES,
-        widget=widgets.RadioSelect,
+    )
+
+    organization = django_filters.ModelChoiceFilter(
+        queryset=Organization.objects.all(),
+        label='Organization',
     )
 
     class Meta:
@@ -569,7 +567,7 @@ class InvoiceRequestFilter(AMYFilterSet):
         ]
 
 
-def filter_active_eventsubmission(qs, value):
+def filter_active_eventsubmission(qs, name, value):
     if value == 'true':
         return qs.filter(active=True)
     elif value == 'false':
@@ -580,7 +578,7 @@ def filter_active_eventsubmission(qs, value):
 class EventSubmissionFilter(AMYFilterSet):
     active = django_filters.ChoiceFilter(
         choices=(('', 'All'), ('true', 'Open'), ('false', 'Closed')),
-        label='Status', action=filter_active_eventsubmission,
+        label='Status', method=filter_active_eventsubmission,
         widget=widgets.RadioSelect,
     )
     assigned_to = ForeignKeyAllValuesFilter(Person)
@@ -596,7 +594,7 @@ class EventSubmissionFilter(AMYFilterSet):
         ]
 
 
-def filter_active_dcselforganizedeventrequest(qs, value):
+def filter_active_dcselforganizedeventrequest(qs, name, value):
     if value == 'true':
         return qs.filter(active=True)
     elif value == 'false':
@@ -607,7 +605,7 @@ def filter_active_dcselforganizedeventrequest(qs, value):
 class DCSelfOrganizedEventRequestFilter(AMYFilterSet):
     active = django_filters.ChoiceFilter(
         choices=(('', 'All'), ('true', 'Open'), ('false', 'Closed')),
-        label='Status', action=filter_active_dcselforganizedeventrequest,
+        label='Status', method=filter_active_dcselforganizedeventrequest,
         widget=widgets.RadioSelect,
     )
     assigned_to = ForeignKeyAllValuesFilter(Person)

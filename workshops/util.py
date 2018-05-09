@@ -340,7 +340,7 @@ class Paginator(DjangoPaginator):
         """
         index = int(self._page_number) or 1
         items = self.page_range
-        length = self._num_pages
+        length = self.num_pages
 
         L = items[0:5]
 
