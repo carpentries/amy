@@ -15,11 +15,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='event',
             name='assigned_to',
-            field=models.ForeignKey(to=settings.AUTH_USER_MODEL, null=True, blank=True),
+            field=models.ForeignKey(to=settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='eventrequest',
             name='assigned_to',
-            field=models.ForeignKey(to=settings.AUTH_USER_MODEL, null=True, blank=True),
+            field=models.ForeignKey(to=settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.CASCADE),
         ),
     ]
