@@ -8,6 +8,7 @@ django-autocomplete-light>=3.2,<3.3
 django-countries>=5.3,<5.4
 django-filter>=1.1,<1.2
 django-reversion>=2.0,<2.1
+django-reversion-compare>=0.8,<0.9
 diff-match-patch>=20121119
 djangorestframework>=3.8,<3.9
 djangorestframework-yaml>=1.0,<1.1

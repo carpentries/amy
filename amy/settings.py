@@ -155,6 +155,7 @@ INSTALLED_APPS += [
     'django_countries',
     'django_filters',
     'reversion',
+    'reversion_compare',
     'rest_framework',
     'api',
     'extforms',

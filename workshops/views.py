@@ -42,8 +42,7 @@ from django.views.generic.edit import (
     ModelFormMixin,
 )
 from github.GithubException import GithubException
-from reversion.models import Version
-from reversion.revisions import get_for_object
+from reversion.models import Version, Revision
 
 from api.filters import (
     InstructorsOverTimeFilter,
@@ -2080,8 +2079,8 @@ def object_changes(request, version_id):
     obj = current_version.object
 
     try:
-        previous_version = get_for_object(obj) \
-                                .filter(pk__lt=current_version.pk)[0]
+        previous_version = Version.objects.get_for_object(obj) \
+                                          .filter(pk__lt=current_version.pk)[0]
         obj_prev = previous_version.object
     except IndexError:
         # first revision for an object

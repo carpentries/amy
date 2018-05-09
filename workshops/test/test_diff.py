@@ -1,5 +1,6 @@
-from reversion.revisions import get_for_object, create_revision
 from django.urls import reverse
+from reversion.models import Version
+from reversion.revisions import create_revision
 from reversion import revisions as reversion
 
 from workshops.models import Event, Person, Tag
@@ -26,7 +27,7 @@ class TestRevisions(TestBase):
             self.event.save()
 
         # load versions
-        versions = get_for_object(self.event)
+        versions = Version.objects.get_for_object(self.event)
         assert len(versions) == 2
         self.newer, self.older = versions
 

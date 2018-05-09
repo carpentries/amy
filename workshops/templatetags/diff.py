@@ -2,45 +2,49 @@ from django import template
 from django.db.models import Q
 from django.utils.safestring import mark_safe
 
-from reversion.helpers import generate_patch_html
+from reversion_compare.helpers import html_diff, SEMANTIC
 
 register = template.Library()
 
 
 @register.simple_tag
 def semantic_diff(left, right, field):
-    return mark_safe(generate_patch_html(left, right, field, cleanup='semantic'))
+    left_txt = left.field_dict[field] or ''
+    right_txt = right.field_dict[field] or ''
+    return mark_safe(html_diff(left_txt, right_txt, cleanup=SEMANTIC))
 
 
 @register.simple_tag
 def relation_diff(left, right, field):
     model = field.related_model
+    field_name = field.get_attname()
+
     if field.many_to_one or field.one_to_one:
-        # {left,right}.field_dict[field.name] is an integer or does not exist
+        # {left,right}.field_dict[field_name] is an integer or does not exist
         # Cast it to a list(empty or single itemed)
-        if left.field_dict.get(field.name):
+        if left.field_dict.get(field_name):
             try:
-                left_PKs = [model.objects.get(pk=left.field_dict.get(field.name))]
+                left_PKs = [model.objects.get(pk=left.field_dict.get(field_name))]
             except model.DoesNotExist:
-                left_PKs = [left.field_dict.get(field.name)]
+                left_PKs = [left.field_dict.get(field_name)]
         else:
             left_PKs = []
-        if right.field_dict.get(field.name):
+        if right.field_dict.get(field_name):
             try:
-                right_PKs = [model.objects.get(pk=right.field_dict.get(field.name))]
+                right_PKs = [model.objects.get(pk=right.field_dict.get(field_name))]
             except model.DoesNotExist:
-                right_PKs = [right.field_dict.get(field.name)]
+                right_PKs = [right.field_dict.get(field_name)]
         else:
             right_PKs = []
     else:
         left_PKs = []
-        for pk in left.field_dict.get(field.name, []):
+        for pk in left.field_dict.get(field_name, []):
             try:
                 left_PKs.append(model.objects.get(pk=pk))
             except model.DoesNotExist:
                 left_PKs.append(pk)
         right_PKs = []
-        for pk in right.field_dict.get(field.name, []):
+        for pk in right.field_dict.get(field_name, []):
             try:
                 right_PKs.append(model.objects.get(pk=pk))
             except model.DoesNotExist:
