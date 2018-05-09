@@ -2,62 +2,65 @@ from functools import reduce
 import operator
 import re
 
+from dal import autocomplete
 from django.contrib.auth.models import Group
+from django.conf.urls import url
 from django.db.models import Q, Count
 
-from selectable.base import ModelLookup
-from selectable.registry import registry
-
 from workshops import models
-from workshops.util import lookup_only_for_admins
+from workshops.util import OnlyForAdminsNoRedirectMixin
 
 
-@lookup_only_for_admins
-class EventLookup(ModelLookup):
-    model = models.Event
-    search_fields = ('slug__icontains', )
+class EventLookupView(OnlyForAdminsNoRedirectMixin,
+                      autocomplete.Select2QuerySetView):
+    def get_queryset(self):
+        results = models.Event.objects.all()
+
+        if self.q:
+            results = results.filter(slug__icontains=self.q)
+
+        return results
 
 
-@lookup_only_for_admins
-class TTTEventLookup(ModelLookup):
-    model = models.Event
-    search_fields = ('slug__icontains', )
-    filters = {
-        'tags__name': 'TTT',
-    }
+class TTTEventLookupView(OnlyForAdminsNoRedirectMixin,
+                         autocomplete.Select2QuerySetView):
+    def get_queryset(self):
+        results = models.Event.objects.filter(tags__name='TTT')
+
+        if self.q:
+            results = results.filter(slug__icontains=self.q)
+
+        return results
 
 
-@lookup_only_for_admins
-class OrganizationLookup(ModelLookup):
-    model = models.Organization
-    search_fields = (
-        'domain__icontains',
-        'fullname__icontains'
-    )
+class OrganizationLookupView(OnlyForAdminsNoRedirectMixin,
+                             autocomplete.Select2QuerySetView):
+    def get_queryset(self):
+        results = models.Organization.objects.all()
+
+        if self.q:
+            results = results.filter(
+                Q(domain__icontains=self.q) | Q(fullname__icontains=self.q)
+            )
+
+        return results
 
 
-@lookup_only_for_admins
-class PersonLookup(ModelLookup):
-    model = models.Person
-    search_fields = (
-        'personal__icontains',
-        'family__icontains',
-        'email__icontains',
-        'username__icontains'
-    )
+class PersonLookupView(OnlyForAdminsNoRedirectMixin,
+                       autocomplete.Select2QuerySetView):
+    def get_queryset(self):
+        results = models.Person.objects.all()
 
-    def get_query(self, request, term):
-        """Override this method to allow for additional lookup method: """
-        # original code from selectable.base.ModelLookup.get_query:
-        qs = self.get_queryset()
-        if term:
-            search_filters = []
-            if self.search_fields:
-                for field in self.search_fields:
-                    search_filters.append(Q(**{field: term}))
+        if self.q:
+            filters = [
+                Q(personal__icontains=self.q),
+                Q(family__icontains=self.q),
+                Q(email__icontains=self.q),
+                Q(username__icontains=self.q)
+            ]
 
-            # tokenizing part
-            tokens = re.split('\s+', term)
+            # split query into first and last names
+            tokens = re.split('\s+', self.q)
             if len(tokens) == 2:
                 name1, name2 = tokens
                 complex_q = (
@@ -65,66 +68,83 @@ class PersonLookup(ModelLookup):
                 ) | (
                     Q(personal__icontains=name2) & Q(family__icontains=name1)
                 )
-                search_filters.append(complex_q)
+                filters.append(complex_q)
 
             # this is brilliant: it applies OR to all search filters
-            qs = qs.filter(reduce(operator.or_, search_filters))
+            results = results.filter(reduce(operator.or_, filters))
 
-        return qs
+        return results
 
 
-@lookup_only_for_admins
-class AdminLookup(ModelLookup):
+class AdminLookupView(OnlyForAdminsNoRedirectMixin,
+                      autocomplete.Select2QuerySetView):
     """The same as PersonLookup, but allows only to select administrators.
 
     Administrator is anyone with superuser power or in "administrators" group.
     """
-    model = models.Person
-    search_fields = (
-        'personal__icontains',
-        'family__icontains',
-        'email__icontains',
-        'username__icontains'
-    )
 
-    def get_query(self, request, term):
-        results = super().get_query(request, term)
+    def get_queryset(self):
         admin_group = Group.objects.get(name='administrators')
-        results = results.filter(
+        results = models.Person.objects.filter(
             Q(is_superuser=True) | Q(groups__in=[admin_group])
-        ).distinct()
+        )
+
+        if self.q:
+            results = results.filter(
+                Q(personal__icontains=self.q) |
+                Q(family__icontains=self.q) |
+                Q(email__icontains=self.q) |
+                Q(username__icontains=self.q)
+            )
+
         return results
 
 
-@lookup_only_for_admins
-class AirportLookup(ModelLookup):
-    model = models.Airport
-    search_fields = (
-        'iata__icontains',
-        'fullname__icontains'
-    )
+class AirportLookupView(OnlyForAdminsNoRedirectMixin,
+                        autocomplete.Select2QuerySetView):
+    def get_queryset(self):
+        results = models.Airport.objects.all()
+
+        if self.q:
+            results = results.filter(
+                Q(iata__icontains=self.q) | Q(fullname__icontains=self.q)
+            )
+
+        return results
 
 
-class LanguageLookup(ModelLookup):
-    model = models.Language
-    search_fields = (
-        'name__icontains',
-        'subtag__icontains',
-    )
+class LanguageLookupView(OnlyForAdminsNoRedirectMixin,
+                         autocomplete.Select2QuerySetView):
+    def dispatch(self, request, *args, **kwargs):
+        self.subtag = 'subtag' in request.GET.keys()
+        return super().dispatch(request, *args, **kwargs)
 
-    def get_query(self, request, term):
-        # Order the languages by their decreasing popularity
-        results = super().get_query(request, term)
-        if 'subtag' in request.GET.keys():
-            return results.filter(subtag__iexact=term)
-        return results.annotate(person_count=Count('person'))\
-                .order_by('-person_count')
+    def get_queryset(self):
+        results = models.Language.objects.all()
+
+        if self.q:
+            results = results.filter(
+                Q(name__icontains=self.q) | Q(subtag__icontains=self.q)
+            )
+
+            if self.subtag:
+                return results.filter(subtag__iexact=self.q)
+
+        results = results.annotate(person_count=Count('person')) \
+                         .order_by('-person_count')
+
+        return results
 
 
-registry.register(EventLookup)
-registry.register(OrganizationLookup)
-registry.register(TTTEventLookup)
-registry.register(PersonLookup)
-registry.register(AdminLookup)
-registry.register(AirportLookup)
-registry.register(LanguageLookup)
+# trainees lookup?
+
+
+urlpatterns = [
+    url(r'^events/$', EventLookupView.as_view(), name='event-lookup'),
+    url(r'^ttt_events/$', TTTEventLookupView.as_view(), name='ttt-event-lookup'),
+    url(r'^organizations/$', OrganizationLookupView.as_view(), name='organization-lookup'),
+    url(r'^persons/$', PersonLookupView.as_view(), name='person-lookup'),
+    url(r'^admins/$', AdminLookupView.as_view(), name='admin-lookup'),
+    url(r'^airports/$', AirportLookupView.as_view(), name='airport-lookup'),
+    url(r'^languages/$', LanguageLookupView.as_view(), name='language-lookup'),
+]

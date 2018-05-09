@@ -1,6 +1,7 @@
 from django.urls import reverse
 
 from .base import TestBase
+from ..lookups import urlpatterns
 
 
 class TestLookups(TestBase):
@@ -8,10 +9,11 @@ class TestLookups(TestBase):
 
     def test_login_regression(self):
         """Make sure lookups are login-protected"""
-        url_name = 'selectable-lookup'
-        rv = self.client.get(reverse(url_name, args=['workshops-organizationlookup']))
-        assert rv.status_code == 401  # unauthorized
+        for pattern in urlpatterns:
+            rv = self.client.get(reverse(pattern.name))
+            self.assertEqual(rv.status_code, 403, pattern.name)  # forbidden
 
         self._setUpUsersAndLogin()
-        rv = self.client.get(reverse(url_name, args=['workshops-organizationlookup']))
-        assert rv.status_code == 200
+        for pattern in urlpatterns:
+            rv = self.client.get(reverse(pattern.name))
+            self.assertEqual(rv.status_code, 200, pattern.name)  # OK

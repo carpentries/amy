@@ -198,7 +198,7 @@ class TestTrainingRequestsListView(TestBase):
     def test_successful_matching_to_training(self):
         data = {
             'match': '',
-            'event_1': self.second_training.pk,
+            'event': self.second_training.pk,
             'requests': [self.first_req.pk],
         }
         rv = self.client.post(reverse('all_trainingrequests'), data,
@@ -218,7 +218,7 @@ class TestTrainingRequestsListView(TestBase):
     def test_successful_matching_twice_to_the_same_training(self):
         data = {
             'match': '',
-            'event_1': self.first_training.pk,
+            'event': self.first_training.pk,
             'requests': [self.first_req.pk],
         }
         # Spiderman is already matched with first_training
@@ -241,7 +241,7 @@ class TestTrainingRequestsListView(TestBase):
 
         data = {
             'match': '',
-            'event_1': self.second_training.pk,
+            'event': self.second_training.pk,
             'requests': [self.first_req.pk, self.second_req.pk],
         }
         # Spiderman is already matched with first_training
@@ -362,7 +362,7 @@ class TestMatchingTrainingRequestAndDetailedView(TestBase):
 
         req = create_training_request(state='p', person=None)
         rv = self.client.post(reverse('trainingrequest_details', args=[req.pk]),
-                              data={'person_1': self.admin.pk,
+                              data={'person': self.admin.pk,
                                     'match-selected-person': ''},
                               follow=True)
         self.assertEqual(rv.status_code, 200)

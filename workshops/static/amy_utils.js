@@ -55,8 +55,7 @@ function updateTrainingProgressForm() {
     training_div.show();
   } else {
     training_div.hide();
-    training_div.find('#id_event_0').val("");
-    training_div.find('#id_event_1').val("");
+    training_div.find('#id_event').val().trigger('change');
   }
 
   if (type == 'SWC Homework' || type == 'DC Homework') {

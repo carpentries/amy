@@ -728,7 +728,7 @@ class TestAssignUtil(TestBase):
         """Ensure we fail with 404 when person PK is string, not integer."""
         tests = [
             (self.factory.get('/'), 'alpha'),
-            (self.factory.post('/', {'person_1': 'alpha'}), None),
+            (self.factory.post('/', {'person': 'alpha'}), None),
         ]
         for request, person_id in tests:
             with self.subTest(method=request.method):
@@ -744,7 +744,7 @@ class TestAssignUtil(TestBase):
         first_person = Person.objects.first()
         tests = [
             (self.factory.get('/'), first_person.pk),
-            (self.factory.post('/', {'person_1': first_person.pk}), None),
+            (self.factory.post('/', {'person': first_person.pk}), None),
         ]
         for request, person_id in tests:
             with self.subTest(method=request.method):

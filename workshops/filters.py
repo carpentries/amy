@@ -1,5 +1,6 @@
 import re
 
+from dal import autocomplete
 import django_filters
 from django.db.models import Q
 from django.forms import widgets
@@ -23,6 +24,13 @@ from workshops.models import (
 )
 
 EMPTY_SELECTION = (None, '---------')
+
+# settings for Select2
+# this makes it possible for autocomplete widget to fit in low-width sidebar
+SIDEBAR_DAL_WIDTH = {
+    'data-width': '100%',
+    'width': 'style',
+}
 
 
 class AllCountriesFilter(django_filters.ChoiceFilter):
@@ -346,6 +354,10 @@ class TraineeFilter(AMYFilterSet):
         queryset=Event.objects.ttt(),
         method=filter_trainees_by_training,
         label='Training',
+        widget=autocomplete.ModelSelect2(
+            url='ttt-event-lookup',
+            attrs=SIDEBAR_DAL_WIDTH,
+        ),
     )
 
     class Meta:
@@ -495,6 +507,10 @@ class TaskFilter(AMYFilterSet):
     event = django_filters.ModelChoiceFilter(
         queryset=Event.objects.all(),
         label='Event',
+        widget=autocomplete.ModelSelect2(
+            url='event-lookup',
+            attrs=SIDEBAR_DAL_WIDTH,
+        ),
     )
 
     class Meta:
@@ -553,6 +569,10 @@ class InvoiceRequestFilter(AMYFilterSet):
     organization = django_filters.ModelChoiceFilter(
         queryset=Organization.objects.all(),
         label='Organization',
+        widget=autocomplete.ModelSelect2(
+            url='organization-lookup',
+            attrs=SIDEBAR_DAL_WIDTH,
+        ),
     )
 
     class Meta:

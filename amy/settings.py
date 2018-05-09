@@ -147,11 +147,13 @@ if ENABLE_PYDATA:
     ]
 INSTALLED_APPS += [
     'workshops',
+    # dal (django-autocomplete-light) replaces django-selectable:
+    'dal',
+    'dal_select2',
     # this should be after 'workshops' because templates in
     # 'templates/registration/' clash
     'django.contrib.admin',
     'crispy_forms',
-    'selectable',
     'django_countries',
     'django_filters',
     'reversion',

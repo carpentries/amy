@@ -823,8 +823,8 @@ def persons_merge(request):
 
     If no persons are supplied via GET params, display person selection
     form."""
-    obj_a_pk = request.GET.get('person_a_1')
-    obj_b_pk = request.GET.get('person_b_1')
+    obj_a_pk = request.GET.get('person_a')
+    obj_b_pk = request.GET.get('person_b')
 
     if not obj_a_pk or not obj_b_pk:
         context = {
@@ -1141,20 +1141,18 @@ def events_merge(request):
     """Display two events side by side on GET and merge them on POST.
 
     If no events are supplied via GET params, display event selection form."""
+    obj_a_pk = request.GET.get('event_a')
+    obj_b_pk = request.GET.get('event_b')
 
-    # field names come from selectable widgets (name_0 for repr, name_1 for pk)
-    obj_a_slug = request.GET.get('event_a_0')
-    obj_b_slug = request.GET.get('event_b_0')
-
-    if not obj_a_slug and not obj_b_slug:
+    if not obj_a_pk and not obj_b_pk:
         context = {
             'title': 'Merge Events',
             'form': EventsSelectionForm(),
         }
         return render(request, 'workshops/generic_form.html', context)
 
-    obj_a = get_object_or_404(Event, slug=obj_a_slug)
-    obj_b = get_object_or_404(Event, slug=obj_b_slug)
+    obj_a = get_object_or_404(Event, pk=obj_a_pk)
+    obj_b = get_object_or_404(Event, pk=obj_b_pk)
 
     form = EventsMergeForm(initial=dict(event_a=obj_a, event_b=obj_b))
 
@@ -2243,7 +2241,7 @@ def profileupdaterequest_details(request, request_id):
             # should check that!
             try:
                 form = PersonLookupForm(request.GET)
-                person = Person.objects.get(pk=int(request.GET['person_1']))
+                person = Person.objects.get(pk=int(request.GET['person']))
                 person_selected = True
             except KeyError:
                 person = None

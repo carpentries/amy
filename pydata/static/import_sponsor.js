@@ -4,7 +4,7 @@ function import_sponsor(url) {
     $('#import_sponsor_modal').modal('hide');
     $('#error_message').addClass('hidden');
 
-    var elem = $("#id_sponsor-organization_0");
+    var elem = $("#id_sponsor-organization");
     // select the first results of a search
     elem.on("autocompleteresponse", function(event, ui) {
       ui.item = ui.content[0];
@@ -16,7 +16,7 @@ function import_sponsor(url) {
 
     $("#id_sponsor-amount").val(data.amount);
 
-    var elem = $("#id_sponsor-contact_0");
+    var elem = $("#id_sponsor-contact");
     // select the first results of a search
     elem.on("autocompleteresponse", function(event, ui) {
       ui.item = ui.content[0];

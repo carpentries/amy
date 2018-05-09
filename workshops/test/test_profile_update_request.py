@@ -137,7 +137,7 @@ class TestProfileUpdateRequest(TestBase):
         pr.domains.add(*KnowledgeDomain.objects.all()[0:2]),
         pr.lessons.add(*Lesson.objects.all()[0:2]),
         url = (reverse('profileupdaterequest_details', args=[pr.pk]) +
-               '?person_0=inigo&person_1=&submit=Submit')
+               '?person=&submit=Submit')
         rv = self.client.get(url)
         self.assertNotEqual(rv.status_code, 500)
 

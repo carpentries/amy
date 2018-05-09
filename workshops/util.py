@@ -743,7 +743,7 @@ def assign(request, obj, person_id):
     """Set obj.assigned_to. This view helper works with both POST and GET
     requests:
 
-    * POST: read person ID from POST's person_1
+    * POST: read person ID from POST's `person`
     * GET: read person_id from URL
     * both: if person_id is None then make event.assigned_to empty
     * otherwise assign matching person.
@@ -751,7 +751,7 @@ def assign(request, obj, person_id):
     This is not a view, but it's used in some."""
     try:
         if request.method == "POST":
-            person_id = request.POST.get('person_1', None)
+            person_id = request.POST.get('person', None)
 
         if person_id is None:
             obj.assigned_to = None
@@ -906,6 +906,10 @@ def lookup_only_for_admins(request):
 class OnlyForAdminsMixin(UserPassesTestMixin):
     def test_func(self):
         return is_admin(self.request.user)
+
+
+class OnlyForAdminsNoRedirectMixin(OnlyForAdminsMixin):
+    raise_exception = True
 
 
 class LoginNotRequiredMixin(object):

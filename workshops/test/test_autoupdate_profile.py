@@ -44,7 +44,7 @@ class TestAutoUpdateProfile(TestBase):
             'url': '',
             'username': 'changed',
             'affiliation': '',
-            'languages_1': [self.latin.pk, self.french.pk],
+            'languages': [self.latin.pk, self.french.pk],
             'domains': [self.chemistry.pk],
             'lessons': [self.git.pk, self.matlab.pk],
             'privacy_consent': True,

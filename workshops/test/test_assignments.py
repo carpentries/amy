@@ -51,7 +51,7 @@ class TestAssignments(TestBase):
 
         self.client.post(
             reverse('event_assign', args=[event.slug, fake_user_pk]),
-            {'person_1': user.pk},
+            {'person': user.pk},
         )
         event.refresh_from_db()
         assert event.assigned_to == user
@@ -72,7 +72,7 @@ class TestAssignments(TestBase):
 
         self.client.post(
             reverse('eventrequest_assign', args=[er.pk, fake_user_pk]),
-            {'person_1': user.pk},
+            {'person': user.pk},
         )
         er.refresh_from_db()
         assert er.assigned_to == user

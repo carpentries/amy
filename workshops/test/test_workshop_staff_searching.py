@@ -19,7 +19,7 @@ class TestLocateWorkshopStaff(TestBase):
         """Ensure search returns everyone with defined airport."""
         response = self.client.get(
             reverse('workshop_staff'),
-            {'airport_1': self.airport_0_0.pk, 'submit': 'Submit'}
+            {'airport': self.airport_0_0.pk, 'submit': 'Submit'}
         )
         self.assertEqual(response.status_code, 200)
 
@@ -36,7 +36,7 @@ class TestLocateWorkshopStaff(TestBase):
         """Ensure people with correct skill are returned."""
         response = self.client.get(
             reverse('workshop_staff'),
-            {'airport_1': self.airport_50_100.pk, 'lessons': [self.git.pk],
+            {'airport': self.airport_50_100.pk, 'lessons': [self.git.pk],
              'submit': 'Submit'}
         )
         self.assertEqual(response.status_code, 200)
@@ -56,7 +56,7 @@ class TestLocateWorkshopStaff(TestBase):
         """Ensure people with correct skills are returned."""
         response = self.client.get(
             reverse('workshop_staff'),
-            {'airport_1': self.airport_50_100.pk,
+            {'airport': self.airport_50_100.pk,
              'lessons': [self.git.pk, self.sql.pk],
              'submit': 'Submit'}
         )
@@ -159,7 +159,7 @@ class TestLocateWorkshopStaff(TestBase):
 
         response = self.client.get(
             reverse('workshop_staff'),
-            {'languages_1': [self.french.pk,],
+            {'languages': [self.french.pk,],
              'submit': 'Submit'}
         )
         self.assertEqual(response.status_code, 200)
@@ -181,7 +181,7 @@ class TestLocateWorkshopStaff(TestBase):
 
         response = self.client.get(
             reverse('workshop_staff'),
-            {'languages_1': [self.english.pk, self.french.pk],
+            {'languages': [self.english.pk, self.french.pk],
              'submit': 'Submit'}
         )
         self.assertEqual(response.status_code, 200)

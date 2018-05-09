@@ -41,7 +41,7 @@ class TestBadge(TestBase):
         award_add = swc_badge.click('Award new', index=0)
         form = award_add.forms[2]
         self.assertSelected(form['badge'], 'Software Carpentry Instructor')
-        form['person_1'] = self.spiderman.id
+        form['person'].force_value(self.spiderman.id)
         assert self.swc_instructor.award_set.count() == 3
         form.submit()
         assert self.swc_instructor.award_set.count() == 4

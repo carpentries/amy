@@ -4,7 +4,7 @@ function import_task(url) {
     $('#import_task_modal').modal('hide');
     $('#error_message').addClass('hidden');
 
-    var elem = $("#id_task-person_0");
+    var elem = $("#id_task-person");
     // select the first results of a search
     elem.on("autocompleteresponse", function(event, ui) {
       ui.item = ui.content[0];

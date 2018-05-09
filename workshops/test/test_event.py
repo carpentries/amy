@@ -501,7 +501,7 @@ class TestEventViews(TestBase):
         data = {
             'role': self.learner.pk,
             'event': event.pk,
-            'person_1': self.spiderman.pk,
+            'person': self.spiderman.pk,
         }
         self.client.post(reverse('task_add'), data)
         event.refresh_from_db()
@@ -515,7 +515,7 @@ class TestEventViews(TestBase):
         be unspecified (== 'xx')."""
         data = {
             'slug': '',
-            'host_1': Organization.objects.all()[0].pk,
+            'host': Organization.objects.all()[0].pk,
             'tags': Tag.objects.all(),
             'invoice_status': 'unknown',
         }
@@ -535,7 +535,7 @@ class TestEventViews(TestBase):
         be unspecified (== 'xx')."""
         data = {
             'slug': '',
-            'host_1': Organization.objects.all()[0].pk,
+            'host': Organization.objects.all()[0].pk,
             'tags': [Tag.objects.first().pk],
             'invoice_status': 'unknown',
         }
@@ -571,7 +571,7 @@ class TestEventViews(TestBase):
         be unspecified (== 'xx')."""
         data = {
             'slug': '',
-            'host_1': Organization.objects.all()[0].pk,
+            'host': Organization.objects.all()[0].pk,
             'tags': [Tag.objects.first().pk],
             'invoice_status': 'unknown',
         }
@@ -754,8 +754,8 @@ class TestEventMerging(TestBase):
         }
         base_url = reverse('events_merge')
         query = urlencode({
-            'event_a_0': self.event_a.slug,
-            'event_b_0': self.event_b.slug
+            'event_a': self.event_a.pk,
+            'event_b': self.event_b.pk
         })
         self.url = '{}?{}'.format(base_url, query)
 

@@ -5,6 +5,7 @@ from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Div, HTML, Submit, Button, Field
 from crispy_forms.bootstrap import AccordionGroup, Accordion
+from dal import autocomplete
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
@@ -19,7 +20,6 @@ from django.forms import (
 )
 from django_countries import Countries
 from django_countries.fields import CountryField
-from selectable import forms as selectable
 
 from workshops import lookups
 from workshops.models import (
@@ -41,6 +41,7 @@ from workshops.models import (
     DCSelfOrganizedEventRequest,
     TrainingProgress,
     Tag,
+    Language,
 )
 
 
@@ -222,19 +223,17 @@ class WorkshopStaffForm(forms.Form):
                                  min_value=-180.0,
                                  max_value=180.0,
                                  required=False)
-    airport = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.AirportLookup,
+    airport = forms.ModelChoiceField(
         label='Airport',
         required=False,
-        widget=selectable.AutoComboboxSelectWidget(
-            lookup_class=lookups.AirportLookup,
-        ),
+        queryset=Airport.objects.all(),
+        widget=autocomplete.ModelSelect2(url='airport-lookup')
     )
-    languages = selectable.AutoCompleteSelectMultipleField(
-        lookup_class=lookups.LanguageLookup,
+    languages = forms.ModelMultipleChoiceField(
         label='Languages',
         required=False,
-        widget=selectable.AutoComboboxSelectMultipleWidget,
+        queryset=Language.objects.all(),
+        widget=autocomplete.ModelSelect2Multiple(url='language-lookup')
     )
 
     country = forms.MultipleChoiceField(choices=[])
@@ -376,34 +375,34 @@ class DebriefForm(forms.Form):
 
 
 class EventForm(forms.ModelForm):
-    host = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.OrganizationLookup,
+    host = forms.ModelChoiceField(
         label='Host',
         required=True,
         help_text=Event._meta.get_field('host').help_text,
-        widget=selectable.AutoComboboxSelectWidget,
+        queryset=Organization.objects.all(),
+        widget=autocomplete.ModelSelect2(url='organization-lookup')
     )
 
-    administrator = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.OrganizationLookup,
+    administrator = forms.ModelChoiceField(
         label='Administrator',
         required=False,
         help_text=Event._meta.get_field('administrator').help_text,
-        widget=selectable.AutoComboboxSelectWidget,
+        queryset=Organization.objects.all(),
+        widget=autocomplete.ModelSelect2(url='organization-lookup')
     )
 
-    assigned_to = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.AdminLookup,
+    assigned_to = forms.ModelChoiceField(
         label='Assigned to',
         required=False,
-        widget=selectable.AutoComboboxSelectWidget,
+        queryset=Person.objects.all(),
+        widget=autocomplete.ModelSelect2(url='admin-lookup')
     )
 
-    language = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.LanguageLookup,
+    language = forms.ModelChoiceField(
         label='Language',
         required=False,
-        widget=selectable.AutoComboboxSelectWidget,
+        queryset=Language.objects.all(),
+        widget=autocomplete.ModelSelect2(url='language-lookup')
     )
 
     country = CountryField().formfield(
@@ -496,28 +495,23 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm):
         model = Task
         fields = '__all__'
         widgets = {
-            'person': selectable.AutoComboboxSelectWidget(
-                lookup_class=lookups.PersonLookup,
-            ),
-            'event': selectable.AutoComboboxSelectWidget(
-                lookup_class=lookups.EventLookup,
-            ),
+            'person': autocomplete.ModelSelect2(url='person-lookup'),
+            'event': autocomplete.ModelSelect2(url='event-lookup'),
         }
 
 
 class PersonForm(forms.ModelForm):
-
-    airport = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.AirportLookup,
+    airport = forms.ModelChoiceField(
         label='Airport',
         required=False,
-        widget=selectable.AutoComboboxSelectWidget,
+        queryset=Airport.objects.all(),
+        widget=autocomplete.ModelSelect2(url='airport-lookup')
     )
-    languages = selectable.AutoCompleteSelectMultipleField(
-        lookup_class=lookups.LanguageLookup,
+    languages = forms.ModelMultipleChoiceField(
         label='Languages',
         required=False,
-        widget=selectable.AutoComboboxSelectMultipleWidget,
+        queryset=Language.objects.all(),
+        widget=autocomplete.ModelSelect2Multiple(url='language-lookup')
     )
 
     helper = bootstrap_helper
@@ -572,19 +566,18 @@ class PersonPermissionsForm(forms.ModelForm):
 
 
 class PersonsSelectionForm(forms.Form):
-
-    person_a = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.PersonLookup,
+    person_a = forms.ModelChoiceField(
         label='Person From',
         required=True,
-        widget=selectable.AutoComboboxSelectWidget,
+        queryset=Person.objects.all(),
+        widget=autocomplete.ModelSelect2(url='person-lookup')
     )
 
-    person_b = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.PersonLookup,
+    person_b = forms.ModelChoiceField(
         label='Person To',
         required=True,
-        widget=selectable.AutoComboboxSelectWidget,
+        queryset=Person.objects.all(),
+        widget=autocomplete.ModelSelect2(url='person-lookup')
     )
 
     helper = BootstrapHelper(use_get_method=True)
@@ -684,15 +677,9 @@ class AwardForm(WidgetOverrideMixin, forms.ModelForm):
         model = Award
         fields = '__all__'
         widgets = {
-            'person': selectable.AutoComboboxSelectWidget(
-                lookup_class=lookups.PersonLookup,
-            ),
-            'event': selectable.AutoComboboxSelectWidget(
-                lookup_class=lookups.EventLookup,
-            ),
-            'awarded_by': selectable.AutoComboboxSelectWidget(
-                lookup_class=lookups.PersonLookup,
-            ),
+            'person': autocomplete.ModelSelect2(url='person-lookup'),
+            'event': autocomplete.ModelSelect2(url='event-lookup'),
+            'awarded_by': autocomplete.ModelSelect2(url='admin-lookup'),
         }
 
 
@@ -717,11 +704,11 @@ class OrganizationForm(forms.ModelForm):
 class MembershipForm(forms.ModelForm):
     helper = bootstrap_helper
 
-    organization = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.OrganizationLookup,
+    organization = forms.ModelChoiceField(
         label='Organization',
         required=True,
-        widget=selectable.AutoComboboxSelectWidget,
+        queryset=Organization.objects.all(),
+        widget=autocomplete.ModelSelect2(url='organization-lookup')
     )
 
     class Meta:
@@ -737,15 +724,9 @@ class SponsorshipForm(WidgetOverrideMixin, forms.ModelForm):
         model = Sponsorship
         fields = '__all__'
         widgets = {
-            'organization': selectable.AutoComboboxSelectWidget(
-                lookup_class=lookups.OrganizationLookup,
-            ),
-            'event': selectable.AutoComboboxSelectWidget(
-                lookup_class=lookups.EventLookup,
-            ),
-            'contact': selectable.AutoComboboxSelectWidget(
-                lookup_class=lookups.PersonLookup,
-            )
+            'organization': autocomplete.ModelSelect2(url='organization-lookup'),
+            'event': autocomplete.ModelSelect2(url='event-lookup'),
+            'contact': autocomplete.ModelSelect2(url='person-lookup'),
         }
 
 
@@ -761,11 +742,11 @@ class SWCEventRequestForm(PrivacyConsentMixin, forms.ModelForm):
                   '-to-admin-fee.html" target="_blank">Look up administration '
                   'fees</a>.',
     )
-    language = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.LanguageLookup,
+    language = forms.ModelChoiceField(
         label='Language',
         required=False,
-        widget=selectable.AutoComboboxSelectWidget,
+        queryset=Language.objects.all(),
+        widget=autocomplete.ModelSelect2(url='language-lookup')
     )
 
     helper = BootstrapHelper(wider_labels=True)
@@ -859,11 +840,11 @@ class DCSelfOrganizedEventRequestForm(
 
 
 class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):
-    languages = selectable.AutoCompleteSelectMultipleField(
-        lookup_class=lookups.LanguageLookup,
+    languages = forms.ModelMultipleChoiceField(
         label='Languages you can teach in',
         required=False,
-        widget=selectable.AutoComboboxSelectMultipleWidget,
+        queryset=Language.objects.all(),
+        widget=autocomplete.ModelSelect2Multiple(url='language-lookup')
     )
 
     class Meta:
@@ -890,33 +871,33 @@ class ProfileUpdateRequestForm(ProfileUpdateRequestFormNoCaptcha,
 
 
 class EventLookupForm(forms.Form):
-    event = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.EventLookup,
+    event = forms.ModelChoiceField(
         label='Event',
         required=True,
-        widget=selectable.AutoComboboxSelectWidget,
+        queryset=Event.objects.all(),
+        widget=autocomplete.ModelSelect2(url='event-lookup')
     )
 
     helper = bootstrap_helper
 
 
 class PersonLookupForm(forms.Form):
-    person = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.PersonLookup,
+    person = forms.ModelChoiceField(
         label='Person',
         required=True,
-        widget=selectable.AutoComboboxSelectWidget,
+        queryset=Person.objects.all(),
+        widget=autocomplete.ModelSelect2(url='person-lookup')
     )
 
     helper = BootstrapHelper(use_get_method=True)
 
 
 class AdminLookupForm(forms.Form):
-    person = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.AdminLookup,
+    person = forms.ModelChoiceField(
         label='Administrator',
         required=True,
-        widget=selectable.AutoComboboxSelectWidget,
+        queryset=Person.objects.all(),
+        widget=autocomplete.ModelSelect2(url='admin-lookup')
     )
 
     helper = bootstrap_helper
@@ -936,18 +917,18 @@ TodoFormSet = modelformset_factory(TodoItem, form=SimpleTodoForm, extra=10)
 
 
 class EventsSelectionForm(forms.Form):
-    event_a = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.EventLookup,
+    event_a = forms.ModelChoiceField(
         label='Event A',
         required=True,
-        widget=selectable.AutoComboboxSelectWidget,
+        queryset=Event.objects.all(),
+        widget=autocomplete.ModelSelect2(url='event-lookup')
     )
 
-    event_b = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.EventLookup,
+    event_b = forms.ModelChoiceField(
         label='Event B',
         required=True,
-        widget=selectable.AutoComboboxSelectWidget,
+        queryset=Event.objects.all(),
+        widget=autocomplete.ModelSelect2(url='event-lookup')
     )
 
     helper = BootstrapHelper(use_get_method=True)
@@ -1179,11 +1160,11 @@ class TrainingRequestForm(forms.ModelForm):
 
 
 class TrainingRequestUpdateForm(forms.ModelForm):
-    person = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.PersonLookup,
+    person = forms.ModelChoiceField(
         label='Matched Trainee',
         required=False,
-        widget=selectable.AutoComboboxSelectWidget,
+        queryset=Person.objects.all(),
+        widget=autocomplete.ModelSelect2(url='person-lookup')
     )
 
     helper = BootstrapHelper(duplicate_buttons_on_top=True,
@@ -1214,11 +1195,11 @@ class AutoUpdateProfileForm(PrivacyConsentMixin, forms.ModelForm):
                   'us at <a href="mailto:admin@software-carpentry.org">'
                   'admin@software-carpentry.org</a>.')
 
-    languages = selectable.AutoCompleteSelectMultipleField(
-        lookup_class=lookups.LanguageLookup,
+    languages = forms.ModelMultipleChoiceField(
         label='Languages',
         required=False,
-        widget=selectable.AutoComboboxSelectMultipleWidget,
+        queryset=Language.objects.all(),
+        widget=autocomplete.ModelSelect2Multiple(url='language-lookup')
     )
 
     helper = bootstrap_helper
@@ -1256,23 +1237,23 @@ class AutoUpdateProfileForm(PrivacyConsentMixin, forms.ModelForm):
 
 
 class TrainingProgressForm(forms.ModelForm):
-    trainee = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.PersonLookup,
+    trainee = forms.ModelChoiceField(
         label='Trainee',
         required=True,
-        widget=selectable.AutoComboboxSelectWidget,
+        queryset=Person.objects.all(),
+        widget=autocomplete.ModelSelect2(url='person-lookup')
     )
-    evaluated_by = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.AdminLookup,
+    evaluated_by = forms.ModelChoiceField(
         label='Evaluated by',
         required=False,
-        widget=selectable.AutoComboboxSelectWidget,
+        queryset=Person.objects.all(),
+        widget=autocomplete.ModelSelect2(url='admin-lookup')
     )
-    event = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.TTTEventLookup,
+    event = forms.ModelChoiceField(
         label='Event',
         required=False,
-        widget=selectable.AutoComboboxSelectWidget,
+        queryset=Event.objects.all(),
+        widget=autocomplete.ModelSelect2(url='event-lookup')
     )
 
     # helper used in edit view
@@ -1304,14 +1285,21 @@ class TrainingProgressForm(forms.ModelForm):
 
 
 class BulkAddTrainingProgressForm(forms.ModelForm):
-    event = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.TTTEventLookup,
+    event = forms.ModelChoiceField(
         label='Training',
         required=False,
-        widget=selectable.AutoComboboxSelectWidget,
+        queryset=Event.objects.filter(tags__name='TTT'),
+        widget=autocomplete.ModelSelect2(url='ttt-event-lookup')
     )
 
     trainees = forms.ModelMultipleChoiceField(queryset=Person.objects.all())
+    # TODO: add trainees lookup?
+    # trainees = forms.ModelMultipleChoiceField(
+    #     label='Trainees',
+    #     required=False,
+    #     queryset=Person.objects.all(),
+    #     widget=autocomplete.ModelSelect2(url='person-lookup'),
+    # )
 
     helper = BootstrapHelper(additional_form_class='training-progress',
                              submit_label='Add',
@@ -1349,6 +1337,13 @@ class BulkDiscardProgressesForm(forms.Form):
     selected trainees."""
 
     trainees = forms.ModelMultipleChoiceField(queryset=Person.objects.all())
+    # TODO: add trainees lookup?
+    # trainees = forms.ModelMultipleChoiceField(
+    #     label='Trainees',
+    #     required=False,
+    #     queryset=Person.objects.all(),
+    #     widget=autocomplete.ModelSelect2(url='person-lookup'),
+    # )
 
     helper = BootstrapHelper(add_submit_button=False,
                              form_tag=False,
@@ -1391,6 +1386,13 @@ class BulkChangeTrainingRequestForm(forms.Form):
 
     requests = forms.ModelMultipleChoiceField(
         queryset=TrainingRequest.objects.all())
+    # TODO: add training-requests lookup?
+    # requests = forms.ModelMultipleChoiceField(
+    #     label='Requests',
+    #     required=False,
+    #     queryset=TrainingRequest.objects.all()
+    #     widget=autocomplete.ModelSelect2(url='???-lookup'),
+    # )
 
     helper = BootstrapHelper(add_submit_button=False,
                              form_tag=False,
@@ -1439,11 +1441,11 @@ class BulkMatchTrainingRequestForm(forms.Form):
     requests = forms.ModelMultipleChoiceField(
         queryset=TrainingRequest.objects.all())
 
-    event = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.TTTEventLookup,
+    event = forms.ModelChoiceField(
         label='Training',
         required=True,
-        widget=selectable.AutoComboboxSelectWidget,
+        queryset=Event.objects.filter(tags__name='TTT'),
+        widget=autocomplete.ModelSelect2(url='ttt-event-lookup')
     )
 
     helper = BootstrapHelper(add_submit_button=False,
@@ -1478,11 +1480,11 @@ class BulkMatchTrainingRequestForm(forms.Form):
 
 class MatchTrainingRequestForm(forms.Form):
     """Form used to match a training request to a Person."""
-    person = selectable.AutoCompleteSelectField(
-        lookup_class=lookups.PersonLookup,
+    person = forms.ModelChoiceField(
         label='Trainee Account',
         required=False,
-        widget=selectable.AutoComboboxSelectWidget,
+        queryset=Person.objects.all(),
+        widget=autocomplete.ModelSelect2(url='person-lookup'),
     )
 
     helper = BootstrapHelper(add_submit_button=False,

@@ -215,7 +215,7 @@ class TestPerson(TestBase):
         url = reverse('person_edit', args=[self.spiderman.pk])
         person_edit = self.app.get(url, user='admin')
         task_form = person_edit.forms[4]
-        task_form['event_1'] = Event.objects.first().pk
+        task_form['event'].force_value(Event.objects.first().pk)
         task_form['role'] = role.pk
 
         self.assertEqual(self.spiderman.task_set.count(), 0)
@@ -716,8 +716,8 @@ class TestPersonMerging(TestBase):
         }
         base_url = reverse('persons_merge')
         query = urlencode({
-            'person_a_1': self.person_a.pk,
-            'person_b_1': self.person_b.pk
+            'person_a': self.person_a.pk,
+            'person_b': self.person_b.pk
         })
         self.url = '{}?{}'.format(base_url, query)
 
