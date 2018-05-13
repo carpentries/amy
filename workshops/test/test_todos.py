@@ -106,20 +106,22 @@ class TestTodoItemViews(TestBase):
 
     def test_edited(self):
         """Ensure TODOs can be edited."""
-        event = Event.objects.all()[0]
+        event = Event.objects.first()
 
         todo = TodoItem.objects.create(
             event=event, completed=False, title="Test TODO4",
             due=date.today(), additional="",
         )
 
-        url, form = self._get_initial_form('todo_edit', todo.pk)
-        form['title'] = "Test TODO4 - new title"
-        form['completed'] = True
-        form['additional'] = ''
+        form = {
+            'title': "Test TODO4 - new title",
+            'completed': True,
+            'additional': '',
+            'event': event.pk,
+        }
 
         rv = self.client.post(reverse('todo_edit', args=[todo.pk]), form)
-        assert rv.status_code == 302
+        self.assertEqual(rv.status_code, 302)
 
         todo.refresh_from_db()
 

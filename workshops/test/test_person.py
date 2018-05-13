@@ -7,8 +7,8 @@ from urllib.parse import urlencode
 import webtest
 
 from django.contrib.auth import authenticate
-from django.core.validators import ValidationError
 from django.contrib.auth.models import Permission, Group
+from django.core.validators import ValidationError
 from django.urls import reverse
 from webtest.forms import Upload
 
@@ -51,10 +51,15 @@ class TestPerson(TestBase):
         self._check_person(doc, self.ironman)
 
     def test_edit_person_email_when_all_fields_set(self):
-        self._test_edit_person_email(self.ron)
+        data = PersonForm(instance=self.ron).initial
+        form = PersonForm(data, instance=self.ron)
+        self.assertTrue(form.is_valid(), form.errors)
 
     def test_edit_person_email_when_airport_not_set(self):
-        self._test_edit_person_email(self.spiderman)
+        data = PersonForm(instance=self.spiderman).initial
+        data['airport'] = ''
+        form = PersonForm(data, instance=self.spiderman)
+        self.assertTrue(form.is_valid(), form.errors)
 
     def test_edit_person_empty_family_name(self):
         data = {
@@ -62,34 +67,6 @@ class TestPerson(TestBase):
         }
         f = PersonForm(data)
         self.assertNotIn('family', f.errors)
-
-    def _test_edit_person_email(self, person):
-        url, values = self._get_initial_form_index(0, 'person_edit', person.id)
-        assert 'email' in values, \
-            'No email address in initial form'
-
-        new_email = 'new@new.new'
-        assert person.email != new_email, \
-            'Would be unable to tell if email had changed'
-        values['email'] = new_email
-
-        if values['airport_1'] is None:
-            values['airport_1'] = ''
-        if values['airport_0'] is None:
-            values['airport_0'] = ''
-
-        # Django redirects when edit works.
-        response = self.client.post(url, values)
-        if response.status_code == 302:
-            new_person = Person.objects.get(id=person.id)
-            assert new_person.email == new_email, \
-                'Incorrect edited email: got {0}, expected {1}'.format(
-                    new_person.email, new_email)
-
-        # Report errors.
-        else:
-            self._check_status_code_and_parse(response, 200)
-            assert False, 'expected 302 redirect after post'
 
     def _check_person(self, doc, person):
         """ Check fields of person against document. """
@@ -154,26 +131,13 @@ class TestPerson(TestBase):
         assert note in content
 
     def test_edit_person_notes(self):
-        url, values = self._get_initial_form_index(0, 'person_edit',
-                                                   self.hermione.id)
+        data = PersonForm(instance=self.hermione).initial
+        # notes not present
+        self.assertEqual(data['notes'], '')
 
-        assert 'notes' in values, 'Notes not present in initial form'
-
-        note = 'Hermione is a very good student.'
-        values['notes'] = note
-
-        # Django redirects when edit works.
-        response = self.client.post(url, values)
-        if response.status_code == 302:
-            new_person = Person.objects.get(id=self.hermione.id)
-            assert new_person.notes == note, \
-                'Incorrect edited notes: got {0}, expected {1}'.format(
-                    new_person.notes, note)
-
-        # Report errors.
-        else:
-            self._check_status_code_and_parse(response, 200)
-            assert False, 'expected 302 redirect after post'
+        data['notes'] = 'Hermione is a very good student.'
+        form = PersonForm(data, instance=self.hermione)
+        self.assertTrue(form.is_valid(), form.errors)
 
     def test_1185_regression(self):
         """Ensure that admins without superuser privileges,
@@ -275,8 +239,15 @@ class TestPerson(TestBase):
             qualifications = person.qualification_set.all()
             tasks = person.task_set.all()
 
-            rv = self.client.post(reverse('person_delete', args=[person.pk, ]))
-            assert rv.status_code == 302
+            # first we need to remove all tasks, qualifications and awards
+            # because they're protected from deletion of Person
+            # (on_delete=PROTECT)
+            person.task_set.all().delete()
+            person.qualification_set.all().delete()
+            person.award_set.all().delete()
+
+            rv = self.client.post(reverse('person_delete', args=[person.pk]))
+            self.assertEqual(rv.status_code, 302)
 
             with self.assertRaises(Person.DoesNotExist):
                 Person.objects.get(pk=person.pk)
@@ -295,11 +266,11 @@ class TestPerson(TestBase):
         """Make sure we can edit user lessons without any issues."""
         assert set(self.hermione.lessons.all()) == {self.git, self.sql}
 
-        url, values = self._get_initial_form_index(0, 'person_edit',
-                                                   self.hermione.id)
-        values['lessons'] = [self.git.pk]
+        url = reverse('person_edit', args=[self.hermione.pk])
+        data = PersonForm(instance=self.hermione).initial
+        data['lessons'] = [self.git.pk]
 
-        response = self.client.post(url, values)
+        response = self.client.post(url, data)
         assert response.status_code == 302
         assert set(self.hermione.lessons.all()) == {self.git}
 
@@ -470,22 +441,32 @@ class TestPerson(TestBase):
 
         trainees = self.app.get(reverse('all_trainees'), user='admin')
 
+        # clear trainee awards so that .last() always returns the exact badge
+        # we want
+        trainee.award_set.all().delete()
+
         # Test workflow starting from clicking at "SWC" label
         swc_res = trainees.click('^SWC$')
-        self.assertSelected(swc_res.forms[2]['badge'],
+        self.assertSelected(swc_res.forms['main-form']['badge'],
                             'Software Carpentry Instructor')
-        self.assertEqual(swc_res.forms[2]['event_0'].value,
-                         '2016-08-10-training')
-        self.assertRedirects(swc_res.forms[2].submit(), trainees.request.url)
+        self.assertEqual(int(swc_res.forms['main-form']['event'].value),
+                         training.pk)
+        res = swc_res.forms['main-form'].submit()
+        self.assertRedirects(res, reverse('all_trainees'))
         self.assertEqual(trainee.award_set.last().badge, self.swc_instructor)
+
+        # clear trainee awards so that .last() always returns the exact badge
+        # we want
+        trainee.award_set.all().delete()
 
         # Test workflow starting from clicking at "DC" label
         dc_res = trainees.click('^DC$')
-        self.assertSelected(dc_res.forms[2]['badge'],
+        self.assertSelected(dc_res.forms['main-form']['badge'],
                             'Data Carpentry Instructor')
-        self.assertEqual(dc_res.forms[2]['event_0'].value,
-                         '2016-08-10-training')
-        self.assertRedirects(dc_res.forms[2].submit(), trainees.request.url)
+        self.assertEqual(int(dc_res.forms['main-form']['event'].value),
+                         training.pk)
+        res = dc_res.forms['main-form'].submit()
+        self.assertRedirects(res, reverse('all_trainees'))
         self.assertEqual(trainee.award_set.last().badge, self.dc_instructor)
 
     def test_person_github_username_validation(self):
@@ -537,12 +518,14 @@ class TestPersonPassword(TestBase):
     def test_edit_password_by_superuser(self):
         self.client.login(username='admin', password='admin')
         user = self.admin
-        url, form = self._get_initial_form('person_password', user.pk)
+        url = reverse('person_password', args=[user.pk])
+        doc = self.client.get(url)
+        form = doc.context['form']
 
         # check that correct form is rendered
-        assert 'old_password' not in form
-        assert 'new_password1' in form
-        assert 'new_password2' in form
+        self.assertNotIn('old_password', form.fields)
+        self.assertIn('new_password1', form.fields)
+        self.assertIn('new_password2', form.fields)
 
         # try incorrect form data first
         new_password = 'new_password'
@@ -565,12 +548,14 @@ class TestPersonPassword(TestBase):
     def test_edit_other_user_password_by_superuser(self):
         self.client.login(username='admin', password='admin')
         user = self.user
-        url, form = self._get_initial_form('person_password', user.pk)
+        url = reverse('person_password', args=[user.pk])
+        doc = self.client.get(url)
+        form = doc.context['form']
 
         # check that correct form is rendered
-        assert 'old_password' not in form
-        assert 'new_password1' in form
-        assert 'new_password2' in form
+        self.assertNotIn('old_password', form.fields)
+        self.assertIn('new_password1', form.fields)
+        self.assertIn('new_password2', form.fields)
 
         # try incorrect form data first
         new_password = 'new_password'
@@ -593,28 +578,31 @@ class TestPersonPassword(TestBase):
     def test_edit_password_by_normal_user(self):
         self.client.login(username='user', password='user')
         user = self.user
-        url, form = self._get_initial_form('person_password', user.pk)
+        url = reverse('person_password', args=[user.pk])
+        doc = self.client.get(url)
+        form = doc.context['form']
 
         # check that correct form is rendered
-        assert 'old_password' in form
-        assert 'new_password1' in form
-        assert 'new_password2' in form
+        self.assertIn('old_password', form.fields)
+        self.assertIn('new_password1', form.fields)
+        self.assertIn('new_password2', form.fields)
 
         # try incorrect form data first
         new_password = 'new_password'
         data = {
             'old_password': 'asdf',
             'new_password1': new_password,
-            'new_password2': 'asdf',
+            'new_password2': 'asdhaf',
         }
         rv = self.client.post(url, data)
         assert rv.status_code != 302
 
+        # try correct old password
         data['old_password'] = 'user'
         rv = self.client.post(url, data)
         assert rv.status_code != 302
 
-        # update password
+        # update password to a new matching password
         data['new_password2'] = new_password
         rv = self.client.post(url, data)
         assert rv.status_code == 302
@@ -1117,15 +1105,21 @@ class TestFilterTaughtWorkshops(TestBase):
 class TestPersonUpdateViewPermissions(TestBase):
 
     def setUp(self):
-        self.trainee = Person.objects.create(username='trainee')
-        self.trainer = Person.objects.create(username='trainer')
+        self.trainee = Person.objects.create_user('trainee', 'Harry', 'Potter',
+                                                  'hp@mail.com', 'hp')
+        self.trainer = Person.objects.create_user('trainer', 'Severus',
+                                                  'Snape', 'ss@mail.com', 'ss')
         trainer_group, _ = Group.objects.get_or_create(name='trainers')
         self.trainer.groups.add(trainer_group)
+
+    def test_correct_permissions(self):
+        self.assertTrue(self.trainer.is_admin)
+        self.assertFalse(self.trainee.is_admin)
 
     def test_trainer_can_edit_self_profile(self):
         profile_edit = self.app.get(
             reverse('person_edit', args=[self.trainer.pk]),
-            user='trainer',
+            user=self.trainer,
         )
         self.assertEqual(profile_edit.status_code, 200)
 
@@ -1133,7 +1127,7 @@ class TestPersonUpdateViewPermissions(TestBase):
         with self.assertRaises(webtest.app.AppError):
             profile_edit = self.app.get(
                 reverse('person_edit', args=[self.trainee.pk]),
-                user='trainer',
+                user=self.trainer,
             )
 
 

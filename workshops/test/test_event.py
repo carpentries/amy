@@ -151,32 +151,20 @@ class TestEvent(TestBase):
         self.assertNotIn(cancelled_event, unpublished)
 
     def test_delete_event(self):
-        """Make sure deleted event and its tasks are no longer accessible."""
+        """Make sure deleted event without any tasks is no longer accessible."""
         event = Event.objects.get(slug="starts-today-ongoing")
-        role1 = Role.objects.create(name='NonInstructor')
-        t1 = Task.objects.create(event=event, person=self.spiderman,
-                                 role=role1)
-        t2 = Task.objects.create(event=event, person=self.ironman,
-                                 role=role1)
-        t3 = Task.objects.create(event=event, person=self.blackwidow,
-                                 role=role1)
-        event.task_set = [t1, t2, t3]
-        event.save()
 
-        rv = self.client.post(reverse('event_delete', args=[event.slug, ]))
-        assert rv.status_code == 302
+        rv = self.client.post(reverse('event_delete', args=[event.slug]))
+        self.assertEqual(rv.status_code, 302)
 
         with self.assertRaises(Event.DoesNotExist):
             Event.objects.get(slug="starts-today-ongoing")
 
-        for t in [t1, t2, t3]:
-            with self.assertRaises(Task.DoesNotExist):
-                Task.objects.get(pk=t.pk)
-
     def test_delete_event_with_tasks_and_awards(self):
         """Ensure we cannot delete an event with related tasks and awards.
 
-        Deletion is prevented via Award.event's on_delete=PROTECT."""
+        Deletion is prevented via Award.event's on_delete=PROTECT
+        and Task.event's on_delete=PROTECT."""
         event = Event.objects.get(slug="starts-today-ongoing")
         role = Role.objects.create(name='NonInstructor')
         badge = Badge.objects.create(name='noninstructor',
@@ -190,11 +178,14 @@ class TestEvent(TestBase):
                                      event=event)
 
         rv = self.client.post(reverse('event_delete', args=[event.slug, ]))
-        assert rv.status_code == 200
+        self.assertEqual(rv.status_code, 200)
 
         content = rv.content.decode('utf-8')
-        assert "Failed to delete" in content
-        assert "awards" in content
+        self.assertIn("Failed to delete", content)
+        self.assertIn("tasks", content)
+        # not available since it's not propagated by Django
+        # to ProtectedError.protected_objects
+        #self.assertIn("awards", content)
 
         # make sure these objects were not deleted
         Event.objects.get(pk=event.pk)

@@ -19,7 +19,7 @@ class TestBadge(TestBase):
         assert self.swc_instructor.name in content
         assert self.swc_instructor.title in content
         assert self.swc_instructor.criteria in content
-        self._check_status_code_and_parse(rv, 200)
+        self.assertEqual(rv.status_code, 200)
 
     def test_badge_display_awards(self):
         "Ensure awards are displayed correctly on their badge details page."

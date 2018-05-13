@@ -1,10 +1,7 @@
 from datetime import datetime
 
-from django.template import Context
-
-from django.template import Template
-
 from django.core.exceptions import ValidationError
+from django.template import Context, Template
 from django.urls import reverse
 
 from workshops.models import TrainingProgress, TrainingRequirement, Event, Tag, \

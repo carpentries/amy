@@ -25,15 +25,15 @@ class TestSearchOrganization(TestBase):
 
     def test_search_for_organization_with_no_matches(self):
         response = self.search_for('non.existent', in_organizations=True)
-        doc = self._check_status_code_and_parse(response, 200)
-        self._check_0(doc, ".//a[@class='searchresult']",
-                      'Expected no search results')
+        self.assertEqual(response.status_code, 200)
+        doc = response.content.decode('utf-8')
+        self.assertNotIn('searchresult', doc, 'Expected no search results')
 
     def test_search_for_organization_when_host_matching_turned_off(self):
         response = self.search_for('Alpha')
-        doc = self._check_status_code_and_parse(response, 200)
-        node = self._check_0(doc, ".//a[@class='searchresult']",
-                             'Expected no search results')
+        self.assertEqual(response.status_code, 200)
+        doc = response.content.decode('utf-8')
+        self.assertNotIn('searchresult', doc, 'Expected no search results')
 
     def test_search_for_organization_by_partial_name(self):
         response = self.search_for('Alpha', in_organizations=True)
@@ -59,13 +59,13 @@ class TestSearchOrganization(TestBase):
     def test_search_for_organization_with_multiple_matches(self):
         # 'a' is in both 'alpha' and 'beta'
         response = self.search_for('a', in_organizations=True)
-        doc = self._check_status_code_and_parse(response, 200)
-        nodes = self._get_N(doc,  ".//a[@class='searchresult']",
-                            'Expected three search results',
-                            expected=3)
-        texts = set([n.text for n in nodes])
-        assert texts == {'alpha.edu', 'self-organized', 'beta.com'}, \
-            'Wrong names {0} in search result'.format(texts)
+        self.assertEqual(response.status_code, 200)
+        doc = response.content.decode('utf-8')
+        self.assertEqual(len(response.context['organizations']), 3,
+                         'Expected three search results')
+        for org in ['alpha.edu', 'self-organized', 'beta.com']:
+            self.assertIn(org, doc,
+                          'Wrong names {0} in search result'.format(org))
 
     def test_search_for_people_by_personal_family_names(self):
         """Test if searching for two words yields people correctly."""
@@ -76,13 +76,13 @@ class TestSearchOrganization(TestBase):
 
         response = self.search_for(
             'Hermione Granger', in_organizations=True, in_persons=True)
-        doc = self._check_status_code_and_parse(response, 200)
-        nodes = self._get_N(doc, ".//a[@class='searchresult']",
-                            'Expected two search results',
-                            expected=2)
-        texts = set([n.text for n in nodes])
-        assert texts == {str(self.org_alpha.domain), str(self.hermione)}, \
-            'Wrong names {0} in search result'.format(texts)
+        self.assertEqual(response.status_code, 200)
+        doc = response.content.decode('utf-8')
+        self.assertEqual(len(response.context['persons'])
+                         + len(response.context['organizations']),
+                         2, 'Expected two search results')
+        for result in {self.org_alpha.domain, self.hermione.get_full_name()}:
+            self.assertIn(result, doc)
 
     def test_search_for_training_requests(self):
         """Make sure that finding training requests works."""

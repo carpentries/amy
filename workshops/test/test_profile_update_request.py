@@ -6,6 +6,10 @@ from .base import TestBase
 from ..models import (
     ProfileUpdateRequest,
     Person,
+    Task,
+    Award,
+    Airport,
+    Qualification,
     KnowledgeDomain,
     Lesson,
     Airport,
@@ -144,6 +148,12 @@ class TestProfileUpdateRequest(TestBase):
     def test_request_accepted_new_person_added(self):
         """Ensure new person is added when no-one matches the profile update
         request."""
+        # remove some dependant objects first
+        Task.objects.all().delete()
+        Award.objects.all().delete()
+        Person.objects.all().update(airport=None)
+        Qualification.objects.all().delete()
+        # now remove all persons except for admin
         Person.objects.exclude(username='admin').delete()
         self.assertEqual(Person.objects.count(), 1)
 
