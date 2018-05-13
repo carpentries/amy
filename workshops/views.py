@@ -1821,6 +1821,13 @@ def instructors_by_date(request):
         end_date = form.cleaned_data['end_date']
         rvs = ReportsViewSet()
         tasks = rvs.instructors_by_time_queryset(start_date, end_date)
+        # speed up things a little
+        tasks = tasks.annotate(
+            taught_times=Count(
+                'person__task',
+                filter=Q(person__task__role__name='instructor')
+            )
+        )
         emails = tasks.filter(person__may_contact=True)\
                       .exclude(person__email=None)\
                       .values_list('person__email', flat=True)
@@ -1987,15 +1994,17 @@ def workshop_issues(request):
         )
     )
     no_attendance = Q(attendance=None) | Q(attendance=0)
+    no_location = (Q(country=None) |
+                   Q(venue=None) | Q(venue__exact='') |
+                   Q(address=None) | Q(address__exact='') |
+                   Q(latitude=None) | Q(longitude=None))
+    bad_dates = Q(start__gt=F('end'))
     events = events.filter(
         (no_attendance & ~Q(tags__name='unresponsive')) |
-        Q(country=None) |
-        Q(venue=None) | Q(venue__exact='') |
-        Q(address=None) | Q(address__exact='') |
-        Q(latitude=None) | Q(longitude=None) |
-        Q(start__gt=F('end')) |
+        no_location |
+        bad_dates |
         Q(num_instructors=0)
-    )
+    ).prefetch_related('task_set', 'task_set__person')
 
     assigned_to, is_admin = assignment_selection(request)
 
@@ -2013,14 +2022,23 @@ def workshop_issues(request):
         # no filtering
         pass
 
-    for e in events:
-        e.missing_attendance_ = (not e.attendance)
-        e.missing_location_ = (
-            not e.country or not e.venue or not e.address or not e.latitude or
-            not e.longitude
-        )
-        e.bad_dates_ = e.start and e.end and (e.start > e.end)
-        e.no_instructors_ = not e.num_instructors
+    events = events.annotate(
+        missing_attendance=Case(
+            When(no_attendance, then=Value(1)),
+            default=Value(0),
+            output_field=IntegerField(),
+        ),
+        missing_location=Case(
+            When(no_location, then=Value(1)),
+            default=Value(0),
+            output_field=IntegerField(),
+        ),
+        bad_dates=Case(
+            When(bad_dates, then=Value(1)),
+            default=Value(0),
+            output_field=IntegerField(),
+        ),
+    )
 
     context = {
         'title': 'Workshops with Issues',

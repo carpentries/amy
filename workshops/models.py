@@ -12,6 +12,7 @@ from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
 from django.db.models import Q, F, IntegerField, Sum, Case, When
 from django.utils import timezone
+from django.utils.functional import cached_property
 from django.urls import reverse
 from django_countries.fields import CountryField
 from reversion import revisions as reversion
@@ -310,7 +311,7 @@ class PersonManager(BaseUserManager):
     def get_by_natural_key(self, username):
         """Let's make this command so that it gets user by *either* username or
         email.  Original behavior is to get user by USERNAME_FIELD."""
-        if '@' in username:
+        if isinstance(username, str) and '@' in username:
             return self.get(email=username)
         else:
             return super().get_by_natural_key(username)
@@ -1061,7 +1062,7 @@ class Event(AssignmentMixin, models.Model):
     def get_absolute_url(self):
         return reverse('event_details', args=[self.slug])
 
-    @property
+    @cached_property
     def repository_url(self):
         """Return self.url formatted as it was repository URL.
 
@@ -1081,7 +1082,7 @@ class Event(AssignmentMixin, models.Model):
             # KeyError: mo.groupdict doesn't supply required names to format
             return self.url
 
-    @property
+    @cached_property
     def website_url(self):
         """Return self.url formatted as it was website URL.
 
@@ -1101,19 +1102,18 @@ class Event(AssignmentMixin, models.Model):
             # KeyError: mo.groupdict doesn't supply required names to format
             return self.url
 
-    @property
+    @cached_property
     def uninvoiced(self):
         """Indicate if the event has been invoiced or not."""
         return self.invoice_status == 'not-invoiced'
 
-    @property
+    @cached_property
     def mailto(self):
         """Return list of emails we can contact about workshop details, like
         attendance."""
         from workshops.util import find_emails
 
-        emails = Task.objects \
-            .filter(event=self) \
+        emails = self.task_set \
             .filter(
                 # we only want hosts, organizers and instructors
                 Q(role__name='host') | Q(role__name='organizer') |
