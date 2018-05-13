@@ -2,7 +2,7 @@
 
 {% load diff %}
 
-{% block title %}<h1>{{ verbose_name}} {{ object }}</h1>{% endblock %}
+{% block title %}<h1>{{ verbose_name|title }} {{ object }}</h1>{% endblock %}
 {% block content %}
 <p>
   <a href="{{ object.get_absolute_url }}" class="btn btn-primary">View newest</a>

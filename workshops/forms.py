@@ -363,11 +363,13 @@ class SearchForm(forms.Form):
 class DebriefForm(forms.Form):
     '''Represent general debrief form.'''
     begin_date = forms.DateField(
-        label='Begin date as YYYY-MM-DD',
+        label='Begin date',
+        help_text='YYYY-MM-DD',
         input_formats=['%Y-%m-%d', ]
     )
     end_date = forms.DateField(
-        label='End date as YYYY-MD-DD',
+        label='End date',
+        help_text='YYYY-MM-DD',
         input_formats=['%Y-%m-%d', ]
     )
 
@@ -1538,11 +1540,13 @@ class SendHomeworkForm(forms.ModelForm):
 
 class AllActivityOverTimeForm(forms.Form):
     start = forms.DateField(
-        label='Begin date as YYYY-MM-DD',
+        label='Begin date',
+        help_text='YYYY-MM-DD',
         input_formats=['%Y-%m-%d', ],
     )
     end = forms.DateField(
-        label='End date as YYYY-MD-DD',
+        label='End date',
+        help_text='YYYY-MM-DD',
         input_formats=['%Y-%m-%d', ],
     )
 
