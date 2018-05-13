@@ -844,18 +844,41 @@ def merge_objects(object_a, object_b, easy_fields, difficult_fields,
                     manager.all().delete()
                 manager.set(list(related_b.all()))
 
-            elif value == 'combine':
-                summed = related_a.all() | related_b.all()
+            elif value == 'obj_a' and manager == related_a:
+                # since we're keeping current values, try to remove opposite
+                # (obj_b) - they may not be removable via on_delete=CASCADE,
+                # so try manually
+                related_b.all().delete()
 
-                # some entries may cause IntegrityError (violation of
+            elif value == 'obj_b' and manager == related_b:
+                # since we're keeping current values, try to remove opposite
+                # (obj_a) - they may not be removable via on_delete=CASCADE,
+                # so try manually
+                related_a.all().delete()
+
+            elif value == 'combine':
+                to_add = None
+
+                if manager == related_a:
+                    to_add = related_b.all()
+                if manager == related_b:
+                    to_add = related_a.all()
+
+                # Some entries may cause IntegrityError (violation of
                 # uniqueness constraint) because they are duplicates *after*
-                # being added by the manager
-                for element in summed:
+                # being added by the manager.
+                # In this case they must be removed to not cause
+                # on_delete=PROTECT violation after merging
+                # (merging_obj.delete()).
+                for element in to_add:
                     try:
                         with transaction.atomic():
                             manager.add(element)
                     except IntegrityError as e:
-                        integrity_errors.append(str(e))
+                        try:
+                            element.delete()
+                        except IntegrityError as e2:
+                            integrity_errors.append(str(e2))
 
         merging_obj.delete()
 
