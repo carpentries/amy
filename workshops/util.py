@@ -27,7 +27,6 @@ from django.http.response import HttpResponse
 from django.http.response import HttpResponseForbidden
 from django.shortcuts import render, redirect
 from django.utils.http import is_safe_url
-from selectable.decorators import results_decorator
 
 from workshops.models import (
     Event,
@@ -913,17 +912,6 @@ def login_not_required(view):
     # @access_control_decorator adds _access_control_list to `view`,
     # so @login_not_required is *not* no-op.
     return view
-
-
-@results_decorator
-def lookup_only_for_admins(request):
-    user = getattr(request, 'user', None)
-    if user is None or not user.is_authenticated():
-        return HttpResponse(status=401)  # Unauthorized
-    elif not is_admin(user):
-        return HttpResponseForbidden()
-    else:
-        return None
 
 
 class OnlyForAdminsMixin(UserPassesTestMixin):
