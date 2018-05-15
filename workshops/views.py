@@ -18,7 +18,7 @@ from django.core.exceptions import (
     PermissionDenied,
 )
 from django.core.urlresolvers import reverse, reverse_lazy
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.db.models import (
     Case,
     When,
@@ -2351,30 +2351,51 @@ def profileupdaterequest_accept(request, request_id, person_id=None):
     person.gender = profileupdate.gender
     person.user_notes = profileupdate.notes
 
-    # we need person to exist in the database in order to set domains and
-    # lessons
-    if not person.id:
-        person.save()
+    with transaction.atomic():
+        # we need person to exist in the database in order to set domains and
+        # lessons
+        if not person.id:
+            try:
+                person.username = create_username(person.personal,
+                                                  person.family)
+                person.save()
+            except IntegrityError:
+                messages.error(
+                    request,
+                    'Cannot update profile: some database constraints weren\'t'
+                    'fulfilled. Make sure that user name, GitHub user name,'
+                    'Twitter user name, or email address are unique.'
+                )
+                return redirect(profileupdate.get_absolute_url())
 
-    person.domains = list(profileupdate.domains.all())
-    person.languages.set(profileupdate.languages.all())
+        person.domains = list(profileupdate.domains.all())
+        person.languages.set(profileupdate.languages.all())
 
-    # Since Person.lessons uses a intermediate model Qualification, we ought to
-    # operate on Qualification objects instead of using Person.lessons as a
-    # list.
+        try:
+            person.save()
+        except IntegrityError:
+            messages.error(
+                request,
+                'Cannot update profile: some database constraints weren\'t'
+                'fulfilled. Make sure that user name, GitHub user name,'
+                'Twitter user name, or email address are unique.'
+            )
+            return redirect(profileupdate.get_absolute_url())
 
-    # erase old lessons
-    Qualification.objects.filter(person=person).delete()
-    # add new
-    Qualification.objects.bulk_create([
-        Qualification(person=person, lesson=L)
-        for L in profileupdate.lessons.all()
-    ])
+        # Since Person.lessons uses a intermediate model Qualification, we ought to
+        # operate on Qualification objects instead of using Person.lessons as a
+        # list.
 
-    person.save()
+        # erase old lessons
+        Qualification.objects.filter(person=person).delete()
+        # add new
+        Qualification.objects.bulk_create([
+            Qualification(person=person, lesson=L)
+            for L in profileupdate.lessons.all()
+        ])
 
-    profileupdate.active = False
-    profileupdate.save()
+        profileupdate.active = False
+        profileupdate.save()
 
     if person_id is None:
         messages.success(request,
@@ -3018,6 +3039,7 @@ def download_trainingrequests(request):
 
     writer = csv.writer(response)
     writer.writerow([
+        'Created-on',
         'State',
         'Matched Trainee',
         'Group Name',
@@ -3047,6 +3069,7 @@ def download_trainingrequests(request):
     ])
     for req in TrainingRequest.objects.all():
         writer.writerow([
+            '{:%Y-%m-%d %H:%M}'.format(req.created_at),
             req.get_state_display(),
             '—' if req.person is None else req.person.get_full_name(),
             req.group_name,

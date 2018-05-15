@@ -213,6 +213,7 @@ class Command(BaseCommand):
             person = person_or_None
 
         occupation = choice(ProfileUpdateRequest.OCCUPATION_CHOICES)[0]
+        training_completion_agreement = randbool(0.5)
         req = TrainingRequest.objects.create(
             state=state,
             person=person_or_None,
@@ -227,9 +228,10 @@ class Command(BaseCommand):
             affiliation=person.affiliation,
             location=self.faker.city(),
             country=choice(Countries)[0],
+            underresourced=randbool(0.6),
             domains_other='',
-            gender=person.gender,
-            gender_other='',
+            underrepresented=randbool(0.6),
+            nonprofit_teaching_experience='',
             previous_training=choice(
                 TrainingRequest.PREVIOUS_TRAINING_CHOICES)[0],
             previous_training_other='',
@@ -239,15 +241,17 @@ class Command(BaseCommand):
             previous_experience_other='',
             programming_language_usage_frequency=choice(
                 TrainingRequest.PROGRAMMING_LANGUAGE_USAGE_FREQUENCY_CHOICES)[0],
-            reason=self.faker.text(),
             teaching_frequency_expectation=choice(
                 TrainingRequest.TEACHING_FREQUENCY_EXPECTATION_CHOICES)[0],
             teaching_frequency_expectation_other='',
             max_travelling_frequency=choice(
                 TrainingRequest.MAX_TRAVELLING_FREQUENCY_CHOICES)[0],
             max_travelling_frequency_other='',
-            additional_skills=self.faker.job() if randbool(0.2) else '',
+            reason=self.faker.text(),
             comment=self.faker.text() if randbool(0.3) else '',
+            training_completion_agreement=training_completion_agreement,
+            workshop_teaching_agreement=randbool(0.5) if training_completion_agreement else False,
+            notes=self.faker.text() if randbool(0.3) else '',
         )
         req.domains = sample(KnowledgeDomain.objects.all())
         req.previous_involvement = sample(Role.objects.all())
