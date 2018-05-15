@@ -4,15 +4,8 @@ function import_task(url) {
     $('#import_task_modal').modal('hide');
     $('#error_message').addClass('hidden');
 
-    var elem = $("#id_task-person");
-    // select the first results of a search
-    elem.on("autocompleteresponse", function(event, ui) {
-      ui.item = ui.content[0];
-      $(this).data('ui-djselectable')._trigger('select', null, ui);
-    });
-    elem.djselectable("search", data.person);
-    elem.on("autocompleteresponse", null);
-    elem.djselectable('close');
+    // Select2 doesn't support programmatical search
+    // so we're not going to fill the person for now
 
     $("#id_task-role").val(data.role)
     $("#id_task-title").val(data.title);

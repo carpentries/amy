@@ -5,7 +5,7 @@ from ..lookups import urlpatterns
 
 
 class TestLookups(TestBase):
-    """Test suite for django-selectable lookups."""
+    """Test suite for Django-Autocomplete-Light lookups."""
 
     def test_login_regression(self):
         """Make sure lookups are login-protected"""

@@ -191,8 +191,6 @@ class TestViews(TestBase):
         self.assert_accessible(url, user=None)
 
     IGNORED_VIEWS = [
-        'selectable-lookup',
-
         # auth
         'login',
         'logout',
