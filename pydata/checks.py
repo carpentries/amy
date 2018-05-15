@@ -11,9 +11,8 @@ def check_pydata_urls_included_in_urlpatterns(**kwargs):
 
     errors = []
     for url in urlpatterns:
-        if hasattr(url, 'urlconf_module') and \
-           url.urlconf_module == pydata_urls:
-            if url.regex.pattern == r'^workshops/':
+        if hasattr(url, 'urlconf_module') and url.urlconf_module == pydata_urls:
+            if url.pattern._regex == r'^workshops/':
                 break
     else:
         errors.append(
