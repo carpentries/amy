@@ -42,10 +42,6 @@ urlpatterns += [
         {"template_name": "account/password_reset_complete.html"},
         name='password_reset_complete'),
 
-    # TODO: implement URLs below (add templates, etc.)
-    # url(r'^account/password_change/$', 'django.contrib.auth.views.password_change', name='password_change'),
-    # url(r'^account/password_change/done/$', 'django.contrib.auth.views.password_change_done', name='password_change_done'),
-
     # autocomplete lookups
     url(r'^select_lookups/', include('workshops.lookups')),
 
