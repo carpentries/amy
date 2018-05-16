@@ -1,8 +1,8 @@
 from django.conf import settings
 from django.contrib import messages
-from django.core.urlresolvers import reverse_lazy
 from django.shortcuts import render
 from django.template.loader import get_template
+from django.urls import reverse_lazy
 from django.views.generic import TemplateView
 
 from workshops.forms import (

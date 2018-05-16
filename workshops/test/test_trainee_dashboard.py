@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from workshops.models import Person, Award, Badge, TrainingProgress, \
     TrainingRequirement

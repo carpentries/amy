@@ -148,11 +148,13 @@ class AMYListView(ListView):
         """Apply a filter to the queryset. Filter is compatible with pagination
         and queryset. Also, apply pagination."""
         if self.filter_class is None:
-            self.filter = super().get_queryset()
+            self.filter = None
+            self.qs = super().get_queryset()
         else:
             self.filter = self.filter_class(self.get_filter_data(),
                                             super().get_queryset())
-        paginated = get_pagination_items(self.request, self.filter)
+            self.qs = self.filter.qs
+        paginated = get_pagination_items(self.request, self.qs)
         return paginated
 
     def get_context_data(self, **kwargs):
@@ -245,7 +247,7 @@ class AutoresponderMixin:
         recipient = form.cleaned_data['email']
 
         email = EmailMessage(
-            subject=self.email_subject, 
+            subject=self.email_subject,
             body=email_body,
             to=[recipient],
         )

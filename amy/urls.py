@@ -2,9 +2,12 @@ from django.conf import settings
 from django.conf.urls import include, url
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
+from django.urls import path
+from django.views.generic import RedirectView
 
 urlpatterns = [
-    url(r'^workshops/admin/', include(admin.site.urls)),
+    url(r'^$', RedirectView.as_view(pattern_name='dispatch')),
+    path('workshops/admin/', admin.site.urls),
 ]
 if settings.ENABLE_PYDATA:
     urlpatterns += [
@@ -39,11 +42,8 @@ urlpatterns += [
         {"template_name": "account/password_reset_complete.html"},
         name='password_reset_complete'),
 
-    # TODO: implement URLs below (add templates, etc.)
-    # url(r'^account/password_change/$', 'django.contrib.auth.views.password_change', name='password_change'),
-    # url(r'^account/password_change/done/$', 'django.contrib.auth.views.password_change_done', name='password_change_done'),
-
-    url(r'^selectable/', include('selectable.urls')),
+    # autocomplete lookups
+    url(r'^select_lookups/', include('workshops.lookups')),
 
     # REST API v1
     url(r'^api/v1/', include('api.urls')),
@@ -52,7 +52,7 @@ urlpatterns += [
     url(r'^forms/', include('extforms.urls')),
 
     # Login with GitHub credentials
-    url('', include('social.apps.django_app.urls', namespace='social')),
+    url('', include('social_django.urls', namespace='social')),
 ]
 
 

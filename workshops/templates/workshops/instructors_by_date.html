@@ -16,7 +16,7 @@
     {% for task in all_tasks %}
     <tr>
         <td><a href="{{ task.event.get_absolute_url }}">{{ task.event }}</a></td>
-        <td><a href="{{ task.person.get_absolute_url }}">{{ task.person.get_full_name }}</a>{% if task.person.email and task.person.may_contact %} &lt;{{ task.person.email|urlize }}&gt;{% endif %} (taught {{ task.person.task_set.instructors.count }} times)</a></td>
+        <td><a href="{{ task.person.get_absolute_url }}">{{ task.person.get_full_name }}</a>{% if task.person.email and task.person.may_contact %} &lt;{{ task.person.email|urlize }}&gt;{% endif %} (taught {{ task.taught_times }} times)</a></td>
         <td><a href="{% url 'task_details' task.id %}">...</a></td>
     </tr>
     {% endfor %}

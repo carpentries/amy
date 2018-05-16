@@ -21,7 +21,7 @@
     <li>
       <a href="{{ person.get_absolute_url }}">{{ person }}</a>
       {% if not forloop.first %}
-      <a href="{% url 'persons_merge' %}?person_b_1={{ person.pk }}&person_a_1={{ prev_person_pk }}" target="_blank">(merge up)</a>
+      <a href="{% url 'persons_merge' %}?person_b={{ person.pk }}&person_a={{ prev_person_pk }}" target="_blank">(merge up)</a>
       {% endif %}
       {% assign person.pk as prev_person_pk %}
     </li>

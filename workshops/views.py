@@ -17,8 +17,7 @@ from django.core.exceptions import (
     ObjectDoesNotExist,
     PermissionDenied,
 )
-from django.core.urlresolvers import reverse, reverse_lazy
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.db.models import (
     Case,
     When,
@@ -36,14 +35,14 @@ from django.forms import HiddenInput
 from django.http import Http404, HttpResponse, JsonResponse
 from django.http import HttpResponseBadRequest
 from django.shortcuts import redirect, render, get_object_or_404
+from django.urls import reverse, reverse_lazy
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView
 from django.views.generic.edit import (
     ModelFormMixin,
 )
 from github.GithubException import GithubException
-from reversion.models import Version
-from reversion.revisions import get_for_object
+from reversion.models import Version, Revision
 
 from api.filters import (
     InstructorsOverTimeFilter,
@@ -824,8 +823,8 @@ def persons_merge(request):
 
     If no persons are supplied via GET params, display person selection
     form."""
-    obj_a_pk = request.GET.get('person_a_1')
-    obj_b_pk = request.GET.get('person_b_1')
+    obj_a_pk = request.GET.get('person_a')
+    obj_b_pk = request.GET.get('person_b')
 
     if not obj_a_pk or not obj_b_pk:
         context = {
@@ -1142,20 +1141,18 @@ def events_merge(request):
     """Display two events side by side on GET and merge them on POST.
 
     If no events are supplied via GET params, display event selection form."""
+    obj_a_pk = request.GET.get('event_a')
+    obj_b_pk = request.GET.get('event_b')
 
-    # field names come from selectable widgets (name_0 for repr, name_1 for pk)
-    obj_a_slug = request.GET.get('event_a_0')
-    obj_b_slug = request.GET.get('event_b_0')
-
-    if not obj_a_slug and not obj_b_slug:
+    if not obj_a_pk and not obj_b_pk:
         context = {
             'title': 'Merge Events',
             'form': EventsSelectionForm(),
         }
         return render(request, 'workshops/generic_form.html', context)
 
-    obj_a = get_object_or_404(Event, slug=obj_a_slug)
-    obj_b = get_object_or_404(Event, slug=obj_b_slug)
+    obj_a = get_object_or_404(Event, pk=obj_a_pk)
+    obj_b = get_object_or_404(Event, pk=obj_b_pk)
 
     form = EventsMergeForm(initial=dict(event_a=obj_a, event_b=obj_b))
 
@@ -1562,7 +1559,7 @@ class BadgeDetails(OnlyForAdminsMixin, AMYDetailView):
         )
         context['filter'] = filter
 
-        awards = get_pagination_items(self.request, filter)
+        awards = get_pagination_items(self.request, filter.qs)
         context['awards'] = awards
 
         return context
@@ -1824,6 +1821,13 @@ def instructors_by_date(request):
         end_date = form.cleaned_data['end_date']
         rvs = ReportsViewSet()
         tasks = rvs.instructors_by_time_queryset(start_date, end_date)
+        # speed up things a little
+        tasks = tasks.annotate(
+            taught_times=Count(
+                'person__task',
+                filter=Q(person__task__role__name='instructor')
+            )
+        )
         emails = tasks.filter(person__may_contact=True)\
                       .exclude(person__email=None)\
                       .values_list('person__email', flat=True)
@@ -1990,15 +1994,17 @@ def workshop_issues(request):
         )
     )
     no_attendance = Q(attendance=None) | Q(attendance=0)
+    no_location = (Q(country=None) |
+                   Q(venue=None) | Q(venue__exact='') |
+                   Q(address=None) | Q(address__exact='') |
+                   Q(latitude=None) | Q(longitude=None))
+    bad_dates = Q(start__gt=F('end'))
     events = events.filter(
         (no_attendance & ~Q(tags__name='unresponsive')) |
-        Q(country=None) |
-        Q(venue=None) | Q(venue__exact='') |
-        Q(address=None) | Q(address__exact='') |
-        Q(latitude=None) | Q(longitude=None) |
-        Q(start__gt=F('end')) |
+        no_location |
+        bad_dates |
         Q(num_instructors=0)
-    )
+    ).prefetch_related('task_set', 'task_set__person')
 
     assigned_to, is_admin = assignment_selection(request)
 
@@ -2016,14 +2022,23 @@ def workshop_issues(request):
         # no filtering
         pass
 
-    for e in events:
-        e.missing_attendance_ = (not e.attendance)
-        e.missing_location_ = (
-            not e.country or not e.venue or not e.address or not e.latitude or
-            not e.longitude
-        )
-        e.bad_dates_ = e.start and e.end and (e.start > e.end)
-        e.no_instructors_ = not e.num_instructors
+    events = events.annotate(
+        missing_attendance=Case(
+            When(no_attendance, then=Value(1)),
+            default=Value(0),
+            output_field=IntegerField(),
+        ),
+        missing_location=Case(
+            When(no_location, then=Value(1)),
+            default=Value(0),
+            output_field=IntegerField(),
+        ),
+        bad_dates=Case(
+            When(bad_dates, then=Value(1)),
+            default=Value(0),
+            output_field=IntegerField(),
+        ),
+    )
 
     context = {
         'title': 'Workshops with Issues',
@@ -2080,8 +2095,8 @@ def object_changes(request, version_id):
     obj = current_version.object
 
     try:
-        previous_version = get_for_object(obj) \
-                                .filter(pk__lt=current_version.pk)[0]
+        previous_version = Version.objects.get_for_object(obj) \
+                                          .filter(pk__lt=current_version.pk)[0]
         obj_prev = previous_version.object
     except IndexError:
         # first revision for an object
@@ -2244,7 +2259,7 @@ def profileupdaterequest_details(request, request_id):
             # should check that!
             try:
                 form = PersonLookupForm(request.GET)
-                person = Person.objects.get(pk=int(request.GET['person_1']))
+                person = Person.objects.get(pk=int(request.GET['person']))
                 person_selected = True
             except KeyError:
                 person = None
@@ -2351,30 +2366,51 @@ def profileupdaterequest_accept(request, request_id, person_id=None):
     person.gender = profileupdate.gender
     person.user_notes = profileupdate.notes
 
-    # we need person to exist in the database in order to set domains and
-    # lessons
-    if not person.id:
-        person.save()
+    with transaction.atomic():
+        # we need person to exist in the database in order to set domains and
+        # lessons
+        if not person.id:
+            try:
+                person.username = create_username(person.personal,
+                                                  person.family)
+                person.save()
+            except IntegrityError:
+                messages.error(
+                    request,
+                    'Cannot update profile: some database constraints weren\'t'
+                    'fulfilled. Make sure that user name, GitHub user name,'
+                    'Twitter user name, or email address are unique.'
+                )
+                return redirect(profileupdate.get_absolute_url())
 
-    person.domains = list(profileupdate.domains.all())
-    person.languages.set(profileupdate.languages.all())
+        person.domains.set(list(profileupdate.domains.all()))
+        person.languages.set(profileupdate.languages.all())
 
-    # Since Person.lessons uses a intermediate model Qualification, we ought to
-    # operate on Qualification objects instead of using Person.lessons as a
-    # list.
+        try:
+            person.save()
+        except IntegrityError:
+            messages.error(
+                request,
+                'Cannot update profile: some database constraints weren\'t'
+                'fulfilled. Make sure that user name, GitHub user name,'
+                'Twitter user name, or email address are unique.'
+            )
+            return redirect(profileupdate.get_absolute_url())
 
-    # erase old lessons
-    Qualification.objects.filter(person=person).delete()
-    # add new
-    Qualification.objects.bulk_create([
-        Qualification(person=person, lesson=L)
-        for L in profileupdate.lessons.all()
-    ])
+        # Since Person.lessons uses a intermediate model Qualification, we ought to
+        # operate on Qualification objects instead of using Person.lessons as a
+        # list.
 
-    person.save()
+        # erase old lessons
+        Qualification.objects.filter(person=person).delete()
+        # add new
+        Qualification.objects.bulk_create([
+            Qualification(person=person, lesson=L)
+            for L in profileupdate.lessons.all()
+        ])
 
-    profileupdate.active = False
-    profileupdate.save()
+        profileupdate.active = False
+        profileupdate.save()
 
     if person_id is None:
         messages.success(request,
@@ -2754,7 +2790,7 @@ def all_trainingrequests(request):
         )
     )
 
-    requests = get_pagination_items(request, filter)
+    requests = get_pagination_items(request, filter.qs)
 
     if request.method == 'POST' and 'match' in request.POST:
         # Bulk match people associated with selected TrainingRequests to
@@ -2847,7 +2883,7 @@ def _match_training_request_to_person(form, training_request, request):
             training_request.person.middle = training_request.middle
             training_request.person.github = training_request.github
             training_request.person.affiliation = training_request.affiliation
-            training_request.person.domains = training_request.domains.all()
+            training_request.person.domains.set(training_request.domains.all())
             training_request.person.occupation = (
                 training_request.get_occupation_display() or
                 training_request.occupation_other)
@@ -3148,7 +3184,7 @@ def all_trainees(request):
                                           output_field=IntegerField())),
         )
     )
-    trainees = get_pagination_items(request, filter)
+    trainees = get_pagination_items(request, filter.qs)
 
     if request.method == 'POST' and 'discard' in request.POST:
         # Bulk discard progress of selected trainees

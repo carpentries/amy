@@ -4,7 +4,6 @@ from itertools import accumulate
 from django.db.models import Count, Sum, Case, F, When, Value, IntegerField, Min
 from rest_framework import viewsets
 from rest_framework.decorators import list_route
-from rest_framework.filters import DjangoFilterBackend
 from rest_framework.generics import ListAPIView
 from rest_framework.metadata import SimpleMetadata
 from rest_framework.pagination import PageNumberPagination
@@ -524,7 +523,7 @@ class ReportsViewSet(ViewSet):
             event__end__lte=end,
             role__name='instructor',
             person__may_contact=True,
-        ).exclude(event__tags=tags).order_by('event', 'person', 'role') \
+        ).exclude(event__tags__in=tags).order_by('event', 'person', 'role') \
          .select_related('person', 'event', 'role')
         return tasks
 
@@ -586,7 +585,6 @@ class EventViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = EventSerializer
     lookup_field = 'slug'
     pagination_class = StandardResultsSetPagination
-    filter_backends = (DjangoFilterBackend, )
     filter_class = EventFilter
 
 
@@ -595,7 +593,6 @@ class TaskViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (IsAuthenticated, IsAdmin)
     serializer_class = TaskSerializer
     pagination_class = StandardResultsSetPagination
-    filter_backends = (DjangoFilterBackend, )
     filter_class = TaskFilter
     _event_slug = None
 
@@ -643,7 +640,6 @@ class PersonViewSet(viewsets.ReadOnlyModelViewSet):
                      .prefetch_related('badges', 'domains', 'lessons')
     serializer_class = PersonSerializer
     pagination_class = StandardResultsSetPagination
-    filter_backends = (DjangoFilterBackend, )
     filter_class = PersonFilter
 
 

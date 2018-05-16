@@ -27,7 +27,6 @@ from django.http.response import HttpResponse
 from django.http.response import HttpResponseForbidden
 from django.shortcuts import render, redirect
 from django.utils.http import is_safe_url
-from selectable.decorators import results_decorator
 
 from workshops.models import (
     Event,
@@ -340,7 +339,7 @@ class Paginator(DjangoPaginator):
         """
         index = int(self._page_number) or 1
         items = self.page_range
-        length = self._num_pages
+        length = self.num_pages
 
         L = items[0:5]
 
@@ -743,7 +742,7 @@ def assign(request, obj, person_id):
     """Set obj.assigned_to. This view helper works with both POST and GET
     requests:
 
-    * POST: read person ID from POST's person_1
+    * POST: read person ID from POST's `person`
     * GET: read person_id from URL
     * both: if person_id is None then make event.assigned_to empty
     * otherwise assign matching person.
@@ -751,7 +750,7 @@ def assign(request, obj, person_id):
     This is not a view, but it's used in some."""
     try:
         if request.method == "POST":
-            person_id = request.POST.get('person_1', None)
+            person_id = request.POST.get('person', None)
 
         if person_id is None:
             obj.assigned_to = None
@@ -844,18 +843,41 @@ def merge_objects(object_a, object_b, easy_fields, difficult_fields,
                     manager.all().delete()
                 manager.set(list(related_b.all()))
 
-            elif value == 'combine':
-                summed = related_a.all() | related_b.all()
+            elif value == 'obj_a' and manager == related_a:
+                # since we're keeping current values, try to remove opposite
+                # (obj_b) - they may not be removable via on_delete=CASCADE,
+                # so try manually
+                related_b.all().delete()
 
-                # some entries may cause IntegrityError (violation of
+            elif value == 'obj_b' and manager == related_b:
+                # since we're keeping current values, try to remove opposite
+                # (obj_a) - they may not be removable via on_delete=CASCADE,
+                # so try manually
+                related_a.all().delete()
+
+            elif value == 'combine':
+                to_add = None
+
+                if manager == related_a:
+                    to_add = related_b.all()
+                if manager == related_b:
+                    to_add = related_a.all()
+
+                # Some entries may cause IntegrityError (violation of
                 # uniqueness constraint) because they are duplicates *after*
-                # being added by the manager
-                for element in summed:
+                # being added by the manager.
+                # In this case they must be removed to not cause
+                # on_delete=PROTECT violation after merging
+                # (merging_obj.delete()).
+                for element in to_add:
                     try:
                         with transaction.atomic():
                             manager.add(element)
                     except IntegrityError as e:
-                        integrity_errors.append(str(e))
+                        try:
+                            element.delete()
+                        except IntegrityError as e2:
+                            integrity_errors.append(str(e2))
 
         merging_obj.delete()
 
@@ -892,20 +914,13 @@ def login_not_required(view):
     return view
 
 
-@results_decorator
-def lookup_only_for_admins(request):
-    user = getattr(request, 'user', None)
-    if user is None or not user.is_authenticated():
-        return HttpResponse(status=401)  # Unauthorized
-    elif not is_admin(user):
-        return HttpResponseForbidden()
-    else:
-        return None
-
-
 class OnlyForAdminsMixin(UserPassesTestMixin):
     def test_func(self):
         return is_admin(self.request.user)
+
+
+class OnlyForAdminsNoRedirectMixin(OnlyForAdminsMixin):
+    raise_exception = True
 
 
 class LoginNotRequiredMixin(object):

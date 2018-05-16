@@ -2,9 +2,9 @@ from datetime import datetime, timedelta, date
 from urllib.parse import urlencode
 import sys
 
-from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.db.utils import IntegrityError
+from django.urls import reverse
 
 from ..management.commands.check_for_workshop_websites_updates import (
     Command as WebsiteUpdatesCommand)
@@ -122,7 +122,7 @@ class TestEvent(TestBase):
             host=Organization.objects.first(),
             administrator=Organization.objects.first(),
         )
-        unpublished_event.tags = Tag.objects.filter(name__in=['TTT', 'online'])
+        unpublished_event.tags.set(Tag.objects.filter(name__in=['TTT', 'online']))
 
         unpublished = Event.objects.unpublished_events().select_related('host')
         self.assertIn(unpublished_event, unpublished)
@@ -141,7 +141,7 @@ class TestEvent(TestBase):
             host=Organization.objects.first(),
             administrator=Organization.objects.first(),
         )
-        cancelled_event.tags = Tag.objects.filter(name='cancelled')
+        cancelled_event.tags.set(Tag.objects.filter(name='cancelled'))
 
         published = Event.objects.published_events().select_related('host')
         uninvoiced = Event.objects.uninvoiced_events().select_related('host')
@@ -151,32 +151,20 @@ class TestEvent(TestBase):
         self.assertNotIn(cancelled_event, unpublished)
 
     def test_delete_event(self):
-        """Make sure deleted event and its tasks are no longer accessible."""
+        """Make sure deleted event without any tasks is no longer accessible."""
         event = Event.objects.get(slug="starts-today-ongoing")
-        role1 = Role.objects.create(name='NonInstructor')
-        t1 = Task.objects.create(event=event, person=self.spiderman,
-                                 role=role1)
-        t2 = Task.objects.create(event=event, person=self.ironman,
-                                 role=role1)
-        t3 = Task.objects.create(event=event, person=self.blackwidow,
-                                 role=role1)
-        event.task_set = [t1, t2, t3]
-        event.save()
 
-        rv = self.client.post(reverse('event_delete', args=[event.slug, ]))
-        assert rv.status_code == 302
+        rv = self.client.post(reverse('event_delete', args=[event.slug]))
+        self.assertEqual(rv.status_code, 302)
 
         with self.assertRaises(Event.DoesNotExist):
             Event.objects.get(slug="starts-today-ongoing")
 
-        for t in [t1, t2, t3]:
-            with self.assertRaises(Task.DoesNotExist):
-                Task.objects.get(pk=t.pk)
-
     def test_delete_event_with_tasks_and_awards(self):
         """Ensure we cannot delete an event with related tasks and awards.
 
-        Deletion is prevented via Award.event's on_delete=PROTECT."""
+        Deletion is prevented via Award.event's on_delete=PROTECT
+        and Task.event's on_delete=PROTECT."""
         event = Event.objects.get(slug="starts-today-ongoing")
         role = Role.objects.create(name='NonInstructor')
         badge = Badge.objects.create(name='noninstructor',
@@ -190,11 +178,14 @@ class TestEvent(TestBase):
                                      event=event)
 
         rv = self.client.post(reverse('event_delete', args=[event.slug, ]))
-        assert rv.status_code == 200
+        self.assertEqual(rv.status_code, 200)
 
         content = rv.content.decode('utf-8')
-        assert "Failed to delete" in content
-        assert "awards" in content
+        self.assertIn("Failed to delete", content)
+        self.assertIn("tasks", content)
+        # not available since it's not propagated by Django
+        # to ProtectedError.protected_objects
+        #self.assertIn("awards", content)
 
         # make sure these objects were not deleted
         Event.objects.get(pk=event.pk)
@@ -501,7 +492,7 @@ class TestEventViews(TestBase):
         data = {
             'role': self.learner.pk,
             'event': event.pk,
-            'person_1': self.spiderman.pk,
+            'person': self.spiderman.pk,
         }
         self.client.post(reverse('task_add'), data)
         event.refresh_from_db()
@@ -515,7 +506,7 @@ class TestEventViews(TestBase):
         be unspecified (== 'xx')."""
         data = {
             'slug': '',
-            'host_1': Organization.objects.all()[0].pk,
+            'host': Organization.objects.all()[0].pk,
             'tags': Tag.objects.all(),
             'invoice_status': 'unknown',
         }
@@ -535,7 +526,7 @@ class TestEventViews(TestBase):
         be unspecified (== 'xx')."""
         data = {
             'slug': '',
-            'host_1': Organization.objects.all()[0].pk,
+            'host': Organization.objects.all()[0].pk,
             'tags': [Tag.objects.first().pk],
             'invoice_status': 'unknown',
         }
@@ -571,7 +562,7 @@ class TestEventViews(TestBase):
         be unspecified (== 'xx')."""
         data = {
             'slug': '',
-            'host_1': Organization.objects.all()[0].pk,
+            'host': Organization.objects.all()[0].pk,
             'tags': [Tag.objects.first().pk],
             'invoice_status': 'unknown',
         }
@@ -690,7 +681,7 @@ class TestEventMerging(TestBase):
             learners_longterm='http://reichel.com/learners_longterm',
             notes='Voluptates hic aspernatur non aut.'
         )
-        self.event_a.tags = Tag.objects.filter(name__in=['LC', 'DC'])
+        self.event_a.tags.set(Tag.objects.filter(name__in=['LC', 'DC']))
         self.event_a.task_set.create(person=self.harry,
                                      role=Role.objects.get(name='instructor'))
         self.event_a.todoitem_set.create(completed=False,
@@ -713,7 +704,7 @@ class TestEventMerging(TestBase):
             learners_longterm='http://www.cummings.biz/learners_longterm',
             notes='Est qui iusto sapiente possimus consectetur rerum et.'
         )
-        self.event_b.tags = Tag.objects.filter(name='SWC')
+        self.event_b.tags.set(Tag.objects.filter(name='SWC'))
         # no tasks for this event
         self.event_b.todoitem_set.create(completed=True, title='Test merging',
                                          due=today)
@@ -754,8 +745,8 @@ class TestEventMerging(TestBase):
         }
         base_url = reverse('events_merge')
         query = urlencode({
-            'event_a_0': self.event_a.slug,
-            'event_b_0': self.event_b.slug
+            'event_a': self.event_a.pk,
+            'event_b': self.event_b.pk
         })
         self.url = '{}?{}'.format(base_url, query)
 

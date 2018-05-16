@@ -1,8 +1,8 @@
 from django.contrib.admin import ModelAdmin
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth.models import Group
-from django.core.urlresolvers import reverse
-from django.views.generic import View
+from django.urls import reverse
+from django.views.generic import View, RedirectView
 from rest_framework.views import APIView
 
 from amy import urls
@@ -191,8 +191,6 @@ class TestViews(TestBase):
         self.assert_accessible(url, user=None)
 
     IGNORED_VIEWS = [
-        'selectable-lookup',
-
         # auth
         'login',
         'logout',
@@ -284,12 +282,15 @@ class TestViews(TestBase):
                     is_model_admin = isinstance(model_admin, ModelAdmin)
                     is_admin_site = isinstance(admin_site, AdminSite)
                     is_api_view = class_ is not None and issubclass(class_, APIView)
+                    is_redirect_view = class_ is not None and issubclass(class_, RedirectView)
                     is_view = class_ is not None and issubclass(class_, View)
 
                     if is_model_admin or is_admin_site:
                         pass  # ignore admin views
                     elif is_api_view:
                         pass  # ignore REST API views
+                    elif is_redirect_view:
+                        pass  # ignore pure redirect views
                     else:
                         assert is_view
 

@@ -1,6 +1,6 @@
 import unittest
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from .base import TestBase
 from ..models import Task, Role, Event, Tag, Organization
@@ -19,7 +19,7 @@ class TestLocateWorkshopStaff(TestBase):
         """Ensure search returns everyone with defined airport."""
         response = self.client.get(
             reverse('workshop_staff'),
-            {'airport_1': self.airport_0_0.pk, 'submit': 'Submit'}
+            {'airport': self.airport_0_0.pk, 'submit': 'Submit'}
         )
         self.assertEqual(response.status_code, 200)
 
@@ -36,7 +36,7 @@ class TestLocateWorkshopStaff(TestBase):
         """Ensure people with correct skill are returned."""
         response = self.client.get(
             reverse('workshop_staff'),
-            {'airport_1': self.airport_50_100.pk, 'lessons': [self.git.pk],
+            {'airport': self.airport_50_100.pk, 'lessons': [self.git.pk],
              'submit': 'Submit'}
         )
         self.assertEqual(response.status_code, 200)
@@ -56,7 +56,7 @@ class TestLocateWorkshopStaff(TestBase):
         """Ensure people with correct skills are returned."""
         response = self.client.get(
             reverse('workshop_staff'),
-            {'airport_1': self.airport_50_100.pk,
+            {'airport': self.airport_50_100.pk,
              'lessons': [self.git.pk, self.sql.pk],
              'submit': 'Submit'}
         )
@@ -159,7 +159,7 @@ class TestLocateWorkshopStaff(TestBase):
 
         response = self.client.get(
             reverse('workshop_staff'),
-            {'languages_1': [self.french.pk,],
+            {'languages': [self.french.pk,],
              'submit': 'Submit'}
         )
         self.assertEqual(response.status_code, 200)
@@ -181,7 +181,7 @@ class TestLocateWorkshopStaff(TestBase):
 
         response = self.client.get(
             reverse('workshop_staff'),
-            {'languages_1': [self.english.pk, self.french.pk],
+            {'languages': [self.english.pk, self.french.pk],
              'submit': 'Submit'}
         )
         self.assertEqual(response.status_code, 200)
@@ -256,10 +256,10 @@ class TestLocateWorkshopStaff(TestBase):
         TTT = Tag.objects.get(name='TTT')
         stalled = Tag.objects.get(name='stalled')
         e1 = Event.objects.create(slug='TTT-event', host=Organization.objects.first())
-        e1.tags = [TTT]
+        e1.tags.set([TTT])
         e2 = Event.objects.create(slug='stalled-TTT-event',
                                   host=Organization.objects.first())
-        e2.tags = [TTT, stalled]
+        e2.tags.set([TTT, stalled])
 
         learner = Role.objects.get(name='learner')
         # Ron is an instructor, so he should not be available as a trainee

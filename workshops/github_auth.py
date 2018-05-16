@@ -1,10 +1,11 @@
 from django.conf import settings
 from django.contrib import messages
-from django.core.urlresolvers import reverse
 from django.shortcuts import redirect
+from django.urls import reverse
+from django.utils.deprecation import MiddlewareMixin
 from github import Github
 from github.GithubException import UnknownObjectException
-from social.exceptions import SocialAuthBaseException
+from social_core.exceptions import SocialAuthBaseException
 
 
 class NoPersonAssociatedWithGithubAccount(SocialAuthBaseException):
@@ -16,7 +17,7 @@ def abort_if_no_user_found(user=None, **kwargs):
         raise NoPersonAssociatedWithGithubAccount
 
 
-class GithubAuthMiddleware():
+class GithubAuthMiddleware(MiddlewareMixin):
     def process_exception(self, request, exception):
         if isinstance(exception, NoPersonAssociatedWithGithubAccount):
             messages.error(request,

@@ -1,8 +1,8 @@
 from itertools import product
 from datetime import datetime
 
-from django.core.urlresolvers import reverse
 from django.db import IntegrityError
+from django.urls import reverse
 
 from .base import TestBase
 from ..models import Task, Event, Role, Person, Organization

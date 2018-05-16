@@ -2,11 +2,11 @@ from json import JSONDecodeError
 from urllib.parse import urljoin
 
 import requests
-from django.core.urlresolvers import reverse
 from django.forms.models import model_to_dict
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.shortcuts import redirect, get_object_or_404
 from django.template.defaultfilters import slugify
+from django.urls import reverse
 from django.views.generic import View
 
 from workshops.forms import EventLookupForm

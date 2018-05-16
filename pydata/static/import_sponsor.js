@@ -4,27 +4,10 @@ function import_sponsor(url) {
     $('#import_sponsor_modal').modal('hide');
     $('#error_message').addClass('hidden');
 
-    var elem = $("#id_sponsor-organization_0");
-    // select the first results of a search
-    elem.on("autocompleteresponse", function(event, ui) {
-      ui.item = ui.content[0];
-      $(this).data('ui-djselectable')._trigger('select', null, ui);
-    });
-    elem.djselectable('search', data.organization);
-    elem.on("autocompleteresponse", null);
-    elem.djselectable('close');
+    // Select2 doesn't support programmatical search
+    // so we're not going to fill the organization or contact for now
 
     $("#id_sponsor-amount").val(data.amount);
-
-    var elem = $("#id_sponsor-contact_0");
-    // select the first results of a search
-    elem.on("autocompleteresponse", function(event, ui) {
-      ui.item = ui.content[0];
-      $(this).data('ui-djselectable')._trigger('select', null, ui);
-    });
-    elem.djselectable("search", data.contact);
-    elem.on("autocompleteresponse", null);
-    elem.djselectable('close');
   });
 }
 

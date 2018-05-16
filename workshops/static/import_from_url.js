@@ -10,19 +10,8 @@ function import_from_url(url) {
     $("#id_reg_key").val(data.reg_key);
     $("#id_url").val(url);
 
-    var elem = $("id_language_0");
-    // query only using the subtag
-    elem.djselectable('option', 'prepareQuery', function(q) { q.subtag = true });
-    // select the first results of a search
-    elem.on("autocompleteresponse", function(event, ui) {
-      ui.item = ui.content[0];
-      $(this).data('ui-djselectable')._trigger('select', null, ui);
-    });
-    elem.djselectable('search', data.language);
-    // reset callbacks and options
-    elem.djselectable('option', 'prepareQuery', null);
-    elem.on("autocompleteresponse", null);
-    elem.djselectable('close');
+    // Select2 doesn't support programmatical search
+    // so we're not going to fill the language for now
 
     $("#id_contact").val(data.contact);
     $('#id_venue').val(data.venue);

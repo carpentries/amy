@@ -1,4 +1,4 @@
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from ..models import Airport, Person
 from .base import TestBase
@@ -15,16 +15,22 @@ class TestAirport(TestBase):
         self.assertEqual(rv.status_code, 200)
 
     def test_airport_delete(self):
-        """Make sure deleted airport is longer accessible.
-
-        Additionally check on_delete behavior for Person."""
-        L1 = [
+        """Make sure deleted airport is no longer accessible.."""
+        airports = [
             self.airport_0_0.iata,
             self.airport_0_50.iata,
             self.airport_50_100.iata,
             self.airport_55_105.iata,
+            self.airport_0_10.iata,
         ]
-        L2 = [
+        can_be_removed = [
+            False,
+            False,
+            False,
+            False,
+            True,
+        ]
+        people = [
             self.hermione.pk,
             self.harry.pk,
             self.ron.pk,
@@ -33,17 +39,28 @@ class TestAirport(TestBase):
             self.blackwidow.pk,
         ]
 
-        for iata in L1[:3]:
+        # airports 0_0, 0_50, 50_100, 55_105 cannot be removed because they're
+        # referenced by instructors and/or non-instructors
+        for iata, remove in zip(airports, can_be_removed):
             rv = self.client.post(reverse('airport_delete', args=[iata, ]))
-            content = rv.content.decode('utf-8')
-            assert 'Failed to delete' in content
+            if remove:
+                self.assertEqual(rv.status_code, 302)
+            else:
+                self.assertEqual(rv.status_code, 200)
+                content = rv.content.decode('utf-8')
+                self.assertIn('Failed to delete', content)
 
-        for person_pk in L2:
-            Person.objects.get(pk=person_pk).delete()
+        # unassign airports from people
+        Person.objects.filter(pk__in=people).update(airport=None)
 
-        for iata in L1:
+        # now all airports can be removed, except for airport that has been
+        # removed
+        for iata, remove in zip(airports, can_be_removed):
+            if remove:
+                continue
+
             rv = self.client.post(reverse('airport_delete', args=[iata, ]))
-            assert rv.status_code == 302
+            self.assertEqual(rv.status_code, 302)
 
             with self.assertRaises(Airport.DoesNotExist):
                 Airport.objects.get(iata=iata)
