@@ -5,6 +5,7 @@ from django.db import models, migrations
 
 
 class Migration(migrations.Migration):
+    atomic = False
 
     dependencies = [
         ('workshops', '0031_auto_20150720_0344'),

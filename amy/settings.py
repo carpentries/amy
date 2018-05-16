@@ -99,7 +99,6 @@ TEMPLATES = [
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'OPTIONS': {
             'loaders': [
-                'app_namespace.Loader',
                 'django.template.loaders.filesystem.Loader',
                 'django.template.loaders.app_directories.Loader',
             ],
@@ -117,8 +116,8 @@ TEMPLATES = [
                 # AMY version
                 'workshops.context_processors.version',
                 # GitHub auth
-                'social.apps.django_app.context_processors.backends',
-                'social.apps.django_app.context_processors.login_redirect',
+                'social_django.context_processors.backends',
+                'social_django.context_processors.login_redirect',
             ],
 
             # Warn viewers of invalid template strings
@@ -148,34 +147,36 @@ if ENABLE_PYDATA:
     ]
 INSTALLED_APPS += [
     'workshops',
+    # dal (django-autocomplete-light) replaces django-selectable:
+    'dal',
+    'dal_select2',
     # this should be after 'workshops' because templates in
     # 'templates/registration/' clash
     'django.contrib.admin',
     'crispy_forms',
-    'selectable',
     'django_countries',
     'django_filters',
     'reversion',
+    'reversion_compare',
     'rest_framework',
     'api',
     'extforms',
     'captcha',
     'compressor',
-    'social.apps.django_app.default',
+    'social_django',
     'debug_toolbar',
     'django_extensions',
 ]
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = (
     'debug_toolbar.middleware.DebugToolbarMiddleware',
     'reversion.middleware.RevisionMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'workshops.github_auth.GithubAuthMiddleware',
@@ -248,7 +249,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # GitHub Auth
 AUTHENTICATION_BACKENDS = (
-    'social.backends.github.GithubOAuth2',
+    'social_core.backends.github.GithubOAuth2',
     'django.contrib.auth.backends.ModelBackend',
 )
 SOCIAL_AUTH_ADMIN_USER_SEARCH_FIELDS = ['github']
@@ -262,10 +263,10 @@ if not DEBUG and not (SOCIAL_AUTH_GITHUB_KEY and SOCIAL_AUTH_GITHUB_SECRET):
 
 
 SOCIAL_AUTH_PIPELINE = (
-    'social.pipeline.social_auth.social_details',
-    'social.pipeline.social_auth.social_uid',
-    'social.pipeline.social_auth.auth_allowed',
-    'social.pipeline.social_auth.social_user',
+    'social_core.pipeline.social_auth.social_details',
+    'social_core.pipeline.social_auth.social_uid',
+    'social_core.pipeline.social_auth.auth_allowed',
+    'social_core.pipeline.social_auth.social_user',
 
     # If we can't find Person associated with given github account, abort.
     'workshops.github_auth.abort_if_no_user_found',
@@ -274,8 +275,8 @@ SOCIAL_AUTH_PIPELINE = (
     # but we don't want to register a new Person when somebody logs in
     # using GitHub account that is not associated with any Person.
 
-    'social.pipeline.social_auth.associate_user',
-    'social.pipeline.social_auth.load_extra_data',
+    'social_core.pipeline.social_auth.associate_user',
+    'social_core.pipeline.social_auth.load_extra_data',
 )
 
 SOCIAL_AUTH_USER_MODEL = 'workshops.Person'
@@ -348,7 +349,9 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'anon': '50/hour',
         'user': '2000/hour'
-    }
+    },
+
+    'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend', ),
 }
 
 LOGGING = {

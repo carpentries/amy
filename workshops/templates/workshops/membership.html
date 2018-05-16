@@ -17,7 +17,7 @@
   <tr><td colspan="2">organization:</td>
       <td><a href="{% url 'organization_details' membership.organization.domain %}">{{ membership.organization.fullname }}</a><br />
           &lt;{{ membership.organization.domain|urlize }}&gt;</td></tr>
-  <tr><td colspan="2">kind:</td><td>{{ membership.variant }}</td></tr>
+  <tr><td colspan="2">variant:</td><td>{{ membership.variant }}</td></tr>
   <tr><td colspan="2">start date:</td><td>{{ membership.agreement_start }}</td></tr>
   <tr><td colspan="2">end date:</td><td>{{ membership.agreement_end }}</td></tr>
   <tr><td colspan="2">contribution type:</td><td>{{ membership.contribution_type }}</td></tr>

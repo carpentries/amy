@@ -2,8 +2,8 @@ import datetime
 import json
 from unittest.mock import MagicMock
 
-from django.core.urlresolvers import reverse
 from django.http import QueryDict
+from django.urls import reverse
 from rest_framework import status
 
 from api.test.base import APITestBase

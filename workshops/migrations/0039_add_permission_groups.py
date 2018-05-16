@@ -22,7 +22,7 @@ def add_permission_groups(apps, schema_editor):
     permissions = Permission.objects.filter(content_type__in=auth_ct.values())
 
     group = Group.objects.create(name='administrators')
-    group.permissions = permissions
+    group.permissions.set(permissions)
     group.save()
 
     # create 'steering committee' group, but don't grant any permissions (cause

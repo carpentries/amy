@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
                 ('title', models.CharField(max_length=100, default='')),
                 ('due', models.DateField(blank=True, null=True)),
                 ('additional', models.CharField(blank=True, max_length=255, default='')),
-                ('event', models.ForeignKey(to='workshops.Event')),
+                ('event', models.ForeignKey(to='workshops.Event', on_delete=models.CASCADE)),
             ],
         ),
     ]

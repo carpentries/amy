@@ -97,7 +97,7 @@ class Migration(migrations.Migration):
             name='Qualification',
             fields=[
                 ('id', models.AutoField(serialize=False, auto_created=True, primary_key=True, verbose_name='ID')),
-                ('person', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
+                ('person', models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
             ],
             options={
             },
@@ -151,9 +151,9 @@ class Migration(migrations.Migration):
             name='Task',
             fields=[
                 ('id', models.AutoField(serialize=False, auto_created=True, primary_key=True, verbose_name='ID')),
-                ('event', models.ForeignKey(to='workshops.Event')),
-                ('person', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
-                ('role', models.ForeignKey(to='workshops.Role')),
+                ('event', models.ForeignKey(to='workshops.Event', on_delete=models.CASCADE)),
+                ('person', models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
+                ('role', models.ForeignKey(to='workshops.Role', on_delete=models.CASCADE)),
             ],
             options={
             },
@@ -162,19 +162,19 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='qualification',
             name='skill',
-            field=models.ForeignKey(to='workshops.Skill'),
+            field=models.ForeignKey(to='workshops.Skill', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='event',
             name='organizer',
-            field=models.ForeignKey(blank=True, related_name='organizer', null=True, to='workshops.Site'),
+            field=models.ForeignKey(blank=True, related_name='organizer', null=True, to='workshops.Site', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='event',
             name='site',
-            field=models.ForeignKey(to='workshops.Site'),
+            field=models.ForeignKey(to='workshops.Site', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(
@@ -186,25 +186,25 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='award',
             name='badge',
-            field=models.ForeignKey(to='workshops.Badge'),
+            field=models.ForeignKey(to='workshops.Badge', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='award',
             name='event',
-            field=models.ForeignKey(blank=True, to='workshops.Event', null=True),
+            field=models.ForeignKey(blank=True, to='workshops.Event', null=True, on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='award',
             name='person',
-            field=models.ForeignKey(to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='person',
             name='airport',
-            field=models.ForeignKey(blank=True, to='workshops.Airport', null=True),
+            field=models.ForeignKey(blank=True, to='workshops.Airport', null=True, on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(

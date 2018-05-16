@@ -17,8 +17,11 @@
 <div class="row">
   <div class="col-xs-12">
     {% if events %}
-    <p><span class="glyphicon glyphicon-envelope"></span> = mail instructors and host about problem</p>
-    <p><span class="glyphicon glyphicon-remove"></span> = no email addresses available</p>
+    <p>Legend:</p>
+    <ul>
+      <li><span class="glyphicon glyphicon-envelope"></span> &mdash; mail instructors and host about problem</li>
+      <li><span class="glyphicon glyphicon-remove"></span> &mdash; no email addresses available</li>
+    </ul>
     <table class="table table-striped">
       <tr>
         <th>Event</th>
@@ -33,7 +36,7 @@
           <a href="{% url 'event_details' event.slug %}">{{ event }}</a>
         </td>
         <td>
-          {% if event.missing_attendance_ %}
+          {% if event.missing_attendance %}
             {% if event.mailto %}
               <a href="{% include 'workshops/attendance_email_href.html' with event=event %}">
               <span class="glyphicon glyphicon-envelope"></span>
@@ -44,7 +47,7 @@
           {% endif %}
         </td>
         <td>
-          {% if event.no_instructors_ %}
+          {% if event.num_instructors <= 0 %}
             {% if event.mailto %}
               <a href="mailto:{{event.mailto}}?subject={% filter urlencode %}Missing instructors for workshop {{event.slug}}{% endfilter %}&body={% filter urlencode %}Hi,
 
@@ -59,7 +62,7 @@ Thanks for your help.{% endfilter %}">
           {% endif %}
         </td>
         <td>
-          {% if event.missing_location_ %}
+          {% if event.missing_location %}
             {% if event.mailto %}
               <a href="mailto:{{event.mailto}}?subject={% filter urlencode %}Missing location for workshop {{event.slug}}{% endfilter %}&body={% filter urlencode %}Hi,
 
@@ -74,7 +77,7 @@ Thanks for your help.{% endfilter %}">
           {% endif %}
         </td>
         <td>
-          {% if event.bad_dates_ %}
+          {% if event.bad_dates %}
             {% if event.mailto %}
               <a href="mailto:{{event.mailto}}?subject={% filter urlencode %}Bad dates for workshop {{ event.slug }}{% endfilter %}&body={% filter urlencode %}Hi,
 

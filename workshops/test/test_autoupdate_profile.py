@@ -1,4 +1,4 @@
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from workshops.models import Person, Qualification, KnowledgeDomain
 from workshops.test import TestBase
@@ -44,7 +44,7 @@ class TestAutoUpdateProfile(TestBase):
             'url': '',
             'username': 'changed',
             'affiliation': '',
-            'languages_1': [self.latin.pk, self.french.pk],
+            'languages': [self.latin.pk, self.french.pk],
             'domains': [self.chemistry.pk],
             'lessons': [self.git.pk, self.matlab.pk],
             'privacy_consent': True,

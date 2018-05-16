@@ -1,5 +1,5 @@
 from django.contrib.auth.models import Group
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from .base import TestBase
 from ..models import Event, Organization, Tag, Person

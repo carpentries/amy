@@ -1,4 +1,4 @@
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from .base import TestBase
 from ..models import Badge, Award, Person, Event
@@ -19,7 +19,7 @@ class TestBadge(TestBase):
         assert self.swc_instructor.name in content
         assert self.swc_instructor.title in content
         assert self.swc_instructor.criteria in content
-        self._check_status_code_and_parse(rv, 200)
+        self.assertEqual(rv.status_code, 200)
 
     def test_badge_display_awards(self):
         "Ensure awards are displayed correctly on their badge details page."
@@ -41,7 +41,7 @@ class TestBadge(TestBase):
         award_add = swc_badge.click('Award new', index=0)
         form = award_add.forms[2]
         self.assertSelected(form['badge'], 'Software Carpentry Instructor')
-        form['person_1'] = self.spiderman.id
+        form['person'].force_value(self.spiderman.id)
         assert self.swc_instructor.award_set.count() == 3
         form.submit()
         assert self.swc_instructor.award_set.count() == 4

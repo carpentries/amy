@@ -1,7 +1,7 @@
 from datetime import timedelta, date
 import itertools
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from .base import TestBase
 from ..models import Membership, Organization, Event

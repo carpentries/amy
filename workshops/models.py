@@ -8,14 +8,15 @@ from django.contrib.auth.models import (
     PermissionsMixin,
 )
 from django.core.exceptions import ValidationError
-from django.core.urlresolvers import reverse
 from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
 from django.db.models import Q, F, IntegerField, Sum, Case, When
 from django.utils import timezone
+from django.utils.functional import cached_property
+from django.urls import reverse
 from django_countries.fields import CountryField
 from reversion import revisions as reversion
-from social.apps.django_app.default.models import UserSocialAuth
+from social_django.models import UserSocialAuth
 
 from workshops import github_auth
 
@@ -31,7 +32,8 @@ STR_REG_KEY =  20         # length of Eventbrite registration key
 class AssignmentMixin(models.Model):
     """This abstract model acts as a mix-in, so it adds
     "assigned to admin [...]" field to any inheriting model."""
-    assigned_to = models.ForeignKey("Person", null=True, blank=True,)
+    assigned_to = models.ForeignKey("Person", null=True, blank=True,
+                                    on_delete=models.SET_NULL)
 
     class Meta:
         abstract = True
@@ -309,7 +311,7 @@ class PersonManager(BaseUserManager):
     def get_by_natural_key(self, username):
         """Let's make this command so that it gets user by *either* username or
         email.  Original behavior is to get user by USERNAME_FIELD."""
-        if '@' in username:
+        if isinstance(username, str) and '@' in username:
             return self.get(email=username)
         else:
             return super().get_by_natural_key(username)
@@ -446,6 +448,9 @@ class Person(AbstractBaseUser, PermissionsMixin):
     ]
 
     objects = PersonManager()
+
+    class Meta:
+        ordering = ['family', 'personal']
 
     def get_full_name(self):
         middle = ''
@@ -591,7 +596,7 @@ class Person(AbstractBaseUser, PermissionsMixin):
 
 
 def is_admin(user):
-    if user is None or user.is_anonymous():
+    if user is None or user.is_anonymous:
         return False
     else:
         return (user.is_superuser or
@@ -1029,6 +1034,7 @@ class Event(AssignmentMixin, models.Model):
     request = models.ForeignKey(
         'EventRequest', null=True, blank=True,
         help_text='Backlink to the request that created this event.',
+        on_delete=models.SET_NULL,
     )
 
     # used in getting metadata updates from GitHub
@@ -1056,7 +1062,7 @@ class Event(AssignmentMixin, models.Model):
     def get_absolute_url(self):
         return reverse('event_details', args=[self.slug])
 
-    @property
+    @cached_property
     def repository_url(self):
         """Return self.url formatted as it was repository URL.
 
@@ -1076,7 +1082,7 @@ class Event(AssignmentMixin, models.Model):
             # KeyError: mo.groupdict doesn't supply required names to format
             return self.url
 
-    @property
+    @cached_property
     def website_url(self):
         """Return self.url formatted as it was website URL.
 
@@ -1096,19 +1102,18 @@ class Event(AssignmentMixin, models.Model):
             # KeyError: mo.groupdict doesn't supply required names to format
             return self.url
 
-    @property
+    @cached_property
     def uninvoiced(self):
         """Indicate if the event has been invoiced or not."""
         return self.invoice_status == 'not-invoiced'
 
-    @property
+    @cached_property
     def mailto(self):
         """Return list of emails we can contact about workshop details, like
         attendance."""
         from workshops.util import find_emails
 
-        emails = Task.objects \
-            .filter(event=self) \
+        emails = self.task_set \
             .filter(
                 # we only want hosts, organizers and instructors
                 Q(role__name='host') | Q(role__name='organizer') |
@@ -1213,6 +1218,7 @@ class EventRequest(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
         verbose_name='What human language do you want the workshop to be run'
                      ' in?',
         null=True,
+        on_delete=models.SET_NULL,
     )
 
     WORKSHOP_TYPE_CHOICES = (
@@ -1364,6 +1370,9 @@ class EventRequest(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
             type=self.workshop_type,
         )
 
+    class Meta:
+        ordering = ['created_at']
+
 
 class EventSubmission(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
                       models.Model):
@@ -1388,6 +1397,9 @@ class EventSubmission(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
 
     def get_absolute_url(self):
         return reverse('eventsubmission_details', args=[self.pk])
+
+    class Meta:
+        ordering = ['created_at']
 
 
 class DCSelfOrganizedEventRequest(AssignmentMixin, ActiveMixin,
@@ -1623,9 +1635,9 @@ class TaskManager(models.Manager):
 class Task(models.Model):
     '''Represent who did what at events.'''
 
-    event      = models.ForeignKey(Event)
-    person     = models.ForeignKey(Person)
-    role       = models.ForeignKey(Role)
+    event      = models.ForeignKey(Event, on_delete=models.PROTECT)
+    person     = models.ForeignKey(Person, on_delete=models.PROTECT)
+    role       = models.ForeignKey(Role, on_delete=models.PROTECT)
     title      = models.CharField(max_length=STR_LONG, blank=True)
     url        = models.URLField(blank=True)
 
@@ -1666,8 +1678,8 @@ class Lesson(models.Model):
 class Qualification(models.Model):
     '''What is someone qualified to teach?'''
 
-    person     = models.ForeignKey(Person)
-    lesson     = models.ForeignKey(Lesson)
+    person     = models.ForeignKey(Person, on_delete=models.PROTECT)
+    lesson     = models.ForeignKey(Lesson, on_delete=models.PROTECT)
 
     def __str__(self):
         return '{0}/{1}'.format(self.person, self.lesson)
@@ -1707,8 +1719,8 @@ class Badge(models.Model):
 class Award(models.Model):
     '''Represent a particular badge earned by a person.'''
 
-    person     = models.ForeignKey(Person)
-    badge      = models.ForeignKey(Badge)
+    person     = models.ForeignKey(Person, on_delete=models.PROTECT)
+    badge      = models.ForeignKey(Badge, on_delete=models.PROTECT)
     awarded    = models.DateField(default=datetime.date.today)
     event      = models.ForeignKey(Event, null=True, blank=True,
                                    on_delete=models.PROTECT)
@@ -1718,6 +1730,7 @@ class Award(models.Model):
 
     class Meta:
         unique_together = ("person", "badge", )
+        ordering = ['awarded']
 
     def __str__(self):
         return '{0}/{1}/{2}/{3}'.format(self.person, self.badge, self.awarded, self.event)
@@ -1780,7 +1793,8 @@ class TodoItemQuerySet(models.query.QuerySet):
 
 class TodoItem(models.Model):
     """Model representing to-do items for events."""
-    event = models.ForeignKey(Event, null=False, blank=False)
+    event = models.ForeignKey(Event, null=False, blank=False,
+                              on_delete=models.PROTECT)
     completed = models.BooleanField(default=False)
     title = models.CharField(max_length=STR_LONG, default='', blank=False)
     due = models.DateField(blank=True, null=True)
@@ -1985,7 +1999,8 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin,
     state = models.CharField(choices=STATES, default='p', max_length=1)
 
     person = models.ForeignKey(Person, null=True, blank=True,
-                               verbose_name='Matched Trainee')
+                               verbose_name='Matched Trainee',
+                               on_delete=models.SET_NULL)
 
     # no association with Event
 
@@ -2210,6 +2225,9 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin,
 
     notes = models.TextField(blank=True, help_text='Admin notes')
 
+    class Meta:
+        ordering = ['created_at']
+
     def clean(self):
         super().clean()
 
@@ -2292,7 +2310,8 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
 
     event = models.ForeignKey(Event, null=True, blank=True,
                               verbose_name='Training',
-                              limit_choices_to=Q(tags__name='TTT'))
+                              limit_choices_to=Q(tags__name='TTT'),
+                              on_delete=models.SET_NULL)
     url = models.URLField(null=True, blank=True)
     notes = models.TextField(blank=True)
 

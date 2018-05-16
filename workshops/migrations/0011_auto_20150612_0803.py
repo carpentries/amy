@@ -13,6 +13,7 @@ def remove_old_contentype(content_type, apps, schema_editor):
 
 
 class Migration(migrations.Migration):
+    atomic = False
 
     dependencies = [
         ('workshops', '0010_merge'),

@@ -1,11 +1,15 @@
 from unittest.mock import patch
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from .base import TestBase
 from ..models import (
     ProfileUpdateRequest,
     Person,
+    Task,
+    Award,
+    Airport,
+    Qualification,
     KnowledgeDomain,
     Lesson,
     Airport,
@@ -137,13 +141,19 @@ class TestProfileUpdateRequest(TestBase):
         pr.domains.add(*KnowledgeDomain.objects.all()[0:2]),
         pr.lessons.add(*Lesson.objects.all()[0:2]),
         url = (reverse('profileupdaterequest_details', args=[pr.pk]) +
-               '?person_0=inigo&person_1=&submit=Submit')
+               '?person=&submit=Submit')
         rv = self.client.get(url)
         self.assertNotEqual(rv.status_code, 500)
 
     def test_request_accepted_new_person_added(self):
         """Ensure new person is added when no-one matches the profile update
         request."""
+        # remove some dependant objects first
+        Task.objects.all().delete()
+        Award.objects.all().delete()
+        Person.objects.all().update(airport=None)
+        Qualification.objects.all().delete()
+        # now remove all persons except for admin
         Person.objects.exclude(username='admin').delete()
         self.assertEqual(Person.objects.count(), 1)
 
