@@ -529,6 +529,7 @@ class PersonForm(forms.ModelForm):
             'middle',
             'family',
             'may_contact',
+            'publish_profile',
             'email',
             'gender',
             'airport',
@@ -618,6 +619,9 @@ class PersonsMergeForm(forms.Form):
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
     may_contact = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    publish_profile = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
     gender = forms.ChoiceField(
@@ -1215,6 +1219,7 @@ class AutoUpdateProfileForm(PrivacyConsentMixin, forms.ModelForm):
             'email',
             'gender',
             'may_contact',
+            'publish_profile',
             'airport',
             'github',
             'twitter',

@@ -58,7 +58,7 @@ class PersonFilter(filters.FilterSet):
         model = Person
         fields = (
             'badges', 'username', 'personal', 'middle', 'family', 'email',
-            'may_contact',
+            'may_contact', 'publish_profile',
         )
         order_by = (
             'lastname', '-lastname', 'firstname', '-firstname', 'email',

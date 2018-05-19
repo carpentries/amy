@@ -376,7 +376,20 @@ class Person(AbstractBaseUser, PermissionsMixin):
     email       = models.CharField(max_length=STR_LONG, unique=True, null=True, blank=True,
                                    verbose_name='Email address')
     gender      = models.CharField(max_length=1, choices=GENDER_CHOICES, null=False, default=UNDISCLOSED)
-    may_contact = models.BooleanField(default=True)
+    may_contact = models.BooleanField(
+        default=True,
+        help_text='Allow to contact from The Carpentries according to the '
+                  '<a href="https://docs.carpentries.org/'
+                  'topic_folders/policies/privacy.html" target="_blank">'
+                  'Privacy Policy</a>.',
+    )
+    publish_profile = models.BooleanField(
+        default=False,
+        verbose_name='Consent to making profile public',
+        help_text='Allow to share profile with The Carpentries website'
+                  ' according to the <a href="https://docs.carpentries.org/'
+                  'topic_folders/policies/privacy.html" target="_blank">'
+                  'Privacy Policy</a>.')
     airport     = models.ForeignKey(Airport, null=True, blank=True, on_delete=models.PROTECT,
                                     verbose_name='Nearest major airport')
     github      = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True,
@@ -736,6 +749,21 @@ class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
     notes = models.TextField(
         default="",
         blank=True)
+    may_contact = models.BooleanField(
+        default=True,
+        help_text='Allow to contact from The Carpentries according to the '
+                  '<a href="https://docs.carpentries.org/'
+                  'topic_folders/policies/privacy.html" target="_blank">'
+                  'Privacy Policy</a>.',
+    )
+    publish_profile = models.BooleanField(
+        default=False,
+        verbose_name='Consent to making profile public',
+        help_text='Allow to share profile with The Carpentries website'
+                  ' according to the <a href="https://docs.carpentries.org/'
+                  'topic_folders/policies/privacy.html" target="_blank">'
+                  'Privacy Policy</a>.',
+    )
 
     def save(self, *args, **kwargs):
         """Save nullable char fields as empty strings."""

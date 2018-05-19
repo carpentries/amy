@@ -862,9 +862,9 @@ def persons_merge(request):
             # non-M2M-relationships
             easy = (
                 'username', 'personal', 'middle', 'family', 'email',
-                'may_contact', 'gender', 'airport', 'github', 'twitter',
-                'url', 'notes', 'affiliation', 'occupation', 'orcid',
-                'is_active',
+                'may_contact', 'publish_profile', 'gender', 'airport',
+                'github', 'twitter', 'url', 'notes', 'affiliation',
+                'occupation', 'orcid', 'is_active',
             )
 
             # M2M relationships

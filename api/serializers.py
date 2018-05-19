@@ -206,6 +206,7 @@ class PersonSerializer(serializers.ModelSerializer):
         model = Person
         fields = (
             'personal', 'middle', 'family', 'email', 'gender', 'may_contact',
+            'publish_profile',
             'airport', 'github', 'twitter', 'url', 'username', 'notes',
             'affiliation', 'badges', 'lessons', 'domains', 'awards', 'tasks',
         )
