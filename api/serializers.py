@@ -63,7 +63,8 @@ class ExportBadgesByPersonSerializer(serializers.ModelSerializer):
 
 class ExportInstructorLocationsSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='fullname')
-    instructors = PersonUsernameSerializer(many=True, source='person_set')
+    instructors = PersonUsernameSerializer(many=True,
+                                           source='public_instructor_set')
 
     class Meta:
         model = Airport

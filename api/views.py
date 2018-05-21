@@ -1,7 +1,17 @@
 import datetime
 from itertools import accumulate
 
-from django.db.models import Count, Sum, Case, F, When, Value, IntegerField, Min
+from django.db.models import (
+    Case,
+    Count,
+    F,
+    IntegerField,
+    Min,
+    Prefetch,
+    Sum,
+    Value,
+    When,
+)
 from rest_framework import viewsets
 from rest_framework.decorators import list_route
 from rest_framework.generics import ListAPIView
@@ -149,8 +159,25 @@ class ExportInstructorLocationsView(ListAPIView):
     permission_classes = (IsAuthenticatedOrReadOnly, )
     paginator = None  # disable pagination
 
-    queryset = Airport.objects.exclude(person=None) \
-                              .prefetch_related('person_set')
+    # This queryset uses a special object `Prefetch` to apply specific filters
+    # to the Airport.person_set objects; this way we can "filter" on
+    # Airport.person_set objects - something that wasn't available a few years
+    # ago...
+    # Additionally, there's no way to filter out Airports with no instructors.
+    queryset = (
+        Airport.objects
+        .exclude(person=None)
+        .filter(person__publish_profile=True)
+        .distinct()
+        .prefetch_related(
+            Prefetch(
+                'person_set',
+                queryset=Person.objects.filter(publish_profile=True)
+                         .filter(badges__in=Badge.objects.instructor_badges()),
+                to_attr='public_instructor_set',
+            )
+        )
+    )
     serializer_class = ExportInstructorLocationsSerializer
 
 
