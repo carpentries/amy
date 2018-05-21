@@ -25,6 +25,10 @@ commands : Makefile
 test :
 	${MANAGE} test
 
+## fast test	: run all tests really fast.
+fast_test:
+	${MANAGE} test --keepdb --parallel
+
 ## dev_database : re-make database using saved data
 dev_database :
 	rm -f ${APP_DB}
