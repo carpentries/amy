@@ -52,7 +52,8 @@ def filter_instructors(queryset, name, value):
 
 
 class PersonFilter(filters.FilterSet):
-    is_instructor = filters.BooleanFilter(method=filter_instructors)
+    is_instructor = filters.BooleanFilter(method=filter_instructors,
+                                          label='Is instructor?')
 
     class Meta:
         model = Person
