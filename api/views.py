@@ -140,7 +140,7 @@ class ApiRoot(APIView):
 
 class ExportBadgesView(ListAPIView):
     """List all badges and people who have them."""
-    permission_classes = (IsAuthenticatedOrReadOnly, )
+    permission_classes = (IsAuthenticated, )
     paginator = None  # disable pagination
 
     queryset = Badge.objects.prefetch_related('award_set', 'award_set__person')
@@ -149,7 +149,7 @@ class ExportBadgesView(ListAPIView):
 
 class ExportBadgesByPersonView(ListAPIView):
     """List all badges and people who have them grouped by person."""
-    permission_classes = (IsAuthenticatedOrReadOnly, )
+    permission_classes = (IsAuthenticated, )
     paginator = None  # disable pagination
 
     queryset = Person.objects.exclude(badges=None).prefetch_related('badges')
@@ -158,7 +158,7 @@ class ExportBadgesByPersonView(ListAPIView):
 
 class ExportInstructorLocationsView(ListAPIView):
     """List all airports and instructors located near them."""
-    permission_classes = (IsAuthenticatedOrReadOnly, )
+    permission_classes = (IsAuthenticated, )
     paginator = None  # disable pagination
 
     # This queryset uses a special object `Prefetch` to apply specific filters

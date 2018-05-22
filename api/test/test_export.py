@@ -76,6 +76,14 @@ class TestExportingBadges(BaseExportingTest):
             },
         ]
 
+    def test_requires_login(self):
+        url = reverse('api:export-badges-by-person')
+        response = self.client.get(url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.login()
+        response = self.client.get(url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
     def test_serialization(self):
         view = ExportBadgesView()
         serializer = view.get_serializer_class()
@@ -85,6 +93,7 @@ class TestExportingBadges(BaseExportingTest):
     def test_view(self):
         # test only JSON output
         url = reverse('api:export-badges')
+        self.login()
         response = self.client.get(url, format='json')
         content = response.content.decode('utf-8')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -132,6 +141,14 @@ class TestExportingBadgesByPerson(BaseExportingTest):
             },
         ]
 
+    def test_requires_login(self):
+        url = reverse('api:export-badges-by-person')
+        response = self.client.get(url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.login()
+        response = self.client.get(url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
     def test_serialization(self):
         view = ExportBadgesByPersonView()
         serializer = view.get_serializer_class()
@@ -141,6 +158,7 @@ class TestExportingBadgesByPerson(BaseExportingTest):
     def test_view(self):
         # test only JSON output
         url = reverse('api:export-badges-by-person')
+        self.login()
         response = self.client.get(url, format='json')
         content = response.content.decode('utf-8')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -195,6 +213,14 @@ class TestExportingInstructors(BaseExportingTest):
             },
         ]
 
+    def test_requires_login(self):
+        url = reverse('api:export-instructors')
+        response = self.client.get(url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.login()
+        response = self.client.get(url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
     def test_serialization(self):
         view = ExportInstructorLocationsView()
         serializer = view.get_serializer_class()
@@ -204,6 +230,7 @@ class TestExportingInstructors(BaseExportingTest):
     def test_view(self):
         # test only JSON output
         url = reverse('api:export-instructors')
+        self.login()
         response = self.client.get(url, format='json')
         content = response.content.decode('utf-8')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -310,6 +337,7 @@ class TestExportingInstructorsRegression(BaseExportingTest):
     def test_view(self):
         # test only JSON output
         url = reverse('api:export-instructors')
+        self.login()
         response = self.client.get(url, format='json')
         content = response.content.decode('utf-8')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -434,7 +462,7 @@ class TestExportingMembers(BaseExportingTest):
     def test_requires_login(self):
         url = reverse('api:export-members')
         response = self.client.get(url, format='json')
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.login()
         response = self.client.get(url, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
