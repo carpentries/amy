@@ -943,3 +943,20 @@ def redirect_with_next_support(request, *args, **kwargs):
 
 def dict_without_Nones(**keys):
     return {k: v for k, v in keys.items() if v is not None}
+
+
+def str2bool(v):
+    """Decoding string-encoded bool into Python objects.
+    This function returns one of the following:
+    * True if value decodes to true,
+    * False if value decodes to false,
+    * None otherwise.
+
+    Based on: https://stackoverflow.com/a/715468"""
+    value = str(v).lower()
+    if value in ("yes", "true", "t", "1"):
+        return True
+    elif value in ("no", "false", "f", "0"):
+        return False
+    else:
+        return None

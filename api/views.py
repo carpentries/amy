@@ -42,7 +42,7 @@ from workshops.models import (
     Person,
     is_admin,
 )
-from workshops.util import get_members, default_membership_cutoff
+from workshops.util import get_members, default_membership_cutoff, str2bool
 
 from .serializers import (
     PersonNameEmailUsernameSerializer,
@@ -161,26 +161,49 @@ class ExportInstructorLocationsView(ListAPIView):
     permission_classes = (IsAuthenticated, )
     paginator = None  # disable pagination
 
-    # This queryset uses a special object `Prefetch` to apply specific filters
-    # to the Airport.person_set objects; this way we can "filter" on
-    # Airport.person_set objects - something that wasn't available a few years
-    # ago...
-    # Additionally, there's no way to filter out Airports with no instructors.
-    queryset = (
-        Airport.objects
-        .exclude(person=None)
-        .filter(person__publish_profile=True)
-        .distinct()
-        .prefetch_related(
-            Prefetch(
-                'person_set',
-                queryset=Person.objects.filter(publish_profile=True)
-                         .filter(badges__in=Badge.objects.instructor_badges()),
-                to_attr='public_instructor_set',
+    serializer_class = ExportInstructorLocationsSerializer
+
+    def get_queryset(self):
+        """This queryset uses a special object `Prefetch` to apply specific
+        filters to the Airport.person_set objects; this way we can "filter" on
+        Airport.person_set objects - something that wasn't available a few
+        years ago... Additionally, there's no way to filter out Airports with
+        no instructors."""
+
+        # adjust queryset for the request params
+        person_qs = Person.objects.all()
+
+        publish_profile = None
+        may_contact = None
+        # `self.request` is only available during "real" request-response cycle
+        if hasattr(self, 'request'):
+            publish_profile = str2bool(
+                self.request.query_params.get('publish_profile', None)
+            )
+            may_contact = str2bool(
+                self.request.query_params.get('may_contact', None)
+            )
+
+        if publish_profile is not None:
+            person_qs = person_qs.filter(publish_profile=publish_profile)
+        if may_contact is not None:
+            person_qs = person_qs.filter(may_contact=may_contact)
+
+        return (
+            Airport.objects
+            .exclude(person=None)
+            .filter(person__publish_profile=True)
+            .distinct()
+            .prefetch_related(
+                Prefetch(
+                    'person_set',
+                    queryset=person_qs.filter(
+                        badges__in=Badge.objects.instructor_badges()
+                    ),
+                    to_attr='public_instructor_set',
+                )
             )
         )
-    )
-    serializer_class = ExportInstructorLocationsSerializer
 
 
 class ExportMembersView(ListAPIView):
