@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import datetime
 from itertools import accumulate
 
@@ -107,33 +108,34 @@ class StandardResultsSetPagination(PageNumberPagination):
 
 class ApiRoot(APIView):
     def get(self, request, format=None):
-        return Response({
-            'export-badges': reverse('api:export-badges', request=request,
-                                     format=format),
-            'export-badges-by-person': reverse('api:export-badges-by-person',
-                                               request=request,
-                                               format=format),
-            'export-instructors': reverse('api:export-instructors',
-                                          request=request, format=format),
-            'export-members': reverse('api:export-members', request=request,
-                                      format=format),
-            'events-published': reverse('api:events-published',
-                                        request=request, format=format),
-            'user-todos': reverse('api:user-todos',
-                                  request=request, format=format),
-            'reports-list': reverse('api:reports-list',
-                                    request=request, format=format),
+        return Response(OrderedDict([
+            ('export-badges', reverse('api:export-badges', request=request,
+                                      format=format)),
+            ('export-badges-by-person', reverse('api:export-badges-by-person',
+                                                request=request,
+                                                format=format)),
+            ('export-instructors', reverse('api:export-instructors',
+                                           request=request, format=format)),
+            ('export-members', reverse('api:export-members', request=request,
+                                       format=format)),
+            ('events-published', reverse('api:events-published',
+                                         request=request, format=format)),
+            ('user-todos', reverse('api:user-todos',
+                                   request=request, format=format)),
+            ('reports-list', reverse('api:reports-list',
+                                     request=request, format=format)),
 
             # "new" API list-type endpoints below
-            'airport-list': reverse('api:airport-list', request=request,
-                                    format=format),
-            'person-list': reverse('api:person-list', request=request,
-                                   format=format),
-            'event-list': reverse('api:event-list', request=request,
-                                  format=format),
-            'organization-list': reverse('api:organization-list', request=request,
-                                 format=format),
-        })
+            ('airport-list', reverse('api:airport-list', request=request,
+                                     format=format)),
+            ('person-list', reverse('api:person-list', request=request,
+                                    format=format)),
+            ('event-list', reverse('api:event-list', request=request,
+                                   format=format)),
+            ('organization-list', reverse('api:organization-list',
+                                          request=request,
+                                          format=format)),
+        ]))
 
 
 class ExportBadgesView(ListAPIView):
