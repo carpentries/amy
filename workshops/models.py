@@ -350,7 +350,7 @@ github_username_validator = RegexValidator(r'[, ]+',
 
 
 @reversion.register
-class Person(AbstractBaseUser, PermissionsMixin):
+class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
     '''Represent a single person.'''
     UNDISCLOSED = 'U'
     MALE = 'M'
@@ -626,7 +626,8 @@ def is_admin(user):
                                    Q(name='trainers')).exists())
 
 
-class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
+class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin,
+        DataPrivacyAgreementMixin, models.Model):
     personal = models.CharField(
         max_length=STR_LONG,
         verbose_name='Personal (first) name',

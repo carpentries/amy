@@ -530,6 +530,7 @@ class PersonForm(forms.ModelForm):
             'family',
             'may_contact',
             'publish_profile',
+            'data_privacy_agreement',
             'email',
             'gender',
             'airport',
@@ -622,6 +623,9 @@ class PersonsMergeForm(forms.Form):
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
     publish_profile = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    data_privacy_agreement = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
     gender = forms.ChoiceField(
@@ -869,8 +873,7 @@ class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):
         return re.sub('^@+', '', twitter_handle)
 
 
-class ProfileUpdateRequestForm(ProfileUpdateRequestFormNoCaptcha,
-                               PrivacyConsentMixin):
+class ProfileUpdateRequestForm(ProfileUpdateRequestFormNoCaptcha):
     captcha = ReCaptchaField()
 
     helper = BootstrapHelper(wider_labels=True)
@@ -1193,7 +1196,7 @@ class TrainingRequestUpdateForm(forms.ModelForm):
         }
 
 
-class AutoUpdateProfileForm(PrivacyConsentMixin, forms.ModelForm):
+class AutoUpdateProfileForm(forms.ModelForm):
     username = forms.CharField(disabled=True, required=False)
     github = forms.CharField(
         disabled=True, required=False,
