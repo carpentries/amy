@@ -298,6 +298,7 @@ class Command(BaseCommand):
             email=email,
             gender=gender,
             may_contact=randbool(0.5),
+            publish_profile=randbool(0.5),
             airport=airport,
             twitter=twitter,
             github=github,

@@ -1,7 +1,18 @@
+from collections import OrderedDict
 import datetime
 from itertools import accumulate
 
-from django.db.models import Count, Sum, Case, F, When, Value, IntegerField, Min
+from django.db.models import (
+    Case,
+    Count,
+    F,
+    IntegerField,
+    Min,
+    Prefetch,
+    Sum,
+    Value,
+    When,
+)
 from rest_framework import viewsets
 from rest_framework.decorators import list_route
 from rest_framework.generics import ListAPIView
@@ -31,7 +42,7 @@ from workshops.models import (
     Person,
     is_admin,
 )
-from workshops.util import get_members, default_membership_cutoff
+from workshops.util import get_members, default_membership_cutoff, str2bool
 
 from .serializers import (
     PersonNameEmailUsernameSerializer,
@@ -69,6 +80,13 @@ class IsAdmin(BasePermission):
         return is_admin(request.user)
 
 
+class HasRestrictedPermission(BasePermission):
+    """This permission allows only users with special
+    'can_access_restricted_API' permission."""
+    def has_permission(self, request, view):
+        return request.user.has_perm('workshops.can_access_restricted_API')
+
+
 class QueryMetadata(SimpleMetadata):
     """Additionally include info about query parameters."""
 
@@ -97,38 +115,39 @@ class StandardResultsSetPagination(PageNumberPagination):
 
 class ApiRoot(APIView):
     def get(self, request, format=None):
-        return Response({
-            'export-badges': reverse('api:export-badges', request=request,
-                                     format=format),
-            'export-badges-by-person': reverse('api:export-badges-by-person',
-                                               request=request,
-                                               format=format),
-            'export-instructors': reverse('api:export-instructors',
-                                          request=request, format=format),
-            'export-members': reverse('api:export-members', request=request,
-                                      format=format),
-            'events-published': reverse('api:events-published',
-                                        request=request, format=format),
-            'user-todos': reverse('api:user-todos',
-                                  request=request, format=format),
-            'reports-list': reverse('api:reports-list',
-                                    request=request, format=format),
+        return Response(OrderedDict([
+            ('export-badges', reverse('api:export-badges', request=request,
+                                      format=format)),
+            ('export-badges-by-person', reverse('api:export-badges-by-person',
+                                                request=request,
+                                                format=format)),
+            ('export-instructors', reverse('api:export-instructors',
+                                           request=request, format=format)),
+            ('export-members', reverse('api:export-members', request=request,
+                                       format=format)),
+            ('events-published', reverse('api:events-published',
+                                         request=request, format=format)),
+            ('user-todos', reverse('api:user-todos',
+                                   request=request, format=format)),
+            ('reports-list', reverse('api:reports-list',
+                                     request=request, format=format)),
 
             # "new" API list-type endpoints below
-            'airport-list': reverse('api:airport-list', request=request,
-                                    format=format),
-            'person-list': reverse('api:person-list', request=request,
-                                   format=format),
-            'event-list': reverse('api:event-list', request=request,
-                                  format=format),
-            'organization-list': reverse('api:organization-list', request=request,
-                                 format=format),
-        })
+            ('airport-list', reverse('api:airport-list', request=request,
+                                     format=format)),
+            ('person-list', reverse('api:person-list', request=request,
+                                    format=format)),
+            ('event-list', reverse('api:event-list', request=request,
+                                   format=format)),
+            ('organization-list', reverse('api:organization-list',
+                                          request=request,
+                                          format=format)),
+        ]))
 
 
 class ExportBadgesView(ListAPIView):
     """List all badges and people who have them."""
-    permission_classes = (IsAuthenticatedOrReadOnly, )
+    permission_classes = (IsAuthenticated, HasRestrictedPermission, )
     paginator = None  # disable pagination
 
     queryset = Badge.objects.prefetch_related('award_set', 'award_set__person')
@@ -137,7 +156,7 @@ class ExportBadgesView(ListAPIView):
 
 class ExportBadgesByPersonView(ListAPIView):
     """List all badges and people who have them grouped by person."""
-    permission_classes = (IsAuthenticatedOrReadOnly, )
+    permission_classes = (IsAuthenticated, HasRestrictedPermission, )
     paginator = None  # disable pagination
 
     queryset = Person.objects.exclude(badges=None).prefetch_related('badges')
@@ -146,17 +165,63 @@ class ExportBadgesByPersonView(ListAPIView):
 
 class ExportInstructorLocationsView(ListAPIView):
     """List all airports and instructors located near them."""
-    permission_classes = (IsAuthenticatedOrReadOnly, )
+    permission_classes = (IsAuthenticated, HasRestrictedPermission, )
     paginator = None  # disable pagination
 
-    queryset = Airport.objects.exclude(person=None) \
-                              .prefetch_related('person_set')
     serializer_class = ExportInstructorLocationsSerializer
+
+    def get_queryset(self):
+        """This queryset uses a special object `Prefetch` to apply specific
+        filters to the Airport.person_set objects; this way we can "filter" on
+        Airport.person_set objects - something that wasn't available a few
+        years ago... Additionally, there's no way to filter out Airports with
+        no instructors."""
+
+        # adjust queryset for the request params
+        person_qs = Person.objects.all()
+
+        publish_profile = None
+        may_contact = None
+        # `self.request` is only available during "real" request-response cycle
+        if hasattr(self, 'request'):
+            publish_profile = str2bool(
+                self.request.query_params.get('publish_profile', None)
+            )
+            may_contact = str2bool(
+                self.request.query_params.get('may_contact', None)
+            )
+
+        if publish_profile is not None:
+            person_qs = person_qs.filter(publish_profile=publish_profile)
+        if may_contact is not None:
+            person_qs = person_qs.filter(may_contact=may_contact)
+
+        return (
+            Airport.objects
+            .exclude(person=None)
+            .filter(person__publish_profile=True)
+            .distinct()
+            .prefetch_related(
+                Prefetch(
+                    'person_set',
+                    queryset=person_qs.filter(
+                        badges__in=Badge.objects.instructor_badges()
+                    ),
+                    to_attr='public_instructor_set',
+                )
+            )
+        )
+
+    def get_query_params_description(self):
+        return {
+            'publish_profile': 'Filter on user `publish_profile` bool value.',
+            'may_contact': 'Filter on user `may_contact` bool value.',
+        }
 
 
 class ExportMembersView(ListAPIView):
     """Show everyone who qualifies as an SCF member."""
-    permission_classes = (IsAuthenticated, IsAdmin)
+    permission_classes = (IsAuthenticated, IsAdmin, HasRestrictedPermission, )
     paginator = None  # disable pagination
 
     renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES + [CSVRenderer, ]
