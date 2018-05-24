@@ -387,10 +387,10 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
     publish_profile = models.BooleanField(
         default=False,
         verbose_name='Consent to making profile public',
-        help_text='Allow to share profile with The Carpentries website'
-                  ' according to the <a href="https://docs.carpentries.org/'
-                  'topic_folders/policies/privacy.html" target="_blank">'
-                  'Privacy Policy</a>.')
+        help_text='Allow to post your name and any public profile you list '
+                  '(website, Twitter) on our instructors website. Emails will'
+                  ' not be posted.'
+    )
     airport     = models.ForeignKey(Airport, null=True, blank=True, on_delete=models.PROTECT,
                                     verbose_name='Nearest major airport')
     github      = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True,
@@ -767,10 +767,9 @@ class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin,
     publish_profile = models.BooleanField(
         default=False,
         verbose_name='Consent to making profile public',
-        help_text='Allow to share profile with The Carpentries website'
-                  ' according to the <a href="https://docs.carpentries.org/'
-                  'topic_folders/policies/privacy.html" target="_blank">'
-                  'Privacy Policy</a>.',
+        help_text='Allow to post your name and any public profile you list '
+                  '(website, Twitter) on our instructors website. Emails will'
+                  ' not be posted.'
     )
 
     def save(self, *args, **kwargs):
