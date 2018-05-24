@@ -138,3 +138,18 @@ class TestActionRequiredPrivacyMiddleware(TestBase):
         # now the dashboard is easily reachable
         rv = self.client.get(url)
         self.assertEqual(rv.status_code, 200)
+
+    def test_allowed_urls(self):
+        form_url = reverse('action_required_privacy')
+        urls = [
+            reverse('logout'),
+        ]
+        # ensure we're logged in
+        self.client.force_login(self.neville)
+        self.assertEqual(self.neville.data_privacy_agreement, False)
+        for url in urls:
+            rv = self.client.get(url)
+            # doesn't redirect to the form
+            self.assertIn(rv.status_code, [200, 302])
+            if 'Location' in rv:
+                self.assertNotEqual(rv['Location'], form_url)
