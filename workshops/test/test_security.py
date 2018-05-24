@@ -47,12 +47,16 @@ class TestViews(TestBase):
         self.admin = Person.objects.create_superuser(
             username='superuser', personal='Super', family='User',
             email='superuser@example.org', password='superuser')
+        self.admin.data_privacy_agreement = True
+        self.admin.save()
         assert admins not in self.admin.groups.all()
 
         # user belonging to Admin group should have access to admin dashboard
         self.mentor = Person.objects.create_user(
             username='admin', personal='Bob', family='Admin',
             email='admin@example.org', password='admin')
+        self.mentor.data_privacy_agreement = True
+        self.mentor.save()
         self.mentor.groups.add(admins)
 
         # steering committee members should have access to admin dashboard too
@@ -60,6 +64,8 @@ class TestViews(TestBase):
             username='committee', personal='Bob', family='Committee',
             email='committee@example.org', password='committee',
         )
+        self.committee.data_privacy_agreement = True
+        self.committee.save()
         self.committee.groups.add(steering_committee)
 
         # members of invoicing group should have access to admin dashboard too
@@ -67,6 +73,8 @@ class TestViews(TestBase):
             username='invoicing', personal='Bob', family='Invoicing',
             email='invoicing@example.org', password='invoicing',
         )
+        self.invoicing.data_privacy_agreement = True
+        self.invoicing.save()
         self.invoicing.groups.add(invoicing_group)
 
         # trainers should have access to admin dashboard too
@@ -74,12 +82,16 @@ class TestViews(TestBase):
             username='trainer', personal='Bob', family='Trainer',
             email='trainer@example.org', password='trainer',
         )
+        self.trainer.data_privacy_agreement = True
+        self.trainer.save()
         self.trainer.groups.add(trainer_group)
 
         # user with access only to trainee dashboard
         self.trainee = Person.objects.create_user(
             username='trainee', personal='Bob', family='Trainee',
             email='trainee@example.org', password='trainee')
+        self.trainee.data_privacy_agreement = True
+        self.trainee.save()
         assert admins not in self.trainee.groups.all()
         assert steering_committee not in self.trainee.groups.all()
 
