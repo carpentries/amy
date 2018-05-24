@@ -54,6 +54,16 @@
       <th>{% include "workshops/merge_radio.html" with field=form.may_contact %}</th>
     </tr>
     <tr>
+      <th>Publish profile</th>
+      <td>{{ obj_a.publish_profile|yesno }}</td><td>{{ obj_b.publish_profile|yesno }}</td>
+      <th>{% include "workshops/merge_radio.html" with field=form.publish_profile %}</th>
+    </tr>
+    <tr>
+      <th>Privacy policy agreement</th>
+      <td>{{ obj_a.data_privacy_agreement|yesno }}</td><td>{{ obj_b.data_privacy_agreement|yesno }}</td>
+      <th>{% include "workshops/merge_radio.html" with field=form.data_privacy_agreement %}</th>
+    </tr>
+    <tr>
       <th>Gender</th>
       <td>{{ obj_a.get_gender_display|default:"—"|urlize_newtab }}</td><td>{{ obj_b.get_gender_display|default:"—"|urlize_newtab }}</td>
       <th>{% include "workshops/merge_radio.html" with field=form.gender %}</th>

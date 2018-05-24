@@ -180,6 +180,7 @@ MIDDLEWARE = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'workshops.github_auth.GithubAuthMiddleware',
+    'workshops.action_required.PrivacyPolicy',
 )
 
 ROOT_URLCONF = 'amy.urls'
@@ -351,7 +352,14 @@ REST_FRAMEWORK = {
         'user': '2000/hour'
     },
 
-    'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend', ),
+    'DEFAULT_FILTER_BACKENDS': (
+        'django_filters.rest_framework.DjangoFilterBackend',
+    ),
+
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ),
 }
 
 LOGGING = {

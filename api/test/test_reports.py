@@ -31,6 +31,8 @@ class BaseReportingTest(APITestBase):
         self.admin = Person.objects.create_superuser(
                 username="admin", personal="Super", family="User",
                 email="sudo@example.org", password='admin')
+        self.admin.data_privacy_agreement = True
+        self.admin.save()
         self.client.login(username='admin', password='admin')
 
 

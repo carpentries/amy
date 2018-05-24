@@ -166,8 +166,8 @@ bootstrap_helper_inline_formsets = BootstrapHelperFormsetInline()
 class PrivacyConsentMixin(forms.Form):
     privacy_consent = forms.BooleanField(
         label='*I have read and agree to <a href='
-              '"https://software-carpentry.org/privacy/" target="_blank">'
-              'the Software Carpentry Foundation\'s data privacy policy</a>.',
+              '"https://docs.carpentries.org/topic_folders/policies/privacy.html" target="_blank">'
+              'the data privacy policy of The Carpentries</a>.',
         required=True)
 
 
@@ -529,6 +529,8 @@ class PersonForm(forms.ModelForm):
             'middle',
             'family',
             'may_contact',
+            'publish_profile',
+            'data_privacy_agreement',
             'email',
             'gender',
             'airport',
@@ -618,6 +620,12 @@ class PersonsMergeForm(forms.Form):
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
     may_contact = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    publish_profile = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    data_privacy_agreement = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
     gender = forms.ChoiceField(
@@ -865,8 +873,7 @@ class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):
         return re.sub('^@+', '', twitter_handle)
 
 
-class ProfileUpdateRequestForm(ProfileUpdateRequestFormNoCaptcha,
-                               PrivacyConsentMixin):
+class ProfileUpdateRequestForm(ProfileUpdateRequestFormNoCaptcha):
     captcha = ReCaptchaField()
 
     helper = BootstrapHelper(wider_labels=True)
@@ -1189,7 +1196,7 @@ class TrainingRequestUpdateForm(forms.ModelForm):
         }
 
 
-class AutoUpdateProfileForm(PrivacyConsentMixin, forms.ModelForm):
+class AutoUpdateProfileForm(forms.ModelForm):
     username = forms.CharField(disabled=True, required=False)
     github = forms.CharField(
         disabled=True, required=False,
@@ -1215,6 +1222,7 @@ class AutoUpdateProfileForm(PrivacyConsentMixin, forms.ModelForm):
             'email',
             'gender',
             'may_contact',
+            'publish_profile',
             'airport',
             'github',
             'twitter',
@@ -1551,3 +1559,24 @@ class AllActivityOverTimeForm(forms.Form):
     )
 
     helper = BootstrapHelper(use_get_method=True)
+
+
+#----------------------------------------------------------
+# Action required forms
+
+class ActionRequiredPrivacyForm(forms.ModelForm):
+    data_privacy_agreement = forms.BooleanField(
+        label='*I have read and agree to <a href='
+              '"https://docs.carpentries.org/topic_folders/policies/privacy.html" target="_blank">'
+              'the data privacy policy of The Carpentries</a>.',
+        required=True)
+
+    helper = BootstrapHelper(add_cancel_button=False)
+
+    class Meta:
+        model = Person
+        fields = [
+            'data_privacy_agreement',
+            'may_contact',
+            'publish_profile',
+        ]

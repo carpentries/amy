@@ -22,6 +22,7 @@ from ..util import (
     InternalError,
     Paginator,
     assign,
+    str2bool
 )
 
 from .base import TestBase
@@ -773,3 +774,42 @@ class TestAssignUtil(TestBase):
 
                 self.event.refresh_from_db()
                 self.assertEqual(self.event.assigned_to, None)
+
+
+class TestStr2Bool(TestBase):
+    """Tests for ensuring str2bool works as expected."""
+    def setUp(self):
+        self.expected_true = (
+            'True', 'TRUE', 'true', 'tRuE',
+            '1',
+            't', 'T',
+            'yes', 'YES', 'yEs',
+        )
+        self.expected_false = (
+            'False', 'FALSE', 'false', 'fAlSe',
+            '0',
+            'f', 'F',
+            'no', 'NO', 'nO',
+        )
+        self.expected_none = (
+            '',
+            ' ',
+            'dummy',
+            'None',
+            'asdgfh',
+        )
+
+    def test_true(self):
+        """Ensure `True` is returned for correct input data."""
+        for element in self.expected_true:
+            self.assertEqual(str2bool(element), True, element)
+
+    def test_false(self):
+        """Ensure `False` is returned for correct input data."""
+        for element in self.expected_false:
+            self.assertEqual(str2bool(element), False, element)
+
+    def test_none(self):
+        """Ensure `None` is returned for correct input data."""
+        for element in self.expected_none:
+            self.assertIsNone(str2bool(element), element)

@@ -13,6 +13,8 @@ class TestTraineeDashboard(TestBase):
         self.user = Person.objects.create_user(
             username='user', personal='', family='',
             email='user@example.org', password='pass')
+        self.user.data_privacy_agreement = True
+        self.user.save()
         self.client.login(username='user', password='pass')
 
     def test_dashboard_loads(self):

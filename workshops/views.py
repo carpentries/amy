@@ -113,6 +113,7 @@ from workshops.forms import (
     BulkChangeTrainingRequestForm,
     BulkMatchTrainingRequestForm,
     AllActivityOverTimeForm,
+    ActionRequiredPrivacyForm,
 )
 from workshops.management.commands.check_for_workshop_websites_updates import (
     Command as WebsiteUpdatesCommand,
@@ -862,9 +863,9 @@ def persons_merge(request):
             # non-M2M-relationships
             easy = (
                 'username', 'personal', 'middle', 'family', 'email',
-                'may_contact', 'gender', 'airport', 'github', 'twitter',
-                'url', 'notes', 'affiliation', 'occupation', 'orcid',
-                'is_active',
+                'may_contact', 'publish_profile', 'gender', 'airport',
+                'github', 'twitter', 'url', 'notes', 'affiliation',
+                'occupation', 'orcid', 'is_active',
             )
 
             # M2M relationships
@@ -3246,3 +3247,34 @@ def all_trainees(request):
                'form': form,
                'discard_form': discard_form}
     return render(request, 'workshops/all_trainees.html', context)
+
+
+# ------------------------------------------------------------
+# "Action required" views
+
+@login_required
+def action_required_privacy(request):
+    person = request.user
+
+    # disable the view for users who already agreed
+    if person.data_privacy_agreement:
+        return redirect(reverse('dispatch'))
+
+    form = ActionRequiredPrivacyForm(instance=person)
+
+    if request.method == 'POST':
+        form = ActionRequiredPrivacyForm(request.POST, instance=person)
+
+        if form.is_valid() and form.instance == person:
+            person = form.save()
+            messages.success(request, 'Agreement successfully saved.')
+
+            return redirect(reverse('dispatch'))
+        else:
+            messages.error(request, 'Fix errors below.')
+
+    context = {
+        'title': 'Action required: privacy policy agreement',
+        'form': form,
+    }
+    return render(request, 'workshops/action_required_privacy.html', context)

@@ -844,16 +844,22 @@ def merge_objects(object_a, object_b, easy_fields, difficult_fields,
                 manager.set(list(related_b.all()))
 
             elif value == 'obj_a' and manager == related_a:
-                # since we're keeping current values, try to remove opposite
-                # (obj_b) - they may not be removable via on_delete=CASCADE,
-                # so try manually
-                related_b.all().delete()
+                # since we're keeping current values, try to remove (or clear
+                # if possible) opposite (obj_b) - they may not be removable
+                # via on_delete=CASCADE, so try manually
+                if hasattr(related_b, 'clear'):
+                    related_b.clear()
+                else:
+                    related_b.all().delete()
 
             elif value == 'obj_b' and manager == related_b:
-                # since we're keeping current values, try to remove opposite
-                # (obj_a) - they may not be removable via on_delete=CASCADE,
-                # so try manually
-                related_a.all().delete()
+                # since we're keeping current values, try to remove (or clear
+                # if possible) opposite (obj_a) - they may not be removable
+                # via on_delete=CASCADE, so try manually
+                if hasattr(related_a, 'clear'):
+                    related_a.clear()
+                else:
+                    related_a.all().delete()
 
             elif value == 'combine':
                 to_add = None
@@ -943,3 +949,20 @@ def redirect_with_next_support(request, *args, **kwargs):
 
 def dict_without_Nones(**keys):
     return {k: v for k, v in keys.items() if v is not None}
+
+
+def str2bool(v):
+    """Decoding string-encoded bool into Python objects.
+    This function returns one of the following:
+    * True if value decodes to true,
+    * False if value decodes to false,
+    * None otherwise.
+
+    Based on: https://stackoverflow.com/a/715468"""
+    value = str(v).lower()
+    if value in ("yes", "true", "t", "1"):
+        return True
+    elif value in ("no", "false", "f", "0"):
+        return False
+    else:
+        return None
