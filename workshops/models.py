@@ -67,9 +67,10 @@ class DataPrivacyAgreementMixin(models.Model):
         null=False, blank=False,
         default=False,  # for 'normal' migration purposes
         verbose_name='I have read and agree to <a href='
-                     '"https://software-carpentry.org/privacy/", '
-                     'target="_blank">the Software Carpentry Foundation\'s '
-                     'data privacy policy</a>.'
+                     '"https://docs.carpentries.org/'
+                     'topic_folders/policies/privacy.html", '
+                     'target="_blank">the data privacy policy</a> '
+                     'of The Carpentries.'
     )
 
     class Meta:
