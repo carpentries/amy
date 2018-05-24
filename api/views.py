@@ -212,6 +212,12 @@ class ExportInstructorLocationsView(ListAPIView):
             )
         )
 
+    def get_query_params_description(self):
+        return {
+            'publish_profile': 'Filter on user `publish_profile` bool value.',
+            'may_contact': 'Filter on user `may_contact` bool value.',
+        }
+
 
 class ExportMembersView(ListAPIView):
     """Show everyone who qualifies as an SCF member."""
