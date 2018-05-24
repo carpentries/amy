@@ -893,6 +893,26 @@ class TestEventMerging(TestBase):
         for key, value in assertions.items():
             self.assertEqual(set(getattr(self.event_a, key).all()), value, key)
 
+    def test_merging_m2m_not_removed(self):
+        """Regression test: merging events could result in M2M fields being
+        removed, for example this could happen to Tags.
+        This tests makes sure no M2M relation objects are being removed."""
+        # update strategy
+        self.strategy.update({
+            'id': 'obj_b',
+            'tags': 'obj_b',
+        })
+        # merge
+        rv = self.client.post(self.url, data=self.strategy)
+        self.assertEqual(rv.status_code, 302)
+
+        # ensure no Tags were removed
+        self.assertEqual(
+            Tag.objects.filter(name__in=['LC', 'DC', 'SWC']).count(),
+            3
+        )
+
+
 
 class TestEventImport(TestBase):
     def setUp(self):
