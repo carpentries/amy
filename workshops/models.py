@@ -465,6 +465,12 @@ class Person(AbstractBaseUser, PermissionsMixin):
     class Meta:
         ordering = ['family', 'personal']
 
+        # additional permissions
+        permissions = [
+            ('can_access_restricted_API',
+             'Can this user access the restricted API endpoints?'),
+        ]
+
     def get_full_name(self):
         middle = ''
         if self.middle:

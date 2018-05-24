@@ -80,6 +80,13 @@ class IsAdmin(BasePermission):
         return is_admin(request.user)
 
 
+class HasRestrictedPermission(BasePermission):
+    """This permission allows only users with special
+    'can_access_restricted_API' permission."""
+    def has_permission(self, request, view):
+        return request.user.has_perm('workshops.can_access_restricted_API')
+
+
 class QueryMetadata(SimpleMetadata):
     """Additionally include info about query parameters."""
 
@@ -140,7 +147,7 @@ class ApiRoot(APIView):
 
 class ExportBadgesView(ListAPIView):
     """List all badges and people who have them."""
-    permission_classes = (IsAuthenticated, )
+    permission_classes = (IsAuthenticated, HasRestrictedPermission, )
     paginator = None  # disable pagination
 
     queryset = Badge.objects.prefetch_related('award_set', 'award_set__person')
@@ -149,7 +156,7 @@ class ExportBadgesView(ListAPIView):
 
 class ExportBadgesByPersonView(ListAPIView):
     """List all badges and people who have them grouped by person."""
-    permission_classes = (IsAuthenticated, )
+    permission_classes = (IsAuthenticated, HasRestrictedPermission, )
     paginator = None  # disable pagination
 
     queryset = Person.objects.exclude(badges=None).prefetch_related('badges')
@@ -158,7 +165,7 @@ class ExportBadgesByPersonView(ListAPIView):
 
 class ExportInstructorLocationsView(ListAPIView):
     """List all airports and instructors located near them."""
-    permission_classes = (IsAuthenticated, )
+    permission_classes = (IsAuthenticated, HasRestrictedPermission, )
     paginator = None  # disable pagination
 
     serializer_class = ExportInstructorLocationsSerializer
@@ -208,7 +215,7 @@ class ExportInstructorLocationsView(ListAPIView):
 
 class ExportMembersView(ListAPIView):
     """Show everyone who qualifies as an SCF member."""
-    permission_classes = (IsAuthenticated, IsAdmin)
+    permission_classes = (IsAuthenticated, IsAdmin, HasRestrictedPermission, )
     paginator = None  # disable pagination
 
     renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES + [CSVRenderer, ]
