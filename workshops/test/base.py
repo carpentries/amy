@@ -208,6 +208,8 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
         self.admin = Person.objects.create_superuser(
                 username="admin", personal="Super", family="User",
                 email="sudo@example.org", password=password)
+        self.admin.data_privacy_agreement = True
+        self.admin.save()
 
         # log user in
         # this user will be authenticated for all self.client requests

@@ -21,6 +21,7 @@ class TestAPIStructure(APITestBase):
             username='admin', personal='Super', family='User',
             email='sudo@example.org', password='admin',
         )
+        self.admin.data_privacy_agreement = True
         self.admin.airport = Airport.objects.first()
         self.admin.save()
 

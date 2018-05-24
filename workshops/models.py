@@ -67,9 +67,10 @@ class DataPrivacyAgreementMixin(models.Model):
         null=False, blank=False,
         default=False,  # for 'normal' migration purposes
         verbose_name='I have read and agree to <a href='
-                     '"https://software-carpentry.org/privacy/", '
-                     'target="_blank">the Software Carpentry Foundation\'s '
-                     'data privacy policy</a>.'
+                     '"https://docs.carpentries.org/'
+                     'topic_folders/policies/privacy.html", '
+                     'target="_blank">the data privacy policy</a> '
+                     'of The Carpentries.'
     )
 
     class Meta:
@@ -349,7 +350,7 @@ github_username_validator = RegexValidator(r'[, ]+',
 
 
 @reversion.register
-class Person(AbstractBaseUser, PermissionsMixin):
+class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
     '''Represent a single person.'''
     UNDISCLOSED = 'U'
     MALE = 'M'
@@ -386,10 +387,10 @@ class Person(AbstractBaseUser, PermissionsMixin):
     publish_profile = models.BooleanField(
         default=False,
         verbose_name='Consent to making profile public',
-        help_text='Allow to share profile with The Carpentries website'
-                  ' according to the <a href="https://docs.carpentries.org/'
-                  'topic_folders/policies/privacy.html" target="_blank">'
-                  'Privacy Policy</a>.')
+        help_text='Allow to post your name and any public profile you list '
+                  '(website, Twitter) on our instructors website. Emails will'
+                  ' not be posted.'
+    )
     airport     = models.ForeignKey(Airport, null=True, blank=True, on_delete=models.PROTECT,
                                     verbose_name='Nearest major airport')
     github      = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True,
@@ -625,7 +626,8 @@ def is_admin(user):
                                    Q(name='trainers')).exists())
 
 
-class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
+class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin,
+        DataPrivacyAgreementMixin, models.Model):
     personal = models.CharField(
         max_length=STR_LONG,
         verbose_name='Personal (first) name',
@@ -765,10 +767,9 @@ class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin, models.Model):
     publish_profile = models.BooleanField(
         default=False,
         verbose_name='Consent to making profile public',
-        help_text='Allow to share profile with The Carpentries website'
-                  ' according to the <a href="https://docs.carpentries.org/'
-                  'topic_folders/policies/privacy.html" target="_blank">'
-                  'Privacy Policy</a>.',
+        help_text='Allow to post your name and any public profile you list '
+                  '(website, Twitter) on our instructors website. Emails will'
+                  ' not be posted.'
     )
 
     def save(self, *args, **kwargs):

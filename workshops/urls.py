@@ -225,4 +225,8 @@ urlpatterns = [
     url(r'^request_training/$',
         RedirectView.as_view(pattern_name='training_request', permanent=True),
         name='old_training_request'),
+
+    # action-required views
+    url(r'^action_required/privacy/$',
+        views.action_required_privacy, name='action_required_privacy'),
 ]

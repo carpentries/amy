@@ -180,6 +180,7 @@ MIDDLEWARE = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'workshops.github_auth.GithubAuthMiddleware',
+    'workshops.action_required.PrivacyPolicy',
 )
 
 ROOT_URLCONF = 'amy.urls'

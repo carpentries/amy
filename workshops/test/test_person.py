@@ -151,6 +151,8 @@ class TestPerson(TestBase):
             email='manager@example.org', password='manager')
         can_change_person = Permission.objects.get(codename='change_person')
         manager.user_permissions.add(can_change_person)
+        manager.data_privacy_agreement = True
+        manager.save()
         bob = Person.objects.create_user(
             username='bob', personal='Bob', family='Smith',
             email='bob@example.org', password='bob')
@@ -507,12 +509,16 @@ class TestPersonPassword(TestBase):
             username='admin', personal='Super', family='User',
             email='sudo@example.org', password='admin',
         )
+        self.admin.data_privacy_agreement = True
+        self.admin.save()
 
         # create a normal user
         self.user = Person.objects.create_user(
             username='user', personal='Typical', family='User',
             email='undo@example.org', password='user',
         )
+        self.user.data_privacy_agreement = True
+        self.user.save()
         self.user.groups.add(admins)
 
     def test_edit_password_by_superuser(self):
@@ -686,6 +692,7 @@ class TestPersonMerging(TestBase):
             'email': 'obj_b',
             'may_contact': 'obj_a',
             'publish_profile': 'obj_a',
+            'data_privacy_agreement': 'obj_b',
             'gender': 'obj_b',
             'airport': 'obj_a',
             'github': 'obj_b',
@@ -726,6 +733,7 @@ class TestPersonMerging(TestBase):
             'email': 'combine',
             'may_contact': 'combine',
             'publish_profile': 'combine',
+            'data_privacy_agreement': 'combine',
             'gender': 'combine',
             'airport': 'combine',
             'github': 'combine',
@@ -1111,6 +1119,8 @@ class TestPersonUpdateViewPermissions(TestBase):
                                                   'hp@mail.com', 'hp')
         self.trainer = Person.objects.create_user('trainer', 'Severus',
                                                   'Snape', 'ss@mail.com', 'ss')
+        self.trainer.data_privacy_agreement = True
+        self.trainer.save()
         trainer_group, _ = Group.objects.get_or_create(name='trainers')
         self.trainer.groups.add(trainer_group)
 

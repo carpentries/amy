@@ -51,9 +51,11 @@ class TestDispatch(TestBase):
     after logging in."""
 
     def test_superuser_logs_in(self):
-        Person.objects.create_superuser(
+        person = Person.objects.create_superuser(
             username='admin', personal='', family='',
             email='admin@example.org', password='pass')
+        person.data_privacy_agreement = True
+        person.save()
 
         rv = self.client.post(reverse('login'),
                               {'username':'admin', 'password':'pass'},
@@ -67,6 +69,8 @@ class TestDispatch(TestBase):
             email='mentor@example.org', password='pass')
         admins = Group.objects.get(name='administrators')
         mentor.groups.add(admins)
+        mentor.data_privacy_agreement = True
+        mentor.save()
 
         rv = self.client.post(reverse('login'),
                               {'username': 'user', 'password': 'pass'},
@@ -80,6 +84,8 @@ class TestDispatch(TestBase):
             email='user@example.org', password='pass')
         steering_committee= Group.objects.get(name='steering committee')
         mentor.groups.add(steering_committee)
+        mentor.data_privacy_agreement = True
+        mentor.save()
 
         rv = self.client.post(reverse('login'),
                               {'username': 'user', 'password': 'pass'},
@@ -91,6 +97,8 @@ class TestDispatch(TestBase):
         self.trainee = Person.objects.create_user(
             username='trainee', personal='', family='',
             email='trainee@example.org', password='pass')
+        self.trainee.data_privacy_agreement = True
+        self.trainee.save()
 
         rv = self.client.post(reverse('login'),
                               {'username': 'trainee', 'password': 'pass'},
