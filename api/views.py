@@ -199,7 +199,6 @@ class ExportInstructorLocationsView(ListAPIView):
         return (
             Airport.objects
             .exclude(person=None)
-            .filter(person__publish_profile=True)
             .distinct()
             .prefetch_related(
                 Prefetch(
