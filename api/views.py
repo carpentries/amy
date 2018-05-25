@@ -170,6 +170,8 @@ class ExportInstructorLocationsView(ListAPIView):
 
     serializer_class = ExportInstructorLocationsSerializer
 
+    metadata_class = QueryMetadata
+
     def get_queryset(self):
         """This queryset uses a special object `Prefetch` to apply specific
         filters to the Airport.person_set objects; this way we can "filter" on
@@ -226,6 +228,8 @@ class ExportMembersView(ListAPIView):
     renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES + [CSVRenderer, ]
 
     serializer_class = PersonNameEmailUsernameSerializer
+
+    metadata_class = QueryMetadata
 
     def get_queryset(self):
         earliest_default, latest_default = default_membership_cutoff()
