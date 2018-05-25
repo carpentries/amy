@@ -206,7 +206,7 @@ class ExportInstructorLocationsView(ListAPIView):
                     'person_set',
                     queryset=person_qs.filter(
                         badges__in=Badge.objects.instructor_badges()
-                    ),
+                    ).distinct(),
                     to_attr='public_instructor_set',
                 )
             )
