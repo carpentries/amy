@@ -328,6 +328,13 @@ class TestExportingInstructorsRegression(BaseExportingTest):
                     {'name': 'Instructor2 Name', 'user': 'instructor2'},
                 ]
             },
+            {
+                'name': 'Airport2',
+                'country': 'US',
+                'latitude': 2.0,
+                'longitude': 1.0,
+                'instructors': []
+            },
         ]
 
     def test_serialization(self):
