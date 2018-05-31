@@ -18,6 +18,7 @@ from workshops.models import (
     EventSubmission as EventSubmissionModel,
     DCSelfOrganizedEventRequest as DCSelfOrganizedEventRequestModel,
     TrainingRequest,
+    ProfileUpdateRequest,
 )
 from workshops.util import (
     login_not_required,
@@ -112,38 +113,74 @@ class DCEventRequestConfirm(SWCEventRequestConfirm):
     template_name = 'forms/workshop_dc_request_confirm.html'
 
 
-@login_not_required
-def profileupdaterequest_create(request):
-    """
-    Profile update request form. Accessible to all users (no login required).
-
-    This one is used when instructors want to change their information.
-    """
-    form = ProfileUpdateRequestForm()
+class ProfileUpdateRequestView(LoginNotRequiredMixin, EmailSendMixin,
+                           AMYCreateView):
+    model = ProfileUpdateRequest
+    form_class = ProfileUpdateRequestForm
     page_title = 'Update Instructor Profile'
-
-    if request.method == 'POST':
-        form = ProfileUpdateRequestForm(request.POST)
-
-        if form.is_valid():
-            form.save()
-
-            # TODO: email notification?
-
-            context = {
-                'title': 'Thank you for updating your instructor profile',
-            }
-            return render(request,
-                          'forms/profileupdate_confirm.html',
-                          context)
-        else:
-            messages.error(request, 'Fix errors below.')
-
-    context = {
-        'title': page_title,
-        'form': form,
+    template_name = 'forms/profileupdate.html'
+    success_url = reverse_lazy('profileupdate_request_confirm')
+    email_fail_silently = False
+    email_kwargs = {
+        'to': settings.REQUEST_NOTIFICATIONS_RECIPIENTS,
+        'reply_to': None,
     }
-    return render(request, 'forms/profileupdate.html', context)
+
+    def get_success_message(self, *args, **kwargs):
+        """Don't display a success message."""
+        return ''
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = self.page_title
+        return context
+
+    def get_subject(self):
+        subject = (
+            'New instructor profile update request: {name}, {affiliation}'
+        ).format(
+            name=self.object.get_full_name(),
+            affiliation=self.object.affiliation,
+        )
+        return subject
+
+    def get_body(self):
+        link = self.object.get_absolute_url()
+        link_domain = settings.SITE_URL
+
+        body_txt = get_template(
+            'mailing/profileupdaterequest.txt'
+        ).render({
+            'object': self.object,
+            'link': link,
+            'link_domain': link_domain,
+        })
+
+        body_html = get_template(
+            'mailing/profileupdaterequest.html'
+        ).render({
+            'object': self.object,
+            'link': link,
+            'link_domain': link_domain,
+        })
+        return body_txt, body_html
+
+    def form_valid(self, form):
+        """Send email to admins if the form is valid."""
+        data = form.cleaned_data
+        self.email_kwargs['reply_to'] = (data['email'], )
+        result = super().form_valid(form)
+        return result
+
+
+class ProfileUpdateRequestConfirm(LoginNotRequiredMixin, TemplateView):
+    """Display confirmation of received workshop request."""
+    template_name = 'forms/profileupdate_confirm.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Thank you for updating your instructor profile'
+        return context
 
 
 # This form is disabled as per @maneesha's request

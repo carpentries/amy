@@ -1,5 +1,6 @@
 from unittest.mock import patch
 
+from django.core import mail
 from django.urls import reverse
 
 from .base import TestBase
@@ -38,7 +39,8 @@ class TestProfileUpdateRequest(TestBase):
             'lessons': [1, 2],  # IDs
             'privacy_consent': True,
         }
-        rv = self.client.post(reverse('profileupdate_request'), data)
+        rv = self.client.post(reverse('profileupdate_request'), data,
+            follow=True)
         assert rv.status_code == 200
         content = rv.content.decode('utf-8')
         assert 'Fix errors below' not in content
@@ -47,8 +49,14 @@ class TestProfileUpdateRequest(TestBase):
         assert ProfileUpdateRequest.objects.all().count() == 1
         assert ProfileUpdateRequest.objects.all()[0].active is True
 
-        # Not testing if emails are sent because we don't send them out for
-        # profile updates for now.
+        # check if an email was sent
+        self.assertEqual(len(mail.outbox), 1)
+        msg = mail.outbox[0]
+        self.assertEqual(
+            msg.subject,
+            'New instructor profile update request: Harry Potter, '
+            'Auror at Ministry of Magic',
+        )
 
     def test_request_discarded(self):
         """Ensure the request is discarded properly."""

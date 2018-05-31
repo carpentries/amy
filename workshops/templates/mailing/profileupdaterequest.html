@@ -1,0 +1,72 @@
+{% load links %}
+<table class="table table-striped">
+  <tbody>
+    <tr><th>Submission date:</th>
+        <td>{{ object.created_at }}</td></tr>
+    <tr><th>Personal:</th>
+        <td>{{ object.personal }}</td></tr>
+    <tr><th>Middle:</th>
+        <td>{{ object.middle }}</td></tr>
+    <tr><th>Family:</th>
+        <td>{{ object.family }}</td></tr>
+    <tr><th>Email:</th>
+        <td>{{ object.email|urlize }}</td></tr>
+    <tr><th>Affiliation:</th>
+        <td>{{ object.affiliation|default:"—" }}</td></tr>
+    <tr><th>Nearest major airport:</th>
+        <td>{{ object.airport_iata }}</td></tr>
+    <tr><th>GitHub username:</th>
+        <td>{{ object.github|default:"—" }}</td></tr>
+    <tr><th>Twitter username:</th>
+        <td>{{ object.twitter|default:"—" }}</td></tr>
+    <tr><th>Personal website:</th>
+        <td>{{ object.website|default:"—"|urlize_newtab }}</td></tr>
+    <tr><th>Gender:</th>
+        <td>{{ object.get_gender_display }} {{ object.gender_other }}</td></tr>
+    <tr><th>Occupation/Career stage:</th>
+        <td>{{ object.get_occupation_display }} {{ object.occupation_other }}</td></tr>
+    <tr><th>ORCID ID:</th>
+        <td>{{ object.orcid|default:"—" }}</td></tr>
+    <tr><th>Areas of expertise:</th>
+        <td>
+          <ul>
+          {% for domain in object.domains.all %}
+            <li>{{ domain }}</li>
+          {% endfor %}
+          {% if object.domains_other %}
+            <li>{{ object.domains_other }}</li>
+          {% endif %}
+          </ul>
+        </td>
+    </tr>
+    <tr><th>Languages:</th>
+        <td>
+          <ul>
+          {% for language in object.languages.all %}
+            <li>{{ language }}</li>
+          {% endfor %}
+          </ul>
+        </td>
+    </tr>
+    <tr><th>Lessons:</th>
+        <td>
+          <ul>
+          {% for lesson in object.lessons.all %}
+            <li>{{ lesson }}</li>
+          {% endfor %}
+          {% if object.lessons_other %}
+            <li>{{ object.lessons_other }}</li>
+          {% endif %}
+          </ul>
+        </td>
+    </tr>
+    <tr><th>Note from the user:</th>
+        <td><pre>{{ object.notes|default:"—" }}</pre></td></tr>
+  </tbody>
+</table>
+
+{% if link %}
+<p>You can view the request here:
+<a href="{{ link_domain }}{{ link }}">{{ link_domain }}{{ link }}</a>
+</p>
+{% endif %}
