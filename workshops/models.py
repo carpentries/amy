@@ -713,7 +713,7 @@ class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin,
         (Person.UNDISCLOSED, 'Prefer not to say'),
         (Person.FEMALE, 'Female'),
         (Person.MALE, 'Male'),
-        (Person.OTHER, 'Other (enter below)'),
+        (Person.OTHER, 'Other:'),
     )
     gender = models.CharField(
         max_length=1,
@@ -771,6 +771,15 @@ class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin,
                   '(website, Twitter) on our instructors website. Emails will'
                   ' not be posted.'
     )
+
+    def get_full_name(self):
+        middle = ''
+        if self.middle:
+            middle = ' {0}'.format(self.middle)
+        return '{0}{1} {2}'.format(self.personal, middle, self.family)
+
+    def get_short_name(self):
+        return self.personal
 
     def save(self, *args, **kwargs):
         """Save nullable char fields as empty strings."""
@@ -1300,7 +1309,7 @@ class EventRequest(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
         ('genomic', 'Genomic data'),
         ('geospatial', 'Geospatial data'),
         ('text-mining', 'Text mining'),
-        ('', 'Other (type below)'),
+        ('', 'Other:'),
     )
     data_types = models.CharField(
         max_length=STR_MED,
@@ -1374,7 +1383,7 @@ class EventRequest(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
         ('', 'Don\'t know yet.'),
         ('book', 'Book travel through our university or program.'),
         ('reimburse', 'Book their own travel and be reimbursed.'),
-        ('', 'Other (type below)'),
+        ('', 'Other:'),
     )
     travel_reimbursement = models.CharField(
         max_length=STR_MED,

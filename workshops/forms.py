@@ -768,12 +768,27 @@ class SWCEventRequestForm(PrivacyConsentMixin, forms.ModelForm):
                    'attendee_data_analysis_level', 'fee_waiver_request')
         widgets = {
             'approx_attendees': forms.RadioSelect(),
-            'attendee_domains': forms.CheckboxSelectMultiple(),
+            'attendee_domains': CheckboxSelectMultipleWithOthers('attendee_domains_other'),
             'attendee_academic_levels': forms.CheckboxSelectMultiple(),
             'attendee_computing_levels': forms.CheckboxSelectMultiple(),
-            'travel_reimbursement': forms.RadioSelect(),
+            'travel_reimbursement': RadioSelectWithOther('travel_reimbursement_other'),
             'admin_fee_payment': forms.RadioSelect(),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # set up a layout object for the helper
+        self.helper.layout = self.helper.build_default_layout(self)
+
+        # set up RadioSelectWithOther widget so that it can display additional
+        # field inline
+        self['attendee_domains'].field.widget.other_field = self['attendee_domains_other']
+        self['travel_reimbursement'].field.widget.other_field = self['travel_reimbursement_other']
+
+        # remove that additional field
+        self.helper.layout.fields.remove('attendee_domains_other')
+        self.helper.layout.fields.remove('travel_reimbursement_other')
 
 
 class DCEventRequestForm(SWCEventRequestForm):
@@ -795,12 +810,29 @@ class DCEventRequestForm(SWCEventRequestForm):
                    'admin_fee_payment', 'attendee_computing_levels')
         widgets = {
             'approx_attendees': forms.RadioSelect(),
-            'attendee_domains': forms.CheckboxSelectMultiple(),
-            'data_types': forms.RadioSelect(),
+            'attendee_domains': CheckboxSelectMultipleWithOthers('attendee_domains_other'),
+            'data_types': RadioSelectWithOther('data_types_other'),
             'attendee_academic_levels': forms.CheckboxSelectMultiple(),
             'attendee_data_analysis_level': forms.CheckboxSelectMultiple(),
-            'travel_reimbursement': forms.RadioSelect(),
+            'travel_reimbursement': RadioSelectWithOther('travel_reimbursement_other'),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # set up a layout object for the helper
+        self.helper.layout = self.helper.build_default_layout(self)
+
+        # set up RadioSelectWithOther widget so that it can display additional
+        # field inline
+        self['attendee_domains'].field.widget.other_field = self['attendee_domains_other']
+        self['data_types'].field.widget.other_field = self['data_types_other']
+        self['travel_reimbursement'].field.widget.other_field = self['travel_reimbursement_other']
+
+        # remove that additional field
+        self.helper.layout.fields.remove('attendee_domains_other')
+        self.helper.layout.fields.remove('data_types_other')
+        self.helper.layout.fields.remove('travel_reimbursement_other')
 
 
 class EventSubmitFormNoCaptcha(forms.ModelForm):
@@ -861,11 +893,30 @@ class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):
         model = ProfileUpdateRequest
         exclude = ('active', 'created_at', 'last_updated_at')
         widgets = {
-            'domains': forms.CheckboxSelectMultiple(),
-            'lessons': forms.CheckboxSelectMultiple(),
-            'occupation': forms.RadioSelect(),
-            'gender': forms.RadioSelect(),
+            'occupation': RadioSelectWithOther('occupation_other'),
+            'gender': RadioSelectWithOther('gender_other'),
+            'domains': CheckboxSelectMultipleWithOthers('domains_other'),
+            'lessons': CheckboxSelectMultipleWithOthers('lessons_other'),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # set up a layout object for the helper
+        self.helper.layout = self.helper.build_default_layout(self)
+
+        # set up RadioSelectWithOther widget so that it can display additional
+        # field inline
+        self['occupation'].field.widget.other_field = self['occupation_other']
+        self['gender'].field.widget.other_field = self['gender_other']
+        self['domains'].field.widget.other_field = self['domains_other']
+        self['lessons'].field.widget.other_field = self['lessons_other']
+
+        # remove that additional field
+        self.helper.layout.fields.remove('occupation_other')
+        self.helper.layout.fields.remove('gender_other')
+        self.helper.layout.fields.remove('domains_other')
+        self.helper.layout.fields.remove('lessons_other')
 
     def clean_twitter(self):
         """Remove '@'s from the beginning of the Twitter handle."""
