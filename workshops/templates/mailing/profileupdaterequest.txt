@@ -1,0 +1,24 @@
+{% load links %}
+Submission date: {{ object.created_at }}
+Personal: {{ object.personal }}
+Middle: {{ object.middle }}
+Family: {{ object.family }}
+Email: {{ object.email|urlize }}
+Affiliation: {{ object.affiliation|default:"—" }}
+Nearest major airport: {{ object.airport_iata }}
+GitHub username: {{ object.github|default:"—" }}
+Twitter username: {{ object.twitter|default:"—" }}
+Personal website: {{ object.website|default:"—"|urlize_newtab }}
+Gender: {{ object.get_gender_display }} {{ object.gender_other }}
+Occupation/Career stage: {{ object.get_occupation_display }} {{ object.occupation_other }}
+ORCID ID: {{ object.orcid|default:"—" }}
+Areas of expertise: {% for domain in object.domains.all %}{{ domain }}, {% endfor %}{{ object.domains_other }}
+Languages: {% for language in object.languages.all %}{{ language }}, {% endfor %}
+Lessons: {% for lesson in object.lessons.all %}{{ lesson }}, {% endfor %}{{ object.lessons_other }}
+Note from the user: {{ object.notes|default:"—" }}
+------------------------------------------
+
+{% if link %}
+You can view the submission here:
+{{ link_domain}}{{ link }}
+{% endif %}
