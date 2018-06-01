@@ -1688,7 +1688,11 @@ def workshop_staff(request):
                 people = people.filter(num_organizer__gte=1)
 
             if data['is_in_progress_trainee']:
-                q = Q(task__event__tags=TTT) & ~Q(task__event__tags=stalled)
+                # filter out people who took part in only stalled TTT events
+                TTT_non_stalled_events = (
+                    Event.objects.exclude(tags=stalled).filter(tags=TTT)
+                )
+                q = Q(task__event__in=TTT_non_stalled_events)
                 people = people.filter(q, task__role__name='learner') \
                                .exclude(badges__in=instructor_badges)
 
