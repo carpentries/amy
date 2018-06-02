@@ -45,6 +45,14 @@ from workshops.models import (
 )
 
 
+# settings for Select2
+# this makes it possible for autocomplete widget to fit in low-width sidebar
+SIDEBAR_DAL_WIDTH = {
+    'data-width': '100%',
+    'width': 'style',
+}
+
+
 class BootstrapHelper(FormHelper):
     """Layout and behavior for crispy-displayed forms."""
     html5_required = True
@@ -227,20 +235,28 @@ class WorkshopStaffForm(forms.Form):
         label='Airport',
         required=False,
         queryset=Airport.objects.all(),
-        widget=autocomplete.ModelSelect2(url='airport-lookup')
+        widget=autocomplete.ModelSelect2(
+            url='airport-lookup',
+            attrs=SIDEBAR_DAL_WIDTH,
+        )
     )
     languages = forms.ModelMultipleChoiceField(
         label='Languages',
         required=False,
         queryset=Language.objects.all(),
-        widget=autocomplete.ModelSelect2Multiple(url='language-lookup')
+        widget=autocomplete.ModelSelect2Multiple(
+            url='language-lookup',
+            attrs=SIDEBAR_DAL_WIDTH,
+        )
     )
 
     country = forms.MultipleChoiceField(choices=[])
 
-    lessons = forms.ModelMultipleChoiceField(queryset=Lesson.objects.all(),
-                                             widget=CheckboxSelectMultiple(),
-                                             required=False)
+    lessons = forms.ModelMultipleChoiceField(
+        queryset=Lesson.objects.all(),
+        widget=SelectMultiple(),
+        required=False,
+    )
 
     INSTRUCTOR_BADGE_CHOICES = (
         ('swc-instructor', 'Software Carpentry Instructor'),
@@ -278,7 +294,6 @@ class WorkshopStaffForm(forms.Form):
                                                            required=False)
 
         self.helper = FormHelper(self)
-        self.helper.form_class = 'form-inline'
         self.helper.form_method = 'get'
         self.helper.layout = Layout(
             Div(
