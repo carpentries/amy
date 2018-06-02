@@ -235,13 +235,19 @@ class WorkshopStaffForm(forms.Form):
         label='Airport',
         required=False,
         queryset=Airport.objects.all(),
-        widget=autocomplete.ModelSelect2(url='airport-lookup')
+        widget=autocomplete.ModelSelect2(
+            url='airport-lookup',
+            attrs=SIDEBAR_DAL_WIDTH,
+        )
     )
     languages = forms.ModelMultipleChoiceField(
         label='Languages',
         required=False,
         queryset=Language.objects.all(),
-        widget=autocomplete.ModelSelect2Multiple(url='language-lookup')
+        widget=autocomplete.ModelSelect2Multiple(
+            url='language-lookup',
+            attrs=SIDEBAR_DAL_WIDTH,
+        )
     )
 
     country = forms.MultipleChoiceField(choices=[])
@@ -286,7 +292,6 @@ class WorkshopStaffForm(forms.Form):
                                                            required=False)
 
         self.helper = FormHelper(self)
-        self.helper.form_class = 'form-inline'
         self.helper.form_method = 'get'
         self.helper.layout = Layout(
             Div(
