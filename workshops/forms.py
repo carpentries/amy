@@ -252,9 +252,11 @@ class WorkshopStaffForm(forms.Form):
 
     country = forms.MultipleChoiceField(choices=[])
 
-    lessons = forms.ModelMultipleChoiceField(queryset=Lesson.objects.all(),
-                                             widget=CheckboxSelectMultiple(),
-                                             required=False)
+    lessons = forms.ModelMultipleChoiceField(
+        queryset=Lesson.objects.all(),
+        widget=SelectMultiple(),
+        required=False,
+    )
 
     INSTRUCTOR_BADGE_CHOICES = (
         ('swc-instructor', 'Software Carpentry Instructor'),
