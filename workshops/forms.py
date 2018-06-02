@@ -45,6 +45,14 @@ from workshops.models import (
 )
 
 
+# settings for Select2
+# this makes it possible for autocomplete widget to fit in low-width sidebar
+SIDEBAR_DAL_WIDTH = {
+    'data-width': '100%',
+    'width': 'style',
+}
+
+
 class BootstrapHelper(FormHelper):
     """Layout and behavior for crispy-displayed forms."""
     html5_required = True
