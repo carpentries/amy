@@ -2973,7 +2973,7 @@ def trainee_dashboard(request):
         badge__name='dc-instructor').exists()
 
     # Workshops person taught at
-    workshops = request.user.task_set.filter(role__name='instructor')
+    workshops = request.user.task_set.all()
 
     if request.method == 'POST' and 'swc-submit' in request.POST:
         requirement = TrainingRequirement.objects.get(name='SWC Homework')

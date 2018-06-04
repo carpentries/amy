@@ -65,14 +65,31 @@
       </ul>
       <p>If you think that you're missing a badge, please email us at <a href="mailto:admin@software-carpentry.org">admin@software-carpentry.org</a></p>
   </td></tr>
-  <tr><th>workshops you taught at</th><td>
-      <ul>
-        {% for workshop in workshops %}
-          <li>{{ workshop.event }}</li>
-        {% empty %}
-          <li>No workshops taught.</li>
+  <tr><th>your workshop activity</th><td>
+      {% if workshops %}
+      <table class="table">
+        <tr>
+          <th>Workshop name</th>
+          <th>Dates</th>
+          <th>Venue</th>
+          <th>Your role</th>
+        </tr>
+        {% for task in workshops %}
+          <tr>
+          {% if task.event.website_url %}
+            <td><a href="{{ task.event.website_url }}" target="_blank">{{ task.event.slug }}</a></td>
+          {% else %}
+            <td>{{ task.event.slug }}</td>
+          {% endif %}
+            <td>{{ task.event.start|date:'Y-m-d' }} &mdash; {{ task.event.end|date:'Y-m-d' }}</td>
+            <td>{{ task.event.venue|default:'—' }}</td>
+            <td>{{ task.role }}</td>
+          </tr>
         {% endfor %}
-      </ul>
+      </table>
+      {% else %}
+      No workshops to show.
+      {% endif %}
   </td></tr>
 </table>
 
