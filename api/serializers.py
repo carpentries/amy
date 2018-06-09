@@ -265,3 +265,54 @@ class EventSerializer(serializers.ModelSerializer):
             'attendance', 'contact', 'country', 'venue', 'address',
             'latitude', 'longitude', 'notes', 'tasks', 'todos', 'assigned_to',
         )
+
+
+# The serializers below are meant to help display user's data without any
+# links in relational fields; instead, either an expanded model is displayed,
+# or - if it's simple enough - its' string representation.
+# The serializers are used mostly in ExportPersonDataView.
+
+
+class EventSerializerSimplified(EventSerializer):
+    class Meta:
+        model = Event
+        fields = (
+            'slug', 'start', 'end', 'tags', 'website_url', 'venue',
+            'address', 'country', 'latitude', 'longitude',
+        )
+
+
+class AwardSerializerExpandEvent(AwardSerializer):
+    event = EventSerializerSimplified(many=False, read_only=True)
+
+
+class TaskSerializerNoPerson(TaskSerializer):
+    event = EventSerializerSimplified(many=False, read_only=True)
+    role = serializers.SlugRelatedField(
+        many=False, read_only=True, slug_field='name')
+
+    class Meta:
+        model = Task
+        fields = ('event', 'role')
+
+
+class PersonSerializerAllData(PersonSerializer):
+    airport = AirportSerializer(many=False, read_only=True)
+    badges = BadgeSerializer(many=True, read_only=True)
+    awards = AwardSerializerExpandEvent(many=True, read_only=True, source='award_set')
+    tasks = TaskSerializerNoPerson(many=True, read_only=True,
+                                   source='task_set')
+    languages = serializers.SlugRelatedField(
+        many=True, read_only=True, slug_field='name')
+
+    class Meta:
+        model = Person
+        fields = (
+            'username', 'personal', 'middle', 'family', 'email', 'gender',
+            'may_contact', 'publish_profile', 'airport',
+            'github', 'twitter', 'url', 'affiliation',
+            'user_notes', 'occupation', 'orcid',
+            'badges', 'lessons', 'languages', 'domains', 'awards', 'tasks',
+        )
+
+        # TODO: add TrainingRequests, TrainingProgress,

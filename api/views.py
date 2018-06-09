@@ -15,7 +15,7 @@ from django.db.models import (
 )
 from rest_framework import viewsets
 from rest_framework.decorators import list_route
-from rest_framework.generics import ListAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.metadata import SimpleMetadata
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import (
@@ -62,6 +62,7 @@ from .serializers import (
     AirportSerializer,
     AwardSerializer,
     PersonSerializer,
+    PersonSerializerAllData,
 )
 
 from .filters import (
@@ -125,6 +126,8 @@ class ApiRoot(APIView):
                                            request=request, format=format)),
             ('export-members', reverse('api:export-members', request=request,
                                        format=format)),
+            ('export-person-data', reverse('api:export-person-data',
+                                           request=request, format=format)),
             ('events-published', reverse('api:events-published',
                                          request=request, format=format)),
             ('user-todos', reverse('api:user-todos',
@@ -262,6 +265,22 @@ class ExportMembersView(ListAPIView):
             'latest': 'Date of latest workshop someone taught at.'
                       '  Defaults to current date.',
         }
+
+
+class ExportPersonDataView(RetrieveAPIView):
+    permission_classes = (IsAuthenticated, )
+    serializer_class = PersonSerializerAllData
+    queryset = Person.objects.all()
+
+    def get_object(self):
+        """Get logged-in user data, make it impossible to gather someone else's
+        data this way."""
+        user = self.request.user
+
+        if user.is_anonymous:
+            return self.get_queryset().none()
+        else:
+            return self.get_queryset().get(pk=user.pk)
 
 
 class PublishedEvents(ListAPIView):
