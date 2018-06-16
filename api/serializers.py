@@ -10,6 +10,9 @@ from workshops.models import (
     Organization,
     Task,
     Award,
+    TrainingRequest,
+    TrainingRequirement,
+    TrainingProgress,
 )
 
 
@@ -37,6 +40,14 @@ class PersonNameEmailUsernameSerializer(serializers.ModelSerializer):
     class Meta:
         model = Person
         fields = ('name', 'email', 'username')
+
+
+class PersonNameSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source='get_full_name')
+
+    class Meta:
+        model = Person
+        fields = ('name', )
 
 
 class ExportBadgesSerializer(serializers.ModelSerializer):
@@ -267,6 +278,45 @@ class EventSerializer(serializers.ModelSerializer):
         )
 
 
+class TrainingRequestSerializer(serializers.ModelSerializer):
+    state = serializers.CharField(source='get_state_display')
+    domains = serializers.SlugRelatedField(
+        many=True, read_only=True, slug_field='name')
+    previous_involvement = serializers.SlugRelatedField(
+        many=True, read_only=True, slug_field='name')
+    previous_training = serializers.CharField(
+        source='get_previous_training_display')
+    previous_experience = serializers.CharField(
+        source='get_previous_experience_display')
+    programming_language_usage_frequency = serializers.CharField(
+        source='get_programming_language_usage_frequency_display')
+    teaching_frequency_expectation = serializers.CharField(
+        source='get_teaching_frequency_expectation_display')
+    max_travelling_frequency = serializers.CharField(
+        source='get_max_travelling_frequency_display')
+
+    class Meta:
+        model = TrainingRequest
+        fields = (
+            'created_at', 'last_updated_at',
+            'state', 'group_name', 'personal', 'middle', 'family', 'email',
+            'github', 'occupation', 'occupation_other', 'affiliation',
+            'location', 'country', 'underresourced', 'underrepresented',
+            'domains', 'domains_other', 'nonprofit_teaching_experience',
+            'previous_involvement', 'previous_training',
+            'previous_training_other', 'previous_training_explanation',
+            'previous_experience', 'previous_experience_other',
+            'previous_experience_explanation',
+            'programming_language_usage_frequency',
+            'teaching_frequency_expectation',
+            'teaching_frequency_expectation_other',
+            'max_travelling_frequency', 'max_travelling_frequency_other',
+            'reason', 'comment',
+            'training_completion_agreement', 'workshop_teaching_agreement',
+            'data_privacy_agreement', 'code_of_conduct_agreement',
+        )
+
+
 # The serializers below are meant to help display user's data without any
 # links in relational fields; instead, either an expanded model is displayed,
 # or - if it's simple enough - its' string representation.
@@ -284,6 +334,29 @@ class EventSerializerSimplified(EventSerializer):
 
 class AwardSerializerExpandEvent(AwardSerializer):
     event = EventSerializerSimplified(many=False, read_only=True)
+
+
+class TrainingRequirementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TrainingRequirement
+        fields = (
+            'name', 'url_required', 'event_required',
+        )
+
+
+class TrainingProgressSerializer(serializers.ModelSerializer):
+    requirement = TrainingRequirementSerializer(many=False, read_only=True)
+    state = serializers.CharField(source='get_state_display')
+    event = EventSerializerSimplified(many=False, read_only=True)
+    evaluated_by = PersonNameSerializer(many=False, read_only=True)
+
+    class Meta:
+        model = TrainingProgress
+        fields = (
+            'created_at', 'last_updated_at',
+            'requirement', 'state', 'discarded',
+            'evaluated_by', 'event', 'url',
+        )
 
 
 class TaskSerializerNoPerson(TaskSerializer):
@@ -304,6 +377,10 @@ class PersonSerializerAllData(PersonSerializer):
                                    source='task_set')
     languages = serializers.SlugRelatedField(
         many=True, read_only=True, slug_field='name')
+    training_requests = TrainingRequestSerializer(
+        many=True, read_only=True, source='trainingrequest_set')
+    training_progresses = TrainingProgressSerializer(
+        many=True, read_only=True, source='trainingprogress_set')
 
     class Meta:
         model = Person
@@ -312,7 +389,7 @@ class PersonSerializerAllData(PersonSerializer):
             'may_contact', 'publish_profile', 'airport',
             'github', 'twitter', 'url', 'affiliation',
             'user_notes', 'occupation', 'orcid',
+            'data_privacy_agreement',
             'badges', 'lessons', 'languages', 'domains', 'awards', 'tasks',
+            'training_requests', 'training_progresses',
         )
-
-        # TODO: add TrainingRequests, TrainingProgress,
