@@ -93,7 +93,10 @@
   </td></tr>
 </table>
 
-<p><a href="{% url 'autoupdate_profile' %}" class="btn btn-primary">Update your profile</a></p>
+<p>
+  <a href="{% url 'autoupdate_profile' %}" class="btn btn-primary">Update your profile</a>
+  <a href="{% url 'api:export-person-data' %}?format=json" class="btn btn-default pull-right">Download your data</a>
+</p>
 
 <h2>Your progress of becoming Software Carpentry (SWC) and Data Carpentry (DC) Instructor</h2>
 
