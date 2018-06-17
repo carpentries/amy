@@ -774,7 +774,7 @@ class PersonPermissions(OnlyForAdminsMixin, PermissionRequiredMixin,
     pk_url_kwarg = 'person_id'
 
 
-@admin_required
+@login_required
 def person_password(request, person_id):
     user = get_object_or_404(Person, pk=person_id)
 
