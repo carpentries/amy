@@ -7,6 +7,7 @@ urlpatterns = [
     url(r'^$', views.dispatch, name='dispatch'),
     url(r'^admin-dashboard/$', views.admin_dashboard, name='admin-dashboard'),
     url(r'^trainee-dashboard/$', views.trainee_dashboard, name='trainee-dashboard'),
+    url(r'^trainee-dashboard/training_progress/$', views.training_progress, name='training-progress'),
 
     url(r'^log/$', views.changes_log, name='changes_log'),
 
