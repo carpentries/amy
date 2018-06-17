@@ -1,0 +1,107 @@
+{% extends "base_nonav_fixed.html" %}
+{% block navbar %}
+  {% include 'navigation_trainee_fixed.html' %}
+{% endblock %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+{% if swc_form.errors or dc_form.errors %}
+  <div class="alert alert-danger" role="alert">Fix errors in your homework submission.</div>
+{% endif %}
+
+<div>
+  <h2>Your progress of becoming Software Carpentry (SWC) and Data Carpentry (DC) Instructor</h2>
+
+  {% if user.is_swc_instructor and user.is_dc_instructor %}
+    <p>Congratulations, you're certified both Software Carpentry and Data Carpentry Instructor!</p>
+  {% elif user.is_swc_instructor %}
+    <p>Congratulations, you're certified Software Carpentry Instructor!</p>
+  {% elif user.is_dc_instructor %}
+    <p>Congratulations, you're certified Data Carpentry Instructor!</p>
+  {% endif %}
+
+  <table class="table table-striped">
+    <tr>
+      <th>1. Training</th>
+      <td>
+        {% if user.passed_training %}
+          <p><span class="label label-success">Training passed</span></p>
+        {% else %}
+          <p><span class="label label-default">Training not passed yet</span></p>
+        {% endif %}
+      </td>
+    </tr>
+    <tr>
+      <th>2. Homework</th>
+      <td>
+        {% if user.passed_swc_homework %}
+          <p><span class="label label-success">SWC Homework accepted</span></p>
+        {% elif user.swc_homework_in_evaluation %}
+          <p><span class="label label-warning">SWC Homework not evaluated yet</span></p>
+          <p>Please wait while we evaluate your homework.</p>
+        {% else %}
+          <p><span class="label label-default">SWC Homework not submitted yet</span> </p>
+          <p>This step is necessary only if you want to become Software Carpentry Instructor.</p>
+          <p>
+            Submit link to your Pull Request:
+          </p>
+          {% crispy swc_form %}
+        {% endif %}
+
+        <hr />
+
+        {% if user.passed_dc_homework %}
+          <p><span class="label label-success">DC Homework accepted</span></p>
+        {% elif user.dc_homework_in_evaluation %}
+          <p><span class="label label-warning">DC Homework not evaluated yet</span></p>
+          <p>Please wait while we evaluate your homework.</p>
+        {% else %}
+          <p><span class="label label-default">DC Homework not submitted yet</span></p>
+          <p>This step is necessary only if you want to become Data Carpentry Instructor.</p>
+          <p>
+            Submit link to your Homework:
+          </p>
+          {% crispy dc_form %}
+        {% endif %}
+
+      </td>
+    </tr>
+    <tr>
+      <th>3. Discussion Session</th>
+      <td>
+        {% if user.passed_discussion %}
+          <p><span class="label label-success">Discussion Session passed</span></p>
+        {% else %}
+          <p><span class="label label-default">Discussion Session not passed yet</span></p>
+          <p>Register for Discussion Session on <a href="http://pad.software-carpentry.org/instructor-discussion">this Etherpad</a>. Register for only one session even if you want to become both SWC and DC Instructor. </p>
+        {% endif %}
+      </td>
+    </tr>
+    <tr>
+      <th>4. Demo Session</th>
+      <td>
+        {% if user.passed_swc_demo %}
+          <p><span class="label label-success">SWC Demo Session passed</span></p>
+        {% else %}
+          <p><span class="label label-default">SWC Demo Session not passed yet</span> </p>
+        {% endif %}
+
+        {% if user.passed_dc_demo %}
+          <p><span class="label label-success">DC Demo Session passed</span></p>
+        {% else %}
+          <p><span class="label label-default">DC Demo Session not passed yet</span></p>
+        {% endif %}
+
+        {% if not user.passed_swc_demo or not user.passed_dc_demo %}
+          <p> Register for Demo Session on <a href="http://pad.software-carpentry.org/teaching-demos">this Etherpad</a>. If you want to become both SWC and DC Instructor, you have to teach <b>two</b> 5-minutes sessions during one or two sessions. </p>
+        {% endif %}
+      </td>
+    </tr>
+  </table>
+
+  <p>In the case of any questions, please send us email at <a href="mailto:admin@software-carpentry.org">admin@software-carpentry.org</a></p>
+</div>
+
+{% endblock %}

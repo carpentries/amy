@@ -210,8 +210,8 @@ class TestViews(TestBase):
         'password_reset_done',
         'password_reset_confirm',
         'password_reset_complete',
-        'password_change',
-        'password_change_done',
+        # 'password_change',
+        # 'password_change_done',
 
         # python-social-auth
         'begin',
