@@ -478,6 +478,10 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
             middle = ' {0}'.format(self.middle)
         return '{0}{1} {2}'.format(self.personal, middle, self.family)
 
+    @cached_property
+    def full_name(self):
+        return self.get_full_name()
+
     def get_short_name(self):
         return self.personal
 
