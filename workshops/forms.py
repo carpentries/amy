@@ -1441,7 +1441,7 @@ class BulkChangeTrainingRequestForm(forms.Form):
                    formnovalidate='formnovalidate'),
             HTML('<a bulk-email-on-click class="btn btn-primary">'
                  'Mail selected trainees</a>&nbsp;'),
-            HTML('<a class="btn btn-primary" href="{% url \'download_trainingrequests\' %}">'
+            HTML('<a class="btn btn-primary" href="{% url \'api:training-requests\' %}?format=csv">'
                  'Download all requests as CSV</a>&nbsp;'),
             HTML('<a href="{% url \'training_request\' %}" class="btn btn-success">'
                  'Create new request</a>'),
