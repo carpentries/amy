@@ -15,7 +15,7 @@
   </tr>
   {% for person in instructors %}
   <tr>
-    <td><a href="{% url 'person_details' person.id %}">{{ person.get_full_name }}</a></td>
+    <td><a href="{% url 'person_details' person.id %}">{{ person.full_name }}</a></td>
     <td>
       {% if person.email %}
       <a href="mailto:{{person.email}}?subject={% filter urlencode %}Missing location information{% endfilter %}&body={% filter urlencode %}Hi,
@@ -49,7 +49,7 @@ Thanks for your help.{% endfilter %}">
     {% regroup pending by person as trainings %}
     {% for person_training in trainings %}
     <tr>
-      <td><a href="{% url 'person_details' person_training.grouper.id %}">{{ person_training.grouper.get_full_name }}</a></td>
+      <td><a href="{% url 'person_details' person_training.grouper.id %}">{{ person_training.grouper.full_name }}</a></td>
       <td>
         {% for e in person_training.list %}
           <a href="{% url 'event_details' e.event.slug %}">{{ e.event }}</a>{% if not forloop.last %}, {% endif %}
@@ -85,7 +85,7 @@ Thanks for your help.{% endfilter %}">
     {% regroup stalled by person as trainings %}
     {% for person_training in trainings %}
     <tr>
-      <td><a href="{% url 'person_details' person_training.grouper.id %}">{{ person_training.grouper.get_full_name }}</a></td>
+      <td><a href="{% url 'person_details' person_training.grouper.id %}">{{ person_training.grouper.full_name }}</a></td>
       <td>
         {% for e in person_training.list %}
           <a href="{% url 'event_details' e.event.slug %}">{{ e.event }}</a>{% if not forloop.last %}, {% endif %}

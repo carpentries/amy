@@ -83,7 +83,7 @@
           <td>
             {% if req.person %}
               <a href="{% url 'person_details' req.person.pk %}">
-                {{ req.person.get_full_name }}
+                {{ req.person.full_name }}
               </a>
               {% if req.person.email %}
                 <br />&lt;{{ req.person.email|urlize }}&gt;

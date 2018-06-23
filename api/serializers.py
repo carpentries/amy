@@ -17,7 +17,7 @@ from workshops.models import (
 
 
 class AwardPersonSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source='person.get_full_name')
+    name = serializers.CharField(source='person.full_name')
     user = serializers.CharField(source='person.username')
 
     class Meta:
@@ -26,7 +26,7 @@ class AwardPersonSerializer(serializers.ModelSerializer):
 
 
 class PersonUsernameSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source='get_full_name')
+    name = serializers.CharField(source='full_name')
     user = serializers.CharField(source='username')
 
     class Meta:
@@ -35,7 +35,7 @@ class PersonUsernameSerializer(serializers.ModelSerializer):
 
 
 class PersonNameEmailUsernameSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source='get_full_name')
+    name = serializers.CharField(source='full_name')
 
     class Meta:
         model = Person
@@ -43,7 +43,7 @@ class PersonNameEmailUsernameSerializer(serializers.ModelSerializer):
 
 
 class PersonNameSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source='get_full_name')
+    name = serializers.CharField(source='full_name')
 
     class Meta:
         model = Person
@@ -141,13 +141,13 @@ class InstructorNumTaughtSerializer(serializers.Serializer):
     person = serializers.HyperlinkedRelatedField(
         read_only=True, view_name='api:person-detail', lookup_field='pk',
         source='*')
-    name = serializers.CharField(source='get_full_name')
+    name = serializers.CharField(source='full_name')
     num_taught = serializers.IntegerField()
 
 
 class InstructorsByTimePeriodSerializer(serializers.ModelSerializer):
     event_slug = serializers.CharField(source='event.slug')
-    person_name = serializers.CharField(source='person.get_full_name')
+    person_name = serializers.CharField(source='person.full_name')
     person_email = serializers.EmailField(source='person.email')
     num_taught = serializers.SerializerMethodField()
 
