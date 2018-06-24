@@ -494,46 +494,34 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
         return self.social_auth.filter(provider='github')
 
     def get_github_uid(self):
-        """May raise GithubException in the case of IO issues.
+        """Return UID (int) of GitHub account for username == `Person.github`.
 
-        Returns uid (int) of Github account with username == Person.github.
-        If there is no account with such username, returns None."""
-
+        Return `None` in case of errors or missing GitHub account.
+        May raise ValueError in the case of IO issues."""
         if self.github and self.is_active:
             try:
+                # if the username is incorrect, this will throw ValidationError
+                github_auth.validate_github_username(self.github)
+
                 github_uid = github_auth.github_username_to_uid(self.github)
-            except ValueError:
+            except (ValidationError, ValueError):
                 github_uid = None
         else:
             github_uid = None
 
         return github_uid
 
-    def check_if_usersocialauth_is_in_sync(self):
-        """May raise GithubException in the case of IO issues."""
-
-        github_uid = self.get_github_uid()
-
-        if github_uid is None:
-            return False
-        else:
-            uids_from_person = {str(github_uid)}
-            uids_from_usersocialauth = {
-                u.uid for u in self.github_usersocialauth
-            }
-            return uids_from_person == uids_from_usersocialauth
-
     def synchronize_usersocialauth(self):
-        """May raise GithubException in the case of IO issues.
+        """Disconnect all GitHub account associated with this Person and
+        associates the account with username == `Person.github`, if there is
+        such GitHub account.
 
-        Disconnect all GitHub account associated with this Person and
-        associates the account with username == Person.github, if there is
-        such GitHub account."""
+        May raise GithubException in the case of IO issues."""
 
         github_uid = self.get_github_uid()
 
-        self.github_usersocialauth.delete()
         if github_uid is not None:
+            self.github_usersocialauth.delete()
             return UserSocialAuth.objects.create(provider='github', user=self,
                                                  uid=github_uid, extra_data={})
         else:

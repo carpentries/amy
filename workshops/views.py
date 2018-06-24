@@ -464,11 +464,9 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView):
 
         context['title'] = 'Person {0}'.format(self.object)
 
-        try:
-            is_usersocialauth_in_sync = \
-                self.object.check_if_usersocialauth_is_in_sync()
-        except GithubException:
-            is_usersocialauth_in_sync = 'unknown'
+        is_usersocialauth_in_sync = (
+            len(self.object.github_usersocialauth) > 0
+        )
         context['is_usersocialauth_in_sync'] = is_usersocialauth_in_sync
 
         return context
