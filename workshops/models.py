@@ -19,6 +19,7 @@ from reversion import revisions as reversion
 from social_django.models import UserSocialAuth
 
 from workshops import github_auth
+from workshops.fields import NullableGithubUsernameField
 
 STR_SHORT   =  10         # length of short strings
 STR_MED     =  40         # length of medium strings
@@ -344,10 +345,6 @@ class PersonManager(BaseUserManager):
                          F('passed_dc_demo')),
         )
 
-github_username_validator = RegexValidator(r'[, ]+',
-                                           'Spaces or commas are disallowed.',
-                                           inverse_match=True)
-
 
 @reversion.register
 class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
@@ -393,10 +390,9 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
     )
     airport     = models.ForeignKey(Airport, null=True, blank=True, on_delete=models.PROTECT,
                                     verbose_name='Nearest major airport')
-    github      = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True,
-                                   verbose_name='GitHub username',
-                                   validators=[github_username_validator],
-                                   help_text='Please put only a single username here.',)
+    github      = NullableGithubUsernameField(unique=True, null=True, blank=True,
+                                              verbose_name='GitHub username',
+                                              help_text='Please put only a single username here.')
     twitter     = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True,
                                    verbose_name='Twitter username')
     url         = models.CharField(max_length=STR_LONG, blank=True,
@@ -687,11 +683,9 @@ class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin,
         verbose_name='Other occupation/career stage',
         blank=True, default='',
     )
-    github = models.CharField(
-        max_length=STR_LONG,
+    github = NullableGithubUsernameField(
         verbose_name='GitHub username',
         help_text='Please put only a single username here.',
-        validators=[github_username_validator],
         blank=True, default='',
     )
     twitter = models.CharField(
@@ -2068,10 +2062,8 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin,
         verbose_name='Email address',
         blank=False,
     )
-    github = models.CharField(
-        max_length=STR_LONG,
+    github = NullableGithubUsernameField(
         verbose_name='GitHub username',
-        validators=[github_username_validator],
         help_text='Please put only a single username here.',
         null=True, blank=True,
     )

@@ -13,6 +13,8 @@ class TestNullableGHUsernameField(TestBase):
             'harry-potter',
             'harry-potter123',
             'Harry-Potter',
+            '',
+            None,
         ]
 
         self.failing = [
