@@ -910,13 +910,20 @@ def sync_usersocialauth(request, person_id):
         return redirect(reverse('persons'))
     else:
         try:
-            person.synchronize_usersocialauth()
+            result = person.synchronize_usersocialauth()
+            if result:
+                messages.success(
+                    request, 'Social account was successfully synchronized.')
+            else:
+                messages.error(
+                    request, 'It was not possible to synchronize this person '
+                             'with their social account.')
+
         except GithubException:
             messages.error(request,
                            'Cannot sync UserSocialAuth table for person #{} '
                            'due to errors with GitHub API.'.format(person_id))
-        else:
-            messages.success(request, 'Sync UserSocialAuth successfully.')
+
         return redirect(reverse('person_details', args=(person_id,)))
 
 #------------------------------------------------------------

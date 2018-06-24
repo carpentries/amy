@@ -514,9 +514,14 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
 
         github_uid = self.get_github_uid()
 
-        uids_from_person = set() if github_uid is None else {str(github_uid)}
-        uids_from_usersocialauth = {u.uid for u in self.github_usersocialauth}
-        return uids_from_person == uids_from_usersocialauth
+        if github_uid is None:
+            return False
+        else:
+            uids_from_person = {str(github_uid)}
+            uids_from_usersocialauth = {
+                u.uid for u in self.github_usersocialauth
+            }
+            return uids_from_person == uids_from_usersocialauth
 
     def synchronize_usersocialauth(self):
         """May raise GithubException in the case of IO issues.
