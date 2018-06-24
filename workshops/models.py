@@ -472,7 +472,8 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
              'Can this user access the restricted API endpoints?'),
         ]
 
-    def get_full_name(self):
+    @cached_property
+    def full_name(self):
         middle = ''
         if self.middle:
             middle = ' {0}'.format(self.middle)
@@ -482,7 +483,7 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
         return self.personal
 
     def __str__(self):
-        result = self.get_full_name()
+        result = self.full_name
         if self.email:
             result += ' <' + self.email + '>'
         return result

@@ -29,7 +29,7 @@ working with you.
 
 ----------------------------------------
 
-Name: {{ person.get_full_name }}
+Name: {{ person.full_name }}
 Preferred email: {{ person.email }}{% for award in instructor_awards %}
 You became {{ award.badge }} on: {{ award.awarded }}{% endfor %}
 Closest airport: {% if person.airport %}{{ person.airport.iata }}{% else %}—{% endif %}
@@ -37,4 +37,4 @@ Twitter handle: {{ person.twitter|default:"—" }}
 GitHub handle: {{ person.github|default:"—" }}
 Lessons you can teach: {{ lessons|join:', ' }}
 You were:{% for own, foreign in tasks %}
-- {{ own.role }} at {{ own.event }} with {% for task in foreign %}{{ task.person.get_full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endfor %}
+- {{ own.role }} at {{ own.event }} with {% for task in foreign %}{{ task.person.full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endfor %}

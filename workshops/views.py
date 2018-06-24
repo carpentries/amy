@@ -2790,8 +2790,10 @@ def all_trainingrequests(request):
         queryset=TrainingRequest.objects.all().prefetch_related(
             Prefetch('person__task_set',
                      to_attr='training_tasks',
-                     queryset=Task.objects.filter(role__name='learner',
-                                                  event__tags__name='TTT')),
+                     queryset=Task.objects
+                        .filter(role__name='learner', event__tags__name='TTT')
+                        .select_related('event')
+                     ),
         )
     )
 
@@ -3060,76 +3062,6 @@ def training_progress(request):
 
 # ------------------------------------------------------------
 # Instructor Training related views
-
-
-@admin_required
-def download_trainingrequests(request):
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = \
-        'attachment; filename="training_requests.csv"'
-
-    writer = csv.writer(response)
-    writer.writerow([
-        'Created-on',
-        'State',
-        'Matched Trainee',
-        'Group Name',
-        'Personal',
-        'Family',
-        'Email',
-        'GitHub username',
-        'Occupation',
-        'Occupation (other)',
-        'Affiliation',
-        'Location',
-        'Country',
-        'Expertise areas',
-        'Expertise areas (other)',
-        'Under-represented',
-        'Previous Involvement',
-        'Previous Training in Teaching',
-        'Previous Training (other)',
-        'Previous Training (explanation)',
-        'Programming Language Usage',
-        'Reason',
-        'Teaching Frequency Expectation',
-        'Teaching Frequency Expectation (other)',
-        'Max Travelling Frequency',
-        'Max Travelling Frequency (other)',
-        'Comment',
-    ])
-    for req in TrainingRequest.objects.all():
-        writer.writerow([
-            '{:%Y-%m-%d %H:%M}'.format(req.created_at),
-            req.get_state_display(),
-            '—' if req.person is None else req.person.get_full_name(),
-            req.group_name,
-            req.personal,
-            req.family,
-            req.email,
-            req.github,
-            req.get_occupation_display(),
-            req.occupation_other,
-            req.affiliation,
-            req.location,
-            req.country,
-            ';'.join(d.name for d in req.domains.all()),
-            req.domains_other,
-            req.get_underrepresented_display(),
-            ';'.join(inv.name for inv in req.previous_involvement.all()),
-            req.get_previous_training_display(),
-            req.previous_training_other,
-            req.previous_training_explanation,
-            req.get_programming_language_usage_frequency_display(),
-            req.reason,
-            req.get_teaching_frequency_expectation_display(),
-            req.teaching_frequency_expectation_other,
-            req.get_max_travelling_frequency_display(),
-            req.max_travelling_frequency_other,
-            req.comment,
-        ])
-
-    return response
 
 
 class TrainingRequestUpdate(RedirectSupportMixin,

@@ -50,6 +50,9 @@ urlpatterns = [
     url('^todos/user/$',
         views.UserTodoItems.as_view(),
         name='user-todos'),
+    url('^training_requests/$',
+        views.TrainingRequests.as_view(),
+        name='training-requests'),
 
     url('^', include(router.urls)),
     url('^', include(awards_router.urls)),

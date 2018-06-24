@@ -15,7 +15,7 @@
       <a href="#" id="change_assignment"><span class="glyphicon glyphicon-cog"></span></a>
       Assignee:
       {% if object.assigned_to %}
-        <a href="{{ object.assigned_to.get_absolute_url }}">{{ object.assigned_to.get_full_name }}</a> (<a href="{% url 'eventsubmission_assign' object.pk %}" id="clear-assignment">clear</a>).
+        <a href="{{ object.assigned_to.get_absolute_url }}">{{ object.assigned_to.full_name }}</a> (<a href="{% url 'eventsubmission_assign' object.pk %}" id="clear-assignment">clear</a>).
       {% else %}
         no one (<a href="{% url 'eventsubmission_assign' object.pk user.pk %}" id="assign-yourself">assign yourself</a>).
       {% endif %}

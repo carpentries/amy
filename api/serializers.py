@@ -17,7 +17,7 @@ from workshops.models import (
 
 
 class AwardPersonSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source='person.get_full_name')
+    name = serializers.CharField(source='person.full_name')
     user = serializers.CharField(source='person.username')
 
     class Meta:
@@ -26,7 +26,7 @@ class AwardPersonSerializer(serializers.ModelSerializer):
 
 
 class PersonUsernameSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source='get_full_name')
+    name = serializers.CharField(source='full_name')
     user = serializers.CharField(source='username')
 
     class Meta:
@@ -35,7 +35,7 @@ class PersonUsernameSerializer(serializers.ModelSerializer):
 
 
 class PersonNameEmailUsernameSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source='get_full_name')
+    name = serializers.CharField(source='full_name')
 
     class Meta:
         model = Person
@@ -43,7 +43,7 @@ class PersonNameEmailUsernameSerializer(serializers.ModelSerializer):
 
 
 class PersonNameSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source='get_full_name')
+    name = serializers.CharField(source='full_name')
 
     class Meta:
         model = Person
@@ -141,13 +141,13 @@ class InstructorNumTaughtSerializer(serializers.Serializer):
     person = serializers.HyperlinkedRelatedField(
         read_only=True, view_name='api:person-detail', lookup_field='pk',
         source='*')
-    name = serializers.CharField(source='get_full_name')
+    name = serializers.CharField(source='full_name')
     num_taught = serializers.IntegerField()
 
 
 class InstructorsByTimePeriodSerializer(serializers.ModelSerializer):
     event_slug = serializers.CharField(source='event.slug')
-    person_name = serializers.CharField(source='person.get_full_name')
+    person_name = serializers.CharField(source='person.full_name')
     person_email = serializers.EmailField(source='person.email')
     num_taught = serializers.SerializerMethodField()
 
@@ -302,6 +302,43 @@ class TrainingRequestSerializer(serializers.ModelSerializer):
             'state', 'group_name', 'personal', 'middle', 'family', 'email',
             'github', 'occupation', 'occupation_other', 'affiliation',
             'location', 'country', 'underresourced', 'underrepresented',
+            'domains', 'domains_other', 'nonprofit_teaching_experience',
+            'previous_involvement', 'previous_training',
+            'previous_training_other', 'previous_training_explanation',
+            'previous_experience', 'previous_experience_other',
+            'previous_experience_explanation',
+            'programming_language_usage_frequency',
+            'teaching_frequency_expectation',
+            'teaching_frequency_expectation_other',
+            'max_travelling_frequency', 'max_travelling_frequency_other',
+            'reason', 'comment',
+            'training_completion_agreement', 'workshop_teaching_agreement',
+            'data_privacy_agreement', 'code_of_conduct_agreement',
+        )
+
+
+class TrainingRequestWithPersonSerializer(TrainingRequestSerializer):
+    person = serializers.SlugRelatedField(many=False, read_only=True,
+                                          slug_field='full_name')
+    domains = serializers.SerializerMethodField()
+    previous_involvement = serializers.SerializerMethodField()
+
+    def get_domains(self, obj):
+        return ", ".join(map(lambda x: getattr(x, 'name'),
+                             obj.domains.all()))
+
+    def get_previous_involvement(self, obj):
+        return ", ".join(map(lambda x: getattr(x, 'name'),
+                             obj.previous_involvement.all()))
+
+    class Meta:
+        model = TrainingRequest
+        fields = (
+            'created_at', 'last_updated_at', 'state',
+            'person', 'group_name', 'personal', 'middle', 'family', 'email',
+            'github', 'underrepresented',
+            'occupation', 'occupation_other', 'affiliation',
+            'location', 'country', 'underresourced',
             'domains', 'domains_other', 'nonprofit_teaching_experience',
             'previous_involvement', 'previous_training',
             'previous_training_other', 'previous_training_explanation',

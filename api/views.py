@@ -40,9 +40,14 @@ from workshops.models import (
     Task,
     Award,
     Person,
+    TrainingRequest,
     is_admin,
 )
 from workshops.util import get_members, default_membership_cutoff, str2bool
+
+from workshops.filters import (
+    TrainingRequestFilter,
+)
 
 from .serializers import (
     PersonNameEmailUsernameSerializer,
@@ -63,6 +68,7 @@ from .serializers import (
     AwardSerializer,
     PersonSerializer,
     PersonSerializerAllData,
+    TrainingRequestWithPersonSerializer,
 )
 
 from .filters import (
@@ -72,6 +78,10 @@ from .filters import (
     InstructorsOverTimeFilter,
     WorkshopsOverTimeFilter,
     LearnersOverTimeFilter,
+)
+
+from .renderers import (
+    TrainingRequestCSVRenderer,
 )
 
 
@@ -133,6 +143,8 @@ class ApiRoot(APIView):
             ('user-todos', reverse('api:user-todos',
                                    request=request, format=format)),
             ('reports-list', reverse('api:reports-list',
+                                     request=request, format=format)),
+            ('training-requests', reverse('api:training-requests',
                                      request=request, format=format)),
 
             # "new" API list-type endpoints below
@@ -336,6 +348,20 @@ class UserTodoItems(ListAPIView):
                                .incomplete() \
                                .exclude(due=None) \
                                .select_related('event')
+
+
+class TrainingRequests(ListAPIView):
+    permission_classes = (IsAuthenticated, IsAdmin)
+    paginator = None
+    serializer_class = TrainingRequestWithPersonSerializer
+    renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES + \
+        [TrainingRequestCSVRenderer, ]
+    queryset = (
+        TrainingRequest.objects.all()
+            .select_related('person')
+            .prefetch_related('previous_involvement', 'domains')
+    )
+    filter_class = TrainingRequestFilter
 
 
 class ReportsViewSet(ViewSet):

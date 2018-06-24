@@ -81,7 +81,7 @@ class TestSearchOrganization(TestBase):
         self.assertEqual(len(response.context['persons'])
                          + len(response.context['organizations']),
                          2, 'Expected two search results')
-        for result in {self.org_alpha.domain, self.hermione.get_full_name()}:
+        for result in {self.org_alpha.domain, self.hermione.full_name}:
             self.assertIn(result, doc)
 
     def test_search_for_training_requests(self):

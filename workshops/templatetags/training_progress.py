@@ -34,7 +34,7 @@ def progress_description(progress):
         state=progress.get_state_display(),
         type=progress.requirement,
         evaluated_by=('evaluated by {}'.format(
-                         progress.evaluated_by.get_full_name())
+                         progress.evaluated_by.full_name)
                       if progress.evaluated_by is not None else 'submitted'),
         day=progress.created_at.strftime('%A %d %B %Y at %H:%M'),
         notes='<br />Notes: {}'.format(progress.notes) if progress.notes else '',

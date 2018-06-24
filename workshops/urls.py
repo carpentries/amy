@@ -173,7 +173,6 @@ urlpatterns = [
     url(r'^autoupdate_profile/$', views.autoupdate_profile, name='autoupdate_profile'),
 
     url(r'^training_requests/$', views.all_trainingrequests, name='all_trainingrequests'),
-    url(r'^training_requests/csv/$', views.download_trainingrequests, name='download_trainingrequests'),
     url(r'^training_request/(?P<pk>\d+)/', include([
         url(r'^$', views.trainingrequest_details, name='trainingrequest_details'),
         url(r'^edit/$', views.TrainingRequestUpdate.as_view(), name='trainingrequest_edit'),
