@@ -464,11 +464,9 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView):
 
         context['title'] = 'Person {0}'.format(self.object)
 
-        try:
-            is_usersocialauth_in_sync = \
-                self.object.check_if_usersocialauth_is_in_sync()
-        except GithubException:
-            is_usersocialauth_in_sync = 'unknown'
+        is_usersocialauth_in_sync = (
+            len(self.object.github_usersocialauth) > 0
+        )
         context['is_usersocialauth_in_sync'] = is_usersocialauth_in_sync
 
         return context
@@ -910,13 +908,20 @@ def sync_usersocialauth(request, person_id):
         return redirect(reverse('persons'))
     else:
         try:
-            person.synchronize_usersocialauth()
+            result = person.synchronize_usersocialauth()
+            if result:
+                messages.success(
+                    request, 'Social account was successfully synchronized.')
+            else:
+                messages.error(
+                    request, 'It was not possible to synchronize this person '
+                             'with their social account.')
+
         except GithubException:
             messages.error(request,
                            'Cannot sync UserSocialAuth table for person #{} '
                            'due to errors with GitHub API.'.format(person_id))
-        else:
-            messages.success(request, 'Sync UserSocialAuth successfully.')
+
         return redirect(reverse('person_details', args=(person_id,)))
 
 #------------------------------------------------------------
