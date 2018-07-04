@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('workshops', '0138_auto_20180524_1400'),
+        ('workshops', '0140_NullableGithubUsernameField'),
     ]
 
     operations = [
