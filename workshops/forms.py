@@ -1267,8 +1267,8 @@ class AutoUpdateProfileForm(forms.ModelForm):
     github = forms.CharField(
         disabled=True, required=False,
         help_text='If you want to change your github username, please email '
-                  'us at <a href="mailto:admin@software-carpentry.org">'
-                  'admin@software-carpentry.org</a>.')
+                  'us at <a href="mailto:team@carpentries.org">'
+                  'team@carpentries.org</a>.')
 
     languages = forms.ModelMultipleChoiceField(
         label='Languages',
