@@ -85,12 +85,9 @@ class COCAgreementMixin(models.Model):
     code_of_conduct_agreement = models.BooleanField(
         null=False, blank=False,
         default=False,  # for 'normal' migration purposes
-        verbose_name='I agree to abide by The Carpentries\' Code of Conduct. '
-                     'The Code of Conduct can be found at '
-                     '<a href="http://software-carpentry.org/conduct/">'
-                     'http://software-carpentry.org/conduct/</a> and '
-                     '<a href="http://datacarpentry.org/code-of-conduct/">'
-                     'http://datacarpentry.org/code-of-conduct/</a>.'
+        verbose_name='I agree to abide by The Carpentries\' <a target="_blank"'
+                     'href="https://docs.carpentries.org/topic_folders'
+                     '/policies/code-of-conduct.html">Code of Conduct</a>.'
     )
 
     class Meta:

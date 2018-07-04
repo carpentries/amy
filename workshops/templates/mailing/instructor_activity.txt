@@ -10,13 +10,13 @@ please update them using:
 
 Please also check the information about workshops you've been involved
 in -- if any details are missing or incorrect, please mail
-admin@software-carpentry.org.  And if you have taught any self
+team@carpentries.org.  And if you have taught any self
 organized workshops, we'd like to add them to your records as well, so
 please send the date, location, instructors, number of attendees, and
 workshop website to the same address.
 
 If you would rather not receive mail from us in future, please mail
-admin@software-carpentry.org and we will remove you from our contact
+team@carpentries.org and we will remove you from our contact
 list.
 
 Thanks for all you've done for Software Carpentry - you're the ones

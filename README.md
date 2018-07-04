@@ -2,8 +2,8 @@
 
 ![](https://travis-ci.org/swcarpentry/amy.svg?branch=master)
 
-AMY is a web-based workshop administration application for [Software
-Carpentry][swc] and related projects.  Its target audience is workshop
+AMY is a web-based workshop administration application for [The Carpentries][tc]
+and related projects.  Its target audience is workshop
 coordinators, most of whom are non-programmers, who need to keep track
 of what workshops are being arranged, when they're supposed to occur,
 who's teaching what, and so on.
@@ -56,7 +56,7 @@ before starting work on new features.
     ~~~
     $ make dev_database
     ~~~
-    
+
 5.  Create an administrator account:
 
     ~~~
@@ -122,11 +122,11 @@ before starting work on new features.
     ~~~
 
 [bower]: http://bower.io/
-[contact-address]: mailto:gvwilson@software-carpentry.org
+[contact-address]: mailto:team@carpentries.org
 [django]: https://www.djangoproject.com
 [fixing-npm-permissions]: https://docs.npmjs.com/getting-started/fixing-npm-permissions#option-2-change-npm-s-default-directory-to-another-directory
 [issues]: https://github.com/swcarpentry/amy/issues
 [nodejs]: https://nodejs.org/
 [npm]: https://www.npmjs.com/
-[swc]: http://software-carpentry.org
+[tc]: https://carpentries.org/
 [virtualenv]: https://virtualenv.pypa.io/en/latest/userguide.html

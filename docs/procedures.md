@@ -10,7 +10,7 @@
 
 4.  Follow Deployment Procedure (see below).
 
-5.  Write to <amy@lists.software-carpentry.org> mailing list.
+5.  Write to <amy@lists.carpentries.org> mailing list.
     The suggested subject of the new thread is "[Amy] New release v1.X.Y".
 
 # Release Procedure
