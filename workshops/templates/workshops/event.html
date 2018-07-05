@@ -31,7 +31,7 @@
       <a href="#" id="change_assignment"><span class="glyphicon glyphicon-cog"></span></a>
       Assignee:
       {% if event.assigned_to %}
-        <a href="{{ event.assigned_to.get_absolute_url }}">{{ event.assigned_to.get_full_name }}</a> (<a href="{% url 'event_assign' event.slug %}" id="clear-assignment">clear</a>).
+        <a href="{{ event.assigned_to.get_absolute_url }}">{{ event.assigned_to.full_name }}</a> (<a href="{% url 'event_assign' event.slug %}" id="clear-assignment">clear</a>).
       {% else %}
         no one (<a href="{% url 'event_assign' event.slug user.pk %}" id="assign-yourself">assign yourself</a>).
       {% endif %}
@@ -135,7 +135,7 @@
         <h4 class="modal-title" id="invoice_modal_label">Invoice</h4>
       </div>
       <div class="modal-body">
-        <p>Please contact <a href="mailto:admin@software-carpentry.org">admin@software-carpentry.org</a> if you need to submit an invoice. Include the following information in your email:</p>
+        <p>Please contact <a href="mailto:team@carpentries.org">team@carpentries.org</a> if you need to submit an invoice. Include the following information in your email:</p>
 
         <ul>
           <li>Link to workshop page in AMY</li>
@@ -167,7 +167,7 @@
   <tr>
     <td class="text-center">{% if t.person_is_dc_instructor %}{% bootstrap_tag "DC" %}{% endif %}</td>
     <td class="text-center">{% if t.person_is_swc_instructor %}{% bootstrap_tag "SWC" %}{% endif %}</td>
-    <td><a href="{{ t.person.get_absolute_url }}">{{ t.person.get_full_name }}</a>{% if t.person.email and t.person.may_contact %} &lt;{{ t.person.email|urlize }}&gt;{% endif %}</td>
+    <td><a href="{{ t.person.get_absolute_url }}">{{ t.person.full_name }}</a>{% if t.person.email and t.person.may_contact %} &lt;{{ t.person.email|urlize }}&gt;{% endif %}</td>
     <td><a href="{% url 'task_details' t.pk %}">{{ t.title|default:"—" }}</a></td>
     <td>{{ t.url|default:"—"|urlize_newtab }}</td>
     <td>{{ t.role.name }}</td>

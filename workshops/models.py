@@ -19,6 +19,7 @@ from reversion import revisions as reversion
 from social_django.models import UserSocialAuth
 
 from workshops import github_auth
+from workshops.fields import NullableGithubUsernameField
 
 STR_SHORT   =  10         # length of short strings
 STR_MED     =  40         # length of medium strings
@@ -84,12 +85,9 @@ class COCAgreementMixin(models.Model):
     code_of_conduct_agreement = models.BooleanField(
         null=False, blank=False,
         default=False,  # for 'normal' migration purposes
-        verbose_name='I agree to abide by The Carpentries\' Code of Conduct. '
-                     'The Code of Conduct can be found at '
-                     '<a href="http://software-carpentry.org/conduct/">'
-                     'http://software-carpentry.org/conduct/</a> and '
-                     '<a href="http://datacarpentry.org/code-of-conduct/">'
-                     'http://datacarpentry.org/code-of-conduct/</a>.'
+        verbose_name='I agree to abide by The Carpentries\' <a target="_blank"'
+                     'href="https://docs.carpentries.org/topic_folders'
+                     '/policies/code-of-conduct.html">Code of Conduct</a>.'
     )
 
     class Meta:
@@ -344,10 +342,6 @@ class PersonManager(BaseUserManager):
                          F('passed_dc_demo')),
         )
 
-github_username_validator = RegexValidator(r'[, ]+',
-                                           'Spaces or commas are disallowed.',
-                                           inverse_match=True)
-
 
 @reversion.register
 class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
@@ -393,10 +387,9 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
     )
     airport     = models.ForeignKey(Airport, null=True, blank=True, on_delete=models.PROTECT,
                                     verbose_name='Nearest major airport')
-    github      = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True,
-                                   verbose_name='GitHub username',
-                                   validators=[github_username_validator],
-                                   help_text='Please put only a single username here.',)
+    github      = NullableGithubUsernameField(unique=True, null=True, blank=True,
+                                              verbose_name='GitHub username',
+                                              help_text='Please put only a single username here.')
     twitter     = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True,
                                    verbose_name='Twitter username')
     url         = models.CharField(max_length=STR_LONG, blank=True,
@@ -472,7 +465,8 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
              'Can this user access the restricted API endpoints?'),
         ]
 
-    def get_full_name(self):
+    @cached_property
+    def full_name(self):
         middle = ''
         if self.middle:
             middle = ' {0}'.format(self.middle)
@@ -482,7 +476,7 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
         return self.personal
 
     def __str__(self):
-        result = self.get_full_name()
+        result = self.full_name
         if self.email:
             result += ' <' + self.email + '>'
         return result
@@ -497,41 +491,34 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
         return self.social_auth.filter(provider='github')
 
     def get_github_uid(self):
-        """May raise GithubException in the case of IO issues.
+        """Return UID (int) of GitHub account for username == `Person.github`.
 
-        Returns uid (int) of Github account with username == Person.github.
-        If there is no account with such username, returns None."""
-
+        Return `None` in case of errors or missing GitHub account.
+        May raise ValueError in the case of IO issues."""
         if self.github and self.is_active:
             try:
+                # if the username is incorrect, this will throw ValidationError
+                github_auth.validate_github_username(self.github)
+
                 github_uid = github_auth.github_username_to_uid(self.github)
-            except ValueError:
+            except (ValidationError, ValueError):
                 github_uid = None
         else:
             github_uid = None
 
         return github_uid
 
-    def check_if_usersocialauth_is_in_sync(self):
-        """May raise GithubException in the case of IO issues."""
-
-        github_uid = self.get_github_uid()
-
-        uids_from_person = set() if github_uid is None else {str(github_uid)}
-        uids_from_usersocialauth = {u.uid for u in self.github_usersocialauth}
-        return uids_from_person == uids_from_usersocialauth
-
     def synchronize_usersocialauth(self):
-        """May raise GithubException in the case of IO issues.
+        """Disconnect all GitHub account associated with this Person and
+        associates the account with username == `Person.github`, if there is
+        such GitHub account.
 
-        Disconnect all GitHub account associated with this Person and
-        associates the account with username == Person.github, if there is
-        such GitHub account."""
+        May raise GithubException in the case of IO issues."""
 
         github_uid = self.get_github_uid()
 
-        self.github_usersocialauth.delete()
         if github_uid is not None:
+            self.github_usersocialauth.delete()
             return UserSocialAuth.objects.create(provider='github', user=self,
                                                  uid=github_uid, extra_data={})
         else:
@@ -686,11 +673,9 @@ class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin,
         verbose_name='Other occupation/career stage',
         blank=True, default='',
     )
-    github = models.CharField(
-        max_length=STR_LONG,
+    github = NullableGithubUsernameField(
         verbose_name='GitHub username',
         help_text='Please put only a single username here.',
-        validators=[github_username_validator],
         blank=True, default='',
     )
     twitter = models.CharField(
@@ -713,7 +698,7 @@ class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin,
         (Person.UNDISCLOSED, 'Prefer not to say'),
         (Person.FEMALE, 'Female'),
         (Person.MALE, 'Male'),
-        (Person.OTHER, 'Other (enter below)'),
+        (Person.OTHER, 'Other:'),
     )
     gender = models.CharField(
         max_length=1,
@@ -772,6 +757,15 @@ class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin,
                   ' not be posted.'
     )
 
+    def get_full_name(self):
+        middle = ''
+        if self.middle:
+            middle = ' {0}'.format(self.middle)
+        return '{0}{1} {2}'.format(self.personal, middle, self.family)
+
+    def get_short_name(self):
+        return self.personal
+
     def save(self, *args, **kwargs):
         """Save nullable char fields as empty strings."""
         self.personal = self.personal.strip()
@@ -819,7 +813,7 @@ class Language(models.Model):
     https://tools.ietf.org/html/rfc5646
     """
     name = models.CharField(
-        max_length=STR_MED,
+        max_length=STR_LONG,
         help_text='Description of this language tag in English')
     subtag = models.CharField(
         max_length=STR_SHORT,
@@ -1300,7 +1294,7 @@ class EventRequest(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
         ('genomic', 'Genomic data'),
         ('geospatial', 'Geospatial data'),
         ('text-mining', 'Text mining'),
-        ('', 'Other (type below)'),
+        ('', 'Other:'),
     )
     data_types = models.CharField(
         max_length=STR_MED,
@@ -1374,7 +1368,7 @@ class EventRequest(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
         ('', 'Don\'t know yet.'),
         ('book', 'Book travel through our university or program.'),
         ('reimburse', 'Book their own travel and be reimbursed.'),
-        ('', 'Other (type below)'),
+        ('', 'Other:'),
     )
     travel_reimbursement = models.CharField(
         max_length=STR_MED,
@@ -2067,10 +2061,8 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin,
         verbose_name='Email address',
         blank=False,
     )
-    github = models.CharField(
-        max_length=STR_LONG,
+    github = NullableGithubUsernameField(
         verbose_name='GitHub username',
-        validators=[github_username_validator],
         help_text='Please put only a single username here.',
         null=True, blank=True,
     )

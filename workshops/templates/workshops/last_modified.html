@@ -1,6 +1,6 @@
 {% if created %}
   {% if created.revision.user %}
-  <p><a href="{% url 'object_changes' created.id %}">Created on {{ created.revision.date_created }}</a> by <a href="{{ created.revision.user.get_absolute_url }}">{{ created.revision.user.get_full_name }}</a>.</p>
+  <p><a href="{% url 'object_changes' created.id %}">Created on {{ created.revision.date_created }}</a> by <a href="{{ created.revision.user.get_absolute_url }}">{{ created.revision.user.full_name }}</a>.</p>
   {% else %}
   <p><a href="{% url 'object_changes' created.id %}">Created on {{ created.revision.date_created }}</a> by unknown user.</p>
   {% endif %}
@@ -9,7 +9,7 @@
 {% endif %}
 {% if last_modified %}
   {% if last_modified.revision.user %}
-  <p><a href="{% url 'object_changes' last_modified.id %}">Last modified on {{ last_modified.revision.date_created }}</a> by <a href="{{ last_modified.revision.user.get_absolute_url }}">{{ last_modified.revision.user.get_full_name }}</a>.</p>
+  <p><a href="{% url 'object_changes' last_modified.id %}">Last modified on {{ last_modified.revision.date_created }}</a> by <a href="{{ last_modified.revision.user.get_absolute_url }}">{{ last_modified.revision.user.full_name }}</a>.</p>
   {% else %}
   <p><a href="{% url 'object_changes' last_modified.id %}">Last modified on {{ last_modified.revision.date_created }}</a> by unknown user.</p>
   {% endif %}

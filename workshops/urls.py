@@ -7,6 +7,7 @@ urlpatterns = [
     url(r'^$', views.dispatch, name='dispatch'),
     url(r'^admin-dashboard/$', views.admin_dashboard, name='admin-dashboard'),
     url(r'^trainee-dashboard/$', views.trainee_dashboard, name='trainee-dashboard'),
+    url(r'^trainee-dashboard/training_progress/$', views.training_progress, name='training-progress'),
 
     url(r'^log/$', views.changes_log, name='changes_log'),
 
@@ -172,7 +173,6 @@ urlpatterns = [
     url(r'^autoupdate_profile/$', views.autoupdate_profile, name='autoupdate_profile'),
 
     url(r'^training_requests/$', views.all_trainingrequests, name='all_trainingrequests'),
-    url(r'^training_requests/csv/$', views.download_trainingrequests, name='download_trainingrequests'),
     url(r'^training_request/(?P<pk>\d+)/', include([
         url(r'^$', views.trainingrequest_details, name='trainingrequest_details'),
         url(r'^edit/$', views.TrainingRequestUpdate.as_view(), name='trainingrequest_edit'),

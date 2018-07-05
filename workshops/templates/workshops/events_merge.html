@@ -36,8 +36,8 @@
     </tr>
     <tr>
       <th>Assignee</th>
-      <td>{% if obj_a.assigned_to %}<a href="{{ obj_a.assigned_to.get_absolute_url }}">{{ obj_a.assigned_to.get_full_name }}</a>{% else %}—{% endif %}</td>
-      <td>{% if obj_b.assigned_to %}<a href="{{ obj_b.assigned_to.get_absolute_url }}">{{ obj_b.assigned_to.get_full_name }}</a>{% else %}—{% endif %}</td>
+      <td>{% if obj_a.assigned_to %}<a href="{{ obj_a.assigned_to.get_absolute_url }}">{{ obj_a.assigned_to.full_name }}</a>{% else %}—{% endif %}</td>
+      <td>{% if obj_b.assigned_to %}<a href="{{ obj_b.assigned_to.get_absolute_url }}">{{ obj_b.assigned_to.full_name }}</a>{% else %}—{% endif %}</td>
       <th>{% include "workshops/merge_radio.html" with field=form.assigned_to %}</th>
     </tr>
     <tr>

@@ -21,6 +21,14 @@
   </div>
   <div role="tabpanel" class="tab-pane" id="tasks">
     {% block task_tab %}
+
+    <div class="row">
+      <div class="col-xs-9 col-xs-offset-1">
+        <p>Notes regarding this event may include instructor and helper names:</p>
+        <pre>{{ event.notes }}</pre>
+      </div>
+    </div>
+
     <form class="form-horizontal" role="form" method="POST" action="{% url 'task_add' %}?next={{ request.get_full_path|urlencode }}#tasks">
       {% crispy task_form %}
     </form>
@@ -35,12 +43,12 @@
     </tr>
     {% for t in tasks %}
     <tr>
-      <td><a href="{{ t.person.get_absolute_url }}">{{ t.person.get_full_name }}</a>{% if t.person.email and t.person.may_contact %} &lt;{{ t.person.email|urlize }}&gt;{% endif %}</td>
+      <td><a href="{{ t.person.get_absolute_url }}">{{ t.person.full_name }}</a>{% if t.person.email and t.person.may_contact %} &lt;{{ t.person.email|urlize }}&gt;{% endif %}</td>
       <td><a href="{% url 'task_details' t.pk %}">{{ t.title|default:"—" }}</a></td>
       <td>{{ t.url|default:"—"|urlize_newtab }}</td>
       <td>{{ t.role.name }}</td>
       <td>
-        <form action="{% url 'task_delete' t.id %}?next={{ request.get_full_path|urlencode }}#tasks" onsubmit='return confirm("Are you sure you wish to remove \"{{ t.person.get_full_name }}\" from {{ object.slug }}?")' method="POST">
+        <form action="{% url 'task_delete' t.id %}?next={{ request.get_full_path|urlencode }}#tasks" onsubmit='return confirm("Are you sure you wish to remove \"{{ t.person.full_name }}\" from {{ object.slug }}?")' method="POST">
           {% csrf_token %}
           <button type="submit" class="btn btn-danger">Delete</button>
         </form>

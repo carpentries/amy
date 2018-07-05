@@ -32,7 +32,6 @@
               <input type="url" id="event_import_url" name="url" required class="form-control" />
             {% endif %}
             <p class="help-block">Either URL to the event's website or to it's repository will work.</p>
-            <p class="help-block">Use the URL of the event's website, e.g. <code>http://swcarpentry.github.io/workshop-template/</code> or <code>http://www.datacarpentry.org/workshop/</code>, and not the URL of its GitHub repository.</p>
             </div>
           {% if update %}
             <div class="form-group">
@@ -49,8 +48,10 @@
                 </label>
               </div>
             </div>
-          {% endif %}
             <button type="submit" class="btn btn-primary" data-loading-text="Loading..." autocomplete="off">Update</button>
+          {% else %}
+            <button type="submit" class="btn btn-primary" data-loading-text="Loading..." autocomplete="off">Import</button>
+          {% endif %}
           </form>
         </div>
         <div class="modal-footer">

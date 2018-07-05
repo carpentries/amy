@@ -15,7 +15,7 @@ from django.db.models import (
 )
 from rest_framework import viewsets
 from rest_framework.decorators import list_route
-from rest_framework.generics import ListAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.metadata import SimpleMetadata
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import (
@@ -40,9 +40,14 @@ from workshops.models import (
     Task,
     Award,
     Person,
+    TrainingRequest,
     is_admin,
 )
 from workshops.util import get_members, default_membership_cutoff, str2bool
+
+from workshops.filters import (
+    TrainingRequestFilter,
+)
 
 from .serializers import (
     PersonNameEmailUsernameSerializer,
@@ -62,6 +67,8 @@ from .serializers import (
     AirportSerializer,
     AwardSerializer,
     PersonSerializer,
+    PersonSerializerAllData,
+    TrainingRequestWithPersonSerializer,
 )
 
 from .filters import (
@@ -71,6 +78,10 @@ from .filters import (
     InstructorsOverTimeFilter,
     WorkshopsOverTimeFilter,
     LearnersOverTimeFilter,
+)
+
+from .renderers import (
+    TrainingRequestCSVRenderer,
 )
 
 
@@ -125,11 +136,15 @@ class ApiRoot(APIView):
                                            request=request, format=format)),
             ('export-members', reverse('api:export-members', request=request,
                                        format=format)),
+            ('export-person-data', reverse('api:export-person-data',
+                                           request=request, format=format)),
             ('events-published', reverse('api:events-published',
                                          request=request, format=format)),
             ('user-todos', reverse('api:user-todos',
                                    request=request, format=format)),
             ('reports-list', reverse('api:reports-list',
+                                     request=request, format=format)),
+            ('training-requests', reverse('api:training-requests',
                                      request=request, format=format)),
 
             # "new" API list-type endpoints below
@@ -264,6 +279,22 @@ class ExportMembersView(ListAPIView):
         }
 
 
+class ExportPersonDataView(RetrieveAPIView):
+    permission_classes = (IsAuthenticated, )
+    serializer_class = PersonSerializerAllData
+    queryset = Person.objects.all()
+
+    def get_object(self):
+        """Get logged-in user data, make it impossible to gather someone else's
+        data this way."""
+        user = self.request.user
+
+        if user.is_anonymous:
+            return self.get_queryset().none()
+        else:
+            return self.get_queryset().get(pk=user.pk)
+
+
 class PublishedEvents(ListAPIView):
     """List published events."""
 
@@ -317,6 +348,20 @@ class UserTodoItems(ListAPIView):
                                .incomplete() \
                                .exclude(due=None) \
                                .select_related('event')
+
+
+class TrainingRequests(ListAPIView):
+    permission_classes = (IsAuthenticated, IsAdmin)
+    paginator = None
+    serializer_class = TrainingRequestWithPersonSerializer
+    renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES + \
+        [TrainingRequestCSVRenderer, ]
+    queryset = (
+        TrainingRequest.objects.all()
+            .select_related('person')
+            .prefetch_related('previous_involvement', 'domains')
+    )
+    filter_class = TrainingRequestFilter
 
 
 class ReportsViewSet(ViewSet):

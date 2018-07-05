@@ -10,13 +10,13 @@ please update them using:
 
 Please also check the information about workshops you've been involved
 in -- if any details are missing or incorrect, please mail
-admin@software-carpentry.org.  And if you have taught any self
+team@carpentries.org.  And if you have taught any self
 organized workshops, we'd like to add them to your records as well, so
 please send the date, location, instructors, number of attendees, and
 workshop website to the same address.
 
 If you would rather not receive mail from us in future, please mail
-admin@software-carpentry.org and we will remove you from our contact
+team@carpentries.org and we will remove you from our contact
 list.
 
 Thanks for all you've done for Software Carpentry - you're the ones
@@ -29,7 +29,7 @@ working with you.
 
 ----------------------------------------
 
-Name: {{ person.get_full_name }}
+Name: {{ person.full_name }}
 Preferred email: {{ person.email }}{% for award in instructor_awards %}
 You became {{ award.badge }} on: {{ award.awarded }}{% endfor %}
 Closest airport: {% if person.airport %}{{ person.airport.iata }}{% else %}—{% endif %}
@@ -37,4 +37,4 @@ Twitter handle: {{ person.twitter|default:"—" }}
 GitHub handle: {{ person.github|default:"—" }}
 Lessons you can teach: {{ lessons|join:', ' }}
 You were:{% for own, foreign in tasks %}
-- {{ own.role }} at {{ own.event }} with {% for task in foreign %}{{ task.person.get_full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endfor %}
+- {{ own.role }} at {{ own.event }} with {% for task in foreign %}{{ task.person.full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endfor %}

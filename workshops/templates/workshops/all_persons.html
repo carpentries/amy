@@ -22,13 +22,13 @@
       <tr>
         <td class="text-center">{% if person.is_dc_instructor %}{% bootstrap_tag "DC" %}{% endif %}</td>
         <td class="text-center">{% if person.is_swc_instructor %}{% bootstrap_tag "SWC" %}{% endif %}</td>
-        <td><a href="{% url 'person_details' person.id %}">{{ person.get_full_name }}</a></td>
+        <td><a href="{% url 'person_details' person.id %}">{{ person.full_name }}</a></td>
         <td>{% if person.email %}<a href="mailto:{{ person.email }}">{{ person.email }}</a>{% else %}—{% endif %}</td>
         <td>
-          <a href="{% url 'person_details' person.pk %}" title="View {{ person.get_full_name }}"><span class="glyphicon glyphicon-info-sign"></span></a>
+          <a href="{% url 'person_details' person.pk %}" title="View {{ person.full_name }}"><span class="glyphicon glyphicon-info-sign"></span></a>
           &nbsp;
           {% if perms.workshops.change_person %}
-          <a href="{% url 'person_edit' person.pk %}" title="Edit {{ person.get_full_name }}"><span class="glyphicon glyphicon-pencil"></span></a>
+          <a href="{% url 'person_edit' person.pk %}" title="Edit {{ person.full_name }}"><span class="glyphicon glyphicon-pencil"></span></a>
           {% endif %}
         </td>
       </tr>

@@ -1,14 +1,7 @@
 """
-Django settings for amy project.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/1.7/topics/settings/
-
-For the full list of settings and their values, see
-https://docs.djangoproject.com/en/1.7/ref/settings/
+Django settings for AMY project.
 """
 
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import json
 import os
 import sys
@@ -16,23 +9,23 @@ import sys
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import ugettext_lazy as _
 
+
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
 
 
 # SECURITY WARNING: don't run with DEBUG turned on in production!
 DEBUG = json.loads(os.environ.get('AMY_DEBUG', 'true'))
-# For deployment in production:
-# AMY_DEBUG=false AMY_SECRET_KEY="..." ./manage.py runserver ...
 
-if DEBUG:
-    SECRET_KEY = '3l$35+@a%g!(^y^98oi%ei+%+yvtl3y0k^_7-fmx2oj09-ac5@'
-else:
-    SECRET_KEY = None
-SECRET_KEY = os.environ.get('AMY_SECRET_KEY', SECRET_KEY)
+##################### S E C R E T  K E Y #####################
+
+# don't run with default SECRET_KEY on production
+DEFAULT_SECRET_KEY = '3l$35+@a%g!(^y^98oi%ei+%+yvtl3y0k^_7-fmx2oj09-ac5@'
+SECRET_KEY = os.environ.get('AMY_SECRET_KEY', DEFAULT_SECRET_KEY)
+if not DEBUG and SECRET_KEY == DEFAULT_SECRET_KEY:
+    raise ImproperlyConfigured('You must specify non-default value for '
+                               'SECRET_KEY when running with Debug=FALSE.')
+
+##################### P Y D A T A #####################
 
 # settings for PyData application
 ENABLE_PYDATA = json.loads(os.environ.get('AMY_ENABLE_PYDATA', 'false'))
@@ -40,6 +33,8 @@ ENABLE_PYDATA = json.loads(os.environ.get('AMY_ENABLE_PYDATA', 'false'))
 if ENABLE_PYDATA:
     PYDATA_USERNAME_SECRET = os.environ.get('AMY_PYDATA_USERNAME')
     PYDATA_PASSWORD_SECRET = os.environ.get('AMY_PYDATA_PASSWORD')
+
+##################### R E C A P T C H A #####################
 
 # be sure to put these values in your envvars, even for development
 RECAPTCHA_PUBLIC_KEY = os.environ.get('AMY_RECAPTCHA_PUBLIC_KEY', None)
@@ -58,42 +53,58 @@ if DEBUG:
         RECAPTCHA_PRIVATE_KEY = '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'
 else:
     # ensure the keys are present on production
-    assert RECAPTCHA_PUBLIC_KEY, 'RECAPTCHA site key not present'
-    assert RECAPTCHA_PRIVATE_KEY, 'RECAPTCHA secure key not present'
+    if not RECAPTCHA_PUBLIC_KEY or not RECAPTCHA_PRIVATE_KEY:
+        raise ImproperlyConfigured('Both ReCaptcha keys (public and private) '
+                                   'must be present.')
 
-# email settings
+##################### E M A I L S #####################
+
+# error email recipients
 ADMINS = (
     ('Sysadmins ML', 'sysadmin@lists.software-carpentry.org'),
 )
-# "From:" for error messages sent out to ADMINS
+# sender for error emails
 SERVER_EMAIL = os.environ.get('AMY_SERVER_EMAIL', 'root@localhost')
 
 # addresses to receive "New workshop request" or "New profile update request"
 # notifications
 REQUEST_NOTIFICATIONS_RECIPIENTS = (
-    'admin-all@lists.software-carpentry.org',
+    'admin-all@carpentries.org',
 )
-EMAIL_HOST = os.environ.get('AMY_EMAIL_HOST', 'localhost')
-EMAIL_HOST_USER = os.environ.get('AMY_EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.environ.get('AMY_EMAIL_HOST_PASSWORD', '')
-EMAIL_PORT = int(os.environ.get('AMY_EMAIL_PORT', 25))
-EMAIL_TIMEOUT = 10  # timeout for blocking email operations, in seconds
-EMAIL_USE_TLS = json.loads(os.environ.get('AMY_EMAIL_USE_TLS', 'false'))
-EMAIL_USE_SSL = json.loads(os.environ.get('AMY_EMAIL_USE_SSL', 'false'))
-
-# "From:" for NOT error messages (ie. sent to whoever we want)
+# default sender for non-error messages
 DEFAULT_FROM_EMAIL = os.environ.get('AMY_DEFAULT_FROM_EMAIL',
                                     'webmaster@localhost')
 
+# django-anymail configuration for Mailgun
+ANYMAIL = {
+    'MAILGUN_API_KEY': os.environ.get('AMY_MAILGUN_API_KEY', None),
+    'MAILGUN_SENDER_DOMAIN': os.environ.get('AMY_MAILGUN_SENDER_DOMAIN', None),
+}
+
+if not DEBUG and (not ANYMAIL['MAILGUN_API_KEY'] or
+                  not ANYMAIL['MAILGUN_SENDER_DOMAIN']):
+    raise ImproperlyConfigured('Mailgun settings are required when running '
+                               'with Debug=False.')
+
+EMAIL_BACKEND = 'anymail.backends.mailgun.EmailBackend'
 if DEBUG:
     # outgoing mails will be stored in `django.core.mail.outbox`
     EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
+
+##################### S I T E,  H O S T S #####################
 
 SITE_URL = 'https://amy.software-carpentry.org'
 if DEBUG:
     SITE_URL = 'http://127.0.0.1:8000'
 
-# New template settings (for Django >= 1.8)
+ALLOWED_HOSTS = [
+    'amy.software-carpentry.org',
+]
+if DEBUG:
+    ALLOWED_HOSTS.append('127.0.0.1')
+
+##################### T E M P L A T E S #####################
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -126,13 +137,9 @@ TEMPLATES = [
     }
 ]
 
-ALLOWED_HOSTS = [
-    'amy.software-carpentry.org',
-]
-if DEBUG:
-    ALLOWED_HOSTS.append('127.0.0.1')
+CRISPY_TEMPLATE_PACK = 'bootstrap3'
 
-# Application definition
+##################### I N S T A L L E D  A P P S #####################
 
 INSTALLED_APPS = [
     'django.contrib.auth',
@@ -140,12 +147,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-]
-if ENABLE_PYDATA:
-    INSTALLED_APPS += [
-        'pydata',
-    ]
-INSTALLED_APPS += [
+    # pydata will be removed if ENABLE_PYDATA is not True
+    'pydata',
     'workshops',
     # dal (django-autocomplete-light) replaces django-selectable:
     'dal',
@@ -166,9 +169,12 @@ INSTALLED_APPS += [
     'social_django',
     'debug_toolbar',
     'django_extensions',
+    'anymail',
 ]
+if not ENABLE_PYDATA:
+    INSTALLED_APPS.remove('pydata')
 
-CRISPY_TEMPLATE_PACK = 'bootstrap3'
+##################### M I D D L E W A R E #####################
 
 MIDDLEWARE = (
     'debug_toolbar.middleware.DebugToolbarMiddleware',
@@ -183,21 +189,7 @@ MIDDLEWARE = (
     'workshops.action_required.PrivacyPolicy',
 )
 
-ROOT_URLCONF = 'amy.urls'
-
-WSGI_APPLICATION = 'amy.wsgi.application'
-
-from django.contrib.messages import constants as message_constants
-MESSAGE_TAGS = {
-    message_constants.INFO: 'alert-info',
-    message_constants.SUCCESS: 'alert-success',
-    message_constants.WARNING: 'alert-warning',
-    message_constants.ERROR: 'alert-danger',
-}
-
-
-# Database
-# https://docs.djangoproject.com/en/1.7/ref/settings/#databases
+##################### D A T A B A S E #####################
 
 if DEBUG:
     DB_FILENAME = os.environ.get('AMY_DB_FILENAME', 'db.sqlite3')
@@ -223,7 +215,8 @@ if '--keepdb' in sys.argv:
     # applying migrations on each test launch.
     DATABASES['default']['TEST']['NAME'] = 'test_db.sqlite3'
 
-# Authentication
+##################### A U T H,  S O C I A L #####################
+
 AUTH_USER_MODEL = 'workshops.Person'
 VALIDATION = 'django.contrib.auth.password_validation.'
 AUTH_PASSWORD_VALIDATORS = [
@@ -287,8 +280,7 @@ SOCIAL_AUTH_USER_MODEL = 'workshops.Person'
 
 GITHUB_API_TOKEN = os.environ.get('GITHUB_API_TOKEN', None)
 
-# Internationalization
-# https://docs.djangoproject.com/en/1.7/topics/i18n/
+################### I N T E R N A T I O N A L I Z A T I O N ###################
 
 LANGUAGE_CODE = 'en-us'
 
@@ -301,8 +293,7 @@ USE_L10N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/1.7/howto/static-files/
+##################### S T A T I C  F I L E S #####################
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
@@ -314,6 +305,20 @@ STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
     'compressor.finders.CompressorFinder',
 ]
+
+##################### M I S C E L L A N E O U S #####################
+
+ROOT_URLCONF = 'amy.urls'
+
+WSGI_APPLICATION = 'amy.wsgi.application'
+
+from django.contrib.messages import constants as message_constants
+MESSAGE_TAGS = {
+    message_constants.INFO: 'alert-info',
+    message_constants.SUCCESS: 'alert-success',
+    message_constants.WARNING: 'alert-warning',
+    message_constants.ERROR: 'alert-danger',
+}
 
 # if "next" (or "?next") variable is not set when logging in, redirect to
 # workshops

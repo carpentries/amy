@@ -24,3 +24,4 @@ social-auth-app-django>=2.1,<2.2
 django-webtest>=1.9,<1.10
 django-debug-toolbar>=1.9,<1.10
 django-extensions>=2.0,<2.1
+django-anymail>=3.0,<3.1

@@ -464,11 +464,9 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView):
 
         context['title'] = 'Person {0}'.format(self.object)
 
-        try:
-            is_usersocialauth_in_sync = \
-                self.object.check_if_usersocialauth_is_in_sync()
-        except GithubException:
-            is_usersocialauth_in_sync = 'unknown'
+        is_usersocialauth_in_sync = (
+            len(self.object.github_usersocialauth) > 0
+        )
         context['is_usersocialauth_in_sync'] = is_usersocialauth_in_sync
 
         return context
@@ -774,7 +772,7 @@ class PersonPermissions(OnlyForAdminsMixin, PermissionRequiredMixin,
     pk_url_kwarg = 'person_id'
 
 
-@admin_required
+@login_required
 def person_password(request, person_id):
     user = get_object_or_404(Person, pk=person_id)
 
@@ -910,13 +908,20 @@ def sync_usersocialauth(request, person_id):
         return redirect(reverse('persons'))
     else:
         try:
-            person.synchronize_usersocialauth()
+            result = person.synchronize_usersocialauth()
+            if result:
+                messages.success(
+                    request, 'Social account was successfully synchronized.')
+            else:
+                messages.error(
+                    request, 'It was not possible to synchronize this person '
+                             'with their social account.')
+
         except GithubException:
             messages.error(request,
                            'Cannot sync UserSocialAuth table for person #{} '
                            'due to errors with GitHub API.'.format(person_id))
-        else:
-            messages.success(request, 'Sync UserSocialAuth successfully.')
+
         return redirect(reverse('person_details', args=(person_id,)))
 
 #------------------------------------------------------------
@@ -1688,7 +1693,11 @@ def workshop_staff(request):
                 people = people.filter(num_organizer__gte=1)
 
             if data['is_in_progress_trainee']:
-                q = Q(task__event__tags=TTT) & ~Q(task__event__tags=stalled)
+                # filter out people who took part in only stalled TTT events
+                TTT_non_stalled_events = (
+                    Event.objects.exclude(tags=stalled).filter(tags=TTT)
+                )
+                q = Q(task__event__in=TTT_non_stalled_events)
                 people = people.filter(q, task__role__name='learner') \
                                .exclude(badges__in=instructor_badges)
 
@@ -2786,8 +2795,10 @@ def all_trainingrequests(request):
         queryset=TrainingRequest.objects.all().prefetch_related(
             Prefetch('person__task_set',
                      to_attr='training_tasks',
-                     queryset=Task.objects.filter(role__name='learner',
-                                                  event__tags__name='TTT')),
+                     queryset=Task.objects
+                        .filter(role__name='learner', event__tags__name='TTT')
+                        .select_related('event')
+                     ),
         )
     )
 
@@ -2945,69 +2956,11 @@ def trainingrequest_details(request, pk):
 
 @login_required
 def trainee_dashboard(request):
-    swc_form = SendHomeworkForm(submit_name='swc-submit')
-    dc_form = SendHomeworkForm(submit_name='dc-submit')
-
-    # Add information about instructor training progress to request.user.
-    request.user = Person.objects.annotate_with_instructor_eligibility() \
-                                 .get(pk=request.user.pk)
-
-    progresses = request.user.trainingprogress_set.filter(discarded=False)
-    last_swc_homework = progresses.filter(
-        requirement__name='SWC Homework').order_by('-created_at').first()
-    request.user.swc_homework_in_evaluation = (
-        last_swc_homework is not None and last_swc_homework.state == 'n')
-    last_dc_homework = progresses.filter(
-        requirement__name='DC Homework').order_by('-created_at').first()
-    request.user.dc_homework_in_evaluation = (
-        last_dc_homework is not None and last_dc_homework.state == 'n')
-
-    # Add information about awarded instructor badges to request.user.
-    request.user.is_swc_instructor = request.user.award_set.filter(
-        badge__name='swc-instructor').exists()
-    request.user.is_dc_instructor = request.user.award_set.filter(
-        badge__name='dc-instructor').exists()
-
     # Workshops person taught at
-    workshops = request.user.task_set.filter(role__name='instructor')
-
-    if request.method == 'POST' and 'swc-submit' in request.POST:
-        requirement = TrainingRequirement.objects.get(name='SWC Homework')
-        progress = TrainingProgress(trainee=request.user,
-                                    state='n',  # not-evaluated yet
-                                    requirement=requirement)
-        swc_form = SendHomeworkForm(data=request.POST, instance=progress,
-                                    submit_name='swc-submit')
-        dc_form = SendHomeworkForm(submit_name='dc-submit')
-
-        if swc_form.is_valid():
-            swc_form.save()
-            messages.success(request, 'Your homework submission will be '
-                                      'evaluated soon.')
-            return redirect(reverse('trainee-dashboard'))
-
-    elif request.method == 'POST' and 'dc-submit' in request.POST:
-        requirement = TrainingRequirement.objects.get(name='DC Homework')
-        progress = TrainingProgress(trainee=request.user,
-                                    state='n',  # not-evaluated yet
-                                    requirement=requirement)
-        swc_form = SendHomeworkForm(submit_name='swc-submit')
-        dc_form = SendHomeworkForm(data=request.POST, instance=progress,
-                                    submit_name='dc-submit')
-
-        if dc_form.is_valid():
-            dc_form.save()
-            messages.success(request, 'Your homework submission will be '
-                                      'evaluated soon.')
-            return redirect(reverse('trainee-dashboard'))
-
-    else:  # GET request
-        pass
+    workshops = request.user.task_set.all()
 
     context = {
         'title': 'Your profile',
-        'swc_form': swc_form,
-        'dc_form': dc_form,
         'workshops': workshops,
     }
     return render(request, 'workshops/trainee_dashboard.html', context)
@@ -3033,6 +2986,8 @@ def autoupdate_profile(request):
 
             person = form.save()
 
+            messages.success(request, 'Your profile was updated.')
+
             return redirect(reverse('trainee-dashboard'))
         else:
             messages.error(request, 'Fix errors below.')
@@ -3041,80 +2996,77 @@ def autoupdate_profile(request):
         'title': 'Update Your Profile',
         'form': form,
     }
-    return render(request, 'workshops/generic_form_nonav.html', context)
+    return render(request, 'workshops/autoupdate_profile.html', context)
+
+
+@login_required
+def training_progress(request):
+    swc_form = SendHomeworkForm(submit_name='swc-submit')
+    dc_form = SendHomeworkForm(submit_name='dc-submit')
+
+    # Add information about instructor training progress to request.user.
+    request.user = Person.objects.annotate_with_instructor_eligibility() \
+                                 .get(pk=request.user.pk)
+
+    progresses = request.user.trainingprogress_set.filter(discarded=False)
+    last_swc_homework = progresses.filter(
+        requirement__name='SWC Homework').order_by('-created_at').first()
+    request.user.swc_homework_in_evaluation = (
+        last_swc_homework is not None and last_swc_homework.state == 'n')
+    last_dc_homework = progresses.filter(
+        requirement__name='DC Homework').order_by('-created_at').first()
+    request.user.dc_homework_in_evaluation = (
+        last_dc_homework is not None and last_dc_homework.state == 'n')
+
+    # Add information about awarded instructor badges to request.user.
+    request.user.is_swc_instructor = request.user.award_set.filter(
+        badge__name='swc-instructor').exists()
+    request.user.is_dc_instructor = request.user.award_set.filter(
+        badge__name='dc-instructor').exists()
+
+    if request.method == 'POST' and 'swc-submit' in request.POST:
+        requirement = TrainingRequirement.objects.get(name='SWC Homework')
+        progress = TrainingProgress(trainee=request.user,
+                                    state='n',  # not-evaluated yet
+                                    requirement=requirement)
+        swc_form = SendHomeworkForm(data=request.POST, instance=progress,
+                                    submit_name='swc-submit')
+        dc_form = SendHomeworkForm(submit_name='dc-submit')
+
+        if swc_form.is_valid():
+            swc_form.save()
+            messages.success(request, 'Your homework submission will be '
+                                      'evaluated soon.')
+            return redirect(reverse('training-progress'))
+
+    elif request.method == 'POST' and 'dc-submit' in request.POST:
+        requirement = TrainingRequirement.objects.get(name='DC Homework')
+        progress = TrainingProgress(trainee=request.user,
+                                    state='n',  # not-evaluated yet
+                                    requirement=requirement)
+        swc_form = SendHomeworkForm(submit_name='swc-submit')
+        dc_form = SendHomeworkForm(data=request.POST, instance=progress,
+                                    submit_name='dc-submit')
+
+        if dc_form.is_valid():
+            dc_form.save()
+            messages.success(request, 'Your homework submission will be '
+                                      'evaluated soon.')
+            return redirect(reverse('training-progress'))
+
+    else:  # GET request
+        pass
+
+    context = {
+        'title': 'Your training progress',
+        'swc_form': swc_form,
+        'dc_form': dc_form,
+    }
+    return render(request, 'workshops/training_progress.html', context)
+
 
 # ------------------------------------------------------------
 # Instructor Training related views
-
-
-@admin_required
-def download_trainingrequests(request):
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = \
-        'attachment; filename="training_requests.csv"'
-
-    writer = csv.writer(response)
-    writer.writerow([
-        'Created-on',
-        'State',
-        'Matched Trainee',
-        'Group Name',
-        'Personal',
-        'Family',
-        'Email',
-        'GitHub username',
-        'Occupation',
-        'Occupation (other)',
-        'Affiliation',
-        'Location',
-        'Country',
-        'Expertise areas',
-        'Expertise areas (other)',
-        'Under-represented',
-        'Previous Involvement',
-        'Previous Training in Teaching',
-        'Previous Training (other)',
-        'Previous Training (explanation)',
-        'Programming Language Usage',
-        'Reason',
-        'Teaching Frequency Expectation',
-        'Teaching Frequency Expectation (other)',
-        'Max Travelling Frequency',
-        'Max Travelling Frequency (other)',
-        'Comment',
-    ])
-    for req in TrainingRequest.objects.all():
-        writer.writerow([
-            '{:%Y-%m-%d %H:%M}'.format(req.created_at),
-            req.get_state_display(),
-            '—' if req.person is None else req.person.get_full_name(),
-            req.group_name,
-            req.personal,
-            req.family,
-            req.email,
-            req.github,
-            req.get_occupation_display(),
-            req.occupation_other,
-            req.affiliation,
-            req.location,
-            req.country,
-            ';'.join(d.name for d in req.domains.all()),
-            req.domains_other,
-            req.get_underrepresented_display(),
-            ';'.join(inv.name for inv in req.previous_involvement.all()),
-            req.get_previous_training_display(),
-            req.previous_training_other,
-            req.previous_training_explanation,
-            req.get_programming_language_usage_frequency_display(),
-            req.reason,
-            req.get_teaching_frequency_expectation_display(),
-            req.teaching_frequency_expectation_other,
-            req.get_max_travelling_frequency_display(),
-            req.max_travelling_frequency_other,
-            req.comment,
-        ])
-
-    return response
 
 
 class TrainingRequestUpdate(RedirectSupportMixin,

@@ -12,12 +12,12 @@
     </tr>
     <tr>
       <th>Instructors</th>
-      <td>{% for t in event.task_set.instructors %}{{ t.person.get_full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+      <td>{% for t in event.task_set.instructors %}{{ t.person.full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
       <td>{{ metadata.instructors|join:', ' }}</td>
     </tr>
     <tr>
       <th>Helpers</th>
-      <td>{% for t in event.task_set.helpers %}{{ t.person.get_full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+      <td>{% for t in event.task_set.helpers %}{{ t.person.full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
       <td>{{ metadata.helpers|join:', ' }}</td>
     </tr>
     <tr>

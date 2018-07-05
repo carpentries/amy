@@ -29,7 +29,7 @@ class TestBadge(TestBase):
 
         awards = self.swc_instructor.award_set.all()
         for award in awards:
-            assert award.person.get_full_name() in content, \
+            assert award.person.full_name in content, \
                 "Award for {} not found".format(award.person)
 
     def test_badge_award(self):

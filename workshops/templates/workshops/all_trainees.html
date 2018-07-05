@@ -58,7 +58,7 @@
         </td>
         <td>
           <a href="{% url 'person_details' trainee.id %}">
-            {{ trainee.get_full_name }}
+            {{ trainee.full_name }}
           </a>
           {% if trainee.email %}<br /> &lt;{{ trainee.email|urlize }}&gt; {% endif %}
         </td>
@@ -120,10 +120,10 @@
           {% endif %}
         </td>
         <td>
-          <a href="{% url 'person_details' trainee.pk %}" title="View {{ trainee.get_full_name }}"><span class="glyphicon glyphicon-info-sign"></span></a>
+          <a href="{% url 'person_details' trainee.pk %}" title="View {{ trainee.full_name }}"><span class="glyphicon glyphicon-info-sign"></span></a>
           &nbsp;
           {% if perms.workshops.change_person %}
-          <a href="{% url 'person_edit' trainee.pk %}" title="Edit {{ trainee.get_full_name }}"><span class="glyphicon glyphicon-pencil"></span></a>
+          <a href="{% url 'person_edit' trainee.pk %}" title="Edit {{ trainee.full_name }}"><span class="glyphicon glyphicon-pencil"></span></a>
           {% endif %}
         </td>
       </tr>

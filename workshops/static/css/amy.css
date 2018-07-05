@@ -193,6 +193,10 @@ table tr label {
     margin-top: 0;
     margin-bottom: 0;
 }
+/* sidebar panel heading size */
+.sidebar .panel {
+    width: 100%;
+}
 
 table ul {
     padding-left: 15px;

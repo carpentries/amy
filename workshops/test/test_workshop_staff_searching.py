@@ -243,7 +243,12 @@ class TestLocateWorkshopStaff(TestBase):
                 self.assertEqual(form.is_valid(), form_pass, form.errors)
 
     def test_searching_trainees(self):
-        """Make sure finding trainees works."""
+        """Make sure finding trainees works. This test additionally checks for
+        a more complex cases:
+        * a trainee who participated in only a stalled TTT workshop
+        * a trainee who participated in only a non-stalled TTT workshop
+        * a trainee who participated in both.
+        """
         response = self.client.get(
             reverse('workshop_staff'),
             {'airport': self.airport_0_0.pk,
@@ -268,55 +273,12 @@ class TestLocateWorkshopStaff(TestBase):
         # Black Widow, on the other hand, is now practising to become certified
         # SWC instructor!
         Task.objects.create(person=self.blackwidow, event=e1, role=learner)
-        # Spiderman tried to became an instructor, but hasn't finished it yet
+        # Spiderman tried to became an instructor once, is enrolled in
+        # non-stalled TTT event
+        Task.objects.create(person=self.spiderman, event=e1, role=learner)
         Task.objects.create(person=self.spiderman, event=e2, role=learner)
-
-        # repeat the query
-        response = self.client.get(
-            reverse('workshop_staff'),
-            {'airport': self.airport_0_0.pk,
-             'is_in_progress_trainee': 'on',
-             'submit': 'Submit'}
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(list(response.context['persons']), [self.blackwidow])
-
-    @unittest.expectedFailure
-    def test_searching_complicated_trainee(self):
-        """Ensure person who took part in one stalled TTT event and one
-        non-stalled TTT event is correctly marked as in-progress trainee.
-
-        This test should fail because Django ORM fails with annotations.
-        See https://github.com/swcarpentry/amy/pull/776#discussion_r63953993
-        and https://github.com/swcarpentry/amy/issues/804."""
-        response = self.client.get(
-            reverse('workshop_staff'),
-            {'airport': self.airport_0_0.pk,
-             'is_in_progress_trainee': 'on',
-             'submit': 'Submit'}
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(list(response.context['persons']), [])
-
-        TTT = Tag.objects.get(name='TTT')
-        stalled = Tag.objects.get(name='stalled')
-        e1 = Event.objects.create(slug='TTT-event', host=Organization.objects.first())
-        e1.tags = [TTT]
-        e2 = Event.objects.create(slug='stalled-TTT-event',
-                                  host=Organization.objects.first())
-        e2.tags = [TTT, stalled]
-
-        learner = Role.objects.get(name='learner')
-
-        # Ron is an instructor, so he should not be available as a trainee
-        Task.objects.create(person=self.ron, event=e1, role=learner)
-        Task.objects.create(person=self.ron, event=e2, role=learner)
-        # Black Widow, on the other hand, is now practising to become certified
-        # SWC instructor!
-        Task.objects.create(person=self.blackwidow, event=e1, role=learner)
-        # Ironman tried to became an instructor via one event, but didn't
-        # finish and now is taking part in another TTT event
-        Task.objects.create(person=self.ironman, event=e1, role=learner)
+        # Ironman on the other hand didn't succeed in getting an instructor
+        # badge (he's enrolled in TTT-stalled event)
         Task.objects.create(person=self.ironman, event=e2, role=learner)
 
         # repeat the query
@@ -327,6 +289,9 @@ class TestLocateWorkshopStaff(TestBase):
              'submit': 'Submit'}
         )
         self.assertEqual(response.status_code, 200)
-        self.assertIn(self.ironman.pk, response.context['trainees'])
-        self.assertEqual(list(response.context['persons']),
-                         [self.blackwidow, self.ironman])
+        self.assertEqual(
+            set(response.context['persons']), set([
+                self.blackwidow,
+                self.spiderman,
+            ])
+        )

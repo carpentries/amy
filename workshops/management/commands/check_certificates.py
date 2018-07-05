@@ -59,14 +59,14 @@ class Command(BaseCommand):
             except Person.DoesNotExist as e:
                 self.stderr.write('{0} does not exist'.format(username))
             else:
-                name = receiver.get_full_name()
+                name = receiver.full_name
 
                 if uid in records:
                     event = records[uid]['event']
                     awarded = records[uid]['awarded']
                     username = records[uid]['awarded_by']
                     try:
-                        awarded_by = Person.objects.get(username=username).get_full_name()
+                        awarded_by = Person.objects.get(username=username).full_name
                     except Person.DoesNotExist as e:
                         self.stderr.write(
                             'Person with username={0} who awarded {1} '

@@ -8,7 +8,7 @@ from django.conf.urls import url
 from django.db.models import Q, Count
 
 from workshops import models
-from workshops.util import OnlyForAdminsNoRedirectMixin
+from workshops.util import OnlyForAdminsNoRedirectMixin, LoginNotRequiredMixin
 
 
 class EventLookupView(OnlyForAdminsNoRedirectMixin,
@@ -113,7 +113,7 @@ class AirportLookupView(OnlyForAdminsNoRedirectMixin,
         return results
 
 
-class LanguageLookupView(OnlyForAdminsNoRedirectMixin,
+class LanguageLookupView(LoginNotRequiredMixin,
                          autocomplete.Select2QuerySetView):
     def dispatch(self, request, *args, **kwargs):
         self.subtag = 'subtag' in request.GET.keys()

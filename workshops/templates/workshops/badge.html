@@ -27,10 +27,10 @@
     </tr>
     {% for award in awards %}
     <tr>
-      <td><a href="{{ award.person.get_absolute_url }}">{{ award.person.get_full_name }}</a>{% if award.person.email and award.person.may_contact %} &lt;{{ award.person.email|urlize }}&gt;{% endif %}</td>
+      <td><a href="{{ award.person.get_absolute_url }}">{{ award.person.full_name }}</a>{% if award.person.email and award.person.may_contact %} &lt;{{ award.person.email|urlize }}&gt;{% endif %}</td>
       <td>{{ award.awarded }}</td>
       <td>{% if award.event %}<a href="{% url 'event_details' award.event.slug %}">{{ award.event }}</a>{% else %}—{% endif %}</td>
-      <td>{% if award.awarded_by %}<a href="{{ award.awarded_by.get_absolute_url }}">{{ award.awarded_by.get_full_name }}</a>{% else %}—{% endif %}</td>
+      <td>{% if award.awarded_by %}<a href="{{ award.awarded_by.get_absolute_url }}">{{ award.awarded_by.full_name }}</a>{% else %}—{% endif %}</td>
       <td>
         <form action="{% url 'award_delete' pk=award.id %}" onsubmit='return confirm("Are you sure you wish to drop award \"{{ award.badge.title }}\" from \"{{ award.person }}\"?")' method="POST">
           {% csrf_token %}

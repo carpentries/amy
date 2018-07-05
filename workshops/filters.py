@@ -6,7 +6,7 @@ from django.db.models import Q
 from django.forms import widgets
 from django_countries import Countries
 
-from workshops.forms import bootstrap_helper_filter
+from workshops.forms import bootstrap_helper_filter, SIDEBAR_DAL_WIDTH
 from workshops.models import (
     Event,
     Organization,
@@ -24,13 +24,6 @@ from workshops.models import (
 )
 
 EMPTY_SELECTION = (None, '---------')
-
-# settings for Select2
-# this makes it possible for autocomplete widget to fit in low-width sidebar
-SIDEBAR_DAL_WIDTH = {
-    'data-width': '100%',
-    'width': 'style',
-}
 
 
 class AllCountriesFilter(django_filters.ChoiceFilter):
