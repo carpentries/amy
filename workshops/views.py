@@ -182,8 +182,6 @@ def admin_dashboard(request):
         Event.objects.upcoming_events() | Event.objects.ongoing_events()
     ).active().prefetch_related('tags')
 
-    uninvoiced_events = Event.objects.active().uninvoiced_events()
-
     # This annotation may produce wrong number of instructors when
     # `unpublished_events` filters out events that contain a specific tag.
     # The bug was fixed in #1130.
@@ -201,14 +199,11 @@ def admin_dashboard(request):
 
     if assigned_to == 'me':
         current_events = current_events.filter(assigned_to=request.user)
-        uninvoiced_events = uninvoiced_events.filter(assigned_to=request.user)
         unpublished_events = unpublished_events.filter(
             assigned_to=request.user)
 
     elif assigned_to == 'noone':
         current_events = current_events.filter(assigned_to__isnull=True)
-        uninvoiced_events = uninvoiced_events.filter(
-            assigned_to__isnull=True)
         unpublished_events = unpublished_events.filter(
             assigned_to__isnull=True)
 
@@ -231,7 +226,6 @@ def admin_dashboard(request):
         'is_admin': is_admin,
         'assigned_to': assigned_to,
         'current_events': current_events,
-        'uninvoiced_events': uninvoiced_events,
         'unpublished_events': unpublished_events,
         'todos_start_date': TodoItemQuerySet.current_week_dates()[0],
         'todos_end_date': TodoItemQuerySet.next_week_dates()[1],
