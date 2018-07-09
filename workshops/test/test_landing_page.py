@@ -29,20 +29,38 @@ class TestAdminDashboard(TestBase):
         """Make sure we don't display stalled or completed events on the
         dashboard."""
         stalled_tag = Tag.objects.get(name='stalled')
+        unresponsive_tag = Tag.objects.get(name='unresponsive')
+        cancelled_tag = Tag.objects.get(name='unresponsive')
+
         stalled = Event.objects.create(
             slug='stalled-event', host=Organization.objects.first(),
         )
         stalled.tags.add(stalled_tag)
+
+        unresponsive = Event.objects.create(
+            slug='unresponsive-event', host=Organization.objects.first(),
+        )
+        unresponsive.tags.add(unresponsive_tag)
+
+        cancelled = Event.objects.create(
+            slug='cancelled-event', host=Organization.objects.first(),
+        )
+        cancelled.tags.add(cancelled_tag)
+
         completed = Event.objects.create(slug='completed-event',
                                          completed=True,
                                          host=Organization.objects.first())
 
         # stalled event appears in unfiltered list of events
-        self.assertIn(stalled, Event.objects.unpublished_events())
-        self.assertIn(completed, Event.objects.unpublished_events())
+        self.assertNotIn(stalled, Event.objects.unpublished_events())
+        self.assertNotIn(unresponsive, Event.objects.unpublished_events())
+        self.assertNotIn(cancelled, Event.objects.unpublished_events())
+        self.assertNotIn(completed, Event.objects.unpublished_events())
 
         response = self.client.get(reverse('admin-dashboard'))
         self.assertNotIn(stalled, response.context['unpublished_events'])
+        self.assertNotIn(unresponsive, response.context['unpublished_events'])
+        self.assertNotIn(cancelled, response.context['unpublished_events'])
         self.assertNotIn(completed, response.context['unpublished_events'])
 
 

@@ -35,54 +35,58 @@
     <table class="table table-striped">
     {% for event in current_events %}
     <tr>
-      {% for tag in carpentries %}
         <td class="text-center" width="25px">
-          {% if tag in event.tags.all %}
-            {% bootstrap_tag tag.name %}
-          {% endif %}
+          {% for tag in carpentries %}
+            {% if tag in event.tags.all %}
+              {% bootstrap_tag tag.name %}
+            {% endif %}
+          {% endfor %}
         </td>
-      {% endfor %}
       <td><a href="{{ event.get_absolute_url }}">{{ event.slug }}</a></td>
     </tr>
     {% endfor %}
     </table>
   </div>
-  <div class="col-xs-3">
-    <h3>Uninvoiced</h3>
-    <table class="table table-striped">
-    {% for event in uninvoiced_events %}
-    <tr>
-      <td><a href="{{ event.get_absolute_url }}">{{ event.slug }}</a></td>
-    </tr>
-    {% endfor %}
-    </table>
-  </div>
-  <div class="col-xs-5">
+  <div class="col-xs-8">
     <h3>Unpublished</h3>
     <table class="table table-striped">
       <tr>
+        <th>slug</th>
         <th>#I</th>
         <th>dates</th>
-        <th>slug</th>
+        <th>location</th>
+        <th>URL</th>
         <th>host</th>
       </tr>
       {% for event in unpublished_events %}
       <tr>
-        <td {% if event.num_instructors == 0 %}class="warning"{% endif %}>
-          {{ event.num_instructors }}
-        </td>
-        <td>
-          {% if event.start %}✓{% endif %}
-        </td>
-        <td {% if not event.slug %}class="warning"{% endif %}>
-          {% if not event.slug %}
-          —
-          {% else %}
-          <a href="{% url 'event_details' event.slug %}">
-            {{ event.slug }}
-          </a>
-          {% endif %}
-        </td>
+        <!-- SLUG -->
+        <td><a href="{% url 'event_details' event.slug %}">{{ event.slug }}</a></td>
+        <!-- INSTRUCTORS COUNT -->
+        {% if event.num_instructors == 0 %}
+        <td class="text-danger bg-danger">{{ event.num_instructors }}</td>
+        {% else %}
+        <td class="text-success">{{ event.num_instructors }}</td>
+        {% endif %}
+        <!-- DATES -->
+        {% if not event.start %}
+        <td class="text-danger bg-danger">✗</td>
+        {% else %}
+        <td class="text-success">✓</td>
+        {% endif %}
+        <!-- LOCATION -->
+        {% if not event.address or not event.venue or not event.country or not event.latitude or not event.longitude %}
+        <td class="text-danger bg-danger">✗</td>
+        {% else %}
+        <td class="text-success">✓</td>
+        {% endif %}
+        <!-- URL -->
+        {% if not event.url %}
+        <td class="text-danger bg-danger">✗</td>
+        {% else %}
+        <td class="text-success">✓</td>
+        {% endif %}
+        <!-- HOST -->
         <td>
           <a href="{% url 'organization_details' event.host.domain %}">
             {{ event.host }}

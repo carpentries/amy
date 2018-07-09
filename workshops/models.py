@@ -836,10 +836,15 @@ class EventQuerySet(models.query.QuerySet):
         """Exclude cancelled events."""
         return self.exclude(tags__name='cancelled')
 
+    def not_unresponsive(self):
+        """Exclude unresponsive events."""
+        return self.exclude(tags__name='unresponsive')
+
     def active(self):
-        """Exclude inactive events (stalled, completed or cancelled)."""
+        """Exclude inactive events (stalled, completed, cancelled or
+        unresponsive)."""
         return self.exclude(tags__name='stalled').exclude(completed=True) \
-                   .not_cancelled()
+                   .not_cancelled().not_unresponsive()
 
     def past_events(self):
         '''Return past events.
@@ -904,10 +909,10 @@ class EventQuerySet(models.query.QuerySet):
         )
 
     def unpublished_events(self):
-        """Return events considered as unpublished (see
+        """Return active events considered as unpublished (see
         `unpublished_conditional` above)."""
         conditional = self.unpublished_conditional()
-        return self.not_cancelled().filter(conditional) \
+        return self.active().filter(conditional) \
                    .order_by('slug', 'id').distinct()
 
     def published_events(self):
