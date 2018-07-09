@@ -107,14 +107,6 @@ class TestPerson(TestBase):
         xpath = ".//td[@id='{0}']".format(key)
         return self._get_1(doc, xpath, key)
 
-    def test_display_person_without_notes(self):
-        response = self.client.get(reverse('person_details',
-                                           args=[str(self.ironman.id)]))
-        assert response.status_code == 200
-
-        content = response.content.decode('utf-8')
-        assert "No notes" in content
-
     def test_display_person_with_notes(self):
         note = 'This person has some serious records'
         p = Person.objects.create(personal='P1', family='P1',
