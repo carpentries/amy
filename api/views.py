@@ -45,10 +45,6 @@ from workshops.models import (
 )
 from workshops.util import get_members, default_membership_cutoff, str2bool
 
-from workshops.filters import (
-    TrainingRequestFilter,
-)
-
 from .serializers import (
     PersonNameEmailUsernameSerializer,
     ExportBadgesSerializer,
@@ -78,6 +74,7 @@ from .filters import (
     InstructorsOverTimeFilter,
     WorkshopsOverTimeFilter,
     LearnersOverTimeFilter,
+    TrainingRequestFilterIDs,
 )
 
 from .renderers import (
@@ -361,7 +358,7 @@ class TrainingRequests(ListAPIView):
             .select_related('person')
             .prefetch_related('previous_involvement', 'domains')
     )
-    filter_class = TrainingRequestFilter
+    filter_class = TrainingRequestFilterIDs
 
 
 class ReportsViewSet(ViewSet):

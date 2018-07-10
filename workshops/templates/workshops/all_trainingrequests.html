@@ -137,8 +137,9 @@
           <span class="caret"></span>
         </button>
         <ul class="dropdown-menu">
-          <li><a href="{% url 'api:training-requests' %}?format=csv">All requests as CSV</a></li>
+          <li><a href="{% url 'api:training-requests' %}?format=csv&" id="download_selected">Selected requests as CSV</a></li>
           <li><a href="{% url 'api:training-requests' %}?format=csv&{{ request.GET.urlencode }}">Filtered requests as CSV</a></li>
+          <li><a href="{% url 'api:training-requests' %}?format=csv">All requests as CSV</a></li>
         </ul>
       </div>
     </div>

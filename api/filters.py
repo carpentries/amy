@@ -1,6 +1,6 @@
 from django_filters import rest_framework as filters
 
-from workshops.filters import AMYFilterSet
+from workshops.filters import AMYFilterSet, TrainingRequestFilter
 from workshops.models import Event, Task, Tag, Person, Badge
 
 
@@ -116,4 +116,23 @@ class LearnersOverTimeFilter(AMYFilterSet):
         model = Event
         fields = [
             'tags',
+        ]
+
+
+class IdInFilter(filters.BaseInFilter, filters.NumberFilter):
+    pass
+
+
+class TrainingRequestFilterIDs(TrainingRequestFilter):
+    ids = IdInFilter(name='id', lookup_expr='in')
+
+    class Meta(TrainingRequestFilter.Meta):
+        fields = [
+            'ids',
+            'search',
+            'group_name',
+            'state',
+            'matched',
+            'affiliation',
+            'location',
         ]
