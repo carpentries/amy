@@ -1529,7 +1529,7 @@ class BulkMatchTrainingRequestForm(forms.Form):
     helper.add_input(
         Submit(
            'match',
-            'Match selected trainees to chosen training',
+            'Accept & match selected trainees to chosen training',
             **{
                 'data-toggle': 'popover',
                 'data-html': 'true',
