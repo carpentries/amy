@@ -280,3 +280,15 @@ class TestListingTrainingRequests(APITestBase):
         self.assertEqual(response.data[0]['domains'], 'Chemistry, Medicine')
         self.assertEqual(response.data[1]['previous_involvement'],
                          'learner, helper')
+
+    def test_selected_ids(self):
+        """Test if filtering by IDs works properly."""
+        url = reverse(self.url)
+
+        self.client.login(username='admin', password='admin')
+        response = self.client.get(url, {'ids': '{}'.format(self.tr2.pk)})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        json = response.json()
+        self.assertEqual(len(json), 1)
+        self.assertEqual(json[0], self.expecting[1])
