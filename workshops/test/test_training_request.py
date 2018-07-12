@@ -206,7 +206,7 @@ class TestTrainingRequestsListView(TestBase):
 
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, 'all_trainingrequests')
-        msg = 'Successfully matched selected people to training.'
+        msg = 'Successfully accepted and matched selected people to training.'
         self.assertContains(rv, msg)
         self.assertEqual(set(Event.objects.filter(task__person=self.spiderman,
                                                   task__role__name='learner')),
@@ -229,11 +229,32 @@ class TestTrainingRequestsListView(TestBase):
 
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, 'all_trainingrequests')
-        msg = 'Successfully matched selected people to training.'
+        msg = 'Successfully accepted and matched selected people to training.'
         self.assertContains(rv, msg)
         self.assertEqual(set(Event.objects.filter(task__person=self.spiderman,
                                                   task__role__name='learner')),
                          {self.first_training})
+
+    def test_trainee_accepted_during_matching(self):
+        # this request is set up without matched person
+        self.second_req.person = self.spiderman
+        self.second_req.save()
+        self.assertEqual(self.second_req.state, 'p')
+
+        data = {
+            'match': '',
+            'event': self.second_training.pk,
+            'requests': [self.second_req.pk],
+        }
+        rv = self.client.post(reverse('all_trainingrequests'), data,
+                              follow=True)
+
+        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.resolver_match.view_name, 'all_trainingrequests')
+        msg = 'Successfully accepted and matched selected people to training.'
+        self.assertContains(rv, msg)
+        self.second_req.refresh_from_db()
+        self.assertEqual(self.second_req.state, 'a')
 
     def test_matching_to_training_fails_in_the_case_of_unmatched_persons(self):
         """Requests that are not matched with any trainee account cannot be
