@@ -2807,13 +2807,18 @@ def all_trainingrequests(request):
         if match_form.is_valid():
             # Perform bulk match
             for r in match_form.cleaned_data['requests']:
+                # automatically accept this request
+                r.state = 'a'
+                r.save()
+
+                # assign to an event
                 Task.objects.get_or_create(
                     person=r.person,
                     role=Role.objects.get(name='learner'),
                     event=match_form.cleaned_data['event'])
 
-            messages.success(request, 'Successfully matched selected '
-                                      'people to training.')
+            messages.success(request, 'Successfully accepted and matched '
+                                      'selected people to training.')
 
             # Raw uri contains GET parameters from django filters. We use it
             # to preserve filter settings.

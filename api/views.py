@@ -45,10 +45,6 @@ from workshops.models import (
 )
 from workshops.util import get_members, default_membership_cutoff, str2bool
 
-from workshops.filters import (
-    TrainingRequestFilter,
-)
-
 from .serializers import (
     PersonNameEmailUsernameSerializer,
     ExportBadgesSerializer,
@@ -78,6 +74,7 @@ from .filters import (
     InstructorsOverTimeFilter,
     WorkshopsOverTimeFilter,
     LearnersOverTimeFilter,
+    TrainingRequestFilterIDs,
 )
 
 from .renderers import (
@@ -359,9 +356,20 @@ class TrainingRequests(ListAPIView):
     queryset = (
         TrainingRequest.objects.all()
             .select_related('person')
-            .prefetch_related('previous_involvement', 'domains')
-    )
-    filter_class = TrainingRequestFilter
+            .prefetch_related(
+                'previous_involvement', 'domains', 'person__award_set',
+                Prefetch('person__task_set',
+                    # We change the attribute "person.task_set" instead of
+                    # directing this filtered tasks to a new attribute, because
+                    # DRF fails to recognize it in the serializer.
+                    # to_attr='training_tasks',
+                    queryset=Task.objects
+                        .filter(role__name='learner', event__tags__name='TTT')
+                        .select_related('event')
+                    ),
+            )
+        )
+    filter_class = TrainingRequestFilterIDs
 
 
 class ReportsViewSet(ViewSet):

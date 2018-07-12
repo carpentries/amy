@@ -2043,7 +2043,8 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin,
         max_length=STR_LONG,
         verbose_name='Group name',
         help_text='If you are scheduled to receive training at a member site, '
-                  'please enter the group name you were provided.',
+                  'please enter the group name you were provided. Otherwise '
+                  'please leave this blank.',
     )
 
     personal = models.CharField(

@@ -320,8 +320,12 @@ class TrainingRequestSerializer(serializers.ModelSerializer):
 class TrainingRequestWithPersonSerializer(TrainingRequestSerializer):
     person = serializers.SlugRelatedField(many=False, read_only=True,
                                           slug_field='full_name')
+    person_id = serializers.PrimaryKeyRelatedField(many=False, read_only=True,
+                                                   source='person')
     domains = serializers.SerializerMethodField()
     previous_involvement = serializers.SerializerMethodField()
+    awards = serializers.SerializerMethodField()
+    training_tasks = serializers.SerializerMethodField()
 
     def get_domains(self, obj):
         return ", ".join(map(lambda x: getattr(x, 'name'),
@@ -331,12 +335,32 @@ class TrainingRequestWithPersonSerializer(TrainingRequestSerializer):
         return ", ".join(map(lambda x: getattr(x, 'name'),
                              obj.previous_involvement.all()))
 
+    def get_awards(self, obj):
+        if obj.person:
+            return ", ".join(
+                map(
+                    lambda x: "{} {:%Y-%m-%d}".format(x.badge.name, x.awarded),
+                              obj.person.award_set.all()
+                )
+            )
+        else:
+            return ""
+
+    def get_training_tasks(self, obj):
+        if obj.person:
+            return ", ".join(
+                map(lambda x: x.event.slug, obj.person.task_set.all())
+            )
+        else:
+            return ""
+
     class Meta:
         model = TrainingRequest
         fields = (
             'created_at', 'last_updated_at', 'state',
-            'person', 'group_name', 'personal', 'middle', 'family', 'email',
-            'github', 'underrepresented',
+            'person', 'person_id', 'awards', 'training_tasks',
+            'group_name', 'personal', 'middle', 'family',
+            'email', 'github', 'underrepresented',
             'occupation', 'occupation_other', 'affiliation',
             'location', 'country', 'underresourced',
             'domains', 'domains_other', 'nonprofit_teaching_experience',

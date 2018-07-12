@@ -15,6 +15,10 @@ from api.views import (
 from workshops.models import (
     Person,
     Role,
+    Event,
+    Tag,
+    Organization,
+    Badge,
     KnowledgeDomain,
     TrainingRequest,
 )
@@ -35,8 +39,12 @@ class TestListingTrainingRequests(APITestBase):
         self.admin.save()
 
         # some roles don't exist
-        Role.objects.create(name='learner', verbose_name='Learner')
+        self.learner = Role.objects.create(name='learner',
+                                           verbose_name='Learner')
         Role.objects.create(name='helper', verbose_name='Helper')
+
+        # some tags don't exist either
+        self.ttt = Tag.objects.create(name='TTT', details='Training')
 
         # first training request (pending)
         self.tr1 = TrainingRequest(
@@ -129,6 +137,25 @@ class TestListingTrainingRequests(APITestBase):
             Role.objects.filter(name__in=['learner', 'helper'])
         )
 
+        # add TTT event self.admin was matched to
+        self.ttt_event = Event(
+            slug='2018-07-12-TTT-event',
+            host=Organization.objects.first(),
+        )
+        self.ttt_event.save()
+        self.ttt_event.tags.set(Tag.objects.filter(name='TTT'))
+        self.admin.task_set.create(role=self.learner, event=self.ttt_event)
+
+        # add some badges
+        self.admin.award_set.create(
+            badge=Badge.objects.get(name='swc-instructor'),
+            awarded=datetime.date(2018, 7, 12)
+        )
+        self.admin.award_set.create(
+            badge=Badge.objects.get(name='dc-instructor'),
+            awarded=datetime.date(2018, 7, 12)
+        )
+
         current_tz = timezone.get_current_timezone()
 
         # prepare expecting dataset
@@ -140,6 +167,9 @@ class TestListingTrainingRequests(APITestBase):
                     self.tr1.last_updated_at.astimezone(current_tz).isoformat(),
                 'state': 'Pending',
                 'person': None,
+                'person_id': None,
+                'awards': '',
+                'training_tasks': '',
                 'group_name': 'GummiBears',
                 'personal': 'Zummi',
                 'middle': '',
@@ -185,6 +215,10 @@ class TestListingTrainingRequests(APITestBase):
                     self.tr2.last_updated_at.astimezone(current_tz).isoformat(),
                 'state': 'Accepted',
                 'person': 'Super User',
+                'person_id': self.admin.pk,
+                'awards': 'swc-instructor 2018-07-12, '
+                          'dc-instructor 2018-07-12',
+                'training_tasks': '2018-07-12-TTT-event',
                 'group_name': 'GummiBears',
                 'personal': 'Grammi',
                 'middle': '',
@@ -248,7 +282,8 @@ class TestListingTrainingRequests(APITestBase):
 
         firstline = content.splitlines()[0]
         expected_firstline = (
-            'Created at,Last updated at,State,Matched Trainee,Group Name,'
+            'Created at,Last updated at,State,Matched Trainee,'
+            'Matched Trainee ID,Badges,Training Tasks,Group Name,'
             'Personal,Middle,Family,Email,GitHub username,'
             'Underrepresented (reason),Occupation,Occupation (other),'
             'Affiliation,Location,Country,Underresourced institution,'
@@ -280,3 +315,15 @@ class TestListingTrainingRequests(APITestBase):
         self.assertEqual(response.data[0]['domains'], 'Chemistry, Medicine')
         self.assertEqual(response.data[1]['previous_involvement'],
                          'learner, helper')
+
+    def test_selected_ids(self):
+        """Test if filtering by IDs works properly."""
+        url = reverse(self.url)
+
+        self.client.login(username='admin', password='admin')
+        response = self.client.get(url, {'ids': '{}'.format(self.tr2.pk)})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        json = response.json()
+        self.assertEqual(len(json), 1)
+        self.assertEqual(json[0], self.expecting[1])
