@@ -905,6 +905,8 @@ class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):
         widget=autocomplete.ModelSelect2Multiple(url='language-lookup')
     )
 
+    helper = BootstrapHelper(wider_labels=True)
+
     class Meta:
         model = ProfileUpdateRequest
         exclude = ('active', 'created_at', 'last_updated_at')
