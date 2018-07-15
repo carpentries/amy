@@ -12,16 +12,14 @@
 {% if all_persons %}
     <table class="table table-striped">
       <tr>
-        <th width="25">DC?</th>
-        <th width="25">SWC?</th>
+        <th width="25">Badges</th>
         <th>Name</th>
         <th>Email</th>
         <th class="additional-links"></th>
       </tr>
     {% for person in all_persons %}
       <tr>
-        <td class="text-center">{% if person.is_dc_instructor %}{% bootstrap_tag "DC" %}{% endif %}</td>
-        <td class="text-center">{% if person.is_swc_instructor %}{% bootstrap_tag "SWC" %}{% endif %}</td>
+        <td class="text-center">{% if person.is_dc_instructor %}{% bootstrap_tag "DC" %}{% endif %}{% if person.is_swc_instructor %}{% bootstrap_tag "SWC" %}{% endif %}</td>
         <td><a href="{% url 'person_details' person.id %}">{{ person.full_name }}</a></td>
         <td>{% if person.email %}<a href="mailto:{{ person.email }}">{{ person.email }}</a>{% else %}—{% endif %}</td>
         <td>

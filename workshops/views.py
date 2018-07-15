@@ -1668,7 +1668,8 @@ def workshop_staff(request):
 
             if data['country']:
                 people = people.filter(
-                    airport__country__in=data['country']
+                    Q(airport__country__in=data['country']) |
+                    Q(country__in=data['country'])
                 ).order_by('family')
 
             if data['gender']:
@@ -2356,6 +2357,7 @@ def profileupdaterequest_accept(request, request_id, person_id=None):
     person.family = profileupdate.family
     person.email = profileupdate.email
     person.affiliation = profileupdate.affiliation
+    person.country = profileupdate.country
     person.airport = airport
     person.github = profileupdate.github
     person.twitter = profileupdate.twitter

@@ -548,6 +548,7 @@ class PersonForm(forms.ModelForm):
             'data_privacy_agreement',
             'email',
             'gender',
+            'country',
             'airport',
             'affiliation',
             'github',
@@ -903,6 +904,8 @@ class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):
         queryset=Language.objects.all(),
         widget=autocomplete.ModelSelect2Multiple(url='language-lookup')
     )
+
+    helper = BootstrapHelper(wider_labels=True)
 
     class Meta:
         model = ProfileUpdateRequest
@@ -1270,6 +1273,11 @@ class AutoUpdateProfileForm(forms.ModelForm):
                   'us at <a href="mailto:team@carpentries.org">'
                   'team@carpentries.org</a>.')
 
+    country = CountryField().formfield(
+        required=False,
+        help_text='Your country of residence.',
+    )
+
     languages = forms.ModelMultipleChoiceField(
         label='Languages',
         required=False,
@@ -1289,6 +1297,7 @@ class AutoUpdateProfileForm(forms.ModelForm):
             'gender',
             'may_contact',
             'publish_profile',
+            'country',
             'airport',
             'github',
             'twitter',

@@ -385,6 +385,7 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
                   '(website, Twitter) on our instructors website. Emails will'
                   ' not be posted.'
     )
+    country     = CountryField(null=False, blank=True, default='', help_text='Person\'s country of residence.')
     airport     = models.ForeignKey(Airport, null=True, blank=True, on_delete=models.PROTECT,
                                     verbose_name='Nearest major airport')
     github      = NullableGithubUsernameField(unique=True, null=True, blank=True,
@@ -639,6 +640,10 @@ class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin,
         help_text='What university, company, lab, or other organization are '
         'you affiliated with (if any)?',
         blank=False,
+    )
+    country = CountryField(
+        null=False, blank=True, default='',
+        verbose_name='Country of residence',
     )
     airport_iata = models.CharField(
         max_length=3,

@@ -26,18 +26,19 @@
   </div>
 </div>
 <table class="table table-striped">
-  <tr><td>username:</td><td id="username">{{ person.username|default:"—" }}</td></tr>
-  <tr><td>personal:</td><td id="personal">{{ person.personal|default:"—" }}</td></tr>
-  <tr><td>middle:</td><td id="middle">{{ person.middle|default:"—" }}</td></tr>
-  <tr><td>family:</td><td id="family">{{ person.family|default:"—" }}</td></tr>
-  <tr><td>may contact:</td><td id="may_contact">{{ person.may_contact|yesno }}</td></tr>
-  <tr><td>consent to publish profile:</td><td id="publish_profile">{{ person.publish_profile|yesno }}</td></tr>
-  <tr><td>privacy policy agreement:</td><td id="data_privacy_agreement">{{ person.data_privacy_agreement|yesno }}</td></tr>
-  <tr><td>email:</td><td id="email">{% if person.email %}{{ person.email|urlize }}{% else %}—{% endif %}</td></tr>
-  <tr><td>gender:</td><td id="gender">{{ person.get_gender_display|default:"—" }}</td></tr>
-  <tr><td>airport:</td><td id="airport">{% if person.airport %}<a href="{{ person.airport.get_absolute_url }}">{{ person.airport }}</a>{% else %}—{% endif %}</td></tr>
-  <tr><td>affiliation:</td><td>{{ person.affiliation|default:"—" }}</td></tr>
-  <tr><td>github:</td>
+  <tr><th>Username:</th><td id="username">{{ person.username|default:"—" }}</td></tr>
+  <tr><th>Personal:</th><td id="personal">{{ person.personal|default:"—" }}</td></tr>
+  <tr><th>Middle:</th><td id="middle">{{ person.middle|default:"—" }}</td></tr>
+  <tr><th>Family:</th><td id="family">{{ person.family|default:"—" }}</td></tr>
+  <tr><th>May contact:</th><td id="may_contact">{{ person.may_contact|yesno }}</td></tr>
+  <tr><th>Consent to publish profile:</th><td id="publish_profile">{{ person.publish_profile|yesno }}</td></tr>
+  <tr><th>Privacy policy agreement:</th><td id="data_privacy_agreement">{{ person.data_privacy_agreement|yesno }}</td></tr>
+  <tr><th>Email:</th><td id="email">{% if person.email %}{{ person.email|urlize }}{% else %}—{% endif %}</td></tr>
+  <tr><th>Gender:</th><td id="gender">{{ person.get_gender_display|default:"—" }}</td></tr>
+  <tr><th>Country:</th><td id="country">{% if person.country %}{{ person.country.name }} <img src="{{ person.country.flag }}" alt="{{ person.country }}" class="country-flag" />{% else %}—{% endif %}</td></tr>
+  <tr><th>Airport:</th><td id="airport">{% if person.airport %}<a href="{{ person.airport.get_absolute_url }}">{{ person.airport }}</a>{% else %}—{% endif %}</td></tr>
+  <tr><th>Affiliation:</th><td>{{ person.affiliation|default:"—" }}</td></tr>
+  <tr><th>GitHub:</th>
       <td>
         {% if person.github %}
           <a href="https://github.com/{{ person.github }}" target="_blank">{{ person.github }}</a>
@@ -52,13 +53,13 @@
           —
         {% endif %}
       </td></tr>
-  <tr><td>can login with:</td><td>{% for auth in person.social_auth.all %}{{ auth.provider|title }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</td></tr>
-  <tr><td>twitter:</td><td id="twitter">{% if person.twitter %}<a href="https://twitter.com/{{ person.twitter }}" target="_blank">{{ person.twitter }}</a>{% else %}—{% endif %}</td></tr>
-  <tr><td>url:</td><td id="url">{{ person.url|urlize_newtab|default:"—" }}</td></tr>
-  <tr><td>occupation:</td><td>{{ person.occupation|default:"—" }}</td></tr>
-  <tr><td>ORCID ID:</td><td>{{ person.orcid|default:"—" }}</td></tr>
+  <tr><th>Can login with:</th><td>{% for auth in person.social_auth.all %}{{ auth.provider|title }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</td></tr>
+  <tr><th>Twitter:</th><td id="twitter">{% if person.twitter %}<a href="https://twitter.com/{{ person.twitter }}" target="_blank">{{ person.twitter }}</a>{% else %}—{% endif %}</td></tr>
+  <tr><th>URL:</th><td id="url">{{ person.url|urlize_newtab|default:"—" }}</td></tr>
+  <tr><th>Cccupation:</th><td>{{ person.occupation|default:"—" }}</td></tr>
+  <tr><th>ORCID ID:</th><td>{{ person.orcid|default:"—" }}</td></tr>
   <tr>
-    <td>Knowledge domains</td>
+    <th>Knowledge domains:</th>
     <td>
       {% with domains=person.domains.all %}
       {% if domains %}
@@ -74,7 +75,7 @@
     </td>
   </tr>
   <tr>
-    <td>Lessons</td>
+    <th>Lessons:</th>
     <td>
       {% with lessons=person.lessons.all %}
       {% if lessons %}
@@ -90,7 +91,7 @@
     </td>
   </tr>
   <tr>
-    <td>Language preferences</td>
+    <th>Language preferences:</th>
     <td>
       {% with languages=person.languages.all %}
       {% if languages %}
@@ -105,10 +106,10 @@
       {% endwith %}
     </td>
   </tr>
-  <tr><td>Notes from the user:</td><td><pre>{{ person.user_notes|default:"—" }}</pre></td></tr>
-  <tr><td>Admin notes (not visible to the user):</td><td><pre>{{ person.notes|default:"—" }}</pre></td></tr>
+  <tr><th>Notes from the user:</th><td><pre>{{ person.user_notes|default:"—" }}</pre></td></tr>
+  <tr><th>Admin notes (not visible to the user):</th><td><pre>{{ person.notes|default:"—" }}</pre></td></tr>
   <tr>
-    <td>Awards</td>
+    <th>Awards:</th>
     <td>
       {% with awards=person.award_set.all %}
       {% if awards %}
@@ -130,7 +131,7 @@
     </td>
   </tr>
   <tr>
-    <td>Tasks</td>
+    <th>Tasks:</th>
     <td>
       {% with tasks=person.task_set.all %}
       {% if tasks %}
@@ -156,7 +157,7 @@
     </td>
   </tr>
   <tr>
-    <td>Training requests</td>
+    <th>Training requests:</th>
     <td>
       {% with requests=person.trainingrequest_set.all %}
       {% if requests %}
@@ -171,9 +172,10 @@
       {% endwith %}
     </td>
   </tr>
-  <tr><td>Instructor Training progress</td><td>
-    {% include "workshops/training_progresses_inline.html" with person=person %}
-  </td></tr>
+  <tr>
+    <th>Instructor Training progress:</th>
+    <td>{% include "workshops/training_progresses_inline.html" with person=person %}</td>
+  </tr>
 </table>
 
 <div class="edit-object">
