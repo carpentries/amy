@@ -1,4 +1,5 @@
 from django import template
+from django.template.defaultfilters import escape
 from django.utils.safestring import mark_safe
 
 from workshops.models import TrainingProgress
@@ -37,7 +38,7 @@ def progress_description(progress):
                          progress.evaluated_by.full_name)
                       if progress.evaluated_by is not None else 'submitted'),
         day=progress.created_at.strftime('%A %d %B %Y at %H:%M'),
-        notes='<br />Notes: {}'.format(progress.notes) if progress.notes else '',
+        notes='<br />Notes: {}'.format(escape(progress.notes)) if progress.notes else '',
     )
     text = text[0].upper() + text[1:]
     return mark_safe(text)
