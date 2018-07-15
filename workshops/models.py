@@ -332,14 +332,16 @@ class PersonManager(BaseUserManager):
             passed_swc_demo=passed('SWC Demo'),
             passed_dc_demo=passed('DC Demo'),
         ).annotate(
-            swc_eligible=(F('passed_training') *
-                          F('passed_swc_homework') *
-                          F('passed_discussion') *
-                          F('passed_swc_demo')),
-            dc_eligible=(F('passed_training') *
-                         F('passed_dc_homework') *
-                         F('passed_discussion') *
-                         F('passed_dc_demo')),
+            # We're using Maths to calculate "binary" score for a person to
+            # be instructor badge eligible. Legend:
+            # * means "AND"
+            # + means "OR"
+            instructor_eligible=(
+                F('passed_training') *
+                (F('passed_swc_homework') + F('passed_dc_homework')) *
+                F('passed_discussion') *
+                (F('passed_swc_demo') + F('passed_dc_demo'))
+            )
         )
 
 
