@@ -2356,6 +2356,7 @@ def profileupdaterequest_accept(request, request_id, person_id=None):
     person.family = profileupdate.family
     person.email = profileupdate.email
     person.affiliation = profileupdate.affiliation
+    person.country = profileupdate.country
     person.airport = airport
     person.github = profileupdate.github
     person.twitter = profileupdate.twitter

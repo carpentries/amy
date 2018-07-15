@@ -641,6 +641,10 @@ class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin,
         'you affiliated with (if any)?',
         blank=False,
     )
+    country = CountryField(
+        null=False, blank=True, default='',
+        verbose_name='Country of residence',
+    )
     airport_iata = models.CharField(
         max_length=3,
         verbose_name='Nearest major airport',
