@@ -1668,7 +1668,8 @@ def workshop_staff(request):
 
             if data['country']:
                 people = people.filter(
-                    airport__country__in=data['country']
+                    Q(airport__country__in=data['country']) |
+                    Q(country__in=data['country'])
                 ).order_by('family')
 
             if data['gender']:
