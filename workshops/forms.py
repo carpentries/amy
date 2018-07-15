@@ -1273,6 +1273,11 @@ class AutoUpdateProfileForm(forms.ModelForm):
                   'us at <a href="mailto:team@carpentries.org">'
                   'team@carpentries.org</a>.')
 
+    country = CountryField().formfield(
+        required=False,
+        help_text='Your country of residence.',
+    )
+
     languages = forms.ModelMultipleChoiceField(
         label='Languages',
         required=False,
@@ -1292,6 +1297,7 @@ class AutoUpdateProfileForm(forms.ModelForm):
             'gender',
             'may_contact',
             'publish_profile',
+            'country',
             'airport',
             'github',
             'twitter',
