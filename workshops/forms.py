@@ -1359,6 +1359,18 @@ class TrainingProgressForm(forms.ModelForm):
             'state': RadioSelect,
         }
 
+    def clean(self):
+        cleaned_data = super().clean()
+
+        trainee = cleaned_data.get('trainee')
+
+        # check if trainee has at least one training task
+        training_tasks = trainee.get_training_tasks()
+
+        if not training_tasks:
+            raise ValidationError("It's not possible to add training progress "
+                                  "to a trainee without any training task.")
+
 
 class BulkAddTrainingProgressForm(forms.ModelForm):
     event = forms.ModelChoiceField(
@@ -1406,6 +1418,20 @@ class BulkAddTrainingProgressForm(forms.ModelForm):
             'state': RadioSelect,
             'notes': TextInput,
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        trainees = cleaned_data.get('trainees')
+
+        # check if all trainees have at least one training task
+        for trainee in trainees:
+            training_tasks = trainee.get_training_tasks()
+
+            if not training_tasks:
+                raise ValidationError("It's not possible to add training "
+                                      "progress to a trainee without any "
+                                      "training task.")
 
 
 class BulkDiscardProgressesForm(forms.Form):

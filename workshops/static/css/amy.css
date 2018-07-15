@@ -216,3 +216,8 @@ select {
 .sidebar .select2-container {
     min-width: 1em;
 }
+
+/* disabled label */
+a.label.disabled {
+    cursor: not-allowed;
+}
