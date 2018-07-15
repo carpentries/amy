@@ -548,6 +548,7 @@ class PersonForm(forms.ModelForm):
             'data_privacy_agreement',
             'email',
             'gender',
+            'country',
             'airport',
             'affiliation',
             'github',

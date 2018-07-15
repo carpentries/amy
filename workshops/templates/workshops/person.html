@@ -35,6 +35,7 @@
   <tr><td>privacy policy agreement:</td><td id="data_privacy_agreement">{{ person.data_privacy_agreement|yesno }}</td></tr>
   <tr><td>email:</td><td id="email">{% if person.email %}{{ person.email|urlize }}{% else %}—{% endif %}</td></tr>
   <tr><td>gender:</td><td id="gender">{{ person.get_gender_display|default:"—" }}</td></tr>
+  <tr><td>country:</td><td id="country">{% if person.country %}{{ person.country.name }} <img src="{{ person.country.flag }}" alt="{{ person.country }}" class="country-flag" />{% else %}—{% endif %}</td></tr>
   <tr><td>airport:</td><td id="airport">{% if person.airport %}<a href="{{ person.airport.get_absolute_url }}">{{ person.airport }}</a>{% else %}—{% endif %}</td></tr>
   <tr><td>affiliation:</td><td>{{ person.affiliation|default:"—" }}</td></tr>
   <tr><td>github:</td>
