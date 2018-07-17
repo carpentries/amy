@@ -294,8 +294,13 @@ def filter_trainees_by_instructor_status(queryset, name, choice):
     elif choice == 'dc':
         return queryset.filter(is_dc_instructor=True)
     elif choice == 'eligible':
-        return queryset.filter(Q(swc_eligible=True, is_swc_instructor=False) |
-                               Q(dc_eligible=True, is_dc_instructor=False))
+        # Instructor eligible but without any badge.
+        # This code is kept in Q()-expressions to allow for fast condition
+        # change.
+        return queryset.filter(
+            Q(instructor_eligible=True) &
+            (Q(is_swc_instructor=False) & Q(is_dc_instructor=False))
+        )
     else:  # choice == 'no'
         return queryset.filter(is_swc_instructor=False, is_dc_instructor=False)
 
