@@ -130,7 +130,7 @@ urlpatterns = [
         url(r'^all_activity_over_time/$', views.all_activity_over_time, name='all_activity_over_time'),
         url(r'^workshop_issues/$', views.workshop_issues, name='workshop_issues'),
         url(r'^instructor_issues/$', views.instructor_issues, name='instructor_issues'),
-        url(r'^duplicates/$', views.duplicates, name='duplicates'),
+        url(r'^duplicate_persons/$', views.duplicate_persons, name='duplicate_persons'),
     ])),
 
     url(r'^version/(?P<version_id>[\d]+)/$', views.object_changes, name='object_changes'),

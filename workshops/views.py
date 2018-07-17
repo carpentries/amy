@@ -2740,7 +2740,7 @@ class TodoDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
 # ------------------------------------------------------------
 
 @admin_required
-def duplicates(request):
+def duplicate_persons(request):
     """Find possible duplicates amongst persons.
 
     Criteria for persons:
@@ -2774,12 +2774,12 @@ def duplicates(request):
                                       .order_by('family', 'personal', 'email')
 
     context = {
-        'title': 'Possible duplicates',
+        'title': 'Possible duplicate persons',
         'switched_persons': switched_persons,
         'duplicate_persons': duplicate_persons,
     }
 
-    return render(request, 'workshops/duplicates.html', context)
+    return render(request, 'workshops/duplicate_persons.html', context)
 
 
 @admin_required
