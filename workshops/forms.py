@@ -1262,6 +1262,160 @@ class TrainingRequestUpdateForm(forms.ModelForm):
         }
 
 
+class TrainingRequestsSelectionForm(forms.Form):
+    trainingrequest_a = forms.ModelChoiceField(
+        label='Training request A',
+        required=True,
+        queryset=TrainingRequest.objects.all(),
+        widget=autocomplete.ModelSelect2(url='trainingrequest-lookup')
+    )
+
+    trainingrequest_b = forms.ModelChoiceField(
+        label='Training request B',
+        required=True,
+        queryset=TrainingRequest.objects.all(),
+        widget=autocomplete.ModelSelect2(url='trainingrequest-lookup')
+    )
+
+    helper = BootstrapHelper(use_get_method=True)
+
+
+class TrainingRequestsMergeForm(forms.Form):
+    TWO = (
+        ('obj_a', 'Use A'),
+        ('obj_b', 'Use B'),
+    )
+    THREE = TWO + (('combine', 'Combine'), )
+    DEFAULT = 'obj_a'
+
+    trainingrequest_a = forms.ModelChoiceField(
+        queryset=TrainingRequest.objects.all(), widget=forms.HiddenInput)
+
+    trainingrequest_b = forms.ModelChoiceField(
+        queryset=TrainingRequest.objects.all(), widget=forms.HiddenInput)
+
+    id = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    state = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    person = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    group_name = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    personal = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    middle = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    family = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    email = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    github = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    occupation = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    occupation_other = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    affiliation = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    location = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    country = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    underresourced = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    domains = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    domains_other = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    underrepresented = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    nonprofit_teaching_experience = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    previous_involvement = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    previous_training = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    previous_training_other = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    previous_training_explanation = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    previous_experience = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    previous_experience_other = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    previous_experience_explanation = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    programming_language_usage_frequency = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    teaching_frequency_expectation = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    teaching_frequency_expectation_other = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    max_travelling_frequency = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    max_travelling_frequency_other = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    reason = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    comment = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    training_completion_agreement = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    workshop_teaching_agreement = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    data_privacy_agreement = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    code_of_conduct_agreement = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    created_at = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    last_updated_at = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    notes = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+
+
 class AutoUpdateProfileForm(forms.ModelForm):
     username = forms.CharField(disabled=True, required=False)
     github = forms.CharField(

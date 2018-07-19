@@ -131,6 +131,7 @@ urlpatterns = [
         url(r'^workshop_issues/$', views.workshop_issues, name='workshop_issues'),
         url(r'^instructor_issues/$', views.instructor_issues, name='instructor_issues'),
         url(r'^duplicate_persons/$', views.duplicate_persons, name='duplicate_persons'),
+        url(r'^duplicate_training_requests/$', views.duplicate_training_requests, name='duplicate_training_requests'),
     ])),
 
     url(r'^version/(?P<version_id>[\d]+)/$', views.object_changes, name='object_changes'),
@@ -173,6 +174,7 @@ urlpatterns = [
     url(r'^autoupdate_profile/$', views.autoupdate_profile, name='autoupdate_profile'),
 
     url(r'^training_requests/$', views.all_trainingrequests, name='all_trainingrequests'),
+    url(r'^training_requests/merge$', views.trainingrequests_merge, name='trainingrequests_merge'),
     url(r'^training_request/(?P<pk>\d+)/', include([
         url(r'^$', views.trainingrequest_details, name='trainingrequest_details'),
         url(r'^edit/$', views.TrainingRequestUpdate.as_view(), name='trainingrequest_edit'),

@@ -106,6 +106,8 @@ from workshops.forms import (
     BulkAddTrainingProgressForm,
     MatchTrainingRequestForm,
     TrainingRequestUpdateForm,
+    TrainingRequestsSelectionForm,
+    TrainingRequestsMergeForm,
     SendHomeworkForm,
     BulkDiscardProgressesForm,
     bootstrap_helper,
@@ -2783,6 +2785,50 @@ def duplicate_persons(request):
 
 
 @admin_required
+def duplicate_training_requests(request):
+    """Find possible duplicates amongst training requests.
+
+    Criteria:
+    * the same name
+    * the same email.
+    """
+    names = (
+        TrainingRequest.objects
+            .values('personal', 'family')
+            .order_by('family', 'personal')
+            .annotate(count_id=Count('id'))
+            .filter(count_id__gt=1)
+    )
+    duplicate_names_criteria = Q(id=0)
+    for name in names:
+        duplicate_names_criteria |= (Q(personal=name['personal']) &
+                                     Q(family=name['family']))
+
+    emails = (
+        TrainingRequest.objects
+            .values_list('email', flat=True)
+            .order_by('family', 'personal')
+            .annotate(count_id=Count('id'))
+            .filter(count_id__gt=1)
+    )
+    duplicate_emails_criteria = Q(id=0)
+    for email in emails:
+        duplicate_emails_criteria |= Q(email=email)
+
+    duplicate_names = TrainingRequest.objects.filter(duplicate_names_criteria).order_by('family', 'personal')
+    duplicate_emails = TrainingRequest.objects.filter(duplicate_emails_criteria).order_by('email')
+
+    context = {
+        'title': 'Possible duplicate training requests',
+        'duplicate_names': duplicate_names,
+        'duplicate_emails': duplicate_emails,
+    }
+
+    return render(request, 'workshops/duplicate_training_requests.html',
+                  context)
+
+
+@admin_required
 def all_trainingrequests(request):
     filter = TrainingRequestFilter(
         request.GET,
@@ -2947,6 +2993,103 @@ def trainingrequest_details(request, pk):
         'form': form,
     }
     return render(request, 'workshops/trainingrequest.html', context)
+
+
+@admin_required
+@permission_required(['workshops.delete_trainingrequest',
+                      'workshops.change_trainingrequest'],
+                     raise_exception=True)
+def trainingrequests_merge(request):
+    """Display two training requests side by side on GET and merge them on
+    POST.
+
+    If no requests are supplied via GET params, display event selection form."""
+    obj_a_pk = request.GET.get('trainingrequest_a')
+    obj_b_pk = request.GET.get('trainingrequest_b')
+
+    if not obj_a_pk or not obj_b_pk:
+        context = {
+            'title': 'Merge Training Requests',
+            'form': TrainingRequestsSelectionForm(),
+        }
+        return render(request, 'workshops/generic_form.html', context)
+
+    obj_a = get_object_or_404(TrainingRequest, pk=obj_a_pk)
+    obj_b = get_object_or_404(TrainingRequest, pk=obj_b_pk)
+
+    form = TrainingRequestsMergeForm(initial=dict(trainingrequest_a=obj_a,
+                                                  trainingrequest_b=obj_b))
+
+    if request.method == "POST":
+        form = TrainingRequestsMergeForm(request.POST)
+
+        if form.is_valid():
+            # merging in process
+            data = form.cleaned_data
+
+            obj_a = data['trainingrequest_a']
+            obj_b = data['trainingrequest_b']
+
+            # `base_obj` stays in the database after merge
+            # `merging_obj` will be removed from DB after merge
+            if data['id'] == 'obj_a':
+                base_obj = obj_a
+                merging_obj = obj_b
+                base_a = True
+            else:
+                base_obj = obj_b
+                merging_obj = obj_a
+                base_a = False
+
+            # non-M2M-relationships:
+            easy = (
+                'state', 'person', 'group_name', 'personal', 'middle',
+                'family', 'email', 'github', 'occupation', 'occupation_other',
+                'affiliation', 'location', 'country', 'underresourced',
+                'domains_other', 'underrepresented',
+                'nonprofit_teaching_experience',
+                'previous_training', 'previous_training_other',
+                'previous_training_explanation', 'previous_experience',
+                'previous_experience_other', 'previous_experience_explanation',
+                'programming_language_usage_frequency',
+                'teaching_frequency_expectation',
+                'teaching_frequency_expectation_other',
+                'max_travelling_frequency', 'max_travelling_frequency_other',
+                'reason', 'comment', 'training_completion_agreement',
+                'workshop_teaching_agreement',
+                'data_privacy_agreement', 'code_of_conduct_agreement',
+                'created_at', 'last_updated_at',
+                'notes',
+            )
+            # M2M relationships
+            difficult = (
+                'domains', 'previous_involvement',
+            )
+
+            try:
+                _, integrity_errors = merge_objects(obj_a, obj_b, easy,
+                                                    difficult, choices=data,
+                                                    base_a=base_a)
+
+                if integrity_errors:
+                    msg = ('There were integrity errors when merging related '
+                           'objects:\n' '\n'.join(integrity_errors))
+                    messages.warning(request, msg)
+
+            except ProtectedError as e:
+                return failed_to_delete(request, object=merging_obj,
+                                        protected_objects=e.protected_objects)
+
+            else:
+                return redirect(base_obj.get_absolute_url())
+
+    context = {
+        'title': 'Merge two training requets',
+        'obj_a': obj_a,
+        'obj_b': obj_b,
+        'form': form,
+    }
+    return render(request, 'workshops/trainingrequests_merge.html', context)
 
 
 # ------------------------------------------------------------
