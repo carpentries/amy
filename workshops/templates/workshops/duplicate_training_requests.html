@@ -1,0 +1,39 @@
+{% extends "base_nav_fixed.html" %}
+
+{% load assignments %}
+
+{% block content %}
+  <h3>Training requests with possible duplicate names</h3>
+  {% if duplicate_names %}
+  <ul>
+    {% for req in duplicate_names %}
+    <li>
+      <a href="{{ req.get_absolute_url }}">{{ req }}</a>
+      {% if not forloop.first %}
+      <a href="{% url 'trainingrequests_merge' %}?trainingrequest_b={{ req.pk }}&trainingrequest_a={{ prev_pk }}" target="_blank">(merge up)</a>
+      {% endif %}
+      {% assign req.pk as prev_pk %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>None.</p>
+  {% endif %}
+
+  <h3>Training requests with possible duplicate emails</h3>
+  {% if duplicate_emails %}
+  <ul>
+    {% for req in duplicate_emails %}
+    <li>
+      <a href="{{ req.get_absolute_url }}">{{ req }}</a>
+      {% if not forloop.first %}
+      <a href="{% url 'trainingrequests_merge' %}?trainingrequest_b={{ req.pk }}&trainingrequest_a={{ prev_pk }}" target="_blank">(merge up)</a>
+      {% endif %}
+      {% assign req.pk as prev_pk %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>None.</p>
+  {% endif %}
+{% endblock %}

@@ -1,4 +1,5 @@
 import unittest
+from urllib.parse import urlencode
 
 from django.core import mail
 from django.core.exceptions import ValidationError
@@ -15,6 +16,7 @@ from ..models import (
     Event,
     Tag,
     Task,
+    KnowledgeDomain,
 )
 
 
@@ -404,3 +406,198 @@ class TestTrainingRequestTemplateTags(TestBase):
         context = Context({'req': training_request})
         got = template.render(context)
         self.assertEqual(got, expected)
+
+
+class TestTrainingRequestMerging(TestBase):
+    # there's little need to check for extra corner cases
+    # because they're covered by merging tests in `test_person`
+    # and `test_event`
+
+    def setUp(self):
+        self._setUpAirports()
+        self._setUpNonInstructors()
+        self._setUpRoles()
+        self._setUpTags()
+        self._setUpUsersAndLogin()
+
+        self.first_req = create_training_request(state='d',
+                                                 person=self.spiderman)
+        self.second_req = create_training_request(state='p', person=None)
+        self.third_req = create_training_request(state='a',
+                                                 person=self.ironman)
+
+        # assign roles (previous involvement with The Carpentries) and
+        # knowledge domains - those are the hardest to merge successfully
+        self.chemistry = KnowledgeDomain.objects.get(name='Chemistry')
+        self.physics = KnowledgeDomain.objects.get(name='Physics')
+        self.humanities = KnowledgeDomain.objects.get(name='Humanities')
+        self.education = KnowledgeDomain.objects.get(name='Education')
+        self.social = KnowledgeDomain.objects.get(name='Social sciences')
+        self.first_req.domains.set([self.chemistry, self.physics])
+        self.second_req.domains.set([self.humanities, self.social])
+        self.third_req.domains.set([self.education])
+
+        self.learner = Role.objects.get(name='learner')
+        self.helper = Role.objects.get(name='helper')
+        self.instructor = Role.objects.get(name='instructor')
+        self.contributor = Role.objects.get(name='contributor')
+        self.first_req.previous_involvement.set([self.learner])
+        self.second_req.previous_involvement.set([self.helper])
+        self.third_req.previous_involvement.set([self.instructor,
+                                                 self.contributor])
+
+        # prepare merge strategies (POST data to be sent to the merging view)
+        self.strategy_1 = {
+            'trainingrequest_a': self.first_req.pk,
+            'trainingrequest_b': self.second_req.pk,
+            'id': 'obj_a',
+            'state': 'obj_b',
+            'person': 'obj_a',
+            'group_name': 'obj_a',
+            'personal': 'obj_a',
+            'middle': 'obj_a',
+            'family': 'obj_a',
+            'email': 'obj_a',
+            'github': 'obj_a',
+            'occupation': 'obj_a',
+            'occupation_other': 'obj_a',
+            'affiliation': 'obj_a',
+            'location': 'obj_a',
+            'country': 'obj_a',
+            'underresourced': 'obj_a',
+            'domains': 'obj_a',
+            'domains_other': 'obj_a',
+            'underrepresented': 'obj_a',
+            'nonprofit_teaching_experience': 'obj_a',
+            'previous_involvement': 'obj_b',
+            'previous_training': 'obj_a',
+            'previous_training_other': 'obj_a',
+            'previous_training_explanation': 'obj_a',
+            'previous_experience': 'obj_a',
+            'previous_experience_other': 'obj_a',
+            'previous_experience_explanation': 'obj_a',
+            'programming_language_usage_frequency': 'obj_a',
+            'teaching_frequency_expectation': 'obj_a',
+            'teaching_frequency_expectation_other': 'obj_a',
+            'max_travelling_frequency': 'obj_a',
+            'max_travelling_frequency_other': 'obj_a',
+            'reason': 'obj_a',
+            'comment': 'obj_a',
+            'training_completion_agreement': 'obj_a',
+            'workshop_teaching_agreement': 'obj_a',
+            'data_privacy_agreement': 'obj_a',
+            'code_of_conduct_agreement': 'obj_a',
+            'created_at': 'obj_a',
+            'last_updated_at': 'obj_a',
+            'notes': 'obj_a',
+        }
+        self.strategy_2 = {
+            'trainingrequest_a': self.first_req.pk,
+            'trainingrequest_b': self.third_req.pk,
+            'id': 'obj_b',
+            'state': 'obj_a',
+            'person': 'obj_a',
+            'group_name': 'obj_b',
+            'personal': 'obj_b',
+            'middle': 'obj_b',
+            'family': 'obj_b',
+            'email': 'obj_b',
+            'github': 'obj_b',
+            'occupation': 'obj_b',
+            'occupation_other': 'obj_b',
+            'affiliation': 'obj_b',
+            'location': 'obj_b',
+            'country': 'obj_b',
+            'underresourced': 'obj_b',
+            'domains': 'combine',
+            'domains_other': 'obj_b',
+            'underrepresented': 'obj_b',
+            'nonprofit_teaching_experience': 'obj_b',
+            'previous_involvement': 'combine',
+            'previous_training': 'obj_a',
+            'previous_training_other': 'obj_a',
+            'previous_training_explanation': 'obj_a',
+            'previous_experience': 'obj_a',
+            'previous_experience_other': 'obj_a',
+            'previous_experience_explanation': 'obj_a',
+            'programming_language_usage_frequency': 'obj_a',
+            'teaching_frequency_expectation': 'obj_a',
+            'teaching_frequency_expectation_other': 'obj_a',
+            'max_travelling_frequency': 'obj_a',
+            'max_travelling_frequency_other': 'obj_a',
+            'reason': 'obj_a',
+            'comment': 'obj_a',
+            'training_completion_agreement': 'obj_a',
+            'workshop_teaching_agreement': 'obj_a',
+            'data_privacy_agreement': 'obj_a',
+            'code_of_conduct_agreement': 'obj_a',
+            'created_at': 'obj_a',
+            'last_updated_at': 'obj_a',
+            'notes': 'obj_a',
+        }
+
+    def test_merging(self):
+        query = urlencode({
+            'trainingrequest_a': self.first_req.pk,
+            'trainingrequest_b': self.second_req.pk,
+        })
+        url = '{}?{}'.format(reverse('trainingrequests_merge'), query)
+
+        rv = self.client.post(url, self.strategy_1, follow=True)
+        self.assertTrue(rv.status_code, 200)
+        # after successful merge, we should end up redirected to the details
+        # page of the base object
+        self.assertEqual(rv.resolver_match.view_name,
+                         'trainingrequest_details')
+
+        # check if objects merged
+        self.first_req.refresh_from_db()
+        with self.assertRaises(TrainingRequest.DoesNotExist):
+            self.second_req.refresh_from_db()
+        self.third_req.refresh_from_db()
+
+        # try second strategy
+        query = urlencode({
+            'trainingrequest_a': self.first_req.pk,
+            'trainingrequest_b': self.third_req.pk,
+        })
+        url = '{}?{}'.format(reverse('trainingrequests_merge'), query)
+        rv = self.client.post(url, self.strategy_2, follow=True)
+        self.assertTrue(rv.status_code, 200)
+        self.assertEqual(rv.resolver_match.view_name,
+                         'trainingrequest_details')
+
+        # check if objects merged
+        with self.assertRaises(TrainingRequest.DoesNotExist):
+            self.first_req.refresh_from_db()
+        with self.assertRaises(TrainingRequest.DoesNotExist):
+            self.second_req.refresh_from_db()
+        self.third_req.refresh_from_db()
+
+        # check if third request properties changed accordingly
+        self.assertEqual(self.third_req.personal, 'John')
+        self.assertEqual(self.third_req.family, 'Smith')
+        self.assertEqual(self.third_req.state, 'p')
+        self.assertEqual(self.third_req.person, self.spiderman)
+        domains_set = set([self.chemistry, self.physics, self.education])
+        roles_set = set([self.helper, self.instructor, self.contributor])
+        self.assertEqual(domains_set,
+                         set(self.third_req.domains.all()))
+        self.assertEqual(roles_set,
+                         set(self.third_req.previous_involvement.all()))
+
+        # make sure no M2M related objects were removed from DB
+        self.chemistry.refresh_from_db()
+        self.physics.refresh_from_db()
+        self.humanities.refresh_from_db()
+        self.education.refresh_from_db()
+        self.social.refresh_from_db()
+
+        self.learner.refresh_from_db()
+        self.helper.refresh_from_db()
+        self.instructor.refresh_from_db()
+        self.contributor.refresh_from_db()
+
+        # make sure no related persons were removed from DB
+        self.ironman.refresh_from_db()
+        self.spiderman.refresh_from_db()

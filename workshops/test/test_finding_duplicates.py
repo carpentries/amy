@@ -21,7 +21,7 @@ class TestEmptyDuplicates(TestBase):
             personal='Tony', family='Stark', username='tony_stark',
             email='ironman@starkindustries.com')
 
-        self.url = reverse('duplicates')
+        self.url = reverse('duplicate_persons')
 
     def test_switched_names_persons(self):
         """Ensure none of the above persons are in `switched_persons`."""
@@ -58,7 +58,7 @@ class TestFindingDuplicates(TestBase):
             personal='Ron', family='Weasley', username='weasley_ron_2',
             email='rw+1@hogwart.edu')
 
-        self.url = reverse('duplicates')
+        self.url = reverse('duplicate_persons')
 
     def test_switched_names_persons(self):
         rv = self.client.get(self.url)
