@@ -882,6 +882,8 @@ def persons_merge(request):
 
             else:
                 return redirect(base_obj.get_absolute_url())
+        else:
+            messages.error(request, 'Fix errors in the form.')
 
     context = {
         'title': 'Merge two persons',
@@ -1207,6 +1209,8 @@ def events_merge(request):
 
             else:
                 return redirect(base_obj.get_absolute_url())
+        else:
+            messages.error(request, 'Fix errors in the form.')
 
     context = {
         'title': 'Merge two events',
@@ -3082,6 +3086,8 @@ def trainingrequests_merge(request):
 
             else:
                 return redirect(base_obj.get_absolute_url())
+        else:
+            messages.error(request, 'Fix errors in the form.')
 
     context = {
         'title': 'Merge two training requets',
