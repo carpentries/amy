@@ -72,14 +72,18 @@
             {% if entry.similar_persons %}
                 <ul>
                 {% for person in entry.similar_persons %}
-                    <li>Matching person: <a href="{% url 'person_details' person.id %}">{{ person.personal }} {{ person.middle }} {{ person.family }} &lt;{{ person.email|default:"—" }}&gt;</a>. <a href="{% url 'person_bulk_add_match_person' i person.id %}">Use this person</a>.</li>
+                    {% if person.0 == entry.existing_person_id %}
+                    <li>Matched person: <a href="{% url 'person_details' person.0 %}">{{ person.1 }}</a>. <a href="{% url 'person_bulk_add_match_person' i %}">Unmatch</a>.</li>
+                    {% else %}
+                    <li>Matching person: <a href="{% url 'person_details' person.0 %}">{{ person.1 }}</a>. <a href="{% url 'person_bulk_add_match_person' i person.0 %}">Use this person</a>.</li>
+                    {% endif %}
                 {% endfor %}
                 </ul>
             {% endif %}
             </td>
             <td>
             {% if persons_tasks|length > 1 %}
-            <a href="{% url 'person_bulk_add_remove_entry' i %}" title='Remove this entry'><span class="glyphicon glyphicon-remove"></span></a>
+            <a href="{% url 'person_bulk_add_remove_entry' i %}" title='Remove this entry'><span class="glyphicon glyphicon-remove text-danger"></span></a>
             {% endif %}
             </td>
         {% endwith %}

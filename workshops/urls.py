@@ -47,6 +47,7 @@ urlpatterns = [
         url(r'^confirm/$',views.person_bulk_add_confirmation, name='person_bulk_add_confirmation'),
         url(r'^(?P<entry_id>\d+)/remove/$',views.person_bulk_add_remove_entry, name='person_bulk_add_remove_entry'),
         url(r'^(?P<entry_id>\d+)/match_person/(?P<person_id>\d+)$',views.person_bulk_add_match_person, name='person_bulk_add_match_person'),
+        url(r'^(?P<entry_id>\d+)/match_person/$',views.person_bulk_add_match_person, name='person_bulk_add_match_person'),
     ])),
 
     url(r'^persons/', include([
