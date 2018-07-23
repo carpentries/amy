@@ -495,12 +495,12 @@ def person_bulk_add(request):
             try:
                 persons_tasks, empty_fields = upload_person_task_csv(stream)
             except csv.Error as e:
-                messages.add_message(
-                    request, messages.ERROR,
-                    "Error processing uploaded CSV file: {}".format(e))
+                messages.error(
+                    request,
+                    "Error processing uploaded .CSV file: {}".format(e))
             except UnicodeDecodeError as e:
-                messages.add_message(
-                    request, messages.ERROR,
+                messages.error(
+                    request,
                     "Please provide a file in {} encoding."
                     .format(charset))
             else:
@@ -508,7 +508,7 @@ def person_bulk_add(request):
                     msg_template = ("The following required fields were not"
                                     " found in the uploaded file: {}")
                     msg = msg_template.format(', '.join(empty_fields))
-                    messages.add_message(request, messages.ERROR, msg)
+                    messages.error(request, msg)
                 else:
                     # instead of insta-saving, put everything into session
                     # then redirect to confirmation page which in turn saves
@@ -582,7 +582,7 @@ def person_bulk_add_confirmation(request):
             # if there's "verify" in POST, then do only verification
             any_errors = verify_upload_person_task(persons_tasks)
             if any_errors:
-                messages.add_message(request, messages.ERROR,
+                messages.error(request,
                                      "Please make sure to fix all errors "
                                      "listed below.")
 
@@ -596,7 +596,7 @@ def person_bulk_add_confirmation(request):
                 persons_created, tasks_created = \
                     create_uploaded_persons_tasks(persons_tasks)
             except (IntegrityError, ObjectDoesNotExist, InternalError) as e:
-                messages.add_message(request, messages.ERROR,
+                messages.error(request,
                                      "Error saving data to the database: {}. "
                                      "Please make sure to fix all errors "
                                      "listed below.".format(e))
@@ -604,8 +604,8 @@ def person_bulk_add_confirmation(request):
 
             else:
                 request.session['bulk-add-people'] = None
-                messages.add_message(
-                    request, messages.SUCCESS,
+                messages.success(
+                    request,
                     'Successfully created {0} persons and {1} tasks.'
                     .format(len(persons_created), len(tasks_created))
                 )
