@@ -22,7 +22,7 @@
         <td><a href="{{ req.organization.get_absolute_url }}">{{ req.organization }}</a></td>
         <td>{{ req.contact_name }} &lt;{{ req.contact_email|urlize_newtab }}&gt;</td>
         <td>{{ req.get_status_display }}</td>
-        <td><a href="{{ req.get_absolute_url }}"><span class="glyphicon glyphicon-info-sign"></span></a></td>
+        <td><a href="{{ req.get_absolute_url }}"><i class="fas fa-info-circle"></i></a></td>
       </tr>
     {% endfor %}
     </tbody>

@@ -12,7 +12,7 @@
 <div class="row">
   <div class="col-md-6 col-md-offset-6 text-right">
     <p>
-      <a href="#" id="change_assignment"><span class="glyphicon glyphicon-cog"></span></a>
+      <a href="#" id="change_assignment"><i class="fas fa-user-cog"></i></a>
       Assignee:
       {% if object.assigned_to %}
         <a href="{{ object.assigned_to.get_absolute_url }}">{{ object.assigned_to.full_name }}</a> (<a href="{% url 'eventsubmission_assign' object.pk %}" id="clear-assignment">clear</a>).

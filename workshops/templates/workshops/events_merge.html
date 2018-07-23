@@ -20,7 +20,7 @@
   <tbody>
     <tr>
       {# selecting an ID basically shows which event should stay, and which should go #}
-      <th>ID <span class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="This indicates which event (as database object) will stay; the other one will be removed."></span></th>
+      <th>ID <i class="fas fa-question-circle" data-toggle="tooltip" title="This indicates which event (as database object) will stay; the other one will be removed."></i></th>
       <td>{{ obj_a.id|default:"—" }}</td><td>{{ obj_b.id|default:"—" }}</td>
       <th>{% include "workshops/merge_radio.html" with field=form.id %}</th>
     </tr>

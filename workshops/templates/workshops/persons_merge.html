@@ -19,7 +19,7 @@
   <tbody>
     <tr>
       {# selecting an ID basically shows which person should stay, and which should go #}
-      <th>ID <span class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="This indicates which person (as database object) will stay; the other one will be removed."></span></th>
+      <th>ID <i class="fas fa-question-circle" data-toggle="tooltip" title="This indicates which person (as database object) will stay; the other one will be removed."></i></th>
       <td>{{ obj_a.id|default:"—" }}</td><td>{{ obj_b.id|default:"—" }}</td>
       <th>{% include "workshops/merge_radio.html" with field=form.id %}</th>
     </tr>
@@ -139,7 +139,7 @@
       <th>{% include "workshops/merge_radio.html" with field=form.task_set %}</th>
     </tr>
     <tr>
-      <th>Is active <span class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="This indicates wheter person can log into AMY."></span></th>
+      <th>Is active <i class="fas fa-question-circle" data-toggle="tooltip" title="This indicates wheter person can log into AMY."></i></th>
       <td>{{ obj_a.is_active|yesno }}</td><td>{{ obj_b.is_active|yesno }}</td>
       <th>{% include "workshops/merge_radio.html" with field=form.is_active %}</th>
     </tr>

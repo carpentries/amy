@@ -28,7 +28,7 @@
   </div>
   <div class="col-md-6 text-right">
     <p>
-      <a href="#" id="change_assignment"><span class="glyphicon glyphicon-cog"></span></a>
+      <a href="#" id="change_assignment"><i class="fas fa-user-cog"></i></a>
       Assignee:
       {% if event.assigned_to %}
         <a href="{{ event.assigned_to.get_absolute_url }}">{{ event.assigned_to.full_name }}</a> (<a href="{% url 'event_assign' event.slug %}" id="clear-assignment">clear</a>).

@@ -54,10 +54,10 @@
           {{ event.completed|yesno }}
         </td>
         <td>
-          <a href="{% url 'event_details' event.slug %}" title="View {{ event.slug }}"><span class="glyphicon glyphicon-info-sign"></span></a>
+          <a href="{% url 'event_details' event.slug %}" title="View {{ event.slug }}"><i class="fas fa-info-circle"></i></a>
           &nbsp;
           {% if perms.workshops.edit_event %}
-          <a href="{% url 'event_edit' event.slug %}" title="Edit {{ event.slug }}"><span class="glyphicon glyphicon-pencil"></span></a>
+          <a href="{% url 'event_edit' event.slug %}" title="Edit {{ event.slug }}"><i class="fas fa-edit"></i></a>
           {% endif %}
         </td>
       </tr>

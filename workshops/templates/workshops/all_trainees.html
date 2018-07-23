@@ -24,26 +24,26 @@
       <th>Name</th>
       <th width="40%">
         Progress
-        <span class="glyphicon glyphicon-question-sign"
-              data-toggle="popover" data-html="true"
-              data-content="<p>
-                            <span class='label label-success'>Passed</span>
-                            <span class='label label-warning'>Not evaluated</span>
-                            <span class='label label-danger'>Failed</span>
-                            <span class='label label-default'><strike>Discarded</strike></span></p>
-                            <p>Click one of labels below to edit or delete it.</p>
-                           "></span>
+        <i class="fas fa-question-circle"
+           data-toggle="popover" data-html="true"
+           data-content="<p>
+                         <span class='badge badge-success'>Passed</span>
+                         <span class='badge badge-warning'>Not evaluated</span>
+                         <span class='badge badge-danger'>Failed</span>
+                         <span class='badge badge-dark'><strike>Discarded</strike></span></p>
+                         <p>Click one of labels below to edit or delete it.</p>
+                        "></i>
       </th>
       <th>Training</th>
       <th>Training requests</th>
       <th width="90px">
         Eligible
-        <span class="glyphicon glyphicon-question-sign"
-              data-toggle="popover" data-html="true"
-              data-content="<span class='label label-default'>Not eligible to be certified</span><br />
-                            <span class='label label-success'>Eligible to be certified</span><br />
-                            <span class='label label-primary'>Certified</span>
-                           "></span>
+        <i class="fas fa-question-circle"
+           data-toggle="popover" data-html="true"
+           data-content="<span class='badge badge-dark'><strike>Not eligible to be certified</strike></span><br />
+                         <span class='badge badge-success'>Eligible to be certified</span><br />
+                         <span class='badge badge-secondary'>Certified</span>
+                        "></i>
       </th>
       <th class="additional-links"></th>
     </tr>
@@ -120,10 +120,10 @@
           {% endif %}
         </td>
         <td>
-          <a href="{% url 'person_details' trainee.pk %}" title="View {{ trainee.full_name }}"><span class="glyphicon glyphicon-info-sign"></span></a>
+          <a href="{% url 'person_details' trainee.pk %}" title="View {{ trainee.full_name }}"><i class="fas fa-info-circle"></i></a>
           &nbsp;
           {% if perms.workshops.change_person %}
-          <a href="{% url 'person_edit' trainee.pk %}" title="Edit {{ trainee.full_name }}"><span class="glyphicon glyphicon-pencil"></span></a>
+          <a href="{% url 'person_edit' trainee.pk %}" title="Edit {{ trainee.full_name }}"><i class="fas fa-edit"></i></a>
           {% endif %}
         </td>
       </tr>

@@ -21,7 +21,7 @@
       <tr>
         <td>{{ req.personal }} {{ req.middle }} {{ req.family }}</td>
         <td>{{ req.email|urlize }}</td>
-        <td><a href="{{ req.get_absolute_url }}"><span class="glyphicon glyphicon-info-sign"></span></a></td>
+        <td><a href="{{ req.get_absolute_url }}"><i class="fas fa-info-circle"></i></a></td>
       </tr>
     {% endfor %}
     </tbody>

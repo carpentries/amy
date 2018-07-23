@@ -23,10 +23,10 @@
         <td><a href="{% url 'person_details' person.id %}">{{ person.full_name }}</a></td>
         <td>{% if person.email %}<a href="mailto:{{ person.email }}">{{ person.email }}</a>{% else %}—{% endif %}</td>
         <td>
-          <a href="{% url 'person_details' person.pk %}" title="View {{ person.full_name }}"><span class="glyphicon glyphicon-info-sign"></span></a>
+          <a href="{% url 'person_details' person.pk %}" title="View {{ person.full_name }}"><i class="fas fa-info-circle"></i></a>
           &nbsp;
           {% if perms.workshops.change_person %}
-          <a href="{% url 'person_edit' person.pk %}" title="Edit {{ person.full_name }}"><span class="glyphicon glyphicon-pencil"></span></a>
+          <a href="{% url 'person_edit' person.pk %}" title="Edit {{ person.full_name }}"><i class="fas fa-edit"></i></a>
           {% endif %}
         </td>
       </tr>

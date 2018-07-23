@@ -25,10 +25,10 @@
             <td>{{ airport.latitude }}</td>
             <td>{{ airport.longitude }}</td>
             <td>
-                <a href="{% url 'airport_details' airport.iata %}" title="View {{ airport }}"><span class="glyphicon glyphicon-info-sign"></span></a>
+                <a href="{% url 'airport_details' airport.iata %}" title="View {{ airport }}"><i class="fas fa-info-circle"></i></a>
                 &nbsp;
                 {% if perms.workshops.change_airport %}
-                <a href="{% url 'airport_edit' airport.iata %}" title="Edit {{ airport }}"><span class="glyphicon glyphicon-pencil"></span></a>
+                <a href="{% url 'airport_edit' airport.iata %}" title="Edit {{ airport }}"><i class="fas fa-edit"></i></a>
                 {% endif %}
             </td>
         </tr>

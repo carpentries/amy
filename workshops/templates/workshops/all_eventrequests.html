@@ -26,7 +26,7 @@
         <td>{{ req.preferred_date }}</td>
         <td>{% bootstrap_tag req.workshop_type|upper %}</td>
         <td>{{ req.comment|truncatewords:5|default:"—" }}</td>
-        <td><a href="{{ req.get_absolute_url }}"><span class="glyphicon glyphicon-info-sign"></span></a></td>
+        <td><a href="{{ req.get_absolute_url }}"><i class="fas fa-info-circle"></i></a></td>
       </tr>
     {% endfor %}
     </tbody>

@@ -26,10 +26,10 @@
           <td>{{ membership.agreement_end|date:'Y-m-d'}}</td>
           <td>{{ membership.get_contribution_type_display }}</td>
           <td>
-            <a href="{% url 'membership_details' membership.pk %}" title="View membership"><span class="glyphicon glyphicon-info-sign"></span></a>
+            <a href="{% url 'membership_details' membership.pk %}" title="View membership"><i class="fas fa-info-circle"></i></a>
             &nbsp;
             {% if perms.workshops.change_membership %}
-              <a href="{% url 'membership_edit' membership.pk %}" title="Edit membership"><span class="glyphicon glyphicon-pencil"></span></a>
+              <a href="{% url 'membership_edit' membership.pk %}" title="Edit membership"><i class="fas fa-edit"></i></a>
             {% endif %}
           </td>
         </tr>

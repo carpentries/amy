@@ -27,10 +27,10 @@
             <td>{{ task.url|default:"—"|urlize_newtab }}</td>
             <td>{{ task.role }}</td>
             <td>
-                <a href="{% url 'task_details' task.id %}" title="View {{ task }}"><span class="glyphicon glyphicon-info-sign"></span></a>
+                <a href="{% url 'task_details' task.id %}" title="View {{ task }}"><i class="fas fa-info-circle"></i></a>
                 &nbsp;
                 {% if perms.workshops.change_task %}
-                <a href="{% url 'task_edit' task.id %}" title="Edit {{ task }}"><span class="glyphicon glyphicon-pencil"></span></a>
+                <a href="{% url 'task_edit' task.id %}" title="Edit {{ task }}"><i class="fas fa-edit"></i></a>
                 {% endif %}
             </td>
         </tr>

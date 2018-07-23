@@ -22,7 +22,7 @@
         <td>{{ submission.contact_name }} &lt;{{ submission.contact_email|urlize }}&gt;</td>
         <td>{{ submission.url|urlize_newtab }}</td>
         <td>{{ submission.self_organized|yesno }}</td>
-        <td><a href="{{ submission.get_absolute_url }}"><span class="glyphicon glyphicon-info-sign"></span></a></td>
+        <td><a href="{{ submission.get_absolute_url }}"><i class="fas fa-info-circle"></i></a></td>
       </tr>
     {% endfor %}
     </tbody>
