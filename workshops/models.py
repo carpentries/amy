@@ -1021,6 +1021,7 @@ class Event(AssignmentMixin, models.Model):
         help_text=PUBLISHED_HELP_TEXT +
                   '<br />Use link to the event\'s <b>website</b>, ' +
                   'not repository.',
+        verbose_name='URL',
     )
     reg_key    = models.CharField(max_length=STR_REG_KEY, blank=True, verbose_name="Eventbrite key")
     attendance = models.PositiveIntegerField(null=True, blank=True)
@@ -2366,7 +2367,7 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
                               verbose_name='Training',
                               limit_choices_to=Q(tags__name='TTT'),
                               on_delete=models.SET_NULL)
-    url = models.URLField(null=True, blank=True)
+    url = models.URLField(null=True, blank=True, verbose_name='URL')
     notes = models.TextField(blank=True)
 
     def get_absolute_url(self):

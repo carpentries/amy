@@ -226,60 +226,6 @@
   </div>
 </div>
 
-<h3 id="todos">TODOs</h3>
-{% if perms.workshops.add_todoitem %}
-<p>
-  <a href="{% url 'todos_add' event.slug %}" class="btn btn-primary">Add standard TODOs</a>
-</p>
-{% endif %}
-{% if todos %}
-<table class="table">
-  <thead>
-    <tr>
-      <th>Title</th>
-      <th>Due date</th>
-      <th>Additional information</th>
-      <th class="additional-links-wider"></th>
-    </tr>
-  </thead>
-  <tbody>
-  {% for todo in todos %}
-    <tr class="{% if todo.due and todo.due > today %}bg-success{% elif todo.due and todo.due < today %}bg-danger{% elif todo.due and todo.due == today %}bg-warning{% endif %} {% if todo.completed %}text-muted strikethrough bg-muted{% endif %}">
-      <td>{{ todo.title }}</td>
-      <td>
-        {{ todo.due|default:"—" }}
-        {% if todo.due and todo.due < today %}
-        <span class="label label-danger {% if todo.completed %}hidden{% endif %}">overdue</span>
-        {% elif todo.due and todo.due == today %}
-        <span class="label label-warning {% if todo.completed %}hidden{% endif %}">due today</span>
-        {% endif %}
-      </td>
-      <td>{{ todo.additional|default:"—"|urlize_newtab }}</td>
-      <td>
-        {% comment %}
-        Include the other glyphicons within the form as a way of stacking them together horizontally.
-        Else, the form tag is rendered below the other glyphicon.
-        {% endcomment %}
-        <form action="{% url 'todo_delete' todo.pk %}" onsubmit='return confirm("Are you sure you wish to remove \"{{ todo }}\"?")' method="POST">
-          {% csrf_token %}
-          <input type="checkbox" class="completness-indicator" {% if todo.completed %}checked="checked"{% endif %} data-todo-id="{{ todo.id }}">
-          <a href="{% url 'todo_edit' todo.pk %}"><span class="space1 glyphicon glyphicon-pencil"></span></a>
-          <label class="space2 glyphicon glyphicon-remove" style="cursor:pointer">
-            <input type="submit" class="hidden" />
-          </label>
-        </form>
-      </td>
-    </tr>
-  {% endfor %}
-  </tbody>
-</table>
-{% else %}
-<p>No TODOs.</p>
-{% endif %}
-{% if perms.workshops.add_todoitem %}
-<h4 id="newtodo">New TODO</h4>
-{% crispy todo_form helper %}
-{% endif %}
 {% endblock %}
 
 {% block extrajs %}

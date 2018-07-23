@@ -20,7 +20,6 @@
         <th>instructors</th>
         <th>host</th>
         <th>dates</th>
-        <th>invoice</th>
         <th>completed</th>
         <th class="additional-links"></th>
       </tr>
@@ -49,7 +48,6 @@
         {% endwith %}
         <td><a href="{% url 'organization_details' event.host.domain %}">{{ event.host }}</a></td>
         <td>{{ event.start }} &ndash; {{ event.end }}</td>
-        <td>{{ event.get_invoice_status_display }}</td>
         <td>
           {{ event.completed|yesno }}
         </td>

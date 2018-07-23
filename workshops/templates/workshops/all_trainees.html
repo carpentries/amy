@@ -129,9 +129,9 @@
       </tr>
     {% endfor %}
     </table>
+    <p>{% crispy discard_form %} <a class="btn btn-primary text-light" bulk-email-on-click>Mail selected trainees</a></p>
     {% pagination all_trainees %}
 
-    {% crispy discard_form %}
 
     <h2>Add Progress to Selected Trainees</h2>
     {% crispy form %}

@@ -1616,8 +1616,7 @@ class BulkDiscardProgressesForm(forms.Form):
                              add_cancel_button=False)
 
     SUBMIT_POPOVER = '''<p>Discarded progress will be displayed in the following
-    way: <span class='label label-default'><strike> Discarded
-    </strike></span>.</p>
+    way: <span class='badge badge-dark'><strike>Discarded</strike></span>.</p>
 
     <p>If you want to permanently remove records from system,
     click one of the progress labels and, then, click "delete" button.</p>'''
@@ -1639,9 +1638,8 @@ class BulkDiscardProgressesForm(forms.Form):
                    'data-toggle': 'popover',
                    'data-html': 'true',
                    'data-content': SUBMIT_POPOVER,
+                   'css_class': 'btn btn-warning',
                }),
-        HTML('&nbsp;<a bulk-email-on-click class="btn btn-primary">'
-             'Mail selected trainees</a>'),
     )
 
 

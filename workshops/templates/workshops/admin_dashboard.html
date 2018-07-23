@@ -8,7 +8,7 @@
 
 {% if updated_metadata %}
 <div class="row">
-  <div class="col-xs-12">
+  <div class="col-12">
     <div class="alert alert-warning alert-dismissible" role="alert">
       <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
       <strong>Attention!</strong> {{ updated_metadata }} of your events had data on website updated. <a href="{% url 'events_metadata_changed' %}">See more</a>
@@ -26,9 +26,13 @@
 {% endif %}
 
 <div class="row">
-  <div class="col-xs-4">
-    <h3>Current</h3>
+  <div class="col-lg-4 col-12">
+    <h3>Current workshops</h3>
     <table class="table table-striped">
+      <tr>
+        <th>tag</th>
+        <th>name</th>
+      </tr>
     {% for event in current_events %}
     <tr>
         <td class="text-center" width="25px">
@@ -43,11 +47,11 @@
     {% endfor %}
     </table>
   </div>
-  <div class="col-xs-8">
-    <h3>Unpublished</h3>
+  <div class="col-lg-8 col-12">
+    <h3>Unpublished workshops</h3>
     <table class="table table-striped">
       <tr>
-        <th>slug</th>
+        <th>name</th>
         <th>#I</th>
         <th>dates</th>
         <th>location</th>
@@ -60,27 +64,27 @@
         <td><a href="{% url 'event_details' event.slug %}">{{ event.slug }}</a></td>
         <!-- INSTRUCTORS COUNT -->
         {% if event.num_instructors == 0 %}
-        <td class="text-danger bg-danger">{{ event.num_instructors }}</td>
+        <td class="text-danger">{{ event.num_instructors }}</td>
         {% else %}
         <td class="text-success">{{ event.num_instructors }}</td>
         {% endif %}
         <!-- DATES -->
         {% if not event.start %}
-        <td class="text-danger bg-danger">✗</td>
+        <td class="text-danger">&times;</td>
         {% else %}
-        <td class="text-success">✓</td>
+        <td class="text-success">&#10003;</td>
         {% endif %}
         <!-- LOCATION -->
         {% if not event.address or not event.venue or not event.country or not event.latitude or not event.longitude %}
-        <td class="text-danger bg-danger">✗</td>
+        <td class="text-danger">&times;</td>
         {% else %}
-        <td class="text-success">✓</td>
+        <td class="text-success">&#10003;</td>
         {% endif %}
         <!-- URL -->
         {% if not event.url %}
-        <td class="text-danger bg-danger">✗</td>
+        <td class="text-danger">&times;</td>
         {% else %}
-        <td class="text-success">✓</td>
+        <td class="text-success">&#10003;</td>
         {% endif %}
         <!-- HOST -->
         <td>
