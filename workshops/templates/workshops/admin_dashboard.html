@@ -1,4 +1,4 @@
-{% extends "base_nav_fluid.html" %}
+{% extends "base_nav.html" %}
 
 {% load compress %}
 {% load static %}
@@ -19,12 +19,8 @@
 
 {% if is_admin or user.is_superuser %}
 <div class="row">
-  <div class="col-xs-12">
-    <div class="btn-group" role="group" aria-label="Events assignment">
-      <a href="?assigned_to=me" class="btn btn-default{% if assigned_to == 'me' %} active{% endif %}">Mine</a>
-      <a href="?assigned_to=noone" class="btn btn-default{% if assigned_to == 'noone' %} active{% endif %}">Unassigned</a>
-      <a href="?assigned_to=all" class="btn btn-default{% if assigned_to == 'all' %} active{% endif %}">All</a>
-    </div>
+  <div class="col-12">
+    {% include "assignment.html" %}
   </div>
 </div>
 {% endif %}
