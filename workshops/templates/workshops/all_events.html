@@ -26,12 +26,12 @@
       </tr>
     {% for event in all_events %}
       {% if event.completed %}
-      <tr class="bg-success">
+      <tr class="table-success">
       {% else %}
       <tr>
       {% endif %}
         <td>{% if event.assigned_to %}<a href="{{ event.assigned_to.get_absolute_url }}">{{ event.assigned_to.get_short_name }}</a>{% else %}—{% endif %}</td>
-        <td {% if not event.slug %}class="warning"{% endif %}>
+        <td {% if not event.slug %}class="table-warning"{% endif %}>
           {% if not event.slug %}
             —
           {% else %}
@@ -41,11 +41,11 @@
           {% endif %}
         </td>
         <td>{% for tag in event.tags.all %}{% bootstrap_tag tag.name %}{% endfor %}</td>
-        <td {% if not event.repository_url %}class="warning"{% endif %}>
+        <td {% if not event.repository_url %}class="table-warning"{% endif %}>
           {{ event.repository_url|default:"—"|urlize_newtab }}
         </td>
         {% with num_instructors=event.task_set.instructors.count %}
-        <td {% if num_instructors == 0 %}class="warning"{% endif %}>{{ num_instructors }}</td>
+        <td {% if num_instructors == 0 %}class="table-warning"{% endif %}>{{ num_instructors }}</td>
         {% endwith %}
         <td><a href="{% url 'organization_details' event.host.domain %}">{{ event.host }}</a></td>
         <td>{{ event.start }} &ndash; {{ event.end }}</td>

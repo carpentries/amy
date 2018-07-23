@@ -79,10 +79,10 @@
         </td>
         <td>
           {% if trainee.is_swc_instructor %}
-            <span class="label label-primary" data-toggle="popover"
+            <span class="badge badge-secondary" data-toggle="popover"
                   data-content="This person is SWC instructor">SWC</span>
           {% elif trainee.get_missing_swc_instructor_requirements %}
-            <a class="label label-default" data-toggle="popover" data-html="true"
+            <a class="badge badge-dark" data-toggle="popover" data-html="true"
                data-content="
                  Not eligible to be certified as Software Carpentry Instructor. Needs to pass:
                    <ul>
@@ -92,17 +92,17 @@
                    </ul>
                  Click to start awarding the badge.
                "
-               href="{% url 'award_add' %}?person={{ trainee.pk }}&amp;badge={{ swc.pk }}&amp;find-training&amp;next={{ request.get_full_path|urlencode }}">SWC</a>
+               href="{% url 'award_add' %}?person={{ trainee.pk }}&amp;badge={{ swc.pk }}&amp;find-training&amp;next={{ request.get_full_path|urlencode }}"><strike>SWC</strike></a>
           {% else %}
-            <a class="label label-success" data-toggle="popover" data-html="true"
+            <a class="badge badge-success" data-toggle="popover" data-html="true"
                data-content="<p>Eligible to be certified as Software Carpentry Instructor.</p><p>Click to start awarding the badge.</p>"
                href="{% url 'award_add' %}?person={{ trainee.pk }}&amp;badge={{ swc.pk }}&amp;find-training&amp;next={{ request.get_full_path|urlencode }}">SWC</a>
           {% endif %}
           {% if trainee.is_dc_instructor %}
-              <span class="label label-primary" data-toggle="popover"
+              <span class="badge badge-secondary" data-toggle="popover"
                     data-content="This person is DC Instructor.">DC</span>
           {% elif trainee.get_missing_dc_instructor_requirements %}
-            <a class="label label-default" data-toggle="popover" data-html="true"
+            <a class="badge badge-dark" data-toggle="popover" data-html="true"
                data-content="
                  Not eligible to be certified as Data Carpentry Instructor. Needs to pass:
                  <ul>
@@ -112,9 +112,9 @@
                  </ul>
                  Click to start awarding the badge.
                "
-               href="{% url 'award_add' %}?person={{ trainee.pk }}&amp;badge={{ dc.pk }}&amp;find-training&amp;next={{ request.get_full_path|urlencode }}#awards">DC</a>
+               href="{% url 'award_add' %}?person={{ trainee.pk }}&amp;badge={{ dc.pk }}&amp;find-training&amp;next={{ request.get_full_path|urlencode }}#awards"><strike>DC</strike></a>
           {% else %}
-            <a class="label label-success" data-toggle="popover" data-html="true"
+            <a class="badge badge-success" data-toggle="popover" data-html="true"
                data-content="<p>Eligible to be certified as Data Carpentry Instructor.</p><p>Click to start awarding the badge.</p>"
                href="{% url 'award_add' %}?person={{ trainee.pk }}&amp;badge={{ dc.pk }}&amp;find-training&amp;next={{ request.get_full_path|urlencode }}#awards">DC</a>
           {% endif %}
