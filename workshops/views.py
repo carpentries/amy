@@ -484,7 +484,8 @@ def person_bulk_add_template(request):
 
 
 @admin_required
-@permission_required('workshops.add_person', raise_exception=True)
+@permission_required(['workshops.add_person', 'workshops.change_person'],
+                     raise_exception=True)
 def person_bulk_add(request):
     if request.method == 'POST':
         form = PersonBulkAddForm(request.POST, request.FILES)
@@ -496,7 +497,7 @@ def person_bulk_add(request):
             except csv.Error as e:
                 messages.add_message(
                     request, messages.ERROR,
-                    "Error processing uploaded .CSV file: {}".format(e))
+                    "Error processing uploaded CSV file: {}".format(e))
             except UnicodeDecodeError as e:
                 messages.add_message(
                     request, messages.ERROR,
@@ -513,6 +514,8 @@ def person_bulk_add(request):
                     # then redirect to confirmation page which in turn saves
                     # the data
                     request.session['bulk-add-people'] = persons_tasks
+                    # request match
+                    request.session['bulk-add-people-match'] = True
                     return redirect('person_bulk_add_confirmation')
 
     else:
@@ -528,16 +531,18 @@ def person_bulk_add(request):
 
 
 @admin_required
-@permission_required('workshops.add_person', raise_exception=True)
+@permission_required(['workshops.add_person', 'workshops.change_person'],
+                     raise_exception=True)
 def person_bulk_add_confirmation(request):
     """
     This view allows for manipulating and saving session-stored upload data.
     """
     persons_tasks = request.session.get('bulk-add-people')
+    match = request.session.get('bulk-add-people-match', False)
 
     # if the session is empty, add message and redirect
     if not persons_tasks:
-        messages.warning(request, "Could not locate CSV data, please try the "
+        messages.warning(request, "Could not locate CSV data, please "
                                   "upload again.")
         return redirect('person_bulk_add')
 
@@ -613,7 +618,9 @@ def person_bulk_add_confirmation(request):
 
     else:
         # alters persons_tasks via reference
-        any_errors = verify_upload_person_task(persons_tasks)
+        any_errors = verify_upload_person_task(persons_tasks,
+                                               match=bool(match))
+        request.session['bulk-add-people-match'] = False
 
     roles = Role.objects.all().values_list('name', flat=True)
 
@@ -628,7 +635,8 @@ def person_bulk_add_confirmation(request):
 
 
 @admin_required
-@permission_required('workshops.add_person', raise_exception=True)
+@permission_required(['workshops.add_person', 'workshops.change_person'],
+                     raise_exception=True)
 def person_bulk_add_remove_entry(request, entry_id):
     "Remove specific entry from the session-saved list of people to be added."
     persons_tasks = request.session.get('bulk-add-people')
@@ -652,29 +660,57 @@ def person_bulk_add_remove_entry(request, entry_id):
 
 
 @admin_required
-@permission_required('workshops.add_person', raise_exception=True)
-def person_bulk_add_match_person(request, entry_id, person_id):
+@permission_required(['workshops.add_person', 'workshops.change_person'],
+                     raise_exception=True)
+def person_bulk_add_match_person(request, entry_id, person_id=None):
     """Save information about matched person in the session-saved data."""
     persons_tasks = request.session.get('bulk-add-people')
+    if not persons_tasks:
+        messages.warning(request, 'Could not locate CSV data, please try the '
+                                  'upload again.')
+        return redirect('person_bulk_add')
 
-    if persons_tasks:
-        entry_id = int(entry_id)
-        person_id = int(person_id)
 
+    if person_id is None:
+        # unmatch
         try:
-            persons_tasks[entry_id]['existing_person_id'] = person_id
+            entry_id = int(entry_id)
+
+            persons_tasks[entry_id]['existing_person_id'] = 0
             request.session['bulk-add-people'] = persons_tasks
 
+        except ValueError:
+            # catches invalid argument for int()
+            messages.warning(request, 'Invalid entry ID ({}) or person ID '
+                                      '({}).'.format(entry_id, person_id))
+
         except IndexError:
+            # catches index out of bound
             messages.warning(request, 'Could not find specified entry #{}'
                                       .format(entry_id))
 
         return redirect(person_bulk_add_confirmation)
 
     else:
-        messages.warning(request, 'Could not locate CSV data, please try the '
-                                  'upload again.')
-        return redirect('person_bulk_add')
+        # match
+        try:
+            entry_id = int(entry_id)
+            person_id = int(person_id)
+
+            persons_tasks[entry_id]['existing_person_id'] = person_id
+            request.session['bulk-add-people'] = persons_tasks
+
+        except ValueError:
+            # catches invalid argument for int()
+            messages.warning(request, 'Invalid entry ID ({}) or person ID '
+                                      '({}).'.format(entry_id, person_id))
+
+        except IndexError:
+            # catches index out of bound
+            messages.warning(request, 'Could not find specified entry #{}'
+                                      .format(entry_id))
+
+        return redirect(person_bulk_add_confirmation)
 
 
 class PersonCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
