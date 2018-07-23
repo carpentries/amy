@@ -324,6 +324,18 @@ class PersonManager(BaseUserManager):
                             default=0,
                             output_field=IntegerField()))
 
+        def passed_either(req_a, req_b):
+            return Sum(Case(When(trainingprogress__requirement__name=req_a,
+                                 trainingprogress__state='p',
+                                 trainingprogress__discarded=False,
+                                 then=1),
+                            When(trainingprogress__requirement__name=req_b,
+                                 trainingprogress__state='p',
+                                 trainingprogress__discarded=False,
+                                 then=1),
+                            default=0,
+                            output_field=IntegerField()))
+
         return self.annotate(
             passed_training=passed('Training'),
             passed_swc_homework=passed('SWC Homework'),
@@ -331,6 +343,8 @@ class PersonManager(BaseUserManager):
             passed_discussion=passed('Discussion'),
             passed_swc_demo=passed('SWC Demo'),
             passed_dc_demo=passed('DC Demo'),
+            passed_homework=passed_either('SWC Homework', 'DC Homework'),
+            passed_demo=passed_either('SWC Demo', 'DC Demo'),
         ).annotate(
             # We're using Maths to calculate "binary" score for a person to
             # be instructor badge eligible. Legend:
@@ -543,9 +557,9 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
 
         fields = [
             ('passed_training', 'Training'),
-            ('passed_swc_homework', 'SWC Homework'),
+            ('passed_homework', 'SWC or DC Homework'),
             ('passed_discussion', 'Discussion'),
-            ('passed_swc_demo', 'SWC Demo'),
+            ('passed_demo', 'SWC or DC Demo'),
         ]
         try:
             return [name for field, name in fields if not getattr(self, field)]
@@ -559,9 +573,9 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
 
         fields = [
             ('passed_training', 'Training'),
-            ('passed_dc_homework', 'DC Homework'),
+            ('passed_homework', 'SWC or DC Homework'),
             ('passed_discussion', 'Discussion'),
-            ('passed_dc_demo', 'DC Demo'),
+            ('passed_demo', 'SWC or DC Demo'),
         ]
         try:
             return [name for field, name in fields if not getattr(self, field)]
