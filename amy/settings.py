@@ -137,7 +137,7 @@ TEMPLATES = [
     }
 ]
 
-CRISPY_TEMPLATE_PACK = 'bootstrap3'
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 ##################### I N S T A L L E D  A P P S #####################
 

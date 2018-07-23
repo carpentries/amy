@@ -6,39 +6,47 @@ inherit from.
 
 ## Base templates
 
-There are multiple types of views in AMY:
-* wide (e.g. 'Dashboard')
-* wide with sidebar (e.g. 'All Events')
-* narrow (e.g. event details)
-* narrow without navigation bar (e.g. login page)
+All templates use [fluid container](https://getbootstrap.com/docs/4.1/layout/overview/)
+from [Bootstrap 4.1](https://getbootstrap.com/docs/4.1/).
 
-The base templates that correspond to them:
-* `base_nonav_fixed.html`: for narrow (fixed-width) pages without navigation
-  bar
-* `base_nav_fixed.html`: for narrow (fixed-width) pages with navigation bar
-  (ie. for logged in users)
-* `base_nav_fluid.html`: for wide (fluid-width) pages with navigation bar and
-  no sidebar
-* `base_nav_fluid_sidebar.html`: for wide (fluid-width) pages with navigation
-  bar and sidebar.
+There are multiple types of views in AMY:
+* wide (e.g. 'Dashboard') -- `base_nav.html`,
+* wide with sidebar (e.g. 'All Events') -- `base_nav_sidebar.html`,
+* wide with two content columns (e.g. `EventRequest` accept view, rarely used) -- `base_nav_twocolumn.html`.
+
+These templates all inherit from `base.html`, which holds the HTML structure,
+includes CSS styles and JS code, displays messages, footer, etc.
+
+The `base_nav.html` is nothing more but `base.html` extended with a navigation.
+Navigation changes depending on user - one navigation bar
+(`navigation.html`) exists for admin users, a different one
+(`navigation_trainee.html`) exists for trainees. A correct navigation bar is
+being included in `base_nav.html`.
 
 ## Blocks available in base template
 
-Django template blocks used across base templates:
+Django template blocks used in `base.html` template:
 
-* `extrastyle`: in `<head>`, when you need to load some additional CSS files or
+* `extrastyle` in `<head>`, when you need to load some additional CSS files or
   embed styles right into the page,
-* `logo`: used in views that display AMY logo (dashboard, login page, log out
+* `extrajs` in `<head>`, for loading additional JavaScript files / codes,
+* `navbar` used in templates that include a navigation bar,
+* `main` with all the main content in case someone really needs to change it
+  (caution: quite a lot is going on in this block, make sure you don't brake
+  it),
+* `leftcolumn` for adding a sidebar or a column (used in
+  `base_nav_sidebar.html` and `base_nav_twocolumn.html`),
+* `maincolumn` for changing main content column grid,
+* `logo` used in views that display AMY logo (login page, log out
   page, password reset, etc.),
-* `navbar`: used in templates that include navbar to… add a navbar,
-* `main`: block that formats page header (`title` below) and page content
-  (`content` below); `main` is redefined in `base_nav_fluid_sidebar.html` to
-  include a `sidebar` block as well,
-* `title`: by default, a `<h1>` with `{{ title}}` (don't confuse template block
-  `title` with template variable `title`)
-* `content`: for displaying page content,
-* `extrajs`: for loading additional JavaScript files / codes; it's on the
-  bottom of the page,
-* `fluid-content`, `fluid-footer`, `fluid-navbar` (in `navigation_fixed.html`):
-  blocks used for adding classes that change fixed-width behavior to
-  fluid-width behavior; their content is specified in fluid templates.
+* `title` to display `<h1>` tag with page title,
+* `content` for displaying page content.
+
+## Widgets
+
+Additionally there were created widgets to support some of the tedious
+components:
+* `assignment.html` displays a dropdown to change filtering events assigned to
+  specific person (user, unassigned, or no filtering)
+* `pagination.html` displays a neat button groups split with "..." to not show
+  too much pages at once.
