@@ -113,7 +113,7 @@
     <td>
       {% with awards=person.award_set.all %}
       {% if awards %}
-      <table class="table table-condensed">
+      <table class="table table-sm">
         <tr><th>badge</th><th>date</th><th>by whom</th><th>related event</th></tr>
         {% for award in awards %}
         <tr>
@@ -135,7 +135,7 @@
     <td>
       {% with tasks=person.task_set.all %}
       {% if tasks %}
-      <table class="table table-condensed">
+      <table class="table table-sm">
         <tr><th>role</th><th>event</th></tr>
         {% for task in tasks %}
         <tr>

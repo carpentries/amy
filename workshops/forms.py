@@ -111,11 +111,11 @@ class BootstrapHelper(FormHelper):
 
         if wider_labels:
             assert display_labels
-            self.label_class = 'col-lg-3'
-            self.field_class = 'col-lg-7'
+            self.label_class = 'col-12 col-lg-3'
+            self.field_class = 'col-12 col-lg-7'
         elif display_labels:
-            self.label_class = 'col-lg-2'
-            self.field_class = 'col-lg-8'
+            self.label_class = 'col-12 col-lg-2'
+            self.field_class = 'col-12 col-lg-8'
         else:
             self.label_class = ''
             self.field_class = 'col-lg-12'
@@ -128,13 +128,12 @@ class BootstrapHelper(FormHelper):
                 'delete', 'Delete',
                 onclick='return confirm("Are you sure you want to delete it?");',
                 form='delete-form',
-                css_class='btn-danger',
-                style='float: right;'))
+                css_class='btn-danger float-right'))
 
         if add_cancel_button:
             self.add_input(Button(
                 'cancel', 'Cancel',
-                css_class='btn-default pull-right',
+                css_class='btn-secondary float-right',
                 onclick='window.history.back()'))
 
         self.form_class = 'form-horizontal ' + additional_form_class
@@ -297,24 +296,27 @@ class WorkshopStaffForm(forms.Form):
         self.helper.form_method = 'get'
         self.helper.layout = Layout(
             Div(
-                Div(HTML('Location close to'), css_class='panel-heading'),
-                Div('airport', css_class='panel-body'),
-                Div(HTML('<b>OR</b>'), css_class='panel-footer'),
-                Div('country', css_class='panel-body'),
-                Div(HTML('<b>OR</b>'), css_class='panel-footer'),
-                Div('latitude', 'longitude', css_class='panel-body'),
-                css_class='panel panel-default ',
+                Div(
+                    HTML('<h5 class="card-title">Location close to</h5>'),
+                    'airport',
+                    HTML('<hr>'),
+                    'country',
+                    HTML('<hr>'),
+                    'latitude',
+                    'longitude',
+                    css_class='card-body'
+                ),
+                css_class='card',
             ),
             'instructor_badges',
+            HTML('<hr>'),
             'was_helper',
             'was_organizer',
             'is_in_progress_trainee',
             'languages',
             'gender',
             'lessons',
-            FormActions(
-                Submit('submit', 'Submit'),
-            ),
+            Submit('submit', 'Submit'),
         )
 
     def clean(self):
@@ -351,7 +353,7 @@ class PersonBulkAddForm(forms.Form):
 class SearchForm(forms.Form):
     '''Represent general searching form.'''
 
-    term = forms.CharField(label='term',
+    term = forms.CharField(label='Term',
                            max_length=100)
     in_organizations = forms.BooleanField(label='in organizations',
                                   required=False,
@@ -448,14 +450,18 @@ class EventForm(forms.ModelForm):
         'attendance',
         'contact',
         'notes',
-        Accordion(
-            AccordionGroup('Location details',
-                'country',
+        # TODO: probably in the next release of Django Crispy Forms (>1.7.2)
+        #       there will be a solid support for Accordion and AccordionGroup,
+        #       but for now we have to do it manually
+        Div(
+            Div(HTML('Location details'), css_class='card-header'),
+            Div('country',
                 'venue',
                 'address',
                 'latitude',
                 'longitude',
-            ),
+                css_class='card-body'),
+            css_class='card mb-2'
         ),
     )
 
@@ -499,7 +505,7 @@ class EventForm(forms.ModelForm):
         # a <link href=""> (for CSS files) or <script src=""> (for JS files)
         js = (
             'date_yyyymmdd.js',
-            'import_from_url.js', 'update_from_url.js',
+            'edit_from_url.js',
             'online_country.js',
         )
 

@@ -3,18 +3,16 @@
 {% load pagination %}
 
 {% block content %}
-  <div class="row">
-    <div class="col-xs-12">
-      <h3>Recently changed</h3>
-      <table class="table table-striped">
-      {% for change in log %}
-      <tr>
-        <td>{{ change.date_created|date:'M j, P' }} </td>
-        <td>{% if change.user %}{{ change.user.personal }}{%else%}Unknown user{%endif%} changed <a href="{% url 'object_changes' change.pk %}">{{ change.version_set.all|first }}</a></td>
-      </tr>
-      {% endfor %}
-      </table>
-    </div>
+  <div class="col-12">
+    <h3>Recently changed</h3>
+    <table class="table table-striped">
+    {% for change in log %}
+    <tr>
+      <td>{{ change.date_created|date:'M j, P' }} </td>
+      <td>{% if change.user %}{{ change.user.personal }}{%else%}Unknown user{%endif%} changed <a href="{% url 'object_changes' change.pk %}">{{ change.version_set.all|first }}</a></td>
+    </tr>
+    {% endfor %}
+    </table>
   </div>
 
   {% pagination log %}

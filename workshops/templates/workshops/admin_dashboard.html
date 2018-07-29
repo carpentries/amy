@@ -30,8 +30,8 @@
     <h3>Current workshops</h3>
     <table class="table table-striped">
       <tr>
-        <th>tag</th>
-        <th>name</th>
+        <th>Tag</th>
+        <th>Name</th>
       </tr>
     {% for event in current_events %}
     <tr>
@@ -51,12 +51,12 @@
     <h3>Unpublished workshops</h3>
     <table class="table table-striped">
       <tr>
-        <th>name</th>
-        <th>#I</th>
-        <th>dates</th>
-        <th>location</th>
+        <th>Name</th>
+        <th width="70px">#I <i class="fas fa-question-circle" data-toggle="tooltip" title="Number of instructors"></i></th>
+        <th>Dates</th>
+        <th>Location</th>
         <th>URL</th>
-        <th>host</th>
+        <th>Host</th>
       </tr>
       {% for event in unpublished_events %}
       <tr>

@@ -4,34 +4,28 @@
 {% load links %}
 
 {% block content %}
-<div>
-  <ul class="nav nav-tabs" role="tablist">
-    <li role="presentation" class="active"><a href="#event" aria-controls="event" role="tab" data-toggle="tab">Event</a></li>
-    <li role="presentation"><a href="#tasks" aria-controls="tasks" role="tab" data-toggle="tab">Tasks</a></li>
-    <li role="presentation"><a href="#sponsors" aria-controls="sponsors" role="tab" data-toggle="tab">Sponsors</a></li>
+<nav class="col-12">
+  <ul class="nav nav-tabs" role="tablist" id="tabs">
+    <li role="presentation" class="nav-item"><a class="nav-link active" href="#event" role="tab" data-toggle="tab" aria-controls="event" aria-selected="true" id="event-tab">Event</a></li>
+    <li role="presentation" class="nav-item"><a class="nav-link" href="#tasks" role="tab" data-toggle="tab" aria-controls="tasks" aria-selected="false" id="tasks-tab">Tasks</a></li>
+    <li role="presentation" class="nav-item"><a class="nav-link" href="#sponsors" role="tab" data-toggle="tab" aria-controls="sponsors" aria-selected="false" id="sponsors-tab">Sponsors</a></li>
   </ul>
-</div>
-<div class="tab-content">
-  <div role="tabpanel" class="tab-pane active" id="event">
-    <div class="container">
-      <button type="button" class="btn btn-default" id="update_url_button">Update from URL</button>
-      {% crispy form %}
-      {% include "workshops/event_import_update_from_url.html" with update=True %}
-    </div>
+</nav>
+<div class="col-12 tab-content">
+  <div class="tab-pane show active" role="tabpanel" aria-labelledby="event-tab" id="event">
+    <a href="#update_url_modal" class="btn btn-secondary" id="update_url_button" data-toggle="modal" data-target="#update_url_modal">Update from URL</a>
+    {% crispy form %}
+    {% include "workshops/event_import_update_from_url.html" with update=True %}
   </div>
-  <div role="tabpanel" class="tab-pane" id="tasks">
+  <div class="tab-pane" role="tabpanel" aria-labelledby="tasks-tab" id="tasks">
     {% block task_tab %}
-
-    <div class="row">
-      <div class="col-xs-9 col-xs-offset-1">
-        <p>Notes regarding this event may include instructor and helper names:</p>
-        <pre>{{ event.notes }}</pre>
-      </div>
-    </div>
+    <p>Notes regarding this event may include instructor and helper names:</p>
+    <pre>{{ event.notes }}</pre>
 
     <form class="form-horizontal" role="form" method="POST" action="{% url 'task_add' %}?next={{ request.get_full_path|urlencode }}#tasks">
       {% crispy task_form %}
     </form>
+
     {% if tasks %}
     <table class="table table-striped">
     <tr>
@@ -61,7 +55,7 @@
     {% endif %}
     {% endblock task_tab %}
   </div>
-  <div role="tabpanel" class="tab-pane" id="sponsors">
+  <div class="tab-pane" role="tabpanel" aria-labelledby="sponsors-tab" id="sponsors">
     {% block sponsor_tab %}
     <form class="form-horizontal" role="form" method="POST" action="{% url 'sponsorship_add' %}">
       {% crispy sponsor_form %}
@@ -100,6 +94,7 @@
     {% endif %}
     {% endblock sponsor_tab %}
   </div>
+</div>
 {% endblock %}
 
 {% block extrajs %}
@@ -107,6 +102,8 @@
 {{ task_form.media }}
 {{ sponsor_form.media }}
 <script type="text/javascript">
-  $('.nav-tabs').stickyTabs();
+  $(function() {
+    $('#tabs').stickyTabs();
+  });
 </script>
 {% endblock extrajs %}

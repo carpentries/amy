@@ -9,8 +9,8 @@
 
 {% if event.metadata_changed %}
 <div class="alert alert-warning alert-dismissible" role="alert">
-  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
-  <h4>Event's website updated</h4>
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+  <h4 class="alert-heading">Event's website updated</h4>
   <p>This event's repository was updated by the repository owner. Changes detected:</p>
   <p>{{ event.metadata_all_changes |linebreaksbr }}</p>
   <p><a class="btn btn-warning" href="{% url 'event_review_metadata_changes' event.slug %}">Review changes</a></p>
@@ -22,13 +22,14 @@
   <strong>Well done!</strong> This event is completed, you don't have to work on it.
 </div>
 {% endif %}
+
 <div class="row">
   <div class="col-md-6">
     {% last_modified event %}
   </div>
   <div class="col-md-6 text-right">
     <p>
-      <a href="#" id="change_assignment"><i class="fas fa-user-cog"></i></a>
+      <a href="#assignment_modal" id="change_assignment" data-toggle="modal" data-target="#assignment_modal"><i class="fas fa-user-cog"></i></a>
       Assignee:
       {% if event.assigned_to %}
         <a href="{{ event.assigned_to.get_absolute_url }}">{{ event.assigned_to.full_name }}</a> (<a href="{% url 'event_assign' event.slug %}" id="clear-assignment">clear</a>).
@@ -38,6 +39,7 @@
     </p>
   </div>
 </div>
+
 <div class="row">
   <div class="col-md-12">
     {% block edit-actions %}
@@ -47,9 +49,7 @@
       {% else %}
       <a href="{% url 'event_edit' event.slug %}" class="btn btn-primary disabled">Edit</a>
       {% endif %}
-    </p>
-    <p class="pull-right">
-      <a href="#" class="btn btn-default" id="preview_event">Show preview</a>
+      <a href="#preview_modal" class="btn btn-secondary float-right" id="preview_event" data-toggle="modal" data-target="#preview_modal">Show preview</a>
     </p>
     {% endblock edit-actions %}
   </div>
@@ -57,49 +57,32 @@
 
 {% include "workshops/event_details_table.html" with event=event %}
 
-{% if event.url %}
-<!-- Validation modal -->
-<div class="modal fade" id="validation_modal" tabindex="-1" role="dialog" aria-labelledby="validation_modal_label" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title" id="validation_modal_label">Validation</h4>
-      </div>
-      <div class="modal-body"></div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-      </div>
-    </div>
-  </div>
-</div>
-{% endif %}
-
 <!-- selecting assignment modal -->
-<div class="modal fade" id="assignment_modal" tabindex="-1" role="dialog" aria-labelledby="assignment_modal_label" aria-hidden="true">
-  <div class="modal-dialog">
+{# this modal doesn't have 'tabindex="-1"', because this parameter breaks Select2 widget #}
+<div class="modal" role="dialog" id="assignment_modal" aria-labelledby="assignment_modal_label" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
+        <h5 class="modal-title" id="assignment_modal_label">Assignment</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title" id="assignment_modal_label">Assignment</h4>
       </div>
       <div class="modal-body">
-        {% crispy person_lookup_form %}
+        {% crispy admin_lookup_form %}
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- SWC website preview modal -->
-<div class="modal fade" id="preview_modal" tabindex="-1" role="dialog" aria-labelledby="preview_modal_label" aria-hidden="true">
-  <div class="modal-dialog">
+<!-- preview modal -->
+<div class="modal" role="dialog" id="preview_modal" tabindex="-1" aria-labelledby="preview_modal_label" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
+        <h5 class="modal-title" id="preview_modal_label">Preview on Software-Carpentry website</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title" id="preview_modal_label">Preview on Software-Carpentry website</h4>
       </div>
       <div class="modal-body">
         <div id="map_canvas" style="width: 100%; height: 500px; margin-left:auto; margin-right: auto; margin-bottom: 15px"></div>
@@ -120,19 +103,37 @@
         </table>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- invoice modal -->
-<div class="modal fade" id="invoice_modal" tabindex="-1" role="dialog" aria-labelledby="invoice_modal_label" aria-hidden="true">
-  <div class="modal-dialog">
+{% if event.url %}
+<!-- Validation modal -->
+<div class="modal" role="dialog" id="validation_modal" tabindex="-1" aria-labelledby="validation_modal_label" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
+        <h5 class="modal-title" id="validation_modal_label">Validation</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title" id="invoice_modal_label">Invoice</h4>
+      </div>
+      <div class="modal-body"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- invoice modal -->
+<div class="modal" role="dialog" id="invoice_modal" tabindex="-1" aria-labelledby="invoice_modal_label" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="invoice_modal_label">Invoice</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
       </div>
       <div class="modal-body">
         <p>Please contact <a href="mailto:team@carpentries.org">team@carpentries.org</a> if you need to submit an invoice. Include the following information in your email:</p>
@@ -141,15 +142,17 @@
           <li>Link to workshop page in AMY</li>
           <li>Purpose of invoice</li>
           <li>Amount of invoice in US Dollars</li>
-          <li>Name, email, phone, and mailing address of person who should receive in invoice</li>
+          <li>Name, email, phone, and mailing address of person who should receive the invoice</li>
         </ul>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
       </div>
     </div>
   </div>
 </div>
+
+<hr>
 
 {% if tasks %}
 <h3>Tasks</h3>
@@ -158,10 +161,10 @@
   <tr>
     <th width="25">DC?</th>
     <th width="25">SWC?</th>
-    <th>person</th>
-    <th>title</th>
-    <th>url</th>
-    <th>role</th>
+    <th>Person</th>
+    <th>Title</th>
+    <th>URL</th>
+    <th>Role</th>
   </tr>
   {% for t in tasks %}
   <tr>
@@ -178,15 +181,17 @@
 <p>No tasks.</p>
 {% endif %}
 
+<hr>
+
 {% block sponsorships %}
 {% with sponsorships=event.sponsorship_set.all %}
 {% if sponsorships %}
 <h3>Sponsors</h3>
 <table class="table table-striped">
   <tr>
-    <th>organization</th>
-    <th>amount</th>
-    <th>contact</th>
+    <th>Organization</th>
+    <th>Amount</th>
+    <th>Contact</th>
   </tr>
   {% for sponsorship in sponsorships %}
   <tr>
@@ -207,14 +212,14 @@
 {% endblock sponsorships %}
 
 <div class="clearfix">
-  <div class="edit-object pull-left">
+  <div class="edit-object float-left">
     {% if perms.workshops.change_event %}
     <a href="{% url 'event_edit' event.slug %}" class="btn btn-primary">Edit</a>
     {% else %}
     <a href="{% url 'event_edit' event.slug %}" class="btn btn-primary disabled">Edit</a>
     {% endif %}
   </div>
-  <div class="delete-object pull-right">
+  <div class="delete-object float-right">
     {% if perms.workshops.change_event %}
     <form action="{% url 'event_delete' slug=event.slug %}" onsubmit='return confirm("Are you sure you wish to remove  \"{{ event }}\"?")' method="POST">
       {% csrf_token %}
@@ -230,79 +235,40 @@
 
 {% block extrajs %}
 {{ todo_form.media }}
-{{ person_lookup_form.media }}
+{{ admin_lookup_form.media }}
 <script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
 <script type="text/javascript">
   var gmap = null;
 
-  $('#change_assignment').click(function() {
-    $('#assignment_modal').modal();
-    return false;
-  });
-  $('#validate_event').click(function() {
-    $('#validation_modal').modal();
-    return false;
-  });
-  $('#validation_modal').on('show.bs.modal', function() {
-    $('#validation_modal .modal-body').load("{% url 'validate_event' event.slug %} #validation");
-  });
-  $('#preview_event').click(function() {
-    $('#preview_modal').modal();
-    return false;
-  });
-  $("#preview_modal").on("shown.bs.modal", function () {
-    // required for the map to show something, otherwise (due to using modal)
-    // we'd get grey area
-    google.maps.event.trigger(gmap, "resize");
-  });
+  $.fn.modal.Constructor.prototype.enforceFocus = function() {};
+
+  // $('#preview_event').click(function() {
+  //   $('#preview_modal').modal();
+  //   return false;
+  // });
 
   $('#invoice_btn').click(function() {
     $('#invoice_modal').modal();
     return false;
   });
 
-  // scroll to TODOs if there's an alert with "todos" class
   $(document).ready(function() {
-    if ($(".alert").hasClass('newtodo')) {
-      $("html, body").scrollTop($("#newtodo").offset().top);
-    }
-    if ($(".alert").hasClass('todos')) {
-      $("html, body").scrollTop($("#todos").offset().top);
-    }
-
-    $(".completness-indicator").click(function() {
-      var todo_id = $(this).attr("data-todo-id");
-      var row = $(this).parent().parent().parent();
-      if ($(this).is("input:checked")) {
-        // mark as complete
-        var url = "/workshops/todo/" + todo_id + "/completed";
-        $.get(url, function() {
-          // add the tick
-          $(this).attr("checked", "checked");
-          // hide labels
-          row.find(".label").addClass("hidden");
-          // add completness styles
-          row.addClass("text-muted strikethrough bg-muted");
-        });
-      } else {
-        // mark as incomplete
-        var url = "/workshops/todo/" + todo_id + "/incompleted";
-        $.get(url, function() {
-          // remove the tick
-          $(this).attr("checked", "");
-          // show labels
-          row.find(".label").removeClass("hidden");
-          // drop completness styles
-          row.removeClass("text-muted strikethrough bg-muted");
-        });
-      }
+    // validation modal loading
+    $('#validation_modal').on('show.bs.modal', function() {
+      $('#validation_modal .modal-body').load("{% url 'validate_event' event.slug %} #validation");
     });
+
+    // $("#preview_modal").on("shown.bs.modal", function () {
+    //   // required for the map to show something, otherwise (due to using modal)
+    //   // we'd get grey area
+    //   google.maps.event.trigger(gmap, "resize");
+    // });
 
     // draw a pin on the map in website preview
     var mapOptions = {
       zoom: 1,
       // by trial and error, these values lets us see the most w/o scrolling
-      center: {lat: 85, lng: 180},
+      center: {lat: 0, lng: 0},
       mapTypeId: google.maps.MapTypeId.ROADMAP
     };
     gmap = new google.maps.Map(document.getElementById("map_canvas"),

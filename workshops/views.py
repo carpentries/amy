@@ -1018,14 +1018,16 @@ def event_details(request, slug):
             messages.error(request, 'Fix errors in the TODO form.',
                            extra_tags='todos')
 
-    person_lookup_form = AdminLookupForm()
+    admin_lookup_form = AdminLookupForm()
     if event.assigned_to:
-        person_lookup_form = AdminLookupForm(
+        admin_lookup_form = AdminLookupForm(
             initial={'person': event.assigned_to}
         )
 
-    person_lookup_form.helper = BootstrapHelper(
-        form_action=reverse('event_assign', args=[slug]))
+    admin_lookup_form.helper = BootstrapHelper(
+        form_action=reverse('event_assign', args=[slug]),
+        add_cancel_button=False)
+
     context = {
         'title': 'Event {0}'.format(event),
         'event': event,
@@ -1037,7 +1039,7 @@ def event_details(request, slug):
             .values_list('person__email', flat=True),
         'helper': bootstrap_helper,
         'today': datetime.date.today(),
-        'person_lookup_form': person_lookup_form,
+        'admin_lookup_form': admin_lookup_form,
     }
     return render(request, 'workshops/event.html', context)
 
@@ -1103,7 +1105,10 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
         'workshops.add_task',
         'workshops.add_sponsorship',
     ]
-    model = Event
+    queryset = Event.objects.select_related('assigned_to', 'administrator',
+                                            'language', 'request') \
+                            .prefetch_related('sponsorship_set')
+    slug_field = 'slug'
     form_class = EventForm
     template_name = 'workshops/event_edit_form.html'
 
@@ -1114,7 +1119,9 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
             'widgets': {'event': HiddenInput()},
         }
         context.update({
-            'tasks': self.get_object().task_set.order_by('role__name'),
+            'tasks': self.get_object().task_set
+                        .select_related('person', 'role')
+                        .order_by('role__name'),
             'task_form': TaskForm(**kwargs),
             'sponsor_form': SponsorshipForm(**kwargs),
         })
@@ -1336,7 +1343,14 @@ def event_review_metadata_changes(request, slug):
     except Event.DoesNotExist:
         raise Http404('No event found matching the query.')
 
-    metadata = fetch_event_metadata(event.website_url)
+    try:
+        metadata = fetch_event_metadata(event.website_url)
+    except requests.exceptions.RequestException:
+        messages.error(request, "There was an error while fetching event's "
+                                "website. Make sure the event has website URL "
+                                "provided, and that it's reachable.")
+        return redirect(event.get_absolute_url())
+
     metadata = parse_metadata_from_event_website(metadata)
 
     # save serialized metadata in session so in case of acceptance we don't

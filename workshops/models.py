@@ -1695,7 +1695,7 @@ class Task(models.Model):
     person     = models.ForeignKey(Person, on_delete=models.PROTECT)
     role       = models.ForeignKey(Role, on_delete=models.PROTECT)
     title      = models.CharField(max_length=STR_LONG, blank=True)
-    url        = models.URLField(blank=True)
+    url        = models.URLField(blank=True, verbose_name='URL')
 
     objects = TaskManager()
 

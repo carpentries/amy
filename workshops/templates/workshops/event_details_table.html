@@ -1,30 +1,30 @@
 {% load links %}
 {% load tags %}
 <table class="table table-striped">
-  <tr><td>slug:</td><td colspan="2">{{ event.slug|default:"—" }}</td></tr>
-  <tr><td>completed:</td><td colspan="2">{{ event.completed|yesno }}</td></tr>
-  <tr class="{% if event.start > event.end %}bg-danger{% endif %}"><td>start date:</td><td colspan="2">{{ event.start|default:"—" }}</td></tr>
-  <tr class="{% if event.start > event.end %}bg-danger{% endif %}"><td>end date: </td><td colspan="2">{{ event.end|default:"—" }}</td></tr>
-  <tr><td>host:</td><td colspan="2"><a href="{% url 'organization_details' event.host.domain %}">{{ event.host }}</a></td></tr>
-  <tr><td>administrator:</td><td colspan="2">{% if event.administrator %}<a href="{{ event.administrator.get_absolute_url }}">{{ event.administrator }}</a>{% else %}—{% endif %}</td></tr>
-  <tr><td>tags:</td><td colspan="2">{% for tag in event.tags.all %}{% bootstrap_tag tag.name %}{% endfor %}</td></tr>
-  <tr class="{% if not event.url %}bg-danger{% endif %}"><td>Website URL:</td><td colspan="2">{{ event.website_url|default:"—"|urlize_newtab }} {% if event.url %}<a href="{% url 'validate_event' event.slug %}" class="btn btn-primary btn-xs pull-right" id="validate_event">validate event</a>{% else %}<a class="btn btn-danger btn-xs pull-right" id="error_event_url" href="#" data-toggle="popover" title="Validation error" data-content="Cannot validate an event without URL pointing to the GitHub repository, e.g.: <code>https://github.com/swcarpentry/2015-05-24-training</code>" data-html="true">Error</a>{% endif %}</td></tr>
-  <tr><td>Language:</td><td colspan="2">{{ event.language|default:"—" }}</td></tr>
-  <tr><td>Eventbrite key:</td><td colspan="2">{% if event.reg_key %}<a href="https://www.eventbrite.com/myevent?eid={{ event.reg_key }}" title="Go to Eventbrite's page for this event" target="_blank">{{ event.reg_key }}</a>{% else %}—{% endif %}</td></tr>
-  <tr><td>admin fee:</td><td colspan="2">{{ event.admin_fee|default_if_none:"—" }}</td></tr>
+  <tr><th>Slug:</th><td colspan="2">{{ event.slug|default:"&mdash;" }}</td></tr>
+  <tr><th>Completed:</th><td colspan="2">{{ event.completed|yesno }}</td></tr>
+  <tr class="{% if event.start > event.end %}table-danger{% endif %}"><th>Start date:</th><td colspan="2">{{ event.start|default:"&mdash;" }}</td></tr>
+  <tr class="{% if event.start > event.end %}table-danger{% endif %}"><th>End date: </th><td colspan="2">{{ event.end|default:"&mdash;" }}</td></tr>
+  <tr><th>Host:</th><td colspan="2"><a href="{% url 'organization_details' event.host.domain %}">{{ event.host }}</a></td></tr>
+  <tr><th>Administrator:</th><td colspan="2">{% if event.administrator %}<a href="{{ event.administrator.get_absolute_url }}">{{ event.administrator }}</a>{% else %}&mdash;{% endif %}</td></tr>
+  <tr><th>Tags:</th><td colspan="2">{% for tag in event.tags.all %}{% bootstrap_tag tag.name %}{% endfor %}</td></tr>
+  <tr class="{% if not event.url %}table-danger{% endif %}"><th>Website URL:</th><td colspan="2">{{ event.website_url|default:"&mdash;"|urlize_newtab }} {% if event.url %}<a href="{% url 'validate_event' event.slug %}" class="btn btn-primary btn-sm float-right" id="validate_event" data-toggle="modal" data-target="#validation_modal">Validate event</a>{% else %}<a class="btn btn-danger btn-sm float-right" id="error_event_url" href="#" data-toggle="popover" title="Validation error" data-content="Cannot validate an event without URL pointing to the GitHub repository, e.g.: <code>https://github.com/swcarpentry/2015-05-24-training</code>" data-html="true">Error</a>{% endif %}</td></tr>
+  <tr><th>Language:</th><td colspan="2">{{ event.language|default:"&mdash;" }}</td></tr>
+  <tr><th>Eventbrite key:</th><td colspan="2">{% if event.reg_key %}<a href="https://www.eventbrite.com/myevent?eid={{ event.reg_key }}" title="Go to Eventbrite's page for this event" target="_blank">{{ event.reg_key }}</a>{% else %}&mdash;{% endif %}</td></tr>
+  <tr><th>Admin fee:</th><td colspan="2">{{ event.admin_fee|default_if_none:"&mdash;" }}</td></tr>
   <tr>
-    <td>invoice:</td>
+    <th>Invoice:</th>
     <td colspan="2">
       {{ event.get_invoice_status_display }}
       {% if event.uninvoiced %}
-      <a href="{# Disabled as per @maneesha's request {% url 'event_invoice' event.slug %}#}#" class="btn btn-primary btn-xs pull-right" id="invoice_btn">Invoice</a>
+      <a href="{# Disabled as per @maneesha's request {% url 'event_invoice' event.slug %}#}#" class="btn btn-primary btn-sm float-right" id="invoice_btn"  data-toggle="modal" data-target="#invoice_modal">Invoice</a>
       {% else %}
-      <a href="#" class="btn btn-primary btn-xs pull-right disabled">Invoice</a>
+      <a href="#" class="btn btn-primary btn-sm float-right disabled">Invoice</a>
       {% endif %}
     </td>
   </tr>
   <tr>
-    <td>invoice requests:</td>
+    <th>Invoice requests:</th>
     <td colspan="2">
       {% if event.invoicerequest_set.all %}
       <ul>
@@ -33,36 +33,36 @@
         {% endfor %}
       </ul>
       {% else %}
-      —
+      &mdash;
       {% endif %}
     </td>
   </tr>
-  <tr class="{% if not event.attendance %}bg-danger{% endif %}">
-    <td>attendance:</td>
+  <tr class="{% if not event.attendance %}table-danger{% endif %}">
+    <th>Attendance:</th>
     <td colspan="2">
-      {{ event.attendance|default_if_none:"—" }}
+      {{ event.attendance|default_if_none:"&mdash;" }}
       {% if not event.attendance and event.mailto %}
-      <a href="{% include 'workshops/attendance_email_href.html' with event=event %}" target="_blank" class="btn btn-primary btn-xs pull-right">Ask for attendance</a>
+      <a href="{% include 'workshops/attendance_email_href.html' with event=event %}" target="_blank" class="btn btn-primary btn-sm float-right">Ask for attendance</a>
       {% else %}
-      <a href="#" class="btn btn-primary btn-xs pull-right disabled">Ask for attendance</a>
+      <a href="#" class="btn btn-primary btn-sm float-right disabled">Ask for attendance</a>
       {% endif %}
     </td>
   </tr>
-  <tr><td>contact:</td><td colspan="2">{{ event.contact|default_if_none:"—"|urlize }}</td></tr>
+  <tr><th>Contact:</th><td colspan="2">{{ event.contact|default_if_none:"&mdash;"|urlize }}</td></tr>
   <tr>
-    <td rowspan="4">location details:</td>
-    <td class="{% if not event.country %}bg-danger{% endif %}">Country:</td>
-    <td class="{% if not event.country %}bg-danger{% endif %}">
+    <th rowspan="4">Location details:</th>
+    <th class="{% if not event.country %}table-danger{% endif %}">Country:</th>
+    <td class="{% if not event.country %}table-danger{% endif %}">
     {% if event.country %}
       {{ event.country.name }} <img src="{{ event.country.flag }}" alt="{{ event.country }}" class="country-flag" />
     {% else %}
-      —
+      &mdash;
     {% endif %}
     </td>
   </tr>
-  <tr class="{% if not event.venue %}bg-danger{% endif %}"><td>Venue:</td><td>{{ event.venue|default:"—" }}</td></tr>
-  <tr class="{% if not event.address %}bg-danger{% endif %}"><td>Address:</td><td>{{ event.address|default:"—" }}</td></tr>
-  <tr class="{% if not event.latitude or not event.longitude %}bg-danger{% endif %}"><td>Lat/long:</td><td>{{ event.latitude|default:"—" }} / {{ event.longitude|default:"—" }} {% if event.latitude and event.longitude %}<a href="{% url 'workshop_staff' %}?latitude={{ event.latitude }}&amp;longitude={{ event.longitude }}&amp;submit=Submit" class="btn btn-primary btn-xs pull-right" id="find_closest_instructors">find closest instructors</a>{% else %}<a class="btn btn-danger btn-xs pull-right" id="error_closest_instructors" href="#" data-toggle="popover" title="Search error" data-content="Cannot search for closest instructors without latitude and longitude of event's location.">Error</a>{% endif %}</td></tr>
-  <tr><td>Event request</td><td colspan="2">{% if event.request %}<a href="{{ event.request.get_absolute_url }}">{{ event.request }}</a>{% else %}—{% endif %}</td></tr>
-  <tr><td>Notes</td><td colspan="2"><pre>{{ event.notes }}</pre></td></tr>
+  <tr class="{% if not event.venue %}table-danger{% endif %}"><th>Venue:</th><td>{{ event.venue|default:"&mdash;" }}</td></tr>
+  <tr class="{% if not event.address %}table-danger{% endif %}"><th>Address:</th><td>{{ event.address|default:"&mdash;" }}</td></tr>
+  <tr class="{% if not event.latitude or not event.longitude %}table-danger{% endif %}"><th>Lat/long:</th><td>{{ event.latitude|default:"&mdash;" }} / {{ event.longitude|default:"&mdash;" }} {% if event.latitude and event.longitude %}<a href="{% url 'workshop_staff' %}?latitude={{ event.latitude }}&amp;longitude={{ event.longitude }}&amp;submit=Submit" class="btn btn-primary btn-sm float-right" id="find_closest_instructors">Find closest instructors</a>{% else %}<a class="btn btn-danger btn-sm float-right" id="error_closest_instructors" href="#" data-toggle="popover" title="Search error" data-content="Cannot search for closest instructors without latitude and longitude of event's location.">Error</a>{% endif %}</td></tr>
+  <tr><th>Event request:</th><td colspan="2">{% if event.request %}<a href="{{ event.request.get_absolute_url }}">{{ event.request }}</a>{% else %}&mdash;{% endif %}</td></tr>
+  <tr><th>Admin notes:</th><td colspan="2">{% if event.notes %}<pre>{{ event.notes }}</pre>{% else %}&mdash;{% endif %}</td></tr>
 </table>
