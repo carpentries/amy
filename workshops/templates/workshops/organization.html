@@ -14,23 +14,37 @@
   {% endif %}
 </p>
 <table class="table table-striped">
-  <tr><td>full name:</td><td>{{ organization.fullname }}</td></tr>
-  <tr><td>domain:</td><td><a href="http://{{ organization.domain }}" target="_blank">{{ organization.domain }}</a></td></tr>
-  <tr><td>country:</td><td>{{ organization.country.name|default:"—" }} <img src="{{ organization.country.flag }}" alt="{{ organization.country }}" class="country-flag" /></td></tr>
+  <tr><th>Full name:</th><td>{{ organization.fullname }}</td></tr>
+  <tr><th>Domain:</th><td><a href="http://{{ organization.domain }}" target="_blank">{{ organization.domain }}</a></td></tr>
+  <tr><th>Country:</th><td>{{ organization.country.name|default:"—" }} <img src="{{ organization.country.flag }}" alt="{{ organization.country }}" class="country-flag" /></td></tr>
+  <tr><th>Notes:</th><td>{% if organization.notes %}<pre>{{ organization.notes }}</pre>{% else %}&mdash;{% endif %}</td></tr>
 </table>
 
-{% if organization.notes %}
-<p>Notes:</p>
-<pre>
-{{ organization.notes }}
-</pre>
-{% else %}
-<p>No notes.</p>
-{% endif %}
+<div class="clearfix">
+  <p class="edit-object float-left">
+    {% if perms.workshops.change_organization %}
+    <a href="{% url 'organization_edit' organization.domain %}" class="btn btn-primary">Edit</a>
+    {% else %}
+    <a href="{% url 'organization_edit' organization.domain %}" class="btn btn-primary disabled">Edit</a>
+    {% endif %}
+  </p>
+  <div class="delete-object float-right">
+    {% if perms.workshops.delete_organization %}
+    <form action="{% url 'organization_delete' organization.domain %}" onsubmit='return confirm("Are you sure you wish to remove  \"{{ organization }}\"?")' method="POST">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Delete organization</button>
+    </form>
+    {% else %}
+    <button class="btn btn-danger disabled">Delete organization</button>
+    {% endif %}
+  </div>
+</div>
 
-<h2>Events</h2>
+<hr>
+
 {% with events=organization.event_set.all %}
 {% if events %}
+<h2>Events</h2>
 <table class="table table-striped">
   <tr>
     <th>tags</th>
@@ -54,28 +68,10 @@
 {% endif %}
 {% endwith %}
 
-<div class="clearfix">
-  <p class="edit-object pull-left">
-    {% if perms.workshops.change_organization %}
-    <a href="{% url 'organization_edit' organization.domain %}" class="btn btn-primary">Edit</a>
-    {% else %}
-    <a href="{% url 'organization_edit' organization.domain %}" class="btn btn-primary disabled">Edit</a>
-    {% endif %}
-  </p>
-  <div class="delete-object pull-right">
-    {% if perms.workshops.delete_organization %}
-    <form action="{% url 'organization_delete' organization.domain %}" onsubmit='return confirm("Are you sure you wish to remove  \"{{ organization }}\"?")' method="POST">
-      {% csrf_token %}
-      <button type="submit" class="btn btn-danger">Delete organization</button>
-    </form>
-    {% else %}
-    <button class="btn btn-danger disabled">Delete organization</button>
-    {% endif %}
-  </div>
-</div>
+<hr>
 
-<h2>Memberships</h2>
 {% if organization.membership_set.all %}
+<h2>Memberships</h2>
 <table class="table table-striped">
   <tr>
     <th rowspan="2">Variant</th>

@@ -4,9 +4,9 @@
 
 {% block content %}
 <table class="table table-striped">
-  <tr><td>name:</td><td>{{ badge.name|default:"—" }}</td></tr>
-  <tr><td>title:</td><td>{{ badge.title|default:"—" }}</td></tr>
-  <tr><td>criteria:</td><td>{{ badge.criteria|default:"—" }}</td></tr>
+  <tr><th>Name:</th><td>{{ badge.name|default:"—" }}</td></tr>
+  <tr><th>Title:</th><td>{{ badge.title|default:"—" }}</td></tr>
+  <tr><th>Criteria:</th><td>{{ badge.criteria|default:"—" }}</td></tr>
 </table>
 
   {% if perms.workshops.add_award %}
@@ -19,10 +19,10 @@
   <h3>Awarded:</h3>
   <table class="table table-striped">
     <tr>
-      <th>person</th>
-      <th>awarded</th>
-      <th>event</th>
-      <th>awarded by</th>
+      <th>Person</th>
+      <th>Awarded</th>
+      <th>Event</th>
+      <th>Awarded by</th>
       <th></th>
     </tr>
     {% for award in awards %}

@@ -512,7 +512,7 @@ class EventForm(forms.ModelForm):
 
 class TaskForm(WidgetOverrideMixin, forms.ModelForm):
 
-    helper = BootstrapHelper(submit_label='Add')
+    helper = BootstrapHelper()
 
     class Meta:
         model = Task
@@ -745,7 +745,11 @@ class MembershipForm(forms.ModelForm):
 
     class Meta:
         model = Membership
-        fields = '__all__'
+        fields = [
+            'organization', 'variant', 'agreement_start', 'agreement_end',
+            'contribution_type', 'workshops_without_admin_fee_per_year',
+            'self_organized_workshops_per_year', 'notes',
+        ]
 
 
 class SponsorshipForm(WidgetOverrideMixin, forms.ModelForm):

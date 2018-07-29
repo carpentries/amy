@@ -7,20 +7,20 @@
 {% last_modified task %}
 
 <table class="table table-striped">
-  <tr><td>event:</td><td><a href="{{ task.event.get_absolute_url }}">{{ task.event }}</a></td></tr>
-  <tr><td>person:</td><td><a href="{{ task.person.get_absolute_url }}">{{ task.person }}</a></td></tr>
-  <tr><td>title:</td><td>{{ task.title }}</td></tr>
-  <tr><td>role:</td><td>{{ task.role }}</td></tr>
-  <tr><td>url:</td><td>{{ task.url|urlize_newtab }}</td></tr>
+  <tr><th>Event:</th><td><a href="{{ task.event.get_absolute_url }}">{{ task.event }}</a></td></tr>
+  <tr><th>Person:</th><td><a href="{{ task.person.get_absolute_url }}">{{ task.person }}</a></td></tr>
+  <tr><th>Title:</th><td>{{ task.title }}</td></tr>
+  <tr><th>Role:</th><td>{{ task.role }}</td></tr>
+  <tr><th>URL:</th><td>{{ task.url|urlize_newtab }}</td></tr>
 </table>
 
 <div class="clearfix">
   {% if perms.workshops.change_task %}
-  <p class="edit-object pull-left"><a href="{% url 'task_edit' task.id %}" class="btn btn-primary">Edit</a></p>
+  <p class="edit-object float-left"><a href="{% url 'task_edit' task.id %}" class="btn btn-primary">Edit</a></p>
   {% else %}
-  <p class="edit-object pull-left"><a href="{% url 'task_edit' task.id %}" class="btn btn-primary disabled">Edit</a></p>
+  <p class="edit-object float-left"><a href="{% url 'task_edit' task.id %}" class="btn btn-primary disabled">Edit</a></p>
   {% endif %}
-  <div class="delete-object pull-right">
+  <div class="delete-object float-right">
     {% if perms.workshops.delete_task %}
       <form action="{% url 'task_delete' task.id %}" onsubmit='return confirm("Are you sure you wish to remove \"{{ task }}\"?")' method="POST">
         {% csrf_token %}

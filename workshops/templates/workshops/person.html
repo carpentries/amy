@@ -12,16 +12,16 @@
   {% else %}
   <a href="{% url 'person_edit' person.id %}" class="btn btn-primary disabled">Edit</a>
   {% endif %}
-  <div class="btn-group pull-right" role="group">
+  <div class="btn-group float-right" role="group">
     {% if perms.workshops.change_person %}
-    <a href="{% url 'person_permissions' person.id %}" class="btn btn-default">Change permissions</a>
+    <a href="{% url 'person_permissions' person.id %}" class="btn btn-warning">Change permissions</a>
     {% else %}
-    <a href="{% url 'person_permissions' person.id %}" class="btn btn-default disabled">Change permissions</a>
+    <a href="{% url 'person_permissions' person.id %}" class="btn btn-warning disabled">Change permissions</a>
     {% endif %}
     {% if perms.workshops.change_person or person == request.user %}
-    <a href="{% url 'person_password' person.id %}" class="btn btn-default">Change password</a>
+    <a href="{% url 'person_password' person.id %}" class="btn btn-warning">Change password</a>
     {% else %}
-    <a href="{% url 'person_password' person.id %}" class="btn btn-default disabled">Change password</a>
+    <a href="{% url 'person_password' person.id %}" class="btn btn-warning disabled">Change password</a>
     {% endif %}
   </div>
 </div>
@@ -43,11 +43,11 @@
         {% if person.github %}
           <a href="https://github.com/{{ person.github }}" target="_blank">{{ person.github }}</a>
           {% if is_usersocialauth_in_sync == 'unknown' %}
-            <a id="socialauth_sync_btn" href="#" class="btn btn-warning btn-xs pull-right" data-toggle="popover" data-html="true" title="Unknown error" data-content="Cannot check if person can log in due to errors in GitHub API access">Allow logging in with GitHub</a>
+            <a id="socialauth_sync_btn" href="#" class="btn btn-warning btn-xs float-right" data-toggle="popover" data-html="true" title="Unknown error" data-content="Cannot check if person can log in due to errors in GitHub API access">Allow logging in with GitHub</a>
           {% elif is_usersocialauth_in_sync == True %}
-            <a id="socialauth_sync_btn" href="#" class="btn btn-success btn-xs pull-right" data-toggle="popover" data-html="true" title="Synchronized" data-content="Person can use their GitHub account to log in">Logging in allowed</a>
+            <a id="socialauth_sync_btn" href="#" class="btn btn-success btn-xs float-right" data-toggle="popover" data-html="true" title="Synchronized" data-content="Person can use their GitHub account to log in">Logging in allowed</a>
           {% else %}
-            <a href="{% url 'sync_usersocialauth' person.id %}" class="btn btn-primary btn-xs pull-right">Allow logging in with GitHub</a>
+            <a href="{% url 'sync_usersocialauth' person.id %}" class="btn btn-primary btn-xs float-right">Allow logging in with GitHub</a>
           {% endif %}
         {% else %}
           —
@@ -136,7 +136,7 @@
       {% with tasks=person.task_set.all %}
       {% if tasks %}
       <table class="table table-sm">
-        <tr><th>role</th><th>event</th></tr>
+        <tr><th>Role</th><th>Event</th></tr>
         {% for task in tasks %}
         <tr>
           <td>{{ task.role }}</td>
@@ -184,16 +184,16 @@
   {% else %}
   <a href="{% url 'person_edit' person.id %}" class="btn btn-primary disabled">Edit</a>
   {% endif %}
-  <div class="btn-group pull-right" role="group">
+  <div class="btn-group float-right" role="group">
     {% if perms.workshops.change_person %}
-    <a href="{% url 'person_permissions' person.id %}" class="btn btn-default">Change permissions</a>
+    <a href="{% url 'person_permissions' person.id %}" class="btn btn-warning">Change permissions</a>
     {% else %}
-    <a href="{% url 'person_permissions' person.id %}" class="btn btn-default disabled">Change permissions</a>
+    <a href="{% url 'person_permissions' person.id %}" class="btn btn-warning disabled">Change permissions</a>
     {% endif %}
     {% if perms.workshops.change_person or person == request.user %}
-    <a href="{% url 'person_password' person.id %}" class="btn btn-default">Change password</a>
+    <a href="{% url 'person_password' person.id %}" class="btn btn-warning">Change password</a>
     {% else %}
-    <a href="{% url 'person_password' person.id %}" class="btn btn-default disabled">Change password</a>
+    <a href="{% url 'person_password' person.id %}" class="btn btn-warning disabled">Change password</a>
     {% endif %}
     {% if perms.workshops.delete_person %}
     {% comment %}
