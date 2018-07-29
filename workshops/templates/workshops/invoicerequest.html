@@ -39,7 +39,7 @@
       <tr><td>notes:</td><td><pre>{{ object.notes }}</pre></td></tr>
     </table>
     <div class="clearfix">
-      <div class="edit-object pull-right">
+      <div class="edit-object float-right">
         {% if perms.workshops.change_invoicerequest %}
         <a href="{% url 'invoicerequest_edit' object.pk %}" class="btn btn-success">Update</a>
         {% else %}

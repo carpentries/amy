@@ -128,21 +128,22 @@
     </table>
     {% pagination requests %}
 
-    <div class="btn-group" role="group">
+    <div class="btn-group" role="group" aria-label="Actions for list of training requests">
       <a class="btn btn-success" href="{% url 'training_request' %}">Create new request</a>
 
       <div class="btn-group" role="group">
-        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <button id="id_downloadBtn" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
           Download
-          <span class="caret"></span>
         </button>
-        <ul class="dropdown-menu">
-          <li><a href="{% url 'api:training-requests' %}?format=csv&" id="download_selected">Selected requests as CSV</a></li>
-          <li><a href="{% url 'api:training-requests' %}?format=csv&{{ request.GET.urlencode }}">Filtered requests as CSV</a></li>
-          <li><a href="{% url 'api:training-requests' %}?format=csv">All requests as CSV</a></li>
-        </ul>
+        <div class="dropdown-menu" aria-labelledby="id_downloadBtn">
+          <a class="dropdown-item" href="{% url 'api:training-requests' %}?format=csv&" id="download_selected">Selected requests as CSV</a>
+          <a class="dropdown-item" href="{% url 'api:training-requests' %}?format=csv&{{ request.GET.urlencode }}">Filtered requests as CSV</a>
+          <a class="dropdown-item" href="{% url 'api:training-requests' %}?format=csv">All requests as CSV</a>
+        </div>
       </div>
     </div>
+
+    <hr>
 
     <h2>Actions</h2>
     {% crispy form %}

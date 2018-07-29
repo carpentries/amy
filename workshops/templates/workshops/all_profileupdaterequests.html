@@ -4,27 +4,23 @@
 
 {% block content %}
   <div class="btn-group" role="group" aria-label="Type of requests">
-    <a href="{% url 'all_profileupdaterequests' %}" class="btn btn-default{% if active_requests %} active{% endif %}">New</a>
-    <a href="{% url 'all_closed_profileupdaterequests' %}" class="btn btn-default{% if not active_requests %} active{% endif %}">Closed</a>
+    <a href="{% url 'all_profileupdaterequests' %}" class="btn btn-secondary{% if active_requests %} active{% endif %}">New</a>
+    <a href="{% url 'all_closed_profileupdaterequests' %}" class="btn btn-secondary{% if not active_requests %} active{% endif %}">Closed</a>
   </div>
   {% if requests %}
   <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>person</th>
-        <th>email</th>
-        <th class="additional-links"></th>
-      </tr>
-    </thead>
-    <tbody>
+    <tr>
+      <th>Person</th>
+      <th>Email</th>
+      <th class="additional-links"></th>
+    </tr>
     {% for req in requests %}
-      <tr>
-        <td>{{ req.personal }} {{ req.middle }} {{ req.family }}</td>
-        <td>{{ req.email|urlize }}</td>
-        <td><a href="{{ req.get_absolute_url }}"><i class="fas fa-info-circle"></i></a></td>
-      </tr>
+    <tr>
+      <td>{{ req.personal }} {{ req.middle }} {{ req.family }}</td>
+      <td>{{ req.email|urlize }}</td>
+      <td><a href="{{ req.get_absolute_url }}"><i class="fas fa-info-circle"></i></a></td>
+    </tr>
     {% endfor %}
-    </tbody>
   </table>
   {% pagination requests %}
   {% else %}

@@ -6,30 +6,26 @@
 {% block content %}
   {% if requests %}
   <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>assignee</th>
-        <th>person</th>
-        <th>is instructor</th>
-        <th>organization</th>
-        <th>planned dates</th>
-        <th>location</th>
-        <th class="additional-links"></th>
-      </tr>
-    </thead>
-    <tbody>
+    <tr>
+      <th>Assignee</th>
+      <th>Person</th>
+      <th>Is instructor</th>
+      <th>Organization</th>
+      <th>Planned dates</th>
+      <th>Location</th>
+      <th class="additional-links"></th>
+    </tr>
     {% for req in requests %}
-      <tr>
-        <td>{% if req.assigned_to %}<a href="{{ req.assigned_to.get_absolute_url }}">{{ req.assigned_to.get_short_name }}</a>{% else %}—{% endif %}</td>
-        <td>{{ req.name }} &lt;{{ req.email|urlize }}&gt;</td>
-        <td>{{ req.instructor_status }}</td>
-        <td>{{ req.organization }}</td>
-        <td>{{ req.dates }}</td>
-        <td>{{ req.location }}, {{ req.country.name }}</td>
-        <td><a href="{{ req.get_absolute_url }}"><i class="fas fa-info-circle"></i></a></td>
-      </tr>
+    <tr>
+      <td>{% if req.assigned_to %}<a href="{{ req.assigned_to.get_absolute_url }}">{{ req.assigned_to.get_short_name }}</a>{% else %}—{% endif %}</td>
+      <td>{{ req.name }} &lt;{{ req.email|urlize }}&gt;</td>
+      <td>{{ req.instructor_status }}</td>
+      <td>{{ req.organization }}</td>
+      <td>{{ req.dates }}</td>
+      <td>{{ req.location }}, {{ req.country.name }}</td>
+      <td><a href="{{ req.get_absolute_url }}"><i class="fas fa-info-circle"></i></a></td>
+    </tr>
     {% endfor %}
-    </tbody>
   </table>
   {% else %}
   <p>No workshop requests matching the filter.</p>

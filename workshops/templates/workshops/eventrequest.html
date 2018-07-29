@@ -5,16 +5,18 @@
 {% block content %}
 {% if not object.active %}
   {% with event=object.event_set.first %}
+  {% if event %}
   <div class="alert alert-warning" role="alert">
-    <p><strong>Warning:</strong> This request was closed (see <a href="{{ object.event.get_absolute_url }}">related event</a>).</p>
+    <p><strong>Warning:</strong> This request was closed (see <a href="{{ event.get_absolute_url }}">related event</a>).</p>
   </div>
+  {% endif %}
   {% endwith %}
 {% endif %}
 
 <div class="row">
-  <div class="col-md-6 col-md-offset-6 text-right">
+  <div class="col-md-6 offset-md-6 text-right">
     <p>
-      <a href="#" id="change_assignment"><i class="fas fa-user-cog"></i></a>
+      <a href="#assignment_modal" id="change_assignment" data-toggle="modal" data-target="#assignment_modal"><i class="fas fa-user-cog"></i></a>
       Assignee:
       {% if object.assigned_to %}
         <a href="{{ object.assigned_to.get_absolute_url }}">{{ object.assigned_to.full_name }}</a> (<a href="{% url 'eventrequest_assign' object.pk %}" id="clear-assignment">clear</a>).
@@ -29,14 +31,14 @@
 
 {% if object.active %}
 <div class="clearfix">
-  <p class="edit-object pull-left">
+  <p class="edit-object float-left">
     {% if perms.workshops.change_eventrequest and perms.workshops.add_event %}
     <a href="{% url 'eventrequest_accept' object.pk %}" class="btn btn-success">Accept</a>
     {% else %}
     <a href="#" class="btn btn-success disabled">Accept</a>
     {% endif %}
   </p>
-  <p class="delete-object pull-right">
+  <p class="delete-object float-right">
     {% if perms.workshops.change_eventrequest %}
     <a href="{% url 'eventrequest_discard' object.pk %}" onclick='return confirm("Are you sure you wish to discard \"{{ object }}\"?")' class="btn btn-danger">Discard request</a>
     {% else %}
@@ -46,23 +48,7 @@
 </div>
 {% endif %}
 
-<!-- selecting assignment modal -->
-<div class="modal fade" id="assignment_modal" tabindex="-1" role="dialog" aria-labelledby="assignment_modal_label" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title" id="assignment_modal_label">Assignment</h4>
-      </div>
-      <div class="modal-body">
-        {% crispy person_lookup_form %}
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-      </div>
-    </div>
-  </div>
-</div>
+{% include "assignment_modal.html" with form=person_lookup_form %}
 {% endblock %}
 
 {% block extrajs %}

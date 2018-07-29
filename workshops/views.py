@@ -917,6 +917,9 @@ def persons_merge(request):
                                         protected_objects=e.protected_objects)
 
             else:
+                messages.success(request, 'Persons were merged successfully. '
+                                          'You were redirected to the base '
+                                          'person.')
                 return redirect(base_obj.get_absolute_url())
         else:
             messages.error(request, 'Fix errors in the form.')
@@ -974,7 +977,16 @@ class AllEvents(OnlyForAdminsMixin, AMYListView):
 def event_details(request, slug):
     '''List details of a particular event.'''
     try:
-        event = Event.objects.get(slug=slug)
+        event = Event.objects.prefetch_related(Prefetch(
+            'task_set',
+            to_attr='contacts',
+            queryset=Task.objects.select_related('person').filter(
+                # we only want hosts, organizers and instructors
+                Q(role__name='host') | Q(role__name='organizer') |
+                Q(role__name='instructor')
+            ).filter(person__may_contact=True)
+            .exclude(Q(person__email='') | Q(person__email=None))
+        )).get(slug=slug)
     except Event.DoesNotExist:
         raise Http404('Event matching query does not exist.')
 
@@ -1251,6 +1263,9 @@ def events_merge(request):
                                         protected_objects=e.protected_objects)
 
             else:
+                messages.success(request, 'Events were merged successfully. '
+                                          'You were redirected to the base '
+                                          'event.')
                 return redirect(base_obj.get_absolute_url())
         else:
             messages.error(request, 'Fix errors in the form.')
@@ -2054,18 +2069,31 @@ def workshop_issues(request):
             )
         )
     )
+
     no_attendance = Q(attendance=None) | Q(attendance=0)
     no_location = (Q(country=None) |
                    Q(venue=None) | Q(venue__exact='') |
                    Q(address=None) | Q(address__exact='') |
                    Q(latitude=None) | Q(longitude=None))
     bad_dates = Q(start__gt=F('end'))
+
     events = events.filter(
         (no_attendance & ~Q(tags__name='unresponsive')) |
         no_location |
         bad_dates |
         Q(num_instructors=0)
     ).prefetch_related('task_set', 'task_set__person')
+
+    events = events.prefetch_related(Prefetch(
+        'task_set',
+        to_attr='contacts',
+        queryset=Task.objects.select_related('person').filter(
+            # we only want hosts, organizers and instructors
+            Q(role__name='host') | Q(role__name='organizer') |
+            Q(role__name='instructor')
+        ).filter(person__may_contact=True)
+        .exclude(Q(person__email='') | Q(person__email=None))
+    ))
 
     assigned_to, is_admin = assignment_selection(request)
 
@@ -2440,8 +2468,8 @@ def profileupdaterequest_accept(request, request_id, person_id=None):
                 messages.error(
                     request,
                     'Cannot update profile: some database constraints weren\'t'
-                    'fulfilled. Make sure that user name, GitHub user name,'
-                    'Twitter user name, or email address are unique.'
+                    ' fulfilled. Make sure that user name, GitHub user name,'
+                    ' Twitter user name, or email address are unique.'
                 )
                 return redirect(profileupdate.get_absolute_url())
 

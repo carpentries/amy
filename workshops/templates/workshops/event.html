@@ -43,7 +43,7 @@
 <div class="row">
   <div class="col-md-12">
     {% block edit-actions %}
-    <p class="edit-object pull-left">
+    <p class="edit-object">
       {% if perms.workshops.change_event %}
       <a href="{% url 'event_edit' event.slug %}" class="btn btn-primary">Edit</a>
       {% else %}
@@ -57,24 +57,7 @@
 
 {% include "workshops/event_details_table.html" with event=event %}
 
-<!-- selecting assignment modal -->
-{# this modal doesn't have 'tabindex="-1"', because this parameter breaks Select2 widget #}
-<div class="modal" role="dialog" id="assignment_modal" aria-labelledby="assignment_modal_label" aria-hidden="true">
-  <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="assignment_modal_label">Assignment</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-      </div>
-      <div class="modal-body">
-        {% crispy admin_lookup_form %}
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-      </div>
-    </div>
-  </div>
-</div>
+{% include "assignment_modal.html" with form=admin_lookup_form %}
 
 <!-- preview modal -->
 <div class="modal" role="dialog" id="preview_modal" tabindex="-1" aria-labelledby="preview_modal_label" aria-hidden="true">

@@ -1164,27 +1164,27 @@ class Event(AssignmentMixin, models.Model):
         return self.invoice_status == 'not-invoiced'
 
     @cached_property
+    def contacts(self):
+        return (
+            self.task_set
+                .filter(
+                    # we only want hosts, organizers and instructors
+                    Q(role__name='host') | Q(role__name='organizer') |
+                    Q(role__name='instructor')
+                )
+                .filter(person__may_contact=True)
+                .exclude(Q(person__email='') | Q(person__email=None))
+                .values_list('person__email', flat=True)
+        )
+
+    @cached_property
     def mailto(self):
         """Return list of emails we can contact about workshop details, like
         attendance."""
         from workshops.util import find_emails
 
-        emails = self.task_set \
-            .filter(
-                # we only want hosts, organizers and instructors
-                Q(role__name='host') | Q(role__name='organizer') |
-                Q(role__name='instructor')
-            ) \
-            .filter(person__may_contact=True) \
-            .exclude(Q(person__email='') | Q(person__email=None)) \
-            .values_list('person__email', flat=True)
-
-        additional_emails = find_emails(self.contact)
-        # Emails will become an iterator in 1.9 (ValuesListQuerySet previously)
-        # so we need a normal list that will be extended by that iterator.
-        # Bonus points: it works in 1.8.x too!
-        additional_emails.extend(emails)
-        return ','.join(additional_emails)
+        emails = find_emails(self.contact)
+        return emails
 
     def get_invoice_form_url(self):
         from .util import universal_date_format
