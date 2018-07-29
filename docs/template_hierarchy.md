@@ -47,6 +47,8 @@ Django template blocks used in `base.html` template:
 Additionally there were created widgets to support some of the tedious
 components:
 * `assignment.html` displays a dropdown to change filtering events assigned to
-  specific person (user, unassigned, or no filtering)
+  specific person (user, unassigned, or no filtering),
+* `assignment_modal.html` displays a modal "window" on the page; this window
+  is used to select person assigned to specified object,
 * `pagination.html` displays a neat button groups split with "..." to not show
   too much pages at once.
