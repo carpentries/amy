@@ -1,6 +1,12 @@
 import re
 
 from dal import autocomplete
+from dal_select2.widgets import (
+    ListSelect2,
+    Select2,
+    Select2Multiple,
+    ModelSelect2Multiple,
+)
 import django_filters
 from django.db.models import Q
 from django.forms import widgets
@@ -11,6 +17,7 @@ from workshops.models import (
     Event,
     Organization,
     Person,
+    Badge,
     Airport,
     EventRequest,
     Tag,
@@ -30,7 +37,8 @@ class AllCountriesFilter(django_filters.ChoiceFilter):
     @property
     def field(self):
         qs = self.model._default_manager.distinct()
-        qs = qs.order_by(self.name).values_list(self.name, flat=True)
+        qs = qs.order_by(self.field_name).values_list(self.field_name,
+                                                      flat=True)
 
         choices = [o for o in qs if o]
         countries = Countries()
@@ -48,7 +56,7 @@ class ForeignKeyAllValuesFilter(django_filters.ChoiceFilter):
 
     @property
     def field(self):
-        name = self.name
+        name = self.field_name
         model = self.lookup_model
 
         qs1 = self.model._default_manager.distinct()
@@ -76,6 +84,35 @@ class EventStateFilter(django_filters.ChoiceFilter):
             return qs
 
 
+class NamesOrderingFilter(django_filters.OrderingFilter):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.extra['choices'] += [
+            ('lastname', 'Last name'),
+            ('-lastname', 'Last name (descending)'),
+            ('firstname', 'First name'),
+            ('-firstname', 'First name (descending)'),
+        ]
+
+    def filter(self, qs, value):
+        ordering = super().filter(qs, value)
+
+        if not value:
+            return ordering
+
+        # `value` is a list
+        if any(v in ['lastname'] for v in value):
+            return ordering.order_by('family', 'middle', 'personal')
+        elif any(v in ['-lastname'] for v in value):
+            return ordering.order_by('-family', '-middle', '-personal')
+        elif any(v in ['firstname'] for v in value):
+            return ordering.order_by('personal', 'middle', 'family')
+        elif any(v in ['-firstname'] for v in value):
+            return ordering.order_by('-personal', '-middle', '-family')
+
+        return ordering
+
+
 class AMYFilterSet(django_filters.FilterSet):
     """
     This base class sets FormHelper.
@@ -89,9 +126,9 @@ class AMYFilterSet(django_filters.FilterSet):
 
 
 class EventFilter(AMYFilterSet):
-    assigned_to = ForeignKeyAllValuesFilter(Person)
-    host = ForeignKeyAllValuesFilter(Organization)
-    administrator = ForeignKeyAllValuesFilter(Organization)
+    assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2())
+    host = ForeignKeyAllValuesFilter(Organization, widget=Select2())
+    administrator = ForeignKeyAllValuesFilter(Organization, widget=Select2())
 
     STATUS_CHOICES = [
         ('', 'All'),
@@ -104,13 +141,27 @@ class EventFilter(AMYFilterSet):
         ('uninvoiced_events', 'Uninvoiced'),
         ('metadata_changed', 'Detected changes in metadata'),
     ]
-    state = EventStateFilter(choices=STATUS_CHOICES, label='Status')
+    state = EventStateFilter(choices=STATUS_CHOICES, label='Status',
+                             widget=Select2())
 
     invoice_status = django_filters.ChoiceFilter(
         choices=(EMPTY_SELECTION, ) + Event.INVOICED_CHOICES,
     )
 
-    country = AllCountriesFilter()
+    tags = django_filters.ModelMultipleChoiceFilter(
+        queryset=Tag.objects.all(), label='Tags',
+        widget=ModelSelect2Multiple(),
+    )
+
+    country = AllCountriesFilter(widget=Select2())
+
+    order_by = django_filters.OrderingFilter(
+        fields=(
+            'slug',
+            'start',
+            'end',
+        ),
+    )
 
     class Meta:
         model = Event
@@ -123,7 +174,6 @@ class EventFilter(AMYFilterSet):
             'completed',
             'country',
         ]
-        order_by = ['-slug', 'slug', 'start', '-start', 'end', '-end']
 
 
 def filter_active_eventrequest(qs, name, value):
@@ -149,6 +199,12 @@ class EventRequestFilter(AMYFilterSet):
         widget=widgets.RadioSelect,
     )
 
+    order_by = django_filters.OrderingFilter(
+        fields=(
+            'created_at',
+        ),
+    )
+
     class Meta:
         model = EventRequest
         fields = [
@@ -157,15 +213,22 @@ class EventRequestFilter(AMYFilterSet):
             'active',
             'country',
         ]
-        order_by = ['-created_at', 'created_at']
 
 
 class OrganizationFilter(AMYFilterSet):
-    country = AllCountriesFilter()
+    country = AllCountriesFilter(widget=Select2())
 
     membership__variant = django_filters.MultipleChoiceFilter(
         label='Memberships (current or past)',
         choices=Membership.MEMBERSHIP_CHOICES,
+        widget=Select2Multiple(),
+    )
+
+    order_by = django_filters.OrderingFilter(
+        fields=(
+            'fullname',
+            'domain',
+        ),
     )
 
     class Meta:
@@ -173,7 +236,6 @@ class OrganizationFilter(AMYFilterSet):
         fields = [
             'country',
         ]
-        order_by = ['fullname', '-fullname', 'domain', '-domain', ]
 
 
 def filter_taught_workshops(queryset, name, values):
@@ -195,7 +257,7 @@ def filter_taught_workshops(queryset, name, values):
 class MembershipFilter(AMYFilterSet):
     organization_name = django_filters.CharFilter(
         label='Organization name',
-        name='organization__fullname',
+        field_name='organization__fullname',
         lookup_expr='icontains',
     )
 
@@ -204,6 +266,15 @@ class MembershipFilter(AMYFilterSet):
 
     CONTRIBUTION_CHOICES = (('', 'Any'),) + Membership.CONTRIBUTION_CHOICES
     contribution_type = django_filters.ChoiceFilter(choices=CONTRIBUTION_CHOICES)
+
+    order_by = django_filters.OrderingFilter(
+        fields=(
+            'organization__fullname',
+            'organization__domain',
+            'agreement_start',
+            'agreement_end',
+        ),
+    )
 
     class Meta:
         model = Membership
@@ -215,9 +286,20 @@ class MembershipFilter(AMYFilterSet):
 
 
 class PersonFilter(AMYFilterSet):
+    badges = django_filters.ModelMultipleChoiceFilter(
+        queryset=Badge.objects.all(), label='Badges',
+        widget=ModelSelect2Multiple(),
+    )
     taught_workshops = django_filters.ModelMultipleChoiceFilter(
         queryset=Tag.objects.all(), label='Taught at workshops of type',
         method=filter_taught_workshops,
+        widget=ModelSelect2Multiple(),
+    )
+
+    order_by = NamesOrderingFilter(
+        fields=(
+            'email',
+        ),
     )
 
     class Meta:
@@ -225,19 +307,6 @@ class PersonFilter(AMYFilterSet):
         fields = [
             'badges', 'taught_workshops',
         ]
-        order_by = ["lastname", "-lastname", "firstname", "-firstname",
-                    "email", "-email"]
-
-    def get_order_by(self, order_value):
-        if order_value == 'firstname':
-            return ['personal', 'middle', 'family']
-        elif order_value == '-firstname':
-            return ['-personal', '-middle', '-family']
-        elif order_value == 'lastname':
-            return ['family', 'middle', 'personal']
-        elif order_value == '-lastname':
-            return ['-family', '-middle', '-personal']
-        return super().get_order_by(order_value)
 
 
 def filter_all_persons(queryset, name, all_persons):
@@ -358,6 +427,13 @@ class TraineeFilter(AMYFilterSet):
         ),
     )
 
+    order_by = NamesOrderingFilter(
+        fields=(
+            'last_login',
+            'email',
+        ),
+    )
+
     class Meta:
         model = Person
         fields = [
@@ -367,20 +443,6 @@ class TraineeFilter(AMYFilterSet):
             'is_instructor',
             'training',
         ]
-        order_by = ["-last_login", "lastname", "-lastname", "firstname", "-firstname",
-                    "email", "-email"]
-
-    def get_order_by(self, order_value):
-        if order_value == 'firstname':
-            return ['personal', 'middle', 'family']
-        elif order_value == '-firstname':
-            return ['-personal', '-middle', '-family']
-        elif order_value == 'lastname':
-            return ['family', 'middle', 'personal']
-        elif order_value == '-lastname':
-            return ['-family', '-middle', '-personal']
-        else:
-            return super().get_order_by(order_value)
 
 
 def filter_matched(queryset, name, choice):
@@ -444,7 +506,7 @@ class TrainingRequestFilter(AMYFilterSet):
     )
 
     group_name = django_filters.CharFilter(
-        name='group_name',
+        field_name='group_name',
         lookup_expr='icontains',
         label='Group')
 
@@ -471,6 +533,12 @@ class TrainingRequestFilter(AMYFilterSet):
 
     location = django_filters.CharFilter(lookup_expr='icontains')
 
+    order_by = NamesOrderingFilter(
+        fields=(
+            'created_at',
+        ),
+    )
+
     class Meta:
         model = TrainingRequest
         fields = [
@@ -481,24 +549,6 @@ class TrainingRequestFilter(AMYFilterSet):
             'affiliation',
             'location',
         ]
-        order_by = ['created_at',
-                    '-created_at',
-                    'trainee firstname',
-                    '-trainee firstname',
-                    'trainee lastname',
-                    '-trainee lastname']
-
-    def get_order_by(self, order_value):
-        if order_value == 'trainee firstname':
-            return ['personal', 'family']
-        elif order_value == '-trainee firstname':
-            return ['-personal', '-family']
-        elif order_value == 'trainee lastname':
-            return ['family', 'personal']
-        elif order_value == '-trainee lastname':
-            return ['-family', '-personal']
-        else:
-            return super().get_order_by(order_value)
 
 
 class TaskFilter(AMYFilterSet):
@@ -511,6 +561,19 @@ class TaskFilter(AMYFilterSet):
         ),
     )
 
+    order_by = django_filters.OrderingFilter(
+        fields=(
+            ('event__slug', 'event'),
+            ('person__family', 'person'),
+            ('role', 'role'),
+        ),
+        field_labels={
+            'event__slug': 'Event',
+            'person__family': 'Person',
+            'role': 'Role',
+        }
+    )
+
     class Meta:
         model = Task
         fields = [
@@ -520,42 +583,59 @@ class TaskFilter(AMYFilterSet):
             # 'person',
             'role',
         ]
-        order_by = [
-            ['event__slug', 'Event'],
-            ['-event__slug', 'Event (descending)'],
-            ['person__family', 'Person'],
-            ['-person__family', 'Person (descending)'],
-            ['role', 'Role'],
-            ['-role', 'Role (descending)'],
-        ]
 
 
 class AirportFilter(AMYFilterSet):
     fullname = django_filters.CharFilter(lookup_expr='icontains')
+
+    order_by = django_filters.OrderingFilter(
+        fields=(
+            'iata',
+            'fullname',
+        ),
+        field_labels={
+            'iata': 'IATA',
+            'fullname': 'Full name',
+        }
+    )
 
     class Meta:
         model = Airport
         fields = [
             'fullname',
         ]
-        order_by = ["iata", "-iata", "fullname", "-fullname"]
 
 
 class BadgeAwardsFilter(AMYFilterSet):
-    awarded_after = django_filters.DateFilter(name='awarded',
+    awarded_after = django_filters.DateFilter(field_name='awarded',
                                               lookup_expr='gte')
-    awarded_before = django_filters.DateFilter(name='awarded',
+    awarded_before = django_filters.DateFilter(field_name='awarded',
                                                lookup_expr='lte')
+    event = django_filters.ModelChoiceFilter(
+        queryset=Event.objects.all(),
+        label='Event',
+        widget=autocomplete.ModelSelect2(
+            url='event-lookup',
+            attrs=SIDEBAR_DAL_WIDTH,
+        ),
+    )
+
+    order_by = django_filters.OrderingFilter(
+        fields=(
+            'awarded',
+            'person__family',
+        ),
+        field_labels={
+            'awarded': 'Awarded date',
+            'person__family': 'Person',
+        }
+    )
 
     class Meta:
         model = Award
         fields = (
             'awarded_after', 'awarded_before', 'event',
         )
-        order_by = [
-            '-awarded', 'awarded', '-person__family',
-            'person__family',
-        ]
 
 
 class InvoiceRequestFilter(AMYFilterSet):
@@ -573,15 +653,18 @@ class InvoiceRequestFilter(AMYFilterSet):
         ),
     )
 
+    order_by = django_filters.OrderingFilter(
+        fields=(
+            'event__slug',
+            'organization__domain',
+        ),
+    )
+
     class Meta:
         model = InvoiceRequest
         fields = [
             'status',
             'organization',
-        ]
-        order_by = [
-            '-event__slug', 'event__slug',
-            'organization__domain', '-organization__domain',
         ]
 
 
@@ -601,14 +684,17 @@ class EventSubmissionFilter(AMYFilterSet):
     )
     assigned_to = ForeignKeyAllValuesFilter(Person)
 
+    order_by = django_filters.OrderingFilter(
+        fields=(
+            'created_at',
+        ),
+    )
+
     class Meta:
         model = EventSubmission
         fields = [
             'active',
             'assigned_to',
-        ]
-        order_by = [
-            '-created_at', 'created_at',
         ]
 
 
@@ -627,6 +713,12 @@ class DCSelfOrganizedEventRequestFilter(AMYFilterSet):
         widget=widgets.RadioSelect,
     )
     assigned_to = ForeignKeyAllValuesFilter(Person)
+
+    order_by = django_filters.OrderingFilter(
+        fields=(
+            'created_at',
+        ),
+    )
 
     class Meta:
         model = DCSelfOrganizedEventRequest

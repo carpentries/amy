@@ -1,9 +1,6 @@
-{% extends "base_nonav_fixed.html" %}
+{% extends "base.html" %}
+{% load static %}
 
-{% block logo %}
-    <div class="row">
-      <div class="col-sm-12 col-md-12">
-        {% include "amy-logo.html" %}
-      </div>
-    </div>
-{% endblock %}
+{% block logo %}<a href="https://github.com/swcarpentry/amy"><img class="p-4" src="{% static 'amy-logo.png' %}" alt="AMY Logo" /></a>{% endblock %}
+
+{% block maincolumn %}col-6 mx-auto pt-4{% endblock maincolumn %}

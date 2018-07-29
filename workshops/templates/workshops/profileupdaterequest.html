@@ -1,4 +1,4 @@
-{% extends "base_nav_fixed.html" %}
+{% extends "base_nav.html" %}
 
 {% load crispy_forms_tags %}
 {% load links %}
@@ -155,7 +155,7 @@
 
 {% if new.active %}
 <div class="clearfix">
-  <div class="edit-object pull-left btn-group" role="group">
+  <div class="edit-object float-left btn-group" role="group">
     {% if old and airport and perms.workshops.change_profileupdaterequest and perms.workshops.change_person %}
     <a href="{% url 'profileupdaterequest_accept' new.pk old.pk %}" role="button" onclick='return confirm("Did you verify the changes with \"{{ old }}\"? If you agree, their record will get updated.")' class="btn btn-success">Update</a>
     {% else %}
@@ -167,8 +167,8 @@
     <a href="#" class="btn btn-success disabled" role="button">Add new person</a>
     {% endif %}
   </div>
-  <div class="btn-group delete-object pull-right" role="group">
-    <a href="{% url 'profileupdaterequest_fix' new.pk %}" role="button" class="btn btn-default">Fix request</a>
+  <div class="btn-group delete-object float-right" role="group">
+    <a href="{% url 'profileupdaterequest_fix' new.pk %}" role="button" class="btn btn-warning">Fix request</a>
     {% if perms.workshops.change_profileupdaterequest %}
     <a href="{% url 'profileupdaterequest_discard' new.pk %}" role="button" onclick='return confirm("Are you sure you wish to discard \"{{ new }}\"?")' class="btn btn-danger">Discard request</a>
     {% else %}

@@ -14,10 +14,10 @@
 {% endfor %}
 {% if person.get_training_tasks %}
 <a href="{% url 'trainingprogress_add' %}?trainee={{ person.id|urlencode }}&amp;next={{ request.get_full_path|urlencode }}"
-   class="label label-default"
+   class="badge badge-secondary"
    data-toggle="popover" data-content="Click to add new progress">+</a>
 {% else %}
-<a class="label label-default disabled"
+<a class="badge badge-secondary disabled"
    data-toggle="popover"
    data-content="It's not possible to add training progress to a trainee without any training task.">+</a>
 {% endif %}

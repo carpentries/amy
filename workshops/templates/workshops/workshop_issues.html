@@ -1,34 +1,30 @@
-{% extends "base_nav_fixed.html" %}
+{% extends "base_nav.html" %}
 
 {% block content %}
 
 {% if is_admin or user.is_superuser %}
 <div class="row">
-  <div class="col-xs-12">
-    <div class="btn-group" role="group" aria-label="Events assignment">
-      <a href="?assigned_to=me" class="btn btn-default{% if assigned_to == 'me' %} active{% endif %}">Mine</a>
-      <a href="?assigned_to=noone" class="btn btn-default{% if assigned_to == 'noone' %} active{% endif %}">Unassigned</a>
-      <a href="?assigned_to=all" class="btn btn-default{% if assigned_to == 'all' %} active{% endif %}">All</a>
-    </div>
+  <div class="col-12">
+    {% include "assignment.html" %}
   </div>
 </div>
 {% endif %}
 
 <div class="row">
-  <div class="col-xs-12">
+  <div class="col-12">
     {% if events %}
-    <p>Legend:</p>
+    <p class="mt-4">Legend:</p>
     <ul>
-      <li><span class="glyphicon glyphicon-envelope"></span> &mdash; mail instructors and host about problem</li>
-      <li><span class="glyphicon glyphicon-remove"></span> &mdash; no email addresses available</li>
+      <li><i class="fas fa-envelope"></i> &mdash; mail instructors and host about problem</li>
+      <li><i class="fas fa-times"></i> &mdash; no email addresses available</li>
     </ul>
     <table class="table table-striped">
       <tr>
         <th>Event</th>
-        <th>Attendance <span class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="Number of attendees is missing"></span></th>
-        <th>Instructors <span class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="No instructors assigned to the event"></span></th>
-        <th>Location <span class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="Country, venue, address or lat/long are missing"></span></th>
-        <th>Dates <span class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="Start date is in future of end date"></span></th>
+        <th>Attendance <i class="fas fa-question-circle" data-toggle="tooltip" title="Number of attendees is missing"></i></th>
+        <th>Instructors <i class="fas fa-question-circle" data-toggle="tooltip" title="No instructors assigned to the event"></i></th>
+        <th>Location <i class="fas fa-question-circle" data-toggle="tooltip" title="Country, venue, address or lat/long are missing"></i></th>
+        <th>Dates <i class="fas fa-question-circle" data-toggle="tooltip" title="Start date is in future of end date"></i></th>
       </tr>
       {% for event in events %}
       <tr>
@@ -37,12 +33,12 @@
         </td>
         <td>
           {% if event.missing_attendance %}
-            {% if event.mailto %}
+            {% if event.mailto or event.contacts %}
               <a href="{% include 'workshops/attendance_email_href.html' with event=event %}">
-              <span class="glyphicon glyphicon-envelope"></span>
+              <i class="fas fa-envelope"></i>
               </a>
             {% else %}
-              <span class="glyphicon glyphicon-remove"></span>
+              <i class="fas fa-times"></i>
             {% endif %}
           {% endif %}
         </td>
@@ -54,10 +50,10 @@
 Can you please send us list of instructors who taught at {{ event.slug }} workshop?
 
 Thanks for your help.{% endfilter %}">
-              <span class="glyphicon glyphicon-envelope"></span>
+              <i class="fas fa-envelope"></i>
               </a>
             {% else %}
-              <span class="glyphicon glyphicon-remove"></span>
+              <i class="fas fa-times"></i>
             {% endif %}
           {% endif %}
         </td>
@@ -69,10 +65,10 @@ Thanks for your help.{% endfilter %}">
 Can you please send us the location where the {{ event.slug }} workshop took place? We need a country, address, venue, and latitude/longitude.
 
 Thanks for your help.{% endfilter %}">
-              <span class="glyphicon glyphicon-envelope"></span>
+              <i class="fas fa-envelope"></i>
               </a>
             {% else %}
-              <span class="glyphicon glyphicon-remove"></span>
+              <i class="fas fa-times"></i>
             {% endif %}
           {% endif %}
         </td>
@@ -84,10 +80,10 @@ Thanks for your help.{% endfilter %}">
 Can you please confirm the start and end dates for the workshop {{ event.slug }}?
 
 Thanks for your help.{% endfilter %}">
-              <span class="glyphicon glyphicon-envelope"></span>
+              <i class="fas fa-envelope"></i>
               </a>
             {% else %}
-              <span class="glyphicon glyphicon-remove"></span>
+              <i class="fas fa-times"></i>
             {% endif %}
           {% endif %}
         </td>

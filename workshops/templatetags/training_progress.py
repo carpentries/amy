@@ -12,7 +12,7 @@ def progress_label(progress):
     assert isinstance(progress, TrainingProgress)
 
     if progress.discarded:
-        additional_label = 'default'
+        additional_label = 'dark'
 
     else:
         switch = {
@@ -22,7 +22,7 @@ def progress_label(progress):
         }
         additional_label = switch[progress.state]
 
-    fmt = 'label label-{}'.format(additional_label)
+    fmt = 'badge badge-{}'.format(additional_label)
     return mark_safe(fmt)
 
 

@@ -1,4 +1,4 @@
-{% extends "base_nav_fixed.html" %}
+{% extends "base_nav.html" %}
 
 {% load links %}
 {% load tags %}
@@ -9,171 +9,167 @@
 {{ form.event_a }}
 {{ form.event_b }}
 <table class="table table-striped table-hover">
-  <thead>
-    <tr>
-      <th width="12%">Field</th>
-      <th width="38%">Event A (<a href="{{ obj_a.get_absolute_url }}" target="_blank">link</a>)</th>
-      <th width="38%">Event B (<a href="{{ obj_b.get_absolute_url }}" target="_blank">link</a>)</th>
-      <th width="12%">Strategy</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      {# selecting an ID basically shows which event should stay, and which should go #}
-      <th>ID <span class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="This indicates which event (as database object) will stay; the other one will be removed."></span></th>
-      <td>{{ obj_a.id|default:"—" }}</td><td>{{ obj_b.id|default:"—" }}</td>
-      <th>{% include "workshops/merge_radio.html" with field=form.id %}</th>
-    </tr>
-    <tr>
-      <th>Slug</th>
-      <td>{{ obj_a.slug|default:"—" }}</td><td>{{ obj_b.slug|default:"—" }}</td>
-      <th>{% include "workshops/merge_radio.html" with field=form.slug %}</th>
-    </tr>
-    <tr>
-      <th>Completed?</th>
-      <td>{{ obj_a.completed|yesno }}</td><td>{{ obj_b.completed|yesno }}</td>
-      <th>{% include "workshops/merge_radio.html" with field=form.completed %}</th>
-    </tr>
-    <tr>
-      <th>Assignee</th>
-      <td>{% if obj_a.assigned_to %}<a href="{{ obj_a.assigned_to.get_absolute_url }}">{{ obj_a.assigned_to.full_name }}</a>{% else %}—{% endif %}</td>
-      <td>{% if obj_b.assigned_to %}<a href="{{ obj_b.assigned_to.get_absolute_url }}">{{ obj_b.assigned_to.full_name }}</a>{% else %}—{% endif %}</td>
-      <th>{% include "workshops/merge_radio.html" with field=form.assigned_to %}</th>
-    </tr>
-    <tr>
-      <th>Start date</th>
-      <td>{{ obj_a.start|default:"—" }}</td><td>{{ obj_b.start|default:"—" }}</td>
-      <th>{% include "workshops/merge_radio.html" with field=form.start %}</th>
-    </tr>
-    <tr>
-      <th>End date</th>
-      <td>{{ obj_a.end|default:"—" }}</td><td>{{ obj_b.end|default:"—" }}</td>
-      <th>{% include "workshops/merge_radio.html" with field=form.end %}</th>
-    </tr>
-    <tr>
-      <th>Host</th>
-      <td><a href="{{ obj_a.host.get_absolute_url }}">{{ obj_a.host }}</a></td>
-      <td><a href="{{ obj_b.host.get_absolute_url }}">{{ obj_b.host }}</a></td>
-      <th>{% include "workshops/merge_radio.html" with field=form.host %}</th>
-    </tr>
-    <tr>
-      <th>Administrator</th>
-      <td>{% if obj_a.administrator %}<a href="{{ obj_a.administrator.get_absolute_url }}">{{ obj_a.administrator }}</a>{% else %}—{% endif %}</td>
-      <td>{% if obj_b.administrator %}<a href="{{ obj_b.administrator.get_absolute_url }}">{{ obj_b.administrator }}</a>{% else %}—{% endif %}</td>
-      <th>{% include "workshops/merge_radio.html" with field=form.administrator %}</th>
-    </tr>
-    <tr>
-      <th>Tags</th>
-      <td>{% for tag in obj_a.tags.all %}{% bootstrap_tag tag.name %}{% empty %}—{% endfor %}</td>
-      <td>{% for tag in obj_b.tags.all %}{% bootstrap_tag tag.name %}{% empty %}—{% endfor %}</td>
-      <th>{% include "workshops/merge_radio.html" with field=form.tags %}</th>
-    </tr>
-    <tr>
-      <th>URL</th>
-      <td>{{ obj_a.url|default:"—"|urlize_newtab }}</td><td>{{ obj_b.url|default:"—"|urlize_newtab }}</td>
-      <th>{% include "workshops/merge_radio.html" with field=form.url %}</th>
-    </tr>
-    <tr>
-      <th>Language</th>
-      <td>{{ obj_a.language|default:"—" }}</td><td>{{ obj_b.language|default:"—" }}</td>
-      <th>{% include "workshops/merge_radio.html" with field=form.language %}</th>
-    </tr>
-    <tr>
-      <th>Eventbrite key</th>
-      <td>{{ obj_a.reg_key|default:"—" }}</td><td>{{ obj_b.reg_key|default:"—" }}</td>
-      <th>{% include "workshops/merge_radio.html" with field=form.reg_key %}</th>
-    </tr>
-    <tr>
-      <th>Admin fee</th>
-      <td>{{ obj_a.admin_fee|default:"—" }}</td><td>{{ obj_b.admin_fee|default:"—" }}</td>
-      <th>{% include "workshops/merge_radio.html" with field=form.admin_fee %}</th>
-    </tr>
-    <tr>
-      <th>Invoice</th>
-      <td>{{ obj_a.get_invoice_status_display }}</td><td>{{ obj_b.get_invoice_status_display }}</td>
-      <th>{% include "workshops/merge_radio.html" with field=form.invoice_status %}</th>
-    </tr>
-    <tr>
-      <th>Attendance</th>
-      <td>{{ obj_a.attendance|default_if_none:"—" }}</td><td>{{ obj_b.attendance|default_if_none:"—" }}</td>
-      <th>{% include "workshops/merge_radio.html" with field=form.attendance %}</th>
-    </tr>
-    <tr>
-      <th>Contact</th>
-      <td>{{ obj_a.contact|default:"—" }}</td><td>{{ obj_b.contact|default:"—" }}</td>
-      <th>{% include "workshops/merge_radio.html" with field=form.contact %}</th>
-    </tr>
-    <tr>
-      <th>Country</th>
-      <td>{% if obj_a.country %}{{ obj_a.country.name }} <img src="{{ obj_a.country.flag }}" alt="{{ obj_a.country }}" class="country-flag" />{% else %}—{% endif %}</td>
-      <td>{% if obj_b.country %}{{ obj_b.country.name }} <img src="{{ obj_b.country.flag }}" alt="{{ obj_b.country }}" class="country-flag" />{% else %}—{% endif %}</td>
-      <th>{% include "workshops/merge_radio.html" with field=form.country %}</th>
-    </tr>
-    <tr>
-      <th>Venue</th>
-      <td>{{ obj_a.venue|default:"—" }}</td><td>{{ obj_b.venue|default:"—" }}</td>
-      <th>{% include "workshops/merge_radio.html" with field=form.venue %}</th>
-    </tr>
-    <tr>
-      <th>Address</th>
-      <td>{{ obj_a.address|default:"—" }}</td><td>{{ obj_b.address|default:"—" }}</td>
-      <th>{% include "workshops/merge_radio.html" with field=form.address %}</th>
-    </tr>
-    <tr>
-      <th>Latitude</th>
-      <td>{{ obj_a.latitude|default:"—" }}</td><td>{{ obj_b.latitude|default:"—" }}</td>
-      <th>{% include "workshops/merge_radio.html" with field=form.latitude %}</th>
-    </tr>
-    <tr>
-      <th>Longitude</th>
-      <td>{{ obj_a.longitude|default:"—" }}</td><td>{{ obj_b.longitude|default:"—" }}</td>
-      <th>{% include "workshops/merge_radio.html" with field=form.longitude %}</th>
-    </tr>
-    <tr>
-      <th>Pre-workshop survey results (learners)</th>
-      <td>{{ obj_a.learners_pre|default:"—"|urlize_newtab }}</td><td>{{ obj_b.learners_pre|default:"—"|urlize_newtab }}</td>
-      <th>{% include "workshops/merge_radio.html" with field=form.learners_pre %}</th>
-    </tr>
-    <tr>
-      <th>Post-workshop survey results (learners)</th>
-      <td>{{ obj_a.learners_post|default:"—"|urlize_newtab }}</td><td>{{ obj_b.learners_post|default:"—"|urlize_newtab }}</td>
-      <th>{% include "workshops/merge_radio.html" with field=form.learners_post %}</th>
-    </tr>
-    <tr>
-      <th>Pre-workshop survey results (instructors)</th>
-      <td>{{ obj_a.instructors_pre|default:"—"|urlize_newtab }}</td><td>{{ obj_b.instructors_pre|default:"—"|urlize_newtab }}</td>
-      <th>{% include "workshops/merge_radio.html" with field=form.instructors_pre %}</th>
-    </tr>
-    <tr>
-      <th>Post-workshop survey results (instructors)</th>
-      <td>{{ obj_a.instructors_post|default:"—"|urlize_newtab }}</td><td>{{ obj_b.instructors_post|default:"—"|urlize_newtab }}</td>
-      <th>{% include "workshops/merge_radio.html" with field=form.instructors_post %}</th>
-    </tr>
-    <tr>
-      <th>Long-term survey results (learners)</th>
-      <td>{{ obj_a.learners_longterm|default:"—"|urlize_newtab }}</td><td>{{ obj_b.learners_longterm|default:"—"|urlize_newtab }}</td>
-      <th>{% include "workshops/merge_radio.html" with field=form.learners_longterm %}</th>
-    </tr>
-    <tr>
-      <th>Notes</th>
-      <td>{% if obj_a.notes %}<pre>{{ obj_a.notes }}</pre>{% else %}—{% endif %}</td><td>{% if obj_b.notes %}<pre>{{ obj_b.notes }}</pre>{% else %}—{% endif %}</td>
-      <th>{% include "workshops/merge_radio.html" with field=form.notes %}</th>
-    </tr>
-    <tr>
-      <th>Tasks</th>
-      <td>{% if obj_a.task_set.all %}<ul>{% for task in obj_a.task_set.all %}<li><a href="{{ task.get_absolute_url }}">{{ task }}</a></li>{% endfor %}</ul>{% else %}—{% endif %}</td>
-      <td>{% if obj_b.task_set.all %}<ul>{% for task in obj_b.task_set.all %}<li><a href="{{ task.get_absolute_url }}">{{ task }}</a></li>{% endfor %}</ul>{% else %}—{% endif %}</td>
-      <th>{% include "workshops/merge_radio.html" with field=form.task_set %}</th>
-    </tr>
-    <tr>
-      <th>TODOs</th>
-      <td>{% if obj_a.todoitem_set.all %}<ul>{% for todo in obj_a.todoitem_set.all %}<li>{% if todo.completed %}<del>{{ todo }}</del>{% else %}{{ todo }}{% endif %}</li>{% endfor %}</ul>{% else %}—{% endif %}</td>
-      <td>{% if obj_b.todoitem_set.all %}<ul>{% for todo in obj_b.todoitem_set.all %}<li>{% if todo.completed %}<del>{{ todo }}</del>{% else %}{{ todo }}{% endif %}</li>{% endfor %}</ul>{% else %}—{% endif %}</td>
-      <th>{% include "workshops/merge_radio.html" with field=form.todoitem_set %}</th>
-    </tr>
-  </tbody>
+  <tr>
+    <th scope="col" width="12%">Field</th>
+    <th scope="col" width="38%">Event A (<a href="{{ obj_a.get_absolute_url }}" target="_blank">link</a>)</th>
+    <th scope="col" width="38%">Event B (<a href="{{ obj_b.get_absolute_url }}" target="_blank">link</a>)</th>
+    <th scope="col" width="12%">Strategy</th>
+  </tr>
+  <tr>
+    {# selecting an ID basically shows which event should stay, and which should go #}
+    <th scope="row">ID <i class="fas fa-question-circle" data-toggle="tooltip" title="This indicates which event (as database object) will stay; the other one will be removed."></i></th>
+    <td>{{ obj_a.id|default:"—" }}</td><td>{{ obj_b.id|default:"—" }}</td>
+    <th>{% include "workshops/merge_radio.html" with field=form.id %}</th>
+  </tr>
+  <tr>
+    <th scope="row">Slug</th>
+    <td>{{ obj_a.slug|default:"—" }}</td><td>{{ obj_b.slug|default:"—" }}</td>
+    <th>{% include "workshops/merge_radio.html" with field=form.slug %}</th>
+  </tr>
+  <tr>
+    <th scope="row">Completed?</th>
+    <td>{{ obj_a.completed|yesno }}</td><td>{{ obj_b.completed|yesno }}</td>
+    <th>{% include "workshops/merge_radio.html" with field=form.completed %}</th>
+  </tr>
+  <tr>
+    <th scope="row">Assignee</th>
+    <td>{% if obj_a.assigned_to %}<a href="{{ obj_a.assigned_to.get_absolute_url }}">{{ obj_a.assigned_to.full_name }}</a>{% else %}—{% endif %}</td>
+    <td>{% if obj_b.assigned_to %}<a href="{{ obj_b.assigned_to.get_absolute_url }}">{{ obj_b.assigned_to.full_name }}</a>{% else %}—{% endif %}</td>
+    <th>{% include "workshops/merge_radio.html" with field=form.assigned_to %}</th>
+  </tr>
+  <tr>
+    <th scope="row">Start date</th>
+    <td>{{ obj_a.start|default:"—" }}</td><td>{{ obj_b.start|default:"—" }}</td>
+    <th>{% include "workshops/merge_radio.html" with field=form.start %}</th>
+  </tr>
+  <tr>
+    <th scope="row">End date</th>
+    <td>{{ obj_a.end|default:"—" }}</td><td>{{ obj_b.end|default:"—" }}</td>
+    <th>{% include "workshops/merge_radio.html" with field=form.end %}</th>
+  </tr>
+  <tr>
+    <th scope="row">Host</th>
+    <td><a href="{{ obj_a.host.get_absolute_url }}">{{ obj_a.host }}</a></td>
+    <td><a href="{{ obj_b.host.get_absolute_url }}">{{ obj_b.host }}</a></td>
+    <th>{% include "workshops/merge_radio.html" with field=form.host %}</th>
+  </tr>
+  <tr>
+    <th scope="row">Administrator</th>
+    <td>{% if obj_a.administrator %}<a href="{{ obj_a.administrator.get_absolute_url }}">{{ obj_a.administrator }}</a>{% else %}—{% endif %}</td>
+    <td>{% if obj_b.administrator %}<a href="{{ obj_b.administrator.get_absolute_url }}">{{ obj_b.administrator }}</a>{% else %}—{% endif %}</td>
+    <th>{% include "workshops/merge_radio.html" with field=form.administrator %}</th>
+  </tr>
+  <tr>
+    <th scope="row">Tags</th>
+    <td>{% for tag in obj_a.tags.all %}{% bootstrap_tag tag.name %}{% empty %}—{% endfor %}</td>
+    <td>{% for tag in obj_b.tags.all %}{% bootstrap_tag tag.name %}{% empty %}—{% endfor %}</td>
+    <th>{% include "workshops/merge_radio.html" with field=form.tags %}</th>
+  </tr>
+  <tr>
+    <th scope="row">URL</th>
+    <td>{{ obj_a.url|default:"—"|urlize_newtab }}</td><td>{{ obj_b.url|default:"—"|urlize_newtab }}</td>
+    <th>{% include "workshops/merge_radio.html" with field=form.url %}</th>
+  </tr>
+  <tr>
+    <th scope="row">Language</th>
+    <td>{{ obj_a.language|default:"—" }}</td><td>{{ obj_b.language|default:"—" }}</td>
+    <th>{% include "workshops/merge_radio.html" with field=form.language %}</th>
+  </tr>
+  <tr>
+    <th scope="row">Eventbrite key</th>
+    <td>{{ obj_a.reg_key|default:"—" }}</td><td>{{ obj_b.reg_key|default:"—" }}</td>
+    <th>{% include "workshops/merge_radio.html" with field=form.reg_key %}</th>
+  </tr>
+  <tr>
+    <th scope="row">Admin fee</th>
+    <td>{{ obj_a.admin_fee|default:"—" }}</td><td>{{ obj_b.admin_fee|default:"—" }}</td>
+    <th>{% include "workshops/merge_radio.html" with field=form.admin_fee %}</th>
+  </tr>
+  <tr>
+    <th scope="row">Invoice</th>
+    <td>{{ obj_a.get_invoice_status_display }}</td><td>{{ obj_b.get_invoice_status_display }}</td>
+    <th>{% include "workshops/merge_radio.html" with field=form.invoice_status %}</th>
+  </tr>
+  <tr>
+    <th scope="row">Attendance</th>
+    <td>{{ obj_a.attendance|default_if_none:"—" }}</td><td>{{ obj_b.attendance|default_if_none:"—" }}</td>
+    <th>{% include "workshops/merge_radio.html" with field=form.attendance %}</th>
+  </tr>
+  <tr>
+    <th scope="row">Contact</th>
+    <td>{{ obj_a.contact|default:"—" }}</td><td>{{ obj_b.contact|default:"—" }}</td>
+    <th>{% include "workshops/merge_radio.html" with field=form.contact %}</th>
+  </tr>
+  <tr>
+    <th scope="row">Country</th>
+    <td>{% if obj_a.country %}{{ obj_a.country.name }} <img src="{{ obj_a.country.flag }}" alt="{{ obj_a.country }}" class="country-flag" />{% else %}—{% endif %}</td>
+    <td>{% if obj_b.country %}{{ obj_b.country.name }} <img src="{{ obj_b.country.flag }}" alt="{{ obj_b.country }}" class="country-flag" />{% else %}—{% endif %}</td>
+    <th>{% include "workshops/merge_radio.html" with field=form.country %}</th>
+  </tr>
+  <tr>
+    <th scope="row">Venue</th>
+    <td>{{ obj_a.venue|default:"—" }}</td><td>{{ obj_b.venue|default:"—" }}</td>
+    <th>{% include "workshops/merge_radio.html" with field=form.venue %}</th>
+  </tr>
+  <tr>
+    <th scope="row">Address</th>
+    <td>{{ obj_a.address|default:"—" }}</td><td>{{ obj_b.address|default:"—" }}</td>
+    <th>{% include "workshops/merge_radio.html" with field=form.address %}</th>
+  </tr>
+  <tr>
+    <th scope="row">Latitude</th>
+    <td>{{ obj_a.latitude|default:"—" }}</td><td>{{ obj_b.latitude|default:"—" }}</td>
+    <th>{% include "workshops/merge_radio.html" with field=form.latitude %}</th>
+  </tr>
+  <tr>
+    <th scope="row">Longitude</th>
+    <td>{{ obj_a.longitude|default:"—" }}</td><td>{{ obj_b.longitude|default:"—" }}</td>
+    <th>{% include "workshops/merge_radio.html" with field=form.longitude %}</th>
+  </tr>
+  <tr>
+    <th scope="row">Pre-workshop survey results (learners)</th>
+    <td>{{ obj_a.learners_pre|default:"—"|urlize_newtab }}</td><td>{{ obj_b.learners_pre|default:"—"|urlize_newtab }}</td>
+    <th>{% include "workshops/merge_radio.html" with field=form.learners_pre %}</th>
+  </tr>
+  <tr>
+    <th scope="row">Post-workshop survey results (learners)</th>
+    <td>{{ obj_a.learners_post|default:"—"|urlize_newtab }}</td><td>{{ obj_b.learners_post|default:"—"|urlize_newtab }}</td>
+    <th>{% include "workshops/merge_radio.html" with field=form.learners_post %}</th>
+  </tr>
+  <tr>
+    <th scope="row">Pre-workshop survey results (instructors)</th>
+    <td>{{ obj_a.instructors_pre|default:"—"|urlize_newtab }}</td><td>{{ obj_b.instructors_pre|default:"—"|urlize_newtab }}</td>
+    <th>{% include "workshops/merge_radio.html" with field=form.instructors_pre %}</th>
+  </tr>
+  <tr>
+    <th scope="row">Post-workshop survey results (instructors)</th>
+    <td>{{ obj_a.instructors_post|default:"—"|urlize_newtab }}</td><td>{{ obj_b.instructors_post|default:"—"|urlize_newtab }}</td>
+    <th>{% include "workshops/merge_radio.html" with field=form.instructors_post %}</th>
+  </tr>
+  <tr>
+    <th scope="row">Long-term survey results (learners)</th>
+    <td>{{ obj_a.learners_longterm|default:"—"|urlize_newtab }}</td><td>{{ obj_b.learners_longterm|default:"—"|urlize_newtab }}</td>
+    <th>{% include "workshops/merge_radio.html" with field=form.learners_longterm %}</th>
+  </tr>
+  <tr>
+    <th scope="row">Notes</th>
+    <td>{% if obj_a.notes %}<pre>{{ obj_a.notes }}</pre>{% else %}—{% endif %}</td><td>{% if obj_b.notes %}<pre>{{ obj_b.notes }}</pre>{% else %}—{% endif %}</td>
+    <th>{% include "workshops/merge_radio.html" with field=form.notes %}</th>
+  </tr>
+  <tr>
+    <th scope="row">Tasks</th>
+    <td>{% if obj_a.task_set.all %}<ul>{% for task in obj_a.task_set.all %}<li><a href="{{ task.get_absolute_url }}">{{ task }}</a></li>{% endfor %}</ul>{% else %}—{% endif %}</td>
+    <td>{% if obj_b.task_set.all %}<ul>{% for task in obj_b.task_set.all %}<li><a href="{{ task.get_absolute_url }}">{{ task }}</a></li>{% endfor %}</ul>{% else %}—{% endif %}</td>
+    <th>{% include "workshops/merge_radio.html" with field=form.task_set %}</th>
+  </tr>
+  <tr>
+    <th scope="row">TODOs</th>
+    <td>{% if obj_a.todoitem_set.all %}<ul>{% for todo in obj_a.todoitem_set.all %}<li>{% if todo.completed %}<del>{{ todo }}</del>{% else %}{{ todo }}{% endif %}</li>{% endfor %}</ul>{% else %}—{% endif %}</td>
+    <td>{% if obj_b.todoitem_set.all %}<ul>{% for todo in obj_b.todoitem_set.all %}<li>{% if todo.completed %}<del>{{ todo }}</del>{% else %}{{ todo }}{% endif %}</li>{% endfor %}</ul>{% else %}—{% endif %}</td>
+    <th>{% include "workshops/merge_radio.html" with field=form.todoitem_set %}</th>
+  </tr>
 </table>
-<div class="pull-right">
+<div class="float-right">
   <input class="btn btn-primary" type="submit" value="Submit" />
 </div>
 </form>

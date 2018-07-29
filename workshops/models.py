@@ -324,6 +324,18 @@ class PersonManager(BaseUserManager):
                             default=0,
                             output_field=IntegerField()))
 
+        def passed_either(req_a, req_b):
+            return Sum(Case(When(trainingprogress__requirement__name=req_a,
+                                 trainingprogress__state='p',
+                                 trainingprogress__discarded=False,
+                                 then=1),
+                            When(trainingprogress__requirement__name=req_b,
+                                 trainingprogress__state='p',
+                                 trainingprogress__discarded=False,
+                                 then=1),
+                            default=0,
+                            output_field=IntegerField()))
+
         return self.annotate(
             passed_training=passed('Training'),
             passed_swc_homework=passed('SWC Homework'),
@@ -331,6 +343,8 @@ class PersonManager(BaseUserManager):
             passed_discussion=passed('Discussion'),
             passed_swc_demo=passed('SWC Demo'),
             passed_dc_demo=passed('DC Demo'),
+            passed_homework=passed_either('SWC Homework', 'DC Homework'),
+            passed_demo=passed_either('SWC Demo', 'DC Demo'),
         ).annotate(
             # We're using Maths to calculate "binary" score for a person to
             # be instructor badge eligible. Legend:
@@ -543,9 +557,9 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
 
         fields = [
             ('passed_training', 'Training'),
-            ('passed_swc_homework', 'SWC Homework'),
+            ('passed_homework', 'SWC or DC Homework'),
             ('passed_discussion', 'Discussion'),
-            ('passed_swc_demo', 'SWC Demo'),
+            ('passed_demo', 'SWC or DC Demo'),
         ]
         try:
             return [name for field, name in fields if not getattr(self, field)]
@@ -559,9 +573,9 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
 
         fields = [
             ('passed_training', 'Training'),
-            ('passed_dc_homework', 'DC Homework'),
+            ('passed_homework', 'SWC or DC Homework'),
             ('passed_discussion', 'Discussion'),
-            ('passed_dc_demo', 'DC Demo'),
+            ('passed_demo', 'SWC or DC Demo'),
         ]
         try:
             return [name for field, name in fields if not getattr(self, field)]
@@ -1007,6 +1021,7 @@ class Event(AssignmentMixin, models.Model):
         help_text=PUBLISHED_HELP_TEXT +
                   '<br />Use link to the event\'s <b>website</b>, ' +
                   'not repository.',
+        verbose_name='URL',
     )
     reg_key    = models.CharField(max_length=STR_REG_KEY, blank=True, verbose_name="Eventbrite key")
     attendance = models.PositiveIntegerField(null=True, blank=True)
@@ -1149,27 +1164,27 @@ class Event(AssignmentMixin, models.Model):
         return self.invoice_status == 'not-invoiced'
 
     @cached_property
+    def contacts(self):
+        return (
+            self.task_set
+                .filter(
+                    # we only want hosts, organizers and instructors
+                    Q(role__name='host') | Q(role__name='organizer') |
+                    Q(role__name='instructor')
+                )
+                .filter(person__may_contact=True)
+                .exclude(Q(person__email='') | Q(person__email=None))
+                .values_list('person__email', flat=True)
+        )
+
+    @cached_property
     def mailto(self):
         """Return list of emails we can contact about workshop details, like
         attendance."""
         from workshops.util import find_emails
 
-        emails = self.task_set \
-            .filter(
-                # we only want hosts, organizers and instructors
-                Q(role__name='host') | Q(role__name='organizer') |
-                Q(role__name='instructor')
-            ) \
-            .filter(person__may_contact=True) \
-            .exclude(Q(person__email='') | Q(person__email=None)) \
-            .values_list('person__email', flat=True)
-
-        additional_emails = find_emails(self.contact)
-        # Emails will become an iterator in 1.9 (ValuesListQuerySet previously)
-        # so we need a normal list that will be extended by that iterator.
-        # Bonus points: it works in 1.8.x too!
-        additional_emails.extend(emails)
-        return ','.join(additional_emails)
+        emails = find_emails(self.contact)
+        return emails
 
     def get_invoice_form_url(self):
         from .util import universal_date_format
@@ -1680,7 +1695,7 @@ class Task(models.Model):
     person     = models.ForeignKey(Person, on_delete=models.PROTECT)
     role       = models.ForeignKey(Role, on_delete=models.PROTECT)
     title      = models.CharField(max_length=STR_LONG, blank=True)
-    url        = models.URLField(blank=True)
+    url        = models.URLField(blank=True, verbose_name='URL')
 
     objects = TaskManager()
 
@@ -2352,7 +2367,7 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
                               verbose_name='Training',
                               limit_choices_to=Q(tags__name='TTT'),
                               on_delete=models.SET_NULL)
-    url = models.URLField(null=True, blank=True)
+    url = models.URLField(null=True, blank=True, verbose_name='URL')
     notes = models.TextField(blank=True)
 
     def get_absolute_url(self):

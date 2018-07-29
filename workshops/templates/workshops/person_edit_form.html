@@ -1,21 +1,21 @@
-{% extends "base_nav_fixed.html" %}
+{% extends "base_nav.html" %}
 
 {% load crispy_forms_tags %}
 
 {% block content %}
-<div>
-  <ul class="nav nav-tabs" role="tablist">
-    <li role="presentation" class="active"><a href="#person" aria-controls="person" role="tab" data-toggle="tab">Person</a></li>
-    <li role="presentation"><a href="#awards" aria-controls="awards" role="tab" data-toggle="tab">Awards</a></li>
-    <li role="presentation"><a href="#tasks" aria-controls="tasks" role="tab" data-toggle="tab">Tasks</a></li>
+<nav class="col-12">
+  <ul class="nav nav-tabs" role="tablist" id="tabs">
+    <li role="presentation" class="nav-item"><a class="nav-link active" href="#person" role="tab" data-toggle="tab" aria-controls="person" aria-selected="true" id="person-tab">Person</a></li>
+    <li role="presentation" class="nav-item"><a class="nav-link" href="#awards" role="tab" data-toggle="tab" aria-controls="awards">Awards</a></li>
+    <li role="presentation" class="nav-item"><a class="nav-link" href="#tasks" role="tab" data-toggle="tab" aria-controls="tasks">Tasks</a></li>
   </ul>
-</div>
+</nav>
 
-<div class="tab-content">
-  <div role="tabpanel" class="tab-pane active" id="person">
+<div class="col-12 tab-content">
+  <div class="tab-pane active" role="tabpanel" aria-labelledby="person-tab" id="person">
     {% crispy form %}
   </div>
-  <div role="tabpanel" class="tab-pane" id="awards">
+  <div class="tab-pane" role="tabpanel" aria-labelledby="awards-tab" id="awards">
     {% if perms.workshops.add_awards %}
     <form class="form-horizontal" role="form" method="POST" action="{% url 'award_add' %}?next={{ request.get_full_path|urlencode }}#awards">
       {% crispy award_form %}
@@ -55,10 +55,10 @@
       </tbody>
     </table>
     {% else %}
-    <p>No awards</p>
+    <p>No awards.</p>
     {% endif %}
   </div>
-  <div role="tabpanel" class="tab-pane" id="tasks">
+  <div class="tab-pane" role="tabpanel" aria-labelledby="tasks-tab" id="tasks">
     {% if perms.workshops.add_tasks %}
     <form class="form-horizontal" role="form" method="POST" action="{% url 'task_add' %}?next={{ request.get_full_path|urlencode }}#tasks">
       {% crispy task_form %}
@@ -88,7 +88,7 @@
       format: "yyyy-mm-dd",
       todayHighlight: true
     });
-    $('.nav-tabs').stickyTabs();
+    $('#tabs').stickyTabs();
   });
 </script>
 {% endblock extrajs %}

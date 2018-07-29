@@ -1,46 +1,46 @@
-{% extends "base_nav_fluid_sidebar.html" %}
+{% extends "base_nav_sidebar.html" %}
 
 {% load crispy_forms_tags %}
 {% load pagination %}
 
 {% block content %}
-    {% if perms.workshops.add_airport %}
-    <p><a href="{% url 'airport_add' %}" class="btn btn-success">New airport</a></p>
-    {% else %}
-    <p><a href="{% url 'airport_add' %}" class="btn btn-success disabled">New airport</a></p>
-    {% endif %}
+  {% if perms.workshops.add_airport %}
+  <p><a href="{% url 'airport_add' %}" class="btn btn-success">New airport</a></p>
+  {% else %}
+  <p><a href="{% url 'airport_add' %}" class="btn btn-success disabled">New airport</a></p>
+  {% endif %}
 {% if all_airports %}
-    <table class="table table-striped">
-        <tr>
-            <th>IATA</th>
-            <th>full name</th>
-            <th>latitude</th>
-            <th>longitude</th>
-            <th class="additional-links"></th>
-        </tr>
+  <table class="table table-striped">
+    <tr>
+      <th>IATA <i class="fas fa-question-circle" data-toggle="tooltip" title="A three-letter code designating airports"></i></th>
+      <th>Full name</th>
+      <th>Latitude</th>
+      <th>Longitude</th>
+      <th class="additional-links"></th>
+    </tr>
     {% for airport in all_airports %}
-        <tr>
-            <td>{{ airport.iata }}</td>
-            <td><a href="{% url 'airport_details' airport.iata %}">{{ airport.fullname }}</a></td>
-            <td>{{ airport.latitude }}</td>
-            <td>{{ airport.longitude }}</td>
-            <td>
-                <a href="{% url 'airport_details' airport.iata %}" title="View {{ airport }}"><span class="glyphicon glyphicon-info-sign"></span></a>
-                &nbsp;
-                {% if perms.workshops.change_airport %}
-                <a href="{% url 'airport_edit' airport.iata %}" title="Edit {{ airport }}"><span class="glyphicon glyphicon-pencil"></span></a>
-                {% endif %}
-            </td>
-        </tr>
+    <tr>
+      <td>{{ airport.iata }}</td>
+      <td><a href="{% url 'airport_details' airport.iata %}">{{ airport.fullname }}</a></td>
+      <td>{{ airport.latitude }}</td>
+      <td>{{ airport.longitude }}</td>
+      <td>
+        <a href="{% url 'airport_details' airport.iata %}" title="View {{ airport }}"><i class="fas fa-info-circle"></i></a>
+        &nbsp;
+        {% if perms.workshops.change_airport %}
+        <a href="{% url 'airport_edit' airport.iata %}" title="Edit {{ airport }}"><i class="fas fa-edit"></i></a>
+        {% endif %}
+      </td>
+    </tr>
     {% endfor %}
-    </table>
-    {% pagination all_airports %}
-    {% if perms.workshops.add_airport %}
-    <p><a href="{% url 'airport_add' %}" class="btn btn-success">New airport</a></p>
-    {% else %}
-    <p><a href="{% url 'airport_add' %}" class="btn btn-success disabled">New airport</a></p>
-    {% endif %}
+  </table>
+  {% pagination all_airports %}
+  {% if perms.workshops.add_airport %}
+  <p><a href="{% url 'airport_add' %}" class="btn btn-success">New airport</a></p>
+  {% else %}
+  <p><a href="{% url 'airport_add' %}" class="btn btn-success disabled">New airport</a></p>
+  {% endif %}
 {% else %}
-    <p>No airports.</p>
+  <p>No airports.</p>
 {% endif %}
 {% endblock %}

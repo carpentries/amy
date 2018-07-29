@@ -495,12 +495,12 @@ def person_bulk_add(request):
             try:
                 persons_tasks, empty_fields = upload_person_task_csv(stream)
             except csv.Error as e:
-                messages.add_message(
-                    request, messages.ERROR,
-                    "Error processing uploaded CSV file: {}".format(e))
+                messages.error(
+                    request,
+                    "Error processing uploaded .CSV file: {}".format(e))
             except UnicodeDecodeError as e:
-                messages.add_message(
-                    request, messages.ERROR,
+                messages.error(
+                    request,
                     "Please provide a file in {} encoding."
                     .format(charset))
             else:
@@ -508,7 +508,7 @@ def person_bulk_add(request):
                     msg_template = ("The following required fields were not"
                                     " found in the uploaded file: {}")
                     msg = msg_template.format(', '.join(empty_fields))
-                    messages.add_message(request, messages.ERROR, msg)
+                    messages.error(request, msg)
                 else:
                     # instead of insta-saving, put everything into session
                     # then redirect to confirmation page which in turn saves
@@ -582,7 +582,7 @@ def person_bulk_add_confirmation(request):
             # if there's "verify" in POST, then do only verification
             any_errors = verify_upload_person_task(persons_tasks)
             if any_errors:
-                messages.add_message(request, messages.ERROR,
+                messages.error(request,
                                      "Please make sure to fix all errors "
                                      "listed below.")
 
@@ -596,7 +596,7 @@ def person_bulk_add_confirmation(request):
                 persons_created, tasks_created = \
                     create_uploaded_persons_tasks(persons_tasks)
             except (IntegrityError, ObjectDoesNotExist, InternalError) as e:
-                messages.add_message(request, messages.ERROR,
+                messages.error(request,
                                      "Error saving data to the database: {}. "
                                      "Please make sure to fix all errors "
                                      "listed below.".format(e))
@@ -604,8 +604,8 @@ def person_bulk_add_confirmation(request):
 
             else:
                 request.session['bulk-add-people'] = None
-                messages.add_message(
-                    request, messages.SUCCESS,
+                messages.success(
+                    request,
                     'Successfully created {0} persons and {1} tasks.'
                     .format(len(persons_created), len(tasks_created))
                 )
@@ -917,6 +917,9 @@ def persons_merge(request):
                                         protected_objects=e.protected_objects)
 
             else:
+                messages.success(request, 'Persons were merged successfully. '
+                                          'You were redirected to the base '
+                                          'person.')
                 return redirect(base_obj.get_absolute_url())
         else:
             messages.error(request, 'Fix errors in the form.')
@@ -974,7 +977,16 @@ class AllEvents(OnlyForAdminsMixin, AMYListView):
 def event_details(request, slug):
     '''List details of a particular event.'''
     try:
-        event = Event.objects.get(slug=slug)
+        event = Event.objects.prefetch_related(Prefetch(
+            'task_set',
+            to_attr='contacts',
+            queryset=Task.objects.select_related('person').filter(
+                # we only want hosts, organizers and instructors
+                Q(role__name='host') | Q(role__name='organizer') |
+                Q(role__name='instructor')
+            ).filter(person__may_contact=True)
+            .exclude(Q(person__email='') | Q(person__email=None))
+        )).get(slug=slug)
     except Event.DoesNotExist:
         raise Http404('Event matching query does not exist.')
 
@@ -1018,14 +1030,16 @@ def event_details(request, slug):
             messages.error(request, 'Fix errors in the TODO form.',
                            extra_tags='todos')
 
-    person_lookup_form = AdminLookupForm()
+    admin_lookup_form = AdminLookupForm()
     if event.assigned_to:
-        person_lookup_form = AdminLookupForm(
+        admin_lookup_form = AdminLookupForm(
             initial={'person': event.assigned_to}
         )
 
-    person_lookup_form.helper = BootstrapHelper(
-        form_action=reverse('event_assign', args=[slug]))
+    admin_lookup_form.helper = BootstrapHelper(
+        form_action=reverse('event_assign', args=[slug]),
+        add_cancel_button=False)
+
     context = {
         'title': 'Event {0}'.format(event),
         'event': event,
@@ -1037,7 +1051,7 @@ def event_details(request, slug):
             .values_list('person__email', flat=True),
         'helper': bootstrap_helper,
         'today': datetime.date.today(),
-        'person_lookup_form': person_lookup_form,
+        'admin_lookup_form': admin_lookup_form,
     }
     return render(request, 'workshops/event.html', context)
 
@@ -1103,7 +1117,10 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
         'workshops.add_task',
         'workshops.add_sponsorship',
     ]
-    model = Event
+    queryset = Event.objects.select_related('assigned_to', 'administrator',
+                                            'language', 'request') \
+                            .prefetch_related('sponsorship_set')
+    slug_field = 'slug'
     form_class = EventForm
     template_name = 'workshops/event_edit_form.html'
 
@@ -1114,7 +1131,9 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
             'widgets': {'event': HiddenInput()},
         }
         context.update({
-            'tasks': self.get_object().task_set.order_by('role__name'),
+            'tasks': self.get_object().task_set
+                        .select_related('person', 'role')
+                        .order_by('role__name'),
             'task_form': TaskForm(**kwargs),
             'sponsor_form': SponsorshipForm(**kwargs),
         })
@@ -1244,6 +1263,9 @@ def events_merge(request):
                                         protected_objects=e.protected_objects)
 
             else:
+                messages.success(request, 'Events were merged successfully. '
+                                          'You were redirected to the base '
+                                          'event.')
                 return redirect(base_obj.get_absolute_url())
         else:
             messages.error(request, 'Fix errors in the form.')
@@ -1336,7 +1358,14 @@ def event_review_metadata_changes(request, slug):
     except Event.DoesNotExist:
         raise Http404('No event found matching the query.')
 
-    metadata = fetch_event_metadata(event.website_url)
+    try:
+        metadata = fetch_event_metadata(event.website_url)
+    except requests.exceptions.RequestException:
+        messages.error(request, "There was an error while fetching event's "
+                                "website. Make sure the event has website URL "
+                                "provided, and that it's reachable.")
+        return redirect(event.get_absolute_url())
+
     metadata = parse_metadata_from_event_website(metadata)
 
     # save serialized metadata in session so in case of acceptance we don't
@@ -2040,18 +2069,31 @@ def workshop_issues(request):
             )
         )
     )
+
     no_attendance = Q(attendance=None) | Q(attendance=0)
     no_location = (Q(country=None) |
                    Q(venue=None) | Q(venue__exact='') |
                    Q(address=None) | Q(address__exact='') |
                    Q(latitude=None) | Q(longitude=None))
     bad_dates = Q(start__gt=F('end'))
+
     events = events.filter(
         (no_attendance & ~Q(tags__name='unresponsive')) |
         no_location |
         bad_dates |
         Q(num_instructors=0)
     ).prefetch_related('task_set', 'task_set__person')
+
+    events = events.prefetch_related(Prefetch(
+        'task_set',
+        to_attr='contacts',
+        queryset=Task.objects.select_related('person').filter(
+            # we only want hosts, organizers and instructors
+            Q(role__name='host') | Q(role__name='organizer') |
+            Q(role__name='instructor')
+        ).filter(person__may_contact=True)
+        .exclude(Q(person__email='') | Q(person__email=None))
+    ))
 
     assigned_to, is_admin = assignment_selection(request)
 
@@ -2426,8 +2468,8 @@ def profileupdaterequest_accept(request, request_id, person_id=None):
                 messages.error(
                     request,
                     'Cannot update profile: some database constraints weren\'t'
-                    'fulfilled. Make sure that user name, GitHub user name,'
-                    'Twitter user name, or email address are unique.'
+                    ' fulfilled. Make sure that user name, GitHub user name,'
+                    ' Twitter user name, or email address are unique.'
                 )
                 return redirect(profileupdate.get_absolute_url())
 

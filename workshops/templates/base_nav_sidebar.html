@@ -1,0 +1,13 @@
+{% extends 'base_nav.html' %}
+{% load crispy_forms_tags %}
+
+{% block leftcolumn %}
+        <div class="col-sm-2 col-md-2 sidebar bg-light border-right">
+        {% block sidebar %}
+          <h3>Filter</h3>
+          {% crispy filter.form %}
+        {% endblock %}
+        </div>
+{% endblock leftcolumn %}
+
+{% block maincolumn %}col-sm-10 col-md-10 col-sm-offset-2 col-md-offset-2{% endblock %}

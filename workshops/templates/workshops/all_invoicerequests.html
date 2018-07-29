@@ -1,4 +1,4 @@
-{% extends "base_nav_fluid_sidebar.html" %}
+{% extends "base_nav_sidebar.html" %}
 
 {% load pagination %}
 {% load links %}
@@ -6,26 +6,22 @@
 {% block content %}
   {% if requests %}
   <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>event</th>
-        <th>organization</th>
-        <th>contact</th>
-        <th>status</th>
-        <th class="additional-links"></th>
-      </tr>
-    </thead>
-    <tbody>
+    <tr>
+      <th>Event</th>
+      <th>Organization</th>
+      <th>Contact</th>
+      <th>Status</th>
+      <th class="additional-links"></th>
+    </tr>
     {% for req in requests %}
-      <tr>
-        <td><a href="{{ req.event.get_absolute_url }}">{{ req.event.slug }}</a></td>
-        <td><a href="{{ req.organization.get_absolute_url }}">{{ req.organization }}</a></td>
-        <td>{{ req.contact_name }} &lt;{{ req.contact_email|urlize_newtab }}&gt;</td>
-        <td>{{ req.get_status_display }}</td>
-        <td><a href="{{ req.get_absolute_url }}"><span class="glyphicon glyphicon-info-sign"></span></a></td>
-      </tr>
+    <tr>
+      <td><a href="{{ req.event.get_absolute_url }}">{{ req.event.slug }}</a></td>
+      <td><a href="{{ req.organization.get_absolute_url }}">{{ req.organization }}</a></td>
+      <td>{{ req.contact_name }} &lt;{{ req.contact_email|urlize_newtab }}&gt;</td>
+      <td>{{ req.get_status_display }}</td>
+      <td><a href="{{ req.get_absolute_url }}"><i class="fas fa-info-circle"></i></a></td>
+    </tr>
     {% endfor %}
-    </tbody>
   </table>
   {% else %}
   <p>No invoice requests matching the filter.</p>

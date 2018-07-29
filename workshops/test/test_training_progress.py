@@ -119,23 +119,23 @@ class TestTrainingProgressValidation(TestBase):
 
 class TestProgressLabelTemplateTag(TestBase):
     def test_passed(self):
-        self._test(state='p', discarded=False, expected='label label-success')
+        self._test(state='p', discarded=False, expected='badge badge-success')
 
     def test_not_evaluated_yet(self):
-        self._test(state='n', discarded=False, expected='label label-warning')
+        self._test(state='n', discarded=False, expected='badge badge-warning')
 
     def test_failed(self):
-        self._test(state='f', discarded=False, expected='label label-danger')
+        self._test(state='f', discarded=False, expected='badge badge-danger')
 
     def test_discarded(self):
-        self._test(state='p', discarded=True, expected='label label-default')
-        self._test(state='n', discarded=True, expected='label label-default')
-        self._test(state='f', discarded=True, expected='label label-default')
+        self._test(state='p', discarded=True, expected='badge badge-dark')
+        self._test(state='n', discarded=True, expected='badge badge-dark')
+        self._test(state='f', discarded=True, expected='badge badge-dark')
 
     def _test(self, state, discarded, expected):
         template = Template(
-            '{% load training_progress %}'
-            '{% progress_label p %}'
+            r'{% load training_progress %}'
+            r'{% progress_label p %}'
         )
         training_progress = TrainingProgress(state=state, discarded=discarded)
         context = Context({'p': training_progress})

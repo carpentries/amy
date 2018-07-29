@@ -1,4 +1,4 @@
-{% extends "base_nav_fluid_sidebar.html" %}
+{% extends "base_nav_sidebar.html" %}
 
 {% load crispy_forms_tags %}
 {% load pagination %}
@@ -15,16 +15,16 @@
     <table class="table table-striped">
       <tr>
         <th><input type="checkbox" value="Select all" select-all-checkbox /></th>
-        <th>instr. badges</th>
-        <th>person</th>
-        <th>taught</th>
-        <th>trainee?</th>
-        <th>airport</th>
-        <th>country</th>
-        <th>lessons</th>
-        <th>affiliation</th>
+        <th>Instr. badges</th>
+        <th>Person</th>
+        <th>Taught</th>
+        <th>Trainee</th>
+        <th>Airport</th>
+        <th>Country</th>
+        <th>Lessons</th>
+        <th>Affiliation</th>
       </tr>
-    {% for p in persons %}
+      {% for p in persons %}
       <tr>
         <td><input type="checkbox" email="{{ p.email }}" respond-to-select-all-checkbox /></td>
         <td>{% for badge in p.badges.all %}
@@ -35,19 +35,19 @@
         <td><a href="{{ p.get_absolute_url }}">{{ p.full_name }}</a>{% if p.email and p.may_contact %} &lt;{{ p.email|urlize }}&gt;{% endif %}</td>
         <td>{{ p.num_taught }}</td>
         <td>{% if p.pk in trainees %}yes{% else %}no{% endif %}</td>
-        <td>{% if p.airport %}<a href="{{ p.airport.get_absolute_url }}">{{ p.airport }}</a>{% else %}—{% endif %}</td>
-        <td>{% if p.country %}{{ p.country.name }}{% else %}—{% endif %}</td>
+        <td>{% if p.airport %}<a href="{{ p.airport.get_absolute_url }}">{{ p.airport }}</a>{% else %}&mdash;{% endif %}</td>
+        <td>{% if p.country %}{{ p.country.name }}{% else %}&mdash;{% endif %}</td>
         <td>
         {% for lesson in p.lessons.all %}
           {% if lesson in lessons %}<strong>{{ lesson }}</strong>{% else %}{{ lesson }}{% endif %}{% if not forloop.last%}, {% endif %}
         {% endfor %}
         </td>
-        <td>{{ p.affiliation|default:"—" }}</td>
+        <td>{{ p.affiliation|default:"&mdash;" }}</td>
       </tr>
-    {% endfor %}
+      {% endfor %}
     </table>
     </form>
-    <p><a class="btn btn-primary" bulk-email-on-click>Contact selected</a></p>
+    <p><a class="btn btn-primary text-white" bulk-email-on-click>Contact selected</a></p>
     {% pagination persons %}
   {% else %}
     <p>No matches.</p>
@@ -55,5 +55,5 @@
 {% endblock %}
 
 {% block extrajs %}
-{{ form.media }}
+{{ filter_form.media }}
 {% endblock extrajs %}

@@ -357,7 +357,10 @@ class TrainingRequests(ListAPIView):
         TrainingRequest.objects.all()
             .select_related('person')
             .prefetch_related(
-                'previous_involvement', 'domains', 'person__award_set',
+                'previous_involvement', 'domains',
+                Prefetch('person__award_set',
+                    queryset=Award.objects.select_related('badge'),
+                ),
                 Prefetch('person__task_set',
                     # We change the attribute "person.task_set" instead of
                     # directing this filtered tasks to a new attribute, because
@@ -366,10 +369,10 @@ class TrainingRequests(ListAPIView):
                     queryset=Task.objects
                         .filter(role__name='learner', event__tags__name='TTT')
                         .select_related('event')
-                    ),
+                ),
             )
         )
-    filter_class = TrainingRequestFilterIDs
+    filterset_class = TrainingRequestFilterIDs
 
 
 class ReportsViewSet(ViewSet):
@@ -700,7 +703,7 @@ class EventViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = EventSerializer
     lookup_field = 'slug'
     pagination_class = StandardResultsSetPagination
-    filter_class = EventFilter
+    filterset_class = EventFilter
 
 
 class TaskViewSet(viewsets.ReadOnlyModelViewSet):
@@ -708,7 +711,7 @@ class TaskViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (IsAuthenticated, IsAdmin)
     serializer_class = TaskSerializer
     pagination_class = StandardResultsSetPagination
-    filter_class = TaskFilter
+    filterset_class = TaskFilter
     _event_slug = None
 
     def get_queryset(self):
@@ -755,7 +758,7 @@ class PersonViewSet(viewsets.ReadOnlyModelViewSet):
                      .prefetch_related('badges', 'domains', 'lessons')
     serializer_class = PersonSerializer
     pagination_class = StandardResultsSetPagination
-    filter_class = PersonFilter
+    filterset_class = PersonFilter
 
 
 class AwardViewSet(viewsets.ReadOnlyModelViewSet):

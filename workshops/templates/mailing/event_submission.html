@@ -6,7 +6,7 @@
     <tr><th>Person:</th>
         <td>{{ object.contact_name }} &lt;{{ object.contact_email|urlize }}&gt;</td></tr>
     <tr><th>Workshop URL:</th>
-        <td>{{ object.url|urlize_newtab }} {% if load %}<a href="{% url 'event_import' %}?url={{ object.url|urlencode }}" class="btn btn-primary btn-xs pull-right" id="load_event">load event data</a>{% endif %}</td></tr>
+        <td>{{ object.url|urlize_newtab }} {% if load %}<a href="{% url 'event_import' %}?url={{ object.url|urlencode }}" class="btn btn-primary btn-sm float-right" id="load_event">load event data</a>{% endif %}</td></tr>
     <tr><th>Self-organized:</th>
         <td>{{ object.self_organized|yesno }}</td></tr>
     <tr><th>Notes:</th>

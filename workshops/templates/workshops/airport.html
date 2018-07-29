@@ -1,4 +1,4 @@
-{% extends "base_nav_fixed.html" %}
+{% extends "base_nav.html" %}
 
 {% load revisions %}
 
@@ -6,20 +6,20 @@
 {% last_modified airport %}
 
 <table class="table table-striped">
-  <tr><td>full name:</td><td>{{ airport.fullname }}</td></tr>
-  <tr><td>iata:</td><td>{{ airport.iata }}</td></tr>
-  <tr><td>country:</td><td>{{ airport.country.name }} <img src="{{ airport.country.flag }}" alt="{{ airport.country }}" class="country-flag" /></td></tr>
-  <tr><td>latitude:</td><td>{{ airport.latitude }}</td></tr>
-  <tr><td>longitude:</td><td>{{ airport.longitude }}</td></tr>
+  <tr><th>Full name:</th><td>{{ airport.fullname }}</td></tr>
+  <tr><th>IATA:</th><td>{{ airport.iata }}</td></tr>
+  <tr><th>Country:</th><td>{{ airport.country.name }} <img src="{{ airport.country.flag }}" alt="{{ airport.country }}" class="country-flag" /></td></tr>
+  <tr><th>Latitude:</th><td>{{ airport.latitude }}</td></tr>
+  <tr><th>Longitude:</th><td>{{ airport.longitude }}</td></tr>
 </table>
 
 <div class="clearfix">
   {% if perms.workshops.change_airport %}
-  <p class="edit-object pull-left"><a href="{% url 'airport_edit' airport.iata %}" class=" btn btn-primary">Edit</a></p>
+  <p class="edit-object float-left"><a href="{% url 'airport_edit' airport.iata %}" class=" btn btn-primary">Edit</a></p>
   {% else %}
-  <p class="edit-object pull-left"><a href="{% url 'airport_edit' airport.iata %}" class=" btn btn-primary disabled">Edit</a></p>
+  <p class="edit-object float-left"><a href="{% url 'airport_edit' airport.iata %}" class=" btn btn-primary disabled">Edit</a></p>
   {% endif %}
-  <div class="delete-object pull-right">
+  <div class="delete-object float-right">
     {% if perms.workshops.delete_airport %}
     <form action="{% url 'airport_delete' airport_iata=airport.iata %}" onsubmit='return confirm("Are you sure you wish to remove  \"{{ airport }}\"?")' method="POST">
       {% csrf_token %}

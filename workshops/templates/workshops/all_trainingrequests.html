@@ -1,4 +1,4 @@
-{% extends "base_nav_fluid_sidebar.html" %}
+{% extends "base_nav_sidebar.html" %}
 
 {% load crispy_forms_tags %}
 {% load pagination %}
@@ -22,12 +22,12 @@
         {% if request.GET.affiliation or request.GET.location %}
           <th>
             Affiliation
-            <span class="glyphicon glyphicon-question-sign"
-                  data-toggle="popover" data-html="true"
-                  data-content="<p>If two lines are presented:
-                                <ul><li>the first line shows affiliation from training request,</li>
-                                <li>and the second line shows affiliation from trainee's profile</li></ul></p>
-                                "></span>
+            <i class="fas fa-question-circle"
+               data-toggle="popover" data-html="true"
+               data-content="<p>If two lines are presented:
+                             <ul><li>the first line shows affiliation from training request,</li>
+                             <li>and the second line shows affiliation from trainee's profile</li></ul></p>
+                             "></i>
           </th>
           <th>Location</th>
         {% endif %}
@@ -39,17 +39,17 @@
         <th>Matched Training</th>
         <th width="50px">
           State
-          <span class="glyphicon glyphicon-question-sign"
-                data-toggle="popover" data-html="true"
-                data-content="<p>
-                              <span class='label label-warning'>Pending</span>
-                              <span class='label label-success'>Accepted</span>
-                              <span class='label label-danger'>Discarded</span>
-                              </p>
-                              <p>Click one of
-                              <a href='#'><span class='glyphicon glyphicon-info-sign'></span></a>
-                              icons below to start accepting request.</p>
-                             "></span>
+          <i class="fas fa-question-circle"
+             data-toggle="popover" data-html="true"
+             data-content="<p>
+                           <span class='badge badge-warning'>Pending</span>
+                           <span class='badge badge-success'>Accepted</span>
+                           <span class='badge badge-danger'>Discarded</span>
+                           </p>
+                           <p>Click one of
+                           <a href='#'><i class='fas fa-info-circle'></i></a>
+                           icons below to start accepting request.</p>
+                          "></i>
         </th>
         <th class="additional-links"></th>
       </tr>
@@ -107,7 +107,7 @@
                     data-toggle="popover" data-html="true"
                     data-content='
                       Click
-                      <a href="#"><span class="glyphicon glyphicon-info-sign"></span></a>
+                      <a href="#"><i class="fas fa-info-circle"></i></a>
                       icon on the right side to start accepting this request.
                     '>
                 {{ req.get_state_display }}
@@ -119,30 +119,31 @@
             {% endif %}
           </td>
           <td>
-            <a href="{% url 'trainingrequest_details' req.id %}?next={{ request.get_full_path|urlencode }}" title="View"><span class="glyphicon glyphicon-info-sign"></span></a>
+            <a href="{% url 'trainingrequest_details' req.id %}?next={{ request.get_full_path|urlencode }}" title="View"><i class="fas fa-info-circle"></i></a>
             &nbsp;
-            <a href="{% url 'trainingrequest_edit' req.id %}?next={{ request.get_full_path|urlencode }}" title="Edit"><span class="glyphicon glyphicon-pencil"></span></a>
+            <a href="{% url 'trainingrequest_edit' req.id %}?next={{ request.get_full_path|urlencode }}" title="Edit"><i class="fas fa-edit"></i></a>
           </td>
         </tr>
       {% endfor %}
     </table>
     {% pagination requests %}
 
-    <div class="btn-group" role="group">
+    <div class="btn-group" role="group" aria-label="Actions for list of training requests">
       <a class="btn btn-success" href="{% url 'training_request' %}">Create new request</a>
 
       <div class="btn-group" role="group">
-        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <button id="id_downloadBtn" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
           Download
-          <span class="caret"></span>
         </button>
-        <ul class="dropdown-menu">
-          <li><a href="{% url 'api:training-requests' %}?format=csv&" id="download_selected">Selected requests as CSV</a></li>
-          <li><a href="{% url 'api:training-requests' %}?format=csv&{{ request.GET.urlencode }}">Filtered requests as CSV</a></li>
-          <li><a href="{% url 'api:training-requests' %}?format=csv">All requests as CSV</a></li>
-        </ul>
+        <div class="dropdown-menu" aria-labelledby="id_downloadBtn">
+          <a class="dropdown-item" href="{% url 'api:training-requests' %}?format=csv&" id="download_selected">Selected requests as CSV</a>
+          <a class="dropdown-item" href="{% url 'api:training-requests' %}?format=csv&{{ request.GET.urlencode }}">Filtered requests as CSV</a>
+          <a class="dropdown-item" href="{% url 'api:training-requests' %}?format=csv">All requests as CSV</a>
+        </div>
       </div>
     </div>
+
+    <hr>
 
     <h2>Actions</h2>
     {% crispy form %}
