@@ -129,7 +129,7 @@ class IdInFilter(filters.BaseInFilter, filters.NumberFilter):
 
 
 class TrainingRequestFilterIDs(TrainingRequestFilter):
-    ids = IdInFilter(name='id', lookup_expr='in')
+    ids = IdInFilter(field_name='id', lookup_expr='in')
 
     class Meta(TrainingRequestFilter.Meta):
         fields = [

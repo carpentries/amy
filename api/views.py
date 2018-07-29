@@ -357,7 +357,10 @@ class TrainingRequests(ListAPIView):
         TrainingRequest.objects.all()
             .select_related('person')
             .prefetch_related(
-                'previous_involvement', 'domains', 'person__award_set',
+                'previous_involvement', 'domains',
+                Prefetch('person__award_set',
+                    queryset=Award.objects.select_related('badge'),
+                ),
                 Prefetch('person__task_set',
                     # We change the attribute "person.task_set" instead of
                     # directing this filtered tasks to a new attribute, because
@@ -366,7 +369,7 @@ class TrainingRequests(ListAPIView):
                     queryset=Task.objects
                         .filter(role__name='learner', event__tags__name='TTT')
                         .select_related('event')
-                    ),
+                ),
             )
         )
     filterset_class = TrainingRequestFilterIDs
