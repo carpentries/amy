@@ -369,7 +369,7 @@ class TrainingRequests(ListAPIView):
                     ),
             )
         )
-    filter_class = TrainingRequestFilterIDs
+    filterset_class = TrainingRequestFilterIDs
 
 
 class ReportsViewSet(ViewSet):
@@ -700,7 +700,7 @@ class EventViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = EventSerializer
     lookup_field = 'slug'
     pagination_class = StandardResultsSetPagination
-    filter_class = EventFilter
+    filterset_class = EventFilter
 
 
 class TaskViewSet(viewsets.ReadOnlyModelViewSet):
@@ -708,7 +708,7 @@ class TaskViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (IsAuthenticated, IsAdmin)
     serializer_class = TaskSerializer
     pagination_class = StandardResultsSetPagination
-    filter_class = TaskFilter
+    filterset_class = TaskFilter
     _event_slug = None
 
     def get_queryset(self):
@@ -755,7 +755,7 @@ class PersonViewSet(viewsets.ReadOnlyModelViewSet):
                      .prefetch_related('badges', 'domains', 'lessons')
     serializer_class = PersonSerializer
     pagination_class = StandardResultsSetPagination
-    filter_class = PersonFilter
+    filterset_class = PersonFilter
 
 
 class AwardViewSet(viewsets.ReadOnlyModelViewSet):

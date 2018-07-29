@@ -6,6 +6,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Div, HTML, Submit, Button, Field
 from crispy_forms.bootstrap import AccordionGroup, Accordion
 from dal import autocomplete
+from dal_select2.widgets import Select2Multiple
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
@@ -289,8 +290,9 @@ class WorkshopStaffForm(forms.Form):
         countries.only = only
 
         choices = list(countries)
-        self.fields['country'] = forms.MultipleChoiceField(choices=choices,
-                                                           required=False)
+        self.fields['country'] = forms.MultipleChoiceField(
+            choices=choices, required=False, widget=Select2Multiple,
+        )
 
         self.helper = FormHelper(self)
         self.helper.form_method = 'get'
@@ -1687,7 +1689,7 @@ class BulkChangeTrainingRequestForm(forms.Form):
                    formnovalidate='formnovalidate'),
             Submit('unmatch', 'Unmatch selected trainees from training',
                    formnovalidate='formnovalidate'),
-            HTML('<a bulk-email-on-click class="btn btn-primary">'
+            HTML('<a bulk-email-on-click class="btn btn-primary text-white">'
                  'Mail selected trainees</a>&nbsp;'),
         )
     )
