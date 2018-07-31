@@ -331,6 +331,8 @@ class TestMatchingTrainingRequestAndDetailedView(TestBase):
     def setUp(self):
         self._setUpUsersAndLogin()
         self._setUpRoles()
+        self._setUpAirports()
+        self._setUpNonInstructors()
 
     def test_detailed_view_of_pending_request(self):
         """Match Request form should be displayed only when no account is
@@ -368,14 +370,39 @@ class TestMatchingTrainingRequestAndDetailedView(TestBase):
         [#949] https://github.com/swcarpentry/amy/pull/949/"""
 
         req = create_training_request(state='p', person=None)
-        rv = self.client.post(reverse('trainingrequest_details', args=[req.pk]),
-                              data={'person': self.admin.pk,
+        rv = self.client.post(reverse('trainingrequest_details',
+                                      args=[req.pk]),
+                              data={'person': self.ironman.pk,
                                     'match-selected-person': ''},
                               follow=True)
         self.assertEqual(rv.status_code, 200)
         req.refresh_from_db()
         self.assertEqual(req.state, 'p')
-        self.assertEqual(req.person, self.admin)
+        self.assertEqual(req.person, self.ironman)
+
+        self.ironman.refresh_from_db()
+
+        # in response to #1270, check if person record was updated
+        data_expected = {
+            'personal': req.personal,
+            'middle': req.middle,
+            'family': req.family,
+            'email': req.email,
+            'country': req.country,
+            'github': req.github or None,
+            'affiliation': req.affiliation,
+            'occupation': req.get_occupation_display() if req.occupation
+                else req.occupation_other,
+            'data_privacy_agreement': req.data_privacy_agreement,
+            'may_contact': True,
+            'is_active': True,
+        }
+        for key, value in data_expected.items():
+            self.assertEqual(getattr(self.ironman, key), value,
+                             'Attribute: {}'.format(key))
+        self.assertIn("\n\nNotes from training request:\n", self.ironman.notes)
+        self.assertEqual(set(self.ironman.domains.all()),
+                         set(req.domains.all()))
 
     def test_matching_with_new_account_works(self):
         req = create_training_request(state='p', person=None)
@@ -385,6 +412,27 @@ class TestMatchingTrainingRequestAndDetailedView(TestBase):
         self.assertEqual(rv.status_code, 200)
         req.refresh_from_db()
         self.assertEqual(req.state, 'p')
+
+        # in response to #1270, check if person record was updated
+        data_expected = {
+            'personal': req.personal,
+            'middle': req.middle,
+            'family': req.family,
+            'email': req.email,
+            'country': req.country,
+            'github': req.github or None,
+            'affiliation': req.affiliation,
+            'occupation': req.get_occupation_display() if req.occupation
+                else req.occupation_other,
+            'data_privacy_agreement': req.data_privacy_agreement,
+            'may_contact': True,
+            'is_active': True,
+        }
+        for key, value in data_expected.items():
+            self.assertEqual(getattr(req.person, key), value,
+                             'Attribute: {}'.format(key))
+        self.assertIn("\n\nNotes from training request:\n", req.person.notes)
+        self.assertEqual(set(req.person.domains.all()), set(req.domains.all()))
 
 
 class TestTrainingRequestTemplateTags(TestBase):

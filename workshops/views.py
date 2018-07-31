@@ -3000,10 +3000,10 @@ def all_trainingrequests(request):
     return render(request, 'workshops/all_trainingrequests.html', context)
 
 
-def _match_training_request_to_person(form, training_request, request):
-    assert form.action in ('match', 'create')
-    try:
-        if form.action == 'create':
+def _match_training_request_to_person(request, training_request, create=False,
+                                      person=None):
+    if create:
+        try:
             training_request.person = Person.objects.create_user(
                 username=create_username(training_request.personal,
                                          training_request.family),
@@ -3011,30 +3011,43 @@ def _match_training_request_to_person(form, training_request, request):
                 family=training_request.family,
                 email=training_request.email,
             )
-
-    except IntegrityError as e:
-        # email address is not unique
-        messages.error(request, 'Could not create a new person -- '
-                                'there already exists a person with '
-                                'exact email address.')
-        return False
+        except IntegrityError as e:
+            # email address is not unique
+            messages.error(request, 'Could not create a new person, because '
+                                    'there already exists a person with '
+                                    'exact email address.')
+            return False
 
     else:
-        if form.action == 'create':
-            training_request.person.middle = training_request.middle
-            training_request.person.github = training_request.github
-            training_request.person.affiliation = training_request.affiliation
-            training_request.person.domains.set(training_request.domains.all())
-            training_request.person.occupation = (
-                training_request.get_occupation_display() or
-                training_request.occupation_other)
+        training_request.person = person
 
-        else:
-            assert form.action == 'match'
-            training_request.person = form.cleaned_data['person']
+    # as per #1270:
+    # https://github.com/swcarpentry/amy/issues/1270#issuecomment-407515948
+    # let's rewrite everything that's possible to rewrite
+    try:
+        training_request.person.personal = training_request.personal
+        training_request.person.middle = training_request.middle
+        training_request.person.family = training_request.family
+        training_request.person.email = training_request.email
+        training_request.person.country = training_request.country
+        training_request.person.github = training_request.github
+        training_request.person.affiliation = training_request.affiliation
+        training_request.person.domains.set(training_request.domains.all())
+        training_request.person.occupation = (
+            training_request.get_occupation_display()
+            if training_request.occupation else
+            training_request.occupation_other)
+        training_request.person.data_privacy_agreement = \
+            training_request.data_privacy_agreement
 
         training_request.person.may_contact = True
         training_request.person.is_active = True
+
+        # merge notes
+        training_request.person.notes = (
+            training_request.person.notes +"\n\nNotes from training request:\n"
+            + training_request.notes)
+
         training_request.person.save()
         training_request.person.synchronize_usersocialauth()
         training_request.save()
@@ -3042,6 +3055,13 @@ def _match_training_request_to_person(form, training_request, request):
         messages.success(request, 'Request matched with the person.')
 
         return True
+    except IntegrityError as e:
+        # email or github not unique
+        messages.error(request, "It was impossible to update related person's "
+                                "data. Probably email address or GitHub "
+                                "handle used in the training request are not "
+                                " unique amongst person entries.")
+        return False
 
 
 @admin_required
@@ -3052,7 +3072,12 @@ def trainingrequest_details(request, pk):
         form = MatchTrainingRequestForm(request.POST)
 
         if form.is_valid():
-            ok = _match_training_request_to_person(form, req, request)
+            create = (form.action == "create")
+            person = form.cleaned_data['person']
+            ok = _match_training_request_to_person(request,
+                                                   training_request=req,
+                                                   create=create,
+                                                   person=person)
             if ok:
                 return redirect_with_next_support(
                     request, 'trainingrequest_details', req.pk)
