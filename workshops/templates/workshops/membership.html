@@ -15,37 +15,37 @@
 </p>
 <table class="table table-striped">
   <tr><th colspan="2">Organization:</th>
-      <td><a href="{% url 'organization_details' membership.organization.domain %}">{{ membership.organization.fullname }}</a><br />
+      <td width="60%"><a href="{% url 'organization_details' membership.organization.domain %}">{{ membership.organization.fullname }}</a><br />
           &lt;{{ membership.organization.domain|urlize }}&gt;</td></tr>
   <tr><th colspan="2">Variant:</th><td>{{ membership.get_variant_display }}</td></tr>
   <tr><th colspan="2">Start date:</th><td>{{ membership.agreement_start }}</td></tr>
   <tr><th colspan="2">End date:</th><td>{{ membership.agreement_end }}</td></tr>
   <tr><th colspan="2">Contribution type:</th><td>{{ membership.get_contribution_type_display }}</td></tr>
   <tr>
-    <th rowspan="3" width="30%">Workshops without fee per year</th>
+    <th rowspan="3" width="30%">Workshops without fee per agreement duration</th>
     <th>Allowed:</th>
-    <td>{{ membership.workshops_without_admin_fee_per_year|default:"—" }}</td>
+    <td>{{ membership.workshops_without_admin_fee_per_agreement|default:"—" }}</td>
   </tr>
   <tr>
     <th>Completed:</th>
-    <td>{{ membership.workshops_without_admin_fee_per_year_completed|default:"—" }}</td>
+    <td>{{ membership.workshops_without_admin_fee_completed|default:"—" }}</td>
   </tr>
   <tr>
     <th>Remaining:</th>
-    <td>{{ membership.workshops_without_admin_fee_per_year_remaining|default:"—" }}</td>
+    <td>{{ membership.workshops_without_admin_fee_remaining|default:"—" }}</td>
   </tr>
   <tr>
-    <th rowspan="3">Self-organized workshops per year</th>
+    <th rowspan="3">Self-organized workshops per agreement duration</th>
     <th>Expected:</th>
-    <td>{{ membership.self_organized_workshops_per_year|default:"—" }}</td>
+    <td>{{ membership.self_organized_workshops_per_agreement|default:"—" }}</td>
   </tr>
   <tr>
     <th>Completed:</th>
-    <td>{{ membership.self_organized_workshops_per_year_completed|default:"—" }}</td>
+    <td>{{ membership.self_organized_workshops_completed|default:"—" }}</td>
   </tr>
   <tr>
     <th>Remaining:</th>
-    <td>{{ membership.self_organized_workshops_per_year_remaining|default:"—" }}</td>
+    <td>{{ membership.self_organized_workshops_remaining|default:"—" }}</td>
   </tr>
   <tr>
     <th colspan="2">Notes:</th>

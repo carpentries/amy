@@ -145,13 +145,15 @@ class Membership(models.Model):
         max_length=STR_MED, null=False, blank=False,
         choices=CONTRIBUTION_CHOICES,
     )
-    workshops_without_admin_fee_per_year = models.PositiveIntegerField(
+    workshops_without_admin_fee_per_agreement = models.PositiveIntegerField(
         null=True, blank=True,
-        help_text="Acceptable number of workshops without admin fee per year",
+        help_text="Acceptable number of workshops without admin fee per "
+                  "agreement duration",
     )
-    self_organized_workshops_per_year = models.PositiveIntegerField(
+    self_organized_workshops_per_agreement = models.PositiveIntegerField(
         null=True, blank=True,
-        help_text="Expected number of self-organized workshops per year",
+        help_text="Expected number of self-organized workshops per agreement "
+                  "duration",
     )
     notes = models.TextField(default="", blank=True)
     organization = models.ForeignKey(Organization, null=False, blank=False,
@@ -164,47 +166,47 @@ class Membership(models.Model):
     def get_absolute_url(self):
         return reverse('membership_details', args=[self.id])
 
-    @property
-    def workshops_without_admin_fee_per_year_completed(self):
-        """Count workshops without admin fee hosted the year agreement
-        started."""
-        year = self.agreement_start.year
+    @cached_property
+    def workshops_without_admin_fee_completed(self):
+        """Count workshops without admin fee hosted the during agreement."""
         self_organized = (Q(administrator=None) |
                           Q(administrator__domain='self-organized'))
         no_fee = Q(admin_fee=0) | Q(admin_fee=None)
+        date_started = Q(start__gte=self.agreement_start, start__lt=self.agreement_end)
 
-        return Event.objects.filter(host=self.organization, start__year=year) \
+        return Event.objects.filter(host=self.organization) \
+                            .filter(date_started) \
                             .filter(no_fee) \
                             .exclude(self_organized).count()
 
-    @property
-    def workshops_without_admin_fee_per_year_remaining(self):
-        """Count remaining workshops w/o admin fee for the year agreement
-        started."""
-        if not self.workshops_without_admin_fee_per_year:
+    @cached_property
+    def workshops_without_admin_fee_remaining(self):
+        """Count remaining workshops w/o admin fee for the agreement."""
+        if not self.workshops_without_admin_fee_per_agreement:
             return None
-        a = self.workshops_without_admin_fee_per_year
-        b = self.workshops_without_admin_fee_per_year_completed
+        a = self.workshops_without_admin_fee_per_agreement
+        b = self.workshops_without_admin_fee_completed
         return a - b
 
-    @property
-    def self_organized_workshops_per_year_completed(self):
+    @cached_property
+    def self_organized_workshops_completed(self):
         """Count self-organized workshops hosted the year agreement started."""
-        year = self.agreement_start.year
         self_organized = (Q(administrator=None) |
                           Q(administrator__domain='self-organized'))
+        date_started = Q(start__gte=self.agreement_start, start__lt=self.agreement_end)
 
-        return Event.objects.filter(host=self.organization, start__year=year) \
+        return Event.objects.filter(host=self.organization) \
+                            .filter(date_started) \
                             .filter(self_organized).count()
 
-    @property
-    def self_organized_workshops_per_year_remaining(self):
+    @cached_property
+    def self_organized_workshops_remaining(self):
         """Count remaining self-organized workshops for the year agreement
         started."""
-        if not self.self_organized_workshops_per_year:
+        if not self.self_organized_workshops_per_agreement:
             return None
-        a = self.self_organized_workshops_per_year
-        b = self.self_organized_workshops_per_year_completed
+        a = self.self_organized_workshops_per_agreement
+        b = self.self_organized_workshops_completed
         return a - b
 
 
