@@ -749,8 +749,8 @@ class MembershipForm(forms.ModelForm):
         model = Membership
         fields = [
             'organization', 'variant', 'agreement_start', 'agreement_end',
-            'contribution_type', 'workshops_without_admin_fee_per_year',
-            'self_organized_workshops_per_year', 'notes',
+            'contribution_type', 'workshops_without_admin_fee_per_agreement',
+            'self_organized_workshops_per_agreement', 'notes',
         ]
 
 
