@@ -59,8 +59,8 @@ Execute the following commands on your local machine, not production.
 6.  Bump version on `master`:
 
         $ echo "__version__ = '$AMY_VERSION'" > workshops/__init__.py  # change version to 1.X.Y
-        $ vim bower.json  # change version to $AMY_VERSION
-        $ git add workshops/__init__.py bower.json
+        $ vim package.json  # change version to $AMY_VERSION
+        $ git add workshops/__init__.py package.json
         $ git commit -m "Bumping version to $AMY_VERSION"
 
 7.  Just to be safe, run tests:
@@ -83,8 +83,8 @@ Execute the following commands on your local machine, not production.
 
         $ git checkout develop
         $ echo "__version__ = '$AMY_NEXT_VERSION'" > workshops/__init__.py  # change version to 1.X+1.0
-        $ vim bower.json  # change version to $AMY_NEXT_VERSION
-        $ git add workshops/__init__.py bower.json
+        $ vim package.json  # change version to $AMY_NEXT_VERSION
+        $ git add workshops/__init__.py package.json
         $ git commit -m "Bumping version to $AMY_NEXT_VERSION"
 
     Skip this step if you're releasing minor AMY version (that is, when you increment Y, not X).
