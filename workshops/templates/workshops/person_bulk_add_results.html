@@ -1,4 +1,4 @@
-{% extends "base_nav_fluid.html" %}
+{% extends "base_nav.html" %}
 
 {% block content %}
 <div class="alert alert-info" role="alert">
@@ -6,142 +6,145 @@
 </div>
 
 <form method="POST" id="main-form">
-    <table class="table table-striped" id="bulk-add-results">
-        <tr>
-            <th>personal</th>
-            <th>family</th>
-            <th>username (generated)</th>
-            <th>email</th>
-            <th>event</th>
-            <th>role</th>
-            <th>errors</th>
-            <th>info</th>
-            <th></th>
-        </tr>
-        {% for entry in persons_tasks %}
-        <tr>
-        {% with i=forloop.counter0 %}
-            <td class="editable">
-                <span>{{ entry.personal|default:"—" }}</span>
-                <input type="text" name="personal" value="{{ entry.personal|default:"" }}" class="hidden">
-            </td>
-            <td class="editable">
-                <span>{{ entry.family|default:"—" }}</span>
-                <input type="text" name="family" value="{{ entry.family|default:"" }}" class="hidden">
-            </td>
-            <td {% if not entry.person_exists %}class="editable"{% endif %}>
-                <span>{{ entry.username|default:"—" }}</span>
-                <input type="text" name="username" value="{{ entry.username|default:"" }}" class="hidden">
-            </td>
-            <td class="editable">
-                <span>{{ entry.email|default:"—" }}</span>
-                <input type="text" name="email" value="{{ entry.email|default:"" }}" class="hidden">
-            </td>
-            <td class="editable">
-                <span>{{ entry.event|default:"—" }}</span>
-                <input type="text" name="event" value="{{ entry.event|default:"" }}" class="hidden">
-            </td>
-            <td class="editable">
-                <span>{{ entry.role|default:"—" }}</span>
-                <select name="role" class="hidden">
-                {% if entry.role not in possible_roles %}
-                    <option selected="selected" value="{{ entry.role }}">{{ entry.role }}</option>
-                {% endif %}
-                {% for role in possible_roles %}
-                    <option value="{{ role }}" {% if role == entry.role %}selected="selected"{% endif %}>{{ role }}</option>
-                {% endfor %}
-                </select>
-            </td>
-            <td class="text-danger">
-            {% if entry.errors %}
-                <ul>
-                {% for error in entry.errors %}
-                    <li>{{ error }}</li>
-                {% endfor %}
-                </ul>
+  <table class="table table-striped" id="bulk-add-results">
+    <tr>
+      <th>Personal</th>
+      <th>Family</th>
+      <th>Username (generated)</th>
+      <th>Email</th>
+      <th>Event</th>
+      <th>Role</th>
+      <th>Errors</th>
+      <th>Info</th>
+      <th></th>
+    </tr>
+    {% for entry in persons_tasks %}
+    <tr>
+    {% with i=forloop.counter0 %}
+      <td class="editable">
+          <span>{{ entry.personal|default:"—" }}</span>
+          <input type="text" name="personal" value="{{ entry.personal|default:"" }}" class="d-none">
+      </td>
+      <td class="editable">
+          <span>{{ entry.family|default:"—" }}</span>
+          <input type="text" name="family" value="{{ entry.family|default:"" }}" class="d-none">
+      </td>
+      <td {% if not entry.person_exists %}class="editable"{% endif %}>
+          <span>{{ entry.username|default:"—" }}</span>
+          <input type="text" name="username" value="{{ entry.username|default:"" }}" class="d-none">
+      </td>
+      <td class="editable">
+          <span>{{ entry.email|default:"—" }}</span>
+          <input type="text" name="email" value="{{ entry.email|default:"" }}" class="d-none">
+      </td>
+      <td class="editable">
+          <span>{{ entry.event|default:"—" }}</span>
+          <input type="text" name="event" value="{{ entry.event|default:"" }}" class="d-none">
+      </td>
+      <td class="editable">
+          <span>{{ entry.role|default:"—" }}</span>
+          <select name="role" class="d-none">
+          {% if entry.role not in possible_roles %}
+              <option selected="selected" value="{{ entry.role }}">{{ entry.role }}</option>
+          {% endif %}
+          {% for role in possible_roles %}
+              <option value="{{ role }}" {% if role == entry.role %}selected="selected"{% endif %}>{{ role }}</option>
+          {% endfor %}
+          </select>
+      </td>
+      <td class="text-danger">
+      {% if entry.errors %}
+          <ul>
+          {% for error in entry.errors %}
+              <li>{{ error }}</li>
+          {% endfor %}
+          </ul>
+      {% endif %}
+      </td>
+      <td>
+      {% if entry.info %}
+          <ul>
+          {% for info in entry.info %}
+              <li>{{ info }}</li>
+          {% endfor %}
+          </ul>
+      {% endif %}
+      {% if entry.similar_persons %}
+          <ul>
+          {% for person in entry.similar_persons %}
+            {% if person.0 == entry.existing_person_id %}
+            <li>Matched person: <a href="{% url 'person_details' person.0 %}">{{ person.1 }}</a>. <a href="{% url 'person_bulk_add_match_person' i %}">Unmatch</a>.</li>
+            {% else %}
+            <li>Matching person: <a href="{% url 'person_details' person.0 %}">{{ person.1 }}</a>. <a href="{% url 'person_bulk_add_match_person' i person.0 %}">Use this person</a>.</li>
             {% endif %}
-            </td>
-            <td>
-            {% if entry.info %}
-                <ul>
-                {% for info in entry.info %}
-                    <li>{{ info }}</li>
-                {% endfor %}
-                </ul>
-            {% endif %}
-            {% if entry.similar_persons %}
-                <ul>
-                {% for person in entry.similar_persons %}
-                    <li>Matching person: <a href="{% url 'person_details' person.id %}">{{ person.personal }} {{ person.middle }} {{ person.family }} &lt;{{ person.email|default:"—" }}&gt;</a>. <a href="{% url 'person_bulk_add_match_person' i person.id %}">Use this person</a>.</li>
-                {% endfor %}
-                </ul>
-            {% endif %}
-            </td>
-            <td>
-            {% if persons_tasks|length > 1 %}
-            <a href="{% url 'person_bulk_add_remove_entry' i %}" title='Remove this entry'><span class="glyphicon glyphicon-remove"></span></a>
-            {% endif %}
-            </td>
-        {% endwith %}
-        </tr>
-        {% endfor %}
-    </table>
+          {% endfor %}
+          </ul>
+      {% endif %}
+      </td>
+      <td>
+      {% if persons_tasks|length > 1 %}
+      <a href="{% url 'person_bulk_add_remove_entry' i %}" title='Remove this entry'><i class="fas fa-times"></i></a>
+      {% endif %}
+      </td>
+    {% endwith %}
+    </tr>
+    {% endfor %}
+  </table>
 
-    {% comment %}
-    This feels a little bit like cheating, but I don't have any better idea
-    how to distinguish between confirmation and cancelation.
-    The important implication of this approach is that the fields' names must
-    stay the way they're now: "confirm" and "cancel".  Values can change.
-    {% endcomment %}
-    {% if any_errors %}
-    <input type="button" name="confirm" value="Confirm and save" class="btn btn-success disabled">
-    {% else %}
-    <input type="submit" name="confirm" value="Confirm and save" class="btn btn-success">
-    {% endif %}
-    <input type="submit" name="cancel" value="No, cancel" class="btn btn-default">
-    <input type="submit" name="verify" value="Verify" class="btn btn-default pull-right">
-    {% csrf_token %}
+  {% comment %}
+  This feels a little bit like cheating, but I don't have any better idea
+  how to distinguish between confirmation and cancelation.
+  The important implication of this approach is that the fields' names must
+  stay the way they're now: "confirm" and "cancel".  Values can change.
+  {% endcomment %}
+  {% if any_errors %}
+  <input type="button" name="confirm" value="Confirm and save" class="btn btn-success disabled">
+  {% else %}
+  <input type="submit" name="confirm" value="Confirm and save" class="btn btn-success">
+  {% endif %}
+  <input type="submit" name="cancel" value="No, cancel" class="btn btn-secondary">
+  <input type="submit" name="verify" value="Verify" class="btn btn-primary float-right">
+  {% csrf_token %}
 </form>
-
 {% endblock %}
 
 {% block extrajs %}
 <script type="text/javascript">
-    $("table#bulk-add-results").delegate('td.editable span', 'dblclick', function(e)
-    {
-        if (e.target.tagName != "INPUT")
-        {
-            var cell = $(e.currentTarget).parent();
-            var span = $(cell).find("span");
-            var input = $(cell).find("input");
-            var select = $(cell).find("select");
-            $(span).addClass("hidden");
-            $(input).removeClass("hidden");
-            $(select).removeClass("hidden");
-        }
-    });
-
-    $("table#bulk-add-results").delegate(':text', 'keypress', function(e) {
-        var key = e.keyCode || e.which;
+  $(document).ready(function() {
+    $("#bulk-add-results").delegate('td.editable span', 'dblclick', function(e) {
+      if (e.target.tagName != "INPUT") {
         var cell = $(e.currentTarget).parent();
         var span = $(cell).find("span");
-        var input = $(e.currentTarget);
-
-        if (key == 13) {
-            span.html(input.val());  // save input value to the span element
-            input.addClass("hidden");
-            span.removeClass("hidden");
-            cell.addClass("warning");
-
-            return false;
-
-        } else if (key == 27) {
-            input.val(span.html());  // revert initial value
-            input.addClass("hidden");
-            span.removeClass("hidden");
-
-            return false;
-        }
+        var input = $(cell).find("input");
+        var select = $(cell).find("select");
+        $(span).addClass("d-none");
+        $(input).removeClass("d-none");
+        $(select).removeClass("d-none");
+      }
     });
+
+    $("#bulk-add-results").delegate(':text', 'keypress', function(e) {
+      var key = e.keyCode || e.which;
+      var cell = $(e.currentTarget).parent();
+      var span = $(cell).find("span");
+      var input = $(e.currentTarget);
+
+      if (key == 13) {
+        span.html(input.val());  // save input value to the span element
+        input.addClass("d-none");
+        span.removeClass("d-none");
+        cell.addClass("table-warning");
+
+        return false;
+
+      } else if (key == 27) {
+        input.val(span.html());  // revert initial value
+        input.addClass("d-none");
+        span.removeClass("d-none");
+
+        return false;
+      }
+    });
+  });
 </script>
 {% endblock %}

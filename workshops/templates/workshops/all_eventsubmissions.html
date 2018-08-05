@@ -1,4 +1,4 @@
-{% extends "base_nav_fluid_sidebar.html" %}
+{% extends "base_nav_sidebar.html" %}
 
 {% load pagination %}
 {% load links %}
@@ -6,26 +6,22 @@
 {% block content %}
   {% if submissions %}
   <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>assignee</th>
-        <th>person</th>
-        <th>workshop URL</th>
-        <th>self organized?</th>
-        <th class="additional-links"></th>
-      </tr>
-    </thead>
-    <tbody>
+    <tr>
+      <th>Assignee</th>
+      <th>Person</th>
+      <th>Workshop URL</th>
+      <th>Self-organized</th>
+      <th class="additional-links"></th>
+    </tr>
     {% for submission in submissions %}
-      <tr>
-        <td>{% if submission.assigned_to %}<a href="{{ submission.assigned_to.get_absolute_url }}">{{ submission.assigned_to.get_short_name }}</a>{% else %}—{% endif %}</td>
-        <td>{{ submission.contact_name }} &lt;{{ submission.contact_email|urlize }}&gt;</td>
-        <td>{{ submission.url|urlize_newtab }}</td>
-        <td>{{ submission.self_organized|yesno }}</td>
-        <td><a href="{{ submission.get_absolute_url }}"><span class="glyphicon glyphicon-info-sign"></span></a></td>
-      </tr>
+    <tr>
+      <td>{% if submission.assigned_to %}<a href="{{ submission.assigned_to.get_absolute_url }}">{{ submission.assigned_to.get_short_name }}</a>{% else %}—{% endif %}</td>
+      <td>{{ submission.contact_name }} &lt;{{ submission.contact_email|urlize }}&gt;</td>
+      <td>{{ submission.url|urlize_newtab }}</td>
+      <td>{{ submission.self_organized|yesno }}</td>
+      <td><a href="{{ submission.get_absolute_url }}"><i class="fas fa-info-circle"></i></a></td>
+    </tr>
     {% endfor %}
-    </tbody>
   </table>
   {% else %}
   <p>No workshop submissions matching the filter.</p>

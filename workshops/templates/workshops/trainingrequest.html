@@ -1,4 +1,4 @@
-{% extends "base_nav_fixed.html" %}
+{% extends "base_nav.html" %}
 
 {% load revisions %}
 {% load crispy_forms_tags %}
@@ -27,42 +27,42 @@
   <a href="{% url 'trainingrequest_edit' req.id %}" class="btn btn-primary">Edit</a>
 </div>
 <table class="table table-striped">
-  <tr><th>state</th>
+  <tr><th>State:</th>
       <td><span class="{% training_request_label req %}">
             {{ req.get_state_display }}
           </span>
       </td></tr>
-  <tr><th>matched person</th>
+  <tr><th>Matched person:</th>
       <td>
         {% if req.person %}
           <a href="{% url 'person_details' req.person.pk %}">
             {{ req.person.full_name }}</a>
           {% if req.person.email %}&lt;{{ req.person.email|urlize }}&gt;{% endif %}
-        {% else %}—{% endif %}
+        {% else %}&mdash;{% endif %}
       </td></tr>
-  <tr><th>created at</th>
+  <tr><th>Created at:</th>
       <td>{{ req.created_at }}</td></tr>
-  <tr><th>group name</th>
+  <tr><th>Group name:</th>
       <td>{{ req.group_name }}</td></tr>
-  <tr><th>personal name</th>
+  <tr><th>Personal name:</th>
       <td>{{ req.personal }}</td></tr>
-  <tr><th>middle name</th>
+  <tr><th>Middle name:</th>
       <td>{{ req.middle }}</td></tr>
-  <tr><th>family name</th>
+  <tr><th>Family name:</th>
       <td>{{ req.family}}</td></tr>
-  <tr><th>email</th>
+  <tr><th>Email:</th>
       <td>{{ req.email|urlize }}</td></tr>
-  <tr><th>github</th>
-      <td>{{ req.github|default:"—" }}</td></tr>
-  <tr><th>occupation</th>
+  <tr><th>Github:</th>
+      <td>{{ req.github|default:"&mdash;" }}</td></tr>
+  <tr><th>Occupation:</th>
       <td>{{ req.get_occupation_display }} {{ req.occupation_other }}</td></tr>
-  <tr><th>affiliation</th>
+  <tr><th>Affiliation:</th>
       <td>{{ req.affiliation }}</td></tr>
-  <tr><th>location</th>
+  <tr><th>Location:</th>
       <td>{{ req.location}}</td></tr>
-  <tr><th>country</th>
+  <tr><th>Country:</th>
       <td>{{ req.get_country_display }}</td></tr>
-  <tr><th>domains</th>
+  <tr><th>Domains:</th>
       <td><ul>
           {% for domain in req.domains.all %}
             <li>{{ domain }}</li>
@@ -70,11 +70,11 @@
             <li>No knowledge domain.</li>
           {% endfor %}
           </ul></td></tr>
-  <tr><th>other areas of expertise</th>
-      <td>{{ req.domains_other|default:"—" }}</td></tr>
-  <tr><th>under-represented:</th>
+  <tr><th>Other areas of expertise:</th>
+      <td>{{ req.domains_other|default:"&mdash;" }}</td></tr>
+  <tr><th>Under-represented::</th>
       <td>{% if req.underrepresented %}Yes. Reason: {{ req.underrepresented }}{% else %}No.{% endif %}</td></tr>
-  <tr><th>previous involvement</th>
+  <tr><th>Previous involvement:</th>
       <td><ul>
           {% for involvement in req.previous_involvement.all %}
             <li>{{ involvement }}</li>
@@ -82,26 +82,26 @@
             <li>No previous involvement.</li>
           {% endfor %}
           </ul></td></tr>
-  <tr><th>previous training in teaching</th>
+  <tr><th>Previous training in teaching:</th>
       <td>{{ req.get_previous_training_display }} {{ req.previous_training_other }}</td></tr>
-  <tr><th>explanation of previous training in teaching</th>
-      <td><pre>{{ req.previous_training_explanation|default:"—" }}</pre></td></tr>
-  <tr><th>previous experience in teaching</th>
+  <tr><th>Explanation of previous training in teaching:</th>
+      <td>{% if req.previous_training_explanation %}<pre>{{ req.previous_training_explanation }}</pre>{% else %}&mdash;{% endif %}</td></tr>
+  <tr><th>previous experience in teaching:</th>
       <td>{{ req.get_previous_experience_display }} {{ req.previous_experience_other }}</td></tr>
-  <tr><th>explanation of previous experience in teaching</th>
-      <td><pre>{{ req.previous_experience_explanation|default:"—" }}</pre></td></tr>
-  <tr><th>programming language usage frequency</th>
+  <tr><th>Explanation of previous experience in teaching:</th>
+      <td>{% if req.previous_experience_explanation %}<pre>{{ req.previous_experience_explanation }}</pre>{% else %}&mdash;{% endif %}</td></tr>
+  <tr><th>Programming language usage frequency:</th>
       <td>{{ req.get_programming_language_usage_frequency_display }}</td></tr>
-  <tr><th>Why do you want to attend this training course?</th>
+  <tr><th>Why do you want to attend this training course?:</th>
       <td><pre>{{ req.reason }}</pre></td></tr>
-  <tr><th>teaching frequency expectation</th>
+  <tr><th>Teaching frequency expectation:</th>
       <td>{{ req.get_teaching_frequency_expectation_display }} {{ req.teaching_frequency_expectation_other}}</td></tr>
-  <tr><th>max travelling frequency</th>
+  <tr><th>Max travelling frequency:</th>
       <td>{{ req.get_max_travelling_frequency_display }} {{ req.max_travelling_frequency_other }}</td></tr>
-  <tr><th>additional comments by submitter</th>
-      <td><pre>{{ req.comment|default:"—" }}</pre></td></tr>
-  <tr><th>admin notes</th>
-      <td><pre>{{ req.notes|default:"—" }}</pre></td></tr>
+  <tr><th>Additional comments by submitter:</th>
+      <td>{% if req.comment %}<pre>{{ req.comment }}</pre>{% else %}&mdash;{% endif %}</td></tr>
+  <tr><th>Admin notes:</th>
+      <td>{% if req.notes %}<pre>{{ req.notes }}</pre>{% else %}&mdash;{% endif %}</td></tr>
 </table>
 
 {% endblock %}

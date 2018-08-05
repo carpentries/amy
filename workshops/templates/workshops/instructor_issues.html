@@ -1,17 +1,17 @@
-{% extends "base_nav_fixed.html" %}
+{% extends "base_nav.html" %}
 
 {% block content %}
 <h2>Instructor Locations</h2>
 {% if instructors %}
 <p>Legend:</p>
 <ul>
-<li><span class="glyphicon glyphicon-envelope"></span> &mdash; mail instructor about problem</li>
-<li><span class="glyphicon glyphicon-remove"></span> &mdash; no email address available</li>
+<li><i class="fas fa-envelope"></i> &mdash; mail instructor about problem</li>
+<li><i class="fas fa-times"></i> &mdash; no email address available</li>
 </ul>
 <table class="table table-striped">
   <tr>
     <th>Instructor</th>
-    <th>Location <span class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="Nearest airport is missing"></span></th>
+    <th>Location <i class="fas fa-question-circle" data-toggle="tooltip" title="Nearest airport is missing"></i></th>
   </tr>
   {% for person in instructors %}
   <tr>
@@ -23,10 +23,10 @@
 We are trying to update the Software and Data Carpentry instructor database - can you please fill in https://amy.software-carpentry.org/workshops/update_profile/ to let us know where you are so that we can match you with workshops?
 
 Thanks for your help.{% endfilter %}">
-        <span class="glyphicon glyphicon-envelope"></span>
+        <i class="fas fa-envelope"></i>
       </a>
       {% else %}
-      <span class="glyphicon glyphicon-remove"></span>
+      <i class="fas fa-times"></i>
       {% endif %}
     </td>
   </tr>
@@ -38,12 +38,12 @@ Thanks for your help.{% endfilter %}">
 
 <h2>Incomplete Trainees</h2>
 {% if pending %}
-  <p><span class="glyphicon glyphicon-envelope"></span> = mail person about problem</p>
-  <p><span class="glyphicon glyphicon-remove"></span> = no email address available</p>
+  <p><i class="fas fa-envelope"></i> = mail person about problem</p>
+  <p><i class="fas fa-times"></i> = no email address available</p>
   <table class="table table-striped">
     <tr>
       <th>Person</th>
-      <th>Training(s) <span class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="Instructor Training(s) not finished"></span></th>
+      <th>Training(s) <i class="fas fa-question-circle" data-toggle="tooltip" title="Instructor Training(s) not finished"></i></th>
       <th>Email</th>
     </tr>
     {% regroup pending by person as trainings %}
@@ -62,10 +62,10 @@ Thanks for your help.{% endfilter %}">
   Can you please let us know if you intend to wrap up instructor training?  We'd still like to have you on the team.
 
   Thanks!{% endfilter %}">
-          <span class="glyphicon glyphicon-envelope"></span>
+          <i class="fas fa-envelope"></i>
         </a>
         {% else %}
-        <span class="glyphicon glyphicon-remove"></span>
+        <i class="fas fa-times"></i>
         {% endif %}
       </td>
     </tr>
@@ -80,7 +80,7 @@ Thanks for your help.{% endfilter %}">
   <table class="table table-striped">
     <tr>
       <th>Person</th>
-      <th>Training(s) <span class="glyphicon glyphicon-question-sign" data-toggle="tooltip" title="Instructor Training(s) not finished and marked as stalled"></span></th>
+      <th>Training(s) <i class="fas fa-question-circle" data-toggle="tooltip" title="Instructor Training(s) not finished and marked as stalled"></i></th>
     </tr>
     {% regroup stalled by person as trainings %}
     {% for person_training in trainings %}

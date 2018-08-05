@@ -5,6 +5,7 @@ Middle: {{ object.middle }}
 Family: {{ object.family }}
 Email: {{ object.email|urlize }}
 Affiliation: {{ object.affiliation|default:"—" }}
+Country of residence: {% if object.country %}{{ object.country.name }}{% else %}—{% endif %}
 Nearest major airport: {{ object.airport_iata }}
 GitHub username: {{ object.github|default:"—" }}
 Twitter username: {{ object.twitter|default:"—" }}

@@ -1,4 +1,4 @@
-{% extends "base_nav_fixed.html" %}
+{% extends "base_nav.html" %}
 
 {% block content %}
 <div id="validation">
@@ -22,7 +22,7 @@
           {% for message in warning_messages %}
           <li>{{ message }}</li>
           {% endfor %}
-        </ul>     
+        </ul>
       </div>
     {% endif %}
     {% if not error_messages and not warning_messages %}

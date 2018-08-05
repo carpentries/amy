@@ -1,4 +1,4 @@
-{% extends "base_nav_fixed.html" %}
+{% extends "base_nav.html" %}
 
 {% load links %}
 {% load revisions %}
@@ -12,149 +12,171 @@
   {% else %}
   <a href="{% url 'person_edit' person.id %}" class="btn btn-primary disabled">Edit</a>
   {% endif %}
-  <div class="btn-group pull-right" role="group">
+  <div class="btn-group float-right" role="group">
     {% if perms.workshops.change_person %}
-    <a href="{% url 'person_permissions' person.id %}" class="btn btn-default">Change permissions</a>
+    <a href="{% url 'person_permissions' person.id %}" class="btn btn-warning">Change permissions</a>
     {% else %}
-    <a href="{% url 'person_permissions' person.id %}" class="btn btn-default disabled">Change permissions</a>
+    <a href="{% url 'person_permissions' person.id %}" class="btn btn-warning disabled">Change permissions</a>
     {% endif %}
     {% if perms.workshops.change_person or person == request.user %}
-    <a href="{% url 'person_password' person.id %}" class="btn btn-default">Change password</a>
+    <a href="{% url 'person_password' person.id %}" class="btn btn-warning">Change password</a>
     {% else %}
-    <a href="{% url 'person_password' person.id %}" class="btn btn-default disabled">Change password</a>
+    <a href="{% url 'person_password' person.id %}" class="btn btn-warning disabled">Change password</a>
     {% endif %}
   </div>
 </div>
 <table class="table table-striped">
-  <tr><td>username:</td><td id="username">{{ person.username|default:"—" }}</td></tr>
-  <tr><td>personal:</td><td id="personal">{{ person.personal|default:"—" }}</td></tr>
-  <tr><td>middle:</td><td id="middle">{{ person.middle|default:"—" }}</td></tr>
-  <tr><td>family:</td><td id="family">{{ person.family|default:"—" }}</td></tr>
-  <tr><td>may contact:</td><td id="may_contact">{{ person.may_contact|yesno }}</td></tr>
-  <tr><td>consent to publish profile:</td><td id="publish_profile">{{ person.publish_profile|yesno }}</td></tr>
-  <tr><td>privacy policy agreement:</td><td id="data_privacy_agreement">{{ person.data_privacy_agreement|yesno }}</td></tr>
-  <tr><td>email:</td><td id="email">{% if person.email %}{{ person.email|urlize }}{% else %}—{% endif %}</td></tr>
-  <tr><td>gender:</td><td id="gender">{{ person.get_gender_display|default:"—" }}</td></tr>
-  <tr><td>airport:</td><td id="airport">{% if person.airport %}<a href="{{ person.airport.get_absolute_url }}">{{ person.airport }}</a>{% else %}—{% endif %}</td></tr>
-  <tr><td>affiliation:</td><td>{{ person.affiliation|default:"—" }}</td></tr>
-  <tr><td>github:</td>
+  <tr><th>Username:</th><td id="username">{{ person.username|default:"—" }}</td></tr>
+  <tr><th>Personal:</th><td id="personal">{{ person.personal|default:"—" }}</td></tr>
+  <tr><th>Middle:</th><td id="middle">{{ person.middle|default:"—" }}</td></tr>
+  <tr><th>Family:</th><td id="family">{{ person.family|default:"—" }}</td></tr>
+  <tr><th>May contact:</th><td id="may_contact">{{ person.may_contact|yesno }}</td></tr>
+  <tr><th>Consent to publish profile:</th><td id="publish_profile">{{ person.publish_profile|yesno }}</td></tr>
+  <tr><th>Privacy policy agreement:</th><td id="data_privacy_agreement">{{ person.data_privacy_agreement|yesno }}</td></tr>
+  <tr><th>Email:</th><td id="email">{% if person.email %}{{ person.email|urlize }}{% else %}—{% endif %}</td></tr>
+  <tr><th>Gender:</th><td id="gender">{{ person.get_gender_display|default:"—" }}</td></tr>
+  <tr><th>Country:</th><td id="country">{% if person.country %}{{ person.country.name }} <img src="{{ person.country.flag }}" alt="{{ person.country }}" class="country-flag" />{% else %}—{% endif %}</td></tr>
+  <tr><th>Airport:</th><td id="airport">{% if person.airport %}<a href="{{ person.airport.get_absolute_url }}">{{ person.airport }}</a>{% else %}—{% endif %}</td></tr>
+  <tr><th>Affiliation:</th><td>{{ person.affiliation|default:"—" }}</td></tr>
+  <tr><th>GitHub:</th>
       <td>
         {% if person.github %}
           <a href="https://github.com/{{ person.github }}" target="_blank">{{ person.github }}</a>
           {% if is_usersocialauth_in_sync == 'unknown' %}
-            <a id="socialauth_sync_btn" href="#" class="btn btn-warning btn-xs pull-right" data-toggle="popover" data-html="true" title="Unknown error" data-content="Cannot check if person can log in due to errors in GitHub API access">Allow logging in with GitHub</a>
+            <a id="socialauth_sync_btn" href="#" class="btn btn-warning btn-sm float-right" data-toggle="popover" data-html="true" title="Unknown error" data-content="Cannot check if person can log in due to errors in GitHub API access">Allow logging in with GitHub</a>
           {% elif is_usersocialauth_in_sync == True %}
-            <a id="socialauth_sync_btn" href="#" class="btn btn-success btn-xs pull-right" data-toggle="popover" data-html="true" title="Synchronized" data-content="Person can use their GitHub account to log in">Logging in allowed</a>
+            <a id="socialauth_sync_btn" href="#" class="btn btn-success btn-sm float-right" data-toggle="popover" data-html="true" title="Synchronized" data-content="Person can use their GitHub account to log in">Logging in allowed</a>
           {% else %}
-            <a href="{% url 'sync_usersocialauth' person.id %}" class="btn btn-primary btn-xs pull-right">Allow logging in with GitHub</a>
+            <a href="{% url 'sync_usersocialauth' person.id %}" class="btn btn-primary btn-sm float-right">Allow logging in with GitHub</a>
           {% endif %}
         {% else %}
           —
         {% endif %}
       </td></tr>
-  <tr><td>can login with:</td><td>{% for auth in person.social_auth.all %}{{ auth.provider|title }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</td></tr>
-  <tr><td>twitter:</td><td id="twitter">{% if person.twitter %}<a href="https://twitter.com/{{ person.twitter }}" target="_blank">{{ person.twitter }}</a>{% else %}—{% endif %}</td></tr>
-  <tr><td>url:</td><td id="url">{{ person.url|urlize_newtab|default:"—" }}</td></tr>
-  <tr><td>occupation:</td><td>{{ person.occupation|default:"—" }}</td></tr>
-  <tr><td>ORCID ID:</td><td>{{ person.orcid|default:"—" }}</td></tr>
-  <tr><td>Instructor Training progress</td><td>
-    {% include "workshops/training_progresses_inline.html" with person=person %}
-  </td></tr>
-  <tr><td>Notes from the user:</td><td><pre>{{ person.user_notes|default:"—" }}</pre></td></tr>
+  <tr><th>Can login with:</th><td>{% for auth in person.social_auth.all %}{{ auth.provider|title }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</td></tr>
+  <tr><th>Twitter:</th><td id="twitter">{% if person.twitter %}<a href="https://twitter.com/{{ person.twitter }}" target="_blank">{{ person.twitter }}</a>{% else %}—{% endif %}</td></tr>
+  <tr><th>URL:</th><td id="url">{{ person.url|urlize_newtab|default:"—" }}</td></tr>
+  <tr><th>Cccupation:</th><td>{{ person.occupation|default:"—" }}</td></tr>
+  <tr><th>ORCID ID:</th><td>{{ person.orcid|default:"—" }}</td></tr>
+  <tr>
+    <th>Knowledge domains:</th>
+    <td>
+      {% with domains=person.domains.all %}
+      {% if domains %}
+      <ul>
+      {% for domain in domains %}
+        <li>{{ domain }}</li>
+      {% endfor %}
+      </ul>
+      {% else %}
+      No knowledge domains.
+      {% endif %}
+      {% endwith %}
+    </td>
+  </tr>
+  <tr>
+    <th>Lessons:</th>
+    <td>
+      {% with lessons=person.lessons.all %}
+      {% if lessons %}
+      <ul>
+      {% for lesson in lessons %}
+        <li>{{ lesson }}</li>
+      {% endfor %}
+      </ul>
+      {% else %}
+      No lessons.
+      {% endif %}
+      {% endwith %}
+    </td>
+  </tr>
+  <tr>
+    <th>Language preferences:</th>
+    <td>
+      {% with languages=person.languages.all %}
+      {% if languages %}
+      <ul>
+      {% for language in languages %}
+        <li>{{ language }}</li>
+      {% endfor %}
+      </ul>
+      {% else %}
+      No languages.
+      {% endif %}
+      {% endwith %}
+    </td>
+  </tr>
+  <tr><th>Notes from the user:</th><td><pre>{{ person.user_notes|default:"—" }}</pre></td></tr>
+  <tr><th>Admin notes (not visible to the user):</th><td><pre>{{ person.notes|default:"—" }}</pre></td></tr>
+  <tr>
+    <th>Awards:</th>
+    <td>
+      {% with awards=person.award_set.all %}
+      {% if awards %}
+      <table class="table table-sm">
+        <tr><th>badge</th><th>date</th><th>by whom</th><th>related event</th></tr>
+        {% for award in awards %}
+        <tr>
+          <td><a href="{{ award.badge.get_absolute_url }}">{{ award.badge }}</a></td>
+          <td>{{ award.awarded }}</td>
+          <td>{% if award.awarded_by %}<a href="{{ award.awarded_by.get_absolute_url }}">{{ award.awarded_by.full_name }}</a>{% else %}—{% endif %}</td>
+          <td>{% if award.event %}<a href="{{ award.event.get_absolute_url }}">{{ award.event }}</a>{% else %}—{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </table>
+      {% else %}
+      No awards.
+      {% endif %}
+      {% endwith %}
+    </td>
+  </tr>
+  <tr>
+    <th>Tasks:</th>
+    <td>
+      {% with tasks=person.task_set.all %}
+      {% if tasks %}
+      <table class="table table-sm">
+        <tr><th>Role</th><th>Event</th></tr>
+        {% for task in tasks %}
+        <tr>
+          <td>{{ task.role }}</td>
+          <td><a href="{{ task.event.get_absolute_url }}">{{ task.event }}</a></td>
+        </tr>
+        {% endfor %}
+      </table>
+      {% else %}
+      No tasks.
+      {% endif %}
+      {% endwith %}
+      <p>Summary:</p>
+      <ul>
+        <li>Instructor: {{ person.num_taught }} times</li>
+        <li>Helper: {{ person.num_helper }} times</li>
+        <li>Learner: {{ person.num_learner }} times</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <th>Training requests:</th>
+    <td>
+      {% with requests=person.trainingrequest_set.all %}
+      {% if requests %}
+      <ul>
+      {% for request in requests %}
+        <li><a href="{{ request.get_absolute_url }}">{{ request }}</a></li>
+      {% endfor %}
+      </ul>
+      {% else %}
+      No related training requests.
+      {% endif %}
+      {% endwith %}
+    </td>
+  </tr>
+  <tr>
+    <th>Instructor Training progress:</th>
+    <td>{% include "workshops/training_progresses_inline.html" with person=person %}</td>
+  </tr>
 </table>
-
-{% if person.notes %}
-<p>Notes:</p>
-<pre>
-{{ person.notes }}
-</pre>
-{% else %}
-<p>No notes.</p>
-{% endif %}
-
-<div class="row">
-  <div class="col-sm-6">
-    {% with awards=person.award_set.all %}
-    {% if awards %}
-    <h5>Awards:</h5>
-    <ul>
-      {% for a in awards %}
-      <li>awarded {% if a.awarded_by %}by <a href="{{ a.awarded_by.get_absolute_url }}">{{ a.awarded_by.full_name }}</a>{% endif %} a(n) <a href="{{ a.badge.get_absolute_url }}">{{ a.badge }}</a> badge on {{ a.awarded }}{% if a.event %} for <a href="{{ a.event.get_absolute_url }}">{{ a.event }}</a>{% endif %}</li>
-      {% endfor %}
-    </ul>
-    {% else %}
-    <h5>No awards.</h5>
-    {% endif %}
-    {% endwith %}
-
-    {% with tasks=person.task_set.all %}
-    {% if tasks %}
-    <h5>Tasks:</h5>
-    <ul>
-      {% for t in tasks %}
-      <li>
-        {{ t.role }} during <a href="{{ t.event.get_absolute_url }}">{{ t.event.slug }}</a> (<a href="{{ t.get_absolute_url }}">show task</a>)
-      </li>
-      {% endfor %}
-    </ul>
-    <ul>
-      {% if person.num_taught %}
-      <li> Has taught {{ person.num_taught }} time{{ person.num_taught|pluralize }}</li>
-      {% endif %}
-      {% if person.num_helper %}
-      <li> Has helped {{ person.num_helper }} time{{ person.num_helper|pluralize }}</li>
-      {% endif %}
-      {% if person.num_learner %}
-      <li> Has learned {{ person.num_learner }} time{{ person.num_learner|pluralize }}</li>
-      {% endif %}
-    </ul>
-    {% else %}
-    <h5>No tasks.</h5>
-    {% endif %}
-    {% endwith %}
-  </div>
-
-  <div class="col-sm-6">
-    {% with domains=person.domains.all %}
-    {% if domains %}
-    <h5>Knowledge domains:</h5>
-    <ul>
-      {% for d in domains %}
-      <li>{{ d }}</li>
-      {% endfor %}
-    </ul>
-    {% else %}
-    <h5>No knowledge domains.</h5>
-    {% endif %}
-    {% endwith %}
-
-    {% with lessons=person.lessons.all %}
-    {% if lessons %}
-    <h5>Lessons:</h5>
-    <ul>
-      {% for l in lessons %}
-      <li>{{ l }}</li>
-      {% endfor %}
-    </ul>
-    {% else %}
-    <h5>No lessons.</h5>
-    {% endif %}
-    {% endwith %}
-
-    {% with languages=person.languages.all %}
-    {% if languages %}
-    <h5>Languages:</h5>
-    <ul>
-      {% for lang in languages %}
-      <li>{{ lang }}</li>
-      {% endfor %}
-    </ul>
-    {% else %}
-    <h5>No language preference.</h5>
-    {% endif %}
-    {% endwith %}
-  </div>
-</div>
 
 <div class="edit-object">
   {% if perms.workshops.change_person %}
@@ -162,16 +184,16 @@
   {% else %}
   <a href="{% url 'person_edit' person.id %}" class="btn btn-primary disabled">Edit</a>
   {% endif %}
-  <div class="btn-group pull-right" role="group">
+  <div class="btn-group float-right" role="group">
     {% if perms.workshops.change_person %}
-    <a href="{% url 'person_permissions' person.id %}" class="btn btn-default">Change permissions</a>
+    <a href="{% url 'person_permissions' person.id %}" class="btn btn-warning">Change permissions</a>
     {% else %}
-    <a href="{% url 'person_permissions' person.id %}" class="btn btn-default disabled">Change permissions</a>
+    <a href="{% url 'person_permissions' person.id %}" class="btn btn-warning disabled">Change permissions</a>
     {% endif %}
     {% if perms.workshops.change_person or person == request.user %}
-    <a href="{% url 'person_password' person.id %}" class="btn btn-default">Change password</a>
+    <a href="{% url 'person_password' person.id %}" class="btn btn-warning">Change password</a>
     {% else %}
-    <a href="{% url 'person_password' person.id %}" class="btn btn-default disabled">Change password</a>
+    <a href="{% url 'person_password' person.id %}" class="btn btn-warning disabled">Change password</a>
     {% endif %}
     {% if perms.workshops.delete_person %}
     {% comment %}

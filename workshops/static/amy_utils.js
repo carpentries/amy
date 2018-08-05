@@ -45,6 +45,30 @@ $.fn.updateSelectAllCheckbox = function () {
   });
 };
 
+/* See http://learn.jquery.com/plugins/basic-plugin-creation/ */
+$.fn.updateIdsInHref = function () {
+  // checked checkboxes
+  var checked = $(this).closest('form').find(':checkbox[respond-to-select-all-checkbox]').filter(':checked');
+  // current URL
+  var href = $(this).attr('href');
+  // make URI.js object out of the URL
+  var uri = URI(href);
+
+  // extend query params
+  uri = uri.query(function(data) {
+    var ids = [];
+    checked.map(function() {
+      ids.push($(this).val());
+    });
+    data.ids = ids.join(",");
+  });
+
+  // update URL with new query parameters
+  $(this).attr('href', uri.toString());
+
+  return this;
+}
+
 function updateTrainingProgressForm() {
   /* At this moment, `this` should be <select> tag of "Type" field. */
   var type = $(this).find(":selected").text();
@@ -106,6 +130,7 @@ $(document).ready(function() {
   on the state of all checkboxes. */
   $('[respond-to-select-all-checkbox]').change(function () {
     $(this).closest('form').find(':checkbox[select-all-checkbox]').updateSelectAllCheckbox();
+    $(this).closest('form').find('a#download_selected').updateIdsInHref();
   });
 
   /* Set "select all" checkboxes to proper initial state. */

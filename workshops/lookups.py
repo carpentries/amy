@@ -136,6 +136,37 @@ class LanguageLookupView(LoginNotRequiredMixin,
         return results
 
 
+class TrainingRequestLookupView(OnlyForAdminsNoRedirectMixin,
+                                autocomplete.Select2QuerySetView):
+    """The same as PersonLookup, but allows only to select administrators.
+
+    Administrator is anyone with superuser power or in "administrators" group.
+    """
+
+    def get_queryset(self):
+        results = models.TrainingRequest.objects.all()
+
+        if self.q:
+            # search for name if two words provided
+            tok = re.split('\s+', self.q)
+            if len(tok) == 2:
+                name_q = (
+                    Q(personal__icontains=tok[0], family__icontains=tok[1]) |
+                    Q(personal__icontains=tok[1], family__icontains=tok[0])
+                )
+            else:
+                # empty Q
+                name_q = Q(id=0)
+
+            results = results.filter(
+                Q(personal__icontains=self.q) |
+                Q(family__icontains=self.q) |
+                Q(email__icontains=self.q) |
+                name_q
+            )
+
+        return results
+
 # trainees lookup?
 
 
@@ -147,4 +178,5 @@ urlpatterns = [
     url(r'^admins/$', AdminLookupView.as_view(), name='admin-lookup'),
     url(r'^airports/$', AirportLookupView.as_view(), name='airport-lookup'),
     url(r'^languages/$', LanguageLookupView.as_view(), name='language-lookup'),
+    url(r'^training_requests/$', TrainingRequestLookupView.as_view(), name='trainingrequest-lookup'),
 ]

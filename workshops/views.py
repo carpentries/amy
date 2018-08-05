@@ -106,6 +106,8 @@ from workshops.forms import (
     BulkAddTrainingProgressForm,
     MatchTrainingRequestForm,
     TrainingRequestUpdateForm,
+    TrainingRequestsSelectionForm,
+    TrainingRequestsMergeForm,
     SendHomeworkForm,
     BulkDiscardProgressesForm,
     bootstrap_helper,
@@ -182,8 +184,6 @@ def admin_dashboard(request):
         Event.objects.upcoming_events() | Event.objects.ongoing_events()
     ).active().prefetch_related('tags')
 
-    uninvoiced_events = Event.objects.active().uninvoiced_events()
-
     # This annotation may produce wrong number of instructors when
     # `unpublished_events` filters out events that contain a specific tag.
     # The bug was fixed in #1130.
@@ -201,14 +201,11 @@ def admin_dashboard(request):
 
     if assigned_to == 'me':
         current_events = current_events.filter(assigned_to=request.user)
-        uninvoiced_events = uninvoiced_events.filter(assigned_to=request.user)
         unpublished_events = unpublished_events.filter(
             assigned_to=request.user)
 
     elif assigned_to == 'noone':
         current_events = current_events.filter(assigned_to__isnull=True)
-        uninvoiced_events = uninvoiced_events.filter(
-            assigned_to__isnull=True)
         unpublished_events = unpublished_events.filter(
             assigned_to__isnull=True)
 
@@ -231,7 +228,6 @@ def admin_dashboard(request):
         'is_admin': is_admin,
         'assigned_to': assigned_to,
         'current_events': current_events,
-        'uninvoiced_events': uninvoiced_events,
         'unpublished_events': unpublished_events,
         'todos_start_date': TodoItemQuerySet.current_week_dates()[0],
         'todos_end_date': TodoItemQuerySet.next_week_dates()[1],
@@ -488,7 +484,8 @@ def person_bulk_add_template(request):
 
 
 @admin_required
-@permission_required('workshops.add_person', raise_exception=True)
+@permission_required(['workshops.add_person', 'workshops.change_person'],
+                     raise_exception=True)
 def person_bulk_add(request):
     if request.method == 'POST':
         form = PersonBulkAddForm(request.POST, request.FILES)
@@ -498,12 +495,12 @@ def person_bulk_add(request):
             try:
                 persons_tasks, empty_fields = upload_person_task_csv(stream)
             except csv.Error as e:
-                messages.add_message(
-                    request, messages.ERROR,
+                messages.error(
+                    request,
                     "Error processing uploaded .CSV file: {}".format(e))
             except UnicodeDecodeError as e:
-                messages.add_message(
-                    request, messages.ERROR,
+                messages.error(
+                    request,
                     "Please provide a file in {} encoding."
                     .format(charset))
             else:
@@ -511,12 +508,14 @@ def person_bulk_add(request):
                     msg_template = ("The following required fields were not"
                                     " found in the uploaded file: {}")
                     msg = msg_template.format(', '.join(empty_fields))
-                    messages.add_message(request, messages.ERROR, msg)
+                    messages.error(request, msg)
                 else:
                     # instead of insta-saving, put everything into session
                     # then redirect to confirmation page which in turn saves
                     # the data
                     request.session['bulk-add-people'] = persons_tasks
+                    # request match
+                    request.session['bulk-add-people-match'] = True
                     return redirect('person_bulk_add_confirmation')
 
     else:
@@ -532,16 +531,18 @@ def person_bulk_add(request):
 
 
 @admin_required
-@permission_required('workshops.add_person', raise_exception=True)
+@permission_required(['workshops.add_person', 'workshops.change_person'],
+                     raise_exception=True)
 def person_bulk_add_confirmation(request):
     """
     This view allows for manipulating and saving session-stored upload data.
     """
     persons_tasks = request.session.get('bulk-add-people')
+    match = request.session.get('bulk-add-people-match', False)
 
     # if the session is empty, add message and redirect
     if not persons_tasks:
-        messages.warning(request, "Could not locate CSV data, please try the "
+        messages.warning(request, "Could not locate CSV data, please "
                                   "upload again.")
         return redirect('person_bulk_add')
 
@@ -581,7 +582,7 @@ def person_bulk_add_confirmation(request):
             # if there's "verify" in POST, then do only verification
             any_errors = verify_upload_person_task(persons_tasks)
             if any_errors:
-                messages.add_message(request, messages.ERROR,
+                messages.error(request,
                                      "Please make sure to fix all errors "
                                      "listed below.")
 
@@ -595,7 +596,7 @@ def person_bulk_add_confirmation(request):
                 persons_created, tasks_created = \
                     create_uploaded_persons_tasks(persons_tasks)
             except (IntegrityError, ObjectDoesNotExist, InternalError) as e:
-                messages.add_message(request, messages.ERROR,
+                messages.error(request,
                                      "Error saving data to the database: {}. "
                                      "Please make sure to fix all errors "
                                      "listed below.".format(e))
@@ -603,8 +604,8 @@ def person_bulk_add_confirmation(request):
 
             else:
                 request.session['bulk-add-people'] = None
-                messages.add_message(
-                    request, messages.SUCCESS,
+                messages.success(
+                    request,
                     'Successfully created {0} persons and {1} tasks.'
                     .format(len(persons_created), len(tasks_created))
                 )
@@ -617,7 +618,9 @@ def person_bulk_add_confirmation(request):
 
     else:
         # alters persons_tasks via reference
-        any_errors = verify_upload_person_task(persons_tasks)
+        any_errors = verify_upload_person_task(persons_tasks,
+                                               match=bool(match))
+        request.session['bulk-add-people-match'] = False
 
     roles = Role.objects.all().values_list('name', flat=True)
 
@@ -632,7 +635,8 @@ def person_bulk_add_confirmation(request):
 
 
 @admin_required
-@permission_required('workshops.add_person', raise_exception=True)
+@permission_required(['workshops.add_person', 'workshops.change_person'],
+                     raise_exception=True)
 def person_bulk_add_remove_entry(request, entry_id):
     "Remove specific entry from the session-saved list of people to be added."
     persons_tasks = request.session.get('bulk-add-people')
@@ -656,29 +660,57 @@ def person_bulk_add_remove_entry(request, entry_id):
 
 
 @admin_required
-@permission_required('workshops.add_person', raise_exception=True)
-def person_bulk_add_match_person(request, entry_id, person_id):
+@permission_required(['workshops.add_person', 'workshops.change_person'],
+                     raise_exception=True)
+def person_bulk_add_match_person(request, entry_id, person_id=None):
     """Save information about matched person in the session-saved data."""
     persons_tasks = request.session.get('bulk-add-people')
+    if not persons_tasks:
+        messages.warning(request, 'Could not locate CSV data, please try the '
+                                  'upload again.')
+        return redirect('person_bulk_add')
 
-    if persons_tasks:
-        entry_id = int(entry_id)
-        person_id = int(person_id)
 
+    if person_id is None:
+        # unmatch
         try:
-            persons_tasks[entry_id]['existing_person_id'] = person_id
+            entry_id = int(entry_id)
+
+            persons_tasks[entry_id]['existing_person_id'] = 0
             request.session['bulk-add-people'] = persons_tasks
 
+        except ValueError:
+            # catches invalid argument for int()
+            messages.warning(request, 'Invalid entry ID ({}) or person ID '
+                                      '({}).'.format(entry_id, person_id))
+
         except IndexError:
+            # catches index out of bound
             messages.warning(request, 'Could not find specified entry #{}'
                                       .format(entry_id))
 
         return redirect(person_bulk_add_confirmation)
 
     else:
-        messages.warning(request, 'Could not locate CSV data, please try the '
-                                  'upload again.')
-        return redirect('person_bulk_add')
+        # match
+        try:
+            entry_id = int(entry_id)
+            person_id = int(person_id)
+
+            persons_tasks[entry_id]['existing_person_id'] = person_id
+            request.session['bulk-add-people'] = persons_tasks
+
+        except ValueError:
+            # catches invalid argument for int()
+            messages.warning(request, 'Invalid entry ID ({}) or person ID '
+                                      '({}).'.format(entry_id, person_id))
+
+        except IndexError:
+            # catches index out of bound
+            messages.warning(request, 'Could not find specified entry #{}'
+                                      .format(entry_id))
+
+        return redirect(person_bulk_add_confirmation)
 
 
 class PersonCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
@@ -885,7 +917,12 @@ def persons_merge(request):
                                         protected_objects=e.protected_objects)
 
             else:
+                messages.success(request, 'Persons were merged successfully. '
+                                          'You were redirected to the base '
+                                          'person.')
                 return redirect(base_obj.get_absolute_url())
+        else:
+            messages.error(request, 'Fix errors in the form.')
 
     context = {
         'title': 'Merge two persons',
@@ -940,7 +977,16 @@ class AllEvents(OnlyForAdminsMixin, AMYListView):
 def event_details(request, slug):
     '''List details of a particular event.'''
     try:
-        event = Event.objects.get(slug=slug)
+        event = Event.objects.prefetch_related(Prefetch(
+            'task_set',
+            to_attr='contacts',
+            queryset=Task.objects.select_related('person').filter(
+                # we only want hosts, organizers and instructors
+                Q(role__name='host') | Q(role__name='organizer') |
+                Q(role__name='instructor')
+            ).filter(person__may_contact=True)
+            .exclude(Q(person__email='') | Q(person__email=None))
+        )).get(slug=slug)
     except Event.DoesNotExist:
         raise Http404('Event matching query does not exist.')
 
@@ -984,14 +1030,16 @@ def event_details(request, slug):
             messages.error(request, 'Fix errors in the TODO form.',
                            extra_tags='todos')
 
-    person_lookup_form = AdminLookupForm()
+    admin_lookup_form = AdminLookupForm()
     if event.assigned_to:
-        person_lookup_form = AdminLookupForm(
+        admin_lookup_form = AdminLookupForm(
             initial={'person': event.assigned_to}
         )
 
-    person_lookup_form.helper = BootstrapHelper(
-        form_action=reverse('event_assign', args=[slug]))
+    admin_lookup_form.helper = BootstrapHelper(
+        form_action=reverse('event_assign', args=[slug]),
+        add_cancel_button=False)
+
     context = {
         'title': 'Event {0}'.format(event),
         'event': event,
@@ -1003,7 +1051,7 @@ def event_details(request, slug):
             .values_list('person__email', flat=True),
         'helper': bootstrap_helper,
         'today': datetime.date.today(),
-        'person_lookup_form': person_lookup_form,
+        'admin_lookup_form': admin_lookup_form,
     }
     return render(request, 'workshops/event.html', context)
 
@@ -1069,7 +1117,10 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
         'workshops.add_task',
         'workshops.add_sponsorship',
     ]
-    model = Event
+    queryset = Event.objects.select_related('assigned_to', 'administrator',
+                                            'language', 'request') \
+                            .prefetch_related('sponsorship_set')
+    slug_field = 'slug'
     form_class = EventForm
     template_name = 'workshops/event_edit_form.html'
 
@@ -1080,7 +1131,9 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
             'widgets': {'event': HiddenInput()},
         }
         context.update({
-            'tasks': self.get_object().task_set.order_by('role__name'),
+            'tasks': self.get_object().task_set
+                        .select_related('person', 'role')
+                        .order_by('role__name'),
             'task_form': TaskForm(**kwargs),
             'sponsor_form': SponsorshipForm(**kwargs),
         })
@@ -1210,7 +1263,12 @@ def events_merge(request):
                                         protected_objects=e.protected_objects)
 
             else:
+                messages.success(request, 'Events were merged successfully. '
+                                          'You were redirected to the base '
+                                          'event.')
                 return redirect(base_obj.get_absolute_url())
+        else:
+            messages.error(request, 'Fix errors in the form.')
 
     context = {
         'title': 'Merge two events',
@@ -1300,7 +1358,14 @@ def event_review_metadata_changes(request, slug):
     except Event.DoesNotExist:
         raise Http404('No event found matching the query.')
 
-    metadata = fetch_event_metadata(event.website_url)
+    try:
+        metadata = fetch_event_metadata(event.website_url)
+    except requests.exceptions.RequestException:
+        messages.error(request, "There was an error while fetching event's "
+                                "website. Make sure the event has website URL "
+                                "provided, and that it's reachable.")
+        return redirect(event.get_absolute_url())
+
     metadata = parse_metadata_from_event_website(metadata)
 
     # save serialized metadata in session so in case of acceptance we don't
@@ -1674,7 +1739,8 @@ def workshop_staff(request):
 
             if data['country']:
                 people = people.filter(
-                    airport__country__in=data['country']
+                    Q(airport__country__in=data['country']) |
+                    Q(country__in=data['country'])
                 ).order_by('family')
 
             if data['gender']:
@@ -2003,18 +2069,31 @@ def workshop_issues(request):
             )
         )
     )
+
     no_attendance = Q(attendance=None) | Q(attendance=0)
     no_location = (Q(country=None) |
                    Q(venue=None) | Q(venue__exact='') |
                    Q(address=None) | Q(address__exact='') |
                    Q(latitude=None) | Q(longitude=None))
     bad_dates = Q(start__gt=F('end'))
+
     events = events.filter(
         (no_attendance & ~Q(tags__name='unresponsive')) |
         no_location |
         bad_dates |
         Q(num_instructors=0)
     ).prefetch_related('task_set', 'task_set__person')
+
+    events = events.prefetch_related(Prefetch(
+        'task_set',
+        to_attr='contacts',
+        queryset=Task.objects.select_related('person').filter(
+            # we only want hosts, organizers and instructors
+            Q(role__name='host') | Q(role__name='organizer') |
+            Q(role__name='instructor')
+        ).filter(person__may_contact=True)
+        .exclude(Q(person__email='') | Q(person__email=None))
+    ))
 
     assigned_to, is_admin = assignment_selection(request)
 
@@ -2362,6 +2441,7 @@ def profileupdaterequest_accept(request, request_id, person_id=None):
     person.family = profileupdate.family
     person.email = profileupdate.email
     person.affiliation = profileupdate.affiliation
+    person.country = profileupdate.country
     person.airport = airport
     person.github = profileupdate.github
     person.twitter = profileupdate.twitter
@@ -2388,8 +2468,8 @@ def profileupdaterequest_accept(request, request_id, person_id=None):
                 messages.error(
                     request,
                     'Cannot update profile: some database constraints weren\'t'
-                    'fulfilled. Make sure that user name, GitHub user name,'
-                    'Twitter user name, or email address are unique.'
+                    ' fulfilled. Make sure that user name, GitHub user name,'
+                    ' Twitter user name, or email address are unique.'
                 )
                 return redirect(profileupdate.get_absolute_url())
 
@@ -2746,7 +2826,7 @@ class TodoDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
 # ------------------------------------------------------------
 
 @admin_required
-def duplicates(request):
+def duplicate_persons(request):
     """Find possible duplicates amongst persons.
 
     Criteria for persons:
@@ -2780,12 +2860,56 @@ def duplicates(request):
                                       .order_by('family', 'personal', 'email')
 
     context = {
-        'title': 'Possible duplicates',
+        'title': 'Possible duplicate persons',
         'switched_persons': switched_persons,
         'duplicate_persons': duplicate_persons,
     }
 
-    return render(request, 'workshops/duplicates.html', context)
+    return render(request, 'workshops/duplicate_persons.html', context)
+
+
+@admin_required
+def duplicate_training_requests(request):
+    """Find possible duplicates amongst training requests.
+
+    Criteria:
+    * the same name
+    * the same email.
+    """
+    names = (
+        TrainingRequest.objects
+            .values('personal', 'family')
+            .order_by('family', 'personal')
+            .annotate(count_id=Count('id'))
+            .filter(count_id__gt=1)
+    )
+    duplicate_names_criteria = Q(id=0)
+    for name in names:
+        duplicate_names_criteria |= (Q(personal=name['personal']) &
+                                     Q(family=name['family']))
+
+    emails = (
+        TrainingRequest.objects
+            .values_list('email', flat=True)
+            .order_by('family', 'personal')
+            .annotate(count_id=Count('id'))
+            .filter(count_id__gt=1)
+    )
+    duplicate_emails_criteria = Q(id=0)
+    for email in emails:
+        duplicate_emails_criteria |= Q(email=email)
+
+    duplicate_names = TrainingRequest.objects.filter(duplicate_names_criteria).order_by('family', 'personal')
+    duplicate_emails = TrainingRequest.objects.filter(duplicate_emails_criteria).order_by('email')
+
+    context = {
+        'title': 'Possible duplicate training requests',
+        'duplicate_names': duplicate_names,
+        'duplicate_emails': duplicate_emails,
+    }
+
+    return render(request, 'workshops/duplicate_training_requests.html',
+                  context)
 
 
 @admin_required
@@ -2813,13 +2937,18 @@ def all_trainingrequests(request):
         if match_form.is_valid():
             # Perform bulk match
             for r in match_form.cleaned_data['requests']:
+                # automatically accept this request
+                r.state = 'a'
+                r.save()
+
+                # assign to an event
                 Task.objects.get_or_create(
                     person=r.person,
                     role=Role.objects.get(name='learner'),
                     event=match_form.cleaned_data['event'])
 
-            messages.success(request, 'Successfully matched selected '
-                                      'people to training.')
+            messages.success(request, 'Successfully accepted and matched '
+                                      'selected people to training.')
 
             # Raw uri contains GET parameters from django filters. We use it
             # to preserve filter settings.
@@ -2871,10 +3000,10 @@ def all_trainingrequests(request):
     return render(request, 'workshops/all_trainingrequests.html', context)
 
 
-def _match_training_request_to_person(form, training_request, request):
-    assert form.action in ('match', 'create')
-    try:
-        if form.action == 'create':
+def _match_training_request_to_person(request, training_request, create=False,
+                                      person=None):
+    if create:
+        try:
             training_request.person = Person.objects.create_user(
                 username=create_username(training_request.personal,
                                          training_request.family),
@@ -2882,30 +3011,43 @@ def _match_training_request_to_person(form, training_request, request):
                 family=training_request.family,
                 email=training_request.email,
             )
-
-    except IntegrityError as e:
-        # email address is not unique
-        messages.error(request, 'Could not create a new person -- '
-                                'there already exists a person with '
-                                'exact email address.')
-        return False
+        except IntegrityError as e:
+            # email address is not unique
+            messages.error(request, 'Could not create a new person, because '
+                                    'there already exists a person with '
+                                    'exact email address.')
+            return False
 
     else:
-        if form.action == 'create':
-            training_request.person.middle = training_request.middle
-            training_request.person.github = training_request.github
-            training_request.person.affiliation = training_request.affiliation
-            training_request.person.domains.set(training_request.domains.all())
-            training_request.person.occupation = (
-                training_request.get_occupation_display() or
-                training_request.occupation_other)
+        training_request.person = person
 
-        else:
-            assert form.action == 'match'
-            training_request.person = form.cleaned_data['person']
+    # as per #1270:
+    # https://github.com/swcarpentry/amy/issues/1270#issuecomment-407515948
+    # let's rewrite everything that's possible to rewrite
+    try:
+        training_request.person.personal = training_request.personal
+        training_request.person.middle = training_request.middle
+        training_request.person.family = training_request.family
+        training_request.person.email = training_request.email
+        training_request.person.country = training_request.country
+        training_request.person.github = training_request.github
+        training_request.person.affiliation = training_request.affiliation
+        training_request.person.domains.set(training_request.domains.all())
+        training_request.person.occupation = (
+            training_request.get_occupation_display()
+            if training_request.occupation else
+            training_request.occupation_other)
+        training_request.person.data_privacy_agreement = \
+            training_request.data_privacy_agreement
 
         training_request.person.may_contact = True
         training_request.person.is_active = True
+
+        # merge notes
+        training_request.person.notes = (
+            training_request.person.notes +"\n\nNotes from training request:\n"
+            + training_request.notes)
+
         training_request.person.save()
         training_request.person.synchronize_usersocialauth()
         training_request.save()
@@ -2913,6 +3055,13 @@ def _match_training_request_to_person(form, training_request, request):
         messages.success(request, 'Request matched with the person.')
 
         return True
+    except IntegrityError as e:
+        # email or github not unique
+        messages.error(request, "It was impossible to update related person's "
+                                "data. Probably email address or GitHub "
+                                "handle used in the training request are not "
+                                " unique amongst person entries.")
+        return False
 
 
 @admin_required
@@ -2923,7 +3072,12 @@ def trainingrequest_details(request, pk):
         form = MatchTrainingRequestForm(request.POST)
 
         if form.is_valid():
-            ok = _match_training_request_to_person(form, req, request)
+            create = (form.action == "create")
+            person = form.cleaned_data['person']
+            ok = _match_training_request_to_person(request,
+                                                   training_request=req,
+                                                   create=create,
+                                                   person=person)
             if ok:
                 return redirect_with_next_support(
                     request, 'trainingrequest_details', req.pk)
@@ -2948,6 +3102,105 @@ def trainingrequest_details(request, pk):
         'form': form,
     }
     return render(request, 'workshops/trainingrequest.html', context)
+
+
+@admin_required
+@permission_required(['workshops.delete_trainingrequest',
+                      'workshops.change_trainingrequest'],
+                     raise_exception=True)
+def trainingrequests_merge(request):
+    """Display two training requests side by side on GET and merge them on
+    POST.
+
+    If no requests are supplied via GET params, display event selection form."""
+    obj_a_pk = request.GET.get('trainingrequest_a')
+    obj_b_pk = request.GET.get('trainingrequest_b')
+
+    if not obj_a_pk or not obj_b_pk:
+        context = {
+            'title': 'Merge Training Requests',
+            'form': TrainingRequestsSelectionForm(),
+        }
+        return render(request, 'workshops/generic_form.html', context)
+
+    obj_a = get_object_or_404(TrainingRequest, pk=obj_a_pk)
+    obj_b = get_object_or_404(TrainingRequest, pk=obj_b_pk)
+
+    form = TrainingRequestsMergeForm(initial=dict(trainingrequest_a=obj_a,
+                                                  trainingrequest_b=obj_b))
+
+    if request.method == "POST":
+        form = TrainingRequestsMergeForm(request.POST)
+
+        if form.is_valid():
+            # merging in process
+            data = form.cleaned_data
+
+            obj_a = data['trainingrequest_a']
+            obj_b = data['trainingrequest_b']
+
+            # `base_obj` stays in the database after merge
+            # `merging_obj` will be removed from DB after merge
+            if data['id'] == 'obj_a':
+                base_obj = obj_a
+                merging_obj = obj_b
+                base_a = True
+            else:
+                base_obj = obj_b
+                merging_obj = obj_a
+                base_a = False
+
+            # non-M2M-relationships:
+            easy = (
+                'state', 'person', 'group_name', 'personal', 'middle',
+                'family', 'email', 'github', 'occupation', 'occupation_other',
+                'affiliation', 'location', 'country', 'underresourced',
+                'domains_other', 'underrepresented',
+                'nonprofit_teaching_experience',
+                'previous_training', 'previous_training_other',
+                'previous_training_explanation', 'previous_experience',
+                'previous_experience_other', 'previous_experience_explanation',
+                'programming_language_usage_frequency',
+                'teaching_frequency_expectation',
+                'teaching_frequency_expectation_other',
+                'max_travelling_frequency', 'max_travelling_frequency_other',
+                'reason', 'comment', 'training_completion_agreement',
+                'workshop_teaching_agreement',
+                'data_privacy_agreement', 'code_of_conduct_agreement',
+                'created_at', 'last_updated_at',
+                'notes',
+            )
+            # M2M relationships
+            difficult = (
+                'domains', 'previous_involvement',
+            )
+
+            try:
+                _, integrity_errors = merge_objects(obj_a, obj_b, easy,
+                                                    difficult, choices=data,
+                                                    base_a=base_a)
+
+                if integrity_errors:
+                    msg = ('There were integrity errors when merging related '
+                           'objects:\n' '\n'.join(integrity_errors))
+                    messages.warning(request, msg)
+
+            except ProtectedError as e:
+                return failed_to_delete(request, object=merging_obj,
+                                        protected_objects=e.protected_objects)
+
+            else:
+                return redirect(base_obj.get_absolute_url())
+        else:
+            messages.error(request, 'Fix errors in the form.')
+
+    context = {
+        'title': 'Merge two training requets',
+        'obj_a': obj_a,
+        'obj_b': obj_b,
+        'form': form,
+    }
+    return render(request, 'workshops/trainingrequests_merge.html', context)
 
 
 # ------------------------------------------------------------

@@ -52,10 +52,10 @@ check-certs :
 schema :
 	${QUERY} .schema
 
-## bower_components : install front-end dependencies using Bower
-bower_components : bower.json
-	bower install
-	touch bower_components
+## node_modules : install front-end dependencies using Yarn
+node_modules : package.json
+	yarn install
+	touch node_modules
 
 ## git_version  : store details about the current commit and tree state.
 workshops/git_version.py :
@@ -71,7 +71,7 @@ workshops/git_version.py :
 	fi
 
 ## serve        : run a server
-serve : bower_components workshops/git_version.py
+serve : node_modules workshops/git_version.py
 	${MANAGE} runserver
 
 ## serve_now    : run a server now

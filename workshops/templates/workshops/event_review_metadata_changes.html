@@ -1,4 +1,4 @@
-{% extends "base_nav_fixed.html" %}
+{% extends "base_nav.html" %}
 
 {% block content %}
 
@@ -70,10 +70,10 @@
   <p>
     {% if perms.workshops.change_event %}
     <a href="{% url 'event_accept_metadata_changes' event.slug %}" class="btn btn-success" onclick='return confirm("Do you really want to update saved values? Note: instructors and helpers cannot be updated this way, they have to be updated manually.")'>Update changes</a>
-    <a href="{% url 'event_dismiss_metadata_changes' event.slug %}" class="btn btn-default">Dismiss</a>
+    <a href="{% url 'event_dismiss_metadata_changes' event.slug %}" class="btn btn-secondary float-right">Dismiss</a>
     {% else %}
     <a href="#" class="btn btn-success">Update changes</a>
-    <a href="#" class="btn btn-default">Dismiss</a>
+    <a href="#" class="btn btn-secondary float-right">Dismiss</a>
     {% endif %}
   </p>
 

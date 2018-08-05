@@ -1,4 +1,4 @@
-{% extends "base_nav_fixed.html" %}
+{% extends "base_nav.html" %}
 
 {% load links %}
 {% load revisions %}
@@ -14,59 +14,54 @@
   {% endif %}
 </p>
 <table class="table table-striped">
-  <tr><td colspan="2">organization:</td>
-      <td><a href="{% url 'organization_details' membership.organization.domain %}">{{ membership.organization.fullname }}</a><br />
+  <tr><th colspan="2">Organization:</th>
+      <td width="60%"><a href="{% url 'organization_details' membership.organization.domain %}">{{ membership.organization.fullname }}</a><br />
           &lt;{{ membership.organization.domain|urlize }}&gt;</td></tr>
-  <tr><td colspan="2">variant:</td><td>{{ membership.variant }}</td></tr>
-  <tr><td colspan="2">start date:</td><td>{{ membership.agreement_start }}</td></tr>
-  <tr><td colspan="2">end date:</td><td>{{ membership.agreement_end }}</td></tr>
-  <tr><td colspan="2">contribution type:</td><td>{{ membership.contribution_type }}</td></tr>
+  <tr><th colspan="2">Variant:</th><td>{{ membership.get_variant_display }}</td></tr>
+  <tr><th colspan="2">Start date:</th><td>{{ membership.agreement_start }}</td></tr>
+  <tr><th colspan="2">End date:</th><td>{{ membership.agreement_end }}</td></tr>
+  <tr><th colspan="2">Contribution type:</th><td>{{ membership.get_contribution_type_display }}</td></tr>
   <tr>
-    <td rowspan="3" width="30%">workshops without fee per year:</td>
-    <td>Allowed</td>
-    <td>{{ membership.workshops_without_admin_fee_per_year|default:"—" }}</td>
+    <th rowspan="3" width="30%">Workshops without fee per agreement duration</th>
+    <th>Allowed:</th>
+    <td>{{ membership.workshops_without_admin_fee_per_agreement|default:"—" }}</td>
   </tr>
   <tr>
-    <td>Completed</td>
-    <td>{{ membership.workshops_without_admin_fee_per_year_completed|default:"—" }}</td>
+    <th>Completed:</th>
+    <td>{{ membership.workshops_without_admin_fee_completed|default:"—" }}</td>
   </tr>
   <tr>
-    <td>Remaining</td>
-    <td>{{ membership.workshops_without_admin_fee_per_year_remaining|default:"—" }}</td>
+    <th>Remaining:</th>
+    <td>{{ membership.workshops_without_admin_fee_remaining|default:"—" }}</td>
   </tr>
   <tr>
-    <td rowspan="3">self-organized workshops per year:</td>
-    <td>Expected</td>
-    <td>{{ membership.self_organized_workshops_per_year|default:"—" }}</td>
+    <th rowspan="3">Self-organized workshops per agreement duration</th>
+    <th>Expected:</th>
+    <td>{{ membership.self_organized_workshops_per_agreement|default:"—" }}</td>
   </tr>
   <tr>
-    <td>Completed</td>
-    <td>{{ membership.self_organized_workshops_per_year_completed|default:"—" }}</td>
+    <th>Completed:</th>
+    <td>{{ membership.self_organized_workshops_completed|default:"—" }}</td>
   </tr>
   <tr>
-    <td>Remaining</td>
-    <td>{{ membership.self_organized_workshops_per_year_remaining|default:"—" }}</td>
+    <th>Remaining:</th>
+    <td>{{ membership.self_organized_workshops_remaining|default:"—" }}</td>
+  </tr>
+  <tr>
+    <th colspan="2">Notes:</th>
+    <td>{% if membership.notes %}<pre>{{ membership.notes }}</pre>{% else %}&mdash;{% endif %}</td>
   </tr>
 </table>
 
-{% if organization.notes %}
-<p>Notes:</p>
-<pre>
-{{ organization.notes }}
-</pre>
-{% else %}
-<p>No notes.</p>
-{% endif %}
-
 <div class="clearfix">
-  <p class="edit-object pull-left">
+  <p class="edit-object float-left">
     {% if perms.workshops.change_membership %}
     <a href="{% url 'membership_edit' membership.id %}" class="btn btn-primary">Edit</a>
     {% else %}
     <a href="{% url 'membership_edit' membership.id %}" class="btn btn-primary disabled">Edit</a>
     {% endif %}
   </p>
-  <div class="delete-object pull-right">
+  <div class="delete-object float-right">
     {% if perms.workshops.delete_membership %}
     <form action="{% url 'membership_delete' membership.id %}" onsubmit='return confirm("Are you sure you wish to remove  \"{{ membership }}\"?")' method="POST">
       {% csrf_token %}

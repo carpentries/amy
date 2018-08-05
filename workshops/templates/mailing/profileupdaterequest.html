@@ -13,6 +13,8 @@
         <td>{{ object.email|urlize }}</td></tr>
     <tr><th>Affiliation:</th>
         <td>{{ object.affiliation|default:"—" }}</td></tr>
+    <tr><th>country:</th>
+        <td>{% if object.country %}{{ object.country.name }}{% else %}—{% endif %}</td></tr>
     <tr><th>Nearest major airport:</th>
         <td>{{ object.airport_iata }}</td></tr>
     <tr><th>GitHub username:</th>

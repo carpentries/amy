@@ -145,13 +145,15 @@ class Membership(models.Model):
         max_length=STR_MED, null=False, blank=False,
         choices=CONTRIBUTION_CHOICES,
     )
-    workshops_without_admin_fee_per_year = models.PositiveIntegerField(
+    workshops_without_admin_fee_per_agreement = models.PositiveIntegerField(
         null=True, blank=True,
-        help_text="Acceptable number of workshops without admin fee per year",
+        help_text="Acceptable number of workshops without admin fee per "
+                  "agreement duration",
     )
-    self_organized_workshops_per_year = models.PositiveIntegerField(
+    self_organized_workshops_per_agreement = models.PositiveIntegerField(
         null=True, blank=True,
-        help_text="Expected number of self-organized workshops per year",
+        help_text="Expected number of self-organized workshops per agreement "
+                  "duration",
     )
     notes = models.TextField(default="", blank=True)
     organization = models.ForeignKey(Organization, null=False, blank=False,
@@ -164,47 +166,47 @@ class Membership(models.Model):
     def get_absolute_url(self):
         return reverse('membership_details', args=[self.id])
 
-    @property
-    def workshops_without_admin_fee_per_year_completed(self):
-        """Count workshops without admin fee hosted the year agreement
-        started."""
-        year = self.agreement_start.year
+    @cached_property
+    def workshops_without_admin_fee_completed(self):
+        """Count workshops without admin fee hosted the during agreement."""
         self_organized = (Q(administrator=None) |
                           Q(administrator__domain='self-organized'))
         no_fee = Q(admin_fee=0) | Q(admin_fee=None)
+        date_started = Q(start__gte=self.agreement_start, start__lt=self.agreement_end)
 
-        return Event.objects.filter(host=self.organization, start__year=year) \
+        return Event.objects.filter(host=self.organization) \
+                            .filter(date_started) \
                             .filter(no_fee) \
                             .exclude(self_organized).count()
 
-    @property
-    def workshops_without_admin_fee_per_year_remaining(self):
-        """Count remaining workshops w/o admin fee for the year agreement
-        started."""
-        if not self.workshops_without_admin_fee_per_year:
+    @cached_property
+    def workshops_without_admin_fee_remaining(self):
+        """Count remaining workshops w/o admin fee for the agreement."""
+        if not self.workshops_without_admin_fee_per_agreement:
             return None
-        a = self.workshops_without_admin_fee_per_year
-        b = self.workshops_without_admin_fee_per_year_completed
+        a = self.workshops_without_admin_fee_per_agreement
+        b = self.workshops_without_admin_fee_completed
         return a - b
 
-    @property
-    def self_organized_workshops_per_year_completed(self):
+    @cached_property
+    def self_organized_workshops_completed(self):
         """Count self-organized workshops hosted the year agreement started."""
-        year = self.agreement_start.year
         self_organized = (Q(administrator=None) |
                           Q(administrator__domain='self-organized'))
+        date_started = Q(start__gte=self.agreement_start, start__lt=self.agreement_end)
 
-        return Event.objects.filter(host=self.organization, start__year=year) \
+        return Event.objects.filter(host=self.organization) \
+                            .filter(date_started) \
                             .filter(self_organized).count()
 
-    @property
-    def self_organized_workshops_per_year_remaining(self):
+    @cached_property
+    def self_organized_workshops_remaining(self):
         """Count remaining self-organized workshops for the year agreement
         started."""
-        if not self.self_organized_workshops_per_year:
+        if not self.self_organized_workshops_per_agreement:
             return None
-        a = self.self_organized_workshops_per_year
-        b = self.self_organized_workshops_per_year_completed
+        a = self.self_organized_workshops_per_agreement
+        b = self.self_organized_workshops_completed
         return a - b
 
 
@@ -324,6 +326,18 @@ class PersonManager(BaseUserManager):
                             default=0,
                             output_field=IntegerField()))
 
+        def passed_either(req_a, req_b):
+            return Sum(Case(When(trainingprogress__requirement__name=req_a,
+                                 trainingprogress__state='p',
+                                 trainingprogress__discarded=False,
+                                 then=1),
+                            When(trainingprogress__requirement__name=req_b,
+                                 trainingprogress__state='p',
+                                 trainingprogress__discarded=False,
+                                 then=1),
+                            default=0,
+                            output_field=IntegerField()))
+
         return self.annotate(
             passed_training=passed('Training'),
             passed_swc_homework=passed('SWC Homework'),
@@ -331,15 +345,19 @@ class PersonManager(BaseUserManager):
             passed_discussion=passed('Discussion'),
             passed_swc_demo=passed('SWC Demo'),
             passed_dc_demo=passed('DC Demo'),
+            passed_homework=passed_either('SWC Homework', 'DC Homework'),
+            passed_demo=passed_either('SWC Demo', 'DC Demo'),
         ).annotate(
-            swc_eligible=(F('passed_training') *
-                          F('passed_swc_homework') *
-                          F('passed_discussion') *
-                          F('passed_swc_demo')),
-            dc_eligible=(F('passed_training') *
-                         F('passed_dc_homework') *
-                         F('passed_discussion') *
-                         F('passed_dc_demo')),
+            # We're using Maths to calculate "binary" score for a person to
+            # be instructor badge eligible. Legend:
+            # * means "AND"
+            # + means "OR"
+            instructor_eligible=(
+                F('passed_training') *
+                (F('passed_swc_homework') + F('passed_dc_homework')) *
+                F('passed_discussion') *
+                (F('passed_swc_demo') + F('passed_dc_demo'))
+            )
         )
 
 
@@ -385,6 +403,7 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
                   '(website, Twitter) on our instructors website. Emails will'
                   ' not be posted.'
     )
+    country     = CountryField(null=False, blank=True, default='', help_text='Person\'s country of residence.')
     airport     = models.ForeignKey(Airport, null=True, blank=True, on_delete=models.PROTECT,
                                     verbose_name='Nearest major airport')
     github      = NullableGithubUsernameField(unique=True, null=True, blank=True,
@@ -540,9 +559,9 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
 
         fields = [
             ('passed_training', 'Training'),
-            ('passed_swc_homework', 'SWC Homework'),
+            ('passed_homework', 'SWC or DC Homework'),
             ('passed_discussion', 'Discussion'),
-            ('passed_swc_demo', 'SWC Demo'),
+            ('passed_demo', 'SWC or DC Demo'),
         ]
         try:
             return [name for field, name in fields if not getattr(self, field)]
@@ -556,9 +575,9 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
 
         fields = [
             ('passed_training', 'Training'),
-            ('passed_dc_homework', 'DC Homework'),
+            ('passed_homework', 'SWC or DC Homework'),
             ('passed_discussion', 'Discussion'),
-            ('passed_dc_demo', 'DC Demo'),
+            ('passed_demo', 'SWC or DC Demo'),
         ]
         try:
             return [name for field, name in fields if not getattr(self, field)]
@@ -639,6 +658,10 @@ class ProfileUpdateRequest(ActiveMixin, CreatedUpdatedMixin,
         help_text='What university, company, lab, or other organization are '
         'you affiliated with (if any)?',
         blank=False,
+    )
+    country = CountryField(
+        null=False, blank=True, default='',
+        verbose_name='Country of residence',
     )
     airport_iata = models.CharField(
         max_length=3,
@@ -836,10 +859,15 @@ class EventQuerySet(models.query.QuerySet):
         """Exclude cancelled events."""
         return self.exclude(tags__name='cancelled')
 
+    def not_unresponsive(self):
+        """Exclude unresponsive events."""
+        return self.exclude(tags__name='unresponsive')
+
     def active(self):
-        """Exclude inactive events (stalled, completed or cancelled)."""
+        """Exclude inactive events (stalled, completed, cancelled or
+        unresponsive)."""
         return self.exclude(tags__name='stalled').exclude(completed=True) \
-                   .not_cancelled()
+                   .not_cancelled().not_unresponsive()
 
     def past_events(self):
         '''Return past events.
@@ -904,10 +932,10 @@ class EventQuerySet(models.query.QuerySet):
         )
 
     def unpublished_events(self):
-        """Return events considered as unpublished (see
+        """Return active events considered as unpublished (see
         `unpublished_conditional` above)."""
         conditional = self.unpublished_conditional()
-        return self.not_cancelled().filter(conditional) \
+        return self.active().filter(conditional) \
                    .order_by('slug', 'id').distinct()
 
     def published_events(self):
@@ -995,6 +1023,7 @@ class Event(AssignmentMixin, models.Model):
         help_text=PUBLISHED_HELP_TEXT +
                   '<br />Use link to the event\'s <b>website</b>, ' +
                   'not repository.',
+        verbose_name='URL',
     )
     reg_key    = models.CharField(max_length=STR_REG_KEY, blank=True, verbose_name="Eventbrite key")
     attendance = models.PositiveIntegerField(null=True, blank=True)
@@ -1137,27 +1166,27 @@ class Event(AssignmentMixin, models.Model):
         return self.invoice_status == 'not-invoiced'
 
     @cached_property
+    def contacts(self):
+        return (
+            self.task_set
+                .filter(
+                    # we only want hosts, organizers and instructors
+                    Q(role__name='host') | Q(role__name='organizer') |
+                    Q(role__name='instructor')
+                )
+                .filter(person__may_contact=True)
+                .exclude(Q(person__email='') | Q(person__email=None))
+                .values_list('person__email', flat=True)
+        )
+
+    @cached_property
     def mailto(self):
         """Return list of emails we can contact about workshop details, like
         attendance."""
         from workshops.util import find_emails
 
-        emails = self.task_set \
-            .filter(
-                # we only want hosts, organizers and instructors
-                Q(role__name='host') | Q(role__name='organizer') |
-                Q(role__name='instructor')
-            ) \
-            .filter(person__may_contact=True) \
-            .exclude(Q(person__email='') | Q(person__email=None)) \
-            .values_list('person__email', flat=True)
-
-        additional_emails = find_emails(self.contact)
-        # Emails will become an iterator in 1.9 (ValuesListQuerySet previously)
-        # so we need a normal list that will be extended by that iterator.
-        # Bonus points: it works in 1.8.x too!
-        additional_emails.extend(emails)
-        return ','.join(additional_emails)
+        emails = find_emails(self.contact)
+        return emails
 
     def get_invoice_form_url(self):
         from .util import universal_date_format
@@ -1668,7 +1697,7 @@ class Task(models.Model):
     person     = models.ForeignKey(Person, on_delete=models.PROTECT)
     role       = models.ForeignKey(Role, on_delete=models.PROTECT)
     title      = models.CharField(max_length=STR_LONG, blank=True)
-    url        = models.URLField(blank=True)
+    url        = models.URLField(blank=True, verbose_name='URL')
 
     objects = TaskManager()
 
@@ -2038,7 +2067,8 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin,
         max_length=STR_LONG,
         verbose_name='Group name',
         help_text='If you are scheduled to receive training at a member site, '
-                  'please enter the group name you were provided.',
+                  'please enter the group name you were provided. Otherwise '
+                  'please leave this blank.',
     )
 
     personal = models.CharField(
@@ -2339,7 +2369,7 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
                               verbose_name='Training',
                               limit_choices_to=Q(tags__name='TTT'),
                               on_delete=models.SET_NULL)
-    url = models.URLField(null=True, blank=True)
+    url = models.URLField(null=True, blank=True, verbose_name='URL')
     notes = models.TextField(blank=True)
 
     def get_absolute_url(self):

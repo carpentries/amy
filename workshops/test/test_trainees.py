@@ -1,6 +1,15 @@
+from datetime import datetime
+
 from django.urls import reverse
 
-from workshops.models import TrainingProgress, TrainingRequirement
+from workshops.models import (
+    TrainingProgress,
+    TrainingRequirement,
+    Event,
+    Organization,
+    Tag,
+    Role,
+)
 from workshops.test.base import TestBase
 
 
@@ -9,10 +18,19 @@ class TestTraineesView(TestBase):
         self._setUpUsersAndLogin()
         self._setUpAirports()
         self._setUpNonInstructors()
+        self._setUpTags()
+        self._setUpRoles()
 
         self.training = TrainingRequirement.objects.get(name='Training')
         self.homework = TrainingRequirement.objects.get(name='SWC Homework')
         self.discussion = TrainingRequirement.objects.get(name='Discussion')
+
+        self.ttt_event = Event.objects.create(
+            start=datetime(2018, 7, 14),
+            slug='2018-07-14-training',
+            host=Organization.objects.first(),
+        )
+        self.ttt_event.tags.add(Tag.objects.get(name='TTT'))
 
     def test_view_loads(self):
         rv = self.client.get(reverse('all_trainees'))
@@ -27,6 +45,18 @@ class TestTraineesView(TestBase):
             'state': 'f',
             'submit': '',
         }
+
+        # all trainees need to have a training task to assign a training
+        # progress to them
+        self.ironman.task_set.create(
+            event=self.ttt_event,
+            role=Role.objects.get(name='learner'),
+        )
+        self.spiderman.task_set.create(
+            event=self.ttt_event,
+            role=Role.objects.get(name='learner'),
+        )
+
         rv = self.client.post(reverse('all_trainees'), data, follow=True)
 
         self.assertEqual(rv.resolver_match.view_name, 'all_trainees')

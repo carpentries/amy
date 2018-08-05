@@ -4,8 +4,15 @@ from django.core.exceptions import ValidationError
 from django.template import Context, Template
 from django.urls import reverse
 
-from workshops.models import TrainingProgress, TrainingRequirement, Event, Tag, \
-    Organization
+from workshops.forms import TrainingProgressForm
+from workshops.models import (
+    TrainingProgress,
+    TrainingRequirement,
+    Event,
+    Tag,
+    Organization,
+    Role,
+)
 from workshops.test import TestBase
 
 
@@ -14,6 +21,8 @@ class TestTrainingProgressValidation(TestBase):
 
     def setUp(self):
         self._setUpUsersAndLogin()
+        self._setUpAirports()
+        self._setUpNonInstructors()
 
         self.requirement = TrainingRequirement.objects.create(
             name='Discussion', url_required=False, event_required=False)
@@ -95,26 +104,38 @@ class TestTrainingProgressValidation(TestBase):
         p1.full_clean()
         p2.full_clean()
 
+    def test_form_invalid_if_trainee_has_no_training_task(self):
+        data = {
+            'requirement': self.requirement.pk,
+            'state': 'p',
+            'evaluated_by': self.admin.pk,
+            'trainee': self.ironman.pk,
+        }
+        form = TrainingProgressForm(data)
+        self.assertEqual(form.is_valid(), False)
+        self.assertIn("not possible to add training progress",
+                      form.non_field_errors()[0])
+
 
 class TestProgressLabelTemplateTag(TestBase):
     def test_passed(self):
-        self._test(state='p', discarded=False, expected='label label-success')
+        self._test(state='p', discarded=False, expected='badge badge-success')
 
     def test_not_evaluated_yet(self):
-        self._test(state='n', discarded=False, expected='label label-warning')
+        self._test(state='n', discarded=False, expected='badge badge-warning')
 
     def test_failed(self):
-        self._test(state='f', discarded=False, expected='label label-danger')
+        self._test(state='f', discarded=False, expected='badge badge-danger')
 
     def test_discarded(self):
-        self._test(state='p', discarded=True, expected='label label-default')
-        self._test(state='n', discarded=True, expected='label label-default')
-        self._test(state='f', discarded=True, expected='label label-default')
+        self._test(state='p', discarded=True, expected='badge badge-dark')
+        self._test(state='n', discarded=True, expected='badge badge-dark')
+        self._test(state='f', discarded=True, expected='badge badge-dark')
 
     def _test(self, state, discarded, expected):
         template = Template(
-            '{% load training_progress %}'
-            '{% progress_label p %}'
+            r'{% load training_progress %}'
+            r'{% progress_label p %}'
         )
         training_progress = TrainingProgress(state=state, discarded=discarded)
         context = Context({'p': training_progress})
@@ -201,6 +222,8 @@ class TestCRUDViews(TestBase):
         self._setUpUsersAndLogin()
         self._setUpAirports()
         self._setUpNonInstructors()
+        self._setUpTags()
+        self._setUpRoles()
 
         self.requirement = TrainingRequirement.objects.create(name='Discussion')
         self.progress = TrainingProgress.objects.create(
@@ -209,6 +232,12 @@ class TestCRUDViews(TestBase):
             evaluated_by=self.admin,
             trainee=self.ironman,
         )
+        self.ttt_event = Event.objects.create(
+            start=datetime(2018, 7, 14),
+            slug='2018-07-14-training',
+            host=Organization.objects.first(),
+        )
+        self.ttt_event.tags.add(Tag.objects.get(name='TTT'))
 
     def test_create_view_loads(self):
         rv = self.client.get(reverse('trainingprogress_add'))
@@ -230,6 +259,14 @@ class TestCRUDViews(TestBase):
             'evaluated_by': self.admin.pk,
             'trainee': self.ironman.pk,
         }
+
+        # in order to add training progress, the trainee needs to have
+        # a training task
+        self.ironman.task_set.create(
+            event=self.ttt_event,
+            role=Role.objects.get(name='learner'),
+        )
+
         rv = self.client.post(reverse('trainingprogress_add'), data,
                               follow=True)
         self.assertEqual(rv.status_code, 200)

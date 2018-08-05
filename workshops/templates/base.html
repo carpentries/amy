@@ -1,0 +1,80 @@
+{% load compress %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+
+    {% compress css %}
+    <link rel="stylesheet" href="{% static 'bootstrap/dist/css/bootstrap.css' %}" />
+    <link rel="stylesheet" href="{% static 'bootstrap-datepicker/dist/css/bootstrap-datepicker3.css' %}" />
+    <link rel="stylesheet" href="{% static '@fortawesome/fontawesome-free/css/all.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/amy.css' %}" />
+    {% endcompress %}
+    {% block extrastyle %}{% endblock extrastyle %}
+
+    {# the JS needs to load here, otherwise there are issues with DAL (autocomplete) #}
+    {% compress js %}
+    <script src="{% static 'jquery/dist/jquery.js' %}"></script>
+    <script src="{% static 'popper.js/dist/umd/popper.js' %}"></script>
+    <script src="{% static 'bootstrap/dist/js/bootstrap.js' %}"></script>
+    <script src="{% static 'bootstrap-datepicker/dist/js/bootstrap-datepicker.js' %}"></script>
+    <script src="{% static 'jquery-stickytabs/jquery.stickytabs.js' %}"></script>
+    <script src="{% static 'urijs/src/URI.js' %}"></script>
+    <script src="{% static 'calendar_popup.js' %}"></script>
+    <script src="{% static 'amy_utils.js' %}"></script>
+    {% endcompress %}
+    {% block extrajs %}{% endblock extrajs %}
+
+    <title>AMY{% if title %}: {{ title }}{% endif %}</title>
+  </head>
+  <body>
+    {% block navbar %}{% endblock navbar %}
+    <div class="container-fluid">
+      {% block main %}
+      <div class="row">
+        {% block leftcolumn %}{% endblock leftcolumn %}
+        <div class="{% block maincolumn %}col-sm-12 col-md-12{% endblock maincolumn %} main pb-4">
+        {% if messages %}
+          {% for message in messages %}
+          <div class="alert {{ message.tags }} alert-dismissible fade show" role="alert">
+            {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+            <strong>Error:</strong>
+            {% elif message.level == DEFAULT_MESSAGE_LEVELS.WARNING %}
+            <strong>Warning:</strong>
+            {% elif message.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+            <strong>Success:</strong>
+            {% endif %}
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          {% endfor %}
+        {% endif %}
+
+        {% block logo %}{% endblock logo %}
+
+        {% block title %}{% if title %}<h1>{{ title }}</h1>{% endif %}{% endblock title %}
+        {% block content %}{% endblock content %}
+        </div>
+      </div>
+      {% endblock main %}
+
+      <div class="row">
+        <footer class="col-sm-12 text-center text-muted border-top pt-3">
+          <p>
+            Powered by <a href="https://github.com/swcarpentry/amy">AMY</a>
+            version {{ workshops_version }}{% if workshops_git_hash %} (<a href="https://github.com/swcarpentry/amy/commit/{{ workshops_git_hash }}">{{ workshops_git_short_hash }}</a> {{ workshops_git_date }}{% if workshops_git_dirty %} dirty{% endif %}){% endif %}.
+            View <a href="https://docs.carpentries.org/topic_folders/policies/privacy.html">our data privacy policy</a>.
+          </p>
+          <p>
+            This project was funded in part by a grant from the National Science Foundation (0953694)
+            to <a href="http://whitelab.weecology.org/">Prof. Ethan White</a>.
+          </p>
+        </footer>
+      </div>
+    </div>
+  </body>
+</html>

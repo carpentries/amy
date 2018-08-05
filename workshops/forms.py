@@ -6,6 +6,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Div, HTML, Submit, Button, Field
 from crispy_forms.bootstrap import AccordionGroup, Accordion
 from dal import autocomplete
+from dal_select2.widgets import Select2Multiple
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
@@ -111,11 +112,11 @@ class BootstrapHelper(FormHelper):
 
         if wider_labels:
             assert display_labels
-            self.label_class = 'col-lg-3'
-            self.field_class = 'col-lg-7'
+            self.label_class = 'col-12 col-lg-3'
+            self.field_class = 'col-12 col-lg-7'
         elif display_labels:
-            self.label_class = 'col-lg-2'
-            self.field_class = 'col-lg-8'
+            self.label_class = 'col-12 col-lg-2'
+            self.field_class = 'col-12 col-lg-8'
         else:
             self.label_class = ''
             self.field_class = 'col-lg-12'
@@ -128,13 +129,12 @@ class BootstrapHelper(FormHelper):
                 'delete', 'Delete',
                 onclick='return confirm("Are you sure you want to delete it?");',
                 form='delete-form',
-                css_class='btn-danger',
-                style='float: right;'))
+                css_class='btn-danger float-right'))
 
         if add_cancel_button:
             self.add_input(Button(
                 'cancel', 'Cancel',
-                css_class='btn-default pull-right',
+                css_class='btn-secondary float-right',
                 onclick='window.history.back()'))
 
         self.form_class = 'form-horizontal ' + additional_form_class
@@ -290,31 +290,35 @@ class WorkshopStaffForm(forms.Form):
         countries.only = only
 
         choices = list(countries)
-        self.fields['country'] = forms.MultipleChoiceField(choices=choices,
-                                                           required=False)
+        self.fields['country'] = forms.MultipleChoiceField(
+            choices=choices, required=False, widget=Select2Multiple,
+        )
 
         self.helper = FormHelper(self)
         self.helper.form_method = 'get'
         self.helper.layout = Layout(
             Div(
-                Div(HTML('Location close to'), css_class='panel-heading'),
-                Div('airport', css_class='panel-body'),
-                Div(HTML('<b>OR</b>'), css_class='panel-footer'),
-                Div('country', css_class='panel-body'),
-                Div(HTML('<b>OR</b>'), css_class='panel-footer'),
-                Div('latitude', 'longitude', css_class='panel-body'),
-                css_class='panel panel-default ',
+                Div(
+                    HTML('<h5 class="card-title">Location close to</h5>'),
+                    'airport',
+                    HTML('<hr>'),
+                    'country',
+                    HTML('<hr>'),
+                    'latitude',
+                    'longitude',
+                    css_class='card-body'
+                ),
+                css_class='card',
             ),
             'instructor_badges',
+            HTML('<hr>'),
             'was_helper',
             'was_organizer',
             'is_in_progress_trainee',
             'languages',
             'gender',
             'lessons',
-            FormActions(
-                Submit('submit', 'Submit'),
-            ),
+            Submit('submit', 'Submit'),
         )
 
     def clean(self):
@@ -351,7 +355,7 @@ class PersonBulkAddForm(forms.Form):
 class SearchForm(forms.Form):
     '''Represent general searching form.'''
 
-    term = forms.CharField(label='term',
+    term = forms.CharField(label='Term',
                            max_length=100)
     in_organizations = forms.BooleanField(label='in organizations',
                                   required=False,
@@ -448,14 +452,18 @@ class EventForm(forms.ModelForm):
         'attendance',
         'contact',
         'notes',
-        Accordion(
-            AccordionGroup('Location details',
-                'country',
+        # TODO: probably in the next release of Django Crispy Forms (>1.7.2)
+        #       there will be a solid support for Accordion and AccordionGroup,
+        #       but for now we have to do it manually
+        Div(
+            Div(HTML('Location details'), css_class='card-header'),
+            Div('country',
                 'venue',
                 'address',
                 'latitude',
                 'longitude',
-            ),
+                css_class='card-body'),
+            css_class='card mb-2'
         ),
     )
 
@@ -499,14 +507,14 @@ class EventForm(forms.ModelForm):
         # a <link href=""> (for CSS files) or <script src=""> (for JS files)
         js = (
             'date_yyyymmdd.js',
-            'import_from_url.js', 'update_from_url.js',
+            'edit_from_url.js',
             'online_country.js',
         )
 
 
 class TaskForm(WidgetOverrideMixin, forms.ModelForm):
 
-    helper = BootstrapHelper(submit_label='Add')
+    helper = BootstrapHelper()
 
     class Meta:
         model = Task
@@ -548,6 +556,7 @@ class PersonForm(forms.ModelForm):
             'data_privacy_agreement',
             'email',
             'gender',
+            'country',
             'airport',
             'affiliation',
             'github',
@@ -738,7 +747,11 @@ class MembershipForm(forms.ModelForm):
 
     class Meta:
         model = Membership
-        fields = '__all__'
+        fields = [
+            'organization', 'variant', 'agreement_start', 'agreement_end',
+            'contribution_type', 'workshops_without_admin_fee_per_agreement',
+            'self_organized_workshops_per_agreement', 'notes',
+        ]
 
 
 class SponsorshipForm(WidgetOverrideMixin, forms.ModelForm):
@@ -903,6 +916,8 @@ class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):
         queryset=Language.objects.all(),
         widget=autocomplete.ModelSelect2Multiple(url='language-lookup')
     )
+
+    helper = BootstrapHelper(wider_labels=True)
 
     class Meta:
         model = ProfileUpdateRequest
@@ -1262,6 +1277,160 @@ class TrainingRequestUpdateForm(forms.ModelForm):
         }
 
 
+class TrainingRequestsSelectionForm(forms.Form):
+    trainingrequest_a = forms.ModelChoiceField(
+        label='Training request A',
+        required=True,
+        queryset=TrainingRequest.objects.all(),
+        widget=autocomplete.ModelSelect2(url='trainingrequest-lookup')
+    )
+
+    trainingrequest_b = forms.ModelChoiceField(
+        label='Training request B',
+        required=True,
+        queryset=TrainingRequest.objects.all(),
+        widget=autocomplete.ModelSelect2(url='trainingrequest-lookup')
+    )
+
+    helper = BootstrapHelper(use_get_method=True)
+
+
+class TrainingRequestsMergeForm(forms.Form):
+    TWO = (
+        ('obj_a', 'Use A'),
+        ('obj_b', 'Use B'),
+    )
+    THREE = TWO + (('combine', 'Combine'), )
+    DEFAULT = 'obj_a'
+
+    trainingrequest_a = forms.ModelChoiceField(
+        queryset=TrainingRequest.objects.all(), widget=forms.HiddenInput)
+
+    trainingrequest_b = forms.ModelChoiceField(
+        queryset=TrainingRequest.objects.all(), widget=forms.HiddenInput)
+
+    id = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    state = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    person = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    group_name = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    personal = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    middle = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    family = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    email = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    github = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    occupation = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    occupation_other = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    affiliation = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    location = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    country = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    underresourced = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    domains = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    domains_other = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    underrepresented = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    nonprofit_teaching_experience = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    previous_involvement = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    previous_training = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    previous_training_other = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    previous_training_explanation = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    previous_experience = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    previous_experience_other = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    previous_experience_explanation = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    programming_language_usage_frequency = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    teaching_frequency_expectation = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    teaching_frequency_expectation_other = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    max_travelling_frequency = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    max_travelling_frequency_other = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    reason = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    comment = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    training_completion_agreement = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    workshop_teaching_agreement = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    data_privacy_agreement = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    code_of_conduct_agreement = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    created_at = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    last_updated_at = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    notes = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+
+
 class AutoUpdateProfileForm(forms.ModelForm):
     username = forms.CharField(disabled=True, required=False)
     github = forms.CharField(
@@ -1269,6 +1438,11 @@ class AutoUpdateProfileForm(forms.ModelForm):
         help_text='If you want to change your github username, please email '
                   'us at <a href="mailto:team@carpentries.org">'
                   'team@carpentries.org</a>.')
+
+    country = CountryField().formfield(
+        required=False,
+        help_text='Your country of residence.',
+    )
 
     languages = forms.ModelMultipleChoiceField(
         label='Languages',
@@ -1289,6 +1463,7 @@ class AutoUpdateProfileForm(forms.ModelForm):
             'gender',
             'may_contact',
             'publish_profile',
+            'country',
             'airport',
             'github',
             'twitter',
@@ -1359,6 +1534,18 @@ class TrainingProgressForm(forms.ModelForm):
             'state': RadioSelect,
         }
 
+    def clean(self):
+        cleaned_data = super().clean()
+
+        trainee = cleaned_data.get('trainee')
+
+        # check if trainee has at least one training task
+        training_tasks = trainee.get_training_tasks()
+
+        if not training_tasks:
+            raise ValidationError("It's not possible to add training progress "
+                                  "to a trainee without any training task.")
+
 
 class BulkAddTrainingProgressForm(forms.ModelForm):
     event = forms.ModelChoiceField(
@@ -1407,6 +1594,20 @@ class BulkAddTrainingProgressForm(forms.ModelForm):
             'notes': TextInput,
         }
 
+    def clean(self):
+        cleaned_data = super().clean()
+
+        trainees = cleaned_data.get('trainees')
+
+        # check if all trainees have at least one training task
+        for trainee in trainees:
+            training_tasks = trainee.get_training_tasks()
+
+            if not training_tasks:
+                raise ValidationError("It's not possible to add training "
+                                      "progress to a trainee without any "
+                                      "training task.")
+
 
 class BulkDiscardProgressesForm(forms.Form):
     """Form used to bulk discard all TrainingProgresses associated with
@@ -1427,8 +1628,7 @@ class BulkDiscardProgressesForm(forms.Form):
                              add_cancel_button=False)
 
     SUBMIT_POPOVER = '''<p>Discarded progress will be displayed in the following
-    way: <span class='label label-default'><strike> Discarded
-    </strike></span>.</p>
+    way: <span class='badge badge-dark'><strike>Discarded</strike></span>.</p>
 
     <p>If you want to permanently remove records from system,
     click one of the progress labels and, then, click "delete" button.</p>'''
@@ -1450,9 +1650,8 @@ class BulkDiscardProgressesForm(forms.Form):
                    'data-toggle': 'popover',
                    'data-html': 'true',
                    'data-content': SUBMIT_POPOVER,
+                   'css_class': 'btn btn-warning',
                }),
-        HTML('&nbsp;<a bulk-email-on-click class="btn btn-primary">'
-             'Mail selected trainees</a>'),
     )
 
 
@@ -1490,12 +1689,8 @@ class BulkChangeTrainingRequestForm(forms.Form):
                    formnovalidate='formnovalidate'),
             Submit('unmatch', 'Unmatch selected trainees from training',
                    formnovalidate='formnovalidate'),
-            HTML('<a bulk-email-on-click class="btn btn-primary">'
+            HTML('<a bulk-email-on-click class="btn btn-primary text-white">'
                  'Mail selected trainees</a>&nbsp;'),
-            HTML('<a class="btn btn-primary" href="{% url \'api:training-requests\' %}?format=csv">'
-                 'Download all requests as CSV</a>&nbsp;'),
-            HTML('<a href="{% url \'training_request\' %}" class="btn btn-success">'
-                 'Create new request</a>'),
         )
     )
 
@@ -1533,7 +1728,7 @@ class BulkMatchTrainingRequestForm(forms.Form):
     helper.add_input(
         Submit(
            'match',
-            'Match selected trainees to chosen training',
+            'Accept & match selected trainees to chosen training',
             **{
                 'data-toggle': 'popover',
                 'data-html': 'true',

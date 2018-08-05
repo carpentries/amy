@@ -350,8 +350,8 @@ class Command(BaseCommand):
                 agreement_start=start,
                 agreement_end=start + timedelta(days=365),
                 contribution_type=choice(Membership.CONTRIBUTION_CHOICES)[0],
-                workshops_without_admin_fee_per_year=randint(5, 15),
-                self_organized_workshops_per_year=randint(5, 15),
+                workshops_without_admin_fee_per_agreement=randint(5, 15),
+                self_organized_workshops_per_agreement=randint(5, 15),
                 notes='',
                 organization=choice(Organization.objects.all()),
             )

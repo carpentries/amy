@@ -12,18 +12,42 @@ class TestMembership(TestBase):
         super().setUp()
         self._setUpUsersAndLogin()
 
+        # parametrize membership creation
+        self.agreement_start = date(2018, 8, 2)
+        self.agreement_start_next_day = self.agreement_start + timedelta(days=1)
+        self.agreement_end = date(2018, 12, 31)
+        self.workshop_interval = timedelta(days=13)
+
         # let's add a membership for one of the organizations
         self.current = Membership.objects.create(
             variant='partner',
-            agreement_start=date(2015, 1, 1),
-            agreement_end=date(2015, 12, 31),
+            agreement_start=self.agreement_start,
+            agreement_end=self.agreement_end,
             contribution_type='financial',
-            workshops_without_admin_fee_per_year=10,
-            self_organized_workshops_per_year=20,
+            workshops_without_admin_fee_per_agreement=10,
+            self_organized_workshops_per_agreement=20,
             organization=self.org_beta,
         )
 
         self_organized_admin = Organization.objects.get(domain='self-organized')
+
+        # create a couple of workshops that span outside of agreement duration
+        data = [
+            [self.agreement_start - timedelta(days=180), self_organized_admin, None],
+            [self.agreement_start - timedelta(days=1), self.org_beta, 500],
+            [self.agreement_start - timedelta(days=1), self_organized_admin, None],
+            [self.agreement_end + timedelta(days=1), self.org_beta, 500],
+        ]
+        for i, (start_date, admin, fee) in enumerate(data):
+            Event.objects.create(
+                slug='event-outside-agreement-range-{}'.format(i),
+                host=self.org_beta,
+                # create each event starts roughly month later
+                start=start_date,
+                end=start_date + timedelta(days=1),
+                administrator=admin,
+                admin_fee=fee,
+            )
 
         # let's add a few events for that organization
         type_ = itertools.cycle(['self-organized', 'no-fee', 'self-organized'])
@@ -35,8 +59,8 @@ class TestMembership(TestBase):
                     slug='event-under-umbrella{}'.format(i),
                     host=self.org_beta,
                     # create each event starts roughly month later
-                    start=date(2015, 1, 1) + i * timedelta(days=31),
-                    end=date(2015, 1, 2) + i * timedelta(days=31),
+                    start=self.agreement_start + i * self.workshop_interval,
+                    end=self.agreement_start_next_day + i * self.workshop_interval,
                     administrator=self_organized_admin,
                 )
 
@@ -45,8 +69,8 @@ class TestMembership(TestBase):
                     slug='event-under-umbrella{}'.format(i),
                     host=self.org_beta,
                     # create each event starts roughly month later
-                    start=date(2015, 1, 1) + i * timedelta(days=31),
-                    end=date(2015, 1, 2) + i * timedelta(days=31),
+                    start=self.agreement_start + i * self.workshop_interval,
+                    end=self.agreement_start_next_day + i * self.workshop_interval,
                     # just to satisfy the criteria
                     administrator=self.org_beta,
                     admin_fee=0,
@@ -63,8 +87,8 @@ class TestMembership(TestBase):
             agreement_start=date(2015, 7, 1),
             agreement_end=date(2016, 6, 30),
             contribution_type='financial',
-            workshops_without_admin_fee_per_year=10,
-            self_organized_workshops_per_year=20,
+            workshops_without_admin_fee_per_agreement=10,
+            self_organized_workshops_per_agreement=20,
             organization=self.org_beta,
         )
 
@@ -74,20 +98,20 @@ class TestMembership(TestBase):
     def test_workshops_without_admin_fee(self):
         """Ensure we calculate properly number of workshops per year."""
         self.assertEqual(
-            self.current.workshops_without_admin_fee_per_year, 10)
+            self.current.workshops_without_admin_fee_per_agreement, 10)
         self.assertEqual(
-            self.current.workshops_without_admin_fee_per_year_completed, 4)
+            self.current.workshops_without_admin_fee_completed, 4)
         self.assertEqual(
-            self.current.workshops_without_admin_fee_per_year_remaining, 6)
+            self.current.workshops_without_admin_fee_remaining, 6)
 
     def test_self_organized_workshops(self):
         """Ensure we calculate properly number of workshops per year."""
         self.assertEqual(
-            self.current.self_organized_workshops_per_year, 20)
+            self.current.self_organized_workshops_per_agreement, 20)
         self.assertEqual(
-            self.current.self_organized_workshops_per_year_completed, 8)
+            self.current.self_organized_workshops_completed, 8)
         self.assertEqual(
-            self.current.self_organized_workshops_per_year_remaining, 12)
+            self.current.self_organized_workshops_remaining, 12)
 
     def test_delete_membership(self):
         '''Test that we can delete membership instance'''

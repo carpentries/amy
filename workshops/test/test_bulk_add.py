@@ -140,26 +140,27 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
 
     def test_verify_with_good_data(self):
         good_data = self.make_data()
-        has_errors = verify_upload_person_task(good_data)
+        has_errors = verify_upload_person_task(good_data, match=True)
         self.assertFalse(has_errors)
         # make sure 'errors' wasn't set
-        self.assertIsNone(good_data[0]['errors'])
+        # 'errors' may be an empty list, which evaluates to False
+        self.assertFalse(good_data[0]['errors'])
 
     def test_verify_event_doesnt_exist(self):
         bad_data = self.make_data()
         bad_data[0]['event'] = 'no-such-event'
-        has_errors = verify_upload_person_task(bad_data)
+        has_errors = verify_upload_person_task(bad_data, match=True)
         self.assertTrue(has_errors)
 
         errors = bad_data[0]['errors']
-        self.assertTrue(len(errors) == 1)
+        self.assertEqual(len(errors), 1)
         self.assertTrue('Event with slug' in errors[0])
 
     def test_verify_role_doesnt_exist(self):
         bad_data = self.make_data()
         bad_data[0]['role'] = 'foobar'
 
-        has_errors = verify_upload_person_task(bad_data)
+        has_errors = verify_upload_person_task(bad_data, match=True)
         self.assertTrue(has_errors)
 
         errors = bad_data[0]['errors']
@@ -174,8 +175,8 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
             bad_data[0]['personal'] = 'Harry'
             bad_data[0]['family'] = 'Potter'
 
-            has_errors = verify_upload_person_task(bad_data)
-            self.assertFalse(has_errors)
+            has_errors = verify_upload_person_task(bad_data, match=True)
+            self.assertFalse(has_errors, 'Bad email: {}'.format(email))
 
     def test_verify_existing_user_has_workshop_role_provided(self):
         bad_data = [
@@ -187,7 +188,7 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
                 'role': '',
             }
         ]
-        has_errors = verify_upload_person_task(bad_data)
+        has_errors = verify_upload_person_task(bad_data, match=True)
         self.assertTrue(has_errors)
         errors = bad_data[0]['errors']
         self.assertEqual(len(errors), 2)
@@ -253,10 +254,23 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
         self.assertEqual(len(data[0]['similar_persons']), 1)
         self.assertEqual(len(data[1]['similar_persons']), 1)
 
-        self.assertEqual(data[0]['similar_persons'][0]['username'],
-                         'potter_harry')
-        self.assertEqual(data[1]['similar_persons'][0]['username'],
-                         'weasley_ron')
+        self.assertEqual(data[0]['similar_persons'][0][0],
+                         self.harry.pk)
+        self.assertEqual(data[1]['similar_persons'][0][0],
+                         self.ron.pk)
+
+    def test_duplicate_errors(self):
+        """Ensure errors about duplicate person in the database are present."""
+        data = self.make_data()
+        data[0]['personal'] = 'Harry'
+        data[0]['family'] = 'Potter'
+        data[0]['email'] = 'harry@hogwarts.edu'
+        verify_upload_person_task(data)
+        self.assertEqual(len(data[0]['errors']), 2)
+        self.assertIn('Person with this email address already exists.',
+                      data[0]['errors'])
+        self.assertIn('Person with this username already exists.',
+                      data[0]['errors'])
 
 
 class BulkUploadUsersViewTestCase(CSVBulkUploadTestBase):

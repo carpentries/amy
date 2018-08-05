@@ -11,11 +11,11 @@
 4.  Follow Deployment Procedure (see below).
 
 5.  Write to <amy@lists.carpentries.org> mailing list.
-    The suggested subject of the new thread is "[Amy] New release v1.X.Y".
+    The suggested subject of the new thread is "[Amy] New release v2.X.Y".
 
 # Release Procedure
 
-We assume that you want to release AMY v1.X.Y.
+We assume that you want to release AMY v2.X.Y.
 
 Execute the following commands on your local machine, not production.
 
@@ -48,8 +48,8 @@ Execute the following commands on your local machine, not production.
 
 4.  Define which version you're going to release (replace X and Y with correct numbers):
 
-        $ AMY_VERSION=v1.X.Y
-        $ AMY_NEXT_VERSION=v1.X+1.0-dev
+        $ AMY_VERSION=v2.X.Y
+        $ AMY_NEXT_VERSION=v2.X+1.0-dev
 
 5.  Merge `develop` into `master` branch:
 
@@ -126,14 +126,14 @@ Execute the following commands on your local machine, not production.
 
 7.  Create local database backup:
 
-        $ cp db.sqlite3 backup-before-upgrade-to-v1.X.Y.sqlite3
+        $ cp db.sqlite3 backup-before-upgrade-to-v2.X.Y.sqlite3
 
     Do not use $AMY_VERSION environment variable because it's not defined here.
 
 8.  Fetch newer AMY source code:
 
         $ git fetch
-        $ git checkout tags/v1.X.Y  # Python files updated
+        $ git checkout tags/v2.X.Y  # Python files updated
 
 9.  Update dependencies:
 

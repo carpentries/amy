@@ -1,4 +1,4 @@
-{% extends "base_nav_fluid_sidebar.html" %}
+{% extends "base_nav_sidebar.html" %}
 
 {% load pagination %}
 {% load links %}
@@ -12,11 +12,11 @@
 {% if all_tasks %}
     <table class="table table-striped">
         <tr>
-            <th>event</th>
-            <th>person</th>
-            <th>title</th>
-            <th>url</th>
-            <th>role</th>
+            <th>Event</th>
+            <th>Person</th>
+            <th>Title</th>
+            <th>URL</th>
+            <th>Role</th>
             <th class="additional-links"></th>
         </tr>
     {% for task in all_tasks %}
@@ -27,10 +27,10 @@
             <td>{{ task.url|default:"—"|urlize_newtab }}</td>
             <td>{{ task.role }}</td>
             <td>
-                <a href="{% url 'task_details' task.id %}" title="View {{ task }}"><span class="glyphicon glyphicon-info-sign"></span></a>
+                <a href="{% url 'task_details' task.id %}" title="View {{ task }}"><i class="fas fa-info-circle"></i></a>
                 &nbsp;
                 {% if perms.workshops.change_task %}
-                <a href="{% url 'task_edit' task.id %}" title="Edit {{ task }}"><span class="glyphicon glyphicon-pencil"></span></a>
+                <a href="{% url 'task_edit' task.id %}" title="Edit {{ task }}"><i class="fas fa-edit"></i></a>
                 {% endif %}
             </td>
         </tr>

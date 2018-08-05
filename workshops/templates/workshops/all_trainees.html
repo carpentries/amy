@@ -1,4 +1,4 @@
-{% extends "base_nav_fluid_sidebar.html" %}
+{% extends "base_nav_sidebar.html" %}
 
 {% load crispy_forms_tags %}
 {% load pagination %}
@@ -24,26 +24,26 @@
       <th>Name</th>
       <th width="40%">
         Progress
-        <span class="glyphicon glyphicon-question-sign"
-              data-toggle="popover" data-html="true"
-              data-content="<p>
-                            <span class='label label-success'>Passed</span>
-                            <span class='label label-warning'>Not evaluated</span>
-                            <span class='label label-danger'>Failed</span>
-                            <span class='label label-default'><strike>Discarded</strike></span></p>
-                            <p>Click one of labels below to edit or delete it.</p>
-                           "></span>
+        <i class="fas fa-question-circle"
+           data-toggle="popover" data-html="true"
+           data-content="<p>
+                         <span class='badge badge-success'>Passed</span>
+                         <span class='badge badge-warning'>Not evaluated</span>
+                         <span class='badge badge-danger'>Failed</span>
+                         <span class='badge badge-dark'><strike>Discarded</strike></span></p>
+                         <p>Click one of labels below to edit or delete it.</p>
+                        "></i>
       </th>
       <th>Training</th>
       <th>Training requests</th>
       <th width="90px">
         Eligible
-        <span class="glyphicon glyphicon-question-sign"
-              data-toggle="popover" data-html="true"
-              data-content="<span class='label label-default'>Not eligible to be certified</span><br />
-                            <span class='label label-success'>Eligible to be certified</span><br />
-                            <span class='label label-primary'>Certified</span>
-                           "></span>
+        <i class="fas fa-question-circle"
+           data-toggle="popover" data-html="true"
+           data-content="<span class='badge badge-dark'><strike>Not eligible to be certified</strike></span><br />
+                         <span class='badge badge-success'>Eligible to be certified</span><br />
+                         <span class='badge badge-secondary'>Certified</span>
+                        "></i>
       </th>
       <th class="additional-links"></th>
     </tr>
@@ -79,10 +79,10 @@
         </td>
         <td>
           {% if trainee.is_swc_instructor %}
-            <span class="label label-primary" data-toggle="popover"
+            <span class="badge badge-secondary" data-toggle="popover"
                   data-content="This person is SWC instructor">SWC</span>
           {% elif trainee.get_missing_swc_instructor_requirements %}
-            <a class="label label-default" data-toggle="popover" data-html="true"
+            <a class="badge badge-dark" data-toggle="popover" data-html="true"
                data-content="
                  Not eligible to be certified as Software Carpentry Instructor. Needs to pass:
                    <ul>
@@ -92,17 +92,17 @@
                    </ul>
                  Click to start awarding the badge.
                "
-               href="{% url 'award_add' %}?person={{ trainee.pk }}&amp;badge={{ swc.pk }}&amp;find-training&amp;next={{ request.get_full_path|urlencode }}">SWC</a>
+               href="{% url 'award_add' %}?person={{ trainee.pk }}&amp;badge={{ swc.pk }}&amp;find-training&amp;next={{ request.get_full_path|urlencode }}"><strike>SWC</strike></a>
           {% else %}
-            <a class="label label-success" data-toggle="popover" data-html="true"
+            <a class="badge badge-success" data-toggle="popover" data-html="true"
                data-content="<p>Eligible to be certified as Software Carpentry Instructor.</p><p>Click to start awarding the badge.</p>"
                href="{% url 'award_add' %}?person={{ trainee.pk }}&amp;badge={{ swc.pk }}&amp;find-training&amp;next={{ request.get_full_path|urlencode }}">SWC</a>
           {% endif %}
           {% if trainee.is_dc_instructor %}
-              <span class="label label-primary" data-toggle="popover"
+              <span class="badge badge-secondary" data-toggle="popover"
                     data-content="This person is DC Instructor.">DC</span>
           {% elif trainee.get_missing_dc_instructor_requirements %}
-            <a class="label label-default" data-toggle="popover" data-html="true"
+            <a class="badge badge-dark" data-toggle="popover" data-html="true"
                data-content="
                  Not eligible to be certified as Data Carpentry Instructor. Needs to pass:
                  <ul>
@@ -112,26 +112,26 @@
                  </ul>
                  Click to start awarding the badge.
                "
-               href="{% url 'award_add' %}?person={{ trainee.pk }}&amp;badge={{ dc.pk }}&amp;find-training&amp;next={{ request.get_full_path|urlencode }}#awards">DC</a>
+               href="{% url 'award_add' %}?person={{ trainee.pk }}&amp;badge={{ dc.pk }}&amp;find-training&amp;next={{ request.get_full_path|urlencode }}#awards"><strike>DC</strike></a>
           {% else %}
-            <a class="label label-success" data-toggle="popover" data-html="true"
+            <a class="badge badge-success" data-toggle="popover" data-html="true"
                data-content="<p>Eligible to be certified as Data Carpentry Instructor.</p><p>Click to start awarding the badge.</p>"
                href="{% url 'award_add' %}?person={{ trainee.pk }}&amp;badge={{ dc.pk }}&amp;find-training&amp;next={{ request.get_full_path|urlencode }}#awards">DC</a>
           {% endif %}
         </td>
         <td>
-          <a href="{% url 'person_details' trainee.pk %}" title="View {{ trainee.full_name }}"><span class="glyphicon glyphicon-info-sign"></span></a>
+          <a href="{% url 'person_details' trainee.pk %}" title="View {{ trainee.full_name }}"><i class="fas fa-info-circle"></i></a>
           &nbsp;
           {% if perms.workshops.change_person %}
-          <a href="{% url 'person_edit' trainee.pk %}" title="Edit {{ trainee.full_name }}"><span class="glyphicon glyphicon-pencil"></span></a>
+          <a href="{% url 'person_edit' trainee.pk %}" title="Edit {{ trainee.full_name }}"><i class="fas fa-edit"></i></a>
           {% endif %}
         </td>
       </tr>
     {% endfor %}
     </table>
+    <p>{% crispy discard_form %} <a class="btn btn-primary text-light" bulk-email-on-click>Mail selected trainees</a></p>
     {% pagination all_trainees %}
 
-    {% crispy discard_form %}
 
     <h2>Add Progress to Selected Trainees</h2>
     {% crispy form %}

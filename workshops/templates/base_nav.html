@@ -1,8 +1,8 @@
-{% extends 'base_nonav_fixed.html' %}
+{% extends 'base.html' %}
 {% block navbar %}
   {% if user.is_admin %}
-    {% include 'navigation_fixed.html' %}
+    {% include 'navigation.html' %}
   {% elif not user.is_admin and not user.is_anonymous %}
-    {% include 'navigation_trainee_fixed.html' %}
+    {% include 'navigation_trainee.html' %}
   {% endif %}
 {% endblock %}

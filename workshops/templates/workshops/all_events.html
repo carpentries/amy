@@ -1,4 +1,4 @@
-{% extends "base_nav_fluid_sidebar.html" %}
+{% extends "base_nav_sidebar.html" %}
 
 {% load links %}
 {% load pagination %}
@@ -13,25 +13,24 @@
 {% if all_events %}
     <table class="table table-striped">
       <tr>
-        <th>assignee</th>
-        <th>slug</th>
-        <th>tags</th>
-        <th>url</th>
-        <th>instructors</th>
-        <th>host</th>
-        <th>dates</th>
-        <th>invoice</th>
-        <th>completed</th>
+        <th>Assignee</th>
+        <th>Slug</th>
+        <th>Tags</th>
+        <th>URL</th>
+        <th>Instructors</th>
+        <th>Host</th>
+        <th>Dates</th>
+        <th>Completed</th>
         <th class="additional-links"></th>
       </tr>
     {% for event in all_events %}
       {% if event.completed %}
-      <tr class="bg-success">
+      <tr class="table-success">
       {% else %}
       <tr>
       {% endif %}
         <td>{% if event.assigned_to %}<a href="{{ event.assigned_to.get_absolute_url }}">{{ event.assigned_to.get_short_name }}</a>{% else %}—{% endif %}</td>
-        <td {% if not event.slug %}class="warning"{% endif %}>
+        <td {% if not event.slug %}class="table-warning"{% endif %}>
           {% if not event.slug %}
             —
           {% else %}
@@ -41,23 +40,22 @@
           {% endif %}
         </td>
         <td>{% for tag in event.tags.all %}{% bootstrap_tag tag.name %}{% endfor %}</td>
-        <td {% if not event.repository_url %}class="warning"{% endif %}>
+        <td {% if not event.repository_url %}class="table-warning"{% endif %}>
           {{ event.repository_url|default:"—"|urlize_newtab }}
         </td>
         {% with num_instructors=event.task_set.instructors.count %}
-        <td {% if num_instructors == 0 %}class="warning"{% endif %}>{{ num_instructors }}</td>
+        <td {% if num_instructors == 0 %}class="table-warning"{% endif %}>{{ num_instructors }}</td>
         {% endwith %}
         <td><a href="{% url 'organization_details' event.host.domain %}">{{ event.host }}</a></td>
         <td>{{ event.start }} &ndash; {{ event.end }}</td>
-        <td>{{ event.get_invoice_status_display }}</td>
         <td>
           {{ event.completed|yesno }}
         </td>
         <td>
-          <a href="{% url 'event_details' event.slug %}" title="View {{ event.slug }}"><span class="glyphicon glyphicon-info-sign"></span></a>
+          <a href="{% url 'event_details' event.slug %}" title="View {{ event.slug }}"><i class="fas fa-info-circle"></i></a>
           &nbsp;
           {% if perms.workshops.edit_event %}
-          <a href="{% url 'event_edit' event.slug %}" title="Edit {{ event.slug }}"><span class="glyphicon glyphicon-pencil"></span></a>
+          <a href="{% url 'event_edit' event.slug %}" title="Edit {{ event.slug }}"><i class="fas fa-edit"></i></a>
           {% endif %}
         </td>
       </tr>

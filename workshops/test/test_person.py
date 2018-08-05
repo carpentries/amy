@@ -107,14 +107,6 @@ class TestPerson(TestBase):
         xpath = ".//td[@id='{0}']".format(key)
         return self._get_1(doc, xpath, key)
 
-    def test_display_person_without_notes(self):
-        response = self.client.get(reverse('person_details',
-                                           args=[str(self.ironman.id)]))
-        assert response.status_code == 200
-
-        content = response.content.decode('utf-8')
-        assert "No notes" in content
-
     def test_display_person_with_notes(self):
         note = 'This person has some serious records'
         p = Person.objects.create(personal='P1', family='P1',
@@ -448,7 +440,7 @@ class TestPerson(TestBase):
         trainee.award_set.all().delete()
 
         # Test workflow starting from clicking at "SWC" label
-        swc_res = trainees.click('^SWC$')
+        swc_res = trainees.click('^<strike>SWC</strike>$')
         self.assertSelected(swc_res.forms['main-form']['badge'],
                             'Software Carpentry Instructor')
         self.assertEqual(int(swc_res.forms['main-form']['event'].value),
@@ -462,7 +454,7 @@ class TestPerson(TestBase):
         trainee.award_set.all().delete()
 
         # Test workflow starting from clicking at "DC" label
-        dc_res = trainees.click('^DC$')
+        dc_res = trainees.click('^<strike>DC</strike>$')
         self.assertSelected(dc_res.forms['main-form']['badge'],
                             'Data Carpentry Instructor')
         self.assertEqual(int(dc_res.forms['main-form']['event'].value),
@@ -999,13 +991,14 @@ class TestGetMissingSWCInstructorRequirements(TestBase):
         person = Person.objects.annotate_with_instructor_eligibility() \
             .get(username='person')
         self.assertEqual(person.get_missing_swc_instructor_requirements(),
-                         ['Training', 'Discussion', 'SWC Demo'])
+                         ['Training', 'Discussion'])
 
     def test_none_requirement_is_fulfilled(self):
         person = Person.objects.annotate_with_instructor_eligibility() \
                                .get(username='person')
         self.assertEqual(person.get_missing_swc_instructor_requirements(),
-                         ['Training', 'SWC Homework', 'Discussion', 'SWC Demo'])
+                         ['Training', 'SWC or DC Homework', 'Discussion',
+                          'SWC or DC Demo'])
 
 
 class TestGetMissingDCInstructorRequirements(TestBase):
@@ -1055,13 +1048,14 @@ class TestGetMissingDCInstructorRequirements(TestBase):
         person = Person.objects.annotate_with_instructor_eligibility() \
                                .get(username='person')
         self.assertEqual(person.get_missing_dc_instructor_requirements(),
-                         ['Training', 'Discussion', 'DC Demo'])
+                         ['Training', 'Discussion'])
 
     def test_none_requirement_is_fulfilled(self):
         person = Person.objects.annotate_with_instructor_eligibility() \
                                .get(username='person')
         self.assertEqual(person.get_missing_dc_instructor_requirements(),
-                         ['Training', 'DC Homework', 'Discussion', 'DC Demo'])
+                         ['Training', 'SWC or DC Homework', 'Discussion',
+                          'SWC or DC Demo'])
 
 
 class TestFilterTaughtWorkshops(TestBase):

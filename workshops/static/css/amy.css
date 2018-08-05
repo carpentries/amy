@@ -1,12 +1,36 @@
-/* Styles for AMY */
-
-.warning {
-    background-color: #F04040;
+body, .dropdown-menu, .btn, .form-control {
+    font-size: 0.875rem;
+}
+.btn-sm, .btn-group-sm > .btn {
+    font-size: 0.75rem;
+}
+.form-check-input {
+    /* this accounts for change in font-size */
+    margin-top: 0.125rem;
+}
+.navbar-expand-lg .navbar-nav .nav-link {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+}
+.main, .sidebar {
+    padding-top: 0.5rem;
+}
+footer {
+    font-size: 0.75rem;
 }
 
-/* used in bulk-add confirmation page */
-table td.editable span {
-    display: block;
+.sidebar select {
+    resize: vertical;
+}
+.sidebar .select2-container {
+    min-width: 1rem;
+}
+.sidebar label.col-form-label {
+    padding-bottom: 0;
+}
+
+label.col-form-label {
+    font-weight: bold;
 }
 
 table .additional-links {
@@ -16,203 +40,23 @@ table .additional-links-wider {
     width: 90px;
 }
 
-/* move country flag in tables a few pixels up */
-.country-flag {
-    width: 16px;
-    height: 11px;
-    margin-top: -4px;
+.form-group small {
+    font-size: 0.8rem;
 }
 
-/* Padding below the event edit form */
-form[role="form"] {
-    margin-bottom: 50px;
-}
-
-/* Padding around horizontal list of skills in find_instructor form */
-.form-inline > * {
-   margin:10px 5px;
-}
-
-/* make space on the right of combobox element for a "dropdown button" */
-input.autocomboboxwidget {
-    /*width: 90%;*/
-    display: inline-block;
-    margin-right: -38px !important;
-}
-
-.footer-hr {
-    margin-top: 100px;
-}
-.footer {
-    color: #767676;
-    text-align: center;
-    padding: 30px 0;
+.tab-content .tab-pane {
+    padding-top: 15px;
+    padding-bottom: 15px
 }
 
 .edit-object {
-    margin: 0px 0px 10px;
+    margin-bottom: 15px;
 }
 
-/* event, organization and person notes are displayed in <pre> */
-pre {
-    white-space: pre-wrap;
-}
-
-.sidebar {
-    position: fixed;
-    top: 51px;
-    bottom: 0px;
-    left: 0px;
-    z-index: 1000;
-    display: block;
-    padding: 20px;
-    overflow-x: hidden;
-    overflow-y: auto;
-    background-color: #F5F5F5;
-    border-right: 1px solid #EEE;
-}
-
-
-/* 100% width instead of Bootstrap's default "auto" makes
-   the input narrower (because in "auto" some long country
-   name expands the input too much) */
-.sidebar .controls input[type="number"],
-.sidebar .controls input[type="text"],
-.sidebar .controls select {
-    width: 100%;
-}
-
-.main {
-    padding: 0 40px;
-}
-
-/* navbar fixed to the top takes some space */
-body {
-    padding-top: 60px;
-}
-
-/* when using nav-tab (http://getbootstrap.com/javascript/#tabs) move the
-   crispy form down a few notches */
-.tab-content {
-    padding-top: 10px;
-}
-/* Overwriting Bootstrap styles for horizontal forms. The checkboxes and radios
-   were shifted to the left too much, while singular checkbox questions were
-   okay. */
-.form-horizontal .checkbox,
-.form-horizontal .checkbox-inline,
-.form-horizontal .radio,
-.form-horizontal .radio-inline {
-    padding-left: 20px;
-}
-
-.form-horizontal .checkbox label, .form-horizontal .radio label {
-    padding-left: 0;
-}
-
-/* Styles for help_text in multiselect or radio fields for EventRequest
-   forms. And since help-block was always last and had a nice bottom margin,
-   now the very last radio/checkbox label should have that margin too. */
-p.help-block-no-margin {
-    display: block;
-    color: #737373;
-    margin: 7px 0px 0px;
-}
-
-label.last-field {
-    margin-bottom: 10px;
-    display: block;
-}
-
-/* any element but tr, with class .strikethrough */
-.strikethrough:not(tr) {
-    text-decoration: line-through;
-}
-
-/* styles for tr with class .strikethrough only: last td child without
-   strikethrough because there are links in this last column and it just seems
-   ugly to have them crossed out */
-tr.strikethrough td:last-child {
-    text-decoration: none;
-}
-tr.strikethrough td {
-    text-decoration: line-through;
-}
-
-.bg-muted {
-    background-color: #F5F5F5;
-}
-
-.space1 {
-    margin: 0 3px 0 9px;
-}
-.space2 {
-    margin: 0 3px;
-}
-
-/* better styles for inline formset (e.g. TODOs) */
-.form-horizontal table .control-label {
-    text-align: center;
-}
-.form-horizontal table .control-group {
-    text-align: center;
-}
-
-/* .table-striped has higher priority than default bg-* background classes
-   so it was necessary to define more precise rules like below */
-table.table-striped tr.bg-primary {
-    color: #FFF;
-    background-color: #337AB7;
-}
-table.table-striped tr.bg-success {
-    background-color: #DFF0D8;
-}
-table.table-striped tr.bg-info {
-    background-color: #D9EDF7;
-}
-table.table-striped tr.bg-warning {
-    background-color: #FCF8E3;
-}
-table.table-striped tr.bg-danger {
-    background-color: #F2DEDE;
-}
-
-#timeline {
-    margin-bottom: 40px;
-}
-
-table tr label {
-    font-weight: normal;
-}
-
-/* Remove too much empty space over some radio filters. This style is copied
-   from Bootstrap behavior for form-horizontal. */
-.sidebar form .radio,
-.sidebar form .checkbox {
-    min-height: 27px;
-    margin-top: 0;
-    margin-bottom: 0;
-}
-/* sidebar panel heading size */
-.sidebar .panel {
-    width: 100%;
-}
-
-table ul {
-    padding-left: 15px;
-}
-
-/* Make question signs blue by default, so they look like a link. */
-.glyphicon-question-sign {
-    color: rgb(51, 122, 183);
-}
-
-/* Make select lists resizable */
-select {
-    resize: vertical;
-}
-
-/* Sidebar select2 autocomplete width settings */
-.sidebar .select2-container {
-    min-width: 1em;
+.main table pre {
+    white-space: pre-wrap;       /* Since CSS 2.1 */
+    white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+    white-space: -pre-wrap;      /* Opera 4-6 */
+    white-space: -o-pre-wrap;    /* Opera 7 */
+    word-wrap: break-word;       /* Internet Explorer 5.5+ */
 }

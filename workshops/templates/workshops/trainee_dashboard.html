@@ -1,6 +1,6 @@
-{% extends "base_nonav_fixed.html" %}
+{% extends "base.html" %}
 {% block navbar %}
-  {% include 'navigation_trainee_fixed.html' %}
+  {% include 'navigation_trainee.html' %}
 {% endblock %}
 
 {% load crispy_forms_tags %}
@@ -9,59 +9,68 @@
 
 <div>
   <table class="table table-striped">
-    <tr><th>personal name</th><td>{{ user.personal|default:"—" }}</td></tr>
-    <tr><th>middle name</th><td>{{ user.middle|default:"—" }}</td></tr>
-    <tr><th>family name</th><td>{{ user.family|default:"—" }}</td></tr>
-    <tr><th>email</th><td>{{ user.email|default:"—" }}</td></tr>
-    <tr><th>gender</th><td>{{ user.get_gender_display }}</td></tr>
-    <tr><th>can we contact you?</th><td>{{ user.may_contact|yesno }}</td></tr>
-    <tr><th>do you consent to publish your profile<br>on The Carpentries website?</th><td>{{ user.publish_profile|yesno }}</td></tr>
-    <tr><th>airport</th><td>{{ user.airport|default:"—"  }}</td></tr>
-    <tr><th>github</th><td>{{ user.github|default:"—" }}</td></tr>
-    <tr><th>twitter</th><td>{{ user.twitter|default:"—" }}</td></tr>
-    <tr><th>url</th><td>{{ user.url|default:"—" }}</td></tr>
-    <tr><th>username</th><td>{{ user.username|default:"—" }}</td></tr>
-    <tr><th>affiliation</th><td>{{ user.affiliation|default:"—" }}</td></tr>
-    <tr><th>occupation</th><td>{{ user.occupation|default:"—" }}</td></tr>
-    <tr><th>orcid</th><td>{{ user.orcid|default:"—" }}</td></tr>
-    <tr><th>areas of expertise</th><td>
+    <tr><th>Personal name:</th><td>{{ user.personal|default:"—" }}</td></tr>
+    <tr><th>Middle name:</th><td>{{ user.middle|default:"—" }}</td></tr>
+    <tr><th>Family name:</th><td>{{ user.family|default:"—" }}</td></tr>
+    <tr><th>Email:</th><td>{{ user.email|default:"—" }}</td></tr>
+    <tr><th>Gender:</th><td>{{ user.get_gender_display }}</td></tr>
+    <tr><th>Can we contact you?</th><td>{{ user.may_contact|yesno }}</td></tr>
+    <tr><th>Do you consent to publish your profile<br>on The Carpentries website?</th><td>{{ user.publish_profile|yesno }}</td></tr>
+    <tr><th>Country:</th><td>{% if user.country %}{{ user.country.name }} <img src="{{ user.country.flag }}" alt="{{ user.country }}" class="country-flag" />{% else %}—{% endif %}</td></tr>
+    <tr><th>Airport:</th><td>{{ user.airport|default:"—"  }}</td></tr>
+    <tr><th>Github:</th><td>{{ user.github|default:"—" }}</td></tr>
+    <tr><th>Twitter:</th><td>{{ user.twitter|default:"—" }}</td></tr>
+    <tr><th>URL:</th><td>{{ user.url|default:"—" }}</td></tr>
+    <tr><th>Username:</th><td>{{ user.username|default:"—" }}</td></tr>
+    <tr><th>Affiliation:</th><td>{{ user.affiliation|default:"—" }}</td></tr>
+    <tr><th>Occupation:</th><td>{{ user.occupation|default:"—" }}</td></tr>
+    <tr><th>Orcid:</th><td>{{ user.orcid|default:"—" }}</td></tr>
+    <tr><th>Areas of expertise:</th><td>
+        {% if user.domains.all %}
         <ul>
           {% for domain in user.domains.all %}
             <li>{{ domain }}</li>
-          {% empty %}
-            <li>No areas of expertise.</li>
           {% endfor %}
         </ul>
+        {% else %}
+        No domains.
+        {% endif %}
     </td></tr>
-    <tr><th>lessons that you can teach</th><td>
+    <tr><th>Lessons that you can teach:</th><td>
+        {% if user.lessons.all %}
         <ul>
           {% for lesson in user.lessons.all %}
             <li>{{ lesson }}</li>
-          {% empty %}
-            <li>No lesson chosen.</li>
           {% endfor %}
         </ul>
+        {% else %}
+        No lessons.
+        {% endif %}
     </td></tr>
-    <tr><th>languages</th><td>
+    <tr><th>Languages:</th><td>
+        {% if user.languages.all %}
         <ul>
           {% for language in user.languages.all %}
             <li>{{ language }}</li>
-          {% empty %}
-            <li>No languages.</li>
           {% endfor %}
         </ul>
+        {% else %}
+        No languages.
+        {% endif %}
     </td></tr>
-    <tr><th>your badges</th><td>
+    <tr><th>Your badges:</th><td>
+        {% if user.badges.all %}
         <ul>
           {% for badge in user.badges.all %}
             <li>{{ badge }}</li>
-          {% empty %}
-            <li>No badges awarded.</li>
           {% endfor %}
         </ul>
+        {% else %}
+        No badges.
+        {% endif %}
         <p>If you think that you're missing a badge, please email us at <a href="mailto:team@carpentries.org">team@carpentries.org</a></p>
     </td></tr>
-    <tr><th>your workshop activity</th><td>
+    <tr><th>Your workshop activity:</th><td>
         {% if workshops %}
         <table class="table">
           <tr>
@@ -91,7 +100,7 @@
 
   <p>
     <a href="{% url 'autoupdate_profile' %}" class="btn btn-primary">Update your profile</a>
-    <a href="{% url 'api:export-person-data' %}?format=json" class="btn btn-default pull-right">Download your data</a>
+    <a href="{% url 'api:export-person-data' %}?format=json" class="btn btn-secondary float-right">Download your data</a>
   </p>
 
 </div>

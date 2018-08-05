@@ -99,10 +99,12 @@ def upload_person_task_csv(stream):
     return result, list(empty_fields)
 
 
-def verify_upload_person_task(data):
+def verify_upload_person_task(data, match=False):
     """
-    Verify that uploaded data is correct.  Show errors by populating ``errors``
-    dictionary item.  This function changes ``data`` in place.
+    Verify that uploaded data is correct.  Show errors by populating `errors`
+    dictionary item.  This function changes `data` in place.
+
+    If `match` provided, it will try to match with first similar person.
     """
 
     errors_occur = False
@@ -116,7 +118,10 @@ def verify_upload_person_task(data):
             try:
                 existing_event = Event.objects.get(slug=event)
             except Event.DoesNotExist:
-                errors.append('Event with slug {0} does not exist.'
+                errors.append('Event with slug "{0}" does not exist.'
+                              .format(event))
+            except Event.MultipleObjectsReturned:
+                errors.append('More than one event named "{0}" exists.'
                               .format(event))
 
         role = item.get('role', None)
@@ -125,10 +130,10 @@ def verify_upload_person_task(data):
             try:
                 existing_role = Role.objects.get(name=role)
             except Role.DoesNotExist:
-                errors.append('Role with name {0} does not exist.'
+                errors.append('Role with name "{0}" does not exist.'
                               .format(role))
             except Role.MultipleObjectsReturned:
-                errors.append('More than one role named {0} exists.'
+                errors.append('More than one role named "{0}" exists.'
                               .format(role))
 
         # check if the user exists, and if so: check if existing user's
@@ -139,7 +144,17 @@ def verify_upload_person_task(data):
         person_id = item.get('existing_person_id', None)
         person = None
 
-        if person_id:
+        # try to match with first similar person
+        if match is True:
+            try:
+                person = Person.objects.get(email=email)
+            except Person.DoesNotExist:
+                person = None
+            else:
+                info.append('Existing record for person will be used.')
+                person_id = person.pk
+
+        elif person_id:
             try:
                 person = Person.objects.get(id=int(person_id))
             except (ValueError, TypeError, Person.DoesNotExist):
@@ -148,6 +163,22 @@ def verify_upload_person_task(data):
                             'be created.')
             else:
                 info.append('Existing record for person will be used.')
+
+        elif not person_id:
+            try:
+                Person.objects.get(email=email)
+            except Person.DoesNotExist:
+                pass
+            else:
+                errors.append('Person with this email address already exists.')
+
+            try:
+                if item.get('username'):
+                    Person.objects.get(username=item.get('username'))
+            except Person.DoesNotExist:
+                pass
+            else:
+                errors.append('Person with this username already exists.')
 
         if not email and not person:
             info.append('It\'s highly recommended to add an email address.')
@@ -158,6 +189,7 @@ def verify_upload_person_task(data):
             item['family'] = family = person.family
             item['email'] = email = person.email
             item['username'] = person.username
+            item['existing_person_id'] = person_id
             item['person_exists'] = True
         else:
             # force a newly created username
@@ -173,9 +205,12 @@ def verify_upload_person_task(data):
             Q(email=email) & ~Q(email='') & Q(email__isnull=False)
         )
         # need to cast to list, otherwise it won't JSON-ify
-        item['similar_persons'] = list(similar_persons.values(
-            'id', 'personal', 'middle', 'family', 'email', 'username',
-        ))
+        item['similar_persons'] = list(
+            zip(
+                similar_persons.values_list('id', flat=True),
+                map(lambda x: str(x), similar_persons)
+            )
+        )
 
         if existing_event and person and existing_role:
             # person, their role and a corresponding event exist, so
@@ -203,12 +238,11 @@ def verify_upload_person_task(data):
         if not event:
             errors.append('Must have an event.')
 
+        item['errors'] = errors
         if errors:
             errors_occur = True
-            item['errors'] = errors
 
-        if info:
-            item['info'] = info
+        item['info'] = info
 
     return errors_occur
 

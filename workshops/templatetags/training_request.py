@@ -10,9 +10,9 @@ register = template.Library()
 def training_request_label(req):
     assert isinstance(req, TrainingRequest)
     switch = {
-        'p': 'label label-warning',
-        'a': 'label label-success',
-        'd': 'label label-danger',
+        'p': 'badge badge-warning',
+        'a': 'badge badge-success',
+        'd': 'badge badge-danger',
     }
     result = switch[req.state]
     return mark_safe(result)

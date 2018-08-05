@@ -1,4 +1,4 @@
-{% extends "base_nav_fluid_sidebar.html" %}
+{% extends "base_nav_sidebar.html" %}
 
 {% load pagination %}
 {% load tags %}
@@ -6,30 +6,26 @@
 {% block content %}
   {% if requests %}
   <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>assignee</th>
-        <th>person</th>
-        <th>affiliation</th>
-        <th>preferred date</th>
-        <th>type</th>
-        <th>comment</th>
-        <th class="additional-links"></th>
-      </tr>
-    </thead>
-    <tbody>
+    <tr>
+      <th>Assignee</th>
+      <th>Person</th>
+      <th>Affiliation</th>
+      <th>Preferred date</th>
+      <th>Type</th>
+      <th>Comment</th>
+      <th class="additional-links"></th>
+    </tr>
     {% for req in requests %}
-      <tr>
-        <td>{% if req.assigned_to %}<a href="{{ req.assigned_to.get_absolute_url }}">{{ req.assigned_to.get_short_name }}</a>{% else %}—{% endif %}</td>
-        <td>{{ req.name }} &lt;{{ req.email|urlize }}&gt;</td>
-        <td>{{ req.affiliation }}</td>
-        <td>{{ req.preferred_date }}</td>
-        <td>{% bootstrap_tag req.workshop_type|upper %}</td>
-        <td>{{ req.comment|truncatewords:5|default:"—" }}</td>
-        <td><a href="{{ req.get_absolute_url }}"><span class="glyphicon glyphicon-info-sign"></span></a></td>
-      </tr>
+    <tr>
+      <td>{% if req.assigned_to %}<a href="{{ req.assigned_to.get_absolute_url }}">{{ req.assigned_to.get_short_name }}</a>{% else %}—{% endif %}</td>
+      <td>{{ req.name }} &lt;{{ req.email|urlize }}&gt;</td>
+      <td>{{ req.affiliation }}</td>
+      <td>{{ req.preferred_date }}</td>
+      <td>{% bootstrap_tag req.workshop_type|upper %}</td>
+      <td>{{ req.comment|truncatewords:5|default:"—" }}</td>
+      <td><a href="{{ req.get_absolute_url }}"><i class="fas fa-info-circle"></i></a></td>
+    </tr>
     {% endfor %}
-    </tbody>
   </table>
   {% else %}
   <p>No workshop requests matching the filter.</p>
