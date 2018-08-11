@@ -14,7 +14,7 @@ from django.db.models import (
     When,
 )
 from rest_framework import viewsets
-from rest_framework.decorators import list_route
+from rest_framework.decorators import action
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.metadata import SimpleMetadata
 from rest_framework.pagination import PageNumberPagination
@@ -424,7 +424,7 @@ class ReportsViewSet(ViewSet):
 
         return iterable
 
-    @list_route(methods=['GET'])
+    @action(detail=False, methods=['GET'])
     def workshops_over_time(self, request, format=None):
         """Cumulative number of workshops run by Software Carpentry and other
         carpentries over time."""
@@ -441,7 +441,7 @@ class ReportsViewSet(ViewSet):
 
         return Response(data)
 
-    @list_route(methods=['GET'])
+    @action(detail=False, methods=['GET'])
     def learners_over_time(self, request, format=None):
         """Cumulative number of learners attending Software-Carpentry and other
         carpentries' workshops over time."""
@@ -459,7 +459,7 @@ class ReportsViewSet(ViewSet):
 
         return Response(data)
 
-    @list_route(methods=['GET'])
+    @action(detail=False, methods=['GET'])
     def instructors_over_time(self, request, format=None):
         """Cumulative number of instructor appearances on workshops over
         time."""
@@ -486,7 +486,7 @@ class ReportsViewSet(ViewSet):
 
         return Response(data)
 
-    @list_route(methods=['GET'])
+    @action(detail=False, methods=['GET'])
     def instructor_num_taught(self, request, format=None):
         badges = Badge.objects.instructor_badges()
         persons = Person.objects.filter(badges__in=badges).annotate(
@@ -529,7 +529,7 @@ class ReportsViewSet(ViewSet):
 
         return start, end
 
-    @list_route(methods=['GET'])
+    @action(detail=False, methods=['GET'])
     def all_activity_over_time(self, request, format=None):
         """Workshops, instructors, and missing data in specific periods."""
         start, end = self._default_start_end_dates(
@@ -645,7 +645,7 @@ class ReportsViewSet(ViewSet):
          .select_related('person', 'event', 'role')
         return tasks
 
-    @list_route(methods=['GET'])
+    @action(detail=False, methods=['GET'])
     def instructors_by_time(self, request, format=None):
         """Workshops and instructors who taught in specific time period."""
         start, end = self._default_start_end_dates(
