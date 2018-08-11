@@ -78,6 +78,11 @@ serve : node_modules workshops/git_version.py
 serve_now :
 	${MANAGE} runserver
 
+## outdated		: show outdated dependencies
+outdated :
+	-pip list --outdated
+	-yarn outdated
+
 ## upgrade      : force package upgrade using pip
 upgrade :
 	@pip install --upgrade -r requirements.txt
