@@ -2214,7 +2214,7 @@ class AllEventRequests(OnlyForAdminsMixin, AMYListView):
     context_object_name = 'requests'
     template_name = 'workshops/all_eventrequests.html'
     filter_class = EventRequestFilter
-    queryset = EventRequest.objects.all()
+    queryset = EventRequest.objects.select_related('assigned_to')
     title = 'Workshop requests'
 
     def get_filter_data(self):

@@ -30,8 +30,6 @@ from workshops.models import (
     Membership,
 )
 
-EMPTY_SELECTION = (None, '---------')
-
 
 class AllCountriesFilter(django_filters.ChoiceFilter):
     @property
@@ -45,7 +43,6 @@ class AllCountriesFilter(django_filters.ChoiceFilter):
         countries.only = choices
 
         self.extra['choices'] = list(countries)
-        self.extra['choices'].insert(0, EMPTY_SELECTION)
         return super().field
 
 
@@ -63,7 +60,6 @@ class ForeignKeyAllValuesFilter(django_filters.ChoiceFilter):
         qs1 = qs1.order_by(name).values_list(name, flat=True)
         qs2 = model.objects.filter(pk__in=qs1)
         self.extra['choices'] = [(o.pk, str(o)) for o in qs2]
-        self.extra['choices'].insert(0, EMPTY_SELECTION)
         return super().field
 
 
@@ -145,7 +141,7 @@ class EventFilter(AMYFilterSet):
                              widget=Select2())
 
     invoice_status = django_filters.ChoiceFilter(
-        choices=(EMPTY_SELECTION, ) + Event.INVOICED_CHOICES,
+        choices=Event.INVOICED_CHOICES,
     )
 
     tags = django_filters.ModelMultipleChoiceFilter(
@@ -185,18 +181,20 @@ def filter_active_eventrequest(qs, name, value):
 
 
 class EventRequestFilter(AMYFilterSet):
-    assigned_to = ForeignKeyAllValuesFilter(Person)
-    country = AllCountriesFilter()
     active = django_filters.ChoiceFilter(
         choices=(('all', 'All'), ('true', 'Open'), ('false', 'Closed')),
-        label='Status', method=filter_active_eventrequest,
+        label='Status',
+        method=filter_active_eventrequest,
         widget=widgets.RadioSelect,
+        empty_label=None,
     )
+    assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2())
+    country = AllCountriesFilter(widget=Select2())
     workshop_type = django_filters.ChoiceFilter(
-        choices=(('', 'All'), ('swc', 'Software-Carpentry'),
+        choices=(('swc', 'Software-Carpentry'),
                  ('dc', 'Data-Carpentry')),
         label='Workshop type',
-        widget=widgets.RadioSelect,
+        empty_label='All',
     )
 
     order_by = django_filters.OrderingFilter(
@@ -678,11 +676,13 @@ def filter_active_eventsubmission(qs, name, value):
 
 class EventSubmissionFilter(AMYFilterSet):
     active = django_filters.ChoiceFilter(
-        choices=(('', 'All'), ('true', 'Open'), ('false', 'Closed')),
-        label='Status', method=filter_active_eventsubmission,
+        choices=(('all', 'All'), ('true', 'Open'), ('false', 'Closed')),
+        label='Status',
+        method=filter_active_eventsubmission,
         widget=widgets.RadioSelect,
+        empty_label=None,
     )
-    assigned_to = ForeignKeyAllValuesFilter(Person)
+    assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2())
 
     order_by = django_filters.OrderingFilter(
         fields=(
@@ -708,11 +708,13 @@ def filter_active_dcselforganizedeventrequest(qs, name, value):
 
 class DCSelfOrganizedEventRequestFilter(AMYFilterSet):
     active = django_filters.ChoiceFilter(
-        choices=(('', 'All'), ('true', 'Open'), ('false', 'Closed')),
-        label='Status', method=filter_active_dcselforganizedeventrequest,
+        choices=(('all', 'All'), ('true', 'Open'), ('false', 'Closed')),
+        label='Status',
+        method=filter_active_dcselforganizedeventrequest,
         widget=widgets.RadioSelect,
+        empty_label=None,
     )
-    assigned_to = ForeignKeyAllValuesFilter(Person)
+    assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2())
 
     order_by = django_filters.OrderingFilter(
         fields=(
