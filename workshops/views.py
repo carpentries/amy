@@ -1914,14 +1914,8 @@ def instructors_by_date(request):
         start_date = form.cleaned_data['begin_date']
         end_date = form.cleaned_data['end_date']
         rvs = ReportsViewSet()
-        tasks = rvs.instructors_by_time_queryset(start_date, end_date)
-        # speed up things a little
-        tasks = tasks.annotate(
-            taught_times=Count(
-                'person__task',
-                filter=Q(person__task__role__name='instructor')
-            )
-        )
+        tasks = rvs.instructors_by_time_queryset(start_date, end_date,
+                                                 only_non_TTT=True)
         emails = tasks.filter(person__may_contact=True)\
                       .exclude(person__email=None)\
                       .values_list('person__email', flat=True)

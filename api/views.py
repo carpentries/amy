@@ -633,16 +633,55 @@ class ReportsViewSet(ViewSet):
             }
         }
 
-    def instructors_by_time_queryset(self, start, end):
-        """Just a queryset to be reused in other view."""
-        tags = Tag.objects.filter(name__in=['stalled', 'unresponsive'])
+    def instructors_by_time_queryset(self, start, end, only_TTT=False,
+                                     only_non_TTT=False):
+        """Just a queryset to be reused in other view.
+
+        `start` and `end` define a timerange for events.
+        `only_TTT` limits output to only TTT events, and
+        `only_non_TTT` excludes TTT events from the results."""
         tasks = Task.objects.filter(
             event__start__gte=start,
             event__end__lte=end,
             role__name='instructor',
             person__may_contact=True,
-        ).exclude(event__tags__in=tags).order_by('event', 'person', 'role') \
-         .select_related('person', 'event', 'role')
+        )
+
+        # include only TTT events
+        if only_TTT:
+            tags = Tag.objects.filter(name__in=['TTT'])
+            tasks = (
+                tasks.filter(event__tags__in=tags)
+            )
+
+        # exclude TTT events
+        elif only_non_TTT:
+            tags = Tag.objects.filter(name__in=['TTT'])
+            tasks = (
+                tasks.exclude(event__tags__in=tags)
+            )
+
+        # exclude stalled or unresponsive events
+        rejected_tags = Tag.objects.filter(name__in=['stalled',
+                                                     'unresponsive'])
+
+        tasks = (
+            tasks
+            .exclude(event__tags__in=rejected_tags)
+            .order_by('event', 'person', 'role')
+            .select_related('event', 'person', 'role')
+            .prefetch_related('event__tags')
+            .annotate(
+                num_taught=Sum(
+                    Case(
+                        When(person__task__role__name='instructor',
+                             then=Value(1)),
+                        default=Value(0),
+                        output_field=IntegerField(),
+                    ),
+                )
+            )
+        )
         return tasks
 
     @action(detail=False, methods=['GET'])
