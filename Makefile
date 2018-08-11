@@ -85,14 +85,13 @@ outdated :
 
 ## upgrade      : force package upgrade using pip
 upgrade :
-	@pip install --upgrade -r requirements.txt
-	@bower update
+	pip install --upgrade -r requirements.txt
+	yarn upgrade
 
 ## clean        : clean up.
 clean :
 	rm -rf \
-	$$(find . -name '*~' -print) \
-	$$(find . -name '*.pyc' -print) \
-	htmlerror \
-	bower_components \
-	${APP_DB}
+		$$(find . -name '*~' -print) \
+		$$(find . -name '*.pyc' -print) \
+		htmlerror \
+		$$(find . -name 'test_db*.sqlite3' -print) \
