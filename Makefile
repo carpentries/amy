@@ -54,7 +54,7 @@ schema :
 
 ## node_modules : install front-end dependencies using Yarn
 node_modules : package.json
-	yarn install
+	yarn install --frozen-lockfile
 	touch node_modules
 
 ## git_version  : store details about the current commit and tree state.
