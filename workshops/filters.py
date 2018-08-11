@@ -181,8 +181,6 @@ def filter_active_eventrequest(qs, name, value):
 
 
 class EventRequestFilter(AMYFilterSet):
-    assigned_to = ForeignKeyAllValuesFilter(Person)
-    country = AllCountriesFilter()
     active = django_filters.ChoiceFilter(
         choices=(('all', 'All'), ('true', 'Open'), ('false', 'Closed')),
         label='Status',
@@ -190,6 +188,8 @@ class EventRequestFilter(AMYFilterSet):
         widget=widgets.RadioSelect,
         empty_label=None,
     )
+    assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2())
+    country = AllCountriesFilter(widget=Select2())
     workshop_type = django_filters.ChoiceFilter(
         choices=(('swc', 'Software-Carpentry'),
                  ('dc', 'Data-Carpentry')),
@@ -682,7 +682,7 @@ class EventSubmissionFilter(AMYFilterSet):
         widget=widgets.RadioSelect,
         empty_label=None,
     )
-    assigned_to = ForeignKeyAllValuesFilter(Person)
+    assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2())
 
     order_by = django_filters.OrderingFilter(
         fields=(
@@ -714,7 +714,7 @@ class DCSelfOrganizedEventRequestFilter(AMYFilterSet):
         widget=widgets.RadioSelect,
         empty_label=None,
     )
-    assigned_to = ForeignKeyAllValuesFilter(Person)
+    assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2())
 
     order_by = django_filters.OrderingFilter(
         fields=(
