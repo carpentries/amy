@@ -4,13 +4,9 @@
 
 {% block content %}
 {% if not object.active %}
-  {% with event=object.event_set.first %}
-  {% if event %}
   <div class="alert alert-warning" role="alert">
-    <p><strong>Warning:</strong> This request was closed (see <a href="{{ event.get_absolute_url }}">related event</a>).</p>
+    <p><strong>Warning:</strong> This request was closed{% if object.event %} (see <a href="{{ object.event.get_absolute_url }}">related event</a>){% endif %}.</p>
   </div>
-  {% endif %}
-  {% endwith %}
 {% endif %}
 
 <div class="row">

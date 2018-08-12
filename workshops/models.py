@@ -94,6 +94,22 @@ class COCAgreementMixin(models.Model):
         abstract = True
 
 
+class EventLink(models.Model):
+    """This mixin provides a one-to-one link between a model, in which it's
+    used, and single Event instance."""
+    event = models.OneToOneField(
+        'Event', null=True, blank=True,
+        verbose_name='Linked event object',
+        help_text='Link to the event instance created or otherwise related to this object.',
+        on_delete=models.PROTECT,
+    )
+
+    class Meta:
+        abstract = True
+
+#------------------------------------------------------------
+
+
 @reversion.register
 class Organization(models.Model):
     '''Represent an organization, academic or business.'''
@@ -1089,12 +1105,6 @@ class Event(AssignmentMixin, models.Model):
         blank=True, default="",
         verbose_name="Long-term assessment survey for learners")
 
-    request = models.ForeignKey(
-        'EventRequest', null=True, blank=True,
-        help_text='Backlink to the request that created this event.',
-        on_delete=models.SET_NULL,
-    )
-
     # used in getting metadata updates from GitHub
     repository_last_commit_hash = models.CharField(
         max_length=40, blank=True, default='',
@@ -1249,7 +1259,7 @@ class Event(AssignmentMixin, models.Model):
 
 
 class EventRequest(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
-                   models.Model):
+                   EventLink, models.Model):
     name = models.CharField(max_length=STR_MED)
     email = models.EmailField()
     affiliation = models.CharField(max_length=STR_LONG,
@@ -1433,7 +1443,7 @@ class EventRequest(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
 
 
 class EventSubmission(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
-                      models.Model):
+                      EventLink, models.Model):
     url = models.URLField(
         null=False, blank=False,
         verbose_name='Link to the workshop\'s website')
@@ -1461,7 +1471,8 @@ class EventSubmission(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
 
 
 class DCSelfOrganizedEventRequest(AssignmentMixin, ActiveMixin,
-                                  CreatedUpdatedMixin, models.Model):
+                                  CreatedUpdatedMixin, EventLink,
+                                  models.Model):
     """Should someone want to run a self-organized Data Carpentry event, they
     have to fill this specific form first. See
     https://github.com/swcarpentry/amy/issues/761"""

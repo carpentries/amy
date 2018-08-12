@@ -793,7 +793,8 @@ class SWCEventRequestForm(PrivacyConsentMixin, forms.ModelForm):
         model = EventRequest
         exclude = ('active', 'created_at', 'last_updated_at', 'assigned_to',
                    'data_types', 'data_types_other',
-                   'attendee_data_analysis_level', 'fee_waiver_request')
+                   'attendee_data_analysis_level', 'fee_waiver_request',
+                   'event', )
         widgets = {
             'approx_attendees': forms.RadioSelect(),
             'attendee_domains': CheckboxSelectMultipleWithOthers('attendee_domains_other'),
@@ -835,7 +836,8 @@ class DCEventRequestForm(SWCEventRequestForm):
 
     class Meta(SWCEventRequestForm.Meta):
         exclude = ('active', 'created_at', 'last_updated_at', 'assigned_to',
-                   'admin_fee_payment', 'attendee_computing_levels')
+                   'admin_fee_payment', 'attendee_computing_levels',
+                   'event', )
         widgets = {
             'approx_attendees': forms.RadioSelect(),
             'attendee_domains': CheckboxSelectMultipleWithOthers('attendee_domains_other'),
@@ -866,13 +868,17 @@ class DCEventRequestForm(SWCEventRequestForm):
 class EventSubmitFormNoCaptcha(forms.ModelForm):
     class Meta:
         model = EventSubmission
-        exclude = ('active', 'created_at', 'last_updated_at', 'assigned_to')
+        exclude = ('created_at', 'last_updated_at', )
 
 
 class EventSubmitForm(EventSubmitFormNoCaptcha, PrivacyConsentMixin):
     captcha = ReCaptchaField()
 
     helper = BootstrapHelper(wider_labels=True)
+
+    class Meta(EventSubmitFormNoCaptcha.Meta):
+        exclude = ('active', 'created_at', 'last_updated_at', 'assigned_to',
+                   'event')
 
 
 class DCSelfOrganizedEventRequestFormNoCaptcha(forms.ModelForm):
@@ -906,7 +912,8 @@ class DCSelfOrganizedEventRequestForm(
     helper = BootstrapHelper(wider_labels=True)
 
     class Meta(DCSelfOrganizedEventRequestFormNoCaptcha.Meta):
-        exclude = ('active', 'created_at', 'last_updated_at', 'assigned_to')
+        exclude = ('active', 'created_at', 'last_updated_at', 'assigned_to',
+                   'event')
 
 
 class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):

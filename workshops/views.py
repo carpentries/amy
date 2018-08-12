@@ -1135,9 +1135,10 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
         'workshops.add_task',
         'workshops.add_sponsorship',
     ]
-    queryset = Event.objects.select_related('assigned_to', 'administrator',
-                                            'language', 'request') \
-                            .prefetch_related('sponsorship_set')
+    queryset = Event.objects.select_related(
+        'assigned_to', 'administrator', 'language', 'eventrequest',
+        'eventsubmission', 'dcselforganizedeventrequest'
+    ).prefetch_related('sponsorship_set')
     slug_field = 'slug'
     form_class = EventForm
     template_name = 'workshops/event_edit_form.html'
@@ -2621,7 +2622,7 @@ def eventsubmission_discard(request, submission_id):
 
 
 @admin_required
-@permission_required(['workshops.change_eventrequest'], raise_exception=True)
+@permission_required(['workshops.change_eventsubmission'], raise_exception=True)
 def eventsubmission_assign(request, submission_id, person_id=None):
     """Set eventsubmission.assigned_to. See `assign` docstring for more
     information."""

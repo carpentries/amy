@@ -5,7 +5,7 @@
 {% block content %}
 {% if not object.active %}
   <div class="alert alert-warning" role="alert">
-    <p><strong>Warning:</strong> This request was closed.</p>
+    <p><strong>Warning:</strong> This request was closed{% if object.event %} (see <a href="{{ object.event.get_absolute_url }}">related event</a>){% endif %}.</p>
   </div>
 {% endif %}
 

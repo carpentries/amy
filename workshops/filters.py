@@ -206,9 +206,9 @@ class EventRequestFilter(AMYFilterSet):
     class Meta:
         model = EventRequest
         fields = [
+            'active',
             'assigned_to',
             'workshop_type',
-            'active',
             'country',
         ]
 
