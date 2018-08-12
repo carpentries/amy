@@ -5,7 +5,7 @@
 {% if is_admin or user.is_superuser %}
 <div class="row">
   <div class="col-12">
-    {% include "assignment.html" %}
+    {% include "includes/assignment.html" %}
   </div>
 </div>
 {% endif %}
@@ -34,7 +34,7 @@
         <td>
           {% if event.missing_attendance %}
             {% if event.mailto or event.contacts %}
-              <a href="{% include 'workshops/attendance_email_href.html' with event=event %}">
+              <a href="{% include 'includes/attendance_email_href.html' with event=event %}">
               <i class="fas fa-envelope"></i>
               </a>
             {% else %}

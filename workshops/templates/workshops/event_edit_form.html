@@ -15,7 +15,7 @@
   <div class="tab-pane show active" role="tabpanel" aria-labelledby="event-tab" id="event">
     <a href="#update_url_modal" class="btn btn-secondary" id="update_url_button" data-toggle="modal" data-target="#update_url_modal">Update from URL</a>
     {% crispy form %}
-    {% include "workshops/event_import_update_from_url.html" with update=True %}
+    {% include "includes/event_import_update_from_url.html" with update=True %}
   </div>
   <div class="tab-pane" role="tabpanel" aria-labelledby="tasks-tab" id="tasks">
     {% block task_tab %}
