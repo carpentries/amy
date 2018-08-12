@@ -387,6 +387,7 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
         # Make the content safe to parse.
         content = re.sub('<!DOCTYPE [^>]*>', '', content)
         content = re.sub('<html[^>]*>', '<html>', content)
+        content = re.sub('<input type="hidden" name="csrfmiddlewaretoken" value="\w+">', '', content)
         content = content.replace('&nbsp;', ' ')
 
         # Parse if we can.

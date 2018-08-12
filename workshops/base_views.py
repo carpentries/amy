@@ -1,5 +1,6 @@
 from smtplib import SMTPException
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ImproperlyConfigured
@@ -204,7 +205,8 @@ class RedirectSupportMixin:
     def get_success_url(self):
         default_url = super().get_success_url()
         next_url = self.request.GET.get('next', None)
-        if next_url is not None and is_safe_url(next_url):
+        if next_url is not None and is_safe_url(next_url,
+                                                allowed_hosts=settings.ALLOWED_HOSTS):
             return next_url
         else:
             return default_url
