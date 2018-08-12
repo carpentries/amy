@@ -13,6 +13,7 @@ from django.contrib.auth.mixins import (
     PermissionRequiredMixin,
     UserPassesTestMixin,
 )
+from django.contrib.auth.views import logout_then_login
 from django.core.exceptions import (
     ObjectDoesNotExist,
     PermissionDenied,
@@ -166,6 +167,12 @@ from workshops.util import (
     redirect_with_next_support,
     dict_without_Nones,
 )
+
+
+@login_required
+def logout_then_login_with_msg(request):
+    messages.success(request, 'You were successfully logged-out.')
+    return logout_then_login(request)
 
 
 @login_required
@@ -967,8 +974,19 @@ def sync_usersocialauth(request, person_id):
 class AllEvents(OnlyForAdminsMixin, AMYListView):
     context_object_name = 'all_events'
     template_name = 'workshops/all_events.html'
-    # notes are too large, so we defer them
-    queryset = Event.objects.defer('notes').prefetch_related('host', 'tags')
+    queryset = (
+        Event.objects
+        .defer('notes')
+        .select_related('assigned_to')
+        .prefetch_related('host', 'tags')
+        .annotate(
+            num_instructors=Sum(
+                Case(When(task__role__name='instructor', then=Value(1)),
+                     default=0,
+                     output_field=IntegerField()),
+            )
+        )
+    )
     filter_class = EventFilter
     title = 'All Events'
 

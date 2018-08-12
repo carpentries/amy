@@ -12,5 +12,5 @@ def pagination(context, objects):
 @register.simple_tag(takes_context=True)
 def set_page_query(context, page):
     query = context['request'].GET.copy()
-    query['page'] = page
+    query['page'] = str(page)
     return query.urlencode()

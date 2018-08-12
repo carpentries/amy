@@ -63,7 +63,7 @@
           {% if trainee.email %}<br /> &lt;{{ trainee.email|urlize }}&gt; {% endif %}
         </td>
         <td>
-          {% include "workshops/training_progresses_inline.html" with person=trainee %}
+          {% include "includes/training_progresses_inline.html" with person=trainee %}
         </td>
         <td>
           {% for task in trainee.training_tasks %}

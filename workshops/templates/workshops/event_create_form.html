@@ -6,7 +6,7 @@
   <a href="#import_url_modal" class="btn btn-secondary" id="import_url_button" data-toggle="modal" data-target="#import_url_modal">Import from URL</a>
   {% crispy form %}
 
-  {% include "workshops/event_import_update_from_url.html" with update=False %}
+  {% include "includes/event_import_update_from_url.html" with update=False %}
 {% endblock %}
 
 {% block extrajs %}

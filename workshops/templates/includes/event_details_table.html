@@ -42,7 +42,7 @@
     <td colspan="2">
       {{ event.attendance|default_if_none:"&mdash;" }}
       {% if not event.attendance and event.mailto %}
-      <a href="{% include 'workshops/attendance_email_href.html' with event=event %}" target="_blank" class="btn btn-primary btn-sm float-right">Ask for attendance</a>
+      <a href="{% include 'includes/attendance_email_href.html' with event=event %}" target="_blank" class="btn btn-primary btn-sm float-right">Ask for attendance</a>
       {% else %}
       <a href="#" class="btn btn-primary btn-sm float-right disabled">Ask for attendance</a>
       {% endif %}
