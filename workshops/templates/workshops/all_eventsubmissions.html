@@ -4,6 +4,9 @@
 {% load links %}
 
 {% block content %}
+  <div class="alert alert-warning">
+    <strong>Warning!</strong> This feature was disabled. Users are no longer able to add workshop submissions.
+  </div>
   {% if submissions %}
   <table class="table table-striped">
     <tr>
@@ -25,6 +28,7 @@
     </tr>
     {% endfor %}
   </table>
+  {% pagination submissions %}
   {% else %}
   <p>No workshop submissions matching the filter.</p>
   {% endif %}
