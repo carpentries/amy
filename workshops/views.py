@@ -1913,24 +1913,32 @@ def instructors_by_date(request):
     if form.is_valid():
         start_date = form.cleaned_data['begin_date']
         end_date = form.cleaned_data['end_date']
+        mode = form.cleaned_data['mode']
         rvs = ReportsViewSet()
-        tasks = rvs.instructors_by_time_queryset(start_date, end_date,
-                                                 only_non_TTT=True)
-        emails = tasks.filter(person__may_contact=True)\
-                      .exclude(person__email=None)\
+        tasks = rvs.instructors_by_time_queryset(
+            start_date, end_date,
+            only_TTT=(mode == 'TTT'),
+            only_non_TTT=(mode == 'nonTTT'),
+        )
+        emails = tasks.filter(person__may_contact=True) \
+                      .exclude(person__email=None) \
                       .values_list('person__email', flat=True)
     else:
         start_date = None
         end_date = None
         tasks = None
         emails = None
+        mode = 'all'
 
-    context = {'title': 'List of instructors by time period',
-               'form': form,
-               'all_tasks': tasks,
-               'emails': emails,
-               'start_date': start_date,
-               'end_date': end_date}
+    context = {
+        'title': 'List of instructors by time period',
+        'form': form,
+        'all_tasks': tasks,
+        'emails': emails,
+        'start_date': start_date,
+        'end_date': end_date,
+        'mode': mode,
+    }
     return render(request, 'workshops/instructors_by_date.html', context)
 
 #------------------------------------------------------------

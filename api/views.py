@@ -690,7 +690,15 @@ class ReportsViewSet(ViewSet):
         start, end = self._default_start_end_dates(
             start=self.request.query_params.get('start', None),
             end=self.request.query_params.get('end', None))
-        tasks = self.instructors_by_time_queryset(start, end)
+
+        mode = self.request.query_params.get('mode', 'all')
+
+        tasks = self.instructors_by_time_queryset(
+            start, end,
+            only_TTT=(mode == 'TTT'),
+            only_non_TTT=(mode == 'nonTTT'),
+        )
+
         serializer = InstructorsByTimePeriodSerializer(
             tasks, many=True, context=dict(request=request))
         return Response(serializer.data)

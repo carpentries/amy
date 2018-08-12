@@ -7,8 +7,8 @@
 {% crispy form %}
 
 {% if all_tasks %}
+  <hr>
   <h3>Events happening between {{ start_date }} and {{ end_date }}</h3>
-  <p>The list below presents only non-TTT workshops.</p>
   <table class="table table-striped">
   <tr>
       <th>Event</th>
@@ -27,10 +27,16 @@
   </tr>
   {% endfor %}
   </table>
-  <p><a href="{% url 'api:reports-instructors-by-time' %}?start={{ start_date|date:'Y-m-d' }}&amp;end={{ end_date|date:'Y-m-d' }}&amp;format=csv">Download as CSV</a></p>
-  {% if emails %}<p><a class="btn btn-primary" href="mailto:?bcc={{ emails|join:',' }}">Send email</a></p>{% endif %}
+
+  <div class="btn-group" role="group" aria-label="Basic example">
+    {% if emails %}<a class="btn btn-primary" href="mailto:?bcc={{ emails|join:',' }}">Send email</a>{% endif %}
+    <a href="{% url 'api:reports-instructors-by-time' %}?start={{ start_date|date:'Y-m-d' }}&amp;end={{ end_date|date:'Y-m-d' }}&amp;format=csv&amp;mode={{ mode }}" class="btn btn-secondary">Download as CSV</a>
+  </div>
+
+  <p></p>
+
 {% else %}
-  <p>No instructors for Instructor Discussion session in selected date range.</p>
+  <p>No instructors for discussion session in selected date range.</p>
 {% endif %}
 {% endblock %}
 
