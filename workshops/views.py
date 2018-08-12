@@ -967,8 +967,19 @@ def sync_usersocialauth(request, person_id):
 class AllEvents(OnlyForAdminsMixin, AMYListView):
     context_object_name = 'all_events'
     template_name = 'workshops/all_events.html'
-    # notes are too large, so we defer them
-    queryset = Event.objects.defer('notes').prefetch_related('host', 'tags')
+    queryset = (
+        Event.objects
+        .defer('notes')
+        .select_related('assigned_to')
+        .prefetch_related('host', 'tags')
+        .annotate(
+            num_instructors=Sum(
+                Case(When(task__role__name='instructor', then=Value(1)),
+                     default=0,
+                     output_field=IntegerField()),
+            )
+        )
+    )
     filter_class = EventFilter
     title = 'All Events'
 
