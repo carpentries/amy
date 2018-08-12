@@ -13,6 +13,7 @@ from django.contrib.auth.mixins import (
     PermissionRequiredMixin,
     UserPassesTestMixin,
 )
+from django.contrib.auth.views import logout_then_login
 from django.core.exceptions import (
     ObjectDoesNotExist,
     PermissionDenied,
@@ -166,6 +167,12 @@ from workshops.util import (
     redirect_with_next_support,
     dict_without_Nones,
 )
+
+
+@login_required
+def logout_then_login_with_msg(request):
+    messages.success(request, 'You were successfully logged-out.')
+    return logout_then_login(request)
 
 
 @login_required

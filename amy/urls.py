@@ -4,6 +4,7 @@ from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.urls import path
 from django.views.generic import RedirectView
+from workshops.views import logout_then_login_with_msg
 
 urlpatterns = [
     url(r'^$', RedirectView.as_view(pattern_name='dispatch')),
@@ -26,9 +27,7 @@ urlpatterns += [
         name='login'),
 
     url(r'^account/logout/$',
-        auth_views.LogoutView.as_view(
-            template_name="account/logged_out.html",
-        ),
+        logout_then_login_with_msg,
         name='logout'),
 
     url(r'^account/password_reset/$',
