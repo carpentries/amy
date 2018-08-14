@@ -995,7 +995,7 @@ class AllEvents(OnlyForAdminsMixin, AMYListView):
 def event_details(request, slug):
     '''List details of a particular event.'''
     try:
-        event = Event.objects.prefetch_related(Prefetch(
+        event = Event.objects.prefetch_related('sponsorship_set', Prefetch(
             'task_set',
             to_attr='contacts',
             queryset=Task.objects.select_related('person').filter(
@@ -1004,7 +1004,9 @@ def event_details(request, slug):
                 Q(role__name='instructor')
             ).filter(person__may_contact=True)
             .exclude(Q(person__email='') | Q(person__email=None))
-        )).get(slug=slug)
+        )).select_related('eventrequest', 'eventsubmission',
+                          'dcselforganizedeventrequest', 'assigned_to', 'host',
+                          'administrator').get(slug=slug)
     except Event.DoesNotExist:
         raise Http404('Event matching query does not exist.')
 

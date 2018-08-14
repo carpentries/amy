@@ -12,7 +12,8 @@ def last_modified(obj):
     "Created on ASD by DSA."
     "Last modified on ASD by DSA."
     """
-    versions = Version.objects.get_for_object(obj)
+    versions = Version.objects.get_for_object(obj).select_related(
+        'revision','revision__user')
 
     try:
         last, *_, created = versions
