@@ -997,7 +997,7 @@ class AdminLookupForm(forms.Form):
         widget=autocomplete.ModelSelect2(url='admin-lookup')
     )
 
-    helper = bootstrap_helper
+    helper = BootstrapHelper(add_cancel_button=False)
 
 
 class SimpleTodoForm(forms.ModelForm):

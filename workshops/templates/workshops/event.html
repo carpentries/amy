@@ -217,35 +217,20 @@
 {% endblock %}
 
 {% block extrajs %}
-{{ todo_form.media }}
-{{ admin_lookup_form.media }}
 <script src="https://maps.googleapis.com/maps/api/js?api=AIzaSyC2WQkpSyrmJhXRcBdqsonpcQjyy8BtPrA&v=3.exp"></script>
 <script type="text/javascript">
   var gmap = null;
-
-  $.fn.modal.Constructor.prototype.enforceFocus = function() {};
-
-  // $('#preview_event').click(function() {
-  //   $('#preview_modal').modal();
-  //   return false;
-  // });
 
   $('#invoice_btn').click(function() {
     $('#invoice_modal').modal();
     return false;
   });
 
-  $(document).ready(function() {
+  $(function () {
     // validation modal loading
     $('#validation_modal').on('show.bs.modal', function() {
       $('#validation_modal .modal-body').load("{% url 'validate_event' event.slug %} #validation");
     });
-
-    // $("#preview_modal").on("shown.bs.modal", function () {
-    //   // required for the map to show something, otherwise (due to using modal)
-    //   // we'd get grey area
-    //   google.maps.event.trigger(gmap, "resize");
-    // });
 
     // draw a pin on the map in website preview
     var mapOptions = {
@@ -256,6 +241,7 @@
     };
     gmap = new google.maps.Map(document.getElementById("map_canvas"),
                                mapOptions);
+    {% if event.latitude and event.longitude %}
     var marker = new google.maps.Marker({
       position: new google.maps.LatLng({{ event.latitude }},
                                        {{ event.longitude }}),
@@ -263,6 +249,11 @@
       title: "{{ event.venue|escapejs }}: {{ event.humandate|escapejs }}",
       visible: true   // marker shown directly, not clustered
     });
+    {% endif %}
+
+    // https://github.com/select2/select2/issues/1645#issuecomment-24296615
+    $.fn.modal.Constructor.prototype.enforceFocus = function() {};
   });
 </script>
+<!-- {{ admin_lookup_form.media }} -->
 {% endblock %}

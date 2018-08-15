@@ -2264,7 +2264,8 @@ class EventRequestDetails(OnlyForAdminsMixin, AMYDetailView):
             )
 
         person_lookup_form.helper = BootstrapHelper(
-            form_action=reverse('eventrequest_assign', args=[self.object.pk]))
+            form_action=reverse('eventrequest_assign', args=[self.object.pk]),
+            add_cancel_button=False)
 
         context['person_lookup_form'] = person_lookup_form
         return context
