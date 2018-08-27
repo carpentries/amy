@@ -20,7 +20,7 @@ from django.core.paginator import (
     Paginator as DjangoPaginator,
 )
 from django.core.validators import ValidationError
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, transaction, models
 from django.db.models import Q
 from django.http import Http404
 from django.http.response import HttpResponse
@@ -35,6 +35,8 @@ from workshops.models import (
     Task,
     Badge,
     is_admin,
+    STR_MED,
+    STR_LONG,
 )
 
 ITEMS_PER_PAGE = 25
@@ -1000,3 +1002,23 @@ def str2bool(v):
         return False
     else:
         return None
+
+
+def build_choice_field_with_other_option(choices, default, verbose_name=None,
+        help_text=None):
+    assert default in [c[0] for c in choices]
+    assert all(c[0] != '' for c in choices)
+
+    field = models.CharField(
+        max_length=STR_MED,
+        choices=choices,
+        verbose_name=verbose_name,
+        help_text=help_text,
+        null=False, blank=False, default=default,
+    )
+    other_field = models.CharField(
+        max_length=STR_LONG,
+        verbose_name=' ',
+        null=False, blank=True, default='',
+    )
+    return field, other_field

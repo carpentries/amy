@@ -510,7 +510,7 @@ class TrainingRequestFilter(AMYFilterSet):
 
     state = django_filters.ChoiceFilter(
         label='State',
-        choices=[('no_d', 'Pending or accepted')] + TrainingRequest.STATES,
+        choices=(('no_d', 'Pending or accepted'),) + TrainingRequest.STATE_CHOICES,
         method=filter_training_requests_by_state,
     )
 

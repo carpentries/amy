@@ -107,6 +107,27 @@ class EventLink(models.Model):
     class Meta:
         abstract = True
 
+
+class StateMixin(models.Model):
+    """A more extensive state field - previously a boolean `active` field was
+    used, with only two states. Now there's three and can be extended."""
+    STATE_CHOICES = (
+        ('p', 'Pending'),
+        ('d', 'Discarded'),
+        ('a', 'Accepted'),
+    )
+    state = models.CharField(max_length=1, choices=STATE_CHOICES,
+                             null=False, blank=False, default='p')
+
+    class Meta:
+        abstract = True
+
+    @cached_property
+    def active(self):
+        # after changing ActiveMixin to StateMixin, this should help in some
+        # cases with code refactoring; will be removed later
+        return self.state == 'p'
+
 #------------------------------------------------------------
 
 
@@ -1258,7 +1279,7 @@ class Event(AssignmentMixin, models.Model):
         super(Event, self).save(*args, **kwargs)
 
 
-class EventRequest(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
+class EventRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
                    EventLink, models.Model):
     name = models.CharField(max_length=STR_MED)
     email = models.EmailField()
@@ -1442,7 +1463,7 @@ class EventRequest(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
         ordering = ['created_at']
 
 
-class EventSubmission(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
+class EventSubmission(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
                       EventLink, models.Model):
     url = models.URLField(
         null=False, blank=False,
@@ -1470,7 +1491,7 @@ class EventSubmission(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
         ordering = ['created_at']
 
 
-class DCSelfOrganizedEventRequest(AssignmentMixin, ActiveMixin,
+class DCSelfOrganizedEventRequest(AssignmentMixin, StateMixin,
                                   CreatedUpdatedMixin, EventLink,
                                   models.Model):
     """Should someone want to run a self-organized Data Carpentry event, they
@@ -2036,36 +2057,13 @@ class InvoiceRequest(models.Model):
 
 #------------------------------------------------------------
 
-
-def build_choice_field_with_other_option(choices, default, verbose_name=None,
-        help_text=None):
-    assert default in [c[0] for c in choices]
-    assert all(c[0] != '' for c in choices)
-
-    field = models.CharField(
-        max_length=STR_MED,
-        choices=choices,
-        verbose_name=verbose_name,
-        help_text=help_text,
-        null=False, blank=False, default=default,
-    )
-    other_field = models.CharField(
-        max_length=STR_LONG,
-        verbose_name=' ',
-        null=False, blank=True, default='',
-    )
-    return field, other_field
+from workshops.util import build_choice_field_with_other_option
 
 
 @reversion.register
 class TrainingRequest(ActiveMixin, CreatedUpdatedMixin,
-        DataPrivacyAgreementMixin, COCAgreementMixin, models.Model):
-    STATES = [
-        ('p', 'Pending'),  # initial state
-        ('a', 'Accepted'),  # state after matching a Person record
-        ('d', 'Discarded'),
-    ]
-    state = models.CharField(choices=STATES, default='p', max_length=1)
+        DataPrivacyAgreementMixin, COCAgreementMixin, StateMixin,
+        models.Model):
 
     person = models.ForeignKey(Person, null=True, blank=True,
                                verbose_name='Matched Trainee',
