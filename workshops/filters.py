@@ -14,6 +14,7 @@ from django_countries import Countries
 
 from workshops.forms import bootstrap_helper_filter, SIDEBAR_DAL_WIDTH
 from workshops.models import (
+    StateMixin,
     Event,
     Organization,
     Person,
@@ -109,6 +110,9 @@ class NamesOrderingFilter(django_filters.OrderingFilter):
         return ordering
 
 
+#------------------------------------------------------------
+
+
 class AMYFilterSet(django_filters.FilterSet):
     """
     This base class sets FormHelper.
@@ -119,6 +123,23 @@ class AMYFilterSet(django_filters.FilterSet):
 
         # Set default FormHelper
         self.form.helper = bootstrap_helper_filter
+
+
+class StateFilterSet(django_filters.FilterSet):
+    """A mixin for extending filter classes for Django models that make use of
+    `StateMixin`."""
+
+    state = django_filters.ChoiceFilter(
+        choices=StateMixin.STATE_CHOICES,
+        label='Status',
+        widget=widgets.RadioSelect,
+        empty_label='Any',
+        null_label=None,
+        null_value=None,
+    )
+
+
+#------------------------------------------------------------
 
 
 class EventFilter(AMYFilterSet):
@@ -180,14 +201,7 @@ def filter_active_eventrequest(qs, name, value):
     return qs
 
 
-class EventRequestFilter(AMYFilterSet):
-    active = django_filters.ChoiceFilter(
-        choices=(('all', 'All'), ('true', 'Open'), ('false', 'Closed')),
-        label='Status',
-        method=filter_active_eventrequest,
-        widget=widgets.RadioSelect,
-        empty_label=None,
-    )
+class EventRequestFilter(AMYFilterSet, StateFilterSet):
     assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2())
     country = AllCountriesFilter(widget=Select2())
     workshop_type = django_filters.ChoiceFilter(
@@ -206,7 +220,7 @@ class EventRequestFilter(AMYFilterSet):
     class Meta:
         model = EventRequest
         fields = [
-            'active',
+            'state',
             'assigned_to',
             'workshop_type',
             'country',
@@ -674,14 +688,7 @@ def filter_active_eventsubmission(qs, name, value):
     return qs
 
 
-class EventSubmissionFilter(AMYFilterSet):
-    active = django_filters.ChoiceFilter(
-        choices=(('all', 'All'), ('true', 'Open'), ('false', 'Closed')),
-        label='Status',
-        method=filter_active_eventsubmission,
-        widget=widgets.RadioSelect,
-        empty_label=None,
-    )
+class EventSubmissionFilter(AMYFilterSet, StateFilterSet):
     assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2())
 
     order_by = django_filters.OrderingFilter(
@@ -693,7 +700,7 @@ class EventSubmissionFilter(AMYFilterSet):
     class Meta:
         model = EventSubmission
         fields = [
-            'active',
+            'state',
             'assigned_to',
         ]
 
@@ -706,14 +713,7 @@ def filter_active_dcselforganizedeventrequest(qs, name, value):
     return qs
 
 
-class DCSelfOrganizedEventRequestFilter(AMYFilterSet):
-    active = django_filters.ChoiceFilter(
-        choices=(('all', 'All'), ('true', 'Open'), ('false', 'Closed')),
-        label='Status',
-        method=filter_active_dcselforganizedeventrequest,
-        widget=widgets.RadioSelect,
-        empty_label=None,
-    )
+class DCSelfOrganizedEventRequestFilter(AMYFilterSet, StateFilterSet):
     assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2())
 
     order_by = django_filters.OrderingFilter(
@@ -725,7 +725,7 @@ class DCSelfOrganizedEventRequestFilter(AMYFilterSet):
     class Meta:
         model = DCSelfOrganizedEventRequest
         fields = [
-            'active',
+            'state',
             'assigned_to',
         ]
         order_by = [

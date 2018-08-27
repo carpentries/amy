@@ -59,6 +59,7 @@ from workshops.base_views import (
     RedirectSupportMixin,
     PrepopulationSupportMixin,
     AMYDetailView,
+    StateFilterMixin,
 )
 from workshops.filters import (
     EventFilter,
@@ -2231,20 +2232,12 @@ def object_changes(request, version_id):
 # ------------------------------------------------------------
 
 
-class AllEventRequests(OnlyForAdminsMixin, AMYListView):
+class AllEventRequests(OnlyForAdminsMixin, StateFilterMixin, AMYListView):
     context_object_name = 'requests'
     template_name = 'workshops/all_eventrequests.html'
     filter_class = EventRequestFilter
     queryset = EventRequest.objects.select_related('assigned_to')
     title = 'Workshop requests'
-
-    def get_filter_data(self):
-        # Set initial value for the "active" radio select.  That's a hack,
-        # nothing else worked...
-        data = super().get_filter_data().copy()
-        data['active'] = data.get('active', 'true')
-        data['workshop_type'] = data.get('workshop_type', '')
-        return data
 
 
 class EventRequestDetails(OnlyForAdminsMixin, AMYDetailView):
@@ -2534,17 +2527,12 @@ def profileupdaterequest_accept(request, request_id, person_id=None):
     return redirect(person.get_absolute_url())
 
 
-class AllEventSubmissions(OnlyForAdminsMixin, AMYListView):
+class AllEventSubmissions(OnlyForAdminsMixin, StateFilterMixin, AMYListView):
     context_object_name = 'submissions'
     template_name = 'workshops/all_eventsubmissions.html'
     filter_class = EventSubmissionFilter
     queryset = EventSubmissionModel.objects.all()
     title = 'Workshop submissions'
-
-    def get_filter_data(self):
-        data = self.request.GET.copy()
-        data['active'] = data.get('active', 'true')
-        return data
 
 
 class EventSubmissionDetails(OnlyForAdminsMixin, AMYDetailView):
@@ -2634,17 +2622,13 @@ def eventsubmission_assign(request, submission_id, person_id=None):
     return redirect(submission.get_absolute_url())
 
 
-class AllDCSelfOrganizedEventRequests(OnlyForAdminsMixin, AMYListView):
+class AllDCSelfOrganizedEventRequests(OnlyForAdminsMixin, StateFilterMixin,
+                                      AMYListView):
     context_object_name = 'requests'
     template_name = 'workshops/all_dcselforganizedeventrequests.html'
     filter_class = DCSelfOrganizedEventRequestFilter
     queryset = DCSelfOrganizedEventRequestModel.objects.all()
     title = 'Data Carpentry self-organized workshop requests'
-
-    def get_filter_data(self):
-        data = self.request.GET.copy()
-        data['active'] = data.get('active', 'true')
-        return data
 
 
 class DCSelfOrganizedEventRequestDetails(OnlyForAdminsMixin, AMYDetailView):
