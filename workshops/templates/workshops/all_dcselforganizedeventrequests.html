@@ -17,7 +17,7 @@
       <th class="additional-links"></th>
     </tr>
     {% for req in requests %}
-    <tr {% if not req.active %}class="table-success"{% endif %}>
+    <tr {% if req.state == "a" %}class="table-success"{% elif req.state == "d" %}class="table-warning"{% endif %}>
       <td>{% if req.assigned_to %}<a href="{{ req.assigned_to.get_absolute_url }}">{{ req.assigned_to.get_short_name }}</a>{% else %}—{% endif %}</td>
       <td>{{ req.name }} &lt;{{ req.email|urlize }}&gt;</td>
       <td>{% if req.instructor_status == 'both' %}
@@ -30,7 +30,7 @@
       <td>{{ req.organization }}</td>
       <td>{{ req.dates }}</td>
       <td>{{ req.location }}, {{ req.country.name }}</td>
-      <td>{% if req.active %}open{% else %}closed{% endif %}</td>
+      <td>{{ req.get_state_display }}</td>
       <td><a href="{{ req.get_absolute_url }}"><i class="fas fa-info-circle"></i></a></td>
     </tr>
     {% endfor %}
