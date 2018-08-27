@@ -392,7 +392,18 @@ class DebriefForm(forms.Form):
         input_formats=['%Y-%m-%d', ]
     )
 
-    helper = BootstrapHelper(use_get_method=True)
+    MODE_CHOICES = (
+        ('all', 'List all events'),
+        ('TTT', 'List only TTT events'),
+        ('nonTTT', 'List only non-TTT events'),
+    )
+    mode = forms.ChoiceField(
+        choices=MODE_CHOICES,
+        widget=forms.RadioSelect,
+        initial='all',
+    )
+
+    helper = BootstrapHelper(use_get_method=True, add_cancel_button=False)
 
 
 class EventForm(forms.ModelForm):
