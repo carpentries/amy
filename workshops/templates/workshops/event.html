@@ -28,15 +28,7 @@
     {% last_modified event %}
   </div>
   <div class="col-md-6 text-right">
-    <p>
-      <a href="#assignment_modal" id="change_assignment" data-toggle="modal" data-target="#assignment_modal"><i class="fas fa-user-cog"></i></a>
-      Assignee:
-      {% if event.assigned_to %}
-        <a href="{{ event.assigned_to.get_absolute_url }}">{{ event.assigned_to.full_name }}</a> (<a href="{% url 'event_assign' event.slug %}" id="clear-assignment">clear</a>).
-      {% else %}
-        no one (<a href="{% url 'event_assign' event.slug user.pk %}" id="assign-yourself">assign yourself</a>).
-      {% endif %}
-    </p>
+    {% include "includes/assigned_to.html" with object=event user=user assign_url='event_assign' %}
   </div>
 </div>
 

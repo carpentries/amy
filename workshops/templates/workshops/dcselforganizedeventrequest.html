@@ -11,15 +11,7 @@
 
 <div class="row">
   <div class="col-md-6 offset-md-6 text-right">
-    <p>
-      <a href="#assignment_modal" id="change_assignment" data-toggle="modal" data-target="#assignment_modal"><i class="fas fa-user-cog"></i></a>
-      Assignee:
-      {% if object.assigned_to %}
-        <a href="{{ object.assigned_to.get_absolute_url }}">{{ object.assigned_to.full_name }}</a> (<a href="{% url 'dcselforganizedeventrequest_assign' object.pk %}" id="clear-assignment">clear</a>).
-      {% else %}
-        no one (<a href="{% url 'dcselforganizedeventrequest_assign' object.pk user.pk %}" id="assign-yourself">assign yourself</a>).
-      {% endif %}
-    </p>
+    {% include "includes/assigned_to.html" with object=object user=user assign_url='dcselforganizedeventrequest_assign' %}
   </div>
 </div>
 
