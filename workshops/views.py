@@ -118,6 +118,8 @@ from workshops.forms import (
     BulkMatchTrainingRequestForm,
     AllActivityOverTimeForm,
     ActionRequiredPrivacyForm,
+    SWCEventRequestNoCaptchaForm,
+    DCEventRequestNoCaptchaForm,
 )
 from workshops.management.commands.check_for_workshop_websites_updates import (
     Command as WebsiteUpdatesCommand,
@@ -2264,25 +2266,51 @@ class EventRequestDetails(OnlyForAdminsMixin, AMYDetailView):
         return context
 
 
+class EventRequestChange(OnlyForAdminsMixin, PermissionRequiredMixin,
+                         AMYUpdateView):
+    permission_required = 'workshops.change_eventrequest'
+    model = EventRequest
+    pk_url_kwarg = 'request_id'
+
+    def get_form_class(self):
+        if self.object.workshop_type == 'swc':
+            return SWCEventRequestNoCaptchaForm
+        elif self.object.workshop_type == 'dc':
+            return DCEventRequestNoCaptchaForm
+        else:
+            return None
+
+
 @admin_required
 @permission_required('workshops.change_eventrequest', raise_exception=True)
-def eventrequest_discard(request, request_id):
-    """Discard EventRequest, ie. set it to inactive."""
-    eventrequest = get_object_or_404(EventRequest, active=True, pk=request_id)
-    eventrequest.active = False
+def eventrequest_set_state(request, request_id, state):
+    """Change state to selected."""
+    correct_values = {
+        'a': 'a',
+        'accepted': 'a',
+        'd': 'd',
+        'discarded': 'd',
+        'p': 'p',
+        'pending': 'p',
+    }
+    if state not in correct_values.keys():
+        raise Http404('Incorrect state value.')
+
+    eventrequest = get_object_or_404(EventRequest, pk=request_id)
+    eventrequest.state = correct_values[state]
     eventrequest.save()
 
     messages.success(request,
-                     'Workshop request was discarded successfully.')
-    return redirect(reverse('all_eventrequests'))
+                     'Workshop request state was changed successfully.')
+    return redirect(eventrequest.get_absolute_url())
 
 
 @admin_required
 @permission_required(['workshops.change_eventrequest', 'workshops.add_event'],
                      raise_exception=True)
-def eventrequest_accept(request, request_id):
+def eventrequest_accept_event(request, request_id):
     """Accept event request by creating a new event."""
-    eventrequest = get_object_or_404(EventRequest, active=True, pk=request_id)
+    eventrequest = get_object_or_404(EventRequest, state='p', pk=request_id)
     form = EventForm()
 
     if request.method == 'POST':
@@ -2290,10 +2318,9 @@ def eventrequest_accept(request, request_id):
 
         if form.is_valid():
             event = form.save()
-            event.request = eventrequest
-            event.save()
 
-            eventrequest.active = False
+            eventrequest.state = 'a'
+            eventrequest.event = event
             eventrequest.save()
             return redirect(reverse('event_details',
                                     args=[event.slug]))
@@ -2304,7 +2331,7 @@ def eventrequest_accept(request, request_id):
         'object': eventrequest,
         'form': form,
     }
-    return render(request, 'workshops/eventrequest_accept.html', context)
+    return render(request, 'workshops/eventrequest_accept_event.html', context)
 
 
 @admin_required
@@ -2560,8 +2587,8 @@ class EventSubmissionDetails(OnlyForAdminsMixin, AMYDetailView):
         return context
 
 
-class EventSubmissionFix(OnlyForAdminsMixin, PermissionRequiredMixin,
-                         AMYUpdateView):
+class EventSubmissionChange(OnlyForAdminsMixin, PermissionRequiredMixin,
+                            AMYUpdateView):
     permission_required = 'workshops.change_eventsubmission'
     model = EventSubmissionModel
     form_class = EventSubmitFormNoCaptcha
@@ -2571,9 +2598,9 @@ class EventSubmissionFix(OnlyForAdminsMixin, PermissionRequiredMixin,
 @admin_required
 @permission_required(['workshops.change_eventsubmission',
                       'workshops.add_event'], raise_exception=True)
-def eventsubmission_accept(request, submission_id):
+def eventsubmission_accept_event(request, submission_id):
     """Accept event submission by creating a new event."""
-    submission = get_object_or_404(EventSubmissionModel, active=True,
+    submission = get_object_or_404(EventSubmissionModel, state='p',
                                    pk=submission_id)
     form = EventForm()
 
@@ -2583,7 +2610,8 @@ def eventsubmission_accept(request, submission_id):
         if form.is_valid():
             event = form.save()
 
-            submission.active = False
+            submission.state = 'a'
+            submission.event = event
             submission.save()
             return redirect(reverse('event_details',
                                     args=[event.slug]))
@@ -2593,23 +2621,34 @@ def eventsubmission_accept(request, submission_id):
     context = {
         'object': submission,
         'form': form,
-        'title': 'New event',
+        'title': None,
     }
-    return render(request, 'workshops/eventsubmission_accept.html', context)
+    return render(request, 'workshops/eventsubmission_accept_event.html',
+                  context)
 
 
 @admin_required
 @permission_required('workshops.change_eventsubmission', raise_exception=True)
-def eventsubmission_discard(request, submission_id):
-    """Discard EventSubmission, ie. set it to inactive."""
-    submission = get_object_or_404(EventSubmissionModel, active=True,
-                                   pk=submission_id)
-    submission.active = False
+def eventsubmission_set_state(request, submission_id, state):
+    """Change state to selected."""
+    correct_values = {
+        'a': 'a',
+        'accepted': 'a',
+        'd': 'd',
+        'discarded': 'd',
+        'p': 'p',
+        'pending': 'p',
+    }
+    if state not in correct_values.keys():
+        raise Http404('Incorrect state value.')
+
+    submission = get_object_or_404(EventSubmissionModel, pk=submission_id)
+    submission.state = correct_values[state]
     submission.save()
 
     messages.success(request,
-                     'Workshop submission was discarded successfully.')
-    return redirect(reverse('all_eventsubmissions'))
+                     'Workshop submission state was changed successfully.')
+    return redirect(reverse(submission.get_absolute_url()))
 
 
 @admin_required
@@ -2663,6 +2702,66 @@ class DCSelfOrganizedEventRequestChange(OnlyForAdminsMixin,
     model = DCSelfOrganizedEventRequestModel
     form_class = DCSelfOrganizedEventRequestFormNoCaptcha
     pk_url_kwarg = 'request_id'
+
+
+@admin_required
+@permission_required('workshops.change_dcselforganizedeventrequest',
+                     raise_exception=True)
+def dcselforganizedeventrequest_set_state(request, request_id, state):
+    """Change state to selected."""
+    correct_values = {
+        'a': 'a',
+        'accepted': 'a',
+        'd': 'd',
+        'discarded': 'd',
+        'p': 'p',
+        'pending': 'p',
+    }
+    if state not in correct_values.keys():
+        raise Http404('Incorrect state value.')
+
+    event_req = get_object_or_404(DCSelfOrganizedEventRequestModel,
+                                  pk=request_id)
+    event_req.state = correct_values[state]
+    event_req.save()
+
+    messages.success(request,
+                     'DC self-organized workshop request state was changed'
+                     ' successfully.')
+    return redirect(reverse(event_req.get_absolute_url()))
+
+
+@admin_required
+@permission_required(['workshops.change_dcselforganizedeventrequest',
+                      'workshops.add_event'],
+                     raise_exception=True)
+def dcselforganizedeventrequest_accept_event(request, request_id):
+    """Accept DC self-org. event request by creating a new event."""
+    event_req = get_object_or_404(DCSelfOrganizedEventRequestModel, state='p',
+                                  pk=request_id)
+    form = EventForm()
+
+    if request.method == 'POST':
+        form = EventForm(request.POST)
+
+        if form.is_valid():
+            event = form.save()
+
+            event_req.state = 'p'
+            event_req.event = event
+            event_req.save()
+            return redirect(reverse('event_details',
+                                    args=[event.slug]))
+        else:
+            messages.error(request, 'Fix errors below.')
+
+    context = {
+        'object': event_req,
+        'form': form,
+    }
+    return render(request,
+                  'workshops/dcselforganizedeventrequest_accept_event.html',
+                  context)
 
 
 @admin_required

@@ -10,7 +10,7 @@
   </div>
 </div>
 
-{% include "mailing/eventrequest.html" %}
+{% include "mailing/eventrequest.html" with object=object %}
 
 {% include "includes/requests_bottom_action_btns.html" with object=object obj_name='request' change_permission=perms.perms.workshops.change_eventrequest add_event_permission=perms.workshops.add_event accept_event_URL='eventrequest_accept_event' set_state_URL='eventrequest_set_state' edit_URL='eventrequest_edit' %}
 
