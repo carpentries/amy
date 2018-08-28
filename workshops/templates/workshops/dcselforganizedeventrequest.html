@@ -12,17 +12,8 @@
 
 {% include "mailing/dc_self_organized.html" %}
 
-{% if object.active %}
-<div class="clearfix">
-  <p class="edit-object float-right">
-    {% if perms.workshops.change_dcselforganizedeventrequest %}
-    <a href="{% url 'dcselforganizedeventrequest_edit' object.pk %}" class="btn btn-primary">Edit</a>
-    {% else %}
-    <a href="#" class="btn btn-primary disabled">Edit</a>
-    {% endif %}
-  </p>
-</div>
-{% endif %}
+{% include "includes/requests_bottom_action_btns.html" with object=object obj_name='request' change_permission=perms.perms.workshops.change_dcselforganizedeventrequest add_event_permission=perms.workshops.add_event accept_event_URL='dcselforganizedeventrequest_accept_event' set_state_URL='dcselforganizedeventrequest_set_state' edit_URL='dcselforganizedeventrequest_edit' %}
+
 
 {% include "includes/assignment_modal.html" with form=person_lookup_form %}
 {% endblock %}

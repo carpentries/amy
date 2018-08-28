@@ -30,26 +30,7 @@
   </table>
 </div>
 
-{% if object.active %}
-<div class="clearfix">
-  <div class="edit-object float-left">
-    {% if perms.workshops.change_eventsubmission and perms.workshops.add_event %}
-    <a href="{% url 'eventsubmission_accept' object.pk %}" class="btn btn-success">Accept</a>
-    {% else %}
-    <a href="#" class="btn btn-success disabled">Accept</a>
-    {% endif %}
-  </div>
-  <div class="btn-group delete-object float-right" role="group">
-    {% if perms.workshops.change_eventsubmission %}
-    <a href="{% url 'eventsubmission_fix' object.pk %}" role="button" class="btn btn-warning">Fix submission</a>
-    <a href="{% url 'eventsubmission_discard' object.pk %}" onclick='return confirm("Are you sure you wish to discard \"{{ object }}\"?")' class="btn btn-danger">Discard submission</a>
-    {% else %}
-    <a href="#" role="button" class="btn btn-warning">Fix submission</a>
-    <a href="#" class="btn btn-danger disabled">Discard submission</a>
-    {% endif %}
-  </div>
-</div>
-{% endif %}
+{% include "includes/requests_bottom_action_btns.html" with object=object obj_name='submission' change_permission=perms.perms.workshops.change_eventsubmission add_event_permission=perms.workshops.add_event accept_event_URL='eventsubmission_accept_event' set_state_URL='eventsubmission_set_state' edit_URL='eventsubmission_edit' %}
 
 {% include "includes/assignment_modal.html" with form=person_lookup_form %}
 {% endblock %}
