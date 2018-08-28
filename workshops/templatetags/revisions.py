@@ -5,7 +5,7 @@ from reversion.models import Version
 register = template.Library()
 
 
-@register.inclusion_tag('workshops/last_modified.html')
+@register.inclusion_tag('includes/last_modified.html')
 def last_modified(obj):
     """Get all versions for specific object, display:
 
