@@ -213,13 +213,13 @@ class EventSubmission(LoginNotRequiredMixin, TemplateView):
     def get_body(self):
         link = self.object.get_absolute_url()
         link_domain = settings.SITE_URL
-        body_txt = get_template('mailing/event_submission.txt') \
+        body_txt = get_template('mailing/eventsubmission.txt') \
             .render({
                 'object': self.object,
                 'link': link,
                 'link_domain': link_domain,
             })
-        body_html = get_template('mailing/event_submission.html') \
+        body_html = get_template('mailing/eventsubmission.html') \
             .render({
                 'object': self.object,
                 'link': link,
