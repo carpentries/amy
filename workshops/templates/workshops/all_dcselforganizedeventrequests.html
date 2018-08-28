@@ -2,6 +2,7 @@
 
 {% load pagination %}
 {% load tags %}
+{% load state %}
 
 {% block content %}
   {% if requests %}
@@ -13,7 +14,11 @@
       <th>Organization</th>
       <th>Planned dates</th>
       <th>Location</th>
-      <th>Status</th>
+      <th width="80">State
+        <i class="fas fa-question-circle"
+           data-toggle="popover" data-html="true"
+           data-content="<span class='badge badge-warning'>Pending</span> <span class='badge badge-danger'>Discarded</span> <span class='badge badge-success'>Accepted</span>"></i>
+      </th>
       <th class="additional-links"></th>
     </tr>
     {% for req in requests %}
@@ -30,7 +35,11 @@
       <td>{{ req.organization }}</td>
       <td>{{ req.dates }}</td>
       <td>{{ req.location }}, {{ req.country.name }}</td>
-      <td>{{ req.get_state_display }}</td>
+      <td>
+        <span class="{% state_label req %}">
+          {{ req.get_state_display }}
+        </span>
+      </td>
       <td><a href="{{ req.get_absolute_url }}"><i class="fas fa-info-circle"></i></a></td>
     </tr>
     {% endfor %}

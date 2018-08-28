@@ -131,7 +131,7 @@ class StateFilterSet(django_filters.FilterSet):
 
     state = django_filters.ChoiceFilter(
         choices=StateMixin.STATE_CHOICES,
-        label='Status',
+        label='State',
         widget=widgets.RadioSelect,
         empty_label='Any',
         null_label=None,

@@ -2,6 +2,7 @@
 
 {% load pagination %}
 {% load links %}
+{% load state %}
 
 {% block content %}
   <div class="alert alert-warning">
@@ -14,7 +15,10 @@
       <th>Person</th>
       <th>Workshop URL</th>
       <th>Self-organized</th>
-      <th>Status</th>
+      <th width="80">State
+        <i class="fas fa-question-circle"
+           data-toggle="popover" data-html="true"
+           data-content="<span class='badge badge-warning'>Pending</span> <span class='badge badge-danger'>Discarded</span> <span class='badge badge-success'>Accepted</span>"></i>
       <th class="additional-links"></th>
     </tr>
     {% for submission in submissions %}
@@ -23,7 +27,11 @@
       <td>{{ submission.contact_name }} &lt;{{ submission.contact_email|urlize }}&gt;</td>
       <td>{{ submission.url|urlize_newtab }}</td>
       <td>{{ submission.self_organized|yesno }}</td>
-      <td>{{ submission.get_state_display }}</td>
+      <td>
+        <span class="{% state_label submission %}">
+          {{ submission.get_state_display }}
+        </span>
+      </td>
       <td><a href="{{ submission.get_absolute_url }}"><i class="fas fa-info-circle"></i></a></td>
     </tr>
     {% endfor %}
