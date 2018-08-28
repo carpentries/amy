@@ -3,11 +3,6 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
-{% if not object.active %}
-  <div class="alert alert-warning" role="alert">
-    <p><strong>Warning:</strong> This request was closed{% if object.event %} (see <a href="{{ object.event.get_absolute_url }}">related event</a>){% endif %}.</p>
-  </div>
-{% endif %}
 
 <div class="row">
   <div class="col-md-6 offset-md-6 text-right">
