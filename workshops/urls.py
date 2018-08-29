@@ -159,7 +159,7 @@ urlpatterns = [
     url(r'^submissions/$', views.AllEventSubmissions.as_view(), name='all_eventsubmissions'),
     url(r'^submission/(?P<submission_id>\d+)/', include([
         url(r'^$', views.EventSubmissionDetails.as_view(), name='eventsubmission_details'),
-        url(r'^set_state/(?P<state>[\w\.-]+)/$', views.eventrequest_set_state, name='eventsubmission_set_state'),
+        url(r'^set_state/(?P<state>[\w\.-]+)/$', views.eventsubmission_set_state, name='eventsubmission_set_state'),
         url(r'^accept_event/$', views.eventsubmission_accept_event, name='eventsubmission_accept_event'),
         url(r'^edit/$', views.EventSubmissionChange.as_view(), name='eventsubmission_edit'),
         url(r'^assign/$', views.eventsubmission_assign, name='eventsubmission_assign'),

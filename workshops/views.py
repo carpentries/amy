@@ -2648,7 +2648,7 @@ def eventsubmission_set_state(request, submission_id, state):
 
     messages.success(request,
                      'Workshop submission state was changed successfully.')
-    return redirect(reverse(submission.get_absolute_url()))
+    return redirect(submission.get_absolute_url())
 
 
 @admin_required
@@ -2728,7 +2728,7 @@ def dcselforganizedeventrequest_set_state(request, request_id, state):
     messages.success(request,
                      'DC self-organized workshop request state was changed'
                      ' successfully.')
-    return redirect(reverse(event_req.get_absolute_url()))
+    return redirect(event_req.get_absolute_url())
 
 
 @admin_required
@@ -2747,7 +2747,7 @@ def dcselforganizedeventrequest_accept_event(request, request_id):
         if form.is_valid():
             event = form.save()
 
-            event_req.state = 'p'
+            event_req.state = 'a'
             event_req.event = event
             event_req.save()
             return redirect(reverse('event_details',
