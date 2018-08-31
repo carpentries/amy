@@ -7,8 +7,8 @@ register = template.Library()
 
 
 @register.simple_tag
-def training_request_label(req):
-    assert isinstance(req, TrainingRequest)
+def state_label(req):
+    assert hasattr(req, 'state')
     switch = {
         'p': 'badge badge-warning',
         'a': 'badge badge-success',

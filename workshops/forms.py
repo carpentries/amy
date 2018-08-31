@@ -779,8 +779,7 @@ class SponsorshipForm(WidgetOverrideMixin, forms.ModelForm):
         }
 
 
-class SWCEventRequestForm(PrivacyConsentMixin, forms.ModelForm):
-    captcha = ReCaptchaField()
+class SWCEventRequestNoCaptchaForm(PrivacyConsentMixin, forms.ModelForm):
     workshop_type = forms.CharField(initial='swc', widget=forms.HiddenInput())
     understand_admin_fee = forms.BooleanField(
         required=True,
@@ -802,10 +801,11 @@ class SWCEventRequestForm(PrivacyConsentMixin, forms.ModelForm):
 
     class Meta:
         model = EventRequest
-        exclude = ('active', 'created_at', 'last_updated_at', 'assigned_to',
+        exclude = ('created_at', 'last_updated_at', 'assigned_to',
                    'data_types', 'data_types_other',
-                   'attendee_data_analysis_level', 'fee_waiver_request')
+                   'attendee_data_analysis_level', 'fee_waiver_request', )
         widgets = {
+            'event': autocomplete.Select2(),
             'approx_attendees': forms.RadioSelect(),
             'attendee_domains': CheckboxSelectMultipleWithOthers('attendee_domains_other'),
             'attendee_academic_levels': forms.CheckboxSelectMultiple(),
@@ -830,7 +830,15 @@ class SWCEventRequestForm(PrivacyConsentMixin, forms.ModelForm):
         self.helper.layout.fields.remove('travel_reimbursement_other')
 
 
-class DCEventRequestForm(SWCEventRequestForm):
+class SWCEventRequestForm(SWCEventRequestNoCaptchaForm):
+    captcha = ReCaptchaField()
+
+    class Meta(SWCEventRequestNoCaptchaForm.Meta):
+        exclude = ('state', 'event') \
+                  + SWCEventRequestNoCaptchaForm.Meta.exclude
+
+
+class DCEventRequestNoCaptchaForm(SWCEventRequestNoCaptchaForm):
     workshop_type = forms.CharField(initial='dc', widget=forms.HiddenInput())
     understand_admin_fee = forms.BooleanField(
         required=True,
@@ -845,9 +853,10 @@ class DCEventRequestForm(SWCEventRequestForm):
     )
 
     class Meta(SWCEventRequestForm.Meta):
-        exclude = ('active', 'created_at', 'last_updated_at', 'assigned_to',
-                   'admin_fee_payment', 'attendee_computing_levels')
+        exclude = ('created_at', 'last_updated_at', 'assigned_to',
+                   'admin_fee_payment', 'attendee_computing_levels', )
         widgets = {
+            'event': autocomplete.Select2(),
             'approx_attendees': forms.RadioSelect(),
             'attendee_domains': CheckboxSelectMultipleWithOthers('attendee_domains_other'),
             'data_types': RadioSelectWithOther('data_types_other'),
@@ -874,16 +883,30 @@ class DCEventRequestForm(SWCEventRequestForm):
         self.helper.layout.fields.remove('travel_reimbursement_other')
 
 
+class DCEventRequestForm(DCEventRequestNoCaptchaForm):
+    captcha = ReCaptchaField()
+
+    class Meta(DCEventRequestNoCaptchaForm.Meta):
+        exclude = ('state', 'event') \
+                  + DCEventRequestNoCaptchaForm.Meta.exclude
+
+
 class EventSubmitFormNoCaptcha(forms.ModelForm):
     class Meta:
         model = EventSubmission
-        exclude = ('active', 'created_at', 'last_updated_at', 'assigned_to')
+        exclude = ('created_at', 'last_updated_at', 'assigned_to', )
+        widgets = {
+            'event': autocomplete.Select2(),
+        }
 
 
 class EventSubmitForm(EventSubmitFormNoCaptcha, PrivacyConsentMixin):
     captcha = ReCaptchaField()
 
     helper = BootstrapHelper(wider_labels=True)
+
+    class Meta(EventSubmitFormNoCaptcha.Meta):
+        exclude = ('state', 'event') + EventSubmitFormNoCaptcha.Meta.exclude
 
 
 class DCSelfOrganizedEventRequestFormNoCaptcha(forms.ModelForm):
@@ -900,6 +923,7 @@ class DCSelfOrganizedEventRequestFormNoCaptcha(forms.ModelForm):
         model = DCSelfOrganizedEventRequest
         exclude = ('created_at', 'last_updated_at', 'assigned_to')
         widgets = {
+            'event': autocomplete.Select2(),
             'instructor_status': forms.RadioSelect(),
             'is_partner': forms.RadioSelect(),
             'domains': forms.CheckboxSelectMultiple(),
@@ -917,7 +941,8 @@ class DCSelfOrganizedEventRequestForm(
     helper = BootstrapHelper(wider_labels=True)
 
     class Meta(DCSelfOrganizedEventRequestFormNoCaptcha.Meta):
-        exclude = ('active', 'created_at', 'last_updated_at', 'assigned_to')
+        exclude = ('state', 'event') \
+                  + DCSelfOrganizedEventRequestFormNoCaptcha.Meta.exclude
 
 
 class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):
@@ -1001,7 +1026,7 @@ class AdminLookupForm(forms.Form):
         widget=autocomplete.ModelSelect2(url='admin-lookup')
     )
 
-    helper = bootstrap_helper
+    helper = BootstrapHelper(add_cancel_button=False)
 
 
 class SimpleTodoForm(forms.ModelForm):

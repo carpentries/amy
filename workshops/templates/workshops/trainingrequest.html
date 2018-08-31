@@ -2,7 +2,7 @@
 
 {% load revisions %}
 {% load crispy_forms_tags %}
-{% load training_request %}
+{% load state %}
 
 {% block content %}
 
@@ -28,7 +28,7 @@
 </div>
 <table class="table table-striped">
   <tr><th>State:</th>
-      <td><span class="{% training_request_label req %}">
+      <td><span class="{% state_label req %}">
             {{ req.get_state_display }}
           </span>
       </td></tr>

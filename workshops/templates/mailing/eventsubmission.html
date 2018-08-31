@@ -1,8 +1,13 @@
 {% load links %}
+{% load state %}
 <table class="table table-striped">
   <tbody>
     <tr><th>Submission date:</th>
         <td>{{ object.created_at }}</td></tr>
+    <tr><th>State</th>
+        <td><span class="{% state_label object %}">{{ object.get_state_display }}</span></td></tr>
+    <tr><th>Related event:</th>
+        <td>{% if object.event %}<a href="{{ object.event.get_absolute_url }}">{{ object.event }}</a>{% else %}&mdash;{% endif %}</td></tr>
     <tr><th>Person:</th>
         <td>{{ object.contact_name }} &lt;{{ object.contact_email|urlize }}&gt;</td></tr>
     <tr><th>Workshop URL:</th>

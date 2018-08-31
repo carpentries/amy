@@ -94,6 +94,43 @@ class COCAgreementMixin(models.Model):
         abstract = True
 
 
+class EventLink(models.Model):
+    """This mixin provides a one-to-one link between a model, in which it's
+    used, and single Event instance."""
+    event = models.OneToOneField(
+        'Event', null=True, blank=True,
+        verbose_name='Linked event object',
+        help_text='Link to the event instance created or otherwise related to this object.',
+        on_delete=models.PROTECT,
+    )
+
+    class Meta:
+        abstract = True
+
+
+class StateMixin(models.Model):
+    """A more extensive state field - previously a boolean `active` field was
+    used, with only two states. Now there's three and can be extended."""
+    STATE_CHOICES = (
+        ('p', 'Pending'),
+        ('d', 'Discarded'),
+        ('a', 'Accepted'),
+    )
+    state = models.CharField(max_length=1, choices=STATE_CHOICES,
+                             null=False, blank=False, default='p')
+
+    class Meta:
+        abstract = True
+
+    @cached_property
+    def active(self):
+        # after changing ActiveMixin to StateMixin, this should help in some
+        # cases with code refactoring; will be removed later
+        return self.state == 'p'
+
+#------------------------------------------------------------
+
+
 @reversion.register
 class Organization(models.Model):
     '''Represent an organization, academic or business.'''
@@ -1089,12 +1126,6 @@ class Event(AssignmentMixin, models.Model):
         blank=True, default="",
         verbose_name="Long-term assessment survey for learners")
 
-    request = models.ForeignKey(
-        'EventRequest', null=True, blank=True,
-        help_text='Backlink to the request that created this event.',
-        on_delete=models.SET_NULL,
-    )
-
     # used in getting metadata updates from GitHub
     repository_last_commit_hash = models.CharField(
         max_length=40, blank=True, default='',
@@ -1248,8 +1279,8 @@ class Event(AssignmentMixin, models.Model):
         super(Event, self).save(*args, **kwargs)
 
 
-class EventRequest(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
-                   models.Model):
+class EventRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
+                   EventLink, models.Model):
     name = models.CharField(max_length=STR_MED)
     email = models.EmailField()
     affiliation = models.CharField(max_length=STR_LONG,
@@ -1432,8 +1463,8 @@ class EventRequest(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
         ordering = ['created_at']
 
 
-class EventSubmission(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
-                      models.Model):
+class EventSubmission(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
+                      EventLink, models.Model):
     url = models.URLField(
         null=False, blank=False,
         verbose_name='Link to the workshop\'s website')
@@ -1460,8 +1491,9 @@ class EventSubmission(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
         ordering = ['created_at']
 
 
-class DCSelfOrganizedEventRequest(AssignmentMixin, ActiveMixin,
-                                  CreatedUpdatedMixin, models.Model):
+class DCSelfOrganizedEventRequest(AssignmentMixin, StateMixin,
+                                  CreatedUpdatedMixin, EventLink,
+                                  models.Model):
     """Should someone want to run a self-organized Data Carpentry event, they
     have to fill this specific form first. See
     https://github.com/swcarpentry/amy/issues/761"""
@@ -2025,36 +2057,13 @@ class InvoiceRequest(models.Model):
 
 #------------------------------------------------------------
 
-
-def build_choice_field_with_other_option(choices, default, verbose_name=None,
-        help_text=None):
-    assert default in [c[0] for c in choices]
-    assert all(c[0] != '' for c in choices)
-
-    field = models.CharField(
-        max_length=STR_MED,
-        choices=choices,
-        verbose_name=verbose_name,
-        help_text=help_text,
-        null=False, blank=False, default=default,
-    )
-    other_field = models.CharField(
-        max_length=STR_LONG,
-        verbose_name=' ',
-        null=False, blank=True, default='',
-    )
-    return field, other_field
+from workshops.util import build_choice_field_with_other_option
 
 
 @reversion.register
 class TrainingRequest(ActiveMixin, CreatedUpdatedMixin,
-        DataPrivacyAgreementMixin, COCAgreementMixin, models.Model):
-    STATES = [
-        ('p', 'Pending'),  # initial state
-        ('a', 'Accepted'),  # state after matching a Person record
-        ('d', 'Discarded'),
-    ]
-    state = models.CharField(choices=STATES, default='p', max_length=1)
+        DataPrivacyAgreementMixin, COCAgreementMixin, StateMixin,
+        models.Model):
 
     person = models.ForeignKey(Person, null=True, blank=True,
                                verbose_name='Matched Trainee',

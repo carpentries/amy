@@ -3,7 +3,7 @@
 {% load crispy_forms_tags %}
 {% load pagination %}
 {% load tags %}
-{% load training_request %}
+{% load state %}
 
 {% block content %}
   {% if requests %}
@@ -103,7 +103,7 @@
           </td>
           <td>
             {% if req.state == 'p' %}
-              <span class="{% training_request_label req %}"
+              <span class="{% state_label req %}"
                     data-toggle="popover" data-html="true"
                     data-content='
                       Click
@@ -113,7 +113,7 @@
                 {{ req.get_state_display }}
               </span>
             {% else %}
-              <span class="{% training_request_label req %}">
+              <span class="{% state_label req %}">
                 {{ req.get_state_display }}
               </span>
             {% endif %}

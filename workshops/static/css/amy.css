@@ -49,7 +49,7 @@ table .additional-links-wider {
     padding-bottom: 15px
 }
 
-.edit-object {
+.edit-object, .delete-object {
     margin-bottom: 15px;
 }
 

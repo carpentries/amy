@@ -447,8 +447,8 @@ class TestTrainingRequestTemplateTags(TestBase):
 
     def _test(self, state, expected):
         template = Template(
-            '{% load training_request %}'
-            '{% training_request_label req %}'
+            '{% load state %}'
+            '{% state_label req %}'
         )
         training_request = TrainingRequest(state=state)
         context = Context({'req': training_request})

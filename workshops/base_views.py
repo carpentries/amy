@@ -260,3 +260,12 @@ class AutoresponderMixin:
             pass  # fail silently
 
         return retval
+
+
+class StateFilterMixin:
+    def get_filter_data(self):
+        """Enhance filter default data by setting the initial value for the
+        `state` field filter."""
+        data = super().get_filter_data().copy()
+        data['state'] = data.get('state', 'p')
+        return data
