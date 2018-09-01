@@ -450,6 +450,7 @@ class EventForm(forms.ModelForm):
     country = CountryField().formfield(
         required=False,
         help_text=Event._meta.get_field('country').help_text,
+        widget=ListSelect2(),
     )
 
     admin_fee = forms.DecimalField(min_value=0, decimal_places=2,
@@ -591,6 +592,10 @@ class PersonForm(forms.ModelForm):
             'domains',
             'languages',
         ]
+
+        widgets = {
+            'country': ListSelect2(),
+        }
 
 
 class PersonCreateForm(PersonForm):
@@ -822,6 +827,7 @@ class SWCEventRequestNoCaptchaForm(PrivacyConsentMixin, forms.ModelForm):
             'attendee_computing_levels': forms.CheckboxSelectMultiple(),
             'travel_reimbursement': RadioSelectWithOther('travel_reimbursement_other'),
             'admin_fee_payment': forms.RadioSelect(),
+            'country': ListSelect2(),
         }
 
     def __init__(self, *args, **kwargs):
@@ -973,6 +979,7 @@ class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):
             'gender': RadioSelectWithOther('gender_other'),
             'domains': CheckboxSelectMultipleWithOthers('domains_other'),
             'lessons': CheckboxSelectMultipleWithOthers('lessons_other'),
+            'country': ListSelect2(),
         }
 
     def __init__(self, *args, **kwargs):
@@ -1259,6 +1266,7 @@ class TrainingRequestForm(forms.ModelForm):
             'programming_language_usage_frequency': forms.RadioSelect(),
             'teaching_frequency_expectation': RadioSelectWithOther('teaching_frequency_expectation_other'),
             'max_travelling_frequency': RadioSelectWithOther('max_travelling_frequency_other'),
+            'country': ListSelect2(),
         }
 
     def __init__(self, *args, initial_group_name=None, **kwargs):
@@ -1488,6 +1496,7 @@ class AutoUpdateProfileForm(forms.ModelForm):
     country = CountryField().formfield(
         required=False,
         help_text='Your country of residence.',
+        widget=ListSelect2(),
     )
 
     languages = forms.ModelMultipleChoiceField(
@@ -1530,6 +1539,7 @@ class AutoUpdateProfileForm(forms.ModelForm):
             'gender': forms.RadioSelect(),
             'domains': forms.CheckboxSelectMultiple(),
             'lessons': forms.CheckboxSelectMultiple(),
+            'airport': ListSelect2(),
         }
 
 
