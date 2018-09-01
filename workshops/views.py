@@ -112,7 +112,7 @@ from workshops.forms import (
     TrainingRequestsMergeForm,
     SendHomeworkForm,
     BulkDiscardProgressesForm,
-    bootstrap_helper,
+    BootstrapHelper,
     bootstrap_helper_inline_formsets,
     BulkChangeTrainingRequestForm,
     BulkMatchTrainingRequestForm,
@@ -847,7 +847,7 @@ def person_password(request, person_id):
     else:
         form = Form(user)
 
-    form.helper = bootstrap_helper
+    form.helper = BootstrapHelper(add_cancel_button=False)
     return render(request, 'workshops/generic_form.html', {
         'form': form,
         'model': Person,
@@ -1072,7 +1072,6 @@ def event_details(request, slug):
         'all_emails' : tasks.filter(person__may_contact=True)\
             .exclude(person__email=None)\
             .values_list('person__email', flat=True),
-        'helper': bootstrap_helper,
         'today': datetime.date.today(),
         'admin_lookup_form': admin_lookup_form,
     }
