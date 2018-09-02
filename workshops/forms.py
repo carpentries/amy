@@ -177,7 +177,6 @@ class BootstrapHelperFormsetInline(BootstrapHelper):
     template = 'bootstrap/table_inline_formset.html'
 
 
-bootstrap_helper = BootstrapHelper()
 bootstrap_helper_filter = BootstrapHelperFilter()
 bootstrap_helper_inline_formsets = BootstrapHelperFormsetInline()
 
@@ -451,12 +450,13 @@ class EventForm(forms.ModelForm):
     country = CountryField().formfield(
         required=False,
         help_text=Event._meta.get_field('country').help_text,
+        widget=ListSelect2(),
     )
 
     admin_fee = forms.DecimalField(min_value=0, decimal_places=2,
                                    required=False, widget=TextInput)
 
-    helper = BootstrapHelper()
+    helper = BootstrapHelper(add_cancel_button=False)
     helper.layout = Layout(
         Field('slug', placeholder='YYYY-MM-DD-location'),
         'completed',
@@ -536,7 +536,7 @@ class EventForm(forms.ModelForm):
 
 class TaskForm(WidgetOverrideMixin, forms.ModelForm):
 
-    helper = BootstrapHelper()
+    helper = BootstrapHelper(add_cancel_button=False)
 
     class Meta:
         model = Task
@@ -593,6 +593,10 @@ class PersonForm(forms.ModelForm):
             'languages',
         ]
 
+        widgets = {
+            'country': ListSelect2(),
+        }
+
 
 class PersonCreateForm(PersonForm):
     class Meta(PersonForm.Meta):
@@ -630,7 +634,7 @@ class PersonsSelectionForm(forms.Form):
         widget=ModelSelect2(url='person-lookup')
     )
 
-    helper = BootstrapHelper(use_get_method=True)
+    helper = BootstrapHelper(use_get_method=True, add_cancel_button=False)
 
 
 class PersonsMergeForm(forms.Form):
@@ -727,7 +731,7 @@ class PersonsMergeForm(forms.Form):
 
 class AwardForm(WidgetOverrideMixin, forms.ModelForm):
 
-    helper = bootstrap_helper
+    helper = BootstrapHelper(add_cancel_button=False)
 
     class Meta:
         model = Award
@@ -750,7 +754,7 @@ class OrganizationForm(forms.ModelForm):
         ],
     )
 
-    helper = bootstrap_helper
+    helper = BootstrapHelper(add_cancel_button=False)
 
     class Meta:
         model = Organization
@@ -758,7 +762,7 @@ class OrganizationForm(forms.ModelForm):
 
 
 class MembershipForm(forms.ModelForm):
-    helper = bootstrap_helper
+    helper = BootstrapHelper(add_cancel_button=False)
 
     organization = forms.ModelChoiceField(
         label='Organization',
@@ -808,7 +812,7 @@ class SWCEventRequestNoCaptchaForm(PrivacyConsentMixin, forms.ModelForm):
         widget=ModelSelect2(url='language-lookup')
     )
 
-    helper = BootstrapHelper(wider_labels=True)
+    helper = BootstrapHelper(wider_labels=True, add_cancel_button=False)
 
     class Meta:
         model = EventRequest
@@ -823,6 +827,7 @@ class SWCEventRequestNoCaptchaForm(PrivacyConsentMixin, forms.ModelForm):
             'attendee_computing_levels': forms.CheckboxSelectMultiple(),
             'travel_reimbursement': RadioSelectWithOther('travel_reimbursement_other'),
             'admin_fee_payment': forms.RadioSelect(),
+            'country': ListSelect2(),
         }
 
     def __init__(self, *args, **kwargs):
@@ -964,7 +969,7 @@ class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):
         widget=ModelSelect2Multiple(url='language-lookup')
     )
 
-    helper = BootstrapHelper(wider_labels=True)
+    helper = BootstrapHelper(wider_labels=True, add_cancel_button=False)
 
     class Meta:
         model = ProfileUpdateRequest
@@ -974,6 +979,7 @@ class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):
             'gender': RadioSelectWithOther('gender_other'),
             'domains': CheckboxSelectMultipleWithOthers('domains_other'),
             'lessons': CheckboxSelectMultipleWithOthers('lessons_other'),
+            'country': ListSelect2(),
         }
 
     def __init__(self, *args, **kwargs):
@@ -1004,7 +1010,7 @@ class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):
 class ProfileUpdateRequestForm(ProfileUpdateRequestFormNoCaptcha):
     captcha = ReCaptchaField()
 
-    helper = BootstrapHelper(wider_labels=True)
+    helper = BootstrapHelper(wider_labels=True, add_cancel_button=False)
 
 
 class EventLookupForm(forms.Form):
@@ -1015,7 +1021,7 @@ class EventLookupForm(forms.Form):
         widget=ModelSelect2(url='event-lookup')
     )
 
-    helper = bootstrap_helper
+    helper = BootstrapHelper(add_cancel_button=False)
 
 
 class PersonLookupForm(forms.Form):
@@ -1026,7 +1032,7 @@ class PersonLookupForm(forms.Form):
         widget=ModelSelect2(url='person-lookup')
     )
 
-    helper = BootstrapHelper(use_get_method=True)
+    helper = BootstrapHelper(use_get_method=True, add_cancel_button=False)
 
 
 class AdminLookupForm(forms.Form):
@@ -1041,7 +1047,7 @@ class AdminLookupForm(forms.Form):
 
 
 class SimpleTodoForm(forms.ModelForm):
-    helper = bootstrap_helper
+    helper = BootstrapHelper(add_cancel_button=False)
 
     class Meta:
         model = TodoItem
@@ -1068,7 +1074,7 @@ class EventsSelectionForm(forms.Form):
         widget=ModelSelect2(url='event-lookup')
     )
 
-    helper = BootstrapHelper(use_get_method=True)
+    helper = BootstrapHelper(use_get_method=True, add_cancel_button=False)
 
 
 class EventsMergeForm(forms.Form):
@@ -1175,7 +1181,7 @@ class EventsMergeForm(forms.Form):
 
 
 class InvoiceRequestForm(forms.ModelForm):
-    helper = bootstrap_helper
+    helper = BootstrapHelper(add_cancel_button=False)
 
     class Meta:
         model = InvoiceRequest
@@ -1208,7 +1214,7 @@ class TrainingRequestForm(forms.ModelForm):
 
     captcha = ReCaptchaField()
 
-    helper = BootstrapHelper(wider_labels=True)
+    helper = BootstrapHelper(wider_labels=True, add_cancel_button=False)
 
     class Meta:
         model = TrainingRequest
@@ -1260,6 +1266,7 @@ class TrainingRequestForm(forms.ModelForm):
             'programming_language_usage_frequency': forms.RadioSelect(),
             'teaching_frequency_expectation': RadioSelectWithOther('teaching_frequency_expectation_other'),
             'max_travelling_frequency': RadioSelectWithOther('max_travelling_frequency_other'),
+            'country': ListSelect2(),
         }
 
     def __init__(self, *args, initial_group_name=None, **kwargs):
@@ -1339,7 +1346,7 @@ class TrainingRequestsSelectionForm(forms.Form):
         widget=ModelSelect2(url='trainingrequest-lookup')
     )
 
-    helper = BootstrapHelper(use_get_method=True)
+    helper = BootstrapHelper(use_get_method=True, add_cancel_button=False)
 
 
 class TrainingRequestsMergeForm(forms.Form):
@@ -1489,6 +1496,7 @@ class AutoUpdateProfileForm(forms.ModelForm):
     country = CountryField().formfield(
         required=False,
         help_text='Your country of residence.',
+        widget=ListSelect2(),
     )
 
     languages = forms.ModelMultipleChoiceField(
@@ -1498,7 +1506,7 @@ class AutoUpdateProfileForm(forms.ModelForm):
         widget=ModelSelect2Multiple(url='language-lookup')
     )
 
-    helper = bootstrap_helper
+    helper = BootstrapHelper(add_cancel_button=False)
 
     class Meta:
         model = Person
@@ -1531,6 +1539,7 @@ class AutoUpdateProfileForm(forms.ModelForm):
             'gender': forms.RadioSelect(),
             'domains': forms.CheckboxSelectMultiple(),
             'lessons': forms.CheckboxSelectMultiple(),
+            'airport': ListSelect2(),
         }
 
 
@@ -1558,12 +1567,14 @@ class TrainingProgressForm(forms.ModelForm):
     helper = BootstrapHelper(duplicate_buttons_on_top=True,
                              submit_label='Update',
                              add_delete_button=True,
-                             additional_form_class='training-progress')
+                             additional_form_class='training-progress',
+                             add_cancel_button=False)
 
     # helper used in create view
     create_helper = BootstrapHelper(duplicate_buttons_on_top=True,
                                     submit_label='Add',
-                                    additional_form_class='training-progress')
+                                    additional_form_class='training-progress',
+                                    add_cancel_button=False)
 
     class Meta:
         model = TrainingProgress
@@ -1845,7 +1856,8 @@ class SendHomeworkForm(forms.ModelForm):
 
     def __init__(self, submit_name, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.helper = BootstrapHelper(submit_name=submit_name)
+        self.helper = BootstrapHelper(submit_name=submit_name,
+                                      add_cancel_button=False)
 
     class Meta:
         model = TrainingProgress
@@ -1866,7 +1878,7 @@ class AllActivityOverTimeForm(forms.Form):
         input_formats=['%Y-%m-%d', ],
     )
 
-    helper = BootstrapHelper(use_get_method=True)
+    helper = BootstrapHelper(use_get_method=True, add_cancel_button=False)
 
 
 #----------------------------------------------------------
