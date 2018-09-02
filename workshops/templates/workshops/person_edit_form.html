@@ -1,6 +1,7 @@
 {% extends "base_nav.html" %}
 
 {% load crispy_forms_tags %}
+{% load links %}
 
 {% block content %}
 <nav class="col-12">
@@ -26,11 +27,11 @@
     <table class="table table-striped">
       <thead>
         <tr>
-          <th>badge</th>
-          <th>awarded</th>
-          <th>event</th>
-          <th>awarded by</th>
-          <th>action</th>
+          <th>Badge</th>
+          <th>Awarded</th>
+          <th>Event</th>
+          <th>Awarded by</th>
+          <th>Action</th>
         </tr>
       </thead>
       <tbody>
@@ -66,11 +67,36 @@
     {% endif %}
 
     {% if tasks %}
-    <ul>
-      {% for task in tasks %}
-      <li>{{ task.role.name }} during <a href="{{ task.event.get_absolute_url }}">{{ task.event }}</a> (<a href="{{ task.get_absolute_url }}">show task</a>)</li>
+    <table class="table table-striped">
+      <tr>
+        <th>Event</th>
+        <th>URL</th>
+        <th>Role</th>
+        <th>Member site seat <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events"></i></th>
+        <th>Open applicant <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events with open applications"></i></th>
+        <th class="additional-links-wider"></th>
+      </tr>
+      {% for t in tasks %}
+      <tr>
+        <td><a href="{{ t.event.get_absolute_url }}">{{ t.event.slug }}</a></td>
+        <td>{{ t.url|default:"—"|urlize_newtab }}</td>
+        <td>{{ t.role.name }}</td>
+        <td>{% if t.seat_membership %}<a href="{{ t.seat_membership.get_absolute_url }}">{{ t.seat_membership }}</a>{% else %}&mdash;{% endif %}</td>
+        <td>{{ t.seat_open_training|yesno }}</td>
+        <td>
+          <a href="{% url 'task_details' t.pk %}" title="View {{ t }}"><i class="fas fa-info-circle"></i></a>
+          &nbsp;
+          {% if perms.workshops.edit_task %}
+          <a href="{% url 'task_edit' t.pk %}" title="Edit {{ t }}"><i class="fas fa-edit"></i></a>
+          {% endif %}
+          <form class="amy-form-inline" action="{% url 'task_delete' t.id %}?next={{ request.get_full_path|urlencode }}#tasks" onsubmit='return confirm("Are you sure you wish to remove \"{{ t.person.full_name }}\" from {{ object.slug }}?")' method="POST">
+            {% csrf_token %}
+            <button type="submit" class="no-btn"><i class="fas fa-times"></i></button>
+          </form>
+        </td>
+      </tr>
       {% endfor %}
-    </ul>
+    </table>
     {% else %}
     <p>No tasks.</p>
     {% endif %}

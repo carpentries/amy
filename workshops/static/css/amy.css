@@ -37,7 +37,7 @@ table .additional-links {
     width: 70px;
 }
 table .additional-links-wider {
-    width: 90px;
+    width: 100px;
 }
 
 .form-group small {
@@ -59,4 +59,47 @@ table .additional-links-wider {
     white-space: -pre-wrap;      /* Opera 4-6 */
     white-space: -o-pre-wrap;    /* Opera 7 */
     word-wrap: break-word;       /* Internet Explorer 5.5+ */
+}
+
+/* Bootstrap4 styles for <a> applied to bare <button> */
+.no-btn {
+    border-radius: 0;
+    margin: 0;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    overflow: visible;
+    text-transform: none;
+    -webkit-appearance: button;
+    color: #dc3545;
+    background-color: transparent;
+    display: inline-block;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    transition: color 0.15s ease-in-out,
+                background-color 0.15s ease-in-out,
+                border-color 0.15s ease-in-out,
+                box-shadow 0.15s ease-in-out;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+    border-style: none;
+}
+.no-btn:hover {
+    color: #a41d2a;
+    text-decoration: underline;
+    text-decoration-line: underline;
+    text-decoration-style: solid;
+    text-decoration-color: currentcolor;
+}
+.amy-form-inline {
+    display: inline-block;
+    margin: 0 0.5rem;
 }
