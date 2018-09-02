@@ -22,7 +22,8 @@ from ..util import (
     InternalError,
     Paginator,
     assign,
-    str2bool
+    str2bool,
+    human_daterange,
 )
 
 from .base import TestBase
@@ -813,3 +814,36 @@ class TestStr2Bool(TestBase):
         """Ensure `None` is returned for correct input data."""
         for element in self.expected_none:
             self.assertIsNone(str2bool(element), element)
+
+
+class TestHumanDaterange(TestBase):
+    def setUp(self):
+        self.formats = {
+            'no_date': '????',
+            'range_char': ' - ',
+        }
+        self.inputs = (
+            (datetime.datetime(2018, 9, 1), datetime.datetime(2018, 9, 30)),
+            (datetime.datetime(2018, 9, 30), datetime.datetime(2018, 9, 1)),
+            (datetime.datetime(2018, 9, 1), datetime.datetime(2018, 12, 1)),
+            (datetime.datetime(2018, 9, 1), datetime.datetime(2019, 12, 1)),
+            (datetime.datetime(2018, 9, 1), None),
+            (None, datetime.datetime(2018, 9, 1)),
+            (None, None),
+        )
+        self.expected_outputs = (
+            'Sep 01 - 30, 2018',
+            'Sep 30 - 01, 2018',
+            'Sep 01 - Dec 01, 2018',
+            'Sep 01, 2018 - Dec 01, 2019',
+            'Sep 01, 2018 - ????',
+            '???? - Sep 01, 2018',
+            '???? - ????',
+        )
+
+    def test_function(self):
+        for i, v in enumerate(self.inputs):
+            with self.subTest(i=i):
+                left, right = v
+                output = human_daterange(left, right, **self.formats)
+                self.assertEqual(output, self.expected_outputs[i])

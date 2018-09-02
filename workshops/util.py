@@ -1022,3 +1022,47 @@ def build_choice_field_with_other_option(choices, default, verbose_name=None,
         null=False, blank=True, default='',
     )
     return field, other_field
+
+
+def human_daterange(
+        date_left, date_right, no_date='???', range_char=' - ',
+        common_month_left='%b %d',
+        common_month_right='%d, %Y',
+        common_year_left='%b %d',
+        common_year_right='%b %d, %Y',
+        nothing_common_left='%b %d, %Y',
+        nothing_common_right='%b %d, %Y'):
+
+    left = ''
+    middle = '{sep}'
+    right = ''
+
+    if date_left and not date_right:
+        left = '{left:%s}' % nothing_common_left
+        right = '{none}'
+
+    elif date_right and not date_left:
+        left = '{none}'
+        right = '{right:%s}' % nothing_common_right
+
+    elif not date_right and not date_left:
+        left = '{none}'
+        right = '{none}'
+
+    else:
+        common_year = (date_left.year == date_right.year)
+        common_month = (date_left.month == date_right.month)
+
+        if common_year and common_month:
+            left = '{left:%s}' % common_month_left
+            right = '{right:%s}' % common_month_right
+        elif common_year:
+            left = '{left:%s}' % common_year_left
+            right = '{right:%s}' % common_year_right
+        else:
+            left = '{left:%s}' % nothing_common_left
+            right = '{right:%s}' % nothing_common_right
+
+    return (left + middle + right).format(
+        **dict(left=date_left, sep=range_char, right=date_right, none=no_date)
+    )

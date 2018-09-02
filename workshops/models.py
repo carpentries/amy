@@ -202,8 +202,11 @@ class Membership(models.Model):
                              on_delete=models.PROTECT)
 
     def __str__(self):
-        return "{} membership: {}".format(self.variant.title(),
-                                          self.organization)
+        from workshops.util import human_daterange
+        dates = human_daterange(self.agreement_start, self.agreement_end)
+        return "{} membership: {} ({})".format(self.variant.title(),
+                                               self.organization,
+                                               dates)
 
     def get_absolute_url(self):
         return reverse('membership_details', args=[self.id])
@@ -1265,23 +1268,10 @@ class Event(AssignmentMixin, models.Model):
     @property
     def human_readable_date(self):
         """Render start and end dates as human-readable short date."""
+        from workshops.util import human_daterange
         date1 = self.start
         date2 = self.end
-
-        if date1 and not date2:
-            return '{:%b %d, %Y}-???'.format(date1)
-        elif date2 and not date1:
-            return '???-{:%b %d, %Y}'.format(date2)
-        elif not date2 and not date1:
-            return '???-???'
-
-        if date1.year == date2.year:
-            if date1.month == date2.month:
-                return '{:%b %d}-{:%d, %Y}'.format(date1, date2)
-            else:
-                return '{:%b %d}-{:%b %d, %Y}'.format(date1, date2)
-        else:
-            return '{:%b %d, %Y}-{:%b %d, %Y}'.format(date1, date2)
+        return human_daterange(date1, date2)
 
     def clean(self):
         """Additional model validation."""
