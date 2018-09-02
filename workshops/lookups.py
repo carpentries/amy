@@ -1,4 +1,5 @@
 from functools import reduce
+from datetime import datetime
 import operator
 import re
 
@@ -42,6 +43,36 @@ class OrganizationLookupView(OnlyForAdminsNoRedirectMixin,
             results = results.filter(
                 Q(domain__icontains=self.q) | Q(fullname__icontains=self.q)
             )
+
+        return results
+
+
+class MembershipLookupView(OnlyForAdminsNoRedirectMixin,
+                           autocomplete.Select2QuerySetView):
+    def get_queryset(self):
+        results = models.Membership.objects.all()
+
+        if self.q:
+            # parse query into date
+            try:
+                date = datetime.strptime(self.q, '%Y-%m-%d').date()
+            except ValueError:
+                date = None
+
+            # filter by organization name
+            org_q = (Q(organization__domain__icontains=self.q) |
+                     Q(organization__fullname__icontains=self.q))
+
+            # filter by variant
+            variant_q = Q(variant__icontains=self.q)
+
+            if date:
+                # filter by agreement date range
+                agreement_q = Q(agreement_start__lte=date, agreement_end__gte=date)
+
+                results = results.filter(org_q | variant_q | agreement_q)
+            else:
+                results = results.filter(org_q | variant_q)
 
         return results
 
@@ -174,6 +205,7 @@ urlpatterns = [
     url(r'^events/$', EventLookupView.as_view(), name='event-lookup'),
     url(r'^ttt_events/$', TTTEventLookupView.as_view(), name='ttt-event-lookup'),
     url(r'^organizations/$', OrganizationLookupView.as_view(), name='organization-lookup'),
+    url(r'^memberships/$', MembershipLookupView.as_view(), name='membership-lookup'),
     url(r'^persons/$', PersonLookupView.as_view(), name='person-lookup'),
     url(r'^admins/$', AdminLookupView.as_view(), name='admin-lookup'),
     url(r'^airports/$', AirportLookupView.as_view(), name='airport-lookup'),

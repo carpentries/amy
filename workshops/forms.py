@@ -562,12 +562,28 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm):
 
     helper = BootstrapHelper(add_cancel_button=False)
 
+    SEAT_MEMBERSHIP_HELP_TEXT = (
+        '{}<br><b>Hint:</b> you can use input format YYYY-MM-DD to display '
+        'memberships available on that date.'.format(
+            Task._meta.get_field('seat_membership').help_text
+        )
+    )
+    seat_membership = forms.ModelChoiceField(
+        label=Task._meta.get_field('seat_membership').verbose_name,
+        help_text=SEAT_MEMBERSHIP_HELP_TEXT,
+        required=False,
+        queryset=Membership.objects.none(),
+        widget=ModelSelect2(url='membership-lookup', attrs=SIDEBAR_DAL_WIDTH)
+    )
+
     class Meta:
         model = Task
         fields = '__all__'
         widgets = {
-            'person': ModelSelect2(url='person-lookup'),
-            'event': ModelSelect2(url='event-lookup'),
+            'person': ModelSelect2(url='person-lookup',
+                                   attrs=SIDEBAR_DAL_WIDTH),
+            'event': ModelSelect2(url='event-lookup',
+                                  attrs=SIDEBAR_DAL_WIDTH),
         }
 
 
@@ -761,9 +777,12 @@ class AwardForm(WidgetOverrideMixin, forms.ModelForm):
         model = Award
         fields = '__all__'
         widgets = {
-            'person': ModelSelect2(url='person-lookup'),
-            'event': ModelSelect2(url='event-lookup'),
-            'awarded_by': ModelSelect2(url='admin-lookup'),
+            'person': ModelSelect2(url='person-lookup',
+                                   attrs=SIDEBAR_DAL_WIDTH),
+            'event': ModelSelect2(url='event-lookup',
+                                  attrs=SIDEBAR_DAL_WIDTH),
+            'awarded_by': ModelSelect2(url='admin-lookup',
+                                       attrs=SIDEBAR_DAL_WIDTH),
         }
 
 
