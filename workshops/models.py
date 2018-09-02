@@ -192,6 +192,11 @@ class Membership(models.Model):
         help_text="Expected number of self-organized workshops per agreement "
                   "duration",
     )
+    # according to Django docs, PositiveIntegerFields accept 0 as valid as well
+    seats_instructor_training = models.PositiveIntegerField(
+        null=False, blank=False, default=0,
+        help_text="Number of seats in instructor trainings",
+    )
     notes = models.TextField(default="", blank=True)
     organization = models.ForeignKey(Organization, null=False, blank=False,
                              on_delete=models.PROTECT)
@@ -246,6 +251,10 @@ class Membership(models.Model):
         b = self.self_organized_workshops_completed
         return a - b
 
+    @cached_property
+    def remaining_seats_instructor_training(self):
+        # TODO: implement later, when other models are changed
+        pass
 
 #------------------------------------------------------------
 
