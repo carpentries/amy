@@ -466,6 +466,7 @@ class EventForm(forms.ModelForm):
         'administrator',
         'assigned_to',
         'tags',
+        'open_TTT_applications',
         'url',
         'language',
         'reg_key',
@@ -508,12 +509,35 @@ class EventForm(forms.ModelForm):
             raise forms.ValidationError('Must not be earlier than start date.')
         return end
 
+    def clean_open_TTT_applications(self):
+        """Ensure we have a TTT tag applied to the event, if the
+        `open_TTT_applications` is True."""
+        open_TTT_applications = self.cleaned_data['open_TTT_applications']
+        if open_TTT_applications and 'tags' in self.cleaned_data:
+            tags = self.cleaned_data['tags']
+
+            # find TTT tag
+            TTT_tag = False
+            for tag in tags:
+                if tag.name == 'TTT':
+                    TTT_tag = True
+                    break
+
+            if not TTT_tag:
+                raise forms.ValidationError('You cannot open applications on '
+                                            'a non-TTT event.')
+        elif 'tags' not in self.cleaned_data:
+            raise forms.ValidationError('You cannot open applications on '
+                                        'a non-TTT event.')
+        return open_TTT_applications
+
     class Meta:
         model = Event
         fields = ('slug', 'completed', 'start', 'end', 'host', 'administrator',
                   'assigned_to', 'tags', 'url', 'language', 'reg_key', 'venue',
                   'admin_fee', 'invoice_status', 'attendance', 'contact',
-                  'notes', 'country', 'address', 'latitude', 'longitude', )
+                  'notes', 'country', 'address', 'latitude', 'longitude',
+                  'open_TTT_applications', )
         widgets = {
             'attendance': TextInput,
             'latitude': TextInput,

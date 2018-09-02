@@ -1148,6 +1148,16 @@ class Event(AssignmentMixin, models.Model):
         default=False,
         help_text='Indicate if metadata changed since last check')
 
+    # defines if people not associated with specific member sites can take part
+    # in TTT event
+    open_TTT_applications = models.BooleanField(
+        null=False, blank=True, default=False,
+        verbose_name="TTT Open applications",
+        help_text="If this event is TTT, you can mark it as 'open "
+                  "applications' which means that people not associated with "
+                  "this event's member sites can also take part in this event."
+    )
+
     class Meta:
         ordering = ('-start', )
 
@@ -1267,6 +1277,19 @@ class Event(AssignmentMixin, models.Model):
                 return '{:%b %d}-{:%b %d, %Y}'.format(date1, date2)
         else:
             return '{:%b %d, %Y}-{:%b %d, %Y}'.format(date1, date2)
+
+    def clean(self):
+        """Additional model validation."""
+        # applies only to saved model instances!!! Otherwise it's impossible
+        # to access M2M objects
+        if self.pk:
+            has_TTT = self.tags.filter(name='TTT')
+            if self.open_TTT_applications and not has_TTT:
+                raise ValidationError(
+                    {'open_TTT_applications':
+                        'You cannot open applications on non-TTT event.'}
+                )
+        # additional validation before the object is saved is in EventForm
 
     def save(self, *args, **kwargs):
         self.slug = self.slug or None
@@ -1768,11 +1791,18 @@ class Task(models.Model):
         return reverse('task_details', kwargs={'task_id': self.id})
 
     def clean(self):
-        """Validate model as a whole."""
+        """Additional model validation."""
 
         # check seats, make sure the corresponding event has "TTT" tag
         errors = dict()
         has_ttt = bool(self.event.tags.filter(name="TTT"))
+        is_open_app = self.event.open_TTT_applications
+
+        if self.seat_membership is not None and self.seat_open_training:
+            raise ValidationError(
+                "This Task cannot be simultaneously open training and use "
+                "a Membership instructor training seat."
+            )
 
         if not has_ttt and self.seat_membership is not None:
             errors['seat_membership'] = ValidationError(
@@ -1783,6 +1813,12 @@ class Task(models.Model):
             errors['seat_open_training'] = ValidationError(
                 "Cannot mark this person as open applicant, because the event "
                 "has no TTT tag.",
+                code='invalid',
+            )
+        elif has_ttt and not is_open_app and self.seat_open_training:
+            errors['seat_open_training'] = ValidationError(
+                "Cannot mark this person as open applicant, because the TTT "
+                "event is not marked as open applications.",
                 code='invalid',
             )
         if errors:
