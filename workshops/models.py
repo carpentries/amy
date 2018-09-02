@@ -1739,6 +1739,19 @@ class Task(models.Model):
     role       = models.ForeignKey(Role, on_delete=models.PROTECT)
     title      = models.CharField(max_length=STR_LONG, blank=True)
     url        = models.URLField(blank=True, verbose_name='URL')
+    seat_membership = models.ForeignKey(
+        Membership, on_delete=models.PROTECT, null=True, blank=True,
+        default=None, verbose_name="Associated member site in TTT event",
+        help_text="In order to count this person into number of used "
+                  "membership instructor training seats, a correct membership "
+                  "entry needs to be selected.",
+    )
+    seat_open_training = models.BooleanField(
+        null=False, blank=True, default=False,
+        verbose_name="Open training seat",
+        help_text="Some TTT events allow for open training; check this field "
+                  "to count this person into open applications."
+    )
 
     objects = TaskManager()
 
@@ -1753,6 +1766,27 @@ class Task(models.Model):
 
     def get_absolute_url(self):
         return reverse('task_details', kwargs={'task_id': self.id})
+
+    def clean(self):
+        """Validate model as a whole."""
+
+        # check seats, make sure the corresponding event has "TTT" tag
+        errors = dict()
+        has_ttt = bool(self.event.tags.filter(name="TTT"))
+
+        if not has_ttt and self.seat_membership is not None:
+            errors['seat_membership'] = ValidationError(
+                "Cannot associate membership when the event has no TTT tag",
+                code='invalid',
+            )
+        if not has_ttt and self.seat_open_training:
+            errors['seat_open_training'] = ValidationError(
+                "Cannot mark this person as open applicant, because the event "
+                "has no TTT tag.",
+                code='invalid',
+            )
+        if errors:
+            raise ValidationError(errors)
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

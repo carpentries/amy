@@ -1,11 +1,12 @@
 from itertools import product
-from datetime import datetime
+from datetime import datetime, timedelta
 
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.urls import reverse
 
 from .base import TestBase
-from ..models import Task, Event, Role, Person, Organization
+from ..models import Task, Event, Role, Person, Organization, Tag, Membership
 
 
 class TestTask(TestBase):
@@ -14,37 +15,35 @@ class TestTask(TestBase):
     def setUp(self):
         self.fixtures = {}
 
-        test_host = Organization.objects.create(domain='example.com',
-                                        fullname='Test Organization')
+        self._setUpTags()
+        self._setUpRoles()
 
-        test_person_1 = Person.objects.create(personal='Test',
-                                              family='Person1',
-                                              username="person1")
+        test_host = Organization.objects.create(
+            domain='example.com', fullname='Test Organization')
 
-        test_person_2 = Person.objects.create(personal='Test',
-                                              family='Person2',
-                                              username="person2")
+        self.test_person_1 = Person.objects.create(
+            personal='Test', family='Person1', username="person1")
 
-        test_event_1 = Event.objects.create(start=datetime.now(),
-                                            slug='test_event_1',
-                                            host=test_host,
-                                            admin_fee=0)
+        self.test_person_2 = Person.objects.create(
+            personal='Test', family='Person2', username="person2")
 
-        test_event_2 = Event.objects.create(start=datetime.now(),
-                                            slug='test_event_2',
-                                            host=test_host,
-                                            admin_fee=0)
+        test_event_1 = Event.objects.create(
+            start=datetime.now(), slug='test_event_1', host=test_host,
+            admin_fee=0)
 
-        test_event_3 = Event.objects.create(start=datetime.now(),
-                                            slug='test_event_3',
-                                            host=test_host,
-                                            admin_fee=0)
+        test_event_2 = Event.objects.create(
+            start=datetime.now(), slug='test_event_2', host=test_host,
+            admin_fee=0)
 
-        instructor_role = Role.objects.create(name="instructor")
-        learner_role = Role.objects.create(name="learner")
-        helper_role = Role.objects.create(name="helper")
-        roles = [instructor_role, learner_role, helper_role]
-        people = [test_person_1, test_person_2]
+        test_event_3 = Event.objects.create(
+            start=datetime.now(), slug='test_event_3', host=test_host,
+            admin_fee=0)
+
+        instructor_role = Role.objects.get(name="instructor")
+        self.learner = Role.objects.get(name="learner")
+        helper_role = Role.objects.get(name="helper")
+        roles = [instructor_role, self.learner, helper_role]
+        people = [self.test_person_1, self.test_person_2]
 
         for role, person in product(roles, people):
             Task.objects.create(person=person, role=role, event=test_event_3)
@@ -52,16 +51,33 @@ class TestTask(TestBase):
         test_role_1 = Role.objects.create(name='test_role_1')
         test_role_2 = Role.objects.create(name='test_role_2')
 
-        test_task_1 = Task.objects.create(person=test_person_1,
-                                          event=test_event_1,
-                                          role=test_role_1)
+        test_task_1 = Task.objects.create(
+            person=self.test_person_1, event=test_event_1, role=test_role_1)
 
-        test_task_2 = Task.objects.create(person=test_person_2,
-                                          event=test_event_2,
-                                          role=test_role_2)
+        test_task_2 = Task.objects.create(
+            person=self.test_person_2, event=test_event_2, role=test_role_2)
 
         self.fixtures['test_task_1'] = test_task_1
         self.fixtures['test_task_2'] = test_task_2
+
+        # create 2 events: one without TTT tag, and one with
+        self.non_ttt_event = Event.objects.create(
+            start=datetime.now(), slug="non-ttt-event", host=test_host,
+        )
+        self.non_ttt_event.tags.set(Tag.objects.filter(name__in=['SWC', 'DC']))
+        self.ttt_event = Event.objects.create(
+            start=datetime.now(), slug="ttt-event", host=test_host,
+        )
+        self.ttt_event.tags.set(Tag.objects.filter(name__in=['DC', 'TTT']))
+
+        # create a membership
+        self.membership = Membership.objects.create(
+            variant='partner',
+            agreement_start=datetime.now() - timedelta(weeks=4),
+            agreement_end=datetime.now() + timedelta(weeks=4),
+            contribution_type='financial',
+            organization=test_host,
+        )
 
         self._setUpUsersAndLogin()
 
@@ -160,3 +176,48 @@ class TestTask(TestBase):
 
             with self.assertRaises(Task.DoesNotExist):
                 Task.objects.get(pk=task.pk)
+
+    def test_seats_validation(self):
+        """Ensure wrong events raise ValidationError on `seat_membership`
+        and `seat_open_training` fields."""
+
+        # first wrong task
+        task1 = Task(
+            event=self.non_ttt_event,
+            person=self.test_person_1,
+            role=self.learner,
+            seat_membership=self.membership,
+            seat_open_training=False,
+        )
+        # second wrong task
+        task2 = Task(
+            event=self.non_ttt_event,
+            person=self.test_person_1,
+            role=self.learner,
+            seat_membership=None,
+            seat_open_training=True,
+        )
+
+        # first good task
+        task3 = Task(
+            event=self.ttt_event,
+            person=self.test_person_2,
+            role=self.learner,
+            seat_membership=self.membership,
+            seat_open_training=False,
+        )
+        # second good task
+        task4 = Task(
+            event=self.ttt_event,
+            person=self.test_person_2,
+            role=self.learner,
+            seat_membership=None,
+            seat_open_training=True,
+        )
+
+        with self.assertRaises(ValidationError):
+            task1.full_clean()
+        with self.assertRaises(ValidationError):
+            task2.full_clean()
+        task3.full_clean()
+        task4.full_clean()
