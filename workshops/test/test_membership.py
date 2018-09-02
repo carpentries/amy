@@ -4,13 +4,19 @@ import itertools
 from django.urls import reverse
 
 from .base import TestBase
-from ..models import Membership, Organization, Event
+from ..models import Membership, Organization, Event, Role, Tag, Task
 
 
 class TestMembership(TestBase):
     def setUp(self):
         super().setUp()
         self._setUpUsersAndLogin()
+        self._setUpRoles()
+        self._setUpTags()
+
+        self.learner = Role.objects.get(name='learner')
+        self.instructor = Role.objects.get(name='instructor')
+        self.TTT = Tag.objects.get(name='TTT')
 
         # parametrize membership creation
         self.agreement_start = date(2018, 8, 2)
@@ -26,6 +32,7 @@ class TestMembership(TestBase):
             contribution_type='financial',
             workshops_without_admin_fee_per_agreement=10,
             self_organized_workshops_per_agreement=20,
+            seats_instructor_training=25,
             organization=self.org_beta,
         )
 
@@ -53,9 +60,10 @@ class TestMembership(TestBase):
         type_ = itertools.cycle(['self-organized', 'no-fee', 'self-organized'])
         for i in range(20):
             next_type = next(type_)
+            e = None
 
             if next_type == 'self-organized':
-                Event.objects.create(
+                e = Event.objects.create(
                     slug='event-under-umbrella{}'.format(i),
                     host=self.org_beta,
                     # create each event starts roughly month later
@@ -63,9 +71,10 @@ class TestMembership(TestBase):
                     end=self.agreement_start_next_day + i * self.workshop_interval,
                     administrator=self_organized_admin,
                 )
+                e.tags.set([self.TTT])
 
             elif next_type == 'no-fee':
-                Event.objects.create(
+                e = Event.objects.create(
                     slug='event-under-umbrella{}'.format(i),
                     host=self.org_beta,
                     # create each event starts roughly month later
@@ -75,7 +84,25 @@ class TestMembership(TestBase):
                     administrator=self.org_beta,
                     admin_fee=0,
                 )
-        # above code should create 11 events that start in 2015:
+                e.tags.set([self.TTT])
+
+            # add a number of tasks for counting instructor training seats
+            if e and i < 10:
+                Task.objects.create(
+                    event=e, person=self.admin,
+                    role=self.learner,
+                    seat_membership=self.current,
+                )
+            # add a number of tasks for counting instructor training seats, but
+            # this time make these tasks instructor tasks - should not be
+            # counted
+            if e and i > 10:
+                Task.objects.create(
+                    event=e, person=self.admin,
+                    role=self.instructor,
+                    seat_membership=self.current,
+                )
+        # above code should create 11 events that start in 2018:
         # self-organized, no-fee, self-organized, self-organized, no-fee,
         # self-organized, self-organized, no-fee, self-organized,
         # self-organized, no-fee, self-organized,
@@ -115,6 +142,8 @@ class TestMembership(TestBase):
 
     def test_delete_membership(self):
         '''Test that we can delete membership instance'''
+        # first we need to remove all tasks refering to the membership
+        Task.objects.all().delete()
         response = self.client.post(
             reverse('membership_delete', args=[self.current.pk]),
             follow=True
@@ -127,3 +156,16 @@ class TestMembership(TestBase):
         self.assertEqual(response.context['organization'].membership_set.count(), 0)
         with self.assertRaises(Membership.DoesNotExist):
             self.current.refresh_from_db()
+
+    def test_number_of_instructor_training_seats(self):
+        """Ensure calculation of seats in the instructor training events is
+        correct."""
+        self.assertEqual(
+            self.current.seats_instructor_training, 25
+        )
+        self.assertEqual(
+            self.current.seats_instructor_training_utilized, 10
+        )
+        self.assertEqual(
+            self.current.seats_instructor_training_remaining, 15
+        )

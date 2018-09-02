@@ -60,15 +60,25 @@ class TestTask(TestBase):
         self.fixtures['test_task_1'] = test_task_1
         self.fixtures['test_task_2'] = test_task_2
 
-        # create 2 events: one without TTT tag, and one with
+        # create 3 events: one without TTT tag, and two with; out of the two,
+        # one is allowed to have open applications, the other is not.
         self.non_ttt_event = Event.objects.create(
             start=datetime.now(), slug="non-ttt-event", host=test_host,
         )
-        self.non_ttt_event.tags.set(Tag.objects.filter(name__in=['SWC', 'DC']))
-        self.ttt_event = Event.objects.create(
-            start=datetime.now(), slug="ttt-event", host=test_host,
+        self.non_ttt_event.tags.set(
+            Tag.objects.filter(name__in=['SWC', 'DC']))
+        self.ttt_event_open = Event.objects.create(
+            start=datetime.now(), slug="ttt-event-open-app", host=test_host,
+            open_TTT_applications=True,
         )
-        self.ttt_event.tags.set(Tag.objects.filter(name__in=['DC', 'TTT']))
+        self.ttt_event_open.tags.set(
+            Tag.objects.filter(name__in=['DC', 'TTT']))
+        self.ttt_event_non_open = Event.objects.create(
+            start=datetime.now(), slug="ttt-event-closed-app", host=test_host,
+            open_TTT_applications=False,
+        )
+        self.ttt_event_non_open.tags.set(
+            Tag.objects.filter(name__in=['DC', 'TTT']))
 
         # create a membership
         self.membership = Membership.objects.create(
@@ -178,8 +188,8 @@ class TestTask(TestBase):
                 Task.objects.get(pk=task.pk)
 
     def test_seats_validation(self):
-        """Ensure wrong events raise ValidationError on `seat_membership`
-        and `seat_open_training` fields."""
+        """Ensure events without TTT tag raise ValidationError on
+        `seat_membership` and `seat_open_training` fields."""
 
         # first wrong task
         task1 = Task(
@@ -200,7 +210,7 @@ class TestTask(TestBase):
 
         # first good task
         task3 = Task(
-            event=self.ttt_event,
+            event=self.ttt_event_open,
             person=self.test_person_2,
             role=self.learner,
             seat_membership=self.membership,
@@ -208,16 +218,70 @@ class TestTask(TestBase):
         )
         # second good task
         task4 = Task(
-            event=self.ttt_event,
+            event=self.ttt_event_open,
             person=self.test_person_2,
             role=self.learner,
             seat_membership=None,
             seat_open_training=True,
         )
 
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(ValidationError) as cm:
             task1.full_clean()
-        with self.assertRaises(ValidationError):
+        exception = cm.exception
+        self.assertIn('seat_membership', exception.error_dict)
+        self.assertNotIn('seat_open_training', exception.error_dict)
+
+        with self.assertRaises(ValidationError) as cm:
             task2.full_clean()
+        exception = cm.exception
+        self.assertIn('seat_open_training', exception.error_dict)
+        self.assertNotIn('seat_membership', exception.error_dict)
+
         task3.full_clean()
         task4.full_clean()
+
+    def test_open_applications_TTT(self):
+        """Ensure events with TTT tag but without open application flag raise
+        ValidationError on `seat_open_training` field."""
+        # wrong task
+        task1 = Task(
+            event=self.ttt_event_non_open,
+            person=self.test_person_1,
+            role=self.learner,
+            seat_membership=None,
+            seat_open_training=True,
+        )
+        # good task
+        task2 = Task(
+            event=self.ttt_event_open,
+            person=self.test_person_1,
+            role=self.learner,
+            seat_membership=None,
+            seat_open_training=True,
+        )
+
+        with self.assertRaises(ValidationError) as cm:
+            task1.full_clean()
+        exception = cm.exception
+        self.assertIn('seat_open_training', exception.error_dict)
+        self.assertNotIn('seat_membership', exception.error_dict)
+
+        task2.full_clean()
+
+    def test_both_open_app_and_seat(self):
+        """Ensure we cannot add a task with both options selected: a member
+        site seat, and open applications seat."""
+        # wrong task
+        task1 = Task(
+            event=self.ttt_event_non_open,
+            person=self.test_person_1,
+            role=self.learner,
+            seat_membership=self.membership,
+            seat_open_training=True,
+        )
+
+        with self.assertRaises(ValidationError) as cm:
+            task1.full_clean()
+        exception = cm.exception
+        self.assertNotIn('seat_membership', exception.error_dict)
+        self.assertNotIn('seat_open_training', exception.error_dict)

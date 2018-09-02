@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, date
 from urllib.parse import urlencode
 import sys
 
+from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.db.utils import IntegrityError
 from django.urls import reverse
@@ -21,6 +22,12 @@ class TestEvent(TestBase):
         self._setUpAirports()
         self._setUpNonInstructors()
         self._setUpUsersAndLogin()
+        self._setUpOrganizations()
+        self._setUpRoles()
+        self._setUpTags()
+
+        self.TTT_tag = Tag.objects.get(name='TTT')
+        self.learner_role = Role.objects.get(name='learner')
 
         # Create a test tag
         Tag.objects.create(name='Test Tag', details='For testing')
@@ -114,7 +121,6 @@ class TestEvent(TestBase):
     def test_unpublished_events_displayed_once(self):
         """Regression test: unpublished events can't be displayed more than
         once on the dashboard.  Refer to #977."""
-        self._setUpTags()
         unpublished_event = Event.objects.create(
             slug='2016-10-20-unpublished',
             start=date(2016, 10, 20),
@@ -133,7 +139,6 @@ class TestEvent(TestBase):
     def test_cancelled_events(self):
         """Regression test: make sure that cancelled events don't show up in
         the unpublished, published or uninvoiced events."""
-        self._setUpTags()
         cancelled_event = Event.objects.create(
             slug='2017-01-07-cancelled',
             start=date(2017, 1, 7),
@@ -231,6 +236,23 @@ class TestEvent(TestBase):
         assert event.repository_url == link
         assert event.website_url == link
 
+    def test_open_TTT_applications_validation(self):
+        event = Event.objects.create(
+            slug='test-event',
+            host=self.org_alpha,
+        )
+
+        # without TTT tag, the validation fails
+        event.open_TTT_applications = True
+        with self.assertRaises(ValidationError) as cm:
+            event.full_clean()
+        exc = cm.exception
+        self.assertIn('open_TTT_applications', exc.error_dict)
+
+        # now the validation should pass
+        event.tags.set([self.TTT_tag])
+        event.full_clean()
+
 
 class TestEventManager(TestBase):
     def test_ttt(self):
@@ -255,12 +277,14 @@ class TestEventViews(TestBase):
         self._setUpUsersAndLogin()
         self._setUpAirports()
         self._setUpNonInstructors()
+        self._setUpOrganizations()
+        self._setUpTags()
 
         self.learner = Role.objects.get_or_create(name='learner')[0]
 
         # Create a test host
-        self.test_host = Organization.objects.create(domain='example.com',
-                                             fullname='Test Organization')
+        self.test_host = Organization.objects.create(
+            domain='example.com', fullname='Test Organization')
 
         # Create a test tag
         self.test_tag = Tag.objects.create(name='Test Tag',
@@ -603,6 +627,23 @@ class TestEventViews(TestBase):
                                      host=self.test_host)
         rv = self.client.get(reverse('event_details', args=[event.slug]))
         assert rv.status_code == 200
+
+    def test_open_TTT_applications_form_validation(self):
+        """Ensure validation of `open_TTT_applications` field."""
+        data = {
+            'slug': '2018-09-02-open-applications',
+            'host': self.org_alpha.pk,
+            'tags': [Tag.objects.get(name='SWC').pk],
+            'invoice_status': 'unknown',
+            'open_TTT_applications': True,
+        }
+        form = EventForm(data)
+        self.assertFalse(form.is_valid())
+        self.assertIn('open_TTT_applications', form.errors.keys())
+
+        data['tags'] = [Tag.objects.get(name='TTT').pk]
+        form = EventForm(data)
+        self.assertTrue(form.is_valid())
 
 
 class TestEventNotes(TestBase):
