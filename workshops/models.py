@@ -252,9 +252,14 @@ class Membership(models.Model):
         return a - b
 
     @cached_property
-    def remaining_seats_instructor_training(self):
-        # TODO: implement later, when other models are changed
-        pass
+    def seats_instructor_training_utilized(self):
+        # count number of tasks that have this membership
+        return self.task_set.filter(role__name="learner").count()
+
+    @cached_property
+    def seats_instructor_training_remaining(self):
+        return (self.seats_instructor_training -
+                self.seats_instructor_training_utilized)
 
 #------------------------------------------------------------
 
