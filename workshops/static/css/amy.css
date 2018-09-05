@@ -103,3 +103,9 @@ table .additional-links-wider {
     display: inline-block;
     margin: 0 0.5rem;
 }
+
+
+/* enable showing of field errors - crispy forms and bootstrap 4 */
+.invalid-feedback {
+    display: block;
+}
