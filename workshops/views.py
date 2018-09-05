@@ -327,7 +327,11 @@ class AllMemberships(OnlyForAdminsMixin, AMYListView):
 
 
 class MembershipDetails(OnlyForAdminsMixin, AMYDetailView):
-    queryset = Membership.objects.all()
+    queryset = (
+        Membership.objects
+                  .select_related('organization')
+                  .prefetch_related('task_set')
+    )
     context_object_name = 'membership'
     template_name = 'workshops/membership.html'
     pk_url_kwarg = 'membership_id'
