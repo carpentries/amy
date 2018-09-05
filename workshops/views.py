@@ -998,7 +998,11 @@ class AllEvents(OnlyForAdminsMixin, AMYListView):
 def event_details(request, slug):
     '''List details of a particular event.'''
     try:
-        event = Event.objects.prefetch_related('sponsorship_set', Prefetch(
+        sponsorship_prefetch = Prefetch(
+            'sponsorship_set',
+            queryset=Sponsorship.objects.select_related('contact')
+        )
+        task_prefetch = Prefetch(
             'task_set',
             to_attr='contacts',
             queryset=Task.objects.select_related('person').filter(
@@ -1007,26 +1011,29 @@ def event_details(request, slug):
                 Q(role__name='instructor')
             ).filter(person__may_contact=True)
             .exclude(Q(person__email='') | Q(person__email=None))
-        )).select_related('eventrequest', 'eventsubmission',
-                          'dcselforganizedeventrequest', 'assigned_to', 'host',
-                          'administrator').get(slug=slug)
+        )
+        event = (
+            Event.objects
+                 .prefetch_related(sponsorship_prefetch, task_prefetch)
+                 .select_related('eventrequest', 'eventsubmission',
+                                 'dcselforganizedeventrequest', 'assigned_to',
+                                 'host', 'administrator').get(slug=slug)
+        )
     except Event.DoesNotExist:
         raise Http404('Event matching query does not exist.')
 
-    tasks = Task.objects \
-                .filter(event__id=event.id) \
-                .select_related('person', 'role') \
-                .annotate(person_is_swc_instructor=Sum(
-                              Case(When(person__badges__name='swc-instructor',
-                                        then=1),
-                                   default=0,
-                                   output_field=IntegerField())),
-                          person_is_dc_instructor=Sum(
-                              Case(When(person__badges__name='dc-instructor',
-                                        then=1),
-                                   default=0,
-                                   output_field=IntegerField()))) \
-                .order_by('role__name')
+    person_instructor_badges = Prefetch(
+        'person__badges',
+        to_attr='person_instructor_badges',
+        queryset=Badge.objects.filter(name__in=Badge.INSTRUCTOR_BADGES)
+    )
+    tasks = (
+        Task.objects
+            .filter(event__id=event.id)
+            .select_related('event', 'person', 'role')
+            .prefetch_related(person_instructor_badges)
+            .order_by('role__name')
+    )
     todos = event.todoitem_set.all()
     todo_form = SimpleTodoForm(prefix='todo', initial={
         'event': event,
