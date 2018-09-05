@@ -1156,12 +1156,18 @@ class Event(AssignmentMixin, models.Model):
         default=False,
         help_text='Indicate if metadata changed since last check')
 
+    member_sites = models.ManyToManyField(
+        Membership,
+        help_text='TTT Member organizations',
+        verbose_name='Memberships associated with this <b>TTT</b> event.',
+        blank=True,
+    )
     # defines if people not associated with specific member sites can take part
     # in TTT event
     open_TTT_applications = models.BooleanField(
         null=False, blank=True, default=False,
         verbose_name="TTT Open applications",
-        help_text="If this event is TTT, you can mark it as 'open "
+        help_text="If this event is <b>TTT</b>, you can mark it as 'open "
                   "applications' which means that people not associated with "
                   "this event's member sites can also take part in this event."
     )
@@ -1275,15 +1281,25 @@ class Event(AssignmentMixin, models.Model):
 
     def clean(self):
         """Additional model validation."""
-        # applies only to saved model instances!!! Otherwise it's impossible
-        # to access M2M objects
+
+        # Applies only to saved model instances!!! Otherwise it's impossible
+        # to access M2M objects.
         if self.pk:
+            errors = dict()
             has_TTT = self.tags.filter(name='TTT')
+
             if self.open_TTT_applications and not has_TTT:
-                raise ValidationError(
-                    {'open_TTT_applications':
-                        'You cannot open applications on non-TTT event.'}
+                errors['open_TTT_applications'] = (
+                    'You cannot open applications on non-TTT event.'
                 )
+
+            if self.member_sites.all() and not has_TTT:
+                errors['member_sites'] = (
+                    'You must use "TTT" tag to apply any member sites.'
+                )
+
+            if errors:
+                raise ValidationError(errors)
         # additional validation before the object is saved is in EventForm
 
     def save(self, *args, **kwargs):
@@ -1865,6 +1881,9 @@ class BadgeQuerySet(models.query.QuerySet):
 
 class Badge(models.Model):
     '''Represent a badge we award.'''
+
+    # just for easier access outside `models.py`
+    INSTRUCTOR_BADGES = BadgeQuerySet.INSTRUCTOR_BADGES
 
     name       = models.CharField(max_length=STR_MED, unique=True)
     title      = models.CharField(max_length=STR_MED)

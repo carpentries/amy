@@ -466,6 +466,7 @@ class EventForm(forms.ModelForm):
         'administrator',
         'assigned_to',
         'tags',
+        'member_sites',
         'open_TTT_applications',
         'url',
         'language',
@@ -509,13 +510,13 @@ class EventForm(forms.ModelForm):
             raise forms.ValidationError('Must not be earlier than start date.')
         return end
 
-    def clean_open_TTT_applications(self):
-        """Ensure we have a TTT tag applied to the event, if the
-        `open_TTT_applications` is True."""
-        open_TTT_applications = self.cleaned_data['open_TTT_applications']
-        if open_TTT_applications and 'tags' in self.cleaned_data:
-            tags = self.cleaned_data['tags']
-
+    def clean_member_sites(self):
+        """Ensure there's a TTT tag applied to the event, if user selected
+        some `member_sites`."""
+        member_sites = self.cleaned_data['member_sites']
+        tags = self.cleaned_data.get('tags', None)
+        error_msg = 'You cannot assign member sites to a non-TTT event.'
+        if member_sites and tags:
             # find TTT tag
             TTT_tag = False
             for tag in tags:
@@ -524,11 +525,34 @@ class EventForm(forms.ModelForm):
                     break
 
             if not TTT_tag:
-                raise forms.ValidationError('You cannot open applications on '
-                                            'a non-TTT event.')
-        elif 'tags' not in self.cleaned_data:
-            raise forms.ValidationError('You cannot open applications on '
-                                        'a non-TTT event.')
+                raise forms.ValidationError(error_msg)
+
+        elif member_sites:
+            raise forms.ValidationError(error_msg)
+
+        return member_sites
+
+    def clean_open_TTT_applications(self):
+        """Ensure there's a TTT tag applied to the event, if the
+        `open_TTT_applications` is True."""
+        open_TTT_applications = self.cleaned_data['open_TTT_applications']
+        tags = self.cleaned_data.get('tags', None)
+        error_msg = 'You cannot open applications on a non-TTT event.'
+
+        if open_TTT_applications and tags:
+            # find TTT tag
+            TTT_tag = False
+            for tag in tags:
+                if tag.name == 'TTT':
+                    TTT_tag = True
+                    break
+
+            if not TTT_tag:
+                raise forms.ValidationError(error_msg)
+
+        elif open_TTT_applications:
+            raise forms.ValidationError(error_msg)
+
         return open_TTT_applications
 
     class Meta:
@@ -537,7 +561,7 @@ class EventForm(forms.ModelForm):
                   'assigned_to', 'tags', 'url', 'language', 'reg_key', 'venue',
                   'admin_fee', 'invoice_status', 'attendance', 'contact',
                   'notes', 'country', 'address', 'latitude', 'longitude',
-                  'open_TTT_applications', )
+                  'open_TTT_applications', 'member_sites', )
         widgets = {
             'attendance': TextInput,
             'latitude': TextInput,
@@ -546,6 +570,10 @@ class EventForm(forms.ModelForm):
             'tags': SelectMultiple(attrs={
                 'size': Tag.ITEMS_VISIBLE_IN_SELECT_WIDGET
             }),
+            'member_sites': ModelSelect2Multiple(
+                url='membership-lookup',
+                attrs=SIDEBAR_DAL_WIDTH,
+            ),
         }
 
     class Media:
@@ -572,7 +600,7 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm):
         label=Task._meta.get_field('seat_membership').verbose_name,
         help_text=SEAT_MEMBERSHIP_HELP_TEXT,
         required=False,
-        queryset=Membership.objects.none(),
+        queryset=Membership.objects.all(),
         widget=ModelSelect2(url='membership-lookup', attrs=SIDEBAR_DAL_WIDTH)
     )
 
@@ -819,7 +847,9 @@ class MembershipForm(forms.ModelForm):
         fields = [
             'organization', 'variant', 'agreement_start', 'agreement_end',
             'contribution_type', 'workshops_without_admin_fee_per_agreement',
-            'self_organized_workshops_per_agreement', 'notes',
+            'self_organized_workshops_per_agreement',
+            'seats_instructor_training',
+            'notes',
         ]
 
 

@@ -9,8 +9,17 @@ from django.urls import reverse
 
 from ..management.commands.check_for_workshop_websites_updates import (
     Command as WebsiteUpdatesCommand)
-from ..models import (Event, Organization, Tag, Role, Task, Award, Badge,
-                      TodoItem)
+from ..models import (
+    Event,
+    Organization,
+    Tag,
+    Role,
+    Task,
+    Award,
+    Badge,
+    TodoItem,
+    Membership,
+)
 from ..forms import EventForm, EventsMergeForm
 from .base import TestBase
 
@@ -235,6 +244,33 @@ class TestEvent(TestBase):
         )
         assert event.repository_url == link
         assert event.website_url == link
+
+    def test_member_sites_validation(self):
+        event = Event.objects.create(
+            slug='test-event',
+            host=self.org_alpha,
+        )
+        member_site = Membership.objects.create(
+            variant='partner',
+            agreement_start=datetime(2018, 9, 1),
+            agreement_end=datetime(2019, 8, 31),
+            contribution_type='other',
+            workshops_without_admin_fee_per_agreement=None,
+            self_organized_workshops_per_agreement=None,
+            seats_instructor_training=50,
+            organization=self.org_alpha,
+        )
+
+        with self.assertRaises(ValidationError) as cm:
+            event.member_sites.add(member_site)
+            event.full_clean()
+        exc = cm.exception
+        self.assertIn('member_sites', exc.error_dict)
+
+        # now the validation should pass
+        event.tags.set([self.TTT_tag])
+        event.full_clean()
+        self.assertIn(member_site, event.member_sites.all())
 
     def test_open_TTT_applications_validation(self):
         event = Event.objects.create(
@@ -627,6 +663,35 @@ class TestEventViews(TestBase):
                                      host=self.test_host)
         rv = self.client.get(reverse('event_details', args=[event.slug]))
         assert rv.status_code == 200
+
+    def test_member_sites_form_validation(self):
+        """"""
+        member_site = Membership.objects.create(
+            variant='partner',
+            agreement_start=datetime(2018, 9, 1),
+            agreement_end=datetime(2019, 8, 31),
+            contribution_type='other',
+            workshops_without_admin_fee_per_agreement=None,
+            self_organized_workshops_per_agreement=None,
+            seats_instructor_training=50,
+            organization=self.org_alpha,
+        )
+
+        data = {
+            'slug': '2018-09-02-open-applications',
+            'host': self.org_alpha.pk,
+            'tags': [Tag.objects.get(name='SWC').pk],
+            'invoice_status': 'unknown',
+            'member_sites': [member_site.pk],
+        }
+
+        form = EventForm(data)
+        self.assertFalse(form.is_valid())
+        self.assertIn('member_sites', form.errors.keys())
+
+        data['tags'] = [Tag.objects.get(name='TTT').pk]
+        form = EventForm(data)
+        self.assertTrue(form.is_valid())
 
     def test_open_TTT_applications_form_validation(self):
         """Ensure validation of `open_TTT_applications` field."""
