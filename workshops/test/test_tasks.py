@@ -207,22 +207,13 @@ class TestTask(TestBase):
             seat_membership=None,
             seat_open_training=True,
         )
-
-        # first good task
+        # wrong task - the event is missing member sites
         task3 = Task(
             event=self.ttt_event_open,
             person=self.test_person_2,
             role=self.learner,
             seat_membership=self.membership,
             seat_open_training=False,
-        )
-        # second good task
-        task4 = Task(
-            event=self.ttt_event_open,
-            person=self.test_person_2,
-            role=self.learner,
-            seat_membership=None,
-            seat_open_training=True,
         )
 
         with self.assertRaises(ValidationError) as cm:
@@ -237,8 +228,32 @@ class TestTask(TestBase):
         self.assertIn('seat_open_training', exception.error_dict)
         self.assertNotIn('seat_membership', exception.error_dict)
 
-        task3.full_clean()
+        with self.assertRaises(ValidationError) as cm:
+            task3.full_clean()
+        exception = cm.exception
+        self.assertIn('seat_membership', exception.error_dict)
+        self.assertNotIn('seat_open_training', exception.error_dict)
+
+        # finally, a task with member site defined
+        self.ttt_event_open.member_sites.add(self.membership)
+        # first good task
+        task4 = Task(
+            event=self.ttt_event_open,
+            person=self.test_person_2,
+            role=self.learner,
+            seat_membership=self.membership,
+            seat_open_training=False,
+        )
+        # second good task
+        task5 = Task(
+            event=self.ttt_event_open,
+            person=self.test_person_2,
+            role=self.learner,
+            seat_membership=None,
+            seat_open_training=True,
+        )
         task4.full_clean()
+        task5.full_clean()
 
     def test_open_applications_TTT(self):
         """Ensure events with TTT tag but without open application flag raise

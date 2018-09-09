@@ -5,6 +5,7 @@ from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Div, HTML, Submit, Button, Field
 from crispy_forms.bootstrap import AccordionGroup, Accordion
+from dal import forward
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
@@ -601,7 +602,11 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm):
         help_text=SEAT_MEMBERSHIP_HELP_TEXT,
         required=False,
         queryset=Membership.objects.all(),
-        widget=ModelSelect2(url='membership-lookup', attrs=SIDEBAR_DAL_WIDTH)
+        widget=ModelSelect2(
+            url='membership-lookup',
+            attrs=SIDEBAR_DAL_WIDTH,
+            forward=('event', ),
+        )
     )
 
     class Meta:

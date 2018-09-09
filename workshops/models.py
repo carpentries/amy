@@ -1820,6 +1820,13 @@ class Task(models.Model):
                 "Cannot associate membership when the event has no TTT tag",
                 code='invalid',
             )
+        elif has_ttt and self.seat_membership and \
+                self.seat_membership not in self.event.member_sites.all():
+            errors['seat_membership'] = ValidationError(
+                "You must select one of event's member sites.",
+                code='invalid',
+            )
+
         if not has_ttt and self.seat_open_training:
             errors['seat_open_training'] = ValidationError(
                 "Cannot mark this person as open applicant, because the event "
@@ -1832,6 +1839,7 @@ class Task(models.Model):
                 "event is not marked as open applications.",
                 code='invalid',
             )
+
         if errors:
             raise ValidationError(errors)
 
