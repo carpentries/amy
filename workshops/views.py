@@ -3090,6 +3090,8 @@ def all_trainingrequests(request):
         match_form = BulkMatchTrainingRequestForm(request.POST)
 
         if match_form.is_valid():
+            member_site = match_form.cleaned_data['seat_membership']
+
             # Perform bulk match
             for r in match_form.cleaned_data['requests']:
                 # automatically accept this request
@@ -3100,7 +3102,26 @@ def all_trainingrequests(request):
                 Task.objects.get_or_create(
                     person=r.person,
                     role=Role.objects.get(name='learner'),
-                    event=match_form.cleaned_data['event'])
+                    event=match_form.cleaned_data['event'],
+                    seat_membership=member_site)
+
+            requests_count = len(match_form.cleaned_data['requests'])
+            today = datetime.date.today()
+
+            if member_site:
+                if member_site.seats_instructor_training_remaining - requests_count <= 0:
+                    messages.warning(
+                        request,
+                        'Membership "{}" is using more training seats than it\'s '
+                        'been allowed.'.format(str(member_site)),
+                    )
+
+                # check if membership is active
+                if not (member_site.agreement_start <= today <= member_site.agreement_end):
+                    messages.warning(
+                        request,
+                        'Membership "{}" is not active.'.format(str(member_site))
+                    )
 
             messages.success(request, 'Successfully accepted and matched '
                                       'selected people to training.')

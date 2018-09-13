@@ -1828,11 +1828,20 @@ class BulkMatchTrainingRequestForm(forms.Form):
         widget=ModelSelect2(url='ttt-event-lookup')
     )
 
+    seat_membership = forms.ModelChoiceField(
+        label='Membership seats',
+        required=False,
+        queryset=Membership.objects.all(),
+        help_text='Assigned users will take instructor seats from selected '
+                  'member site.',
+        widget=ModelSelect2(url='membership-lookup'),
+    )
+
     helper = BootstrapHelper(add_submit_button=False,
                              form_tag=False,
                              add_cancel_button=False)
     helper.layout = Layout(
-        'event',
+        'event', 'seat_membership',
     )
     helper.add_input(
         Submit(
