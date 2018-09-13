@@ -12,6 +12,7 @@ from django.contrib.auth.decorators import (
     user_passes_test,
     login_required as django_login_required
 )
+from django.conf import settings
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import (
@@ -977,7 +978,8 @@ def redirect_with_next_support(request, *args, **kwargs):
     does the same. """
 
     next_url = request.GET.get('next', None)
-    if next_url is not None and is_safe_url(next_url):
+    if next_url is not None and is_safe_url(next_url,
+                                            allowed_hosts=settings.ALLOWED_HOSTS):
         return redirect(next_url)
     else:
         return redirect(*args, **kwargs)
