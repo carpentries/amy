@@ -322,7 +322,22 @@ class AllMemberships(OnlyForAdminsMixin, AMYListView):
     context_object_name = 'all_memberships'
     template_name = 'workshops/all_memberships.html'
     filter_class = MembershipFilter
-    queryset = Membership.objects.all()
+    queryset = Membership.objects.annotate(
+        instructor_training_seats_total=(
+            F('seats_instructor_training') +
+            F('additional_instructor_training_seats')
+        ),
+        # for future reference, in case someone would want to implement
+        # this annotation
+        # instructor_training_seats_utilized=(
+        #     Count('task', filter=Q(task__role__name='learner'))
+        # ),
+        instructor_training_seats_remaining=(
+            F('seats_instructor_training') +
+            F('additional_instructor_training_seats') -
+            Count('task', filter=Q(task__role__name='learner'))
+        ),
+    )
     title = 'All Memberships'
 
 

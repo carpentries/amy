@@ -60,7 +60,7 @@
     <th>Utilized:</th>
     <td>{{ membership.seats_instructor_training_utilized }}</td>
   </tr>
-  <tr {% if membership.seats_instructor_training_remaining <= 0 %}class="table-danger"{% endif %}>
+  <tr {% if membership.seats_instructor_training_remaining <= 0 and membership.seats_instructor_training_total > 0 or membership.seats_instructor_training_remaining < 0 and membership.seats_instructor_training_total == 0 %}class="table-danger"{% endif %}>
     <th>Remaining:</th>
     <td>{{ membership.seats_instructor_training_remaining }}</td>
   </tr>
