@@ -467,7 +467,6 @@ class EventForm(forms.ModelForm):
         'administrator',
         'assigned_to',
         'tags',
-        'member_sites',
         'open_TTT_applications',
         'url',
         'language',
@@ -511,28 +510,6 @@ class EventForm(forms.ModelForm):
             raise forms.ValidationError('Must not be earlier than start date.')
         return end
 
-    def clean_member_sites(self):
-        """Ensure there's a TTT tag applied to the event, if user selected
-        some `member_sites`."""
-        member_sites = self.cleaned_data['member_sites']
-        tags = self.cleaned_data.get('tags', None)
-        error_msg = 'You cannot assign member sites to a non-TTT event.'
-        if member_sites and tags:
-            # find TTT tag
-            TTT_tag = False
-            for tag in tags:
-                if tag.name == 'TTT':
-                    TTT_tag = True
-                    break
-
-            if not TTT_tag:
-                raise forms.ValidationError(error_msg)
-
-        elif member_sites:
-            raise forms.ValidationError(error_msg)
-
-        return member_sites
-
     def clean_open_TTT_applications(self):
         """Ensure there's a TTT tag applied to the event, if the
         `open_TTT_applications` is True."""
@@ -562,7 +539,7 @@ class EventForm(forms.ModelForm):
                   'assigned_to', 'tags', 'url', 'language', 'reg_key', 'venue',
                   'admin_fee', 'invoice_status', 'attendance', 'contact',
                   'notes', 'country', 'address', 'latitude', 'longitude',
-                  'open_TTT_applications', 'member_sites', )
+                  'open_TTT_applications', )
         widgets = {
             'attendance': TextInput,
             'latitude': TextInput,
@@ -571,10 +548,6 @@ class EventForm(forms.ModelForm):
             'tags': SelectMultiple(attrs={
                 'size': Tag.ITEMS_VISIBLE_IN_SELECT_WIDGET
             }),
-            'member_sites': ModelSelect2Multiple(
-                url='membership-lookup',
-                attrs=SIDEBAR_DAL_WIDTH,
-            ),
         }
 
     class Media:
@@ -605,7 +578,6 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm):
         widget=ModelSelect2(
             url='membership-lookup',
             attrs=SIDEBAR_DAL_WIDTH,
-            forward=('event', ),
         )
     )
 
@@ -854,6 +826,7 @@ class MembershipForm(forms.ModelForm):
             'contribution_type', 'workshops_without_admin_fee_per_agreement',
             'self_organized_workshops_per_agreement',
             'seats_instructor_training',
+            'additional_instructor_training_seats',
             'notes',
         ]
 

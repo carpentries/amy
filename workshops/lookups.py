@@ -52,15 +52,6 @@ class MembershipLookupView(OnlyForAdminsNoRedirectMixin,
     def get_queryset(self):
         results = models.Membership.objects.all()
 
-        # filter by event - in case of existing event, only Memberships
-        # from its `member_sites` are allowed
-        try:
-            event_id = int(self.forwarded['event'])
-        except (TypeError, ValueError, KeyError):
-            event_id = None
-        if event_id is not None:
-            results = results.filter(event=event_id)
-
         if self.q:
             # parse query into date
             try:
