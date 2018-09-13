@@ -1023,6 +1023,10 @@ def event_details(request, slug):
                                  'dcselforganizedeventrequest', 'assigned_to',
                                  'host', 'administrator').get(slug=slug)
         )
+        member_sites = (
+            Membership.objects.filter(task__event=event)
+                              .distinct()
+        )
     except Event.DoesNotExist:
         raise Http404('Event matching query does not exist.')
 
@@ -1078,6 +1082,7 @@ def event_details(request, slug):
         'title': 'Event {0}'.format(event),
         'event': event,
         'tasks': tasks,
+        'member_sites': member_sites,
         'todo_form': todo_form,
         'todos': todos,
         'all_emails' : tasks.filter(person__may_contact=True)\
