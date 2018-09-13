@@ -1574,6 +1574,39 @@ class TaskCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
     model = Task
     form_class = TaskForm
 
+    def post(self, request, *args, **kwargs):
+        """Save request in `self.request`."""
+        self.request = request
+        return super().post(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        """Check associated membership remaining seats and validity."""
+        seat_membership = form.cleaned_data['seat_membership']
+        if hasattr(self, 'request') and seat_membership is not None:
+            # check number of available seats
+            if seat_membership.seats_instructor_training_remaining == 1:
+                messages.warning(
+                    self.request,
+                    'Membership "{}" has 0 instructor training seats'
+                    ' available.'.format(str(seat_membership))
+                )
+            if seat_membership.seats_instructor_training_remaining < 1:
+                messages.warning(
+                    self.request,
+                    'Membership "{}" is using more training seats'
+                    ' than it\'s been allowed.'.format(str(seat_membership))
+                )
+
+            today = datetime.date.today()
+            # check if membership is active
+            if not (seat_membership.agreement_start <= today <= seat_membership.agreement_end):
+                messages.warning(
+                    self.request,
+                    'Membership "{}" is not active.'.format(str(seat_membership))
+                )
+
+        return super().form_valid(form)
+
 
 class TaskUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
                  AMYUpdateView):
