@@ -195,7 +195,14 @@ class Membership(models.Model):
     # according to Django docs, PositiveIntegerFields accept 0 as valid as well
     seats_instructor_training = models.PositiveIntegerField(
         null=False, blank=False, default=0,
+        verbose_name="Instructor training seats",
         help_text="Number of seats in instructor trainings",
+    )
+    additional_instructor_training_seats = models.PositiveIntegerField(
+        null=False, blank=False, default=0,
+        verbose_name="Additional instructor training seats",
+        help_text="Use this field if you want to grant more seats than "
+                  "the agreement provides for.",
     )
     notes = models.TextField(default="", blank=True)
     organization = models.ForeignKey(Organization, null=False, blank=False,
@@ -255,13 +262,18 @@ class Membership(models.Model):
         return a - b
 
     @cached_property
+    def seats_instructor_training_total(self):
+        return (self.additional_instructor_training_seats +
+                self.seats_instructor_training)
+
+    @cached_property
     def seats_instructor_training_utilized(self):
         # count number of tasks that have this membership
         return self.task_set.filter(role__name="learner").count()
 
     @cached_property
     def seats_instructor_training_remaining(self):
-        return (self.seats_instructor_training -
+        return (self.seats_instructor_training_total -
                 self.seats_instructor_training_utilized)
 
 #------------------------------------------------------------
@@ -1156,12 +1168,6 @@ class Event(AssignmentMixin, models.Model):
         default=False,
         help_text='Indicate if metadata changed since last check')
 
-    member_sites = models.ManyToManyField(
-        Membership,
-        help_text='TTT Member organizations',
-        verbose_name='Memberships associated with this <b>TTT</b> event.',
-        blank=True,
-    )
     # defines if people not associated with specific member sites can take part
     # in TTT event
     open_TTT_applications = models.BooleanField(
@@ -1291,11 +1297,6 @@ class Event(AssignmentMixin, models.Model):
             if self.open_TTT_applications and not has_TTT:
                 errors['open_TTT_applications'] = (
                     'You cannot open applications on non-TTT event.'
-                )
-
-            if self.member_sites.all() and not has_TTT:
-                errors['member_sites'] = (
-                    'You must use "TTT" tag to apply any member sites.'
                 )
 
             if errors:
@@ -1818,12 +1819,6 @@ class Task(models.Model):
         if not has_ttt and self.seat_membership is not None:
             errors['seat_membership'] = ValidationError(
                 "Cannot associate membership when the event has no TTT tag",
-                code='invalid',
-            )
-        elif has_ttt and self.seat_membership and \
-                self.seat_membership not in self.event.member_sites.all():
-            errors['seat_membership'] = ValidationError(
-                "You must select one of event's member sites.",
                 code='invalid',
             )
 
