@@ -1,3 +1,4 @@
+from datetime import date
 import re
 
 from dal import autocomplete
@@ -250,6 +251,15 @@ class OrganizationFilter(AMYFilterSet):
         ]
 
 
+def filter_training_seats_only(queryset, name, active):
+    """Limit Memberships to only active entries."""
+    if active:
+        today = date.today()
+        return queryset.filter(agreement_start__gte=today,
+                               agreement_end__lte=today)
+    else:
+        return queryset
+
 def filter_training_seats_only(queryset, name, seats):
     """Limit Memberships to only entries with some training seats allowed."""
     if seats:
@@ -259,7 +269,7 @@ def filter_training_seats_only(queryset, name, seats):
 
 
 def filter_nonpositive_remaining_seats(queryset, name, seats):
-    """Limit Memberships to only entries with some training seats allowed."""
+    """Limit Memberships to only entries with negative remaining seats."""
     if seats:
         return queryset.filter(instructor_training_seats_remaining__lt=0)
     else:
@@ -278,6 +288,11 @@ class MembershipFilter(AMYFilterSet):
 
     CONTRIBUTION_CHOICES = (('', 'Any'),) + Membership.CONTRIBUTION_CHOICES
     contribution_type = django_filters.ChoiceFilter(choices=CONTRIBUTION_CHOICES)
+
+    active_only = django_filters.BooleanFilter(
+        label='Only show active memberships',
+        method=filter_training_seats_only,
+        widget=widgets.CheckboxInput)
 
     training_seats_only = django_filters.BooleanFilter(
         label='Only show memberships with non-zero allowed training seats',

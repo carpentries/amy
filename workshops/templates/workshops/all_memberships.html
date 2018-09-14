@@ -21,7 +21,7 @@
       </tr>
       {% for membership in all_memberships %}
         <tr>
-          <td>{{ membership.organization.fullname }}</td>
+          <td><a href="{{ membership.organization.get_absolute_url }}">{{ membership.organization.fullname }}</a></td>
           <td>{{ membership.get_variant_display }}</td>
           <td>{{ membership.agreement_start|date:'Y-m-d' }}</td>
           <td>{{ membership.agreement_end|date:'Y-m-d'}}</td>
