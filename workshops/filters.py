@@ -323,6 +323,47 @@ class MembershipFilter(AMYFilterSet):
         ]
 
 
+class MembershipTrainingsFilter(AMYFilterSet):
+    organization_name = django_filters.CharFilter(
+        label='Organization name',
+        field_name='organization__fullname',
+        lookup_expr='icontains',
+    )
+
+    active_only = django_filters.BooleanFilter(
+        label='Only show active memberships',
+        method=filter_training_seats_only,
+        widget=widgets.CheckboxInput)
+
+    training_seats_only = django_filters.BooleanFilter(
+        label='Only show memberships with non-zero allowed training seats',
+        method=filter_training_seats_only,
+        widget=widgets.CheckboxInput)
+
+    nonpositive_remaining_seats_only = django_filters.BooleanFilter(
+        label='Only show memberships with zero or less remaining seats',
+        method=filter_nonpositive_remaining_seats,
+        widget=widgets.CheckboxInput)
+
+    order_by = django_filters.OrderingFilter(
+        fields=(
+            'organization__fullname',
+            'organization__domain',
+            'agreement_start',
+            'agreement_end',
+            'instructor_training_seats_total',
+            'instructor_training_seats_utilized',
+            'instructor_training_seats_remaining',
+        ),
+    )
+
+    class Meta:
+        model = Membership
+        fields = [
+            'organization_name',
+        ]
+
+
 def filter_taught_workshops(queryset, name, values):
     """Limit Persons to only instructors from events with specific tags.
 

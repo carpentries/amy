@@ -65,6 +65,7 @@ from workshops.filters import (
     EventFilter,
     OrganizationFilter,
     MembershipFilter,
+    MembershipTrainingsFilter,
     PersonFilter,
     TaskFilter,
     AirportFilter,
@@ -1972,47 +1973,6 @@ def search(request):
 #------------------------------------------------------------
 
 @admin_required
-def instructors_by_date(request):
-    '''Show who taught between begin_date and end_date.'''
-
-    form = DebriefForm()
-    if 'begin_date' in request.GET and 'end_date' in request.GET:
-        form = DebriefForm(request.GET)
-
-    if form.is_valid():
-        start_date = form.cleaned_data['begin_date']
-        end_date = form.cleaned_data['end_date']
-        mode = form.cleaned_data['mode']
-        rvs = ReportsViewSet()
-        tasks = rvs.instructors_by_time_queryset(
-            start_date, end_date,
-            only_TTT=(mode == 'TTT'),
-            only_non_TTT=(mode == 'nonTTT'),
-        )
-        emails = tasks.filter(person__may_contact=True) \
-                      .exclude(person__email=None) \
-                      .values_list('person__email', flat=True)
-    else:
-        start_date = None
-        end_date = None
-        tasks = None
-        emails = None
-        mode = 'all'
-
-    context = {
-        'title': 'List of instructors by time period',
-        'form': form,
-        'all_tasks': tasks,
-        'emails': emails,
-        'start_date': start_date,
-        'end_date': end_date,
-        'mode': mode,
-    }
-    return render(request, 'workshops/instructors_by_date.html', context)
-
-#------------------------------------------------------------
-
-@admin_required
 def export_badges(request):
     title = 'Export Badges'
 
@@ -2063,6 +2023,48 @@ def export_members(request):
     return render(request, 'workshops/export.html', context)
 
 #------------------------------------------------------------
+#--------------------- R E P O R T S ------------------------
+#------------------------------------------------------------
+
+@admin_required
+def instructors_by_date(request):
+    '''Show who taught between begin_date and end_date.'''
+
+    form = DebriefForm()
+    if 'begin_date' in request.GET and 'end_date' in request.GET:
+        form = DebriefForm(request.GET)
+
+    if form.is_valid():
+        start_date = form.cleaned_data['begin_date']
+        end_date = form.cleaned_data['end_date']
+        mode = form.cleaned_data['mode']
+        rvs = ReportsViewSet()
+        tasks = rvs.instructors_by_time_queryset(
+            start_date, end_date,
+            only_TTT=(mode == 'TTT'),
+            only_non_TTT=(mode == 'nonTTT'),
+        )
+        emails = tasks.filter(person__may_contact=True) \
+                      .exclude(person__email=None) \
+                      .values_list('person__email', flat=True)
+    else:
+        start_date = None
+        end_date = None
+        tasks = None
+        emails = None
+        mode = 'all'
+
+    context = {
+        'title': 'List of instructors by time period',
+        'form': form,
+        'all_tasks': tasks,
+        'emails': emails,
+        'start_date': start_date,
+        'end_date': end_date,
+        'mode': mode,
+    }
+    return render(request, 'workshops/instructors_by_date.html', context)
+
 
 @admin_required
 def workshops_over_time(request):
@@ -2141,6 +2143,41 @@ def all_activity_over_time(request):
         'data': data,
     }
     return render(request, 'workshops/all_activity_over_time.html', context)
+
+
+@admin_required
+def membership_trainings_stats(request):
+    """Display basic statistics for memberships and instructor trainings."""
+    today = datetime.date.today()
+    data = (
+        Membership.objects
+            # .filter(agreement_end__gte=today, agreement_start__lte=today)
+            .select_related('organization')
+            .prefetch_related('task_set')
+            .annotate(
+                instructor_training_seats_total=(
+                    F('seats_instructor_training') +
+                    F('additional_instructor_training_seats')
+                ),
+                instructor_training_seats_utilized=(
+                    Count('task', filter=Q(task__role__name='learner'))
+                ),
+                instructor_training_seats_remaining=(
+                    F('seats_instructor_training') +
+                    F('additional_instructor_training_seats') -
+                    Count('task', filter=Q(task__role__name='learner'))
+                ),
+            )
+    )
+
+    filter_ = MembershipTrainingsFilter(request.GET, data)
+    paginated = get_pagination_items(request, filter_.qs)
+    context = {
+        'title': 'Membership trainings statistics',
+        'data': paginated,
+        'filter': filter_,
+    }
+    return render(request, 'workshops/membership_trainings_stats.html', context)
 
 
 @admin_required
