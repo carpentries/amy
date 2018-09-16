@@ -33,6 +33,7 @@ class TestMembership(TestBase):
             workshops_without_admin_fee_per_agreement=10,
             self_organized_workshops_per_agreement=20,
             seats_instructor_training=25,
+            additional_instructor_training_seats=3,
             organization=self.org_beta,
         )
 
@@ -164,8 +165,11 @@ class TestMembership(TestBase):
             self.current.seats_instructor_training, 25
         )
         self.assertEqual(
+            self.current.additional_instructor_training_seats, 3
+        )
+        self.assertEqual(
             self.current.seats_instructor_training_utilized, 10
         )
         self.assertEqual(
-            self.current.seats_instructor_training_remaining, 15
+            self.current.seats_instructor_training_remaining, 18
         )
