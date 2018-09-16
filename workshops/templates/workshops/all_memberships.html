@@ -16,15 +16,17 @@
         <th>Start date</th>
         <th>End date</th>
         <th>Contribution</th>
+        <th>Remaining instructor training seats</th>
         <th class="additional-links"></th>
       </tr>
       {% for membership in all_memberships %}
         <tr>
-          <td>{{ membership.organization.fullname }}</td>
+          <td><a href="{{ membership.organization.get_absolute_url }}">{{ membership.organization.fullname }}</a></td>
           <td>{{ membership.get_variant_display }}</td>
           <td>{{ membership.agreement_start|date:'Y-m-d' }}</td>
           <td>{{ membership.agreement_end|date:'Y-m-d'}}</td>
           <td>{{ membership.get_contribution_type_display }}</td>
+          <td {% if membership.instructor_training_seats_remaining <= 0 and membership.instructor_training_seats_total > 0 or membership.instructor_training_seats_remaining < 0 and membership.instructor_training_seats_total == 0 %}class="table-danger"{% endif %}>{{ membership.instructor_training_seats_remaining }}</td>
           <td>
             <a href="{% url 'membership_details' membership.pk %}" title="View membership"><i class="fas fa-info-circle"></i></a>
             &nbsp;

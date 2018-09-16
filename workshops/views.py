@@ -65,6 +65,7 @@ from workshops.filters import (
     EventFilter,
     OrganizationFilter,
     MembershipFilter,
+    MembershipTrainingsFilter,
     PersonFilter,
     TaskFilter,
     AirportFilter,
@@ -322,12 +323,31 @@ class AllMemberships(OnlyForAdminsMixin, AMYListView):
     context_object_name = 'all_memberships'
     template_name = 'workshops/all_memberships.html'
     filter_class = MembershipFilter
-    queryset = Membership.objects.all()
+    queryset = Membership.objects.annotate(
+        instructor_training_seats_total=(
+            F('seats_instructor_training') +
+            F('additional_instructor_training_seats')
+        ),
+        # for future reference, in case someone would want to implement
+        # this annotation
+        # instructor_training_seats_utilized=(
+        #     Count('task', filter=Q(task__role__name='learner'))
+        # ),
+        instructor_training_seats_remaining=(
+            F('seats_instructor_training') +
+            F('additional_instructor_training_seats') -
+            Count('task', filter=Q(task__role__name='learner'))
+        ),
+    )
     title = 'All Memberships'
 
 
 class MembershipDetails(OnlyForAdminsMixin, AMYDetailView):
-    queryset = Membership.objects.all()
+    queryset = (
+        Membership.objects
+                  .select_related('organization')
+                  .prefetch_related('task_set')
+    )
     context_object_name = 'membership'
     template_name = 'workshops/membership.html'
     pk_url_kwarg = 'membership_id'
@@ -998,7 +1018,11 @@ class AllEvents(OnlyForAdminsMixin, AMYListView):
 def event_details(request, slug):
     '''List details of a particular event.'''
     try:
-        event = Event.objects.prefetch_related('sponsorship_set', Prefetch(
+        sponsorship_prefetch = Prefetch(
+            'sponsorship_set',
+            queryset=Sponsorship.objects.select_related('contact')
+        )
+        task_prefetch = Prefetch(
             'task_set',
             to_attr='contacts',
             queryset=Task.objects.select_related('person').filter(
@@ -1007,26 +1031,33 @@ def event_details(request, slug):
                 Q(role__name='instructor')
             ).filter(person__may_contact=True)
             .exclude(Q(person__email='') | Q(person__email=None))
-        )).select_related('eventrequest', 'eventsubmission',
-                          'dcselforganizedeventrequest', 'assigned_to', 'host',
-                          'administrator').get(slug=slug)
+        )
+        event = (
+            Event.objects
+                 .prefetch_related(sponsorship_prefetch, task_prefetch)
+                 .select_related('eventrequest', 'eventsubmission',
+                                 'dcselforganizedeventrequest', 'assigned_to',
+                                 'host', 'administrator').get(slug=slug)
+        )
+        member_sites = (
+            Membership.objects.filter(task__event=event)
+                              .distinct()
+        )
     except Event.DoesNotExist:
         raise Http404('Event matching query does not exist.')
 
-    tasks = Task.objects \
-                .filter(event__id=event.id) \
-                .select_related('person', 'role') \
-                .annotate(person_is_swc_instructor=Sum(
-                              Case(When(person__badges__name='swc-instructor',
-                                        then=1),
-                                   default=0,
-                                   output_field=IntegerField())),
-                          person_is_dc_instructor=Sum(
-                              Case(When(person__badges__name='dc-instructor',
-                                        then=1),
-                                   default=0,
-                                   output_field=IntegerField()))) \
-                .order_by('role__name')
+    person_instructor_badges = Prefetch(
+        'person__badges',
+        to_attr='person_instructor_badges',
+        queryset=Badge.objects.filter(name__in=Badge.INSTRUCTOR_BADGES)
+    )
+    tasks = (
+        Task.objects
+            .filter(event__id=event.id)
+            .select_related('event', 'person', 'role')
+            .prefetch_related(person_instructor_badges)
+            .order_by('role__name')
+    )
     todos = event.todoitem_set.all()
     todo_form = SimpleTodoForm(prefix='todo', initial={
         'event': event,
@@ -1067,6 +1098,7 @@ def event_details(request, slug):
         'title': 'Event {0}'.format(event),
         'event': event,
         'tasks': tasks,
+        'member_sites': member_sites,
         'todo_form': todo_form,
         'todos': todos,
         'all_emails' : tasks.filter(person__may_contact=True)\
@@ -1558,6 +1590,39 @@ class TaskCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
     model = Task
     form_class = TaskForm
 
+    def post(self, request, *args, **kwargs):
+        """Save request in `self.request`."""
+        self.request = request
+        return super().post(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        """Check associated membership remaining seats and validity."""
+        seat_membership = form.cleaned_data['seat_membership']
+        if hasattr(self, 'request') and seat_membership is not None:
+            # check number of available seats
+            if seat_membership.seats_instructor_training_remaining == 1:
+                messages.warning(
+                    self.request,
+                    'Membership "{}" has 0 instructor training seats'
+                    ' available.'.format(str(seat_membership))
+                )
+            if seat_membership.seats_instructor_training_remaining < 1:
+                messages.warning(
+                    self.request,
+                    'Membership "{}" is using more training seats'
+                    ' than it\'s been allowed.'.format(str(seat_membership))
+                )
+
+            today = datetime.date.today()
+            # check if membership is active
+            if not (seat_membership.agreement_start <= today <= seat_membership.agreement_end):
+                messages.warning(
+                    self.request,
+                    'Membership "{}" is not active.'.format(str(seat_membership))
+                )
+
+        return super().form_valid(form)
+
 
 class TaskUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
                  AMYUpdateView):
@@ -1908,47 +1973,6 @@ def search(request):
 #------------------------------------------------------------
 
 @admin_required
-def instructors_by_date(request):
-    '''Show who taught between begin_date and end_date.'''
-
-    form = DebriefForm()
-    if 'begin_date' in request.GET and 'end_date' in request.GET:
-        form = DebriefForm(request.GET)
-
-    if form.is_valid():
-        start_date = form.cleaned_data['begin_date']
-        end_date = form.cleaned_data['end_date']
-        mode = form.cleaned_data['mode']
-        rvs = ReportsViewSet()
-        tasks = rvs.instructors_by_time_queryset(
-            start_date, end_date,
-            only_TTT=(mode == 'TTT'),
-            only_non_TTT=(mode == 'nonTTT'),
-        )
-        emails = tasks.filter(person__may_contact=True) \
-                      .exclude(person__email=None) \
-                      .values_list('person__email', flat=True)
-    else:
-        start_date = None
-        end_date = None
-        tasks = None
-        emails = None
-        mode = 'all'
-
-    context = {
-        'title': 'List of instructors by time period',
-        'form': form,
-        'all_tasks': tasks,
-        'emails': emails,
-        'start_date': start_date,
-        'end_date': end_date,
-        'mode': mode,
-    }
-    return render(request, 'workshops/instructors_by_date.html', context)
-
-#------------------------------------------------------------
-
-@admin_required
 def export_badges(request):
     title = 'Export Badges'
 
@@ -1999,6 +2023,48 @@ def export_members(request):
     return render(request, 'workshops/export.html', context)
 
 #------------------------------------------------------------
+#--------------------- R E P O R T S ------------------------
+#------------------------------------------------------------
+
+@admin_required
+def instructors_by_date(request):
+    '''Show who taught between begin_date and end_date.'''
+
+    form = DebriefForm()
+    if 'begin_date' in request.GET and 'end_date' in request.GET:
+        form = DebriefForm(request.GET)
+
+    if form.is_valid():
+        start_date = form.cleaned_data['begin_date']
+        end_date = form.cleaned_data['end_date']
+        mode = form.cleaned_data['mode']
+        rvs = ReportsViewSet()
+        tasks = rvs.instructors_by_time_queryset(
+            start_date, end_date,
+            only_TTT=(mode == 'TTT'),
+            only_non_TTT=(mode == 'nonTTT'),
+        )
+        emails = tasks.filter(person__may_contact=True) \
+                      .exclude(person__email=None) \
+                      .values_list('person__email', flat=True)
+    else:
+        start_date = None
+        end_date = None
+        tasks = None
+        emails = None
+        mode = 'all'
+
+    context = {
+        'title': 'List of instructors by time period',
+        'form': form,
+        'all_tasks': tasks,
+        'emails': emails,
+        'start_date': start_date,
+        'end_date': end_date,
+        'mode': mode,
+    }
+    return render(request, 'workshops/instructors_by_date.html', context)
+
 
 @admin_required
 def workshops_over_time(request):
@@ -2077,6 +2143,41 @@ def all_activity_over_time(request):
         'data': data,
     }
     return render(request, 'workshops/all_activity_over_time.html', context)
+
+
+@admin_required
+def membership_trainings_stats(request):
+    """Display basic statistics for memberships and instructor trainings."""
+    today = datetime.date.today()
+    data = (
+        Membership.objects
+            # .filter(agreement_end__gte=today, agreement_start__lte=today)
+            .select_related('organization')
+            .prefetch_related('task_set')
+            .annotate(
+                instructor_training_seats_total=(
+                    F('seats_instructor_training') +
+                    F('additional_instructor_training_seats')
+                ),
+                instructor_training_seats_utilized=(
+                    Count('task', filter=Q(task__role__name='learner'))
+                ),
+                instructor_training_seats_remaining=(
+                    F('seats_instructor_training') +
+                    F('additional_instructor_training_seats') -
+                    Count('task', filter=Q(task__role__name='learner'))
+                ),
+            )
+    )
+
+    filter_ = MembershipTrainingsFilter(request.GET, data)
+    paginated = get_pagination_items(request, filter_.qs)
+    context = {
+        'title': 'Membership trainings statistics',
+        'data': paginated,
+        'filter': filter_,
+    }
+    return render(request, 'workshops/membership_trainings_stats.html', context)
 
 
 @admin_required
@@ -3041,6 +3142,8 @@ def all_trainingrequests(request):
         match_form = BulkMatchTrainingRequestForm(request.POST)
 
         if match_form.is_valid():
+            member_site = match_form.cleaned_data['seat_membership']
+
             # Perform bulk match
             for r in match_form.cleaned_data['requests']:
                 # automatically accept this request
@@ -3051,7 +3154,26 @@ def all_trainingrequests(request):
                 Task.objects.get_or_create(
                     person=r.person,
                     role=Role.objects.get(name='learner'),
-                    event=match_form.cleaned_data['event'])
+                    event=match_form.cleaned_data['event'],
+                    seat_membership=member_site)
+
+            requests_count = len(match_form.cleaned_data['requests'])
+            today = datetime.date.today()
+
+            if member_site:
+                if member_site.seats_instructor_training_remaining - requests_count <= 0:
+                    messages.warning(
+                        request,
+                        'Membership "{}" is using more training seats than it\'s '
+                        'been allowed.'.format(str(member_site)),
+                    )
+
+                # check if membership is active
+                if not (member_site.agreement_start <= today <= member_site.agreement_end):
+                    messages.warning(
+                        request,
+                        'Membership "{}" is not active.'.format(str(member_site))
+                    )
 
             messages.success(request, 'Successfully accepted and matched '
                                       'selected people to training.')

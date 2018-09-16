@@ -51,6 +51,42 @@
     <th colspan="2">Notes:</th>
     <td>{% if membership.notes %}<pre>{{ membership.notes }}</pre>{% else %}&mdash;{% endif %}</td>
   </tr>
+  <tr>
+    <th rowspan="3" width="30%">Instructor training seats</th>
+    <th>Allowed:</th>
+    <td>{{ membership.seats_instructor_training_total }}</td>
+  </tr>
+  <tr>
+    <th>Utilized:</th>
+    <td>{{ membership.seats_instructor_training_utilized }}</td>
+  </tr>
+  <tr {% if membership.seats_instructor_training_remaining <= 0 and membership.seats_instructor_training_total > 0 or membership.seats_instructor_training_remaining < 0 and membership.seats_instructor_training_total == 0 %}class="table-danger"{% endif %}>
+    <th>Remaining:</th>
+    <td>{{ membership.seats_instructor_training_remaining }}</td>
+  </tr>
+  <tr>
+    <th>Instructor training seats &mdash; tasks:</th>
+    <td colspan="2">
+      {% if membership.task_set.all %}
+      <table class="w-100">
+        <tr>
+          <th>Event</th>
+          <th>Person</th>
+          <th>Task</th>
+        </tr>
+        {% for t in membership.task_set.all %}
+        <tr>
+          <td><a href="{{ t.event.get_absolute_url }}">{{ t.event }}</a></td>
+          <td><a href="{{ t.person.get_absolute_url }}">{{ t.person }}</a></td>
+          <td><a href="{{ t.task.get_absolute_url }}">{{ t }}</a></td>
+        </tr>
+        {% endfor %}
+      </table>
+      {% else %}
+      No entries.
+      {% endif %}
+    </td>
+  </tr>
 </table>
 
 <div class="clearfix">

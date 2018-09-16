@@ -5,6 +5,7 @@ from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Div, HTML, Submit, Button, Field
 from crispy_forms.bootstrap import AccordionGroup, Accordion
+from dal import forward
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
@@ -466,6 +467,7 @@ class EventForm(forms.ModelForm):
         'administrator',
         'assigned_to',
         'tags',
+        'open_TTT_applications',
         'url',
         'language',
         'reg_key',
@@ -508,12 +510,36 @@ class EventForm(forms.ModelForm):
             raise forms.ValidationError('Must not be earlier than start date.')
         return end
 
+    def clean_open_TTT_applications(self):
+        """Ensure there's a TTT tag applied to the event, if the
+        `open_TTT_applications` is True."""
+        open_TTT_applications = self.cleaned_data['open_TTT_applications']
+        tags = self.cleaned_data.get('tags', None)
+        error_msg = 'You cannot open applications on a non-TTT event.'
+
+        if open_TTT_applications and tags:
+            # find TTT tag
+            TTT_tag = False
+            for tag in tags:
+                if tag.name == 'TTT':
+                    TTT_tag = True
+                    break
+
+            if not TTT_tag:
+                raise forms.ValidationError(error_msg)
+
+        elif open_TTT_applications:
+            raise forms.ValidationError(error_msg)
+
+        return open_TTT_applications
+
     class Meta:
         model = Event
         fields = ('slug', 'completed', 'start', 'end', 'host', 'administrator',
                   'assigned_to', 'tags', 'url', 'language', 'reg_key', 'venue',
                   'admin_fee', 'invoice_status', 'attendance', 'contact',
-                  'notes', 'country', 'address', 'latitude', 'longitude', )
+                  'notes', 'country', 'address', 'latitude', 'longitude',
+                  'open_TTT_applications', )
         widgets = {
             'attendance': TextInput,
             'latitude': TextInput,
@@ -538,12 +564,31 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm):
 
     helper = BootstrapHelper(add_cancel_button=False)
 
+    SEAT_MEMBERSHIP_HELP_TEXT = (
+        '{}<br><b>Hint:</b> you can use input format YYYY-MM-DD to display '
+        'memberships available on that date.'.format(
+            Task._meta.get_field('seat_membership').help_text
+        )
+    )
+    seat_membership = forms.ModelChoiceField(
+        label=Task._meta.get_field('seat_membership').verbose_name,
+        help_text=SEAT_MEMBERSHIP_HELP_TEXT,
+        required=False,
+        queryset=Membership.objects.all(),
+        widget=ModelSelect2(
+            url='membership-lookup',
+            attrs=SIDEBAR_DAL_WIDTH,
+        )
+    )
+
     class Meta:
         model = Task
         fields = '__all__'
         widgets = {
-            'person': ModelSelect2(url='person-lookup'),
-            'event': ModelSelect2(url='event-lookup'),
+            'person': ModelSelect2(url='person-lookup',
+                                   attrs=SIDEBAR_DAL_WIDTH),
+            'event': ModelSelect2(url='event-lookup',
+                                  attrs=SIDEBAR_DAL_WIDTH),
         }
 
 
@@ -737,9 +782,12 @@ class AwardForm(WidgetOverrideMixin, forms.ModelForm):
         model = Award
         fields = '__all__'
         widgets = {
-            'person': ModelSelect2(url='person-lookup'),
-            'event': ModelSelect2(url='event-lookup'),
-            'awarded_by': ModelSelect2(url='admin-lookup'),
+            'person': ModelSelect2(url='person-lookup',
+                                   attrs=SIDEBAR_DAL_WIDTH),
+            'event': ModelSelect2(url='event-lookup',
+                                  attrs=SIDEBAR_DAL_WIDTH),
+            'awarded_by': ModelSelect2(url='admin-lookup',
+                                       attrs=SIDEBAR_DAL_WIDTH),
         }
 
 
@@ -776,7 +824,10 @@ class MembershipForm(forms.ModelForm):
         fields = [
             'organization', 'variant', 'agreement_start', 'agreement_end',
             'contribution_type', 'workshops_without_admin_fee_per_agreement',
-            'self_organized_workshops_per_agreement', 'notes',
+            'self_organized_workshops_per_agreement',
+            'seats_instructor_training',
+            'additional_instructor_training_seats',
+            'notes',
         ]
 
 
@@ -1777,11 +1828,20 @@ class BulkMatchTrainingRequestForm(forms.Form):
         widget=ModelSelect2(url='ttt-event-lookup')
     )
 
+    seat_membership = forms.ModelChoiceField(
+        label='Membership seats',
+        required=False,
+        queryset=Membership.objects.all(),
+        help_text='Assigned users will take instructor seats from selected '
+                  'member site.',
+        widget=ModelSelect2(url='membership-lookup'),
+    )
+
     helper = BootstrapHelper(add_submit_button=False,
                              form_tag=False,
                              add_cancel_button=False)
     helper.layout = Layout(
-        'event',
+        'event', 'seat_membership',
     )
     helper.add_input(
         Submit(

@@ -192,13 +192,28 @@ class Membership(models.Model):
         help_text="Expected number of self-organized workshops per agreement "
                   "duration",
     )
+    # according to Django docs, PositiveIntegerFields accept 0 as valid as well
+    seats_instructor_training = models.PositiveIntegerField(
+        null=False, blank=False, default=0,
+        verbose_name="Instructor training seats",
+        help_text="Number of seats in instructor trainings",
+    )
+    additional_instructor_training_seats = models.PositiveIntegerField(
+        null=False, blank=False, default=0,
+        verbose_name="Additional instructor training seats",
+        help_text="Use this field if you want to grant more seats than "
+                  "the agreement provides for.",
+    )
     notes = models.TextField(default="", blank=True)
     organization = models.ForeignKey(Organization, null=False, blank=False,
                              on_delete=models.PROTECT)
 
     def __str__(self):
-        return "{} membership: {}".format(self.variant.title(),
-                                          self.organization)
+        from workshops.util import human_daterange
+        dates = human_daterange(self.agreement_start, self.agreement_end)
+        return "{} membership: {} ({})".format(self.variant.title(),
+                                               self.organization,
+                                               dates)
 
     def get_absolute_url(self):
         return reverse('membership_details', args=[self.id])
@@ -246,6 +261,20 @@ class Membership(models.Model):
         b = self.self_organized_workshops_completed
         return a - b
 
+    @cached_property
+    def seats_instructor_training_total(self):
+        return (self.additional_instructor_training_seats +
+                self.seats_instructor_training)
+
+    @cached_property
+    def seats_instructor_training_utilized(self):
+        # count number of tasks that have this membership
+        return self.task_set.filter(role__name="learner").count()
+
+    @cached_property
+    def seats_instructor_training_remaining(self):
+        return (self.seats_instructor_training_total -
+                self.seats_instructor_training_utilized)
 
 #------------------------------------------------------------
 
@@ -1139,6 +1168,16 @@ class Event(AssignmentMixin, models.Model):
         default=False,
         help_text='Indicate if metadata changed since last check')
 
+    # defines if people not associated with specific member sites can take part
+    # in TTT event
+    open_TTT_applications = models.BooleanField(
+        null=False, blank=True, default=False,
+        verbose_name="TTT Open applications",
+        help_text="If this event is <b>TTT</b>, you can mark it as 'open "
+                  "applications' which means that people not associated with "
+                  "this event's member sites can also take part in this event."
+    )
+
     class Meta:
         ordering = ('-start', )
 
@@ -1241,23 +1280,28 @@ class Event(AssignmentMixin, models.Model):
     @property
     def human_readable_date(self):
         """Render start and end dates as human-readable short date."""
+        from workshops.util import human_daterange
         date1 = self.start
         date2 = self.end
+        return human_daterange(date1, date2)
 
-        if date1 and not date2:
-            return '{:%b %d, %Y}-???'.format(date1)
-        elif date2 and not date1:
-            return '???-{:%b %d, %Y}'.format(date2)
-        elif not date2 and not date1:
-            return '???-???'
+    def clean(self):
+        """Additional model validation."""
 
-        if date1.year == date2.year:
-            if date1.month == date2.month:
-                return '{:%b %d}-{:%d, %Y}'.format(date1, date2)
-            else:
-                return '{:%b %d}-{:%b %d, %Y}'.format(date1, date2)
-        else:
-            return '{:%b %d, %Y}-{:%b %d, %Y}'.format(date1, date2)
+        # Applies only to saved model instances!!! Otherwise it's impossible
+        # to access M2M objects.
+        if self.pk:
+            errors = dict()
+            has_TTT = self.tags.filter(name='TTT')
+
+            if self.open_TTT_applications and not has_TTT:
+                errors['open_TTT_applications'] = (
+                    'You cannot open applications on non-TTT event.'
+                )
+
+            if errors:
+                raise ValidationError(errors)
+        # additional validation before the object is saved is in EventForm
 
     def save(self, *args, **kwargs):
         self.slug = self.slug or None
@@ -1730,6 +1774,19 @@ class Task(models.Model):
     role       = models.ForeignKey(Role, on_delete=models.PROTECT)
     title      = models.CharField(max_length=STR_LONG, blank=True)
     url        = models.URLField(blank=True, verbose_name='URL')
+    seat_membership = models.ForeignKey(
+        Membership, on_delete=models.PROTECT, null=True, blank=True,
+        default=None, verbose_name="Associated member site in TTT event",
+        help_text="In order to count this person into number of used "
+                  "membership instructor training seats, a correct membership "
+                  "entry needs to be selected.",
+    )
+    seat_open_training = models.BooleanField(
+        null=False, blank=True, default=False,
+        verbose_name="Open training seat",
+        help_text="Some TTT events allow for open training; check this field "
+                  "to count this person into open applications."
+    )
 
     objects = TaskManager()
 
@@ -1744,6 +1801,42 @@ class Task(models.Model):
 
     def get_absolute_url(self):
         return reverse('task_details', kwargs={'task_id': self.id})
+
+    def clean(self):
+        """Additional model validation."""
+
+        # check seats, make sure the corresponding event has "TTT" tag
+        errors = dict()
+        has_ttt = bool(self.event.tags.filter(name="TTT"))
+        is_open_app = self.event.open_TTT_applications
+
+        if self.seat_membership is not None and self.seat_open_training:
+            raise ValidationError(
+                "This Task cannot be simultaneously open training and use "
+                "a Membership instructor training seat."
+            )
+
+        if not has_ttt and self.seat_membership is not None:
+            errors['seat_membership'] = ValidationError(
+                "Cannot associate membership when the event has no TTT tag",
+                code='invalid',
+            )
+
+        if not has_ttt and self.seat_open_training:
+            errors['seat_open_training'] = ValidationError(
+                "Cannot mark this person as open applicant, because the event "
+                "has no TTT tag.",
+                code='invalid',
+            )
+        elif has_ttt and not is_open_app and self.seat_open_training:
+            errors['seat_open_training'] = ValidationError(
+                "Cannot mark this person as open applicant, because the TTT "
+                "event is not marked as open applications.",
+                code='invalid',
+            )
+
+        if errors:
+            raise ValidationError(errors)
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -1791,6 +1884,9 @@ class BadgeQuerySet(models.query.QuerySet):
 
 class Badge(models.Model):
     '''Represent a badge we award.'''
+
+    # just for easier access outside `models.py`
+    INSTRUCTOR_BADGES = BadgeQuerySet.INSTRUCTOR_BADGES
 
     name       = models.CharField(max_length=STR_MED, unique=True)
     title      = models.CharField(max_length=STR_MED)
