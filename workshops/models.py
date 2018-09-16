@@ -10,7 +10,12 @@ from django.contrib.auth.models import (
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
-from django.db.models import Q, F, IntegerField, Sum, Case, When
+from django.db.models import (
+    ExpressionWrapper,
+    Q, F,
+    IntegerField,
+    Sum, Case, When,
+)
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.urls import reverse
@@ -2156,8 +2161,20 @@ class InvoiceRequest(models.Model):
 from workshops.util import build_choice_field_with_other_option
 
 
+class TrainingRequestManager(models.Manager):
+    def get_queryset(self):
+        """Enhance default TrainingRequest queryset with auto-computed
+        fields."""
+        return super().get_queryset().annotate(
+            score_total=ExpressionWrapper(
+                F('score_manual') + F('score_auto'),
+                output_field=IntegerField()
+            ),
+        )
+
+
 @reversion.register
-class TrainingRequest(ActiveMixin, CreatedUpdatedMixin,
+class TrainingRequest(CreatedUpdatedMixin,
         DataPrivacyAgreementMixin, COCAgreementMixin, StateMixin,
         models.Model):
 
@@ -2387,6 +2404,25 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin,
 
     notes = models.TextField(blank=True, help_text='Admin notes')
 
+    score_auto = models.PositiveIntegerField(
+        null=False, blank=False, default=0,
+        verbose_name="Application automatic score",
+        help_text="Filled out by AMY.",
+    )
+    score_manual = models.IntegerField(
+        null=False, blank=False, default=0,
+        verbose_name="Application manual score (can be negative)",
+        help_text="Filled out by admin.",
+    )
+    # score_total - calculated automatically by the manager
+    score_notes = models.TextField(
+        blank=True,
+        verbose_name="Notes regarding manual score",
+        help_text="Explanation of manual score, if necessary.",
+    )
+
+    objects = TrainingRequestManager()
+
     class Meta:
         ordering = ['created_at']
 
@@ -2397,6 +2433,50 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin,
                 and self.person.get_training_tasks().exists():
             raise ValidationError({'state': 'Pending training request cannot '
                                             'be matched with a training.'})
+
+    def save(self, *args, **kwargs):
+        """Calculate automatic score according to the rubric:
+        https://github.com/carpentries/instructor-training/blob/gh-pages/files/rubric.md"""
+
+        score = 0
+
+        # location based points:
+        # +1 for outside EU/UK/US/CA/AU/NZ or +1 for underresourced and within
+        # EU/UK/US/CA/AU/NZ
+        # TODO: cannot check it yet, we need to migrate from Django-Countries
+        #       to Django-Countries-Plus first
+
+        # economics or social sciences, arts, humanities, or library science
+        scoring_domains = [
+            'Humanities', 'Library and information science',
+            'Economics/business', 'Social sciences',
+        ]
+        for domain in self.domains.all():
+            if domain.name in scoring_domains:
+                score += 1
+                break
+
+        # +1 for each previous involvement with The Carpentries (max. 3)
+        prev_inv_count = len(self.previous_involvement.all())
+        score += prev_inv_count if prev_inv_count <= 3 else 3
+
+        # previous training in teaching: "a certification or short course"
+        # or "a full degree"
+        if self.previous_training in ['course', 'full']:
+            score += 1
+
+        # previous experience in teaching: "TA for full course"
+        # or "primary instructor for full course"
+        if self.previous_experience in ['ta', 'courses']:
+            score += 1
+
+        # using tools "every day" or "a few times a week"
+        if self.programming_language_usage_frequency in ['daily', 'weekly']:
+            score += 1
+
+        self.score_auto = score
+
+        return super().save(*args, **kwargs)
 
     def get_absolute_url(self):
         return reverse('trainingrequest_details', args=[self.pk])

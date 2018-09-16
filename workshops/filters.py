@@ -631,6 +631,7 @@ class TrainingRequestFilter(AMYFilterSet):
     order_by = NamesOrderingFilter(
         fields=(
             'created_at',
+            'score_total',
         ),
     )
 
