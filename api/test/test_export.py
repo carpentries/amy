@@ -588,11 +588,10 @@ class TestExportingPersonData(BaseExportingTest):
         # add training requests
         training_request = TrainingRequest.objects.create(
             # mixins
-            active=True,
             data_privacy_agreement=True,
             code_of_conduct_agreement=True,
-
             state='p',  # pending
+
             person=self.user,
             group_name='Mosquitos',
             personal='User',

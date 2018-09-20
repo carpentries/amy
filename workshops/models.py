@@ -2437,6 +2437,12 @@ class TrainingRequest(CreatedUpdatedMixin,
     def save(self, *args, **kwargs):
         """Calculate automatic score according to the rubric:
         https://github.com/carpentries/instructor-training/blob/gh-pages/files/rubric.md"""
+        inserted = False
+
+        # save first so that there's an ID present
+        if not self.pk:
+            super().save(*args, **kwargs)
+            inserted = True
 
         score = 0
 
@@ -2481,9 +2487,15 @@ class TrainingRequest(CreatedUpdatedMixin,
         if self.programming_language_usage_frequency in ['daily', 'weekly']:
             score += 1
 
-        self.score_auto = score
+        if self.pk and score > 0:
+            self.score_auto = score
 
-        return super().save(*args, **kwargs)
+            # we cannot force insert for the second time - this time it should
+            # be an UPDATE query
+            if inserted and 'force_insert' in kwargs:
+                kwargs.pop('force_insert')
+
+            super().save(*args, **kwargs)
 
     def get_absolute_url(self):
         return reverse('trainingrequest_details', args=[self.pk])
