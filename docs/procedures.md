@@ -58,7 +58,7 @@ Execute the following commands on your local machine, not production.
 
 6.  Bump version on `master`:
 
-        $ echo "__version__ = '$AMY_VERSION'" > workshops/__init__.py  # change version to 1.X.Y
+        $ echo "__version__ = '$AMY_VERSION'" > workshops/__init__.py  # change version to 2.X.Y
         $ vim package.json  # change version to $AMY_VERSION
         $ git add workshops/__init__.py package.json
         $ git commit -m "Bumping version to $AMY_VERSION"
@@ -82,7 +82,7 @@ Execute the following commands on your local machine, not production.
 10. Bump version on `develop`:
 
         $ git checkout develop
-        $ echo "__version__ = '$AMY_NEXT_VERSION'" > workshops/__init__.py  # change version to 1.X+1.0
+        $ echo "__version__ = '$AMY_NEXT_VERSION'" > workshops/__init__.py  # change version to 2.X+1.0
         $ vim package.json  # change version to $AMY_NEXT_VERSION
         $ git add workshops/__init__.py package.json
         $ git commit -m "Bumping version to $AMY_NEXT_VERSION"

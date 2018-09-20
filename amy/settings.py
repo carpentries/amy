@@ -149,7 +149,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # pydata will be removed if ENABLE_PYDATA is not True
     'pydata',
-    'workshops',
+    'workshops.apps.WorkshopsConfig',
     # dal (django-autocomplete-light) replaces django-selectable:
     'dal',
     'dal_select2',

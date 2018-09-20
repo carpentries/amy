@@ -2434,16 +2434,9 @@ class TrainingRequest(CreatedUpdatedMixin,
             raise ValidationError({'state': 'Pending training request cannot '
                                             'be matched with a training.'})
 
-    def save(self, *args, **kwargs):
+    def recalculate_score_auto(self):
         """Calculate automatic score according to the rubric:
         https://github.com/carpentries/instructor-training/blob/gh-pages/files/rubric.md"""
-        inserted = False
-
-        # save first so that there's an ID present
-        if not self.pk:
-            super().save(*args, **kwargs)
-            inserted = True
-
         score = 0
 
         # location based points (country not on the list of countries)
@@ -2486,6 +2479,19 @@ class TrainingRequest(CreatedUpdatedMixin,
         # using tools "every day" or "a few times a week"
         if self.programming_language_usage_frequency in ['daily', 'weekly']:
             score += 1
+
+        return score
+
+    def save(self, *args, **kwargs):
+        """Run recalculation upon save."""
+        inserted = False
+
+        # save first so that there's an ID present
+        if not self.pk:
+            super().save(*args, **kwargs)
+            inserted = True
+
+        score = self.recalculate_score_auto()
 
         if self.pk and score > 0:
             self.score_auto = score
