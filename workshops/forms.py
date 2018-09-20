@@ -1362,6 +1362,12 @@ class TrainingRequestUpdateForm(forms.ModelForm):
         widget=ModelSelect2(url='person-lookup')
     )
 
+    score_auto = forms.IntegerField(
+        disabled=True,
+        label=TrainingRequest._meta.get_field('score_auto').verbose_name,
+        help_text=TrainingRequest._meta.get_field('score_auto').help_text,
+    )
+
     helper = BootstrapHelper(duplicate_buttons_on_top=True,
                              submit_label='Update')
 
