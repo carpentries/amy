@@ -2500,12 +2500,12 @@ class TrainingRequest(CreatedUpdatedMixin,
         if self.pk and score != self.score_auto:
             self.score_auto = score
 
-            # we cannot force insert for the second time - this time it should
-            # be an UPDATE query
-            if inserted and 'force_insert' in kwargs:
-                kwargs.pop('force_insert')
+        # we cannot force insert for the second time - this time it should
+        # be an UPDATE query
+        if inserted and 'force_insert' in kwargs:
+            kwargs.pop('force_insert')
 
-            super().save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     def get_absolute_url(self):
         return reverse('trainingrequest_details', args=[self.pk])
