@@ -2440,11 +2440,15 @@ class TrainingRequest(CreatedUpdatedMixin,
         score = 0
 
         # location based points (country not on the list of countries)
-        # according to https://github.com/swcarpentry/amy/issues/1327#issuecomment-422539917
+        # according to
+        # https://github.com/swcarpentry/amy/issues/1327#issuecomment-422539917
+        # and
+        # https://github.com/swcarpentry/amy/issues/1327#issuecomment-423292177
         not_scoring_countries = [
-            'US', 'CA', 'NZ', 'GB', 'AU', 'AT', 'BE', 'BG', 'HR', 'CY', 'CZ',
+            'US', 'CA', 'NZ', 'GB', 'AU', 'AT', 'BE', 'CY', 'CZ',
             'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT',
             'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE',
+            'CH', 'IS', 'NO',
         ]
         if self.country and self.country.code not in not_scoring_countries:
             score += 1
