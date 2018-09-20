@@ -42,6 +42,12 @@
       </td></tr>
   <tr><th>Created at:</th>
       <td>{{ req.created_at }}</td></tr>
+  <tr><th>Application score:</th>
+      <td>Automatic: {{ req.score_auto }} pts. <br>
+          Manual: {{ req.score_manual }} pts. <br>
+          <b>Total: {{ req.score_total }} pts.</b></td></tr>
+  <tr><th>Manual score notes:</th>
+      <td>{% if req.score_notes %}<pre>{{ req.score_notes }}</pre>{% else %}&mdash;{% endif %}</td></tr>
   <tr><th>Group name:</th>
       <td>{{ req.group_name }}</td></tr>
   <tr><th>Personal name:</th>
