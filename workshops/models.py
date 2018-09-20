@@ -2497,7 +2497,7 @@ class TrainingRequest(CreatedUpdatedMixin,
 
         score = self.recalculate_score_auto()
 
-        if self.pk and score > 0:
+        if self.pk and score != self.score_auto:
             self.score_auto = score
 
             # we cannot force insert for the second time - this time it should
