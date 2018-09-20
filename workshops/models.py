@@ -2440,11 +2440,18 @@ class TrainingRequest(CreatedUpdatedMixin,
 
         score = 0
 
-        # location based points:
-        # +1 for outside EU/UK/US/CA/AU/NZ or +1 for underresourced and within
-        # EU/UK/US/CA/AU/NZ
-        # TODO: cannot check it yet, we need to migrate from Django-Countries
-        #       to Django-Countries-Plus first
+        # location based points (country not on the list of countries)
+        # according to https://github.com/swcarpentry/amy/issues/1327#issuecomment-422539917
+        not_scoring_countries = [
+            'US', 'CA', 'NZ', 'GB', 'AU', 'AT', 'BE', 'BG', 'HR', 'CY', 'CZ',
+            'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT',
+            'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE',
+        ]
+        if self.country and self.country.code not in not_scoring_countries:
+            score += 1
+
+        if self.underresourced:
+            score += 1
 
         # economics or social sciences, arts, humanities, or library science
         scoring_domains = [
