@@ -3133,6 +3133,7 @@ def all_trainingrequests(request):
         )
     )
 
+    emails = filter.qs.values_list('email', flat=True)
     requests = get_pagination_items(request, filter.qs)
 
     if request.method == 'POST' and 'match' in request.POST:
@@ -3219,11 +3220,14 @@ def all_trainingrequests(request):
         form = BulkChangeTrainingRequestForm()
         match_form = BulkMatchTrainingRequestForm()
 
-    context = {'title': 'Training Requests',
-               'requests': requests,
-               'filter': filter,
-               'form': form,
-               'match_form': match_form}
+    context = {
+        'title': 'Training Requests',
+        'requests': requests,
+        'filter': filter,
+        'form': form,
+        'match_form': match_form,
+        'emails': emails,
+    }
 
     return render(request, 'workshops/all_trainingrequests.html', context)
 

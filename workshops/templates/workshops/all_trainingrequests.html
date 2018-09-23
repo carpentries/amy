@@ -135,6 +135,7 @@
     {% pagination requests %}
 
     <div class="btn-group" role="group" aria-label="Actions for list of training requests">
+      <a class="btn btn-info" href="mailto:?bcc={% for mail in emails %}{{ mail }}{% if not forloop.last %},{% endif %}{% endfor %}">Mail <strong>all</strong> people matching this query</a>
       <a class="btn btn-success" href="{% url 'training_request' %}">Create new request</a>
 
       <div class="btn-group" role="group">
