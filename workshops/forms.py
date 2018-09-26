@@ -1800,11 +1800,18 @@ class BulkChangeTrainingRequestForm(forms.Form):
         # reports missing values in required fields in
         # BulkMatchTrainingRequestForm.
         FormActions(
-            Submit('discard', 'Discard selected requests',
-                   formnovalidate='formnovalidate'),
+            Div(
+                Submit('discard', 'Discard selected requests',
+                       formnovalidate='formnovalidate',
+                       css_class="btn-danger"),
+                Submit('accept', 'Accept selected requests',
+                       formnovalidate='formnovalidate',
+                       css_class="btn-success"),
+                css_class="btn-group",
+            ),
             Submit('unmatch', 'Unmatch selected trainees from training',
                    formnovalidate='formnovalidate'),
-            HTML('<a bulk-email-on-click class="btn btn-primary text-white">'
+            HTML('<a bulk-email-on-click class="btn btn-info text-white">'
                  'Mail selected trainees</a>&nbsp;'),
         )
     )

@@ -3199,6 +3199,22 @@ def all_trainingrequests(request):
 
             return redirect(request.get_raw_uri())
 
+    elif request.method == 'POST' and 'accept' in request.POST:
+        # Bulk discard selected TrainingRequests.
+        form = BulkChangeTrainingRequestForm(request.POST)
+        match_form = BulkMatchTrainingRequestForm()
+
+        if form.is_valid():
+            # Perform bulk discard
+            for r in form.cleaned_data['requests']:
+                r.state = 'a'
+                r.save()
+
+            messages.success(request, 'Successfully accepted selected '
+                                      'requests.')
+
+            return redirect(request.get_raw_uri())
+
     elif request.method == 'POST' and 'unmatch' in request.POST:
         # Bulk unmatch people associated with selected TrainingRequests from
         # trainings.

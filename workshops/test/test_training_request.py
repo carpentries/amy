@@ -313,6 +313,25 @@ class TestTrainingRequestsListView(TestBase):
         self.third_req.refresh_from_db()
         self.assertEqual(self.third_req.state, 'a')
 
+    def test_successful_bulk_accept(self):
+        data = {
+            'accept': '',
+            'requests': [self.first_req.pk, self.second_req.pk],
+        }
+        rv = self.client.post(reverse('all_trainingrequests'), data,
+                              follow=True)
+
+        self.assertTrue(rv.status_code, 200)
+        self.assertEqual(rv.resolver_match.view_name, 'all_trainingrequests')
+        msg = 'Successfully accepted selected requests.'
+        self.assertContains(rv, msg)
+        self.first_req.refresh_from_db()
+        self.assertEqual(self.first_req.state, 'a')
+        self.second_req.refresh_from_db()
+        self.assertEqual(self.second_req.state, 'a')
+        self.third_req.refresh_from_db()
+        self.assertEqual(self.third_req.state, 'a')
+
     def test_successful_matching_to_training(self):
         data = {
             'match': '',
