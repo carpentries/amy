@@ -594,6 +594,12 @@ def filter_training_requests_by_state(queryset, name, choice):
         return queryset.filter(state=choice)
 
 
+def filter_non_null_manual_score(queryset, name, manual_score):
+    if manual_score:
+        return queryset.filter(score_manual__isnull=False)
+    return queryset
+
+
 class TrainingRequestFilter(AMYFilterSet):
     search = django_filters.CharFilter(
         label='Name or Email',
@@ -622,6 +628,12 @@ class TrainingRequestFilter(AMYFilterSet):
         method=filter_matched,
     )
 
+    nonnull_manual_score = django_filters.BooleanFilter(
+        label='Manual score applied',
+        method=filter_non_null_manual_score,
+        widget=widgets.CheckboxInput,
+    )
+
     affiliation = django_filters.CharFilter(
         method=filter_affiliation,
     )
@@ -631,6 +643,7 @@ class TrainingRequestFilter(AMYFilterSet):
     order_by = NamesOrderingFilter(
         fields=(
             'created_at',
+            'score_total',
         ),
     )
 

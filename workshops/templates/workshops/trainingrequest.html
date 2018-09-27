@@ -42,6 +42,12 @@
       </td></tr>
   <tr><th>Created at:</th>
       <td>{{ req.created_at }}</td></tr>
+  <tr><th>Application score:</th>
+      <td>Automatic: {{ req.score_auto }} pts. <br>
+          Manual: {% if req.score_manual is not None %}{{ req.score_manual }} pts.{% else %}not scored{% endif %} <br>
+          <b>Total: {{ req.score_total }} pts.</b></td></tr>
+  <tr><th>Manual score notes:</th>
+      <td>{% if req.score_notes %}<pre>{{ req.score_notes }}</pre>{% else %}&mdash;{% endif %}</td></tr>
   <tr><th>Group name:</th>
       <td>{{ req.group_name }}</td></tr>
   <tr><th>Personal name:</th>
@@ -72,7 +78,7 @@
           </ul></td></tr>
   <tr><th>Other areas of expertise:</th>
       <td>{{ req.domains_other|default:"&mdash;" }}</td></tr>
-  <tr><th>Under-represented::</th>
+  <tr><th>Under-represented:</th>
       <td>{% if req.underrepresented %}Yes. Reason: {{ req.underrepresented }}{% else %}No.{% endif %}</td></tr>
   <tr><th>Previous involvement:</th>
       <td><ul>
@@ -86,7 +92,7 @@
       <td>{{ req.get_previous_training_display }} {{ req.previous_training_other }}</td></tr>
   <tr><th>Explanation of previous training in teaching:</th>
       <td>{% if req.previous_training_explanation %}<pre>{{ req.previous_training_explanation }}</pre>{% else %}&mdash;{% endif %}</td></tr>
-  <tr><th>previous experience in teaching:</th>
+  <tr><th>Previous experience in teaching:</th>
       <td>{{ req.get_previous_experience_display }} {{ req.previous_experience_other }}</td></tr>
   <tr><th>Explanation of previous experience in teaching:</th>
       <td>{% if req.previous_experience_explanation %}<pre>{{ req.previous_experience_explanation }}</pre>{% else %}&mdash;{% endif %}</td></tr>

@@ -1362,6 +1362,12 @@ class TrainingRequestUpdateForm(forms.ModelForm):
         widget=ModelSelect2(url='person-lookup')
     )
 
+    score_auto = forms.IntegerField(
+        disabled=True,
+        label=TrainingRequest._meta.get_field('score_auto').verbose_name,
+        help_text=TrainingRequest._meta.get_field('score_auto').help_text,
+    )
+
     helper = BootstrapHelper(duplicate_buttons_on_top=True,
                              submit_label='Update')
 
@@ -1794,11 +1800,18 @@ class BulkChangeTrainingRequestForm(forms.Form):
         # reports missing values in required fields in
         # BulkMatchTrainingRequestForm.
         FormActions(
-            Submit('discard', 'Discard selected requests',
-                   formnovalidate='formnovalidate'),
+            Div(
+                Submit('discard', 'Discard selected requests',
+                       formnovalidate='formnovalidate',
+                       css_class="btn-danger"),
+                Submit('accept', 'Accept selected requests',
+                       formnovalidate='formnovalidate',
+                       css_class="btn-success"),
+                css_class="btn-group",
+            ),
             Submit('unmatch', 'Unmatch selected trainees from training',
                    formnovalidate='formnovalidate'),
-            HTML('<a bulk-email-on-click class="btn btn-primary text-white">'
+            HTML('<a bulk-email-on-click class="btn btn-info text-white">'
                  'Mail selected trainees</a>&nbsp;'),
         )
     )

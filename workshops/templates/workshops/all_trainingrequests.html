@@ -34,9 +34,12 @@
         {% if request.GET.group_name %}
           <th>Group</th>
         {% endif %}
-        <th>Created at</th>
+        {% if request.GET.order_by == 'created_at' or request.GET.order_by == '-created_at' %}
+          <th>Created at</th>
+        {% endif %}
         <th>Matched Trainee</th>
         <th>Matched Training</th>
+        <th>Score</th>
         <th width="50px">
           State
           <i class="fas fa-question-circle"
@@ -79,7 +82,9 @@
           {% if request.GET.group_name %}
             <td>{{ req.group_name }}</td>
           {% endif %}
-          <td>{{ req.created_at|date:'Y-m-d H:i' }}</td>
+          {% if request.GET.order_by == 'created_at' or request.GET.order_by == '-created_at' %}
+            <td>{{ req.created_at|date:'Y-m-d H:i' }}</td>
+          {% endif %}
           <td>
             {% if req.person %}
               <a href="{% url 'person_details' req.person.pk %}">
@@ -101,6 +106,7 @@
               —
             {% endif %}
           </td>
+          <td>{{ req.score_total }} pts.</td>
           <td>
             {% if req.state == 'p' %}
               <span class="{% state_label req %}"
@@ -129,6 +135,7 @@
     {% pagination requests %}
 
     <div class="btn-group" role="group" aria-label="Actions for list of training requests">
+      <a class="btn btn-info" href="mailto:?bcc={% for mail in emails %}{{ mail }}{% if not forloop.last %},{% endif %}{% endfor %}">Mail <strong>all</strong> people matching this query</a>
       <a class="btn btn-success" href="{% url 'training_request' %}">Create new request</a>
 
       <div class="btn-group" role="group">
