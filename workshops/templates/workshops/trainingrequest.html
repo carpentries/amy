@@ -44,7 +44,7 @@
       <td>{{ req.created_at }}</td></tr>
   <tr><th>Application score:</th>
       <td>Automatic: {{ req.score_auto }} pts. <br>
-          Manual: {{ req.score_manual }} pts. <br>
+          Manual: {% if req.score_manual is not None %}{{ req.score_manual }} pts.{% else %}not scored{% endif %} <br>
           <b>Total: {{ req.score_total }} pts.</b></td></tr>
   <tr><th>Manual score notes:</th>
       <td>{% if req.score_notes %}<pre>{{ req.score_notes }}</pre>{% else %}&mdash;{% endif %}</td></tr>

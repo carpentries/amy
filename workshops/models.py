@@ -14,7 +14,8 @@ from django.db.models import (
     ExpressionWrapper,
     Q, F,
     IntegerField,
-    Sum, Case, When,
+    PositiveIntegerField,
+    Sum, Case, When, Value,
 )
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -2166,9 +2167,12 @@ class TrainingRequestManager(models.Manager):
         """Enhance default TrainingRequest queryset with auto-computed
         fields."""
         return super().get_queryset().annotate(
-            score_total=ExpressionWrapper(
-                F('score_manual') + F('score_auto'),
-                output_field=IntegerField()
+            score_total=Case(
+                When(score_manual__isnull=False,
+                     then=F('score_auto') + F('score_manual')),
+                When(score_manual__isnull=True,
+                     then=F('score_auto')),
+                output_field=PositiveIntegerField(),
             ),
         )
 
@@ -2410,9 +2414,9 @@ class TrainingRequest(CreatedUpdatedMixin,
         help_text="Filled out by AMY.",
     )
     score_manual = models.IntegerField(
-        null=False, blank=False, default=0,
+        null=True, blank=True,
         verbose_name="Application manual score (can be negative)",
-        help_text="Filled out by admin.",
+        help_text="Leave blank if you don't want to score this application.",
     )
     # score_total - calculated automatically by the manager
     score_notes = models.TextField(

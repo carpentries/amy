@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='trainingrequest',
             name='score_manual',
-            field=models.IntegerField(default=0, help_text='Filled out by admin.', verbose_name='Application manual score (can be negative)'),
+            field=models.IntegerField(default=None, null=True, blank=True, help_text='Filled out by admin.', verbose_name='Application manual score (can be negative)'),
         ),
         migrations.AddField(
             model_name='trainingrequest',
