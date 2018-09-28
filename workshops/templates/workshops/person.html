@@ -114,7 +114,7 @@
       {% with awards=person.award_set.all %}
       {% if awards %}
       <table class="table table-sm">
-        <tr><th>badge</th><th>date</th><th>by whom</th><th>related event</th></tr>
+        <tr><th>Badge</th><th>Date</th><th>By whom</th><th>Related event</th></tr>
         {% for award in awards %}
         <tr>
           <td><a href="{{ award.badge.get_absolute_url }}">{{ award.badge }}</a></td>
@@ -174,7 +174,7 @@
   </tr>
   <tr>
     <th>Instructor Training progress:</th>
-    <td>{% include "workshops/training_progresses_inline.html" with person=person %}</td>
+    <td>{% include "includes/training_progresses_inline.html" with person=person %}</td>
   </tr>
 </table>
 

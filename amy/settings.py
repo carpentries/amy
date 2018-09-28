@@ -149,7 +149,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # pydata will be removed if ENABLE_PYDATA is not True
     'pydata',
-    'workshops',
+    'workshops.apps.WorkshopsConfig',
     # dal (django-autocomplete-light) replaces django-selectable:
     'dal',
     'dal_select2',
@@ -247,8 +247,8 @@ AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
 )
 SOCIAL_AUTH_ADMIN_USER_SEARCH_FIELDS = ['github']
-SOCIAL_AUTH_GITHUB_KEY = os.environ.get('SOCIAL_AUTH_GITHUB_KEY', '').strip()
-SOCIAL_AUTH_GITHUB_SECRET = os.environ.get('SOCIAL_AUTH_GITHUB_SECRET', '').strip()
+SOCIAL_AUTH_GITHUB_KEY = os.environ.get('AMY_SOCIAL_AUTH_GITHUB_KEY', '').strip()
+SOCIAL_AUTH_GITHUB_SECRET = os.environ.get('AMY_SOCIAL_AUTH_GITHUB_SECRET', '').strip()
 if not DEBUG and not (SOCIAL_AUTH_GITHUB_KEY and SOCIAL_AUTH_GITHUB_SECRET):
     print('Logging using github account will *not* work, '
           'because you didn\'t set SOCIAL_AUTH_GITHUB_KEY and/or '
@@ -278,7 +278,7 @@ SOCIAL_AUTH_USER_MODEL = 'workshops.Person'
 # Github API token (optional). Setting this token reduces limits and quotes
 # on Github API.
 
-GITHUB_API_TOKEN = os.environ.get('GITHUB_API_TOKEN', None)
+GITHUB_API_TOKEN = os.environ.get('AMY_GITHUB_API_TOKEN', None)
 
 ################### I N T E R N A T I O N A L I Z A T I O N ###################
 

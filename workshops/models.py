@@ -10,7 +10,13 @@ from django.contrib.auth.models import (
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
-from django.db.models import Q, F, IntegerField, Sum, Case, When
+from django.db.models import (
+    ExpressionWrapper,
+    Q, F,
+    IntegerField,
+    PositiveIntegerField,
+    Sum, Case, When, Value,
+)
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.urls import reverse
@@ -94,6 +100,43 @@ class COCAgreementMixin(models.Model):
         abstract = True
 
 
+class EventLink(models.Model):
+    """This mixin provides a one-to-one link between a model, in which it's
+    used, and single Event instance."""
+    event = models.OneToOneField(
+        'Event', null=True, blank=True,
+        verbose_name='Linked event object',
+        help_text='Link to the event instance created or otherwise related to this object.',
+        on_delete=models.PROTECT,
+    )
+
+    class Meta:
+        abstract = True
+
+
+class StateMixin(models.Model):
+    """A more extensive state field - previously a boolean `active` field was
+    used, with only two states. Now there's three and can be extended."""
+    STATE_CHOICES = (
+        ('p', 'Pending'),
+        ('d', 'Discarded'),
+        ('a', 'Accepted'),
+    )
+    state = models.CharField(max_length=1, choices=STATE_CHOICES,
+                             null=False, blank=False, default='p')
+
+    class Meta:
+        abstract = True
+
+    @cached_property
+    def active(self):
+        # after changing ActiveMixin to StateMixin, this should help in some
+        # cases with code refactoring; will be removed later
+        return self.state == 'p'
+
+#------------------------------------------------------------
+
+
 @reversion.register
 class Organization(models.Model):
     '''Represent an organization, academic or business.'''
@@ -155,13 +198,28 @@ class Membership(models.Model):
         help_text="Expected number of self-organized workshops per agreement "
                   "duration",
     )
+    # according to Django docs, PositiveIntegerFields accept 0 as valid as well
+    seats_instructor_training = models.PositiveIntegerField(
+        null=False, blank=False, default=0,
+        verbose_name="Instructor training seats",
+        help_text="Number of seats in instructor trainings",
+    )
+    additional_instructor_training_seats = models.PositiveIntegerField(
+        null=False, blank=False, default=0,
+        verbose_name="Additional instructor training seats",
+        help_text="Use this field if you want to grant more seats than "
+                  "the agreement provides for.",
+    )
     notes = models.TextField(default="", blank=True)
     organization = models.ForeignKey(Organization, null=False, blank=False,
                              on_delete=models.PROTECT)
 
     def __str__(self):
-        return "{} membership: {}".format(self.variant.title(),
-                                          self.organization)
+        from workshops.util import human_daterange
+        dates = human_daterange(self.agreement_start, self.agreement_end)
+        return "{} membership: {} ({})".format(self.variant.title(),
+                                               self.organization,
+                                               dates)
 
     def get_absolute_url(self):
         return reverse('membership_details', args=[self.id])
@@ -209,6 +267,20 @@ class Membership(models.Model):
         b = self.self_organized_workshops_completed
         return a - b
 
+    @cached_property
+    def seats_instructor_training_total(self):
+        return (self.additional_instructor_training_seats +
+                self.seats_instructor_training)
+
+    @cached_property
+    def seats_instructor_training_utilized(self):
+        # count number of tasks that have this membership
+        return self.task_set.filter(role__name="learner").count()
+
+    @cached_property
+    def seats_instructor_training_remaining(self):
+        return (self.seats_instructor_training_total -
+                self.seats_instructor_training_utilized)
 
 #------------------------------------------------------------
 
@@ -1089,12 +1161,6 @@ class Event(AssignmentMixin, models.Model):
         blank=True, default="",
         verbose_name="Long-term assessment survey for learners")
 
-    request = models.ForeignKey(
-        'EventRequest', null=True, blank=True,
-        help_text='Backlink to the request that created this event.',
-        on_delete=models.SET_NULL,
-    )
-
     # used in getting metadata updates from GitHub
     repository_last_commit_hash = models.CharField(
         max_length=40, blank=True, default='',
@@ -1107,6 +1173,16 @@ class Event(AssignmentMixin, models.Model):
     metadata_changed = models.BooleanField(
         default=False,
         help_text='Indicate if metadata changed since last check')
+
+    # defines if people not associated with specific member sites can take part
+    # in TTT event
+    open_TTT_applications = models.BooleanField(
+        null=False, blank=True, default=False,
+        verbose_name="TTT Open applications",
+        help_text="If this event is <b>TTT</b>, you can mark it as 'open "
+                  "applications' which means that people not associated with "
+                  "this event's member sites can also take part in this event."
+    )
 
     class Meta:
         ordering = ('-start', )
@@ -1210,23 +1286,28 @@ class Event(AssignmentMixin, models.Model):
     @property
     def human_readable_date(self):
         """Render start and end dates as human-readable short date."""
+        from workshops.util import human_daterange
         date1 = self.start
         date2 = self.end
+        return human_daterange(date1, date2)
 
-        if date1 and not date2:
-            return '{:%b %d, %Y}-???'.format(date1)
-        elif date2 and not date1:
-            return '???-{:%b %d, %Y}'.format(date2)
-        elif not date2 and not date1:
-            return '???-???'
+    def clean(self):
+        """Additional model validation."""
 
-        if date1.year == date2.year:
-            if date1.month == date2.month:
-                return '{:%b %d}-{:%d, %Y}'.format(date1, date2)
-            else:
-                return '{:%b %d}-{:%b %d, %Y}'.format(date1, date2)
-        else:
-            return '{:%b %d, %Y}-{:%b %d, %Y}'.format(date1, date2)
+        # Applies only to saved model instances!!! Otherwise it's impossible
+        # to access M2M objects.
+        if self.pk:
+            errors = dict()
+            has_TTT = self.tags.filter(name='TTT')
+
+            if self.open_TTT_applications and not has_TTT:
+                errors['open_TTT_applications'] = (
+                    'You cannot open applications on non-TTT event.'
+                )
+
+            if errors:
+                raise ValidationError(errors)
+        # additional validation before the object is saved is in EventForm
 
     def save(self, *args, **kwargs):
         self.slug = self.slug or None
@@ -1248,8 +1329,8 @@ class Event(AssignmentMixin, models.Model):
         super(Event, self).save(*args, **kwargs)
 
 
-class EventRequest(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
-                   models.Model):
+class EventRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
+                   EventLink, models.Model):
     name = models.CharField(max_length=STR_MED)
     email = models.EmailField()
     affiliation = models.CharField(max_length=STR_LONG,
@@ -1432,8 +1513,8 @@ class EventRequest(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
         ordering = ['created_at']
 
 
-class EventSubmission(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
-                      models.Model):
+class EventSubmission(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
+                      EventLink, models.Model):
     url = models.URLField(
         null=False, blank=False,
         verbose_name='Link to the workshop\'s website')
@@ -1460,8 +1541,9 @@ class EventSubmission(AssignmentMixin, ActiveMixin, CreatedUpdatedMixin,
         ordering = ['created_at']
 
 
-class DCSelfOrganizedEventRequest(AssignmentMixin, ActiveMixin,
-                                  CreatedUpdatedMixin, models.Model):
+class DCSelfOrganizedEventRequest(AssignmentMixin, StateMixin,
+                                  CreatedUpdatedMixin, EventLink,
+                                  models.Model):
     """Should someone want to run a self-organized Data Carpentry event, they
     have to fill this specific form first. See
     https://github.com/swcarpentry/amy/issues/761"""
@@ -1698,6 +1780,19 @@ class Task(models.Model):
     role       = models.ForeignKey(Role, on_delete=models.PROTECT)
     title      = models.CharField(max_length=STR_LONG, blank=True)
     url        = models.URLField(blank=True, verbose_name='URL')
+    seat_membership = models.ForeignKey(
+        Membership, on_delete=models.PROTECT, null=True, blank=True,
+        default=None, verbose_name="Associated member site in TTT event",
+        help_text="In order to count this person into number of used "
+                  "membership instructor training seats, a correct membership "
+                  "entry needs to be selected.",
+    )
+    seat_open_training = models.BooleanField(
+        null=False, blank=True, default=False,
+        verbose_name="Open training seat",
+        help_text="Some TTT events allow for open training; check this field "
+                  "to count this person into open applications."
+    )
 
     objects = TaskManager()
 
@@ -1712,6 +1807,42 @@ class Task(models.Model):
 
     def get_absolute_url(self):
         return reverse('task_details', kwargs={'task_id': self.id})
+
+    def clean(self):
+        """Additional model validation."""
+
+        # check seats, make sure the corresponding event has "TTT" tag
+        errors = dict()
+        has_ttt = bool(self.event.tags.filter(name="TTT"))
+        is_open_app = self.event.open_TTT_applications
+
+        if self.seat_membership is not None and self.seat_open_training:
+            raise ValidationError(
+                "This Task cannot be simultaneously open training and use "
+                "a Membership instructor training seat."
+            )
+
+        if not has_ttt and self.seat_membership is not None:
+            errors['seat_membership'] = ValidationError(
+                "Cannot associate membership when the event has no TTT tag",
+                code='invalid',
+            )
+
+        if not has_ttt and self.seat_open_training:
+            errors['seat_open_training'] = ValidationError(
+                "Cannot mark this person as open applicant, because the event "
+                "has no TTT tag.",
+                code='invalid',
+            )
+        elif has_ttt and not is_open_app and self.seat_open_training:
+            errors['seat_open_training'] = ValidationError(
+                "Cannot mark this person as open applicant, because the TTT "
+                "event is not marked as open applications.",
+                code='invalid',
+            )
+
+        if errors:
+            raise ValidationError(errors)
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -1759,6 +1890,9 @@ class BadgeQuerySet(models.query.QuerySet):
 
 class Badge(models.Model):
     '''Represent a badge we award.'''
+
+    # just for easier access outside `models.py`
+    INSTRUCTOR_BADGES = BadgeQuerySet.INSTRUCTOR_BADGES
 
     name       = models.CharField(max_length=STR_MED, unique=True)
     title      = models.CharField(max_length=STR_MED)
@@ -2025,36 +2159,28 @@ class InvoiceRequest(models.Model):
 
 #------------------------------------------------------------
 
+from workshops.util import build_choice_field_with_other_option
 
-def build_choice_field_with_other_option(choices, default, verbose_name=None,
-        help_text=None):
-    assert default in [c[0] for c in choices]
-    assert all(c[0] != '' for c in choices)
 
-    field = models.CharField(
-        max_length=STR_MED,
-        choices=choices,
-        verbose_name=verbose_name,
-        help_text=help_text,
-        null=False, blank=False, default=default,
-    )
-    other_field = models.CharField(
-        max_length=STR_LONG,
-        verbose_name=' ',
-        null=False, blank=True, default='',
-    )
-    return field, other_field
+class TrainingRequestManager(models.Manager):
+    def get_queryset(self):
+        """Enhance default TrainingRequest queryset with auto-computed
+        fields."""
+        return super().get_queryset().annotate(
+            score_total=Case(
+                When(score_manual__isnull=False,
+                     then=F('score_auto') + F('score_manual')),
+                When(score_manual__isnull=True,
+                     then=F('score_auto')),
+                output_field=PositiveIntegerField(),
+            ),
+        )
 
 
 @reversion.register
-class TrainingRequest(ActiveMixin, CreatedUpdatedMixin,
-        DataPrivacyAgreementMixin, COCAgreementMixin, models.Model):
-    STATES = [
-        ('p', 'Pending'),  # initial state
-        ('a', 'Accepted'),  # state after matching a Person record
-        ('d', 'Discarded'),
-    ]
-    state = models.CharField(choices=STATES, default='p', max_length=1)
+class TrainingRequest(CreatedUpdatedMixin,
+        DataPrivacyAgreementMixin, COCAgreementMixin, StateMixin,
+        models.Model):
 
     person = models.ForeignKey(Person, null=True, blank=True,
                                verbose_name='Matched Trainee',
@@ -2282,6 +2408,25 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin,
 
     notes = models.TextField(blank=True, help_text='Admin notes')
 
+    score_auto = models.PositiveIntegerField(
+        null=False, blank=False, default=0,
+        verbose_name="Application automatic score",
+        help_text="Filled out by AMY.",
+    )
+    score_manual = models.IntegerField(
+        null=True, blank=True,
+        verbose_name="Application manual score (can be negative)",
+        help_text="Leave blank if you don't want to score this application.",
+    )
+    # score_total - calculated automatically by the manager
+    score_notes = models.TextField(
+        blank=True,
+        verbose_name="Notes regarding manual score",
+        help_text="Explanation of manual score, if necessary.",
+    )
+
+    objects = TrainingRequestManager()
+
     class Meta:
         ordering = ['created_at']
 
@@ -2292,6 +2437,79 @@ class TrainingRequest(ActiveMixin, CreatedUpdatedMixin,
                 and self.person.get_training_tasks().exists():
             raise ValidationError({'state': 'Pending training request cannot '
                                             'be matched with a training.'})
+
+    def recalculate_score_auto(self):
+        """Calculate automatic score according to the rubric:
+        https://github.com/carpentries/instructor-training/blob/gh-pages/files/rubric.md"""
+        score = 0
+
+        # location based points (country not on the list of countries)
+        # according to
+        # https://github.com/swcarpentry/amy/issues/1327#issuecomment-422539917
+        # and
+        # https://github.com/swcarpentry/amy/issues/1327#issuecomment-423292177
+        not_scoring_countries = [
+            'US', 'CA', 'NZ', 'GB', 'AU', 'AT', 'BE', 'CY', 'CZ',
+            'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT',
+            'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE',
+            'CH', 'IS', 'NO',
+        ]
+        if self.country and self.country.code not in not_scoring_countries:
+            score += 1
+
+        if self.underresourced:
+            score += 1
+
+        # economics or social sciences, arts, humanities, or library science
+        scoring_domains = [
+            'Humanities', 'Library and information science',
+            'Economics/business', 'Social sciences',
+        ]
+        for domain in self.domains.all():
+            if domain.name in scoring_domains:
+                score += 1
+                break
+
+        # +1 for each previous involvement with The Carpentries (max. 3)
+        prev_inv_count = len(self.previous_involvement.all())
+        score += prev_inv_count if prev_inv_count <= 3 else 3
+
+        # previous training in teaching: "a certification or short course"
+        # or "a full degree"
+        if self.previous_training in ['course', 'full']:
+            score += 1
+
+        # previous experience in teaching: "TA for full course"
+        # or "primary instructor for full course"
+        if self.previous_experience in ['ta', 'courses']:
+            score += 1
+
+        # using tools "every day" or "a few times a week"
+        if self.programming_language_usage_frequency in ['daily', 'weekly']:
+            score += 1
+
+        return score
+
+    def save(self, *args, **kwargs):
+        """Run recalculation upon save."""
+        inserted = False
+
+        # save first so that there's an ID present
+        if not self.pk:
+            super().save(*args, **kwargs)
+            inserted = True
+
+        score = self.recalculate_score_auto()
+
+        if self.pk and score != self.score_auto:
+            self.score_auto = score
+
+        # we cannot force insert for the second time - this time it should
+        # be an UPDATE query
+        if inserted and 'force_insert' in kwargs:
+            kwargs.pop('force_insert')
+
+        super().save(*args, **kwargs)
 
     def get_absolute_url(self):
         return reverse('trainingrequest_details', args=[self.pk])

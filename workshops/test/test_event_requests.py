@@ -23,7 +23,7 @@ class TestSWCEventRequestForm(TestBase):
             'travel_reimbursement', 'travel_reimbursement_other',
             'admin_fee_payment', 'comment', 'captcha', 'privacy_consent',
         ])
-        assert fields_left == fields_right
+        self.assertEqual(fields_left, fields_right)
 
     def test_request_added(self):
         """Ensure the request is successfully added to the pool."""
@@ -46,13 +46,13 @@ class TestSWCEventRequestForm(TestBase):
         }
         rv = self.client.post(reverse('swc_workshop_request'), data,
                               follow=True)
-        assert rv.status_code == 200
+        self.assertEqual(rv.status_code, 200)
         content = rv.content.decode('utf-8')
-        assert 'Fix errors below' not in content
-        assert 'Thank you for requesting a workshop' in content
-        assert EventRequest.objects.all().count() == 1
-        assert EventRequest.objects.all()[0].active is True
-        assert len(mail.outbox) == 1
+        self.assertNotIn('Fix errors below', content)
+        self.assertIn('Thank you for requesting a workshop', content)
+        self.assertEqual(EventRequest.objects.all().count(), 1)
+        self.assertEqual(EventRequest.objects.all()[0].state, 'p')
+        self.assertEqual(len(mail.outbox), 1)
         msg = mail.outbox[0]
         self.assertEqual(
             msg.subject,
@@ -67,10 +67,11 @@ class TestSWCEventRequestForm(TestBase):
             affiliation='Hogwarts', location='United Kingdom',
             country='GB', workshop_type='swc',
         )
-        rv = self.client.get(reverse('eventrequest_discard', args=[er.pk]))
-        assert rv.status_code == 302
+        rv = self.client.get(reverse('eventrequest_set_state',
+                                     args=[er.pk, 'discarded']))
+        self.assertEqual(rv.status_code, 302)
         er.refresh_from_db()
-        assert not er.active
+        self.assertEqual(er.state, 'd')
 
 
 class TestDCEventRequestForm(TestBase):
@@ -91,7 +92,7 @@ class TestDCEventRequestForm(TestBase):
             'travel_reimbursement', 'travel_reimbursement_other',
             'comment', 'privacy_consent', 'captcha',
         ])
-        assert fields_left == fields_right
+        self.assertEqual(fields_left, fields_right)
 
     def test_request_added(self):
         """Ensure the request is successfully added to the pool."""
@@ -115,13 +116,13 @@ class TestDCEventRequestForm(TestBase):
         }
         rv = self.client.post(reverse('dc_workshop_request'), data,
                               follow=True)
-        assert rv.status_code == 200
+        self.assertEqual(rv.status_code, 200)
         content = rv.content.decode('utf-8')
-        assert 'Fix errors below' not in content
-        assert 'Thank you for requesting a workshop' in content
-        assert EventRequest.objects.all().count() == 1
-        assert EventRequest.objects.all()[0].active is True
-        assert len(mail.outbox) == 1
+        self.assertNotIn('Fix errors below', content)
+        self.assertIn('Thank you for requesting a workshop', content)
+        self.assertEqual(EventRequest.objects.all().count(), 1)
+        self.assertEqual(EventRequest.objects.all()[0].state, 'p')
+        self.assertEqual(len(mail.outbox), 1)
         msg = mail.outbox[0]
         self.assertEqual(
             msg.subject,
@@ -136,10 +137,11 @@ class TestDCEventRequestForm(TestBase):
             affiliation='Hogwarts', location='United Kingdom',
             country='GB', workshop_type='dc',
         )
-        rv = self.client.get(reverse('eventrequest_discard', args=[er.pk]))
-        assert rv.status_code == 302
+        rv = self.client.get(reverse('eventrequest_set_state',
+                                     args=[er.pk, 'discarded']))
+        self.assertEqual(rv.status_code, 302)
         er.refresh_from_db()
-        assert not er.active
+        self.assertEqual(er.state, 'd')
 
 
 class TestEventRequestsViews(TestBase):
@@ -147,42 +149,46 @@ class TestEventRequestsViews(TestBase):
         self._setUpUsersAndLogin()
 
         self.er1 = EventRequest.objects.create(
-            active=True, name="Harry Potter", email="harry@potter.com",
+            state="p", name="Harry Potter", email="harry@potter.com",
             affiliation="Hogwarts", location="Scotland", country="GB",
             preferred_date="soon",
         )
         self.er2 = EventRequest.objects.create(
-            active=False, name="Harry Potter", email="harry@potter.com",
+            state="d", name="Harry Potter", email="harry@potter.com",
             affiliation="Hogwarts", location="Scotland", country="GB",
             preferred_date="soon",
         )
 
-    def test_active_requests_list(self):
+    def test_pending_requests_list(self):
         rv = self.client.get(reverse('all_eventrequests'))
-        assert self.er1 in rv.context['requests']
-        assert self.er2 not in rv.context['requests']
+        self.assertIn(self.er1, rv.context['requests'])
+        self.assertNotIn(self.er2, rv.context['requests'])
 
-    def test_inactive_requests_list(self):
-        rv = self.client.get(reverse('all_eventrequests') + '?active=false')
-        assert self.er1 not in rv.context['requests']
-        assert self.er2 in rv.context['requests']
+    def test_discarded_requests_list(self):
+        rv = self.client.get(reverse('all_eventrequests') + '?state=d')
+        self.assertNotIn(self.er1, rv.context['requests'])
+        self.assertIn(self.er2, rv.context['requests'])
 
-    def test_active_request_view(self):
-        rv = self.client.get(reverse('eventrequest_details',
-                                     args=[self.er1.pk]))
-        assert rv.status_code == 200
+    def test_set_state_pending_request_view(self):
+        rv = self.client.get(reverse('eventrequest_set_state',
+                                     args=[self.er1.pk, 'discarded']))
+        self.assertEqual(rv.status_code, 302)
+        self.er1.refresh_from_db()
+        self.assertEqual(self.er1.state, "d")
 
-    def test_inactive_request_view(self):
-        rv = self.client.get(reverse('eventrequest_details',
-                                     args=[self.er2.pk]))
-        assert rv.status_code == 200
+    def test_set_state_discarded_request_view(self):
+        rv = self.client.get(reverse('eventrequest_set_state',
+                                     args=[self.er2.pk, 'discarded']))
+        self.assertEqual(rv.status_code, 302)
+        self.er2.refresh_from_db()
+        self.assertEqual(self.er2.state, "d")
 
-    def test_active_request_accept(self):
-        rv = self.client.get(reverse('eventrequest_accept',
-                                     args=[self.er1.pk]))
-        assert rv.status_code == 200
+    def test_pending_request_accept(self):
+        rv = self.client.get(reverse('eventrequest_set_state',
+                                     args=[self.er1.pk, 'accepted']))
+        self.assertEqual(rv.status_code, 302)
 
-    def test_active_request_accepted(self):
+    def test_pending_request_accepted_with_event(self):
         """Ensure a backlink from Event to EventRequest that created the
         event exists after ER is accepted."""
         data = {
@@ -192,23 +198,44 @@ class TestEventRequestsViews(TestBase):
             'invoice_status': 'unknown',
         }
         rv = self.client.post(
-            reverse('eventrequest_accept', args=[self.er1.pk]),
+            reverse('eventrequest_accept_event', args=[self.er1.pk]),
             data)
-        assert rv.status_code == 302, rv.status_code
-        request = Event.objects.get(slug='2016-06-30-test-event').request
+        self.assertEqual(rv.status_code, 302)
+        request = Event.objects.get(slug='2016-06-30-test-event').eventrequest
         self.assertEqual(request, self.er1)
 
-    def test_inactive_request_accept(self):
-        rv = self.client.get(reverse('eventrequest_accept',
+    def test_discarded_request_accepted_with_event(self):
+        rv = self.client.get(reverse('eventrequest_accept_event',
                                      args=[self.er2.pk]))
-        assert rv.status_code != 200
+        self.assertEqual(rv.status_code, 404)
 
-    def test_active_request_discard(self):
-        rv = self.client.get(reverse('eventrequest_discard',
-                                     args=[self.er1.pk]), follow=True)
-        assert rv.status_code == 200
+    def test_pending_request_discard(self):
+        rv = self.client.get(reverse('eventrequest_set_state',
+                                     args=[self.er1.pk, 'discarded']),
+                             follow=True)
+        self.assertEqual(rv.status_code, 200)
 
-    def test_inactive_request_discard(self):
-        rv = self.client.get(reverse('eventrequest_discard',
-                                     args=[self.er2.pk]), follow=True)
-        assert rv.status_code != 200
+    def test_discarded_request_discard(self):
+        rv = self.client.get(reverse('eventrequest_set_state',
+                                     args=[self.er2.pk, 'discarded']),
+                             follow=True)
+        self.assertEqual(rv.status_code, 200)
+
+    def test_discarded_request_reopened(self):
+        self.er1.state = "a"
+        self.er1.save()
+        rv = self.client.get(
+            reverse('eventrequest_set_state',
+                    args=[self.er1.pk, 'pending']),
+            follow=True)
+        self.er1.refresh_from_db()
+        self.assertEqual(self.er1.state, "p")
+
+    def test_accepted_request_reopened(self):
+        self.assertEqual(self.er2.state, "d")
+        rv = self.client.get(
+            reverse('eventrequest_set_state',
+                    args=[self.er2.pk, 'pending']),
+            follow=True)
+        self.er2.refresh_from_db()
+        self.assertEqual(self.er2.state, "p")

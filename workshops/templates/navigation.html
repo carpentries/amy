@@ -1,6 +1,6 @@
 {% load navigation %}
 {% block navbar %}
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow">
       <a class="navbar-brand" href="{% url 'admin-dashboard' %}">AMY</a>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
@@ -26,6 +26,7 @@
               {% navbar_element_permed "Bulk add persons" "person_bulk_add" "workshops.add_person" True %}
               {% navbar_element_permed "Merge persons" "persons_merge" "workshops.delete_person" True %}
               {% navbar_element_permed "Merge events" "events_merge" "workshops.change_event,workshops.delete_event" True %}
+              {% navbar_element_permed "Merge training requests" "trainingrequests_merge" "workshops.change_trainingrequest,workshops.delete_trainingrequest" True %}
               {% navbar_element "Find Workshop Staff" "workshop_staff" True %}
               <div class="dropdown-divider"></div>
               {% url "export_badges" as export_badges_url %}
@@ -45,6 +46,7 @@
               {% navbar_element "Instructors over time" "instructors_over_time" True %}
               {% navbar_element "How often instructors have taught" "instructor_num_taught" True %}
               {% navbar_element "All activity over time" "all_activity_over_time" True %}
+              {% navbar_element "Membership trainings statistics" "membership_trainings_stats" True %}
               <div class="dropdown-divider"></div>
               {% navbar_element "Workshop issues" "workshop_issues" True %}
               {% navbar_element "Instructor issues" "instructor_issues" True %}
@@ -56,9 +58,11 @@
             <a class="nav-link dropdown-toggle" href="#" id="requestsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Requests</a>
             <div class="dropdown-menu" aria-labelledby="requestsDropdown">
               {% navbar_element "Training requests" "all_trainingrequests" True %}
+              <div class="dropdown-divider"></div>
               {% navbar_element "Workshop requests" "all_eventrequests" True %}
               {% navbar_element "Workshop submissions" "all_eventsubmissions" True %}
               {% navbar_element "DC self-organized workshop requests" "all_dcselforganizedeventrequests" True %}
+              <div class="dropdown-divider"></div>
               {% navbar_element "Profile update requests" "all_profileupdaterequests" True %}
               {% navbar_element "Invoice requests" "all_invoicerequests" True %}
             </div>

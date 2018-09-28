@@ -2,6 +2,7 @@
 
 {% load pagination %}
 {% load tags %}
+{% load state %}
 
 {% block content %}
   {% if requests %}
@@ -12,21 +13,32 @@
       <th>Affiliation</th>
       <th>Preferred date</th>
       <th>Type</th>
+      <th width="80">State
+        <i class="fas fa-question-circle"
+           data-toggle="popover" data-html="true"
+           data-content="<span class='badge badge-warning'>Pending</span> <span class='badge badge-danger'>Discarded</span> <span class='badge badge-success'>Accepted</span>"></i>
+      </th>
       <th>Comment</th>
       <th class="additional-links"></th>
     </tr>
     {% for req in requests %}
-    <tr>
+    <tr {% if req.state == "a" %}class="table-success"{% elif req.state == "d" %}class="table-warning"{% endif %}>
       <td>{% if req.assigned_to %}<a href="{{ req.assigned_to.get_absolute_url }}">{{ req.assigned_to.get_short_name }}</a>{% else %}—{% endif %}</td>
       <td>{{ req.name }} &lt;{{ req.email|urlize }}&gt;</td>
       <td>{{ req.affiliation }}</td>
       <td>{{ req.preferred_date }}</td>
       <td>{% bootstrap_tag req.workshop_type|upper %}</td>
+      <td>
+        <span class="{% state_label req %}">
+          {{ req.get_state_display }}
+        </span>
+      </td>
       <td>{{ req.comment|truncatewords:5|default:"—" }}</td>
       <td><a href="{{ req.get_absolute_url }}"><i class="fas fa-info-circle"></i></a></td>
     </tr>
     {% endfor %}
   </table>
+  {% pagination requests %}
   {% else %}
   <p>No workshop requests matching the filter.</p>
   {% endif %}

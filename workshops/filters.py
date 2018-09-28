@@ -1,3 +1,4 @@
+from datetime import date
 import re
 
 from dal import autocomplete
@@ -14,6 +15,7 @@ from django_countries import Countries
 
 from workshops.forms import bootstrap_helper_filter, SIDEBAR_DAL_WIDTH
 from workshops.models import (
+    StateMixin,
     Event,
     Organization,
     Person,
@@ -30,8 +32,6 @@ from workshops.models import (
     Membership,
 )
 
-EMPTY_SELECTION = (None, '---------')
-
 
 class AllCountriesFilter(django_filters.ChoiceFilter):
     @property
@@ -45,7 +45,6 @@ class AllCountriesFilter(django_filters.ChoiceFilter):
         countries.only = choices
 
         self.extra['choices'] = list(countries)
-        self.extra['choices'].insert(0, EMPTY_SELECTION)
         return super().field
 
 
@@ -63,7 +62,6 @@ class ForeignKeyAllValuesFilter(django_filters.ChoiceFilter):
         qs1 = qs1.order_by(name).values_list(name, flat=True)
         qs2 = model.objects.filter(pk__in=qs1)
         self.extra['choices'] = [(o.pk, str(o)) for o in qs2]
-        self.extra['choices'].insert(0, EMPTY_SELECTION)
         return super().field
 
 
@@ -113,6 +111,9 @@ class NamesOrderingFilter(django_filters.OrderingFilter):
         return ordering
 
 
+#------------------------------------------------------------
+
+
 class AMYFilterSet(django_filters.FilterSet):
     """
     This base class sets FormHelper.
@@ -123,6 +124,23 @@ class AMYFilterSet(django_filters.FilterSet):
 
         # Set default FormHelper
         self.form.helper = bootstrap_helper_filter
+
+
+class StateFilterSet(django_filters.FilterSet):
+    """A mixin for extending filter classes for Django models that make use of
+    `StateMixin`."""
+
+    state = django_filters.ChoiceFilter(
+        choices=StateMixin.STATE_CHOICES,
+        label='State',
+        widget=widgets.RadioSelect,
+        empty_label='Any',
+        null_label=None,
+        null_value=None,
+    )
+
+
+#------------------------------------------------------------
 
 
 class EventFilter(AMYFilterSet):
@@ -145,7 +163,7 @@ class EventFilter(AMYFilterSet):
                              widget=Select2())
 
     invoice_status = django_filters.ChoiceFilter(
-        choices=(EMPTY_SELECTION, ) + Event.INVOICED_CHOICES,
+        choices=Event.INVOICED_CHOICES,
     )
 
     tags = django_filters.ModelMultipleChoiceFilter(
@@ -184,19 +202,14 @@ def filter_active_eventrequest(qs, name, value):
     return qs
 
 
-class EventRequestFilter(AMYFilterSet):
-    assigned_to = ForeignKeyAllValuesFilter(Person)
-    country = AllCountriesFilter()
-    active = django_filters.ChoiceFilter(
-        choices=(('all', 'All'), ('true', 'Open'), ('false', 'Closed')),
-        label='Status', method=filter_active_eventrequest,
-        widget=widgets.RadioSelect,
-    )
+class EventRequestFilter(AMYFilterSet, StateFilterSet):
+    assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2())
+    country = AllCountriesFilter(widget=Select2())
     workshop_type = django_filters.ChoiceFilter(
-        choices=(('', 'All'), ('swc', 'Software-Carpentry'),
+        choices=(('swc', 'Software-Carpentry'),
                  ('dc', 'Data-Carpentry')),
         label='Workshop type',
-        widget=widgets.RadioSelect,
+        empty_label='All',
     )
 
     order_by = django_filters.OrderingFilter(
@@ -208,9 +221,9 @@ class EventRequestFilter(AMYFilterSet):
     class Meta:
         model = EventRequest
         fields = [
+            'state',
             'assigned_to',
             'workshop_type',
-            'active',
             'country',
         ]
 
@@ -238,20 +251,29 @@ class OrganizationFilter(AMYFilterSet):
         ]
 
 
-def filter_taught_workshops(queryset, name, values):
-    """Limit Persons to only instructors from events with specific tags.
-
-    This needs to be in a separate function because django-filters doesn't
-    support `action` parameter as supposed, ie. with
-    `method='filter_taught_workshops'` it doesn't call the method; instead it
-    tries calling a string, which results in error."""
-
-    if not values:
+def filter_training_seats_only(queryset, name, active):
+    """Limit Memberships to only active entries."""
+    if active:
+        today = date.today()
+        return queryset.filter(agreement_start__gte=today,
+                               agreement_end__lte=today)
+    else:
         return queryset
 
-    return queryset.filter(task__role__name='instructor',
-                           task__event__tags__in=values) \
-                   .distinct()
+def filter_training_seats_only(queryset, name, seats):
+    """Limit Memberships to only entries with some training seats allowed."""
+    if seats:
+        return queryset.filter(instructor_training_seats_total__gt=0)
+    else:
+        return queryset
+
+
+def filter_nonpositive_remaining_seats(queryset, name, seats):
+    """Limit Memberships to only entries with negative remaining seats."""
+    if seats:
+        return queryset.filter(instructor_training_seats_remaining__lt=0)
+    else:
+        return queryset
 
 
 class MembershipFilter(AMYFilterSet):
@@ -267,12 +289,28 @@ class MembershipFilter(AMYFilterSet):
     CONTRIBUTION_CHOICES = (('', 'Any'),) + Membership.CONTRIBUTION_CHOICES
     contribution_type = django_filters.ChoiceFilter(choices=CONTRIBUTION_CHOICES)
 
+    active_only = django_filters.BooleanFilter(
+        label='Only show active memberships',
+        method=filter_training_seats_only,
+        widget=widgets.CheckboxInput)
+
+    training_seats_only = django_filters.BooleanFilter(
+        label='Only show memberships with non-zero allowed training seats',
+        method=filter_training_seats_only,
+        widget=widgets.CheckboxInput)
+
+    nonpositive_remaining_seats_only = django_filters.BooleanFilter(
+        label='Only show memberships with zero or less remaining seats',
+        method=filter_nonpositive_remaining_seats,
+        widget=widgets.CheckboxInput)
+
     order_by = django_filters.OrderingFilter(
         fields=(
             'organization__fullname',
             'organization__domain',
             'agreement_start',
             'agreement_end',
+            'instructor_training_seats_remaining',
         ),
     )
 
@@ -283,6 +321,63 @@ class MembershipFilter(AMYFilterSet):
             'variant',
             'contribution_type',
         ]
+
+
+class MembershipTrainingsFilter(AMYFilterSet):
+    organization_name = django_filters.CharFilter(
+        label='Organization name',
+        field_name='organization__fullname',
+        lookup_expr='icontains',
+    )
+
+    active_only = django_filters.BooleanFilter(
+        label='Only show active memberships',
+        method=filter_training_seats_only,
+        widget=widgets.CheckboxInput)
+
+    training_seats_only = django_filters.BooleanFilter(
+        label='Only show memberships with non-zero allowed training seats',
+        method=filter_training_seats_only,
+        widget=widgets.CheckboxInput)
+
+    nonpositive_remaining_seats_only = django_filters.BooleanFilter(
+        label='Only show memberships with zero or less remaining seats',
+        method=filter_nonpositive_remaining_seats,
+        widget=widgets.CheckboxInput)
+
+    order_by = django_filters.OrderingFilter(
+        fields=(
+            'organization__fullname',
+            'organization__domain',
+            'agreement_start',
+            'agreement_end',
+            'instructor_training_seats_total',
+            'instructor_training_seats_utilized',
+            'instructor_training_seats_remaining',
+        ),
+    )
+
+    class Meta:
+        model = Membership
+        fields = [
+            'organization_name',
+        ]
+
+
+def filter_taught_workshops(queryset, name, values):
+    """Limit Persons to only instructors from events with specific tags.
+
+    This needs to be in a separate function because django-filters doesn't
+    support `action` parameter as supposed, ie. with
+    `method='filter_taught_workshops'` it doesn't call the method; instead it
+    tries calling a string, which results in error."""
+
+    if not values:
+        return queryset
+
+    return queryset.filter(task__role__name='instructor',
+                           task__event__tags__in=values) \
+                   .distinct()
 
 
 class PersonFilter(AMYFilterSet):
@@ -499,6 +594,12 @@ def filter_training_requests_by_state(queryset, name, choice):
         return queryset.filter(state=choice)
 
 
+def filter_non_null_manual_score(queryset, name, manual_score):
+    if manual_score:
+        return queryset.filter(score_manual__isnull=False)
+    return queryset
+
+
 class TrainingRequestFilter(AMYFilterSet):
     search = django_filters.CharFilter(
         label='Name or Email',
@@ -512,7 +613,7 @@ class TrainingRequestFilter(AMYFilterSet):
 
     state = django_filters.ChoiceFilter(
         label='State',
-        choices=[('no_d', 'Pending or accepted')] + TrainingRequest.STATES,
+        choices=(('no_d', 'Pending or accepted'),) + TrainingRequest.STATE_CHOICES,
         method=filter_training_requests_by_state,
     )
 
@@ -527,6 +628,12 @@ class TrainingRequestFilter(AMYFilterSet):
         method=filter_matched,
     )
 
+    nonnull_manual_score = django_filters.BooleanFilter(
+        label='Manual score applied',
+        method=filter_non_null_manual_score,
+        widget=widgets.CheckboxInput,
+    )
+
     affiliation = django_filters.CharFilter(
         method=filter_affiliation,
     )
@@ -536,6 +643,7 @@ class TrainingRequestFilter(AMYFilterSet):
     order_by = NamesOrderingFilter(
         fields=(
             'created_at',
+            'score_total',
         ),
     )
 
@@ -676,13 +784,8 @@ def filter_active_eventsubmission(qs, name, value):
     return qs
 
 
-class EventSubmissionFilter(AMYFilterSet):
-    active = django_filters.ChoiceFilter(
-        choices=(('', 'All'), ('true', 'Open'), ('false', 'Closed')),
-        label='Status', method=filter_active_eventsubmission,
-        widget=widgets.RadioSelect,
-    )
-    assigned_to = ForeignKeyAllValuesFilter(Person)
+class EventSubmissionFilter(AMYFilterSet, StateFilterSet):
+    assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2())
 
     order_by = django_filters.OrderingFilter(
         fields=(
@@ -693,7 +796,7 @@ class EventSubmissionFilter(AMYFilterSet):
     class Meta:
         model = EventSubmission
         fields = [
-            'active',
+            'state',
             'assigned_to',
         ]
 
@@ -706,13 +809,8 @@ def filter_active_dcselforganizedeventrequest(qs, name, value):
     return qs
 
 
-class DCSelfOrganizedEventRequestFilter(AMYFilterSet):
-    active = django_filters.ChoiceFilter(
-        choices=(('', 'All'), ('true', 'Open'), ('false', 'Closed')),
-        label='Status', method=filter_active_dcselforganizedeventrequest,
-        widget=widgets.RadioSelect,
-    )
-    assigned_to = ForeignKeyAllValuesFilter(Person)
+class DCSelfOrganizedEventRequestFilter(AMYFilterSet, StateFilterSet):
+    assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2())
 
     order_by = django_filters.OrderingFilter(
         fields=(
@@ -723,7 +821,7 @@ class DCSelfOrganizedEventRequestFilter(AMYFilterSet):
     class Meta:
         model = DCSelfOrganizedEventRequest
         fields = [
-            'active',
+            'state',
             'assigned_to',
         ]
         order_by = [

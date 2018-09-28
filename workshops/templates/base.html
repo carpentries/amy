@@ -14,18 +14,9 @@
     {% endcompress %}
     {% block extrastyle %}{% endblock extrastyle %}
 
-    {# the JS needs to load here, otherwise there are issues with DAL (autocomplete) #}
     {% compress js %}
     <script src="{% static 'jquery/dist/jquery.js' %}"></script>
-    <script src="{% static 'popper.js/dist/umd/popper.js' %}"></script>
-    <script src="{% static 'bootstrap/dist/js/bootstrap.js' %}"></script>
-    <script src="{% static 'bootstrap-datepicker/dist/js/bootstrap-datepicker.js' %}"></script>
-    <script src="{% static 'jquery-stickytabs/jquery.stickytabs.js' %}"></script>
-    <script src="{% static 'urijs/src/URI.js' %}"></script>
-    <script src="{% static 'calendar_popup.js' %}"></script>
-    <script src="{% static 'amy_utils.js' %}"></script>
     {% endcompress %}
-    {% block extrajs %}{% endblock extrajs %}
 
     <title>AMY{% if title %}: {{ title }}{% endif %}</title>
   </head>
@@ -76,5 +67,16 @@
         </footer>
       </div>
     </div>
+
+    {% compress js %}
+    <script src="{% static 'popper.js/dist/umd/popper.js' %}"></script>
+    <script src="{% static 'bootstrap/dist/js/bootstrap.js' %}"></script>
+    <script src="{% static 'bootstrap-datepicker/dist/js/bootstrap-datepicker.js' %}"></script>
+    <script src="{% static 'jquery-stickytabs/jquery.stickytabs.js' %}"></script>
+    <script src="{% static 'urijs/src/URI.js' %}"></script>
+    <script src="{% static 'calendar_popup.js' %}"></script>
+    <script src="{% static 'amy_utils.js' %}"></script>
+    {% endcompress %}
+    {% block extrajs %}{% endblock extrajs %}
   </body>
 </html>

@@ -9,6 +9,9 @@ from ..models import (
     DCWorkshopTopic,
     AcademicLevel,
     DataAnalysisLevel,
+    Organization,
+    Tag,
+    Event,
 )
 
 
@@ -46,8 +49,8 @@ class TestDCSelfOrganizedEventRequestForm(TestBase):
         ]
         self.assertEqual(fields_left, fields_right)
 
-    def test_submission_added(self):
-        """Test if the submitted form adds a new event submission."""
+    def test_request_added(self):
+        """Test if the submitted form adds a new event request."""
         self.assertEqual(len(DCSelfOrganizedEventRequest.objects.all()), 1)
         data = {
             'g-recaptcha-response': 'PASSED',
@@ -78,7 +81,7 @@ class TestDCSelfOrganizedEventRequestForm(TestBase):
         self.assertNotIn('form', rv.context)
         self.assertEqual(len(DCSelfOrganizedEventRequest.objects.all()), 2)
 
-    def test_submission_sends_email(self):
+    def test_request_sends_email(self):
         """Test if the submitted form results in email sent."""
         data = {
             'g-recaptcha-response': 'PASSED',
@@ -114,3 +117,63 @@ class TestDCSelfOrganizedEventRequestForm(TestBase):
             'DC: new self-organized workshop request from {} @ {}'.format(
                 'Harry Potter', 'Hogwarts School of Witchcraft and Wizardry')
         )
+
+    def test_request_accepted_with_event(self):
+        self.assertEqual(self.request.state, "p")
+        minimal_event = {
+            'slug': '2018-08-29-first-event',
+            'host': Organization.objects.first().pk,
+            'tags': [Tag.objects.first().pk],
+            'invoice_status': 'not-invoiced',
+        }
+        rv = self.client.post(
+            reverse('dcselforganizedeventrequest_accept_event',
+                    args=[self.request.pk]),
+            minimal_event, follow=True)
+        self.assertEqual(rv.status_code, 200)
+        self.request.refresh_from_db()
+        self.assertEqual(self.request.state, "a")
+        self.assertEqual(
+            Event.objects.get(slug='2018-08-29-first-event')
+                 .dcselforganizedeventrequest,
+            self.request)
+
+    def test_request_discarded(self):
+        self.assertEqual(self.request.state, "p")
+        rv = self.client.get(
+            reverse('dcselforganizedeventrequest_set_state',
+                    args=[self.request.pk, 'discarded']),
+            follow=True)
+        self.assertEqual(rv.status_code, 200)
+        self.request.refresh_from_db()
+        self.assertEqual(self.request.state, "d")
+
+    def test_request_accepted(self):
+        self.assertEqual(self.request.state, "p")
+        rv = self.client.get(
+            reverse('dcselforganizedeventrequest_set_state',
+                    args=[self.request.pk, 'accepted']),
+            follow=True)
+        self.assertEqual(rv.status_code, 200)
+        self.request.refresh_from_db()
+        self.assertEqual(self.request.state, "a")
+
+    def test_discarded_request_reopened(self):
+        self.request.state = "d"
+        self.request.save()
+        rv = self.client.get(
+            reverse('dcselforganizedeventrequest_set_state',
+                    args=[self.request.pk, 'pending']),
+            follow=True)
+        self.request.refresh_from_db()
+        self.assertEqual(self.request.state, "p")
+
+    def test_accepted_request_reopened(self):
+        self.request.state = "a"
+        self.request.save()
+        rv = self.client.get(
+            reverse('dcselforganizedeventrequest_set_state',
+                    args=[self.request.pk, 'pending']),
+            follow=True)
+        self.request.refresh_from_db()
+        self.assertEqual(self.request.state, "p")

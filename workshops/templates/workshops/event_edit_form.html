@@ -15,7 +15,7 @@
   <div class="tab-pane show active" role="tabpanel" aria-labelledby="event-tab" id="event">
     <a href="#update_url_modal" class="btn btn-secondary" id="update_url_button" data-toggle="modal" data-target="#update_url_modal">Update from URL</a>
     {% crispy form %}
-    {% include "workshops/event_import_update_from_url.html" with update=True %}
+    {% include "includes/event_import_update_from_url.html" with update=True %}
   </div>
   <div class="tab-pane" role="tabpanel" aria-labelledby="tasks-tab" id="tasks">
     {% block task_tab %}
@@ -29,22 +29,29 @@
     {% if tasks %}
     <table class="table table-striped">
     <tr>
-      <th>person</th>
-      <th>title</th>
-      <th>url</th>
-      <th>role</th>
-      <th>actions</th>
+      <th>Person</th>
+      <th>URL</th>
+      <th>Role</th>
+      <th>Member site seat <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events"></i></th>
+      <th>Open applicant <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events with open applications"></i></th>
+      <th class="additional-links-wider"></th>
     </tr>
     {% for t in tasks %}
     <tr>
       <td><a href="{{ t.person.get_absolute_url }}">{{ t.person.full_name }}</a>{% if t.person.email and t.person.may_contact %} &lt;{{ t.person.email|urlize }}&gt;{% endif %}</td>
-      <td><a href="{% url 'task_details' t.pk %}">{{ t.title|default:"—" }}</a></td>
       <td>{{ t.url|default:"—"|urlize_newtab }}</td>
       <td>{{ t.role.name }}</td>
+      <td>{% if t.seat_membership %}<a href="{{ t.seat_membership.get_absolute_url }}">{{ t.seat_membership }}</a>{% else %}&mdash;{% endif %}</td>
+      <td>{{ t.seat_open_training|yesno }}</td>
       <td>
-        <form action="{% url 'task_delete' t.id %}?next={{ request.get_full_path|urlencode }}#tasks" onsubmit='return confirm("Are you sure you wish to remove \"{{ t.person.full_name }}\" from {{ object.slug }}?")' method="POST">
+        <a href="{% url 'task_details' t.pk %}" title="View {{ t }}"><i class="fas fa-info-circle"></i></a>
+        &nbsp;
+        {% if perms.workshops.edit_task %}
+        <a href="{% url 'task_edit' t.pk %}" title="Edit {{ t }}"><i class="fas fa-edit"></i></a>
+        {% endif %}
+        <form class="amy-form-inline" action="{% url 'task_delete' t.id %}?next={{ request.get_full_path|urlencode }}#tasks" onsubmit='return confirm("Are you sure you wish to remove \"{{ t.person.full_name }}\" from {{ object.slug }}?")' method="POST">
           {% csrf_token %}
-          <button type="submit" class="btn btn-danger">Delete</button>
+          <button type="submit" class="no-btn"><i class="fas fa-times"></i></button>
         </form>
       </td>
     </tr>
@@ -65,10 +72,10 @@
     {% block sponsor_list %}
     <table class="table table-striped">
     <tr>
-      <th>organization</th>
-      <th>amount</th>
-      <th>contact</th>
-      <th>actions</th>
+      <th>Organization</th>
+      <th>Amount</th>
+      <th>Contact</th>
+      <th>Actions</th>
     </tr>
     {% for sponsorship in object.sponsorship_set.all %}
     <tr>
@@ -98,9 +105,6 @@
 {% endblock %}
 
 {% block extrajs %}
-{{ form.media }}
-{{ task_form.media }}
-{{ sponsor_form.media }}
 <script type="text/javascript">
   $(function() {
     $('#tabs').stickyTabs();

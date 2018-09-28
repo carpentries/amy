@@ -28,15 +28,7 @@
     {% last_modified event %}
   </div>
   <div class="col-md-6 text-right">
-    <p>
-      <a href="#assignment_modal" id="change_assignment" data-toggle="modal" data-target="#assignment_modal"><i class="fas fa-user-cog"></i></a>
-      Assignee:
-      {% if event.assigned_to %}
-        <a href="{{ event.assigned_to.get_absolute_url }}">{{ event.assigned_to.full_name }}</a> (<a href="{% url 'event_assign' event.slug %}" id="clear-assignment">clear</a>).
-      {% else %}
-        no one (<a href="{% url 'event_assign' event.slug user.pk %}" id="assign-yourself">assign yourself</a>).
-      {% endif %}
-    </p>
+    {% include "includes/assigned_to.html" with object=event user=user assign_url='event_assign' %}
   </div>
 </div>
 
@@ -55,9 +47,9 @@
   </div>
 </div>
 
-{% include "workshops/event_details_table.html" with event=event %}
+{% include "includes/event_details_table.html" with event=event %}
 
-{% include "assignment_modal.html" with form=admin_lookup_form %}
+{% include "includes/assignment_modal.html" with form=admin_lookup_form %}
 
 <!-- preview modal -->
 <div class="modal" role="dialog" id="preview_modal" tabindex="-1" aria-labelledby="preview_modal_label" aria-hidden="true">
@@ -142,21 +134,29 @@
 {% if all_emails %}<p><a href="mailto:?bcc={{ all_emails|join:',' }}" class="btn btn-primary">Mail everyone</a></p>{% endif %}
 <table class="table table-striped">
   <tr>
-    <th width="25">DC?</th>
-    <th width="25">SWC?</th>
+    <th width="150">Instr. badges</th>
     <th>Person</th>
-    <th>Title</th>
     <th>URL</th>
     <th>Role</th>
+    <th>Member site seat <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events"></i></th>
+    <th>Open applicant <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events with open applications"></i></th>
+    <th class="additional-links"></th>
   </tr>
   {% for t in tasks %}
   <tr>
-    <td class="text-center">{% if t.person_is_dc_instructor %}{% bootstrap_tag "DC" %}{% endif %}</td>
-    <td class="text-center">{% if t.person_is_swc_instructor %}{% bootstrap_tag "SWC" %}{% endif %}</td>
+    <td>{% for badge in t.person_instructor_badges %}{% bootstrap_tag badge.name|cut:"-instructor"|upper %}{% empty %}&mdash;{% endfor %}</td>
     <td><a href="{{ t.person.get_absolute_url }}">{{ t.person.full_name }}</a>{% if t.person.email and t.person.may_contact %} &lt;{{ t.person.email|urlize }}&gt;{% endif %}</td>
-    <td><a href="{% url 'task_details' t.pk %}">{{ t.title|default:"—" }}</a></td>
-    <td>{{ t.url|default:"—"|urlize_newtab }}</td>
+    <td>{{ t.url|default:"&mdash;"|urlize_newtab }}</td>
     <td>{{ t.role.name }}</td>
+    <td>{% if t.seat_membership %}<a href="{{ t.seat_membership.get_absolute_url }}">{{ t.seat_membership }}</a>{% else %}&mdash;{% endif %}</td>
+    <td>{{ t.seat_open_training|yesno }}</td>
+    <td>
+      <a href="{% url 'task_details' t.pk %}" title="View {{ t }}"><i class="fas fa-info-circle"></i></a>
+      &nbsp;
+      {% if perms.workshops.edit_task %}
+      <a href="{% url 'task_edit' t.pk %}" title="Edit {{ t }}"><i class="fas fa-edit"></i></a>
+      {% endif %}
+    </td>
   </tr>
   {% endfor %}
 </table>
@@ -217,35 +217,20 @@
 {% endblock %}
 
 {% block extrajs %}
-{{ todo_form.media }}
-{{ admin_lookup_form.media }}
-<script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
+<script src="https://maps.googleapis.com/maps/api/js?api=AIzaSyC2WQkpSyrmJhXRcBdqsonpcQjyy8BtPrA&v=3.exp"></script>
 <script type="text/javascript">
   var gmap = null;
-
-  $.fn.modal.Constructor.prototype.enforceFocus = function() {};
-
-  // $('#preview_event').click(function() {
-  //   $('#preview_modal').modal();
-  //   return false;
-  // });
 
   $('#invoice_btn').click(function() {
     $('#invoice_modal').modal();
     return false;
   });
 
-  $(document).ready(function() {
+  $(function () {
     // validation modal loading
     $('#validation_modal').on('show.bs.modal', function() {
       $('#validation_modal .modal-body').load("{% url 'validate_event' event.slug %} #validation");
     });
-
-    // $("#preview_modal").on("shown.bs.modal", function () {
-    //   // required for the map to show something, otherwise (due to using modal)
-    //   // we'd get grey area
-    //   google.maps.event.trigger(gmap, "resize");
-    // });
 
     // draw a pin on the map in website preview
     var mapOptions = {
@@ -256,6 +241,7 @@
     };
     gmap = new google.maps.Map(document.getElementById("map_canvas"),
                                mapOptions);
+    {% if event.latitude and event.longitude %}
     var marker = new google.maps.Marker({
       position: new google.maps.LatLng({{ event.latitude }},
                                        {{ event.longitude }}),
@@ -263,6 +249,10 @@
       title: "{{ event.venue|escapejs }}: {{ event.humandate|escapejs }}",
       visible: true   // marker shown directly, not clustered
     });
+    {% endif %}
+
+    // https://github.com/select2/select2/issues/1645#issuecomment-24296615
+    $.fn.modal.Constructor.prototype.enforceFocus = function() {};
   });
 </script>
 {% endblock %}

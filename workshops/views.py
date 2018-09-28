@@ -13,6 +13,7 @@ from django.contrib.auth.mixins import (
     PermissionRequiredMixin,
     UserPassesTestMixin,
 )
+from django.contrib.auth.views import logout_then_login
 from django.core.exceptions import (
     ObjectDoesNotExist,
     PermissionDenied,
@@ -58,11 +59,13 @@ from workshops.base_views import (
     RedirectSupportMixin,
     PrepopulationSupportMixin,
     AMYDetailView,
+    StateFilterMixin,
 )
 from workshops.filters import (
     EventFilter,
     OrganizationFilter,
     MembershipFilter,
+    MembershipTrainingsFilter,
     PersonFilter,
     TaskFilter,
     AirportFilter,
@@ -110,12 +113,14 @@ from workshops.forms import (
     TrainingRequestsMergeForm,
     SendHomeworkForm,
     BulkDiscardProgressesForm,
-    bootstrap_helper,
+    BootstrapHelper,
     bootstrap_helper_inline_formsets,
     BulkChangeTrainingRequestForm,
     BulkMatchTrainingRequestForm,
     AllActivityOverTimeForm,
     ActionRequiredPrivacyForm,
+    SWCEventRequestNoCaptchaForm,
+    DCEventRequestNoCaptchaForm,
 )
 from workshops.management.commands.check_for_workshop_websites_updates import (
     Command as WebsiteUpdatesCommand,
@@ -166,6 +171,12 @@ from workshops.util import (
     redirect_with_next_support,
     dict_without_Nones,
 )
+
+
+@login_required
+def logout_then_login_with_msg(request):
+    messages.success(request, 'You were successfully logged-out.')
+    return logout_then_login(request)
 
 
 @login_required
@@ -312,12 +323,31 @@ class AllMemberships(OnlyForAdminsMixin, AMYListView):
     context_object_name = 'all_memberships'
     template_name = 'workshops/all_memberships.html'
     filter_class = MembershipFilter
-    queryset = Membership.objects.all()
+    queryset = Membership.objects.annotate(
+        instructor_training_seats_total=(
+            F('seats_instructor_training') +
+            F('additional_instructor_training_seats')
+        ),
+        # for future reference, in case someone would want to implement
+        # this annotation
+        # instructor_training_seats_utilized=(
+        #     Count('task', filter=Q(task__role__name='learner'))
+        # ),
+        instructor_training_seats_remaining=(
+            F('seats_instructor_training') +
+            F('additional_instructor_training_seats') -
+            Count('task', filter=Q(task__role__name='learner'))
+        ),
+    )
     title = 'All Memberships'
 
 
 class MembershipDetails(OnlyForAdminsMixin, AMYDetailView):
-    queryset = Membership.objects.all()
+    queryset = (
+        Membership.objects
+                  .select_related('organization')
+                  .prefetch_related('task_set')
+    )
     context_object_name = 'membership'
     template_name = 'workshops/membership.html'
     pk_url_kwarg = 'membership_id'
@@ -837,7 +867,7 @@ def person_password(request, person_id):
     else:
         form = Form(user)
 
-    form.helper = bootstrap_helper
+    form.helper = BootstrapHelper(add_cancel_button=False)
     return render(request, 'workshops/generic_form.html', {
         'form': form,
         'model': Person,
@@ -967,8 +997,19 @@ def sync_usersocialauth(request, person_id):
 class AllEvents(OnlyForAdminsMixin, AMYListView):
     context_object_name = 'all_events'
     template_name = 'workshops/all_events.html'
-    # notes are too large, so we defer them
-    queryset = Event.objects.defer('notes').prefetch_related('host', 'tags')
+    queryset = (
+        Event.objects
+        .defer('notes')
+        .select_related('assigned_to')
+        .prefetch_related('host', 'tags')
+        .annotate(
+            num_instructors=Sum(
+                Case(When(task__role__name='instructor', then=Value(1)),
+                     default=0,
+                     output_field=IntegerField()),
+            )
+        )
+    )
     filter_class = EventFilter
     title = 'All Events'
 
@@ -977,7 +1018,11 @@ class AllEvents(OnlyForAdminsMixin, AMYListView):
 def event_details(request, slug):
     '''List details of a particular event.'''
     try:
-        event = Event.objects.prefetch_related(Prefetch(
+        sponsorship_prefetch = Prefetch(
+            'sponsorship_set',
+            queryset=Sponsorship.objects.select_related('contact')
+        )
+        task_prefetch = Prefetch(
             'task_set',
             to_attr='contacts',
             queryset=Task.objects.select_related('person').filter(
@@ -986,24 +1031,33 @@ def event_details(request, slug):
                 Q(role__name='instructor')
             ).filter(person__may_contact=True)
             .exclude(Q(person__email='') | Q(person__email=None))
-        )).get(slug=slug)
+        )
+        event = (
+            Event.objects
+                 .prefetch_related(sponsorship_prefetch, task_prefetch)
+                 .select_related('eventrequest', 'eventsubmission',
+                                 'dcselforganizedeventrequest', 'assigned_to',
+                                 'host', 'administrator').get(slug=slug)
+        )
+        member_sites = (
+            Membership.objects.filter(task__event=event)
+                              .distinct()
+        )
     except Event.DoesNotExist:
         raise Http404('Event matching query does not exist.')
 
-    tasks = Task.objects \
-                .filter(event__id=event.id) \
-                .select_related('person', 'role') \
-                .annotate(person_is_swc_instructor=Sum(
-                              Case(When(person__badges__name='swc-instructor',
-                                        then=1),
-                                   default=0,
-                                   output_field=IntegerField())),
-                          person_is_dc_instructor=Sum(
-                              Case(When(person__badges__name='dc-instructor',
-                                        then=1),
-                                   default=0,
-                                   output_field=IntegerField()))) \
-                .order_by('role__name')
+    person_instructor_badges = Prefetch(
+        'person__badges',
+        to_attr='person_instructor_badges',
+        queryset=Badge.objects.filter(name__in=Badge.INSTRUCTOR_BADGES)
+    )
+    tasks = (
+        Task.objects
+            .filter(event__id=event.id)
+            .select_related('event', 'person', 'role')
+            .prefetch_related(person_instructor_badges)
+            .order_by('role__name')
+    )
     todos = event.todoitem_set.all()
     todo_form = SimpleTodoForm(prefix='todo', initial={
         'event': event,
@@ -1044,12 +1098,12 @@ def event_details(request, slug):
         'title': 'Event {0}'.format(event),
         'event': event,
         'tasks': tasks,
+        'member_sites': member_sites,
         'todo_form': todo_form,
         'todos': todos,
         'all_emails' : tasks.filter(person__may_contact=True)\
             .exclude(person__email=None)\
             .values_list('person__email', flat=True),
-        'helper': bootstrap_helper,
         'today': datetime.date.today(),
         'admin_lookup_form': admin_lookup_form,
     }
@@ -1117,9 +1171,10 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
         'workshops.add_task',
         'workshops.add_sponsorship',
     ]
-    queryset = Event.objects.select_related('assigned_to', 'administrator',
-                                            'language', 'request') \
-                            .prefetch_related('sponsorship_set')
+    queryset = Event.objects.select_related(
+        'assigned_to', 'administrator', 'language', 'eventrequest',
+        'eventsubmission', 'dcselforganizedeventrequest'
+    ).prefetch_related('sponsorship_set')
     slug_field = 'slug'
     form_class = EventForm
     template_name = 'workshops/event_edit_form.html'
@@ -1535,6 +1590,39 @@ class TaskCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
     model = Task
     form_class = TaskForm
 
+    def post(self, request, *args, **kwargs):
+        """Save request in `self.request`."""
+        self.request = request
+        return super().post(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        """Check associated membership remaining seats and validity."""
+        seat_membership = form.cleaned_data['seat_membership']
+        if hasattr(self, 'request') and seat_membership is not None:
+            # check number of available seats
+            if seat_membership.seats_instructor_training_remaining == 1:
+                messages.warning(
+                    self.request,
+                    'Membership "{}" has 0 instructor training seats'
+                    ' available.'.format(str(seat_membership))
+                )
+            if seat_membership.seats_instructor_training_remaining < 1:
+                messages.warning(
+                    self.request,
+                    'Membership "{}" is using more training seats'
+                    ' than it\'s been allowed.'.format(str(seat_membership))
+                )
+
+            today = datetime.date.today()
+            # check if membership is active
+            if not (seat_membership.agreement_start <= today <= seat_membership.agreement_end):
+                messages.warning(
+                    self.request,
+                    'Membership "{}" is not active.'.format(str(seat_membership))
+                )
+
+        return super().form_valid(form)
+
 
 class TaskUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
                  AMYUpdateView):
@@ -1885,45 +1973,6 @@ def search(request):
 #------------------------------------------------------------
 
 @admin_required
-def instructors_by_date(request):
-    '''Show who taught between begin_date and end_date.'''
-
-    form = DebriefForm()
-    if 'begin_date' in request.GET and 'end_date' in request.GET:
-        form = DebriefForm(request.GET)
-
-    if form.is_valid():
-        start_date = form.cleaned_data['begin_date']
-        end_date = form.cleaned_data['end_date']
-        rvs = ReportsViewSet()
-        tasks = rvs.instructors_by_time_queryset(start_date, end_date)
-        # speed up things a little
-        tasks = tasks.annotate(
-            taught_times=Count(
-                'person__task',
-                filter=Q(person__task__role__name='instructor')
-            )
-        )
-        emails = tasks.filter(person__may_contact=True)\
-                      .exclude(person__email=None)\
-                      .values_list('person__email', flat=True)
-    else:
-        start_date = None
-        end_date = None
-        tasks = None
-        emails = None
-
-    context = {'title': 'List of instructors by time period',
-               'form': form,
-               'all_tasks': tasks,
-               'emails': emails,
-               'start_date': start_date,
-               'end_date': end_date}
-    return render(request, 'workshops/instructors_by_date.html', context)
-
-#------------------------------------------------------------
-
-@admin_required
 def export_badges(request):
     title = 'Export Badges'
 
@@ -1974,6 +2023,48 @@ def export_members(request):
     return render(request, 'workshops/export.html', context)
 
 #------------------------------------------------------------
+#--------------------- R E P O R T S ------------------------
+#------------------------------------------------------------
+
+@admin_required
+def instructors_by_date(request):
+    '''Show who taught between begin_date and end_date.'''
+
+    form = DebriefForm()
+    if 'begin_date' in request.GET and 'end_date' in request.GET:
+        form = DebriefForm(request.GET)
+
+    if form.is_valid():
+        start_date = form.cleaned_data['begin_date']
+        end_date = form.cleaned_data['end_date']
+        mode = form.cleaned_data['mode']
+        rvs = ReportsViewSet()
+        tasks = rvs.instructors_by_time_queryset(
+            start_date, end_date,
+            only_TTT=(mode == 'TTT'),
+            only_non_TTT=(mode == 'nonTTT'),
+        )
+        emails = tasks.filter(person__may_contact=True) \
+                      .exclude(person__email=None) \
+                      .values_list('person__email', flat=True)
+    else:
+        start_date = None
+        end_date = None
+        tasks = None
+        emails = None
+        mode = 'all'
+
+    context = {
+        'title': 'List of instructors by time period',
+        'form': form,
+        'all_tasks': tasks,
+        'emails': emails,
+        'start_date': start_date,
+        'end_date': end_date,
+        'mode': mode,
+    }
+    return render(request, 'workshops/instructors_by_date.html', context)
+
 
 @admin_required
 def workshops_over_time(request):
@@ -2052,6 +2143,41 @@ def all_activity_over_time(request):
         'data': data,
     }
     return render(request, 'workshops/all_activity_over_time.html', context)
+
+
+@admin_required
+def membership_trainings_stats(request):
+    """Display basic statistics for memberships and instructor trainings."""
+    today = datetime.date.today()
+    data = (
+        Membership.objects
+            # .filter(agreement_end__gte=today, agreement_start__lte=today)
+            .select_related('organization')
+            .prefetch_related('task_set')
+            .annotate(
+                instructor_training_seats_total=(
+                    F('seats_instructor_training') +
+                    F('additional_instructor_training_seats')
+                ),
+                instructor_training_seats_utilized=(
+                    Count('task', filter=Q(task__role__name='learner'))
+                ),
+                instructor_training_seats_remaining=(
+                    F('seats_instructor_training') +
+                    F('additional_instructor_training_seats') -
+                    Count('task', filter=Q(task__role__name='learner'))
+                ),
+            )
+    )
+
+    filter_ = MembershipTrainingsFilter(request.GET, data)
+    paginated = get_pagination_items(request, filter_.qs)
+    context = {
+        'title': 'Membership trainings statistics',
+        'data': paginated,
+        'filter': filter_,
+    }
+    return render(request, 'workshops/membership_trainings_stats.html', context)
 
 
 @admin_required
@@ -2210,20 +2336,12 @@ def object_changes(request, version_id):
 # ------------------------------------------------------------
 
 
-class AllEventRequests(OnlyForAdminsMixin, AMYListView):
+class AllEventRequests(OnlyForAdminsMixin, StateFilterMixin, AMYListView):
     context_object_name = 'requests'
     template_name = 'workshops/all_eventrequests.html'
     filter_class = EventRequestFilter
-    queryset = EventRequest.objects.all()
+    queryset = EventRequest.objects.select_related('assigned_to')
     title = 'Workshop requests'
-
-    def get_filter_data(self):
-        # Set initial value for the "active" radio select.  That's a hack,
-        # nothing else worked...
-        data = super().get_filter_data().copy()
-        data['active'] = data.get('active', 'true')
-        data['workshop_type'] = data.get('workshop_type', '')
-        return data
 
 
 class EventRequestDetails(OnlyForAdminsMixin, AMYDetailView):
@@ -2243,31 +2361,58 @@ class EventRequestDetails(OnlyForAdminsMixin, AMYDetailView):
             )
 
         person_lookup_form.helper = BootstrapHelper(
-            form_action=reverse('eventrequest_assign', args=[self.object.pk]))
+            form_action=reverse('eventrequest_assign', args=[self.object.pk]),
+            add_cancel_button=False)
 
         context['person_lookup_form'] = person_lookup_form
         return context
 
 
+class EventRequestChange(OnlyForAdminsMixin, PermissionRequiredMixin,
+                         AMYUpdateView):
+    permission_required = 'workshops.change_eventrequest'
+    model = EventRequest
+    pk_url_kwarg = 'request_id'
+
+    def get_form_class(self):
+        if self.object.workshop_type == 'swc':
+            return SWCEventRequestNoCaptchaForm
+        elif self.object.workshop_type == 'dc':
+            return DCEventRequestNoCaptchaForm
+        else:
+            return None
+
+
 @admin_required
 @permission_required('workshops.change_eventrequest', raise_exception=True)
-def eventrequest_discard(request, request_id):
-    """Discard EventRequest, ie. set it to inactive."""
-    eventrequest = get_object_or_404(EventRequest, active=True, pk=request_id)
-    eventrequest.active = False
+def eventrequest_set_state(request, request_id, state):
+    """Change state to selected."""
+    correct_values = {
+        'a': 'a',
+        'accepted': 'a',
+        'd': 'd',
+        'discarded': 'd',
+        'p': 'p',
+        'pending': 'p',
+    }
+    if state not in correct_values.keys():
+        raise Http404('Incorrect state value.')
+
+    eventrequest = get_object_or_404(EventRequest, pk=request_id)
+    eventrequest.state = correct_values[state]
     eventrequest.save()
 
     messages.success(request,
-                     'Workshop request was discarded successfully.')
-    return redirect(reverse('all_eventrequests'))
+                     'Workshop request state was changed successfully.')
+    return redirect(eventrequest.get_absolute_url())
 
 
 @admin_required
 @permission_required(['workshops.change_eventrequest', 'workshops.add_event'],
                      raise_exception=True)
-def eventrequest_accept(request, request_id):
+def eventrequest_accept_event(request, request_id):
     """Accept event request by creating a new event."""
-    eventrequest = get_object_or_404(EventRequest, active=True, pk=request_id)
+    eventrequest = get_object_or_404(EventRequest, state='p', pk=request_id)
     form = EventForm()
 
     if request.method == 'POST':
@@ -2275,10 +2420,9 @@ def eventrequest_accept(request, request_id):
 
         if form.is_valid():
             event = form.save()
-            event.request = eventrequest
-            event.save()
 
-            eventrequest.active = False
+            eventrequest.state = 'a'
+            eventrequest.event = event
             eventrequest.save()
             return redirect(reverse('event_details',
                                     args=[event.slug]))
@@ -2289,7 +2433,7 @@ def eventrequest_accept(request, request_id):
         'object': eventrequest,
         'form': form,
     }
-    return render(request, 'workshops/eventrequest_accept.html', context)
+    return render(request, 'workshops/eventrequest_accept_event.html', context)
 
 
 @admin_required
@@ -2512,17 +2656,12 @@ def profileupdaterequest_accept(request, request_id, person_id=None):
     return redirect(person.get_absolute_url())
 
 
-class AllEventSubmissions(OnlyForAdminsMixin, AMYListView):
+class AllEventSubmissions(OnlyForAdminsMixin, StateFilterMixin, AMYListView):
     context_object_name = 'submissions'
     template_name = 'workshops/all_eventsubmissions.html'
     filter_class = EventSubmissionFilter
     queryset = EventSubmissionModel.objects.all()
     title = 'Workshop submissions'
-
-    def get_filter_data(self):
-        data = self.request.GET.copy()
-        data['active'] = data.get('active', 'true')
-        return data
 
 
 class EventSubmissionDetails(OnlyForAdminsMixin, AMYDetailView):
@@ -2550,8 +2689,8 @@ class EventSubmissionDetails(OnlyForAdminsMixin, AMYDetailView):
         return context
 
 
-class EventSubmissionFix(OnlyForAdminsMixin, PermissionRequiredMixin,
-                         AMYUpdateView):
+class EventSubmissionChange(OnlyForAdminsMixin, PermissionRequiredMixin,
+                            AMYUpdateView):
     permission_required = 'workshops.change_eventsubmission'
     model = EventSubmissionModel
     form_class = EventSubmitFormNoCaptcha
@@ -2561,9 +2700,9 @@ class EventSubmissionFix(OnlyForAdminsMixin, PermissionRequiredMixin,
 @admin_required
 @permission_required(['workshops.change_eventsubmission',
                       'workshops.add_event'], raise_exception=True)
-def eventsubmission_accept(request, submission_id):
+def eventsubmission_accept_event(request, submission_id):
     """Accept event submission by creating a new event."""
-    submission = get_object_or_404(EventSubmissionModel, active=True,
+    submission = get_object_or_404(EventSubmissionModel, state='p',
                                    pk=submission_id)
     form = EventForm()
 
@@ -2573,7 +2712,8 @@ def eventsubmission_accept(request, submission_id):
         if form.is_valid():
             event = form.save()
 
-            submission.active = False
+            submission.state = 'a'
+            submission.event = event
             submission.save()
             return redirect(reverse('event_details',
                                     args=[event.slug]))
@@ -2583,27 +2723,38 @@ def eventsubmission_accept(request, submission_id):
     context = {
         'object': submission,
         'form': form,
-        'title': 'New event',
+        'title': None,
     }
-    return render(request, 'workshops/eventsubmission_accept.html', context)
+    return render(request, 'workshops/eventsubmission_accept_event.html',
+                  context)
 
 
 @admin_required
 @permission_required('workshops.change_eventsubmission', raise_exception=True)
-def eventsubmission_discard(request, submission_id):
-    """Discard EventSubmission, ie. set it to inactive."""
-    submission = get_object_or_404(EventSubmissionModel, active=True,
-                                   pk=submission_id)
-    submission.active = False
+def eventsubmission_set_state(request, submission_id, state):
+    """Change state to selected."""
+    correct_values = {
+        'a': 'a',
+        'accepted': 'a',
+        'd': 'd',
+        'discarded': 'd',
+        'p': 'p',
+        'pending': 'p',
+    }
+    if state not in correct_values.keys():
+        raise Http404('Incorrect state value.')
+
+    submission = get_object_or_404(EventSubmissionModel, pk=submission_id)
+    submission.state = correct_values[state]
     submission.save()
 
     messages.success(request,
-                     'Workshop submission was discarded successfully.')
-    return redirect(reverse('all_eventsubmissions'))
+                     'Workshop submission state was changed successfully.')
+    return redirect(submission.get_absolute_url())
 
 
 @admin_required
-@permission_required(['workshops.change_eventrequest'], raise_exception=True)
+@permission_required(['workshops.change_eventsubmission'], raise_exception=True)
 def eventsubmission_assign(request, submission_id, person_id=None):
     """Set eventsubmission.assigned_to. See `assign` docstring for more
     information."""
@@ -2612,17 +2763,13 @@ def eventsubmission_assign(request, submission_id, person_id=None):
     return redirect(submission.get_absolute_url())
 
 
-class AllDCSelfOrganizedEventRequests(OnlyForAdminsMixin, AMYListView):
+class AllDCSelfOrganizedEventRequests(OnlyForAdminsMixin, StateFilterMixin,
+                                      AMYListView):
     context_object_name = 'requests'
     template_name = 'workshops/all_dcselforganizedeventrequests.html'
     filter_class = DCSelfOrganizedEventRequestFilter
     queryset = DCSelfOrganizedEventRequestModel.objects.all()
     title = 'Data Carpentry self-organized workshop requests'
-
-    def get_filter_data(self):
-        data = self.request.GET.copy()
-        data['active'] = data.get('active', 'true')
-        return data
 
 
 class DCSelfOrganizedEventRequestDetails(OnlyForAdminsMixin, AMYDetailView):
@@ -2657,6 +2804,66 @@ class DCSelfOrganizedEventRequestChange(OnlyForAdminsMixin,
     model = DCSelfOrganizedEventRequestModel
     form_class = DCSelfOrganizedEventRequestFormNoCaptcha
     pk_url_kwarg = 'request_id'
+
+
+@admin_required
+@permission_required('workshops.change_dcselforganizedeventrequest',
+                     raise_exception=True)
+def dcselforganizedeventrequest_set_state(request, request_id, state):
+    """Change state to selected."""
+    correct_values = {
+        'a': 'a',
+        'accepted': 'a',
+        'd': 'd',
+        'discarded': 'd',
+        'p': 'p',
+        'pending': 'p',
+    }
+    if state not in correct_values.keys():
+        raise Http404('Incorrect state value.')
+
+    event_req = get_object_or_404(DCSelfOrganizedEventRequestModel,
+                                  pk=request_id)
+    event_req.state = correct_values[state]
+    event_req.save()
+
+    messages.success(request,
+                     'DC self-organized workshop request state was changed'
+                     ' successfully.')
+    return redirect(event_req.get_absolute_url())
+
+
+@admin_required
+@permission_required(['workshops.change_dcselforganizedeventrequest',
+                      'workshops.add_event'],
+                     raise_exception=True)
+def dcselforganizedeventrequest_accept_event(request, request_id):
+    """Accept DC self-org. event request by creating a new event."""
+    event_req = get_object_or_404(DCSelfOrganizedEventRequestModel, state='p',
+                                  pk=request_id)
+    form = EventForm()
+
+    if request.method == 'POST':
+        form = EventForm(request.POST)
+
+        if form.is_valid():
+            event = form.save()
+
+            event_req.state = 'a'
+            event_req.event = event
+            event_req.save()
+            return redirect(reverse('event_details',
+                                    args=[event.slug]))
+        else:
+            messages.error(request, 'Fix errors below.')
+
+    context = {
+        'object': event_req,
+        'form': form,
+    }
+    return render(request,
+                  'workshops/dcselforganizedeventrequest_accept_event.html',
+                  context)
 
 
 @admin_required
@@ -2926,6 +3133,7 @@ def all_trainingrequests(request):
         )
     )
 
+    emails = filter.qs.values_list('email', flat=True)
     requests = get_pagination_items(request, filter.qs)
 
     if request.method == 'POST' and 'match' in request.POST:
@@ -2935,6 +3143,8 @@ def all_trainingrequests(request):
         match_form = BulkMatchTrainingRequestForm(request.POST)
 
         if match_form.is_valid():
+            member_site = match_form.cleaned_data['seat_membership']
+
             # Perform bulk match
             for r in match_form.cleaned_data['requests']:
                 # automatically accept this request
@@ -2945,7 +3155,26 @@ def all_trainingrequests(request):
                 Task.objects.get_or_create(
                     person=r.person,
                     role=Role.objects.get(name='learner'),
-                    event=match_form.cleaned_data['event'])
+                    event=match_form.cleaned_data['event'],
+                    seat_membership=member_site)
+
+            requests_count = len(match_form.cleaned_data['requests'])
+            today = datetime.date.today()
+
+            if member_site:
+                if member_site.seats_instructor_training_remaining - requests_count <= 0:
+                    messages.warning(
+                        request,
+                        'Membership "{}" is using more training seats than it\'s '
+                        'been allowed.'.format(str(member_site)),
+                    )
+
+                # check if membership is active
+                if not (member_site.agreement_start <= today <= member_site.agreement_end):
+                    messages.warning(
+                        request,
+                        'Membership "{}" is not active.'.format(str(member_site))
+                    )
 
             messages.success(request, 'Successfully accepted and matched '
                                       'selected people to training.')
@@ -2966,6 +3195,22 @@ def all_trainingrequests(request):
                 r.save()
 
             messages.success(request, 'Successfully discarded selected '
+                                      'requests.')
+
+            return redirect(request.get_raw_uri())
+
+    elif request.method == 'POST' and 'accept' in request.POST:
+        # Bulk discard selected TrainingRequests.
+        form = BulkChangeTrainingRequestForm(request.POST)
+        match_form = BulkMatchTrainingRequestForm()
+
+        if form.is_valid():
+            # Perform bulk discard
+            for r in form.cleaned_data['requests']:
+                r.state = 'a'
+                r.save()
+
+            messages.success(request, 'Successfully accepted selected '
                                       'requests.')
 
             return redirect(request.get_raw_uri())
@@ -2991,11 +3236,14 @@ def all_trainingrequests(request):
         form = BulkChangeTrainingRequestForm()
         match_form = BulkMatchTrainingRequestForm()
 
-    context = {'title': 'Training Requests',
-               'requests': requests,
-               'filter': filter,
-               'form': form,
-               'match_form': match_form}
+    context = {
+        'title': 'Training Requests',
+        'requests': requests,
+        'filter': filter,
+        'form': form,
+        'match_form': match_form,
+        'emails': emails,
+    }
 
     return render(request, 'workshops/all_trainingrequests.html', context)
 

@@ -140,6 +140,122 @@ class TestTrainingRequestModel(TestBase):
             req.full_clean()
 
 
+class TestTrainingRequestModelScoring(TestBase):
+    def setUp(self):
+        self._setUpRoles()
+
+        self.tr = TrainingRequest.objects.create(
+            personal='John',
+            family='Smith',
+            email='john@smith.com',
+            occupation='',
+            affiliation='',
+            location='Washington',
+            country='US',
+            previous_training='none',
+            previous_experience='none',
+            programming_language_usage_frequency='never',
+            reason='Just for fun.',
+            teaching_frequency_expectation='monthly',
+            max_travelling_frequency='yearly',
+            state='p',
+        )
+
+    def test_minimal_response_no_score(self):
+        self.assertEqual(self.tr.score_auto, 0)
+
+    def test_country(self):
+        # a sample country that scores a point
+        self.tr.country = 'W3'
+        self.tr.save()
+        self.assertEqual(self.tr.score_auto, 1)
+
+    def test_underresourced_institution(self):
+        # a sample country that scores a point
+        self.tr.underresourced = True
+        self.tr.save()
+        self.assertEqual(self.tr.score_auto, 1)
+
+    def test_country_and_underresourced_institution(self):
+        # a sample country that scores a point
+        self.tr.country = 'W3'
+        self.tr.underresourced = True
+        self.tr.save()
+        self.assertEqual(self.tr.score_auto, 2)
+
+    def test_domains(self):
+        """Ensure m2m_changed signals work correctly on
+        `TrainingRequest.domains` field."""
+        # test adding a domain
+        domain = KnowledgeDomain.objects.get(name='Humanities')
+        self.tr.domains.add(domain)
+        self.assertEqual(self.tr.score_auto, 1)
+
+        # test removing a domain
+        # domain.trainingrequest_set.remove(self.tr)
+        self.tr.domains.remove(domain)
+        self.assertEqual(len(self.tr.domains.all()), 0)
+        self.assertEqual(self.tr.score_auto, 0)
+
+        # test setting domains
+        domains = KnowledgeDomain.objects.filter(name__in=[
+            'Humanities', 'Library and information science',
+            'Economics/business', 'Social sciences',
+        ])
+        self.tr.domains.set(domains)
+        self.assertEqual(self.tr.score_auto, 1)
+
+    def test_previous_involvement(self):
+        """Ensure m2m_changed signals work correctly on
+        `TrainingRequest.previous_involvement` field."""
+        roles = Role.objects.all()
+        self.tr.previous_involvement.add(roles[0])
+        self.assertEqual(self.tr.score_auto, 1)
+        self.tr.previous_involvement.add(roles[1])
+        self.assertEqual(self.tr.score_auto, 2)
+        self.tr.previous_involvement.add(roles[2])
+        self.assertEqual(self.tr.score_auto, 3)
+        self.tr.previous_involvement.add(roles[3])
+        # previous involvement scoring max's out at 3
+        self.assertEqual(self.tr.score_auto, 3)
+
+    def test_previous_training_in_teaching(self):
+        """Go through all options in `previous_training` and ensure only some
+        produce additional score."""
+        choices = TrainingRequest.PREVIOUS_TRAINING_CHOICES
+        for choice, desc in choices:
+            self.tr.previous_training = choice
+            self.tr.save()
+            if choice in ['course', 'full']:
+                self.assertEqual(self.tr.score_auto, 1)
+            else:
+                self.assertEqual(self.tr.score_auto, 0)
+
+    def test_previous_experience_in_teaching(self):
+        """Go through all options in `previous_experience` and ensure only some
+        produce additional score."""
+        choices = TrainingRequest.PREVIOUS_EXPERIENCE_CHOICES
+        for choice, desc in choices:
+            self.tr.previous_experience = choice
+            self.tr.save()
+            if choice in ['ta', 'courses']:
+                self.assertEqual(self.tr.score_auto, 1)
+            else:
+                self.assertEqual(self.tr.score_auto, 0)
+
+    def test_tooling(self):
+        """Go through all options in `programming_language_usage_frequency`
+        and ensure only some produce additional score."""
+        choices = TrainingRequest.PROGRAMMING_LANGUAGE_USAGE_FREQUENCY_CHOICES
+        for choice, desc in choices:
+            self.tr.programming_language_usage_frequency = choice
+            self.tr.save()
+            if choice in ['daily', 'weekly']:
+                self.assertEqual(self.tr.score_auto, 1)
+            else:
+                self.assertEqual(self.tr.score_auto, 0)
+
+
 class TestTrainingRequestsListView(TestBase):
     def setUp(self):
         self._setUpAirports()
@@ -194,6 +310,25 @@ class TestTrainingRequestsListView(TestBase):
         self.assertEqual(self.first_req.state, 'd')
         self.second_req.refresh_from_db()
         self.assertEqual(self.second_req.state, 'd')
+        self.third_req.refresh_from_db()
+        self.assertEqual(self.third_req.state, 'a')
+
+    def test_successful_bulk_accept(self):
+        data = {
+            'accept': '',
+            'requests': [self.first_req.pk, self.second_req.pk],
+        }
+        rv = self.client.post(reverse('all_trainingrequests'), data,
+                              follow=True)
+
+        self.assertTrue(rv.status_code, 200)
+        self.assertEqual(rv.resolver_match.view_name, 'all_trainingrequests')
+        msg = 'Successfully accepted selected requests.'
+        self.assertContains(rv, msg)
+        self.first_req.refresh_from_db()
+        self.assertEqual(self.first_req.state, 'a')
+        self.second_req.refresh_from_db()
+        self.assertEqual(self.second_req.state, 'a')
         self.third_req.refresh_from_db()
         self.assertEqual(self.third_req.state, 'a')
 
@@ -447,8 +582,8 @@ class TestTrainingRequestTemplateTags(TestBase):
 
     def _test(self, state, expected):
         template = Template(
-            '{% load training_request %}'
-            '{% training_request_label req %}'
+            '{% load state %}'
+            '{% state_label req %}'
         )
         training_request = TrainingRequest(state=state)
         context = Context({'req': training_request})

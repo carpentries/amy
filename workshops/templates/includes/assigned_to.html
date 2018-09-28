@@ -1,0 +1,11 @@
+{% load assignments %}
+{% if object.slug %}{% assign object.slug as pk %}{% else %}{% assign object.pk as pk %}{% endif %}
+    <p>
+      <a href="#assignment_modal" id="change_assignment" data-toggle="modal" data-target="#assignment_modal"><i class="fas fa-user-cog"></i></a>
+      {% if object.assigned_to %}
+      Assigned to:
+        <a href="{{ object.assigned_to.get_absolute_url }}">{{ object.assigned_to.full_name }}</a> (<a href="{% url assign_url pk %}" id="clear-assignment">clear</a>).
+      {% else %}
+      Not assigned (<a href="{% url assign_url pk user.pk %}" id="assign-yourself">assign yourself</a>).
+      {% endif %}
+    </p>

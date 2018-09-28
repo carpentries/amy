@@ -5,7 +5,7 @@ from django.urls import reverse
 
 from .base import TestBase
 from ..forms import EventSubmitForm
-from ..models import EventSubmission, Organization, Tag
+from ..models import EventSubmission, Organization, Tag, Event
 
 
 class TestEventSubmitForm(TestBase):
@@ -68,27 +68,61 @@ class TestEventSubmitForm(TestBase):
             'New workshop submission from Harry Potter'
         )
 
-    def test_request_accepted(self):
+    def test_submission_accepted_with_event(self):
         """Ensure submission is turned inactive after acceptance."""
-        self.assertEqual(self.submission.active, True)
+        self.assertEqual(self.submission.state, "p")
         minimal_event = {
             'slug': '1970-01-01-first-event',
             'host': Organization.objects.first().pk,
             'tags': [Tag.objects.first().pk],
             'invoice_status': 'not-invoiced',
         }
-        rv = self.client.post(reverse('eventsubmission_accept',
+        rv = self.client.post(reverse('eventsubmission_accept_event',
                                       args=[self.submission.pk]),
                               minimal_event, follow=True)
         self.assertEqual(rv.status_code, 200)
         self.submission.refresh_from_db()
-        self.assertEqual(self.submission.active, False)
+        self.assertEqual(self.submission.state, "a")
+        self.assertEqual(
+            Event.objects.get(slug='1970-01-01-first-event').eventsubmission,
+            self.submission)
 
-    def test_request_discarded(self):
+    def test_submission_discarded(self):
         """Ensure submission is turned inactive after being discarded."""
-        self.assertEqual(self.submission.active, True)
-        rv = self.client.get(reverse('eventsubmission_discard',
-                                     args=[self.submission.pk]), follow=True)
+        self.assertEqual(self.submission.state, "p")
+        rv = self.client.get(reverse('eventsubmission_set_state',
+                                     args=[self.submission.pk, 'discarded']),
+                             follow=True)
         self.assertEqual(rv.status_code, 200)
         self.submission.refresh_from_db()
-        self.assertEqual(self.submission.active, False)
+        self.assertEqual(self.submission.state, "d")
+
+    def test_submission_accepted(self):
+        """Ensure submission is turned inactive after being discarded."""
+        self.assertEqual(self.submission.state, "p")
+        rv = self.client.get(reverse('eventsubmission_set_state',
+                                     args=[self.submission.pk, 'accepted']),
+                             follow=True)
+        self.assertEqual(rv.status_code, 200)
+        self.submission.refresh_from_db()
+        self.assertEqual(self.submission.state, "a")
+
+    def test_discarded_submission_reopened(self):
+        self.submission.state = "d"
+        self.submission.save()
+        rv = self.client.get(
+            reverse('eventsubmission_set_state',
+                    args=[self.submission.pk, 'pending']),
+            follow=True)
+        self.submission.refresh_from_db()
+        self.assertEqual(self.submission.state, "p")
+
+    def test_accepted_submission_reopened(self):
+        self.submission.state = "a"
+        self.submission.save()
+        rv = self.client.get(
+            reverse('eventsubmission_set_state',
+                    args=[self.submission.pk, 'pending']),
+            follow=True)
+        self.submission.refresh_from_db()
+        self.assertEqual(self.submission.state, "p")

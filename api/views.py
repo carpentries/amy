@@ -14,7 +14,7 @@ from django.db.models import (
     When,
 )
 from rest_framework import viewsets
-from rest_framework.decorators import list_route
+from rest_framework.decorators import action
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.metadata import SimpleMetadata
 from rest_framework.pagination import PageNumberPagination
@@ -424,7 +424,7 @@ class ReportsViewSet(ViewSet):
 
         return iterable
 
-    @list_route(methods=['GET'])
+    @action(detail=False, methods=['GET'])
     def workshops_over_time(self, request, format=None):
         """Cumulative number of workshops run by Software Carpentry and other
         carpentries over time."""
@@ -441,7 +441,7 @@ class ReportsViewSet(ViewSet):
 
         return Response(data)
 
-    @list_route(methods=['GET'])
+    @action(detail=False, methods=['GET'])
     def learners_over_time(self, request, format=None):
         """Cumulative number of learners attending Software-Carpentry and other
         carpentries' workshops over time."""
@@ -459,7 +459,7 @@ class ReportsViewSet(ViewSet):
 
         return Response(data)
 
-    @list_route(methods=['GET'])
+    @action(detail=False, methods=['GET'])
     def instructors_over_time(self, request, format=None):
         """Cumulative number of instructor appearances on workshops over
         time."""
@@ -486,7 +486,7 @@ class ReportsViewSet(ViewSet):
 
         return Response(data)
 
-    @list_route(methods=['GET'])
+    @action(detail=False, methods=['GET'])
     def instructor_num_taught(self, request, format=None):
         badges = Badge.objects.instructor_badges()
         persons = Person.objects.filter(badges__in=badges).annotate(
@@ -529,7 +529,7 @@ class ReportsViewSet(ViewSet):
 
         return start, end
 
-    @list_route(methods=['GET'])
+    @action(detail=False, methods=['GET'])
     def all_activity_over_time(self, request, format=None):
         """Workshops, instructors, and missing data in specific periods."""
         start, end = self._default_start_end_dates(
@@ -633,25 +633,72 @@ class ReportsViewSet(ViewSet):
             }
         }
 
-    def instructors_by_time_queryset(self, start, end):
-        """Just a queryset to be reused in other view."""
-        tags = Tag.objects.filter(name__in=['stalled', 'unresponsive'])
+    def instructors_by_time_queryset(self, start, end, only_TTT=False,
+                                     only_non_TTT=False):
+        """Just a queryset to be reused in other view.
+
+        `start` and `end` define a timerange for events.
+        `only_TTT` limits output to only TTT events, and
+        `only_non_TTT` excludes TTT events from the results."""
         tasks = Task.objects.filter(
             event__start__gte=start,
             event__end__lte=end,
             role__name='instructor',
             person__may_contact=True,
-        ).exclude(event__tags__in=tags).order_by('event', 'person', 'role') \
-         .select_related('person', 'event', 'role')
+        )
+
+        # include only TTT events
+        if only_TTT:
+            tags = Tag.objects.filter(name__in=['TTT'])
+            tasks = (
+                tasks.filter(event__tags__in=tags)
+            )
+
+        # exclude TTT events
+        elif only_non_TTT:
+            tags = Tag.objects.filter(name__in=['TTT'])
+            tasks = (
+                tasks.exclude(event__tags__in=tags)
+            )
+
+        # exclude stalled or unresponsive events
+        rejected_tags = Tag.objects.filter(name__in=['stalled',
+                                                     'unresponsive'])
+
+        tasks = (
+            tasks
+            .exclude(event__tags__in=rejected_tags)
+            .order_by('event', 'person', 'role')
+            .select_related('event', 'person', 'role')
+            .prefetch_related('event__tags')
+            .annotate(
+                num_taught=Sum(
+                    Case(
+                        When(person__task__role__name='instructor',
+                             then=Value(1)),
+                        default=Value(0),
+                        output_field=IntegerField(),
+                    ),
+                )
+            )
+        )
         return tasks
 
-    @list_route(methods=['GET'])
+    @action(detail=False, methods=['GET'])
     def instructors_by_time(self, request, format=None):
         """Workshops and instructors who taught in specific time period."""
         start, end = self._default_start_end_dates(
             start=self.request.query_params.get('start', None),
             end=self.request.query_params.get('end', None))
-        tasks = self.instructors_by_time_queryset(start, end)
+
+        mode = self.request.query_params.get('mode', 'all')
+
+        tasks = self.instructors_by_time_queryset(
+            start, end,
+            only_TTT=(mode == 'TTT'),
+            only_non_TTT=(mode == 'nonTTT'),
+        )
+
         serializer = InstructorsByTimePeriodSerializer(
             tasks, many=True, context=dict(request=request))
         return Response(serializer.data)

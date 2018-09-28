@@ -2,8 +2,12 @@
 
 {% load pagination %}
 {% load links %}
+{% load state %}
 
 {% block content %}
+  <div class="alert alert-warning">
+    <strong>Warning!</strong> This feature was disabled. Users are no longer able to add workshop submissions.
+  </div>
   {% if submissions %}
   <table class="table table-striped">
     <tr>
@@ -11,18 +15,28 @@
       <th>Person</th>
       <th>Workshop URL</th>
       <th>Self-organized</th>
+      <th width="80">State
+        <i class="fas fa-question-circle"
+           data-toggle="popover" data-html="true"
+           data-content="<span class='badge badge-warning'>Pending</span> <span class='badge badge-danger'>Discarded</span> <span class='badge badge-success'>Accepted</span>"></i>
       <th class="additional-links"></th>
     </tr>
     {% for submission in submissions %}
-    <tr>
+    <tr {% if submission.state == "a" %}class="table-success"{% elif submission.state == "d" %}class="table-warning"{% endif %}>
       <td>{% if submission.assigned_to %}<a href="{{ submission.assigned_to.get_absolute_url }}">{{ submission.assigned_to.get_short_name }}</a>{% else %}—{% endif %}</td>
       <td>{{ submission.contact_name }} &lt;{{ submission.contact_email|urlize }}&gt;</td>
       <td>{{ submission.url|urlize_newtab }}</td>
       <td>{{ submission.self_organized|yesno }}</td>
+      <td>
+        <span class="{% state_label submission %}">
+          {{ submission.get_state_display }}
+        </span>
+      </td>
       <td><a href="{{ submission.get_absolute_url }}"><i class="fas fa-info-circle"></i></a></td>
     </tr>
     {% endfor %}
   </table>
+  {% pagination submissions %}
   {% else %}
   <p>No workshop submissions matching the filter.</p>
   {% endif %}

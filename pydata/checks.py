@@ -52,11 +52,11 @@ def check_pydata_urls_included_before_workshop_urls(**kwargs):
 def check_pydata_installed_before_workshops(**kwargs):
     errors = []
     if settings.INSTALLED_APPS.index('pydata') > \
-       settings.INSTALLED_APPS.index('workshops'):
+       settings.INSTALLED_APPS.index('workshops.apps.WorkshopsConfig'):
         errors.append(
             Error(
-                '`pydata` installed after `workshops` app.',
-                hint=('Add `pydata` to INSTALLED_APPS before the `workshops` app.'),
+                '`pydata` installed after `workshops.apps.WorkshopsConfig` app.',
+                hint=('Add `pydata` to INSTALLED_APPS before the `workshops.apps.WorkshopsConfig` app.'),
                 id='amy.E003',
             ),
         )

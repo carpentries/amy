@@ -54,7 +54,7 @@ schema :
 
 ## node_modules : install front-end dependencies using Yarn
 node_modules : package.json
-	yarn install
+	yarn install --frozen-lockfile
 	touch node_modules
 
 ## git_version  : store details about the current commit and tree state.
@@ -78,16 +78,20 @@ serve : node_modules workshops/git_version.py
 serve_now :
 	${MANAGE} runserver
 
+## outdated		: show outdated dependencies
+outdated :
+	-pip list --outdated
+	-yarn outdated
+
 ## upgrade      : force package upgrade using pip
 upgrade :
-	@pip install --upgrade -r requirements.txt
-	@bower update
+	pip install --upgrade -r requirements.txt
+	yarn upgrade
 
 ## clean        : clean up.
 clean :
 	rm -rf \
-	$$(find . -name '*~' -print) \
-	$$(find . -name '*.pyc' -print) \
-	htmlerror \
-	bower_components \
-	${APP_DB}
+		$$(find . -name '*~' -print) \
+		$$(find . -name '*.pyc' -print) \
+		htmlerror \
+		$$(find . -name 'test_db*.sqlite3' -print) \

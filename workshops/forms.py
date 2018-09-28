@@ -5,8 +5,7 @@ from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Div, HTML, Submit, Button, Field
 from crispy_forms.bootstrap import AccordionGroup, Accordion
-from dal import autocomplete
-from dal_select2.widgets import Select2Multiple
+from dal import forward
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
@@ -44,6 +43,16 @@ from workshops.models import (
     Tag,
     Language,
 )
+# this is used instead of Django Autocomplete Light widgets
+# see issue #1330
+from workshops.fields import (
+    Select2,
+    Select2Multiple,
+    ListSelect2,
+    ModelSelect2,
+    ModelSelect2Multiple,
+    TagSelect2,
+)
 
 
 # settings for Select2
@@ -73,7 +82,8 @@ class BootstrapHelper(FormHelper):
                  form_tag=True,
                  display_labels=True,
                  form_action=None,
-                 form_id=None):
+                 form_id=None,
+                 include_media=True):
         """
         `duplicate_buttons_on_top` -- Whether submit buttons should be
         displayed on both top and bottom of the form.
@@ -147,6 +157,8 @@ class BootstrapHelper(FormHelper):
         if form_id is not None:
             self.form_id = form_id
 
+        # don't prevent from loading media by default
+        self.include_media = include_media
 
 
 class BootstrapHelperFilter(FormHelper):
@@ -166,7 +178,6 @@ class BootstrapHelperFormsetInline(BootstrapHelper):
     template = 'bootstrap/table_inline_formset.html'
 
 
-bootstrap_helper = BootstrapHelper()
 bootstrap_helper_filter = BootstrapHelperFilter()
 bootstrap_helper_inline_formsets = BootstrapHelperFormsetInline()
 
@@ -235,7 +246,7 @@ class WorkshopStaffForm(forms.Form):
         label='Airport',
         required=False,
         queryset=Airport.objects.all(),
-        widget=autocomplete.ModelSelect2(
+        widget=ModelSelect2(
             url='airport-lookup',
             attrs=SIDEBAR_DAL_WIDTH,
         )
@@ -244,7 +255,7 @@ class WorkshopStaffForm(forms.Form):
         label='Languages',
         required=False,
         queryset=Language.objects.all(),
-        widget=autocomplete.ModelSelect2Multiple(
+        widget=ModelSelect2Multiple(
             url='language-lookup',
             attrs=SIDEBAR_DAL_WIDTH,
         )
@@ -392,7 +403,18 @@ class DebriefForm(forms.Form):
         input_formats=['%Y-%m-%d', ]
     )
 
-    helper = BootstrapHelper(use_get_method=True)
+    MODE_CHOICES = (
+        ('all', 'List all events'),
+        ('TTT', 'List only TTT events'),
+        ('nonTTT', 'List only non-TTT events'),
+    )
+    mode = forms.ChoiceField(
+        choices=MODE_CHOICES,
+        widget=forms.RadioSelect,
+        initial='all',
+    )
+
+    helper = BootstrapHelper(use_get_method=True, add_cancel_button=False)
 
 
 class EventForm(forms.ModelForm):
@@ -401,7 +423,7 @@ class EventForm(forms.ModelForm):
         required=True,
         help_text=Event._meta.get_field('host').help_text,
         queryset=Organization.objects.all(),
-        widget=autocomplete.ModelSelect2(url='organization-lookup')
+        widget=ModelSelect2(url='organization-lookup')
     )
 
     administrator = forms.ModelChoiceField(
@@ -409,32 +431,33 @@ class EventForm(forms.ModelForm):
         required=False,
         help_text=Event._meta.get_field('administrator').help_text,
         queryset=Organization.objects.all(),
-        widget=autocomplete.ModelSelect2(url='organization-lookup')
+        widget=ModelSelect2(url='organization-lookup')
     )
 
     assigned_to = forms.ModelChoiceField(
         label='Assigned to',
         required=False,
         queryset=Person.objects.all(),
-        widget=autocomplete.ModelSelect2(url='admin-lookup')
+        widget=ModelSelect2(url='admin-lookup')
     )
 
     language = forms.ModelChoiceField(
         label='Language',
         required=False,
         queryset=Language.objects.all(),
-        widget=autocomplete.ModelSelect2(url='language-lookup')
+        widget=ModelSelect2(url='language-lookup')
     )
 
     country = CountryField().formfield(
         required=False,
         help_text=Event._meta.get_field('country').help_text,
+        widget=ListSelect2(),
     )
 
     admin_fee = forms.DecimalField(min_value=0, decimal_places=2,
                                    required=False, widget=TextInput)
 
-    helper = BootstrapHelper()
+    helper = BootstrapHelper(add_cancel_button=False)
     helper.layout = Layout(
         Field('slug', placeholder='YYYY-MM-DD-location'),
         'completed',
@@ -444,6 +467,7 @@ class EventForm(forms.ModelForm):
         'administrator',
         'assigned_to',
         'tags',
+        'open_TTT_applications',
         'url',
         'language',
         'reg_key',
@@ -486,12 +510,36 @@ class EventForm(forms.ModelForm):
             raise forms.ValidationError('Must not be earlier than start date.')
         return end
 
+    def clean_open_TTT_applications(self):
+        """Ensure there's a TTT tag applied to the event, if the
+        `open_TTT_applications` is True."""
+        open_TTT_applications = self.cleaned_data['open_TTT_applications']
+        tags = self.cleaned_data.get('tags', None)
+        error_msg = 'You cannot open applications on a non-TTT event.'
+
+        if open_TTT_applications and tags:
+            # find TTT tag
+            TTT_tag = False
+            for tag in tags:
+                if tag.name == 'TTT':
+                    TTT_tag = True
+                    break
+
+            if not TTT_tag:
+                raise forms.ValidationError(error_msg)
+
+        elif open_TTT_applications:
+            raise forms.ValidationError(error_msg)
+
+        return open_TTT_applications
+
     class Meta:
         model = Event
         fields = ('slug', 'completed', 'start', 'end', 'host', 'administrator',
                   'assigned_to', 'tags', 'url', 'language', 'reg_key', 'venue',
                   'admin_fee', 'invoice_status', 'attendance', 'contact',
-                  'notes', 'country', 'address', 'latitude', 'longitude', )
+                  'notes', 'country', 'address', 'latitude', 'longitude',
+                  'open_TTT_applications', )
         widgets = {
             'attendance': TextInput,
             'latitude': TextInput,
@@ -514,14 +562,33 @@ class EventForm(forms.ModelForm):
 
 class TaskForm(WidgetOverrideMixin, forms.ModelForm):
 
-    helper = BootstrapHelper()
+    helper = BootstrapHelper(add_cancel_button=False)
+
+    SEAT_MEMBERSHIP_HELP_TEXT = (
+        '{}<br><b>Hint:</b> you can use input format YYYY-MM-DD to display '
+        'memberships available on that date.'.format(
+            Task._meta.get_field('seat_membership').help_text
+        )
+    )
+    seat_membership = forms.ModelChoiceField(
+        label=Task._meta.get_field('seat_membership').verbose_name,
+        help_text=SEAT_MEMBERSHIP_HELP_TEXT,
+        required=False,
+        queryset=Membership.objects.all(),
+        widget=ModelSelect2(
+            url='membership-lookup',
+            attrs=SIDEBAR_DAL_WIDTH,
+        )
+    )
 
     class Meta:
         model = Task
         fields = '__all__'
         widgets = {
-            'person': autocomplete.ModelSelect2(url='person-lookup'),
-            'event': autocomplete.ModelSelect2(url='event-lookup'),
+            'person': ModelSelect2(url='person-lookup',
+                                   attrs=SIDEBAR_DAL_WIDTH),
+            'event': ModelSelect2(url='event-lookup',
+                                  attrs=SIDEBAR_DAL_WIDTH),
         }
 
 
@@ -530,16 +597,16 @@ class PersonForm(forms.ModelForm):
         label='Airport',
         required=False,
         queryset=Airport.objects.all(),
-        widget=autocomplete.ModelSelect2(url='airport-lookup')
+        widget=ModelSelect2(url='airport-lookup')
     )
     languages = forms.ModelMultipleChoiceField(
         label='Languages',
         required=False,
         queryset=Language.objects.all(),
-        widget=autocomplete.ModelSelect2Multiple(url='language-lookup')
+        widget=ModelSelect2Multiple(url='language-lookup')
     )
 
-    helper = bootstrap_helper
+    helper = BootstrapHelper(add_cancel_button=False)
 
     class Meta:
         model = Person
@@ -571,6 +638,10 @@ class PersonForm(forms.ModelForm):
             'languages',
         ]
 
+        widgets = {
+            'country': ListSelect2(),
+        }
+
 
 class PersonCreateForm(PersonForm):
     class Meta(PersonForm.Meta):
@@ -598,17 +669,17 @@ class PersonsSelectionForm(forms.Form):
         label='Person From',
         required=True,
         queryset=Person.objects.all(),
-        widget=autocomplete.ModelSelect2(url='person-lookup')
+        widget=ModelSelect2(url='person-lookup')
     )
 
     person_b = forms.ModelChoiceField(
         label='Person To',
         required=True,
         queryset=Person.objects.all(),
-        widget=autocomplete.ModelSelect2(url='person-lookup')
+        widget=ModelSelect2(url='person-lookup')
     )
 
-    helper = BootstrapHelper(use_get_method=True)
+    helper = BootstrapHelper(use_get_method=True, add_cancel_button=False)
 
 
 class PersonsMergeForm(forms.Form):
@@ -705,15 +776,18 @@ class PersonsMergeForm(forms.Form):
 
 class AwardForm(WidgetOverrideMixin, forms.ModelForm):
 
-    helper = bootstrap_helper
+    helper = BootstrapHelper(add_cancel_button=False)
 
     class Meta:
         model = Award
         fields = '__all__'
         widgets = {
-            'person': autocomplete.ModelSelect2(url='person-lookup'),
-            'event': autocomplete.ModelSelect2(url='event-lookup'),
-            'awarded_by': autocomplete.ModelSelect2(url='admin-lookup'),
+            'person': ModelSelect2(url='person-lookup',
+                                   attrs=SIDEBAR_DAL_WIDTH),
+            'event': ModelSelect2(url='event-lookup',
+                                  attrs=SIDEBAR_DAL_WIDTH),
+            'awarded_by': ModelSelect2(url='admin-lookup',
+                                       attrs=SIDEBAR_DAL_WIDTH),
         }
 
 
@@ -728,7 +802,7 @@ class OrganizationForm(forms.ModelForm):
         ],
     )
 
-    helper = bootstrap_helper
+    helper = BootstrapHelper(add_cancel_button=False)
 
     class Meta:
         model = Organization
@@ -736,13 +810,13 @@ class OrganizationForm(forms.ModelForm):
 
 
 class MembershipForm(forms.ModelForm):
-    helper = bootstrap_helper
+    helper = BootstrapHelper(add_cancel_button=False)
 
     organization = forms.ModelChoiceField(
         label='Organization',
         required=True,
         queryset=Organization.objects.all(),
-        widget=autocomplete.ModelSelect2(url='organization-lookup')
+        widget=ModelSelect2(url='organization-lookup')
     )
 
     class Meta:
@@ -750,7 +824,10 @@ class MembershipForm(forms.ModelForm):
         fields = [
             'organization', 'variant', 'agreement_start', 'agreement_end',
             'contribution_type', 'workshops_without_admin_fee_per_agreement',
-            'self_organized_workshops_per_agreement', 'notes',
+            'self_organized_workshops_per_agreement',
+            'seats_instructor_training',
+            'additional_instructor_training_seats',
+            'notes',
         ]
 
 
@@ -762,14 +839,13 @@ class SponsorshipForm(WidgetOverrideMixin, forms.ModelForm):
         model = Sponsorship
         fields = '__all__'
         widgets = {
-            'organization': autocomplete.ModelSelect2(url='organization-lookup'),
-            'event': autocomplete.ModelSelect2(url='event-lookup'),
-            'contact': autocomplete.ModelSelect2(url='person-lookup'),
+            'organization': ModelSelect2(url='organization-lookup'),
+            'event': ModelSelect2(url='event-lookup'),
+            'contact': ModelSelect2(url='person-lookup'),
         }
 
 
-class SWCEventRequestForm(PrivacyConsentMixin, forms.ModelForm):
-    captcha = ReCaptchaField()
+class SWCEventRequestNoCaptchaForm(PrivacyConsentMixin, forms.ModelForm):
     workshop_type = forms.CharField(initial='swc', widget=forms.HiddenInput())
     understand_admin_fee = forms.BooleanField(
         required=True,
@@ -784,23 +860,25 @@ class SWCEventRequestForm(PrivacyConsentMixin, forms.ModelForm):
         label='Language',
         required=False,
         queryset=Language.objects.all(),
-        widget=autocomplete.ModelSelect2(url='language-lookup')
+        widget=ModelSelect2(url='language-lookup')
     )
 
-    helper = BootstrapHelper(wider_labels=True)
+    helper = BootstrapHelper(wider_labels=True, add_cancel_button=False)
 
     class Meta:
         model = EventRequest
-        exclude = ('active', 'created_at', 'last_updated_at', 'assigned_to',
+        exclude = ('created_at', 'last_updated_at', 'assigned_to',
                    'data_types', 'data_types_other',
-                   'attendee_data_analysis_level', 'fee_waiver_request')
+                   'attendee_data_analysis_level', 'fee_waiver_request', )
         widgets = {
+            'event': Select2(),
             'approx_attendees': forms.RadioSelect(),
             'attendee_domains': CheckboxSelectMultipleWithOthers('attendee_domains_other'),
             'attendee_academic_levels': forms.CheckboxSelectMultiple(),
             'attendee_computing_levels': forms.CheckboxSelectMultiple(),
             'travel_reimbursement': RadioSelectWithOther('travel_reimbursement_other'),
             'admin_fee_payment': forms.RadioSelect(),
+            'country': ListSelect2(),
         }
 
     def __init__(self, *args, **kwargs):
@@ -819,7 +897,15 @@ class SWCEventRequestForm(PrivacyConsentMixin, forms.ModelForm):
         self.helper.layout.fields.remove('travel_reimbursement_other')
 
 
-class DCEventRequestForm(SWCEventRequestForm):
+class SWCEventRequestForm(SWCEventRequestNoCaptchaForm):
+    captcha = ReCaptchaField()
+
+    class Meta(SWCEventRequestNoCaptchaForm.Meta):
+        exclude = ('state', 'event') \
+                  + SWCEventRequestNoCaptchaForm.Meta.exclude
+
+
+class DCEventRequestNoCaptchaForm(SWCEventRequestNoCaptchaForm):
     workshop_type = forms.CharField(initial='dc', widget=forms.HiddenInput())
     understand_admin_fee = forms.BooleanField(
         required=True,
@@ -834,9 +920,10 @@ class DCEventRequestForm(SWCEventRequestForm):
     )
 
     class Meta(SWCEventRequestForm.Meta):
-        exclude = ('active', 'created_at', 'last_updated_at', 'assigned_to',
-                   'admin_fee_payment', 'attendee_computing_levels')
+        exclude = ('created_at', 'last_updated_at', 'assigned_to',
+                   'admin_fee_payment', 'attendee_computing_levels', )
         widgets = {
+            'event': Select2(),
             'approx_attendees': forms.RadioSelect(),
             'attendee_domains': CheckboxSelectMultipleWithOthers('attendee_domains_other'),
             'data_types': RadioSelectWithOther('data_types_other'),
@@ -863,16 +950,30 @@ class DCEventRequestForm(SWCEventRequestForm):
         self.helper.layout.fields.remove('travel_reimbursement_other')
 
 
+class DCEventRequestForm(DCEventRequestNoCaptchaForm):
+    captcha = ReCaptchaField()
+
+    class Meta(DCEventRequestNoCaptchaForm.Meta):
+        exclude = ('state', 'event') \
+                  + DCEventRequestNoCaptchaForm.Meta.exclude
+
+
 class EventSubmitFormNoCaptcha(forms.ModelForm):
     class Meta:
         model = EventSubmission
-        exclude = ('active', 'created_at', 'last_updated_at', 'assigned_to')
+        exclude = ('created_at', 'last_updated_at', 'assigned_to', )
+        widgets = {
+            'event': Select2(),
+        }
 
 
 class EventSubmitForm(EventSubmitFormNoCaptcha, PrivacyConsentMixin):
     captcha = ReCaptchaField()
 
     helper = BootstrapHelper(wider_labels=True)
+
+    class Meta(EventSubmitFormNoCaptcha.Meta):
+        exclude = ('state', 'event') + EventSubmitFormNoCaptcha.Meta.exclude
 
 
 class DCSelfOrganizedEventRequestFormNoCaptcha(forms.ModelForm):
@@ -889,6 +990,7 @@ class DCSelfOrganizedEventRequestFormNoCaptcha(forms.ModelForm):
         model = DCSelfOrganizedEventRequest
         exclude = ('created_at', 'last_updated_at', 'assigned_to')
         widgets = {
+            'event': Select2(),
             'instructor_status': forms.RadioSelect(),
             'is_partner': forms.RadioSelect(),
             'domains': forms.CheckboxSelectMultiple(),
@@ -906,7 +1008,8 @@ class DCSelfOrganizedEventRequestForm(
     helper = BootstrapHelper(wider_labels=True)
 
     class Meta(DCSelfOrganizedEventRequestFormNoCaptcha.Meta):
-        exclude = ('active', 'created_at', 'last_updated_at', 'assigned_to')
+        exclude = ('state', 'event') \
+                  + DCSelfOrganizedEventRequestFormNoCaptcha.Meta.exclude
 
 
 class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):
@@ -914,10 +1017,10 @@ class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):
         label='Languages you can teach in',
         required=False,
         queryset=Language.objects.all(),
-        widget=autocomplete.ModelSelect2Multiple(url='language-lookup')
+        widget=ModelSelect2Multiple(url='language-lookup')
     )
 
-    helper = BootstrapHelper(wider_labels=True)
+    helper = BootstrapHelper(wider_labels=True, add_cancel_button=False)
 
     class Meta:
         model = ProfileUpdateRequest
@@ -927,6 +1030,7 @@ class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):
             'gender': RadioSelectWithOther('gender_other'),
             'domains': CheckboxSelectMultipleWithOthers('domains_other'),
             'lessons': CheckboxSelectMultipleWithOthers('lessons_other'),
+            'country': ListSelect2(),
         }
 
     def __init__(self, *args, **kwargs):
@@ -957,7 +1061,7 @@ class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):
 class ProfileUpdateRequestForm(ProfileUpdateRequestFormNoCaptcha):
     captcha = ReCaptchaField()
 
-    helper = BootstrapHelper(wider_labels=True)
+    helper = BootstrapHelper(wider_labels=True, add_cancel_button=False)
 
 
 class EventLookupForm(forms.Form):
@@ -965,10 +1069,10 @@ class EventLookupForm(forms.Form):
         label='Event',
         required=True,
         queryset=Event.objects.all(),
-        widget=autocomplete.ModelSelect2(url='event-lookup')
+        widget=ModelSelect2(url='event-lookup')
     )
 
-    helper = bootstrap_helper
+    helper = BootstrapHelper(add_cancel_button=False)
 
 
 class PersonLookupForm(forms.Form):
@@ -976,10 +1080,10 @@ class PersonLookupForm(forms.Form):
         label='Person',
         required=True,
         queryset=Person.objects.all(),
-        widget=autocomplete.ModelSelect2(url='person-lookup')
+        widget=ModelSelect2(url='person-lookup')
     )
 
-    helper = BootstrapHelper(use_get_method=True)
+    helper = BootstrapHelper(use_get_method=True, add_cancel_button=False)
 
 
 class AdminLookupForm(forms.Form):
@@ -987,14 +1091,14 @@ class AdminLookupForm(forms.Form):
         label='Administrator',
         required=True,
         queryset=Person.objects.all(),
-        widget=autocomplete.ModelSelect2(url='admin-lookup')
+        widget=ModelSelect2(url='admin-lookup')
     )
 
-    helper = bootstrap_helper
+    helper = BootstrapHelper(add_cancel_button=False)
 
 
 class SimpleTodoForm(forms.ModelForm):
-    helper = bootstrap_helper
+    helper = BootstrapHelper(add_cancel_button=False)
 
     class Meta:
         model = TodoItem
@@ -1011,17 +1115,17 @@ class EventsSelectionForm(forms.Form):
         label='Event A',
         required=True,
         queryset=Event.objects.all(),
-        widget=autocomplete.ModelSelect2(url='event-lookup')
+        widget=ModelSelect2(url='event-lookup')
     )
 
     event_b = forms.ModelChoiceField(
         label='Event B',
         required=True,
         queryset=Event.objects.all(),
-        widget=autocomplete.ModelSelect2(url='event-lookup')
+        widget=ModelSelect2(url='event-lookup')
     )
 
-    helper = BootstrapHelper(use_get_method=True)
+    helper = BootstrapHelper(use_get_method=True, add_cancel_button=False)
 
 
 class EventsMergeForm(forms.Form):
@@ -1128,7 +1232,7 @@ class EventsMergeForm(forms.Form):
 
 
 class InvoiceRequestForm(forms.ModelForm):
-    helper = bootstrap_helper
+    helper = BootstrapHelper(add_cancel_button=False)
 
     class Meta:
         model = InvoiceRequest
@@ -1161,7 +1265,7 @@ class TrainingRequestForm(forms.ModelForm):
 
     captcha = ReCaptchaField()
 
-    helper = BootstrapHelper(wider_labels=True)
+    helper = BootstrapHelper(wider_labels=True, add_cancel_button=False)
 
     class Meta:
         model = TrainingRequest
@@ -1213,6 +1317,7 @@ class TrainingRequestForm(forms.ModelForm):
             'programming_language_usage_frequency': forms.RadioSelect(),
             'teaching_frequency_expectation': RadioSelectWithOther('teaching_frequency_expectation_other'),
             'max_travelling_frequency': RadioSelectWithOther('max_travelling_frequency_other'),
+            'country': ListSelect2(),
         }
 
     def __init__(self, *args, initial_group_name=None, **kwargs):
@@ -1254,7 +1359,13 @@ class TrainingRequestUpdateForm(forms.ModelForm):
         label='Matched Trainee',
         required=False,
         queryset=Person.objects.all(),
-        widget=autocomplete.ModelSelect2(url='person-lookup')
+        widget=ModelSelect2(url='person-lookup')
+    )
+
+    score_auto = forms.IntegerField(
+        disabled=True,
+        label=TrainingRequest._meta.get_field('score_auto').verbose_name,
+        help_text=TrainingRequest._meta.get_field('score_auto').help_text,
     )
 
     helper = BootstrapHelper(duplicate_buttons_on_top=True,
@@ -1282,17 +1393,17 @@ class TrainingRequestsSelectionForm(forms.Form):
         label='Training request A',
         required=True,
         queryset=TrainingRequest.objects.all(),
-        widget=autocomplete.ModelSelect2(url='trainingrequest-lookup')
+        widget=ModelSelect2(url='trainingrequest-lookup')
     )
 
     trainingrequest_b = forms.ModelChoiceField(
         label='Training request B',
         required=True,
         queryset=TrainingRequest.objects.all(),
-        widget=autocomplete.ModelSelect2(url='trainingrequest-lookup')
+        widget=ModelSelect2(url='trainingrequest-lookup')
     )
 
-    helper = BootstrapHelper(use_get_method=True)
+    helper = BootstrapHelper(use_get_method=True, add_cancel_button=False)
 
 
 class TrainingRequestsMergeForm(forms.Form):
@@ -1442,16 +1553,17 @@ class AutoUpdateProfileForm(forms.ModelForm):
     country = CountryField().formfield(
         required=False,
         help_text='Your country of residence.',
+        widget=ListSelect2(),
     )
 
     languages = forms.ModelMultipleChoiceField(
         label='Languages',
         required=False,
         queryset=Language.objects.all(),
-        widget=autocomplete.ModelSelect2Multiple(url='language-lookup')
+        widget=ModelSelect2Multiple(url='language-lookup')
     )
 
-    helper = bootstrap_helper
+    helper = BootstrapHelper(add_cancel_button=False)
 
     class Meta:
         model = Person
@@ -1484,6 +1596,7 @@ class AutoUpdateProfileForm(forms.ModelForm):
             'gender': forms.RadioSelect(),
             'domains': forms.CheckboxSelectMultiple(),
             'lessons': forms.CheckboxSelectMultiple(),
+            'airport': ListSelect2(),
         }
 
 
@@ -1492,31 +1605,33 @@ class TrainingProgressForm(forms.ModelForm):
         label='Trainee',
         required=True,
         queryset=Person.objects.all(),
-        widget=autocomplete.ModelSelect2(url='person-lookup')
+        widget=ModelSelect2(url='person-lookup')
     )
     evaluated_by = forms.ModelChoiceField(
         label='Evaluated by',
         required=False,
         queryset=Person.objects.all(),
-        widget=autocomplete.ModelSelect2(url='admin-lookup')
+        widget=ModelSelect2(url='admin-lookup')
     )
     event = forms.ModelChoiceField(
         label='Event',
         required=False,
         queryset=Event.objects.all(),
-        widget=autocomplete.ModelSelect2(url='event-lookup')
+        widget=ModelSelect2(url='event-lookup')
     )
 
     # helper used in edit view
     helper = BootstrapHelper(duplicate_buttons_on_top=True,
                              submit_label='Update',
                              add_delete_button=True,
-                             additional_form_class='training-progress')
+                             additional_form_class='training-progress',
+                             add_cancel_button=False)
 
     # helper used in create view
     create_helper = BootstrapHelper(duplicate_buttons_on_top=True,
                                     submit_label='Add',
-                                    additional_form_class='training-progress')
+                                    additional_form_class='training-progress',
+                                    add_cancel_button=False)
 
     class Meta:
         model = TrainingProgress
@@ -1552,7 +1667,7 @@ class BulkAddTrainingProgressForm(forms.ModelForm):
         label='Training',
         required=False,
         queryset=Event.objects.filter(tags__name='TTT'),
-        widget=autocomplete.ModelSelect2(url='ttt-event-lookup')
+        widget=ModelSelect2(url='ttt-event-lookup')
     )
 
     trainees = forms.ModelMultipleChoiceField(queryset=Person.objects.all())
@@ -1561,7 +1676,7 @@ class BulkAddTrainingProgressForm(forms.ModelForm):
     #     label='Trainees',
     #     required=False,
     #     queryset=Person.objects.all(),
-    #     widget=autocomplete.ModelSelect2(url='person-lookup'),
+    #     widget=ModelSelect2(url='person-lookup'),
     # )
 
     helper = BootstrapHelper(additional_form_class='training-progress',
@@ -1619,7 +1734,7 @@ class BulkDiscardProgressesForm(forms.Form):
     #     label='Trainees',
     #     required=False,
     #     queryset=Person.objects.all(),
-    #     widget=autocomplete.ModelSelect2(url='person-lookup'),
+    #     widget=ModelSelect2(url='person-lookup'),
     # )
 
     helper = BootstrapHelper(add_submit_button=False,
@@ -1666,7 +1781,7 @@ class BulkChangeTrainingRequestForm(forms.Form):
     #     label='Requests',
     #     required=False,
     #     queryset=TrainingRequest.objects.all()
-    #     widget=autocomplete.ModelSelect2(url='???-lookup'),
+    #     widget=ModelSelect2(url='???-lookup'),
     # )
 
     helper = BootstrapHelper(add_submit_button=False,
@@ -1685,11 +1800,18 @@ class BulkChangeTrainingRequestForm(forms.Form):
         # reports missing values in required fields in
         # BulkMatchTrainingRequestForm.
         FormActions(
-            Submit('discard', 'Discard selected requests',
-                   formnovalidate='formnovalidate'),
+            Div(
+                Submit('discard', 'Discard selected requests',
+                       formnovalidate='formnovalidate',
+                       css_class="btn-danger"),
+                Submit('accept', 'Accept selected requests',
+                       formnovalidate='formnovalidate',
+                       css_class="btn-success"),
+                css_class="btn-group",
+            ),
             Submit('unmatch', 'Unmatch selected trainees from training',
                    formnovalidate='formnovalidate'),
-            HTML('<a bulk-email-on-click class="btn btn-primary text-white">'
+            HTML('<a bulk-email-on-click class="btn btn-info text-white">'
                  'Mail selected trainees</a>&nbsp;'),
         )
     )
@@ -1716,14 +1838,23 @@ class BulkMatchTrainingRequestForm(forms.Form):
         label='Training',
         required=True,
         queryset=Event.objects.filter(tags__name='TTT'),
-        widget=autocomplete.ModelSelect2(url='ttt-event-lookup')
+        widget=ModelSelect2(url='ttt-event-lookup')
+    )
+
+    seat_membership = forms.ModelChoiceField(
+        label='Membership seats',
+        required=False,
+        queryset=Membership.objects.all(),
+        help_text='Assigned users will take instructor seats from selected '
+                  'member site.',
+        widget=ModelSelect2(url='membership-lookup'),
     )
 
     helper = BootstrapHelper(add_submit_button=False,
                              form_tag=False,
                              add_cancel_button=False)
     helper.layout = Layout(
-        'event',
+        'event', 'seat_membership',
     )
     helper.add_input(
         Submit(
@@ -1755,7 +1886,7 @@ class MatchTrainingRequestForm(forms.Form):
         label='Trainee Account',
         required=False,
         queryset=Person.objects.all(),
-        widget=autocomplete.ModelSelect2(url='person-lookup'),
+        widget=ModelSelect2(url='person-lookup'),
     )
 
     helper = BootstrapHelper(add_submit_button=False,
@@ -1798,7 +1929,8 @@ class SendHomeworkForm(forms.ModelForm):
 
     def __init__(self, submit_name, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.helper = BootstrapHelper(submit_name=submit_name)
+        self.helper = BootstrapHelper(submit_name=submit_name,
+                                      add_cancel_button=False)
 
     class Meta:
         model = TrainingProgress
@@ -1819,7 +1951,7 @@ class AllActivityOverTimeForm(forms.Form):
         input_formats=['%Y-%m-%d', ],
     )
 
-    helper = BootstrapHelper(use_get_method=True)
+    helper = BootstrapHelper(use_get_method=True, add_cancel_button=False)
 
 
 #----------------------------------------------------------
