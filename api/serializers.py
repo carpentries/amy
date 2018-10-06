@@ -191,6 +191,7 @@ class AwardSerializer(serializers.ModelSerializer):
 class PersonSerializer(serializers.ModelSerializer):
     airport = serializers.HyperlinkedRelatedField(
         read_only=True, view_name='api:airport-detail', lookup_field='iata')
+    country = serializers.CharField()
     lessons = serializers.SlugRelatedField(
         many=True, read_only=True, slug_field='name')
     domains = serializers.SlugRelatedField(
@@ -212,7 +213,7 @@ class PersonSerializer(serializers.ModelSerializer):
         model = Person
         fields = (
             'personal', 'middle', 'family', 'email', 'gender', 'may_contact',
-            'publish_profile', 'airport',
+            'publish_profile', 'airport', 'country',
             'github', 'twitter', 'url', 'orcid', 'username', 'notes',
             'affiliation', 'badges', 'lessons', 'domains', 'awards', 'tasks',
         )

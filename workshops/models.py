@@ -919,6 +919,9 @@ class Language(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        ordering = ["name"]
+
 #------------------------------------------------------------
 
 # In order to make our custom filters chainable, we have to
@@ -1073,7 +1076,9 @@ class Event(AssignmentMixin, models.Model):
         null=True, blank=True,
         help_text=PUBLISHED_HELP_TEXT,
     )
-    end        = models.DateField(null=True, blank=True)
+    end = models.DateField(
+        null=True, blank=True,
+    )
     slug = models.SlugField(
         max_length=STR_LONG, unique=True,
         help_text='Use <code>YYYY-MM-DD-location</code> format, where '
