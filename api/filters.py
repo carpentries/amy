@@ -8,22 +8,16 @@ from workshops.filters import (
 from workshops.models import Event, Task, Tag, Person, Badge
 
 
-def filter_tag_by_name(queryset, name, values):
-    # tags = Tag.objects.filter(name__in=values)
-    # for tag in tags:
-    #     queryset = queryset.filter(tags=tag)
-    # return queryset
-    return Tag.objects.all()
-
-
 class EventFilter(filters.FilterSet):
     start_after = filters.DateFilter(field_name='start', lookup_expr='gte')
     start_before = filters.DateFilter(field_name='start', lookup_expr='lte')
     end_after = filters.DateFilter(field_name='end', lookup_expr='gte')
     end_before = filters.DateFilter(field_name='end', lookup_expr='lte')
-    TAG_CHOICES = Tag.objects.all().values_list('name', 'name')
-    tag = filters.MultipleChoiceFilter(
-        choices=TAG_CHOICES, field_name='tags', method=filter_tag_by_name,
+    tags = filters.ModelMultipleChoiceFilter(
+        field_name='tags__name',
+        to_field_name='name',
+        queryset=Tag.objects.all(),
+        conjoined=True,
     )
     order_by = filters.OrderingFilter(
         fields=(
@@ -36,7 +30,7 @@ class EventFilter(filters.FilterSet):
     class Meta:
         model = Event
         fields = (
-            'completed', 'tag',
+            'completed', 'tags',
             'start', 'start_before', 'start_after',
             'end', 'end_before', 'end_after',
         )
