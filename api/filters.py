@@ -37,8 +37,10 @@ class EventFilter(filters.FilterSet):
         model = Event
         fields = (
             'completed', 'tag',
+            'administrator', 'host',
             'start', 'start_before', 'start_after',
             'end', 'end_before', 'end_after',
+            'country',
         )
 
 
@@ -60,9 +62,6 @@ def filter_instructors(queryset, name, value):
         return queryset.exclude(badges__in=instructor_badges)
     else:
         return queryset
-
-
-
 
 
 class PersonFilter(filters.FilterSet):
