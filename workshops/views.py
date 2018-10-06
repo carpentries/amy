@@ -3144,6 +3144,7 @@ def all_trainingrequests(request):
 
         if match_form.is_valid():
             member_site = match_form.cleaned_data['seat_membership']
+            open_seat = match_form.cleaned_data['seat_open_training']
 
             # Perform bulk match
             for r in match_form.cleaned_data['requests']:
@@ -3156,7 +3157,9 @@ def all_trainingrequests(request):
                     person=r.person,
                     role=Role.objects.get(name='learner'),
                     event=match_form.cleaned_data['event'],
-                    seat_membership=member_site)
+                    seat_membership=member_site,
+                    seat_open_training=open_seat,
+                )
 
             requests_count = len(match_form.cleaned_data['requests'])
             today = datetime.date.today()

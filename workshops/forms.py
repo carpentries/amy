@@ -1850,11 +1850,18 @@ class BulkMatchTrainingRequestForm(forms.Form):
         widget=ModelSelect2(url='membership-lookup'),
     )
 
+    seat_open_training = forms.BooleanField(
+        label='Open training seat',
+        required=False,
+        help_text="Some TTT events allow for open training; check this field "
+                  "to count this person into open applications.",
+    )
+
     helper = BootstrapHelper(add_submit_button=False,
                              form_tag=False,
                              add_cancel_button=False)
     helper.layout = Layout(
-        'event', 'seat_membership',
+        'event', 'seat_membership', 'seat_open_training',
     )
     helper.add_input(
         Submit(
@@ -1873,11 +1880,28 @@ class BulkMatchTrainingRequestForm(forms.Form):
     def clean(self):
         super().clean()
 
+        event = self.cleaned_data['event']
+        member_site = self.cleaned_data['seat_membership']
+        open_training = self.cleaned_data['seat_open_training']
+
         if any(r.person is None for r in self.cleaned_data.get('requests', [])):
             raise ValidationError('Some of the requests are not matched '
                                   'to a trainee yet. Before matching them to '
                                   'a training, you need to accept them '
                                   'and match with a trainee.')
+
+        if member_site and open_training:
+            raise ValidationError(
+                "Cannot simultaneously match as open training and use "
+                "a Membership instructor training seat."
+            )
+
+        if open_training and not event.open_TTT_applications:
+            raise ValidationError({
+                'seat_open_training': ValidationError(
+                    'Selected TTT event does not allow for open training seats.'
+                ),
+            })
 
 
 class MatchTrainingRequestForm(forms.Form):
