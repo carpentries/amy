@@ -79,7 +79,7 @@ class PersonFilter(filters.FilterSet):
         model = Person
         fields = (
             'badges', 'username', 'personal', 'middle', 'family', 'email',
-            'may_contact', 'publish_profile', 'github',
+            'may_contact', 'publish_profile', 'github', 'country',
         )
 
 
