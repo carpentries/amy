@@ -294,44 +294,12 @@ class ExportPersonDataView(RetrieveAPIView):
 
 class PublishedEvents(ListAPIView):
     """List published events."""
-
     # only events that have both a starting date and a URL
     permission_classes = (IsAuthenticatedOrReadOnly, )
     paginator = None  # disable pagination
-
     serializer_class = ExportEventSerializer
-
-    metadata_class = QueryMetadata
-
-    def get_queryset(self):
-        """Optionally restrict the returned event set to events hosted by
-        specific host or administered by specific admin."""
-        queryset = Event.objects.published_events()
-
-        administrator = self.request.query_params.get('administrator', None)
-        if administrator is not None:
-            queryset = queryset.filter(administrator__pk=administrator)
-
-        host = self.request.query_params.get('host', None)
-        if host is not None:
-            queryset = queryset.filter(host__pk=host)
-
-        tags = self.request.query_params.getlist('tag', None)
-        if tags:
-            tags = Tag.objects.filter(name__in=tags)
-            for tag in tags:
-                queryset = queryset.filter(tags=tag)
-
-        return queryset
-
-    def get_query_params_description(self):
-        return {
-            'administrator': 'ID of the organization responsible for admin '
-                             'work on events.',
-            'host': 'ID of the organization hosting the event.',
-            'tag': "Events' tag(s). You can use this parameter multiple "
-                   "times.",
-        }
+    filterset_class = EventFilter
+    queryset = Event.objects.published_events()
 
 
 class UserTodoItems(ListAPIView):

@@ -31,8 +31,10 @@ class EventFilter(filters.FilterSet):
         model = Event
         fields = (
             'completed', 'tags',
+            'administrator', 'host',
             'start', 'start_before', 'start_after',
             'end', 'end_before', 'end_after',
+            'country',
         )
 
 
@@ -56,9 +58,6 @@ def filter_instructors(queryset, name, value):
         return queryset
 
 
-
-
-
 class PersonFilter(filters.FilterSet):
     is_instructor = filters.BooleanFilter(method=filter_instructors,
                                           label='Is instructor?')
@@ -73,7 +72,7 @@ class PersonFilter(filters.FilterSet):
         model = Person
         fields = (
             'badges', 'username', 'personal', 'middle', 'family', 'email',
-            'may_contact', 'publish_profile', 'github',
+            'may_contact', 'publish_profile', 'github', 'country',
         )
 
 
