@@ -102,6 +102,7 @@ ALLOWED_HOSTS = [
 ]
 if DEBUG:
     ALLOWED_HOSTS.append('127.0.0.1')
+    ALLOWED_HOSTS.append('localhost')
 
 ##################### T E M P L A T E S #####################
 
