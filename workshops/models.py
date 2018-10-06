@@ -919,6 +919,9 @@ class Language(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        ordering = ["name"]
+
 #------------------------------------------------------------
 
 # In order to make our custom filters chainable, we have to
