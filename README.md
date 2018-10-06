@@ -15,7 +15,7 @@ other things thrown in.  If you would like to help, please read:
 
 *   the [contributor guidelines](CONTRIBUTING.md), and
 
-*   our [contributor code of conduct](CONDUCT.md).
+*   our [contributor code of conduct](CODE_OF_CONDUCT.md).
 
 Please [check with us][contact-address] or open an [issue][issues]
 before starting work on new features.
