@@ -32,7 +32,7 @@ before starting work on new features.
 2.  Install Django and other dependencies:
 
     ~~~
-    $ python3 -m pip install --user -r requirements.txt
+    $ python -m pip install --user -r requirements.txt
     ~~~
 
     If you're experienced Python programmer, feel free to create a
