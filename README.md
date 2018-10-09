@@ -59,7 +59,7 @@ before starting work on new features.
     $ make serve
     ~~~
 
-    **Note**:  this also installs front-end dependencies for AMY, such as jQuery or Bootstrap.
+    **Note**:  this also installs front-end dependencies for AMY, including [jQuery][jquery] and [Bootstrap][bootstrap] ([full list here](https://github.com/swcarpentry/amy/blob/develop/package.json)).
 
 7.  Open <http://127.0.0.1:8000/workshops/> in your browser and start clicking.
 
@@ -111,8 +111,10 @@ before starting work on new features.
     $ make serve
     ~~~
 
+[bootstrap]: https://getbootstrap.com/
 [contact-address]: mailto:team@carpentries.org
 [django]: https://www.djangoproject.com
+[jquery]: https://jquery.com/
 [fixing-npm-permissions]: https://docs.npmjs.com/getting-started/fixing-npm-permissions#option-2-change-npm-s-default-directory-to-another-directory
 [issues]: https://github.com/swcarpentry/amy/issues
 [tc]: https://carpentries.org/
