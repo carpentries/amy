@@ -39,17 +39,7 @@ before starting work on new features.
     Python3-compatible [virtualenv][virtualenv] for AMY and install
     dependencies from `requirements.txt`.
 
-3.  Install [Bower][bower], the tool that manages AMY's JavaScript and CSS dependencies:
-
-    ~~~
-    $ sudo npm install -g bower
-    ~~~
-
-    You may need some additional dependencies to install [Bower][bower], such as [NodeJS][nodejs] and [npm][npm].
-
-    **Note**: if you don't want to use `sudo`, you can install `bower`
-    locally. You'll need to set up your `$PATH` correctly, though. Look
-    [here][fixing-npm-permissions] for details.
+3.  Install [yarn](https://yarnpkg.com/lang/en/docs/install), the tool that manages AMY's JavaScript and CSS dependencies. [You can install it here](https://yarnpkg.com/lang/en/docs/install).
 
 4.  Set up your local database with fake (development-ready) data with:
 
