@@ -71,7 +71,7 @@ before starting work on new features.
 
     **Note**:  this also installs front-end dependencies for AMY, such as jQuery or Bootstrap.
 
-7.  Open <http://localhost:8000/workshops/> in your browser and start clicking.
+7.  Open <http://127.0.0.1:8000/workshops/> in your browser and start clicking.
 
     Use the administrator account that you created.
 
