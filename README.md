@@ -1,6 +1,6 @@
 ![](workshops/static/amy-logo.png)
 
-![](https://travis-ci.org/swcarpentry/amy.svg?branch=master)
+![](https://travis-ci.org/swcarpentry/amy.svg?branch=master) [![](https://img.shields.io/badge/python-3.4+-blue.svg)](https://www.python.org/downloads/release/python-340/)
 
 AMY is a web-based workshop administration application for [The Carpentries][tc]
 and related projects.  Its target audience is workshop
@@ -8,7 +8,7 @@ coordinators, most of whom are non-programmers, who need to keep track
 of what workshops are being arranged, when they're supposed to occur,
 who's teaching what, and so on.
 
-AMY is built using [Django][django], with a bit of Javascript and
+AMY is built using [Django][django] with Python 3, with a bit of Javascript and
 other things thrown in.  If you would like to help, please read:
 
 *   the setup instructions below,
@@ -39,7 +39,7 @@ before starting work on new features.
     Python3-compatible [virtualenv][virtualenv] for AMY and install
     dependencies from `requirements.txt`.
 
-3.  Install [yarn](https://yarnpkg.com/lang/en/docs/install), the tool that manages AMY's JavaScript and CSS dependencies. [You can install it here](https://yarnpkg.com/lang/en/docs/install).
+3.  Install [yarn](yarn), the tool that manages AMY's JavaScript and CSS dependencies. [You can install it here](yarn).
 
 4.  Set up your local database with fake (development-ready) data with:
 
@@ -111,12 +111,10 @@ before starting work on new features.
     $ make serve
     ~~~
 
-[bower]: http://bower.io/
 [contact-address]: mailto:team@carpentries.org
 [django]: https://www.djangoproject.com
 [fixing-npm-permissions]: https://docs.npmjs.com/getting-started/fixing-npm-permissions#option-2-change-npm-s-default-directory-to-another-directory
 [issues]: https://github.com/swcarpentry/amy/issues
-[nodejs]: https://nodejs.org/
-[npm]: https://www.npmjs.com/
 [tc]: https://carpentries.org/
 [virtualenv]: https://virtualenv.pypa.io/en/latest/userguide.html
+[yarn]: https://yarnpkg.com/lang/en/docs/install
