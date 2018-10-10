@@ -183,58 +183,14 @@ class ProfileUpdateRequestConfirm(LoginNotRequiredMixin, TemplateView):
         return context
 
 
-# This form is disabled as per @maneesha's request
-# class EventSubmission(LoginNotRequiredMixin, EmailSendMixin,
-#                       AMYCreateView):
+# This form is disabled
 class EventSubmission(LoginNotRequiredMixin, TemplateView):
     """Display form for submitting existing workshops."""
-    model = EventSubmissionModel
-    form_class = EventSubmitForm
     template_name = 'forms/event_submit.html'
-    success_url = reverse_lazy('event_submission_confirm')
-    email_fail_silently = False
-    email_kwargs = {
-        'to': settings.REQUEST_NOTIFICATIONS_RECIPIENTS,
-    }
-
-    def get_success_message(self, *args, **kwargs):
-        """Don't display a success message."""
-        return ''
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Tell us about your workshop'
-        return context
-
-    def get_subject(self):
-        return ('New workshop submission from {}'
-                .format(self.object.contact_name))
-
-    def get_body(self):
-        link = self.object.get_absolute_url()
-        link_domain = settings.SITE_URL
-        body_txt = get_template('mailing/eventsubmission.txt') \
-            .render({
-                'object': self.object,
-                'link': link,
-                'link_domain': link_domain,
-            })
-        body_html = get_template('mailing/eventsubmission.html') \
-            .render({
-                'object': self.object,
-                'link': link,
-                'link_domain': link_domain,
-            })
-        return body_txt, body_html
-
-
-class EventSubmissionConfirm(LoginNotRequiredMixin, TemplateView):
-    """Display confirmation of received workshop submission."""
-    template_name = 'forms/event_submission_confirm.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'Thanks for your submission'
         return context
 
 
