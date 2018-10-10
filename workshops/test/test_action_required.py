@@ -82,7 +82,8 @@ class TestActionRequiredPrivacyMiddleware(TestBase):
             reverse('dc_workshop_request'),
             reverse('dc_workshop_selforganized_request'),
             reverse('event_submit'),
-            reverse('profileupdate_request'),
+            # below always redirects, as it's been deprecated
+            # reverse('profileupdate_request'),
             reverse('training_request'),
             reverse('training_request_confirm'),
         ]

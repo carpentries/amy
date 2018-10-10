@@ -25,39 +25,6 @@ class TestProfileUpdateRequest(TestBase):
         self._setUpInstructors()
         self._setUpUsersAndLogin()
 
-    def test_request_added(self):
-        """Test if ProfileUpdateRequest is successfully added."""
-        data = {
-            'g-recaptcha-response': 'PASSED',  # to auto-pass RECAPTCHA
-            'personal': 'Harry', 'family': 'Potter',
-            'email': 'harry@potter.com', 'airport_iata': 'LON',
-            'affiliation': 'Auror at Ministry of Magic',
-            'occupation': '', 'occupation_other': 'Auror',
-            'github': 'hpotter', 'twitter': 'hpotter',
-            'orcid': '', 'website': '', 'gender': 'M',
-            'domains': [1, 2],  # IDs
-            'lessons': [1, 2],  # IDs
-            'privacy_consent': True,
-        }
-        rv = self.client.post(reverse('profileupdate_request'), data,
-            follow=True)
-        assert rv.status_code == 200
-        content = rv.content.decode('utf-8')
-        assert 'Fix errors below' not in content
-        assert \
-            'Thank you for updating your instructor profile' in content
-        assert ProfileUpdateRequest.objects.all().count() == 1
-        assert ProfileUpdateRequest.objects.all()[0].active is True
-
-        # check if an email was sent
-        self.assertEqual(len(mail.outbox), 1)
-        msg = mail.outbox[0]
-        self.assertEqual(
-            msg.subject,
-            'New instructor profile update request: Harry Potter, '
-            'Auror at Ministry of Magic',
-        )
-
     def test_request_discarded(self):
         """Ensure the request is discarded properly."""
         # add a minimal request
