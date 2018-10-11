@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.shortcuts import render
 from django.template.loader import get_template
 from django.urls import reverse_lazy
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, RedirectView
 
 from workshops.forms import (
     SWCEventRequestForm,
@@ -113,128 +113,21 @@ class DCEventRequestConfirm(SWCEventRequestConfirm):
     template_name = 'forms/workshop_dc_request_confirm.html'
 
 
-class ProfileUpdateRequestView(LoginNotRequiredMixin, EmailSendMixin,
-                           AMYCreateView):
-    model = ProfileUpdateRequest
-    form_class = ProfileUpdateRequestForm
-    page_title = 'Update Instructor Profile'
-    template_name = 'forms/profileupdate.html'
-    success_url = reverse_lazy('profileupdate_request_confirm')
-    email_fail_silently = False
-    email_kwargs = {
-        'to': settings.REQUEST_NOTIFICATIONS_RECIPIENTS,
-        'reply_to': None,
-    }
-
-    def get_success_message(self, *args, **kwargs):
-        """Don't display a success message."""
-        return ''
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = self.page_title
-        return context
-
-    def get_subject(self):
-        subject = (
-            'New instructor profile update request: {name}, {affiliation}'
-        ).format(
-            name=self.object.get_full_name(),
-            affiliation=self.object.affiliation,
-        )
-        return subject
-
-    def get_body(self):
-        link = self.object.get_absolute_url()
-        link_domain = settings.SITE_URL
-
-        body_txt = get_template(
-            'mailing/profileupdaterequest.txt'
-        ).render({
-            'object': self.object,
-            'link': link,
-            'link_domain': link_domain,
-        })
-
-        body_html = get_template(
-            'mailing/profileupdaterequest.html'
-        ).render({
-            'object': self.object,
-            'link': link,
-            'link_domain': link_domain,
-        })
-        return body_txt, body_html
-
-    def form_valid(self, form):
-        """Send email to admins if the form is valid."""
-        data = form.cleaned_data
-        self.email_kwargs['reply_to'] = (data['email'], )
-        result = super().form_valid(form)
-        return result
+# This form is disabled
+class ProfileUpdateRequestView(LoginNotRequiredMixin, RedirectView):
+    permanent = False
+    query_string = False
+    url = 'https://static.carpentries.org/instructors/'
 
 
-class ProfileUpdateRequestConfirm(LoginNotRequiredMixin, TemplateView):
-    """Display confirmation of received workshop request."""
-    template_name = 'forms/profileupdate_confirm.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'Thank you for updating your instructor profile'
-        return context
-
-
-# This form is disabled as per @maneesha's request
-# class EventSubmission(LoginNotRequiredMixin, EmailSendMixin,
-#                       AMYCreateView):
+# This form is disabled
 class EventSubmission(LoginNotRequiredMixin, TemplateView):
     """Display form for submitting existing workshops."""
-    model = EventSubmissionModel
-    form_class = EventSubmitForm
     template_name = 'forms/event_submit.html'
-    success_url = reverse_lazy('event_submission_confirm')
-    email_fail_silently = False
-    email_kwargs = {
-        'to': settings.REQUEST_NOTIFICATIONS_RECIPIENTS,
-    }
-
-    def get_success_message(self, *args, **kwargs):
-        """Don't display a success message."""
-        return ''
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Tell us about your workshop'
-        return context
-
-    def get_subject(self):
-        return ('New workshop submission from {}'
-                .format(self.object.contact_name))
-
-    def get_body(self):
-        link = self.object.get_absolute_url()
-        link_domain = settings.SITE_URL
-        body_txt = get_template('mailing/eventsubmission.txt') \
-            .render({
-                'object': self.object,
-                'link': link,
-                'link_domain': link_domain,
-            })
-        body_html = get_template('mailing/eventsubmission.html') \
-            .render({
-                'object': self.object,
-                'link': link,
-                'link_domain': link_domain,
-            })
-        return body_txt, body_html
-
-
-class EventSubmissionConfirm(LoginNotRequiredMixin, TemplateView):
-    """Display confirmation of received workshop submission."""
-    template_name = 'forms/event_submission_confirm.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'Thanks for your submission'
         return context
 
 
