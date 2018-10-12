@@ -357,9 +357,9 @@ class WorkshopStaffForm(forms.Form):
         return cleaned_data
 
 
-class PersonBulkAddForm(forms.Form):
-    '''Represent CSV upload form for bulk adding people.'''
-
+class BulkUploadCSVForm(forms.Form):
+    """This form allows to upload a single file; it's used by person bulk
+    upload and training request manual score bulk upload."""
     file = forms.FileField()
 
 
