@@ -82,7 +82,7 @@ from workshops.forms import (
     DebriefForm,
     WorkshopStaffForm,
     PersonForm,
-    PersonBulkAddForm,
+    BulkUploadCSVForm,
     EventForm,
     TaskForm,
     AwardForm,
@@ -170,6 +170,9 @@ from workshops.util import (
     login_required,
     redirect_with_next_support,
     dict_without_Nones,
+    upload_trainingrequest_manual_score_csv,
+    clean_upload_trainingrequest_manual_score,
+    update_manual_score,
 )
 
 
@@ -518,7 +521,7 @@ def person_bulk_add_template(request):
                      raise_exception=True)
 def person_bulk_add(request):
     if request.method == 'POST':
-        form = PersonBulkAddForm(request.POST, request.FILES)
+        form = BulkUploadCSVForm(request.POST, request.FILES)
         if form.is_valid():
             charset = request.FILES['file'].charset or settings.DEFAULT_CHARSET
             stream = io.TextIOWrapper(request.FILES['file'].file, charset)
@@ -549,7 +552,7 @@ def person_bulk_add(request):
                     return redirect('person_bulk_add_confirmation')
 
     else:
-        form = PersonBulkAddForm()
+        form = BulkUploadCSVForm()
 
     context = {
         'title': 'Bulk Add People',
@@ -3453,6 +3456,125 @@ def trainingrequests_merge(request):
     }
     return render(request, 'workshops/trainingrequests_merge.html', context)
 
+
+@admin_required
+def bulk_upload_training_request_scores_template(request):
+    """Dynamically generate a CSV template that can be used to bulk-upload
+    training request scores."""
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = \
+        'attachment; filename=BulkTrainingRequestScoresTemplate.csv'
+
+    writer = csv.writer(response)
+    writer.writerow(TrainingRequest.MANUAL_SCORE_UPLOAD_FIELDS)
+    return response
+
+
+@admin_required
+def bulk_upload_training_request_scores(request):
+    if request.method == "POST":
+        form = BulkUploadCSVForm(request.POST, request.FILES)
+        if form.is_valid():
+            charset = request.FILES['file'].charset or settings.DEFAULT_CHARSET
+            stream = io.TextIOWrapper(request.FILES['file'].file, charset)
+            try:
+                data = upload_trainingrequest_manual_score_csv(stream)
+            except csv.Error as e:
+                messages.error(
+                    request,
+                    "Error processing uploaded .CSV file: {}".format(e))
+            except UnicodeDecodeError as e:
+                messages.error(
+                    request,
+                    "Please provide a file in {} encoding."
+                    .format(charset))
+            else:
+                request.session['bulk-upload-training-request-scores'] = data
+                return redirect(
+                    'bulk_upload_training_request_scores_confirmation'
+                )
+
+        else:
+            messages.error(request, "Fix errors below.")
+
+    else:
+        form = BulkUploadCSVForm()
+
+    context = {
+        'title': 'Bulk upload Training Requests manual score',
+        'form': form,
+        'charset': settings.DEFAULT_CHARSET,
+    }
+    return render(
+        request,
+        'workshops/trainingrequest_bulk_upload_manual_score_form.html',
+        context,
+    )
+
+
+@admin_required
+def bulk_upload_training_request_scores_confirmation(request):
+    """This view allows for verifying and saving of uploaded training
+    request scores."""
+    data = request.session.get('bulk-upload-training-request-scores')
+
+    if not data:
+        messages.warning(request,
+                         "Could not locate CSV data, please upload again.")
+        return redirect('bulk_upload_training_request_scores')
+
+    if request.method == "POST":
+        if (request.POST.get('confirm', None) and
+                not request.POST.get('cancel', None)):
+
+            errors, cleaned_data = \
+                clean_upload_trainingrequest_manual_score(data)
+
+            if not errors:
+                try:
+                    records_count = update_manual_score(cleaned_data)
+                except (IntegrityError, ObjectDoesNotExist, InternalError,
+                        TypeError, ValueError) as e:
+                    messages.error(
+                        request,
+                        "Error saving data to the database: {}. Please make "
+                        "sure to fix all errors listed below.".format(e)
+                    )
+                    errors, cleaned_data = \
+                        clean_upload_trainingrequest_manual_score(data)
+                else:
+                    request.session['bulk-upload-training-request-scores'] = \
+                        None
+                    messages.success(
+                        request,
+                        "Successfully updated {} Training Requests."
+                        .format(records_count)
+                    )
+                    return redirect('bulk_upload_training_request_scores')
+            else:
+                messages.warning(
+                    request,
+                    "Please fix the data according to error messages below.",
+                )
+
+        else:
+            # any "cancel" or lack of "confirm" in POST cancels the upload
+            request.session['bulk-upload-training-request-scores'] = None
+            return redirect('bulk_upload_training_request_scores')
+
+    else:
+        errors, cleaned_data = clean_upload_trainingrequest_manual_score(data)
+
+    context = {
+        'title': 'Confirm uploaded Training Requests manual score data',
+        'any_errors': errors,
+        'zipped': zip(cleaned_data, data),
+    }
+    return render(
+        request,
+        'workshops/trainingrequest_bulk_upload_manual_score_confirmation.html',
+        context,
+    )
 
 # ------------------------------------------------------------
 # Views for trainees

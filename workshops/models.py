@@ -2187,6 +2187,10 @@ class TrainingRequest(CreatedUpdatedMixin,
         DataPrivacyAgreementMixin, COCAgreementMixin, StateMixin,
         models.Model):
 
+    MANUAL_SCORE_UPLOAD_FIELDS = (
+        'request_id', 'score_manual', 'score_notes',
+    )
+
     person = models.ForeignKey(Person, null=True, blank=True,
                                verbose_name='Matched Trainee',
                                on_delete=models.SET_NULL)
