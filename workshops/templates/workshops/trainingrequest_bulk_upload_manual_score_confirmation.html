@@ -26,18 +26,26 @@
         {% if entry.0.object.score_manual is None %}Not scored{% else %}
         {{ entry.0.object.score_manual }}{% endif %}
       </td>
-      <td>{{ entry.0.object.score_notes|default:"—" }}</td>
+      <td>
+        {% if entry.0.object.score_notes %}
+          <pre>{{ entry.0.object.score_notes }}</pre>
+        {% else %}—{% endif %}
+      </td>
       <td>{{ entry.1.request_id|default:"—" }}</td>
       <td>{{ entry.1.score_manual|default:"—" }}</td>
-      <td>{{ entry.1.score_notes|default:"—" }}</td>
+      <td>
+        {% if entry.1.score_notes %}
+          <pre>{{ entry.1.score_notes }}</pre>
+        {% else %}—{% endif %}
+      </td>
       <td class="text-danger">
-      {% if entry.errors %}
+        {% if entry.0.errors %}
           <ul>
-          {% for error in entry.errors %}
+          {% for error in entry.0.errors %}
               <li>{{ error }}</li>
           {% endfor %}
           </ul>
-      {% endif %}
+        {% endif %}
       </td>
     </tr>
     {% endfor %}

@@ -402,6 +402,7 @@ def clean_upload_trainingrequest_manual_score(data):
                 object=obj,
                 score_manual=score_manual,
                 score_notes=score_notes,
+                errors=errors,
             )
         )
     return errors_occur, clean_data

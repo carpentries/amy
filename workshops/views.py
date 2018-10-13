@@ -3564,6 +3564,11 @@ def bulk_upload_training_request_scores_confirmation(request):
 
     else:
         errors, cleaned_data = clean_upload_trainingrequest_manual_score(data)
+        if errors:
+            messages.warning(
+                request,
+                'Please fix errors in the provided CSV file and re-upload.',
+            )
 
     context = {
         'title': 'Confirm uploaded Training Requests manual score data',
