@@ -80,6 +80,7 @@ from .filters import (
 
 from .renderers import (
     TrainingRequestCSVRenderer,
+    TrainingRequestManualScoreCSVRenderer,
 )
 
 
@@ -320,7 +321,7 @@ class TrainingRequests(ListAPIView):
     permission_classes = (IsAuthenticated, IsAdmin)
     paginator = None
     renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES + \
-        [TrainingRequestCSVRenderer, ]
+        [TrainingRequestCSVRenderer, TrainingRequestManualScoreCSVRenderer]
     queryset = (
         TrainingRequest.objects.all()
             .select_related('person')

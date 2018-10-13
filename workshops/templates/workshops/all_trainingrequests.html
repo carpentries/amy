@@ -154,9 +154,9 @@
           Download for bulk manual scoring
         </button>
         <div class="dropdown-menu" aria-labelledby="id_downloadBtn">
-          <a class="dropdown-item" href="{% url 'api:training-requests' %}?format=csv&manualscore=1" amy-download-selected>Selected requests as CSV</a>
-          <a class="dropdown-item" href="{% url 'api:training-requests' %}?format=csv&manualscore=1&{{ request.GET.urlencode }}">Filtered requests as CSV</a>
-          <a class="dropdown-item" href="{% url 'api:training-requests' %}?format=csv&manualscore=1">All requests as CSV</a>
+          <a class="dropdown-item" href="{% url 'api:training-requests' %}?format=csv2&manualscore=1" amy-download-selected>Selected requests as CSV</a>
+          <a class="dropdown-item" href="{% url 'api:training-requests' %}?format=csv2&manualscore=1&{{ request.GET.urlencode }}">Filtered requests as CSV</a>
+          <a class="dropdown-item" href="{% url 'api:training-requests' %}?format=csv2&manualscore=1">All requests as CSV</a>
         </div>
       </div>
     </div>
