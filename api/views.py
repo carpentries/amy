@@ -65,6 +65,7 @@ from .serializers import (
     PersonSerializer,
     PersonSerializerAllData,
     TrainingRequestWithPersonSerializer,
+    TrainingRequestForManualScoringSerializer,
 )
 
 from .filters import (
@@ -318,7 +319,6 @@ class UserTodoItems(ListAPIView):
 class TrainingRequests(ListAPIView):
     permission_classes = (IsAuthenticated, IsAdmin)
     paginator = None
-    serializer_class = TrainingRequestWithPersonSerializer
     renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES + \
         [TrainingRequestCSVRenderer, ]
     queryset = (
@@ -341,6 +341,13 @@ class TrainingRequests(ListAPIView):
             )
         )
     filterset_class = TrainingRequestFilterIDs
+
+    def get_serializer_class(self):
+        if self.request.query_params.get('manualscore'):
+            return TrainingRequestForManualScoringSerializer
+        else:
+            return TrainingRequestWithPersonSerializer
+
 
 
 class ReportsViewSet(ViewSet):
