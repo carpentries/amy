@@ -372,6 +372,8 @@ def clean_upload_trainingrequest_manual_score(data):
         else:
             try:
                 num_request_id = int(request_id)
+                if num_request_id < 0:
+                    raise ValueError('Request ID should not be negative')
             except (ValueError, TypeError):
                 errors.append("Request ID is not an integer value.")
             else:
