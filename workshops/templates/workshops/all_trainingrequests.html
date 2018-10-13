@@ -143,9 +143,20 @@
           Download
         </button>
         <div class="dropdown-menu" aria-labelledby="id_downloadBtn">
-          <a class="dropdown-item" href="{% url 'api:training-requests' %}?format=csv&" id="download_selected">Selected requests as CSV</a>
+          <a class="dropdown-item" href="{% url 'api:training-requests' %}?format=csv&" amy-download-selected>Selected requests as CSV</a>
           <a class="dropdown-item" href="{% url 'api:training-requests' %}?format=csv&{{ request.GET.urlencode }}">Filtered requests as CSV</a>
           <a class="dropdown-item" href="{% url 'api:training-requests' %}?format=csv">All requests as CSV</a>
+        </div>
+      </div>
+
+      <div class="btn-group" role="group">
+        <button id="id_downloadBtn" type="button" class="btn btn-dark dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Download for bulk manual scoring
+        </button>
+        <div class="dropdown-menu" aria-labelledby="id_downloadBtn">
+          <a class="dropdown-item" href="{% url 'api:training-requests' %}?format=csv&manualscore=1" amy-download-selected>Selected requests as CSV</a>
+          <a class="dropdown-item" href="{% url 'api:training-requests' %}?format=csv&manualscore=1&{{ request.GET.urlencode }}">Filtered requests as CSV</a>
+          <a class="dropdown-item" href="{% url 'api:training-requests' %}?format=csv&manualscore=1">All requests as CSV</a>
         </div>
       </div>
     </div>
