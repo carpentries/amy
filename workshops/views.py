@@ -3471,6 +3471,8 @@ def bulk_upload_training_request_scores_template(request):
 
 
 @admin_required
+@permission_required(['workshops.change_trainingrequest'],
+                     raise_exception=True)
 def bulk_upload_training_request_scores(request):
     if request.method == "POST":
         form = BulkUploadCSVForm(request.POST, request.FILES)
@@ -3513,6 +3515,8 @@ def bulk_upload_training_request_scores(request):
 
 
 @admin_required
+@permission_required(['workshops.change_trainingrequest'],
+                     raise_exception=True)
 def bulk_upload_training_request_scores_confirmation(request):
     """This view allows for verifying and saving of uploaded training
     request scores."""
