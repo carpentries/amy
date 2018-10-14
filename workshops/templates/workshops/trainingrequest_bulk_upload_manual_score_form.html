@@ -2,7 +2,7 @@
 
 {% block content %}
 {% load static %}
-<p><a href="{% url 'bulk_upload_training_request_scores_template' %}"><code>BulkTrainingRequestScoresTemplate.csv</code></a> is a blank template of a well-formed CSV file.</p>
+<p>You can use <i>Download for bulk manual scoring</i> link on <a href="{% url 'all_trainingrequests' %}">Training requests</a> page; you'll download a CSV file with data required for manual score and three columns for bulk upload (see table below).</p>
 
 <p>Hint: the uploaded CSV file needs to have these three columns &ndash; other columns will be ignored:</p>
 
@@ -13,7 +13,7 @@
   </tr>
   <tr>
     <td><code>request_id</code></td>
-    <td><i>Primary Key</i> &ndash; a field representing individual training request in the database; you can look it up in the CSV download of selected records on <a href="{% url 'all_trainingrequests' %}">Training Requests</a> page (below the table).</td>
+    <td><i>Primary Key</i> &ndash; a field representing individual training request in the database.</td>
   </tr>
   <tr>
     <td><code>score_manual</code></td>

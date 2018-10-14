@@ -3458,19 +3458,6 @@ def trainingrequests_merge(request):
 
 
 @admin_required
-def bulk_upload_training_request_scores_template(request):
-    """Dynamically generate a CSV template that can be used to bulk-upload
-    training request scores."""
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = \
-        'attachment; filename=BulkTrainingRequestScoresTemplate.csv'
-
-    writer = csv.writer(response)
-    writer.writerow(TrainingRequest.MANUAL_SCORE_UPLOAD_FIELDS)
-    return response
-
-
-@admin_required
 @permission_required(['workshops.change_trainingrequest'],
                      raise_exception=True)
 def bulk_upload_training_request_scores(request):
