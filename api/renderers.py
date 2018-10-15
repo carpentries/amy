@@ -2,13 +2,12 @@ from rest_framework_csv.renderers import CSVRenderer
 
 from .serializers import (
     TrainingRequestWithPersonSerializer,
+    TrainingRequestForManualScoringSerializer,
 )
 
 
-class TrainingRequestCSVRenderer(CSVRenderer):
-    # sets the columns ordering
-    header = TrainingRequestWithPersonSerializer.Meta.fields
-    labels = {
+class TrainingRequestCSVColumns:
+    translation_labels = {
         'created_at': 'Created at',
         'last_updated_at': 'Last updated at',
         'state': 'State',
@@ -51,3 +50,20 @@ class TrainingRequestCSVRenderer(CSVRenderer):
         'data_privacy_agreement': 'Data privacy agreement (yes/no)',
         'code_of_conduct_agreement': 'Code of Conduct agreement (yes/no)',
     }
+
+    def __init__(self):
+        self.header = self.serializer.Meta.fields
+        self.labels = {
+            k: v
+            for k, v in self.translation_labels.items()
+            if k in self.header
+        }
+
+
+class TrainingRequestCSVRenderer(CSVRenderer, TrainingRequestCSVColumns):
+    serializer = TrainingRequestWithPersonSerializer
+
+
+class TrainingRequestManualScoreCSVRenderer(CSVRenderer, TrainingRequestCSVColumns):
+    serializer = TrainingRequestForManualScoringSerializer
+    format = 'csv2'

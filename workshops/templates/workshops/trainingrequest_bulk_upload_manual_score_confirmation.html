@@ -1,0 +1,68 @@
+{% extends "base_nav.html" %}
+
+{% block content %}
+
+<form method="POST" id="main-form">
+  <table class="table table-striped">
+    <tr>
+      <th>Matched request</th>
+      <th>Actual score</th>
+      <th>Actual score notes</th>
+      <th><code>request_id</code></th>
+      <th><code>score_manual</code></th>
+      <th><code>score_notes</code></th>
+      <th></th>
+    </tr>
+    {% for entry in zipped %}
+    <tr>
+      <td>
+        {% if entry.0.object %}
+        <a href="{{ entry.0.object.get_absolute_url }}">{{ entry.0.object }}</a>
+        {% else %}
+        —
+        {% endif %}
+      </td>
+      <td>
+        {% if entry.0.object.score_manual is None %}Not scored{% else %}
+        {{ entry.0.object.score_manual }}{% endif %}
+      </td>
+      <td>
+        {% if entry.0.object.score_notes %}
+          <pre>{{ entry.0.object.score_notes }}</pre>
+        {% else %}—{% endif %}
+      </td>
+      <td>{{ entry.1.request_id|default:"—" }}</td>
+      <td>{{ entry.1.score_manual|default:"—" }}</td>
+      <td>
+        {% if entry.1.score_notes %}
+          <pre>{{ entry.1.score_notes }}</pre>
+        {% else %}—{% endif %}
+      </td>
+      <td class="text-danger">
+        {% if entry.0.errors %}
+          <ul>
+          {% for error in entry.0.errors %}
+              <li>{{ error }}</li>
+          {% endfor %}
+          </ul>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  {% comment %}
+  This feels a little bit like cheating, but I don't have any better idea
+  how to distinguish between confirmation and cancelation.
+  The important implication of this approach is that the fields' names must
+  stay the way they're now: "confirm" and "cancel".  Values can change.
+  {% endcomment %}
+  {% if any_errors %}
+  <input type="button" name="confirm" value="Confirm and save" class="btn btn-success disabled">
+  {% else %}
+  <input type="submit" name="confirm" value="Confirm and save" class="btn btn-success">
+  {% endif %}
+  <input type="submit" name="cancel" value="Cancel" class="btn btn-secondary">
+  {% csrf_token %}
+</form>
+{% endblock %}

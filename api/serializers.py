@@ -373,6 +373,37 @@ class TrainingRequestWithPersonSerializer(TrainingRequestSerializer):
         )
 
 
+class TrainingRequestForManualScoringSerializer(TrainingRequestSerializer):
+    request_id = serializers.IntegerField(source='pk')
+
+    class Meta:
+        model = TrainingRequest
+        fields = (
+            'request_id',
+            'score_manual',
+            'score_notes',
+            'group_name',
+            'personal',
+            'middle',
+            'family',
+            'underrepresented',
+            'affiliation',
+            'nonprofit_teaching_experience',
+            'previous_training',
+            'previous_training_other',
+            'previous_training_explanation',
+            'previous_experience',
+            'previous_experience_other',
+            'previous_experience_explanation',
+            'teaching_frequency_expectation',
+            'teaching_frequency_expectation_other',
+            'max_travelling_frequency',
+            'max_travelling_frequency_other',
+            'reason',
+            'comment',
+        )
+
+
 # The serializers below are meant to help display user's data without any
 # links in relational fields; instead, either an expanded model is displayed,
 # or - if it's simple enough - its' string representation.

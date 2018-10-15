@@ -1,0 +1,37 @@
+{% extends "base_nav.html" %}
+
+{% block content %}
+{% load static %}
+<p>You can use <i>Download for bulk manual scoring</i> link on <a href="{% url 'all_trainingrequests' %}">Training requests</a> page; you'll download a CSV file with data required for manual score and three columns for bulk upload (see table below).</p>
+
+<p>Hint: the uploaded CSV file needs to have these three columns &ndash; other columns will be ignored:</p>
+
+<table class="table table-striped table-bordered table-sm">
+  <tr>
+    <th>Column header</th>
+    <th>Meaning</th>
+  </tr>
+  <tr>
+    <td><code>request_id</code></td>
+    <td><i>Primary Key</i> &ndash; a field representing individual training request in the database.</td>
+  </tr>
+  <tr>
+    <td><code>score_manual</code></td>
+    <td>Integer value representing manual score; can be negative.</td>
+  </tr>
+  <tr>
+    <td><code>score_notes</code></td>
+    <td>Text value used for explanation of manual score, if required.</td>
+  </tr>
+</table>
+
+<form action="" method="post" enctype="multipart/form-data"
+      accept-charset="{{charset}}"
+      id="main-form">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <input type="submit" value="Submit" />
+</form>
+
+{% endblock %}

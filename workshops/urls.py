@@ -184,6 +184,8 @@ urlpatterns = [
         url(r'^$', views.trainingrequest_details, name='trainingrequest_details'),
         url(r'^edit/$', views.TrainingRequestUpdate.as_view(), name='trainingrequest_edit'),
     ])),
+    url(r'^bulk_upload_training_request_scores/', views.bulk_upload_training_request_scores, name='bulk_upload_training_request_scores'),
+    url(r'^bulk_upload_training_request_scores/confirm/$',views.bulk_upload_training_request_scores_confirmation, name='bulk_upload_training_request_scores_confirmation'),
 
     url(r'^trainees/$', views.all_trainees, name='all_trainees'),
 
