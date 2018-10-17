@@ -4,7 +4,7 @@ requests==2.19.1
 requests-mock==1.5.2
 django-crispy-forms==1.7.2
 # replaces django-selectable:
-django-autocomplete-light==3.3.2
+django-autocomplete-light==3.3.0
 django-countries==5.3.2
 django-filter==2.0.0
 django-reversion==2.0.13
