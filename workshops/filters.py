@@ -251,12 +251,12 @@ class OrganizationFilter(AMYFilterSet):
         ]
 
 
-def filter_training_seats_only(queryset, name, active):
+def filter_active_memberships_only(queryset, name, active):
     """Limit Memberships to only active entries."""
     if active:
         today = date.today()
-        return queryset.filter(agreement_start__gte=today,
-                               agreement_end__lte=today)
+        return queryset.filter(agreement_start__lte=today,
+                               agreement_end__gte=today)
     else:
         return queryset
 
@@ -291,7 +291,7 @@ class MembershipFilter(AMYFilterSet):
 
     active_only = django_filters.BooleanFilter(
         label='Only show active memberships',
-        method=filter_training_seats_only,
+        method=filter_active_memberships_only,
         widget=widgets.CheckboxInput)
 
     training_seats_only = django_filters.BooleanFilter(
@@ -332,7 +332,7 @@ class MembershipTrainingsFilter(AMYFilterSet):
 
     active_only = django_filters.BooleanFilter(
         label='Only show active memberships',
-        method=filter_training_seats_only,
+        method=filter_active_memberships_only,
         widget=widgets.CheckboxInput)
 
     training_seats_only = django_filters.BooleanFilter(
