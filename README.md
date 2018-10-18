@@ -1,6 +1,7 @@
 ![](workshops/static/amy-logo.png)
 
-![](https://travis-ci.org/swcarpentry/amy.svg?branch=master) [![](https://img.shields.io/badge/python-3.4+-blue.svg)](https://www.python.org/downloads/release/python-340/)
+![](https://travis-ci.org/swcarpentry/amy.svg?branch=master)
+[![](https://img.shields.io/badge/python-3.4+-blue.svg)](https://www.python.org/downloads/release/python-340/)
 
 AMY is a web-based workshop administration application for [The Carpentries][tc]
 and related projects.  Its target audience is workshop
