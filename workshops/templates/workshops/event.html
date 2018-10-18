@@ -144,7 +144,7 @@
   </tr>
   {% for t in tasks %}
   <tr>
-    <td>{% for badge in t.person_instructor_badges %}{% bootstrap_tag badge.name|cut:"-instructor"|upper %}{% empty %}&mdash;{% endfor %}</td>
+    <td>{% for badge in t.person.instructor_badges %}{% bootstrap_tag badge.name|cut:"-instructor"|upper %}{% empty %}&mdash;{% endfor %}</td>
     <td><a href="{{ t.person.get_absolute_url }}">{{ t.person.full_name }}</a>{% if t.person.email and t.person.may_contact %} &lt;{{ t.person.email|urlize }}&gt;{% endif %}</td>
     <td>{{ t.url|default:"&mdash;"|urlize_newtab }}</td>
     <td>{{ t.role.name }}</td>
