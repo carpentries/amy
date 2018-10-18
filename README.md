@@ -39,7 +39,7 @@ before starting work on new features.
     Python3-compatible [virtualenv][virtualenv] for AMY and install
     dependencies from `requirements.txt`.
 
-3.  Install [yarn](yarn), the tool that manages AMY's JavaScript and CSS dependencies. [You can install it here](yarn).
+3.  Install [yarn][yarn], the tool that manages AMY's JavaScript and CSS dependencies. [You can install it here][yarn].
 
 4.  Set up your local database with fake (development-ready) data with:
 
