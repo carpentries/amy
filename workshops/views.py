@@ -1051,8 +1051,8 @@ def event_details(request, slug):
 
     person_instructor_badges = Prefetch(
         'person__badges',
-        to_attr='person_instructor_badges',
-        queryset=Badge.objects.filter(name__in=Badge.INSTRUCTOR_BADGES)
+        to_attr='instructor_badges',
+        queryset=Badge.objects.instructor_badges()
     )
     tasks = (
         Task.objects

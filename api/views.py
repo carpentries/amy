@@ -331,13 +331,10 @@ class TrainingRequests(ListAPIView):
                     queryset=Award.objects.select_related('badge'),
                 ),
                 Prefetch('person__task_set',
-                    # We change the attribute "person.task_set" instead of
-                    # directing this filtered tasks to a new attribute, because
-                    # DRF fails to recognize it in the serializer.
-                    # to_attr='training_tasks',
                     queryset=Task.objects
                         .filter(role__name='learner', event__tags__name='TTT')
-                        .select_related('event')
+                        .select_related('event'),
+                    to_attr='training_tasks',
                 ),
             )
         )

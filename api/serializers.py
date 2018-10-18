@@ -344,7 +344,7 @@ class TrainingRequestWithPersonSerializer(TrainingRequestSerializer):
     def get_training_tasks(self, obj):
         if obj.person:
             return ", ".join(
-                map(lambda x: x.event.slug, obj.person.task_set.all())
+                map(lambda x: x.event.slug, obj.person.training_tasks)
             )
         else:
             return ""
