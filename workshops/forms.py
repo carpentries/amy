@@ -457,7 +457,8 @@ class EventForm(forms.ModelForm):
     admin_fee = forms.DecimalField(min_value=0, decimal_places=2,
                                    required=False, widget=TextInput)
 
-    helper = BootstrapHelper(add_cancel_button=False)
+    helper = BootstrapHelper(add_cancel_button=False,
+                             duplicate_buttons_on_top=True)
     helper.layout = Layout(
         Field('slug', placeholder='YYYY-MM-DD-location'),
         'completed',
@@ -606,7 +607,8 @@ class PersonForm(forms.ModelForm):
         widget=ModelSelect2Multiple(url='language-lookup')
     )
 
-    helper = BootstrapHelper(add_cancel_button=False)
+    helper = BootstrapHelper(add_cancel_button=False,
+                             duplicate_buttons_on_top=True)
 
     class Meta:
         model = Person
@@ -802,7 +804,8 @@ class OrganizationForm(forms.ModelForm):
         ],
     )
 
-    helper = BootstrapHelper(add_cancel_button=False)
+    helper = BootstrapHelper(add_cancel_button=False,
+                             duplicate_buttons_on_top=True)
 
     class Meta:
         model = Organization
@@ -863,7 +866,8 @@ class SWCEventRequestNoCaptchaForm(PrivacyConsentMixin, forms.ModelForm):
         widget=ModelSelect2(url='language-lookup')
     )
 
-    helper = BootstrapHelper(wider_labels=True, add_cancel_button=False)
+    helper = BootstrapHelper(wider_labels=True, add_cancel_button=False,
+                             duplicate_buttons_on_top=True)
 
     class Meta:
         model = EventRequest
@@ -900,6 +904,9 @@ class SWCEventRequestNoCaptchaForm(PrivacyConsentMixin, forms.ModelForm):
 class SWCEventRequestForm(SWCEventRequestNoCaptchaForm):
     captcha = ReCaptchaField()
 
+    helper = BootstrapHelper(wider_labels=True, add_cancel_button=False,
+                             duplicate_buttons_on_top=False)
+
     class Meta(SWCEventRequestNoCaptchaForm.Meta):
         exclude = ('state', 'event') \
                   + SWCEventRequestNoCaptchaForm.Meta.exclude
@@ -918,6 +925,9 @@ class DCEventRequestNoCaptchaForm(SWCEventRequestNoCaptchaForm):
         ' lodging if they need to travel. Therefore overall workshop costs are'
         ' $2500 - $6000.',
     )
+
+    helper = BootstrapHelper(wider_labels=True, add_cancel_button=False,
+                             duplicate_buttons_on_top=True)
 
     class Meta(SWCEventRequestForm.Meta):
         exclude = ('created_at', 'last_updated_at', 'assigned_to',
@@ -952,6 +962,9 @@ class DCEventRequestNoCaptchaForm(SWCEventRequestNoCaptchaForm):
 
 class DCEventRequestForm(DCEventRequestNoCaptchaForm):
     captcha = ReCaptchaField()
+
+    helper = BootstrapHelper(wider_labels=True, add_cancel_button=False,
+                             duplicate_buttons_on_top=False)
 
     class Meta(DCEventRequestNoCaptchaForm.Meta):
         exclude = ('state', 'event') \
