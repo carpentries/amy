@@ -76,6 +76,7 @@ from workshops.filters import (
     DCSelfOrganizedEventRequestFilter,
     TraineeFilter,
     TrainingRequestFilter,
+    WorkshopRequestFilter,
 )
 from workshops.forms import (
     SearchForm,
@@ -121,6 +122,7 @@ from workshops.forms import (
     ActionRequiredPrivacyForm,
     SWCEventRequestNoCaptchaForm,
     DCEventRequestNoCaptchaForm,
+    WorkshopRequestAdminForm,
 )
 from workshops.management.commands.check_for_workshop_websites_updates import (
     Command as WebsiteUpdatesCommand,
@@ -149,6 +151,7 @@ from workshops.models import (
     is_admin,
     TrainingProgress,
     TrainingRequirement,
+    WorkshopRequest,
 )
 from workshops.util import (
     upload_person_task_csv,
@@ -3852,3 +3855,115 @@ def action_required_privacy(request):
         'form': form,
     }
     return render(request, 'workshops/action_required_privacy.html', context)
+
+
+# ------------------------------------------------------------
+# WorkshopRequest related views
+
+class AllWorkshopRequests(OnlyForAdminsMixin, StateFilterMixin, AMYListView):
+    context_object_name = 'requests'
+    template_name = 'workshops/all_workshoprequests.html'
+    filter_class = WorkshopRequestFilter
+    queryset = (
+        WorkshopRequest.objects.select_related('assigned_to', 'institution')
+                               .prefetch_related('requested_workshop_types')
+    )
+    title = 'Workshop requests'
+
+
+class WorkshopRequestDetails(OnlyForAdminsMixin, AMYDetailView):
+    queryset = WorkshopRequest.objects.all()
+    context_object_name = 'object'
+    template_name = 'workshops/workshoprequest.html'
+    pk_url_kwarg = 'request_id'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Workshop request #{}'.format(self.get_object().pk)
+
+        person_lookup_form = AdminLookupForm()
+        if self.object.assigned_to:
+            person_lookup_form = AdminLookupForm(
+                initial={'person': self.object.assigned_to}
+            )
+
+        person_lookup_form.helper = BootstrapHelper(
+            form_action=reverse('workshoprequest_assign',
+                                args=[self.object.pk]),
+            add_cancel_button=False)
+
+        context['person_lookup_form'] = person_lookup_form
+        return context
+
+
+class WorkshopRequestChange(OnlyForAdminsMixin, PermissionRequiredMixin,
+                            AMYUpdateView):
+    permission_required = 'workshops.change_workshoprequest'
+    model = WorkshopRequest
+    pk_url_kwarg = 'request_id'
+    form_class = WorkshopRequestAdminForm
+
+
+@admin_required
+@permission_required('workshops.change_workshoprequest', raise_exception=True)
+def workshoprequest_set_state(request, request_id, state):
+    """Change state to selected."""
+    correct_values = {
+        'a': 'a',
+        'accepted': 'a',
+        'd': 'd',
+        'discarded': 'd',
+        'p': 'p',
+        'pending': 'p',
+    }
+    if state not in correct_values.keys():
+        raise Http404('Incorrect state value.')
+
+    workshoprequest = get_object_or_404(WorkshopRequest, pk=request_id)
+    workshoprequest.state = correct_values[state]
+    workshoprequest.save()
+
+    messages.success(request,
+                     'Workshop request state was changed successfully.')
+    return redirect(workshoprequest.get_absolute_url())
+
+
+@admin_required
+@permission_required(['workshops.change_workshoprequest', 'workshops.add_event'],
+                     raise_exception=True)
+def workshoprequest_accept_event(request, request_id):
+    """Accept event request by creating a new event."""
+    workshoprequest = get_object_or_404(WorkshopRequest, state='p',
+                                        pk=request_id)
+    form = EventForm()
+
+    if request.method == 'POST':
+        form = EventForm(request.POST)
+
+        if form.is_valid():
+            event = form.save()
+
+            workshoprequest.state = 'a'
+            workshoprequest.event = event
+            workshoprequest.save()
+            return redirect(reverse('event_details',
+                                    args=[event.slug]))
+        else:
+            messages.error(request, 'Fix errors below.')
+
+    context = {
+        'object': workshoprequest,
+        'form': form,
+    }
+    return render(request, 'workshops/workshoprequest_accept_event.html', context)
+
+
+@admin_required
+@permission_required(['workshops.change_workshoprequest'],
+                     raise_exception=True)
+def workshoprequest_assign(request, request_id, person_id=None):
+    """Set workshoprequest.assigned_to. See `assign` docstring for more
+    information."""
+    workshop_req = get_object_or_404(WorkshopRequest, pk=request_id)
+    assign(request, workshop_req, person_id)
+    return redirect(reverse('workshoprequest_details', args=[workshop_req.pk]))
