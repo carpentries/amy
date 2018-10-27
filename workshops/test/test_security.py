@@ -192,7 +192,7 @@ class TestViews(TestBase):
         """
         Test that a view with LoginNotRequiredMixin is accessible to everyone.
         """
-        view_name = 'event_submit'
+        view_name = 'workshop_request'
         view = get_view_by_name(view_name)
         assert LoginNotRequiredMixin in view.view_class.__mro__
         url = reverse(view_name)
