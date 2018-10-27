@@ -30,6 +30,7 @@ from workshops.models import (
     DCSelfOrganizedEventRequest,
     TrainingRequest,
     Membership,
+    Curriculum,
     WorkshopRequest,
 )
 
@@ -742,6 +743,11 @@ class EventRequestFilter(AMYFilterSet, StateFilterSet):
 class WorkshopRequestFilter(AMYFilterSet, StateFilterSet):
     assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2())
     country = AllCountriesFilter(widget=Select2())
+    requested_workshop_types = django_filters.ModelMultipleChoiceFilter(
+        label='Requested workshop types',
+        queryset=Curriculum.objects.all(),
+        widget=widgets.CheckboxSelectMultiple(),
+    )
 
     order_by = django_filters.OrderingFilter(
         fields=(
