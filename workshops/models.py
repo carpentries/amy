@@ -9,7 +9,7 @@ from django.contrib.auth.models import (
 )
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, RegexValidator
-from django.db import models
+from django.db import models, transaction
 from django.db.models import (
     ExpressionWrapper,
     Q, F,
@@ -27,11 +27,11 @@ from social_django.models import UserSocialAuth
 from workshops import github_auth
 from workshops.fields import NullableGithubUsernameField
 
-STR_SHORT   =  10         # length of short strings
-STR_MED     =  40         # length of medium strings
-STR_LONG    = 100         # length of long strings
+STR_SHORT   =  10  # length of short strings
+STR_MED     =  40  # length of medium strings
+STR_LONG    = 100  # length of long strings
 STR_LONGEST = 255  # length of the longest strings
-STR_REG_KEY =  20         # length of Eventbrite registration key
+STR_REG_KEY =  20  # length of Eventbrite registration key
 
 #------------------------------------------------------------
 
@@ -2621,3 +2621,50 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
 
     class Meta:
         ordering = ['created_at']
+
+
+#------------------------------------------------------------
+
+
+class Curriculum(ActiveMixin, models.Model):
+    slug = models.CharField(
+        max_length=STR_MED,
+        null=False, blank=False, default="",
+        unique=True,
+        verbose_name="Curriculum ID",
+        help_text="Use computer-friendly text here, e.g. 'dc-ecology-r'.",
+    )
+    name = models.CharField(
+        max_length=200,
+        null=False, blank=False, default="",
+        unique=True,
+        verbose_name="Curriculum name",
+        help_text="Use user-friendly language, e.g. "
+                  "'Data Carpentry (Ecology with R)'.",
+    )
+    unknown = models.BooleanField(
+        null=False, blank=True, default=False,
+        verbose_name="Unknown entry",
+        help_text="Mark this curriculum record as 'I don't know yet', or "
+                  "'Unknown', or 'Not sure yet'. There can be only one such "
+                  "record in the database.",
+    )
+
+    class Meta:
+        verbose_name = "Curriculum"
+        verbose_name_plural = "Curricula"
+
+    def __str__(self):
+        return self.name
+
+    @transaction.atomic
+    def save(self, *args, **kwargs):
+        """When saving with `unknown=True`, update all other records with this
+        parameter to `unknown=False`. This helps keeping only one record with
+        `unknown=True` in the database - a specific case of uniqueness."""
+
+        # wrapped in transaction in order to prevent from updating records to
+        # `unknown=False` when saving fails
+        if self.unknown:
+            Curriculum.objects.filter(unknown=True).update(unknown=False)
+        return super().save(*args, **kwargs)
