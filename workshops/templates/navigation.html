@@ -60,12 +60,13 @@
               {% navbar_element "Training requests" "all_trainingrequests" True %}
               {% navbar_element "Bulk upload training request scores" "bulk_upload_training_request_scores" True %}
               <div class="dropdown-divider"></div>
-              {% navbar_element "Workshop requests" "all_eventrequests" True %}
-              {% navbar_element "Workshop submissions" "all_eventsubmissions" True %}
-              {% navbar_element "DC self-organized workshop requests" "all_dcselforganizedeventrequests" True %}
+              {% navbar_element "Workshop requests" "all_workshoprequests" True False %}
+              {% navbar_element "SWC/DC Event requests" "all_eventrequests" True False %}
+              {% navbar_element "DC self-organized workshop requests" "all_dcselforganizedeventrequests" True False %}
               <div class="dropdown-divider"></div>
-              {% navbar_element "Profile update requests" "all_profileupdaterequests" True %}
-              {% navbar_element "Invoice requests" "all_invoicerequests" True %}
+              {% navbar_element "Workshop submissions" "all_eventsubmissions" True True %}
+              {% navbar_element "Profile update requests" "all_profileupdaterequests" True True %}
+              {% navbar_element "Invoice requests" "all_invoicerequests" True True %}
             </div>
           </li>
         </ul>
