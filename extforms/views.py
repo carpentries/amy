@@ -7,9 +7,11 @@ from django.views.generic import TemplateView, RedirectView
 
 from workshops.forms import (
     TrainingRequestForm,
+    WorkshopRequestExternalForm,
 )
 from workshops.models import (
     TrainingRequest,
+    WorkshopRequest,
 )
 from workshops.util import (
     LoginNotRequiredMixin,
@@ -53,6 +55,86 @@ class TrainingRequestConfirm(LoginNotRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Thank you for applying for an instructor training'
+        return context
+
+
+#------------------------------------------------------------
+# WorkshopRequest views
+
+class WorkshopRequestCreate(
+    LoginNotRequiredMixin,
+    EmailSendMixin,
+    AMYCreateView,
+):
+    model = WorkshopRequest
+    form_class = WorkshopRequestExternalForm
+    page_title = 'Request a Carpentries Workshop'
+    template_name = 'forms/workshoprequest.html'
+    success_url = reverse_lazy('workshop_request_confirm')
+    email_fail_silently = False
+    email_kwargs = {
+        'to': settings.REQUEST_NOTIFICATIONS_RECIPIENTS,
+        'reply_to': None,
+    }
+
+    def get_success_message(self, *args, **kwargs):
+        """Don't display a success message."""
+        return ''
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = self.page_title
+        return context
+
+    def get_subject(self):
+        affiliation = (
+            str(self.object.institution)
+            if self.object.institution
+            else self.object.institution_name
+        )
+        subject = (
+            'New workshop request: {affiliation}, {dates}'
+        ).format(
+            affiliation=affiliation,
+            dates=self.object.preferred_dates,
+        )
+        return subject
+
+    def get_body(self):
+        link = self.object.get_absolute_url()
+        link_domain = settings.SITE_URL
+
+        body_txt = get_template(
+            'mailing/workshoprequest.txt'
+        ).render({
+            'object': self.object,
+            'link': link,
+            'link_domain': link_domain,
+        })
+
+        body_html = get_template(
+            'mailing/workshoprequest.html'
+        ).render({
+            'object': self.object,
+            'link': link,
+            'link_domain': link_domain,
+        })
+        return body_txt, body_html
+
+    def form_valid(self, form):
+        """Send email to admins if the form is valid."""
+        data = form.cleaned_data
+        self.email_kwargs['reply_to'] = (data['email'], )
+        result = super().form_valid(form)
+        return result
+
+
+class WorkshopRequestConfirm(LoginNotRequiredMixin, TemplateView):
+    template_name = 'forms/workshoprequest_confirm.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Thank you for requesting a workshop'
         return context
 
 
