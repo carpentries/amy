@@ -2692,7 +2692,7 @@ class Curriculum(ActiveMixin, models.Model):
 class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
                       DataPrivacyAgreementMixin, COCAgreementMixin,
                       HostResponsibilitiesMixin,
-                      models.Model):
+                      EventLink, models.Model):
     personal = models.CharField(
         max_length=STR_LONGEST,
         blank=False, null=False,
@@ -2864,7 +2864,7 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         verbose_name="Will this be a self-organized or "
                      "centrally-organized workshop?",
     )
-    self_organized_github = models.CharField(
+    self_organized_github = models.URLField(
         max_length=STR_LONGEST,
         blank=True, null=False,
         verbose_name="Link to workshop GitHub page",
@@ -2936,6 +2936,10 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     comment = models.TextField(
         blank=True,
         verbose_name="Is there anything else you would like to share with us?",
+    )
+    admin_comment = models.TextField(
+        blank=True,
+        verbose_name="Admin comment",
     )
 
     class Meta:
