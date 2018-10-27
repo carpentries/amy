@@ -17,7 +17,7 @@
   <tr><th>Eventbrite key:</th><td colspan="2">{% if event.reg_key %}<a href="https://www.eventbrite.com/myevent?eid={{ event.reg_key }}" title="Go to Eventbrite's page for this event" target="_blank">{{ event.reg_key }}</a>{% else %}&mdash;{% endif %}</td></tr>
   <tr><th>Admin fee:</th><td colspan="2">{{ event.admin_fee|default_if_none:"&mdash;" }}</td></tr>
   <tr>
-    <th>Invoice:</th>
+    <th><span class="badge badge-secondary">deprecated</span> Invoice:</th>
     <td colspan="2">
       {{ event.get_invoice_status_display }}
       {% if event.uninvoiced %}
@@ -28,7 +28,7 @@
     </td>
   </tr>
   <tr>
-    <th>Invoice requests:</th>
+    <th><span class="badge badge-secondary">deprecated</span> Invoice requests:</th>
     <td colspan="2">
       {% if event.invoicerequest_set.all %}
       <ul>
@@ -67,12 +67,13 @@
   <tr class="{% if not event.venue %}table-danger{% endif %}"><th>Venue:</th><td>{{ event.venue|default:"&mdash;" }}</td></tr>
   <tr class="{% if not event.address %}table-danger{% endif %}"><th>Address:</th><td>{{ event.address|default:"&mdash;" }}</td></tr>
   <tr class="{% if not event.latitude or not event.longitude %}table-danger{% endif %}"><th>Lat/long:</th><td>{{ event.latitude|default:"&mdash;" }} / {{ event.longitude|default:"&mdash;" }} {% if event.latitude and event.longitude %}<a href="https://www.google.com/maps/place/{{ event.latitude }},{{ event.longitude }}" target="_blank">(map)</a> <a href="{% url 'workshop_staff' %}?latitude={{ event.latitude|unlocalize }}&amp;longitude={{ event.longitude|unlocalize }}&amp;submit=Submit" class="btn btn-primary btn-sm float-right" id="find_closest_instructors">Find closest instructors</a>{% else %}<a class="btn btn-danger btn-sm float-right" id="error_closest_instructors" href="#" data-toggle="popover" title="Search error" data-content="Cannot search for closest instructors without latitude and longitude of event's location.">Error</a>{% endif %}</td></tr>
-  <tr><th>Event request:</th><td colspan="2">{% if event.request %}<a href="{{ event.request.get_absolute_url }}">{{ event.request }}</a>{% else %}&mdash;{% endif %}</td></tr>
   <tr><th>Admin notes:</th><td colspan="2">{% if event.notes %}<pre>{{ event.notes }}</pre>{% else %}&mdash;{% endif %}</td></tr>
   <tr><th>Related workshop request:</th>
+    <td colspan="2">{% if event|one2one_exists:"workshoprequest" %}<a href="{{ event.workshoprequest.get_absolute_url }}">{{ event.workshoprequest }}</a>{% else %}&mdash;{% endif %}</td></tr>
+  <tr><th><span class="badge badge-secondary">deprecated</span> Related event request:</th>
     <td colspan="2">{% if event|one2one_exists:"eventrequest" %}<a href="{{ event.eventrequest.get_absolute_url }}">{{ event.eventrequest }}</a>{% else %}&mdash;{% endif %}</td></tr>
-  <tr><th>Related workshop submission:</th>
+  <tr><th><span class="badge badge-secondary">deprecated</span> Related workshop submission:</th>
     <td colspan="2">{% if event|one2one_exists:"eventsubmission" %}<a href="{{ event.eventsubmission.get_absolute_url }}">{{ event.eventsubmission }}</a>{% else %}&mdash;{% endif %}</td></tr>
-  <tr><th>Related DC self-organized workshop request:</th>
+  <tr><th><span class="badge badge-secondary">deprecated</span> Related DC self-organized workshop request:</th>
     <td colspan="2">{% if event|one2one_exists:"dcselforganizedeventrequest" %}<a href="{{ event.dcselforganizedeventrequest.get_absolute_url }}">{{ event.dcselforganizedeventrequest }}</a>{% else %}&mdash;{% endif %}</td></tr>
 </table>
