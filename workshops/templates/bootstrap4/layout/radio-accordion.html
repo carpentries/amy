@@ -1,0 +1,33 @@
+{% load attrs %}
+{% load crispy_forms_tags %}
+<label for="id_centrally_organized_fee_0" class="col-form-label {{ label_class }}">
+  {{ field.label }}
+</label>
+<div class="{{ field_class }}">
+  <div class="accordion" id="accordion_{{ field.auto_id }}">
+    {% for option in field %}
+    <div class="card">
+      <div class="card-header" id="heading_{{ field.auto_id }}_{{ forloop.counter }}">
+        <h5 class="mb-0">
+          <label for="{{ option.id_for_label }}" data-toggle="collapse" data-target="#collapse_{{ field.auto_id }}_{{ forloop.counter }}" aria-expanded="true" aria-controls="collapse_{{ field.auto_id }}_{{ forloop.counter }}" class="btn-link">
+            <input type="radio" id="{{ option.data.attrs.id }}" name="{{ option.data.name }}" value="{{ option.data.value }}" {% if option.data.attrs.required %}required{% endif %} {% if option.data.attrs.checked %}checked{% endif %}>
+            {{ option.choice_label }}
+          </label>
+        </h5>
+      </div>
+
+      <div id="collapse_{{ field.auto_id }}_{{ forloop.counter }}" class="collapse {% if option.data.attrs.checked %}show{% endif %}" aria-labelledby="heading_{{ field.auto_id }}_{{ forloop.counter }}" data-parent="#accordion_{{ field.auto_id }}">
+        <div class="card-body">
+          <p>{{ field.field.widget.notes|get_key:option.data.value }}</p>
+
+          {% with subfields=field.field.widget.subfields|get_key:option.data.value %}
+          {% for sf in subfields %}
+          <p>{{ sf|as_crispy_field }}</p>
+          {% endfor %}
+          {% endwith %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>

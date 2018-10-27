@@ -42,6 +42,8 @@ from workshops.models import (
     TrainingProgress,
     Tag,
     Language,
+    KnowledgeDomain,
+    WorkshopRequest,
 )
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330
@@ -2010,3 +2012,322 @@ class ActionRequiredPrivacyForm(forms.ModelForm):
             'may_contact',
             'publish_profile',
         ]
+
+
+#----------------------------------------------------------
+# WorkshopRequest related forms
+
+class WorkshopRequestBaseForm(forms.ModelForm):
+    institution = forms.ModelChoiceField(
+        required=False,
+        queryset=Organization.objects.order_by('fullname'),
+        widget=ListSelect2(),
+        label=WorkshopRequest._meta.get_field('institution').verbose_name,
+        help_text=WorkshopRequest._meta.get_field('institution').help_text,
+    )
+    domains = forms.ModelMultipleChoiceField(
+        required=False,
+        queryset=KnowledgeDomain.objects.all(),
+        widget=CheckboxSelectMultipleWithOthers('domains_other'),
+        label=WorkshopRequest._meta.get_field('domains').verbose_name,
+        help_text=WorkshopRequest._meta.get_field('domains').help_text,
+    )
+
+    travel_expences_agreement = forms.BooleanField(
+        required=True,
+        label=WorkshopRequest._meta.get_field('travel_expences_agreement')
+                                   .verbose_name,
+    )
+    data_privacy_agreement = forms.BooleanField(
+        required=True,
+        label=WorkshopRequest._meta.get_field('data_privacy_agreement')
+                                   .verbose_name,
+    )
+    code_of_conduct_agreement = forms.BooleanField(
+        required=True,
+        label=WorkshopRequest._meta.get_field('code_of_conduct_agreement')
+                                   .verbose_name,
+    )
+    host_responsibilities = forms.BooleanField(
+        required=True,
+        label=WorkshopRequest._meta.get_field('host_responsibilities')
+                                   .verbose_name,
+    )
+
+    helper = BootstrapHelper(add_cancel_button=False)
+
+    class Meta:
+        model = WorkshopRequest
+        fields = (
+            "personal",
+            "family",
+            "email",
+            "institution",
+            "institution_name",
+            "institution_department",
+            "location",
+            "country",
+            "part_of_conference",
+            "conference_details",
+            "preferred_dates",
+            "language",
+            "number_attendees",
+            "domains",
+            "domains_other",
+            "academic_levels",
+            "computing_levels",
+            "audience_description",
+            "requested_workshop_types",
+            "organization_type",
+            "self_organized_github",
+            "centrally_organized_fee",
+            "waiver_circumstances",
+            "travel_expences_agreement",
+            "travel_expences_management",
+            "travel_expences_management_other",
+            "comment",
+            "data_privacy_agreement",
+            "code_of_conduct_agreement",
+            "host_responsibilities",
+        )
+
+        widgets = {
+            'country': ListSelect2(),
+            'language': ListSelect2(),
+            'number_attendees': forms.RadioSelect(),
+            'academic_levels': forms.CheckboxSelectMultiple(),
+            'computing_levels': forms.CheckboxSelectMultiple(),
+            'requested_workshop_types': forms.CheckboxSelectMultiple(),
+            'organization_type': forms.RadioSelect(),
+            'centrally_organized_fee': forms.RadioSelect(),
+            'travel_expences_management':
+                RadioSelectWithOther('travel_expences_management_other'),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # change institution object labels (originally Organization displays
+        # domain as well)
+        self.fields['institution'].label_from_instance = \
+            self.institution_label_from_instance
+
+        self.fields['travel_expences_management'].required = False
+
+        # set up a layout object for the helper
+        self.helper.layout = self.helper.build_default_layout(self)
+
+        # set up `*WithOther` widgets so that they can display additional
+        # fields inline
+        self['domains'].field.widget.other_field = self['domains_other']
+        self['travel_expences_management'].field.widget.other_field = \
+            self['travel_expences_management_other']
+
+        # remove additional fields
+        self.helper.layout.fields.remove('domains_other')
+        self.helper.layout.fields.remove('travel_expences_management_other')
+
+        # get current position of `organization_type` field
+        pos_index = self.helper.layout.fields.index('organization_type')
+
+        # setup additional information for the field
+        self['organization_type'].field.widget.subfields = {
+            'self': [
+                self['self_organized_github'],
+            ],
+            'central': [
+                self['centrally_organized_fee'],
+                self['waiver_circumstances'],
+            ],
+        }
+        self['organization_type'].field.widget.notes = {
+            'self': WorkshopRequest.SELF_ORGANIZED_NOTES,
+            'central': WorkshopRequest.CENTRALLY_ORGANIZED_NOTES,
+        }
+        self.helper.layout.fields.remove('organization_type')
+        self.helper.layout.fields.remove('self_organized_github')
+        self.helper.layout.fields.remove('centrally_organized_fee')
+        self.helper.layout.fields.remove('waiver_circumstances')
+
+        # insert div+field at previously saved position
+        self.helper.layout.insert(pos_index,
+            Div(
+                Field('organization_type',
+                      template="bootstrap4/layout/radio-accordion.html"),
+                css_class='form-group row',
+            ),
+        )
+
+    @staticmethod
+    def institution_label_from_instance(obj):
+        """Static method that overrides ModelChoiceField choice labels,
+        essentially works just like `Model.__str__`."""
+        return "{}".format(obj.fullname)
+
+    def clean_domains(self):
+        """Allow for empty `domains` as long as there's something in
+        `domains_other`."""
+        domains = self.cleaned_data['domains']
+        domains_other = self.cleaned_data.get('domains_other', '')
+
+        error_msg = ('')
+
+        return domains
+
+    def clean(self):
+        super().clean()
+        errors = dict()
+
+        # 1: make sure institution is valid
+        institution = self.cleaned_data.get('institution', None)
+        institution_name = self.cleaned_data['institution_name']
+        if not institution and not institution_name:
+            errors['institution'] = ValidationError('Institution is required.')
+        elif institution and institution_name:
+            errors['institution_name'] = ValidationError(
+                "You must select institution, or enter it's name. "
+                "You can't do both.")
+
+        # 2: make sure there's institution selected when department is present
+        institution_department = self.cleaned_data['institution_department']
+        if institution_department and not institution and not institution_name:
+            errors['institution_department'] = ValidationError(
+                "You must select institution or enter it's name when you "
+                "enter department/school details.")
+
+        # 3: enter conference details if this is part of conference
+        part_of_conference = self.cleaned_data['part_of_conference']
+        conference_details = self.cleaned_data['conference_details']
+        if not part_of_conference and conference_details:
+            errors['conference_details'] = ValidationError(
+                "You entered conference details, but did you forget to select "
+                '"part of conference" checkbox above?')
+        elif part_of_conference and not conference_details:
+            errors['conference_details'] = ValidationError(
+                "Please enter conference/event details.")
+
+        # 4: * self-organized workshop, require URL
+        #    * centrally-organized workshop, require fee description
+        #    * fee waiver? require waiver circumstances description
+        organization_type = self.cleaned_data['organization_type']
+        self_organized_github = self.cleaned_data['self_organized_github']
+        centrally_organized_fee = self.cleaned_data['centrally_organized_fee']
+        waiver_circumstances = self.cleaned_data['waiver_circumstances']
+
+        if organization_type == 'self' and not self_organized_github:
+            errors['self_organized_github'] = ValidationError(
+                "Please enter workshop URL data.")
+        elif organization_type == 'central' and not centrally_organized_fee:
+            errors['centrally_organized_fee'] = ValidationError(
+                "Please select applicable administrative fee option.")
+        elif organization_type == 'central' and \
+                centrally_organized_fee == 'waiver' and \
+                not waiver_circumstances:
+            errors['waiver_circumstances'] = ValidationError(
+                "Please describe your waiver circumstances.")
+
+        # 5: don't allow empty domains and empty domains_other
+        domains = self.cleaned_data['domains']
+        domains_other = self.cleaned_data.get('domains_other', '')
+        if not domains and not domains_other:
+            errors['domains'] = ValidationError(
+                "This field is required. If you're uncertain about what to "
+                'choose, select "Don\'t know yet".')
+
+        # 6: don't allow empty travel expences management
+        travel_expences_management = \
+            self.cleaned_data['travel_expences_management']
+        travel_expences_management_other = \
+            self.cleaned_data.get('travel_expences_management_other', '')
+        if not travel_expences_management and not travel_expences_management_other:
+            errors['travel_expences_management'] = "This field is required."
+
+        # raise errors if any present
+        if errors:
+            raise ValidationError(errors)
+
+
+class WorkshopRequestAdminForm(WorkshopRequestBaseForm):
+    helper = BootstrapHelper(add_cancel_button=False,
+                             duplicate_buttons_on_top=True)
+
+    class Meta(WorkshopRequestBaseForm.Meta):
+        fields = (
+            "state",
+            "event",
+            "personal",
+            "family",
+            "email",
+            "institution",
+            "institution_name",
+            "institution_department",
+            "location",
+            "country",
+            "part_of_conference",
+            "conference_details",
+            "preferred_dates",
+            "language",
+            "number_attendees",
+            "domains",
+            "domains_other",
+            "academic_levels",
+            "computing_levels",
+            "audience_description",
+            "requested_workshop_types",
+            "organization_type",
+            "self_organized_github",
+            "centrally_organized_fee",
+            "waiver_circumstances",
+            "travel_expences_agreement",
+            "travel_expences_management",
+            "travel_expences_management_other",
+            "comment",
+            "admin_comment",
+            "data_privacy_agreement",
+            "code_of_conduct_agreement",
+            "host_responsibilities",
+        )
+
+        widgets = WorkshopRequestBaseForm.Meta.widgets.copy()
+        widgets.update(
+            {'event': ListSelect2()}
+        )
+
+
+class WorkshopRequestExternalForm(WorkshopRequestBaseForm):
+    captcha = ReCaptchaField()
+
+    class Meta(WorkshopRequestBaseForm.Meta):
+        fields = (
+            "personal",
+            "family",
+            "email",
+            "institution",
+            "institution_name",
+            "institution_department",
+            "location",
+            "country",
+            "part_of_conference",
+            "conference_details",
+            "preferred_dates",
+            "language",
+            "number_attendees",
+            "domains",
+            "domains_other",
+            "academic_levels",
+            "computing_levels",
+            "audience_description",
+            "requested_workshop_types",
+            "organization_type",
+            "self_organized_github",
+            "centrally_organized_fee",
+            "waiver_circumstances",
+            "travel_expences_agreement",
+            "travel_expences_management",
+            "travel_expences_management_other",
+            "comment",
+            "data_privacy_agreement",
+            "code_of_conduct_agreement",
+            "host_responsibilities",
+            "captcha",
+        )
