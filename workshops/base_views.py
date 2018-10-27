@@ -22,16 +22,34 @@ from workshops.forms import BootstrapHelper
 from workshops.util import failed_to_delete, Paginator, get_pagination_items
 
 
+class FormInvalidMessageMixin:
+    """
+    Add an error message on invalid form submission.
+    """
+    form_invalid_message = ''
+
+    def form_invalid(self, form):
+        response = super().form_invalid(form)
+        message = self.get_form_invalid_message(form.cleaned_data)
+        if message:
+            messages.error(self.request, message)
+        return response
+
+    def get_form_invalid_message(self, cleaned_data):
+        return self.form_invalid_message % cleaned_data
+
+
 class AMYDetailView(DetailView):
     pass
 
 
-class AMYCreateView(SuccessMessageMixin, CreateView):
+class AMYCreateView(SuccessMessageMixin, FormInvalidMessageMixin, CreateView):
     """
     Class-based view for creating objects that extends default template context
     by adding model class used in objects creation.
     """
     success_message = '{name} was created successfully.'
+    form_invalid_message = 'Please fix errors in the form below.'
 
     template_name = 'workshops/generic_form.html'
 
