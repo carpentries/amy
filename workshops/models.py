@@ -2689,6 +2689,7 @@ class Curriculum(ActiveMixin, models.Model):
 #------------------------------------------------------------
 
 
+@reversion.register
 class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
                       DataPrivacyAgreementMixin, COCAgreementMixin,
                       HostResponsibilitiesMixin,
@@ -2956,4 +2957,4 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         )
 
     def get_absolute_url(self):
-        return ""
+        return reverse('workshoprequest_details', args=[self.id])
