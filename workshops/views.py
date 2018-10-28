@@ -2347,7 +2347,7 @@ class AllEventRequests(OnlyForAdminsMixin, StateFilterMixin, AMYListView):
     template_name = 'workshops/all_eventrequests.html'
     filter_class = EventRequestFilter
     queryset = EventRequest.objects.select_related('assigned_to')
-    title = 'Workshop requests'
+    title = 'SWC/DC Event requests'
 
 
 class EventRequestDetails(OnlyForAdminsMixin, AMYDetailView):
@@ -2358,7 +2358,7 @@ class EventRequestDetails(OnlyForAdminsMixin, AMYDetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Workshop request #{}'.format(self.get_object().pk)
+        context['title'] = 'SWC/DC Event request #{}'.format(self.get_object().pk)
 
         person_lookup_form = AdminLookupForm()
         if self.object.assigned_to:
