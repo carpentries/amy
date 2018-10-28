@@ -19,6 +19,7 @@ from ..models import (
     Badge,
     TodoItem,
     Membership,
+    Curriculum,
 )
 from ..forms import EventForm, EventsMergeForm
 from .base import TestBase
@@ -653,6 +654,42 @@ class TestEventViews(TestBase):
         data['tags'] = [Tag.objects.get(name='TTT').pk]
         form = EventForm(data)
         self.assertTrue(form.is_valid())
+
+    def test_curricula_and_tags_validation(self):
+        """Ensure validation of `curricula` and `tags` fields."""
+        # missing tags
+        data = {
+            'slug': '2018-10-28-curriculum',
+            'host': self.org_alpha.pk,
+            'tags': [
+                Tag.objects.get(name='TTT').pk,
+                Tag.objects.get(name='online').pk,
+            ],
+            'curricula': [
+                Curriculum.objects.get(slug='swc-python').pk,
+                Curriculum.objects.get(slug='dc-geospatial').pk,
+                Curriculum.objects.get(slug='lc').pk,
+                # below isn't a valid choice
+                # Curriculum.objects.get(unknown=True).pk,
+            ],
+        }
+        form = EventForm(data)
+        self.assertIn('curricula', form.errors)
+
+        # try adding SWC tag
+        data['tags'].append(Tag.objects.get(name='SWC').pk)
+        form = EventForm(data)
+        self.assertIn('curricula', form.errors)
+
+        # try adding DC tag
+        data['tags'].append(Tag.objects.get(name='DC').pk)
+        form = EventForm(data)
+        self.assertIn('curricula', form.errors)
+
+        # try adding LC tag
+        data['tags'].append(Tag.objects.get(name='LC').pk)
+        form = EventForm(data)
+        self.assertNotIn('curricula', form.errors)
 
 
 class TestEventNotes(TestBase):
