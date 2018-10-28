@@ -10,15 +10,19 @@ def bootstrap_tag(name):
     """Wrap <span> around a tag so that it's displayed as Bootstrap badge:
     http://getbootstrap.com/components/#labels"""
 
+    name_low = name.lower()
+
     addn_class = 'badge-secondary'
-    if name == 'SWC':
+    if name_low.startswith('swc'):
         addn_class = 'badge-primary'
-    elif name == 'DC':
+    elif name_low.startswith('dc'):
         addn_class = 'badge-success'
-    elif name == 'online':
+    elif name_low.startswith('online'):
         addn_class = 'badge-info'
-    elif name == 'LC':
+    elif name_low.startswith('lc'):
         addn_class = 'badge-warning'
+    elif name_low.startswith('ttt'):
+        addn_class = 'badge-danger'
 
     fmt = '<span class="badge {additional_class}">{name}</span>'
     fmt = fmt.format(additional_class=addn_class, name=name)
