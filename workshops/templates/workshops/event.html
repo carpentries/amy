@@ -102,31 +102,6 @@
 </div>
 {% endif %}
 
-<!-- invoice modal -->
-<div class="modal" role="dialog" id="invoice_modal" tabindex="-1" aria-labelledby="invoice_modal_label" aria-hidden="true">
-  <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="invoice_modal_label">Invoice</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-      </div>
-      <div class="modal-body">
-        <p>Please contact <a href="mailto:team@carpentries.org">team@carpentries.org</a> if you need to submit an invoice. Include the following information in your email:</p>
-
-        <ul>
-          <li>Link to workshop page in AMY</li>
-          <li>Purpose of invoice</li>
-          <li>Amount of invoice in US Dollars</li>
-          <li>Name, email, phone, and mailing address of person who should receive the invoice</li>
-        </ul>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <hr>
 
 {% if tasks %}
@@ -220,11 +195,6 @@
 <script src="https://maps.googleapis.com/maps/api/js?api=AIzaSyC2WQkpSyrmJhXRcBdqsonpcQjyy8BtPrA&v=3.exp"></script>
 <script type="text/javascript">
   var gmap = null;
-
-  $('#invoice_btn').click(function() {
-    $('#invoice_modal').modal();
-    return false;
-  });
 
   $(function () {
     // validation modal loading

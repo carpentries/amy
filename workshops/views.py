@@ -1307,46 +1307,6 @@ def events_merge(request):
     return render(request, 'workshops/events_merge.html', context)
 
 
-# disabled as per @maneesha's request (disabled in HTML template)
-# see https://github.com/swcarpentry/amy/issues/1040
-@admin_required
-@permission_required('workshops.add_invoicerequest', raise_exception=True)
-def event_invoice(request, slug):
-    # try:
-    #     event = Event.objects.get(slug=slug)
-    # except ObjectDoesNotExist:
-    #     raise Http404("No event found matching the query.")
-
-    # form = InvoiceRequestForm(initial=dict(
-    #     organization=event.host, date=event.start, event=event,
-    #     event_location=event.venue, amount=event.admin_fee,
-    # ))
-
-    # if request.method == 'POST':
-    #     form = InvoiceRequestForm(request.POST)
-
-    #     if form.is_valid():
-    #         form.save()
-    #         messages.success(request,
-    #                          'Successfully added an invoice request for {}.'
-    #                          .format(event.slug))
-    #         return redirect(reverse('event_details',
-    #                                 args=[event.slug]))
-    #     else:
-    #         messages.error(request, 'Fix errors below.')
-
-    # context = {
-    #     'title_left': 'Event {}'.format(event.slug),
-    #     'title_right': 'New invoice request',
-    #     'event': event,
-    #     'form': form,
-    # }
-    context = {
-        'title': 'Invoice',
-    }
-    return render(request, 'workshops/event_invoice.html', context)
-
-
 @admin_required
 def events_metadata_changed(request):
     """List events with metadata changed."""

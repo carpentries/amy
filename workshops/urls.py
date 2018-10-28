@@ -100,8 +100,6 @@ urlpatterns = [
         url(r'^review_metadata_changes/$', views.event_review_metadata_changes, name='event_review_metadata_changes'),
         url(r'^review_metadata_changes/accept/$', views.event_accept_metadata_changes, name='event_accept_metadata_changes'),
         url(r'^review_metadata_changes/dismiss/$', views.event_dismiss_metadata_changes, name='event_dismiss_metadata_changes'),
-        # deprecated: invoices
-        url(r'^invoice/$', views.event_invoice, name='event_invoice'),
     ])),
 
     # deprecated: invoices

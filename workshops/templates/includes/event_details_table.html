@@ -22,7 +22,12 @@
     <td colspan="2">
       {{ event.get_invoice_status_display }}
       {% if event.uninvoiced %}
-      <a href="{# Disabled as per @maneesha's request {% url 'event_invoice' event.slug %}#}#" class="btn btn-primary btn-sm float-right" id="invoice_btn"  data-toggle="modal" data-target="#invoice_modal">Invoice</a>
+      <a tabindex="0" role="button" class="btn btn-primary btn-sm float-right" data-toggle="popover" title="Invoicing disabled" data-content="Please contact <a href='mailto:team@carpentries.org'>team@carpentries.org</a> if you need to submit an invoice. Include the following information in your email: <ul>
+  <li>Link to workshop page in AMY</li>
+  <li>Purpose of invoice</li>
+  <li>Amount of invoice in US Dollars</li>
+  <li>Name, email, phone, and mailing address of person who should receive in invoice</li>
+</ul>" data-html="true" data-trigger="focus">Invoice</a>
       {% else %}
       <a href="#" class="btn btn-primary btn-sm float-right disabled">Invoice</a>
       {% endif %}
