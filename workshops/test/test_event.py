@@ -17,7 +17,6 @@ from ..models import (
     Task,
     Award,
     Badge,
-    TodoItem,
     Membership,
     Curriculum,
 )
@@ -771,8 +770,6 @@ class TestEventMerging(TestBase):
         self.event_a.tags.set(Tag.objects.filter(name__in=['LC', 'DC']))
         self.event_a.task_set.create(person=self.harry,
                                      role=Role.objects.get(name='instructor'))
-        self.event_a.todoitem_set.create(completed=False,
-                                         title='Find instructors', due=today)
 
         self.event_b = Event.objects.create(
             slug='event-b', completed=False, assigned_to=self.hermione,
@@ -793,8 +790,6 @@ class TestEventMerging(TestBase):
         )
         self.event_b.tags.set(Tag.objects.filter(name='SWC'))
         # no tasks for this event
-        self.event_b.todoitem_set.create(completed=True, title='Test merging',
-                                         due=today)
 
         # some "random" strategy for testing
         self.strategy = {
@@ -828,7 +823,6 @@ class TestEventMerging(TestBase):
             'notes': 'obj_a',
             'tags': 'combine',
             'task_set': 'obj_b',
-            'todoitem_set': 'obj_a',
         }
         base_url = reverse('events_merge')
         query = urlencode({
@@ -876,7 +870,6 @@ class TestEventMerging(TestBase):
             'address': 'combine',
             'notes': 'combine',
             'task_set': 'combine',
-            'todoitem_set': 'combine',
         }
         data = hidden.copy()
         data.update(failing)
@@ -950,8 +943,6 @@ class TestEventMerging(TestBase):
         assertions = {
             'tags': set(Tag.objects.filter(name__in=['SWC', 'DC', 'LC'])),
             'task_set': set(Task.objects.none()),
-            'todoitem_set': set(TodoItem.objects
-                                        .filter(title='Find instructors')),
         }
 
         rv = self.client.post(self.url, data=self.strategy)

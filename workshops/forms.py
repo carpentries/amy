@@ -32,7 +32,6 @@ from workshops.models import (
     Organization,
     EventRequest,
     ProfileUpdateRequest,
-    TodoItem,
     Membership,
     Sponsorship,
     InvoiceRequest,
@@ -1138,19 +1137,6 @@ class AdminLookupForm(forms.Form):
     helper = BootstrapHelper(add_cancel_button=False)
 
 
-class SimpleTodoForm(forms.ModelForm):
-    helper = BootstrapHelper(add_cancel_button=False)
-
-    class Meta:
-        model = TodoItem
-        fields = ('title', 'due', 'additional', 'completed', 'event')
-        widgets = {'event': HiddenInput, }
-
-# `extra`: number of forms populated via `initial` parameter; it's hardcoded in
-# `views.todos_add`
-TodoFormSet = modelformset_factory(TodoItem, form=SimpleTodoForm, extra=10)
-
-
 class EventsSelectionForm(forms.Form):
     event_a = forms.ModelChoiceField(
         label='Event A',
@@ -1265,9 +1251,6 @@ class EventsMergeForm(forms.Form):
         choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
     )
     task_set = forms.ChoiceField(
-        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
-    )
-    todoitem_set = forms.ChoiceField(
         choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
     )
 

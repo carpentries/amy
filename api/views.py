@@ -34,7 +34,6 @@ from workshops.models import (
     Badge,
     Airport,
     Event,
-    TodoItem,
     Tag,
     Organization,
     Task,
@@ -51,7 +50,6 @@ from .serializers import (
     ExportBadgesByPersonSerializer,
     ExportInstructorLocationsSerializer,
     ExportEventSerializer,
-    TimelineTodoSerializer,
     WorkshopsOverTimeSerializer,
     InstructorsOverTimeSerializer,
     InstructorNumTaughtSerializer,
@@ -59,7 +57,6 @@ from .serializers import (
     OrganizationSerializer,
     EventSerializer,
     TaskSerializer,
-    TodoSerializer,
     AirportSerializer,
     AwardSerializer,
     PersonSerializer,
@@ -139,8 +136,6 @@ class ApiRoot(APIView):
                                            request=request, format=format)),
             ('events-published', reverse('api:events-published',
                                          request=request, format=format)),
-            ('user-todos', reverse('api:user-todos',
-                                   request=request, format=format)),
             ('reports-list', reverse('api:reports-list',
                                      request=request, format=format)),
             ('training-requests', reverse('api:training-requests',
@@ -302,19 +297,6 @@ class PublishedEvents(ListAPIView):
     serializer_class = ExportEventSerializer
     filterset_class = EventFilter
     queryset = Event.objects.published_events()
-
-
-class UserTodoItems(ListAPIView):
-    permission_classes = (IsAuthenticated, IsAdmin)
-    paginator = None
-    serializer_class = TimelineTodoSerializer
-
-    def get_queryset(self):
-        """Return current TODOs for currently logged in user."""
-        return TodoItem.objects.user(self.request.user) \
-                               .incomplete() \
-                               .exclude(due=None) \
-                               .select_related('event')
 
 
 class TrainingRequests(ListAPIView):
@@ -737,27 +719,6 @@ class TaskViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         qs = Task.objects.all().select_related('person', 'role',
                                                'person__airport')
-        if self._event_slug:
-            qs = qs.filter(event__slug=self._event_slug)
-        return qs
-
-    def list(self, request, event_slug=None):
-        self._event_slug = event_slug
-        return super().list(request)
-
-    def retrieve(self, request, pk=None, event_slug=None):
-        self._event_slug = event_slug
-        return super().retrieve(request, pk=pk)
-
-
-class TodoViewSet(viewsets.ReadOnlyModelViewSet):
-    """List todos belonging to specific event."""
-    permission_classes = (IsAuthenticated, IsAdmin)
-    serializer_class = TodoSerializer
-    _event_slug = None
-
-    def get_queryset(self):
-        qs = TodoItem.objects.all()
         if self._event_slug:
             qs = qs.filter(event__slug=self._event_slug)
         return qs

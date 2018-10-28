@@ -224,15 +224,6 @@ urlpatterns = [
         url(r'^accept/(?P<person_id>[\w\.-]+)/$', views.profileupdaterequest_accept, name='profileupdaterequest_accept'),
     ])),
 
-    # deprecated: todos
-    url(r'^todos/(?P<slug>[\w-]+)/add/$', views.todos_add, name='todos_add'),
-    url(r'^todo/(?P<todo_id>\d+)/', include([
-        url(r'^completed/$', views.todo_mark_completed, name='todo_mark_completed'),
-        url(r'^incompleted/$', views.todo_mark_incompleted, name='todo_mark_incompleted'),
-        url(r'^edit/$', views.TodoItemUpdate.as_view(), name='todo_edit'),
-        url(r'^delete/$', views.TodoDelete.as_view(), name='todo_delete'),
-    ])),
-
     # action-required views
     url(r'^action_required/privacy/$',
         views.action_required_privacy, name='action_required_privacy'),
