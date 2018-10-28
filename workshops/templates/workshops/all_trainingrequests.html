@@ -59,7 +59,7 @@
           <td>
             <input type="checkbox" name="requests" value="{{ req.pk }}"
                    respond-to-select-all-checkbox
-                   email="{% if req.person %}{{ req.person.email }}{% endif %}"
+                   email="{% if req.person %}{{ req.person.email }}{% elif req.email %}{{ req.email }}{% endif %}"
                    {% if req in form.cleaned_data.requests or req in match_form.cleaned_data.requests %}checked {% endif %}
             />
           </td>
