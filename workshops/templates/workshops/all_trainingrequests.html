@@ -19,20 +19,18 @@
           <input type="checkbox" select-all-checkbox />
         </th>
         <th>Submitter</th>
-        {% if request.GET.affiliation or request.GET.location %}
-          <th>
-            Affiliation
-            <i class="fas fa-question-circle"
-               data-toggle="popover" data-html="true"
-               data-content="<p>If two lines are presented:
-                             <ul><li>the first line shows affiliation from training request,</li>
-                             <li>and the second line shows affiliation from trainee's profile</li></ul></p>
-                             "></i>
-          </th>
+        <th>Group</th>
+        <th>
+          Affiliation
+          <i class="fas fa-question-circle"
+             data-toggle="popover" data-html="true"
+             data-content="<p>If two lines are presented:
+                           <ul><li>the first line shows affiliation from training request,</li>
+                           <li>and the second line shows affiliation from trainee's profile</li></ul></p>
+                           "></i>
+        </th>
+        {% if request.GET.location %}
           <th>Location</th>
-        {% endif %}
-        {% if request.GET.group_name %}
-          <th>Group</th>
         {% endif %}
         {% if request.GET.order_by == 'created_at' or request.GET.order_by == '-created_at' %}
           <th>Created at</th>
@@ -69,18 +67,16 @@
             {{ req.personal }} {{ req.middle }} {{ req.family }}<br />
             &lt;{{ req.email|urlize }}&gt;
           </td>
-          {% if request.GET.affiliation or request.GET.location %}
-            <td>
-              {{ req.affiliation }}
-              {% if req.person %}
-                 <br />
-                {{ req.person.affiliation }}
-              {% endif %}
-            </td>
-            <td>{{ req.location }}</td>
-          {% endif %}
-          {% if request.GET.group_name %}
-            <td>{{ req.group_name }}</td>
+          <td>{{ req.group_name|default:"—" }}</td>
+          <td>
+            {{ req.affiliation|default:"—" }}
+            {% if req.person %}
+               <hr />
+              {{ req.person.affiliation|default:"—" }}
+            {% endif %}
+          </td>
+          {% if request.GET.location %}
+            <td>{{ req.location|default:"—" }}</td>
           {% endif %}
           {% if request.GET.order_by == 'created_at' or request.GET.order_by == '-created_at' %}
             <td>{{ req.created_at|date:'Y-m-d H:i' }}</td>
