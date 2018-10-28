@@ -403,3 +403,107 @@ class TestWorkshopRequestExternalForm(TestBase):
             msg.subject,
             'New workshop request: Ministry of Magic, 03-04 November, 2018',
         )
+
+
+class TestWorkshopRequestViews(TestBase):
+    def setUp(self):
+        self._setUpUsersAndLogin()
+
+        self.wr1 = WorkshopRequest.objects.create(
+            state="p", personal="Harry", family="Potter", email="harry@potter.com",
+            institution_name="Hogwarts", location="Scotland", country="GB",
+            part_of_conference=False, preferred_dates="soon",
+            language=Language.objects.get(name='English'),
+            audience_description="Students of Hogwarts",
+            organization_type='self',
+        )
+        self.wr2 = WorkshopRequest.objects.create(
+            state="d", personal="Harry", family="Potter", email="harry@potter.com",
+            institution_name="Hogwarts", location="Scotland", country="GB",
+            part_of_conference=False, preferred_dates="soon",
+            language=Language.objects.get(name='English'),
+            audience_description="Students of Hogwarts",
+            organization_type='central',
+        )
+
+    def test_pending_requests_list(self):
+        rv = self.client.get(reverse('all_workshoprequests'))
+        self.assertIn(self.wr1, rv.context['requests'])
+        self.assertNotIn(self.wr2, rv.context['requests'])
+
+    def test_discarded_requests_list(self):
+        rv = self.client.get(reverse('all_workshoprequests') + '?state=d')
+        self.assertNotIn(self.wr1, rv.context['requests'])
+        self.assertIn(self.wr2, rv.context['requests'])
+
+    def test_set_state_pending_request_view(self):
+        rv = self.client.get(reverse('workshoprequest_set_state',
+                                     args=[self.wr1.pk, 'discarded']))
+        self.assertEqual(rv.status_code, 302)
+        self.wr1.refresh_from_db()
+        self.assertEqual(self.wr1.state, "d")
+
+    def test_set_state_discarded_request_view(self):
+        rv = self.client.get(reverse('workshoprequest_set_state',
+                                     args=[self.wr2.pk, 'discarded']))
+        self.assertEqual(rv.status_code, 302)
+        self.wr2.refresh_from_db()
+        self.assertEqual(self.wr2.state, "d")
+
+    def test_pending_request_accept(self):
+        rv = self.client.get(reverse('workshoprequest_set_state',
+                                     args=[self.wr1.pk, 'accepted']))
+        self.assertEqual(rv.status_code, 302)
+
+    def test_pending_request_accepted_with_event(self):
+        """Ensure a backlink from Event to WorkshopRequest that created the
+        event exists after ER is accepted."""
+        data = {
+            'slug': '2018-10-28-test-event',
+            'host': Organization.objects.first().pk,
+            'tags': [1],
+            'invoice_status': 'unknown',
+        }
+        rv = self.client.post(
+            reverse('workshoprequest_accept_event', args=[self.wr1.pk]),
+            data)
+        self.assertEqual(rv.status_code, 302)
+        request = Event.objects.get(slug='2018-10-28-test-event') \
+                               .workshoprequest
+        self.assertEqual(request, self.wr1)
+
+    def test_discarded_request_accepted_with_event(self):
+        rv = self.client.get(reverse('workshoprequest_accept_event',
+                                     args=[self.wr2.pk]))
+        self.assertEqual(rv.status_code, 404)
+
+    def test_pending_request_discard(self):
+        rv = self.client.get(reverse('workshoprequest_set_state',
+                                     args=[self.wr1.pk, 'discarded']),
+                             follow=True)
+        self.assertEqual(rv.status_code, 200)
+
+    def test_discarded_request_discard(self):
+        rv = self.client.get(reverse('workshoprequest_set_state',
+                                     args=[self.wr2.pk, 'discarded']),
+                             follow=True)
+        self.assertEqual(rv.status_code, 200)
+
+    def test_discarded_request_reopened(self):
+        self.wr1.state = "a"
+        self.wr1.save()
+        rv = self.client.get(
+            reverse('workshoprequest_set_state',
+                    args=[self.wr1.pk, 'pending']),
+            follow=True)
+        self.wr1.refresh_from_db()
+        self.assertEqual(self.wr1.state, "p")
+
+    def test_accepted_request_reopened(self):
+        self.assertEqual(self.wr2.state, "d")
+        rv = self.client.get(
+            reverse('workshoprequest_set_state',
+                    args=[self.wr2.pk, 'pending']),
+            follow=True)
+        self.wr2.refresh_from_db()
+        self.assertEqual(self.wr2.state, "p")
