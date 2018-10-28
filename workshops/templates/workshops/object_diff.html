@@ -4,10 +4,15 @@
 
 {% block title %}<h1>{{ verbose_name|title }} {{ object }}</h1>{% endblock %}
 {% block content %}
+
 <p>
   <a href="{{ object.get_absolute_url }}" class="btn btn-primary">View newest</a>
 </p>
-<p>Changed on {{ revision.date_created|date:'M j, P' }} by {{ revision.user|default:'Unknown user' }}.</p>
+
+{% include "reversion-compare/action_list_partial.html"  %}
+
+<p class="mt-4">Changed on {{ revision.date_created|date:'M j Y, P' }} by {{ revision.user|default:'Unknown user' }}.</p>
+{% with previous_version=version1 current_version=version2%}
 {% if previous_version == current_version %}
 <p>This is a new object, it doesn't have any previous revisions.</p>
 {% endif %}
@@ -27,4 +32,5 @@
   {% endfor %}
 </table>
 {% endblock %}
+{% endwith %}
 {% endblock %}
