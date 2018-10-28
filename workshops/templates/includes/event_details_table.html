@@ -17,6 +17,17 @@
   <tr><th>Language:</th><td colspan="2">{{ event.language|default:"&mdash;" }}</td></tr>
   <tr><th>Eventbrite key:</th><td colspan="2">{% if event.reg_key %}<a href="https://www.eventbrite.com/myevent?eid={{ event.reg_key }}" title="Go to Eventbrite's page for this event" target="_blank">{{ event.reg_key }}</a>{% else %}&mdash;{% endif %}</td></tr>
   <tr><th>Admin fee:</th><td colspan="2">{{ event.admin_fee|default_if_none:"&mdash;" }}</td></tr>
+  <tr>
+    <th>Invoice:</th>
+    <td colspan="2">
+      {{ event.get_invoice_status_display }}
+      {% if event.uninvoiced %}
+      <a href="{# Disabled as per @maneesha's request {% url 'event_invoice' event.slug %}#}#" class="btn btn-primary btn-sm float-right" id="invoice_btn"  data-toggle="modal" data-target="#invoice_modal">Invoice</a>
+      {% else %}
+      <a href="#" class="btn btn-primary btn-sm float-right disabled">Invoice</a>
+      {% endif %}
+    </td>
+  </tr>
   <tr class="{% if not event.attendance %}table-danger{% endif %}">
     <th>Attendance:</th>
     <td colspan="2">
@@ -47,17 +58,6 @@
   <tr><th>Related workshop request:</th>
     <td colspan="2">{% if event|one2one_exists:"workshoprequest" %}<a href="{{ event.workshoprequest.get_absolute_url }}">{{ event.workshoprequest }}</a>{% else %}&mdash;{% endif %}</td></tr>
   <tr>
-    <th><span class="badge badge-secondary">deprecated</span> Invoice:</th>
-    <td colspan="2">
-      {{ event.get_invoice_status_display }}
-      {% if event.uninvoiced %}
-      <a href="{# Disabled as per @maneesha's request {% url 'event_invoice' event.slug %}#}#" class="btn btn-primary btn-sm float-right" id="invoice_btn"  data-toggle="modal" data-target="#invoice_modal">Invoice</a>
-      {% else %}
-      <a href="#" class="btn btn-primary btn-sm float-right disabled">Invoice</a>
-      {% endif %}
-    </td>
-  </tr>
-  <tr>
     <th><span class="badge badge-secondary">deprecated</span> Invoice requests:</th>
     <td colspan="2">
       {% if event.invoicerequest_set.all %}
@@ -72,9 +72,9 @@
     </td>
   </tr>
   <tr><th><span class="badge badge-secondary">deprecated</span> Related event request:</th>
-    <td colspan="2">{% if event|one2one_exists:"eventrequest" %}<a href="{{ event.eventrequest.get_absolute_url }}">{{ event.eventrequest }}</a>{% else %}&mdash;{% endif %}</td></tr>
+      <td colspan="2">{% if event|one2one_exists:"eventrequest" %}<a href="{{ event.eventrequest.get_absolute_url }}">{{ event.eventrequest }}</a>{% else %}&mdash;{% endif %}</td></tr>
   <tr><th><span class="badge badge-secondary">deprecated</span> Related workshop submission:</th>
-    <td colspan="2">{% if event|one2one_exists:"eventsubmission" %}<a href="{{ event.eventsubmission.get_absolute_url }}">{{ event.eventsubmission }}</a>{% else %}&mdash;{% endif %}</td></tr>
+      <td colspan="2">{% if event|one2one_exists:"eventsubmission" %}<a href="{{ event.eventsubmission.get_absolute_url }}">{{ event.eventsubmission }}</a>{% else %}&mdash;{% endif %}</td></tr>
   <tr><th><span class="badge badge-secondary">deprecated</span> Related DC self-organized workshop request:</th>
-    <td colspan="2">{% if event|one2one_exists:"dcselforganizedeventrequest" %}<a href="{{ event.dcselforganizedeventrequest.get_absolute_url }}">{{ event.dcselforganizedeventrequest }}</a>{% else %}&mdash;{% endif %}</td></tr>
+      <td colspan="2">{% if event|one2one_exists:"dcselforganizedeventrequest" %}<a href="{{ event.dcselforganizedeventrequest.get_absolute_url }}">{{ event.dcselforganizedeventrequest }}</a>{% else %}&mdash;{% endif %}</td></tr>
 </table>
