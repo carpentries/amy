@@ -4,7 +4,7 @@
 
 {% block title-left %}<h1>Workshop request #{{ object.pk }}</h1>{% endblock %}
 {% block content-left %}
-{% include "mailing/eventrequest.html" with object=object %}
+{% include "includes/eventrequest.html" with object=object %}
 {% endblock %}
 {% block title-right %}<h1>New event</h1>{% endblock %}
 {% block content-right %}

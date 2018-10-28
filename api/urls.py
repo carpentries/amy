@@ -21,8 +21,6 @@ person_task_router.register('tasks', views.PersonTaskViewSet,
 router.register('events', views.EventViewSet)
 tasks_router = routers.NestedSimpleRouter(router, 'events', lookup='event')
 tasks_router.register('tasks', views.TaskViewSet, base_name='event-tasks')
-todos_router = routers.NestedSimpleRouter(router, 'events', lookup='event')
-todos_router.register('todos', views.TodoViewSet, base_name='event-todos')
 router.register('organizations', views.OrganizationViewSet)
 router.register('airports', views.AirportViewSet)
 
@@ -47,9 +45,6 @@ urlpatterns = [
     url('^events/published/$',
         views.PublishedEvents.as_view(),
         name='events-published'),
-    url('^todos/user/$',
-        views.UserTodoItems.as_view(),
-        name='user-todos'),
     url('^training_requests/$',
         views.TrainingRequests.as_view(),
         name='training-requests'),
@@ -58,7 +53,6 @@ urlpatterns = [
     url('^', include(awards_router.urls)),
     url('^', include(person_task_router.urls)),
     url('^', include(tasks_router.urls)),
-    url('^', include(todos_router.urls)),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)  # allow to specify format

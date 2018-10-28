@@ -48,7 +48,6 @@ class TestAPIStructure(APITestBase):
         #   → awards
         # → events
         #   → tasks
-        #   → todos
         # → organizations
         # → airports
         # → reports
@@ -75,7 +74,6 @@ class TestAPIStructure(APITestBase):
                                         args=[self.event.slug]))
         event_links = {
             'tasks': reverse('api:event-tasks-list', args=[self.event.slug]),
-            'todos': reverse('api:event-todos-list', args=[self.event.slug]),
         }
         for endpoint, link in event_links.items():
             self.assertIn(link, event.data[endpoint])
@@ -102,12 +100,10 @@ class TestAPIStructure(APITestBase):
         # event
         #   → host-detail (via host, administrator)
         #   → tasks-list
-        #   → todos-list
         #   → person-detail
         # host (no links)
         # task
         #   → person-detail
-        # todos (no links)
         # person
         #   → airport-detail
         #   → award-list
@@ -122,7 +118,6 @@ class TestAPIStructure(APITestBase):
             'administrator': reverse('api:organization-detail',
                                      args=[self.event.administrator.domain]),
             'tasks': reverse('api:event-tasks-list', args=[self.event.slug]),
-            'todos': reverse('api:event-todos-list', args=[self.event.slug]),
             'assigned_to': reverse('api:person-detail',
                                    args=[self.event.assigned_to.pk])
         }

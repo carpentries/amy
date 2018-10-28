@@ -1,13 +1,5 @@
-{% extends "base_nav.html" %}
-
-{% load static %}
-{% load crispy_forms_tags %}
-
-{% block logo %}
-<img src="{% static 'software-carpentry-banner.png' %}" alt='Software-Carpentry logo' />
-<img src="{% static 'data-carpentry-banner.png' %}" alt='Data-Carpentry logo' />
-{% endblock %}
-
+{% extends "forms/trainingrequest.html" %}
+{% block extrajs %}{% endblock %}
 {% block content %}
 
 <p>Thank you for your submission. A team member will follow up with

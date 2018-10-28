@@ -553,3 +553,9 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
             expected_value, got_value,
             msg='Expected "{}" to be selected '
                 'while {} is/are selected.'.format(expected, selected))
+
+    def passCaptcha(self, data_dictionary):
+        """Extends provided `data_dictionary` with RECAPTCHA pass data."""
+        data_dictionary.update(
+            {'g-recaptcha-response': 'PASSED'}  # to auto-pass RECAPTCHA
+        )

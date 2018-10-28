@@ -106,7 +106,7 @@ $(document).ready(function() {
         data-toggle="popover"
         data-content="Content of a popup">Hover, focus or click me!</span>
   */
-  $('[data-toggle="popover"]').popover({placement: "auto", trigger: "click hover focus"});
+  $('[data-toggle="popover"]').popover({placement: "auto"});
 
   /* Some pages may have checkboxes in tables selected by default; in those
   cases, we should update URL in a[amy-download-selected] when the page

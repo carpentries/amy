@@ -30,6 +30,8 @@ from workshops.models import (
     DCSelfOrganizedEventRequest,
     TrainingRequest,
     Membership,
+    Curriculum,
+    WorkshopRequest,
 )
 
 
@@ -190,40 +192,6 @@ class EventFilter(AMYFilterSet):
             'administrator',
             'invoice_status',
             'completed',
-            'country',
-        ]
-
-
-def filter_active_eventrequest(qs, name, value):
-    if value == 'true':
-        return qs.filter(active=True)
-    elif value == 'false':
-        return qs.filter(active=False)
-    return qs
-
-
-class EventRequestFilter(AMYFilterSet, StateFilterSet):
-    assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2())
-    country = AllCountriesFilter(widget=Select2())
-    workshop_type = django_filters.ChoiceFilter(
-        choices=(('swc', 'Software-Carpentry'),
-                 ('dc', 'Data-Carpentry')),
-        label='Workshop type',
-        empty_label='All',
-    )
-
-    order_by = django_filters.OrderingFilter(
-        fields=(
-            'created_at',
-        ),
-    )
-
-    class Meta:
-        model = EventRequest
-        fields = [
-            'state',
-            'assigned_to',
-            'workshop_type',
             'country',
         ]
 
@@ -744,6 +712,57 @@ class BadgeAwardsFilter(AMYFilterSet):
         fields = (
             'awarded_after', 'awarded_before', 'event',
         )
+
+
+class EventRequestFilter(AMYFilterSet, StateFilterSet):
+    assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2())
+    country = AllCountriesFilter(widget=Select2())
+    workshop_type = django_filters.ChoiceFilter(
+        choices=(('swc', 'Software-Carpentry'),
+                 ('dc', 'Data-Carpentry')),
+        label='Workshop type',
+        empty_label='All',
+    )
+
+    order_by = django_filters.OrderingFilter(
+        fields=(
+            'created_at',
+        ),
+    )
+
+    class Meta:
+        model = EventRequest
+        fields = [
+            'state',
+            'assigned_to',
+            'workshop_type',
+            'country',
+        ]
+
+
+class WorkshopRequestFilter(AMYFilterSet, StateFilterSet):
+    assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2())
+    country = AllCountriesFilter(widget=Select2())
+    requested_workshop_types = django_filters.ModelMultipleChoiceFilter(
+        label='Requested workshop types',
+        queryset=Curriculum.objects.all(),
+        widget=widgets.CheckboxSelectMultiple(),
+    )
+
+    order_by = django_filters.OrderingFilter(
+        fields=(
+            'created_at',
+        ),
+    )
+
+    class Meta:
+        model = WorkshopRequest
+        fields = [
+            'state',
+            'assigned_to',
+            'requested_workshop_types',
+            'country',
+        ]
 
 
 class InvoiceRequestFilter(AMYFilterSet):

@@ -12,3 +12,9 @@ def one2one_exists(obj, related_field_name):
         return obj
     except ObjectDoesNotExist:
         return False
+
+
+@register.filter
+def get_key(obj, keyname):
+    """Simply return key from sequence."""
+    return obj[keyname]

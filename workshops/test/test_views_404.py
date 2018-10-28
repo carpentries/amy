@@ -4,7 +4,7 @@ from .base import TestBase
 
 
 class TestViewsFor404ing(TestBase):
-    """Make sure specific tests return 404 instead of 500."""
+    """Make sure specific views return 404 instead of 500."""
 
     def setUp(self):
         super()._setUpUsersAndLogin()
@@ -51,11 +51,6 @@ class TestViewsFor404ing(TestBase):
 
     def test_revision_details(self):
         url = reverse('object_changes', args=[1234])
-        rv = self.client.get(url)
-        self.assertEqual(rv.status_code, 404)
-
-    def test_todos_add(self):
-        url = reverse('todos_add', args=['non-existing-event'])
         rv = self.client.get(url)
         self.assertEqual(rv.status_code, 404)
 

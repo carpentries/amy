@@ -2,9 +2,9 @@
 
 {% load crispy_forms_tags %}
 
-{% block title-left %}<h1>DC self-organized workshop request #{{ object.pk }}</h1>{% endblock %}
+{% block title-left %}<h1>Workshop request #{{ object.pk }}</h1>{% endblock %}
 {% block content-left %}
-{% include "includes/dc_self_organized.html" with object=object %}
+{% include "mailing/workshoprequest.html" with object=object %}
 {% endblock %}
 {% block title-right %}<h1>New event</h1>{% endblock %}
 {% block content-right %}

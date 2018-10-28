@@ -42,8 +42,9 @@ class TestTrainingRequestForm(TestBase):
             'agreed_to_complete_training': 'on',
             'agreed_to_teach_workshops': 'on',
             'privacy_consent': True,
-            'g-recaptcha-response': 'PASSED',
         }
+        self.passCaptcha(data)
+
         rv = self.client.post(reverse('training_request'), data,
                               follow=True)
         self.assertEqual(rv.status_code, 200)
