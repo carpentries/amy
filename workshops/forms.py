@@ -461,38 +461,70 @@ class EventForm(forms.ModelForm):
 
     helper = BootstrapHelper(add_cancel_button=False,
                              duplicate_buttons_on_top=True)
-    helper.layout = Layout(
-        Field('slug', placeholder='YYYY-MM-DD-location'),
-        'completed',
-        Field('start', placeholder='YYYY-MM-DD'),
-        Field('end', placeholder='YYYY-MM-DD'),
-        'host',
-        'administrator',
-        'assigned_to',
-        'tags',
-        'open_TTT_applications',
-        'url',
-        'language',
-        'reg_key',
-        'admin_fee',
-        'invoice_status',
-        'attendance',
-        'contact',
-        'notes',
-        # TODO: probably in the next release of Django Crispy Forms (>1.7.2)
-        #       there will be a solid support for Accordion and AccordionGroup,
-        #       but for now we have to do it manually
-        Div(
-            Div(HTML('Location details'), css_class='card-header'),
-            Div('country',
-                'venue',
-                'address',
-                'latitude',
-                'longitude',
-                css_class='card-body'),
-            css_class='card mb-2'
-        ),
-    )
+
+    class Meta:
+        model = Event
+        fields = ('slug', 'completed', 'start', 'end', 'host', 'administrator',
+                  'assigned_to', 'tags', 'url', 'language', 'reg_key', 'venue',
+                  'admin_fee', 'invoice_status', 'attendance', 'contact',
+                  'notes', 'country', 'address', 'latitude', 'longitude',
+                  'open_TTT_applications', 'curricula', )
+        widgets = {
+            'attendance': TextInput,
+            'latitude': TextInput,
+            'longitude': TextInput,
+            'invoice_status': RadioSelect,
+            'tags': SelectMultiple(attrs={
+                'size': Tag.ITEMS_VISIBLE_IN_SELECT_WIDGET
+            }),
+            'curricula': CheckboxSelectMultiple(),
+        }
+
+    class Media:
+        # thanks to this, {{ form.media }} in the template will generate
+        # a <link href=""> (for CSS files) or <script src=""> (for JS files)
+        js = (
+            'date_yyyymmdd.js',
+            'edit_from_url.js',
+            'online_country.js',
+        )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper.layout = Layout(
+            Field('slug', placeholder='YYYY-MM-DD-location'),
+            'completed',
+            Field('start', placeholder='YYYY-MM-DD'),
+            Field('end', placeholder='YYYY-MM-DD'),
+            'host',
+            'administrator',
+            'assigned_to',
+            'tags',
+            'open_TTT_applications',
+            'curricula',
+            'url',
+            'language',
+            'reg_key',
+            'admin_fee',
+            'invoice_status',
+            'attendance',
+            'contact',
+            'notes',
+            # TODO: probably in the next release of Django Crispy Forms (>1.7.2)
+            #       there will be a solid support for Accordion and AccordionGroup,
+            #       but for now we have to do it manually
+            Div(
+                Div(HTML('Location details'), css_class='card-header'),
+                Div('country',
+                    'venue',
+                    'address',
+                    'latitude',
+                    'longitude',
+                    css_class='card-body'),
+                css_class='card mb-2'
+            ),
+        )
 
     def clean_slug(self):
         # Ensure slug is in "YYYY-MM-DD-location" format
@@ -536,31 +568,25 @@ class EventForm(forms.ModelForm):
 
         return open_TTT_applications
 
-    class Meta:
-        model = Event
-        fields = ('slug', 'completed', 'start', 'end', 'host', 'administrator',
-                  'assigned_to', 'tags', 'url', 'language', 'reg_key', 'venue',
-                  'admin_fee', 'invoice_status', 'attendance', 'contact',
-                  'notes', 'country', 'address', 'latitude', 'longitude',
-                  'open_TTT_applications', )
-        widgets = {
-            'attendance': TextInput,
-            'latitude': TextInput,
-            'longitude': TextInput,
-            'invoice_status': RadioSelect,
-            'tags': SelectMultiple(attrs={
-                'size': Tag.ITEMS_VISIBLE_IN_SELECT_WIDGET
-            }),
-        }
+    def clean_curricula(self):
+        """Validate tags when some curricula are selected."""
+        curricula = self.cleaned_data['curricula']
+        tags = self.cleaned_data['tags']
 
-    class Media:
-        # thanks to this, {{ form.media }} in the template will generate
-        # a <link href=""> (for CSS files) or <script src=""> (for JS files)
-        js = (
-            'date_yyyymmdd.js',
-            'edit_from_url.js',
-            'online_country.js',
-        )
+        try:
+            expected_tags = [
+                c.slug.split("-")[0].upper() for c in curricula
+                if c.active and not c.unknown
+            ]
+        except (ValueError, TypeError):
+            expected_tags = []
+
+        for tag in expected_tags:
+            if not tags.filter(name=tag):
+                raise forms.ValidationError(
+                    "You must add tags corresponding to these curricula.")
+
+        return curricula
 
 
 class TaskForm(WidgetOverrideMixin, forms.ModelForm):
