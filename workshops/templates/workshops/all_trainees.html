@@ -25,7 +25,7 @@
       <th width="40%">
         Progress
         <i class="fas fa-question-circle"
-           data-toggle="popover" data-html="true"
+           data-toggle="popover" data-html="true" data-trigger="hover"
            data-content="<p>
                          <span class='badge badge-success'>Passed</span>
                          <span class='badge badge-warning'>Not evaluated</span>
@@ -39,7 +39,7 @@
       <th width="90px">
         Eligible
         <i class="fas fa-question-circle"
-           data-toggle="popover" data-html="true"
+           data-toggle="popover" data-html="true" data-trigger="hover"
            data-content="<span class='badge badge-dark'><strike>Not eligible to be certified</strike></span><br />
                          <span class='badge badge-success'>Eligible to be certified</span><br />
                          <span class='badge badge-secondary'>Certified</span>
@@ -79,10 +79,10 @@
         </td>
         <td>
           {% if trainee.is_swc_instructor %}
-            <span class="badge badge-secondary" data-toggle="popover"
+            <span class="badge badge-secondary" data-toggle="popover" data-trigger="hover"
                   data-content="This person is SWC instructor">SWC</span>
           {% elif trainee.get_missing_swc_instructor_requirements %}
-            <a class="badge badge-dark" data-toggle="popover" data-html="true"
+            <a class="badge badge-dark" data-toggle="popover" data-html="true" data-trigger="hover"
                data-content="
                  Not eligible to be certified as Software Carpentry Instructor. Needs to pass:
                    <ul>
@@ -94,15 +94,15 @@
                "
                href="{% url 'award_add' %}?person={{ trainee.pk }}&amp;badge={{ swc.pk }}&amp;find-training&amp;next={{ request.get_full_path|urlencode }}"><strike>SWC</strike></a>
           {% else %}
-            <a class="badge badge-success" data-toggle="popover" data-html="true"
+            <a class="badge badge-success" data-toggle="popover" data-html="true" data-trigger="hover"
                data-content="<p>Eligible to be certified as Software Carpentry Instructor.</p><p>Click to start awarding the badge.</p>"
                href="{% url 'award_add' %}?person={{ trainee.pk }}&amp;badge={{ swc.pk }}&amp;find-training&amp;next={{ request.get_full_path|urlencode }}">SWC</a>
           {% endif %}
           {% if trainee.is_dc_instructor %}
-              <span class="badge badge-secondary" data-toggle="popover"
+              <span class="badge badge-secondary" data-toggle="popover" data-trigger="hover"
                     data-content="This person is DC Instructor.">DC</span>
           {% elif trainee.get_missing_dc_instructor_requirements %}
-            <a class="badge badge-dark" data-toggle="popover" data-html="true"
+            <a class="badge badge-dark" data-toggle="popover" data-html="true" data-trigger="hover"
                data-content="
                  Not eligible to be certified as Data Carpentry Instructor. Needs to pass:
                  <ul>
@@ -114,7 +114,7 @@
                "
                href="{% url 'award_add' %}?person={{ trainee.pk }}&amp;badge={{ dc.pk }}&amp;find-training&amp;next={{ request.get_full_path|urlencode }}#awards"><strike>DC</strike></a>
           {% else %}
-            <a class="badge badge-success" data-toggle="popover" data-html="true"
+            <a class="badge badge-success" data-toggle="popover" data-html="true" data-trigger="hover"
                data-content="<p>Eligible to be certified as Data Carpentry Instructor.</p><p>Click to start awarding the badge.</p>"
                href="{% url 'award_add' %}?person={{ trainee.pk }}&amp;badge={{ dc.pk }}&amp;find-training&amp;next={{ request.get_full_path|urlencode }}#awards">DC</a>
           {% endif %}

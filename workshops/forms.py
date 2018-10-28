@@ -1787,6 +1787,7 @@ class BulkDiscardProgressesForm(forms.Form):
                formnovalidate='formnovalidate',
                **{
                    'data-toggle': 'popover',
+                   'data-trigger': 'hover',
                    'data-html': 'true',
                    'data-content': SUBMIT_POPOVER,
                    'css_class': 'btn btn-warning',
@@ -1894,6 +1895,7 @@ class BulkMatchTrainingRequestForm(forms.Form):
             **{
                 'data-toggle': 'popover',
                 'data-html': 'true',
+                'data-trigger': 'hover',
                 'data-content': 'If you want to <strong>re</strong>match '
                                 'trainees to other training, first '
                                 '<strong>unmatch</strong> them!',
