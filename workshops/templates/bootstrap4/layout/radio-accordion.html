@@ -4,6 +4,7 @@
   {{ field.label }}
 </label>
 <div class="{{ field_class }}">
+  {% include 'bootstrap4/layout/field_errors.html' %}
   <div class="accordion" id="accordion_{{ field.auto_id }}">
     {% for option in field %}
     <div class="card">

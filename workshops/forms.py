@@ -2180,7 +2180,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
 
         # 1: make sure institution is valid
         institution = self.cleaned_data.get('institution', None)
-        institution_name = self.cleaned_data['institution_name']
+        institution_name = self.cleaned_data.get('institution_name', '')
         if not institution and not institution_name:
             errors['institution'] = ValidationError('Institution is required.')
         elif institution and institution_name:
@@ -2189,15 +2189,16 @@ class WorkshopRequestBaseForm(forms.ModelForm):
                 "You can't do both.")
 
         # 2: make sure there's institution selected when department is present
-        institution_department = self.cleaned_data['institution_department']
+        institution_department = self.cleaned_data \
+                                     .get('institution_department', '')
         if institution_department and not institution and not institution_name:
             errors['institution_department'] = ValidationError(
                 "You must select institution or enter it's name when you "
                 "enter department/school details.")
 
         # 3: enter conference details if this is part of conference
-        part_of_conference = self.cleaned_data['part_of_conference']
-        conference_details = self.cleaned_data['conference_details']
+        part_of_conference = self.cleaned_data.get('part_of_conference', '')
+        conference_details = self.cleaned_data.get('conference_details', '')
         if not part_of_conference and conference_details:
             errors['conference_details'] = ValidationError(
                 "You entered conference details, but did you forget to select "
@@ -2209,10 +2210,13 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         # 4: * self-organized workshop, require URL
         #    * centrally-organized workshop, require fee description
         #    * fee waiver? require waiver circumstances description
-        organization_type = self.cleaned_data['organization_type']
-        self_organized_github = self.cleaned_data['self_organized_github']
-        centrally_organized_fee = self.cleaned_data['centrally_organized_fee']
-        waiver_circumstances = self.cleaned_data['waiver_circumstances']
+        organization_type = self.cleaned_data.get('organization_type', '')
+        self_organized_github = self.cleaned_data \
+                                    .get('self_organized_github', '')
+        centrally_organized_fee = self.cleaned_data \
+                                      .get('centrally_organized_fee', '')
+        waiver_circumstances = self.cleaned_data \
+                                   .get('waiver_circumstances', '')
 
         if organization_type == 'self' and not self_organized_github:
             errors['self_organized_github'] = ValidationError(
@@ -2227,7 +2231,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
                 "Please describe your waiver circumstances.")
 
         # 5: don't allow empty domains and empty domains_other
-        domains = self.cleaned_data['domains']
+        domains = self.cleaned_data.get('domains', '')
         domains_other = self.cleaned_data.get('domains_other', '')
         if not domains and not domains_other:
             errors['domains'] = ValidationError(
@@ -2236,10 +2240,11 @@ class WorkshopRequestBaseForm(forms.ModelForm):
 
         # 6: don't allow empty travel expences management
         travel_expences_management = \
-            self.cleaned_data['travel_expences_management']
+            self.cleaned_data.get('travel_expences_management', '')
         travel_expences_management_other = \
             self.cleaned_data.get('travel_expences_management_other', '')
-        if not travel_expences_management and not travel_expences_management_other:
+        if not travel_expences_management and \
+                not travel_expences_management_other:
             errors['travel_expences_management'] = "This field is required."
 
         # raise errors if any present
