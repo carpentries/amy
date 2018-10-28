@@ -1205,6 +1205,14 @@ class Event(AssignmentMixin, models.Model):
                   "this event's member sites can also take part in this event."
     )
 
+    # taught curriculum information
+    curricula = models.ManyToManyField(
+        "Curriculum",
+        blank=True,
+        limit_choices_to={'active': True, 'unknown': False},
+        verbose_name="Curricula taught at the workshop",
+    )
+
     class Meta:
         ordering = ('-start', )
 
@@ -2669,6 +2677,7 @@ class Curriculum(ActiveMixin, models.Model):
     class Meta:
         verbose_name = "Curriculum"
         verbose_name_plural = "Curricula"
+        ordering = ["slug", ]
 
     def __str__(self):
         return self.name
