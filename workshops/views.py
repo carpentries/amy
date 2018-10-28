@@ -44,6 +44,7 @@ from django.views.generic.edit import (
 )
 from github.GithubException import GithubException
 from reversion.models import Version, Revision
+from reversion_compare.forms import SelectDiffForm
 
 from api.filters import (
     InstructorsOverTimeFilter,
@@ -2239,30 +2240,92 @@ def instructor_issues(request):
 
 @admin_required
 def object_changes(request, version_id):
+    """This view is highly inspired by `HistoryCompareDetailView` from
+    `django-reversion-compare`:
+
+    https://github.com/jedie/django-reversion-compare/blob/master/reversion_compare/views.py
+
+    The biggest change between above and this code is model-agnosticism:
+    the only thing that matters is `version_id` view parameter and underlying
+    object. This is where current and previous versions of the object are taken
+    from. Only later they're replaced with GET-provided arguments `version1`
+    and `version2`."""
+
+    # retrieve object from version/revision
     current_version = get_object_or_404(Version, pk=version_id)
     obj = current_version.object
 
+    # retrieve previous version
     try:
         previous_version = Version.objects.get_for_object(obj) \
                                           .filter(pk__lt=current_version.pk)[0]
-        obj_prev = previous_version.object
     except IndexError:
         # first revision for an object
         previous_version = current_version
-        obj_prev = obj
+
+    # set default versions displayed in the template
+    version2 = current_version
+    version1 = previous_version
+
+    # set default ordering: latest first
+    history_latest_first = True
+
+    def _order(queryset):
+        """Applies the correct ordering to the given version queryset."""
+        return queryset.order_by("-pk" if history_latest_first else "pk")
+
+    # get action list
+    action_list = [
+        {
+            "version": version,
+            "revision": version.revision,
+        }
+        for version in _order(
+            Version.objects.get_for_object(obj)
+                           .select_related("revision__user")
+        )
+    ]
+
+    if len(action_list) >= 2:
+        # this preselects radio buttons
+        if history_latest_first:
+            action_list[0]["first"] = True
+            action_list[1]["second"] = True
+        else:
+            action_list[-1]["first"] = True
+            action_list[-2]["second"] = True
+
+    if request.GET:
+        form = SelectDiffForm(request.GET)
+        if form.is_valid():
+            version_id1 = form.cleaned_data["version_id1"]
+            version_id2 = form.cleaned_data["version_id2"]
+
+            if version_id1 > version_id2:
+                # Compare always the newest one (#2) with the older one (#1)
+                version_id1, version_id2 = version_id2, version_id1
+
+            queryset = Version.objects.get_for_object(obj)
+            version1 = get_object_or_404(queryset, pk=version_id1)
+            version2 = get_object_or_404(queryset, pk=version_id2)
+        else:
+            messages.warning(request, "Wrong version IDs.")
 
     context = {
-        'object_prev': obj_prev,
-        'object': obj,
-        'previous_version': previous_version,
-        'current_version': current_version,
-        'revision': current_version.revision,
         'title': str(obj),
         'verbose_name': obj._meta.verbose_name,
+        'object': obj,
+        'version1': version1,
+        'version2': version2,
+        'revision': version2.revision,
         'fields': [
             f for f in obj._meta.get_fields()
             if f.concrete
         ],
+        'action': '',
+        'compare_view': True,
+        'action_list': action_list,
+        'comparable': len(action_list) >= 2,
     }
     return render(request, 'workshops/object_diff.html', context)
 
