@@ -61,7 +61,7 @@ else:
 
 # error email recipients
 ADMINS = (
-    ('Sysadmins ML', 'sysadmin@lists.software-carpentry.org'),
+    ('Sysadmins ML', 'sysadmin@lists.carpentries.org'),
 )
 # sender for error emails
 SERVER_EMAIL = os.environ.get('AMY_SERVER_EMAIL', 'root@localhost')
