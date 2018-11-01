@@ -7,7 +7,17 @@ from django.test import RequestFactory
 
 import requests_mock
 
-from ..models import Organization, Event, Role, Person, Task, Badge, Award
+from ..models import (
+    Organization,
+    Event,
+    Role,
+    Person,
+    Task,
+    Badge,
+    Award,
+    WorkshopRequest,
+    Language,
+)
 from ..util import (
     fetch_event_metadata,
     generate_url_to_event_index,
@@ -24,6 +34,7 @@ from ..util import (
     assign,
     str2bool,
     human_daterange,
+    match_notification_email,
 )
 
 from .base import TestBase
@@ -847,3 +858,93 @@ class TestHumanDaterange(TestBase):
                 left, right = v
                 output = human_daterange(left, right, **self.formats)
                 self.assertEqual(output, self.expected_outputs[i])
+
+
+class TestMatchingNotificationEmail(TestBase):
+    def setUp(self):
+        self.request = WorkshopRequest.objects.create(
+            state="p", personal="Harry", family="Potter", email="h@potter.com",
+            institution_name="Hogwarts", location="Scotland", country="GB",
+            part_of_conference=False, preferred_dates="soon",
+            language=Language.objects.get(name='English'),
+            audience_description="Students of Hogwarts",
+            organization_type='self',
+        )
+
+    def test_default_criteria(self):
+        # Online
+        self.request.country = 'W3'
+        results = match_notification_email(self.request)
+        self.assertEqual(results, ['team@carpentries.org'])
+
+        # European Union
+        self.request.country = 'EU'
+        results = match_notification_email(self.request)
+        self.assertEqual(results, ['team@carpentries.org'])
+
+        # United States
+        self.request.country = 'US'
+        results = match_notification_email(self.request)
+        self.assertEqual(results, ['team@carpentries.org'])
+
+        # Poland
+        self.request.country = 'PL'
+        results = match_notification_email(self.request)
+        self.assertEqual(results, ['team@carpentries.org'])
+
+        # unknown country code
+        self.request.country = 'XY'
+        results = match_notification_email(self.request)
+        self.assertEqual(results, ['team@carpentries.org'])
+
+    def test_matching_Africa(self):
+        """Testing just a subset of countries in Africa."""
+
+        # the Democratic Republic of the Congo
+        self.request.country = 'CD'
+        results = match_notification_email(self.request)
+        self.assertEqual(results, ['admin-afr@carpentries.org'])
+
+        # Nigeria
+        self.request.country = 'NG'
+        results = match_notification_email(self.request)
+        self.assertEqual(results, ['admin-afr@carpentries.org'])
+
+        # South Sudan
+        self.request.country = 'SS'
+        results = match_notification_email(self.request)
+        self.assertEqual(results, ['admin-afr@carpentries.org'])
+
+        # Somalia
+        self.request.country = 'SO'
+        results = match_notification_email(self.request)
+        self.assertEqual(results, ['admin-afr@carpentries.org'])
+
+        # Egipt
+        self.request.country = 'EG'
+        results = match_notification_email(self.request)
+        self.assertEqual(results, ['admin-afr@carpentries.org'])
+
+        # Tunisia
+        self.request.country = 'TN'
+        results = match_notification_email(self.request)
+        self.assertEqual(results, ['admin-afr@carpentries.org'])
+
+    def test_matching_UK_CA_NZ_AU(self):
+        """Test a bunch of criteria automatically."""
+        data = [
+            ('GB', 'admin-uk@carpentries.org'),
+            ('CA', 'admin-ca@carpentries.org'),
+            ('NZ', 'admin-nz@carpentries.org'),
+            ('AU', 'admin-au@carpentries.org'),
+        ]
+        for code, email in data:
+            with self.subTest(code=code):
+                self.request.country = code
+                results = match_notification_email(self.request)
+                self.assertEqual(results, [email])
+
+    def test_object_no_criteria(self):
+        self.assertFalse(hasattr(self, 'country'))
+        results = match_notification_email(self)
+        self.assertEqual(results, ['team@carpentries.org'])
