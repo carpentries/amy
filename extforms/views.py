@@ -15,6 +15,7 @@ from workshops.models import (
 )
 from workshops.util import (
     LoginNotRequiredMixin,
+    match_notification_email,
 )
 from workshops.base_views import (
     AMYCreateView,
@@ -72,10 +73,6 @@ class WorkshopRequestCreate(
     template_name = 'forms/workshoprequest.html'
     success_url = reverse_lazy('workshop_request_confirm')
     email_fail_silently = False
-    email_kwargs = {
-        'to': settings.REQUEST_NOTIFICATIONS_RECIPIENTS,
-        'reply_to': None,
-    }
 
     def get_success_message(self, *args, **kwargs):
         """Don't display a success message."""
@@ -85,6 +82,12 @@ class WorkshopRequestCreate(
         context = super().get_context_data(**kwargs)
         context['title'] = self.page_title
         return context
+
+    def get_email_kwargs(self):
+        return {
+            'to': match_notification_email(self.object),
+            'reply_to': [self.object.email],
+        }
 
     def get_subject(self):
         affiliation = (
@@ -124,7 +127,6 @@ class WorkshopRequestCreate(
     def form_valid(self, form):
         """Send email to admins if the form is valid."""
         data = form.cleaned_data
-        self.email_kwargs['reply_to'] = (data['email'], )
         result = super().form_valid(form)
         return result
 

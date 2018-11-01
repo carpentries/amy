@@ -198,12 +198,19 @@ class EmailSendMixin:
         """Generate email body (in TXT and HTML versions)."""
         return "", ""
 
+    def get_email_kwargs(self):
+        """Use this method to define email sender arguments, like:
+        * `to`: recipient address(es)
+        * `reply_to`: reply-to address
+        etc."""
+        return self.email_kwargs
+
     def prepare_email(self):
         """Set up email contents."""
         subject = self.get_subject()
         body_txt, body_html = self.get_body()
-        email = EmailMultiAlternatives(subject, body_txt,
-                                       **self.email_kwargs)
+        kwargs = self.get_email_kwargs()
+        email = EmailMultiAlternatives(subject, body_txt, **kwargs)
         email.attach_alternative(body_html, 'text/html')
         return email
 

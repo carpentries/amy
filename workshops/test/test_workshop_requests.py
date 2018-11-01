@@ -403,6 +403,7 @@ class TestWorkshopRequestExternalForm(TestBase):
             msg.subject,
             'New workshop request: Ministry of Magic, 03-04 November, 2018',
         )
+        self.assertEqual(msg.recipients(), ['admin-uk@carpentries.org'])
 
 
 class TestWorkshopRequestViews(TestBase):

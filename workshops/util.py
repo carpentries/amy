@@ -1,10 +1,11 @@
 # coding: utf-8
+from collections import namedtuple, defaultdict
+from collections.abc import Sequence
 import csv
 import datetime
-import re
-from collections import namedtuple, defaultdict
 from functools import wraps
 from itertools import chain
+import re
 
 import requests
 import yaml
@@ -1191,3 +1192,29 @@ def human_daterange(
     return (left + middle + right).format(
         **dict(left=date_left, sep=range_char, right=date_right, none=no_date)
     )
+
+
+def match_notification_email(obj):
+    """Try to match applied object to a set of criteria (defined in
+    `settings.py`)."""
+    results = []
+    for criterium, result in settings.ADMIN_NOTIFICATION_CRITERIA.items():
+        field, value = criterium
+        value_string = isinstance(value, str)
+        value_iter = isinstance(value, Sequence)
+
+        # get requested field value from `obj`
+        field_value = getattr(obj, field, None)
+
+        # try to match criteria
+        if value_string and field_value:
+            if field_value == value:
+                results.append(result)
+        elif value_iter and field_value:
+            if field_value in value:
+                results.append(result)
+
+    # fallback to default address if nothing matches
+    if not results:
+        return [settings.ADMIN_NOTIFICATION_CRITERIA_DEFAULT]
+    return results
