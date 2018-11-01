@@ -19,20 +19,18 @@
           <input type="checkbox" select-all-checkbox />
         </th>
         <th>Submitter</th>
-        {% if request.GET.affiliation or request.GET.location %}
-          <th>
-            Affiliation
-            <i class="fas fa-question-circle"
-               data-toggle="popover" data-html="true"
-               data-content="<p>If two lines are presented:
-                             <ul><li>the first line shows affiliation from training request,</li>
-                             <li>and the second line shows affiliation from trainee's profile</li></ul></p>
-                             "></i>
-          </th>
+        <th>Group</th>
+        <th>
+          Affiliation
+          <i class="fas fa-question-circle"
+             data-toggle="popover" data-html="true" data-trigger="hover"
+             data-content="<p>If two lines are presented:
+                           <ul><li>the first line shows affiliation from training request,</li>
+                           <li>and the second line shows affiliation from trainee's profile</li></ul></p>
+                           "></i>
+        </th>
+        {% if request.GET.location %}
           <th>Location</th>
-        {% endif %}
-        {% if request.GET.group_name %}
-          <th>Group</th>
         {% endif %}
         {% if request.GET.order_by == 'created_at' or request.GET.order_by == '-created_at' %}
           <th>Created at</th>
@@ -43,7 +41,7 @@
         <th width="50px">
           State
           <i class="fas fa-question-circle"
-             data-toggle="popover" data-html="true"
+             data-toggle="popover" data-html="true" data-trigger="hover"
              data-content="<p>
                            <span class='badge badge-warning'>Pending</span>
                            <span class='badge badge-success'>Accepted</span>
@@ -61,7 +59,7 @@
           <td>
             <input type="checkbox" name="requests" value="{{ req.pk }}"
                    respond-to-select-all-checkbox
-                   email="{% if req.person %}{{ req.person.email }}{% endif %}"
+                   email="{% if req.person %}{{ req.person.email }}{% elif req.email %}{{ req.email }}{% endif %}"
                    {% if req in form.cleaned_data.requests or req in match_form.cleaned_data.requests %}checked {% endif %}
             />
           </td>
@@ -69,18 +67,16 @@
             {{ req.personal }} {{ req.middle }} {{ req.family }}<br />
             &lt;{{ req.email|urlize }}&gt;
           </td>
-          {% if request.GET.affiliation or request.GET.location %}
-            <td>
-              {{ req.affiliation }}
-              {% if req.person %}
-                 <br />
-                {{ req.person.affiliation }}
-              {% endif %}
-            </td>
-            <td>{{ req.location }}</td>
-          {% endif %}
-          {% if request.GET.group_name %}
-            <td>{{ req.group_name }}</td>
+          <td>{{ req.group_name|default:"—" }}</td>
+          <td>
+            {{ req.affiliation|default:"—" }}
+            {% if req.person %}
+               <hr />
+              {{ req.person.affiliation|default:"—" }}
+            {% endif %}
+          </td>
+          {% if request.GET.location %}
+            <td>{{ req.location|default:"—" }}</td>
           {% endif %}
           {% if request.GET.order_by == 'created_at' or request.GET.order_by == '-created_at' %}
             <td>{{ req.created_at|date:'Y-m-d H:i' }}</td>
@@ -143,9 +139,20 @@
           Download
         </button>
         <div class="dropdown-menu" aria-labelledby="id_downloadBtn">
-          <a class="dropdown-item" href="{% url 'api:training-requests' %}?format=csv&" id="download_selected">Selected requests as CSV</a>
+          <a class="dropdown-item" href="{% url 'api:training-requests' %}?format=csv&" amy-download-selected>Selected requests as CSV</a>
           <a class="dropdown-item" href="{% url 'api:training-requests' %}?format=csv&{{ request.GET.urlencode }}">Filtered requests as CSV</a>
           <a class="dropdown-item" href="{% url 'api:training-requests' %}?format=csv">All requests as CSV</a>
+        </div>
+      </div>
+
+      <div class="btn-group" role="group">
+        <button id="id_downloadBtn" type="button" class="btn btn-dark dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Download for bulk manual scoring
+        </button>
+        <div class="dropdown-menu" aria-labelledby="id_downloadBtn">
+          <a class="dropdown-item" href="{% url 'api:training-requests' %}?format=csv2&manualscore=1" amy-download-selected>Selected requests as CSV</a>
+          <a class="dropdown-item" href="{% url 'api:training-requests' %}?format=csv2&manualscore=1&{{ request.GET.urlencode }}">Filtered requests as CSV</a>
+          <a class="dropdown-item" href="{% url 'api:training-requests' %}?format=csv2&manualscore=1">All requests as CSV</a>
         </div>
       </div>
     </div>

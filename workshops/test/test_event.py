@@ -17,8 +17,8 @@ from ..models import (
     Task,
     Award,
     Badge,
-    TodoItem,
     Membership,
+    Curriculum,
 )
 from ..forms import EventForm, EventsMergeForm
 from .base import TestBase
@@ -654,6 +654,42 @@ class TestEventViews(TestBase):
         form = EventForm(data)
         self.assertTrue(form.is_valid())
 
+    def test_curricula_and_tags_validation(self):
+        """Ensure validation of `curricula` and `tags` fields."""
+        # missing tags
+        data = {
+            'slug': '2018-10-28-curriculum',
+            'host': self.org_alpha.pk,
+            'tags': [
+                Tag.objects.get(name='TTT').pk,
+                Tag.objects.get(name='online').pk,
+            ],
+            'curricula': [
+                Curriculum.objects.get(slug='swc-python').pk,
+                Curriculum.objects.get(slug='dc-geospatial').pk,
+                Curriculum.objects.get(slug='lc').pk,
+                # below isn't a valid choice
+                # Curriculum.objects.get(unknown=True).pk,
+            ],
+        }
+        form = EventForm(data)
+        self.assertIn('curricula', form.errors)
+
+        # try adding SWC tag
+        data['tags'].append(Tag.objects.get(name='SWC').pk)
+        form = EventForm(data)
+        self.assertIn('curricula', form.errors)
+
+        # try adding DC tag
+        data['tags'].append(Tag.objects.get(name='DC').pk)
+        form = EventForm(data)
+        self.assertIn('curricula', form.errors)
+
+        # try adding LC tag
+        data['tags'].append(Tag.objects.get(name='LC').pk)
+        form = EventForm(data)
+        self.assertNotIn('curricula', form.errors)
+
 
 class TestEventNotes(TestBase):
     """Make sure notes once written are saved forever!"""
@@ -734,8 +770,6 @@ class TestEventMerging(TestBase):
         self.event_a.tags.set(Tag.objects.filter(name__in=['LC', 'DC']))
         self.event_a.task_set.create(person=self.harry,
                                      role=Role.objects.get(name='instructor'))
-        self.event_a.todoitem_set.create(completed=False,
-                                         title='Find instructors', due=today)
 
         self.event_b = Event.objects.create(
             slug='event-b', completed=False, assigned_to=self.hermione,
@@ -756,8 +790,6 @@ class TestEventMerging(TestBase):
         )
         self.event_b.tags.set(Tag.objects.filter(name='SWC'))
         # no tasks for this event
-        self.event_b.todoitem_set.create(completed=True, title='Test merging',
-                                         due=today)
 
         # some "random" strategy for testing
         self.strategy = {
@@ -791,7 +823,6 @@ class TestEventMerging(TestBase):
             'notes': 'obj_a',
             'tags': 'combine',
             'task_set': 'obj_b',
-            'todoitem_set': 'obj_a',
         }
         base_url = reverse('events_merge')
         query = urlencode({
@@ -839,7 +870,6 @@ class TestEventMerging(TestBase):
             'address': 'combine',
             'notes': 'combine',
             'task_set': 'combine',
-            'todoitem_set': 'combine',
         }
         data = hidden.copy()
         data.update(failing)
@@ -913,8 +943,6 @@ class TestEventMerging(TestBase):
         assertions = {
             'tags': set(Tag.objects.filter(name__in=['SWC', 'DC', 'LC'])),
             'task_set': set(Task.objects.none()),
-            'todoitem_set': set(TodoItem.objects
-                                        .filter(title='Find instructors')),
         }
 
         rv = self.client.post(self.url, data=self.strategy)

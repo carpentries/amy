@@ -37,13 +37,10 @@ class TestRevisions(TestBase):
                                      args=[self.newer.revision.pk]))
         # test returned context
         context = rv.context
-        assert context['previous_version'] == self.older
-        assert context['current_version'] == self.newer
+        assert context['version1'] == self.older
+        assert context['version2'] == self.newer
         assert context['revision'] == self.newer.revision
         assert context['object'] == self.event
-        assert 'object_prev' in context
-        assert context['object_prev'].__class__ == Event
-
 
     def test_diff_shows_coloured_labels(self):
         # get newer revision page

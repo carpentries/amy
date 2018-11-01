@@ -25,39 +25,11 @@ class TestSWCEventRequestForm(TestBase):
         ])
         self.assertEqual(fields_left, fields_right)
 
-    def test_request_added(self):
-        """Ensure the request is successfully added to the pool."""
-        data = {
-            'workshop_type': 'swc',
-            'g-recaptcha-response': 'PASSED',  # to auto-pass RECAPTCHA
-            'name': 'Harry Potter', 'email': 'harry@potter.com',
-            'affiliation': 'Hogwarts', 'location': 'United Kingdom',
-            'country': 'GB', 'preferred_date': 'soon',
-            'approx_attendees': '20-40',
-            'attendee_domains': [1, 2],  # IDs
-            'attendee_domains_other': 'Nonsesology',
-            'attendee_academic_levels': [1, 2],  # IDs
-            'attendee_computing_levels': [1, 2],  # IDs
-            'cover_travel_accomodation': True,
-            'understand_admin_fee': True,
-            'travel_reimbursement': 'book', 'travel_reimbursement_other': '',
-            'admin_fee_payment': 'self-organized', 'comment': '',
-            'privacy_consent': True,
-        }
-        rv = self.client.post(reverse('swc_workshop_request'), data,
-                              follow=True)
-        self.assertEqual(rv.status_code, 200)
-        content = rv.content.decode('utf-8')
-        self.assertNotIn('Fix errors below', content)
-        self.assertIn('Thank you for requesting a workshop', content)
-        self.assertEqual(EventRequest.objects.all().count(), 1)
-        self.assertEqual(EventRequest.objects.all()[0].state, 'p')
-        self.assertEqual(len(mail.outbox), 1)
-        msg = mail.outbox[0]
-        self.assertEqual(
-            msg.subject,
-            '[SWC] New workshop request: Hogwarts, United Kingdom'
-        )
+    def test_request_form_redirects(self):
+        self.assertEqual(len(EventRequest.objects.all()), 0)
+        rv = self.client.get(reverse('swc_workshop_request'))
+        self.assertRedirects(rv, reverse('workshop_request'))
+        self.assertEqual(len(EventRequest.objects.all()), 0)
 
     def test_request_discarded(self):
         """Ensure the request is discarded properly."""
@@ -94,40 +66,11 @@ class TestDCEventRequestForm(TestBase):
         ])
         self.assertEqual(fields_left, fields_right)
 
-    def test_request_added(self):
-        """Ensure the request is successfully added to the pool."""
-        data = {
-            'workshop_type': 'dc',
-            'g-recaptcha-response': 'PASSED',  # to auto-pass RECAPTCHA
-            'name': 'Harry Potter', 'email': 'harry@potter.com',
-            'affiliation': 'Hogwarts', 'location': 'United Kingdom',
-            'country': 'GB', 'preferred_date': 'soon',
-            'approx_attendees': '20-40',
-            'attendee_domains': [1, 2],  # IDs
-            'attendee_domains_other': 'Nonsesology',
-            'data_types': 'survey', 'data_types_other': '',
-            'attendee_academic_levels': [1, 2],  # IDs
-            'attendee_data_analysis_level': [1, 2],  # IDs
-            'cover_travel_accomodation': True,
-            'understand_admin_fee': True, 'fee_waiver_request': True,
-            'travel_reimbursement': 'book', 'travel_reimbursement_other': '',
-            'comment': '',
-            'privacy_consent': True,
-        }
-        rv = self.client.post(reverse('dc_workshop_request'), data,
-                              follow=True)
-        self.assertEqual(rv.status_code, 200)
-        content = rv.content.decode('utf-8')
-        self.assertNotIn('Fix errors below', content)
-        self.assertIn('Thank you for requesting a workshop', content)
-        self.assertEqual(EventRequest.objects.all().count(), 1)
-        self.assertEqual(EventRequest.objects.all()[0].state, 'p')
-        self.assertEqual(len(mail.outbox), 1)
-        msg = mail.outbox[0]
-        self.assertEqual(
-            msg.subject,
-            '[DC] New workshop request: Hogwarts, United Kingdom'
-        )
+    def test_request_form_redirects(self):
+        self.assertEqual(len(EventRequest.objects.all()), 0)
+        rv = self.client.get(reverse('dc_workshop_request'))
+        self.assertRedirects(rv, reverse('workshop_request'))
+        self.assertEqual(len(EventRequest.objects.all()), 0)
 
     def test_request_discarded(self):
         """Ensure the request is discarded properly."""

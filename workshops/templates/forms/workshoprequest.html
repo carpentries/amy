@@ -1,0 +1,17 @@
+{% extends "base_nav.html" %}
+
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block logo %}
+<img src="{% static 'carpentries-banner.png' %}" alt='The Carpentries logo' class="img-fluid w-50 mx-auto d-block" />
+{% endblock %}
+
+{% block content %}
+
+<p>Thank you for requesting a workshop with The Carpentries! The questions
+below will help us match your workshop needs with our instructors and content.
+We look forward to working with you.</p>
+
+{% crispy form %}
+{% endblock %}

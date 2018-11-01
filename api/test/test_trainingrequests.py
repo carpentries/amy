@@ -26,7 +26,6 @@ from workshops.models import (
 
 class TestListingTrainingRequests(APITestBase):
     view = TrainingRequests
-    serializer_class = TrainingRequests.serializer_class
     url = 'api:training-requests'
     maxDiff = None
 
@@ -265,7 +264,8 @@ class TestListingTrainingRequests(APITestBase):
     def test_serialization(self, mock_request):
         # we're mocking a request here because it's not possible to create
         # a fake request context for the view
-        response = self.serializer_class(self.view().get_queryset(), many=True)
+        serializer_class = self.view().get_serializer_class()
+        response = serializer_class(self.view().get_queryset(), many=True)
         self.assertEqual(len(response.data), 2)
         self.assertEqual(response.data[0], self.expecting[0])
         self.assertEqual(response.data[1], self.expecting[1])
@@ -309,7 +309,8 @@ class TestListingTrainingRequests(APITestBase):
         """Some columns are M2M fields, but should be displayed as a string,
         not array /list/."""
         # the same mocking as in test_serialization
-        response = self.serializer_class(self.view().get_queryset(), many=True)
+        serializer_class = self.view().get_serializer_class()
+        response = serializer_class(self.view().get_queryset(), many=True)
         self.assertEqual(len(response.data), 2)
 
         self.assertEqual(response.data[0]['domains'], 'Chemistry, Medicine')

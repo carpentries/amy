@@ -106,7 +106,14 @@ $(document).ready(function() {
         data-toggle="popover"
         data-content="Content of a popup">Hover, focus or click me!</span>
   */
-  $('[data-toggle="popover"]').popover({placement: "auto", trigger: "click hover focus"});
+  $('[data-toggle="popover"]').popover({placement: "auto"});
+
+  /* Some pages may have checkboxes in tables selected by default; in those
+  cases, we should update URL in a[amy-download-selected] when the page
+  loads. */
+  $('a[amy-download-selected]').each(function(i, obj) {
+    $(this).updateIdsInHref();
+  });
 
   /*
   Add <input type="checkbox" select-all-checkbox> to your form to let user
@@ -123,6 +130,10 @@ $(document).ready(function() {
     } else {
         checkboxes.prop('checked', false);
     }
+    // below runs `updateIdsInHref` for all matching <a> (`.each` is required)
+    $(this).closest('form').find('a[amy-download-selected]').each(function(i, obj) {
+      $(this).updateIdsInHref();
+    });
   });
 
   /* When a checkbox is clicked, update "select all" checkbox state to checked,
@@ -130,7 +141,10 @@ $(document).ready(function() {
   on the state of all checkboxes. */
   $('[respond-to-select-all-checkbox]').change(function () {
     $(this).closest('form').find(':checkbox[select-all-checkbox]').updateSelectAllCheckbox();
-    $(this).closest('form').find('a#download_selected').updateIdsInHref();
+    // below runs `updateIdsInHref` for all matching <a> (`.each` is required)
+    $(this).closest('form').find('a[amy-download-selected]').each(function(i, obj) {
+      $(this).updateIdsInHref();
+    });
   });
 
   /* Set "select all" checkboxes to proper initial state. */

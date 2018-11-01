@@ -31,7 +31,6 @@ class TestEventSubmitForm(TestBase):
         """Test if the submitted form adds a new event submission."""
         self.assertEqual(len(EventSubmission.objects.all()), 1)
         data = {
-            'g-recaptcha-response': 'PASSED',
             'contact_name': 'Harry Potter',
             'contact_email': 'harry@potter.com',
             'self_organized': True,
@@ -39,6 +38,8 @@ class TestEventSubmitForm(TestBase):
             'notes': '',
             'privacy_consent': True,
         }
+        self.passCaptcha(data)
+
         rv = self.client.post(reverse('event_submit'), data,
                               follow=True)
         self.assertEqual(rv.status_code, 200)
@@ -49,7 +50,6 @@ class TestEventSubmitForm(TestBase):
     def test_submission_sends_email(self):
         """Test if the submitted form results in email sent."""
         data = {
-            'g-recaptcha-response': 'PASSED',
             'contact_name': 'Harry Potter',
             'contact_email': 'harry@potter.com',
             'self_organized': True,
@@ -57,6 +57,8 @@ class TestEventSubmitForm(TestBase):
             'notes': '',
             'privacy_consent': True,
         }
+        self.passCaptcha(data)
+
         rv = self.client.post(reverse('event_submit'), data,
                               follow=True)
         self.assertEqual(rv.status_code, 200)

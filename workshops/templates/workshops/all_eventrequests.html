@@ -5,6 +5,9 @@
 {% load state %}
 
 {% block content %}
+  <div class="alert alert-warning">
+    <strong>Warning!</strong> This feature was disabled. Users are no longer able to add event requests.
+  </div>
   {% if requests %}
   <table class="table table-striped">
     <tr>
@@ -15,7 +18,7 @@
       <th>Type</th>
       <th width="80">State
         <i class="fas fa-question-circle"
-           data-toggle="popover" data-html="true"
+           data-toggle="popover" data-html="true" data-trigger="hover"
            data-content="<span class='badge badge-warning'>Pending</span> <span class='badge badge-danger'>Discarded</span> <span class='badge badge-success'>Accepted</span>"></i>
       </th>
       <th>Comment</th>

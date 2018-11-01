@@ -11,11 +11,16 @@ from .models import (
     Badge,
     TrainingRequirement,
     TrainingRequest,
+    Curriculum,
 )
 
 
 class RoleAdmin(admin.ModelAdmin):
     list_display = ('name', 'verbose_name')
+
+
+class CurriculumAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'slug', 'name', 'active', 'unknown')
 
 
 admin.site.register(Tag)
@@ -28,3 +33,4 @@ admin.site.register(KnowledgeDomain)
 admin.site.register(Badge)
 admin.site.register(TrainingRequirement)
 admin.site.register(TrainingRequest)
+admin.site.register(Curriculum, CurriculumAdmin)

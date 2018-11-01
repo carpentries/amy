@@ -5,7 +5,6 @@ from workshops.models import (
     Airport,
     Person,
     Event,
-    TodoItem,
     Tag,
     Organization,
     Task,
@@ -103,27 +102,6 @@ class ExportEventSerializer(serializers.ModelSerializer):
             'slug', 'start', 'end', 'url', 'humandate', 'contact', 'country',
             'venue', 'address', 'latitude', 'longitude', 'eventbrite_id',
             'tags',
-        )
-
-
-class TimelineTodoSerializer(serializers.ModelSerializer):
-    content = serializers.SerializerMethodField()
-    start = serializers.DateField(format=None, source='due')
-
-    class Meta:
-        model = TodoItem
-        fields = (
-            'content', 'start',
-        )
-
-    def get_content(self, obj):
-        """Return HTML containing interesting information for admins.  This
-        will be displayed on labels in the timeline."""
-
-        return '<a href="{url}">{event}</a><br><small>{todo}</small>'.format(
-            url=obj.event.get_absolute_url(),
-            event=obj.event.slug,
-            todo=obj.title,
         )
 
 
@@ -232,12 +210,6 @@ class TaskSerializer(serializers.ModelSerializer):
         fields = ('event', 'person', 'role')
 
 
-class TodoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TodoItem
-        fields = ('completed', 'title', 'due', 'additional')
-
-
 class EventSerializer(serializers.ModelSerializer):
     country = serializers.CharField()
     start = serializers.DateField(format=None)
@@ -254,12 +226,6 @@ class EventSerializer(serializers.ModelSerializer):
         lookup_field='slug',
         lookup_url_kwarg='event_slug',
     )
-    todos = serializers.HyperlinkedIdentityField(
-        view_name='api:event-todos-list',
-        lookup_field='slug',
-        lookup_url_kwarg='event_slug',
-        source='todoitem_set',
-    )
     assigned_to = serializers.HyperlinkedRelatedField(
         read_only=True, view_name='api:person-detail')
 
@@ -269,7 +235,7 @@ class EventSerializer(serializers.ModelSerializer):
             'slug', 'completed', 'start', 'end', 'host', 'administrator',
             'tags', 'website_url', 'reg_key', 'admin_fee', 'invoice_status',
             'attendance', 'contact', 'country', 'venue', 'address',
-            'latitude', 'longitude', 'notes', 'tasks', 'todos', 'assigned_to',
+            'latitude', 'longitude', 'notes', 'tasks', 'assigned_to',
         )
 
 
@@ -344,7 +310,7 @@ class TrainingRequestWithPersonSerializer(TrainingRequestSerializer):
     def get_training_tasks(self, obj):
         if obj.person:
             return ", ".join(
-                map(lambda x: x.event.slug, obj.person.task_set.all())
+                map(lambda x: x.event.slug, obj.person.training_tasks)
             )
         else:
             return ""
@@ -370,6 +336,37 @@ class TrainingRequestWithPersonSerializer(TrainingRequestSerializer):
             'reason', 'comment',
             'training_completion_agreement', 'workshop_teaching_agreement',
             'data_privacy_agreement', 'code_of_conduct_agreement',
+        )
+
+
+class TrainingRequestForManualScoringSerializer(TrainingRequestSerializer):
+    request_id = serializers.IntegerField(source='pk')
+
+    class Meta:
+        model = TrainingRequest
+        fields = (
+            'request_id',
+            'score_manual',
+            'score_notes',
+            'group_name',
+            'personal',
+            'middle',
+            'family',
+            'underrepresented',
+            'affiliation',
+            'nonprofit_teaching_experience',
+            'previous_training',
+            'previous_training_other',
+            'previous_training_explanation',
+            'previous_experience',
+            'previous_experience_other',
+            'previous_experience_explanation',
+            'teaching_frequency_expectation',
+            'teaching_frequency_expectation_other',
+            'max_travelling_frequency',
+            'max_travelling_frequency_other',
+            'reason',
+            'comment',
         )
 
 

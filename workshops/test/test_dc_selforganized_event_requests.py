@@ -49,74 +49,11 @@ class TestDCSelfOrganizedEventRequestForm(TestBase):
         ]
         self.assertEqual(fields_left, fields_right)
 
-    def test_request_added(self):
-        """Test if the submitted form adds a new event request."""
+    def test_request_form_redirects(self):
         self.assertEqual(len(DCSelfOrganizedEventRequest.objects.all()), 1)
-        data = {
-            'g-recaptcha-response': 'PASSED',
-            'name': 'Harry Potter',
-            'email': 'harry@potter.com',
-            'organization': 'Hogwarts School of Witchcraft and Wizardry',
-            'is_partner': 'y',
-            'instructor_status': 'both',
-            'location': 'Scotland',
-            'country': 'GB',
-            'dates': '2016-06-18 to 2016-06-19',
-            'payment': 'invoice',
-            'handle_registration': True,
-            'distribute_surveys': True,
-            'follow_code_of_conduct': True,
-            'domains': DCWorkshopDomain.objects
-                                       .values_list('pk', flat=True)[0:2],
-            'topics': DCWorkshopTopic.objects
-                                     .values_list('pk', flat=True)[0:2],
-            'attendee_academic_levels': [AcademicLevel.objects.first().pk],
-            'attendee_data_analysis_level':
-                [DataAnalysisLevel.objects.first().pk],
-            'privacy_consent': True,
-        }
-        rv = self.client.post(reverse('dc_workshop_selforganized_request'),
-                              data, follow=True)
-        self.assertEqual(rv.status_code, 200)
-        self.assertNotIn('form', rv.context)
-        self.assertEqual(len(DCSelfOrganizedEventRequest.objects.all()), 2)
-
-    def test_request_sends_email(self):
-        """Test if the submitted form results in email sent."""
-        data = {
-            'g-recaptcha-response': 'PASSED',
-            'name': 'Harry Potter',
-            'email': 'harry@potter.com',
-            'organization': 'Hogwarts School of Witchcraft and Wizardry',
-            'is_partner': 'y',
-            'instructor_status': 'both',
-            'location': 'Scotland',
-            'country': 'GB',
-            'dates': '2016-06-18 to 2016-06-19',
-            'payment': 'invoice',
-            'handle_registration': True,
-            'distribute_surveys': True,
-            'follow_code_of_conduct': True,
-            'domains': DCWorkshopDomain.objects
-                                       .values_list('pk', flat=True)[0:2],
-            'topics': DCWorkshopTopic.objects
-                                     .values_list('pk', flat=True)[0:2],
-            'attendee_academic_levels': [AcademicLevel.objects.first().pk],
-            'attendee_data_analysis_level':
-                [DataAnalysisLevel.objects.first().pk],
-            'privacy_consent': True,
-        }
-        rv = self.client.post(reverse('dc_workshop_selforganized_request'),
-                              data, follow=True)
-        self.assertEqual(rv.status_code, 200)
-        self.assertNotIn('form', rv.context)
-        self.assertEqual(len(mail.outbox), 1)
-        msg = mail.outbox[0]
-        self.assertEqual(
-            msg.subject,
-            'DC: new self-organized workshop request from {} @ {}'.format(
-                'Harry Potter', 'Hogwarts School of Witchcraft and Wizardry')
-        )
+        rv = self.client.get(reverse('dc_workshop_selforganized_request'))
+        self.assertRedirects(rv, reverse('workshop_request'))
+        self.assertEqual(len(DCSelfOrganizedEventRequest.objects.all()), 1)
 
     def test_request_accepted_with_event(self):
         self.assertEqual(self.request.state, "p")

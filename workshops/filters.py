@@ -30,6 +30,8 @@ from workshops.models import (
     DCSelfOrganizedEventRequest,
     TrainingRequest,
     Membership,
+    Curriculum,
+    WorkshopRequest,
 )
 
 
@@ -194,40 +196,6 @@ class EventFilter(AMYFilterSet):
         ]
 
 
-def filter_active_eventrequest(qs, name, value):
-    if value == 'true':
-        return qs.filter(active=True)
-    elif value == 'false':
-        return qs.filter(active=False)
-    return qs
-
-
-class EventRequestFilter(AMYFilterSet, StateFilterSet):
-    assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2())
-    country = AllCountriesFilter(widget=Select2())
-    workshop_type = django_filters.ChoiceFilter(
-        choices=(('swc', 'Software-Carpentry'),
-                 ('dc', 'Data-Carpentry')),
-        label='Workshop type',
-        empty_label='All',
-    )
-
-    order_by = django_filters.OrderingFilter(
-        fields=(
-            'created_at',
-        ),
-    )
-
-    class Meta:
-        model = EventRequest
-        fields = [
-            'state',
-            'assigned_to',
-            'workshop_type',
-            'country',
-        ]
-
-
 class OrganizationFilter(AMYFilterSet):
     country = AllCountriesFilter(widget=Select2())
 
@@ -251,12 +219,12 @@ class OrganizationFilter(AMYFilterSet):
         ]
 
 
-def filter_training_seats_only(queryset, name, active):
+def filter_active_memberships_only(queryset, name, active):
     """Limit Memberships to only active entries."""
     if active:
         today = date.today()
-        return queryset.filter(agreement_start__gte=today,
-                               agreement_end__lte=today)
+        return queryset.filter(agreement_start__lte=today,
+                               agreement_end__gte=today)
     else:
         return queryset
 
@@ -291,7 +259,7 @@ class MembershipFilter(AMYFilterSet):
 
     active_only = django_filters.BooleanFilter(
         label='Only show active memberships',
-        method=filter_training_seats_only,
+        method=filter_active_memberships_only,
         widget=widgets.CheckboxInput)
 
     training_seats_only = django_filters.BooleanFilter(
@@ -332,7 +300,7 @@ class MembershipTrainingsFilter(AMYFilterSet):
 
     active_only = django_filters.BooleanFilter(
         label='Only show active memberships',
-        method=filter_training_seats_only,
+        method=filter_active_memberships_only,
         widget=widgets.CheckboxInput)
 
     training_seats_only = django_filters.BooleanFilter(
@@ -744,6 +712,57 @@ class BadgeAwardsFilter(AMYFilterSet):
         fields = (
             'awarded_after', 'awarded_before', 'event',
         )
+
+
+class EventRequestFilter(AMYFilterSet, StateFilterSet):
+    assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2())
+    country = AllCountriesFilter(widget=Select2())
+    workshop_type = django_filters.ChoiceFilter(
+        choices=(('swc', 'Software-Carpentry'),
+                 ('dc', 'Data-Carpentry')),
+        label='Workshop type',
+        empty_label='All',
+    )
+
+    order_by = django_filters.OrderingFilter(
+        fields=(
+            'created_at',
+        ),
+    )
+
+    class Meta:
+        model = EventRequest
+        fields = [
+            'state',
+            'assigned_to',
+            'workshop_type',
+            'country',
+        ]
+
+
+class WorkshopRequestFilter(AMYFilterSet, StateFilterSet):
+    assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2())
+    country = AllCountriesFilter(widget=Select2())
+    requested_workshop_types = django_filters.ModelMultipleChoiceFilter(
+        label='Requested workshop types',
+        queryset=Curriculum.objects.all(),
+        widget=widgets.CheckboxSelectMultiple(),
+    )
+
+    order_by = django_filters.OrderingFilter(
+        fields=(
+            'created_at',
+        ),
+    )
+
+    class Meta:
+        model = WorkshopRequest
+        fields = [
+            'state',
+            'assigned_to',
+            'requested_workshop_types',
+            'country',
+        ]
 
 
 class InvoiceRequestFilter(AMYFilterSet):

@@ -2,12 +2,17 @@
 Django settings for AMY project.
 """
 
+from collections import namedtuple
 import json
 import os
 import sys
 
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import ugettext_lazy as _
+
+
+# some basic structures
+Criterium = namedtuple('Criterium', ['name', 'value'])
 
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
@@ -61,16 +66,11 @@ else:
 
 # error email recipients
 ADMINS = (
-    ('Sysadmins ML', 'sysadmin@lists.software-carpentry.org'),
+    ('Sysadmins ML', 'sysadmin@lists.carpentries.org'),
 )
 # sender for error emails
 SERVER_EMAIL = os.environ.get('AMY_SERVER_EMAIL', 'root@localhost')
 
-# addresses to receive "New workshop request" or "New profile update request"
-# notifications
-REQUEST_NOTIFICATIONS_RECIPIENTS = (
-    'admin-all@carpentries.org',
-)
 # default sender for non-error messages
 DEFAULT_FROM_EMAIL = os.environ.get('AMY_DEFAULT_FROM_EMAIL',
                                     'webmaster@localhost')
@@ -90,6 +90,31 @@ EMAIL_BACKEND = 'anymail.backends.mailgun.EmailBackend'
 if DEBUG:
     # outgoing mails will be stored in `django.core.mail.outbox`
     EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
+
+################# N O T I F I C A T I O N S #################
+# Admin notification filtering
+crit_UK = Criterium('country', 'GB')
+crit_CA = Criterium('country', 'CA')
+crit_NZ = Criterium('country', 'NZ')
+crit_AU = Criterium('country', 'AU')
+crit_Africa = Criterium(
+    'country',
+    (
+        'DZ', 'AO', 'BJ', 'BW', 'BF', 'BI', 'CM', 'CV', 'CF', 'TD', 'KM', 'CD',
+        'DJ', 'EG', 'GQ', 'ER', 'ET', 'GA', 'GM', 'GH', 'GN', 'GW', 'CI', 'KE',
+        'LS', 'LR', 'LY', 'MG', 'MW', 'ML', 'MR', 'MU', 'YT', 'MA', 'MZ', 'NA',
+        'NE', 'NG', 'CG', 'RE', 'RW', 'SH', 'ST', 'SN', 'SC', 'SL', 'SO', 'ZA',
+        'SS', 'SD', 'SZ', 'TZ', 'TG', 'TN', 'UG', 'EH', 'ZM', 'ZW',
+    ),
+)
+ADMIN_NOTIFICATION_CRITERIA = {
+    crit_UK: 'admin-uk@carpentries.org',
+    crit_CA: 'admin-ca@carpentries.org',
+    crit_NZ: 'admin-nz@carpentries.org',
+    crit_AU: 'admin-au@carpentries.org',
+    crit_Africa: 'admin-afr@carpentries.org',
+}
+ADMIN_NOTIFICATION_CRITERIA_DEFAULT = 'team@carpentries.org'
 
 ##################### S I T E,  H O S T S #####################
 

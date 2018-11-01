@@ -22,16 +22,34 @@ from workshops.forms import BootstrapHelper
 from workshops.util import failed_to_delete, Paginator, get_pagination_items
 
 
+class FormInvalidMessageMixin:
+    """
+    Add an error message on invalid form submission.
+    """
+    form_invalid_message = ''
+
+    def form_invalid(self, form):
+        response = super().form_invalid(form)
+        message = self.get_form_invalid_message(form.cleaned_data)
+        if message:
+            messages.error(self.request, message)
+        return response
+
+    def get_form_invalid_message(self, cleaned_data):
+        return self.form_invalid_message % cleaned_data
+
+
 class AMYDetailView(DetailView):
     pass
 
 
-class AMYCreateView(SuccessMessageMixin, CreateView):
+class AMYCreateView(SuccessMessageMixin, FormInvalidMessageMixin, CreateView):
     """
     Class-based view for creating objects that extends default template context
     by adding model class used in objects creation.
     """
     success_message = '{name} was created successfully.'
+    form_invalid_message = 'Please fix errors in the form below.'
 
     template_name = 'workshops/generic_form.html'
 
@@ -180,12 +198,19 @@ class EmailSendMixin:
         """Generate email body (in TXT and HTML versions)."""
         return "", ""
 
+    def get_email_kwargs(self):
+        """Use this method to define email sender arguments, like:
+        * `to`: recipient address(es)
+        * `reply_to`: reply-to address
+        etc."""
+        return self.email_kwargs
+
     def prepare_email(self):
         """Set up email contents."""
         subject = self.get_subject()
         body_txt, body_html = self.get_body()
-        email = EmailMultiAlternatives(subject, body_txt,
-                                       **self.email_kwargs)
+        kwargs = self.get_email_kwargs()
+        email = EmailMultiAlternatives(subject, body_txt, **kwargs)
         email.attach_alternative(body_html, 'text/html')
         return email
 
