@@ -31,6 +31,8 @@ from .forms import (
 
 @login_required
 def dispatch(request):
+    """If user is admin, then show them admin dashboard; otherwise redirect
+    them to trainee dashboard."""
     if is_admin(request.user):
         return redirect(reverse('admin-dashboard'))
     else:
@@ -93,7 +95,7 @@ def admin_dashboard(request):
         'updated_metadata': updated_metadata,
         'carpentries': Tag.objects.carpentries(),
     }
-    return render(request, 'workshops/admin_dashboard.html', context)
+    return render(request, 'dashboard/admin_dashboard.html', context)
 
 
 # ------------------------------------------------------------
@@ -109,7 +111,7 @@ def trainee_dashboard(request):
         'title': 'Your profile',
         'workshops': workshops,
     }
-    return render(request, 'workshops/trainee_dashboard.html', context)
+    return render(request, 'dashboard/trainee_dashboard.html', context)
 
 
 @login_required
@@ -142,7 +144,7 @@ def autoupdate_profile(request):
         'title': 'Update Your Profile',
         'form': form,
     }
-    return render(request, 'workshops/autoupdate_profile.html', context)
+    return render(request, 'dashboard/autoupdate_profile.html', context)
 
 
 @login_required
@@ -208,4 +210,4 @@ def training_progress(request):
         'swc_form': swc_form,
         'dc_form': dc_form,
     }
-    return render(request, 'workshops/training_progress.html', context)
+    return render(request, 'dashboard/training_progress.html', context)

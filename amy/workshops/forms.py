@@ -44,7 +44,7 @@ from workshops.models import (
     WorkshopRequest,
 )
 # this is used instead of Django Autocomplete Light widgets
-# see issue #1330
+# see issue #1330: https://github.com/swcarpentry/amy/issues/1330
 from workshops.fields import (
     Select2,
     Select2Multiple,
