@@ -5,11 +5,6 @@ from django.db.models import (
     Value,
     IntegerField,
     Count,
-    Q,
-    F,
-    ProtectedError,
-    Sum,
-    Prefetch,
 )
 from django.shortcuts import render, redirect
 from django.urls import reverse
@@ -22,15 +17,15 @@ from workshops.models import (
     TrainingRequirement,
     TrainingProgress,
 )
-from workshops.forms import (
-    AutoUpdateProfileForm,
-    SendHomeworkForm,
-)
 from workshops.util import (
     login_required,
     admin_required,
     is_admin,
     assignment_selection,
+)
+from .forms import (
+    AutoUpdateProfileForm,
+    SendHomeworkForm,
 )
 
 
@@ -108,7 +103,7 @@ def admin_dashboard(request):
 @login_required
 def trainee_dashboard(request):
     # Workshops person taught at
-    workshops = request.user.task_set.all()
+    workshops = request.user.task_set.select_related('role', 'event')
 
     context = {
         'title': 'Your profile',

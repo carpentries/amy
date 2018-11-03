@@ -16,7 +16,6 @@ from django.forms import (
     TextInput,
     modelformset_factory,
     RadioSelect,
-    URLField,
 )
 from django_countries import Countries
 from django_countries.fields import CountryField
@@ -1565,65 +1564,6 @@ class TrainingRequestsMergeForm(forms.Form):
         choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
     )
 
-
-class AutoUpdateProfileForm(forms.ModelForm):
-    username = forms.CharField(disabled=True, required=False)
-    github = forms.CharField(
-        disabled=True, required=False,
-        help_text='If you want to change your github username, please email '
-                  'us at <a href="mailto:team@carpentries.org">'
-                  'team@carpentries.org</a>.')
-
-    country = CountryField().formfield(
-        required=False,
-        help_text='Your country of residence.',
-        widget=ListSelect2(),
-    )
-
-    languages = forms.ModelMultipleChoiceField(
-        label='Languages',
-        required=False,
-        queryset=Language.objects.all(),
-        widget=ModelSelect2Multiple(url='language-lookup')
-    )
-
-    helper = BootstrapHelper(add_cancel_button=False)
-
-    class Meta:
-        model = Person
-        fields = [
-            'personal',
-            'middle',
-            'family',
-            'email',
-            'gender',
-            'may_contact',
-            'publish_profile',
-            'country',
-            'airport',
-            'github',
-            'twitter',
-            'url',
-            'username',
-            'affiliation',
-            'domains',
-            'lessons',
-            'languages',
-            'occupation',
-            'orcid',
-        ]
-        readonly_fields = (
-            'username',
-            'github',
-        )
-        widgets = {
-            'gender': forms.RadioSelect(),
-            'domains': forms.CheckboxSelectMultiple(),
-            'lessons': forms.CheckboxSelectMultiple(),
-            'airport': ListSelect2(),
-        }
-
-
 class TrainingProgressForm(forms.ModelForm):
     trainee = forms.ModelChoiceField(
         label='Trainee',
@@ -1971,21 +1911,6 @@ class MatchTrainingRequestForm(forms.Form):
     class Meta:
         fields = [
             'person',
-        ]
-
-
-class SendHomeworkForm(forms.ModelForm):
-    url = URLField(label='URL')
-
-    def __init__(self, submit_name, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper = BootstrapHelper(submit_name=submit_name,
-                                      add_cancel_button=False)
-
-    class Meta:
-        model = TrainingProgress
-        fields = [
-            'url',
         ]
 
 
