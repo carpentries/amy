@@ -2762,6 +2762,7 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     LC_LESSONS_LINK = (
         "<a href='https://librarycarpentry.org/'>"
         "Library Carpentry</a>"
+    )
     requested_workshop_types = models.ManyToManyField(
         Curriculum, limit_choices_to={'active': True},
         blank=False,
