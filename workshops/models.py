@@ -2775,7 +2775,7 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
                   "match. If your learners are people working in library and "
                   "information related roles interested in learning data and "
                   "software skills, Library Carpentry is the best choice. " 
-                  "Please visit the " + SWC_LESSONS_LINK + " or the "
+                  "Please visit the " + SWC_LESSONS_LINK + ", "
                   + DC_LESSONS_LINK + LC_LESSONS_LINK +
                   " for more information about any of our lessons. If you’re "
                   "not sure and would like to discuss with us, please select "
