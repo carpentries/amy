@@ -1,8 +1,13 @@
 from django.contrib.auth.models import Group
 from django.urls import reverse
 
-from .base import TestBase
-from ..models import Event, Organization, Tag, Person
+from workshops.test import TestBase
+from workshops.models import (
+    Event,
+    Organization,
+    Tag,
+    Person,
+)
 
 
 class TestAdminDashboard(TestBase):

@@ -1,6 +1,10 @@
 from django.urls import reverse
 
-from workshops.models import Person, Qualification, KnowledgeDomain
+from workshops.models import (
+    Person,
+    Qualification,
+    KnowledgeDomain,
+)
 from workshops.test import TestBase
 
 
