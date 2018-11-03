@@ -70,7 +70,7 @@ if '--keepdb' in sys.argv:
     # faster than sqlite3 database in a file. However, we may want to keep
     # database between test launches, so that we avoid the overhead of
     # applying migrations on each test launch.
-    DATABASES['default']['TEST']['NAME'] = 'test_db.sqlite3'
+    DATABASES['default'].update(dict(TEST=dict(NAME='test_db.sqlite3')))
 
 # URLS
 # -----------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 from django.urls import reverse
 
 from workshops.models import Person, Role, TrainingRequest
-from workshops.test import TestBase
+from workshops.tests import TestBase
 
 
 class TestTrainingRequestForm(TestBase):

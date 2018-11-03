@@ -4,7 +4,7 @@ from django.urls import reverse
 
 from workshops.models import Person, Award, Badge, TrainingProgress, \
     TrainingRequirement
-from workshops.test import TestBase
+from workshops.tests import TestBase
 
 
 class TestTraineeDashboard(TestBase):

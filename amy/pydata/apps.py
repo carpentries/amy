@@ -16,8 +16,8 @@ class PyDataConfig(AppConfig):
 
         from workshops.forms import PersonForm, TaskForm, SponsorshipForm
         from workshops.models import Person, Task, Organization, Sponsorship
-        from workshops.test.base import TestBase
-        from workshops.test.test_sponsorship import TestSponsorshipViews
+        from workshops.tests.base import TestBase
+        from workshops.tests.test_sponsorship import TestSponsorshipViews
         from workshops.views import EventCreate, PersonCreate
 
         # Add fixtures within pydata app to testing database
