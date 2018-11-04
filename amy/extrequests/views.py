@@ -22,6 +22,15 @@ from django.db.models import (
 from django.shortcuts import redirect, render, get_object_or_404
 from django.urls import reverse
 
+from extrequests.forms import (
+    MatchTrainingRequestForm,
+    BulkMatchTrainingRequestForm,
+    BulkChangeTrainingRequestForm,
+    TrainingRequestUpdateForm,
+    TrainingRequestsSelectionForm,
+    TrainingRequestsMergeForm,
+    WorkshopRequestAdminForm,
+)
 from workshops.base_views import (
     AMYUpdateView,
     AMYListView,
@@ -34,15 +43,8 @@ from workshops.base_views import (
 from workshops.forms import (
     AdminLookupForm,
     BootstrapHelper,
-    EventForm,
-    MatchTrainingRequestForm,
-    BulkMatchTrainingRequestForm,
-    BulkChangeTrainingRequestForm,
-    TrainingRequestUpdateForm,
-    TrainingRequestsSelectionForm,
-    TrainingRequestsMergeForm,
-    WorkshopRequestAdminForm,
     BulkUploadCSVForm,
+    EventForm,
 )
 from workshops.filters import (
     TrainingRequestFilter,

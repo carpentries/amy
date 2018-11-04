@@ -13,6 +13,14 @@ from django.db import (
 from django.shortcuts import redirect, render, get_object_or_404
 from django.urls import reverse
 
+from extrequests.deprecated_forms import (
+    SWCEventRequestNoCaptchaForm,
+    DCEventRequestNoCaptchaForm,
+    EventSubmitFormNoCaptcha,
+    DCSelfOrganizedEventRequestFormNoCaptcha,
+    ProfileUpdateRequestFormNoCaptcha,
+    InvoiceRequestUpdateForm,
+)
 from workshops.base_views import (
     AMYUpdateView,
     AMYListView,
@@ -24,14 +32,8 @@ from workshops.base_views import (
 from workshops.forms import (
     AdminLookupForm,
     BootstrapHelper,
-    SWCEventRequestNoCaptchaForm,
-    DCEventRequestNoCaptchaForm,
     EventForm,
-    InvoiceRequestUpdateForm,
-    EventSubmitFormNoCaptcha,
-    DCSelfOrganizedEventRequestFormNoCaptcha,
     PersonLookupForm,
-    ProfileUpdateRequestFormNoCaptcha,
 )
 from workshops.filters import (
     EventRequestFilter,

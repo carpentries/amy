@@ -1,16 +1,20 @@
 from captcha.fields import ReCaptchaField
 from django import forms
 
+from extrequests.forms import (
+    WorkshopRequestBaseForm,
+)
 from workshops.fields import (
     RadioSelectWithOther,
     CheckboxSelectMultipleWithOthers,
     ListSelect2,
 )
+from workshops.models import (
+    TrainingRequest,
+)
 from workshops.forms import (
     BootstrapHelper,
-    WorkshopRequestBaseForm,
 )
-from workshops.models import TrainingRequest
 
 
 class TrainingRequestForm(forms.ModelForm):
@@ -65,11 +69,15 @@ class TrainingRequestForm(forms.ModelForm):
             'domains': CheckboxSelectMultipleWithOthers('domains_other'),
             'gender': forms.RadioSelect(),
             'previous_involvement': forms.CheckboxSelectMultiple(),
-            'previous_training': RadioSelectWithOther('previous_training_other'),
-            'previous_experience': RadioSelectWithOther('previous_experience_other'),
+            'previous_training': RadioSelectWithOther(
+                'previous_training_other'),
+            'previous_experience': RadioSelectWithOther(
+                'previous_experience_other'),
             'programming_language_usage_frequency': forms.RadioSelect(),
-            'teaching_frequency_expectation': RadioSelectWithOther('teaching_frequency_expectation_other'),
-            'max_travelling_frequency': RadioSelectWithOther('max_travelling_frequency_other'),
+            'teaching_frequency_expectation': RadioSelectWithOther(
+                'teaching_frequency_expectation_other'),
+            'max_travelling_frequency': RadioSelectWithOther(
+                'max_travelling_frequency_other'),
             'country': ListSelect2(),
         }
 
@@ -103,7 +111,8 @@ class TrainingRequestForm(forms.ModelForm):
         self.helper.layout.fields.remove('domains_other')
         self.helper.layout.fields.remove('previous_training_other')
         self.helper.layout.fields.remove('previous_experience_other')
-        self.helper.layout.fields.remove('teaching_frequency_expectation_other')
+        self.helper.layout.fields.remove(
+            'teaching_frequency_expectation_other')
         self.helper.layout.fields.remove('max_travelling_frequency_other')
 
 
