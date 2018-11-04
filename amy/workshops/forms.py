@@ -52,6 +52,8 @@ from workshops.fields import (
     ModelSelect2,
     ModelSelect2Multiple,
     TagSelect2,
+    RadioSelectWithOther,
+    CheckboxSelectMultipleWithOthers,
 )
 
 
@@ -197,38 +199,6 @@ class WidgetOverrideMixin:
         super().__init__(*args, **kwargs)
         for field, widget in widgets.items():
             self.fields[field].widget = widget
-
-
-class RadioSelectWithOther(forms.RadioSelect):
-    """A RadioSelect widget that should render additional field ('Other').
-
-    We have a number of occurences of two model fields bound together: one
-    containing predefined set of choices, the other being a text input for
-    other input user wants to choose instead of one of our predefined options.
-
-    This widget should help with rendering two widgets in one table row."""
-
-    other_field = None  # to be bound later
-
-    def __init__(self, other_field_name, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.other_field_name = other_field_name
-
-
-class CheckboxSelectMultipleWithOthers(forms.CheckboxSelectMultiple):
-    """A multiple choice widget that should render additional field ('Other').
-
-    We have a number of occurences of two model fields bound together: one
-    containing predefined set of choices, the other being a text input for
-    other input user wants to choose instead of one of our predefined options.
-
-    This widget should help with rendering two widgets in one table row."""
-
-    other_field = None  # to be bound later
-
-    def __init__(self, other_field_name, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.other_field_name = other_field_name
 
 
 class WorkshopStaffForm(forms.Form):
@@ -1281,100 +1251,6 @@ class InvoiceRequestUpdateForm(forms.ModelForm):
         fields = (
             'status', 'sent_date', 'paid_date', 'notes'
         )
-
-
-class TrainingRequestForm(forms.ModelForm):
-    # agreement fields are moved to the model
-
-    captcha = ReCaptchaField()
-
-    helper = BootstrapHelper(wider_labels=True, add_cancel_button=False)
-
-    class Meta:
-        model = TrainingRequest
-        fields = (
-            'group_name',
-            'personal',
-            'family',
-            'email',
-            'github',
-            'occupation',
-            'occupation_other',
-            'affiliation',
-            'location',
-            'country',
-            'underresourced',
-            'domains',
-            'domains_other',
-            # 'gender',
-            # 'gender_other',
-            'underrepresented',
-            'nonprofit_teaching_experience',
-            'previous_involvement',
-            'previous_training',
-            'previous_training_other',
-            'previous_training_explanation',
-            'previous_experience',
-            'previous_experience_other',
-            'previous_experience_explanation',
-            'programming_language_usage_frequency',
-            'teaching_frequency_expectation',
-            'teaching_frequency_expectation_other',
-            'max_travelling_frequency',
-            'max_travelling_frequency_other',
-            'reason',
-            # 'additional_skills',
-            'comment',
-            'data_privacy_agreement',
-            'code_of_conduct_agreement',
-            'training_completion_agreement',
-            'workshop_teaching_agreement',
-        )
-        widgets = {
-            'occupation': RadioSelectWithOther('occupation_other'),
-            'domains': CheckboxSelectMultipleWithOthers('domains_other'),
-            'gender': forms.RadioSelect(),
-            'previous_involvement': forms.CheckboxSelectMultiple(),
-            'previous_training': RadioSelectWithOther('previous_training_other'),
-            'previous_experience': RadioSelectWithOther('previous_experience_other'),
-            'programming_language_usage_frequency': forms.RadioSelect(),
-            'teaching_frequency_expectation': RadioSelectWithOther('teaching_frequency_expectation_other'),
-            'max_travelling_frequency': RadioSelectWithOther('max_travelling_frequency_other'),
-            'country': ListSelect2(),
-        }
-
-    def __init__(self, *args, initial_group_name=None, **kwargs):
-        initial = kwargs.pop('initial', {})
-        if initial_group_name is not None:
-            initial['group_name'] = initial_group_name
-        super().__init__(*args, initial=initial, **kwargs)
-        if initial_group_name is not None:
-            field = self.fields['group_name']
-            field.widget = field.hidden_widget()
-
-        # set up a layout object for the helper
-        self.helper.layout = self.helper.build_default_layout(self)
-
-        # set up RadioSelectWithOther widget so that it can display additional
-        # field inline
-        self['occupation'].field.widget.other_field = self['occupation_other']
-        self['domains'].field.widget.other_field = self['domains_other']
-        self['previous_training'].field.widget.other_field = (
-            self['previous_training_other'])
-        self['previous_experience'].field.widget.other_field = (
-            self['previous_experience_other'])
-        self['teaching_frequency_expectation'].field.widget.other_field = (
-            self['teaching_frequency_expectation_other'])
-        self['max_travelling_frequency'].field.widget.other_field = (
-            self['max_travelling_frequency_other'])
-
-        # remove that additional field
-        self.helper.layout.fields.remove('occupation_other')
-        self.helper.layout.fields.remove('domains_other')
-        self.helper.layout.fields.remove('previous_training_other')
-        self.helper.layout.fields.remove('previous_experience_other')
-        self.helper.layout.fields.remove('teaching_frequency_expectation_other')
-        self.helper.layout.fields.remove('max_travelling_frequency_other')
 
 
 class TrainingRequestUpdateForm(forms.ModelForm):

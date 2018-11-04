@@ -42,6 +42,7 @@ class NullableGithubUsernameField(models.CharField):
         GHUSERNAME_REGEX_VALIDATOR,
     ]
 
+
 #------------------------------------------------------------
 # "Rewrite" select2 widgets from Django Autocomplete Light so
 # that they don't use Django's admin-provided jQuery, which
@@ -59,20 +60,58 @@ class Select2WidgetMixin(DALSelect2WidgetMixin):
             pass
         return forms.Media(css=m._css, js=js)
 
+
 class Select2(Select2WidgetMixin, DALSelect2):
     pass
+
 
 class Select2Multiple(Select2WidgetMixin, DALSelect2Multiple):
     pass
 
+
 class ListSelect2(Select2WidgetMixin, DALListSelect2):
     pass
+
 
 class ModelSelect2(Select2WidgetMixin, DALModelSelect2):
     pass
 
+
 class ModelSelect2Multiple(Select2WidgetMixin, DALModelSelect2Multiple):
     pass
 
+
 class TagSelect2(Select2WidgetMixin, DALTagSelect2):
     pass
+
+
+class RadioSelectWithOther(forms.RadioSelect):
+    """A RadioSelect widget that should render additional field ('Other').
+
+    We have a number of occurences of two model fields bound together: one
+    containing predefined set of choices, the other being a text input for
+    other input user wants to choose instead of one of our predefined options.
+
+    This widget should help with rendering two widgets in one table row."""
+
+    other_field = None  # to be bound later
+
+    def __init__(self, other_field_name, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.other_field_name = other_field_name
+
+
+class CheckboxSelectMultipleWithOthers(forms.CheckboxSelectMultiple):
+    """A multiple choice widget that should render additional field ('Other').
+
+    We have a number of occurences of two model fields bound together: one
+    containing predefined set of choices, the other being a text input for
+    other input user wants to choose instead of one of our predefined options.
+
+    This widget should help with rendering two widgets in one table row."""
+
+    other_field = None  # to be bound later
+
+    def __init__(self, other_field_name, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.other_field_name = other_field_name

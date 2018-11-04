@@ -1,12 +1,9 @@
 from django.conf import settings
-from django.contrib import messages
-from django.shortcuts import render
 from django.template.loader import get_template
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView, RedirectView
 
 from workshops.forms import (
-    TrainingRequestForm,
     WorkshopRequestExternalForm,
 )
 from workshops.models import (
@@ -23,8 +20,12 @@ from workshops.base_views import (
     AutoresponderMixin,
 )
 
+from extforms.forms import (
+    TrainingRequestForm,
+)
 
-#------------------------------------------------------------
+
+# ------------------------------------------------------------
 # TrainingRequest views
 
 class TrainingRequestCreate(
@@ -45,7 +46,8 @@ class TrainingRequestCreate(
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        group_name = self.request.GET.get('group', None) or None  # replace empty string with None
+        # replace empty string with None
+        group_name = self.request.GET.get('group', None) or None
         kwargs['initial_group_name'] = group_name
         return kwargs
 
@@ -59,7 +61,7 @@ class TrainingRequestConfirm(LoginNotRequiredMixin, TemplateView):
         return context
 
 
-#------------------------------------------------------------
+# ------------------------------------------------------------
 # WorkshopRequest views
 
 class WorkshopRequestCreate(
@@ -126,7 +128,6 @@ class WorkshopRequestCreate(
 
     def form_valid(self, form):
         """Send email to admins if the form is valid."""
-        data = form.cleaned_data
         result = super().form_valid(form)
         return result
 
@@ -140,7 +141,7 @@ class WorkshopRequestConfirm(LoginNotRequiredMixin, TemplateView):
         return context
 
 
-#------------------------------------------------------------
+# ------------------------------------------------------------
 # Deprecated views
 
 class RedirectToWorkshopRequest(LoginNotRequiredMixin, RedirectView):

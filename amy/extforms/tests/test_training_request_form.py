@@ -1,14 +1,17 @@
+from django.core import mail
 from django.urls import reverse
 
-from workshops.models import Person, Role, TrainingRequest
+from workshops.models import Role, TrainingRequest
 from workshops.tests import TestBase
 
 
 class TestTrainingRequestForm(TestBase):
     def setUp(self):
+        self._setUpUsersAndLogin()
         self._setUpRoles()
 
     def test_request_added(self):
+        email = 'john@smith.com'
         data = {
             'group': 'coolprogrammers',
             'personal': 'John',
@@ -52,6 +55,11 @@ class TestTrainingRequestForm(TestBase):
         self._save_html(content)
         self.assertNotIn('Fix errors below', content)
         self.assertEqual(TrainingRequest.objects.all().count(), 1)
+
+        # Test that the sender was emailed
+        self.assertEqual(len(mail.outbox), 1)
+        msg = mail.outbox[0]
+        self.assertEqual(msg.to, [email])
 
 
 class GroupNameFieldTestsBase(TestBase):
@@ -111,7 +119,8 @@ class WhenNoGroupNameIsPrefilledIn(GroupNameFieldTestsBase):
     url_suffix = ''
 
     def test_group_field_should_be_displayed(self):
-        self.assertNotEqual(self.form['group_name'].attrs.get('type'), 'hidden')
+        self.assertNotEqual(self.form['group_name'].attrs.get('type'),
+                            'hidden')
 
     def test_group_name_field_should_be_optional(self):
         self.fillin_and_submit()
