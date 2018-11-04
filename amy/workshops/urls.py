@@ -92,13 +92,6 @@ urlpatterns = [
         url(r'^review_metadata_changes/dismiss/$', views.event_dismiss_metadata_changes, name='event_dismiss_metadata_changes'),
     ])),
 
-    # deprecated: invoices
-    url(r'^invoices/$', views.AllInvoiceRequests.as_view(), name='all_invoicerequests'),
-    url(r'^invoice/(?P<request_id>\d+)/', include([
-        url(r'^$', views.InvoiceRequestDetails.as_view(), name='invoicerequest_details'),
-        url(r'^edit/$', views.InvoiceRequestUpdate.as_view(), name='invoicerequest_edit'),
-    ])),
-
     # tasks
     url(r'^tasks/', include([
         url(r'^$', views.AllTasks.as_view(), name='all_tasks'),
@@ -140,76 +133,11 @@ urlpatterns = [
         url(r'^duplicate_training_requests/$', views.duplicate_training_requests, name='duplicate_training_requests'),
     ])),
 
-    # training requests
-    url(r'^training_requests/$', views.all_trainingrequests, name='all_trainingrequests'),
-    url(r'^training_requests/merge$', views.trainingrequests_merge, name='trainingrequests_merge'),
-    url(r'^training_request/(?P<pk>\d+)/', include([
-        url(r'^$', views.trainingrequest_details, name='trainingrequest_details'),
-        url(r'^edit/$', views.TrainingRequestUpdate.as_view(), name='trainingrequest_edit'),
-    ])),
-    url(r'^bulk_upload_training_request_scores/', views.bulk_upload_training_request_scores, name='bulk_upload_training_request_scores'),
-    url(r'^bulk_upload_training_request_scores/confirm/$',views.bulk_upload_training_request_scores_confirmation, name='bulk_upload_training_request_scores_confirmation'),
-
     # training progresses
     url(r'^training_progresses/add/$', views.TrainingProgressCreate.as_view(), name='trainingprogress_add'),
     url(r'^training_progress/(?P<pk>\d+)/', include([
         url(r'^edit/$', views.TrainingProgressUpdate.as_view(), name='trainingprogress_edit'),
         url(r'^delete/$', views.TrainingProgressDelete.as_view(), name='trainingprogress_delete'),
-    ])),
-
-    # unified workshop requests
-    url(r'^workshop_requests/$', views.AllWorkshopRequests.as_view(), name='all_workshoprequests'),
-    url(r'^workshop_request/(?P<request_id>\d+)/', include([
-        url(r'^$', views.WorkshopRequestDetails.as_view(), name='workshoprequest_details'),
-        url(r'^set_state/(?P<state>[\w]+)/$', views.workshoprequest_set_state, name='workshoprequest_set_state'),
-        url(r'^accept_event/$', views.workshoprequest_accept_event, name='workshoprequest_accept_event'),
-        url(r'^edit/$', views.WorkshopRequestChange.as_view(), name='workshoprequest_edit'),
-        url(r'^assign/$', views.workshoprequest_assign, name='workshoprequest_assign'),
-        url(r'^assign/(?P<person_id>[\w\.-]+)/$', views.workshoprequest_assign, name='workshoprequest_assign'),
-    ])),
-
-    # old swc/dc workshop requests
-    url(r'^requests/$', views.AllEventRequests.as_view(), name='all_eventrequests'),
-    url(r'^request/(?P<request_id>\d+)/', include([
-        url(r'^$', views.EventRequestDetails.as_view(), name='eventrequest_details'),
-        url(r'^set_state/(?P<state>[\w]+)/$', views.eventrequest_set_state, name='eventrequest_set_state'),
-        url(r'^accept_event/$', views.eventrequest_accept_event, name='eventrequest_accept_event'),
-        url(r'^edit/$', views.EventRequestChange.as_view(), name='eventrequest_edit'),
-        url(r'^assign/$', views.eventrequest_assign, name='eventrequest_assign'),
-        url(r'^assign/(?P<person_id>[\w\.-]+)/$', views.eventrequest_assign, name='eventrequest_assign'),
-    ])),
-
-    # dc self-organized workshop requests
-    url(r'^dc_selforganized_requests/$', views.AllDCSelfOrganizedEventRequests.as_view(), name='all_dcselforganizedeventrequests'),
-    url(r'^dc_selforganized_request/(?P<request_id>\d+)/', include([
-        url(r'^$', views.DCSelfOrganizedEventRequestDetails.as_view(), name='dcselforganizedeventrequest_details'),
-        url(r'^set_state/(?P<state>[\w\.-]+)/$', views.dcselforganizedeventrequest_set_state, name='dcselforganizedeventrequest_set_state'),
-        url(r'^accept_event/$', views.dcselforganizedeventrequest_accept_event, name='dcselforganizedeventrequest_accept_event'),
-        url(r'^edit/$', views.DCSelfOrganizedEventRequestChange.as_view(), name='dcselforganizedeventrequest_edit'),
-        url(r'^assign/$', views.dcselforganizedeventrequest_assign, name='dcselforganizedeventrequest_assign'),
-        url(r'^assign/(?P<person_id>[\w\.-]+)/$', views.dcselforganizedeventrequest_assign, name='dcselforganizedeventrequest_assign'),
-    ])),
-
-    # deprecated: workshop submissions
-    url(r'^submissions/$', views.AllEventSubmissions.as_view(), name='all_eventsubmissions'),
-    url(r'^submission/(?P<submission_id>\d+)/', include([
-        url(r'^$', views.EventSubmissionDetails.as_view(), name='eventsubmission_details'),
-        url(r'^set_state/(?P<state>[\w\.-]+)/$', views.eventsubmission_set_state, name='eventsubmission_set_state'),
-        url(r'^accept_event/$', views.eventsubmission_accept_event, name='eventsubmission_accept_event'),
-        url(r'^edit/$', views.EventSubmissionChange.as_view(), name='eventsubmission_edit'),
-        url(r'^assign/$', views.eventsubmission_assign, name='eventsubmission_assign'),
-        url(r'^assign/(?P<person_id>[\w\.-]+)/$', views.eventsubmission_assign, name='eventsubmission_assign'),
-    ])),
-
-    # deprecated: profile update requests
-    url(r'^profile_updates/$', views.AllProfileUpdateRequests.as_view(), name='all_profileupdaterequests'),
-    url(r'^profile_updates/closed/$', views.AllClosedProfileUpdateRequests.as_view(), name='all_closed_profileupdaterequests'),
-    url(r'^profile_update/(?P<request_id>\d+)/', include([
-        url(r'^$', views.profileupdaterequest_details, name='profileupdaterequest_details'),
-        url(r'^fix/$', views.ProfileUpdateRequestFix.as_view(), name='profileupdaterequest_fix'),
-        url(r'^discard/$', views.profileupdaterequest_discard, name='profileupdaterequest_discard'),
-        url(r'^accept/$', views.profileupdaterequest_accept, name='profileupdaterequest_accept'),
-        url(r'^accept/(?P<person_id>[\w\.-]+)/$', views.profileupdaterequest_accept, name='profileupdaterequest_accept'),
     ])),
 
     # action-required views

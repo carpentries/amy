@@ -2,11 +2,14 @@ from smtplib import SMTPException
 
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth.mixins import (
+    PermissionRequiredMixin,
+)
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ImproperlyConfigured
 from django.core.mail import EmailMultiAlternatives, EmailMessage
 from django.db.models import Model, ProtectedError
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, Http404
 from django.utils.http import is_safe_url
 from django.views.generic import (
     CreateView,
@@ -15,6 +18,10 @@ from django.views.generic import (
     FormView,
     ListView,
     DetailView,
+    RedirectView,
+)
+from django.views.generic.detail import (
+    SingleObjectMixin,
 )
 from django.template.loader import get_template
 
@@ -294,3 +301,66 @@ class StateFilterMixin:
         data = super().get_filter_data().copy()
         data['state'] = data.get('state', 'p')
         return data
+
+
+class ChangeRequestState(PermissionRequiredMixin, SingleObjectMixin,
+                         RedirectView):
+
+    # State URL argument to state model value mapping.
+    # Here 'a' and 'accepted' both match to 'a' (recognizable by model's state
+    # field), similarly for 'd' (discarded) and 'p' (pending).
+    states = {
+        'a': 'a',
+        'accepted': 'a',
+        'd': 'd',
+        'discarded': 'd',
+        'p': 'p',
+        'pending': 'p',
+    }
+
+    # Message shown when requested state is not found in `states` dictionary.
+    incorrect_state_message = 'Incorrect state value.'
+
+    # URL keyword argument for requested state.
+    state_url_kwarg = 'state'
+
+    # Message shown upon successful state change
+    success_message = ('%(name)s state was changed to "%(requested_state)s" '
+                       'successfully.')
+
+    def get_states(self):
+        """Return state-state mapping; keys are URL values, and items are
+        model-recognizable field values."""
+        return self.states
+
+    def get_incorrect_state_message(self):
+        return self.incorrect_state_message
+
+    def incorrect_state(self):
+        msg = self.get_incorrect_state_message()
+        raise Http404(msg)
+
+    def get_success_message(self):
+        return self.success_message % dict(
+            name=str(self.object),
+            requested_state=self.object.get_state_display(),
+        )
+
+    def get(self, request, *args, **kwargs):
+        states = self.get_states()
+        requested_state = self.kwargs.get(self.state_url_kwarg)
+
+        self.object = self.get_object()
+        if requested_state in states:
+            self.object.state = states[requested_state]
+            self.object.save()
+
+        else:
+            self.incorrect_state()
+
+        # show success message
+        success_message = self.get_success_message()
+        if success_message:
+            messages.success(self.request, success_message)
+
+        return super().get(request, *args, **kwargs)

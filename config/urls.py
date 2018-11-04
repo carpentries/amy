@@ -33,6 +33,7 @@ if settings.ENABLE_PYDATA:
 
 urlpatterns += [
     path('dashboard/', include('dashboard.urls')),
+    path('requests/', include('extrequests.urls')),
     path('workshops/', include('workshops.urls')),
     # path('account/', include('django.contrib.auth.urls')),
 
