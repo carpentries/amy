@@ -1,6 +1,5 @@
 from unittest.mock import patch
 
-from django.core import mail
 from django.urls import reverse
 
 from workshops.tests.base import TestBase
@@ -9,7 +8,6 @@ from workshops.models import (
     Person,
     Task,
     Award,
-    Airport,
     Qualification,
     KnowledgeDomain,
     Lesson,

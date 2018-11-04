@@ -1,20 +1,16 @@
 # coding: utf-8
-import cgi
-import datetime
 from io import StringIO
 
 from django.contrib.sessions.serializers import JSONSerializer
-from django.urls import reverse
 
-from workshops.models import Person, TrainingRequest
+from extrequests.tests.test_training_request import create_training_request
+from workshops.models import TrainingRequest
 from workshops.util import (
     upload_trainingrequest_manual_score_csv,
     clean_upload_trainingrequest_manual_score,
     update_manual_score,
 )
-
 from workshops.tests.base import TestBase
-from workshops.tests.test_training_request import create_training_request
 
 
 class UploadTrainingRequestManualScoreCSVTestCase(TestBase):

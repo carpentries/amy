@@ -1,8 +1,6 @@
 from django.urls import reverse
 
-from workshops.forms import (
-    WorkshopRequestBaseForm,
-)
+from extrequests.forms import WorkshopRequestBaseForm
 from workshops.models import (
     WorkshopRequest,
     Event,

@@ -1,8 +1,6 @@
-from django.core import mail
 from django.urls import reverse
 
-from workshops.tests.base import TestBase
-from workshops.forms import DCSelfOrganizedEventRequestForm
+from extforms.deprecated_forms import DCSelfOrganizedEventRequestForm
 from workshops.models import (
     DCSelfOrganizedEventRequest,
     DCWorkshopDomain,
@@ -13,6 +11,7 @@ from workshops.models import (
     Tag,
     Event,
 )
+from workshops.tests.base import TestBase
 
 
 class TestDCSelfOrganizedEventRequestForm(TestBase):
@@ -98,7 +97,7 @@ class TestDCSelfOrganizedEventRequestForm(TestBase):
     def test_discarded_request_reopened(self):
         self.request.state = "d"
         self.request.save()
-        rv = self.client.get(
+        self.client.get(
             reverse('dcselforganizedeventrequest_set_state',
                     args=[self.request.pk, 'pending']),
             follow=True)
@@ -108,7 +107,7 @@ class TestDCSelfOrganizedEventRequestForm(TestBase):
     def test_accepted_request_reopened(self):
         self.request.state = "a"
         self.request.save()
-        rv = self.client.get(
+        self.client.get(
             reverse('dcselforganizedeventrequest_set_state',
                     args=[self.request.pk, 'pending']),
             follow=True)

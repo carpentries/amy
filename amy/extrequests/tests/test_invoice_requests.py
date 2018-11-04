@@ -1,8 +1,8 @@
 from datetime import date
 
-from workshops.tests.base import TestBase
+from extforms.deprecated_forms import InvoiceRequestForm
 from workshops.models import InvoiceRequest, Event, Organization
-from workshops.forms import InvoiceRequestForm
+from workshops.tests.base import TestBase
 
 
 class TestInvoiceRequestForm(TestBase):

@@ -1,9 +1,8 @@
-from django.core import mail
 from django.urls import reverse
 
-from workshops.tests.base import TestBase
+from extforms.deprecated_forms import SWCEventRequestForm, DCEventRequestForm
 from workshops.models import EventRequest, Event, Organization
-from workshops.forms import SWCEventRequestForm, DCEventRequestForm
+from workshops.tests.base import TestBase
 
 
 class TestSWCEventRequestForm(TestBase):
