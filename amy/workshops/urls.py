@@ -82,8 +82,8 @@ urlpatterns = [
     ])),
     url(r'^event/(?P<slug>[\w-]+)/', include([
         url(r'^$', views.event_details, name='event_details'),
-        url(r'^assign/$', views.event_assign, name='event_assign'),
-        url(r'^assign/(?P<person_id>[\w\.-]+)/$', views.event_assign, name='event_assign'),
+        url(r'^assign/$', views.EventAssign.as_view(), name='event_assign'),
+        url(r'^assign/(?P<person_id>[\w\.-]+)/$', views.EventAssign.as_view(), name='event_assign'),
         url(r'^edit/$', views.EventUpdate.as_view(), name='event_edit'),
         url(r'^delete/$', views.EventDelete.as_view(), name='event_delete'),
         url(r'^validate/$', views.validate_event, name='validate_event'),

@@ -26,7 +26,12 @@ from django.views.generic.detail import (
 from django.template.loader import get_template
 
 from workshops.forms import BootstrapHelper
-from workshops.util import failed_to_delete, Paginator, get_pagination_items
+from workshops.util import (
+    failed_to_delete,
+    Paginator,
+    get_pagination_items,
+    assign,
+)
 
 
 class FormInvalidMessageMixin:
@@ -303,8 +308,8 @@ class StateFilterMixin:
         return data
 
 
-class ChangeRequestState(PermissionRequiredMixin, SingleObjectMixin,
-                         RedirectView):
+class ChangeRequestStateView(PermissionRequiredMixin, SingleObjectMixin,
+                             RedirectView):
 
     # State URL argument to state model value mapping.
     # Here 'a' and 'accepted' both match to 'a' (recognizable by model's state
@@ -346,6 +351,9 @@ class ChangeRequestState(PermissionRequiredMixin, SingleObjectMixin,
             requested_state=self.object.get_state_display(),
         )
 
+    def get_redirect_url(self, *args, **kwargs):
+        return self.object.get_absolute_url()
+
     def get(self, request, *args, **kwargs):
         states = self.get_states()
         requested_state = self.kwargs.get(self.state_url_kwarg)
@@ -363,4 +371,19 @@ class ChangeRequestState(PermissionRequiredMixin, SingleObjectMixin,
         if success_message:
             messages.success(self.request, success_message)
 
+        return super().get(request, *args, **kwargs)
+
+
+class AssignView(PermissionRequiredMixin, SingleObjectMixin, RedirectView):
+    # URL keyword argument for requested person.
+    permanent = False
+    person_url_kwarg = 'person_id'
+
+    def get_redirect_url(self, *args, **kwargs):
+        return self.object.get_absolute_url()
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        requested_person_id = self.kwargs.get(self.person_url_kwarg)
+        assign(request, self.object, requested_person_id)
         return super().get(request, *args, **kwargs)

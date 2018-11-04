@@ -28,7 +28,8 @@ from workshops.base_views import (
     AMYDetailView,
     StateFilterMixin,
     RedirectSupportMixin,
-    ChangeRequestState,
+    ChangeRequestStateView,
+    AssignView,
 )
 from workshops.forms import (
     AdminLookupForm,
@@ -57,7 +58,6 @@ from workshops.models import (
 from workshops.util import (
     OnlyForAdminsMixin,
     admin_required,
-    assign,
     redirect_with_next_support,
     upload_trainingrequest_manual_score_csv,
     clean_upload_trainingrequest_manual_score,
@@ -118,15 +118,12 @@ class WorkshopRequestChange(OnlyForAdminsMixin, PermissionRequiredMixin,
     form_class = WorkshopRequestAdminForm
 
 
-class WorkshopRequestSetState(OnlyForAdminsMixin, ChangeRequestState):
+class WorkshopRequestSetState(OnlyForAdminsMixin, ChangeRequestStateView):
     permission_required = 'workshops.change_workshoprequest'
     model = WorkshopRequest
     pk_url_kwarg = 'request_id'
     state_url_kwarg = 'state'
     permanent = False
-
-    def get_redirect_url(self, *args, **kwargs):
-        return self.object.get_absolute_url()
 
 
 @admin_required
@@ -161,15 +158,11 @@ def workshoprequest_accept_event(request, request_id):
                   context)
 
 
-@admin_required
-@permission_required(['workshops.change_workshoprequest'],
-                     raise_exception=True)
-def workshoprequest_assign(request, request_id, person_id=None):
-    """Set workshoprequest.assigned_to. See `assign` docstring for more
-    information."""
-    workshop_req = get_object_or_404(WorkshopRequest, pk=request_id)
-    assign(request, workshop_req, person_id)
-    return redirect(reverse('workshoprequest_details', args=[workshop_req.pk]))
+class WorkshopRequestAssign(OnlyForAdminsMixin, AssignView):
+    permission_required = 'workshops.change_workshoprequest'
+    model = WorkshopRequest
+    pk_url_kwarg = 'request_id'
+    person_url_kwarg = 'person_id'
 
 
 # ------------------------------------------------------------

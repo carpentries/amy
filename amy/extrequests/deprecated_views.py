@@ -10,7 +10,6 @@ from django.db import (
     IntegrityError,
     transaction,
 )
-from django.http import Http404
 from django.shortcuts import redirect, render, get_object_or_404
 from django.urls import reverse
 
@@ -19,7 +18,8 @@ from workshops.base_views import (
     AMYListView,
     AMYDetailView,
     StateFilterMixin,
-    ChangeRequestState,
+    ChangeRequestStateView,
+    AssignView,
 )
 from workshops.forms import (
     AdminLookupForm,
@@ -54,7 +54,6 @@ from workshops.models import (
 from workshops.util import (
     OnlyForAdminsMixin,
     admin_required,
-    assign,
     create_username,
 )
 
@@ -112,15 +111,12 @@ class EventRequestChange(OnlyForAdminsMixin, PermissionRequiredMixin,
             return None
 
 
-class EventRequestSetState(OnlyForAdminsMixin, ChangeRequestState):
+class EventRequestSetState(OnlyForAdminsMixin, ChangeRequestStateView):
     permission_required = 'workshops.change_eventrequest'
     model = EventRequest
     pk_url_kwarg = 'request_id'
     state_url_kwarg = 'state'
     permanent = False
-
-    def get_redirect_url(self, *args, **kwargs):
-        return self.object.get_absolute_url()
 
 
 @admin_required
@@ -152,14 +148,11 @@ def eventrequest_accept_event(request, request_id):
     return render(request, 'workshops/eventrequest_accept_event.html', context)
 
 
-@admin_required
-@permission_required(['workshops.change_eventrequest'], raise_exception=True)
-def eventrequest_assign(request, request_id, person_id=None):
-    """Set eventrequest.assigned_to. See `assign` docstring for more
-    information."""
-    event_req = get_object_or_404(EventRequest, pk=request_id)
-    assign(request, event_req, person_id)
-    return redirect(reverse('eventrequest_details', args=[event_req.pk]))
+class EventRequestAssign(OnlyForAdminsMixin, AssignView):
+    permission_required = 'workshops.change_eventrequest'
+    model = EventRequest
+    pk_url_kwarg = 'request_id'
+    person_url_kwarg = 'person_id'
 
 
 # ------------------------------------------------------------
@@ -240,26 +233,19 @@ def eventsubmission_accept_event(request, submission_id):
                   context)
 
 
-class EventSubmissionSetState(OnlyForAdminsMixin, ChangeRequestState):
+class EventSubmissionSetState(OnlyForAdminsMixin, ChangeRequestStateView):
     permission_required = 'workshops.change_eventsubmission'
     model = EventSubmissionModel
     pk_url_kwarg = 'submission_id'
     state_url_kwarg = 'state'
     permanent = False
 
-    def get_redirect_url(self, *args, **kwargs):
-        return self.object.get_absolute_url()
 
-
-@admin_required
-@permission_required(['workshops.change_eventsubmission'],
-                     raise_exception=True)
-def eventsubmission_assign(request, submission_id, person_id=None):
-    """Set eventsubmission.assigned_to. See `assign` docstring for more
-    information."""
-    submission = get_object_or_404(EventSubmissionModel, pk=submission_id)
-    assign(request, submission, person_id)
-    return redirect(submission.get_absolute_url())
+class EventSubmissionAssign(OnlyForAdminsMixin, AssignView):
+    permission_required = 'workshops.change_eventsubmission'
+    model = EventSubmissionModel
+    pk_url_kwarg = 'request_id'
+    person_url_kwarg = 'person_id'
 
 
 # ------------------------------------------------------------
@@ -311,15 +297,12 @@ class DCSelfOrganizedEventRequestChange(OnlyForAdminsMixin,
 
 
 class DCSelfOrganizedEventRequestSetState(OnlyForAdminsMixin,
-                                          ChangeRequestState):
+                                          ChangeRequestStateView):
     permission_required = 'workshops.change_dcselforganizedeventrequest'
     model = DCSelfOrganizedEventRequestModel
     pk_url_kwarg = 'request_id'
     state_url_kwarg = 'state'
     permanent = False
-
-    def get_redirect_url(self, *args, **kwargs):
-        return self.object.get_absolute_url()
 
 
 @admin_required
@@ -355,17 +338,11 @@ def dcselforganizedeventrequest_accept_event(request, request_id):
                   context)
 
 
-@admin_required
-@permission_required(['workshops.change_dcselforganizedeventrequest'],
-                     raise_exception=True)
-def dcselforganizedeventrequest_assign(request, request_id, person_id=None):
-    """Set eventrequest.assigned_to. See `assign` docstring for more
-    information."""
-    event_req = get_object_or_404(DCSelfOrganizedEventRequestModel,
-                                  pk=request_id)
-    assign(request, event_req, person_id)
-    return redirect(reverse('dcselforganizedeventrequest_details',
-                            args=[event_req.pk]))
+class DCSelfOrganizedEventRequestAssign(OnlyForAdminsMixin, AssignView):
+    permission_required = 'workshops.change_dcselforganizedeventrequest'
+    model = DCSelfOrganizedEventRequestModel
+    pk_url_kwarg = 'request_id'
+    person_url_kwarg = 'person_id'
 
 
 # ------------------------------------------------------------

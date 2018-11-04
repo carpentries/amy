@@ -59,6 +59,7 @@ from workshops.base_views import (
     RedirectSupportMixin,
     PrepopulationSupportMixin,
     AMYDetailView,
+    AssignView,
 )
 from workshops.filters import (
     EventFilter,
@@ -129,7 +130,6 @@ from workshops.util import (
     assignment_selection,
     get_pagination_items,
     failed_to_delete,
-    assign,
     merge_objects,
     create_username,
     admin_required,
@@ -1102,19 +1102,11 @@ def event_import(request):
         return HttpResponseBadRequest('Missing or wrong "url" parameter.')
 
 
-@admin_required
-@permission_required('workshops.change_event', raise_exception=True)
-def event_assign(request, slug, person_id=None):
-    """Set event.assigned_to. See `assign` docstring for more information."""
-    try:
-        event = Event.objects.get(slug=slug)
-
-        assign(request, event, person_id)
-
-        return redirect(reverse('event_details', args=[event.slug]))
-
-    except Event.DoesNotExist:
-        raise Http404("No event found matching the query.")
+class EventAssign(OnlyForAdminsMixin, AssignView):
+    permission_required = 'workshops.change_event'
+    model = Event
+    pk_url_kwarg = 'request_id'
+    person_url_kwarg = 'person_id'
 
 
 @admin_required
