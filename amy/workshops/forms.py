@@ -4,23 +4,18 @@ from captcha.fields import ReCaptchaField
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Div, HTML, Submit, Button, Field
-from crispy_forms.bootstrap import AccordionGroup, Accordion
-from dal import forward
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.forms import (
-    HiddenInput,
     SelectMultiple,
     CheckboxSelectMultiple,
     TextInput,
-    modelformset_factory,
     RadioSelect,
 )
 from django_countries import Countries
 from django_countries.fields import CountryField
 
-from workshops import lookups
 from workshops.models import (
     Award,
     Event,
@@ -51,7 +46,6 @@ from workshops.fields import (
     ListSelect2,
     ModelSelect2,
     ModelSelect2Multiple,
-    TagSelect2,
     RadioSelectWithOther,
     CheckboxSelectMultipleWithOthers,
 )
@@ -2108,43 +2102,4 @@ class WorkshopRequestAdminForm(WorkshopRequestBaseForm):
         widgets = WorkshopRequestBaseForm.Meta.widgets.copy()
         widgets.update(
             {'event': ListSelect2()}
-        )
-
-
-class WorkshopRequestExternalForm(WorkshopRequestBaseForm):
-    captcha = ReCaptchaField()
-
-    class Meta(WorkshopRequestBaseForm.Meta):
-        fields = (
-            "personal",
-            "family",
-            "email",
-            "institution",
-            "institution_name",
-            "institution_department",
-            "location",
-            "country",
-            "part_of_conference",
-            "conference_details",
-            "preferred_dates",
-            "language",
-            "number_attendees",
-            "domains",
-            "domains_other",
-            "academic_levels",
-            "computing_levels",
-            "audience_description",
-            "requested_workshop_types",
-            "organization_type",
-            "self_organized_github",
-            "centrally_organized_fee",
-            "waiver_circumstances",
-            "travel_expences_agreement",
-            "travel_expences_management",
-            "travel_expences_management_other",
-            "comment",
-            "data_privacy_agreement",
-            "code_of_conduct_agreement",
-            "host_responsibilities",
-            "captcha",
         )

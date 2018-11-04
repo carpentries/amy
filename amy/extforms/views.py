@@ -3,7 +3,8 @@ from django.template.loader import get_template
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView, RedirectView
 
-from workshops.forms import (
+from extforms.forms import (
+    TrainingRequestForm,
     WorkshopRequestExternalForm,
 )
 from workshops.models import (
@@ -18,10 +19,6 @@ from workshops.base_views import (
     AMYCreateView,
     EmailSendMixin,
     AutoresponderMixin,
-)
-
-from extforms.forms import (
-    TrainingRequestForm,
 )
 
 

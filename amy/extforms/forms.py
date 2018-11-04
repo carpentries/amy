@@ -1,11 +1,14 @@
 from captcha.fields import ReCaptchaField
 from django import forms
 
-from workshops.forms import BootstrapHelper
 from workshops.fields import (
     RadioSelectWithOther,
     CheckboxSelectMultipleWithOthers,
     ListSelect2,
+)
+from workshops.forms import (
+    BootstrapHelper,
+    WorkshopRequestBaseForm,
 )
 from workshops.models import TrainingRequest
 
@@ -102,3 +105,42 @@ class TrainingRequestForm(forms.ModelForm):
         self.helper.layout.fields.remove('previous_experience_other')
         self.helper.layout.fields.remove('teaching_frequency_expectation_other')
         self.helper.layout.fields.remove('max_travelling_frequency_other')
+
+
+class WorkshopRequestExternalForm(WorkshopRequestBaseForm):
+    captcha = ReCaptchaField()
+
+    class Meta(WorkshopRequestBaseForm.Meta):
+        fields = (
+            "personal",
+            "family",
+            "email",
+            "institution",
+            "institution_name",
+            "institution_department",
+            "location",
+            "country",
+            "part_of_conference",
+            "conference_details",
+            "preferred_dates",
+            "language",
+            "number_attendees",
+            "domains",
+            "domains_other",
+            "academic_levels",
+            "computing_levels",
+            "audience_description",
+            "requested_workshop_types",
+            "organization_type",
+            "self_organized_github",
+            "centrally_organized_fee",
+            "waiver_circumstances",
+            "travel_expences_agreement",
+            "travel_expences_management",
+            "travel_expences_management_other",
+            "comment",
+            "data_privacy_agreement",
+            "code_of_conduct_agreement",
+            "host_responsibilities",
+            "captcha",
+        )
