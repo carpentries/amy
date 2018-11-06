@@ -67,7 +67,7 @@ from workshops.util import (
 
 class AllEventRequests(OnlyForAdminsMixin, StateFilterMixin, AMYListView):
     context_object_name = 'requests'
-    template_name = 'workshops/all_eventrequests.html'
+    template_name = 'requests_deprecated/all_eventrequests.html'
     filter_class = EventRequestFilter
     queryset = EventRequest.objects.select_related('assigned_to')
     title = 'SWC/DC Event requests'
@@ -76,7 +76,7 @@ class AllEventRequests(OnlyForAdminsMixin, StateFilterMixin, AMYListView):
 class EventRequestDetails(OnlyForAdminsMixin, AMYDetailView):
     queryset = EventRequest.objects.all()
     context_object_name = 'object'
-    template_name = 'workshops/eventrequest.html'
+    template_name = 'requests_deprecated/eventrequest.html'
     pk_url_kwarg = 'request_id'
 
     def get_context_data(self, **kwargs):
@@ -147,7 +147,7 @@ def eventrequest_accept_event(request, request_id):
         'object': eventrequest,
         'form': form,
     }
-    return render(request, 'workshops/eventrequest_accept_event.html', context)
+    return render(request, 'requests_deprecated/eventrequest_accept_event.html', context)
 
 
 class EventRequestAssign(OnlyForAdminsMixin, AssignView):
@@ -164,7 +164,7 @@ class EventRequestAssign(OnlyForAdminsMixin, AssignView):
 
 class AllEventSubmissions(OnlyForAdminsMixin, StateFilterMixin, AMYListView):
     context_object_name = 'submissions'
-    template_name = 'workshops/all_eventsubmissions.html'
+    template_name = 'requests_deprecated/all_eventsubmissions.html'
     filter_class = EventSubmissionFilter
     queryset = EventSubmissionModel.objects.all()
     title = 'Workshop submissions'
@@ -172,7 +172,7 @@ class AllEventSubmissions(OnlyForAdminsMixin, StateFilterMixin, AMYListView):
 
 class EventSubmissionDetails(OnlyForAdminsMixin, AMYDetailView):
     context_object_name = 'object'
-    template_name = 'workshops/eventsubmission.html'
+    template_name = 'requests_deprecated/eventsubmission.html'
     queryset = EventSubmissionModel.objects.all()
     pk_url_kwarg = 'submission_id'
 
@@ -231,7 +231,7 @@ def eventsubmission_accept_event(request, submission_id):
         'form': form,
         'title': None,
     }
-    return render(request, 'workshops/eventsubmission_accept_event.html',
+    return render(request, 'requests_deprecated/eventsubmission_accept_event.html',
                   context)
 
 
@@ -258,7 +258,7 @@ class EventSubmissionAssign(OnlyForAdminsMixin, AssignView):
 class AllDCSelfOrganizedEventRequests(OnlyForAdminsMixin, StateFilterMixin,
                                       AMYListView):
     context_object_name = 'requests'
-    template_name = 'workshops/all_dcselforganizedeventrequests.html'
+    template_name = 'requests_deprecated/all_dcselforganizedeventrequests.html'
     filter_class = DCSelfOrganizedEventRequestFilter
     queryset = DCSelfOrganizedEventRequestModel.objects.all()
     title = 'Data Carpentry self-organized workshop requests'
@@ -266,7 +266,7 @@ class AllDCSelfOrganizedEventRequests(OnlyForAdminsMixin, StateFilterMixin,
 
 class DCSelfOrganizedEventRequestDetails(OnlyForAdminsMixin, AMYDetailView):
     context_object_name = 'object'
-    template_name = 'workshops/dcselforganizedeventrequest.html'
+    template_name = 'requests_deprecated/dcselforganizedeventrequest.html'
     queryset = DCSelfOrganizedEventRequestModel.objects.all()
     pk_url_kwarg = 'request_id'
 
@@ -336,7 +336,7 @@ def dcselforganizedeventrequest_accept_event(request, request_id):
         'form': form,
     }
     return render(request,
-                  'workshops/dcselforganizedeventrequest_accept_event.html',
+                  'requests_deprecated/dcselforganizedeventrequest_accept_event.html',
                   context)
 
 
@@ -354,7 +354,7 @@ class DCSelfOrganizedEventRequestAssign(OnlyForAdminsMixin, AssignView):
 
 class AllProfileUpdateRequests(OnlyForAdminsMixin, AMYListView):
     context_object_name = 'requests'
-    template_name = 'workshops/all_profileupdaterequests.html'
+    template_name = 'requests_deprecated/all_profileupdaterequests.html'
     title = 'Instructor profile update requests'
     queryset = ProfileUpdateRequest.objects.filter(active=True) \
                                            .order_by('-created_at')
@@ -428,7 +428,7 @@ def profileupdaterequest_details(request, request_id):
         'person_selected': person_selected,
         'airport': airport,
     }
-    return render(request, 'workshops/profileupdaterequest.html', context)
+    return render(request, 'requests_deprecated/profileupdaterequest.html', context)
 
 
 class ProfileUpdateRequestFix(OnlyForAdminsMixin, PermissionRequiredMixin,
@@ -569,7 +569,7 @@ def profileupdaterequest_accept(request, request_id, person_id=None):
 
 class AllInvoiceRequests(OnlyForAdminsMixin, AMYListView):
     context_object_name = 'requests'
-    template_name = 'workshops/all_invoicerequests.html'
+    template_name = 'requests_deprecated/all_invoicerequests.html'
     filter_class = InvoiceRequestFilter
     queryset = InvoiceRequest.objects.all()
     title = 'Invoice requests'
@@ -582,7 +582,7 @@ class AllInvoiceRequests(OnlyForAdminsMixin, AMYListView):
 
 class InvoiceRequestDetails(OnlyForAdminsMixin, AMYDetailView):
     context_object_name = 'object'
-    template_name = 'workshops/invoicerequest.html'
+    template_name = 'requests_deprecated/invoicerequest.html'
     queryset = InvoiceRequest.objects.all()
     pk_url_kwarg = 'request_id'
 

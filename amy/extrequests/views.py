@@ -78,7 +78,7 @@ from workshops.util import (
 
 class AllWorkshopRequests(OnlyForAdminsMixin, StateFilterMixin, AMYListView):
     context_object_name = 'requests'
-    template_name = 'workshops/all_workshoprequests.html'
+    template_name = 'requests/all_workshoprequests.html'
     filter_class = WorkshopRequestFilter
     queryset = (
         WorkshopRequest.objects.select_related('assigned_to', 'institution')
@@ -90,7 +90,7 @@ class AllWorkshopRequests(OnlyForAdminsMixin, StateFilterMixin, AMYListView):
 class WorkshopRequestDetails(OnlyForAdminsMixin, AMYDetailView):
     queryset = WorkshopRequest.objects.all()
     context_object_name = 'object'
-    template_name = 'workshops/workshoprequest.html'
+    template_name = 'requests/workshoprequest.html'
     pk_url_kwarg = 'request_id'
 
     def get_context_data(self, **kwargs):
@@ -156,7 +156,7 @@ def workshoprequest_accept_event(request, request_id):
         'object': workshoprequest,
         'form': form,
     }
-    return render(request, 'workshops/workshoprequest_accept_event.html',
+    return render(request, 'requests/workshoprequest_accept_event.html',
                   context)
 
 
@@ -304,7 +304,7 @@ def all_trainingrequests(request):
         'emails': emails,
     }
 
-    return render(request, 'workshops/all_trainingrequests.html', context)
+    return render(request, 'requests/all_trainingrequests.html', context)
 
 
 def _match_training_request_to_person(request, training_request, create=False,
@@ -409,7 +409,7 @@ def trainingrequest_details(request, pk):
         'req': req,
         'form': form,
     }
-    return render(request, 'workshops/trainingrequest.html', context)
+    return render(request, 'requests/trainingrequest.html', context)
 
 
 class TrainingRequestUpdate(RedirectSupportMixin,
@@ -434,7 +434,7 @@ def trainingrequests_merge(request):
 
     if not obj_a_pk or not obj_b_pk:
         context = {
-            'title': 'Merge Training Requests',
+            'title': 'Select Training Requests to merge',
             'form': TrainingRequestsSelectionForm(),
         }
         return render(request, 'workshops/generic_form.html', context)
@@ -516,7 +516,7 @@ def trainingrequests_merge(request):
         'obj_b': obj_b,
         'form': form,
     }
-    return render(request, 'workshops/trainingrequests_merge.html', context)
+    return render(request, 'requests/trainingrequests_merge.html', context)
 
 
 @admin_required
@@ -558,7 +558,7 @@ def bulk_upload_training_request_scores(request):
     }
     return render(
         request,
-        'workshops/trainingrequest_bulk_upload_manual_score_form.html',
+        'requests/trainingrequest_bulk_upload_manual_score_form.html',
         context,
     )
 
@@ -630,6 +630,6 @@ def bulk_upload_training_request_scores_confirmation(request):
     }
     return render(
         request,
-        'workshops/trainingrequest_bulk_upload_manual_score_confirmation.html',
+        'requests/trainingrequest_bulk_upload_manual_score_confirmation.html',
         context,
     )
