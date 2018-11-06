@@ -2759,6 +2759,10 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         "<a href='http://www.datacarpentry.org/lessons/'>"
         "Data Carpentry lessons page</a>"
     )
+    LC_LESSONS_LINK = (
+        "<a href='https://librarycarpentry.org/'>"
+        "Library Carpentry</a>"
+    )
     requested_workshop_types = models.ManyToManyField(
         Curriculum, limit_choices_to={'active': True},
         blank=False,
@@ -2768,8 +2772,11 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
                   "the best choice. If your learners are interested in "
                   "learning more about programming, including version control"
                   " and automation, Software Carpentry is likely the best "
-                  "match. Please visit the " + SWC_LESSONS_LINK + " or the "
-                  + DC_LESSONS_LINK +
+                  "match. If your learners are people working in library and "
+                  "information related roles interested in learning data and "
+                  "software skills, Library Carpentry is the best choice. " 
+                  "Please visit the " + SWC_LESSONS_LINK + ", "
+                  + DC_LESSONS_LINK + ", or the " + LC_LESSONS_LINK +
                   " for more information about any of our lessons. If you’re "
                   "not sure and would like to discuss with us, please select "
                   "the 'Not sure' option below.",
