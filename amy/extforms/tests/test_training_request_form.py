@@ -2,7 +2,7 @@ from django.core import mail
 from django.urls import reverse
 
 from workshops.models import Role, TrainingRequest
-from workshops.tests import TestBase
+from workshops.tests.base import TestBase
 
 
 class TestTrainingRequestForm(TestBase):

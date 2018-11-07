@@ -9,7 +9,7 @@ from workshops.models import (
     Curriculum,
     WorkshopRequest,
 )
-from workshops.tests import TestBase
+from workshops.tests.base import TestBase
 
 
 class TestWorkshopRequestExternalForm(TestBase):

@@ -12,7 +12,7 @@ class PyDataConfig(AppConfig):
     verbose_name = 'AMY for PyData conferences'
 
     def ready(self):
-        from . import checks
+        from pydata import checks
 
         from workshops.forms import PersonForm, TaskForm, SponsorshipForm
         from workshops.models import Person, Task, Organization, Sponsorship

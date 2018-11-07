@@ -5,7 +5,7 @@ from workshops.models import (
     Qualification,
     KnowledgeDomain,
 )
-from workshops.tests import TestBase
+from workshops.tests.base import TestBase
 
 
 class TestAutoUpdateProfile(TestBase):

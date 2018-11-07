@@ -1294,7 +1294,7 @@ class Event(AssignmentMixin, models.Model):
         return emails
 
     def get_invoice_form_url(self):
-        from .util import universal_date_format
+        from workshops.util import universal_date_format
 
         query = {
             'entry.823772951': self.venue,  # Organization to invoice

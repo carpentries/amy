@@ -8,10 +8,10 @@ from workshops.forms import (
 )
 from workshops.models import (
     EventRequest,
-    ProfileUpdateRequest,
-    InvoiceRequest,
     EventSubmission,
     DCSelfOrganizedEventRequest,
+    InvoiceRequest,
+    ProfileUpdateRequest,
     Language,
 )
 # this is used instead of Django Autocomplete Light widgets

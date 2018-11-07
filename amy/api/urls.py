@@ -2,7 +2,7 @@ from django.conf.urls import url, include
 from rest_framework_nested import routers
 from rest_framework.urlpatterns import format_suffix_patterns
 
-from . import views
+from api import views
 
 # new in Django 1.9: this defines a namespace for URLs; there's no need for
 # `namespace='api'` in the include()

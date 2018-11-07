@@ -19,8 +19,8 @@ from workshops.models import (
 from workshops.util import OnlyForAdminsMixin
 from workshops.base_views import AMYCreateView, AMYFormView
 
-from .api import PersonAPIClient, TaskAPIClient, SponsorshipAPIClient
-from .forms import PersonAddFormSet, TaskAddFormSet, SponsorshipAddFormSet
+from pydata.api import PersonAPIClient, TaskAPIClient, SponsorshipAPIClient
+from pydata.forms import PersonAddFormSet, TaskAddFormSet, SponsorshipAddFormSet
 
 
 class ConferenceImport(OnlyForAdminsMixin, View):

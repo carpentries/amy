@@ -1,7 +1,7 @@
 from django.contrib.auth.models import Group
 from django.urls import reverse
 
-from workshops.tests import TestBase
+from workshops.tests.base import TestBase
 from workshops.models import (
     Event,
     Organization,

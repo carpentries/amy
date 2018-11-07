@@ -141,7 +141,12 @@ PYDATA_APP = [
 LOCAL_APPS = [
     'amy.workshops.apps.WorkshopsConfig',
     'amy.api.apps.ApiConfig',
+    'amy.dashboard.apps.DashboardConfig',
     'amy.extforms.apps.ExtformsConfig',
+    'amy.extrequests.apps.ExtrequestsConfig',
+    'amy.fiscal.apps.FiscalConfig',
+    'amy.reports.apps.ReportsConfig',
+    'amy.trainings.apps.TrainingsConfig',
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 if ENABLE_PYDATA:

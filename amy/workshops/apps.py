@@ -1,7 +1,7 @@
 from django.apps import AppConfig
 from django.db.models.signals import m2m_changed
 
-from .signals import trainingrequest_m2m_changed
+from workshops.signals import trainingrequest_m2m_changed
 
 
 class WorkshopsConfig(AppConfig):

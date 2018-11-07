@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import (
+from workshops.models import (
     Tag,
     AcademicLevel,
     ComputingExperienceLevel,

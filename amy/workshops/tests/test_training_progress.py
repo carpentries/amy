@@ -13,7 +13,7 @@ from workshops.models import (
     Organization,
     Role,
 )
-from workshops.tests import TestBase
+from workshops.tests.base import TestBase
 
 
 class TestTrainingProgressValidation(TestBase):

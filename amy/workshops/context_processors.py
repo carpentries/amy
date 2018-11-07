@@ -1,6 +1,6 @@
-from . import __version__
+from workshops import __version__
 try:
-    from . import git_version
+    from workshops import git_version
 except ImportError:
     git_version = None
 

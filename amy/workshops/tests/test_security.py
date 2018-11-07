@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 
 from config import urls
 from workshops.models import Person
-from workshops.tests import TestBase
+from workshops.tests.base import TestBase
 from workshops.util import OnlyForAdminsMixin, LoginNotRequiredMixin, \
     admin_required, login_required, login_not_required
 

@@ -44,7 +44,7 @@ from workshops.models import (
 )
 from workshops.util import get_members, default_membership_cutoff, str2bool
 
-from .serializers import (
+from api.serializers import (
     PersonNameEmailUsernameSerializer,
     ExportBadgesSerializer,
     ExportBadgesByPersonSerializer,
@@ -65,7 +65,7 @@ from .serializers import (
     TrainingRequestForManualScoringSerializer,
 )
 
-from .filters import (
+from api.filters import (
     EventFilter,
     TaskFilter,
     PersonFilter,
@@ -75,7 +75,7 @@ from .filters import (
     TrainingRequestFilterIDs,
 )
 
-from .renderers import (
+from api.renderers import (
     TrainingRequestCSVRenderer,
     TrainingRequestManualScoreCSVRenderer,
 )

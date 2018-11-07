@@ -1,6 +1,6 @@
-from django.urls import include, path, re_path
+from django.urls import path
 
-from . import views
+from dashboard import views
 
 urlpatterns = [
     path('', views.dispatch, name='dispatch'),

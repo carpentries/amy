@@ -23,7 +23,7 @@ from workshops.util import (
     is_admin,
     assignment_selection,
 )
-from .forms import (
+from dashboard.forms import (
     AutoUpdateProfileForm,
     SendHomeworkForm,
 )
