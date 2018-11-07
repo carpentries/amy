@@ -5,20 +5,19 @@ from django.core.checks import register, Error, Tags
 @register(Tags.urls)
 def check_pydata_urls_included_in_urlpatterns(**kwargs):
     '''Check that `pydata.urls` is included in amy.urls'''
-    from amy.urls import urlpatterns
-    from workshops import urls as workshops_urls
-    from . import urls as pydata_urls
+    from config.urls import urlpatterns
+    from pydata import urls as pydata_urls
 
     errors = []
     for url in urlpatterns:
         if hasattr(url, 'urlconf_module') and url.urlconf_module == pydata_urls:
-            if url.pattern._regex == r'^workshops/':
+            if url.pattern._route == 'workshops/':
                 break
     else:
         errors.append(
             Error(
-                '`pydata.urls` not included in amy.urls.',
-                hint=('Include `pydata.urls` in amy.urls.'),
+                '`pydata.urls` not included in config.urls.',
+                hint=('Include `pydata.urls` in config.urls.'),
                 id='amy.E001',
             )
         )
@@ -28,9 +27,9 @@ def check_pydata_urls_included_in_urlpatterns(**kwargs):
 @register(Tags.urls)
 def check_pydata_urls_included_before_workshop_urls(**kwargs):
     '''Check that `pydata.urls` is included before `workshops.urls`'''
-    from amy.urls import urlpatterns
+    from config.urls import urlpatterns
     from workshops import urls as workshops_urls
-    from . import urls as pydata_urls
+    from pydata import urls as pydata_urls
 
     errors = []
     for url in urlpatterns:
@@ -51,12 +50,12 @@ def check_pydata_urls_included_before_workshop_urls(**kwargs):
 @register(Tags.templates)
 def check_pydata_installed_before_workshops(**kwargs):
     errors = []
-    if settings.INSTALLED_APPS.index('pydata') > \
-       settings.INSTALLED_APPS.index('workshops.apps.WorkshopsConfig'):
+    if settings.INSTALLED_APPS.index('amy.pydata.apps.PyDataConfig') > \
+       settings.INSTALLED_APPS.index('amy.workshops.apps.WorkshopsConfig'):
         errors.append(
             Error(
-                '`pydata` installed after `workshops.apps.WorkshopsConfig` app.',
-                hint=('Add `pydata` to INSTALLED_APPS before the `workshops.apps.WorkshopsConfig` app.'),
+                '`amy.pydata.apps.PyDataConfig` installed after `amy.workshops.apps.WorkshopsConfig` app.',
+                hint=('Add `amy.pydata.apps.PyDataConfig` to INSTALLED_APPS before the `workshops.apps.WorkshopsConfig` app.'),
                 id='amy.E003',
             ),
         )

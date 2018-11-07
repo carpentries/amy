@@ -96,6 +96,7 @@ class TestSponsorshipViews(TestBase):
         payload = {
             'organization': self.org_beta.pk,
             'event': self.event.pk,
+            'amount': "0",
         }
         response = self.client.post(
             reverse('sponsorship_add'), payload, follow=True
