@@ -1,8 +1,10 @@
 from django_filters import rest_framework as filters
 
+from extrequests.filters import (
+    TrainingRequestFilter,
+)
 from workshops.filters import (
     AMYFilterSet,
-    TrainingRequestFilter,
     NamesOrderingFilter,
 )
 from workshops.models import Event, Task, Tag, Person, Badge

@@ -22,6 +22,10 @@ from django.db.models import (
 from django.shortcuts import redirect, render, get_object_or_404
 from django.urls import reverse
 
+from extrequests.filters import (
+    TrainingRequestFilter,
+    WorkshopRequestFilter,
+)
 from extrequests.forms import (
     MatchTrainingRequestForm,
     BulkMatchTrainingRequestForm,
@@ -45,10 +49,6 @@ from workshops.forms import (
     BootstrapHelper,
     BulkUploadCSVForm,
     EventForm,
-)
-from workshops.filters import (
-    TrainingRequestFilter,
-    WorkshopRequestFilter,
 )
 from workshops.models import (
     TrainingRequest,

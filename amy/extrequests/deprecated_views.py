@@ -21,6 +21,12 @@ from extrequests.deprecated_forms import (
     ProfileUpdateRequestFormNoCaptcha,
     InvoiceRequestUpdateForm,
 )
+from extrequests.deprecated_filters import (
+    EventRequestFilter,
+    InvoiceRequestFilter,
+    EventSubmissionFilter,
+    DCSelfOrganizedEventRequestFilter,
+)
 from workshops.base_views import (
     AMYUpdateView,
     AMYListView,
@@ -34,12 +40,6 @@ from workshops.forms import (
     BootstrapHelper,
     EventForm,
     PersonLookupForm,
-)
-from workshops.filters import (
-    EventRequestFilter,
-    InvoiceRequestFilter,
-    EventSubmissionFilter,
-    DCSelfOrganizedEventRequestFilter,
 )
 from workshops.models import (
     EventRequest,
