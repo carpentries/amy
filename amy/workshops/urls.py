@@ -8,9 +8,7 @@ urlpatterns = [
     url(r'^search/$', views.search, name='search'),
     url(r'^log/$', views.changes_log, name='changes_log'),
     url(r'^version/(?P<version_id>[\d]+)/$', views.object_changes, name='object_changes'),
-    url(r'^trainings/$', views.AllTrainings.as_view(), name='all_trainings'),
     url(r'^workshop_staff/$', views.workshop_staff, name='workshop_staff'),
-    url(r'^trainees/$', views.all_trainees, name='all_trainees'),
 
     # airports
     url(r'^airports/', include([
@@ -105,13 +103,6 @@ urlpatterns = [
         url(r'^instructor_issues/$', views.instructor_issues, name='instructor_issues'),
         url(r'^duplicate_persons/$', views.duplicate_persons, name='duplicate_persons'),
         url(r'^duplicate_training_requests/$', views.duplicate_training_requests, name='duplicate_training_requests'),
-    ])),
-
-    # training progresses
-    url(r'^training_progresses/add/$', views.TrainingProgressCreate.as_view(), name='trainingprogress_add'),
-    url(r'^training_progress/(?P<pk>\d+)/', include([
-        url(r'^edit/$', views.TrainingProgressUpdate.as_view(), name='trainingprogress_edit'),
-        url(r'^delete/$', views.TrainingProgressDelete.as_view(), name='trainingprogress_delete'),
     ])),
 
     # action-required views
