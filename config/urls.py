@@ -32,10 +32,13 @@ if settings.ENABLE_PYDATA:
     urlpatterns += PyData_urlpatterns
 
 urlpatterns += [
+    path('api/v1/', include('api.urls')),  # REST API v1
     path('dashboard/', include('dashboard.urls')),
     path('requests/', include('extrequests.urls')),
+    path('forms/', include('extforms.urls')),  # external, anonymous user-accessible forms
+    path('fiscal/', include('fiscal.urls')),
     path('workshops/', include('workshops.urls')),
-    # path('account/', include('django.contrib.auth.urls')),
+    path('select_lookups/', include('workshops.lookups')),  # autocomplete lookups
 
     # django views for authentication
     path('account/login/',
@@ -73,15 +76,6 @@ urlpatterns += [
              template_name="account/password_reset_complete.html",
          ),
          name='password_reset_complete'),
-
-    # autocomplete lookups
-    path('select_lookups/', include('workshops.lookups')),
-
-    # REST API v1
-    path('api/v1/', include('api.urls')),
-
-    # external, anonuser-accessible forms
-    path('forms/', include('extforms.urls')),
 
     # Login with GitHub credentials
     path('', include('social_django.urls', namespace='social')),

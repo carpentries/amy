@@ -78,9 +78,9 @@ corresponding apps.
     * `EventSubmission`,
     * `DCSelfOrganizedEventRequest`,
 * `fiscal`:
-    * -
+    * no models
 * `trainings`:
-    * -
+    * no models
 * `workshops`:
     * `Language`,
     * `Lesson`,

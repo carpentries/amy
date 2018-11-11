@@ -31,7 +31,6 @@ class TestSponsorshipModel(TestBase):
             event=self.event,
         ).full_clean()
 
-
     def test_sponsorship_can_be_deleted_and_related_objects_are_intact(self):
         '''Check that the event and organization aren't deleted'''
         sponsorship = Sponsorship.objects.create(
