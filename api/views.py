@@ -736,7 +736,8 @@ class PersonViewSet(viewsets.ReadOnlyModelViewSet):
     """List many people or retrieve only one person."""
     permission_classes = (IsAuthenticated, IsAdmin)
     queryset = Person.objects.all().select_related('airport') \
-                     .prefetch_related('badges', 'domains', 'lessons')
+                     .prefetch_related('badges', 'domains', 'lessons') \
+                     .distinct()
     serializer_class = PersonSerializer
     pagination_class = StandardResultsSetPagination
     filterset_class = PersonFilter
