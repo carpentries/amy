@@ -1,10 +1,11 @@
 from django.contrib import admin
 
 from workshops.models import (
-    Tag,
     AcademicLevel,
     ComputingExperienceLevel,
-    DataAnalysisLevel,
+)
+from workshops.models import (
+    Tag,
     Role,
     Lesson,
     KnowledgeDomain,
@@ -23,10 +24,10 @@ class CurriculumAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'slug', 'name', 'active', 'unknown')
 
 
-admin.site.register(Tag)
 admin.site.register(AcademicLevel)
 admin.site.register(ComputingExperienceLevel)
-admin.site.register(DataAnalysisLevel)
+
+admin.site.register(Tag)
 admin.site.register(Role, RoleAdmin)
 admin.site.register(Lesson)
 admin.site.register(KnowledgeDomain)

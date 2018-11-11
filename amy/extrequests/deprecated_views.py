@@ -27,6 +27,12 @@ from extrequests.deprecated_filters import (
     EventSubmissionFilter,
     DCSelfOrganizedEventRequestFilter,
 )
+from extrequests.models import (
+    EventRequest,
+    EventSubmission as EventSubmissionModel,
+    DCSelfOrganizedEventRequest as DCSelfOrganizedEventRequestModel,
+    ProfileUpdateRequest,
+)
 from workshops.base_views import (
     AMYUpdateView,
     AMYListView,
@@ -42,12 +48,8 @@ from workshops.forms import (
     PersonLookupForm,
 )
 from workshops.models import (
-    EventRequest,
     InvoiceRequest,
     Person,
-    EventSubmission as EventSubmissionModel,
-    DCSelfOrganizedEventRequest as DCSelfOrganizedEventRequestModel,
-    ProfileUpdateRequest,
     Award,
     Badge,
     Airport,

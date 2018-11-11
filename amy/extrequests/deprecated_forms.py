@@ -2,16 +2,18 @@ import re
 
 from django import forms
 
+from extrequests.models import (
+    EventRequest,
+    EventSubmission,
+    DCSelfOrganizedEventRequest,
+    ProfileUpdateRequest,
+)
 from workshops.forms import (
     BootstrapHelper,
     PrivacyConsentMixin,
 )
 from workshops.models import (
-    EventRequest,
-    EventSubmission,
-    DCSelfOrganizedEventRequest,
     InvoiceRequest,
-    ProfileUpdateRequest,
     Language,
 )
 # this is used instead of Django Autocomplete Light widgets

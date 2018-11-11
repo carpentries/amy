@@ -4,6 +4,11 @@ from dal_select2.widgets import (
 )
 import django_filters
 
+from extrequests.models import (
+    EventRequest,
+    EventSubmission,
+    DCSelfOrganizedEventRequest,
+)
 from workshops.filters import (
     AMYFilterSet,
     StateFilterSet,
@@ -14,10 +19,7 @@ from workshops.forms import SIDEBAR_DAL_WIDTH
 from workshops.models import (
     Organization,
     Person,
-    EventRequest,
     InvoiceRequest,
-    EventSubmission,
-    DCSelfOrganizedEventRequest,
 )
 
 
