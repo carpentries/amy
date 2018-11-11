@@ -8,13 +8,11 @@ import unittest
 from unittest.mock import MagicMock
 
 from django.core.management import call_command
-from django.test import TestCase
 import requests_mock
 
 from workshops.tests.base import TestBase
 from workshops.management.commands.fake_database import (
     Command as FakeDatabaseCommand,
-    Faker
 )
 from workshops.management.commands.instructors_activity import (
     Command as InstructorsActivityCommand)
@@ -24,11 +22,8 @@ from workshops.management.commands.check_for_workshop_websites_updates import (
     datetime_match,
     datetime_decode)
 from workshops.models import (
-    Airport,
     Role,
     Badge,
-    Tag,
-    Person,
     Organization,
     Event,
     Task,

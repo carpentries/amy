@@ -1,7 +1,10 @@
 from django.urls import reverse
 
 from extforms.deprecated_forms import SWCEventRequestForm, DCEventRequestForm
-from workshops.models import EventRequest, Event, Organization
+from extrequests.models import (
+    EventRequest,
+)
+from workshops.models import Event, Organization
 from workshops.tests.base import TestBase
 
 

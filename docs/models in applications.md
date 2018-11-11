@@ -30,6 +30,9 @@ the way all these models are deprecated and to be removed in future,
 * `workshops` - for persons and workshops management, including tasks and
 badges.
 
+`workshops` application still takes a lead in many areas, and for now should be
+considered "core" application. For example it defines many reusable classes,
+like `TestBase` for base test case, or multiple model mixins.
 
 ## Versioned models
 

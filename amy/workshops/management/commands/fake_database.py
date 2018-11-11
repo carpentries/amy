@@ -14,6 +14,15 @@ from django_countries import countries as Countries
 from faker import Faker
 from faker.providers import BaseProvider
 
+from extrequests.models import (
+    ProfileUpdateRequest,
+    EventRequest,
+    EventSubmission,
+    DCSelfOrganizedEventRequest,
+    DCWorkshopDomain,
+    DCWorkshopTopic,
+    DataAnalysisLevel,
+)
 from workshops.models import (
     Airport,
     Role,
@@ -29,17 +38,10 @@ from workshops.models import (
     TrainingRequirement,
     TrainingProgress,
     TrainingRequest,
-    ProfileUpdateRequest,
     KnowledgeDomain,
     Membership,
-    EventRequest,
     AcademicLevel,
     ComputingExperienceLevel,
-    DataAnalysisLevel,
-    EventSubmission,
-    DCSelfOrganizedEventRequest,
-    DCWorkshopDomain,
-    DCWorkshopTopic,
     Language,
     InvoiceRequest,
 )

@@ -1,12 +1,14 @@
 from django.urls import reverse
 
 from extforms.deprecated_forms import DCSelfOrganizedEventRequestForm
-from workshops.models import (
-    DCSelfOrganizedEventRequest,
+from extrequests.models import (
+    DataAnalysisLevel,
     DCWorkshopDomain,
     DCWorkshopTopic,
+    DCSelfOrganizedEventRequest,
+)
+from workshops.models import (
     AcademicLevel,
-    DataAnalysisLevel,
     Organization,
     Tag,
     Event,

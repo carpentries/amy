@@ -1,6 +1,9 @@
 from django.urls import reverse
 
-from workshops.models import Person, Event, EventRequest
+from extrequests.models import (
+    EventRequest,
+)
+from workshops.models import Person, Event
 from workshops.tests.base import TestBase
 
 

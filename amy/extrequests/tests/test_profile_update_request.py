@@ -3,8 +3,10 @@ from unittest.mock import patch
 from django.urls import reverse
 
 from workshops.tests.base import TestBase
-from workshops.models import (
+from extrequests.models import (
     ProfileUpdateRequest,
+)
+from workshops.models import (
     Person,
     Task,
     Award,
