@@ -27,7 +27,7 @@ before_script:
     fi;
 
 script:
-  - coverage run --source=amy,api,workshops manage.py test
+  - coverage run --source=amy manage.py test
 
 after_success:
   coveralls

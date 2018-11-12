@@ -95,3 +95,8 @@ clean :
 		$$(find . -name '*.pyc' -print) \
 		htmlerror \
 		$$(find . -name 'test_db*.sqlite3' -print) \
+
+## coverage     : run tests and generate HTML coverage
+coverage :
+	coverage --source=amy manage.py test
+	coverage html
