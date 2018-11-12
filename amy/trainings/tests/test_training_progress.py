@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from django.template import Context, Template
 from django.urls import reverse
 
-from workshops.forms import TrainingProgressForm
+from trainings.forms import TrainingProgressForm
 from workshops.models import (
     TrainingProgress,
     TrainingRequirement,
