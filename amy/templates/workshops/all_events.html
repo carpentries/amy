@@ -39,7 +39,7 @@
             </a>
           {% endif %}
         </td>
-        <td>{% for tag in event.tags.all %}{% bootstrap_tag tag.name %}{% endfor %}</td>
+        <td>{% for tag in event.tags.all %}{% include "includes/tag.html" with tag=tag %}{% endfor %}</td>
         <td {% if not event.repository_url %}class="table-warning"{% endif %}>
           {{ event.repository_url|default:"—"|urlize_newtab }}
         </td>

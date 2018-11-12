@@ -93,7 +93,7 @@ def admin_dashboard(request):
         'current_events': current_events,
         'unpublished_events': unpublished_events,
         'updated_metadata': updated_metadata,
-        'carpentries': Tag.objects.carpentries(),
+        'main_tags': Tag.objects.main_tags(),
     }
     return render(request, 'dashboard/admin_dashboard.html', context)
 

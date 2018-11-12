@@ -35,7 +35,7 @@
         {% for type in req.requested_workshop_types.all %}
           {# limit to only 3 #}
           {% if forloop.counter0 < 3 %}
-            {% bootstrap_tag type.slug %}
+            {% include "includes/curriculum.html" with curriculum=type %}
           {% elif forloop.counter0 == 3 %}
             {% bootstrap_tag "..." %}
           {% endif %}
