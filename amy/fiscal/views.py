@@ -44,7 +44,7 @@ from workshops.util import (
 
 class AllOrganizations(OnlyForAdminsMixin, AMYListView):
     context_object_name = 'all_organizations'
-    template_name = 'workshops/all_organizations.html'
+    template_name = 'fiscal/all_organizations.html'
     filter_class = OrganizationFilter
     queryset = Organization.objects.prefetch_related(Prefetch(
         'membership_set',
@@ -60,7 +60,7 @@ class AllOrganizations(OnlyForAdminsMixin, AMYListView):
 class OrganizationDetails(OnlyForAdminsMixin, AMYDetailView):
     queryset = Organization.objects.all()
     context_object_name = 'organization'
-    template_name = 'workshops/organization.html'
+    template_name = 'fiscal/organization.html'
     slug_field = 'domain'
     slug_url_kwarg = 'org_domain'
 
@@ -101,7 +101,7 @@ class OrganizationDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
 
 class AllMemberships(OnlyForAdminsMixin, AMYListView):
     context_object_name = 'all_memberships'
-    template_name = 'workshops/all_memberships.html'
+    template_name = 'fiscal/all_memberships.html'
     filter_class = MembershipFilter
     queryset = Membership.objects.annotate(
         instructor_training_seats_total=(
@@ -129,7 +129,7 @@ class MembershipDetails(OnlyForAdminsMixin, AMYDetailView):
                   .prefetch_related('task_set')
     )
     context_object_name = 'membership'
-    template_name = 'workshops/membership.html'
+    template_name = 'fiscal/membership.html'
     pk_url_kwarg = 'membership_id'
 
     def get_context_data(self, **kwargs):

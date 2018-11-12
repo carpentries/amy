@@ -78,7 +78,7 @@ def instructors_by_date(request):
         'end_date': end_date,
         'mode': mode,
     }
-    return render(request, 'workshops/instructors_by_date.html', context)
+    return render(request, 'reports/instructors_by_date.html', context)
 
 
 @admin_required
@@ -91,7 +91,7 @@ def workshops_over_time(request):
         'filter': WorkshopsOverTimeFilter(request.GET),
         'title': 'Workshops over time',
     }
-    return render(request, 'workshops/time_series.html', context)
+    return render(request, 'reports/time_series.html', context)
 
 
 @admin_required
@@ -104,7 +104,7 @@ def learners_over_time(request):
         'filter': LearnersOverTimeFilter(request.GET),
         'title': 'Learners over time',
     }
-    return render(request, 'workshops/time_series.html', context)
+    return render(request, 'reports/time_series.html', context)
 
 
 @admin_required
@@ -117,7 +117,7 @@ def instructors_over_time(request):
         'filter': InstructorsOverTimeFilter(request.GET),
         'title': 'Instructors over time',
     }
-    return render(request, 'workshops/time_series.html', context)
+    return render(request, 'reports/time_series.html', context)
 
 
 @admin_required
@@ -127,7 +127,7 @@ def instructor_num_taught(request):
         'api_endpoint': reverse('api:reports-instructor-num-taught'),
         'title': 'Frequency of Instruction',
     }
-    return render(request, 'workshops/instructor_num_taught.html', context)
+    return render(request, 'reports/instructor_num_taught.html', context)
 
 
 @admin_required
@@ -157,7 +157,7 @@ def all_activity_over_time(request):
         'form': form,
         'data': data,
     }
-    return render(request, 'workshops/all_activity_over_time.html', context)
+    return render(request, 'reports/all_activity_over_time.html', context)
 
 
 @admin_required
@@ -192,7 +192,7 @@ def membership_trainings_stats(request):
         'data': paginated,
         'filter': filter_,
     }
-    return render(request, 'workshops/membership_trainings_stats.html',
+    return render(request, 'reports/membership_trainings_stats.html',
                   context)
 
 
@@ -277,7 +277,7 @@ def workshop_issues(request):
         'is_admin': is_admin,
         'assigned_to': assigned_to,
     }
-    return render(request, 'workshops/workshop_issues.html', context)
+    return render(request, 'reports/workshop_issues.html', context)
 
 
 @admin_required
@@ -314,7 +314,7 @@ def instructor_issues(request):
         'pending': pending_instructors,
         'stalled': stalled_instructors,
     }
-    return render(request, 'workshops/instructor_issues.html', context)
+    return render(request, 'reports/instructor_issues.html', context)
 
 
 @admin_required
@@ -357,7 +357,7 @@ def duplicate_persons(request):
         'duplicate_persons': duplicate_persons,
     }
 
-    return render(request, 'workshops/duplicate_persons.html', context)
+    return render(request, 'reports/duplicate_persons.html', context)
 
 
 @admin_required
@@ -404,5 +404,5 @@ def duplicate_training_requests(request):
         'duplicate_emails': duplicate_emails,
     }
 
-    return render(request, 'workshops/duplicate_training_requests.html',
+    return render(request, 'reports/duplicate_training_requests.html',
                   context)

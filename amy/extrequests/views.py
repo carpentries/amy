@@ -437,7 +437,7 @@ def trainingrequests_merge(request):
             'title': 'Select Training Requests to merge',
             'form': TrainingRequestsSelectionForm(),
         }
-        return render(request, 'workshops/generic_form.html', context)
+        return render(request, 'generic_form.html', context)
 
     obj_a = get_object_or_404(TrainingRequest, pk=obj_a_pk)
     obj_b = get_object_or_404(TrainingRequest, pk=obj_b_pk)

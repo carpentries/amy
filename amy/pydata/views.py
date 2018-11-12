@@ -146,7 +146,7 @@ class SponsorshipImport(BaseImport):
 
 class BulkImportEventSelect(OnlyForAdminsMixin, AMYFormView):
     form_class = EventLookupForm
-    template_name = 'workshops/generic_form.html'
+    template_name = 'generic_form.html'
     title = 'Bulk import a Conference'
 
     def form_valid(self, form):

@@ -44,7 +44,7 @@ from workshops.util import (
 
 class AllTrainings(OnlyForAdminsMixin, AMYListView):
     context_object_name = 'all_trainings'
-    template_name = 'workshops/all_trainings.html'
+    template_name = 'trainings/all_trainings.html'
     queryset = Event.objects.filter(tags__name='TTT').annotate(
         trainees=Count(Case(When(task__role__name='learner',
                                  then=F('task__person__id')),
@@ -85,7 +85,7 @@ class TrainingProgressUpdate(RedirectSupportMixin, OnlyForAdminsMixin,
                              AMYUpdateView):
     model = TrainingProgress
     form_class = TrainingProgressForm
-    template_name = 'workshops/trainingprogress_form.html'
+    template_name = 'trainings/trainingprogress_form.html'
 
 
 class TrainingProgressDelete(RedirectSupportMixin, OnlyForAdminsMixin,
@@ -184,4 +184,4 @@ def all_trainees(request):
                'filter': filter,
                'form': form,
                'discard_form': discard_form}
-    return render(request, 'workshops/all_trainees.html', context)
+    return render(request, 'trainings/all_trainees.html', context)

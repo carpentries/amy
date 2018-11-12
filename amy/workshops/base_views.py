@@ -63,7 +63,7 @@ class AMYCreateView(SuccessMessageMixin, FormInvalidMessageMixin, CreateView):
     success_message = '{name} was created successfully.'
     form_invalid_message = 'Please fix errors in the form below.'
 
-    template_name = 'workshops/generic_form.html'
+    template_name = 'generic_form.html'
 
     def get_context_data(self, **kwargs):
         context = super(AMYCreateView, self).get_context_data(**kwargs)
@@ -96,7 +96,7 @@ class AMYUpdateView(SuccessMessageMixin, UpdateView):
     """
     success_message = '{name} was updated successfully.'
 
-    template_name = 'workshops/generic_form.html'
+    template_name = 'generic_form.html'
 
     def get_context_data(self, **kwargs):
         context = super(AMYUpdateView, self).get_context_data(**kwargs)

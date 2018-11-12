@@ -616,7 +616,7 @@ def person_password(request, person_id):
         form = Form(user)
 
     form.helper = BootstrapHelper(add_cancel_button=False)
-    return render(request, 'workshops/generic_form.html', {
+    return render(request, 'generic_form.html', {
         'form': form,
         'model': Person,
         'object': user,
@@ -640,7 +640,7 @@ def persons_merge(request):
             'title': 'Merge Persons',
             'form': PersonsSelectionForm(),
         }
-        return render(request, 'workshops/generic_form.html', context)
+        return render(request, 'generic_form.html', context)
 
     obj_a = get_object_or_404(Person, pk=obj_a_pk)
     obj_b = get_object_or_404(Person, pk=obj_b_pk)
@@ -976,7 +976,7 @@ def events_merge(request):
             'title': 'Merge Events',
             'form': EventsSelectionForm(),
         }
-        return render(request, 'workshops/generic_form.html', context)
+        return render(request, 'generic_form.html', context)
 
     obj_a = get_object_or_404(Event, pk=obj_a_pk)
     obj_b = get_object_or_404(Event, pk=obj_b_pk)
