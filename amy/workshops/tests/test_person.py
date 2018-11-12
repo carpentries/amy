@@ -41,14 +41,14 @@ class TestPerson(TestBase):
     def test_display_person_correctly_with_all_fields(self):
         response = self.client.get(
             reverse('person_details', args=[str(self.hermione.id)]))
-        doc = self._check_status_code_and_parse(response, 200)
-        self._check_person(doc, self.hermione)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['person'], self.hermione)
 
     def test_display_person_correctly_with_some_fields(self):
         response = self.client.get(
             reverse('person_details', args=[str(self.ironman.id)]))
-        doc = self._check_status_code_and_parse(response, 200)
-        self._check_person(doc, self.ironman)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['person'], self.ironman)
 
     def test_edit_person_email_when_all_fields_set(self):
         data = PersonForm(instance=self.ron).initial
@@ -67,45 +67,6 @@ class TestPerson(TestBase):
         }
         f = PersonForm(data)
         self.assertNotIn('family', f.errors)
-
-    def _check_person(self, doc, person):
-        """ Check fields of person against document. """
-        fields = (('personal', person.personal),
-                  ('family', person.family),
-                  ('email', person.email),
-                  ('gender', person.get_gender_display()),
-                  ('may_contact', 'yes' if person.may_contact else 'no'),
-                  ('airport', person.airport),
-                  ('twitter', person.twitter),
-                  ('url', person.url))
-        for (key, value) in fields:
-            node = self._get_field(doc, key)
-
-            if isinstance(value, bool):
-                # bool is a special case because we can show it as either
-                # "True" or "yes" (alternatively "False" or "no")
-                assert node.text in (str(value), "yes" if value else "no"), \
-                    'Mis-match in {0}: expected boolean value, got {1}' \
-                    .format(key, node.text)
-            elif not value:
-                # None is also a special case.  We should handle:
-                # "None", "unknown", "maybe", or even "—" (mdash)
-                assert node.text in (str(value), "unknown", "maybe", "—"), \
-                    'Mis-match in {0}: expected boolean value, got {1}' \
-                    .format(key, node.text)
-            else:
-                if node.text is None:
-                    # emails, URLs and some FKs are usually urlized, so we need
-                    # to go deeper: to the first child of current node
-                    node = node[0]
-                assert node.text == str(value), \
-                    'Mis-match in {0}: expected {1}/{2}, got {3}' \
-                    .format(key, value, type(value), node.text)
-
-    def _get_field(self, doc, key):
-        """ Get field from person display. """
-        xpath = ".//td[@id='{0}']".format(key)
-        return self._get_1(doc, xpath, key)
 
     def test_display_person_with_notes(self):
         note = 'This person has some serious records'

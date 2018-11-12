@@ -3,7 +3,6 @@ from urllib.parse import urlencode
 import sys
 
 from django.core.exceptions import ValidationError
-from django.db.models import Q
 from django.db.utils import IntegrityError
 from django.urls import reverse
 
@@ -17,7 +16,6 @@ from workshops.models import (
     Task,
     Award,
     Badge,
-    Membership,
     Curriculum,
 )
 from workshops.forms import EventForm, EventsMergeForm
@@ -385,19 +383,19 @@ class TestEventViews(TestBase):
                 'administrator': host.id,
                 'invoice_status': 'unknown',
             })
-        if response.status_code == 302:
-            url = response['location']
-            event_slug = url.rstrip('/').rsplit('/', 1)[1]
-            event = Event.objects.get(slug=event_slug)
-            assert event.host == host, (
-                'New event has wrong host: {} != {}'.format(event.host, host))
-            tags = list(event.tags.all())
-            assert tags == [self.test_tag], (
-                'New event has wrong tags: {} != {}'.format(tags,
-                                                            [self.test_tag]))
-        else:
-            self._check_status_code_and_parse(response, 200)
-            assert False, 'expected 302 redirect after post'
+
+        self.assertEqual(response.status_code, 302)
+        url = response['location']
+        event_slug = url.rstrip('/').rsplit('/', 1)[1]
+        event = Event.objects.get(slug=event_slug)
+        self.assertEqual(
+            event.host, host,
+            'New event has wrong host: {} != {}'.format(event.host, host))
+        tags = list(event.tags.all())
+        self.assertEqual(
+            tags, [self.test_tag],
+            'New event has wrong tags: {} != {}'.format(tags, [self.test_tag])
+        )
 
     def test_unique_slug(self):
         """Ensure events with the same slugs are prohibited.

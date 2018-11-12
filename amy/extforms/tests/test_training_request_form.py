@@ -52,7 +52,6 @@ class TestTrainingRequestForm(TestBase):
                               follow=True)
         self.assertEqual(rv.status_code, 200)
         content = rv.content.decode('utf-8')
-        self._save_html(content)
         self.assertNotIn('Fix errors below', content)
         self.assertEqual(TrainingRequest.objects.all().count(), 1)
 
