@@ -232,6 +232,10 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView):
     ).prefetch_related(
         'award_set__badge', 'award_set__awarded_by', 'award_set__event',
         'task_set__role', 'task_set__event',
+        Prefetch('task_set',
+                 to_attr='training_tasks',
+                 queryset=Task.objects.filter(role__name='learner',
+                                              event__tags__name='TTT')),
     ).select_related('airport')
 
     def get_context_data(self, **kwargs):

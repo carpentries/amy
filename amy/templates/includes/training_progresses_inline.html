@@ -13,7 +13,7 @@
   </a>
   &nbsp;
 {% endfor %}
-{% if person.get_training_tasks %}
+{% if person.training_tasks %}
 <a href="{% url 'trainingprogress_add' %}?trainee={{ person.id|urlencode }}&amp;next={{ request.get_full_path|urlencode }}"
    class="badge badge-secondary"
    data-toggle="popover" data-content="Click to add new progress" data-trigger="hover">+</a>
