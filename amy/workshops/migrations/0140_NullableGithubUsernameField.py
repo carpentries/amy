@@ -22,12 +22,13 @@ def display_wrong_gh_usernames(apps, schema_editor):
     q4 = Q(github__iregex=r'[^a-z0-9-]+')
 
     persons = persons.filter(q1 | q2 | q3 | q4)
-    print("\n")
-    print("#" * 20)
-    print("People with invalid GitHub usernames:")
-    for person in persons:
-        print("{} ({} {}):\t{}".format(str(person), person.personal,
-                                       person.family, person.github))
+    if persons:
+        print("\n")
+        print("#" * 20)
+        print("People with invalid GitHub usernames:")
+        for person in persons:
+            print("{} ({} {}):\t{}".format(str(person), person.personal,
+                                           person.family, person.github))
 
 
 class Migration(migrations.Migration):
