@@ -1,6 +1,7 @@
 from django import forms
 
-from workshops.forms import TaskForm, SponsorshipForm, BootstrapHelper
+from fiscal.forms import SponsorshipForm
+from workshops.forms import TaskForm, BootstrapHelper
 from workshops.models import Person, Task, Sponsorship
 
 

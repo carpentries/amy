@@ -14,10 +14,11 @@ class PyDataConfig(AppConfig):
     def ready(self):
         from pydata import checks
 
-        from workshops.forms import PersonForm, TaskForm, SponsorshipForm
+        from fiscal.forms import SponsorshipForm
+        from fiscal.tests.test_sponsorship import TestSponsorshipViews
+        from workshops.forms import PersonForm, TaskForm
         from workshops.models import Person, Task, Organization, Sponsorship
         from workshops.tests.base import TestBase
-        from workshops.tests.test_sponsorship import TestSponsorshipViews
         from workshops.views import EventCreate, PersonCreate
 
         # Add fixtures within pydata app to testing database
