@@ -739,6 +739,10 @@ def is_admin(user):
 #------------------------------------------------------------
 
 class TagQuerySet(models.query.QuerySet):
+    def main_tags(self):
+        names = ['SWC', 'DC', 'LC', 'TTT', 'ITT', 'WiSE']
+        return Tag.objects.filter(name__in=names).order_by('id')
+
     def carpentries(self):
         return Tag.objects.filter(name__in=['SWC', 'DC', 'LC']).order_by('id')
 
@@ -746,7 +750,7 @@ class TagQuerySet(models.query.QuerySet):
 class Tag(models.Model):
     '''Label for grouping events.'''
 
-    ITEMS_VISIBLE_IN_SELECT_WIDGET = 10
+    ITEMS_VISIBLE_IN_SELECT_WIDGET = 13
 
     name       = models.CharField(max_length=STR_MED, unique=True)
     details    = models.CharField(max_length=STR_LONG)
