@@ -1,4 +1,4 @@
-from django.conf.urls import url, include
+from django.urls import path, include
 from rest_framework_nested import routers
 from rest_framework.urlpatterns import format_suffix_patterns
 
@@ -25,34 +25,34 @@ router.register('organizations', views.OrganizationViewSet)
 router.register('airports', views.AirportViewSet)
 
 urlpatterns = [
-    url('^$', views.ApiRoot.as_view(), name='root'),
+    path('', views.ApiRoot.as_view(), name='root'),
     # TODO: turn these export views into ViewSets and add them to the router
-    url('^export/badges/$',
-        views.ExportBadgesView.as_view(),
-        name='export-badges'),
-    url('^export/badges_by_person/$',
-        views.ExportBadgesByPersonView.as_view(),
-        name='export-badges-by-person'),
-    url('^export/instructors/$',
-        views.ExportInstructorLocationsView.as_view(),
-        name='export-instructors'),
-    url('^export/members/$',
-        views.ExportMembersView.as_view(),
-        name='export-members'),
-    url('^export/person_data/$',
-        views.ExportPersonDataView.as_view(),
-        name='export-person-data'),
-    url('^events/published/$',
-        views.PublishedEvents.as_view(),
-        name='events-published'),
-    url('^training_requests/$',
-        views.TrainingRequests.as_view(),
-        name='training-requests'),
+    path('export/badges/',
+         views.ExportBadgesView.as_view(),
+         name='export-badges'),
+    path('export/badges_by_person/',
+         views.ExportBadgesByPersonView.as_view(),
+         name='export-badges-by-person'),
+    path('export/instructors/',
+         views.ExportInstructorLocationsView.as_view(),
+         name='export-instructors'),
+    path('export/members/',
+         views.ExportMembersView.as_view(),
+         name='export-members'),
+    path('export/person_data/',
+         views.ExportPersonDataView.as_view(),
+         name='export-person-data'),
+    path('events/published/',
+         views.PublishedEvents.as_view(),
+         name='events-published'),
+    path('training_requests/',
+         views.TrainingRequests.as_view(),
+         name='training-requests'),
 
-    url('^', include(router.urls)),
-    url('^', include(awards_router.urls)),
-    url('^', include(person_task_router.urls)),
-    url('^', include(tasks_router.urls)),
+    path('', include(router.urls)),
+    path('', include(awards_router.urls)),
+    path('', include(person_task_router.urls)),
+    path('', include(tasks_router.urls)),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)  # allow to specify format
