@@ -552,6 +552,24 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
         blank=True, default='',
     )
 
+    LESSON_PUBLICATION_CHOICES = (
+        ('yes-profile', 'Yes, and use the name associated with my profile'),
+        ('yes-orcid',
+         'Yes, and use the name associated with my ORCID profile'),
+        ('yes-github', 'Yes, and only use my GitHub handle'),
+        ('no', 'No'),
+    )
+    lesson_publication_consent = models.CharField(
+        max_length=STR_MED, choices=LESSON_PUBLICATION_CHOICES,
+        blank=True, default='no', null=False,
+        verbose_name='Do you consent to have your name or identity associated '
+                     'with lesson publications?',
+        help_text='When we publish our lessons, we like to include everyone '
+                  'who has contributed via pull request as an author. If you '
+                  'do make any contributions, would you like to be included '
+                  'as an author when we publish the lesson?',
+    )
+
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = [
         'personal',
