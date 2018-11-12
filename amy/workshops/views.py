@@ -1222,6 +1222,7 @@ class TaskCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
     def form_valid(self, form):
         """Check associated membership remaining seats and validity."""
         seat_membership = form.cleaned_data['seat_membership']
+        event = form.cleaned_data['event']
         if hasattr(self, 'request') and seat_membership is not None:
             # check number of available seats
             if seat_membership.seats_instructor_training_remaining == 1:
@@ -1234,15 +1235,29 @@ class TaskCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
                 messages.warning(
                     self.request,
                     'Membership "{}" is using more training seats'
-                    ' than it\'s been allowed.'.format(str(seat_membership))
+                    " than it's been allowed.".format(str(seat_membership))
                 )
 
             today = datetime.date.today()
             # check if membership is active
-            if not (seat_membership.agreement_start <= today <= seat_membership.agreement_end):
+            if not (seat_membership.agreement_start <= today <=
+                    seat_membership.agreement_end):
                 messages.warning(
                     self.request,
-                    'Membership "{}" is not active.'.format(str(seat_membership))
+                    'Membership "{}" is not active.'.format(
+                        str(seat_membership))
+                )
+
+            # show warning if training falls out of agreement dates
+            if event.start and event.start < seat_membership.agreement_start \
+                    or event.end and event.end > seat_membership.agreement_end:
+                messages.warning(
+                    self.request,
+                    'Training "{}" has start or end date outside '
+                    'membership "{}" agreement dates.'.format(
+                        str(event),
+                        str(seat_membership),
+                    ),
                 )
 
         return super().form_valid(form)

@@ -196,6 +196,7 @@ def all_trainingrequests(request):
         match_form = BulkMatchTrainingRequestForm(request.POST)
 
         if match_form.is_valid():
+            event = match_form.cleaned_data['event']
             member_site = match_form.cleaned_data['seat_membership']
             open_seat = match_form.cleaned_data['seat_open_training']
 
@@ -209,7 +210,7 @@ def all_trainingrequests(request):
                 Task.objects.get_or_create(
                     person=r.person,
                     role=Role.objects.get(name='learner'),
-                    event=match_form.cleaned_data['event'],
+                    event=event,
                     seat_membership=member_site,
                     seat_open_training=open_seat,
                 )
@@ -233,6 +234,18 @@ def all_trainingrequests(request):
                         request,
                         'Membership "{}" is not active.'.format(
                             str(member_site))
+                    )
+
+                # show warning if training falls out of agreement dates
+                if event.start and event.start < member_site.agreement_start \
+                        or event.end and event.end > member_site.agreement_end:
+                    messages.warning(
+                        request,
+                        'Training "{}" has start or end date outside '
+                        'membership "{}" agreement dates.'.format(
+                            str(event),
+                            str(member_site),
+                        ),
                     )
 
             messages.success(request, 'Successfully accepted and matched '
