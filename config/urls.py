@@ -37,6 +37,7 @@ urlpatterns += [
     path('requests/', include('extrequests.urls')),
     path('forms/', include('extforms.urls')),  # external, anonymous user-accessible forms
     path('fiscal/', include('fiscal.urls')),
+    path('reports/', include('reports.urls')),
     path('trainings/', include('trainings.urls')),
     path('workshops/', include('workshops.urls')),
     path('select_lookups/', include('workshops.lookups')),  # autocomplete lookups

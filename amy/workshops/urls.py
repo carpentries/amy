@@ -90,21 +90,6 @@ urlpatterns = [
         url(r'^members/$', views.export_members, name='export_members'),
     ])),
 
-    # reports
-    url(r'^reports/', include([
-        url(r'^instructors_by_date/$', views.instructors_by_date, name='instructors_by_date'),
-        url(r'^workshops_over_time/$', views.workshops_over_time, name='workshops_over_time'),
-        url(r'^learners_over_time/$', views.learners_over_time, name='learners_over_time'),
-        url(r'^instructors_over_time/$', views.instructors_over_time, name='instructors_over_time'),
-        url(r'^instructor_num_taught/$', views.instructor_num_taught, name='instructor_num_taught'),
-        url(r'^all_activity_over_time/$', views.all_activity_over_time, name='all_activity_over_time'),
-        url(r'^membership_trainings_stats/$', views.membership_trainings_stats, name='membership_trainings_stats'),
-        url(r'^workshop_issues/$', views.workshop_issues, name='workshop_issues'),
-        url(r'^instructor_issues/$', views.instructor_issues, name='instructor_issues'),
-        url(r'^duplicate_persons/$', views.duplicate_persons, name='duplicate_persons'),
-        url(r'^duplicate_training_requests/$', views.duplicate_training_requests, name='duplicate_training_requests'),
-    ])),
-
     # action-required views
     url(r'^action_required/privacy/$',
         views.action_required_privacy, name='action_required_privacy'),

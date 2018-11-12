@@ -3,6 +3,7 @@ from django.urls import reverse
 from workshops.models import Person
 from workshops.tests.base import TestBase
 
+
 class TestEmptyDuplicates(TestBase):
     """Tests to return empty context variables when no matches found."""
     def setUp(self):
@@ -40,6 +41,7 @@ class TestEmptyDuplicates(TestBase):
         self.assertNotIn(self.kira, switched)
         self.assertNotIn(self.batman, switched)
         self.assertNotIn(self.ironman, switched)
+
 
 class TestFindingDuplicates(TestBase):
     def setUp(self):
