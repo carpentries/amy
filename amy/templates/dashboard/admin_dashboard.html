@@ -38,7 +38,7 @@
         <td class="text-center" width="25px">
           {% for tag in main_tags %}
             {% if tag in event.tags.all %}
-              {% bootstrap_tag tag.name %}
+              {% include "includes/tag.html" with tag=tag %}
             {% endif %}
           {% endfor %}
         </td>

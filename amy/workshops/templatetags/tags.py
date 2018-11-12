@@ -6,23 +6,31 @@ register = template.Library()
 
 
 @register.simple_tag
+def bootstrap_tag_class(name):
+    name_low = name.lower()
+
+    class_ = 'badge-secondary'
+    if name_low.startswith('swc'):
+        class_ = 'badge-primary'
+    elif name_low.startswith('dc'):
+        class_ = 'badge-success'
+    elif name_low.startswith('online'):
+        class_ = 'badge-info'
+    elif name_low.startswith('lc'):
+        class_ = 'badge-warning'
+    elif name_low.startswith('ttt'):
+        class_ = 'badge-danger'
+    elif name_low.startswith('itt'):
+        class_ = 'badge-danger'
+
+    return mark_safe(class_)
+
+
+@register.simple_tag
 def bootstrap_tag(name):
     """Wrap <span> around a tag so that it's displayed as Bootstrap badge:
     http://getbootstrap.com/components/#labels"""
-
-    name_low = name.lower()
-
-    addn_class = 'badge-secondary'
-    if name_low.startswith('swc'):
-        addn_class = 'badge-primary'
-    elif name_low.startswith('dc'):
-        addn_class = 'badge-success'
-    elif name_low.startswith('online'):
-        addn_class = 'badge-info'
-    elif name_low.startswith('lc'):
-        addn_class = 'badge-warning'
-    elif name_low.startswith('ttt'):
-        addn_class = 'badge-danger'
+    addn_class = bootstrap_tag_class(name)
 
     fmt = '<span class="badge {additional_class}">{name}</span>'
     fmt = fmt.format(additional_class=addn_class, name=name)

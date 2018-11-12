@@ -61,8 +61,8 @@
   </tr>
   <tr>
     <th scope="row">Tags</th>
-    <td>{% for tag in obj_a.tags.all %}{% bootstrap_tag tag.name %}{% empty %}—{% endfor %}</td>
-    <td>{% for tag in obj_b.tags.all %}{% bootstrap_tag tag.name %}{% empty %}—{% endfor %}</td>
+    <td>{% for tag in obj_a.tags.all %}{% include "includes/tag.html" with tag=tag %}{% empty %}—{% endfor %}</td>
+    <td>{% for tag in obj_b.tags.all %}{% include "includes/tag.html" with tag=tag %}{% empty %}—{% endfor %}</td>
     <th>{% include "includes/merge_radio.html" with field=form.tags %}</th>
   </tr>
   <tr>

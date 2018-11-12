@@ -20,7 +20,7 @@
   {% for task in all_tasks %}
   <tr>
       <td><a href="{{ task.event.get_absolute_url }}">{{ task.event }}</a></td>
-      <td>{% for tag in task.event.tags.all %}{% bootstrap_tag tag.name %}{% endfor %}</td>
+      <td>{% for tag in task.event.tags.all %}{% include "includes/tag.html" with tag=tag %}{% endfor %}</td>
       <td><a href="{{ task.person.get_absolute_url }}">{{ task.person.full_name }}</a>{% if task.person.email and task.person.may_contact %} &lt;{{ task.person.email|urlize }}&gt;{% endif %}</a></td>
       <td>{{ task.num_taught }} time{{ task.num_taught|pluralize }}</td>
       <td><a href="{% url 'task_details' task.id %}">...</a></td>
