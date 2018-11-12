@@ -32,6 +32,7 @@
   <tr><th>Family:</th><td id="family">{{ person.family|default:"—" }}</td></tr>
   <tr><th>May contact:</th><td id="may_contact">{{ person.may_contact|yesno }}</td></tr>
   <tr><th>Consent to publish profile:</th><td id="publish_profile">{{ person.publish_profile|yesno }}</td></tr>
+  <tr><th>Consent to include name when publishing lessons:</th><td id="lesson_publication_consent">{{ person.get_lesson_publication_consent_display }}</td></tr>
   <tr><th>Privacy policy agreement:</th><td id="data_privacy_agreement">{{ person.data_privacy_agreement|yesno }}</td></tr>
   <tr><th>Email:</th><td id="email">{% if person.email %}{{ person.email|urlize }}{% else %}—{% endif %}</td></tr>
   <tr><th>Gender:</th><td id="gender">{{ person.get_gender_display|default:"—" }}</td></tr>

@@ -49,6 +49,7 @@ class AutoUpdateProfileForm(forms.ModelForm):
             'gender',
             'may_contact',
             'publish_profile',
+            'lesson_publication_consent',
             'country',
             'airport',
             'github',

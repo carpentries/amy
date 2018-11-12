@@ -567,6 +567,7 @@ class PersonForm(forms.ModelForm):
             'family',
             'may_contact',
             'publish_profile',
+            'lesson_publication_consent',
             'data_privacy_agreement',
             'email',
             'gender',
