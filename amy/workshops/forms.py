@@ -376,9 +376,6 @@ class EventForm(forms.ModelForm):
         widget=ListSelect2(),
     )
 
-    admin_fee = forms.DecimalField(min_value=0, decimal_places=2,
-                                   required=False, widget=TextInput)
-
     helper = BootstrapHelper(add_cancel_button=False,
                              duplicate_buttons_on_top=True)
 
@@ -386,7 +383,7 @@ class EventForm(forms.ModelForm):
         model = Event
         fields = ('slug', 'completed', 'start', 'end', 'host', 'administrator',
                   'assigned_to', 'tags', 'url', 'language', 'reg_key', 'venue',
-                  'admin_fee', 'invoice_status', 'attendance', 'contact',
+                  'attendance', 'contact',
                   'notes', 'country', 'address', 'latitude', 'longitude',
                   'open_TTT_applications', 'curricula', )
         widgets = {
@@ -426,8 +423,6 @@ class EventForm(forms.ModelForm):
             'url',
             'language',
             'reg_key',
-            'admin_fee',
-            'invoice_status',
             'attendance',
             'contact',
             'notes',
