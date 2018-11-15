@@ -234,7 +234,7 @@ class EventSerializer(serializers.ModelSerializer):
         model = Event
         fields = (
             'slug', 'completed', 'start', 'end', 'host', 'administrator',
-            'tags', 'website_url', 'reg_key', 'admin_fee', 'invoice_status',
+            'tags', 'website_url', 'reg_key',
             'attendance', 'contact', 'country', 'venue', 'address',
             'latitude', 'longitude', 'notes', 'tasks', 'assigned_to',
         )
