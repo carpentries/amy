@@ -160,7 +160,7 @@ class TestWorkshopRequestBaseForm(TestBase):
             'organization_type': 'self',
             'self_organized_github':
                 'http://hogwarts.github.io/2018-11-03-Hogwarts',
-            'centrally_organized_fee': '',
+            'centrally_organized_fee': 'nonprofit',  # needs to be present
             'waiver_circumstances': '',
         }
         form = WorkshopRequestBaseForm(data)
@@ -199,7 +199,7 @@ class TestWorkshopRequestBaseForm(TestBase):
         data = {
             'organization_type': 'self',
             'self_organized_github': '',
-            'centrally_organized_fee': '',
+            'centrally_organized_fee': 'nonprofit',  # field is required
             'waiver_circumstances': '',
         }
         form = WorkshopRequestBaseForm(data)
@@ -253,6 +253,7 @@ class TestWorkshopRequestBaseForm(TestBase):
         # 8: missing organization type
         data = {
             'organization_type': '',
+            'centrally_organized_fee': 'nonprofit',  # field is required
         }
         form = WorkshopRequestBaseForm(data)
         self.assertIn('organization_type', form.errors)

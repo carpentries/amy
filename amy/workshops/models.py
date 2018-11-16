@@ -2282,7 +2282,6 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         help_text="Please provide URL."
     )
     FEE_CHOICES = (
-        ("", "Not applicable."),
         ("nonprofit", "I am with a government site, university, or other "
                       "nonprofit. I understand the workshop fee of US$2500, "
                       "and agree to follow through on The Carpentries "
@@ -2299,7 +2298,7 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     centrally_organized_fee = models.CharField(
         max_length=20,
         choices=FEE_CHOICES,
-        blank=True, null=False, default="",
+        blank=False, null=False, default="nonprofit",
         verbose_name="Which of the following applies to your payment for the "
                      "administrative fee?",
     )
