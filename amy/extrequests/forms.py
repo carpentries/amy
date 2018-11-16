@@ -2,6 +2,7 @@ from crispy_forms.bootstrap import FormActions
 from crispy_forms.layout import Layout, Div, HTML, Submit, Field
 from django import forms
 from django.core.exceptions import ValidationError
+from django.db.models import Case, When
 
 from workshops.forms import BootstrapHelper
 from workshops.models import (
@@ -218,7 +219,11 @@ class WorkshopRequestBaseForm(forms.ModelForm):
     )
     domains = forms.ModelMultipleChoiceField(
         required=False,
-        queryset=KnowledgeDomain.objects.all(),
+        queryset=KnowledgeDomain.objects.order_by(
+            # this crazy django-ninja-code sorts by 'name', but leaves
+            # "Don't know yet" entry last
+            Case(When(name="Don't know yet", then=-1)), 'name',
+        ),
         widget=CheckboxSelectMultipleWithOthers('domains_other'),
         label=WorkshopRequest._meta.get_field('domains').verbose_name,
         help_text=WorkshopRequest._meta.get_field('domains').help_text,

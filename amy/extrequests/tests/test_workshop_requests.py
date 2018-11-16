@@ -322,6 +322,23 @@ class TestWorkshopRequestBaseForm(TestBase):
         self.assertNotIn('travel_expences_management', form.errors)
         self.assertNotIn('travel_expences_management_other', form.errors)
 
+    def test_domains_order_preserved(self):
+        """In #1405 it was requested to have "Don't know yet" option always
+        last, and other options sorted alphabetically. It posed a serious
+        issue, but thankfully since Django 1.8 it's possible with Case(When())
+        added to the `.order_by` clause."""
+        form = WorkshopRequestBaseForm()
+        domains_qs = form.fields['domains'].queryset
+
+        # make sure that "Don't know yet" is last on the list
+        self.assertEqual(domains_qs.last(),
+                         KnowledgeDomain.objects.get(name="Don't know yet"))
+
+        # make sure other elements on the list [0..-1] are still sorted
+        # alphabetically by name
+        domain_names = list(domains_qs.values_list('name', flat=True))[:-1]
+        self.assertEqual(domain_names, sorted(domain_names))
+
 
 class TestWorkshopRequestViews(TestBase):
     def setUp(self):
