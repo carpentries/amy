@@ -10,29 +10,12 @@
   <tr><th>Host:</th><td colspan="2"><a href="{% url 'organization_details' event.host.domain %}">{{ event.host }}</a></td></tr>
   <tr><th>Administrator:</th><td colspan="2">{% if event.administrator %}<a href="{{ event.administrator.get_absolute_url }}">{{ event.administrator }}</a>{% else %}&mdash;{% endif %}</td></tr>
   <tr><th>Tags:</th><td colspan="2">{% for tag in event.tags.all %}{% include "includes/tag.html" with tag=tag %}{% endfor %}</td></tr>
-  <tr><th>Curricula:</th><td colspan="2">{% for curriculum in event.curricula.all %}{% include "includes/curriculum.html" with curriculum=curriculum %}{% endfor %}</td></tr>
+  <tr><th>Curricula:</th><td colspan="2">{% for curriculum in event.curricula.all %}{% include "includes/curriculum.html" with curriculum=curriculum %}{% empty %}&mdash;{% endfor %}</td></tr>
   <tr><th>Member sites:<br><small>gathered from associated tasks</small></th><td colspan="2">{% if member_sites %}<ul>{% for site in member_sites %}<li><a href="{{ site.get_absolute_url }}">{{ site }}</a></li>{% endfor %}</ul>{% else %}&mdash;{% endif %}</td></tr>
   <tr><th>Open applications <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events"></i>:</th><td colspan="2">{{ event.open_TTT_applications|yesno }}</td></tr>
   <tr class="{% if not event.url %}table-danger{% endif %}"><th>Website URL:</th><td colspan="2">{{ event.website_url|default:"&mdash;"|urlize_newtab }} {% if event.url %}<a href="{% url 'validate_event' event.slug %}" class="btn btn-primary btn-sm float-right" id="validate_event" data-toggle="modal" data-target="#validation_modal">Validate event</a>{% else %}<a class="btn btn-danger btn-sm float-right" id="error_event_url" tabindex="0" role="button" data-toggle="popover" title="Validation error" data-content="Cannot validate an event without URL pointing to the GitHub repository, e.g.: <code>https://github.com/swcarpentry/2015-05-24-training</code>" data-html="true" data-trigger="focus">Error</a>{% endif %}</td></tr>
   <tr><th>Language:</th><td colspan="2">{{ event.language|default:"&mdash;" }}</td></tr>
   <tr><th>Eventbrite key:</th><td colspan="2">{% if event.reg_key %}<a href="https://www.eventbrite.com/myevent?eid={{ event.reg_key }}" title="Go to Eventbrite's page for this event" target="_blank">{{ event.reg_key }}</a>{% else %}&mdash;{% endif %}</td></tr>
-  <tr><th>Admin fee:</th><td colspan="2">{{ event.admin_fee|default_if_none:"&mdash;" }}</td></tr>
-  <tr>
-    <th>Invoice:</th>
-    <td colspan="2">
-      {{ event.get_invoice_status_display }}
-      {% if event.uninvoiced %}
-      <a tabindex="0" role="button" class="btn btn-primary btn-sm float-right" data-toggle="popover" title="Invoicing disabled" data-content="Please contact <a href='mailto:team@carpentries.org'>team@carpentries.org</a> if you need to submit an invoice. Include the following information in your email: <ul>
-  <li>Link to workshop page in AMY</li>
-  <li>Purpose of invoice</li>
-  <li>Amount of invoice in US Dollars</li>
-  <li>Name, email, phone, and mailing address of person who should receive in invoice</li>
-</ul>" data-html="true" data-trigger="focus">Invoice</a>
-      {% else %}
-      <a href="#" class="btn btn-primary btn-sm float-right disabled">Invoice</a>
-      {% endif %}
-    </td>
-  </tr>
   <tr class="{% if not event.attendance %}table-danger{% endif %}">
     <th>Attendance:</th>
     <td colspan="2">
