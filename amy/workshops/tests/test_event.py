@@ -477,39 +477,35 @@ class TestEventViews(TestBase):
         response = self.client.post(reverse('event_add'), data)
         assert response.status_code == 302
 
-    def test_negative_admin_fee_attendance(self):
-        """Ensure we disallow negative admin fee or attendance.
+    def test_negative_attendance(self):
+        """Ensure we disallow negative attendance.
 
         This is a regression test for
-        https://github.com/swcarpentry/amy/issues/435."""
+        https://github.com/swcarpentry/amy/issues/435.
+
+        Warning: this used to test `admin_fee` for negative value, but since
+        #1411 (https://github.com/swcarpentry/amy/pull/1411) we don't have
+        `admin_fee` in the form nor on Event Details page."""
         error_str = "Ensure this value is greater than or equal to 0."
 
         data = {
             'host': self.test_host.id,
             'tags': [self.test_tag.id],
             'slug': '2016-06-30-test-event',
-            'admin_fee': -1200,
+            'attendance': -36,
             'invoice_status': 'unknown',
         }
 
-        f = EventForm(data)
-        self.assertIn('admin_fee', f.errors)
-        self.assertIn(error_str, f.errors['admin_fee'])
-
-        del data['admin_fee']
         data['attendance'] = -36
         f = EventForm(data)
         self.assertIn('attendance', f.errors)
         self.assertIn(error_str, f.errors['attendance'])
 
-        data['admin_fee'] = 0
         data['attendance'] = 0
         f = EventForm(data)
-        self.assertNotIn('admin_fee', f.errors)
         self.assertNotIn('attendance', f.errors)
 
         data['slug'] = '2016-06-30-test-event2'
-        data['admin_fee'] = 1200
         data['attendance'] = 36
         f = EventForm(data)
         self.assertTrue(f.is_valid())
