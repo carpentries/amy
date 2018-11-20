@@ -152,7 +152,7 @@ def verify_upload_person_task(data, match=False):
         if match is True:
             try:
                 person = Person.objects.get(email=email)
-            except Person.DoesNotExist:
+            except (Person.DoesNotExist, Person.MultipleObjectsReturned):
                 person = None
             else:
                 info.append('Existing record for person will be used.')
@@ -171,7 +171,7 @@ def verify_upload_person_task(data, match=False):
         elif not person_id:
             try:
                 Person.objects.get(email=email)
-            except Person.DoesNotExist:
+            except (Person.DoesNotExist, Person.MultipleObjectsReturned):
                 pass
             else:
                 errors.append('Person with this email address already exists.')

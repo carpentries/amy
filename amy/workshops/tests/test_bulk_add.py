@@ -178,6 +178,49 @@ class VerifyUploadPersonTask(CSVBulkUploadTestBase):
             has_errors = verify_upload_person_task(bad_data, match=True)
             self.assertFalse(has_errors, 'Bad email: {}'.format(email))
 
+    def test_email_missing(self):
+        """This tests against regression in:
+        https://github.com/swcarpentry/amy/issues/1394
+
+        The issue: entries without emails (email=None) were caught in
+        `Person.objects.get(email=email)`, which returned multiple objects
+        (because we have many users with empty emails, and it doesn't violate
+        UNIQUE constraint."""
+
+        # make existing users loose their emails
+        usernames = ['potter_harry', 'granger_hermione', 'weasley_ron']
+        Person.objects.filter(username__in=usernames).update(email=None)
+
+        bad_data = [
+            {
+                'email': None,
+                'personal': 'Harry',
+                'family': 'Potter',
+                'event': 'foobar',
+                'role': 'learner'
+            },
+            {
+                'email': None,
+                'personal': 'Hermione',
+                'family': 'Granger',
+                'event': 'foobar',
+                'role': 'learner'
+            },
+            {
+                'email': None,
+                'personal': 'Ron',
+                'family': 'Weasley',
+                'event': 'foobar',
+                'role': 'learner'
+            },
+        ]
+        # test for first occurrence of the error
+        has_errors = verify_upload_person_task(bad_data, match=True)
+        self.assertFalse(has_errors)
+        # test for second occurrence of the error
+        has_errors = verify_upload_person_task(bad_data, match=False)
+        self.assertFalse(has_errors)
+
     def test_verify_existing_user_has_workshop_role_provided(self):
         bad_data = [
             {
