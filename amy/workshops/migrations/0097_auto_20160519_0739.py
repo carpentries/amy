@@ -17,7 +17,7 @@ def populate_languages(apps, schema_editor):
     [2]: http://www.iana.org/assignments/language-subtag-registry/language-subtag-registry
     [3]: https://github.com/mattcg/language-subtag-registry/
     """
-    languages = json.load(open('data/registry.json'))
+    languages = json.load(open('data/registry.json', encoding='utf-8'))
     Language = apps.get_model('workshops', 'Language')
     for language in languages:
         if language['Type'] == 'language' and len(language['Subtag']) <= 2:
