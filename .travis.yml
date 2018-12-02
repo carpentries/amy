@@ -6,11 +6,14 @@ cache: pip
 
 python:
   - 3.5
+  - 3.6
+  - 3.7
 
 env:
   - AMY_ENABLE_PYDATA=true
     AMY_PYDATA_USERNAME=username
     AMY_PYDATA_PASSWORD=password
+    CHECK_MIGRATION=true
   - CHECK_MIGRATION=true
 
 install:
