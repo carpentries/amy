@@ -2215,16 +2215,16 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     )
 
     SWC_LESSONS_LINK = (
-        "<a href='https://software-carpentry.org/lessons/'>"
-        "Software Carpentry lessons page</a>"
+        '<a href="https://software-carpentry.org/lessons/">'
+        'Software Carpentry lessons page</a>'
     )
     DC_LESSONS_LINK = (
-        "<a href='http://www.datacarpentry.org/lessons/'>"
-        "Data Carpentry lessons page</a>"
+        '<a href="http://www.datacarpentry.org/lessons/">'
+        'Data Carpentry lessons page</a>'
     )
     LC_LESSONS_LINK = (
-        "<a href='https://librarycarpentry.org/'>"
-        "Library Carpentry</a>"
+        '<a href="https://librarycarpentry.org/lessons/">'
+        'Library Carpentry lessons page</a>'
     )
     requested_workshop_types = models.ManyToManyField(
         Curriculum, limit_choices_to={'active': True},
@@ -2242,7 +2242,7 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
                   + DC_LESSONS_LINK + ", or the " + LC_LESSONS_LINK +
                   " for more information about any of our lessons. If you’re "
                   "not sure and would like to discuss with us, please select "
-                  "the 'Not sure' option below.",
+                  "the 'Not sure' option above.",
     )
 
     ORGANIZATION_TYPE_CHOICES = (
