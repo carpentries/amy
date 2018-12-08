@@ -116,13 +116,13 @@ DJANGO_APPS = [
     # 'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.humanize', # Handy template tags
-    'django.contrib.admin',
+    'django.contrib.humanize',  # Handy template tags
 ]
 THIRD_PARTY_APPS = [
     'crispy_forms',
     'dal',
     'dal_select2',
+    'django.contrib.admin',  # django admin needs to be after DAL
     'django_countries',
     'django_filters',
     'reversion',

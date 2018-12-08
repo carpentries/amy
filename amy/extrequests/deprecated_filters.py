@@ -1,7 +1,4 @@
 from dal import autocomplete
-from dal_select2.widgets import (
-    Select2,
-)
 import django_filters
 
 from extrequests.models import (
@@ -9,6 +6,7 @@ from extrequests.models import (
     EventSubmission,
     DCSelfOrganizedEventRequest,
 )
+from workshops.fields import Select2
 from workshops.filters import (
     AMYFilterSet,
     StateFilterSet,

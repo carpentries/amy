@@ -53,11 +53,18 @@ class Select2WidgetMixin(DALSelect2WidgetMixin):
     def media(self):
         m = super().media
         js = list(m._js)
-        try:
-            js.remove('admin/js/vendor/jquery/jquery.js')
-            js.remove('admin/js/vendor/jquery/jquery.min.js')
-        except ValueError:
-            pass
+
+        jquery_messing_imports = (
+            'admin/js/vendor/jquery/jquery.js',
+            'admin/js/vendor/jquery/jquery.min.js',
+            # 'admin/js/jquery.init.js',
+            # 'autocomplete_light/jquery.init.js',
+        )
+        for import_ in jquery_messing_imports:
+            try:
+                js.remove(import_)
+            except ValueError:
+                pass
         return forms.Media(css=m._css, js=js)
 
 
