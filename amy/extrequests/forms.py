@@ -13,6 +13,7 @@ from workshops.models import (
     TrainingRequest,
     KnowledgeDomain,
     WorkshopRequest,
+    Curriculum,
 )
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330: https://github.com/swcarpentry/amy/issues/1330
@@ -248,6 +249,32 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         required=True,
         label=WorkshopRequest._meta.get_field('host_responsibilities')
                                    .verbose_name,
+    )
+
+    requested_workshop_types = forms.ModelMultipleChoiceField(
+        required=True,
+        queryset=Curriculum.objects.order_by(
+            # This crazy django-ninja-code gives different weights to entries
+            # matching different criterias, and then sorts them by 'name'.
+            # For example when two entries (e.g. swc-r and swc-python) have the
+            # same weight (here: 5), then sorting by name comes in.
+            Case(
+                 When(slug="dc-other", then=2),
+                 When(slug="lc-other", then=4),
+                 When(slug="swc-other", then=6),
+                 When(slug="unknown", then=7),
+                 When(slug__startswith="dc", then=1),
+                 When(slug__startswith="lc", then=3),
+                 When(slug__startswith="swc", then=5),
+                 default=8,
+            ),
+            'name',
+        ),
+        label=WorkshopRequest._meta.get_field('requested_workshop_types')
+                                   .verbose_name,
+        help_text=WorkshopRequest._meta.get_field('requested_workshop_types')
+                                       .help_text,
+        widget=forms.CheckboxSelectMultiple(),
     )
 
     helper = BootstrapHelper(add_cancel_button=False)
