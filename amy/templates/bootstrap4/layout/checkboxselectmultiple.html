@@ -5,6 +5,8 @@
 <div class="{% if inline_class %}form-check{% endif %}{% if field_class %} {{ field_class }}{% endif %}"{% if flat_attrs %} {{ flat_attrs|safe }}{% endif %}>
     {% include 'bootstrap4/layout/field_errors_block.html' %}
 
+    {% block help_text_before %}{% include 'bootstrap4/layout/help_text.html' %}{% endblock %}
+
     {% for choice in field.field.choices %}
         {% if not inline_class %}<div class="form-check">{% endif %}
         <label id="id_{{ field.id_for_label }}_{{ forloop.counter }}" class="form-check-{% if inline_class %}{{ inline_class }}{% else %}label{% endif %}" for="id_{{ field.html_name }}_{{ forloop.counter }}">
@@ -22,5 +24,5 @@
       {% if not inline_class %}</div>{% endif %}
     {% endif %}
 
-    {% include 'bootstrap4/layout/help_text.html' %}
+    {% block help_text_after %}{% endblock %}
 </div>
