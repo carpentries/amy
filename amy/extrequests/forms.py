@@ -355,6 +355,26 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             ),
         )
 
+        # add horizontal lines after some fields to visually group them
+        # together
+        hr_fields_after = (
+            'email', 'institution_department', 'audience_description',
+        )
+        hr_fields_before = (
+            'travel_expences_management',
+            'comment',
+        )
+        for field in hr_fields_after:
+            self.helper.layout.insert(
+                self.helper.layout.fields.index(field) + 1,
+                HTML('<hr class="col-lg-10 col-12 mx-0 px-0">'),
+            )
+        for field in hr_fields_before:
+            self.helper.layout.insert(
+                self.helper.layout.fields.index(field),
+                HTML('<hr class="col-lg-10 col-12 mx-0 px-0">'),
+            )
+
     @staticmethod
     def institution_label_from_instance(obj):
         """Static method that overrides ModelChoiceField choice labels,
