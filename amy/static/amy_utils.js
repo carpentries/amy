@@ -185,4 +185,7 @@ $(document).ready(function() {
       event.preventDefault();  // prevent submission
     }
   });
+
+  /* Fix select2 widgets losing their focus. */
+  $('select').on("select2:close", function () { $(this).focus(); });
  });
