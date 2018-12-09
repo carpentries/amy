@@ -14,7 +14,7 @@
             {{ choice.1|unlocalize }}
             {% if forloop.last %}
                 {% if field.field.widget.other_field_name %}
-                {% crispy_field field.field.widget.other_field input-sm %}
+                {% crispy_field field.field.widget.other_field 'class' 'form-control-sm' %}
                 {% endif %}
             {% endif %}
         </label>

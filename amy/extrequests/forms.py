@@ -401,6 +401,10 @@ class WorkshopRequestBaseForm(forms.ModelForm):
                 HTML('<hr class="col-lg-10 col-12 mx-0 px-0">'),
             )
 
+        # move "institution_name" field to "institution" subfield
+        self['institution'].field.widget.subfield = self['institution_name']
+        self.helper.layout.fields.remove('institution_name')
+
     @staticmethod
     def institution_label_from_instance(obj):
         """Static method that overrides ModelChoiceField choice labels,

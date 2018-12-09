@@ -19,7 +19,7 @@
       {% if not inline_class %}<div class="checkbox">{% endif %}
         <label class="{% if inline_class %}checkbox-{{ inline_class }}{% endif %}last-field">
             Other:
-            {% crispy_field field.field.widget.other_field input-sm %}
+            {% crispy_field field.field.widget.other_field 'class' 'form-control-sm' %}
         </label>
       {% if not inline_class %}</div>{% endif %}
     {% endif %}
