@@ -129,7 +129,6 @@ class WorkshopRequestExternalForm(WorkshopRequestBaseForm):
             "institution_department",
             "location",
             "country",
-            "part_of_conference",
             "conference_details",
             "preferred_dates",
             "language",

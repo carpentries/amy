@@ -22,7 +22,7 @@ class TestWorkshopRequestExternalForm(TestBase):
         fields_right = set([
             "personal", "family", "email", "institution", "institution_name",
             "institution_department", "location", "country",
-            "part_of_conference", "conference_details", "preferred_dates",
+            "conference_details", "preferred_dates",
             "language", "number_attendees", "domains", "domains_other",
             "academic_levels", "computing_levels", "audience_description",
             "requested_workshop_types", "organization_type",

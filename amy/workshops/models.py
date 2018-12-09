@@ -2138,17 +2138,12 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         null=False, blank=False,
         verbose_name="Country",
     )
-    part_of_conference = models.BooleanField(
-        null=False, blank=False,
-        verbose_name="Is this workshop part of conference or larger event?",
-        help_text="We can manage registration and other coordination for our"
-                  " workshop, but not other conference activities.",
-    )
     conference_details = models.CharField(
         max_length=STR_LONGEST,
         blank=True, null=False, default="",
-        verbose_name="Conference details",
-        help_text="Name, description (if applicable).",
+        verbose_name="Is this workshop part of conference or larger event?",
+        help_text="If yes, please provide conference details "
+                  "(name, description).",
     )
     preferred_dates = models.CharField(
         max_length=STR_LONGEST,
@@ -2242,7 +2237,7 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
                   + DC_LESSONS_LINK + ", or the " + LC_LESSONS_LINK +
                   " for more information about any of our lessons. If you’re "
                   "not sure and would like to discuss with us, please select "
-                  "the 'Not sure' option above.",
+                  'the "Don\'t know yet" option below.',
     )
 
     ORGANIZATION_TYPE_CHOICES = (

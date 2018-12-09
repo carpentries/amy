@@ -290,7 +290,6 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             "institution_department",
             "location",
             "country",
-            "part_of_conference",
             "conference_details",
             "preferred_dates",
             "language",
@@ -430,18 +429,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
                 "You must select institution or enter it's name when you "
                 "enter department/school details.")
 
-        # 3: enter conference details if this is part of conference
-        part_of_conference = self.cleaned_data.get('part_of_conference', '')
-        conference_details = self.cleaned_data.get('conference_details', '')
-        if not part_of_conference and conference_details:
-            errors['conference_details'] = ValidationError(
-                "You entered conference details, but did you forget to select "
-                '"part of conference" checkbox above?')
-        elif part_of_conference and not conference_details:
-            errors['conference_details'] = ValidationError(
-                "Please enter conference/event details.")
-
-        # 4: * self-organized workshop, require URL
+        # 3: * self-organized workshop, require URL
         #    * centrally-organized workshop, require fee description
         #    * fee waiver? require waiver circumstances description
         organization_type = self.cleaned_data.get('organization_type', '')
@@ -690,7 +678,6 @@ class WorkshopRequestAdminForm(WorkshopRequestBaseForm):
             "institution_department",
             "location",
             "country",
-            "part_of_conference",
             "conference_details",
             "preferred_dates",
             "language",

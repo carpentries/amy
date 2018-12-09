@@ -864,7 +864,7 @@ class TestMatchingNotificationEmail(TestBase):
         self.request = WorkshopRequest.objects.create(
             state="p", personal="Harry", family="Potter", email="h@potter.com",
             institution_name="Hogwarts", location="Scotland", country="GB",
-            part_of_conference=False, preferred_dates="soon",
+            preferred_dates="soon",
             language=Language.objects.get(name='English'),
             audience_description="Students of Hogwarts",
             organization_type='self',

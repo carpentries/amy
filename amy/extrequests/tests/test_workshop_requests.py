@@ -112,45 +112,6 @@ class TestWorkshopRequestBaseForm(TestBase):
         self.assertIn('institution_name', form.errors)  # can't use both fields
         self.assertNotIn('institution_department', form.errors)
 
-    def test_conference_validation(self):
-        """Ensure correct validation for conference details."""
-
-        # 1: no conference
-        data = {
-            'part_of_conference': False,
-            'conference_details': '',
-        }
-        form = WorkshopRequestBaseForm(data)
-        self.assertNotIn('part_of_conference', form.errors)
-        self.assertNotIn('conference_details', form.errors)
-
-        # 2: correct conference data
-        data = {
-            'part_of_conference': True,
-            'conference_details': 'PyCon 2019',
-        }
-        form = WorkshopRequestBaseForm(data)
-        self.assertNotIn('part_of_conference', form.errors)
-        self.assertNotIn('conference_details', form.errors)
-
-        # 3: part of conference and missing conference details
-        data = {
-            'part_of_conference': True,
-            'conference_details': '',
-        }
-        form = WorkshopRequestBaseForm(data)
-        self.assertNotIn('part_of_conference', form.errors)
-        self.assertIn('conference_details', form.errors)
-
-        # 4: conference details, but missing part of conference field
-        data = {
-            'part_of_conference': False,
-            'conference_details': 'PyCon 2019',
-        }
-        form = WorkshopRequestBaseForm(data)
-        self.assertNotIn('part_of_conference', form.errors)
-        self.assertIn('conference_details', form.errors)
-
     def test_organization_type(self):
         """Test validation of fields related to values in
         `organization_type`."""
@@ -348,7 +309,7 @@ class TestWorkshopRequestViews(TestBase):
             state="p", personal="Harry", family="Potter",
             email="harry@potter.com",
             institution_name="Hogwarts", location="Scotland", country="GB",
-            part_of_conference=False, preferred_dates="soon",
+            preferred_dates="soon",
             language=Language.objects.get(name='English'),
             audience_description="Students of Hogwarts",
             organization_type='self',
@@ -357,7 +318,7 @@ class TestWorkshopRequestViews(TestBase):
             state="d", personal="Harry", family="Potter",
             email="harry@potter.com",
             institution_name="Hogwarts", location="Scotland", country="GB",
-            part_of_conference=False, preferred_dates="soon",
+            preferred_dates="soon",
             language=Language.objects.get(name='English'),
             audience_description="Students of Hogwarts",
             organization_type='central',
