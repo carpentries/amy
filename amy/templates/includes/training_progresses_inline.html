@@ -1,0 +1,24 @@
+{% load training_progress %}
+
+{% for progress in person.trainingprogress_set.all %}
+  <a href="{% url 'trainingprogress_edit' progress.id %}?next={{ request.get_full_path|urlencode }}"
+     class="{% progress_label progress %}"
+     data-toggle="popover"
+     data-content="{% progress_description progress %}<br />Click to edit or delete."
+     data-html="true"
+     data-trigger="hover">
+    {% if progress.discarded %}<strike>{% endif %}
+      {{ progress.requirement }}
+    {% if progress.discarded %}</strike>{% endif %}
+  </a>
+  &nbsp;
+{% endfor %}
+{% if person.training_tasks %}
+<a href="{% url 'trainingprogress_add' %}?trainee={{ person.id|urlencode }}&amp;next={{ request.get_full_path|urlencode }}"
+   class="badge badge-secondary"
+   data-toggle="popover" data-content="Click to add new progress" data-trigger="hover">+</a>
+{% else %}
+<a class="badge badge-secondary disabled"
+   data-toggle="popover"
+   data-content="It's not possible to add training progress to a trainee without any training task." data-trigger="hover">+</a>
+{% endif %}
