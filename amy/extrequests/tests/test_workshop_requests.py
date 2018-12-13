@@ -112,45 +112,6 @@ class TestWorkshopRequestBaseForm(TestBase):
         self.assertIn('institution_name', form.errors)  # can't use both fields
         self.assertNotIn('institution_department', form.errors)
 
-    def test_conference_validation(self):
-        """Ensure correct validation for conference details."""
-
-        # 1: no conference
-        data = {
-            'part_of_conference': False,
-            'conference_details': '',
-        }
-        form = WorkshopRequestBaseForm(data)
-        self.assertNotIn('part_of_conference', form.errors)
-        self.assertNotIn('conference_details', form.errors)
-
-        # 2: correct conference data
-        data = {
-            'part_of_conference': True,
-            'conference_details': 'PyCon 2019',
-        }
-        form = WorkshopRequestBaseForm(data)
-        self.assertNotIn('part_of_conference', form.errors)
-        self.assertNotIn('conference_details', form.errors)
-
-        # 3: part of conference and missing conference details
-        data = {
-            'part_of_conference': True,
-            'conference_details': '',
-        }
-        form = WorkshopRequestBaseForm(data)
-        self.assertNotIn('part_of_conference', form.errors)
-        self.assertIn('conference_details', form.errors)
-
-        # 4: conference details, but missing part of conference field
-        data = {
-            'part_of_conference': False,
-            'conference_details': 'PyCon 2019',
-        }
-        form = WorkshopRequestBaseForm(data)
-        self.assertNotIn('part_of_conference', form.errors)
-        self.assertIn('conference_details', form.errors)
-
     def test_organization_type(self):
         """Test validation of fields related to values in
         `organization_type`."""
@@ -160,7 +121,7 @@ class TestWorkshopRequestBaseForm(TestBase):
             'organization_type': 'self',
             'self_organized_github':
                 'http://hogwarts.github.io/2018-11-03-Hogwarts',
-            'centrally_organized_fee': '',
+            'centrally_organized_fee': 'nonprofit',  # needs to be present
             'waiver_circumstances': '',
         }
         form = WorkshopRequestBaseForm(data)
@@ -199,7 +160,7 @@ class TestWorkshopRequestBaseForm(TestBase):
         data = {
             'organization_type': 'self',
             'self_organized_github': '',
-            'centrally_organized_fee': '',
+            'centrally_organized_fee': 'nonprofit',  # field is required
             'waiver_circumstances': '',
         }
         form = WorkshopRequestBaseForm(data)
@@ -253,6 +214,7 @@ class TestWorkshopRequestBaseForm(TestBase):
         # 8: missing organization type
         data = {
             'organization_type': '',
+            'centrally_organized_fee': 'nonprofit',  # field is required
         }
         form = WorkshopRequestBaseForm(data)
         self.assertIn('organization_type', form.errors)
@@ -321,6 +283,23 @@ class TestWorkshopRequestBaseForm(TestBase):
         self.assertNotIn('travel_expences_management', form.errors)
         self.assertNotIn('travel_expences_management_other', form.errors)
 
+    def test_domains_order_preserved(self):
+        """In #1405 it was requested to have "Don't know yet" option always
+        last, and other options sorted alphabetically. It posed a serious
+        issue, but thankfully since Django 1.8 it's possible with Case(When())
+        added to the `.order_by` clause."""
+        form = WorkshopRequestBaseForm()
+        domains_qs = form.fields['domains'].queryset
+
+        # make sure that "Don't know yet" is last on the list
+        self.assertEqual(domains_qs.last(),
+                         KnowledgeDomain.objects.get(name="Don't know yet"))
+
+        # make sure other elements on the list [0..-1] are still sorted
+        # alphabetically by name
+        domain_names = list(domains_qs.values_list('name', flat=True))[:-1]
+        self.assertEqual(domain_names, sorted(domain_names))
+
 
 class TestWorkshopRequestViews(TestBase):
     def setUp(self):
@@ -330,7 +309,7 @@ class TestWorkshopRequestViews(TestBase):
             state="p", personal="Harry", family="Potter",
             email="harry@potter.com",
             institution_name="Hogwarts", location="Scotland", country="GB",
-            part_of_conference=False, preferred_dates="soon",
+            preferred_dates="soon",
             language=Language.objects.get(name='English'),
             audience_description="Students of Hogwarts",
             organization_type='self',
@@ -339,7 +318,7 @@ class TestWorkshopRequestViews(TestBase):
             state="d", personal="Harry", family="Potter",
             email="harry@potter.com",
             institution_name="Hogwarts", location="Scotland", country="GB",
-            part_of_conference=False, preferred_dates="soon",
+            preferred_dates="soon",
             language=Language.objects.get(name='English'),
             audience_description="Students of Hogwarts",
             organization_type='central',

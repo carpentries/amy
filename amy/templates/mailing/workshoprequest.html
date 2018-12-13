@@ -17,9 +17,9 @@
         <td>{{ object.location }}</td></tr>
     <tr><th>Country:</th>
         <td>{{ object.country.name }} <img src="{{ object.country.flag }}" alt="{{ object.country }}" class="country-flag" /></td></tr>
-    <tr><th>Part of a conference:</th>
+    <tr><th>Conference:</th>
         <td>
-          {{ object.part_of_conference|yesno }}{% if object.part_of_conference %}: {{ object.conference_details }}{% endif %}
+          {{ object.conference_details|default:"—" }}
         </td></tr>
     <tr><th>Preferred dates:</th>
         <td>{{ object.preferred_dates }}</td></tr>

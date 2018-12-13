@@ -1,17 +1,14 @@
 from datetime import date
 
-from dal_select2.widgets import (
-    Select2,
-    Select2Multiple,
-)
 import django_filters
 from django.forms import widgets
 
+from workshops.fields import Select2, Select2Multiple
+from workshops.filters import AMYFilterSet, AllCountriesFilter
 from workshops.models import (
     Organization,
     Membership,
 )
-from workshops.filters import AMYFilterSet, AllCountriesFilter
 
 
 class OrganizationFilter(AMYFilterSet):

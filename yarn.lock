@@ -7,6 +7,11 @@
   resolved "https://registry.yarnpkg.com/@fortawesome/fontawesome-free/-/fontawesome-free-5.4.0.tgz#f3eea20ce4c216dc35e3c13f52f1caf9fc52d746"
   integrity sha512-yOvY4vhouiTXMNHMlxdgjjC6rdmspQTFCMaRDcxzOK+LP9YfoIccXpOK9boyUgvA1U/pgzHlVZDHrWs6r3sRcA==
 
+"@ttskch/select2-bootstrap4-theme@^1.0.5":
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/@ttskch/select2-bootstrap4-theme/-/select2-bootstrap4-theme-1.0.5.tgz#1610ef4c672c0f4cfd34d05bfc81b1c605bf4a9a"
+  integrity sha512-84qDd9eDwR6TijtPtV1jzhKcZnXZXwFxS98tc6Rh1mMv285Bptmv1JcsGvq33k7oq1QqK54p6BlYRx8kTP0ZiA==
+
 bootstrap-datepicker@^1.8.0:
   version "1.8.0"
   resolved "https://registry.yarnpkg.com/bootstrap-datepicker/-/bootstrap-datepicker-1.8.0.tgz#c63513931e6f09f16ae9f11b62f32d950df3958e"

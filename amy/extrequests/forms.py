@@ -2,6 +2,7 @@ from crispy_forms.bootstrap import FormActions
 from crispy_forms.layout import Layout, Div, HTML, Submit, Field
 from django import forms
 from django.core.exceptions import ValidationError
+from django.db.models import Case, When
 
 from workshops.forms import BootstrapHelper
 from workshops.models import (
@@ -12,6 +13,7 @@ from workshops.models import (
     TrainingRequest,
     KnowledgeDomain,
     WorkshopRequest,
+    Curriculum,
 )
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330: https://github.com/swcarpentry/amy/issues/1330
@@ -218,7 +220,11 @@ class WorkshopRequestBaseForm(forms.ModelForm):
     )
     domains = forms.ModelMultipleChoiceField(
         required=False,
-        queryset=KnowledgeDomain.objects.all(),
+        queryset=KnowledgeDomain.objects.order_by(
+            # this crazy django-ninja-code sorts by 'name', but leaves
+            # "Don't know yet" entry last
+            Case(When(name="Don't know yet", then=-1)), 'name',
+        ),
         widget=CheckboxSelectMultipleWithOthers('domains_other'),
         label=WorkshopRequest._meta.get_field('domains').verbose_name,
         help_text=WorkshopRequest._meta.get_field('domains').help_text,
@@ -245,6 +251,32 @@ class WorkshopRequestBaseForm(forms.ModelForm):
                                    .verbose_name,
     )
 
+    requested_workshop_types = forms.ModelMultipleChoiceField(
+        required=True,
+        queryset=Curriculum.objects.order_by(
+            # This crazy django-ninja-code gives different weights to entries
+            # matching different criterias, and then sorts them by 'name'.
+            # For example when two entries (e.g. swc-r and swc-python) have the
+            # same weight (here: 5), then sorting by name comes in.
+            Case(
+                 When(slug="dc-other", then=2),
+                 When(slug="lc-other", then=4),
+                 When(slug="swc-other", then=6),
+                 When(slug="unknown", then=7),
+                 When(slug__startswith="dc", then=1),
+                 When(slug__startswith="lc", then=3),
+                 When(slug__startswith="swc", then=5),
+                 default=8,
+            ),
+            'name',
+        ),
+        label=WorkshopRequest._meta.get_field('requested_workshop_types')
+                                   .verbose_name,
+        help_text=WorkshopRequest._meta.get_field('requested_workshop_types')
+                                       .help_text,
+        widget=forms.CheckboxSelectMultiple(),
+    )
+
     helper = BootstrapHelper(add_cancel_button=False)
 
     class Meta:
@@ -258,7 +290,6 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             "institution_department",
             "location",
             "country",
-            "part_of_conference",
             "conference_details",
             "preferred_dates",
             "language",
@@ -273,9 +304,9 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             "self_organized_github",
             "centrally_organized_fee",
             "waiver_circumstances",
-            "travel_expences_agreement",
             "travel_expences_management",
             "travel_expences_management_other",
+            "travel_expences_agreement",
             "comment",
             "data_privacy_agreement",
             "code_of_conduct_agreement",
@@ -350,6 +381,30 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             ),
         )
 
+        # add horizontal lines after some fields to visually group them
+        # together
+        hr_fields_after = (
+            'email', 'institution_department', 'audience_description',
+        )
+        hr_fields_before = (
+            'travel_expences_management',
+            'comment',
+        )
+        for field in hr_fields_after:
+            self.helper.layout.insert(
+                self.helper.layout.fields.index(field) + 1,
+                HTML('<hr class="col-lg-10 col-12 mx-0 px-0">'),
+            )
+        for field in hr_fields_before:
+            self.helper.layout.insert(
+                self.helper.layout.fields.index(field),
+                HTML('<hr class="col-lg-10 col-12 mx-0 px-0">'),
+            )
+
+        # move "institution_name" field to "institution" subfield
+        self['institution'].field.widget.subfield = self['institution_name']
+        self.helper.layout.fields.remove('institution_name')
+
     @staticmethod
     def institution_label_from_instance(obj):
         """Static method that overrides ModelChoiceField choice labels,
@@ -378,18 +433,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
                 "You must select institution or enter it's name when you "
                 "enter department/school details.")
 
-        # 3: enter conference details if this is part of conference
-        part_of_conference = self.cleaned_data.get('part_of_conference', '')
-        conference_details = self.cleaned_data.get('conference_details', '')
-        if not part_of_conference and conference_details:
-            errors['conference_details'] = ValidationError(
-                "You entered conference details, but did you forget to select "
-                '"part of conference" checkbox above?')
-        elif part_of_conference and not conference_details:
-            errors['conference_details'] = ValidationError(
-                "Please enter conference/event details.")
-
-        # 4: * self-organized workshop, require URL
+        # 3: * self-organized workshop, require URL
         #    * centrally-organized workshop, require fee description
         #    * fee waiver? require waiver circumstances description
         organization_type = self.cleaned_data.get('organization_type', '')
@@ -638,7 +682,6 @@ class WorkshopRequestAdminForm(WorkshopRequestBaseForm):
             "institution_department",
             "location",
             "country",
-            "part_of_conference",
             "conference_details",
             "preferred_dates",
             "language",

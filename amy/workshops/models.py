@@ -2138,17 +2138,12 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         null=False, blank=False,
         verbose_name="Country",
     )
-    part_of_conference = models.BooleanField(
-        null=False, blank=False,
-        verbose_name="Is this workshop part of conference or larger event?",
-        help_text="We can manage registration and other coordination for our"
-                  " workshop, but not other conference activities.",
-    )
     conference_details = models.CharField(
         max_length=STR_LONGEST,
         blank=True, null=False, default="",
-        verbose_name="Conference details",
-        help_text="Name, description (if applicable).",
+        verbose_name="Is this workshop part of conference or larger event?",
+        help_text="If yes, please provide conference details "
+                  "(name, description).",
     )
     preferred_dates = models.CharField(
         max_length=STR_LONGEST,
@@ -2215,16 +2210,16 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     )
 
     SWC_LESSONS_LINK = (
-        "<a href='https://software-carpentry.org/lessons/'>"
-        "Software Carpentry lessons page</a>"
+        '<a href="https://software-carpentry.org/lessons/">'
+        'Software Carpentry lessons page</a>'
     )
     DC_LESSONS_LINK = (
-        "<a href='http://www.datacarpentry.org/lessons/'>"
-        "Data Carpentry lessons page</a>"
+        '<a href="http://www.datacarpentry.org/lessons/">'
+        'Data Carpentry lessons page</a>'
     )
     LC_LESSONS_LINK = (
-        "<a href='https://librarycarpentry.org/'>"
-        "Library Carpentry</a>"
+        '<a href="https://librarycarpentry.org/lessons/">'
+        'Library Carpentry lessons page</a>'
     )
     requested_workshop_types = models.ManyToManyField(
         Curriculum, limit_choices_to={'active': True},
@@ -2242,7 +2237,7 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
                   + DC_LESSONS_LINK + ", or the " + LC_LESSONS_LINK +
                   " for more information about any of our lessons. If you’re "
                   "not sure and would like to discuss with us, please select "
-                  "the 'Not sure' option below.",
+                  'the "Don\'t know yet" option below.',
     )
 
     ORGANIZATION_TYPE_CHOICES = (
@@ -2282,7 +2277,6 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         help_text="Please provide URL."
     )
     FEE_CHOICES = (
-        ("", "Not applicable."),
         ("nonprofit", "I am with a government site, university, or other "
                       "nonprofit. I understand the workshop fee of US$2500, "
                       "and agree to follow through on The Carpentries "
@@ -2299,7 +2293,7 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     centrally_organized_fee = models.CharField(
         max_length=20,
         choices=FEE_CHOICES,
-        blank=True, null=False, default="",
+        blank=False, null=False, default="nonprofit",
         verbose_name="Which of the following applies to your payment for the "
                      "administrative fee?",
     )

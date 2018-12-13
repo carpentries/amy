@@ -1,12 +1,10 @@
 import re
 
-from dal_select2.widgets import (
-    Select2,
-)
 import django_filters
 from django.db.models import Q
 from django.forms import widgets
 
+from workshops.fields import Select2
 from workshops.filters import (
     AMYFilterSet,
     NamesOrderingFilter,

@@ -5,7 +5,7 @@ Person: {{ object.personal }} {{ object.family }} &lt;{{ object.email }}&gt;
 Institution: {{ object.institution|default:object.institution_name }}{% if object.institution_department %}, {{ object.institution_department }}{% endif %}
 Location: {{ object.location }}
 Country: {{ object.country.name }}
-Part of a conference: {{ object.part_of_conference|yesno }}{% if object.part_of_conference %}: {{ object.conference_details }}{% endif %}
+Conference: {{ object.conference_details|default:"—" }}
 Preferred dates: {{ object.preferred_dates }}
 Language: {{ object.language }}
 Approx. number of attendees: {{ object.get_number_attendees_display }}

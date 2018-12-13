@@ -1,17 +1,15 @@
-from datetime import date
 import re
 
-from dal import autocomplete
-from dal_select2.widgets import (
-    Select2,
-    Select2Multiple,
-    ModelSelect2Multiple,
-)
 import django_filters
 from django.db.models import Q
 from django.forms import widgets
 from django_countries import Countries
 
+from workshops.fields import (
+    Select2,
+    ModelSelect2,
+    ModelSelect2Multiple,
+)
 from workshops.forms import bootstrap_helper_filter, SIDEBAR_DAL_WIDTH
 from workshops.models import (
     StateMixin,
@@ -23,7 +21,6 @@ from workshops.models import (
     Tag,
     Task,
     Award,
-    Membership,
 )
 
 
@@ -340,7 +337,7 @@ class TraineeFilter(AMYFilterSet):
         queryset=Event.objects.ttt(),
         method=filter_trainees_by_training,
         label='Training',
-        widget=autocomplete.ModelSelect2(
+        widget=ModelSelect2(
             url='ttt-event-lookup',
             attrs=SIDEBAR_DAL_WIDTH,
         ),
@@ -368,7 +365,7 @@ class TaskFilter(AMYFilterSet):
     event = django_filters.ModelChoiceFilter(
         queryset=Event.objects.all(),
         label='Event',
-        widget=autocomplete.ModelSelect2(
+        widget=ModelSelect2(
             url='event-lookup',
             attrs=SIDEBAR_DAL_WIDTH,
         ),
@@ -427,7 +424,7 @@ class BadgeAwardsFilter(AMYFilterSet):
     event = django_filters.ModelChoiceFilter(
         queryset=Event.objects.all(),
         label='Event',
-        widget=autocomplete.ModelSelect2(
+        widget=ModelSelect2(
             url='event-lookup',
             attrs=SIDEBAR_DAL_WIDTH,
         ),

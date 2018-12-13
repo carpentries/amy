@@ -53,12 +53,33 @@ class Select2WidgetMixin(DALSelect2WidgetMixin):
     def media(self):
         m = super().media
         js = list(m._js)
-        try:
-            js.remove('admin/js/vendor/jquery/jquery.js')
-            js.remove('admin/js/vendor/jquery/jquery.min.js')
-        except ValueError:
-            pass
+
+        # remove JS import that mess up jQuery
+        jquery_messing_imports = (
+            'admin/js/vendor/jquery/jquery.js',
+            'admin/js/vendor/jquery/jquery.min.js',
+            # 'admin/js/jquery.init.js',
+            # 'autocomplete_light/jquery.init.js',
+        )
+        for import_ in jquery_messing_imports:
+            try:
+                js.remove(import_)
+            except ValueError:
+                pass
+
+        # inject select2 bootstrap4 theme
+        select2_bootstrap4_theme = ('@ttskch/select2-bootstrap4-theme/'
+                                    'dist/select2-bootstrap4.css')
+
+        m._css['screen'] = m._css['screen'] + (select2_bootstrap4_theme, )
+
         return forms.Media(css=m._css, js=js)
+
+    def build_attrs(self, *args, **kwargs):
+        """Set select2 bootstrap4 theme by default."""
+        attrs = super().build_attrs(*args, **kwargs)
+        attrs.setdefault('data-theme', 'bootstrap4')
+        return attrs
 
 
 class Select2(Select2WidgetMixin, DALSelect2):
