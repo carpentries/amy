@@ -596,12 +596,16 @@ class PersonCreateForm(PersonForm):
 
 
 class PersonPermissionsForm(forms.ModelForm):
+    helper = BootstrapHelper(add_cancel_button=False)
+
     user_permissions = forms.ModelMultipleChoiceField(
         label=Person._meta.get_field('user_permissions').verbose_name,
         help_text=Person._meta.get_field('user_permissions').help_text,
         required=False,
         queryset=Permission.objects.select_related('content_type'),
     )
+    user_permissions.widget.attrs.update({'class': 'resizable-vertical',
+                                          'size': '20'})
 
     class Meta:
         model = Person

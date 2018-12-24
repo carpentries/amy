@@ -109,3 +109,15 @@ table .additional-links-wider {
 .invalid-feedback {
     display: block;
 }
+
+
+/* general resizable class styles */
+.resizable-vertical {
+    resize: vertical;
+}
+.resizable-horizontal {
+    resize: horizontal;
+}
+.resizable {
+    resize: both;
+}
