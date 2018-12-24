@@ -3,6 +3,7 @@ import re
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Div, HTML, Submit, Button, Field
 from django import forms
+from django.contrib.auth.models import Permission
 from django.forms import (
     SelectMultiple,
     CheckboxSelectMultiple,
@@ -595,6 +596,13 @@ class PersonCreateForm(PersonForm):
 
 
 class PersonPermissionsForm(forms.ModelForm):
+    user_permissions = forms.ModelMultipleChoiceField(
+        label=Person._meta.get_field('user_permissions').verbose_name,
+        help_text=Person._meta.get_field('user_permissions').help_text,
+        required=False,
+        queryset=Permission.objects.select_related('content_type'),
+    )
+
     class Meta:
         model = Person
         # only display administration-related fields: groups, permissions,
