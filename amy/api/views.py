@@ -445,7 +445,47 @@ class ReportsViewSet(ViewSet):
     def instructor_num_taught(self, request, format=None):
         badges = Badge.objects.instructor_badges()
         persons = Person.objects.filter(badges__in=badges).annotate(
-            num_taught=Count(
+            num_taught_SWC=Count(
+                Case(
+                    When(
+                        task__role__name='instructor',
+                        task__event__tags__name='SWC',
+                        then=F('task'),
+                    ),
+                ),
+                distinct=True
+            ),
+            num_taught_DC=Count(
+                Case(
+                    When(
+                        task__role__name='instructor',
+                        task__event__tags__name='DC',
+                        then=F('task'),
+                    ),
+                ),
+                distinct=True
+            ),
+            num_taught_LC=Count(
+                Case(
+                    When(
+                        task__role__name='instructor',
+                        task__event__tags__name='LC',
+                        then=F('task'),
+                    ),
+                ),
+                distinct=True
+            ),
+            num_taught_TTT=Count(
+                Case(
+                    When(
+                        task__role__name='instructor',
+                        task__event__tags__name='TTT',
+                        then=F('task'),
+                    ),
+                ),
+                distinct=True
+            ),
+            num_taught_total=Count(
                 Case(
                     When(
                         task__role__name='instructor',
@@ -453,8 +493,8 @@ class ReportsViewSet(ViewSet):
                     ),
                 ),
                 distinct=True
-            )
-        ).order_by('-num_taught')
+            ),
+        ).order_by('-num_taught_total')
         serializer = InstructorNumTaughtSerializer(
             persons, many=True, context=dict(request=request))
         return Response(serializer.data)
