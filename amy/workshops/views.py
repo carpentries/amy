@@ -1401,6 +1401,10 @@ def workshop_staff(request):
                 output_field=IntegerField()
             )
         )
+    ).prefetch_related(Prefetch(
+        'badges',
+        to_attr='instructor_badges',
+        queryset=Badge.objects.instructor_badges()),
     )
 
     filter_form = WorkshopStaffForm()
