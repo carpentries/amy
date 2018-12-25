@@ -1,5 +1,3 @@
-import unittest
-
 from django.urls import reverse
 
 from workshops.tests.base import TestBase
@@ -126,7 +124,9 @@ class TestLocateWorkshopStaff(TestBase):
         self.assertIn(self.blackwidow, response.context['persons'])
 
     def test_instructor_badges(self):
-        """Ensure people with instructor badges are returned by search."""
+        """Ensure people with instructor badges are returned by search. The
+        search is OR'ed, so should return people with any of the selected
+        badges."""
         response = self.client.get(
             reverse('workshop_staff'),
             {'airport': self.airport_0_0.pk,
@@ -136,10 +136,9 @@ class TestLocateWorkshopStaff(TestBase):
         self.assertEqual(response.status_code, 200)
 
         # instructors
-        self.assertIn(self.hermione, response.context['persons'])
-        self.assertIn(self.harry, response.context['persons'])
-        # Ron doesn't have a DC badge
-        self.assertNotIn(self.ron, response.context['persons'])
+        self.assertIn(self.hermione, response.context['persons'])  # SWC, DC
+        self.assertIn(self.harry, response.context['persons'])  # SWC, DC
+        self.assertIn(self.ron, response.context['persons'])  # SWC only
         # non-instructors
         self.assertNotIn(self.spiderman, response.context['persons'])
         self.assertNotIn(self.ironman, response.context['persons'])
