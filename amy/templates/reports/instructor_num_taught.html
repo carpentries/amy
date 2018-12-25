@@ -24,10 +24,10 @@
       var anonymous_data = [];
       var max = 0;
       $.each(data, function(record, value) {
-        items.push(value.name + ": " + value.num_taught);
-        anonymous_data.push(value.num_taught);
-        if (max < value.num_taught) {
-          max = value.num_taught;
+        items.push(value.name + ": " + value.num_taught_total);
+        anonymous_data.push(value.num_taught_total);
+        if (max < value.num_taught_total) {
+          max = value.num_taught_total;
         }
       });
 
