@@ -63,7 +63,7 @@ class TestReportingInstructorNumTaught(BaseReportingTest):
         # prepare an instructor
         instructor = Person.objects.create(
             username='harrypotter', personal='Harry', family='Potter',
-            email='user1@name.org',
+            email='user1@name.org', country='GB',
         )
 
         # prepare instructor role
@@ -102,6 +102,7 @@ class TestReportingInstructorNumTaught(BaseReportingTest):
                     instructor.pk,
                 ),
                 'name': 'Harry Potter',
+                'country': 'GB',
                 'num_taught_SWC': 1,
                 'num_taught_DC': 1,
                 'num_taught_LC': 1,

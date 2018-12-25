@@ -120,6 +120,7 @@ class InstructorNumTaughtSerializer(serializers.Serializer):
         read_only=True, view_name='api:person-detail', lookup_field='pk',
         source='*')
     name = serializers.CharField(source='full_name')
+    country = serializers.CharField()
     num_taught_SWC = serializers.IntegerField()
     num_taught_DC = serializers.IntegerField()
     num_taught_LC = serializers.IntegerField()
