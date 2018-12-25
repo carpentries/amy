@@ -221,18 +221,6 @@ class TestViews(TestBase):
         'complete',
         'disconnect',
         'disconnect_individual',
-
-        # redirections to new form addresses
-        'old_swc_workshop_request',
-        'old_swc_workshop_request_confirm',
-        'old_dc_workshop_request',
-        'old_dc_workshop_request_confirm',
-        'old_dc_workshop_selforganized_request',
-        'old_dc_workshop_selforganized_request_confirm',
-        'old_event_submit',
-        'old_event_submission_confirm',
-        'old_profileupdate_request',
-        'old_training_request',
     ]
 
     def test_all_views_have_explicit_access_control_defined(self):

@@ -83,6 +83,57 @@ urlpatterns += [
     path('', include('social_django.urls', namespace='social')),
 ]
 
+redirect_urlpatterns = [
+    path('workshops/', RedirectView.as_view(pattern_name='dispatch')),
+    path('workshops/admin-dashboard/', RedirectView.as_view(pattern_name='admin-dashboard')),
+    path('workshops/trainee-dashboard/', RedirectView.as_view(pattern_name='trainee-dashboard')),
+    path('workshops/trainee-dashboard/training_progress/', RedirectView.as_view(pattern_name='training-progress')),
+    path('workshops/autoupdate_profile/', RedirectView.as_view(pattern_name='autoupdate_profile')),
+
+    path('workshops/training_requests/', RedirectView.as_view(pattern_name='all_trainingrequests')),
+    path('workshops/training_requests/merge', RedirectView.as_view(pattern_name='trainingrequests_merge')),
+    path('workshops/bulk_upload_training_request_scores', RedirectView.as_view(pattern_name='bulk_upload_training_request_scores')),
+    path('workshops/bulk_upload_training_request_scores/confirm', RedirectView.as_view(pattern_name='bulk_upload_training_request_scores_confirmation')),
+
+    path('workshops/workshop_requests/', RedirectView.as_view(pattern_name='all_workshoprequests')),
+    path('workshops/requests/', RedirectView.as_view(pattern_name='all_eventrequests')),
+    path('workshops/dc_selforganized_requests/', RedirectView.as_view(pattern_name='all_dcselforganizedeventrequests')),
+    path('workshops/submissions/', RedirectView.as_view(pattern_name='all_eventsubmissions')),
+    path('workshops/profile_updates/', RedirectView.as_view(pattern_name='all_profileupdaterequests')),
+    path('workshops/invoices/', RedirectView.as_view(pattern_name='all_invoicerequests')),
+
+    path('workshops/organizations/', RedirectView.as_view(pattern_name='all_organizations')),
+    path('workshops/memberships/', RedirectView.as_view(pattern_name='all_memberships')),
+
+    path('workshops/reports/instructors_by_date/', RedirectView.as_view(pattern_name='instructors_by_date')),
+    path('workshops/reports/workshops_over_time/', RedirectView.as_view(pattern_name='workshops_over_time')),
+    path('workshops/reports/learners_over_time/', RedirectView.as_view(pattern_name='learners_over_time')),
+    path('workshops/reports/instructors_over_time/', RedirectView.as_view(pattern_name='instructors_over_time')),
+    path('workshops/reports/instructor_num_taught/', RedirectView.as_view(pattern_name='instructor_num_taught')),
+    path('workshops/reports/all_activity_over_time/', RedirectView.as_view(pattern_name='all_activity_over_time')),
+    path('workshops/reports/membership_trainings_stats/', RedirectView.as_view(pattern_name='membership_trainings_stats')),
+    path('workshops/reports/workshop_issues/', RedirectView.as_view(pattern_name='workshop_issues')),
+    path('workshops/reports/instructor_issues/', RedirectView.as_view(pattern_name='instructor_issues')),
+    path('workshops/reports/duplicate_persons/', RedirectView.as_view(pattern_name='duplicate_persons')),
+    path('workshops/reports/duplicate_training_requests/', RedirectView.as_view(pattern_name='duplicate_training_requests')),
+
+    path('workshops/trainings/', RedirectView.as_view(pattern_name='all_trainings')),
+    path('workshops/trainees/', RedirectView.as_view(pattern_name='all_trainees')),
+
+    # old form addresses below, to be removed in future
+    path('workshops/swc/request/', RedirectView.as_view(pattern_name='swc_workshop_request', permanent=True)),
+    path('workshops/swc/request/confirm/', RedirectView.as_view(pattern_name='swc_workshop_request_confirm', permanent=True)),
+    path('workshops/dc/request/', RedirectView.as_view(pattern_name='dc_workshop_request', permanent=True)),
+    path('workshops/dc/request/confirm/', RedirectView.as_view(pattern_name='dc_workshop_request_confirm', permanent=True)),
+    path('workshops/dc/request_selforganized/', RedirectView.as_view(pattern_name='dc_workshop_selforganized_request', permanent=True)),
+    path('workshops/dc/request_selforganized/confirm/', RedirectView.as_view(pattern_name='dc_workshop_selforganized_request_confirm', permanent=True)),
+    path('workshops/submit/', RedirectView.as_view(pattern_name='event_submit', permanent=True)),
+    path('workshops/update_profile/', RedirectView.as_view(pattern_name='profileupdate_request', permanent=True)),
+    path('workshops/request_training/', RedirectView.as_view(pattern_name='training_request', permanent=True)),
+]
+
+urlpatterns += redirect_urlpatterns
+
 if settings.DEBUG:
     import debug_toolbar
     urlpatterns += [
