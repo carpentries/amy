@@ -5,11 +5,13 @@ from django.db.models import (
     Value,
     IntegerField,
     Count,
+    Prefetch,
 )
 from django.shortcuts import render, redirect
 from django.urls import reverse
 
 from workshops.models import (
+    Badge,
     Event,
     Tag,
     Qualification,
@@ -153,8 +155,13 @@ def training_progress(request):
     dc_form = SendHomeworkForm(submit_name='dc-submit')
 
     # Add information about instructor training progress to request.user.
-    request.user = Person.objects.annotate_with_instructor_eligibility() \
-                                 .get(pk=request.user.pk)
+    request.user = Person.objects \
+        .annotate_with_instructor_eligibility() \
+        .prefetch_related(Prefetch(
+            'badges',
+            to_attr='instructor_badges',
+            queryset=Badge.objects.instructor_badges()),
+        ).get(pk=request.user.pk)
 
     progresses = request.user.trainingprogress_set.filter(discarded=False)
     last_swc_homework = progresses.filter(
@@ -165,12 +172,6 @@ def training_progress(request):
         requirement__name='DC Homework').order_by('-created_at').first()
     request.user.dc_homework_in_evaluation = (
         last_dc_homework is not None and last_dc_homework.state == 'n')
-
-    # Add information about awarded instructor badges to request.user.
-    request.user.is_swc_instructor = request.user.award_set.filter(
-        badge__name='swc-instructor').exists()
-    request.user.is_dc_instructor = request.user.award_set.filter(
-        badge__name='dc-instructor').exists()
 
     if request.method == 'POST' and 'swc-submit' in request.POST:
         requirement = TrainingRequirement.objects.get(name='SWC Homework')
@@ -194,7 +195,7 @@ def training_progress(request):
                                     requirement=requirement)
         swc_form = SendHomeworkForm(submit_name='swc-submit')
         dc_form = SendHomeworkForm(data=request.POST, instance=progress,
-                                    submit_name='dc-submit')
+                                   submit_name='dc-submit')
 
         if dc_form.is_valid():
             dc_form.save()
