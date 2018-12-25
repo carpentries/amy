@@ -1453,8 +1453,10 @@ def workshop_staff(request):
                 people = people.filter(gender=data['gender'])
 
             if data['instructor_badges']:
+                instr_badges_q = Q()
                 for badge in data['instructor_badges']:
-                    people = people.filter(badges__name=badge)
+                    instr_badges_q |= Q(badges__name=badge)
+                people = people.filter(instr_badges_q)
 
             # it's faster to count role=helper occurences than to check if user
             # had a role=helper
