@@ -13,6 +13,7 @@ from django.contrib.auth.mixins import (
     PermissionRequiredMixin,
     UserPassesTestMixin,
 )
+from django.contrib.auth.models import Permission
 from django.contrib.auth.views import logout_then_login
 from django.core.exceptions import (
     ObjectDoesNotExist,
@@ -581,9 +582,12 @@ class PersonDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
 class PersonPermissions(OnlyForAdminsMixin, PermissionRequiredMixin,
                         AMYUpdateView):
     permission_required = 'workshops.change_person'
-    model = Person
     form_class = PersonPermissionsForm
     pk_url_kwarg = 'person_id'
+    queryset = Person.objects.prefetch_related('groups', Prefetch(
+            'user_permissions',
+            queryset=Permission.objects.select_related('content_type'),
+        ))
 
 
 @login_required
