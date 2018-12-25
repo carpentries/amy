@@ -222,6 +222,7 @@ class WorkshopStaffForm(forms.Form):
     INSTRUCTOR_BADGE_CHOICES = (
         ('swc-instructor', 'Software Carpentry Instructor'),
         ('dc-instructor', 'Data Carpentry Instructor'),
+        ('lc-instructor', 'Library Carpentry Instructor'),
     )
     instructor_badges = forms.MultipleChoiceField(
         choices=INSTRUCTOR_BADGE_CHOICES,

@@ -12,14 +12,17 @@
 {% endif %}
 
 <div>
-  <h2>Your progress of becoming Software Carpentry (SWC) and Data Carpentry (DC) Instructor</h2>
+  <h2>Your progress of becoming The Carpentries Instructor</h2>
 
-  {% if user.is_swc_instructor and user.is_dc_instructor %}
-    <p>Congratulations, you're certified both Software Carpentry and Data Carpentry Instructor!</p>
-  {% elif user.is_swc_instructor %}
-    <p>Congratulations, you're certified Software Carpentry Instructor!</p>
-  {% elif user.is_dc_instructor %}
-    <p>Congratulations, you're certified Data Carpentry Instructor!</p>
+  {% if user.instructor_badges %}
+  <div class="alert alert-success" role="alert">
+    <p>Congratulations, you're a certified:</p>
+    <ul>
+    {% for badge in user.instructor_badges %}
+      <li>{{ badge.title }}</li>
+    {% endfor %}
+    </ul>
+  </div>
   {% endif %}
 
   <table class="table table-striped">

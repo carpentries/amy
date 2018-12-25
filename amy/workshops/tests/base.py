@@ -128,6 +128,8 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
             name='dc-instructor',
             defaults=dict(title='Data Carpentry Instructor',
                           criteria='Worked hard for this'))
+        # lc-instructor is provided via a migration
+        self.lc_instructor = Badge.objects.get(name='lc-instructor')
 
     def _setUpInstructors(self):
         '''Set up person objects representing instructors.'''
@@ -145,6 +147,9 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
         Award.objects.create(person=self.hermione,
                              badge=self.dc_instructor,
                              awarded=datetime.date(2014, 1, 1))
+        Award.objects.create(person=self.hermione,
+                             badge=self.lc_instructor,
+                             awarded=datetime.date(2018, 12, 25))
         Qualification.objects.create(person=self.hermione, lesson=self.git)
         Qualification.objects.create(person=self.hermione, lesson=self.sql)
 

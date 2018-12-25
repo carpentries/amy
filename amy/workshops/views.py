@@ -194,15 +194,12 @@ class AllPersons(OnlyForAdminsMixin, AMYListView):
     context_object_name = 'all_persons'
     template_name = 'workshops/all_persons.html'
     filter_class = PersonFilter
-    queryset = Person.objects.defer('notes').annotate(
-        is_swc_instructor=Sum(Case(When(badges__name='swc-instructor',
-                                        then=1),
-                                   default=0,
-                                   output_field=IntegerField())),
-        is_dc_instructor=Sum(Case(When(badges__name='dc-instructor',
-                                       then=1),
-                                  default=0,
-                                  output_field=IntegerField())),
+    queryset = Person.objects.prefetch_related(
+        Prefetch(
+            'badges',
+            to_attr='instructor_badges',
+            queryset=Badge.objects.instructor_badges()
+        )
     )
     title = 'All Persons'
 
@@ -1408,6 +1405,10 @@ def workshop_staff(request):
                 output_field=IntegerField()
             )
         )
+    ).prefetch_related(Prefetch(
+        'badges',
+        to_attr='instructor_badges',
+        queryset=Badge.objects.instructor_badges()),
     )
 
     filter_form = WorkshopStaffForm()

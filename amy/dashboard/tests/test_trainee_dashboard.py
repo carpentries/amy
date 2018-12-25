@@ -31,36 +31,49 @@ class TestInstructorStatus(TestBase):
 
     def setUp(self):
         self._setUpUsersAndLogin()
-        self.swc_instructor = Badge.objects.get(name='swc-instructor')
-        self.dc_instructor = Badge.objects.get(name='dc-instructor')
+        self._setUpBadges()
         self.progress_url = reverse('training-progress')
 
-    def test_swc_instructor_and_dc_instructor(self):
+    def test_swc_dc_lc_instructor_badges(self):
         """When the trainee is awarded both Carpentry Instructor badge,
         we want to display that info in the dashboard."""
 
         Award.objects.create(person=self.admin, badge=self.swc_instructor,
-                             awarded=datetime(2016, 6, 1, 15, 00))
+                             awarded=datetime(2016, 6, 1, 15, 0))
         Award.objects.create(person=self.admin, badge=self.dc_instructor,
-                             awarded=datetime(2016, 6, 1, 15, 00))
+                             awarded=datetime(2016, 6, 1, 15, 0))
+        Award.objects.create(person=self.admin, badge=self.lc_instructor,
+                             awarded=datetime(2018, 12, 25, 20, 16))
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, 'Congratulations, you\'re certified both '
-                                'Software Carpentry and Data Carpentry '
-                                'Instructor!')
+        self.assertContains(rv, 'Software Carpentry Instructor')
+        self.assertContains(rv, 'Data Carpentry Instructor')
+        self.assertContains(rv, 'Library Carpentry Instructor')
+        self.assertIn(self.swc_instructor,
+                      rv.context['user'].instructor_badges)
+        self.assertIn(self.dc_instructor, rv.context['user'].instructor_badges)
+        self.assertIn(self.lc_instructor, rv.context['user'].instructor_badges)
 
     def test_swc_instructor(self):
         Award.objects.create(person=self.admin, badge=self.swc_instructor,
-                             awarded=datetime(2016, 6, 1, 15, 00))
+                             awarded=datetime(2016, 6, 1, 15, 0))
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, 'Congratulations, you\'re certified '
-                                'Software Carpentry Instructor!')
+        self.assertContains(rv, 'Software Carpentry Instructor')
+        self.assertIn(self.swc_instructor,
+                      rv.context['user'].instructor_badges)
 
     def test_dc_instructor(self):
         Award.objects.create(person=self.admin, badge=self.dc_instructor,
-                             awarded=datetime(2016, 6, 1, 15, 00))
+                             awarded=datetime(2016, 6, 1, 15, 0))
         rv = self.client.get(self.progress_url)
-        self.assertContains(rv, 'Congratulations, you\'re certified '
-                                'Data Carpentry Instructor!')
+        self.assertContains(rv, 'Data Carpentry Instructor')
+        self.assertIn(self.dc_instructor, rv.context['user'].instructor_badges)
+
+    def test_lc_instructor(self):
+        Award.objects.create(person=self.admin, badge=self.lc_instructor,
+                             awarded=datetime(2018, 12, 25, 20, 16))
+        rv = self.client.get(self.progress_url)
+        self.assertContains(rv, 'Library Carpentry Instructor')
+        self.assertIn(self.lc_instructor, rv.context['user'].instructor_badges)
 
     def test_neither_swc_nor_dc_instructor(self):
         """Check that we don't display that the trainee is an instructor if

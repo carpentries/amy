@@ -1340,7 +1340,7 @@ class BadgeQuerySet(models.query.QuerySet):
     """Custom QuerySet that provides easy way to get instructor badges
     (we use that a lot)."""
 
-    INSTRUCTOR_BADGES = ('dc-instructor', 'swc-instructor')
+    INSTRUCTOR_BADGES = ('dc-instructor', 'swc-instructor', 'lc-instructor')
 
     def instructor_badges(self):
         """Filter for instructor badges only."""
