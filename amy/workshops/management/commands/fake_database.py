@@ -136,9 +136,9 @@ class Command(BaseCommand):
             Tag.objects.create(name=tag, details=details)
 
     def fake_badges(self):
-        """Provide fixed badges (before they end up in fixtures, see #626)."""
-        # 4 badges are already in the migrations: swc-instructor,
-        # dc-instructor, maintainer, and trainer
+        """Provide fixed badges."""
+        # Some badges are already in the migrations: swc-instructor,
+        # dc-instructor, maintainer, trainer, lc-instructor.
         self.stdout.write('Generating fake badges...')
         badges = [
             ('creator', 'Creator',
