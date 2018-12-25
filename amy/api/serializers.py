@@ -120,7 +120,11 @@ class InstructorNumTaughtSerializer(serializers.Serializer):
         read_only=True, view_name='api:person-detail', lookup_field='pk',
         source='*')
     name = serializers.CharField(source='full_name')
-    num_taught = serializers.IntegerField()
+    num_taught_SWC = serializers.IntegerField()
+    num_taught_DC = serializers.IntegerField()
+    num_taught_LC = serializers.IntegerField()
+    num_taught_TTT = serializers.IntegerField()
+    num_taught_total = serializers.IntegerField()
 
 
 class InstructorsByTimePeriodSerializer(serializers.ModelSerializer):
