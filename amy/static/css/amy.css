@@ -121,3 +121,14 @@ table .additional-links-wider {
 .resizable {
     resize: both;
 }
+
+/* don't display honeypot field in comment forms */
+form input[name=honeypot] {
+    display: none;
+}
+
+/* comment form styling */
+.commentform textarea {
+    width: 100%;
+    resize: vertical;
+}

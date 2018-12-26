@@ -4,6 +4,7 @@
 {% load links %}
 {% load revisions %}
 {% load tags %}
+{% load comments %}
 
 {% block content %}
 
@@ -188,6 +189,12 @@
     {% endif %}
   </div>
 </div>
+
+<hr>
+{% render_comment_list for event %}
+{% if user.is_authenticated %}
+  {% render_comment_form for event %}
+{% endif %}
 
 {% endblock %}
 

@@ -1,0 +1,15 @@
+<div class="row">
+  <div class="col-12"><h3 id="comments">Comments</h3></div>
+  <div class="col-12">
+    {% for comment in comment_list %}
+    <div class="card my-2" id="c{{ comment.id }}">
+      <div class="card-header">
+        <strong>{{ comment.name }}</strong> <span class="text-muted">commented on {{ comment.submit_date }}</span>
+      </div>
+      <div class="card-body">
+        <p>{{ comment.comment }}</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>

@@ -595,6 +595,9 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
             middle = ' {0}'.format(self.middle)
         return '{0}{1} {2}'.format(self.personal, middle, self.family)
 
+    def get_full_name(self):
+        return self.full_name
+
     def get_short_name(self):
         return self.personal
 

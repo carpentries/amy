@@ -1,0 +1,36 @@
+{% load comments i18n %}
+
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs">
+          <li class="nav-item">
+            <a class="nav-link active" href="#write" id="write-tab" data-toggle="tab" role="tab" aria-controls="write" aria-selected="true">Write comment</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#preview" id="preview-tab" data-toggle="tab" role="tab" aria-controls="preview" aria-selected="true">Preview</a>
+          </li>
+        </ul>
+      </div>
+      <div class="card-body tab-content">
+        <div class="tab-pane show active" id="write" role="tabpanel" aria-labelledby="write-tab">
+          <form action="{% comment_form_target %}" method="post" class="commentform">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.path }}#comments" />
+            {{ form.honeypot }}
+            {{ form.content_type }}
+            {{ form.object_pk }}
+            {{ form.timestamp }}
+            {{ form.security_hash }}
+            {{ form.comment }}
+            <input type="submit" value="Comment" id="id_submit" class="btn btn-success" />
+          </form>
+        </div>
+        <div class="tab-pane" id="preview" role="tabpanel" aria-labelledby="preview-tab">
+          <p>With supporting text below as a natural lead-in to additional content.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
