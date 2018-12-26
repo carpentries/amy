@@ -118,6 +118,7 @@ class WorkshopRequestChange(OnlyForAdminsMixin, PermissionRequiredMixin,
     model = WorkshopRequest
     pk_url_kwarg = 'request_id'
     form_class = WorkshopRequestAdminForm
+    template_name = 'generic_form_with_comments.html'
 
 
 class WorkshopRequestSetState(OnlyForAdminsMixin, ChangeRequestStateView):
@@ -430,6 +431,7 @@ class TrainingRequestUpdate(RedirectSupportMixin,
                             AMYUpdateView):
     model = TrainingRequest
     form_class = TrainingRequestUpdateForm
+    template_name = 'generic_form_with_comments.html'
 
 
 @admin_required

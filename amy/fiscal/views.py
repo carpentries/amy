@@ -84,6 +84,7 @@ class OrganizationUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
     form_class = OrganizationForm
     slug_field = 'domain'
     slug_url_kwarg = 'org_domain'
+    template_name = 'generic_form_with_comments.html'
 
 
 class OrganizationDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
@@ -155,6 +156,7 @@ class MembershipUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
     model = Membership
     form_class = MembershipForm
     pk_url_kwarg = 'membership_id'
+    template_name = 'generic_form_with_comments.html'
 
 
 class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
