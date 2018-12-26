@@ -105,6 +105,7 @@ class EventRequestChange(OnlyForAdminsMixin, PermissionRequiredMixin,
     permission_required = 'workshops.change_eventrequest'
     model = EventRequest
     pk_url_kwarg = 'request_id'
+    template_name = 'deprecated_generic_form.html'
 
     def get_form_class(self):
         if self.object.workshop_type == 'swc':
@@ -203,6 +204,7 @@ class EventSubmissionChange(OnlyForAdminsMixin, PermissionRequiredMixin,
     model = EventSubmissionModel
     form_class = EventSubmitFormNoCaptcha
     pk_url_kwarg = 'submission_id'
+    template_name = 'deprecated_generic_form.html'
 
 
 @admin_required
@@ -298,6 +300,7 @@ class DCSelfOrganizedEventRequestChange(OnlyForAdminsMixin,
     model = DCSelfOrganizedEventRequestModel
     form_class = DCSelfOrganizedEventRequestFormNoCaptcha
     pk_url_kwarg = 'request_id'
+    template_name = 'deprecated_generic_form.html'
 
 
 class DCSelfOrganizedEventRequestSetState(OnlyForAdminsMixin,
@@ -439,6 +442,7 @@ class ProfileUpdateRequestFix(OnlyForAdminsMixin, PermissionRequiredMixin,
     model = ProfileUpdateRequest
     form_class = ProfileUpdateRequestFormNoCaptcha
     pk_url_kwarg = 'request_id'
+    template_name = 'deprecated_generic_form.html'
 
 
 @admin_required
@@ -600,3 +604,4 @@ class InvoiceRequestUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
     model = InvoiceRequest
     form_class = InvoiceRequestUpdateForm
     pk_url_kwarg = 'request_id'
+    template_name = 'deprecated_generic_form.html'
