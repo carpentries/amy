@@ -133,6 +133,7 @@ THIRD_PARTY_APPS = [
     'debug_toolbar',
     'django_extensions',
     'anymail',
+    'django_comments',  # this used to be in django.contrib
 ]
 PYDATA_APP = [
     'amy.pydata.apps.PyDataConfig',

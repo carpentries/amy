@@ -81,6 +81,9 @@ urlpatterns += [
 
     # Login with GitHub credentials
     path('', include('social_django.urls', namespace='social')),
+
+    # for commenting system
+    path('comments/', include('django_comments.urls')),
 ]
 
 redirect_urlpatterns = [
