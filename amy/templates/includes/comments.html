@@ -1,0 +1,6 @@
+{% load comments %}
+<hr>
+{% render_comment_list for object %}
+{% if user.is_authenticated %}
+  {% render_comment_form for object %}
+{% endif %}
