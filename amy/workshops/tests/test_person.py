@@ -1,6 +1,6 @@
 # coding: utf-8
 
-import datetime
+from datetime import datetime, timezone, date
 from social_django.models import UserSocialAuth
 from unittest.mock import patch
 from urllib.parse import urlencode
@@ -604,7 +604,7 @@ class TestPersonMerging(TestBase):
             is_active=True,
         )
         self.person_a.award_set.create(badge=self.swc_instructor,
-                                       awarded=datetime.date(2016, 2, 16))
+                                       awarded=date(2016, 2, 16))
         Qualification.objects.create(person=self.person_a, lesson=self.git)
         Qualification.objects.create(person=self.person_a, lesson=self.sql)
         self.person_a.domains.set([KnowledgeDomain.objects.first()])
@@ -621,7 +621,7 @@ class TestPersonMerging(TestBase):
             content_object=self.admin,
             user=self.person_a,
             comment="Comment from person_a on admin",
-            submit_date=datetime.datetime(2018, 12, 27, 16, 52),
+            submit_date=datetime.now(tz=timezone.utc),
             site=Site.objects.get_current(),
         )
         # comments regarding this person
@@ -629,7 +629,7 @@ class TestPersonMerging(TestBase):
             content_object=self.person_a,
             user=self.admin,
             comment="Comment from admin on person_a",
-            submit_date=datetime.datetime(2018, 12, 27, 16, 52),
+            submit_date=datetime.now(tz=timezone.utc),
             site=Site.objects.get_current(),
         )
 
@@ -645,7 +645,7 @@ class TestPersonMerging(TestBase):
             is_active=True,
         )
         self.person_b.award_set.create(badge=self.dc_instructor,
-                                       awarded=datetime.date(2016, 2, 16))
+                                       awarded=date(2016, 2, 16))
         Qualification.objects.create(person=self.person_b, lesson=self.sql)
         self.person_b.domains.set([KnowledgeDomain.objects.last()])
         self.person_b.languages.set([Language.objects.last()])
@@ -657,7 +657,7 @@ class TestPersonMerging(TestBase):
             content_object=self.admin,
             user=self.person_b,
             comment="Comment from person_b on admin",
-            submit_date=datetime.datetime(2018, 12, 27, 16, 52),
+            submit_date=datetime.now(tz=timezone.utc),
             site=Site.objects.get_current(),
         )
         # comments regarding this person
@@ -665,7 +665,7 @@ class TestPersonMerging(TestBase):
             content_object=self.person_b,
             user=self.admin,
             comment="Comment from admin on person_b",
-            submit_date=datetime.datetime(2018, 12, 27, 16, 52),
+            submit_date=datetime.now(tz=timezone.utc),
             site=Site.objects.get_current(),
         )
 

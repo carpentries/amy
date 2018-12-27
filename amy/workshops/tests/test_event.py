@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 from urllib.parse import urlencode
 import sys
 
@@ -771,7 +771,7 @@ class TestEventMerging(TestBase):
             content_object=self.event_a,
             user=self.harry,
             comment="Comment from admin on event_a",
-            submit_date=datetime(2018, 12, 27, 21, 20),
+            submit_date=datetime.now(tz=timezone.utc),
             site=Site.objects.get_current(),
         )
 
@@ -799,7 +799,7 @@ class TestEventMerging(TestBase):
             content_object=self.event_b,
             user=self.hermione,
             comment="Comment from admin on event_b",
-            submit_date=datetime(2018, 12, 27, 21, 20),
+            submit_date=datetime.now(tz=timezone.utc),
             site=Site.objects.get_current(),
         )
 
@@ -957,6 +957,8 @@ class TestEventMerging(TestBase):
         assertions = {
             'tags': set(Tag.objects.filter(name__in=['SWC', 'DC', 'LC'])),
             'task_set': set(Task.objects.none()),
+            # comments are not relational, they're related via generic FKs,
+            # so they won't appear here
         }
 
         rv = self.client.post(self.url, data=self.strategy)
