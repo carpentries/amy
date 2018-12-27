@@ -1,5 +1,7 @@
 {% load comments %}
 <hr>
+
+<div class="col-12"><h3 id="comments">Comments</h3></div>
 {% render_comment_list for object %}
 {% if user.is_authenticated %}
   {% render_comment_form for object %}
