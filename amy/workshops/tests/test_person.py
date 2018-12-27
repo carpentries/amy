@@ -8,8 +8,10 @@ import webtest
 
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import Permission, Group
+from django.contrib.sites.models import Site
 from django.core.validators import ValidationError
 from django.urls import reverse
+from django_comments.models import Comment
 from webtest.forms import Upload
 
 from workshops.filters import filter_taught_workshops
@@ -614,6 +616,23 @@ class TestPersonMerging(TestBase):
                                      Language.objects.last()])
         self.person_a.trainingprogress_set.create(requirement=self.training)
 
+        # comments made by this person
+        self.ca_1 = Comment.objects.create(
+            content_object=self.admin,
+            user=self.person_a,
+            comment="Comment from person_a on admin",
+            submit_date=datetime.datetime(2018, 12, 27, 16, 52),
+            site=Site.objects.get_current(),
+        )
+        # comments regarding this person
+        self.ca_2 = Comment.objects.create(
+            content_object=self.person_a,
+            user=self.admin,
+            comment="Comment from admin on person_a",
+            submit_date=datetime.datetime(2018, 12, 27, 16, 52),
+            site=Site.objects.get_current(),
+        )
+
         # create second person
         self.person_b = Person.objects.create(
             personal='Jayden', middle='', family='Deckow',
@@ -632,6 +651,23 @@ class TestPersonMerging(TestBase):
         self.person_b.languages.set([Language.objects.last()])
         self.person_b.trainingprogress_set.create(requirement=self.training)
         self.person_b.trainingprogress_set.create(requirement=self.homework)
+
+        # comments made by this person
+        self.cb_1 = Comment.objects.create(
+            content_object=self.admin,
+            user=self.person_b,
+            comment="Comment from person_b on admin",
+            submit_date=datetime.datetime(2018, 12, 27, 16, 52),
+            site=Site.objects.get_current(),
+        )
+        # comments regarding this person
+        self.cb_2 = Comment.objects.create(
+            content_object=self.person_b,
+            user=self.admin,
+            comment="Comment from admin on person_b",
+            submit_date=datetime.datetime(2018, 12, 27, 16, 52),
+            site=Site.objects.get_current(),
+        )
 
         # set up a strategy
         self.strategy = {
@@ -662,6 +698,8 @@ class TestPersonMerging(TestBase):
             'task_set': 'obj_b',
             'is_active': 'obj_a',
             'trainingprogress_set': 'combine',
+            'comment_comments': 'combine',  # made by this person
+            'comments': 'combine',  # regarding this person
         }
         base_url = reverse('persons_merge')
         query = urlencode({
@@ -706,6 +744,8 @@ class TestPersonMerging(TestBase):
             'languages': 'combine',
             'task_set': 'combine',
             'trainingprogress_set': 'combine',
+            'comment_comments': 'combine',
+            'comments': 'combine',
         }
         data = hidden.copy()
         data.update(failing)
@@ -780,6 +820,8 @@ class TestPersonMerging(TestBase):
             # Combining similar TrainingProgresses should end up in
             # a unique constraint violation, shouldn't it?
             'trainingprogress_set': set(TrainingProgress.objects.all()),
+
+            'comment_comments': set([self.ca_1, self.cb_1]),
         }
 
         rv = self.client.post(self.url, data=self.strategy)
@@ -825,6 +867,51 @@ class TestPersonMerging(TestBase):
 
         rv = self.client.post(self.url, data=self.strategy)
         self.assertEqual(rv.status_code, 302)
+
+    def test_merging_comments_strategy1(self):
+        """Ensure comments regarding persons are correctly merged using
+        `merge_objects`.
+        This test uses strategy 1 (combine)."""
+        self.strategy['comments'] = 'combine'
+        comments = [self.ca_2, self.cb_2]
+        rv = self.client.post(self.url, data=self.strategy)
+        self.assertEqual(rv.status_code, 302)
+        self.person_b.refresh_from_db()
+        self.assertEqual(
+            set(Comment.objects.for_model(self.person_b)
+                               .filter(is_removed=False)),
+            set(comments),
+        )
+
+    def test_merging_comments_strategy2(self):
+        """Ensure comments regarding persons are correctly merged using
+        `merge_objects`.
+        This test uses strategy 2 (object a)."""
+        self.strategy['comments'] = 'obj_a'
+        comments = [self.ca_2]
+        rv = self.client.post(self.url, data=self.strategy)
+        self.assertEqual(rv.status_code, 302)
+        self.person_b.refresh_from_db()
+        self.assertEqual(
+            set(Comment.objects.for_model(self.person_b)
+                               .filter(is_removed=False)),
+            set(comments),
+        )
+
+    def test_merging_comments_strategy3(self):
+        """Ensure comments regarding persons are correctly merged using
+        `merge_objects`.
+        This test uses strategy 3 (object b)."""
+        self.strategy['comments'] = 'obj_b'
+        comments = [self.cb_2]
+        rv = self.client.post(self.url, data=self.strategy)
+        self.assertEqual(rv.status_code, 302)
+        self.person_b.refresh_from_db()
+        self.assertEqual(
+            set(Comment.objects.for_model(self.person_b)
+                               .filter(is_removed=False)),
+            set(comments),
+        )
 
 
 def github_username_to_uid_mock(username):

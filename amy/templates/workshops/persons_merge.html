@@ -148,7 +148,13 @@
     <th>{% include "includes/merge_radio.html" with field=form.trainingprogress_set %}</th>
   </tr>
   <tr>
-    <th>Comments</th>
+    <th>Comments by this person</th>
+    <td>{% include "comments/list.html" with comment_list=obj_a.comment_comments.all %}</td>
+    <td>{% include "comments/list.html" with comment_list=obj_b.comment_comments.all %}</td>
+    <th>{% include "includes/merge_radio.html" with field=form.comment_comments %}</th>
+  </tr>
+  <tr>
+    <th>Comments regarding this person</th>
     <td>{% render_comment_list for obj_a %}</td>
     <td>{% render_comment_list for obj_b %}</td>
     <th>{% include "includes/merge_radio.html" with field=form.comments %}</th>
