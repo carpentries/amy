@@ -1,11 +1,15 @@
+from datetime import datetime, timezone
 import unittest
 from urllib.parse import urlencode
 
+from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.template import Context
 from django.template import Template
 from django.urls import reverse
+from django_comments.models import Comment
 
+from extrequests.forms import TrainingRequestsMergeForm
 from workshops.tests.base import TestBase
 from workshops.models import (
     Person,
@@ -552,6 +556,23 @@ class TestTrainingRequestMerging(TestBase):
         self.third_req = create_training_request(state='a',
                                                  person=self.ironman)
 
+        # comments regarding first request
+        self.ca = Comment.objects.create(
+            content_object=self.first_req,
+            user=self.spiderman,
+            comment="Comment from admin on first_req",
+            submit_date=datetime.now(tz=timezone.utc),
+            site=Site.objects.get_current(),
+        )
+        # comments regarding second request
+        self.cb = Comment.objects.create(
+            content_object=self.second_req,
+            user=self.ironman,
+            comment="Comment from admin on second_req",
+            submit_date=datetime.now(tz=timezone.utc),
+            site=Site.objects.get_current(),
+        )
+
         # assign roles (previous involvement with The Carpentries) and
         # knowledge domains - those are the hardest to merge successfully
         self.chemistry = KnowledgeDomain.objects.get(name='Chemistry')
@@ -614,8 +635,8 @@ class TestTrainingRequestMerging(TestBase):
             'data_privacy_agreement': 'obj_a',
             'code_of_conduct_agreement': 'obj_a',
             'created_at': 'obj_a',
-            'last_updated_at': 'obj_a',
             'notes': 'obj_a',
+            'comments': 'combine',
         }
         self.strategy_2 = {
             'trainingrequest_a': self.first_req.pk,
@@ -658,18 +679,185 @@ class TestTrainingRequestMerging(TestBase):
             'data_privacy_agreement': 'obj_a',
             'code_of_conduct_agreement': 'obj_a',
             'created_at': 'obj_a',
-            'last_updated_at': 'obj_a',
             'notes': 'obj_a',
+            'comments': 'combine',
         }
 
-    def test_merging(self):
-        query = urlencode({
+        base_url = reverse('trainingrequests_merge')
+        query_1 = urlencode({
             'trainingrequest_a': self.first_req.pk,
             'trainingrequest_b': self.second_req.pk,
         })
-        url = '{}?{}'.format(reverse('trainingrequests_merge'), query)
+        query_2 = urlencode({
+            'trainingrequest_a': self.first_req.pk,
+            'trainingrequest_b': self.third_req.pk,
+        })
+        self.url_1 = '{}?{}'.format(base_url, query_1)
+        self.url_2 = '{}?{}'.format(base_url, query_2)
 
-        rv = self.client.post(url, self.strategy_1, follow=True)
+    def test_form_invalid_values(self):
+        """Make sure only a few fields accept third option ("combine")."""
+        hidden = {
+            'trainingrequest_a': self.first_req.pk,
+            'trainingrequest_b': self.second_req.pk,
+        }
+        # fields accepting only 2 options: "obj_a" and "obj_b"
+        failing = {
+            'id': 'combine',
+            'state': 'combine',
+            'person': 'combine',
+            'group_name': 'combine',
+            'personal': 'combine',
+            'middle': 'combine',
+            'family': 'combine',
+            'email': 'combine',
+            'github': 'combine',
+            'occupation': 'combine',
+            'occupation_other': 'combine',
+            'affiliation': 'combine',
+            'location': 'combine',
+            'country': 'combine',
+            'underresourced': 'combine',
+            'domains_other': 'combine',
+            'underrepresented': 'combine',
+            'nonprofit_teaching_experience': 'combine',
+            'previous_training': 'combine',
+            'previous_training_other': 'combine',
+            'previous_training_explanation': 'combine',
+            'previous_experience': 'combine',
+            'previous_experience_other': 'combine',
+            'previous_experience_explanation': 'combine',
+            'programming_language_usage_frequency': 'combine',
+            'teaching_frequency_expectation': 'combine',
+            'teaching_frequency_expectation_other': 'combine',
+            'max_travelling_frequency': 'combine',
+            'max_travelling_frequency_other': 'combine',
+            'training_completion_agreement': 'combine',
+            'workshop_teaching_agreement': 'combine',
+            'data_privacy_agreement': 'combine',
+            'code_of_conduct_agreement': 'combine',
+            'created_at': 'combine',
+        }
+        # fields additionally accepting "combine"
+        passing = {
+            'domains': 'combine',
+            'previous_involvement': 'combine',
+            'reason': 'combine',
+            'comment': 'combine',
+            'notes': 'combine',
+            'comments': 'combine',
+        }
+        data = hidden.copy()
+        data.update(failing)
+        data.update(passing)
+
+        form = TrainingRequestsMergeForm(data)
+        self.assertFalse(form.is_valid())
+
+        for key in failing:
+            self.assertIn(key, form.errors)
+        for key in passing:
+            self.assertNotIn(key, form.errors)
+
+        # make sure no fields are added without this test being updated
+        self.assertEqual(set(list(form.fields.keys())), set(list(data.keys())))
+
+    def test_merging_base_trainingrequest(self):
+        """Merging: ensure the base training request is selected based on ID
+        form field.
+
+        If ID field has a value of 'obj_b', then 1st training req is base and
+        it won't be removed from the database after the merge. 2nd training
+        req, on the other hand, will."""
+        rv = self.client.post(self.url_1, data=self.strategy_1)
+        self.assertEqual(rv.status_code, 302)
+
+        self.first_req.refresh_from_db()
+        with self.assertRaises(TrainingRequest.DoesNotExist):
+            self.second_req.refresh_from_db()
+
+    def test_merging_basic_attributes(self):
+        """Merging: ensure basic (non-relationships) attributes are properly
+        saved."""
+        assertions = {
+            'id': self.first_req.id,
+            'state': self.second_req.state,
+            'person': self.first_req.person,
+            'group_name': self.first_req.group_name,
+            'personal': self.first_req.personal,
+            'middle': self.first_req.middle,
+            'family': self.first_req.family,
+            'email': self.first_req.email,
+            'github': self.first_req.github,
+            'occupation': self.first_req.occupation,
+            'occupation_other': self.first_req.occupation_other,
+            'affiliation': self.first_req.affiliation,
+            'location': self.first_req.location,
+            'country': self.first_req.country,
+            'underresourced': self.first_req.underresourced,
+            'domains_other': self.first_req.domains_other,
+            'underrepresented': self.first_req.underrepresented,
+            'nonprofit_teaching_experience':
+                self.first_req.nonprofit_teaching_experience,
+            'previous_training': self.first_req.previous_training,
+            'previous_training_other': self.first_req.previous_training_other,
+            'previous_training_explanation':
+                self.first_req.previous_training_explanation,
+            'previous_experience': self.first_req.previous_experience,
+            'previous_experience_other':
+                self.first_req.previous_experience_other,
+            'previous_experience_explanation':
+                self.first_req.previous_experience_explanation,
+            'programming_language_usage_frequency':
+                self.first_req.programming_language_usage_frequency,
+            'teaching_frequency_expectation':
+                self.first_req.teaching_frequency_expectation,
+            'teaching_frequency_expectation_other':
+                self.first_req.teaching_frequency_expectation_other,
+            'max_travelling_frequency':
+                self.first_req.max_travelling_frequency,
+            'max_travelling_frequency_other':
+                self.first_req.max_travelling_frequency_other,
+            'reason': self.first_req.reason,
+            'comment': self.first_req.comment,
+            'training_completion_agreement':
+                self.first_req.training_completion_agreement,
+            'workshop_teaching_agreement':
+                self.first_req.workshop_teaching_agreement,
+            'data_privacy_agreement': self.first_req.data_privacy_agreement,
+            'code_of_conduct_agreement':
+                self.first_req.code_of_conduct_agreement,
+            'created_at': self.first_req.created_at,
+            'notes': self.first_req.notes,
+        }
+        rv = self.client.post(self.url_1, data=self.strategy_1)
+        self.assertEqual(rv.status_code, 302)
+        self.first_req.refresh_from_db()
+
+        for key, value in assertions.items():
+            self.assertEqual(getattr(self.first_req, key), value, key)
+
+    def test_merging_relational_attributes(self):
+        """Merging: ensure relational fields are properly saved/combined."""
+        assertions = {
+            'domains': set([self.chemistry, self.physics]),
+            'previous_involvement': set([self.helper]),
+            # comments are not relational, they're related via generic FKs,
+            # so they won't appear here
+        }
+
+        rv = self.client.post(self.url_1, data=self.strategy_1)
+        self.assertEqual(rv.status_code, 302)
+        self.first_req.refresh_from_db()
+
+        for key, value in assertions.items():
+            self.assertEqual(
+                set(getattr(self.first_req, key).all()),
+                value,
+                key)
+
+    def test_merging(self):
+        rv = self.client.post(self.url_1, self.strategy_1, follow=True)
         self.assertTrue(rv.status_code, 200)
         # after successful merge, we should end up redirected to the details
         # page of the base object
@@ -683,12 +871,7 @@ class TestTrainingRequestMerging(TestBase):
         self.third_req.refresh_from_db()
 
         # try second strategy
-        query = urlencode({
-            'trainingrequest_a': self.first_req.pk,
-            'trainingrequest_b': self.third_req.pk,
-        })
-        url = '{}?{}'.format(reverse('trainingrequests_merge'), query)
-        rv = self.client.post(url, self.strategy_2, follow=True)
+        rv = self.client.post(self.url_2, self.strategy_2, follow=True)
         self.assertTrue(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name,
                          'trainingrequest_details')
@@ -727,3 +910,48 @@ class TestTrainingRequestMerging(TestBase):
         # make sure no related persons were removed from DB
         self.ironman.refresh_from_db()
         self.spiderman.refresh_from_db()
+
+    def test_merging_comments_strategy1(self):
+        """Ensure comments regarding persons are correctly merged using
+        `merge_objects`.
+        This test uses strategy 1 (combine)."""
+        self.strategy_1['comments'] = 'combine'
+        comments = [self.ca, self.cb]
+        rv = self.client.post(self.url_1, data=self.strategy_1)
+        self.assertEqual(rv.status_code, 302)
+        self.first_req.refresh_from_db()
+        self.assertEqual(
+            set(Comment.objects.for_model(self.first_req)
+                               .filter(is_removed=False)),
+            set(comments),
+        )
+
+    def test_merging_comments_strategy2(self):
+        """Ensure comments regarding persons are correctly merged using
+        `merge_objects`.
+        This test uses strategy 2 (object a)."""
+        self.strategy_1['comments'] = 'obj_a'
+        comments = [self.ca]
+        rv = self.client.post(self.url_1, data=self.strategy_1)
+        self.assertEqual(rv.status_code, 302)
+        self.first_req.refresh_from_db()
+        self.assertEqual(
+            set(Comment.objects.for_model(self.first_req)
+                               .filter(is_removed=False)),
+            set(comments),
+        )
+
+    def test_merging_comments_strategy3(self):
+        """Ensure comments regarding persons are correctly merged using
+        `merge_objects`.
+        This test uses strategy 3 (object b)."""
+        self.strategy_1['comments'] = 'obj_b'
+        comments = [self.cb]
+        rv = self.client.post(self.url_1, data=self.strategy_1)
+        self.assertEqual(rv.status_code, 302)
+        self.first_req.refresh_from_db()
+        self.assertEqual(
+            set(Comment.objects.for_model(self.first_req)
+                               .filter(is_removed=False)),
+            set(comments),
+        )
