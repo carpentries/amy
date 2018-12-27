@@ -2,9 +2,11 @@ from datetime import datetime, timedelta, date
 from urllib.parse import urlencode
 import sys
 
+from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
 from django.urls import reverse
+from django_comments.models import Comment
 
 from workshops.management.commands.check_for_workshop_websites_updates import (
     Command as WebsiteUpdatesCommand)
@@ -764,6 +766,14 @@ class TestEventMerging(TestBase):
         self.event_a.tags.set(Tag.objects.filter(name__in=['LC', 'DC']))
         self.event_a.task_set.create(person=self.harry,
                                      role=Role.objects.get(name='instructor'))
+        # comments regarding this event
+        self.ca = Comment.objects.create(
+            content_object=self.event_a,
+            user=self.harry,
+            comment="Comment from admin on event_a",
+            submit_date=datetime(2018, 12, 27, 21, 20),
+            site=Site.objects.get_current(),
+        )
 
         self.event_b = Event.objects.create(
             slug='event-b', completed=False, assigned_to=self.hermione,
@@ -784,6 +794,14 @@ class TestEventMerging(TestBase):
         )
         self.event_b.tags.set(Tag.objects.filter(name='SWC'))
         # no tasks for this event
+        # comments regarding this event
+        self.cb = Comment.objects.create(
+            content_object=self.event_b,
+            user=self.hermione,
+            comment="Comment from admin on event_b",
+            submit_date=datetime(2018, 12, 27, 21, 20),
+            site=Site.objects.get_current(),
+        )
 
         # some "random" strategy for testing
         self.strategy = {
@@ -817,6 +835,7 @@ class TestEventMerging(TestBase):
             'notes': 'obj_a',
             'tags': 'combine',
             'task_set': 'obj_b',
+            'comments': 'combine',
         }
         base_url = reverse('events_merge')
         query = urlencode({
@@ -864,6 +883,7 @@ class TestEventMerging(TestBase):
             'address': 'combine',
             'notes': 'combine',
             'task_set': 'combine',
+            'comments': 'combine',
         }
         data = hidden.copy()
         data.update(failing)
@@ -984,6 +1004,47 @@ class TestEventMerging(TestBase):
             3
         )
 
+    def test_merging_comments_strategy1(self):
+        """Ensure comments are correctly merged using `merge_objects`.
+        This test uses strategy 1 (combine)."""
+        self.strategy['comments'] = 'combine'
+        comments = [self.ca, self.cb]
+        rv = self.client.post(self.url, data=self.strategy)
+        self.assertEqual(rv.status_code, 302)
+        self.event_b.refresh_from_db()
+        self.assertEqual(
+            set(Comment.objects.for_model(self.event_b)
+                               .filter(is_removed=False)),
+            set(comments),
+        )
+
+    def test_merging_comments_strategy2(self):
+        """Ensure comments are correctly merged using `merge_objects`.
+        This test uses strategy 2 (object a)."""
+        self.strategy['comments'] = 'obj_a'
+        comments = [self.ca]
+        rv = self.client.post(self.url, data=self.strategy)
+        self.assertEqual(rv.status_code, 302)
+        self.event_b.refresh_from_db()
+        self.assertEqual(
+            set(Comment.objects.for_model(self.event_b)
+                               .filter(is_removed=False)),
+            set(comments),
+        )
+
+    def test_merging_comments_strategy3(self):
+        """Ensure comments are correctly merged using `merge_objects`.
+        This test uses strategy 3 (object b)."""
+        self.strategy['comments'] = 'obj_b'
+        comments = [self.cb]
+        rv = self.client.post(self.url, data=self.strategy)
+        self.assertEqual(rv.status_code, 302)
+        self.event_b.refresh_from_db()
+        self.assertEqual(
+            set(Comment.objects.for_model(self.event_b)
+                               .filter(is_removed=False)),
+            set(comments),
+        )
 
 
 class TestEventImport(TestBase):
