@@ -658,9 +658,6 @@ class TrainingRequestsMergeForm(forms.Form):
     created_at = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
-    last_updated_at = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
-    )
     notes = forms.ChoiceField(
         choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
     )
