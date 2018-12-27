@@ -664,6 +664,9 @@ class TrainingRequestsMergeForm(forms.Form):
     notes = forms.ChoiceField(
         choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
     )
+    comments = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )
 
 
 class WorkshopRequestAdminForm(WorkshopRequestBaseForm):

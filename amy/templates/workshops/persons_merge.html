@@ -1,6 +1,7 @@
 {% extends "base_nav.html" %}
 
 {% load links %}
+{% load comments %}
 
 {% block content %}
 <form method="POST">
@@ -145,6 +146,12 @@
     <td>{% if obj_a.trainingprogress_set.all %}<ul>{% for item in obj_a.trainingprogress_set.all %}<li><a href="{{ item.get_absolute_url }}">{{ item }}</a></li>{% endfor %}</ul>{% else %}—{% endif %}</td>
     <td>{% if obj_b.trainingprogress_set.all %}<ul>{% for item in obj_b.trainingprogress_set.all %}<li><a href="{{ item.get_absolute_url }}">{{ item }}</a></li>{% endfor %}</ul>{% else %}—{% endif %}</td>
     <th>{% include "includes/merge_radio.html" with field=form.trainingprogress_set %}</th>
+  </tr>
+  <tr>
+    <th>Comments</th>
+    <td>{% render_comment_list for obj_a %}</td>
+    <td>{% render_comment_list for obj_b %}</td>
+    <th>{% include "includes/merge_radio.html" with field=form.comments %}</th>
   </tr>
 </table>
 <div class="float-right">

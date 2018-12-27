@@ -728,6 +728,9 @@ class PersonsMergeForm(forms.Form):
     trainingprogress_set = forms.ChoiceField(
         choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
     )
+    comments = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )
 
 
 class AwardForm(WidgetOverrideMixin, forms.ModelForm):
@@ -894,6 +897,9 @@ class EventsMergeForm(forms.Form):
         choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
     )
     task_set = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    comments = forms.ChoiceField(
         choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
     )
 
