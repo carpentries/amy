@@ -3,6 +3,6 @@
 
 <div class="col-12"><h3 id="comments">Comments</h3></div>
 {% render_comment_list for object %}
-{% if user.is_authenticated %}
+{% if user.is_authenticated and not disable_commenting %}
   {% render_comment_form for object %}
 {% endif %}
