@@ -50,7 +50,8 @@ class OrganizationForm(forms.ModelForm):
 class OrganizationCreateForm(OrganizationForm):
     comment = forms.CharField(
         label='Comment',
-        help_text='This will be added to comments after the event is created',
+        help_text='This will be added to comments after the organization '
+                  'is created.',
         widget=forms.Textarea,
         required=False,
     )
@@ -58,6 +59,16 @@ class OrganizationCreateForm(OrganizationForm):
     class Meta(OrganizationForm.Meta):
         fields = OrganizationForm.Meta.fields.copy()
         fields.append('comment')
+
+    def save(self, *args, **kwargs):
+        res = super().save(*args, **kwargs)
+
+        create_comment_signal.send(sender=self.__class__,
+                                   content_object=res,
+                                   comment=self.cleaned_data['comment'],
+                                   timestamp=None)
+
+        return res
 
 
 class MembershipForm(forms.ModelForm):
@@ -80,11 +91,22 @@ class MembershipForm(forms.ModelForm):
             'additional_instructor_training_seats',
         ]
 
+    def save(self, *args, **kwargs):
+        res = super().save(*args, **kwargs)
+
+        create_comment_signal.send(sender=self.__class__,
+                                   content_object=res,
+                                   comment=self.cleaned_data['comment'],
+                                   timestamp=None)
+
+        return res
+
 
 class MembershipCreateForm(MembershipForm):
     comment = forms.CharField(
         label='Comment',
-        help_text='This will be added to comments after the event is created',
+        help_text='This will be added to comments after the membership is '
+                  'created.',
         widget=forms.Textarea,
         required=False,
     )

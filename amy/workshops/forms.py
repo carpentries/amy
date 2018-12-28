@@ -515,7 +515,7 @@ class EventForm(forms.ModelForm):
 class EventCreateForm(EventForm):
     comment = forms.CharField(
         label='Comment',
-        help_text='This will be added to comments after the event is created',
+        help_text='This will be added to comments after the event is created.',
         widget=forms.Textarea,
         required=False,
     )
@@ -626,7 +626,8 @@ class PersonForm(forms.ModelForm):
 class PersonCreateForm(PersonForm):
     comment = forms.CharField(
         label='Comment',
-        help_text='This will be added to comments after the event is created',
+        help_text='This will be added to comments after the person is '
+                  'created.',
         widget=forms.Textarea,
         required=False,
     )
