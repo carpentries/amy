@@ -4,6 +4,7 @@ import itertools
 import sys
 
 from django.contrib.auth.models import Group, Permission
+from django.contrib.sites.models import Site
 from django_webtest import WebTest
 import webtest.forms
 
@@ -46,6 +47,11 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
 
     def setUp(self):
         '''Create standard objects.'''
+
+        # we need to clear Sites' cache, because after post_migration signal,
+        # there's some junk in the cache that prevents from adding comments
+        # (the site in CACHE is not a real Site)
+        Site.objects.clear_cache()
 
         self._setUpOrganizations()
         self._setUpAirports()
