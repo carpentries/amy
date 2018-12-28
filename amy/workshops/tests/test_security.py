@@ -266,12 +266,13 @@ class TestViews(TestBase):
                                           class_ is None)
 
                 if is_function_based_view:
-                    self.assertTrue(acl is not None,
-                                    'You have a function based view with '
-                                    'no access control decorator. This view is '
-                                    'probably accessible to every user. If '
-                                    'this is what you want, use '
-                                    '@login_not_required decorator.')
+                    self.assertTrue(
+                        acl is not None,
+                        'You have a function based view with no access control'
+                        ' decorator. This view is probably accessible to every'
+                        ' user. If this is what you want, use '
+                        '@login_not_required decorator. Questionable view: '
+                        '"{}"'.format(url))
                     self.assertEqual(len(acl), 1,
                                      'You have more than one access control '
                                      'decorator defined in this view.')
