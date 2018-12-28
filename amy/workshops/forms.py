@@ -639,16 +639,6 @@ class PersonCreateForm(PersonForm):
         fields.remove('username')
         fields.append('comment')
 
-    def save(self, *args, **kwargs):
-        res = super().save(*args, **kwargs)
-
-        create_comment_signal.send(sender=self.__class__,
-                                   content_object=res,
-                                   comment=self.cleaned_data['comment'],
-                                   timestamp=None)
-
-        return res
-
 
 class PersonPermissionsForm(forms.ModelForm):
     helper = BootstrapHelper(add_cancel_button=False)

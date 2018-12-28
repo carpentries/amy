@@ -100,6 +100,7 @@ from workshops.models import (
     Task,
     TrainingRequest,
 )
+from workshops.signals import create_comment_signal
 from workshops.util import (
     upload_person_task_csv,
     verify_upload_person_task,
@@ -515,6 +516,12 @@ class PersonCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
         # Need to save that object because of commit=False previously.
         # This doesn't save our troublesome M2M field.
         self.object.save()
+
+        # send a signal to add a comment
+        create_comment_signal.send(sender=self.form_class,
+                                   content_object=self.object,
+                                   comment=form.cleaned_data['comment'],
+                                   timestamp=None)
 
         # saving intermediary M2M model: Qualification
         for lesson in form.cleaned_data['lessons']:
