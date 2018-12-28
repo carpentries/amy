@@ -1,15 +1,18 @@
+from datetime import datetime, timezone
 import re
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Div, HTML, Submit, Button, Field
 from django import forms
 from django.contrib.auth.models import Permission
+from django.contrib.sites.models import Site
 from django.forms import (
     SelectMultiple,
     CheckboxSelectMultiple,
     TextInput,
     RadioSelect,
 )
+from django_comments.models import Comment
 from django_countries import Countries
 from django_countries.fields import CountryField
 
@@ -927,3 +930,28 @@ class ActionRequiredPrivacyForm(forms.ModelForm):
             'may_contact',
             'publish_profile',
         ]
+
+
+# ----------------------------------------------------------
+# Signals
+
+def form_saved_add_comment(sender, **kwargs):
+    """A receiver for custom form.save() signal. This is intended to save
+    comment, entered as a form field, when creating a new object, and present
+    it as automatic system Comment (from django_comments app)."""
+    content_object = kwargs.get('content_object', None)
+    comment = kwargs.get('comment', None)
+    timestamp = kwargs.get('timestamp', datetime.now(timezone.utc))
+
+    # only proceed if we have an actual object (that exists in DB), and
+    # comment contents
+    if content_object and comment and content_object.pk:
+        site = Site.objects.get_current()
+        Comment.objects.create(
+            content_object=content_object,
+            site=site,
+            user=None,
+            user_name='Automatic comment',
+            submit_date=timestamp,
+            comment=comment,
+        )
