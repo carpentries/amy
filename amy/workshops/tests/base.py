@@ -68,15 +68,12 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
     def _setUpOrganizations(self):
         '''Set up organization objects.'''
 
-        self.org_alpha = Organization.objects.create(domain='alpha.edu',
-                                              fullname='Alpha Organization',
-                                              country='Azerbaijan',
-                                              notes='')
+        self.org_alpha = Organization.objects.create(
+            domain='alpha.edu', fullname='Alpha Organization',
+            country='Azerbaijan')
 
-        self.org_beta = Organization.objects.create(domain='beta.com',
-                                             fullname='Beta Organization',
-                                             country='Brazil',
-                                             notes='Notes\nabout\nBrazil\n')
+        self.org_beta = Organization.objects.create(
+            domain='beta.com', fullname='Beta Organization', country='Brazil')
 
     def _setUpAirports(self):
         '''Set up airport objects.'''

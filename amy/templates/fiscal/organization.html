@@ -17,7 +17,6 @@
   <tr><th>Full name:</th><td>{{ organization.fullname }}</td></tr>
   <tr><th>Domain:</th><td><a href="http://{{ organization.domain }}" target="_blank">{{ organization.domain }}</a></td></tr>
   <tr><th>Country:</th><td>{{ organization.country.name|default:"—" }} <img src="{{ organization.country.flag }}" alt="{{ organization.country }}" class="country-flag" /></td></tr>
-  <tr><th>Notes:</th><td>{% if organization.notes %}<pre>{{ organization.notes }}</pre>{% else %}&mdash;{% endif %}</td></tr>
 </table>
 
 <div class="clearfix">

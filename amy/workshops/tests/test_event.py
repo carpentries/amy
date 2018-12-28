@@ -687,47 +687,6 @@ class TestEventViews(TestBase):
         self.assertNotIn('curricula', form.errors)
 
 
-class TestEventNotes(TestBase):
-    """Make sure notes once written are saved forever!"""
-
-    def setUp(self):
-        self._setUpUsersAndLogin()
-
-        # a test host is required for all new events
-        self.test_host = Organization.objects.create(domain='example.com',
-                                             fullname='Test Organization')
-
-        # prepare a lifespan of all events
-        self.event_start = datetime.now() + timedelta(days=-1)
-        self.event_end = datetime.now() + timedelta(days=1)
-
-    def test_event_without_notes(self):
-        "Make sure event without notes don't have NULLed field ``notes``"
-        e = Event(start=self.event_start,
-                  end=self.event_end,
-                  slug='no_notes',
-                  host=self.test_host,
-                  admin_fee=100)
-
-        # test for field's default value (the field is not NULL)
-        self.assertEqual(e.notes, "")  # therefore the field is not NULL
-
-    def test_event_with_notes(self):
-        "Make sure event with notes are correctly stored"
-
-        notes = "This event's going to be extremely exhausting."
-
-        e = Event(start=self.event_start,
-                  end=self.event_end,
-                  slug='with_notes',
-                  host=self.test_host,
-                  admin_fee=100,
-                  notes=notes)
-
-        # make sure that notes have been saved
-        self.assertEqual(e.notes, notes)
-
-
 class TestEventMerging(TestBase):
     def setUp(self):
         self._setUpOrganizations()
@@ -744,7 +703,7 @@ class TestEventMerging(TestBase):
         tomorrow = today + timedelta(days=1)
 
         # Add full-blown events so that we can test merging of everything.
-        # Random data such as contact, venue, address, lat/long, URLs or notes
+        # Random data such as contact, venue, address, lat/long, or URLs
         # were generated with faker (see `fake_database.py` for details).
         self.event_a = Event.objects.create(
             slug='event-a', completed=True, assigned_to=self.harry,
@@ -761,7 +720,6 @@ class TestEventMerging(TestBase):
             instructors_pre='http://reichel.com/instructors_pre',
             instructors_post='http://reichel.com/instructors_post',
             learners_longterm='http://reichel.com/learners_longterm',
-            notes='Voluptates hic aspernatur non aut.'
         )
         self.event_a.tags.set(Tag.objects.filter(name__in=['LC', 'DC']))
         self.event_a.task_set.create(person=self.harry,
@@ -790,7 +748,6 @@ class TestEventMerging(TestBase):
             instructors_pre='http://www.cummings.biz/instructors_pre',
             instructors_post='http://www.cummings.biz/instructors_post',
             learners_longterm='http://www.cummings.biz/learners_longterm',
-            notes='Est qui iusto sapiente possimus consectetur rerum et.'
         )
         self.event_b.tags.set(Tag.objects.filter(name='SWC'))
         # no tasks for this event
@@ -832,7 +789,6 @@ class TestEventMerging(TestBase):
             'contact': 'obj_a',
             'venue': 'obj_b',
             'address': 'combine',
-            'notes': 'obj_a',
             'tags': 'combine',
             'task_set': 'obj_b',
             'comments': 'combine',
@@ -881,7 +837,6 @@ class TestEventMerging(TestBase):
             'contact': 'combine',
             'venue': 'combine',
             'address': 'combine',
-            'notes': 'combine',
             'task_set': 'combine',
             'comments': 'combine',
         }
@@ -942,7 +897,6 @@ class TestEventMerging(TestBase):
             'learners_longterm': self.event_b.learners_longterm,
             'contact': self.event_a.contact,
             'venue': self.event_b.venue,
-            'notes': self.event_a.notes,
             'address': self.event_a.address + self.event_b.address,
         }
         rv = self.client.post(self.url, data=self.strategy)

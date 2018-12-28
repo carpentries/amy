@@ -87,11 +87,6 @@
     <th>{% include "includes/merge_radio.html" with field=form.url %}</th>
   </tr>
   <tr>
-    <th>Notes</th>
-    <td>{% if obj_a.notes %}<pre>{{ obj_a.notes }}</pre>{% else %}—{% endif %}</td><td>{% if obj_b.notes %}<pre>{{ obj_b.notes }}</pre>{% else %}—{% endif %}</td>
-    <th>{% include "includes/merge_radio.html" with field=form.notes %}</th>
-  </tr>
-  <tr>
     <th>Affiliation</th>
     <td>{{ obj_a.affiliation|default:"—" }}</td><td>{{ obj_b.affiliation|default:"—" }}</td>
     <th>{% include "includes/merge_radio.html" with field=form.affiliation %}</th>

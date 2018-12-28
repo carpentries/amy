@@ -364,12 +364,6 @@ def _match_training_request_to_person(request, training_request, create=False,
         training_request.person.may_contact = True
         training_request.person.is_active = True
 
-        # merge notes
-        training_request.person.notes = (
-            training_request.person.notes +
-            "\n\nNotes from training request:\n" +
-            training_request.notes)
-
         training_request.person.save()
         training_request.person.synchronize_usersocialauth()
         training_request.save()
@@ -499,7 +493,6 @@ def trainingrequests_merge(request):
                 'workshop_teaching_agreement',
                 'data_privacy_agreement', 'code_of_conduct_agreement',
                 'created_at', 'last_updated_at',
-                'notes',
             )
             # M2M relationships
             difficult = (

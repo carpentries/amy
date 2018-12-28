@@ -215,11 +215,6 @@
       <th>{% include "includes/merge_radio.html" with field=form.created_at %}</th>
     </tr>
     <tr>
-      <th>Admin notes</th>
-      <td>{% if obj_a.notes %}<pre>{{ obj_a.notes }}</pre>{% else %}—{% endif %}</td><td>{% if obj_b.notes %}<pre>{{ obj_b.notes }}</pre>{% else %}—{% endif %}</td>
-      <th>{% include "includes/merge_radio.html" with field=form.notes %}</th>
-    </tr>
-    <tr>
       <th>Comments</th>
       <td>{% render_comment_list for obj_a %}</td>
       <td>{% render_comment_list for obj_b %}</td>

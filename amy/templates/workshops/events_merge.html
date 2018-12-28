@@ -153,11 +153,6 @@
     <th>{% include "includes/merge_radio.html" with field=form.learners_longterm %}</th>
   </tr>
   <tr>
-    <th scope="row">Notes</th>
-    <td>{% if obj_a.notes %}<pre>{{ obj_a.notes }}</pre>{% else %}—{% endif %}</td><td>{% if obj_b.notes %}<pre>{{ obj_b.notes }}</pre>{% else %}—{% endif %}</td>
-    <th>{% include "includes/merge_radio.html" with field=form.notes %}</th>
-  </tr>
-  <tr>
     <th scope="row">Tasks</th>
     <td>{% if obj_a.task_set.all %}<ul>{% for task in obj_a.task_set.all %}<li><a href="{{ task.get_absolute_url }}">{{ task }}</a></li>{% endfor %}</ul>{% else %}—{% endif %}</td>
     <td>{% if obj_b.task_set.all %}<ul>{% for task in obj_b.task_set.all %}<li><a href="{{ task.get_absolute_url }}">{{ task }}</a></li>{% endfor %}</ul>{% else %}—{% endif %}</td>

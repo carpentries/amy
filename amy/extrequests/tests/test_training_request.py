@@ -482,7 +482,6 @@ class TestMatchingTrainingRequestAndDetailedView(TestBase):
         for key, value in data_expected.items():
             self.assertEqual(getattr(self.ironman, key), value,
                              'Attribute: {}'.format(key))
-        self.assertIn("\n\nNotes from training request:\n", self.ironman.notes)
         self.assertEqual(set(self.ironman.domains.all()),
                          set(req.domains.all()))
 
@@ -513,7 +512,6 @@ class TestMatchingTrainingRequestAndDetailedView(TestBase):
         for key, value in data_expected.items():
             self.assertEqual(getattr(req.person, key), value,
                              'Attribute: {}'.format(key))
-        self.assertIn("\n\nNotes from training request:\n", req.person.notes)
         self.assertEqual(set(req.person.domains.all()), set(req.domains.all()))
 
 
@@ -635,7 +633,6 @@ class TestTrainingRequestMerging(TestBase):
             'data_privacy_agreement': 'obj_a',
             'code_of_conduct_agreement': 'obj_a',
             'created_at': 'obj_a',
-            'notes': 'obj_a',
             'comments': 'combine',
         }
         self.strategy_2 = {
@@ -679,7 +676,6 @@ class TestTrainingRequestMerging(TestBase):
             'data_privacy_agreement': 'obj_a',
             'code_of_conduct_agreement': 'obj_a',
             'created_at': 'obj_a',
-            'notes': 'obj_a',
             'comments': 'combine',
         }
 
@@ -744,7 +740,6 @@ class TestTrainingRequestMerging(TestBase):
             'previous_involvement': 'combine',
             'reason': 'combine',
             'comment': 'combine',
-            'notes': 'combine',
             'comments': 'combine',
         }
         data = hidden.copy()
@@ -828,7 +823,6 @@ class TestTrainingRequestMerging(TestBase):
             'code_of_conduct_agreement':
                 self.first_req.code_of_conduct_agreement,
             'created_at': self.first_req.created_at,
-            'notes': self.first_req.notes,
         }
         rv = self.client.post(self.url_1, data=self.strategy_1)
         self.assertEqual(rv.status_code, 302)

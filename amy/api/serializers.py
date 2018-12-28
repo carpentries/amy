@@ -149,7 +149,7 @@ class OrganizationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Organization
-        fields = ('domain', 'fullname', 'country', 'notes')
+        fields = ('domain', 'fullname', 'country')
 
 
 class AirportSerializer(serializers.ModelSerializer):
@@ -198,8 +198,7 @@ class PersonSerializer(serializers.ModelSerializer):
             'personal', 'middle', 'family', 'email', 'gender', 'may_contact',
             'publish_profile', 'lesson_publication_consent', 'airport',
             'country', 'github', 'twitter', 'url', 'orcid', 'username',
-            'notes', 'affiliation', 'badges', 'lessons', 'domains', 'awards',
-            'tasks',
+            'affiliation', 'badges', 'lessons', 'domains', 'awards', 'tasks',
         )
 
 
@@ -241,7 +240,7 @@ class EventSerializer(serializers.ModelSerializer):
             'slug', 'completed', 'start', 'end', 'host', 'administrator',
             'tags', 'website_url', 'reg_key',
             'attendance', 'contact', 'country', 'venue', 'address',
-            'latitude', 'longitude', 'notes', 'tasks', 'assigned_to',
+            'latitude', 'longitude', 'tasks', 'assigned_to',
         )
 
 

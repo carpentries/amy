@@ -4,23 +4,6 @@ from workshops.models import Organization, Event
 from workshops.tests.base import TestBase
 
 
-class TestOrganizationNotes(TestBase):
-    '''Test cases for Organization notes.'''
-
-    def test_fixture_notes(self):
-        assert self.org_alpha.notes == '', \
-            'Alpha Organization notes should be empty'
-        assert self.org_beta.notes == 'Notes\nabout\nBrazil\n', \
-            'Beta Organization notes incorrect'
-
-    def test_organization_created_without_notes(self):
-        organization = Organization(domain='example.org',
-                    fullname='Sample Example',
-                    country='United-States')
-        assert organization.notes == '', \
-            'Organization created without notes should have empty notes'
-
-
 class TestOrganization(TestBase):
     def setUp(self):
         super().setUp()
@@ -61,7 +44,6 @@ class TestOrganization(TestBase):
             'domain': 'http://beta.com/',
             'fullname': self.org_beta.fullname,
             'country': self.org_beta.country,
-            'notes': self.org_beta.notes,
         }
         url = reverse('organization_edit', args=[self.org_beta.domain])
         rv = self.client.post(url, data=data)

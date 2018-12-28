@@ -747,9 +747,6 @@ class PersonsMergeForm(forms.Form):
     url = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
-    notes = forms.ChoiceField(
-        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
-    )
     affiliation = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
@@ -948,9 +945,6 @@ class EventsMergeForm(forms.Form):
     )
     learners_longterm = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
-    )
-    notes = forms.ChoiceField(
-        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
     )
     task_set = forms.ChoiceField(
         choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,

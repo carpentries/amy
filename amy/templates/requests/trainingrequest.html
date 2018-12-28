@@ -106,8 +106,6 @@
       <td>{{ req.get_max_travelling_frequency_display }} {{ req.max_travelling_frequency_other }}</td></tr>
   <tr><th>Additional comments by submitter:</th>
       <td>{% if req.comment %}<pre>{{ req.comment }}</pre>{% else %}&mdash;{% endif %}</td></tr>
-  <tr><th>Admin notes:</th>
-      <td>{% if req.notes %}<pre>{{ req.notes }}</pre>{% else %}&mdash;{% endif %}</td></tr>
 </table>
 
 {% include "includes/comments.html" with object=req %}

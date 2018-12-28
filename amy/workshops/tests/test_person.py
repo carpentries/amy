@@ -70,30 +70,6 @@ class TestPerson(TestBase):
         f = PersonForm(data)
         self.assertNotIn('family', f.errors)
 
-    def test_display_person_with_notes(self):
-        note = 'This person has some serious records'
-        p = Person.objects.create(personal='P1', family='P1',
-                                  email='p1@p1.net',
-                                  notes=note)
-
-        response = self.client.get(reverse('person_details',
-                                           args=[str(p.id)]))
-
-        assert response.status_code == 200
-
-        content = response.content.decode('utf-8')
-        assert "No notes" not in content
-        assert note in content
-
-    def test_edit_person_notes(self):
-        data = PersonForm(instance=self.hermione).initial
-        # notes not present
-        self.assertEqual(data['notes'], '')
-
-        data['notes'] = 'Hermione is a very good student.'
-        form = PersonForm(data, instance=self.hermione)
-        self.assertTrue(form.is_valid(), form.errors)
-
     def test_1185_regression(self):
         """Ensure that admins without superuser privileges,
         but with 'change_person' permission can edit other people.
@@ -598,7 +574,7 @@ class TestPersonMerging(TestBase):
             username='purdy_kelsi', email='purdy.kelsi@example.com',
             gender='F', may_contact=True, airport=self.airport_0_0,
             github='purdy_kelsi', twitter='purdy_kelsi',
-            url='http://kelsipurdy.com/', notes='',
+            url='http://kelsipurdy.com/',
             affiliation='University of Arizona',
             occupation='TA at Biology Department', orcid='0000-0000-0000',
             is_active=True,
@@ -639,7 +615,7 @@ class TestPersonMerging(TestBase):
             username='deckow_jayden', email='deckow.jayden@example.com',
             gender='M', may_contact=True, airport=self.airport_0_50,
             github='deckow_jayden', twitter='deckow_jayden',
-            url='http://jaydendeckow.com/', notes='deckow_jayden',
+            url='http://jaydendeckow.com/',
             affiliation='UFlo',
             occupation='Staff', orcid='0000-0000-0001',
             is_active=True,
@@ -687,7 +663,6 @@ class TestPersonMerging(TestBase):
             'github': 'obj_b',
             'twitter': 'obj_a',
             'url': 'obj_b',
-            'notes': 'combine',
             'affiliation': 'obj_b',
             'occupation': 'obj_a',
             'orcid': 'obj_b',
@@ -737,7 +712,6 @@ class TestPersonMerging(TestBase):
         }
         # fields additionally accepting "combine"
         passing = {
-            'notes': 'combine',
             'award_set': 'combine',
             'qualification_set': 'combine',
             'domains': 'combine',
@@ -792,7 +766,6 @@ class TestPersonMerging(TestBase):
             'github': self.person_b.github,
             'twitter': self.person_a.twitter,
             'url': self.person_b.url,
-            'notes': self.person_a.notes + self.person_b.notes,
             'affiliation': self.person_b.affiliation,
             'occupation': self.person_a.occupation,
             'orcid': self.person_b.orcid,
