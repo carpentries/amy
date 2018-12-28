@@ -478,6 +478,54 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             raise ValidationError(errors)
 
 
+class WorkshopRequestAdminForm(WorkshopRequestBaseForm):
+    helper = BootstrapHelper(add_cancel_button=False,
+                             duplicate_buttons_on_top=True)
+
+    class Meta(WorkshopRequestBaseForm.Meta):
+        fields = (
+            "state",
+            "event",
+            "personal",
+            "family",
+            "email",
+            "institution",
+            "institution_name",
+            "institution_department",
+            "location",
+            "country",
+            "conference_details",
+            "preferred_dates",
+            "language",
+            "number_attendees",
+            "domains",
+            "domains_other",
+            "academic_levels",
+            "computing_levels",
+            "audience_description",
+            "requested_workshop_types",
+            "organization_type",
+            "self_organized_github",
+            "centrally_organized_fee",
+            "waiver_circumstances",
+            "travel_expences_agreement",
+            "travel_expences_management",
+            "travel_expences_management_other",
+            "comment",
+            "data_privacy_agreement",
+            "code_of_conduct_agreement",
+            "host_responsibilities",
+        )
+
+        widgets = WorkshopRequestBaseForm.Meta.widgets.copy()
+        widgets.update(
+            {'event': ListSelect2()}
+        )
+
+
+# ----------------------------------------------------------
+# Training Requests
+
 class TrainingRequestUpdateForm(forms.ModelForm):
     person = forms.ModelChoiceField(
         label='Matched Trainee',
@@ -664,49 +712,3 @@ class TrainingRequestsMergeForm(forms.Form):
     comments = forms.ChoiceField(
         choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
     )
-
-
-class WorkshopRequestAdminForm(WorkshopRequestBaseForm):
-    helper = BootstrapHelper(add_cancel_button=False,
-                             duplicate_buttons_on_top=True)
-
-    class Meta(WorkshopRequestBaseForm.Meta):
-        fields = (
-            "state",
-            "event",
-            "personal",
-            "family",
-            "email",
-            "institution",
-            "institution_name",
-            "institution_department",
-            "location",
-            "country",
-            "conference_details",
-            "preferred_dates",
-            "language",
-            "number_attendees",
-            "domains",
-            "domains_other",
-            "academic_levels",
-            "computing_levels",
-            "audience_description",
-            "requested_workshop_types",
-            "organization_type",
-            "self_organized_github",
-            "centrally_organized_fee",
-            "waiver_circumstances",
-            "travel_expences_agreement",
-            "travel_expences_management",
-            "travel_expences_management_other",
-            "comment",
-            "admin_comment",
-            "data_privacy_agreement",
-            "code_of_conduct_agreement",
-            "host_responsibilities",
-        )
-
-        widgets = WorkshopRequestBaseForm.Meta.widgets.copy()
-        widgets.update(
-            {'event': ListSelect2()}
-        )
