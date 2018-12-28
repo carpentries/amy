@@ -627,7 +627,7 @@ class TestTrainingRequestMerging(TestBase):
             'max_travelling_frequency': 'obj_a',
             'max_travelling_frequency_other': 'obj_a',
             'reason': 'obj_a',
-            'comment': 'obj_a',
+            'user_notes': 'obj_a',
             'training_completion_agreement': 'obj_a',
             'workshop_teaching_agreement': 'obj_a',
             'data_privacy_agreement': 'obj_a',
@@ -670,7 +670,7 @@ class TestTrainingRequestMerging(TestBase):
             'max_travelling_frequency': 'obj_a',
             'max_travelling_frequency_other': 'obj_a',
             'reason': 'obj_a',
-            'comment': 'obj_a',
+            'user_notes': 'obj_a',
             'training_completion_agreement': 'obj_a',
             'workshop_teaching_agreement': 'obj_a',
             'data_privacy_agreement': 'obj_a',
@@ -739,7 +739,7 @@ class TestTrainingRequestMerging(TestBase):
             'domains': 'combine',
             'previous_involvement': 'combine',
             'reason': 'combine',
-            'comment': 'combine',
+            'user_notes': 'combine',
             'comments': 'combine',
         }
         data = hidden.copy()
@@ -814,7 +814,7 @@ class TestTrainingRequestMerging(TestBase):
             'max_travelling_frequency_other':
                 self.first_req.max_travelling_frequency_other,
             'reason': self.first_req.reason,
-            'comment': self.first_req.comment,
+            'user_notes': self.first_req.user_notes,
             'training_completion_agreement':
                 self.first_req.training_completion_agreement,
             'workshop_teaching_agreement':

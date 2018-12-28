@@ -307,7 +307,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             "travel_expences_management",
             "travel_expences_management_other",
             "travel_expences_agreement",
-            "comment",
+            "user_notes",
             "data_privacy_agreement",
             "code_of_conduct_agreement",
             "host_responsibilities",
@@ -388,7 +388,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         )
         hr_fields_before = (
             'travel_expences_management',
-            'comment',
+            'user_notes',
         )
         for field in hr_fields_after:
             self.helper.layout.insert(
@@ -511,7 +511,7 @@ class WorkshopRequestAdminForm(WorkshopRequestBaseForm):
             "travel_expences_agreement",
             "travel_expences_management",
             "travel_expences_management_other",
-            "comment",
+            "user_notes",
             "data_privacy_agreement",
             "code_of_conduct_agreement",
             "host_responsibilities",
@@ -688,7 +688,7 @@ class TrainingRequestsMergeForm(forms.Form):
     reason = forms.ChoiceField(
         choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
     )
-    comment = forms.ChoiceField(
+    user_notes = forms.ChoiceField(
         choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
     )
     training_completion_agreement = forms.ChoiceField(

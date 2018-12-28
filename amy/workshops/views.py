@@ -1569,7 +1569,7 @@ def search(request):
                     Q(github__icontains=term) |
                     Q(affiliation__icontains=term) |
                     Q(location__icontains=term) |
-                    Q(comment__icontains=term)
+                    Q(user_notes__icontains=term)
                 )
                 results += list(training_requests)
 

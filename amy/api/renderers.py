@@ -44,7 +44,7 @@ class TrainingRequestCSVColumns:
         'max_travelling_frequency': 'Max Travelling Frequency',
         'max_travelling_frequency_other': 'Max Travelling Frequency (other)',
         'reason': 'Reason for undertaking training',
-        'comment': 'Comment',
+        'user_notes': 'User notes',
         'training_completion_agreement': 'Training completion agreement (yes/no)',
         'workshop_teaching_agreement': 'Workshop teaching agreement (yes/no)',
         'data_privacy_agreement': 'Data privacy agreement (yes/no)',

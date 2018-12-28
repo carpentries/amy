@@ -95,7 +95,7 @@ class TestSearchOrganization(TestBase):
         TrainingRequest.objects.create(
             group_name='Leprechauns', personal='Victor', family='Krum',
             email='vkrum@durmstrang.edu', github='vkrum',
-            comment='Lorem Ipsum',
+            user_notes='Lorem Ipsum',
         )
 
         response = self.search_for(

@@ -1788,7 +1788,7 @@ class TrainingRequest(CreatedUpdatedMixin, DataPrivacyAgreementMixin,
         null=False, blank=False,
     )
 
-    comment = models.TextField(
+    user_notes = models.TextField(
         default='', null=False, blank=True,
         help_text='What else do you want us to know?',
         verbose_name='Anything else?')
@@ -2333,7 +2333,7 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         verbose_name="Other travel expences management",
     )
 
-    comment = models.TextField(
+    user_notes = models.TextField(
         blank=True,
         verbose_name="Is there anything else you would like to share with us?",
     )

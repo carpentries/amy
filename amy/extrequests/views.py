@@ -489,7 +489,7 @@ def trainingrequests_merge(request):
                 'teaching_frequency_expectation',
                 'teaching_frequency_expectation_other',
                 'max_travelling_frequency', 'max_travelling_frequency_other',
-                'reason', 'comment', 'training_completion_agreement',
+                'reason', 'user_notes', 'training_completion_agreement',
                 'workshop_teaching_agreement',
                 'data_privacy_agreement', 'code_of_conduct_agreement',
                 'created_at', 'last_updated_at',

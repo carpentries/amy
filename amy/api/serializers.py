@@ -277,7 +277,7 @@ class TrainingRequestSerializer(serializers.ModelSerializer):
             'teaching_frequency_expectation',
             'teaching_frequency_expectation_other',
             'max_travelling_frequency', 'max_travelling_frequency_other',
-            'reason', 'comment',
+            'reason', 'user_notes',
             'training_completion_agreement', 'workshop_teaching_agreement',
             'data_privacy_agreement', 'code_of_conduct_agreement',
         )
@@ -338,7 +338,7 @@ class TrainingRequestWithPersonSerializer(TrainingRequestSerializer):
             'teaching_frequency_expectation',
             'teaching_frequency_expectation_other',
             'max_travelling_frequency', 'max_travelling_frequency_other',
-            'reason', 'comment',
+            'reason', 'user_notes',
             'training_completion_agreement', 'workshop_teaching_agreement',
             'data_privacy_agreement', 'code_of_conduct_agreement',
         )
@@ -371,7 +371,7 @@ class TrainingRequestForManualScoringSerializer(TrainingRequestSerializer):
             'max_travelling_frequency',
             'max_travelling_frequency_other',
             'reason',
-            'comment',
+            'user_notes',
         )
 
 
