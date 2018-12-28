@@ -6,6 +6,7 @@ from crispy_forms.layout import Layout, Div, HTML, Submit, Button, Field
 from django import forms
 from django.contrib.auth.models import Permission
 from django.contrib.sites.models import Site
+from django.dispatch import receiver
 from django.forms import (
     SelectMultiple,
     CheckboxSelectMultiple,
@@ -36,6 +37,7 @@ from workshops.fields import (
     ModelSelect2,
     ModelSelect2Multiple,
 )
+from workshops.signals import create_comment_signal
 
 
 # settings for Select2
@@ -386,11 +388,11 @@ class EventForm(forms.ModelForm):
 
     class Meta:
         model = Event
-        fields = ('slug', 'completed', 'start', 'end', 'host', 'administrator',
+        fields = ['slug', 'completed', 'start', 'end', 'host', 'administrator',
                   'assigned_to', 'tags', 'url', 'language', 'reg_key', 'venue',
                   'attendance', 'contact',
-                  'notes', 'country', 'address', 'latitude', 'longitude',
-                  'open_TTT_applications', 'curricula', )
+                  'country', 'address', 'latitude', 'longitude',
+                  'open_TTT_applications', 'curricula', ]
         widgets = {
             'attendance': TextInput,
             'latitude': TextInput,
@@ -430,7 +432,6 @@ class EventForm(forms.ModelForm):
             'reg_key',
             'attendance',
             'contact',
-            'notes',
             Div(
                 Div(HTML('Location details'), css_class='card-header'),
                 Div('country',
@@ -504,6 +505,33 @@ class EventForm(forms.ModelForm):
                     "You must add tags corresponding to these curricula.")
 
         return curricula
+
+
+class EventCreateForm(EventForm):
+    comment = forms.CharField(
+        label='Comment',
+        help_text='This will be added to comments after the event is created',
+        widget=forms.Textarea,
+        required=False,
+    )
+
+    class Meta(EventForm.Meta):
+        fields = EventForm.Meta.fields.copy()
+        fields.append('comment')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper.layout.append('comment')
+
+    def save(self, *args, **kwargs):
+        res = super().save(*args, **kwargs)
+
+        create_comment_signal.send(sender=self.__class__,
+                                   content_object=res,
+                                   comment=self.cleaned_data['comment'],
+                                   timestamp=None)
+
+        return res
 
 
 class TaskForm(WidgetOverrideMixin, forms.ModelForm):
@@ -935,6 +963,7 @@ class ActionRequiredPrivacyForm(forms.ModelForm):
 # ----------------------------------------------------------
 # Signals
 
+@receiver(create_comment_signal, sender=EventCreateForm)
 def form_saved_add_comment(sender, **kwargs):
     """A receiver for custom form.save() signal. This is intended to save
     comment, entered as a form field, when creating a new object, and present

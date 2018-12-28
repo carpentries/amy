@@ -69,6 +69,7 @@ from workshops.forms import (
     PersonForm,
     BulkUploadCSVForm,
     EventForm,
+    EventCreateForm,
     TaskForm,
     AwardForm,
     PersonPermissionsForm,
@@ -889,7 +890,7 @@ class EventCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
                   AMYCreateView):
     permission_required = 'workshops.add_event'
     model = Event
-    form_class = EventForm
+    form_class = EventCreateForm
     template_name = 'workshops/event_create_form.html'
 
 

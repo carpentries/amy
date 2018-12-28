@@ -48,7 +48,7 @@ from workshops.forms import (
     AdminLookupForm,
     BootstrapHelper,
     BulkUploadCSVForm,
-    EventForm,
+    EventCreateForm,
 )
 from workshops.models import (
     TrainingRequest,
@@ -137,10 +137,10 @@ def workshoprequest_accept_event(request, request_id):
     """Accept event request by creating a new event."""
     workshoprequest = get_object_or_404(WorkshopRequest, state='p',
                                         pk=request_id)
-    form = EventForm()
+    form = EventCreateForm()
 
     if request.method == 'POST':
-        form = EventForm(request.POST)
+        form = EventCreateForm(request.POST)
 
         if form.is_valid():
             event = form.save()
