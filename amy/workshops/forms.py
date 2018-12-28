@@ -168,6 +168,9 @@ bootstrap_helper_filter = BootstrapHelperFilter()
 bootstrap_helper_inline_formsets = BootstrapHelperFormsetInline()
 
 
+# ----------------------------------------------------------
+# MixIns
+
 class PrivacyConsentMixin(forms.Form):
     privacy_consent = forms.BooleanField(
         label='*I have read and agree to <a href='
@@ -178,13 +181,15 @@ class PrivacyConsentMixin(forms.Form):
 
 
 class WidgetOverrideMixin:
-
     def __init__(self, *args, **kwargs):
         widgets = kwargs.pop('widgets', {})
         super().__init__(*args, **kwargs)
         for field, widget in widgets.items():
             self.fields[field].widget = widget
 
+
+# ----------------------------------------------------------
+# Forms
 
 class WorkshopStaffForm(forms.Form):
     '''Represent instructor matching form.'''
@@ -608,7 +613,6 @@ class PersonForm(forms.ModelForm):
             'occupation',
             'orcid',
             'user_notes',
-            'notes',
             'lessons',
             'domains',
             'languages',
@@ -620,11 +624,29 @@ class PersonForm(forms.ModelForm):
 
 
 class PersonCreateForm(PersonForm):
+    comment = forms.CharField(
+        label='Comment',
+        help_text='This will be added to comments after the event is created',
+        widget=forms.Textarea,
+        required=False,
+    )
+
     class Meta(PersonForm.Meta):
         # remove 'username' field as it's being populated after form save
         # in the `views.PersonCreate.form_valid`
         fields = PersonForm.Meta.fields.copy()
         fields.remove('username')
+        fields.append('comment')
+
+    def save(self, *args, **kwargs):
+        res = super().save(*args, **kwargs)
+
+        create_comment_signal.send(sender=self.__class__,
+                                   content_object=res,
+                                   comment=self.cleaned_data['comment'],
+                                   timestamp=None)
+
+        return res
 
 
 class PersonPermissionsForm(forms.ModelForm):
@@ -964,6 +986,7 @@ class ActionRequiredPrivacyForm(forms.ModelForm):
 # Signals
 
 @receiver(create_comment_signal, sender=EventCreateForm)
+@receiver(create_comment_signal, sender=PersonCreateForm)
 def form_saved_add_comment(sender, **kwargs):
     """A receiver for custom form.save() signal. This is intended to save
     comment, entered as a form field, when creating a new object, and present
