@@ -21,7 +21,7 @@ from workshops.models import (
     Organization, Language,
     Tag, TrainingRequirement, TrainingProgress
 )
-from workshops.forms import PersonForm, PersonsMergeForm
+from workshops.forms import PersonForm, PersonCreateForm, PersonsMergeForm
 
 
 @patch('workshops.github_auth.github_username_to_uid', lambda username: None)
@@ -423,6 +423,43 @@ class TestPerson(TestBase):
             github=valid_username,
         )
         person.clean_fields(exclude=['password'])
+
+    def test_creating_person_with_no_comment(self):
+        """Ensure that no comment is added when PersonCreateForm without comment
+        content is saved."""
+        self.assertEqual(Comment.objects.count(), 0)
+        data = {
+            'username': 'curie_marie',
+            'personal': 'Marie',
+            'family': 'Curie',
+            'gender': 'F',
+            'email': 'm.curie@sorbonne.fr',
+            'comment': '',
+        }
+        url = reverse('person_add')
+        self.client.post(url, data)
+        Person.objects.get(username='curie_marie')
+        self.assertEqual(Comment.objects.count(), 0)
+
+    def test_creating_person_with_comment(self):
+        """Ensure that a comment is added when PersonCreateForm with comment
+        content is saved."""
+        self.assertEqual(Comment.objects.count(), 0)
+        data = {
+            'username': 'curie_marie',
+            'personal': 'Marie',
+            'family': 'Curie',
+            'gender': 'F',
+            'email': 'm.curie@sorbonne.fr',
+            'comment': 'This is a test comment.',
+        }
+        url = reverse('person_add')
+        self.client.post(url, data)
+        obj = Person.objects.get(username='curie_marie')
+        self.assertEqual(Comment.objects.count(), 1)
+        comment = Comment.objects.first()
+        self.assertEqual(comment.comment, 'This is a test comment.')
+        self.assertIn(comment, Comment.objects.for_model(obj))
 
 
 class TestPersonPassword(TestBase):

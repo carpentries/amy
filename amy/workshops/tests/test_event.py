@@ -20,7 +20,7 @@ from workshops.models import (
     Badge,
     Curriculum,
 )
-from workshops.forms import EventForm, EventsMergeForm
+from workshops.forms import EventForm, EventCreateForm, EventsMergeForm
 from workshops.tests.base import TestBase
 
 
@@ -39,7 +39,8 @@ class TestEvent(TestBase):
         self.learner_role = Role.objects.get(name='learner')
 
         # Create a test tag
-        Tag.objects.create(name='Test Tag', details='For testing')
+        self.test_tag = Tag.objects.create(name='Test Tag',
+                                           details='For testing')
 
         # Create a test role
         Role.objects.create(name='Test Role')
@@ -261,6 +262,37 @@ class TestEvent(TestBase):
         # now the validation should pass
         event.tags.set([self.TTT_tag])
         event.full_clean()
+
+    def test_creating_event_with_no_comment(self):
+        """Ensure that no comment is added when EventCreateForm without comment
+        content is saved."""
+        self.assertEqual(Comment.objects.count(), 0)
+        data = {
+            'slug': '2018-12-28-test-event',
+            'host': self.org_alpha.id,
+            'tags': [self.test_tag.id],
+            'comment': '',
+        }
+        form = EventCreateForm(data)
+        form.save()
+        self.assertEqual(Comment.objects.count(), 0)
+
+    def test_creating_event_with_comment(self):
+        """Ensure that a comment is added when EventCreateForm with comment
+        content is saved."""
+        self.assertEqual(Comment.objects.count(), 0)
+        data = {
+            'slug': '2018-12-28-test-event',
+            'host': self.org_alpha.id,
+            'tags': [self.test_tag.id],
+            'comment': 'This is a test comment.',
+        }
+        form = EventCreateForm(data)
+        obj = form.save()
+        self.assertEqual(Comment.objects.count(), 1)
+        comment = Comment.objects.first()
+        self.assertEqual(comment.comment, 'This is a test comment.')
+        self.assertIn(comment, Comment.objects.for_model(obj))
 
 
 class TestEventManager(TestBase):
