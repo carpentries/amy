@@ -388,6 +388,14 @@ class EventForm(forms.ModelForm):
         widget=ListSelect2(),
     )
 
+    comment = forms.CharField(
+        label='Comment',
+        help_text='Any content in here will be added to comments after this '
+                  'event is saved.',
+        widget=forms.Textarea,
+        required=False,
+    )
+
     helper = BootstrapHelper(add_cancel_button=False,
                              duplicate_buttons_on_top=True)
 
@@ -397,7 +405,9 @@ class EventForm(forms.ModelForm):
                   'assigned_to', 'tags', 'url', 'language', 'reg_key', 'venue',
                   'attendance', 'contact',
                   'country', 'address', 'latitude', 'longitude',
-                  'open_TTT_applications', 'curricula', ]
+                  'open_TTT_applications', 'curricula',
+                  'comment',
+                  ]
         widgets = {
             'attendance': TextInput,
             'latitude': TextInput,
@@ -447,6 +457,7 @@ class EventForm(forms.ModelForm):
                     css_class='card-body'),
                 css_class='card mb-2'
             ),
+            'comment',
         )
 
     def clean_slug(self):
@@ -511,23 +522,6 @@ class EventForm(forms.ModelForm):
 
         return curricula
 
-
-class EventCreateForm(EventForm):
-    comment = forms.CharField(
-        label='Comment',
-        help_text='This will be added to comments after the event is created.',
-        widget=forms.Textarea,
-        required=False,
-    )
-
-    class Meta(EventForm.Meta):
-        fields = EventForm.Meta.fields.copy()
-        fields.append('comment')
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper.layout.append('comment')
-
     def save(self, *args, **kwargs):
         res = super().save(*args, **kwargs)
 
@@ -537,6 +531,15 @@ class EventCreateForm(EventForm):
                                    timestamp=None)
 
         return res
+
+
+class EventCreateForm(EventForm):
+    comment = forms.CharField(
+        label='Comment',
+        help_text='This will be added to comments after the event is created.',
+        widget=forms.Textarea,
+        required=False,
+    )
 
 
 class TaskForm(WidgetOverrideMixin, forms.ModelForm):
@@ -970,6 +973,7 @@ class ActionRequiredPrivacyForm(forms.ModelForm):
 # ----------------------------------------------------------
 # Signals
 
+@receiver(create_comment_signal, sender=EventForm)
 @receiver(create_comment_signal, sender=EventCreateForm)
 @receiver(create_comment_signal, sender=PersonCreateForm)
 def form_saved_add_comment(sender, **kwargs):

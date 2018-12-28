@@ -263,8 +263,17 @@ class TestEvent(TestBase):
         event.tags.set([self.TTT_tag])
         event.full_clean()
 
+
+class TestEventFormComments(TestBase):
+    form = EventForm
+
+    def setUp(self):
+        self._setUpOrganizations()
+        self.test_tag = Tag.objects.create(name='Test Tag',
+                                           details='For testing')
+
     def test_creating_event_with_no_comment(self):
-        """Ensure that no comment is added when EventCreateForm without comment
+        """Ensure that no comment is added when the form without comment
         content is saved."""
         self.assertEqual(Comment.objects.count(), 0)
         data = {
@@ -273,12 +282,12 @@ class TestEvent(TestBase):
             'tags': [self.test_tag.id],
             'comment': '',
         }
-        form = EventCreateForm(data)
+        form = EventForm(data)
         form.save()
         self.assertEqual(Comment.objects.count(), 0)
 
     def test_creating_event_with_comment(self):
-        """Ensure that a comment is added when EventCreateForm with comment
+        """Ensure that a comment is added when the form with comment
         content is saved."""
         self.assertEqual(Comment.objects.count(), 0)
         data = {
@@ -287,12 +296,16 @@ class TestEvent(TestBase):
             'tags': [self.test_tag.id],
             'comment': 'This is a test comment.',
         }
-        form = EventCreateForm(data)
+        form = EventForm(data)
         obj = form.save()
         self.assertEqual(Comment.objects.count(), 1)
         comment = Comment.objects.first()
         self.assertEqual(comment.comment, 'This is a test comment.')
         self.assertIn(comment, Comment.objects.for_model(obj))
+
+
+class TestEventCreateFormComments(TestEventFormComments):
+    form = EventCreateForm
 
 
 class TestEventManager(TestBase):
