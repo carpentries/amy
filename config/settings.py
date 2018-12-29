@@ -115,7 +115,13 @@ DJANGO_APPS = [
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.humanize',  # Handy template tags
+
+    # Handy template tags
+    'django.contrib.humanize',
+
+    # for TemplatesSetting form template renderer
+    # https://docs.djangoproject.com/en/dev/ref/forms/renderers/
+    'django.forms',
 ]
 THIRD_PARTY_APPS = [
     'crispy_forms',
@@ -281,6 +287,13 @@ STATICFILES_FINDERS = [
 MEDIA_ROOT = str(APPS_DIR('media'))
 # https://docs.djangoproject.com/en/dev/ref/settings/#media-url
 MEDIA_URL = '/media/'
+
+# FORM RENDERER
+# -----------------------------------------------------------------------------
+# https://docs.djangoproject.com/en/2.1/ref/settings/#form-renderer
+# and
+# https://docs.djangoproject.com/en/1.11/ref/forms/renderers/
+FORM_RENDERER = 'django.forms.renderers.TemplatesSetting'
 
 # TEMPLATES
 # -----------------------------------------------------------------------------
