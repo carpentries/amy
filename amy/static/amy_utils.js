@@ -188,4 +188,16 @@ $(document).ready(function() {
 
   /* Fix select2 widgets losing their focus. */
   $('select').on("select2:close", function () { $(this).focus(); });
+
+  /* react on comment tab change: resize preview div */
+  $('.comment-form a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+    var target_pane = $(e.target).attr("href");
+    var prev_target_pane = $(e.relatedTarget).attr("href");
+
+    if (target_pane == "#preview") {
+      if ($(target_pane).height() < $(prev_target_pane).height()) {
+        $(target_pane).height($(prev_target_pane).height());
+      }
+    }
+  })
  });
