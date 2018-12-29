@@ -16,6 +16,7 @@ from django.forms import (
 from django_comments.models import Comment
 from django_countries import Countries
 from django_countries.fields import CountryField
+from markdownx.fields import MarkdownxFormField
 
 from workshops.models import (
     Award,
@@ -388,7 +389,7 @@ class EventForm(forms.ModelForm):
         widget=ListSelect2(),
     )
 
-    comment = forms.CharField(
+    comment = MarkdownxFormField(
         label='Comment',
         help_text='Any content in here will be added to comments after this '
                   'event is saved.',
@@ -534,7 +535,7 @@ class EventForm(forms.ModelForm):
 
 
 class EventCreateForm(EventForm):
-    comment = forms.CharField(
+    comment = MarkdownxFormField(
         label='Comment',
         help_text='This will be added to comments after the event is created.',
         widget=forms.Textarea,
@@ -627,7 +628,7 @@ class PersonForm(forms.ModelForm):
 
 
 class PersonCreateForm(PersonForm):
-    comment = forms.CharField(
+    comment = MarkdownxFormField(
         label='Comment',
         help_text='This will be added to comments after the person is '
                   'created.',

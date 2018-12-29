@@ -1,6 +1,7 @@
 from django import forms
 from django.core.validators import RegexValidator
 from django.dispatch import receiver
+from markdownx.fields import MarkdownxFormField
 
 from workshops.forms import (
     BootstrapHelper,
@@ -48,7 +49,7 @@ class OrganizationForm(forms.ModelForm):
 
 
 class OrganizationCreateForm(OrganizationForm):
-    comment = forms.CharField(
+    comment = MarkdownxFormField(
         label='Comment',
         help_text='This will be added to comments after the organization '
                   'is created.',
@@ -103,7 +104,7 @@ class MembershipForm(forms.ModelForm):
 
 
 class MembershipCreateForm(MembershipForm):
-    comment = forms.CharField(
+    comment = MarkdownxFormField(
         label='Comment',
         help_text='This will be added to comments after the membership is '
                   'created.',
