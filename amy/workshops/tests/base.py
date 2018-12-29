@@ -43,16 +43,10 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
                WebTest):  # Support for functional tests (django-webtest)
     '''Base class for AMY test cases.'''
 
-    ERR_DIR = 'htmlerror' # where to save error HTML files
-
     def setUp(self):
         '''Create standard objects.'''
 
-        # we need to clear Sites' cache, because after post_migration signal,
-        # there's some junk in the cache that prevents from adding comments
-        # (the site in CACHE is not a real Site)
-        Site.objects.clear_cache()
-
+        self.clear_sites_cache()
         self._setUpOrganizations()
         self._setUpAirports()
         self._setUpLessons()
@@ -60,6 +54,12 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
         self._setUpInstructors()
         self._setUpNonInstructors()
         self._setUpPermissions()
+
+    def clear_sites_cache(self):
+        # we need to clear Sites' cache, because after post_migration signal,
+        # there's some junk in the cache that prevents from adding comments
+        # (the site in CACHE is not a real Site)
+        Site.objects.clear_cache()
 
     def _setUpLessons(self):
         '''Set up lesson objects.'''
