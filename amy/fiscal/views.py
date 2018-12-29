@@ -16,7 +16,9 @@ from fiscal.filters import (
 )
 from fiscal.forms import (
     OrganizationForm,
+    OrganizationCreateForm,
     MembershipForm,
+    MembershipCreateForm,
     SponsorshipForm,
 )
 from workshops.base_views import (
@@ -74,7 +76,7 @@ class OrganizationCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
                          AMYCreateView):
     permission_required = 'workshops.add_organization'
     model = Organization
-    form_class = OrganizationForm
+    form_class = OrganizationCreateForm
 
 
 class OrganizationUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
@@ -84,6 +86,7 @@ class OrganizationUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
     form_class = OrganizationForm
     slug_field = 'domain'
     slug_url_kwarg = 'org_domain'
+    template_name = 'generic_form_with_comments.html'
 
 
 class OrganizationDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
@@ -145,7 +148,7 @@ class MembershipCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
         'workshops.change_organization',
     ]
     model = Membership
-    form_class = MembershipForm
+    form_class = MembershipCreateForm
     populate_fields = ['organization']
 
 
@@ -155,6 +158,7 @@ class MembershipUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
     model = Membership
     form_class = MembershipForm
     pk_url_kwarg = 'membership_id'
+    template_name = 'generic_form_with_comments.html'
 
 
 class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin,

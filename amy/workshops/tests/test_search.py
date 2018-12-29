@@ -71,18 +71,17 @@ class TestSearchOrganization(TestBase):
         """Test if searching for two words yields people correctly."""
         # let's add Hermione Granger to some organization's notes
         # this is required because of redirection if only 1 person matches
-        self.org_alpha.notes = 'Hermione Granger'
-        self.org_alpha.save()
+        org = Organization.objects.create(fullname='Hermione Granger',
+                                          domain='hgr.com')
 
         response = self.search_for(
             'Hermione Granger', in_organizations=True, in_persons=True)
         self.assertEqual(response.status_code, 200)
-        doc = response.content.decode('utf-8')
         self.assertEqual(len(response.context['persons'])
                          + len(response.context['organizations']),
                          2, 'Expected two search results')
-        for result in {self.org_alpha.domain, self.hermione.full_name}:
-            self.assertIn(result, doc)
+        self.assertIn(org, response.context['organizations'])
+        self.assertIn(self.hermione, response.context['persons'])
 
     def test_search_for_training_requests(self):
         """Make sure that finding training requests works."""
@@ -96,7 +95,7 @@ class TestSearchOrganization(TestBase):
         TrainingRequest.objects.create(
             group_name='Leprechauns', personal='Victor', family='Krum',
             email='vkrum@durmstrang.edu', github='vkrum',
-            comment='Lorem Ipsum',
+            user_notes='Lorem Ipsum',
         )
 
         response = self.search_for(

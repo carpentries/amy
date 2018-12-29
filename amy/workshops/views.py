@@ -69,6 +69,7 @@ from workshops.forms import (
     PersonForm,
     BulkUploadCSVForm,
     EventForm,
+    EventCreateForm,
     TaskForm,
     AwardForm,
     PersonPermissionsForm,
@@ -99,6 +100,7 @@ from workshops.models import (
     Task,
     TrainingRequest,
 )
+from workshops.signals import create_comment_signal
 from workshops.util import (
     upload_person_task_csv,
     verify_upload_person_task,
@@ -116,6 +118,7 @@ from workshops.util import (
     admin_required,
     OnlyForAdminsMixin,
     login_required,
+    add_comment,
 )
 
 
@@ -514,6 +517,12 @@ class PersonCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
         # This doesn't save our troublesome M2M field.
         self.object.save()
 
+        # send a signal to add a comment
+        create_comment_signal.send(sender=self.form_class,
+                                   content_object=self.object,
+                                   comment=form.cleaned_data['comment'],
+                                   timestamp=None)
+
         # saving intermediary M2M model: Qualification
         for lesson in form.cleaned_data['lessons']:
             Qualification.objects.create(lesson=lesson, person=self.object)
@@ -677,13 +686,16 @@ def persons_merge(request):
             easy = (
                 'username', 'personal', 'middle', 'family', 'email',
                 'may_contact', 'publish_profile', 'gender', 'airport',
-                'github', 'twitter', 'url', 'notes', 'affiliation',
+                'github', 'twitter', 'url', 'affiliation',
                 'occupation', 'orcid', 'is_active',
             )
 
             # M2M relationships
             difficult = ('award_set', 'qualification_set', 'domains',
-                         'languages', 'task_set', 'trainingprogress_set')
+                         'languages', 'task_set', 'trainingprogress_set',
+                         'comment_comments',  # made by this person
+                         'comments',  # made by others regarding this person
+                         )
 
             try:
                 _, integrity_errors = merge_objects(obj_a, obj_b, easy,
@@ -752,7 +764,6 @@ class AllEvents(OnlyForAdminsMixin, AMYListView):
     template_name = 'workshops/all_events.html'
     queryset = (
         Event.objects
-        .defer('notes')
         .select_related('assigned_to')
         .prefetch_related('host', 'tags')
         .annotate(
@@ -886,7 +897,7 @@ class EventCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
                   AMYCreateView):
     permission_required = 'workshops.add_event'
     model = Event
-    form_class = EventForm
+    form_class = EventCreateForm
     template_name = 'workshops/event_create_form.html'
 
 
@@ -1016,7 +1027,7 @@ def events_merge(request):
                 'invoice_status', 'attendance', 'contact', 'country', 'venue',
                 'address', 'latitude', 'longitude', 'learners_pre',
                 'learners_post', 'instructors_pre', 'instructors_post',
-                'learners_longterm', 'notes',
+                'learners_longterm',
             )
             # M2M relationships
             difficult = ('tags', 'task_set')
@@ -1142,11 +1153,9 @@ def event_accept_metadata_changes(request, slug):
     # update instructors and helpers
     instructors = ', '.join(metadata.get('instructors', []))
     helpers = ', '.join(metadata.get('helpers', []))
-    event.notes += (
-        '\n\n---------\nUPDATE {:%Y-%m-%d}:'
-        '\nINSTRUCTORS: {}\n\nHELPERS: {}'
-        .format(datetime.date.today(), instructors, helpers)
-    )
+    comment_txt = 'INSTRUCTORS: {}\n\nHELPERS: {}' \
+        .format(instructors, helpers)
+    add_comment(event, comment_txt)
 
     # save serialized metadata
     event.repository_metadata = metadata_serialized
@@ -1195,8 +1204,7 @@ class AllTasks(OnlyForAdminsMixin, AMYListView):
     context_object_name = 'all_tasks'
     template_name = 'workshops/all_tasks.html'
     filter_class = TaskFilter
-    queryset = Task.objects.select_related('event', 'person', 'role') \
-                           .defer('person__notes', 'event__notes')
+    queryset = Task.objects.select_related('event', 'person', 'role')
     title = 'All Tasks'
 
 
@@ -1517,16 +1525,13 @@ def search(request):
 
             if form.cleaned_data['in_organizations']:
                 organizations = Organization.objects.filter(
-                    Q(domain__icontains=term) |
-                    Q(fullname__icontains=term) |
-                    Q(notes__icontains=term)) \
+                    Q(domain__icontains=term) | Q(fullname__icontains=term)) \
                     .order_by('fullname')
                 results += list(organizations)
 
             if form.cleaned_data['in_events']:
                 events = Event.objects.filter(
                     Q(slug__icontains=term) |
-                    Q(notes__icontains=term) |
                     Q(host__domain__icontains=term) |
                     Q(host__fullname__icontains=term) |
                     Q(url__icontains=term) |
@@ -1571,7 +1576,7 @@ def search(request):
                     Q(github__icontains=term) |
                     Q(affiliation__icontains=term) |
                     Q(location__icontains=term) |
-                    Q(comment__icontains=term)
+                    Q(user_notes__icontains=term)
                 )
                 results += list(training_requests)
 
@@ -1587,7 +1592,7 @@ def search(request):
         'title': 'Search',
         'form': form,
         'term': term,
-        'organizations' : organizations,
+        'organizations': organizations,
         'events': events,
         'persons': persons,
         'airports': airports,

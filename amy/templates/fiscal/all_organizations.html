@@ -14,7 +14,6 @@
             <th>Full name</th>
             <th>Domain</th>
             <th>Current membership</th>
-            <th>Notes</th>
             <th class="additional-links"></th>
         </tr>
     {% for organization in all_organizations %}
@@ -30,7 +29,6 @@
                 —
               {% endfor %}
             </td>
-            <td>{{ organization.notes|truncatechars:40 }}</td>
             <td>
               <a href="{% url 'organization_details' organization.domain %}" title="View {{ organization.fullname }}"><i class="fas fa-info-circle"></i></a>
                 &nbsp;

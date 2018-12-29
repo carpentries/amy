@@ -253,7 +253,6 @@ class Command(BaseCommand):
             comment=self.faker.text() if randbool(0.3) else '',
             training_completion_agreement=training_completion_agreement,
             workshop_teaching_agreement=randbool(0.5) if training_completion_agreement else False,
-            notes=self.faker.text() if randbool(0.3) else '',
         )
         req.domains.set(sample(KnowledgeDomain.objects.all()))
         req.previous_involvement.set(sample(Role.objects.all()))
@@ -354,7 +353,6 @@ class Command(BaseCommand):
                 contribution_type=choice(Membership.CONTRIBUTION_CHOICES)[0],
                 workshops_without_admin_fee_per_agreement=randint(5, 15),
                 self_organized_workshops_per_agreement=randint(5, 15),
-                notes='',
                 organization=choice(Organization.objects.all()),
             )
 
@@ -644,8 +642,7 @@ class Command(BaseCommand):
                 currency=choice(InvoiceRequest.CURRENCY)[0],
                 currency_other='',
                 breakdown='',
-                vendor_form_required=
-                    choice(InvoiceRequest.VENDOR_FORM_CHOICES)[0],
+                vendor_form_required=choice(InvoiceRequest.VENDOR_FORM_CHOICES)[0],
                 vendor_form_link='',
                 form_W9=randbool(0.5),
                 receipts_sent=choice(InvoiceRequest.RECEIPTS_CHOICES)[0],

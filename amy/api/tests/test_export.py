@@ -623,10 +623,9 @@ class TestExportingPersonData(BaseExportingTest):
             max_travelling_frequency='not-at-all',
             max_travelling_frequency_other='',
             reason='I want to became an instructor',
-            comment='I like trains',
+            user_notes='I like trains',
             training_completion_agreement=True,
             workshop_teaching_agreement=True,
-            notes='Admin notes invisible to the user',
         )
         training_request.domains.set([KnowledgeDomain.objects.first()])
         training_request.previous_involvement.set(
@@ -691,7 +690,6 @@ class TestExportingPersonData(BaseExportingTest):
         # make sure this endpoint does not return first user data now
         self.assertEqual(rv.json()['username'], 'secondary_user')
 
-
     def test_all_related_objects_shown(self):
         """Test if all related fields are present in data output."""
         self.login()
@@ -708,7 +706,6 @@ class TestExportingPersonData(BaseExportingTest):
         missing_fields = [
             'password',
             'is_active',
-            'notes',
         ]
 
         # simple (non-relational) fields expected in API output
@@ -888,7 +885,7 @@ class TestExportingPersonData(BaseExportingTest):
                 'max_travelling_frequency': 'Not at all',
                 'max_travelling_frequency_other': '',
                 'reason': 'I want to became an instructor',
-                'comment': 'I like trains',
+                'user_notes': 'I like trains',
                 'training_completion_agreement': True,
                 'workshop_teaching_agreement': True,
                 'data_privacy_agreement': True,

@@ -77,7 +77,7 @@ class TestListingTrainingRequests(APITestBase):
             max_travelling_frequency_other='',
             reason='I hope to pass on the Gummi Wisdom one day, and to do that'
                    ' I must know how to do it efficiently.',
-            comment='',
+            user_notes='',
             training_completion_agreement=True,
             workshop_teaching_agreement=True,
             data_privacy_agreement=True,
@@ -122,7 +122,7 @@ class TestListingTrainingRequests(APITestBase):
             max_travelling_frequency_other='',
             reason='I need to pass on the Gummiberry juice recipe one day, and'
                    ' to do that I must know how to do it efficiently.',
-            comment='',
+            user_notes='',
             training_completion_agreement=True,
             workshop_teaching_agreement=True,
             data_privacy_agreement=True,
@@ -206,7 +206,7 @@ class TestListingTrainingRequests(APITestBase):
                 'reason':
                     'I hope to pass on the Gummi Wisdom one day, and to do '
                     'that I must know how to do it efficiently.',
-                'comment': '',
+                'user_notes': '',
                 'training_completion_agreement': True,
                 'workshop_teaching_agreement': True,
                 'data_privacy_agreement': True,
@@ -261,7 +261,7 @@ class TestListingTrainingRequests(APITestBase):
                 'reason':
                     'I need to pass on the Gummiberry juice recipe one day,'
                     ' and to do that I must know how to do it efficiently.',
-                'comment': '',
+                'user_notes': '',
                 'training_completion_agreement': True,
                 'workshop_teaching_agreement': True,
                 'data_privacy_agreement': True,
@@ -305,7 +305,7 @@ class TestListingTrainingRequests(APITestBase):
             'Programming Language Usage,Teaching Frequency Expectation,'
             'Teaching Frequency Expectation (other),Max Travelling Frequency,'
             'Max Travelling Frequency (other),Reason for undertaking training,'
-            'Comment,Training completion agreement (yes/no),'
+            'User notes,Training completion agreement (yes/no),'
             'Workshop teaching agreement (yes/no),'
             'Data privacy agreement (yes/no),'
             'Code of Conduct agreement (yes/no)'

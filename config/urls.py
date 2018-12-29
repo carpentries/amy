@@ -14,11 +14,16 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
+from django.contrib.contenttypes.views import shortcut
 from django.urls import include, path, re_path
 from django.views.generic import RedirectView
+from django_comments.views.comments import post_comment, comment_done
+from markdownx.views import ImageUploadView, MarkdownifyView
 from workshops.views import logout_then_login_with_msg
+from workshops.util import login_required
 
 urlpatterns = [
     path('', RedirectView.as_view(pattern_name='dispatch')),
@@ -81,7 +86,20 @@ urlpatterns += [
 
     # Login with GitHub credentials
     path('', include('social_django.urls', namespace='social')),
-]
+
+    # for commenting system
+    path('comments/', include([
+        path('post/', login_required(post_comment), name='comments-post-comment'),
+        path('posted/', login_required(comment_done), name='comments-comment-done'),
+        path('cr/<int:content_type_id>/<int:object_id>/', login_required(shortcut), name='comments-url-redirect'),
+    ])),
+
+    # for markdown upload & preview
+    path('markdownx/', include([
+        path('markdownify/', login_required(MarkdownifyView.as_view()), name='markdownx_markdownify'),
+        path('upload/', login_required(ImageUploadView.as_view()), name='markdownx_upload'),
+    ])),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 redirect_urlpatterns = [
     path('workshops/', RedirectView.as_view(pattern_name='dispatch')),

@@ -44,7 +44,7 @@ from workshops.base_views import (
 from workshops.forms import (
     AdminLookupForm,
     BootstrapHelper,
-    EventForm,
+    EventCreateForm,
     PersonLookupForm,
 )
 from workshops.models import (
@@ -129,10 +129,10 @@ class EventRequestSetState(OnlyForAdminsMixin, ChangeRequestStateView):
 def eventrequest_accept_event(request, request_id):
     """Accept event request by creating a new event."""
     eventrequest = get_object_or_404(EventRequest, state='p', pk=request_id)
-    form = EventForm()
+    form = EventCreateForm()
 
     if request.method == 'POST':
-        form = EventForm(request.POST)
+        form = EventCreateForm(request.POST)
 
         if form.is_valid():
             event = form.save()
@@ -212,10 +212,10 @@ def eventsubmission_accept_event(request, submission_id):
     """Accept event submission by creating a new event."""
     submission = get_object_or_404(EventSubmissionModel, state='p',
                                    pk=submission_id)
-    form = EventForm()
+    form = EventCreateForm()
 
     if request.method == 'POST':
-        form = EventForm(request.POST)
+        form = EventCreateForm(request.POST)
 
         if form.is_valid():
             event = form.save()
@@ -317,10 +317,10 @@ def dcselforganizedeventrequest_accept_event(request, request_id):
     """Accept DC self-org. event request by creating a new event."""
     event_req = get_object_or_404(DCSelfOrganizedEventRequestModel, state='p',
                                   pk=request_id)
-    form = EventForm()
+    form = EventCreateForm()
 
     if request.method == 'POST':
-        form = EventForm(request.POST)
+        form = EventCreateForm(request.POST)
 
         if form.is_valid():
             event = form.save()

@@ -100,7 +100,6 @@ def all_trainees(request):
         request.GET,
         queryset=Person.objects
             .annotate_with_instructor_eligibility()
-            .defer('notes')  # notes are too large, so we defer them
             .prefetch_related(
                 Prefetch('task_set',
                          to_attr='training_tasks',

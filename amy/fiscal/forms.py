@@ -1,9 +1,12 @@
 from django import forms
 from django.core.validators import RegexValidator
+from django.dispatch import receiver
+from markdownx.fields import MarkdownxFormField
 
 from workshops.forms import (
     BootstrapHelper,
     WidgetOverrideMixin,
+    form_saved_add_comment,
 )
 from workshops.models import (
     Organization,
@@ -15,6 +18,7 @@ from workshops.models import (
 from workshops.fields import (
     ModelSelect2,
 )
+from workshops.signals import create_comment_signal
 
 
 # settings for Select2
@@ -41,7 +45,31 @@ class OrganizationForm(forms.ModelForm):
 
     class Meta:
         model = Organization
-        fields = ['domain', 'fullname', 'country', 'notes']
+        fields = ['domain', 'fullname', 'country']
+
+
+class OrganizationCreateForm(OrganizationForm):
+    comment = MarkdownxFormField(
+        label='Comment',
+        help_text='This will be added to comments after the organization '
+                  'is created.',
+        widget=forms.Textarea,
+        required=False,
+    )
+
+    class Meta(OrganizationForm.Meta):
+        fields = OrganizationForm.Meta.fields.copy()
+        fields.append('comment')
+
+    def save(self, *args, **kwargs):
+        res = super().save(*args, **kwargs)
+
+        create_comment_signal.send(sender=self.__class__,
+                                   content_object=res,
+                                   comment=self.cleaned_data['comment'],
+                                   timestamp=None)
+
+        return res
 
 
 class MembershipForm(forms.ModelForm):
@@ -62,8 +90,31 @@ class MembershipForm(forms.ModelForm):
             'self_organized_workshops_per_agreement',
             'seats_instructor_training',
             'additional_instructor_training_seats',
-            'notes',
         ]
+
+    def save(self, *args, **kwargs):
+        res = super().save(*args, **kwargs)
+
+        create_comment_signal.send(sender=self.__class__,
+                                   content_object=res,
+                                   comment=self.cleaned_data['comment'],
+                                   timestamp=None)
+
+        return res
+
+
+class MembershipCreateForm(MembershipForm):
+    comment = MarkdownxFormField(
+        label='Comment',
+        help_text='This will be added to comments after the membership is '
+                  'created.',
+        widget=forms.Textarea,
+        required=False,
+    )
+
+    class Meta(MembershipForm.Meta):
+        fields = MembershipForm.Meta.fields.copy()
+        fields.append('comment')
 
 
 class SponsorshipForm(WidgetOverrideMixin, forms.ModelForm):
@@ -78,3 +129,19 @@ class SponsorshipForm(WidgetOverrideMixin, forms.ModelForm):
             'event': ModelSelect2(url='event-lookup'),
             'contact': ModelSelect2(url='person-lookup'),
         }
+
+
+# ----------------------------------------------------------
+# Signals
+
+# adding @receiver decorator to the function defined in `workshops.forms`
+form_saved_add_comment = receiver(
+    create_comment_signal,
+    sender=OrganizationCreateForm,
+)(form_saved_add_comment)
+
+# adding @receiver decorator to the function defined in `workshops.forms`
+form_saved_add_comment = receiver(
+    create_comment_signal,
+    sender=MembershipCreateForm,
+)(form_saved_add_comment)

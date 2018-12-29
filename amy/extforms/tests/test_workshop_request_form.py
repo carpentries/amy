@@ -29,7 +29,7 @@ class TestWorkshopRequestExternalForm(TestBase):
             "self_organized_github", "centrally_organized_fee",
             "waiver_circumstances", "travel_expences_agreement",
             "travel_expences_management", "travel_expences_management_other",
-            "comment", "data_privacy_agreement", "code_of_conduct_agreement",
+            "user_notes", "data_privacy_agreement", "code_of_conduct_agreement",
             "host_responsibilities", "captcha",
         ])
         self.assertEqual(fields_left, fields_right)
@@ -63,7 +63,7 @@ class TestWorkshopRequestExternalForm(TestBase):
             'travel_expences_agreement': True,
             'travel_expences_management': 'booked',
             'travel_expences_management_other': '',
-            'comment': 'N/c',
+            'user_notes': 'N/c',
             'data_privacy_agreement': True,
             'code_of_conduct_agreement': True,
             'host_responsibilities': True,

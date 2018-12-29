@@ -2,7 +2,9 @@ from datetime import timedelta, date
 import itertools
 
 from django.urls import reverse
+from django_comments.models import Comment
 
+from fiscal.forms import MembershipCreateForm
 from workshops.tests.base import TestBase
 from workshops.models import Membership, Organization, Event, Role, Tag, Task
 
@@ -173,3 +175,38 @@ class TestMembership(TestBase):
         self.assertEqual(
             self.current.seats_instructor_training_remaining, 18
         )
+
+    def test_creating_event_with_no_comment(self):
+        """Ensure that no comment is added when MembershipCreateForm without
+        comment content is saved."""
+        self.assertEqual(Comment.objects.count(), 0)
+        data = {
+            'organization': self.org_alpha.pk,
+            'variant': 'partner',
+            'contribution_type': 'financial',
+            'additional_instructor_training_seats': 0,
+            'seats_instructor_training': 0,
+            'comment': '',
+        }
+        form = MembershipCreateForm(data)
+        form.save()
+        self.assertEqual(Comment.objects.count(), 0)
+
+    def test_creating_event_with_comment(self):
+        """Ensure that a comment is added when MembershipCreateForm with
+        comment content is saved."""
+        self.assertEqual(Comment.objects.count(), 0)
+        data = {
+            'organization': self.org_alpha.pk,
+            'variant': 'partner',
+            'contribution_type': 'financial',
+            'additional_instructor_training_seats': 0,
+            'seats_instructor_training': 0,
+            'comment': 'This is a test comment.',
+        }
+        form = MembershipCreateForm(data)
+        obj = form.save()
+        self.assertEqual(Comment.objects.count(), 1)
+        comment = Comment.objects.first()
+        self.assertEqual(comment.comment, 'This is a test comment.')
+        self.assertIn(comment, Comment.objects.for_model(obj))

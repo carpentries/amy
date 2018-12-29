@@ -4,6 +4,7 @@ import itertools
 import sys
 
 from django.contrib.auth.models import Group, Permission
+from django.contrib.sites.models import Site
 from django_webtest import WebTest
 import webtest.forms
 
@@ -42,11 +43,10 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
                WebTest):  # Support for functional tests (django-webtest)
     '''Base class for AMY test cases.'''
 
-    ERR_DIR = 'htmlerror' # where to save error HTML files
-
     def setUp(self):
         '''Create standard objects.'''
 
+        self.clear_sites_cache()
         self._setUpOrganizations()
         self._setUpAirports()
         self._setUpLessons()
@@ -54,6 +54,12 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
         self._setUpInstructors()
         self._setUpNonInstructors()
         self._setUpPermissions()
+
+    def clear_sites_cache(self):
+        # we need to clear Sites' cache, because after post_migration signal,
+        # there's some junk in the cache that prevents from adding comments
+        # (the site in CACHE is not a real Site)
+        Site.objects.clear_cache()
 
     def _setUpLessons(self):
         '''Set up lesson objects.'''
@@ -68,15 +74,12 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
     def _setUpOrganizations(self):
         '''Set up organization objects.'''
 
-        self.org_alpha = Organization.objects.create(domain='alpha.edu',
-                                              fullname='Alpha Organization',
-                                              country='Azerbaijan',
-                                              notes='')
+        self.org_alpha = Organization.objects.create(
+            domain='alpha.edu', fullname='Alpha Organization',
+            country='Azerbaijan')
 
-        self.org_beta = Organization.objects.create(domain='beta.com',
-                                             fullname='Beta Organization',
-                                             country='Brazil',
-                                             notes='Notes\nabout\nBrazil\n')
+        self.org_beta = Organization.objects.create(
+            domain='beta.com', fullname='Beta Organization', country='Brazil')
 
     def _setUpAirports(self):
         '''Set up airport objects.'''
@@ -346,12 +349,12 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
         are currently in the database.  This is an auxiliary method for adding
         them to the tests, should one need them."""
         Role.objects.bulk_create([
-            Role(name='helper'),
-            Role(name='instructor'),
+            Role(name='helper', verbose_name='Helper'),
+            Role(name='instructor', verbose_name='Instructor'),
             Role(name='host', verbose_name='Host'),
-            Role(name='learner'),
-            Role(name='organizer'),
-            Role(name='tutor'),
+            Role(name='learner', verbose_name='Learner'),
+            Role(name='organizer', verbose_name='Organizer'),
+            Role(name='tutor', verbose_name='Tutor'),
         ])
 
     def saveResponse(self, response, filename='error.html'):

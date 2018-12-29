@@ -21,7 +21,7 @@ function import_from_url(url) {
     $('#id_latitude').val(data.latitude);
     $('#id_longitude').val(data.longitude);
 
-    $("#id_notes").val(
+    $("#id_comment").val(
       "INSTRUCTORS: " + data.instructors.join(", ") + "\n\n" +
       "HELPERS: " + data.helpers.join(", ")
     );
@@ -52,7 +52,7 @@ function update_from_url(url, action) {
         $('#id_country').val(data.country);
         $('#id_latitude').val(data.latitude);
         $('#id_longitude').val(data.longitude);
-        $("#id_notes").val(
+        $("#id_comment").val(
           "INSTRUCTORS: " + data.instructors.join(", ") + "\n\n" +
           "HELPERS: " + data.helpers.join(", ")
         );
@@ -97,11 +97,9 @@ function update_from_url(url, action) {
         if ($("#id_longitude").val() == "") {
           $("#id_longitude").val(data.longitude);
         }
-        // append notes
-        var today = new Date();
-        var today_str = "\n\n---------\nUPDATE " + today.yyyymmdd() + ":\n";
-        $("#id_notes").val(
-          $("#id_notes").val() + today_str +
+        // save content in the comment
+        $("#id_comment").val(
+          $("#id_comment").val() +
           "INSTRUCTORS: " + data.instructors.join(", ") + "\n\n" +
           "HELPERS: " + data.helpers.join(", ")
         );

@@ -1,24 +1,9 @@
 from django.urls import reverse
+from django_comments.models import Comment
 
+from fiscal.forms import OrganizationCreateForm
 from workshops.models import Organization, Event
 from workshops.tests.base import TestBase
-
-
-class TestOrganizationNotes(TestBase):
-    '''Test cases for Organization notes.'''
-
-    def test_fixture_notes(self):
-        assert self.org_alpha.notes == '', \
-            'Alpha Organization notes should be empty'
-        assert self.org_beta.notes == 'Notes\nabout\nBrazil\n', \
-            'Beta Organization notes incorrect'
-
-    def test_organization_created_without_notes(self):
-        organization = Organization(domain='example.org',
-                    fullname='Sample Example',
-                    country='United-States')
-        assert organization.notes == '', \
-            'Organization created without notes should have empty notes'
 
 
 class TestOrganization(TestBase):
@@ -61,9 +46,37 @@ class TestOrganization(TestBase):
             'domain': 'http://beta.com/',
             'fullname': self.org_beta.fullname,
             'country': self.org_beta.country,
-            'notes': self.org_beta.notes,
         }
         url = reverse('organization_edit', args=[self.org_beta.domain])
         rv = self.client.post(url, data=data)
         # make sure we're not updating to good values
         assert rv.status_code == 200
+
+    def test_creating_event_with_no_comment(self):
+        """Ensure that no comment is added when OrganizationCreateForm without
+        comment content is saved."""
+        self.assertEqual(Comment.objects.count(), 0)
+        data = {
+            'fullname': 'Test Organization',
+            'domain': 'test.org',
+            'comment': '',
+        }
+        form = OrganizationCreateForm(data)
+        form.save()
+        self.assertEqual(Comment.objects.count(), 0)
+
+    def test_creating_event_with_comment(self):
+        """Ensure that a comment is added when OrganizationCreateForm with
+        comment content is saved."""
+        self.assertEqual(Comment.objects.count(), 0)
+        data = {
+            'fullname': 'Test Organization',
+            'domain': 'test.org',
+            'comment': 'This is a test comment.',
+        }
+        form = OrganizationCreateForm(data)
+        obj = form.save()
+        self.assertEqual(Comment.objects.count(), 1)
+        comment = Comment.objects.first()
+        self.assertEqual(comment.comment, 'This is a test comment.')
+        self.assertIn(comment, Comment.objects.for_model(obj))

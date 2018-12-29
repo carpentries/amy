@@ -1,17 +1,22 @@
+from datetime import datetime, timezone
 import re
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Div, HTML, Submit, Button, Field
 from django import forms
 from django.contrib.auth.models import Permission
+from django.contrib.sites.models import Site
+from django.dispatch import receiver
 from django.forms import (
     SelectMultiple,
     CheckboxSelectMultiple,
     TextInput,
     RadioSelect,
 )
+from django_comments.models import Comment
 from django_countries import Countries
 from django_countries.fields import CountryField
+from markdownx.fields import MarkdownxFormField
 
 from workshops.models import (
     Award,
@@ -33,6 +38,7 @@ from workshops.fields import (
     ModelSelect2,
     ModelSelect2Multiple,
 )
+from workshops.signals import create_comment_signal
 
 
 # settings for Select2
@@ -163,6 +169,9 @@ bootstrap_helper_filter = BootstrapHelperFilter()
 bootstrap_helper_inline_formsets = BootstrapHelperFormsetInline()
 
 
+# ----------------------------------------------------------
+# MixIns
+
 class PrivacyConsentMixin(forms.Form):
     privacy_consent = forms.BooleanField(
         label='*I have read and agree to <a href='
@@ -173,13 +182,15 @@ class PrivacyConsentMixin(forms.Form):
 
 
 class WidgetOverrideMixin:
-
     def __init__(self, *args, **kwargs):
         widgets = kwargs.pop('widgets', {})
         super().__init__(*args, **kwargs)
         for field, widget in widgets.items():
             self.fields[field].widget = widget
 
+
+# ----------------------------------------------------------
+# Forms
 
 class WorkshopStaffForm(forms.Form):
     '''Represent instructor matching form.'''
@@ -378,16 +389,26 @@ class EventForm(forms.ModelForm):
         widget=ListSelect2(),
     )
 
+    comment = MarkdownxFormField(
+        label='Comment',
+        help_text='Any content in here will be added to comments after this '
+                  'event is saved.',
+        widget=forms.Textarea,
+        required=False,
+    )
+
     helper = BootstrapHelper(add_cancel_button=False,
                              duplicate_buttons_on_top=True)
 
     class Meta:
         model = Event
-        fields = ('slug', 'completed', 'start', 'end', 'host', 'administrator',
+        fields = ['slug', 'completed', 'start', 'end', 'host', 'administrator',
                   'assigned_to', 'tags', 'url', 'language', 'reg_key', 'venue',
                   'attendance', 'contact',
-                  'notes', 'country', 'address', 'latitude', 'longitude',
-                  'open_TTT_applications', 'curricula', )
+                  'country', 'address', 'latitude', 'longitude',
+                  'open_TTT_applications', 'curricula',
+                  'comment',
+                  ]
         widgets = {
             'attendance': TextInput,
             'latitude': TextInput,
@@ -427,7 +448,6 @@ class EventForm(forms.ModelForm):
             'reg_key',
             'attendance',
             'contact',
-            'notes',
             Div(
                 Div(HTML('Location details'), css_class='card-header'),
                 Div('country',
@@ -438,6 +458,7 @@ class EventForm(forms.ModelForm):
                     css_class='card-body'),
                 css_class='card mb-2'
             ),
+            'comment',
         )
 
     def clean_slug(self):
@@ -501,6 +522,25 @@ class EventForm(forms.ModelForm):
                     "You must add tags corresponding to these curricula.")
 
         return curricula
+
+    def save(self, *args, **kwargs):
+        res = super().save(*args, **kwargs)
+
+        create_comment_signal.send(sender=self.__class__,
+                                   content_object=res,
+                                   comment=self.cleaned_data['comment'],
+                                   timestamp=None)
+
+        return res
+
+
+class EventCreateForm(EventForm):
+    comment = MarkdownxFormField(
+        label='Comment',
+        help_text='This will be added to comments after the event is created.',
+        widget=forms.Textarea,
+        required=False,
+    )
 
 
 class TaskForm(WidgetOverrideMixin, forms.ModelForm):
@@ -577,7 +617,6 @@ class PersonForm(forms.ModelForm):
             'occupation',
             'orcid',
             'user_notes',
-            'notes',
             'lessons',
             'domains',
             'languages',
@@ -589,11 +628,20 @@ class PersonForm(forms.ModelForm):
 
 
 class PersonCreateForm(PersonForm):
+    comment = MarkdownxFormField(
+        label='Comment',
+        help_text='This will be added to comments after the person is '
+                  'created.',
+        widget=forms.Textarea,
+        required=False,
+    )
+
     class Meta(PersonForm.Meta):
         # remove 'username' field as it's being populated after form save
         # in the `views.PersonCreate.form_valid`
         fields = PersonForm.Meta.fields.copy()
         fields.remove('username')
+        fields.append('comment')
 
 
 class PersonPermissionsForm(forms.ModelForm):
@@ -694,9 +742,6 @@ class PersonsMergeForm(forms.Form):
     url = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
-    notes = forms.ChoiceField(
-        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
-    )
     affiliation = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
@@ -726,6 +771,12 @@ class PersonsMergeForm(forms.Form):
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
     trainingprogress_set = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    comment_comments = forms.ChoiceField(
+        choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    comments = forms.ChoiceField(
         choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
     )
 
@@ -890,10 +941,10 @@ class EventsMergeForm(forms.Form):
     learners_longterm = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
-    notes = forms.ChoiceField(
+    task_set = forms.ChoiceField(
         choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
     )
-    task_set = forms.ChoiceField(
+    comments = forms.ChoiceField(
         choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
     )
 
@@ -918,3 +969,31 @@ class ActionRequiredPrivacyForm(forms.ModelForm):
             'may_contact',
             'publish_profile',
         ]
+
+
+# ----------------------------------------------------------
+# Signals
+
+@receiver(create_comment_signal, sender=EventForm)
+@receiver(create_comment_signal, sender=EventCreateForm)
+@receiver(create_comment_signal, sender=PersonCreateForm)
+def form_saved_add_comment(sender, **kwargs):
+    """A receiver for custom form.save() signal. This is intended to save
+    comment, entered as a form field, when creating a new object, and present
+    it as automatic system Comment (from django_comments app)."""
+    content_object = kwargs.get('content_object', None)
+    comment = kwargs.get('comment', None)
+    timestamp = kwargs.get('timestamp', datetime.now(timezone.utc))
+
+    # only proceed if we have an actual object (that exists in DB), and
+    # comment contents
+    if content_object and comment and content_object.pk:
+        site = Site.objects.get_current()
+        Comment.objects.create(
+            content_object=content_object,
+            site=site,
+            user=None,
+            user_name='Automatic comment',
+            submit_date=timestamp,
+            comment=comment,
+        )

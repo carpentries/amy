@@ -1,10 +1,12 @@
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 from urllib.parse import urlencode
 import sys
 
+from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
 from django.urls import reverse
+from django_comments.models import Comment
 
 from workshops.management.commands.check_for_workshop_websites_updates import (
     Command as WebsiteUpdatesCommand)
@@ -18,7 +20,7 @@ from workshops.models import (
     Badge,
     Curriculum,
 )
-from workshops.forms import EventForm, EventsMergeForm
+from workshops.forms import EventForm, EventCreateForm, EventsMergeForm
 from workshops.tests.base import TestBase
 
 
@@ -37,7 +39,8 @@ class TestEvent(TestBase):
         self.learner_role = Role.objects.get(name='learner')
 
         # Create a test tag
-        Tag.objects.create(name='Test Tag', details='For testing')
+        self.test_tag = Tag.objects.create(name='Test Tag',
+                                           details='For testing')
 
         # Create a test role
         Role.objects.create(name='Test Role')
@@ -259,6 +262,50 @@ class TestEvent(TestBase):
         # now the validation should pass
         event.tags.set([self.TTT_tag])
         event.full_clean()
+
+
+class TestEventFormComments(TestBase):
+    form = EventForm
+
+    def setUp(self):
+        self._setUpOrganizations()
+        self.test_tag = Tag.objects.create(name='Test Tag',
+                                           details='For testing')
+
+    def test_creating_event_with_no_comment(self):
+        """Ensure that no comment is added when the form without comment
+        content is saved."""
+        self.assertEqual(Comment.objects.count(), 0)
+        data = {
+            'slug': '2018-12-28-test-event',
+            'host': self.org_alpha.id,
+            'tags': [self.test_tag.id],
+            'comment': '',
+        }
+        form = EventForm(data)
+        form.save()
+        self.assertEqual(Comment.objects.count(), 0)
+
+    def test_creating_event_with_comment(self):
+        """Ensure that a comment is added when the form with comment
+        content is saved."""
+        self.assertEqual(Comment.objects.count(), 0)
+        data = {
+            'slug': '2018-12-28-test-event',
+            'host': self.org_alpha.id,
+            'tags': [self.test_tag.id],
+            'comment': 'This is a test comment.',
+        }
+        form = EventForm(data)
+        obj = form.save()
+        self.assertEqual(Comment.objects.count(), 1)
+        comment = Comment.objects.first()
+        self.assertEqual(comment.comment, 'This is a test comment.')
+        self.assertIn(comment, Comment.objects.for_model(obj))
+
+
+class TestEventCreateFormComments(TestEventFormComments):
+    form = EventCreateForm
 
 
 class TestEventManager(TestBase):
@@ -685,47 +732,6 @@ class TestEventViews(TestBase):
         self.assertNotIn('curricula', form.errors)
 
 
-class TestEventNotes(TestBase):
-    """Make sure notes once written are saved forever!"""
-
-    def setUp(self):
-        self._setUpUsersAndLogin()
-
-        # a test host is required for all new events
-        self.test_host = Organization.objects.create(domain='example.com',
-                                             fullname='Test Organization')
-
-        # prepare a lifespan of all events
-        self.event_start = datetime.now() + timedelta(days=-1)
-        self.event_end = datetime.now() + timedelta(days=1)
-
-    def test_event_without_notes(self):
-        "Make sure event without notes don't have NULLed field ``notes``"
-        e = Event(start=self.event_start,
-                  end=self.event_end,
-                  slug='no_notes',
-                  host=self.test_host,
-                  admin_fee=100)
-
-        # test for field's default value (the field is not NULL)
-        self.assertEqual(e.notes, "")  # therefore the field is not NULL
-
-    def test_event_with_notes(self):
-        "Make sure event with notes are correctly stored"
-
-        notes = "This event's going to be extremely exhausting."
-
-        e = Event(start=self.event_start,
-                  end=self.event_end,
-                  slug='with_notes',
-                  host=self.test_host,
-                  admin_fee=100,
-                  notes=notes)
-
-        # make sure that notes have been saved
-        self.assertEqual(e.notes, notes)
-
-
 class TestEventMerging(TestBase):
     def setUp(self):
         self._setUpOrganizations()
@@ -742,7 +748,7 @@ class TestEventMerging(TestBase):
         tomorrow = today + timedelta(days=1)
 
         # Add full-blown events so that we can test merging of everything.
-        # Random data such as contact, venue, address, lat/long, URLs or notes
+        # Random data such as contact, venue, address, lat/long, or URLs
         # were generated with faker (see `fake_database.py` for details).
         self.event_a = Event.objects.create(
             slug='event-a', completed=True, assigned_to=self.harry,
@@ -759,11 +765,18 @@ class TestEventMerging(TestBase):
             instructors_pre='http://reichel.com/instructors_pre',
             instructors_post='http://reichel.com/instructors_post',
             learners_longterm='http://reichel.com/learners_longterm',
-            notes='Voluptates hic aspernatur non aut.'
         )
         self.event_a.tags.set(Tag.objects.filter(name__in=['LC', 'DC']))
         self.event_a.task_set.create(person=self.harry,
                                      role=Role.objects.get(name='instructor'))
+        # comments regarding this event
+        self.ca = Comment.objects.create(
+            content_object=self.event_a,
+            user=self.harry,
+            comment="Comment from admin on event_a",
+            submit_date=datetime.now(tz=timezone.utc),
+            site=Site.objects.get_current(),
+        )
 
         self.event_b = Event.objects.create(
             slug='event-b', completed=False, assigned_to=self.hermione,
@@ -780,10 +793,17 @@ class TestEventMerging(TestBase):
             instructors_pre='http://www.cummings.biz/instructors_pre',
             instructors_post='http://www.cummings.biz/instructors_post',
             learners_longterm='http://www.cummings.biz/learners_longterm',
-            notes='Est qui iusto sapiente possimus consectetur rerum et.'
         )
         self.event_b.tags.set(Tag.objects.filter(name='SWC'))
         # no tasks for this event
+        # comments regarding this event
+        self.cb = Comment.objects.create(
+            content_object=self.event_b,
+            user=self.hermione,
+            comment="Comment from admin on event_b",
+            submit_date=datetime.now(tz=timezone.utc),
+            site=Site.objects.get_current(),
+        )
 
         # some "random" strategy for testing
         self.strategy = {
@@ -814,9 +834,9 @@ class TestEventMerging(TestBase):
             'contact': 'obj_a',
             'venue': 'obj_b',
             'address': 'combine',
-            'notes': 'obj_a',
             'tags': 'combine',
             'task_set': 'obj_b',
+            'comments': 'combine',
         }
         base_url = reverse('events_merge')
         query = urlencode({
@@ -862,8 +882,8 @@ class TestEventMerging(TestBase):
             'contact': 'combine',
             'venue': 'combine',
             'address': 'combine',
-            'notes': 'combine',
             'task_set': 'combine',
+            'comments': 'combine',
         }
         data = hidden.copy()
         data.update(failing)
@@ -922,7 +942,6 @@ class TestEventMerging(TestBase):
             'learners_longterm': self.event_b.learners_longterm,
             'contact': self.event_a.contact,
             'venue': self.event_b.venue,
-            'notes': self.event_a.notes,
             'address': self.event_a.address + self.event_b.address,
         }
         rv = self.client.post(self.url, data=self.strategy)
@@ -937,6 +956,8 @@ class TestEventMerging(TestBase):
         assertions = {
             'tags': set(Tag.objects.filter(name__in=['SWC', 'DC', 'LC'])),
             'task_set': set(Task.objects.none()),
+            # comments are not relational, they're related via generic FKs,
+            # so they won't appear here
         }
 
         rv = self.client.post(self.url, data=self.strategy)
@@ -984,6 +1005,47 @@ class TestEventMerging(TestBase):
             3
         )
 
+    def test_merging_comments_strategy1(self):
+        """Ensure comments are correctly merged using `merge_objects`.
+        This test uses strategy 1 (combine)."""
+        self.strategy['comments'] = 'combine'
+        comments = [self.ca, self.cb]
+        rv = self.client.post(self.url, data=self.strategy)
+        self.assertEqual(rv.status_code, 302)
+        self.event_b.refresh_from_db()
+        self.assertEqual(
+            set(Comment.objects.for_model(self.event_b)
+                               .filter(is_removed=False)),
+            set(comments),
+        )
+
+    def test_merging_comments_strategy2(self):
+        """Ensure comments are correctly merged using `merge_objects`.
+        This test uses strategy 2 (object a)."""
+        self.strategy['comments'] = 'obj_a'
+        comments = [self.ca]
+        rv = self.client.post(self.url, data=self.strategy)
+        self.assertEqual(rv.status_code, 302)
+        self.event_b.refresh_from_db()
+        self.assertEqual(
+            set(Comment.objects.for_model(self.event_b)
+                               .filter(is_removed=False)),
+            set(comments),
+        )
+
+    def test_merging_comments_strategy3(self):
+        """Ensure comments are correctly merged using `merge_objects`.
+        This test uses strategy 3 (object b)."""
+        self.strategy['comments'] = 'obj_b'
+        comments = [self.cb]
+        rv = self.client.post(self.url, data=self.strategy)
+        self.assertEqual(rv.status_code, 302)
+        self.event_b.refresh_from_db()
+        self.assertEqual(
+            set(Comment.objects.for_model(self.event_b)
+                               .filter(is_removed=False)),
+            set(comments),
+        )
 
 
 class TestEventImport(TestBase):
