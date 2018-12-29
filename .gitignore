@@ -21,6 +21,8 @@ workshops/git_version.py
 staticfiles/*
 # JS, CSS dependencies (installed via yarn)
 node_modules
+# dir for media (uploaded by users) files
+mediafiles/*
 
 # Jupyter Notebooks
 *.ipynb
