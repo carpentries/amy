@@ -134,6 +134,7 @@ THIRD_PARTY_APPS = [
     'django_extensions',
     'anymail',
     'django_comments',  # this used to be in django.contrib
+    'markdownx',
 ]
 PYDATA_APP = [
     'amy.pydata.apps.PyDataConfig',
