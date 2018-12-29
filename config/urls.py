@@ -20,6 +20,7 @@ from django.contrib.contenttypes.views import shortcut
 from django.urls import include, path, re_path
 from django.views.generic import RedirectView
 from django_comments.views.comments import post_comment, comment_done
+from markdownx.views import ImageUploadView, MarkdownifyView
 from workshops.views import logout_then_login_with_msg
 from workshops.util import login_required
 
@@ -90,6 +91,12 @@ urlpatterns += [
         path('post/', login_required(post_comment), name='comments-post-comment'),
         path('posted/', login_required(comment_done), name='comments-comment-done'),
         path('cr/<int:content_type_id>/<int:object_id>/', login_required(shortcut), name='comments-url-redirect'),
+    ])),
+
+    # for markdown upload & preview
+    path('markdownx/', include([
+        path('markdownify/', login_required(MarkdownifyView.as_view()), name='markdownx_markdownify'),
+        path('upload/', login_required(ImageUploadView.as_view()), name='markdownx_upload'),
     ])),
 ]
 
