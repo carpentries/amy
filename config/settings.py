@@ -154,6 +154,7 @@ LOCAL_APPS = [
     'amy.fiscal.apps.FiscalConfig',
     'amy.reports.apps.ReportsConfig',
     'amy.trainings.apps.TrainingsConfig',
+    'amy.extcomments.apps.ExtcommentsConfig',
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 if ENABLE_PYDATA:
@@ -486,3 +487,8 @@ LOGGING = {
 # -----------------------------------------------------------------------------
 DEBUG_TOOLBAR_PATCH_SETTINGS = False
 INTERNAL_IPS = ['127.0.0.1', '::1']
+
+# Django-contrib-comments
+# -----------------------------------------------------------------------------
+# https://django-contrib-comments.readthedocs.io/en/latest/settings.html
+COMMENTS_APP = 'extcomments'
