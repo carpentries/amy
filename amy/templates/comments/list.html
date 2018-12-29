@@ -1,3 +1,4 @@
+{% load markdown %}
 <div class="col-12">
   {% for comment in comment_list %}
   <div class="card my-2" id="c{{ comment.id }}">
@@ -5,7 +6,7 @@
       <strong>{{ comment.name }}</strong> <span class="text-muted">commented on {{ comment.submit_date }}</span>
     </div>
     <div class="card-body">
-      <p>{{ comment.comment }}</p>
+      <p>{{ comment.comment|mkdown }}</p>
     </div>
   </div>
   {% endfor %}
