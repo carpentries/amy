@@ -223,7 +223,9 @@ class WorkshopStaffForm(forms.Form):
         )
     )
 
-    country = forms.MultipleChoiceField(choices=[])
+    country = forms.MultipleChoiceField(
+        choices=list(Countries()), required=False, widget=Select2Multiple,
+    )
 
     lessons = forms.ModelMultipleChoiceField(
         queryset=Lesson.objects.all(),
@@ -250,18 +252,6 @@ class WorkshopStaffForm(forms.Form):
     def __init__(self, *args, **kwargs):
         '''Build form layout dynamically.'''
         super().__init__(*args, **kwargs)
-
-        # dynamically build choices for country field
-        only = Airport.objects.distinct().exclude(country='') \
-                                         .exclude(country=None) \
-                                         .values_list('country', flat=True)
-        countries = Countries()
-        countries.only = only
-
-        choices = list(countries)
-        self.fields['country'] = forms.MultipleChoiceField(
-            choices=choices, required=False, widget=Select2Multiple,
-        )
 
         self.helper = FormHelper(self)
         self.helper.form_method = 'get'

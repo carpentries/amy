@@ -470,8 +470,11 @@ class BadgeAwardsFilter(AMYFilterSet):
 
 
 class WorkshopStaffFilter(AMYFilterSet):
-    country = AllCountriesMultipleFilter(widget=Select2Multiple(),
-                                         method="filter_country")
+    country = django_filters.MultipleChoiceFilter(
+        choices=list(Countries()),
+        widget=Select2Multiple(),
+        method="filter_country",
+    )
     lessons = django_filters.ModelMultipleChoiceFilter(
         label='Lessons',
         queryset=Lesson.objects.all(),
