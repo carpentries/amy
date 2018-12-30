@@ -1,7 +1,11 @@
+import csv
+import io
+
 from django.urls import reverse
 
 from workshops.tests.base import TestBase
 from workshops.models import Task, Role, Event, Tag, Organization, Badge
+from workshops.views import _workshop_staff_query
 
 
 class TestLocateWorkshopStaff(TestBase):
@@ -12,11 +16,12 @@ class TestLocateWorkshopStaff(TestBase):
         self._setUpTags()
         self._setUpRoles()
         self._setUpUsersAndLogin()
+        self.url = reverse('workshop_staff')
 
     def test_non_instructors_and_instructors_returned_by_search(self):
         """Ensure search returns everyone with defined airport."""
         response = self.client.get(
-            reverse('workshop_staff'),
+            self.url,
             {
                 'airport': self.airport_0_0.pk,
             }
@@ -35,7 +40,7 @@ class TestLocateWorkshopStaff(TestBase):
     def test_match_on_one_skill(self):
         """Ensure people with correct skill are returned."""
         response = self.client.get(
-            reverse('workshop_staff'),
+            self.url,
             {
                 'airport': self.airport_50_100.pk,
                 'lessons': [self.git.pk],
@@ -57,7 +62,7 @@ class TestLocateWorkshopStaff(TestBase):
     def test_match_instructors_on_two_skills(self):
         """Ensure people with correct skills are returned."""
         response = self.client.get(
-            reverse('workshop_staff'),
+            self.url,
             {
                 'airport': self.airport_50_100.pk,
                 'lessons': [self.git.pk, self.sql.pk],
@@ -80,7 +85,7 @@ class TestLocateWorkshopStaff(TestBase):
     def test_match_by_country(self):
         """Ensure people with airports in Bulgaria are returned."""
         response = self.client.get(
-            reverse('workshop_staff'),
+            self.url,
             {
                 'country': ['BG'],
             }
@@ -99,7 +104,7 @@ class TestLocateWorkshopStaff(TestBase):
     def test_match_by_multiple_countries(self):
         """Ensure people with airports in Albania and Bulgaria are returned."""
         response = self.client.get(
-            reverse('workshop_staff'),
+            self.url,
             {
                 'country': ['AL', 'BG'],
             }
@@ -118,7 +123,7 @@ class TestLocateWorkshopStaff(TestBase):
     def test_match_gender(self):
         """Ensure only people with specific gender are returned."""
         response = self.client.get(
-            reverse('workshop_staff'),
+            self.url,
             {
                 'airport': self.airport_0_0.pk,
                 'gender': 'F',
@@ -140,7 +145,7 @@ class TestLocateWorkshopStaff(TestBase):
         search is OR'ed, so should return people with any of the selected
         badges."""
         response = self.client.get(
-            reverse('workshop_staff'),
+            self.url,
             {
                 'airport': self.airport_0_0.pk,
                 'badges': Badge.objects.filter(name__in=[
@@ -160,7 +165,7 @@ class TestLocateWorkshopStaff(TestBase):
         self.assertNotIn(self.blackwidow, response.context['persons'])
 
         response = self.client.get(
-            reverse('workshop_staff'),
+            self.url,
             {
                 'airport': self.airport_0_0.pk,
                 'badges': Badge.objects.filter(name__in=[
@@ -192,7 +197,7 @@ class TestLocateWorkshopStaff(TestBase):
         self.harry.save()
 
         response = self.client.get(
-            reverse('workshop_staff'),
+            self.url,
             {
                 'languages': [self.french.pk],
             }
@@ -215,7 +220,7 @@ class TestLocateWorkshopStaff(TestBase):
         self.harry.save()
 
         response = self.client.get(
-            reverse('workshop_staff'),
+            self.url,
             {
                 'languages': [self.english.pk, self.french.pk],
             }
@@ -239,7 +244,7 @@ class TestLocateWorkshopStaff(TestBase):
                             event=Event.objects.first())
 
         response = self.client.get(
-            reverse('workshop_staff'),
+            self.url,
             {
                 'airport': self.airport_0_0.pk,
                 'was_helper': 'on',
@@ -249,7 +254,7 @@ class TestLocateWorkshopStaff(TestBase):
         self.assertEqual(list(response.context['persons']), [self.spiderman])
 
         response = self.client.get(
-            reverse('workshop_staff'),
+            self.url,
             {
                 'airport': self.airport_0_0.pk,
                 'was_organizer': 'on',
@@ -276,7 +281,7 @@ class TestLocateWorkshopStaff(TestBase):
             with self.subTest(data=data):
                 params = dict(submit='Submit')
                 params.update(data)
-                rv = self.client.get(reverse('workshop_staff'), params)
+                rv = self.client.get(self.url, params)
                 form = rv.context['form']
                 self.assertEqual(form.is_valid(), form_pass, form.errors)
 
@@ -288,7 +293,7 @@ class TestLocateWorkshopStaff(TestBase):
         * a trainee who participated in both.
         """
         response = self.client.get(
-            reverse('workshop_staff'),
+            self.url,
             {
                 'airport': self.airport_0_0.pk,
                 'is_in_progress_trainee': 'on',
@@ -322,7 +327,7 @@ class TestLocateWorkshopStaff(TestBase):
 
         # repeat the query
         response = self.client.get(
-            reverse('workshop_staff'),
+            self.url,
             {
                 'airport': self.airport_0_0.pk,
                 'is_in_progress_trainee': 'on',
@@ -335,3 +340,44 @@ class TestLocateWorkshopStaff(TestBase):
                 self.spiderman,
             ])
         )
+
+
+class TestWorkshopStaffCSV(TestBase):
+    """Test cases for downloading workshop staff search results as CSV."""
+
+    def setUp(self):
+        super().setUp()
+        self._setUpTags()
+        self._setUpRoles()
+        self._setUpUsersAndLogin()
+
+        self.url = reverse('workshop_staff_csv')
+
+    def test_header_row(self):
+        """Ensure header contains the data we want."""
+        rv = self.client.get(self.url)
+        first_row = rv.content.decode('utf-8').splitlines()[0]
+        first_row_expected = (
+            "Name,Email,Instructor badges,Taught times,Is trainee,Airport,"
+            "Country,Lessons,Affiliation"
+        )
+
+        self.assertEqual(first_row, first_row_expected)
+
+    def test_results(self):
+        """Test for the workshop staff CSV output."""
+        rv = self.client.get(self.url)
+        reader = csv.DictReader(io.StringIO(rv.content.decode('utf-8')))
+        results = _workshop_staff_query()
+        for row, expected in zip(reader, results):
+            self.assertEqual(row['Name'], expected.full_name)
+            self.assertEqual(row['Email'] or None, expected.email)
+            self.assertEqual(row['Instructor badges'],
+                             " ".join(map(lambda x: x.name,
+                                          expected.instructor_badges)))
+            self.assertEqual(row['Taught times'], str(expected.num_taught))
+            self.assertEqual(row['Is trainee'],
+                             'yes' if expected.is_trainee else 'no')
+            self.assertEqual(row['Airport'], str(expected.airport))
+            self.assertEqual(row['Country'], expected.country.name)
+            self.assertEqual(row['Affiliation'], expected.affiliation)
