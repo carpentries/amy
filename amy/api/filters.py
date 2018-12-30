@@ -1,7 +1,13 @@
+from django.forms import widgets
 from django_filters import rest_framework as filters
+from django_filters import widgets as filter_widgets
+from django_countries import Countries
 
 from extrequests.filters import (
     TrainingRequestFilter,
+)
+from workshops.fields import (
+    Select2Multiple,
 )
 from workshops.filters import (
     AMYFilterSet,
@@ -84,11 +90,21 @@ class InstructorsOverTimeFilter(AMYFilterSet):
         label='Badges',
         lookup_expr='in',
     )
+    country = filters.MultipleChoiceFilter(
+        choices=list(Countries()),
+        widget=Select2Multiple(),
+        help_text="Instructor's country",
+    )
+    date = filters.DateFromToRangeFilter(
+        label='Date range (from - to)',
+        help_text="Filters on award's date",
+        widget=filter_widgets.RangeWidget(attrs={"class": "dateinput"}),
+    )
 
     class Meta:
         model = Person
         fields = [
-            'badges',
+            'badges', 'country',
         ]
 
 
@@ -96,12 +112,22 @@ class WorkshopsOverTimeFilter(AMYFilterSet):
     tags = filters.ModelMultipleChoiceFilter(
         queryset=Tag.objects.all(),
         label='Events with at least one of the following tags:',
+        widget=widgets.SelectMultiple(attrs=dict(size=13)),
+    )
+    country = filters.MultipleChoiceFilter(
+        choices=list(Countries()),
+        widget=Select2Multiple(),
+    )
+    start = filters.DateFromToRangeFilter(
+        label='Date range (from - to)',
+        help_text="Filters only on the 'Event.start' field",
+        widget=filter_widgets.RangeWidget(attrs={"class": "dateinput"}),
     )
 
     class Meta:
         model = Event
         fields = [
-            'tags',
+            'tags', 'country', 'start',
         ]
 
 
@@ -110,12 +136,22 @@ class LearnersOverTimeFilter(AMYFilterSet):
         queryset=Tag.objects.all(),
         label='Events with all the following tags:',
         conjoined=True,
+        widget=widgets.SelectMultiple(attrs=dict(size=13)),
+    )
+    country = filters.MultipleChoiceFilter(
+        choices=list(Countries()),
+        widget=Select2Multiple(),
+    )
+    start = filters.DateFromToRangeFilter(
+        label='Date range (from - to)',
+        help_text="Filters only on the 'Event.start' field",
+        widget=filter_widgets.RangeWidget(attrs={"class": "dateinput"}),
     )
 
     class Meta:
         model = Event
         fields = [
-            'tags',
+            'tags', 'country', 'start',
         ]
 
 

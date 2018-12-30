@@ -141,7 +141,8 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
             personal='Hermione', family='Granger',
             email='hermione@granger.co.uk', gender='F', may_contact=True,
             airport=self.airport_0_0, github='herself', twitter='herself',
-            url='http://hermione.org', username="granger_hermione")
+            url='http://hermione.org', username="granger_hermione",
+            country='GB')
 
         # Hermione is additionally a qualified Data Carpentry instructor
         Award.objects.create(person=self.hermione,
@@ -160,7 +161,8 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
             personal='Harry', family='Potter',
             email='harry@hogwarts.edu', gender='M', may_contact=True,
             airport=self.airport_0_50, github='hpotter', twitter=None,
-            username="potter_harry")
+            username="potter_harry",
+            country='GB')
 
         # Harry is additionally a qualified Data Carpentry instructor
         Award.objects.create(person=self.harry,
@@ -175,7 +177,8 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
             personal='Ron', family='Weasley',
             email='rweasley@ministry.gov.uk', gender='M', may_contact=False,
             airport=self.airport_50_100, github=None, twitter=None,
-            url='http://geocities.com/ron_weas', username="weasley_ron")
+            url='http://geocities.com/ron_weas', username="weasley_ron",
+            country='GB')
 
         Award.objects.create(person=self.ron,
                              badge=self.swc_instructor,
@@ -188,17 +191,20 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
         self.spiderman = Person.objects.create(
             personal='Peter', middle='Q.', family='Parker',
             email='peter@webslinger.net', gender='O', may_contact=True,
-            username="spiderman", airport=self.airport_55_105)
+            username="spiderman", airport=self.airport_55_105,
+            country='US')
 
         self.ironman = Person.objects.create(
             personal='Tony', family='Stark', email='me@stark.com',
             gender='M', may_contact=True, username="ironman",
-            airport=self.airport_50_100)
+            airport=self.airport_50_100,
+            country='US')
 
         self.blackwidow = Person.objects.create(
             personal='Natasha', family='Romanova', email=None,
             gender='F', may_contact=False, username="blackwidow",
-            airport=self.airport_0_50)
+            airport=self.airport_0_50,
+            country='RU')
 
     def _setUpUsersAndLogin(self):
         """Set up one account for administrator that can log into the website.

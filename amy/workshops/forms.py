@@ -29,6 +29,7 @@ from workshops.models import (
     Membership,
     Tag,
     Language,
+    Badge,
 )
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330: https://github.com/swcarpentry/amy/issues/1330
@@ -222,7 +223,9 @@ class WorkshopStaffForm(forms.Form):
         )
     )
 
-    country = forms.MultipleChoiceField(choices=[])
+    country = forms.MultipleChoiceField(
+        choices=list(Countries()), required=False, widget=Select2Multiple,
+    )
 
     lessons = forms.ModelMultipleChoiceField(
         queryset=Lesson.objects.all(),
@@ -230,13 +233,8 @@ class WorkshopStaffForm(forms.Form):
         required=False,
     )
 
-    INSTRUCTOR_BADGE_CHOICES = (
-        ('swc-instructor', 'Software Carpentry Instructor'),
-        ('dc-instructor', 'Data Carpentry Instructor'),
-        ('lc-instructor', 'Library Carpentry Instructor'),
-    )
-    instructor_badges = forms.MultipleChoiceField(
-        choices=INSTRUCTOR_BADGE_CHOICES,
+    badges = forms.ModelMultipleChoiceField(
+        queryset=Badge.objects.instructor_badges(),
         widget=CheckboxSelectMultiple(),
         required=False,
     )
@@ -255,18 +253,6 @@ class WorkshopStaffForm(forms.Form):
         '''Build form layout dynamically.'''
         super().__init__(*args, **kwargs)
 
-        # dynamically build choices for country field
-        only = Airport.objects.distinct().exclude(country='') \
-                                         .exclude(country=None) \
-                                         .values_list('country', flat=True)
-        countries = Countries()
-        countries.only = only
-
-        choices = list(countries)
-        self.fields['country'] = forms.MultipleChoiceField(
-            choices=choices, required=False, widget=Select2Multiple,
-        )
-
         self.helper = FormHelper(self)
         self.helper.form_method = 'get'
         self.helper.layout = Layout(
@@ -283,7 +269,7 @@ class WorkshopStaffForm(forms.Form):
                 ),
                 css_class='card',
             ),
-            'instructor_badges',
+            'badges',
             HTML('<hr>'),
             'was_helper',
             'was_organizer',
@@ -291,7 +277,7 @@ class WorkshopStaffForm(forms.Form):
             'languages',
             'gender',
             'lessons',
-            Submit('submit', 'Submit'),
+            Submit('', 'Submit'),
         )
 
     def clean(self):

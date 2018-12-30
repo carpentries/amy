@@ -8,6 +8,7 @@ urlpatterns = [
     path('log/', views.changes_log, name='changes_log'),
     path('version/<int:version_id>/', views.object_changes, name='object_changes'),
     path('workshop_staff/', views.workshop_staff, name='workshop_staff'),
+    path('workshop_staff/csv/', views.workshop_staff_csv, name='workshop_staff_csv'),
 
     # airports
     path('airports/', include([
