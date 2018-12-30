@@ -529,14 +529,5 @@ class WorkshopStaffFilter(AMYFilterSet):
 
     def filter_in_progress_trainee(self, qs, n, v):
         if v:
-            stalled = Tag.objects.get(name='stalled')
-            TTT = Tag.objects.get(name='TTT')
-            TTT_non_stalled_events = (
-                Event.objects.exclude(tags=stalled).filter(tags=TTT)
-            )
-            instructor_badges = Badge.objects.instructor_badges()
-
-            q = Q(task__event__in=TTT_non_stalled_events)
-            return qs.filter(q, task__role__name='learner') \
-                     .exclude(badges__in=instructor_badges)
+            return qs.filter(is_trainee__gte=1)
         return qs

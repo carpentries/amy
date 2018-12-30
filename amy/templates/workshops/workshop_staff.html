@@ -32,7 +32,7 @@
         {% endfor %}</td>
         <td><a href="{{ p.get_absolute_url }}">{{ p.full_name }}</a>{% if p.email and p.may_contact %} &lt;{{ p.email|urlize }}&gt;{% endif %}</td>
         <td>{{ p.num_taught }}</td>
-        <td>{% if p.pk in trainees %}yes{% else %}no{% endif %}</td>
+        <td>{{ p.is_trainee|yesno }}</td>
         <td>{% if p.airport %}<a href="{{ p.airport.get_absolute_url }}">{{ p.airport }}</a>{% else %}&mdash;{% endif %}</td>
         <td>{% if p.country %}{{ p.country.name }}{% else %}&mdash;{% endif %}</td>
         <td>
@@ -45,7 +45,12 @@
       {% endfor %}
     </table>
     </form>
-    <p><a class="btn btn-primary text-white" bulk-email-on-click>Contact selected</a></p>
+    <p>
+      <div class="btn-group" role="group" aria-label="Buttons">
+        <a class="btn btn-primary text-white" bulk-email-on-click>Contact selected</a>
+        <a class="btn btn-secondary" href="{% url 'workshop_staff_csv' %}?{{ request.GET.urlencode }}">Download as CSV</a>
+      </div>
+    </p>
     {% pagination persons %}
   {% else %}
     <p>No matches.</p>
