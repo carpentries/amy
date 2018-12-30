@@ -1,7 +1,7 @@
 from django.urls import reverse
 
 from workshops.tests.base import TestBase
-from workshops.models import Task, Role, Event, Tag, Organization
+from workshops.models import Task, Role, Event, Tag, Organization, Badge
 
 
 class TestLocateWorkshopStaff(TestBase):
@@ -17,7 +17,9 @@ class TestLocateWorkshopStaff(TestBase):
         """Ensure search returns everyone with defined airport."""
         response = self.client.get(
             reverse('workshop_staff'),
-            {'airport': self.airport_0_0.pk, 'submit': 'Submit'}
+            {
+                'airport': self.airport_0_0.pk,
+            }
         )
         self.assertEqual(response.status_code, 200)
 
@@ -34,8 +36,10 @@ class TestLocateWorkshopStaff(TestBase):
         """Ensure people with correct skill are returned."""
         response = self.client.get(
             reverse('workshop_staff'),
-            {'airport': self.airport_50_100.pk, 'lessons': [self.git.pk],
-             'submit': 'Submit'}
+            {
+                'airport': self.airport_50_100.pk,
+                'lessons': [self.git.pk],
+            }
         )
         self.assertEqual(response.status_code, 200)
         # lessons
@@ -54,9 +58,10 @@ class TestLocateWorkshopStaff(TestBase):
         """Ensure people with correct skills are returned."""
         response = self.client.get(
             reverse('workshop_staff'),
-            {'airport': self.airport_50_100.pk,
-             'lessons': [self.git.pk, self.sql.pk],
-             'submit': 'Submit'}
+            {
+                'airport': self.airport_50_100.pk,
+                'lessons': [self.git.pk, self.sql.pk],
+            }
         )
         self.assertEqual(response.status_code, 200)
         # lessons
@@ -76,7 +81,9 @@ class TestLocateWorkshopStaff(TestBase):
         """Ensure people with airports in Bulgaria are returned."""
         response = self.client.get(
             reverse('workshop_staff'),
-            {'country': ['BG'], 'submit': 'Submit'}
+            {
+                'country': ['BG'],
+            }
         )
         self.assertEqual(response.status_code, 200)
 
@@ -93,7 +100,9 @@ class TestLocateWorkshopStaff(TestBase):
         """Ensure people with airports in Albania and Bulgaria are returned."""
         response = self.client.get(
             reverse('workshop_staff'),
-            {'country': ['AL', 'BG'], 'submit': 'Submit'}
+            {
+                'country': ['AL', 'BG'],
+            }
         )
         self.assertEqual(response.status_code, 200)
 
@@ -110,7 +119,10 @@ class TestLocateWorkshopStaff(TestBase):
         """Ensure only people with specific gender are returned."""
         response = self.client.get(
             reverse('workshop_staff'),
-            {'airport': self.airport_0_0.pk, 'gender': 'F', 'submit': 'Submit'}
+            {
+                'airport': self.airport_0_0.pk,
+                'gender': 'F',
+            }
         )
         self.assertEqual(response.status_code, 200)
 
@@ -129,16 +141,39 @@ class TestLocateWorkshopStaff(TestBase):
         badges."""
         response = self.client.get(
             reverse('workshop_staff'),
-            {'airport': self.airport_0_0.pk,
-             'instructor_badges': ['swc-instructor', 'dc-instructor'],
-             'submit': 'Submit'}
+            {
+                'airport': self.airport_0_0.pk,
+                'badges': Badge.objects.filter(name__in=[
+                    'swc-instructor',
+                    'dc-instructor']).values_list('pk', flat=True),
+            }
         )
         self.assertEqual(response.status_code, 200)
 
         # instructors
-        self.assertIn(self.hermione, response.context['persons'])  # SWC, DC
+        self.assertIn(self.hermione, response.context['persons'])  # SWC, DC,LC
         self.assertIn(self.harry, response.context['persons'])  # SWC, DC
         self.assertIn(self.ron, response.context['persons'])  # SWC only
+        # non-instructors
+        self.assertNotIn(self.spiderman, response.context['persons'])
+        self.assertNotIn(self.ironman, response.context['persons'])
+        self.assertNotIn(self.blackwidow, response.context['persons'])
+
+        response = self.client.get(
+            reverse('workshop_staff'),
+            {
+                'airport': self.airport_0_0.pk,
+                'badges': Badge.objects.filter(name__in=[
+                    'dc-instructor',
+                    'lc-instructor']).values_list('pk', flat=True),
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+
+        # instructors
+        self.assertIn(self.hermione, response.context['persons'])  # SWC, DC,LC
+        self.assertIn(self.harry, response.context['persons'])  # SWC, DC
+        self.assertNotIn(self.ron, response.context['persons'])  # SWC only
         # non-instructors
         self.assertNotIn(self.spiderman, response.context['persons'])
         self.assertNotIn(self.ironman, response.context['persons'])
@@ -158,8 +193,9 @@ class TestLocateWorkshopStaff(TestBase):
 
         response = self.client.get(
             reverse('workshop_staff'),
-            {'languages': [self.french.pk,],
-             'submit': 'Submit'}
+            {
+                'languages': [self.french.pk],
+            }
         )
         self.assertEqual(response.status_code, 200)
 
@@ -180,8 +216,9 @@ class TestLocateWorkshopStaff(TestBase):
 
         response = self.client.get(
             reverse('workshop_staff'),
-            {'languages': [self.english.pk, self.french.pk],
-             'submit': 'Submit'}
+            {
+                'languages': [self.english.pk, self.french.pk],
+            }
         )
         self.assertEqual(response.status_code, 200)
 
@@ -203,18 +240,20 @@ class TestLocateWorkshopStaff(TestBase):
 
         response = self.client.get(
             reverse('workshop_staff'),
-            {'airport': self.airport_0_0.pk,
-             'was_helper': 'on',
-             'submit': 'Submit'}
+            {
+                'airport': self.airport_0_0.pk,
+                'was_helper': 'on',
+            }
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(list(response.context['persons']), [self.spiderman])
 
         response = self.client.get(
             reverse('workshop_staff'),
-            {'airport': self.airport_0_0.pk,
-             'was_organizer': 'on',
-             'submit': 'Submit'}
+            {
+                'airport': self.airport_0_0.pk,
+                'was_organizer': 'on',
+            }
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(list(response.context['persons']), [self.blackwidow])
@@ -250,9 +289,10 @@ class TestLocateWorkshopStaff(TestBase):
         """
         response = self.client.get(
             reverse('workshop_staff'),
-            {'airport': self.airport_0_0.pk,
-             'is_in_progress_trainee': 'on',
-             'submit': 'Submit'}
+            {
+                'airport': self.airport_0_0.pk,
+                'is_in_progress_trainee': 'on',
+            }
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(list(response.context['persons']), [])
@@ -283,9 +323,10 @@ class TestLocateWorkshopStaff(TestBase):
         # repeat the query
         response = self.client.get(
             reverse('workshop_staff'),
-            {'airport': self.airport_0_0.pk,
-             'is_in_progress_trainee': 'on',
-             'submit': 'Submit'}
+            {
+                'airport': self.airport_0_0.pk,
+                'is_in_progress_trainee': 'on',
+            }
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(

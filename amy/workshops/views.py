@@ -62,6 +62,7 @@ from workshops.filters import (
     TaskFilter,
     AirportFilter,
     BadgeAwardsFilter,
+    WorkshopStaffFilter,
 )
 from workshops.forms import (
     SearchForm,
@@ -1372,7 +1373,7 @@ class BadgeDetails(OnlyForAdminsMixin, AMYDetailView):
         return context
 
 
-#------------------------------------------------------------
+# ------------------------------------------------------------
 
 @admin_required
 def workshop_staff(request):
@@ -1419,84 +1420,38 @@ def workshop_staff(request):
         queryset=Badge.objects.instructor_badges()),
     )
 
-    filter_form = WorkshopStaffForm()
-
     lessons = list()
+    form = WorkshopStaffForm(request.GET)
 
-    if 'submit' in request.GET:
-        filter_form = WorkshopStaffForm(request.GET)
-        if filter_form.is_valid():
-            data = filter_form.cleaned_data
+    if form.is_valid():
+        # to highlight (in template) what lessons people know
+        lessons = form.cleaned_data['lessons']
 
-            if data['lessons']:
-                lessons = data['lessons']
-                # this has to be in a loop to match a *subset* of lessons,
-                # not any lesson within the list (as it would be with
-                # `.filter(lessons_in=lessons)`)
-                for lesson in lessons:
-                    people = people.filter(
-                        qualification__lesson=lesson
-                    )
+        x, y = None, None
 
-            if data['airport']:
-                x = data['airport'].latitude
-                y = data['airport'].longitude
-                # using Euclidean distance just because it's faster and easier
-                complex_F = ((F('airport__latitude') - x) ** 2 +
-                             (F('airport__longitude') - y) ** 2)
-                people = people.annotate(distance=complex_F) \
-                               .order_by('distance', 'family')
+        if form.cleaned_data['airport']:
+            x = form.cleaned_data['airport'].latitude
+            y = form.cleaned_data['airport'].longitude
 
-            if data['latitude'] and data['longitude']:
-                x = data['latitude']
-                y = data['longitude']
-                # using Euclidean distance just because it's faster and easier
-                complex_F = ((F('airport__latitude') - x) ** 2 +
-                             (F('airport__longitude') - y) ** 2)
-                people = people.annotate(distance=complex_F) \
-                               .order_by('distance', 'family')
+        elif form.cleaned_data['latitude'] and form.cleaned_data['longitude']:
+            x = form.cleaned_data['latitude']
+            y = form.cleaned_data['longitude']
 
-            if data['country']:
-                people = people.filter(
-                    Q(airport__country__in=data['country']) |
-                    Q(country__in=data['country'])
-                ).order_by('family')
+        if x and y:
+            # using Euclidean distance just because it's faster and easier
+            complex_F = ((F('airport__latitude') - x) ** 2 +
+                         (F('airport__longitude') - y) ** 2)
+            people = people.annotate(distance=complex_F) \
+                           .order_by('distance', 'family')
 
-            if data['gender']:
-                people = people.filter(gender=data['gender'])
-
-            if data['instructor_badges']:
-                instr_badges_q = Q()
-                for badge in data['instructor_badges']:
-                    instr_badges_q |= Q(badges__name=badge)
-                people = people.filter(instr_badges_q)
-
-            # it's faster to count role=helper occurences than to check if user
-            # had a role=helper
-            if data['was_helper']:
-                people = people.filter(num_helper__gte=1)
-
-            if data['was_organizer']:
-                people = people.filter(num_organizer__gte=1)
-
-            if data['is_in_progress_trainee']:
-                # filter out people who took part in only stalled TTT events
-                TTT_non_stalled_events = (
-                    Event.objects.exclude(tags=stalled).filter(tags=TTT)
-                )
-                q = Q(task__event__in=TTT_non_stalled_events)
-                people = people.filter(q, task__role__name='learner') \
-                               .exclude(badges__in=instructor_badges)
-
-            if data['languages']:
-                for language in data['languages']:
-                    people = people.filter(languages=language)
+        f = WorkshopStaffFilter(request.GET, queryset=people)
+        people = f.qs
 
     emails = people.filter(may_contact=True).values_list('email', flat=True)
     people = get_pagination_items(request, people)
     context = {
         'title': 'Find Workshop Staff',
-        'filter_form': filter_form,
+        'filter_form': form,
         'persons': people,
         'lessons': lessons,
         'instructor_badges': instructor_badges,
@@ -1505,7 +1460,7 @@ def workshop_staff(request):
     }
     return render(request, 'workshops/workshop_staff.html', context)
 
-#------------------------------------------------------------
+# ------------------------------------------------------------
 
 
 @csrf_exempt
