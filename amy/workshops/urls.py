@@ -1,5 +1,4 @@
 from django.urls import path, include
-from django.views.generic import RedirectView
 
 from workshops import views
 
@@ -9,6 +8,7 @@ urlpatterns = [
     path('log/', views.changes_log, name='changes_log'),
     path('version/<int:version_id>/', views.object_changes, name='object_changes'),
     path('workshop_staff/', views.workshop_staff, name='workshop_staff'),
+    path('workshop_staff/csv/', views.workshop_staff_csv, name='workshop_staff_csv'),
 
     # airports
     path('airports/', include([
@@ -94,39 +94,3 @@ urlpatterns = [
     path('action_required/privacy/',
          views.action_required_privacy, name='action_required_privacy'),
 ]
-
-redirects_urlpatterns = [
-    # redirects for the old forms
-    path('swc/request/',
-         RedirectView.as_view(pattern_name='swc_workshop_request', permanent=True),
-         name='old_swc_workshop_request'),
-    path('swc/request/confirm/',
-         RedirectView.as_view(pattern_name='swc_workshop_request_confirm', permanent=True),
-         name='old_swc_workshop_request_confirm'),
-    path('dc/request/',
-         RedirectView.as_view(pattern_name='dc_workshop_request', permanent=True),
-         name='old_dc_workshop_request'),
-    path('dc/request/confirm/',
-         RedirectView.as_view(pattern_name='dc_workshop_request_confirm', permanent=True),
-         name='old_dc_workshop_request_confirm'),
-    path('dc/request_selforganized/',
-         RedirectView.as_view(pattern_name='dc_workshop_selforganized_request', permanent=True),
-         name='old_dc_workshop_selforganized_request'),
-    path('dc/request_selforganized/confirm/',
-         RedirectView.as_view(pattern_name='dc_workshop_selforganized_request_confirm', permanent=True),
-         name='old_dc_workshop_selforganized_request_confirm'),
-    path('submit/',
-         RedirectView.as_view(pattern_name='event_submit', permanent=True),
-         name='old_event_submit'),
-    # path('submit/confirm/',
-    #      RedirectView.as_view(pattern_name='event_submission_confirm', permanent=True),
-    #      name='old_event_submission_confirm'),
-    path('update_profile/',
-         RedirectView.as_view(pattern_name='profileupdate_request', permanent=True),
-         name='old_profileupdate_request'),
-    path('request_training/',
-         RedirectView.as_view(pattern_name='training_request', permanent=True),
-         name='old_training_request'),
-]
-
-urlpatterns += redirects_urlpatterns

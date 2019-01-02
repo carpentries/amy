@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.sites.shortcuts import get_current_site
 from django.template.loader import get_template
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView, RedirectView
@@ -104,7 +105,7 @@ class WorkshopRequestCreate(
 
     def get_body(self):
         link = self.object.get_absolute_url()
-        link_domain = settings.SITE_URL
+        link_domain = 'https://{}'.format(get_current_site(self.request))
 
         body_txt = get_template(
             'mailing/workshoprequest.txt'

@@ -100,7 +100,6 @@ def all_trainees(request):
         request.GET,
         queryset=Person.objects
             .annotate_with_instructor_eligibility()
-            .defer('notes')  # notes are too large, so we defer them
             .prefetch_related(
                 Prefetch('task_set',
                          to_attr='training_tasks',
@@ -111,8 +110,7 @@ def all_trainees(request):
                 'trainingprogress_set',
                 'trainingprogress_set__requirement',
                 'trainingprogress_set__evaluated_by',
-            )
-            .annotate(
+            ).annotate(
                 is_swc_instructor=Sum(Case(When(badges__name='swc-instructor',
                                                 then=1),
                                            default=0,
@@ -121,7 +119,11 @@ def all_trainees(request):
                                                then=1),
                                           default=0,
                                           output_field=IntegerField())),
-        )
+                is_lc_instructor=Sum(Case(When(badges__name='lc-instructor',
+                                               then=1),
+                                          default=0,
+                                          output_field=IntegerField())),
+            )
     )
     trainees = get_pagination_items(request, filter.qs)
 
@@ -181,6 +183,7 @@ def all_trainees(request):
                'all_trainees': trainees,
                'swc': Badge.objects.get(name='swc-instructor'),
                'dc': Badge.objects.get(name='dc-instructor'),
+               'lc': Badge.objects.get(name='lc-instructor'),
                'filter': filter,
                'form': form,
                'discard_form': discard_form}

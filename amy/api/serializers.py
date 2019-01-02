@@ -120,7 +120,12 @@ class InstructorNumTaughtSerializer(serializers.Serializer):
         read_only=True, view_name='api:person-detail', lookup_field='pk',
         source='*')
     name = serializers.CharField(source='full_name')
-    num_taught = serializers.IntegerField()
+    country = serializers.CharField()
+    num_taught_SWC = serializers.IntegerField()
+    num_taught_DC = serializers.IntegerField()
+    num_taught_LC = serializers.IntegerField()
+    num_taught_TTT = serializers.IntegerField()
+    num_taught_total = serializers.IntegerField()
 
 
 class InstructorsByTimePeriodSerializer(serializers.ModelSerializer):
@@ -144,7 +149,7 @@ class OrganizationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Organization
-        fields = ('domain', 'fullname', 'country', 'notes')
+        fields = ('domain', 'fullname', 'country')
 
 
 class AirportSerializer(serializers.ModelSerializer):
@@ -193,8 +198,7 @@ class PersonSerializer(serializers.ModelSerializer):
             'personal', 'middle', 'family', 'email', 'gender', 'may_contact',
             'publish_profile', 'lesson_publication_consent', 'airport',
             'country', 'github', 'twitter', 'url', 'orcid', 'username',
-            'notes', 'affiliation', 'badges', 'lessons', 'domains', 'awards',
-            'tasks',
+            'affiliation', 'badges', 'lessons', 'domains', 'awards', 'tasks',
         )
 
 
@@ -236,7 +240,7 @@ class EventSerializer(serializers.ModelSerializer):
             'slug', 'completed', 'start', 'end', 'host', 'administrator',
             'tags', 'website_url', 'reg_key',
             'attendance', 'contact', 'country', 'venue', 'address',
-            'latitude', 'longitude', 'notes', 'tasks', 'assigned_to',
+            'latitude', 'longitude', 'tasks', 'assigned_to',
         )
 
 
@@ -273,7 +277,7 @@ class TrainingRequestSerializer(serializers.ModelSerializer):
             'teaching_frequency_expectation',
             'teaching_frequency_expectation_other',
             'max_travelling_frequency', 'max_travelling_frequency_other',
-            'reason', 'comment',
+            'reason', 'user_notes',
             'training_completion_agreement', 'workshop_teaching_agreement',
             'data_privacy_agreement', 'code_of_conduct_agreement',
         )
@@ -334,7 +338,7 @@ class TrainingRequestWithPersonSerializer(TrainingRequestSerializer):
             'teaching_frequency_expectation',
             'teaching_frequency_expectation_other',
             'max_travelling_frequency', 'max_travelling_frequency_other',
-            'reason', 'comment',
+            'reason', 'user_notes',
             'training_completion_agreement', 'workshop_teaching_agreement',
             'data_privacy_agreement', 'code_of_conduct_agreement',
         )
@@ -367,7 +371,7 @@ class TrainingRequestForManualScoringSerializer(TrainingRequestSerializer):
             'max_travelling_frequency',
             'max_travelling_frequency_other',
             'reason',
-            'comment',
+            'user_notes',
         )
 
 

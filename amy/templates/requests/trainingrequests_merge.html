@@ -2,6 +2,7 @@
 
 {% load links %}
 {% load tags %}
+{% load comments %}
 
 {% block content %}
 <form method="POST">
@@ -214,14 +215,10 @@
       <th>{% include "includes/merge_radio.html" with field=form.created_at %}</th>
     </tr>
     <tr>
-      <th>Last updated at</th>
-      <td>{{ obj_a.last_updated_at|default:"—" }}</td><td>{{ obj_b.last_updated_at|default:"—" }}</td>
-      <th>{% include "includes/merge_radio.html" with field=form.last_updated_at %}</th>
-    </tr>
-    <tr>
-      <th>Admin notes</th>
-      <td>{% if obj_a.notes %}<pre>{{ obj_a.notes }}</pre>{% else %}—{% endif %}</td><td>{% if obj_b.notes %}<pre>{{ obj_b.notes }}</pre>{% else %}—{% endif %}</td>
-      <th>{% include "includes/merge_radio.html" with field=form.notes %}</th>
+      <th>Comments</th>
+      <td>{% render_comment_list for obj_a %}</td>
+      <td>{% render_comment_list for obj_b %}</td>
+      <th>{% include "includes/merge_radio.html" with field=form.comments %}</th>
     </tr>
   </tbody>
 </table>

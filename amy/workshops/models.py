@@ -160,7 +160,6 @@ class Organization(models.Model):
     domain     = models.CharField(max_length=STR_LONG, unique=True)
     fullname   = models.CharField(max_length=STR_LONG, unique=True)
     country    = CountryField(null=True, blank=True)
-    notes      = models.TextField(default="", blank=True)
 
     def __str__(self):
         return "{} <{}>".format(self.fullname, self.domain)
@@ -226,9 +225,8 @@ class Membership(models.Model):
         help_text="Use this field if you want to grant more seats than "
                   "the agreement provides for.",
     )
-    notes = models.TextField(default="", blank=True)
     organization = models.ForeignKey(Organization, null=False, blank=False,
-                             on_delete=models.PROTECT)
+                                     on_delete=models.PROTECT)
 
     def __str__(self):
         from workshops.util import human_daterange
@@ -506,8 +504,6 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
     user_notes = models.TextField(
         default='', blank=True,
         verbose_name='Notes provided by the user in update profile form.')
-    notes = models.TextField(default="", blank=True,
-                             verbose_name='Admin notes')
     affiliation = models.CharField(
         max_length=STR_LONG, default='', blank=True,
         help_text='What university, company, lab, or other organization are '
@@ -594,6 +590,9 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
         if self.middle:
             middle = ' {0}'.format(self.middle)
         return '{0}{1} {2}'.format(self.personal, middle, self.family)
+
+    def get_full_name(self):
+        return self.full_name
 
     def get_short_name(self):
         return self.personal
@@ -982,7 +981,6 @@ class Event(AssignmentMixin, models.Model):
         verbose_name='Invoice status',
         default='not-invoiced', blank=False,
     )
-    notes      = models.TextField(default="", blank=True)
     contact = models.CharField(max_length=STR_LONGEST, default="", blank=True)
     country = CountryField(
         null=True, blank=True,
@@ -1340,7 +1338,7 @@ class BadgeQuerySet(models.query.QuerySet):
     """Custom QuerySet that provides easy way to get instructor badges
     (we use that a lot)."""
 
-    INSTRUCTOR_BADGES = ('dc-instructor', 'swc-instructor')
+    INSTRUCTOR_BADGES = ('dc-instructor', 'swc-instructor', 'lc-instructor')
 
     def instructor_badges(self):
         """Filter for instructor badges only."""
@@ -1548,7 +1546,7 @@ class InvoiceRequest(models.Model):
 
         return self.get_status_display()
 
-#------------------------------------------------------------
+# ------------------------------------------------------------
 
 from workshops.util import build_choice_field_with_other_option
 
@@ -1569,9 +1567,8 @@ class TrainingRequestManager(models.Manager):
 
 
 @reversion.register
-class TrainingRequest(CreatedUpdatedMixin,
-        DataPrivacyAgreementMixin, COCAgreementMixin, StateMixin,
-        models.Model):
+class TrainingRequest(CreatedUpdatedMixin, DataPrivacyAgreementMixin,
+                      COCAgreementMixin, StateMixin, models.Model):
 
     MANUAL_SCORE_UPLOAD_FIELDS = (
         'request_id', 'score_manual', 'score_notes',
@@ -1791,7 +1788,7 @@ class TrainingRequest(CreatedUpdatedMixin,
         null=False, blank=False,
     )
 
-    comment = models.TextField(
+    user_notes = models.TextField(
         default='', null=False, blank=True,
         help_text='What else do you want us to know?',
         verbose_name='Anything else?')
@@ -1812,8 +1809,6 @@ class TrainingRequest(CreatedUpdatedMixin,
         verbose_name='I agree to teach a Carpentry workshop within 12 months '
                      'of this Training Course.'
     )
-
-    notes = models.TextField(blank=True, help_text='Admin notes')
 
     score_auto = models.PositiveIntegerField(
         null=False, blank=False, default=0,
@@ -2338,13 +2333,9 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         verbose_name="Other travel expences management",
     )
 
-    comment = models.TextField(
+    user_notes = models.TextField(
         blank=True,
         verbose_name="Is there anything else you would like to share with us?",
-    )
-    admin_comment = models.TextField(
-        blank=True,
-        verbose_name="Admin comment",
     )
 
     class Meta:

@@ -1,6 +1,7 @@
 {% extends "base_nav.html" %}
 
 {% load links %}
+{% load comments %}
 
 {% block content %}
 <form method="POST">
@@ -86,11 +87,6 @@
     <th>{% include "includes/merge_radio.html" with field=form.url %}</th>
   </tr>
   <tr>
-    <th>Notes</th>
-    <td>{% if obj_a.notes %}<pre>{{ obj_a.notes }}</pre>{% else %}—{% endif %}</td><td>{% if obj_b.notes %}<pre>{{ obj_b.notes }}</pre>{% else %}—{% endif %}</td>
-    <th>{% include "includes/merge_radio.html" with field=form.notes %}</th>
-  </tr>
-  <tr>
     <th>Affiliation</th>
     <td>{{ obj_a.affiliation|default:"—" }}</td><td>{{ obj_b.affiliation|default:"—" }}</td>
     <th>{% include "includes/merge_radio.html" with field=form.affiliation %}</th>
@@ -145,6 +141,18 @@
     <td>{% if obj_a.trainingprogress_set.all %}<ul>{% for item in obj_a.trainingprogress_set.all %}<li><a href="{{ item.get_absolute_url }}">{{ item }}</a></li>{% endfor %}</ul>{% else %}—{% endif %}</td>
     <td>{% if obj_b.trainingprogress_set.all %}<ul>{% for item in obj_b.trainingprogress_set.all %}<li><a href="{{ item.get_absolute_url }}">{{ item }}</a></li>{% endfor %}</ul>{% else %}—{% endif %}</td>
     <th>{% include "includes/merge_radio.html" with field=form.trainingprogress_set %}</th>
+  </tr>
+  <tr>
+    <th>Comments by this person</th>
+    <td>{% include "comments/list.html" with comment_list=obj_a.comment_comments.all %}</td>
+    <td>{% include "comments/list.html" with comment_list=obj_b.comment_comments.all %}</td>
+    <th>{% include "includes/merge_radio.html" with field=form.comment_comments %}</th>
+  </tr>
+  <tr>
+    <th>Comments regarding this person</th>
+    <td>{% render_comment_list for obj_a %}</td>
+    <td>{% render_comment_list for obj_b %}</td>
+    <th>{% include "includes/merge_radio.html" with field=form.comments %}</th>
   </tr>
 </table>
 <div class="float-right">

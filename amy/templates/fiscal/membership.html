@@ -48,10 +48,6 @@
     <td>{{ membership.self_organized_workshops_remaining|default:"—" }}</td>
   </tr>
   <tr>
-    <th colspan="2">Notes:</th>
-    <td>{% if membership.notes %}<pre>{{ membership.notes }}</pre>{% else %}&mdash;{% endif %}</td>
-  </tr>
-  <tr>
     <th rowspan="3" width="30%">Instructor training seats</th>
     <th>Allowed:</th>
     <td>{{ membership.seats_instructor_training_total }}</td>
@@ -108,4 +104,7 @@
     {% endif %}
   </div>
 </div>
+
+{% include "includes/comments.html" with object=membership %}
+
 {% endblock %}

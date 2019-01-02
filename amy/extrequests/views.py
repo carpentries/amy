@@ -48,7 +48,7 @@ from workshops.forms import (
     AdminLookupForm,
     BootstrapHelper,
     BulkUploadCSVForm,
-    EventForm,
+    EventCreateForm,
 )
 from workshops.models import (
     TrainingRequest,
@@ -118,6 +118,7 @@ class WorkshopRequestChange(OnlyForAdminsMixin, PermissionRequiredMixin,
     model = WorkshopRequest
     pk_url_kwarg = 'request_id'
     form_class = WorkshopRequestAdminForm
+    template_name = 'generic_form_with_comments.html'
 
 
 class WorkshopRequestSetState(OnlyForAdminsMixin, ChangeRequestStateView):
@@ -136,10 +137,10 @@ def workshoprequest_accept_event(request, request_id):
     """Accept event request by creating a new event."""
     workshoprequest = get_object_or_404(WorkshopRequest, state='p',
                                         pk=request_id)
-    form = EventForm()
+    form = EventCreateForm()
 
     if request.method == 'POST':
-        form = EventForm(request.POST)
+        form = EventCreateForm(request.POST)
 
         if form.is_valid():
             event = form.save()
@@ -363,12 +364,6 @@ def _match_training_request_to_person(request, training_request, create=False,
         training_request.person.may_contact = True
         training_request.person.is_active = True
 
-        # merge notes
-        training_request.person.notes = (
-            training_request.person.notes +
-            "\n\nNotes from training request:\n" +
-            training_request.notes)
-
         training_request.person.save()
         training_request.person.synchronize_usersocialauth()
         training_request.save()
@@ -430,6 +425,7 @@ class TrainingRequestUpdate(RedirectSupportMixin,
                             AMYUpdateView):
     model = TrainingRequest
     form_class = TrainingRequestUpdateForm
+    template_name = 'generic_form_with_comments.html'
 
 
 @admin_required
@@ -493,11 +489,10 @@ def trainingrequests_merge(request):
                 'teaching_frequency_expectation',
                 'teaching_frequency_expectation_other',
                 'max_travelling_frequency', 'max_travelling_frequency_other',
-                'reason', 'comment', 'training_completion_agreement',
+                'reason', 'user_notes', 'training_completion_agreement',
                 'workshop_teaching_agreement',
                 'data_privacy_agreement', 'code_of_conduct_agreement',
                 'created_at', 'last_updated_at',
-                'notes',
             )
             # M2M relationships
             difficult = (

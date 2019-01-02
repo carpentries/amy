@@ -15,6 +15,8 @@ from django.contrib.auth.decorators import (
 )
 from django.conf import settings
 from django.contrib.auth.mixins import UserPassesTestMixin
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import (
     EmptyPage,
@@ -25,10 +27,9 @@ from django.core.validators import ValidationError
 from django.db import IntegrityError, transaction, models
 from django.db.models import Q
 from django.http import Http404
-from django.http.response import HttpResponse
-from django.http.response import HttpResponseForbidden
 from django.shortcuts import render, redirect
 from django.utils.http import is_safe_url
+from django_comments.models import Comment
 
 from workshops.models import (
     Event,
@@ -973,6 +974,10 @@ def merge_objects(object_a, object_b, easy_fields, difficult_fields,
                     pass
 
         for attr in difficult_fields:
+            if attr == 'comments':
+                # special case handled below the for-loop
+                continue
+
             related_a = getattr(object_a, attr)
             related_b = getattr(object_b, attr)
 
@@ -1040,11 +1045,50 @@ def merge_objects(object_a, object_b, easy_fields, difficult_fields,
                     try:
                         with transaction.atomic():
                             manager.add(element)
-                    except IntegrityError as e:
+                    except IntegrityError:
                         try:
                             element.delete()
-                        except IntegrityError as e2:
-                            integrity_errors.append(str(e2))
+                        except IntegrityError as e:
+                            integrity_errors.append(str(e))
+
+        if 'comments' in choices:
+            value = choices['comments']
+            # special case: comments made regarding these objects
+            comments_a = Comment.objects.for_model(object_a)
+            comments_b = Comment.objects.for_model(object_b)
+            base_obj_ct = ContentType.objects.get_for_model(base_obj)
+
+            if value == 'obj_a':
+                # we're keeping comments on obj_a, and removing (hiding)
+                # comments on obj_b
+                # WARNING: sequence of operations is important here!
+                comments_b.update(is_removed=True)
+                comments_a.update(
+                    content_type=base_obj_ct,
+                    object_pk=base_obj.pk,
+                )
+
+            elif value == 'obj_b':
+                # we're keeping comments on obj_b, and removing (hiding)
+                # comments on obj_a
+                # WARNING: sequence of operations is important here!
+                comments_a.update(is_removed=True)
+                comments_b.update(
+                    content_type=base_obj_ct,
+                    object_pk=base_obj.pk,
+                )
+
+            elif value == 'combine':
+                # we're making comments from either of the objects point to
+                # the new base object
+                comments_a.update(
+                    content_type=base_obj_ct,
+                    object_pk=base_obj.pk,
+                )
+                comments_b.update(
+                    content_type=base_obj_ct,
+                    object_pk=base_obj.pk,
+                )
 
         merging_obj.delete()
 
@@ -1092,7 +1136,6 @@ class OnlyForAdminsNoRedirectMixin(OnlyForAdminsMixin):
 
 class LoginNotRequiredMixin(object):
     pass
-
 
 
 def redirect_with_next_support(request, *args, **kwargs):
@@ -1218,3 +1261,21 @@ def match_notification_email(obj):
     if not results:
         return [settings.ADMIN_NOTIFICATION_CRITERIA_DEFAULT]
     return results
+
+
+def add_comment(content_object, comment, **kwargs):
+    """A simple way to create a comment for specific object."""
+    user = kwargs.get('user', None)
+    user_name = kwargs.get('user_name', 'Automatic comment')
+    submit_date = kwargs.get('submit_date',
+                             datetime.datetime.now(datetime.timezone.utc))
+    site = kwargs.get('site', Site.objects.get_current())
+
+    return Comment.objects.create(
+        comment=comment,
+        content_object=content_object,
+        user=user,
+        user_name=user_name,
+        submit_date=submit_date,
+        site=site,
+    )

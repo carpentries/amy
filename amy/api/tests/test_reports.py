@@ -18,6 +18,7 @@ from workshops.models import (
     Organization,
     Task,
     Event,
+    Tag,
 )
 from workshops.tests.base import TestBase
 
@@ -47,23 +48,52 @@ class TestReportingInstructorNumTaught(BaseReportingTest):
         dc_instructor, _ = Badge.objects.get_or_create(
             name='dc-instructor'
         )
-        # set up an event
-        host = Organization.objects.create(domain='host.edu', fullname='Organization EDU')
-        event = Event.objects.create(slug='event1', host=host)
+        lc_instructor, _ = Badge.objects.get_or_create(
+            name='lc-instructor'
+        )
+
+        # prepare tags
+        Tag.objects.bulk_create([
+            Tag(name='TTT', details=''),
+            Tag(name='LC', details=''),
+            Tag(name='DC', details=''),
+            Tag(name='SWC', details=''),
+        ])
+
+        # prepare an instructor
         instructor = Person.objects.create(
             username='harrypotter', personal='Harry', family='Potter',
-            email='user1@name.org',
+            email='user1@name.org', country='GB',
         )
+
+        # prepare instructor role
         instructor_role, _ = Role.objects.get_or_create(name='instructor')
+
+        # create an organization host
+        host = Organization.objects.create(domain='host.edu',
+                                           fullname='Organization EDU')
+
+        # set up events
+        event1 = Event.objects.create(slug='event1', host=host)
+        event2 = Event.objects.create(slug='event2', host=host)
+        event2.tags.set(
+            Tag.objects.filter(name__in=['SWC', 'DC', 'LC', 'TTT']))
+
         Task.objects.create(
-            event=event,
+            event=event1,
             person=instructor,
             role=instructor_role
         )
-        # Award a SWC Badge
+        Task.objects.create(
+            event=event2,
+            person=instructor,
+            role=instructor_role
+        )
+
+        # Award a SWC, DC and LC badges
         Award.objects.create(person=instructor, badge=swc_instructor)
-        # Award a DC Badge
         Award.objects.create(person=instructor, badge=dc_instructor)
+        Award.objects.create(person=instructor, badge=lc_instructor)
 
         # make sure we *do not* get twice the number expected
         self.expecting = [
@@ -72,7 +102,12 @@ class TestReportingInstructorNumTaught(BaseReportingTest):
                     instructor.pk,
                 ),
                 'name': 'Harry Potter',
-                'num_taught': 1,
+                'country': 'GB',
+                'num_taught_SWC': 1,
+                'num_taught_DC': 1,
+                'num_taught_LC': 1,
+                'num_taught_TTT': 1,
+                'num_taught_total': 2,
             },
         ]
 

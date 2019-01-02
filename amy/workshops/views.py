@@ -13,6 +13,7 @@ from django.contrib.auth.mixins import (
     PermissionRequiredMixin,
     UserPassesTestMixin,
 )
+from django.contrib.auth.models import Permission
 from django.contrib.auth.views import logout_then_login
 from django.core.exceptions import (
     ObjectDoesNotExist,
@@ -61,6 +62,7 @@ from workshops.filters import (
     TaskFilter,
     AirportFilter,
     BadgeAwardsFilter,
+    WorkshopStaffFilter,
 )
 from workshops.forms import (
     SearchForm,
@@ -68,6 +70,7 @@ from workshops.forms import (
     PersonForm,
     BulkUploadCSVForm,
     EventForm,
+    EventCreateForm,
     TaskForm,
     AwardForm,
     PersonPermissionsForm,
@@ -98,6 +101,7 @@ from workshops.models import (
     Task,
     TrainingRequest,
 )
+from workshops.signals import create_comment_signal
 from workshops.util import (
     upload_person_task_csv,
     verify_upload_person_task,
@@ -115,6 +119,7 @@ from workshops.util import (
     admin_required,
     OnlyForAdminsMixin,
     login_required,
+    add_comment,
 )
 
 
@@ -193,15 +198,12 @@ class AllPersons(OnlyForAdminsMixin, AMYListView):
     context_object_name = 'all_persons'
     template_name = 'workshops/all_persons.html'
     filter_class = PersonFilter
-    queryset = Person.objects.defer('notes').annotate(
-        is_swc_instructor=Sum(Case(When(badges__name='swc-instructor',
-                                        then=1),
-                                   default=0,
-                                   output_field=IntegerField())),
-        is_dc_instructor=Sum(Case(When(badges__name='dc-instructor',
-                                       then=1),
-                                  default=0,
-                                  output_field=IntegerField())),
+    queryset = Person.objects.prefetch_related(
+        Prefetch(
+            'badges',
+            to_attr='instructor_badges',
+            queryset=Badge.objects.instructor_badges()
+        )
     )
     title = 'All Persons'
 
@@ -516,6 +518,12 @@ class PersonCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
         # This doesn't save our troublesome M2M field.
         self.object.save()
 
+        # send a signal to add a comment
+        create_comment_signal.send(sender=self.form_class,
+                                   content_object=self.object,
+                                   comment=form.cleaned_data['comment'],
+                                   timestamp=None)
+
         # saving intermediary M2M model: Qualification
         for lesson in form.cleaned_data['lessons']:
             Qualification.objects.create(lesson=lesson, person=self.object)
@@ -581,9 +589,12 @@ class PersonDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
 class PersonPermissions(OnlyForAdminsMixin, PermissionRequiredMixin,
                         AMYUpdateView):
     permission_required = 'workshops.change_person'
-    model = Person
     form_class = PersonPermissionsForm
     pk_url_kwarg = 'person_id'
+    queryset = Person.objects.prefetch_related('groups', Prefetch(
+            'user_permissions',
+            queryset=Permission.objects.select_related('content_type'),
+        ))
 
 
 @login_required
@@ -676,13 +687,16 @@ def persons_merge(request):
             easy = (
                 'username', 'personal', 'middle', 'family', 'email',
                 'may_contact', 'publish_profile', 'gender', 'airport',
-                'github', 'twitter', 'url', 'notes', 'affiliation',
+                'github', 'twitter', 'url', 'affiliation',
                 'occupation', 'orcid', 'is_active',
             )
 
             # M2M relationships
             difficult = ('award_set', 'qualification_set', 'domains',
-                         'languages', 'task_set', 'trainingprogress_set')
+                         'languages', 'task_set', 'trainingprogress_set',
+                         'comment_comments',  # made by this person
+                         'comments',  # made by others regarding this person
+                         )
 
             try:
                 _, integrity_errors = merge_objects(obj_a, obj_b, easy,
@@ -751,7 +765,6 @@ class AllEvents(OnlyForAdminsMixin, AMYListView):
     template_name = 'workshops/all_events.html'
     queryset = (
         Event.objects
-        .defer('notes')
         .select_related('assigned_to')
         .prefetch_related('host', 'tags')
         .annotate(
@@ -885,7 +898,7 @@ class EventCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
                   AMYCreateView):
     permission_required = 'workshops.add_event'
     model = Event
-    form_class = EventForm
+    form_class = EventCreateForm
     template_name = 'workshops/event_create_form.html'
 
 
@@ -1015,7 +1028,7 @@ def events_merge(request):
                 'invoice_status', 'attendance', 'contact', 'country', 'venue',
                 'address', 'latitude', 'longitude', 'learners_pre',
                 'learners_post', 'instructors_pre', 'instructors_post',
-                'learners_longterm', 'notes',
+                'learners_longterm',
             )
             # M2M relationships
             difficult = ('tags', 'task_set')
@@ -1141,11 +1154,9 @@ def event_accept_metadata_changes(request, slug):
     # update instructors and helpers
     instructors = ', '.join(metadata.get('instructors', []))
     helpers = ', '.join(metadata.get('helpers', []))
-    event.notes += (
-        '\n\n---------\nUPDATE {:%Y-%m-%d}:'
-        '\nINSTRUCTORS: {}\n\nHELPERS: {}'
-        .format(datetime.date.today(), instructors, helpers)
-    )
+    comment_txt = 'INSTRUCTORS: {}\n\nHELPERS: {}' \
+        .format(instructors, helpers)
+    add_comment(event, comment_txt)
 
     # save serialized metadata
     event.repository_metadata = metadata_serialized
@@ -1194,8 +1205,7 @@ class AllTasks(OnlyForAdminsMixin, AMYListView):
     context_object_name = 'all_tasks'
     template_name = 'workshops/all_tasks.html'
     filter_class = TaskFilter
-    queryset = Task.objects.select_related('event', 'person', 'role') \
-                           .defer('person__notes', 'event__notes')
+    queryset = Task.objects.select_related('event', 'person', 'role')
     title = 'All Tasks'
 
 
@@ -1363,134 +1373,156 @@ class BadgeDetails(OnlyForAdminsMixin, AMYDetailView):
         return context
 
 
-#------------------------------------------------------------
+# ------------------------------------------------------------
 
-@admin_required
-def workshop_staff(request):
-    '''Search for workshop staff.'''
-    instructor_badges = Badge.objects.instructor_badges()
+def _workshop_staff_query(lat=None, lng=None):
+    """This query is used in two views: workshop staff searching and its CSV
+    results. Thanks to factoring-out this function, we're now quite certain
+    that the results in both of the views are the same."""
     TTT = Tag.objects.get(name='TTT')
     stalled = Tag.objects.get(name='stalled')
+    learner = Role.objects.get(name='learner')
+    instructor_badges = Badge.objects.instructor_badges()
 
-    people = Person.objects.filter(airport__isnull=False) \
-                           .select_related('airport') \
-                           .prefetch_related('badges', 'lessons')
-
-    trainees = Task.objects.filter(event__tags=TTT) \
-                           .filter(role__name='learner') \
-                           .filter(person__airport__isnull=False) \
-                           .exclude(event__tags=stalled) \
-                           .exclude(person__badges__in=instructor_badges) \
-                           .values_list('person__pk', flat=True)
+    trainee_tasks = Task.objects.filter(event__tags=TTT, role=learner) \
+                                .exclude(event__tags=stalled) \
+                                .exclude(person__badges__in=instructor_badges)
 
     # we need to count number of specific roles users had
-    # and if they are SWC/DC instructors
-    people = people.annotate(
-        num_taught=Count(
-            Case(
-                When(task__role__name='instructor', then=Value(1)),
-                output_field=IntegerField()
-            )
-        ),
-        num_helper=Count(
-            Case(
-                When(task__role__name='helper', then=Value(1)),
-                output_field=IntegerField()
-            )
-        ),
-        num_organizer=Count(
-            Case(
-                When(task__role__name='organizer', then=Value(1)),
-                output_field=IntegerField()
-            )
+    # and if they are SWC/DC/LC instructors
+    people = (
+        Person.objects
+        .filter(airport__isnull=False)
+        .select_related('airport')
+        .annotate(
+            num_taught=Count(
+                Case(
+                    When(task__role__name='instructor', then=Value(1)),
+                    output_field=IntegerField()
+                )
+            ),
+            num_helper=Count(
+                Case(
+                    When(task__role__name='helper', then=Value(1)),
+                    output_field=IntegerField()
+                )
+            ),
+            num_organizer=Count(
+                Case(
+                    When(task__role__name='organizer', then=Value(1)),
+                    output_field=IntegerField()
+                )
+            ),
+            is_trainee=Count('task', filter=(Q(task__in=trainee_tasks))),
+        ).prefetch_related(
+            'lessons',
+            Prefetch(
+                'badges',
+                to_attr='instructor_badges',
+                queryset=Badge.objects.instructor_badges()
+            ),
         )
     )
 
-    filter_form = WorkshopStaffForm()
+    if lat and lng:
+        # using Euclidean distance just because it's faster and easier
+        complex_F = ((F('airport__latitude') - lat) ** 2 +
+                     (F('airport__longitude') - lng) ** 2)
+        people = people.annotate(distance=complex_F) \
+                       .order_by('distance', 'family')
 
+    return people
+
+
+@admin_required
+def workshop_staff(request):
+    """Search for workshop staff."""
+
+    # read data from form, if it was submitted correctly
+    lat, lng = None, None
     lessons = list()
+    form = WorkshopStaffForm(request.GET)
+    if form.is_valid():
+        # to highlight (in template) what lessons people know
+        lessons = form.cleaned_data['lessons']
 
-    if 'submit' in request.GET:
-        filter_form = WorkshopStaffForm(request.GET)
-        if filter_form.is_valid():
-            data = filter_form.cleaned_data
+        if form.cleaned_data['airport']:
+            lat = form.cleaned_data['airport'].latitude
+            lng = form.cleaned_data['airport'].longitude
 
-            if data['lessons']:
-                lessons = data['lessons']
-                # this has to be in a loop to match a *subset* of lessons,
-                # not any lesson within the list (as it would be with
-                # `.filter(lessons_in=lessons)`)
-                for lesson in lessons:
-                    people = people.filter(
-                        qualification__lesson=lesson
-                    )
+        elif form.cleaned_data['latitude'] and form.cleaned_data['longitude']:
+            lat = form.cleaned_data['latitude']
+            lng = form.cleaned_data['longitude']
 
-            if data['airport']:
-                x = data['airport'].latitude
-                y = data['airport'].longitude
-                # using Euclidean distance just because it's faster and easier
-                complex_F = ((F('airport__latitude') - x) ** 2 +
-                             (F('airport__longitude') - y) ** 2)
-                people = people.annotate(distance=complex_F) \
-                               .order_by('distance', 'family')
+    # prepare the query
+    people = _workshop_staff_query(lat, lng)
 
-            if data['latitude'] and data['longitude']:
-                x = data['latitude']
-                y = data['longitude']
-                # using Euclidean distance just because it's faster and easier
-                complex_F = ((F('airport__latitude') - x) ** 2 +
-                             (F('airport__longitude') - y) ** 2)
-                people = people.annotate(distance=complex_F) \
-                               .order_by('distance', 'family')
+    # filter the query
+    f = WorkshopStaffFilter(request.GET, queryset=people)
+    people = get_pagination_items(request, f.qs)
 
-            if data['country']:
-                people = people.filter(
-                    Q(airport__country__in=data['country']) |
-                    Q(country__in=data['country'])
-                ).order_by('family')
-
-            if data['gender']:
-                people = people.filter(gender=data['gender'])
-
-            if data['instructor_badges']:
-                for badge in data['instructor_badges']:
-                    people = people.filter(badges__name=badge)
-
-            # it's faster to count role=helper occurences than to check if user
-            # had a role=helper
-            if data['was_helper']:
-                people = people.filter(num_helper__gte=1)
-
-            if data['was_organizer']:
-                people = people.filter(num_organizer__gte=1)
-
-            if data['is_in_progress_trainee']:
-                # filter out people who took part in only stalled TTT events
-                TTT_non_stalled_events = (
-                    Event.objects.exclude(tags=stalled).filter(tags=TTT)
-                )
-                q = Q(task__event__in=TTT_non_stalled_events)
-                people = people.filter(q, task__role__name='learner') \
-                               .exclude(badges__in=instructor_badges)
-
-            if data['languages']:
-                for language in data['languages']:
-                    people = people.filter(languages=language)
-
-    emails = people.filter(may_contact=True).values_list('email', flat=True)
-    people = get_pagination_items(request, people)
     context = {
         'title': 'Find Workshop Staff',
-        'filter_form': filter_form,
+        'filter_form': form,
         'persons': people,
         'lessons': lessons,
-        'instructor_badges': instructor_badges,
-        'trainees': trainees,
-        'emails': emails,
     }
     return render(request, 'workshops/workshop_staff.html', context)
 
-#------------------------------------------------------------
+
+@admin_required
+def workshop_staff_csv(request):
+    """Generate CSV of workshop staff search results."""
+
+    # read data from form, if it was submitted correctly
+    lat, lng = None, None
+    form = WorkshopStaffForm(request.GET)
+    if form.is_valid():
+        if form.cleaned_data['airport']:
+            lat = form.cleaned_data['airport'].latitude
+            lng = form.cleaned_data['airport'].longitude
+
+        elif form.cleaned_data['latitude'] and form.cleaned_data['longitude']:
+            lat = form.cleaned_data['latitude']
+            lng = form.cleaned_data['longitude']
+
+    # prepare the query
+    people = _workshop_staff_query(lat, lng)
+
+    # filter the query
+    f = WorkshopStaffFilter(request.GET, queryset=people)
+    people = f.qs
+
+    # first row of the CSV output
+    header_row = ('Name', 'Email', 'Instructor badges', 'Taught times',
+                  'Is trainee', 'Airport', 'Country', 'Lessons', 'Affiliation')
+
+    # CSV http header
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = ('attachment; '
+                                       'filename="WorkshopStaff.csv"')
+    # CSV output
+    writer = csv.writer(response)
+    writer.writerow(header_row)
+    for person in people:
+        writer.writerow([
+            person.full_name,
+            person.email,
+            " ".join([
+                badge.name for badge in person.instructor_badges
+            ]),
+            person.num_taught,
+            "yes" if person.is_trainee else "no",
+            str(person.airport) if person.airport else "",
+            person.country.name if person.country else "",
+            " ".join([
+                lesson.name for lesson in person.lessons.all()
+            ]),
+            person.affiliation or "",
+        ])
+    return response
+
+# ------------------------------------------------------------
 
 
 @csrf_exempt
@@ -1510,16 +1542,13 @@ def search(request):
 
             if form.cleaned_data['in_organizations']:
                 organizations = Organization.objects.filter(
-                    Q(domain__icontains=term) |
-                    Q(fullname__icontains=term) |
-                    Q(notes__icontains=term)) \
+                    Q(domain__icontains=term) | Q(fullname__icontains=term)) \
                     .order_by('fullname')
                 results += list(organizations)
 
             if form.cleaned_data['in_events']:
                 events = Event.objects.filter(
                     Q(slug__icontains=term) |
-                    Q(notes__icontains=term) |
                     Q(host__domain__icontains=term) |
                     Q(host__fullname__icontains=term) |
                     Q(url__icontains=term) |
@@ -1564,7 +1593,7 @@ def search(request):
                     Q(github__icontains=term) |
                     Q(affiliation__icontains=term) |
                     Q(location__icontains=term) |
-                    Q(comment__icontains=term)
+                    Q(user_notes__icontains=term)
                 )
                 results += list(training_requests)
 
@@ -1580,7 +1609,7 @@ def search(request):
         'title': 'Search',
         'form': form,
         'term': term,
-        'organizations' : organizations,
+        'organizations': organizations,
         'events': events,
         'persons': persons,
         'airports': airports,

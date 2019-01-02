@@ -7,10 +7,14 @@ from django_countries import Countries
 
 from workshops.fields import (
     Select2,
+    Select2Multiple,
     ModelSelect2,
     ModelSelect2Multiple,
 )
-from workshops.forms import bootstrap_helper_filter, SIDEBAR_DAL_WIDTH
+from workshops.forms import (
+    bootstrap_helper_filter,
+    SIDEBAR_DAL_WIDTH,
+)
 from workshops.models import (
     StateMixin,
     Event,
@@ -21,10 +25,27 @@ from workshops.models import (
     Tag,
     Task,
     Award,
+    Language,
+    Lesson,
 )
 
 
 class AllCountriesFilter(django_filters.ChoiceFilter):
+    @property
+    def field(self):
+        qs = self.model._default_manager.distinct()
+        qs = qs.order_by(self.field_name).values_list(self.field_name,
+                                                      flat=True)
+
+        choices = [o for o in qs if o]
+        countries = Countries()
+        countries.only = choices
+
+        self.extra['choices'] = list(countries)
+        return super().field
+
+
+class AllCountriesMultipleFilter(django_filters.MultipleChoiceFilter):
     @property
     def field(self):
         qs = self.model._default_manager.distinct()
@@ -446,3 +467,70 @@ class BadgeAwardsFilter(AMYFilterSet):
         fields = (
             'awarded_after', 'awarded_before', 'event',
         )
+
+
+class WorkshopStaffFilter(AMYFilterSet):
+    country = django_filters.MultipleChoiceFilter(
+        choices=list(Countries()),
+        widget=Select2Multiple(),
+        method="filter_country",
+    )
+    lessons = django_filters.ModelMultipleChoiceFilter(
+        label='Lessons',
+        queryset=Lesson.objects.all(),
+        widget=ModelSelect2Multiple(attrs=SIDEBAR_DAL_WIDTH),
+        conjoined=True,  # `AND`
+    )
+    badges = django_filters.ModelMultipleChoiceFilter(
+        label='Badges',
+        queryset=Badge.objects.instructor_badges(),
+        widget=ModelSelect2Multiple(attrs=SIDEBAR_DAL_WIDTH),
+        conjoined=False,  # `OR`
+    )
+    languages = django_filters.ModelMultipleChoiceFilter(
+        label='Languages',
+        queryset=Language.objects.all(),
+        widget=ModelSelect2Multiple(
+            url='language-lookup',
+            attrs=SIDEBAR_DAL_WIDTH,
+        ),
+        conjoined=True,  # `AND`
+    )
+    gender = django_filters.ChoiceFilter(
+        label='Gender',
+        choices=Person.GENDER_CHOICES,
+    )
+    was_helper = django_filters.BooleanFilter(
+        widget=widgets.CheckboxInput,
+        method='filter_helper',
+    )
+    was_organizer = django_filters.BooleanFilter(
+        widget=widgets.CheckboxInput,
+        method='filter_organizer',
+    )
+    is_in_progress_trainee = django_filters.BooleanFilter(
+        widget=widgets.CheckboxInput,
+        method='filter_in_progress_trainee',
+    )
+
+    def filter_country(self, qs, n, v):
+        if v:
+            return qs.filter(
+                Q(airport__country__in=v) | Q(country__in=v)
+            )
+        return qs
+
+    def filter_helper(self, qs, n, v):
+        if v:
+            return qs.filter(num_helper__gte=1)
+        return qs
+
+    def filter_organizer(self, qs, n, v):
+        if v:
+            return qs.filter(num_organizer__gte=1)
+        return qs
+
+    def filter_in_progress_trainee(self, qs, n, v):
+        if v:
+            return qs.filter(is_trainee__gte=1)
+        return qs

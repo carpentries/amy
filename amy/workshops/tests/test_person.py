@@ -1,6 +1,6 @@
 # coding: utf-8
 
-import datetime
+from datetime import datetime, timezone, date
 from social_django.models import UserSocialAuth
 from unittest.mock import patch
 from urllib.parse import urlencode
@@ -8,8 +8,10 @@ import webtest
 
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import Permission, Group
+from django.contrib.sites.models import Site
 from django.core.validators import ValidationError
 from django.urls import reverse
+from django_comments.models import Comment
 from webtest.forms import Upload
 
 from workshops.filters import filter_taught_workshops
@@ -19,7 +21,7 @@ from workshops.models import (
     Organization, Language,
     Tag, TrainingRequirement, TrainingProgress
 )
-from workshops.forms import PersonForm, PersonsMergeForm
+from workshops.forms import PersonForm, PersonCreateForm, PersonsMergeForm
 
 
 @patch('workshops.github_auth.github_username_to_uid', lambda username: None)
@@ -67,30 +69,6 @@ class TestPerson(TestBase):
         }
         f = PersonForm(data)
         self.assertNotIn('family', f.errors)
-
-    def test_display_person_with_notes(self):
-        note = 'This person has some serious records'
-        p = Person.objects.create(personal='P1', family='P1',
-                                  email='p1@p1.net',
-                                  notes=note)
-
-        response = self.client.get(reverse('person_details',
-                                           args=[str(p.id)]))
-
-        assert response.status_code == 200
-
-        content = response.content.decode('utf-8')
-        assert "No notes" not in content
-        assert note in content
-
-    def test_edit_person_notes(self):
-        data = PersonForm(instance=self.hermione).initial
-        # notes not present
-        self.assertEqual(data['notes'], '')
-
-        data['notes'] = 'Hermione is a very good student.'
-        form = PersonForm(data, instance=self.hermione)
-        self.assertTrue(form.is_valid(), form.errors)
 
     def test_1185_regression(self):
         """Ensure that admins without superuser privileges,
@@ -446,6 +424,43 @@ class TestPerson(TestBase):
         )
         person.clean_fields(exclude=['password'])
 
+    def test_creating_person_with_no_comment(self):
+        """Ensure that no comment is added when PersonCreateForm without comment
+        content is saved."""
+        self.assertEqual(Comment.objects.count(), 0)
+        data = {
+            'username': 'curie_marie',
+            'personal': 'Marie',
+            'family': 'Curie',
+            'gender': 'F',
+            'email': 'm.curie@sorbonne.fr',
+            'comment': '',
+        }
+        url = reverse('person_add')
+        self.client.post(url, data)
+        Person.objects.get(username='curie_marie')
+        self.assertEqual(Comment.objects.count(), 0)
+
+    def test_creating_person_with_comment(self):
+        """Ensure that a comment is added when PersonCreateForm with comment
+        content is saved."""
+        self.assertEqual(Comment.objects.count(), 0)
+        data = {
+            'username': 'curie_marie',
+            'personal': 'Marie',
+            'family': 'Curie',
+            'gender': 'F',
+            'email': 'm.curie@sorbonne.fr',
+            'comment': 'This is a test comment.',
+        }
+        url = reverse('person_add')
+        self.client.post(url, data)
+        obj = Person.objects.get(username='curie_marie')
+        self.assertEqual(Comment.objects.count(), 1)
+        comment = Comment.objects.first()
+        self.assertEqual(comment.comment, 'This is a test comment.')
+        self.assertIn(comment, Comment.objects.for_model(obj))
+
 
 class TestPersonPassword(TestBase):
     """Separate tests for testing password setting.
@@ -596,13 +611,13 @@ class TestPersonMerging(TestBase):
             username='purdy_kelsi', email='purdy.kelsi@example.com',
             gender='F', may_contact=True, airport=self.airport_0_0,
             github='purdy_kelsi', twitter='purdy_kelsi',
-            url='http://kelsipurdy.com/', notes='',
+            url='http://kelsipurdy.com/',
             affiliation='University of Arizona',
             occupation='TA at Biology Department', orcid='0000-0000-0000',
             is_active=True,
         )
         self.person_a.award_set.create(badge=self.swc_instructor,
-                                       awarded=datetime.date(2016, 2, 16))
+                                       awarded=date(2016, 2, 16))
         Qualification.objects.create(person=self.person_a, lesson=self.git)
         Qualification.objects.create(person=self.person_a, lesson=self.sql)
         self.person_a.domains.set([KnowledgeDomain.objects.first()])
@@ -614,24 +629,58 @@ class TestPersonMerging(TestBase):
                                      Language.objects.last()])
         self.person_a.trainingprogress_set.create(requirement=self.training)
 
+        # comments made by this person
+        self.ca_1 = Comment.objects.create(
+            content_object=self.admin,
+            user=self.person_a,
+            comment="Comment from person_a on admin",
+            submit_date=datetime.now(tz=timezone.utc),
+            site=Site.objects.get_current(),
+        )
+        # comments regarding this person
+        self.ca_2 = Comment.objects.create(
+            content_object=self.person_a,
+            user=self.admin,
+            comment="Comment from admin on person_a",
+            submit_date=datetime.now(tz=timezone.utc),
+            site=Site.objects.get_current(),
+        )
+
         # create second person
         self.person_b = Person.objects.create(
             personal='Jayden', middle='', family='Deckow',
             username='deckow_jayden', email='deckow.jayden@example.com',
             gender='M', may_contact=True, airport=self.airport_0_50,
             github='deckow_jayden', twitter='deckow_jayden',
-            url='http://jaydendeckow.com/', notes='deckow_jayden',
+            url='http://jaydendeckow.com/',
             affiliation='UFlo',
             occupation='Staff', orcid='0000-0000-0001',
             is_active=True,
         )
         self.person_b.award_set.create(badge=self.dc_instructor,
-                                       awarded=datetime.date(2016, 2, 16))
+                                       awarded=date(2016, 2, 16))
         Qualification.objects.create(person=self.person_b, lesson=self.sql)
         self.person_b.domains.set([KnowledgeDomain.objects.last()])
         self.person_b.languages.set([Language.objects.last()])
         self.person_b.trainingprogress_set.create(requirement=self.training)
         self.person_b.trainingprogress_set.create(requirement=self.homework)
+
+        # comments made by this person
+        self.cb_1 = Comment.objects.create(
+            content_object=self.admin,
+            user=self.person_b,
+            comment="Comment from person_b on admin",
+            submit_date=datetime.now(tz=timezone.utc),
+            site=Site.objects.get_current(),
+        )
+        # comments regarding this person
+        self.cb_2 = Comment.objects.create(
+            content_object=self.person_b,
+            user=self.admin,
+            comment="Comment from admin on person_b",
+            submit_date=datetime.now(tz=timezone.utc),
+            site=Site.objects.get_current(),
+        )
 
         # set up a strategy
         self.strategy = {
@@ -651,7 +700,6 @@ class TestPersonMerging(TestBase):
             'github': 'obj_b',
             'twitter': 'obj_a',
             'url': 'obj_b',
-            'notes': 'combine',
             'affiliation': 'obj_b',
             'occupation': 'obj_a',
             'orcid': 'obj_b',
@@ -662,6 +710,8 @@ class TestPersonMerging(TestBase):
             'task_set': 'obj_b',
             'is_active': 'obj_a',
             'trainingprogress_set': 'combine',
+            'comment_comments': 'combine',  # made by this person
+            'comments': 'combine',  # regarding this person
         }
         base_url = reverse('persons_merge')
         query = urlencode({
@@ -699,13 +749,14 @@ class TestPersonMerging(TestBase):
         }
         # fields additionally accepting "combine"
         passing = {
-            'notes': 'combine',
             'award_set': 'combine',
             'qualification_set': 'combine',
             'domains': 'combine',
             'languages': 'combine',
             'task_set': 'combine',
             'trainingprogress_set': 'combine',
+            'comment_comments': 'combine',
+            'comments': 'combine',
         }
         data = hidden.copy()
         data.update(failing)
@@ -752,7 +803,6 @@ class TestPersonMerging(TestBase):
             'github': self.person_b.github,
             'twitter': self.person_a.twitter,
             'url': self.person_b.url,
-            'notes': self.person_a.notes + self.person_b.notes,
             'affiliation': self.person_b.affiliation,
             'occupation': self.person_a.occupation,
             'orcid': self.person_b.orcid,
@@ -780,6 +830,8 @@ class TestPersonMerging(TestBase):
             # Combining similar TrainingProgresses should end up in
             # a unique constraint violation, shouldn't it?
             'trainingprogress_set': set(TrainingProgress.objects.all()),
+
+            'comment_comments': set([self.ca_1, self.cb_1]),
         }
 
         rv = self.client.post(self.url, data=self.strategy)
@@ -825,6 +877,51 @@ class TestPersonMerging(TestBase):
 
         rv = self.client.post(self.url, data=self.strategy)
         self.assertEqual(rv.status_code, 302)
+
+    def test_merging_comments_strategy1(self):
+        """Ensure comments regarding persons are correctly merged using
+        `merge_objects`.
+        This test uses strategy 1 (combine)."""
+        self.strategy['comments'] = 'combine'
+        comments = [self.ca_2, self.cb_2]
+        rv = self.client.post(self.url, data=self.strategy)
+        self.assertEqual(rv.status_code, 302)
+        self.person_b.refresh_from_db()
+        self.assertEqual(
+            set(Comment.objects.for_model(self.person_b)
+                               .filter(is_removed=False)),
+            set(comments),
+        )
+
+    def test_merging_comments_strategy2(self):
+        """Ensure comments regarding persons are correctly merged using
+        `merge_objects`.
+        This test uses strategy 2 (object a)."""
+        self.strategy['comments'] = 'obj_a'
+        comments = [self.ca_2]
+        rv = self.client.post(self.url, data=self.strategy)
+        self.assertEqual(rv.status_code, 302)
+        self.person_b.refresh_from_db()
+        self.assertEqual(
+            set(Comment.objects.for_model(self.person_b)
+                               .filter(is_removed=False)),
+            set(comments),
+        )
+
+    def test_merging_comments_strategy3(self):
+        """Ensure comments regarding persons are correctly merged using
+        `merge_objects`.
+        This test uses strategy 3 (object b)."""
+        self.strategy['comments'] = 'obj_b'
+        comments = [self.cb_2]
+        rv = self.client.post(self.url, data=self.strategy)
+        self.assertEqual(rv.status_code, 302)
+        self.person_b.refresh_from_db()
+        self.assertEqual(
+            set(Comment.objects.for_model(self.person_b)
+                               .filter(is_removed=False)),
+            set(comments),
+        )
 
 
 def github_username_to_uid_mock(username):

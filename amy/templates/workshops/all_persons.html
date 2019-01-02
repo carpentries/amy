@@ -19,7 +19,9 @@
       </tr>
     {% for person in all_persons %}
       <tr>
-        <td class="text-center">{% if person.is_dc_instructor %}{% bootstrap_tag "DC" %}{% endif %}{% if person.is_swc_instructor %}{% bootstrap_tag "SWC" %}{% endif %}</td>
+        <td class="text-center">{% for badge in person.instructor_badges %}
+          {% bootstrap_tag badge.name|cut:"-instructor"|upper %}
+        {% empty %}&mdash;{% endfor %}</td>
         <td><a href="{% url 'person_details' person.id %}">{{ person.full_name }}</a></td>
         <td>{% if person.email %}<a href="mailto:{{ person.email }}">{{ person.email }}</a>{% else %}—{% endif %}</td>
         <td>

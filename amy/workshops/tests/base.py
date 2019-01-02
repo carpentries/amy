@@ -4,6 +4,7 @@ import itertools
 import sys
 
 from django.contrib.auth.models import Group, Permission
+from django.contrib.sites.models import Site
 from django_webtest import WebTest
 import webtest.forms
 
@@ -42,11 +43,10 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
                WebTest):  # Support for functional tests (django-webtest)
     '''Base class for AMY test cases.'''
 
-    ERR_DIR = 'htmlerror' # where to save error HTML files
-
     def setUp(self):
         '''Create standard objects.'''
 
+        self.clear_sites_cache()
         self._setUpOrganizations()
         self._setUpAirports()
         self._setUpLessons()
@@ -54,6 +54,12 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
         self._setUpInstructors()
         self._setUpNonInstructors()
         self._setUpPermissions()
+
+    def clear_sites_cache(self):
+        # we need to clear Sites' cache, because after post_migration signal,
+        # there's some junk in the cache that prevents from adding comments
+        # (the site in CACHE is not a real Site)
+        Site.objects.clear_cache()
 
     def _setUpLessons(self):
         '''Set up lesson objects.'''
@@ -68,15 +74,12 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
     def _setUpOrganizations(self):
         '''Set up organization objects.'''
 
-        self.org_alpha = Organization.objects.create(domain='alpha.edu',
-                                              fullname='Alpha Organization',
-                                              country='Azerbaijan',
-                                              notes='')
+        self.org_alpha = Organization.objects.create(
+            domain='alpha.edu', fullname='Alpha Organization',
+            country='Azerbaijan')
 
-        self.org_beta = Organization.objects.create(domain='beta.com',
-                                             fullname='Beta Organization',
-                                             country='Brazil',
-                                             notes='Notes\nabout\nBrazil\n')
+        self.org_beta = Organization.objects.create(
+            domain='beta.com', fullname='Beta Organization', country='Brazil')
 
     def _setUpAirports(self):
         '''Set up airport objects.'''
@@ -128,6 +131,8 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
             name='dc-instructor',
             defaults=dict(title='Data Carpentry Instructor',
                           criteria='Worked hard for this'))
+        # lc-instructor is provided via a migration
+        self.lc_instructor = Badge.objects.get(name='lc-instructor')
 
     def _setUpInstructors(self):
         '''Set up person objects representing instructors.'''
@@ -136,7 +141,8 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
             personal='Hermione', family='Granger',
             email='hermione@granger.co.uk', gender='F', may_contact=True,
             airport=self.airport_0_0, github='herself', twitter='herself',
-            url='http://hermione.org', username="granger_hermione")
+            url='http://hermione.org', username="granger_hermione",
+            country='GB')
 
         # Hermione is additionally a qualified Data Carpentry instructor
         Award.objects.create(person=self.hermione,
@@ -145,6 +151,9 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
         Award.objects.create(person=self.hermione,
                              badge=self.dc_instructor,
                              awarded=datetime.date(2014, 1, 1))
+        Award.objects.create(person=self.hermione,
+                             badge=self.lc_instructor,
+                             awarded=datetime.date(2018, 12, 25))
         Qualification.objects.create(person=self.hermione, lesson=self.git)
         Qualification.objects.create(person=self.hermione, lesson=self.sql)
 
@@ -152,7 +161,8 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
             personal='Harry', family='Potter',
             email='harry@hogwarts.edu', gender='M', may_contact=True,
             airport=self.airport_0_50, github='hpotter', twitter=None,
-            username="potter_harry")
+            username="potter_harry",
+            country='GB')
 
         # Harry is additionally a qualified Data Carpentry instructor
         Award.objects.create(person=self.harry,
@@ -167,7 +177,8 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
             personal='Ron', family='Weasley',
             email='rweasley@ministry.gov.uk', gender='M', may_contact=False,
             airport=self.airport_50_100, github=None, twitter=None,
-            url='http://geocities.com/ron_weas', username="weasley_ron")
+            url='http://geocities.com/ron_weas', username="weasley_ron",
+            country='GB')
 
         Award.objects.create(person=self.ron,
                              badge=self.swc_instructor,
@@ -180,17 +191,20 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
         self.spiderman = Person.objects.create(
             personal='Peter', middle='Q.', family='Parker',
             email='peter@webslinger.net', gender='O', may_contact=True,
-            username="spiderman", airport=self.airport_55_105)
+            username="spiderman", airport=self.airport_55_105,
+            country='US')
 
         self.ironman = Person.objects.create(
             personal='Tony', family='Stark', email='me@stark.com',
             gender='M', may_contact=True, username="ironman",
-            airport=self.airport_50_100)
+            airport=self.airport_50_100,
+            country='US')
 
         self.blackwidow = Person.objects.create(
             personal='Natasha', family='Romanova', email=None,
             gender='F', may_contact=False, username="blackwidow",
-            airport=self.airport_0_50)
+            airport=self.airport_0_50,
+            country='RU')
 
     def _setUpUsersAndLogin(self):
         """Set up one account for administrator that can log into the website.
@@ -341,12 +355,12 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
         are currently in the database.  This is an auxiliary method for adding
         them to the tests, should one need them."""
         Role.objects.bulk_create([
-            Role(name='helper'),
-            Role(name='instructor'),
+            Role(name='helper', verbose_name='Helper'),
+            Role(name='instructor', verbose_name='Instructor'),
             Role(name='host', verbose_name='Host'),
-            Role(name='learner'),
-            Role(name='organizer'),
-            Role(name='tutor'),
+            Role(name='learner', verbose_name='Learner'),
+            Role(name='organizer', verbose_name='Organizer'),
+            Role(name='tutor', verbose_name='Tutor'),
         ])
 
     def saveResponse(self, response, filename='error.html'):

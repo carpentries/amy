@@ -108,7 +108,6 @@
     </td>
   </tr>
   <tr><th>Notes from the user:</th><td><pre>{{ person.user_notes|default:"—" }}</pre></td></tr>
-  <tr><th>Admin notes (not visible to the user):</th><td><pre>{{ person.notes|default:"—" }}</pre></td></tr>
   <tr>
     <th>Awards:</th>
     <td>
@@ -210,4 +209,7 @@
     {% endif %}
   </div>
 </div>
+
+{% include "includes/comments.html" with object=person %}
+
 {% endblock %}

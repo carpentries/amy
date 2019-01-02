@@ -19,8 +19,6 @@
   </div>
   <div class="tab-pane" role="tabpanel" aria-labelledby="tasks-tab" id="tasks">
     {% block task_tab %}
-    <p>Notes regarding this event may include instructor and helper names:</p>
-    <pre>{{ event.notes }}</pre>
 
     <form class="form-horizontal" role="form" method="POST" action="{% url 'task_add' %}?next={{ request.get_full_path|urlencode }}#tasks">
       {% crispy task_form %}
@@ -102,6 +100,9 @@
     {% endblock sponsor_tab %}
   </div>
 </div>
+
+{% include "includes/comments.html" with object=event %}
+
 {% endblock %}
 
 {% block extrajs %}

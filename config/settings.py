@@ -49,8 +49,7 @@ if not DEBUG and SECRET_KEY == DEFAULT_SECRET_KEY:
     raise ImproperlyConfigured('You must specify non-default value for '
                                'SECRET_KEY when running with Debug=FALSE.')
 
-SITE_URL = env.str('AMY_SITE_URL',
-                   default='https://amy.software-carpentry.org')
+SITE_ID = env.int('AMY_SITE_ID', default=1)
 ALLOWED_HOSTS = env.list('AMY_ALLOWED_HOSTS',
                          default=['amy.software-carpentry.org'])
 if DEBUG:
@@ -106,16 +105,23 @@ else:
     if not RECAPTCHA_PUBLIC_KEY or not RECAPTCHA_PRIVATE_KEY:
         raise ImproperlyConfigured(
             "Both ReCaptcha keys (public and private) must be present.")
+
 # APPS
 # -----------------------------------------------------------------------------
 DJANGO_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
-    # 'django.contrib.sites',
+    'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.humanize',  # Handy template tags
+
+    # Handy template tags
+    'django.contrib.humanize',
+
+    # for TemplatesSetting form template renderer
+    # https://docs.djangoproject.com/en/dev/ref/forms/renderers/
+    'django.forms',
 ]
 THIRD_PARTY_APPS = [
     'crispy_forms',
@@ -133,6 +139,8 @@ THIRD_PARTY_APPS = [
     'debug_toolbar',
     'django_extensions',
     'anymail',
+    'django_comments',  # this used to be in django.contrib
+    'markdownx',
 ]
 PYDATA_APP = [
     'amy.pydata.apps.PyDataConfig',
@@ -146,6 +154,7 @@ LOCAL_APPS = [
     'amy.fiscal.apps.FiscalConfig',
     'amy.reports.apps.ReportsConfig',
     'amy.trainings.apps.TrainingsConfig',
+    'amy.extcomments.apps.ExtcommentsConfig',
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 if ENABLE_PYDATA:
@@ -157,7 +166,7 @@ else:
 # -----------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#migration-modules
 MIGRATION_MODULES = {
-    # 'sites': 'questions_ranker.contrib.sites.migrations'
+    # 'sites': 'amy.contrib.sites.migrations'
 }
 
 # AUTHENTICATION
@@ -276,9 +285,16 @@ STATICFILES_FINDERS = [
 # MEDIA
 # -----------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#media-root
-MEDIA_ROOT = str(APPS_DIR('media'))
+MEDIA_ROOT = str(ROOT_DIR('mediafiles'))
 # https://docs.djangoproject.com/en/dev/ref/settings/#media-url
 MEDIA_URL = '/media/'
+
+# FORM RENDERER
+# -----------------------------------------------------------------------------
+# https://docs.djangoproject.com/en/2.1/ref/settings/#form-renderer
+# and
+# https://docs.djangoproject.com/en/1.11/ref/forms/renderers/
+FORM_RENDERER = 'django.forms.renderers.TemplatesSetting'
 
 # TEMPLATES
 # -----------------------------------------------------------------------------
@@ -471,3 +487,8 @@ LOGGING = {
 # -----------------------------------------------------------------------------
 DEBUG_TOOLBAR_PATCH_SETTINGS = False
 INTERNAL_IPS = ['127.0.0.1', '::1']
+
+# Django-contrib-comments
+# -----------------------------------------------------------------------------
+# https://django-contrib-comments.readthedocs.io/en/latest/settings.html
+COMMENTS_APP = 'extcomments'
