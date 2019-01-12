@@ -1,4 +1,5 @@
-sudo: false
+dist: xenial
+sudo: required
 
 language: python
 
@@ -7,7 +8,7 @@ cache: pip
 python:
   - 3.5
   - 3.6
-  - "3.7-dev"
+  - 3.7
 
 env:
   - AMY_ENABLE_PYDATA=true
