@@ -92,16 +92,6 @@ class MembershipForm(forms.ModelForm):
             'additional_instructor_training_seats',
         ]
 
-    def save(self, *args, **kwargs):
-        res = super().save(*args, **kwargs)
-
-        create_comment_signal.send(sender=self.__class__,
-                                   content_object=res,
-                                   comment=self.cleaned_data['comment'],
-                                   timestamp=None)
-
-        return res
-
 
 class MembershipCreateForm(MembershipForm):
     comment = MarkdownxFormField(
@@ -115,6 +105,16 @@ class MembershipCreateForm(MembershipForm):
     class Meta(MembershipForm.Meta):
         fields = MembershipForm.Meta.fields.copy()
         fields.append('comment')
+
+    def save(self, *args, **kwargs):
+        res = super().save(*args, **kwargs)
+
+        create_comment_signal.send(sender=self.__class__,
+                                   content_object=res,
+                                   comment=self.cleaned_data['comment'],
+                                   timestamp=None)
+
+        return res
 
 
 class SponsorshipForm(WidgetOverrideMixin, forms.ModelForm):
