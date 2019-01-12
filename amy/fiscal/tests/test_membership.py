@@ -4,7 +4,7 @@ import itertools
 from django.urls import reverse
 from django_comments.models import Comment
 
-from fiscal.forms import MembershipCreateForm
+from fiscal.forms import MembershipCreateForm, MembershipForm
 from workshops.tests.base import TestBase
 from workshops.models import Membership, Organization, Event, Role, Tag, Task
 
@@ -210,3 +210,23 @@ class TestMembership(TestBase):
         comment = Comment.objects.first()
         self.assertEqual(comment.comment, 'This is a test comment.')
         self.assertIn(comment, Comment.objects.for_model(obj))
+
+    def test_workshop_edit_form_no_comment(self):
+        """Ensure workshop edit form works and doesn't provide `comment` field.
+
+        This is a regression test against #1437:
+        https://github.com/swcarpentry/amy/issues/1437
+        """
+        self.assertNotIn('comment', MembershipForm.Meta.fields)
+
+        self.assertEqual(Comment.objects.count(), 0)
+        data = {
+            'organization': self.org_alpha.pk,
+            'variant': 'partner',
+            'contribution_type': 'financial',
+            'additional_instructor_training_seats': 0,
+            'seats_instructor_training': 0,
+        }
+        form = MembershipForm(data, instance=self.current)
+        form.save()
+        self.assertEqual(Comment.objects.count(), 0)
