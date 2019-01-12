@@ -19,7 +19,6 @@
            data-toggle="popover" data-html="true"
            data-content="<span class='badge badge-warning'>Pending</span> <span class='badge badge-danger'>Discarded</span> <span class='badge badge-success'>Accepted</span>"></i>
       </th>
-      <th>Comment</th>
       <th class="additional-links"></th>
     </tr>
     {% for req in requests %}
@@ -46,7 +45,6 @@
           {{ req.get_state_display }}
         </span>
       </td>
-      <td>{{ req.comment|truncatewords:5|default:"—" }}</td>
       <td><a href="{{ req.get_absolute_url }}"><i class="fas fa-info-circle"></i></a></td>
     </tr>
     {% endfor %}

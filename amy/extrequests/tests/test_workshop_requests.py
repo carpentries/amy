@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.urls import reverse
 
 from extrequests.forms import WorkshopRequestBaseForm
@@ -405,3 +406,22 @@ class TestWorkshopRequestViews(TestBase):
             follow=True)
         self.wr2.refresh_from_db()
         self.assertEqual(self.wr2.state, "p")
+
+    def test_list_no_comments(self):
+        """Regression for #1435: missing "comment" field displayed on "all
+        workshops" page.
+
+        https://github.com/swcarpentry/amy/issues/1435
+        """
+
+        # make sure the `string_if_invalid` is not empty
+        self.assertTrue(settings.TEMPLATES[0]['OPTIONS']['string_if_invalid'])
+
+        rv = self.client.get(reverse('all_workshoprequests'))
+
+        # some objects available in the page
+        self.assertNotEqual(len(rv.context['requests']), 0)
+
+        # no string_if_invalid found in the page
+        invalid = settings.TEMPLATES[0]['OPTIONS']['string_if_invalid']
+        self.assertNotIn(invalid, rv.content.decode('utf-8'))
