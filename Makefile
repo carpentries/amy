@@ -100,3 +100,12 @@ clean :
 coverage :
 	coverage --source=amy manage.py test
 	coverage html
+
+## bumpversion	: bump version strings in various files, expected envvars CURRENT, NEXT
+bumpversion :
+	@if [ "${CURRENT}" -a "$(NEXT)" ]; \
+	then \
+		echo "Bumping version $(CURRENT) to $(NEXT)"; \
+		sed -i "s/$(CURRENT)/$(NEXT)/" amy/workshops/__init__.py ; \
+		sed -i "s/$(CURRENT)/$(NEXT)/" package.json ; \
+	fi

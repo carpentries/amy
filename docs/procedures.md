@@ -48,6 +48,7 @@ Execute the following commands on your local machine, not production.
 
 4.  Define which version you're going to release (replace X and Y with correct numbers):
 
+        $ AMY_CURRENT=v2.X.Y-dev  # this needs to correspond to what you have in amy/workshops/__init__.py and package.json
         $ AMY_VERSION=v2.X.Y
         $ AMY_NEXT_VERSION=v2.X+1.0-dev
 
@@ -58,9 +59,8 @@ Execute the following commands on your local machine, not production.
 
 6.  Bump version on `master`:
 
-        $ echo "__version__ = '$AMY_VERSION'" > workshops/__init__.py  # change version to 2.X.Y
-        $ vim package.json  # change version to $AMY_VERSION
-        $ git add workshops/__init__.py package.json
+        $ make bumpversion CURRENT=$AMY_CURRENT NEXT=$AMY_VERSION
+        $ git add amy/workshops/__init__.py package.json
         $ git commit -m "Bumping version to $AMY_VERSION"
 
 7.  Just to be safe, run tests:
@@ -82,9 +82,8 @@ Execute the following commands on your local machine, not production.
 10. Bump version on `develop`:
 
         $ git checkout develop
-        $ echo "__version__ = '$AMY_NEXT_VERSION'" > workshops/__init__.py  # change version to 2.X+1.0
-        $ vim package.json  # change version to $AMY_NEXT_VERSION
-        $ git add workshops/__init__.py package.json
+        $ make bumpversion CURRENT=$AMY_CURRENT NEXT=$AMY_NEXT_VERSION
+        $ git add amy/workshops/__init__.py package.json
         $ git commit -m "Bumping version to $AMY_NEXT_VERSION"
 
     Skip this step if development version doesn't change, for example during
