@@ -127,9 +127,9 @@ Execute the following commands on your local machine, not production.
 
 7.  Create local database backup:
 
-        $ cp db.sqlite3 backup-before-upgrade-to-v2.X.Y.sqlite3
+        $ sqlite3 db.sqlite3 ".backup DB_backups/backup-before-upgrade-to-v2.X.Y.sqlite3"
 
-    Do not use $AMY_VERSION environment variable because it's not defined here.
+    Do not use `$AMY_VERSION` environment variable because it's not defined here.
 
 8.  Fetch newer AMY source code:
 
@@ -142,7 +142,7 @@ Execute the following commands on your local machine, not production.
 
 10. Test migrations:
 
-        $ cp db.sqlite3 migration-test.sqlite3
+        $ sqlite3 db.sqlite3 ".backup migration-test.sqlite3"
         $ AMY_DB_FILENAME=migration-test.sqlite3 ./manage.py migrate
         $ rm migration-test.sqlite3
 
