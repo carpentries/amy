@@ -11,7 +11,7 @@
 4.  Follow Deployment Procedure (see below).
 
 5.  Write to <amy@lists.carpentries.org> mailing list.
-    The suggested subject of the new thread is "[Amy] New release v2.X.Y".
+    The suggested subject of the new thread is "[AMY] New release v2.X.Y".
 
 # Release Procedure
 
@@ -44,17 +44,17 @@ Execute the following commands on your local machine, not production.
         $ git pull upstream master
         $ git push origin master
 
-    Pushes to your `origin` repository are optional.
+    Pushes to your `origin` remote are optional.
 
 4.  Define which version you're going to release (replace X and Y with correct numbers):
 
         $ AMY_VERSION=v2.X.Y
         $ AMY_NEXT_VERSION=v2.X+1.0-dev
 
-5.  Merge `develop` into `master` branch:
+5.  Merge `develop` into `master` branch (be careful, as there are sometimes conflicts that need to be manually resolved):
 
         $ git checkout master
-        $ git merge --no-ff develop  # sometimes there are conflicts in files with release version, but most often we need to edit them and commit
+        $ git merge --no-ff develop
 
 6.  Bump version on `master`:
 
@@ -87,7 +87,9 @@ Execute the following commands on your local machine, not production.
         $ git add workshops/__init__.py package.json
         $ git commit -m "Bumping version to $AMY_NEXT_VERSION"
 
-    Skip this step if you're releasing minor AMY version (that is, when you increment Y, not X).
+    Skip this step if development version doesn't change, for example during
+    minor version development cycle (`v2.X.0-dev`) you're releasing a patch
+    (`v2.X-1.Y`).
 
 11. And push it everywhere:
 
