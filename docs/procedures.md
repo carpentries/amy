@@ -125,9 +125,10 @@ Execute the following commands on your local machine, not production.
 
 6.  Go to [admin dashboard](https://amy.software-carpentry.org/workshops/admin-dashboard/) and make sure that maintenance page is displayed.
 
-7.  Create local database backup:
+7.  Create a compressed local database backup (through special backup function in SQLite client):
 
         $ sqlite3 db.sqlite3 ".backup DB_backups/backup-before-upgrade-to-v2.X.Y.sqlite3"
+        $ gzip DB_backups/backup-before-upgrade-to-v2.X.Y.sqlite3
 
     Do not use `$AMY_VERSION` environment variable because it's not defined here.
 
