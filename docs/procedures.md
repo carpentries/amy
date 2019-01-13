@@ -151,9 +151,7 @@ Execute the following commands on your local machine, not production.
 
 12. Regenerate version number in the footer:
 
-        $ make serve
-
-    This launches local server on 8000 port. Quit it with Ctrl+C.
+        $ make amy/workshops/git_version.py
 
 13. Update static files:
 

@@ -58,7 +58,7 @@ node_modules : package.json
 	touch node_modules
 
 ## git_version  : store details about the current commit and tree state.
-workshops/git_version.py :
+amy/workshops/git_version.py :
 	@if test -d .git; \
 	then \
 		git log -1 --date=short --format="HASH = '%H'%nSHORT_HASH = '%h'%nDATE = '%cd'%n" >$@; \
