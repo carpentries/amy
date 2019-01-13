@@ -144,7 +144,7 @@ Execute the following commands on your local machine, not production.
 10. Test migrations:
 
         $ sqlite3 db.sqlite3 ".backup migration-test.sqlite3"
-        $ AMY_DB_FILENAME=migration-test.sqlite3 ./manage.py migrate
+        $ DATABASE_URL=sqlite:///migration-test.sqlite3 ./manage.py migrate
         $ rm migration-test.sqlite3
 
 11. Migrate production database (`db.sqlite3`):
