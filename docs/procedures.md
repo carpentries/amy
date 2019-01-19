@@ -9,7 +9,7 @@
 3.  Follow [Release Procedure](#release-procedure).
 
 4.  Follow Deployment Procedure (either
-    [manual method](#deployment-procedure-manual-method) or using
+    [manual method](#deployment-procedure---manual-method) or using
     [Ansible Playbook](#deployment-procedure-using-ansible)).
 
 5.  Write to <amy@lists.carpentries.org> mailing list.
