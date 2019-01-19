@@ -6,9 +6,11 @@
     Release notes should have two sections: new features and bugfixes, each one enumerating changes and mentioning their authors.
     Base your work on the list of all closed pull requests for given milestone, available on GitHub.
 
-3.  Follow Release Procedure (see below).
+3.  Follow [Release Procedure].
 
-4.  Follow Deployment Procedure (see below).
+4.  Follow Deployment Procedure (either
+    [manual method](#deployment-procedure-manual-method) or using
+    [Ansible Playbook](#deployment-procedure-using-ansible)).
 
 5.  Write to <amy@lists.carpentries.org> mailing list.
     The suggested subject of the new thread is "[AMY] New release v2.X.Y".
@@ -95,11 +97,12 @@ Execute the following commands on your local machine, not production.
         $ git push upstream develop
         $ git push origin develop
 
-# Deployment Procedure
+
+# Deployment Procedure - manual method
 
 1.  Log into production:
 
-        $ ssh amy@amy.software-carpentry.org
+        $ ssh amy@amy.carpentries.org
 
     All the following commands will be executed on production, not your local machine.
 
@@ -173,3 +176,57 @@ Execute the following commands on your local machine, not production.
 17. Log out production:
 
         $ exit
+
+
+# Deployment procedure using Ansible
+
+If you have access to Ansible playbook files for AMY, you can automate
+deployment.
+
+**CAUTION:** only use this method if you don't have to invoke any custom
+methods when the server is off for upgrade.
+
+1. Ensure you have `ansible-playbook` command available:
+
+        $ ansible-playbook --version
+
+2. Create an inventory file `production` containing production server address:
+
+        [all:vars]
+        env=production
+
+        [webservers]
+        amy.carpentries.org
+
+    The first group `all:vars` sets `production` variable group. You can
+    further tweak them in `env_vars/production.yml`.
+
+3. Set correct git tag in `env_vars/production.yml`:
+
+        ...
+        #===> Git settings only for production
+        fetch_git_tag: yes
+        git_tag: tags/v2.4.0
+        ...
+
+    Replace `v2.4.0` with the version you want to fetch (e.g. `v2.5.0`).
+
+4. Review other variables in `env_vars/production.yml` and update them if
+   required.
+
+5. Make sure your public SSH key is added to the `~/.ssh/authorized_keys` file
+   on destination server `amy.carpentries.org`.
+
+6. Optional: test provisioning on a local Vagrant machine
+
+    $ vagrant up --provision
+
+7. Run Ansible provisioning:
+
+        $ ansible-playbook --inventory=production --user=amy -vv
+
+    The last switch `-vv` enables verbosity, which helps in debugging if errors
+    occur.
+
+8. Check production website - it should be running, and there should be a
+   version number (e.g. `v2.5.0`) in the footer.
