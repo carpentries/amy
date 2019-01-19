@@ -219,7 +219,7 @@ methods when the server is off for upgrade.
 
 6. Optional: test provisioning on a local Vagrant machine
 
-    $ vagrant up --provision
+        $ vagrant up --provision
 
 7. Run Ansible provisioning:
 
