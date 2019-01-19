@@ -6,7 +6,7 @@
     Release notes should have two sections: new features and bugfixes, each one enumerating changes and mentioning their authors.
     Base your work on the list of all closed pull requests for given milestone, available on GitHub.
 
-3.  Follow [Release Procedure].
+3.  Follow [Release Procedure](#release-procedure).
 
 4.  Follow Deployment Procedure (either
     [manual method](#deployment-procedure-manual-method) or using
