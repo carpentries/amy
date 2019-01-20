@@ -15,7 +15,7 @@ class TrainingRequestCSVColumns:
         'person_id': 'Matched Trainee ID',
         'awards': 'Badges',
         'training_tasks': 'Training Tasks',
-        'group_name': 'Group Name',
+        'group_name': 'Registration Code',
         'personal': 'Personal',
         'middle': 'Middle',
         'family': 'Family',
