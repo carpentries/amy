@@ -58,7 +58,7 @@ node_modules : package.json
 	touch node_modules
 
 ## git_version  : store details about the current commit and tree state.
-workshops/git_version.py :
+amy/workshops/git_version.py :
 	@if test -d .git; \
 	then \
 		git log -1 --date=short --format="HASH = '%H'%nSHORT_HASH = '%h'%nDATE = '%cd'%n" >$@; \
@@ -100,3 +100,12 @@ clean :
 coverage :
 	coverage --source=amy manage.py test
 	coverage html
+
+## bumpversion	: bump version strings in various files, expected envvars CURRENT, NEXT
+bumpversion :
+	@if [ "${CURRENT}" -a "$(NEXT)" ]; \
+	then \
+		echo "Bumping version $(CURRENT) to $(NEXT)"; \
+		sed -i "s/$(CURRENT)/$(NEXT)/" amy/workshops/__init__.py ; \
+		sed -i "s/$(CURRENT)/$(NEXT)/" package.json ; \
+	fi
