@@ -1583,9 +1583,9 @@ class TrainingRequest(CreatedUpdatedMixin, DataPrivacyAgreementMixin,
     group_name = models.CharField(
         blank=True, default='', null=False,
         max_length=STR_LONG,
-        verbose_name='Group name',
+        verbose_name='Registration Code',
         help_text='If you are scheduled to receive training at a member site, '
-                  'please enter the group name you were provided. Otherwise '
+                  'please enter the same code you were given to register on Eventbrite. Otherwise '
                   'please leave this blank.',
     )
 
