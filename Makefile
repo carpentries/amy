@@ -13,7 +13,7 @@ QUERY = sqlite3 ${APP_DB}
 # Error messages.
 E_CERT_PATH = "error: must set CERT_PATH before running command"
 
-.PHONY: workshops/git_version.py
+.PHONY: amy/workshops/git_version.py
 
 all : commands
 
