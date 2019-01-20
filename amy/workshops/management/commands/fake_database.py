@@ -214,7 +214,8 @@ class Command(BaseCommand):
             state = 'a'
             person = person_or_None
 
-        occupation = choice(ProfileUpdateRequest.OCCUPATION_CHOICES)[0]
+        occupation = choice(ProfileUpdateRequest._meta.get_field('occupation')
+                                                      .choices)[0]
         training_completion_agreement = randbool(0.5)
         req = TrainingRequest.objects.create(
             state=state,
@@ -250,7 +251,8 @@ class Command(BaseCommand):
                 TrainingRequest.MAX_TRAVELLING_FREQUENCY_CHOICES)[0],
             max_travelling_frequency_other='',
             reason=self.faker.text(),
-            comment=self.faker.text() if randbool(0.3) else '',
+            # there's no such field as `comment` anymore
+            # comment=self.faker.text() if randbool(0.3) else '',
             training_completion_agreement=training_completion_agreement,
             workshop_teaching_agreement=randbool(0.5) if training_completion_agreement else False,
         )
@@ -289,8 +291,8 @@ class Command(BaseCommand):
             # assume that the username is provided by the person
             username = social_username
 
-        github = social_username if randbool(0.5) else None
-        twitter = social_username if randbool(0.5) else None
+        github = social_username
+        twitter = social_username
         url = self.faker.url() if randbool(0.5) else ''
 
         person = Person.objects.create(
@@ -587,7 +589,9 @@ class Command(BaseCommand):
                 airport_iata=(p.airport.iata
                               if randbool(0.9) and p.airport is not None
                               else choice(Airport.objects.all()).iata),
-                occupation=choice(ProfileUpdateRequest.OCCUPATION_CHOICES)[0],
+                occupation=choice(ProfileUpdateRequest._meta
+                                                      .get_field('occupation')
+                                                      .choices)[0],
                 occupation_other='',
                 github=p.github or '',
                 twitter=p.twitter or '',
