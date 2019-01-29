@@ -23,7 +23,7 @@ install:
 
 before_script:
   - if [[ $CHECK_MIGRATION == true ]]; then
-      python manage.py makemigrations --dry-run -e;
+      python manage.py makemigrations --dry-run --check;
       export STATUS_CODE=$?;
       if [[ "$STATUS_CODE" == "0" ]]; then
         exit 1;
