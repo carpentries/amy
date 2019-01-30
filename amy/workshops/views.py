@@ -1533,11 +1533,11 @@ def search(request):
     term = ''
     organizations = events = persons = airports = training_requests = None
 
-    if request.method == 'GET':
+    if request.method == 'GET' and 'term' in request.GET:
         form = SearchForm(request.GET)
         if form.is_valid():
             term = form.cleaned_data['term']
-            tokens = re.split('\s+', term)
+            tokens = re.split(r'\s+', term)
             results = list()
 
             if form.cleaned_data['in_organizations']:
@@ -1600,6 +1600,9 @@ def search(request):
             # only 1 record found? Let's move to it immediately
             if len(results) == 1:
                 return redirect(results[0].get_absolute_url())
+
+        else:
+            messages.error(request, 'Fix errors below.')
 
     # if empty GET, we'll create a blank form
     else:
