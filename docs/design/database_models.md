@@ -61,7 +61,6 @@ A custom user model (`Person`) was defined according to Django documentation.
 ### `Language`
 
 ## Requests and form-models
-### `ProfileUpdateRequest`
 ### `EventRequest`
 ### `EventSubmission`
 ### `DCSelfOrganizedEventRequest`
@@ -70,7 +69,6 @@ A custom user model (`Person`) was defined according to Django documentation.
 ### `DataAnalysisLevel`
 ### `DCWorkshopTopic`
 ### `DCWorkshopDomain`
-### `InvoiceRequest`
 
 ## Training-connected models
 ### `TrainingRequest`

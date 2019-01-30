@@ -15,7 +15,6 @@ from faker import Faker
 from faker.providers import BaseProvider
 
 from extrequests.models import (
-    ProfileUpdateRequest,
     EventRequest,
     EventSubmission,
     DCSelfOrganizedEventRequest,
@@ -43,7 +42,6 @@ from workshops.models import (
     AcademicLevel,
     ComputingExperienceLevel,
     Language,
-    InvoiceRequest,
 )
 from workshops.util import create_username
 
@@ -214,8 +212,8 @@ class Command(BaseCommand):
             state = 'a'
             person = person_or_None
 
-        occupation = choice(ProfileUpdateRequest._meta.get_field('occupation')
-                                                      .choices)[0]
+        occupation = choice(TrainingRequest._meta.get_field('occupation')
+                                           .choices)[0]
         training_completion_agreement = randbool(0.5)
         req = TrainingRequest.objects.create(
             state=state,
@@ -571,89 +569,6 @@ class Command(BaseCommand):
             req.attendee_data_analysis_level.set(sample(
                 DataAnalysisLevel.objects.all()))
 
-    def fake_profile_update_requests(self, count=20):
-        self.stdout.write('Generating {} fake '
-                          'profile update requests...'.format(count))
-
-        for _ in range(count):
-            p = Person.objects.order_by('?').first()  # type: Person
-            req = ProfileUpdateRequest.objects.create(
-                active=randbool(0.5),
-                personal=(p.personal if randbool(0.9)
-                          else self.faker.first_name()),
-                middle=p.middle,
-                family=p.family if randbool(0.9) else self.faker.last_name(),
-                email=p.email if randbool(0.8) else self.faker.email(),
-                affiliation=(p.affiliation if randbool(0.8)
-                             else self.faker.company()),
-                airport_iata=(p.airport.iata
-                              if randbool(0.9) and p.airport is not None
-                              else choice(Airport.objects.all()).iata),
-                occupation=choice(ProfileUpdateRequest._meta
-                                                      .get_field('occupation')
-                                                      .choices)[0],
-                occupation_other='',
-                github=p.github or '',
-                twitter=p.twitter or '',
-                orcid=p.orcid or '',
-                website=p.url or '',
-                gender=choice(ProfileUpdateRequest.GENDER_CHOICES)[0],
-                gender_other='',
-                domains_other='',
-                lessons_other='',
-                notes='',
-            )
-            req.domains.set(p.domains.all() if randbool(0.9) else
-                            sample(KnowledgeDomain.objects.all()))
-            req.languages.set(p.languages.all() if randbool(0.9) else
-                              sample(Language.objects.all()))
-            req.lessons.set(p.lessons.all() if randbool(0.9) else
-                            sample(Lesson.objects.all()))
-
-    def fake_invoice_requests(self, count=10):
-        self.stdout.write('Generating {} fake '
-                          'invoice requests...'.format(count))
-
-        for _ in range(count):
-            status = choice(InvoiceRequest.STATUS_CHOICES)[0]
-            sent_date = (None if status == 'not-invoiced' else
-                         self.faker.date_time_between(start_date='-1y').date())
-            paid_date = (
-                self.faker.date_time_between(start_date=sent_date).date()
-                if status == 'paid' else None)
-            org = Organization.objects.order_by('?').first()
-            event = (Event.objects.order_by('?').first()
-                     if randbool(0.8) else None)
-
-            req = InvoiceRequest.objects.create(
-                status=status,
-                sent_date=sent_date,
-                paid_date=paid_date,
-                organization=org,
-                reason=choice(InvoiceRequest.INVOICE_REASON)[0],
-                reason_other='',
-                date=(self.faker.date_time_between(start_date='-1y').date()
-                      if sent_date is None else sent_date),
-                event=event,
-                event_location='',
-                item_id='',
-                postal_number='',
-                contact_name=org.fullname,
-                contact_email=self.faker.email(),
-                contact_phone='',
-                full_address=self.faker.address(),
-                amount=choice([1000, 2000, 10000]),
-                currency=choice(InvoiceRequest.CURRENCY)[0],
-                currency_other='',
-                breakdown='',
-                vendor_form_required=choice(InvoiceRequest.VENDOR_FORM_CHOICES)[0],
-                vendor_form_link='',
-                form_W9=randbool(0.5),
-                receipts_sent=choice(InvoiceRequest.RECEIPTS_CHOICES)[0],
-                shared_receipts_link='',
-                notes='',
-            )
-
     def handle(self, *args, **options):
         seed = options['seed']
         if seed is not None:
@@ -681,5 +596,3 @@ class Command(BaseCommand):
         self.fake_workshop_requests()
         self.fake_workshop_submissions()
         self.fake_dc_selforganized_workshop_requests()
-        self.fake_profile_update_requests()
-        self.fake_invoice_requests()
