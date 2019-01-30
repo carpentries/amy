@@ -1,12 +1,10 @@
 from captcha.fields import ReCaptchaField
-from django import forms
 
 from extrequests.deprecated_forms import (
     SWCEventRequestNoCaptchaForm,
     DCEventRequestNoCaptchaForm,
     DCSelfOrganizedEventRequestFormNoCaptcha,
     EventSubmitFormNoCaptcha,
-    ProfileUpdateRequestFormNoCaptcha,
 )
 from workshops.forms import (
     BootstrapHelper,
@@ -54,9 +52,3 @@ class EventSubmitForm(EventSubmitFormNoCaptcha, PrivacyConsentMixin):
 
     class Meta(EventSubmitFormNoCaptcha.Meta):
         exclude = ('state', 'event') + EventSubmitFormNoCaptcha.Meta.exclude
-
-
-class ProfileUpdateRequestForm(ProfileUpdateRequestFormNoCaptcha):
-    captcha = ReCaptchaField()
-
-    helper = BootstrapHelper(wider_labels=True, add_cancel_button=False)

@@ -20,7 +20,7 @@ The new application structure contains:
 * `extforms` - as previously for forms available externally, ie. for
   unauthenticated users,
 * `extrequests` - for all `*Request` objects (`EventRequest`,
-`EventSubmission`, `DCSelfOrganizedEventRequest`, `ProfileUpdateRequest`,
+`EventSubmission`, `DCSelfOrganizedEventRequest`, ~~`ProfileUpdateRequest`~~,
 ~~`InvoiceRequest`~~ - by the way all these models are deprecated and to be
 removed in future - `WorkshopRequest`, and `TrainingRequest`),
 * `fiscal` - for organizations, memberships, and sponsorships,
@@ -73,7 +73,7 @@ corresponding apps.
     * `DataAnalysisLevel`,
     * `DCWorkshopTopic`,
     * `DCWorkshopDomain`,
-    * `ProfileUpdateRequest`,
+    * ~~`ProfileUpdateRequest`~~,
     * `EventRequest`,
     * `EventSubmission`,
     * `DCSelfOrganizedEventRequest`,
