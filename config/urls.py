@@ -118,7 +118,6 @@ redirect_urlpatterns = [
     path('workshops/dc_selforganized_requests/', RedirectView.as_view(pattern_name='all_dcselforganizedeventrequests')),
     path('workshops/submissions/', RedirectView.as_view(pattern_name='all_eventsubmissions')),
     path('workshops/profile_updates/', RedirectView.as_view(pattern_name='all_profileupdaterequests')),
-    path('workshops/invoices/', RedirectView.as_view(pattern_name='all_invoicerequests')),
 
     path('workshops/organizations/', RedirectView.as_view(pattern_name='all_organizations')),
     path('workshops/memberships/', RedirectView.as_view(pattern_name='all_memberships')),

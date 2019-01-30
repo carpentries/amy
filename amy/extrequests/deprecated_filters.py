@@ -17,7 +17,6 @@ from workshops.forms import SIDEBAR_DAL_WIDTH
 from workshops.models import (
     Organization,
     Person,
-    InvoiceRequest,
 )
 
 
@@ -96,39 +95,4 @@ class DCSelfOrganizedEventRequestFilter(AMYFilterSet, StateFilterSet):
         ]
         order_by = [
             '-created_at', 'created_at',
-        ]
-
-
-# ------------------------------------------------------------
-# InvoiceRequest related filter and filter methods
-# CAUTION: THIS FEATURE IS DEPRECATED!!!
-# ------------------------------------------------------------
-
-class InvoiceRequestFilter(AMYFilterSet):
-    STATUS_CHOICES = (('', 'All'),) + InvoiceRequest.STATUS_CHOICES
-    status = django_filters.ChoiceFilter(
-        choices=STATUS_CHOICES,
-    )
-
-    organization = django_filters.ModelChoiceFilter(
-        queryset=Organization.objects.all(),
-        label='Organization',
-        widget=autocomplete.ModelSelect2(
-            url='organization-lookup',
-            attrs=SIDEBAR_DAL_WIDTH,
-        ),
-    )
-
-    order_by = django_filters.OrderingFilter(
-        fields=(
-            'event__slug',
-            'organization__domain',
-        ),
-    )
-
-    class Meta:
-        model = InvoiceRequest
-        fields = [
-            'status',
-            'organization',
         ]

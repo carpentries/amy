@@ -68,11 +68,4 @@ urlpatterns = [
         path('accept/', deprecated_views.profileupdaterequest_accept, name='profileupdaterequest_accept'),
         path('accept/<int:person_id>/', deprecated_views.profileupdaterequest_accept, name='profileupdaterequest_accept'),
     ])),
-
-    # deprecated: invoices
-    path('invoices/', deprecated_views.AllInvoiceRequests.as_view(), name='all_invoicerequests'),
-    path('invoice/<int:request_id>/', include([
-        path('', deprecated_views.InvoiceRequestDetails.as_view(), name='invoicerequest_details'),
-        path('edit/', deprecated_views.InvoiceRequestUpdate.as_view(), name='invoicerequest_edit'),
-    ])),
 ]

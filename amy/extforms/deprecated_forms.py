@@ -8,9 +8,6 @@ from extrequests.deprecated_forms import (
     EventSubmitFormNoCaptcha,
     ProfileUpdateRequestFormNoCaptcha,
 )
-from workshops.models import (
-    InvoiceRequest,
-)
 from workshops.forms import (
     BootstrapHelper,
     PrivacyConsentMixin,
@@ -63,32 +60,3 @@ class ProfileUpdateRequestForm(ProfileUpdateRequestFormNoCaptcha):
     captcha = ReCaptchaField()
 
     helper = BootstrapHelper(wider_labels=True, add_cancel_button=False)
-
-
-class InvoiceRequestForm(forms.ModelForm):
-    helper = BootstrapHelper(add_cancel_button=False)
-
-    class Meta:
-        model = InvoiceRequest
-        fields = (
-            'organization', 'reason', 'reason_other', 'date', 'event',
-            'event_location', 'item_id', 'postal_number', 'contact_name',
-            'contact_email', 'contact_phone', 'full_address', 'amount',
-            'currency', 'currency_other', 'breakdown', 'vendor_form_required',
-            'vendor_form_link', 'form_W9', 'receipts_sent',
-            'shared_receipts_link', 'notes',
-        )
-        widgets = {
-            'reason': forms.RadioSelect,
-            'currency': forms.RadioSelect,
-            'vendor_form_required': forms.RadioSelect,
-            'receipts_sent': forms.RadioSelect,
-        }
-
-
-class InvoiceRequestUpdateForm(forms.ModelForm):
-    class Meta:
-        model = InvoiceRequest
-        fields = (
-            'status', 'sent_date', 'paid_date', 'notes'
-        )

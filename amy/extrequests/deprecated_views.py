@@ -19,11 +19,9 @@ from extrequests.deprecated_forms import (
     EventSubmitFormNoCaptcha,
     DCSelfOrganizedEventRequestFormNoCaptcha,
     ProfileUpdateRequestFormNoCaptcha,
-    InvoiceRequestUpdateForm,
 )
 from extrequests.deprecated_filters import (
     EventRequestFilter,
-    InvoiceRequestFilter,
     EventSubmissionFilter,
     DCSelfOrganizedEventRequestFilter,
 )
@@ -48,7 +46,6 @@ from workshops.forms import (
     PersonLookupForm,
 )
 from workshops.models import (
-    InvoiceRequest,
     Person,
     Award,
     Badge,
@@ -563,40 +560,3 @@ def profileupdaterequest_accept(request, request_id, person_id=None):
                          '{} was updated successfully.'.format(person_name))
 
     return redirect(person.get_absolute_url())
-
-
-# ------------------------------------------------------------
-# InvoiceRequest related views
-# CAUTION: THIS FEATURE IS DEPRECATED!!!
-
-class AllInvoiceRequests(OnlyForAdminsMixin, AMYListView):
-    context_object_name = 'requests'
-    template_name = 'requests_deprecated/all_invoicerequests.html'
-    filter_class = InvoiceRequestFilter
-    queryset = InvoiceRequest.objects.all()
-    title = 'Invoice requests'
-
-    def get_filter_data(self):
-        data = self.request.GET.copy()
-        data['status'] = data.get('status', '')
-        return data
-
-
-class InvoiceRequestDetails(OnlyForAdminsMixin, AMYDetailView):
-    context_object_name = 'object'
-    template_name = 'requests_deprecated/invoicerequest.html'
-    queryset = InvoiceRequest.objects.all()
-    pk_url_kwarg = 'request_id'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'Invoice request #{}'.format(self.get_object().pk)
-        return context
-
-
-class InvoiceRequestUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                           AMYUpdateView):
-    permission_required = 'workshops.change_invoicerequest'
-    model = InvoiceRequest
-    form_class = InvoiceRequestUpdateForm
-    pk_url_kwarg = 'request_id'

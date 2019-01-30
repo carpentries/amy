@@ -20,9 +20,9 @@ The new application structure contains:
 * `extforms` - as previously for forms available externally, ie. for
   unauthenticated users,
 * `extrequests` - for all `*Request` objects (`EventRequest`,
-`EventSubmission`, `DCSelfOrganizedEventRequest`, `ProfileUpdateRequest`, by
-the way all these models are deprecated and to be removed in future,
-`InvoiceRequest`, `WorkshopRequest`, and `TrainingRequest`),
+`EventSubmission`, `DCSelfOrganizedEventRequest`, `ProfileUpdateRequest`,
+~~`InvoiceRequest`~~ - by the way all these models are deprecated and to be
+removed in future - `WorkshopRequest`, and `TrainingRequest`),
 * `fiscal` - for organizations, memberships, and sponsorships,
 * `pydata` - as previously for PyData integration,
 * `reports` - for reports,
@@ -42,7 +42,7 @@ indicated in this tree below.
 
 * `extrequests`:
     * `TrainingRequest`,
-    * `InvoiceRequest`,
+    * ~~`InvoiceRequest`~~,
     * `WorkshopRequest`,
     * non-versioned, but their removal causes huge problems with migration,
       since they're referenced by `WorkshopRequest`:

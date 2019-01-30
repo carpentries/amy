@@ -43,7 +43,6 @@ from workshops.models import (
     AcademicLevel,
     ComputingExperienceLevel,
     Language,
-    InvoiceRequest,
 )
 from workshops.util import create_username
 
@@ -610,50 +609,6 @@ class Command(BaseCommand):
             req.lessons.set(p.lessons.all() if randbool(0.9) else
                             sample(Lesson.objects.all()))
 
-    def fake_invoice_requests(self, count=10):
-        self.stdout.write('Generating {} fake '
-                          'invoice requests...'.format(count))
-
-        for _ in range(count):
-            status = choice(InvoiceRequest.STATUS_CHOICES)[0]
-            sent_date = (None if status == 'not-invoiced' else
-                         self.faker.date_time_between(start_date='-1y').date())
-            paid_date = (
-                self.faker.date_time_between(start_date=sent_date).date()
-                if status == 'paid' else None)
-            org = Organization.objects.order_by('?').first()
-            event = (Event.objects.order_by('?').first()
-                     if randbool(0.8) else None)
-
-            req = InvoiceRequest.objects.create(
-                status=status,
-                sent_date=sent_date,
-                paid_date=paid_date,
-                organization=org,
-                reason=choice(InvoiceRequest.INVOICE_REASON)[0],
-                reason_other='',
-                date=(self.faker.date_time_between(start_date='-1y').date()
-                      if sent_date is None else sent_date),
-                event=event,
-                event_location='',
-                item_id='',
-                postal_number='',
-                contact_name=org.fullname,
-                contact_email=self.faker.email(),
-                contact_phone='',
-                full_address=self.faker.address(),
-                amount=choice([1000, 2000, 10000]),
-                currency=choice(InvoiceRequest.CURRENCY)[0],
-                currency_other='',
-                breakdown='',
-                vendor_form_required=choice(InvoiceRequest.VENDOR_FORM_CHOICES)[0],
-                vendor_form_link='',
-                form_W9=randbool(0.5),
-                receipts_sent=choice(InvoiceRequest.RECEIPTS_CHOICES)[0],
-                shared_receipts_link='',
-                notes='',
-            )
-
     def handle(self, *args, **options):
         seed = options['seed']
         if seed is not None:
@@ -682,4 +637,3 @@ class Command(BaseCommand):
         self.fake_workshop_submissions()
         self.fake_dc_selforganized_workshop_requests()
         self.fake_profile_update_requests()
-        self.fake_invoice_requests()
