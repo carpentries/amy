@@ -71,7 +71,7 @@ amy/workshops/git_version.py :
 	fi
 
 ## serve        : run a server
-serve : node_modules workshops/git_version.py
+serve : node_modules amy/workshops/git_version.py
 	${MANAGE} runserver
 
 ## serve_now    : run a server now
