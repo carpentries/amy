@@ -1613,7 +1613,12 @@ def search(request):
 
             # only 1 record found? Let's move to it immediately
             if len(results) == 1:
-                return redirect(results[0].get_absolute_url())
+                result = results[0]
+                if isinstance(result, Comment):
+                    return redirect(result.content_object.get_absolute_url() +
+                                    "#c{}".format(result.id))
+                else:
+                    return redirect(result.get_absolute_url())
 
         else:
             messages.error(request, 'Fix errors below.')
