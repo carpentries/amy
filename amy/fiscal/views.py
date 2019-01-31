@@ -34,6 +34,8 @@ from workshops.models import (
     Organization,
     Membership,
     Sponsorship,
+    Task,
+    Award,
 )
 from workshops.util import (
     OnlyForAdminsMixin,
@@ -126,11 +128,16 @@ class AllMemberships(OnlyForAdminsMixin, AMYListView):
 
 
 class MembershipDetails(OnlyForAdminsMixin, AMYDetailView):
-    queryset = (
-        Membership.objects
-                  .select_related('organization')
-                  .prefetch_related('task_set')
-    )
+    prefetch_awards = Prefetch('person__award_set',
+                               queryset=Award.objects.select_related('badge'))
+    queryset = Membership.objects.select_related('organization') \
+        .prefetch_related(
+            Prefetch(
+                'task_set',
+                queryset=Task.objects.select_related('event', 'person')
+                                     .prefetch_related(prefetch_awards)
+            )
+        )
     context_object_name = 'membership'
     template_name = 'fiscal/membership.html'
     pk_url_kwarg = 'membership_id'
