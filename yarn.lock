@@ -368,6 +368,29 @@ d3@^4:
     d3-voronoi "1.1.2"
     d3-zoom "1.7.1"
 
+datatables.net-bs4@^1.10.19:
+  version "1.10.19"
+  resolved "https://registry.yarnpkg.com/datatables.net-bs4/-/datatables.net-bs4-1.10.19.tgz#0608dff22008cf3c7b8a68b1bc702ed255b404fb"
+  integrity sha512-pgeP17w4aPR7HIxIwuJghfqXULjdg1K6xMUUKDyCERJRSNNK4MRToFfELtIsluLNN555YBK4Kx8nihX5/ZT1Fw==
+  dependencies:
+    datatables.net "1.10.19"
+    jquery ">=1.7"
+
+datatables.net-dt@^1.10.19:
+  version "1.10.19"
+  resolved "https://registry.yarnpkg.com/datatables.net-dt/-/datatables.net-dt-1.10.19.tgz#fc668e4942ac6e331be2707975d0f33e01afb60f"
+  integrity sha512-joFHYjLYvr9VnC9Fx3e+8jtXnQ/fP/mPFWt9p0NhZ3Zm5N0jlYyWhJQbnLkihOLuDcDFMaGdBQSvmIdTVdgGyw==
+  dependencies:
+    datatables.net "1.10.19"
+    jquery ">=1.7"
+
+datatables.net@1.10.19, datatables.net@^1.10.19:
+  version "1.10.19"
+  resolved "https://registry.yarnpkg.com/datatables.net/-/datatables.net-1.10.19.tgz#97a1ed41c85e62d61040603481b59790a172dd1f"
+  integrity sha512-+ljXcI6Pj3PTGy5pesp3E5Dr3x3AV45EZe0o1r0gKENN2gafBKXodVnk2ypKwl2tTmivjxbkiqoWnipTefyBTA==
+  dependencies:
+    jquery ">=1.7"
+
 iconv-lite@0.4:
   version "0.4.24"
   resolved "https://registry.yarnpkg.com/iconv-lite/-/iconv-lite-0.4.24.tgz#2022b4b25fbddc21d2f524974a474aafe733908b"
@@ -380,7 +403,7 @@ jquery-stickytabs@^1.2.4:
   resolved "https://registry.yarnpkg.com/jquery-stickytabs/-/jquery-stickytabs-1.2.4.tgz#c76d1864ee039e25bc5724274acd956ef28a6b6e"
   integrity sha1-x20YZO4DniW8VyQnSs2VbvKKa24=
 
-"jquery@>=1.7.1 <4.0.0", jquery@^3.3.1:
+jquery@>=1.7, "jquery@>=1.7.1 <4.0.0", jquery@^3.3.1:
   version "3.3.1"
   resolved "https://registry.yarnpkg.com/jquery/-/jquery-3.3.1.tgz#958ce29e81c9790f31be7792df5d4d95fc57fbca"
   integrity sha512-Ubldcmxp5np52/ENotGxlLe6aGMvmF4R8S6tZjsP6Knsaxd/xp3Zrh50cG93lR6nPXyUFwzN3ZSOQI0wRJNdGg==
