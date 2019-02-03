@@ -107,16 +107,19 @@
 {% if tasks %}
 <h3>Tasks</h3>
 {% if all_emails %}<p><a href="mailto:?bcc={{ all_emails|join:',' }}" class="btn btn-primary">Mail everyone</a></p>{% endif %}
-<table class="table table-striped">
-  <tr>
-    <th width="150">Instr. badges</th>
-    <th>Person</th>
-    <th>URL</th>
-    <th>Role</th>
-    <th>Member site seat <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events"></i></th>
-    <th>Open applicant <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events with open applications"></i></th>
-    <th class="additional-links"></th>
-  </tr>
+<table id="event-tasks" class="table table-striped table-bordered">
+  <thead>
+    <tr>
+      <th width="150">Instr. badges</th>
+      <th>Person</th>
+      <th>URL</th>
+      <th>Role</th>
+      <th>Member site seat <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events"></i></th>
+      <th>Open applicant <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events with open applications"></i></th>
+      <th class="additional-links"></th>
+    </tr>
+  </thead>
+  <tbody>
   {% for t in tasks %}
   <tr>
     <td>{% for badge in t.person.instructor_badges %}{% bootstrap_tag badge.name|cut:"-instructor"|upper %}{% empty %}&mdash;{% endfor %}</td>
@@ -134,6 +137,7 @@
     </td>
   </tr>
   {% endfor %}
+  </tbody>
 </table>
 {% else %}
 <p>No tasks.</p>
@@ -225,6 +229,12 @@
 
     // https://github.com/select2/select2/issues/1645#issuecomment-24296615
     $.fn.modal.Constructor.prototype.enforceFocus = function() {};
+
+    // datatables enabled for event tasks table
+    $("#event-tasks").DataTable({
+      info: false,
+      paging: false,
+    });
   });
 </script>
 {% endblock %}

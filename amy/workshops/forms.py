@@ -332,6 +332,10 @@ class SearchForm(forms.Form):
                                               required=False,
                                               initial=True)
 
+    in_comments = forms.BooleanField(label='in comments',
+                                     required=False,
+                                     initial=True)
+
     helper = BootstrapHelper(
         add_cancel_button=False,
         use_get_method=True,

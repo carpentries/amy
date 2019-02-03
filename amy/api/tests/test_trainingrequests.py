@@ -293,7 +293,7 @@ class TestListingTrainingRequests(APITestBase):
         firstline = content.splitlines()[0]
         expected_firstline = (
             'Created at,Last updated at,State,Matched Trainee,'
-            'Matched Trainee ID,Badges,Training Tasks,Group Name,'
+            'Matched Trainee ID,Badges,Training Tasks,Registration Code,'
             'Personal,Middle,Family,Email,GitHub username,'
             'Underrepresented (reason),Occupation,Occupation (other),'
             'Affiliation,Location,Country,Underresourced institution,'

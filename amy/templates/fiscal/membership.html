@@ -68,13 +68,18 @@
         <tr>
           <th>Event</th>
           <th>Person</th>
-          <th>Task</th>
+          <th>Awards</th>
         </tr>
         {% for t in membership.task_set.all %}
         <tr>
           <td><a href="{{ t.event.get_absolute_url }}">{{ t.event }}</a></td>
           <td><a href="{{ t.person.get_absolute_url }}">{{ t.person }}</a></td>
-          <td><a href="{{ t.task.get_absolute_url }}">{{ t }}</a></td>
+          <td>
+            {% for award in t.person.award_set.all %}
+            {{ award.badge }} ({{ award.awarded }}){% if not forloop.last %},<br>{% endif %}
+            {% empty %}&mdash;
+            {% endfor %}
+          </td>
         </tr>
         {% endfor %}
       </table>

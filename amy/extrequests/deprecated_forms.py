@@ -6,14 +6,12 @@ from extrequests.models import (
     EventRequest,
     EventSubmission,
     DCSelfOrganizedEventRequest,
-    ProfileUpdateRequest,
 )
 from workshops.forms import (
     BootstrapHelper,
     PrivacyConsentMixin,
 )
 from workshops.models import (
-    InvoiceRequest,
     Language,
 )
 # this is used instead of Django Autocomplete Light widgets
@@ -170,78 +168,3 @@ class DCSelfOrganizedEventRequestFormNoCaptcha(forms.ModelForm):
             'attendee_data_analysis_level': forms.CheckboxSelectMultiple(),
             'payment': forms.RadioSelect(),
         }
-
-
-class ProfileUpdateRequestFormNoCaptcha(forms.ModelForm):
-    languages = forms.ModelMultipleChoiceField(
-        label='Languages you can teach in',
-        required=False,
-        queryset=Language.objects.all(),
-        widget=ModelSelect2Multiple(url='language-lookup')
-    )
-
-    helper = BootstrapHelper(wider_labels=True, add_cancel_button=False)
-
-    class Meta:
-        model = ProfileUpdateRequest
-        exclude = ('active', 'created_at', 'last_updated_at')
-        widgets = {
-            'occupation': RadioSelectWithOther('occupation_other'),
-            'gender': RadioSelectWithOther('gender_other'),
-            'domains': CheckboxSelectMultipleWithOthers('domains_other'),
-            'lessons': CheckboxSelectMultipleWithOthers('lessons_other'),
-            'country': ListSelect2(),
-        }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        # set up a layout object for the helper
-        self.helper.layout = self.helper.build_default_layout(self)
-
-        # set up RadioSelectWithOther widget so that it can display additional
-        # field inline
-        self['occupation'].field.widget.other_field = self['occupation_other']
-        self['gender'].field.widget.other_field = self['gender_other']
-        self['domains'].field.widget.other_field = self['domains_other']
-        self['lessons'].field.widget.other_field = self['lessons_other']
-
-        # remove that additional field
-        self.helper.layout.fields.remove('occupation_other')
-        self.helper.layout.fields.remove('gender_other')
-        self.helper.layout.fields.remove('domains_other')
-        self.helper.layout.fields.remove('lessons_other')
-
-    def clean_twitter(self):
-        """Remove '@'s from the beginning of the Twitter handle."""
-        twitter_handle = self.cleaned_data['twitter']
-        return re.sub('^@+', '', twitter_handle)
-
-
-class InvoiceRequestForm(forms.ModelForm):
-    helper = BootstrapHelper(add_cancel_button=False)
-
-    class Meta:
-        model = InvoiceRequest
-        fields = (
-            'organization', 'reason', 'reason_other', 'date', 'event',
-            'event_location', 'item_id', 'postal_number', 'contact_name',
-            'contact_email', 'contact_phone', 'full_address', 'amount',
-            'currency', 'currency_other', 'breakdown', 'vendor_form_required',
-            'vendor_form_link', 'form_W9', 'receipts_sent',
-            'shared_receipts_link', 'notes',
-        )
-        widgets = {
-            'reason': forms.RadioSelect,
-            'currency': forms.RadioSelect,
-            'vendor_form_required': forms.RadioSelect,
-            'receipts_sent': forms.RadioSelect,
-        }
-
-
-class InvoiceRequestUpdateForm(forms.ModelForm):
-    class Meta:
-        model = InvoiceRequest
-        fields = (
-            'status', 'sent_date', 'paid_date', 'notes'
-        )

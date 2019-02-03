@@ -57,22 +57,4 @@ urlpatterns = [
         path('assign/', deprecated_views.EventSubmissionAssign.as_view(), name='eventsubmission_assign'),
         path('assign/<int:person_id>/', deprecated_views.EventSubmissionAssign.as_view(), name='eventsubmission_assign'),
     ])),
-
-    # deprecated: profile update requests
-    path('profile_updates/', deprecated_views.AllProfileUpdateRequests.as_view(), name='all_profileupdaterequests'),
-    path('profile_updates/closed/', deprecated_views.AllClosedProfileUpdateRequests.as_view(), name='all_closed_profileupdaterequests'),
-    path('profile_update/<int:request_id>/', include([
-        path('', deprecated_views.profileupdaterequest_details, name='profileupdaterequest_details'),
-        path('fix/', deprecated_views.ProfileUpdateRequestFix.as_view(), name='profileupdaterequest_fix'),
-        path('discard/', deprecated_views.profileupdaterequest_discard, name='profileupdaterequest_discard'),
-        path('accept/', deprecated_views.profileupdaterequest_accept, name='profileupdaterequest_accept'),
-        path('accept/<int:person_id>/', deprecated_views.profileupdaterequest_accept, name='profileupdaterequest_accept'),
-    ])),
-
-    # deprecated: invoices
-    path('invoices/', deprecated_views.AllInvoiceRequests.as_view(), name='all_invoicerequests'),
-    path('invoice/<int:request_id>/', include([
-        path('', deprecated_views.InvoiceRequestDetails.as_view(), name='invoicerequest_details'),
-        path('edit/', deprecated_views.InvoiceRequestUpdate.as_view(), name='invoicerequest_edit'),
-    ])),
 ]

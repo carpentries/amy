@@ -41,6 +41,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.edit import (
     ModelFormMixin,
 )
+from django_comments.models import Comment
 from github.GithubException import GithubException
 from reversion.models import Version, Revision
 from reversion_compare.forms import SelectDiffForm
@@ -1532,12 +1533,13 @@ def search(request):
 
     term = ''
     organizations = events = persons = airports = training_requests = None
+    comments = None
 
-    if request.method == 'GET':
+    if request.method == 'GET' and 'term' in request.GET:
         form = SearchForm(request.GET)
         if form.is_valid():
             term = form.cleaned_data['term']
-            tokens = re.split('\s+', term)
+            tokens = re.split(r'\s+', term)
             results = list()
 
             if form.cleaned_data['in_organizations']:
@@ -1597,9 +1599,29 @@ def search(request):
                 )
                 results += list(training_requests)
 
+            if form.cleaned_data['in_comments']:
+                comments = Comment.objects.filter(
+                    Q(comment__icontains=term) |
+                    Q(user_name__icontains=term) |
+                    Q(user_email__icontains=term) |
+                    Q(user__personal__icontains=term) |
+                    Q(user__family__icontains=term) |
+                    Q(user__email__icontains=term) |
+                    Q(user__github__icontains=term)
+                ).prefetch_related('content_object')
+                results += list(comments)
+
             # only 1 record found? Let's move to it immediately
             if len(results) == 1:
-                return redirect(results[0].get_absolute_url())
+                result = results[0]
+                if isinstance(result, Comment):
+                    return redirect(result.content_object.get_absolute_url() +
+                                    "#c{}".format(result.id))
+                else:
+                    return redirect(result.get_absolute_url())
+
+        else:
+            messages.error(request, 'Fix errors below.')
 
     # if empty GET, we'll create a blank form
     else:
@@ -1613,6 +1635,7 @@ def search(request):
         'events': events,
         'persons': persons,
         'airports': airports,
+        'comments': comments,
         'training_requests': training_requests,
     }
     return render(request, 'workshops/search.html', context)

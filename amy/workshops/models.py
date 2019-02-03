@@ -534,9 +534,6 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
     # new people will be inactive by default
     is_active = models.BooleanField(default=False)
 
-    # Recorded in ProfileUpdateRequest. Occupation will store the either
-    # 'undisclosed' or full text of occupation selected by user.  In case of
-    # selecting 'other' the value from `occupation_other` field will be used.
     occupation = models.CharField(
         max_length=STR_LONG,
         verbose_name='Current occupation/career stage',
@@ -1399,155 +1396,6 @@ class KnowledgeDomain(models.Model):
 
 # ------------------------------------------------------------
 
-
-@reversion.register
-class InvoiceRequest(models.Model):
-    STATUS_CHOICES = (
-        ('not-invoiced', 'Invoice not requested'),
-        ('sent', 'Sent out'),
-        ('paid', 'Paid'),
-    )
-    status = models.CharField(
-        max_length=STR_MED, null=False, blank=False, default='not-invoiced',
-        choices=STATUS_CHOICES,
-        verbose_name='Invoice status')
-
-    sent_date = models.DateField(
-        null=True, blank=True, verbose_name='Date invoice was sent out',
-        help_text='YYYY-MM-DD')
-    paid_date = models.DateField(
-        null=True, blank=True, verbose_name='Date invoice was paid',
-        help_text='YYYY-MM-DD')
-
-    organization = models.ForeignKey(
-        Organization, on_delete=models.PROTECT, verbose_name='Organization to invoice',
-        help_text='e.g. University of Florida Ecology Department')
-
-    INVOICE_REASON = (
-        ('admin-fee', 'Workshop administrative fee'),
-        ('admin-fee-expenses', 'Workshop administrative fee plus expenses'),
-        ('partner', 'Partner agreement'),
-        ('affiliate', 'Affiliate agreement'),
-        ('consulting', 'Consulting'),
-        ('', 'Other (enter below)'),
-    )
-    reason = models.CharField(
-        max_length=STR_MED, null=False, blank=True, default='admin-fee',
-        choices=INVOICE_REASON,
-        verbose_name='Reason for invoice')
-    reason_other = models.CharField(
-        max_length=STR_LONG, null=False, blank=True, default='',
-        verbose_name='Other reason for invoice')
-    date = models.DateField(
-        null=False, blank=False, verbose_name='Date of invoice subject',
-        help_text='YYYY-MM-DD; either event\'s date or invoice reason date.')
-    event = models.ForeignKey(
-        Event, on_delete=models.PROTECT, null=True, blank=True)
-    event_location = models.CharField(
-        max_length=STR_LONG, null=False, blank=True, default='')
-    item_id = models.CharField(
-        max_length=STR_MED, null=False, blank=True, default='',
-        verbose_name='Item ID (if applicable)')
-    postal_number = models.CharField(
-        max_length=STR_MED, null=False, blank=True, default='',
-        verbose_name='PO # (if required)')
-    contact_name = models.CharField(
-        max_length=STR_LONG, null=False, blank=False,
-        verbose_name='Organization contact name',
-        help_text='e.g. Dr. Jane Smith - the name of the person to contact at '
-                  'the organization about the invoice')
-    contact_email = models.EmailField(
-        max_length=STR_LONG, null=False, blank=False,
-        verbose_name='Organization contact email')
-    contact_phone = models.CharField(
-        max_length=STR_LONG, null=False, blank=True,
-        verbose_name='Organization contact phone #')
-    full_address = models.TextField(
-        null=False, blank=False,
-        verbose_name='Full address to invoice',
-        help_text='e.g. Dr. Jane Smith; University of Florida Ecology '
-                  'Department; 123 University Way; Gainesville, FL 32844')
-    amount = models.DecimalField(
-        max_digits=8, decimal_places=2, null=False, blank=False,
-        validators=[MinValueValidator(0)],
-        verbose_name='Full invoice amount',
-        help_text='e.g. 1992.33 ')
-
-    CURRENCY = (
-        ('USD', 'US Dollars'),
-        ('GBP', 'UK Pounds'),
-        ('EUR', 'Euros'),
-        ('', 'Other (enter below)'),
-    )
-    currency = models.CharField(
-        max_length=STR_MED, null=False, blank=True, default='USD',
-        choices=CURRENCY)
-    currency_other = models.CharField(
-        max_length=STR_LONG, null=False, blank=True, default='',
-        verbose_name='Other currency')
-
-    breakdown = models.TextField(
-        blank=True, default='',
-        verbose_name='Notes on invoice breakdown',
-        help_text='e.g. 1250.00 workshop fee;'
-                  ' 742.33 Instructor, Pat Li, travel expenses')
-
-    VENDOR_FORM_CHOICES = (
-        ('yes', 'Yes'),
-        ('no', 'No'),
-        ('unsure', 'Will check with contact and submit info if needed'),
-    )
-    vendor_form_required = models.CharField(
-        max_length=STR_SHORT, null=False, blank=False, default='no',
-        choices=VENDOR_FORM_CHOICES,
-        verbose_name='Do vendor/supplier forms need to be submitted?')
-    vendor_form_link = models.URLField(
-        null=False, blank=True, default='',
-        verbose_name='Link to vendor/supplier forms')
-    form_W9 = models.BooleanField(verbose_name='Organization needs a W-9 form')
-
-    RECEIPTS_CHOICES = (
-        ('email', 'Via email'),
-        ('shared', 'In a Google Drive or other shared location'),
-        ('not-yet', 'Haven\'t sent yet'),
-        ('na', 'Not applicable'),
-    )
-    receipts_sent = models.CharField(
-        max_length=STR_MED, null=False, blank=False, default='not-yet',
-        choices=RECEIPTS_CHOICES,
-        verbose_name='Any required receipts sent?')
-    shared_receipts_link = models.URLField(
-        null=False, blank=True, default='',
-        verbose_name='Link to receipts in shared location',
-        help_text='e.g. link to Google drive folder')
-    notes = models.TextField(
-        blank=True, default='',
-        verbose_name='Any other notes')
-
-    def __str__(self):
-        return "Invoice to {!s} for {!s}".format(self.organization,
-                                                 self.event)
-
-    def get_absolute_url(self):
-        return reverse('invoicerequest_details', args=[self.pk])
-
-    @property
-    def paid(self):
-        return self.status == 'paid'
-
-    @property
-    def long_status(self):
-        """Display status with date, if available."""
-        LONG_FMT = '{} on {:%Y-%m-%d}'
-        if self.status == 'sent' and self.sent_date:
-            return LONG_FMT.format(self.get_status_display(), self.sent_date)
-        elif self.status == 'paid' and self.paid_date:
-            return LONG_FMT.format(self.get_status_display(), self.paid_date)
-
-        return self.get_status_display()
-
-# ------------------------------------------------------------
-
 from workshops.util import build_choice_field_with_other_option
 
 
@@ -1583,9 +1431,9 @@ class TrainingRequest(CreatedUpdatedMixin, DataPrivacyAgreementMixin,
     group_name = models.CharField(
         blank=True, default='', null=False,
         max_length=STR_LONG,
-        verbose_name='Group name',
+        verbose_name='Registration Code',
         help_text='If you are scheduled to receive training at a member site, '
-                  'please enter the group name you were provided. Otherwise '
+                  'please enter the same code you were given to register on Eventbrite. Otherwise '
                   'please leave this blank.',
     )
 
