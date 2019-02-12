@@ -56,18 +56,17 @@ class BulkChangeTrainingRequestForm(forms.Form):
         # BulkMatchTrainingRequestForm.
         FormActions(
             Div(
-                Submit('discard', 'Discard selected requests',
-                       formnovalidate='formnovalidate',
-                       css_class="btn-danger"),
-                Submit('accept', 'Accept selected requests',
+                Submit('accept', 'Accept selected',
                        formnovalidate='formnovalidate',
                        css_class="btn-success"),
+                Submit('discard', 'Discard selected',
+                       formnovalidate='formnovalidate',
+                       css_class="btn-danger"),
+                Submit('unmatch', 'Unmatch selected from training',
+                       formnovalidate='formnovalidate',
+                       css_class="btn-primary"),
                 css_class="btn-group",
             ),
-            Submit('unmatch', 'Unmatch selected trainees from training',
-                   formnovalidate='formnovalidate'),
-            HTML('<a bulk-email-on-click class="btn btn-info text-white">'
-                 'Mail selected trainees</a>&nbsp;'),
         )
     )
 
