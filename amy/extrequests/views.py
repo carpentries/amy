@@ -187,11 +187,12 @@ def all_trainingrequests(request):
         )
     )
 
+    form = BulkChangeTrainingRequestForm()
+    match_form = BulkMatchTrainingRequestForm()
 
     if request.method == 'POST' and 'match' in request.POST:
         # Bulk match people associated with selected TrainingRequests to
         # trainings.
-        form = BulkChangeTrainingRequestForm()
         match_form = BulkMatchTrainingRequestForm(request.POST)
 
         if match_form.is_valid():
@@ -250,14 +251,9 @@ def all_trainingrequests(request):
             messages.success(request, 'Successfully accepted and matched '
                                       'selected people to training.')
 
-            # Raw uri contains GET parameters from django filters. We use it
-            # to preserve filter settings.
-            return redirect(request.get_raw_uri())
-
     elif request.method == 'POST' and 'discard' in request.POST:
         # Bulk discard selected TrainingRequests.
         form = BulkChangeTrainingRequestForm(request.POST)
-        match_form = BulkMatchTrainingRequestForm()
 
         if form.is_valid():
             # Perform bulk discard
@@ -268,12 +264,9 @@ def all_trainingrequests(request):
             messages.success(request, 'Successfully discarded selected '
                                       'requests.')
 
-            return redirect(request.get_raw_uri())
-
     elif request.method == 'POST' and 'accept' in request.POST:
         # Bulk discard selected TrainingRequests.
         form = BulkChangeTrainingRequestForm(request.POST)
-        match_form = BulkMatchTrainingRequestForm()
 
         if form.is_valid():
             # Perform bulk discard
@@ -284,13 +277,10 @@ def all_trainingrequests(request):
             messages.success(request, 'Successfully accepted selected '
                                       'requests.')
 
-            return redirect(request.get_raw_uri())
-
     elif request.method == 'POST' and 'unmatch' in request.POST:
         # Bulk unmatch people associated with selected TrainingRequests from
         # trainings.
         form = BulkChangeTrainingRequestForm(request.POST)
-        match_form = BulkMatchTrainingRequestForm()
 
         form.check_person_matched = True
         if form.is_valid():
@@ -300,12 +290,6 @@ def all_trainingrequests(request):
 
             messages.success(request, 'Successfully unmatched selected '
                                       'people from trainings.')
-
-            return redirect(request.get_raw_uri())
-
-    else:  # GET request
-        form = BulkChangeTrainingRequestForm()
-        match_form = BulkMatchTrainingRequestForm()
 
     context = {
         'title': 'Training Requests',
