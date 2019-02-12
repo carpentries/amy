@@ -7,7 +7,7 @@
 
 {% block content %}
   {% if requests %}
-    <form role="form" class="form-horizontal" method="post">
+    <form role="form" class="form-horizontal" method="post" action="{% url 'all_trainingrequests' %}?{{ request.GET.urlencode }}">
     {% if form.errors.requests or match_form.errors.requests %}
       <div class="alert alert-danger" role="alert">You didn't select any request.</div>
     {% elif form.errors or match_form.errors %}
