@@ -9,9 +9,9 @@
   {% if requests %}
     <form role="form" class="form-horizontal" method="post" action="{% url 'all_trainingrequests' %}?{{ request.GET.urlencode }}">
     {% if form.errors.requests or match_form.errors.requests %}
-      <div class="alert alert-danger" role="alert">You didn't select any request.</div>
+      <div class="alert alert-danger" role="alert">You didn't select any requests.</div>
     {% elif form.errors or match_form.errors %}
-      <div class="alert alert-danger" role="alert">Fix errors below and try again.</div>
+      <div class="alert alert-danger" role="alert">Fix errors in the form below and try again.</div>
     {% endif %}
     <table class="table table-striped">
       <tr>
