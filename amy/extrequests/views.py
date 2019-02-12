@@ -251,19 +251,6 @@ def all_trainingrequests(request):
             messages.success(request, 'Successfully accepted and matched '
                                       'selected people to training.')
 
-    elif request.method == 'POST' and 'discard' in request.POST:
-        # Bulk discard selected TrainingRequests.
-        form = BulkChangeTrainingRequestForm(request.POST)
-
-        if form.is_valid():
-            # Perform bulk discard
-            for r in form.cleaned_data['requests']:
-                r.state = 'd'
-                r.save()
-
-            messages.success(request, 'Successfully discarded selected '
-                                      'requests.')
-
     elif request.method == 'POST' and 'accept' in request.POST:
         # Bulk discard selected TrainingRequests.
         form = BulkChangeTrainingRequestForm(request.POST)
@@ -275,6 +262,19 @@ def all_trainingrequests(request):
                 r.save()
 
             messages.success(request, 'Successfully accepted selected '
+                                      'requests.')
+
+    elif request.method == 'POST' and 'discard' in request.POST:
+        # Bulk discard selected TrainingRequests.
+        form = BulkChangeTrainingRequestForm(request.POST)
+
+        if form.is_valid():
+            # Perform bulk discard
+            for r in form.cleaned_data['requests']:
+                r.state = 'd'
+                r.save()
+
+            messages.success(request, 'Successfully discarded selected '
                                       'requests.')
 
     elif request.method == 'POST' and 'unmatch' in request.POST:
