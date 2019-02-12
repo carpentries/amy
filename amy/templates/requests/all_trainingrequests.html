@@ -54,9 +54,7 @@
           <td>
             <input type="checkbox" name="requests" value="{{ req.pk }}"
                    respond-to-select-all-checkbox
-                   email="{% if req.person %}{{ req.person.email }}{% elif req.email %}{{ req.email }}{% endif %}"
-                   {% if req in form.cleaned_data.requests or req in match_form.cleaned_data.requests %}checked {% endif %}
-            />
+                   email="{% if req.person %}{{ req.person.email }}{% elif req.email %}{{ req.email }}{% endif %}" />
           </td>
           <td>
             {{ req.personal }} {{ req.middle }} {{ req.family }}<br />
@@ -120,7 +118,6 @@
       {% endfor %}
       </tbody>
     </table>
-    {% pagination requests %}
 
     <div class="btn-group" role="group" aria-label="Actions for list of training requests">
       <a class="btn btn-info" href="mailto:?bcc={% for mail in emails %}{{ mail }}{% if not forloop.last %},{% endif %}{% endfor %}">Mail <strong>all</strong> people matching this query</a>
