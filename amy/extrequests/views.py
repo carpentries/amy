@@ -174,7 +174,7 @@ class WorkshopRequestAssign(OnlyForAdminsMixin, AssignView):
 
 @admin_required
 def all_trainingrequests(request):
-    filter = TrainingRequestFilter(
+    filter_ = TrainingRequestFilter(
         request.GET,
         queryset=TrainingRequest.objects.all().prefetch_related(
             Prefetch(
@@ -187,8 +187,6 @@ def all_trainingrequests(request):
         )
     )
 
-    emails = filter.qs.values_list('email', flat=True)
-    requests = get_pagination_items(request, filter.qs)
 
     if request.method == 'POST' and 'match' in request.POST:
         # Bulk match people associated with selected TrainingRequests to
@@ -311,11 +309,10 @@ def all_trainingrequests(request):
 
     context = {
         'title': 'Training Requests',
-        'requests': requests,
-        'filter': filter,
+        'requests': filter_.qs,
+        'filter': filter_,
         'form': form,
         'match_form': match_form,
-        'emails': emails,
     }
 
     return render(request, 'requests/all_trainingrequests.html', context)
