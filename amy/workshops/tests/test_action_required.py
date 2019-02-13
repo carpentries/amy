@@ -1,4 +1,5 @@
 from django.urls import reverse
+from django.utils.http import urlencode
 
 from workshops.tests.base import TestBase
 from workshops.forms import ActionRequiredPrivacyForm
@@ -35,9 +36,9 @@ class TestActionRequiredPrivacy(TestBase):
         self.neville.data_privacy_agreement = True
         self.neville.save()
 
-        # form redirects
+        # form throws 404
         rv = self.client.get(url)
-        self.assertEqual(rv.status_code, 302)
+        self.assertEqual(rv.status_code, 404)
 
     def test_agreement_submit(self):
         "Make sure the form passes only when `data_agreement_policy` is set."
@@ -117,7 +118,7 @@ class TestActionRequiredPrivacyMiddleware(TestBase):
             rv = self.client.get(url)
             # redirects to the form
             self.assertEqual(rv.status_code, 302)
-            self.assertEqual(rv['Location'], form_url)
+            self.assertTrue(rv['Location'].startswith(form_url))
 
     def test_no_more_redirects_after_agreement(self):
         """Ensure user is no longer forcefully redirected to accept the
@@ -132,7 +133,7 @@ class TestActionRequiredPrivacyMiddleware(TestBase):
         # we can't get to the url because we're redirected to the form
         rv = self.client.get(url)
         self.assertEqual(rv.status_code, 302)
-        self.assertEqual(rv['Location'], form_url)
+        self.assertTrue(rv['Location'].startswith(form_url))
 
         # agree on the privacy policy
         self.neville.data_privacy_agreement = True
@@ -156,3 +157,20 @@ class TestActionRequiredPrivacyMiddleware(TestBase):
             self.assertIn(rv.status_code, [200, 302])
             if 'Location' in rv:
                 self.assertNotEqual(rv['Location'], form_url)
+
+    def test_next_param(self):
+        """Ensure a non-dispatch URL is reachable through `?next` query
+        string."""
+
+        url = reverse('autoupdate_profile')
+        form_url = reverse('action_required_privacy')
+        form_url += '?{}'.format(urlencode({'next': url}))
+
+        # ensure we're logged in
+        self.client.force_login(self.neville)
+        self.assertEqual(self.neville.data_privacy_agreement, False)
+
+        # submit form
+        rv = self.client.post(form_url, data=dict(data_privacy_agreement=True))
+        self.assertEqual(rv.status_code, 302)
+        self.assertEqual(rv['Location'], url)
