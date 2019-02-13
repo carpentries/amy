@@ -1808,7 +1808,10 @@ def action_required_privacy(request):
             person = form.save()
             messages.success(request, 'Agreement successfully saved.')
 
-            return redirect(reverse('dispatch'))
+            if 'next' in request.GET:
+                return redirect(request.GET['next'])
+            else:
+                return redirect(reverse('dispatch'))
         else:
             messages.error(request, 'Fix errors below.')
 
