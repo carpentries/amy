@@ -1797,7 +1797,7 @@ def action_required_privacy(request):
 
     # disable the view for users who already agreed
     if person.data_privacy_agreement:
-        return redirect(reverse('dispatch'))
+        raise Http404('This view is disabled.')
 
     form = ActionRequiredPrivacyForm(instance=person)
 
@@ -1808,7 +1808,10 @@ def action_required_privacy(request):
             person = form.save()
             messages.success(request, 'Agreement successfully saved.')
 
-            return redirect(reverse('dispatch'))
+            if 'next' in request.GET:
+                return redirect(request.GET['next'])
+            else:
+                return redirect(reverse('dispatch'))
         else:
             messages.error(request, 'Fix errors below.')
 

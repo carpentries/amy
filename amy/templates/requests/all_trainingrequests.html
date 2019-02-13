@@ -4,64 +4,58 @@
 {% load pagination %}
 {% load tags %}
 {% load state %}
+{% load static %}
 
 {% block content %}
   {% if requests %}
-    <form role="form" class="form-horizontal" method="post">
+    <form role="form" class="form-horizontal" method="post" action="{% url 'all_trainingrequests' %}?{{ request.GET.urlencode }}">
     {% if form.errors.requests or match_form.errors.requests %}
-      <div class="alert alert-danger" role="alert">You didn't select any request.</div>
+      <div class="alert alert-danger" role="alert">You didn't select any requests.</div>
     {% elif form.errors or match_form.errors %}
-      <div class="alert alert-danger" role="alert">Fix errors below and try again.</div>
+      <div class="alert alert-danger" role="alert">Fix errors in the form below and try again.</div>
     {% endif %}
-    <table class="table table-striped">
-      <tr>
-        <th width="10px">
-          <input type="checkbox" select-all-checkbox />
-        </th>
-        <th>Submitter</th>
-        <th>Reg. Code</th>
-        <th>
-          Affiliation
-          <i class="fas fa-question-circle"
-             data-toggle="popover" data-html="true" data-trigger="hover"
-             data-content="<p>If two lines are presented:
-                           <ul><li>the first line shows affiliation from training request,</li>
-                           <li>and the second line shows affiliation from trainee's profile</li></ul></p>
-                           "></i>
-        </th>
-        {% if request.GET.location %}
+    <table class="table table-striped table-bordered table-hover" id="table-requests">
+      <thead>
+        <tr>
+          <th><input type="checkbox" select-all-checkbox /></th>
+          <th>Submitter</th>
+          <th>Reg. Code</th>
+          <th>Affiliation
+              <i class="fas fa-question-circle"
+                 data-toggle="popover" data-html="true" data-trigger="hover"
+                 data-content="<p>If two lines are presented:
+                               <ul><li>the first line shows affiliation from training request,</li>
+                               <li>and the second line shows affiliation from trainee's profile</li></ul></p>"></i>
+          </th>
           <th>Location</th>
-        {% endif %}
-        {% if request.GET.order_by == 'created_at' or request.GET.order_by == '-created_at' %}
           <th>Created at</th>
-        {% endif %}
-        <th>Matched Trainee</th>
-        <th>Matched Training</th>
-        <th>Score</th>
-        <th width="50px">
-          State
-          <i class="fas fa-question-circle"
-             data-toggle="popover" data-html="true" data-trigger="hover"
-             data-content="<p>
-                           <span class='badge badge-warning'>Pending</span>
-                           <span class='badge badge-success'>Accepted</span>
-                           <span class='badge badge-danger'>Discarded</span>
-                           </p>
-                           <p>Click one of
-                           <a href='#'><i class='fas fa-info-circle'></i></a>
-                           icons below to start accepting request.</p>
-                          "></i>
-        </th>
-        <th class="additional-links"></th>
+          <th>Matched Trainee</th>
+          <th>Matched Training</th>
+          <th>Score</th>
+          <th width="50px">
+            State
+            <i class="fas fa-question-circle"
+               data-toggle="popover" data-html="true" data-trigger="hover"
+               data-content="<p>
+                             <span class='badge badge-warning'>Pending</span>
+                             <span class='badge badge-success'>Accepted</span>
+                             <span class='badge badge-danger'>Discarded</span>
+                             </p>
+                             <p>Click one of
+                             <a href='#'><i class='fas fa-info-circle'></i></a>
+                             icons below to start accepting request.</p>
+                            "></i>
+          </th>
+          <th></th>
+        </thead>
       </tr>
+      <tbody>
       {% for req in requests %}
         <tr>
           <td>
             <input type="checkbox" name="requests" value="{{ req.pk }}"
                    respond-to-select-all-checkbox
-                   email="{% if req.person %}{{ req.person.email }}{% elif req.email %}{{ req.email }}{% endif %}"
-                   {% if req in form.cleaned_data.requests or req in match_form.cleaned_data.requests %}checked {% endif %}
-            />
+                   email="{% if req.person %}{{ req.person.email }}{% elif req.email %}{{ req.email }}{% endif %}" />
           </td>
           <td>
             {{ req.personal }} {{ req.middle }} {{ req.family }}<br />
@@ -75,12 +69,8 @@
               {{ req.person.affiliation|default:"—" }}
             {% endif %}
           </td>
-          {% if request.GET.location %}
-            <td>{{ req.location|default:"—" }}</td>
-          {% endif %}
-          {% if request.GET.order_by == 'created_at' or request.GET.order_by == '-created_at' %}
-            <td>{{ req.created_at|date:'Y-m-d H:i' }}</td>
-          {% endif %}
+          <td>{{ req.location|default:"—" }}</td>
+          <td>{{ req.created_at|date:'Y-m-d H:i' }}</td>
           <td>
             {% if req.person %}
               <a href="{% url 'person_details' req.person.pk %}">
@@ -127,43 +117,57 @@
           </td>
         </tr>
       {% endfor %}
+      </tbody>
     </table>
-    {% pagination requests %}
 
     <div class="btn-group" role="group" aria-label="Actions for list of training requests">
-      <a class="btn btn-info" href="mailto:?bcc={% for mail in emails %}{{ mail }}{% if not forloop.last %},{% endif %}{% endfor %}">Mail <strong>all</strong> people matching this query</a>
-      <a class="btn btn-success" href="{% url 'training_request' %}">Create new request</a>
-
-      <div class="btn-group" role="group">
-        <button id="id_downloadBtn" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-          Download
-        </button>
-        <div class="dropdown-menu" aria-labelledby="id_downloadBtn">
-          <a class="dropdown-item" href="{% url 'api:training-requests' %}?format=csv&" amy-download-selected>Selected requests as CSV</a>
-          <a class="dropdown-item" href="{% url 'api:training-requests' %}?format=csv&{{ request.GET.urlencode }}">Filtered requests as CSV</a>
-          <a class="dropdown-item" href="{% url 'api:training-requests' %}?format=csv">All requests as CSV</a>
-        </div>
-      </div>
-
-      <div class="btn-group" role="group">
-        <button id="id_downloadBtn" type="button" class="btn btn-dark dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-          Download for bulk manual scoring
-        </button>
-        <div class="dropdown-menu" aria-labelledby="id_downloadBtn">
-          <a class="dropdown-item" href="{% url 'api:training-requests' %}?format=csv2&manualscore=1" amy-download-selected>Selected requests as CSV</a>
-          <a class="dropdown-item" href="{% url 'api:training-requests' %}?format=csv2&manualscore=1&{{ request.GET.urlencode }}">Filtered requests as CSV</a>
-          <a class="dropdown-item" href="{% url 'api:training-requests' %}?format=csv2&manualscore=1">All requests as CSV</a>
-        </div>
-      </div>
+      <a class="btn btn-info text-white" bulk-email-on-click>Mail selected</a>
+      <a class="btn btn-secondary" href="{% url 'api:training-requests' %}?format=csv&" amy-download-selected>Download selected</a>
+      <a class="btn btn-dark" href="{% url 'api:training-requests' %}?format=csv2&manualscore=1" amy-download-selected>Download selected for bulk manual scoring</a>
     </div>
 
     <hr>
 
-    <h2>Actions</h2>
+    <h2>Modify</h2>
+
     {% crispy form %}
+
+    <hr>
+
+    <h2>Accept & match</h2>
+
     {% crispy match_form %}
     </form>
 {% else %}
     <p>No training requests.</p>
 {% endif %}
+{% endblock %}
+
+
+{% block extrajs %}
+<script type="text/javascript" src="{% static 'checkboxes_sessionstorage.js' %}"></script>
+<script type="text/javascript">
+  $(function () {
+    // datatables enabled for event tasks table
+    $("#table-requests").DataTable({
+      "lengthMenu": [
+        [25, 50, 100, 200, -1],
+        [25, 50, 100, 200, "All"]
+      ],
+      columnDefs: [
+        // disable ordering on "checkbox" column
+        {
+          orderable: false,
+          targets: 0
+        },
+        // disable ordering on additional links column
+        {
+          orderable: false,
+          targets: -1
+        }
+      ],
+      stateSave: true
+    });
+  });
+</script>
 {% endblock %}

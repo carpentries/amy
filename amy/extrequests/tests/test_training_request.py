@@ -357,7 +357,7 @@ class TestTrainingRequestsListView(TestBase):
                               follow=True)
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, 'all_trainingrequests')
-        msg = 'Fix errors below and try again.'
+        msg = 'Fix errors in the form below and try again.'
         self.assertContains(rv, msg)
         msg = ('Some of the requests are not matched to a trainee yet. Before '
                'matching them to a training, you need to accept them '
@@ -399,7 +399,7 @@ class TestTrainingRequestsListView(TestBase):
 
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(rv.resolver_match.view_name, 'all_trainingrequests')
-        msg = 'Fix errors below and try again.'
+        msg = 'Fix errors in the form below and try again.'
         self.assertContains(rv, msg)
 
         # Check that Spiderman is still matched to first_training even though
