@@ -403,7 +403,7 @@ ADMIN_NOTIFICATION_CRITERIA_DEFAULT = 'team@carpentries.org'
 # ADMIN
 # ------------------------------------------------------------------------------
 # Django Admin URL.
-ADMIN_URL = 'admin/'
+ADMIN_URL = env('AMY_ADMIN_URL', default='admin/')
 # https://docs.djangoproject.com/en/dev/ref/settings/#admins
 ADMINS = [
     ('Sysadmins ML', 'sysadmin@lists.carpentries.org'),

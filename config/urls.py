@@ -27,7 +27,7 @@ from workshops.util import login_required
 
 urlpatterns = [
     path('', RedirectView.as_view(pattern_name='dispatch')),
-    path('admin/', admin.site.urls),
+    path(settings.ADMIN_URL, admin.site.urls),  # {% url 'admin:index' %}
 ]
 
 if settings.ENABLE_PYDATA:
