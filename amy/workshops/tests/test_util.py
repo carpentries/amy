@@ -873,27 +873,27 @@ class TestMatchingNotificationEmail(TestBase):
     def test_default_criteria(self):
         # Online
         self.request.country = 'W3'
-        results = match_notification_email(self.request)
+        results = list(match_notification_email(self.request))
         self.assertEqual(results, ['team@carpentries.org'])
 
         # European Union
         self.request.country = 'EU'
-        results = match_notification_email(self.request)
+        results = list(match_notification_email(self.request))
         self.assertEqual(results, ['team@carpentries.org'])
 
         # United States
         self.request.country = 'US'
-        results = match_notification_email(self.request)
+        results = list(match_notification_email(self.request))
         self.assertEqual(results, ['team@carpentries.org'])
 
         # Poland
         self.request.country = 'PL'
-        results = match_notification_email(self.request)
+        results = list(match_notification_email(self.request))
         self.assertEqual(results, ['team@carpentries.org'])
 
         # unknown country code
         self.request.country = 'XY'
-        results = match_notification_email(self.request)
+        results = list(match_notification_email(self.request))
         self.assertEqual(results, ['team@carpentries.org'])
 
     def test_matching_Africa(self):
@@ -901,32 +901,32 @@ class TestMatchingNotificationEmail(TestBase):
 
         # the Democratic Republic of the Congo
         self.request.country = 'CD'
-        results = match_notification_email(self.request)
+        results = list(match_notification_email(self.request))
         self.assertEqual(results, ['admin-afr@carpentries.org'])
 
         # Nigeria
         self.request.country = 'NG'
-        results = match_notification_email(self.request)
+        results = list(match_notification_email(self.request))
         self.assertEqual(results, ['admin-afr@carpentries.org'])
 
         # South Sudan
         self.request.country = 'SS'
-        results = match_notification_email(self.request)
+        results = list(match_notification_email(self.request))
         self.assertEqual(results, ['admin-afr@carpentries.org'])
 
         # Somalia
         self.request.country = 'SO'
-        results = match_notification_email(self.request)
+        results = list(match_notification_email(self.request))
         self.assertEqual(results, ['admin-afr@carpentries.org'])
 
         # Egipt
         self.request.country = 'EG'
-        results = match_notification_email(self.request)
+        results = list(match_notification_email(self.request))
         self.assertEqual(results, ['admin-afr@carpentries.org'])
 
         # Tunisia
         self.request.country = 'TN'
-        results = match_notification_email(self.request)
+        results = list(match_notification_email(self.request))
         self.assertEqual(results, ['admin-afr@carpentries.org'])
 
     def test_matching_UK_CA_NZ_AU(self):
@@ -940,7 +940,7 @@ class TestMatchingNotificationEmail(TestBase):
         for code, email in data:
             with self.subTest(code=code):
                 self.request.country = code
-                results = match_notification_email(self.request)
+                results = list(match_notification_email(self.request))
                 self.assertEqual(results, [email])
 
     def test_object_no_criteria(self):
