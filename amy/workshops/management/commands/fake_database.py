@@ -305,6 +305,7 @@ class Command(BaseCommand):
             github=github,
             url=url,
             username=username,
+            country=choice(Countries)[0],
         )
 
         if is_instructor:

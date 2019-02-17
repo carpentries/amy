@@ -18,6 +18,7 @@ from django_countries import Countries
 from django_countries.fields import CountryField
 from markdownx.fields import MarkdownxFormField
 
+from dashboard.models import Continent
 from workshops.models import (
     Award,
     Event,
@@ -34,6 +35,7 @@ from workshops.models import (
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330: https://github.com/swcarpentry/amy/issues/1330
 from workshops.fields import (
+    Select2,
     Select2Multiple,
     ListSelect2,
     ModelSelect2,
@@ -227,6 +229,11 @@ class WorkshopStaffForm(forms.Form):
         choices=list(Countries()), required=False, widget=Select2Multiple,
     )
 
+    continent = forms.ChoiceField(
+        choices=Continent.objects.values_list('pk', 'name'), required=False,
+        widget=Select2,
+    )
+
     lessons = forms.ModelMultipleChoiceField(
         queryset=Lesson.objects.all(),
         widget=SelectMultiple(),
@@ -258,10 +265,12 @@ class WorkshopStaffForm(forms.Form):
         self.helper.layout = Layout(
             Div(
                 Div(
-                    HTML('<h5 class="card-title">Location close to</h5>'),
+                    HTML('<h5 class="card-title">Location</h5>'),
                     'airport',
                     HTML('<hr>'),
                     'country',
+                    HTML('<hr>'),
+                    'continent',
                     HTML('<hr>'),
                     'latitude',
                     'longitude',
