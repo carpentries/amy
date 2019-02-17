@@ -195,6 +195,14 @@ class WidgetOverrideMixin:
 # ----------------------------------------------------------
 # Forms
 
+
+def continent_list():
+    """This has to be as a callable, because otherwise Django evaluates this
+    query and, if the database doesn't exist yet (e.g. during Travis-CI
+    tests)."""
+    return Continent.objects.values_list('pk', 'name')
+
+
 class WorkshopStaffForm(forms.Form):
     '''Represent instructor matching form.'''
 
@@ -230,8 +238,7 @@ class WorkshopStaffForm(forms.Form):
     )
 
     continent = forms.ChoiceField(
-        choices=Continent.objects.values_list('pk', 'name'), required=False,
-        widget=Select2,
+        choices=continent_list, required=False, widget=Select2,
     )
 
     lessons = forms.ModelMultipleChoiceField(
