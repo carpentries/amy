@@ -2,7 +2,6 @@
 Django settings for AMY project.
 """
 
-from collections import namedtuple
 import os
 import sys
 
@@ -280,6 +279,14 @@ STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
     'compressor.finders.CompressorFinder',
+]
+
+# DJANGO-COMPRESSOR
+# -----------------------------------------------------------------------------
+# https://django-compressor.readthedocs.io/en/stable/settings/
+COMPRESS_CSS_FILTERS = [
+    'compressor.filters.css_default.CssAbsoluteFilter',
+    'compressor.filters.cssmin.CSSCompressorFilter',
 ]
 
 # MEDIA
