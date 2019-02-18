@@ -31,6 +31,7 @@ from django.shortcuts import render, redirect
 from django.utils.http import is_safe_url
 from django_comments.models import Comment
 
+from dashboard.models import Criterium
 from workshops.models import (
     Event,
     Role,
@@ -1241,26 +1242,17 @@ def match_notification_email(obj):
     """Try to match applied object to a set of criteria (defined in
     `settings.py`)."""
     results = []
-    for criterium, result in settings.ADMIN_NOTIFICATION_CRITERIA.items():
-        field, value = criterium
-        value_string = isinstance(value, str)
-        value_iter = isinstance(value, Sequence)
 
-        # get requested field value from `obj`
-        field_value = getattr(obj, field, None)
-
-        # try to match criteria
-        if value_string and field_value:
-            if field_value == value:
-                results.append(result)
-        elif value_iter and field_value:
-            if field_value in value:
-                results.append(result)
+    # some objects may not have this attribute, in this case we should fall
+    # back to default criteria email
+    if hasattr(obj, 'country'):
+        results = (
+            Criterium.objects.filter(countries__contains=obj.country)
+                             .values_list('email', flat=True)
+        )
 
     # fallback to default address if nothing matches
-    if not results:
-        return [settings.ADMIN_NOTIFICATION_CRITERIA_DEFAULT]
-    return results
+    return results or [settings.ADMIN_NOTIFICATION_CRITERIA_DEFAULT]
 
 
 def add_comment(content_object, comment, **kwargs):

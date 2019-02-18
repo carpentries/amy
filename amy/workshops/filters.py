@@ -5,6 +5,7 @@ from django.db.models import Q
 from django.forms import widgets
 from django_countries import Countries
 
+from dashboard.models import Continent
 from workshops.fields import (
     Select2,
     Select2Multiple,
@@ -123,6 +124,24 @@ class NamesOrderingFilter(django_filters.OrderingFilter):
         return ordering
 
 
+class ContinentFilter(django_filters.ChoiceFilter):
+    @property
+    def field(self):
+        self.extra['choices'] = Continent.objects.values_list('pk', 'name')
+        return super().field
+
+    def filter(self, qs, value):
+        if isinstance(value, django_filters.fields.Lookup):
+            value = value.value
+
+        # no filtering
+        if value in ([], (), {}, None, '', 'all'):
+            return qs
+
+        # filtering: qs `country` must be in the list of countries given by
+        # selected continent
+        return qs.filter(country__in=Continent.objects.get(pk=value).countries)
+
 #------------------------------------------------------------
 
 
@@ -184,6 +203,7 @@ class EventFilter(AMYFilterSet):
     )
 
     country = AllCountriesFilter(widget=Select2())
+    continent = ContinentFilter(widget=Select2(), label="Continent")
 
     order_by = django_filters.OrderingFilter(
         fields=(
@@ -203,6 +223,7 @@ class EventFilter(AMYFilterSet):
             'invoice_status',
             'completed',
             'country',
+            'continent',
         ]
 
 
@@ -419,6 +440,8 @@ class TaskFilter(AMYFilterSet):
 class AirportFilter(AMYFilterSet):
     fullname = django_filters.CharFilter(lookup_expr='icontains')
 
+    continent = ContinentFilter(widget=Select2(), label="Continent")
+
     order_by = django_filters.OrderingFilter(
         fields=(
             'iata',
@@ -475,6 +498,7 @@ class WorkshopStaffFilter(AMYFilterSet):
         widget=Select2Multiple(),
         method="filter_country",
     )
+    continent = ContinentFilter(widget=Select2(), label="Continent")
     lessons = django_filters.ModelMultipleChoiceFilter(
         label='Lessons',
         queryset=Lesson.objects.all(),
