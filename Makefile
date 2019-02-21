@@ -29,6 +29,10 @@ test :
 fast_test:
 	${MANAGE} test --keepdb --parallel
 
+## fast_test_fail	: run all tests really fast, fails as soon as any test fails.
+fast_test_fail:
+	${MANAGE} test --keepdb --parallel --failfast
+
 ## dev_database : re-make database using saved data
 dev_database :
 	rm -f ${APP_DB}
