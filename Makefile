@@ -35,7 +35,11 @@ fast_test_fail:
 
 ## dev_database : re-make database using saved data
 dev_database :
-	rm -f ${APP_DB}
+	@if test  -f ${APP_DB}; \
+	then \
+		echo "You must remove database file yourself!"; \
+		exit 1; \
+	fi
 	${MANAGE} migrate
 	${MANAGE} fake_database
 	${MANAGE} createinitialrevisions
