@@ -25,7 +25,7 @@ commands : Makefile
 test :
 	${MANAGE} test
 
-## fast test	: run all tests really fast.
+## fast_test    : run all tests really fast.
 fast_test:
 	${MANAGE} test --keepdb --parallel
 
@@ -45,7 +45,7 @@ dev_database :
 airports :
 	@${MANAGE} export_airports
 
-## check-certs : check that all instructor certificates have been set (must set CERT_PATH to run)
+## check-certs  : check that all instructor certificates have been set (must set CERT_PATH to run)
 check-certs :
 	@if [ -z "${CERT_PATH}" ]; then echo ${E_CERT_PATH}; else ${MANAGE} check_certificates ${CERT_PATH}; fi
 
@@ -79,7 +79,7 @@ serve : node_modules amy/workshops/git_version.py
 serve_now :
 	${MANAGE} runserver
 
-## outdated		: show outdated dependencies
+## outdated     : show outdated dependencies
 outdated :
 	-pip list --outdated
 	-yarn outdated
@@ -102,7 +102,7 @@ coverage :
 	coverage --source=amy manage.py test
 	coverage html
 
-## bumpversion	: bump version strings in various files, expected envvars CURRENT, NEXT
+## bumpversion  : bump version strings in various files, expected envvars CURRENT, NEXT
 bumpversion :
 	@if [ "${CURRENT}" -a "$(NEXT)" ]; \
 	then \
