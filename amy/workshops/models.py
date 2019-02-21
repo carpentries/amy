@@ -1523,15 +1523,13 @@ class TrainingRequest(CreatedUpdatedMixin, DataPrivacyAgreementMixin,
         blank=True, default='',
     )
 
-    # a single checkbox for under-represented minorities
-    # instead of two "gender" fields
-    underrepresented = models.CharField(
-        max_length=STR_LONGEST, blank=True, null=True,
-        verbose_name='I self-identify as a member of a group that is '
-                     'under-represented in research and/or computing, e.g., '
-                     'women, ethnic minorities, LGBTQ, etc.',
-        help_text="Provide details or leave blank if this doesn't apply"
-                  " to you."
+    underrepresented_details = models.CharField(
+        max_length=STR_LONGEST, blank=True, default="",
+        verbose_name="If you are comfortable doing so, please share more "
+                     "details. Your response is optional, and these details "
+                     "will not impact your application's ranking.",
+        help_text="This response is optional and doesn't impact your "
+                  "application's ranking.",
     )
 
     # new field for teaching-related experience in non-profit or volunteer org.
@@ -1775,12 +1773,6 @@ class TrainingRequest(CreatedUpdatedMixin, DataPrivacyAgreementMixin,
                 timestamp=self.created_at,
             )
         )
-
-    def get_underrepresented_display(self):
-        if self.underrepresented:
-            return "Yes: {}".format(self.underrepresented)
-        else:
-            return "No"
 
 
 @reversion.register
