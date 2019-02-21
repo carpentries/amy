@@ -1731,6 +1731,11 @@ class TrainingRequest(CreatedUpdatedMixin, DataPrivacyAgreementMixin,
                 score += 1
                 break
 
+        # Changed in https://github.com/swcarpentry/amy/issues/1468:
+        # +1 for underrepresented minority in research and/or computing
+        if self.underrepresented == 'yes':
+            score += 1
+
         # +1 for each previous involvement with The Carpentries (max. 3)
         prev_inv_count = len(self.previous_involvement.all())
         score += prev_inv_count if prev_inv_count <= 3 else 3

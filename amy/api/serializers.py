@@ -358,8 +358,6 @@ class TrainingRequestForManualScoringSerializer(TrainingRequestSerializer):
             'personal',
             'middle',
             'family',
-            'underrepresented',
-            'underrepresented_details',
             'affiliation',
             'nonprofit_teaching_experience',
             'previous_training',

@@ -152,6 +152,20 @@ class TestTrainingRequestModelScoring(TestBase):
         self.tr.domains.set(domains)
         self.assertEqual(self.tr.score_auto, 1)
 
+    def test_underrepresented(self):
+        """With change in https://github.com/swcarpentry/amy/issues/1468,
+        we start automatically scoring underrepresented field."""
+        data = {
+            'yes': 1,
+            'no': 0,
+            'undisclosed': 0,
+            '???': 0,
+        }
+        for value, score in data.items():
+            self.tr.underrepresented = value
+            self.tr.save()
+            self.assertEqual(self.tr.score_auto, score)
+
     def test_previous_involvement(self):
         """Ensure m2m_changed signals work correctly on
         `TrainingRequest.previous_involvement` field."""
