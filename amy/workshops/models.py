@@ -1523,6 +1523,19 @@ class TrainingRequest(CreatedUpdatedMixin, DataPrivacyAgreementMixin,
         blank=True, default='',
     )
 
+    UNDERREPRESENTED_CHOICES = (
+        ('yes', 'Yes'),
+        ('no', 'No'),
+        ('undisclosed', 'Prefer not to say'),
+    )
+    underrepresented = models.CharField(
+        max_length=20, blank=False, default='undisclosed',
+        choices=UNDERREPRESENTED_CHOICES,
+        verbose_name="I self-identify as a member of a group that is "
+                     "under-represented in research and/or computing.",
+        help_text="The Carpentries strives to increase opportunities for "
+                  "underrepresented groups to join our team."
+    )
     underrepresented_details = models.CharField(
         max_length=STR_LONGEST, blank=True, default="",
         verbose_name="If you are comfortable doing so, please share more "
