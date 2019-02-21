@@ -87,7 +87,7 @@ outdated :
 ## upgrade      : force package upgrade using pip
 upgrade :
 	pip install --upgrade -r requirements.txt
-	yarn upgrade
+	yarn upgrade --frozen-lockfile
 
 ## clean        : clean up.
 clean :
