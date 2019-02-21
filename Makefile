@@ -35,10 +35,7 @@ dev_database :
 	${MANAGE} migrate
 	${MANAGE} fake_database
 	${MANAGE} createinitialrevisions
-
-## superuser    : make a super-user in the database
-superuser :
-	@${MANAGE} create_superuser
+	${MANAGE} create_superuser
 
 ## airports     : display YAML for airports
 airports :
