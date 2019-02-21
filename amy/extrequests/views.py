@@ -462,7 +462,7 @@ def trainingrequests_merge(request):
                 'family', 'email', 'github', 'occupation', 'occupation_other',
                 'affiliation', 'location', 'country', 'underresourced',
                 'domains_other', 'underrepresented',
-                'nonprofit_teaching_experience',
+                'underrepresented_details', 'nonprofit_teaching_experience',
                 'previous_training', 'previous_training_other',
                 'previous_training_explanation', 'previous_experience',
                 'previous_experience_other', 'previous_experience_explanation',
