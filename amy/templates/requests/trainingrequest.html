@@ -79,7 +79,7 @@
   <tr><th>Other areas of expertise:</th>
       <td>{{ req.domains_other|default:"&mdash;" }}</td></tr>
   <tr><th>Under-represented:</th>
-      <td>{% if req.underrepresented %}Yes. Reason: {{ req.underrepresented }}{% else %}No.{% endif %}</td></tr>
+      <td>{{ req.get_underrepresented_display }}.{% if req.underrepresented_details %} Reason: {{ req.underrepresented_details }}{% endif %}</td></tr>
   <tr><th>Previous involvement:</th>
       <td><ul>
           {% for involvement in req.previous_involvement.all %}

@@ -152,6 +152,20 @@ class TestTrainingRequestModelScoring(TestBase):
         self.tr.domains.set(domains)
         self.assertEqual(self.tr.score_auto, 1)
 
+    def test_underrepresented(self):
+        """With change in https://github.com/swcarpentry/amy/issues/1468,
+        we start automatically scoring underrepresented field."""
+        data = {
+            'yes': 1,
+            'no': 0,
+            'undisclosed': 0,
+            '???': 0,
+        }
+        for value, score in data.items():
+            self.tr.underrepresented = value
+            self.tr.save()
+            self.assertEqual(self.tr.score_auto, score)
+
     def test_previous_involvement(self):
         """Ensure m2m_changed signals work correctly on
         `TrainingRequest.previous_involvement` field."""
@@ -614,6 +628,7 @@ class TestTrainingRequestMerging(TestBase):
             'domains': 'obj_a',
             'domains_other': 'obj_a',
             'underrepresented': 'obj_a',
+            'underrepresented_details': 'obj_a',
             'nonprofit_teaching_experience': 'obj_a',
             'previous_involvement': 'obj_b',
             'previous_training': 'obj_a',
@@ -657,6 +672,7 @@ class TestTrainingRequestMerging(TestBase):
             'domains': 'combine',
             'domains_other': 'obj_b',
             'underrepresented': 'obj_b',
+            'underrepresented_details': 'obj_b',
             'nonprofit_teaching_experience': 'obj_b',
             'previous_involvement': 'combine',
             'previous_training': 'obj_a',
@@ -717,6 +733,7 @@ class TestTrainingRequestMerging(TestBase):
             'underresourced': 'combine',
             'domains_other': 'combine',
             'underrepresented': 'combine',
+            'underrepresented_details': 'combine',
             'nonprofit_teaching_experience': 'combine',
             'previous_training': 'combine',
             'previous_training_other': 'combine',

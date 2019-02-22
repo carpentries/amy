@@ -62,7 +62,8 @@ class TestListingTrainingRequests(APITestBase):
             country='US',
             underresourced=True,
             domains_other='Magic',
-            underrepresented='Yes',
+            underrepresented='yes',
+            underrepresented_details='LGBTQ',
             nonprofit_teaching_experience='None',
             previous_training='none',
             previous_training_other='',
@@ -107,7 +108,8 @@ class TestListingTrainingRequests(APITestBase):
             country='US',
             underresourced=True,
             domains_other='Cooking',
-            underrepresented='Yes',
+            underrepresented='no',
+            underrepresented_details='Male',
             nonprofit_teaching_experience='None',
             previous_training='none',
             previous_training_other='',
@@ -180,7 +182,8 @@ class TestListingTrainingRequests(APITestBase):
                 'family': 'Gummi-Glen',
                 'email': 'zummi@gummibears.com',
                 'github': None,
-                'underrepresented': 'Yes',
+                'underrepresented': 'yes',
+                'underrepresented_details': 'LGBTQ',
                 'occupation': '',
                 'occupation_other': 'Magician',
                 'affiliation': 'Gummi-Glen',
@@ -234,7 +237,8 @@ class TestListingTrainingRequests(APITestBase):
                 'family': 'Gummi-Glen',
                 'email': 'grammi@gummibears.com',
                 'github': None,
-                'underrepresented': 'Yes',
+                'underrepresented': 'no',
+                'underrepresented_details': 'Male',
                 'occupation': '',
                 'occupation_other': 'Cook',
                 'affiliation': 'Gummi-Glen',
@@ -294,7 +298,7 @@ class TestListingTrainingRequests(APITestBase):
         expected_firstline = (
             'Created at,Last updated at,State,Matched Trainee,'
             'Matched Trainee ID,Badges,Training Tasks,Registration Code,'
-            'Personal,Middle,Family,Email,GitHub username,'
+            'Personal,Middle,Family,Email,GitHub username,Underrepresented,'
             'Underrepresented (reason),Occupation,Occupation (other),'
             'Affiliation,Location,Country,Underresourced institution,'
             'Expertise areas,Expertise areas (other),'

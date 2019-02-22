@@ -25,7 +25,7 @@ class TestTrainingRequestForm(TestBase):
             'country': 'PL',
             'domains': [1, 2],
             'domains_other': '',
-            'underrepresented': '',
+            'underrepresented': 'undisclosed',
             'previous_involvement': [Role.objects.get(name='host').id],
             'previous_training': 'none',
             'previous_training_other': '',

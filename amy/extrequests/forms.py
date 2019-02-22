@@ -645,6 +645,9 @@ class TrainingRequestsMergeForm(forms.Form):
     underrepresented = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
+    underrepresented_details = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
     nonprofit_teaching_experience = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
