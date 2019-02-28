@@ -484,6 +484,177 @@ Other content.
                 self.assertEqual(expected, parse_metadata_from_event_website(metadata))
 
 
+class TestAlternativeLatitudeLongitude(TestBase):
+    maxDiff = None
+
+    html_content_old = """
+<html><head>
+<meta name="latlng" content="36.998977, -109.045173" />
+</head>
+<body>
+<h1>test</h1>
+</body></html>
+"""
+    html_content_new = """
+<html><head>
+<meta name="lat" content="36.998977" />
+<meta name="lng" content="-109.045173" />
+</head>
+<body>
+<h1>test</h1>
+</body></html>
+"""
+    yaml_content_old = """---
+layout: workshop
+root: .
+latlng: 36.998977, -109.045173
+----
+Other content.
+"""
+    yaml_content_new = """---
+layout: workshop
+root: .
+lat: 36.998977
+lng: -109.045173
+----
+Other content.
+"""
+
+    def test_finding_metadata_on_index(self):
+        content = self.yaml_content_old
+        expected = {
+            'latlng': '36.998977, -109.045173',
+        }
+        self.assertEqual(expected, find_metadata_on_event_homepage(content))
+
+        content = self.yaml_content_new
+        expected = {
+            'lat': '36.998977',
+            'lng': '-109.045173',
+        }
+        self.assertEqual(expected, find_metadata_on_event_homepage(content))
+
+    def test_finding_metadata_on_website(self):
+        content = self.html_content_old
+        expected = {
+            'latlng': '36.998977, -109.045173',
+        }
+        self.assertEqual(expected, find_metadata_on_event_website(content))
+
+        content = self.html_content_new
+        expected = {
+            'lat': '36.998977',
+            'lng': '-109.045173',
+        }
+        self.assertEqual(expected, find_metadata_on_event_website(content))
+
+    def test_parsing_old_latlng(self):
+        metadata = {
+            'slug': '2015-07-13-test',
+            'startdate': '2015-07-13',
+            'enddate': '2015-07-14',
+            'country': 'us',
+            'venue': 'Euphoric State University',
+            'address': 'Highway to Heaven 42, Academipolis',
+            'latlng': '36.998977, -109.045173',
+            'language': 'us',
+            'instructor': 'Hermione Granger|Ron Weasley',
+            'helper': 'Peter Parker|Tony Stark|Natasha Romanova',
+            'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
+            'eventbrite': '10000000',
+        }
+        expected = {
+            'slug': '2015-07-13-test',
+            'language': 'US',
+            'start': datetime.date(2015, 7, 13),
+            'end': datetime.date(2015, 7, 14),
+            'country': 'US',
+            'venue': 'Euphoric State University',
+            'address': 'Highway to Heaven 42, Academipolis',
+            'latitude': 36.998977,
+            'longitude': -109.045173,
+            'reg_key': 10000000,
+            'instructors': ['Hermione Granger', 'Ron Weasley'],
+            'helpers': ['Peter Parker', 'Tony Stark', 'Natasha Romanova'],
+            'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
+        }
+        self.assertEqual(expected, parse_metadata_from_event_website(metadata))
+
+    def test_parsing_new_latlng(self):
+        metadata = {
+            'slug': '2015-07-13-test',
+            'startdate': '2015-07-13',
+            'enddate': '2015-07-14',
+            'country': 'us',
+            'venue': 'Euphoric State University',
+            'address': 'Highway to Heaven 42, Academipolis',
+            'lat': '36.998977',
+            'lng': '-109.045173',
+            'language': 'us',
+            'instructor': 'Hermione Granger|Ron Weasley',
+            'helper': 'Peter Parker|Tony Stark|Natasha Romanova',
+            'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
+            'eventbrite': '10000000',
+        }
+        expected = {
+            'slug': '2015-07-13-test',
+            'language': 'US',
+            'start': datetime.date(2015, 7, 13),
+            'end': datetime.date(2015, 7, 14),
+            'country': 'US',
+            'venue': 'Euphoric State University',
+            'address': 'Highway to Heaven 42, Academipolis',
+            'latitude': 36.998977,
+            'longitude': -109.045173,
+            'reg_key': 10000000,
+            'instructors': ['Hermione Granger', 'Ron Weasley'],
+            'helpers': ['Peter Parker', 'Tony Stark', 'Natasha Romanova'],
+            'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
+        }
+        self.assertEqual(expected, parse_metadata_from_event_website(metadata))
+
+    def test_validating_old_latlng(self):
+        """"""
+        metadata = {
+            'slug': '2015-07-13-test',
+            'language': 'us',
+            'startdate': '2015-07-13',
+            'enddate': '2015-07-14',
+            'country': 'us',
+            'venue': 'Euphoric State University',
+            'address': 'Highway to Heaven 42, Academipolis',
+            'eventbrite': '10000000',
+            'instructor': 'Hermione Granger, Ron Weasley',
+            'helper': 'Peter Parker, Tony Stark, Natasha Romanova',
+            'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
+            'latlng': '36.998977, -109.045173',
+        }
+        errors, warnings = validate_metadata_from_event_website(metadata)
+        self.assertEqual(errors, [])
+        self.assertEqual(warnings, [])
+
+    def test_validating_new_latlng(self):
+        """"""
+        metadata = {
+            'slug': '2015-07-13-test',
+            'language': 'us',
+            'startdate': '2015-07-13',
+            'enddate': '2015-07-14',
+            'country': 'us',
+            'venue': 'Euphoric State University',
+            'address': 'Highway to Heaven 42, Academipolis',
+            'eventbrite': '10000000',
+            'instructor': 'Hermione Granger, Ron Weasley',
+            'helper': 'Peter Parker, Tony Stark, Natasha Romanova',
+            'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
+            'lat': '36.998977',
+            'lng': '-109.045173',
+        }
+        errors, warnings = validate_metadata_from_event_website(metadata)
+        self.assertEqual(errors, [])
+        self.assertEqual(warnings, [])
+
+
 class TestMembership(TestBase):
     """Tests for SCF membership."""
 
