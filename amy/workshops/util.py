@@ -52,7 +52,8 @@ NUM_TRIES = 100
 
 ALLOWED_METADATA_NAMES = [
     'slug', 'startdate', 'enddate', 'country', 'venue', 'address',
-    'latlng', 'language', 'eventbrite', 'instructor', 'helper', 'contact',
+    'latlng', 'lat', 'lng', 'language', 'eventbrite', 'instructor', 'helper',
+    'contact',
 ]
 
 
@@ -649,9 +650,9 @@ def find_metadata_on_event_homepage(content):
         # get metadata to the form returned by `find_metadata_on_event_website`
         # because YAML tries to interpret values from index's header
         filtered_metadata = {key: value for key, value in metadata.items()
-                         if key in ALLOWED_METADATA_NAMES}
+                             if key in ALLOWED_METADATA_NAMES}
         for key, value in filtered_metadata.items():
-            if isinstance(value, int):
+            if isinstance(value, int) or isinstance(value, float):
                 filtered_metadata[key] = str(value)
             elif isinstance(value, datetime.date):
                 filtered_metadata[key] = '{:%Y-%m-%d}'.format(value)
@@ -686,15 +687,23 @@ def parse_metadata_from_event_website(metadata):
     if len(language) < 2:
         language = ''
 
+    # read either ('lat', 'lng') pair or (old) 'latlng' comma-separated value
+    if 'lat' in metadata and 'lng' in metadata:
+        latitude = metadata.get('lat', '')
+        longitude = metadata.get('lng', '')
+    else:
+        try:
+            latitude, longitude = metadata.get('latlng', '').split(',')
+        except (ValueError, AttributeError):
+            latitude, longitude = None, None
+
     try:
-        latitude, _ = metadata.get('latlng', '').split(',')
         latitude = float(latitude.strip())
     except (ValueError, AttributeError):
         # value error: can't convert string to float
         # attribute error: object doesn't have "split" or "strip" methods
         latitude = None
     try:
-        _, longitude = metadata.get('latlng', '').split(',')
         longitude = float(longitude.strip())
     except (ValueError, AttributeError):
         # value error: can't convert string to float
@@ -766,13 +775,26 @@ def validate_metadata_from_event_website(metadata):
         Requirement('country', None, True, TWOCHAR_FMT),
         Requirement('venue', None, True, None),
         Requirement('address', None, True, None),
-        Requirement('latlng', 'latitude / longitude', True,
-                    '^' + FRACTION_FMT + r',\s?' + FRACTION_FMT + '$'),
         Requirement('instructor', None, True, None),
         Requirement('helper', None, True, None),
         Requirement('contact', None, True, None),
         Requirement('eventbrite', 'Eventbrite event ID', False, r'^\d+$'),
     ]
+
+    # additional, separate check for latitude and longitude data
+    latlng_req = Requirement('latlng', 'latitude / longitude', True,
+                             r'^{},\s?{}$'.format(FRACTION_FMT, FRACTION_FMT))
+    lat_req = Requirement('lat', 'latitude', True, '^' + FRACTION_FMT + '$')
+    lng_req = Requirement('lng', 'longitude', True, '^' + FRACTION_FMT + '$')
+
+    # separate 'lat' and 'lng' are supported since #1461,
+    # but here we're checking which requirement to add to the list of
+    # "required" requirements
+    if 'lat' in metadata or 'lng' in metadata:
+        requirements.append(lat_req)
+        requirements.append(lng_req)
+    else:
+        requirements.append(latlng_req)
 
     for requirement in requirements:
         d_ = requirement._asdict()
