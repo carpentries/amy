@@ -410,12 +410,16 @@ class PersonManager(BaseUserManager):
                             default=0,
                             output_field=IntegerField()))
 
-        def passed_either(req_a, req_b):
+        def passed_either(req_a, req_b, req_c):
             return Sum(Case(When(trainingprogress__requirement__name=req_a,
                                  trainingprogress__state='p',
                                  trainingprogress__discarded=False,
                                  then=1),
                             When(trainingprogress__requirement__name=req_b,
+                                 trainingprogress__state='p',
+                                 trainingprogress__discarded=False,
+                                 then=1),
+                            When(trainingprogress__requirement__name=req_c,
                                  trainingprogress__state='p',
                                  trainingprogress__discarded=False,
                                  then=1),
@@ -426,11 +430,13 @@ class PersonManager(BaseUserManager):
             passed_training=passed('Training'),
             passed_swc_homework=passed('SWC Homework'),
             passed_dc_homework=passed('DC Homework'),
+            passed_lc_homework=passed('LC Homework'),
             passed_discussion=passed('Discussion'),
             passed_swc_demo=passed('SWC Demo'),
             passed_dc_demo=passed('DC Demo'),
-            passed_homework=passed_either('SWC Homework', 'DC Homework'),
-            passed_demo=passed_either('SWC Demo', 'DC Demo'),
+            passed_lc_demo=passed('LC Demo'),
+            passed_homework=passed_either('SWC Homework', 'DC Homework', 'LC Homework'),
+            passed_demo=passed_either('SWC Demo', 'DC Demo', 'LC Demo'),
         ).annotate(
             # We're using Maths to calculate "binary" score for a person to
             # be instructor badge eligible. Legend:
