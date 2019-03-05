@@ -15,13 +15,22 @@
     {% endcompress %}
     {% block extrastyle %}{% endblock extrastyle %}
 
-    {% compress js %}
-    <script src="{% static 'jquery/dist/jquery.js' %}"></script>
-    {% endcompress %}
-
     <title>AMY{% if title %}: {{ title }}{% endif %}</title>
   </head>
   <body>
+    {% compress js %}
+    <script src="{% static 'jquery/dist/jquery.js' %}"></script>
+    <script src="{% static 'popper.js/dist/umd/popper.js' %}"></script>
+    <script src="{% static 'bootstrap/dist/js/bootstrap.js' %}"></script>
+    <script src="{% static 'bootstrap-datepicker/dist/js/bootstrap-datepicker.js' %}"></script>
+    <script src="{% static 'jquery-stickytabs/jquery.stickytabs.js' %}"></script>
+    <script src="{% static 'urijs/src/URI.js' %}"></script>
+    <script src="{% static 'datatables.net/js/jquery.dataTables.js' %}"></script>
+    <script src="{% static 'datatables.net-bs4/js/dataTables.bootstrap4.js' %}"></script>
+    <script src="{% static 'calendar_popup.js' %}"></script>
+    <script src="{% static 'amy_utils.js' %}"></script>
+    {% endcompress %}
+
     {% block navbar %}{% endblock navbar %}
     <div class="container-fluid">
       {% block main %}
@@ -69,17 +78,6 @@
       </div>
     </div>
 
-    {% compress js %}
-    <script src="{% static 'popper.js/dist/umd/popper.js' %}"></script>
-    <script src="{% static 'bootstrap/dist/js/bootstrap.js' %}"></script>
-    <script src="{% static 'bootstrap-datepicker/dist/js/bootstrap-datepicker.js' %}"></script>
-    <script src="{% static 'jquery-stickytabs/jquery.stickytabs.js' %}"></script>
-    <script src="{% static 'urijs/src/URI.js' %}"></script>
-    <script src="{% static 'datatables.net/js/jquery.dataTables.js' %}"></script>
-    <script src="{% static 'datatables.net-bs4/js/dataTables.bootstrap4.js' %}"></script>
-    <script src="{% static 'calendar_popup.js' %}"></script>
-    <script src="{% static 'amy_utils.js' %}"></script>
-    {% endcompress %}
     {% block extrajs %}{% endblock extrajs %}
   </body>
 </html>

@@ -608,7 +608,8 @@ class TestExportingPersonData(BaseExportingTest):
             # need to set it below
             # domains=KnowledgeDomain.objects.first(),
             domains_other='E-commerce',
-            underrepresented='',
+            underrepresented='yes',
+            underrepresented_details='LGBTQ',
             nonprofit_teaching_experience='Voluntary teacher',
             # need to set it below
             # previous_involvement=Role.objects.filter(name='instructor'),
@@ -868,7 +869,8 @@ class TestExportingPersonData(BaseExportingTest):
                 'underresourced': False,
                 'domains': ['Chemistry'],
                 'domains_other': 'E-commerce',
-                'underrepresented': '',
+                'underrepresented': 'yes',
+                'underrepresented_details': 'LGBTQ',
                 'nonprofit_teaching_experience': 'Voluntary teacher',
                 'previous_involvement': ['instructor'],
                 'previous_training': 'A certification or short course',

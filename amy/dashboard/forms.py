@@ -5,6 +5,7 @@ from workshops.models import (
     Language,
     Person,
     TrainingProgress,
+    TrainingRequirement,
 )
 
 from workshops.forms import BootstrapHelper
@@ -77,14 +78,16 @@ class AutoUpdateProfileForm(forms.ModelForm):
 
 class SendHomeworkForm(forms.ModelForm):
     url = forms.URLField(label='URL')
+    requirement = forms.ModelChoiceField(
+        queryset=TrainingRequirement.objects.filter(name__endswith="Homework"),
+        label="Type", required=True,
+    )
 
-    def __init__(self, submit_name, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper = BootstrapHelper(submit_name=submit_name,
-                                      add_cancel_button=False)
+    helper = BootstrapHelper(add_cancel_button=False)
 
     class Meta:
         model = TrainingProgress
         fields = [
+            'requirement',
             'url',
         ]

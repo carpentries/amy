@@ -1,4 +1,5 @@
 from captcha.fields import ReCaptchaField
+from crispy_forms.layout import HTML
 from django import forms
 
 from extrequests.forms import (
@@ -41,6 +42,7 @@ class TrainingRequestForm(forms.ModelForm):
             'domains',
             'domains_other',
             'underrepresented',
+            'underrepresented_details',
             'nonprofit_teaching_experience',
             'previous_involvement',
             'previous_training',
@@ -65,6 +67,7 @@ class TrainingRequestForm(forms.ModelForm):
             'occupation': RadioSelectWithOther('occupation_other'),
             'domains': CheckboxSelectMultipleWithOthers('domains_other'),
             'gender': forms.RadioSelect(),
+            'underrepresented': forms.RadioSelect(),
             'previous_involvement': forms.CheckboxSelectMultiple(),
             'previous_training': RadioSelectWithOther(
                 'previous_training_other'),
@@ -111,6 +114,15 @@ class TrainingRequestForm(forms.ModelForm):
         self.helper.layout.fields.remove(
             'teaching_frequency_expectation_other')
         self.helper.layout.fields.remove('max_travelling_frequency_other')
+
+        # add <HR> around "underrepresented*" fields
+        index = self.helper.layout.fields.index('underrepresented')
+        self.helper.layout.insert(
+            index, HTML('<hr class="col-lg-10 col-12 mx-0 px-0">'))
+
+        index = self.helper.layout.fields.index('underrepresented_details')
+        self.helper.layout.insert(
+            index + 1, HTML('<hr class="col-lg-10 col-12 mx-0 px-0">'))
 
 
 class WorkshopRequestExternalForm(WorkshopRequestBaseForm):

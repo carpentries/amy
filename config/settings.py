@@ -2,7 +2,6 @@
 Django settings for AMY project.
 """
 
-from collections import namedtuple
 import os
 import sys
 
@@ -282,6 +281,14 @@ STATICFILES_FINDERS = [
     'compressor.finders.CompressorFinder',
 ]
 
+# DJANGO-COMPRESSOR
+# -----------------------------------------------------------------------------
+# https://django-compressor.readthedocs.io/en/stable/settings/
+COMPRESS_CSS_FILTERS = [
+    'compressor.filters.css_default.CssAbsoluteFilter',
+    'compressor.filters.cssmin.CSSCompressorFilter',
+]
+
 # MEDIA
 # -----------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#media-root
@@ -375,35 +382,12 @@ if not DEBUG and (not ANYMAIL['MAILGUN_API_KEY'] or
 
 # NOTIFICATIONS
 # -----------------------------------------------------------------------------
-Criterium = namedtuple('Criterium', ['name', 'value'])
-# Admin notification filtering
-crit_UK = Criterium('country', 'GB')
-crit_CA = Criterium('country', 'CA')
-crit_NZ = Criterium('country', 'NZ')
-crit_AU = Criterium('country', 'AU')
-crit_Africa = Criterium(
-    'country',
-    (
-        'DZ', 'AO', 'BJ', 'BW', 'BF', 'BI', 'CM', 'CV', 'CF', 'TD', 'KM', 'CD',
-        'DJ', 'EG', 'GQ', 'ER', 'ET', 'GA', 'GM', 'GH', 'GN', 'GW', 'CI', 'KE',
-        'LS', 'LR', 'LY', 'MG', 'MW', 'ML', 'MR', 'MU', 'YT', 'MA', 'MZ', 'NA',
-        'NE', 'NG', 'CG', 'RE', 'RW', 'SH', 'ST', 'SN', 'SC', 'SL', 'SO', 'ZA',
-        'SS', 'SD', 'SZ', 'TZ', 'TG', 'TN', 'UG', 'EH', 'ZM', 'ZW',
-    ),
-)
-ADMIN_NOTIFICATION_CRITERIA = {
-    crit_UK: 'admin-uk@carpentries.org',
-    crit_CA: 'admin-ca@carpentries.org',
-    crit_NZ: 'admin-nz@carpentries.org',
-    crit_AU: 'admin-au@carpentries.org',
-    crit_Africa: 'admin-afr@carpentries.org',
-}
 ADMIN_NOTIFICATION_CRITERIA_DEFAULT = 'team@carpentries.org'
 
 # ADMIN
 # ------------------------------------------------------------------------------
 # Django Admin URL.
-ADMIN_URL = 'admin/'
+ADMIN_URL = env('AMY_ADMIN_URL', default='admin/')
 # https://docs.djangoproject.com/en/dev/ref/settings/#admins
 ADMINS = [
     ('Sysadmins ML', 'sysadmin@lists.carpentries.org'),

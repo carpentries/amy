@@ -109,9 +109,14 @@
       <th>{% include "includes/merge_radio.html" with field=form.domains_other %}</th>
     </tr>
     <tr>
-      <th>Under-represented (reason)</th>
-      <td>{{ obj_a.underrepresented|default:"—" }}</td><td>{{ obj_b.underrepresented|default:"—" }}</td>
+      <th>Under-represented</th>
+      <td>{{ obj_a.get_underrepresented_display }}</td><td>{{ obj_b.get_underrepresented_display }}</td>
       <th>{% include "includes/merge_radio.html" with field=form.underrepresented %}</th>
+    </tr>
+    <tr>
+      <th>Under-represented (reason)</th>
+      <td>{{ obj_a.underrepresented_details|default:"—" }}</td><td>{{ obj_b.underrepresented_details|default:"—" }}</td>
+      <th>{% include "includes/merge_radio.html" with field=form.underrepresented_details %}</th>
     </tr>
     <tr>
       <th>Non-profit / volunteer teaching experience</th>

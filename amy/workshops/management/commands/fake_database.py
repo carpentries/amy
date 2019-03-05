@@ -215,6 +215,9 @@ class Command(BaseCommand):
         occupation = choice(TrainingRequest._meta.get_field('occupation')
                                            .choices)[0]
         training_completion_agreement = randbool(0.5)
+        underrepresented_choices = (
+            TrainingRequest._meta.get_field('underrepresented').choices
+        )
         req = TrainingRequest.objects.create(
             state=state,
             person=person_or_None,
@@ -231,7 +234,10 @@ class Command(BaseCommand):
             country=choice(Countries)[0],
             underresourced=randbool(0.6),
             domains_other='',
-            underrepresented=randbool(0.6),
+            underrepresented=choice(underrepresented_choices)[0],
+            underrepresented_details=choice(
+                ['', self.faker.paragraph(nb_sentences=1)]
+            ),
             nonprofit_teaching_experience='',
             previous_training=choice(
                 TrainingRequest.PREVIOUS_TRAINING_CHOICES)[0],
@@ -305,6 +311,7 @@ class Command(BaseCommand):
             github=github,
             url=url,
             username=username,
+            country=choice(Countries)[0],
         )
 
         if is_instructor:

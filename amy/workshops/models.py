@@ -410,12 +410,16 @@ class PersonManager(BaseUserManager):
                             default=0,
                             output_field=IntegerField()))
 
-        def passed_either(req_a, req_b):
+        def passed_either(req_a, req_b, req_c):
             return Sum(Case(When(trainingprogress__requirement__name=req_a,
                                  trainingprogress__state='p',
                                  trainingprogress__discarded=False,
                                  then=1),
                             When(trainingprogress__requirement__name=req_b,
+                                 trainingprogress__state='p',
+                                 trainingprogress__discarded=False,
+                                 then=1),
+                            When(trainingprogress__requirement__name=req_c,
                                  trainingprogress__state='p',
                                  trainingprogress__discarded=False,
                                  then=1),
@@ -426,11 +430,13 @@ class PersonManager(BaseUserManager):
             passed_training=passed('Training'),
             passed_swc_homework=passed('SWC Homework'),
             passed_dc_homework=passed('DC Homework'),
+            passed_lc_homework=passed('LC Homework'),
             passed_discussion=passed('Discussion'),
             passed_swc_demo=passed('SWC Demo'),
             passed_dc_demo=passed('DC Demo'),
-            passed_homework=passed_either('SWC Homework', 'DC Homework'),
-            passed_demo=passed_either('SWC Demo', 'DC Demo'),
+            passed_lc_demo=passed('LC Demo'),
+            passed_homework=passed_either('SWC Homework', 'DC Homework', 'LC Homework'),
+            passed_demo=passed_either('SWC Demo', 'DC Demo', 'LC Demo'),
         ).annotate(
             # We're using Maths to calculate "binary" score for a person to
             # be instructor badge eligible. Legend:
@@ -1523,15 +1529,26 @@ class TrainingRequest(CreatedUpdatedMixin, DataPrivacyAgreementMixin,
         blank=True, default='',
     )
 
-    # a single checkbox for under-represented minorities
-    # instead of two "gender" fields
+    UNDERREPRESENTED_CHOICES = (
+        ('yes', 'Yes'),
+        ('no', 'No'),
+        ('undisclosed', 'Prefer not to say'),
+    )
     underrepresented = models.CharField(
-        max_length=STR_LONGEST, blank=True, null=True,
-        verbose_name='I self-identify as a member of a group that is '
-                     'under-represented in research and/or computing, e.g., '
-                     'women, ethnic minorities, LGBTQ, etc.',
-        help_text="Provide details or leave blank if this doesn't apply"
-                  " to you."
+        max_length=20, blank=False, default='undisclosed',
+        choices=UNDERREPRESENTED_CHOICES,
+        verbose_name="I self-identify as a member of a group that is "
+                     "under-represented in research and/or computing.",
+        help_text="The Carpentries strives to increase opportunities for "
+                  "underrepresented groups to join our team."
+    )
+    underrepresented_details = models.CharField(
+        max_length=STR_LONGEST, blank=True, default="",
+        verbose_name="If you are comfortable doing so, please share more "
+                     "details. Your response is optional, and these details "
+                     "will not impact your application's ranking.",
+        help_text="This response is optional and doesn't impact your "
+                  "application's ranking.",
     )
 
     # new field for teaching-related experience in non-profit or volunteer org.
@@ -1720,6 +1737,11 @@ class TrainingRequest(CreatedUpdatedMixin, DataPrivacyAgreementMixin,
                 score += 1
                 break
 
+        # Changed in https://github.com/swcarpentry/amy/issues/1468:
+        # +1 for underrepresented minority in research and/or computing
+        if self.underrepresented == 'yes':
+            score += 1
+
         # +1 for each previous involvement with The Carpentries (max. 3)
         prev_inv_count = len(self.previous_involvement.all())
         score += prev_inv_count if prev_inv_count <= 3 else 3
@@ -1775,12 +1797,6 @@ class TrainingRequest(CreatedUpdatedMixin, DataPrivacyAgreementMixin,
                 timestamp=self.created_at,
             )
         )
-
-    def get_underrepresented_display(self):
-        if self.underrepresented:
-            return "Yes: {}".format(self.underrepresented)
-        else:
-            return "No"
 
 
 @reversion.register
