@@ -151,8 +151,7 @@ def autoupdate_profile(request):
 
 @login_required
 def training_progress(request):
-    swc_form = SendHomeworkForm(submit_name='swc-submit')
-    dc_form = SendHomeworkForm(submit_name='dc-submit')
+    homework_form = SendHomeworkForm()
 
     # Add information about instructor training progress to request.user.
     request.user = Person.objects \
@@ -172,43 +171,34 @@ def training_progress(request):
         requirement__name='DC Homework').order_by('-created_at').first()
     request.user.dc_homework_in_evaluation = (
         last_dc_homework is not None and last_dc_homework.state == 'n')
+    last_lc_homework = progresses.filter(
+        requirement__name='LC Homework').order_by('-created_at').first()
+    request.user.lc_homework_in_evaluation = (
+        last_lc_homework is not None and last_lc_homework.state == 'n')
 
-    if request.method == 'POST' and 'swc-submit' in request.POST:
-        requirement = TrainingRequirement.objects.get(name='SWC Homework')
-        progress = TrainingProgress(trainee=request.user,
-                                    state='n',  # not-evaluated yet
-                                    requirement=requirement)
-        swc_form = SendHomeworkForm(data=request.POST, instance=progress,
-                                    submit_name='swc-submit')
-        dc_form = SendHomeworkForm(submit_name='dc-submit')
+    if request.method == 'POST':
+        homework_form = SendHomeworkForm(data=request.POST)
+        if homework_form.is_valid():
+            # read homework type from POST
+            hw_type = homework_form.cleaned_data['requirement']
 
-        if swc_form.is_valid():
-            swc_form.save()
-            messages.success(request, 'Your homework submission will be '
-                                      'evaluated soon.')
-            return redirect(reverse('training-progress'))
+            # create "empty" progress object and fill out
+            progress = TrainingProgress(
+                trainee=request.user,
+                state='n',  # not evaluated yet
+                requirement=hw_type,
+            )
 
-    elif request.method == 'POST' and 'dc-submit' in request.POST:
-        requirement = TrainingRequirement.objects.get(name='DC Homework')
-        progress = TrainingProgress(trainee=request.user,
-                                    state='n',  # not-evaluated yet
-                                    requirement=requirement)
-        swc_form = SendHomeworkForm(submit_name='swc-submit')
-        dc_form = SendHomeworkForm(data=request.POST, instance=progress,
-                                   submit_name='dc-submit')
-
-        if dc_form.is_valid():
-            dc_form.save()
-            messages.success(request, 'Your homework submission will be '
-                                      'evaluated soon.')
-            return redirect(reverse('training-progress'))
-
-    else:  # GET request
-        pass
+            # create virtual form to validate and save
+            form = SendHomeworkForm(data=request.POST, instance=progress)
+            if form.is_valid():
+                form.save()
+                messages.success(request, "Your homework submission will be "
+                                          "evaluated soon.")
+                return redirect(reverse('training-progress'))
 
     context = {
         'title': 'Your training progress',
-        'swc_form': swc_form,
-        'dc_form': dc_form,
+        'homework_form': homework_form,
     }
     return render(request, 'dashboard/training_progress.html', context)
