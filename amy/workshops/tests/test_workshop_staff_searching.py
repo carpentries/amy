@@ -278,12 +278,11 @@ class TestLocateWorkshopStaff(TestBase):
         ]
 
         for form_pass, data in test_vectors:
-            with self.subTest(data=data):
-                params = dict(submit='Submit')
-                params.update(data)
-                rv = self.client.get(self.url, params)
-                form = rv.context['form']
-                self.assertEqual(form.is_valid(), form_pass, form.errors)
+            params = dict(submit='Submit')
+            params.update(data)
+            rv = self.client.get(self.url, params)
+            form = rv.context['form']
+            self.assertEqual(form.is_valid(), form_pass, form.errors)
 
     def test_searching_trainees(self):
         """Make sure finding trainees works. This test additionally checks for
@@ -341,6 +340,17 @@ class TestLocateWorkshopStaff(TestBase):
             ])
         )
 
+    def test_searching_trainers(self):
+        """Make sure people with Trainer badge are shown correctly."""
+        response = self.client.get(self.url, dict(is_trainer="on"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(list(response.context['persons']), [])
+        trainer = Badge.objects.get(name='trainer')
+        self.harry.award_set.create(badge=trainer)
+        response = self.client.get(self.url, dict(is_trainer="on"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(list(response.context['persons']), [self.harry])
+
 
 class TestWorkshopStaffCSV(TestBase):
     """Test cases for downloading workshop staff search results as CSV."""
@@ -358,8 +368,8 @@ class TestWorkshopStaffCSV(TestBase):
         rv = self.client.get(self.url)
         first_row = rv.content.decode('utf-8').splitlines()[0]
         first_row_expected = (
-            "Name,Email,Instructor badges,Taught times,Is trainee,Airport,"
-            "Country,Lessons,Affiliation"
+            "Name,Email,Instructor badges,Has Trainer badge,Taught times,"
+            "Is trainee,Airport,Country,Lessons,Affiliation"
         )
 
         self.assertEqual(first_row, first_row_expected)
@@ -375,6 +385,8 @@ class TestWorkshopStaffCSV(TestBase):
             self.assertEqual(row['Instructor badges'],
                              " ".join(map(lambda x: x.name,
                                           expected.instructor_badges)))
+            self.assertEqual(row['Has Trainer badge'],
+                             'yes' if expected.is_trainer else 'no')
             self.assertEqual(row['Taught times'], str(expected.num_taught))
             self.assertEqual(row['Is trainee'],
                              'yes' if expected.is_trainee else 'no')

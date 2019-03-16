@@ -16,6 +16,7 @@
       <tr>
         <th><input type="checkbox" value="Select all" select-all-checkbox /></th>
         <th>Instr. badges</th>
+        <th>Has Trainer badge</th>
         <th>Person</th>
         <th>Taught</th>
         <th>Trainee</th>
@@ -30,6 +31,7 @@
         <td>{% for badge in p.instructor_badges %}
           {% bootstrap_tag badge.name|cut:"-instructor"|upper %}
         {% endfor %}</td>
+        <td>{{ p.is_trainer|yesno }}</td>
         <td><a href="{{ p.get_absolute_url }}">{{ p.full_name }}</a>{% if p.email and p.may_contact %} &lt;{{ p.email|urlize }}&gt;{% endif %}</td>
         <td>{{ p.num_taught }}</td>
         <td>{{ p.is_trainee|yesno }}</td>
