@@ -85,7 +85,7 @@ function updateTrainingProgressForm() {
     }
   }
 
-  if (type == 'SWC Homework' || type == 'DC Homework') {
+  if (type == 'SWC Homework' || type == 'DC Homework' || type == 'LC Homework') {
     url_div.show();
   } else {
     url_div.hide();
