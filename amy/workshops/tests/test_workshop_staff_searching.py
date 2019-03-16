@@ -278,12 +278,11 @@ class TestLocateWorkshopStaff(TestBase):
         ]
 
         for form_pass, data in test_vectors:
-            with self.subTest(data=data):
-                params = dict(submit='Submit')
-                params.update(data)
-                rv = self.client.get(self.url, params)
-                form = rv.context['form']
-                self.assertEqual(form.is_valid(), form_pass, form.errors)
+            params = dict(submit='Submit')
+            params.update(data)
+            rv = self.client.get(self.url, params)
+            form = rv.context['form']
+            self.assertEqual(form.is_valid(), form_pass, form.errors)
 
     def test_searching_trainees(self):
         """Make sure finding trainees works. This test additionally checks for
@@ -340,6 +339,17 @@ class TestLocateWorkshopStaff(TestBase):
                 self.spiderman,
             ])
         )
+
+    def test_searching_trainers(self):
+        """Make sure people with Trainer badge are shown correctly."""
+        response = self.client.get(self.url, dict(is_trainer="on"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(list(response.context['persons']), [])
+        trainer = Badge.objects.get(name='trainer')
+        self.harry.award_set.create(badge=trainer)
+        response = self.client.get(self.url, dict(is_trainer="on"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(list(response.context['persons']), [self.harry])
 
 
 class TestWorkshopStaffCSV(TestBase):
