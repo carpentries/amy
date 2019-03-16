@@ -1496,8 +1496,9 @@ def workshop_staff_csv(request):
     people = f.qs
 
     # first row of the CSV output
-    header_row = ('Name', 'Email', 'Instructor badges', 'Taught times',
-                  'Is trainee', 'Airport', 'Country', 'Lessons', 'Affiliation')
+    header_row = ('Name', 'Email', 'Instructor badges', 'Has Trainer badge',
+                  'Taught times', 'Is trainee', 'Airport', 'Country',
+                  'Lessons', 'Affiliation')
 
     # CSV http header
     response = HttpResponse(content_type='text/csv')
@@ -1513,6 +1514,7 @@ def workshop_staff_csv(request):
             " ".join([
                 badge.name for badge in person.instructor_badges
             ]),
+            "yes" if person.is_trainer else "no",
             person.num_taught,
             "yes" if person.is_trainee else "no",
             str(person.airport) if person.airport else "",
