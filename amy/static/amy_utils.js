@@ -79,9 +79,9 @@ function updateTrainingProgressForm() {
     training_div.show();
   } else {
     training_div.hide();
-    var value = training_div.find('#id_event').val();
-    if (value != undefined) {
-      value.trigger('change');
+    var event = training_div.find('#id_event');
+    if (event.val() != undefined) {
+      event.val(null).trigger('change');
     }
   }
 
