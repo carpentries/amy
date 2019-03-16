@@ -1415,6 +1415,7 @@ def _workshop_staff_query(lat=None, lng=None):
                 )
             ),
             is_trainee=Count('task', filter=(Q(task__in=trainee_tasks))),
+            is_trainer=Count('badges', filter=(Q(badges__name='trainer'))),
         ).prefetch_related(
             'lessons',
             Prefetch(

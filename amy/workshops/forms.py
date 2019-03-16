@@ -253,6 +253,10 @@ class WorkshopStaffForm(forms.Form):
         required=False,
     )
 
+    is_trainer = forms.BooleanField(
+        required=False,
+        label='Has Trainer badge')
+
     GENDER_CHOICES = ((None, '---------'), ) + Person.GENDER_CHOICES
     gender = forms.ChoiceField(choices=GENDER_CHOICES, required=False)
 
@@ -286,6 +290,7 @@ class WorkshopStaffForm(forms.Form):
                 css_class='card',
             ),
             'badges',
+            'is_trainer',
             HTML('<hr>'),
             'was_helper',
             'was_organizer',
