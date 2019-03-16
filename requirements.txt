@@ -30,4 +30,3 @@ django-contrib-comments==1.9.0
 django-markdownx==2.0.28
 Markdown==3.0.1
 Pillow==5.3.0
-csscompressor==0.9.5
