@@ -1,10 +1,10 @@
 import re
 
-from dal import autocomplete
 import django_filters
 from django.db.models import Q
 from django.forms import widgets
 
+from workshops.fields import ModelSelect2
 from workshops.filters import (
     AMYFilterSet,
     NamesOrderingFilter,
@@ -128,7 +128,7 @@ class TraineeFilter(AMYFilterSet):
         queryset=Event.objects.ttt(),
         method=filter_trainees_by_training,
         label='Training',
-        widget=autocomplete.ModelSelect2(
+        widget=ModelSelect2(
             url='ttt-event-lookup',
             attrs=SIDEBAR_DAL_WIDTH,
         ),

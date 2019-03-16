@@ -15,9 +15,6 @@
     {% endcompress %}
     {% block extrastyle %}{% endblock extrastyle %}
 
-    <title>AMY{% if title %}: {{ title }}{% endif %}</title>
-  </head>
-  <body>
     {% compress js %}
     <script src="{% static 'jquery/dist/jquery.js' %}"></script>
     <script src="{% static 'popper.js/dist/umd/popper.js' %}"></script>
@@ -30,6 +27,10 @@
     <script src="{% static 'calendar_popup.js' %}"></script>
     <script src="{% static 'amy_utils.js' %}"></script>
     {% endcompress %}
+
+    <title>AMY{% if title %}: {{ title }}{% endif %}</title>
+  </head>
+  <body>
 
     {% block navbar %}{% endblock navbar %}
     <div class="container-fluid">
