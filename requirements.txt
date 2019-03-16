@@ -1,4 +1,4 @@
-Django==2.1.2
+Django==2.1.7
 PyYAML==3.13
 requests==2.19.1
 requests-mock==1.5.2
