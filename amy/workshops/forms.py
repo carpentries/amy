@@ -200,7 +200,7 @@ def continent_list():
     """This has to be as a callable, because otherwise Django evaluates this
     query and, if the database doesn't exist yet (e.g. during Travis-CI
     tests)."""
-    return Continent.objects.values_list('pk', 'name')
+    return [('', '')] + list(Continent.objects.values_list('pk', 'name'))
 
 
 class WorkshopStaffForm(forms.Form):
