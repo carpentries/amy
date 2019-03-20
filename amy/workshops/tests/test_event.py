@@ -1,9 +1,11 @@
 from datetime import datetime, timedelta, date, timezone
 from urllib.parse import urlencode
+import unittest
 import sys
 
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
+from django.db import connection
 from django.db.utils import IntegrityError
 from django.urls import reverse
 from django_comments.models import Comment
@@ -1160,3 +1162,71 @@ class TestEventReviewingRepoChanges(TestBase):
         for key, value in self.metadata.items():
             if key not in ('slug', 'instructors', 'helpers', 'language'):
                 self.assertNotEqual(getattr(self.event, key), value)
+
+
+class TestEventAttendance(TestBase):
+    """
+    Make sure new (as of #1177) attendance mechanics work as expected.
+    """
+    _db_engine = connection.settings_dict['ENGINE']
+
+    def setUp(self):
+        super().setUp()
+        self._setUpRoles()
+        self._setUpTags()
+        self._setUpUsersAndLogin()
+
+        self.slug = '2019-03-19-simple-event'
+        self.event = Event.objects.create(
+            slug=self.slug, country='US', host=Organization.objects.first()
+        )
+        self.event.tags.set(Tag.objects.filter(name__in=['LC', 'DC']))
+
+    @unittest.skipIf(_db_engine == 'django.db.backends.sqlite3',
+                     'SQLite drops integer field validation')
+    def test_correct_values_for_manual_attendance(self):
+        # `manual_attendance` doesn't accept anything below 0
+        with self.assertRaises(ValidationError):
+            self.event.manual_attendance = -2
+            self.event.full_clean()  # manually trigger validation
+
+        self.event.manual_attendance = 0
+        self.event.full_clean()  # manually trigger validation
+
+    def test_zero_attendance(self):
+        # manual_attendance = 0
+        # some tasks, but none of them is learner
+        # attendance == 0
+        self.event.manual_attendance = 0
+        self.event.save()
+        self.event.task_set.create(person=self.hermione,
+                                   role=Role.objects.get(name='instructor'))
+        self.event.task_set.create(person=self.ron,
+                                   role=Role.objects.get(name='helper'))
+        self.assertEqual(
+            Event.objects.attendance().get(slug=self.slug).attendance, 0)
+
+    def test_single_manual_attendance(self):
+        self.event.manual_attendance = 1
+        self.event.save()
+        self.assertEqual(self.event.task_set.count(), 0)
+        self.assertEqual(self.event.attendance, 1)
+
+    def test_single_learner_task(self):
+        self.event.manual_attendance = 0
+        self.event.save()
+        self.event.task_set.create(person=self.harry,
+                                   role=Role.objects.get(name='learner'))
+        self.assertEqual(self.event.attendance, 1)
+
+    def test_equal_manual_attendance_and_learner_tasks(self):
+        # manual_attendance = 2
+        # 2 learner tasks
+        # attendance = 2
+        self.event.manual_attendance = 2
+        self.event.save()
+        self.event.task_set.create(person=self.harry,
+                                   role=Role.objects.get(name='learner'))
+        self.event.task_set.create(person=self.spiderman,
+                                   role=Role.objects.get(name='learner'))
+        self.assertEqual(self.event.attendance, 2)
