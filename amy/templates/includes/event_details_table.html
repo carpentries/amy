@@ -20,6 +20,7 @@
     <th>Attendance:</th>
     <td colspan="2">
       {{ event.attendance|default_if_none:"&mdash;" }}
+      <i class="fas fa-question-circle" data-toggle="popover" data-html="true" data-trigger="hover" data-content="Manually entered attendance: {{ event.manual_attendance|default_if_none:'&mdash;' }}<br>Counted learner tasks: {{ event.learner_tasks_count|default_if_none:'&mdash;' }}" data-original-title="" title=""></i>
       {% if not event.attendance and event.mailto %}
       <a href="{% include 'includes/attendance_email_href.html' with event=event %}" target="_blank" class="btn btn-primary btn-sm float-right">Ask for attendance</a>
       {% else %}
