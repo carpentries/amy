@@ -452,7 +452,7 @@ Harry,Potter,harry@hogwarts.edu,foobar,Instructor
         attendance.
         """
         foobar = Event.objects.get(slug="foobar")
-        assert foobar.attendance is None
+        self.assertEqual(foobar.attendance, 0)
         foobar.save()
 
         csv = """personal,family,email,event,role
@@ -482,8 +482,10 @@ Harry,Potter,harry@hogwarts.edu,foobar,learner
         self.client.post(reverse('person_bulk_add_confirmation'), payload,
                          follow=True)
 
-        foobar.refresh_from_db()
-        self.assertEqual(1, foobar.attendance)
+        # instead of refreshing, we have to get a "fresh" object, because
+        # `attendance` is a cached property
+        foobar = Event.objects.get(slug="foobar")
+        self.assertEqual(foobar.attendance, 1)
 
 
 class BulkUploadRemoveEntryViewTestCase(CSVBulkUploadTestBase):
