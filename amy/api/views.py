@@ -296,7 +296,7 @@ class PublishedEvents(ListAPIView):
     paginator = None  # disable pagination
     serializer_class = ExportEventSerializer
     filterset_class = EventFilter
-    queryset = Event.objects.published_events()
+    queryset = Event.objects.published_events().attendance()
 
 
 class TrainingRequests(ListAPIView):
@@ -337,7 +337,7 @@ class ReportsViewSet(ViewSet):
     are missing, because we want to still have the power and simplicity of
     a router."""
     permission_classes = (IsAuthenticated, IsAdmin)
-    event_queryset = Event.objects.past_events().order_by('start')
+    event_queryset = Event.objects.past_events().attendance().order_by('start')
     award_queryset = Award.objects.order_by('awarded')
 
     renderer_classes = (BrowsableAPIRenderer, JSONRenderer, CSVRenderer,
@@ -569,13 +569,15 @@ class ReportsViewSet(ViewSet):
         dc_total_instr = dc_total_instr.count()
 
         # total learners for both SWC and DC workshops
-        swc_total_learners = swc_workshops.aggregate(count=Sum('attendance'))
-        swc_total_learners = swc_total_learners['count']
-        dc_total_learners = dc_workshops.aggregate(count=Sum('attendance'))
-        dc_total_learners = dc_total_learners['count']
+        swc_total_learners = swc_workshops.attendance().aggregate(
+            learners_total=Sum('attendance')
+        )['learners_total']
+        dc_total_learners = dc_workshops.attendance().aggregate(
+            learners_total=Sum('attendance')
+        )['learners_total']
 
         # Workshops missing any of this data.
-        missing_attendance = events_qs.filter(attendance=None) \
+        missing_attendance = events_qs.attendance().filter(attendance=None) \
                                       .values_list('slug', flat=True)
         missing_instructors = events_qs.annotate(
             instructors=Sum(
@@ -740,8 +742,10 @@ class OrganizationViewSet(viewsets.ReadOnlyModelViewSet):
 class EventViewSet(viewsets.ReadOnlyModelViewSet):
     """List many events or retrieve only one."""
     permission_classes = (IsAuthenticated, IsAdmin)
-    queryset = Event.objects.all().select_related('host', 'administrator') \
-                                  .prefetch_related('tags')
+    queryset = Event.objects \
+                            .select_related('host', 'administrator') \
+                            .prefetch_related('tags') \
+                            .attendance()
     serializer_class = EventSerializer
     lookup_field = 'slug'
     pagination_class = StandardResultsSetPagination
