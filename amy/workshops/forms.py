@@ -415,13 +415,13 @@ class EventForm(forms.ModelForm):
         model = Event
         fields = ['slug', 'completed', 'start', 'end', 'host', 'administrator',
                   'assigned_to', 'tags', 'url', 'language', 'reg_key', 'venue',
-                  'attendance', 'contact',
+                  'manual_attendance', 'contact',
                   'country', 'address', 'latitude', 'longitude',
                   'open_TTT_applications', 'curricula',
                   'comment',
                   ]
         widgets = {
-            'attendance': TextInput,
+            'manual_attendance': TextInput,
             'latitude': TextInput,
             'longitude': TextInput,
             'invoice_status': RadioSelect,
@@ -457,7 +457,7 @@ class EventForm(forms.ModelForm):
             'url',
             'language',
             'reg_key',
-            'attendance',
+            'manual_attendance',
             'contact',
             Div(
                 Div(HTML('Location details'), css_class='card-header'),
@@ -916,7 +916,7 @@ class EventsMergeForm(forms.Form):
     invoice_status = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
-    attendance = forms.ChoiceField(
+    manual_attendance = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
     contact = forms.ChoiceField(

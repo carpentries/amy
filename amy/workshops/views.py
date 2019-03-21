@@ -800,6 +800,7 @@ def event_details(request, slug):
         )
         event = (
             Event.objects
+                 .attendance()
                  .prefetch_related(sponsorship_prefetch, task_prefetch)
                  .select_related('eventrequest', 'eventsubmission',
                                  'dcselforganizedeventrequest', 'assigned_to',

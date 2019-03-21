@@ -1,9 +1,11 @@
 from datetime import datetime, timedelta, date, timezone
 from urllib.parse import urlencode
+import unittest
 import sys
 
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
+from django.db import connection
 from django.db.utils import IntegrityError
 from django.urls import reverse
 from django_comments.models import Comment
@@ -524,8 +526,8 @@ class TestEventViews(TestBase):
         response = self.client.post(reverse('event_add'), data)
         assert response.status_code == 302
 
-    def test_negative_attendance(self):
-        """Ensure we disallow negative attendance.
+    def test_negative_manual_attendance(self):
+        """Ensure we disallow negative manual attendance.
 
         This is a regression test for
         https://github.com/swcarpentry/amy/issues/435.
@@ -539,29 +541,30 @@ class TestEventViews(TestBase):
             'host': self.test_host.id,
             'tags': [self.test_tag.id],
             'slug': '2016-06-30-test-event',
-            'attendance': -36,
+            'manual_attendance': -36,
             'invoice_status': 'unknown',
         }
 
-        data['attendance'] = -36
+        data['manual_attendance'] = -36
         f = EventForm(data)
-        self.assertIn('attendance', f.errors)
-        self.assertIn(error_str, f.errors['attendance'])
+        self.assertIn('manual_attendance', f.errors)
+        self.assertIn(error_str, f.errors['manual_attendance'])
 
-        data['attendance'] = 0
+        data['manual_attendance'] = 0
         f = EventForm(data)
-        self.assertNotIn('attendance', f.errors)
+        self.assertNotIn('manual_attendance', f.errors)
 
         data['slug'] = '2016-06-30-test-event2'
-        data['attendance'] = 36
+        data['manual_attendance'] = 36
         f = EventForm(data)
         self.assertTrue(f.is_valid())
 
     def test_number_of_attendees_increasing(self):
         """Ensure event.attendance gets bigger after adding new learners."""
         event = Event.objects.get(slug='test_event_0')
-        event.attendance = 0  # testing for numeric case
+        event.manual_attendance = 0  # testing for numeric case
         event.save()
+        self.assertEqual(event.attendance, 0)
 
         data = {
             'role': self.learner.pk,
@@ -569,7 +572,10 @@ class TestEventViews(TestBase):
             'person': self.spiderman.pk,
         }
         self.client.post(reverse('task_add'), data)
-        event.refresh_from_db()
+
+        # instead of refreshing, we have to get a "fresh" object, because
+        # `attendance` is a cached property
+        event = Event.objects.get(slug='test_event_0')
         self.assertEqual(event.attendance, 1)
 
     def test_slug_illegal_characters(self):
@@ -757,8 +763,8 @@ class TestEventMerging(TestBase):
             url='http://reichel.com/event-a', language=self.french,
             reg_key='123456',
             admin_fee=2500, invoice_status='not-invoiced',
-            attendance=30, contact='moore.buna@schuppe.info', country='US',
-            venue='Modi', address='876 Dot Fork',
+            manual_attendance=30, contact='moore.buna@schuppe.info',
+            country='US', venue='Modi', address='876 Dot Fork',
             latitude=59.987509, longitude=-51.507076,
             learners_pre='http://reichel.com/learners_pre',
             learners_post='http://reichel.com/learners_post',
@@ -785,7 +791,7 @@ class TestEventMerging(TestBase):
             url='http://www.cummings.biz/event-b', language=self.english,
             reg_key='654321',
             admin_fee=2500, invoice_status='not-invoiced',
-            attendance=40, contact='haleigh.schneider@hotmail.com',
+            manual_attendance=40, contact='haleigh.schneider@hotmail.com',
             country='GB', venue='Nisi', address='59747 Fernanda Cape',
             latitude=-29.545137, longitude=32.417491,
             learners_pre='http://www.cummings.biz/learners_pre',
@@ -822,7 +828,7 @@ class TestEventMerging(TestBase):
             'reg_key': 'obj_a',
             'admin_fee': 'obj_b',
             'invoice_status': 'obj_a',
-            'attendance': 'obj_b',
+            'manual_attendance': 'obj_b',
             'country': 'obj_a',
             'latitude': 'obj_b',
             'longitude': 'obj_a',
@@ -866,7 +872,7 @@ class TestEventMerging(TestBase):
             'reg_key': 'combine',
             'admin_fee': 'combine',
             'invoice_status': 'combine',
-            'attendance': 'combine',
+            'manual_attendance': 'combine',
             'country': 'combine',
             'latitude': 'combine',
             'longitude': 'combine',
@@ -931,7 +937,7 @@ class TestEventMerging(TestBase):
             'reg_key': self.event_a.reg_key,
             'admin_fee': self.event_b.admin_fee,
             'invoice_status': self.event_a.invoice_status,
-            'attendance': self.event_b.attendance,
+            'manual_attendance': self.event_b.manual_attendance,
             'country': self.event_a.country,
             'latitude': self.event_b.latitude,
             'longitude': self.event_a.longitude,
@@ -1156,3 +1162,71 @@ class TestEventReviewingRepoChanges(TestBase):
         for key, value in self.metadata.items():
             if key not in ('slug', 'instructors', 'helpers', 'language'):
                 self.assertNotEqual(getattr(self.event, key), value)
+
+
+class TestEventAttendance(TestBase):
+    """
+    Make sure new (as of #1177) attendance mechanics work as expected.
+    """
+    _db_engine = connection.settings_dict['ENGINE']
+
+    def setUp(self):
+        super().setUp()
+        self._setUpRoles()
+        self._setUpTags()
+        self._setUpUsersAndLogin()
+
+        self.slug = '2019-03-19-simple-event'
+        self.event = Event.objects.create(
+            slug=self.slug, country='US', host=Organization.objects.first()
+        )
+        self.event.tags.set(Tag.objects.filter(name__in=['LC', 'DC']))
+
+    @unittest.skipIf(_db_engine == 'django.db.backends.sqlite3',
+                     'SQLite drops integer field validation')
+    def test_correct_values_for_manual_attendance(self):
+        # `manual_attendance` doesn't accept anything below 0
+        with self.assertRaises(ValidationError):
+            self.event.manual_attendance = -2
+            self.event.full_clean()  # manually trigger validation
+
+        self.event.manual_attendance = 0
+        self.event.full_clean()  # manually trigger validation
+
+    def test_zero_attendance(self):
+        # manual_attendance = 0
+        # some tasks, but none of them is learner
+        # attendance == 0
+        self.event.manual_attendance = 0
+        self.event.save()
+        self.event.task_set.create(person=self.hermione,
+                                   role=Role.objects.get(name='instructor'))
+        self.event.task_set.create(person=self.ron,
+                                   role=Role.objects.get(name='helper'))
+        self.assertEqual(
+            Event.objects.attendance().get(slug=self.slug).attendance, 0)
+
+    def test_single_manual_attendance(self):
+        self.event.manual_attendance = 1
+        self.event.save()
+        self.assertEqual(self.event.task_set.count(), 0)
+        self.assertEqual(self.event.attendance, 1)
+
+    def test_single_learner_task(self):
+        self.event.manual_attendance = 0
+        self.event.save()
+        self.event.task_set.create(person=self.harry,
+                                   role=Role.objects.get(name='learner'))
+        self.assertEqual(self.event.attendance, 1)
+
+    def test_equal_manual_attendance_and_learner_tasks(self):
+        # manual_attendance = 2
+        # 2 learner tasks
+        # attendance = 2
+        self.event.manual_attendance = 2
+        self.event.save()
+        self.event.task_set.create(person=self.harry,
+                                   role=Role.objects.get(name='learner'))
+        self.event.task_set.create(person=self.spiderman,
+                                   role=Role.objects.get(name='learner'))
+        self.assertEqual(self.event.attendance, 2)
