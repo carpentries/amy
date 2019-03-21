@@ -542,37 +542,50 @@ class ReportsViewSet(ViewSet):
         events_qs = Event.objects.filter(start__gte=start, start__lte=end)
         swc_tag = Tag.objects.get(name='SWC')
         dc_tag = Tag.objects.get(name='DC')
+        lc_tag = Tag.objects.get(name='LC')
         wise_tag = Tag.objects.get(name='WiSE')
         TTT_tag = Tag.objects.get(name='TTT')
         self_organized_host = Organization.objects.get(domain='self-organized')
 
-        # count workshops: SWC, DC, total (SWC and/or DC), self-organized,
+        # count workshops: SWC, DC, LC, total (SWC, DC and LC), self-organized,
         # WiSE, TTT
         swc_workshops = events_qs.filter(tags=swc_tag)
         dc_workshops = events_qs.filter(tags=dc_tag)
-        swc_dc_workshops = events_qs.filter(tags__in=[swc_tag, dc_tag]).count()
+        lc_workshops = events_qs.filter(tags=lc_tag)
+        total_workshops = events_qs.filter(
+            tags__in=[swc_tag, dc_tag, lc_tag]).count()
         wise_workshops = events_qs.filter(tags=wise_tag).count()
         ttt_workshops = events_qs.filter(tags=TTT_tag).count()
         self_organized_workshops = events_qs \
             .filter(administrator=self_organized_host).count()
 
-        # total and unique instructors for both SWC and DC workshops
+        # total and unique instructors for SWC, DC, LC workshops
         swc_total_instr = Person.objects \
             .filter(task__event__in=swc_workshops,
                     task__role__name='instructor')
         swc_unique_instr = swc_total_instr.distinct().count()
         swc_total_instr = swc_total_instr.count()
+
         dc_total_instr = Person.objects \
             .filter(task__event__in=dc_workshops,
                     task__role__name='instructor')
         dc_unique_instr = dc_total_instr.distinct().count()
         dc_total_instr = dc_total_instr.count()
 
-        # total learners for both SWC and DC workshops
+        lc_total_instr = Person.objects \
+            .filter(task__event__in=lc_workshops,
+                    task__role__name='instructor')
+        lc_unique_instr = lc_total_instr.distinct().count()
+        lc_total_instr = lc_total_instr.count()
+
+        # total learners for SWC, DC, LC workshops
         swc_total_learners = swc_workshops.attendance().aggregate(
             learners_total=Sum('attendance')
         )['learners_total']
         dc_total_learners = dc_workshops.attendance().aggregate(
+            learners_total=Sum('attendance')
+        )['learners_total']
+        lc_total_learners = lc_workshops.attendance().aggregate(
             learners_total=Sum('attendance')
         )['learners_total']
 
@@ -595,18 +608,23 @@ class ReportsViewSet(ViewSet):
             'workshops': {
                 'SWC': swc_workshops.count(),
                 'DC': dc_workshops.count(),
+                'LC': lc_workshops.count(),
+
                 # This dictionary is traversed in a template where we cannot
                 # write "{{ data.workshops.SWC,DC }}", because commas are
                 # disallowed in templates. Therefore, we include
-                # swc_dc_workshops twice, under two different keys:
-                # - 'SWC,DC' - for backward compatibility,
-                # - 'SWC_or_DC' - so that you can access it in a template.
-                'SWC,DC': swc_dc_workshops,
-                'SWC_or_DC': swc_dc_workshops,
+                # total_workshops under different keys:
+                # - 'SWC,DC' and 'SWC_or_DC' - for backward compatibility,
+                # - 'carpentries' - new name for SWC/DC/LC collective
+                'SWC,DC': total_workshops,
+                'SWC_or_DC': total_workshops,
+                'carpentries': total_workshops,
+
                 'WiSE': wise_workshops,
                 'TTT': ttt_workshops,
+
                 # We include self_organized_workshops twice, under two
-                # different keys, for the same reason as swc_dc_workshops.
+                # different keys, for the same reason as total_workshops.
                 'self-organized': self_organized_workshops,
                 'self_organized': self_organized_workshops,
             },
@@ -619,10 +637,15 @@ class ReportsViewSet(ViewSet):
                     'total': dc_total_instr,
                     'unique': dc_unique_instr,
                 },
+                'LC': {
+                    'total': lc_total_instr,
+                    'unique': lc_unique_instr,
+                },
             },
             'learners': {
                 'SWC': swc_total_learners,
                 'DC': dc_total_learners,
+                'LC': lc_total_learners,
             },
             'missing': {
                 'attendance': missing_attendance,
