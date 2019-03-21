@@ -2,6 +2,7 @@
 
 {% load crispy_forms_tags %}
 {% load static %}
+{% load tags %}
 
 {% block content %}
 <div class="row">
@@ -15,49 +16,92 @@
     {% if data %}
       <h3>Results</h3>
 
-      <dl>
-        <dt>Number of SWC workshops:</dt>
-        <dd>{{ data.workshops.SWC }}</dd>
-        <dt>Number of DC workshops:</dt>
-        <dd>{{ data.workshops.DC }}</dd>
-        <dt>Number of SWC or DC workshops:</dt>
-        <dd>{{ data.workshops.SWC_or_DC }}</dd>
-        <dt>Number of TTT workshops:</dt>
-        <dd>{{ data.workshops.TTT }}</dd>
-        <dt>Number of WiSE workshops:</dt>
-        <dd>{{ data.workshops.WiSE }}</dd>
-        <dt>Number of self-organized workshops:</dt>
-        <dd>{{ data.workshops.self_organized }}</dd>
-
-        <dt>Total number of instructors in SWC workshops:</dt>
-        <dd>{{ data.instructors.SWC.total }}</dd>
-        <dt>Number of unique instructors in SWC workshops:</dt>
-        <dd>{{ data.instructors.SWC.unique }}</dd>
-
-        <dt>Total number of instructors in DC workshops:</dt>
-        <dd>{{ data.instructors.DC.total }}</dd>
-        <dt>Number of unique instructors in DC workshops:</dt>
-        <dd>{{ data.instructors.DC.unique }}</dd>
-
-        <dt>Total number of learners in SWC workshops:</dt>
-        <dd>{{ data.learners.SWC }}</dd>
-        <dt>Total number of learners in DC workshops:</dt>
-        <dd>{{ data.learners.DC }}</dd>
-
-        <dt>Workshops with missing instructors:</dt>
-        <dd>
-          {% for slug in data.missing.instructors %}
-            <a href="{% url 'event_details' slug %}">{{ slug }}</a>,
-          {% endfor %}
-        </dd>
-        <dt>Workshops with missing attendance:</dt>
-        <dd>
-          {% for slug in data.missing.attendance %}
-            <a href="{% url 'event_details' slug %}">{{ slug }}</a>,
-          {% endfor %}
-        </dd>
-      </dl>
-
+      <table class="table table-striped">
+        <tr>
+          <th>Number of {% bootstrap_tag "SWC" %} workshops:</th>
+          <td>{{ data.workshops.SWC|default:"0" }}</td>
+        </tr>
+        <tr>
+          <th>Number of {% bootstrap_tag "DC" %} workshops:</th>
+          <td>{{ data.workshops.DC|default:"0" }}</td>
+        </tr>
+        <tr>
+          <th>Number of {% bootstrap_tag "LC" %} workshops:</th>
+          <td>{{ data.workshops.LC|default:"0" }}</td>
+        </tr>
+        <tr>
+          <th>Number of All Carpentries workshops:</th>
+          <td>{{ data.workshops.carpentries|default:"0" }}</td>
+        </tr>
+        <tr>
+          <th>Number of {% bootstrap_tag "TTT" %} workshops:</th>
+          <td>{{ data.workshops.TTT|default:"0" }}</td>
+        </tr>
+        <tr>
+          <th>Number of {% bootstrap_tag "WiSE" %} workshops:</th>
+          <td>{{ data.workshops.WiSE|default:"0" }}</td>
+        </tr>
+        <tr>
+          <th>Number of self-organized workshops:</th>
+          <td>{{ data.workshops.self_organized|default:"0" }}</td>
+        </tr>
+        <tr>
+          <th>Total number of instructors in {% bootstrap_tag "SWC" %} workshops:</th>
+          <td>{{ data.instructors.SWC.total|default:"0" }}</td>
+        </tr>
+        <tr>
+          <th>Number of unique instructors in {% bootstrap_tag "SWC" %} workshops:</th>
+          <td>{{ data.instructors.SWC.unique|default:"0" }}</td>
+        </tr>
+        <tr>
+          <th>Total number of instructors in {% bootstrap_tag "DC" %} workshops:</th>
+          <td>{{ data.instructors.DC.total|default:"0" }}</td>
+        </tr>
+        <tr>
+          <th>Number of unique instructors in {% bootstrap_tag "DC" %} workshops:</th>
+          <td>{{ data.instructors.DC.unique|default:"0" }}</td>
+        </tr>
+        <tr>
+          <th>Total number of instructors in {% bootstrap_tag "LC" %} workshops:</th>
+          <td>{{ data.instructors.LC.total|default:"0" }}</td>
+        </tr>
+        <tr>
+          <th>Number of unique instructors in {% bootstrap_tag "LC" %} workshops:</th>
+          <td>{{ data.instructors.LC.unique|default:"0" }}</td>
+        </tr>
+        <tr>
+          <th>Total number of learners in {% bootstrap_tag "SWC" %} workshops:</th>
+          <td>{{ data.learners.SWC|default:"0" }}</td>
+        </tr>
+        <tr>
+          <th>Total number of learners in {% bootstrap_tag "DC" %} workshops:</th>
+          <td>{{ data.learners.DC|default:"0" }}</td>
+        </tr>
+        <tr>
+          <th>Total number of learners in {% bootstrap_tag "LC" %} workshops:</th>
+          <td>{{ data.learners.LC|default:"0" }}</td>
+        </tr>
+        <tr>
+          <th>Workshops with missing instructors:</th>
+          <td>
+            {% for slug in data.missing.instructors %}
+              <a href="{% url 'event_details' slug %}">{{ slug }}</a>,
+            {% empty %}
+              None.
+            {% endfor %}
+          </td>
+        </tr>
+        <tr>
+        <th>Workshops with missing attendance:</th>
+          <td>
+            {% for slug in data.missing.attendance %}
+              <a href="{% url 'event_details' slug %}">{{ slug }}</a>,
+            {% empty %}
+              None.
+            {% endfor %}
+          </td>
+        </tr>
+      </table>
     {% endif %}
   </div>
 </div>
