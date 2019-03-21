@@ -916,7 +916,8 @@ class EventQuerySet(models.query.QuerySet):
         """
         return self.annotate(
             learner_tasks_count=Count(
-                'task', filter=Q(task__role__name='learner')),
+                'task', filter=Q(task__role__name='learner'))
+        ).annotate(
             attendance=Greatest(
                 'manual_attendance', 'learner_tasks_count'),
         )
