@@ -16,11 +16,6 @@ from faker import Faker
 from faker.providers import BaseProvider
 
 from extrequests.models import (
-    EventRequest,
-    EventSubmission,
-    DCSelfOrganizedEventRequest,
-    DCWorkshopDomain,
-    DCWorkshopTopic,
     DataAnalysisLevel,
 )
 from workshops.models import (
@@ -548,54 +543,25 @@ class Command(BaseCommand):
                 DataAnalysisLevel.objects.all()))
             req.save()
 
-    def fake_workshop_submissions(self, count=10):
-        self.stdout.write('Generating {} fake '
-                          'workshop submissions...'.format(count))
+                # requested_workshop_types=[],  # will be selected below
 
-        for _ in range(count):
-            EventSubmission.objects.create(
-                url=self.faker.url(),
-                contact_name=self.faker.name(),
-                contact_email=self.faker.email(),
-                self_organized=randbool(0.5),
-                notes='',
+                organization_type=organization_type,
+                self_organized_github=self_organized_github,
+                centrally_organized_fee=centrally_organized_fee,
+                waiver_circumstances=waiver_circumstances,
+                travel_expences_agreement=travel_expences_agreement,
+                travel_expences_management=travel_expences_management,
+                travel_expences_management_other=travel_expences_management_other,
+
+                user_notes = self.faker.sentence(),
             )
 
-    def fake_dc_selforganized_workshop_requests(self, count=5):
-        self.stdout.write('Generating {} fake dc self-organized '
-                          'workshops requests...'.format(count))
+            req.domains.set(sample(KnowledgeDomain.objects.all()))
+            req.academic_levels.set(sample(AcademicLevel.objects.all()))
+            req.computing_levels.set(sample(ComputingExperienceLevel.objects.all()))
+            req.requested_workshop_types.set(sample(curricula))
+            req.save()
 
-        for _ in range(count):
-            date = self.faker.date_time_between(start_date='now',
-                                                end_date='+1y')
-
-            req = DCSelfOrganizedEventRequest.objects.create(
-                name=self.faker.name(),
-                email=self.faker.email(),
-                organization=self.faker.company(),
-                instructor_status=choice(
-                    DCSelfOrganizedEventRequest.INSTRUCTOR_CHOICES)[0],
-                is_partner=choice(
-                    DCSelfOrganizedEventRequest.PARTNER_CHOICES)[0],
-                is_partner_other='',
-                location=self.faker.city(),
-                country=choice(Countries)[0],
-                associated_conference='',
-                dates=str(date.date()),
-                domains_other='',
-                topics_other='',
-                payment=choice(DCSelfOrganizedEventRequest.PAYMENT_CHOICES)[0],
-                fee_waiver_reason='',
-                handle_registration=True,
-                distribute_surveys=True,
-                follow_code_of_conduct=True,
-            )
-            req.domains.set(sample(DCWorkshopDomain.objects.all()))
-            req.topics.set(sample(DCWorkshopTopic.objects.all()))
-            req.attendee_academic_levels.set(sample(
-                AcademicLevel.objects.all()))
-            req.attendee_data_analysis_level.set(sample(
-                DataAnalysisLevel.objects.all()))
 
     def handle(self, *args, **options):
         seed = options['seed']
