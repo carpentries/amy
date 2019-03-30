@@ -10,6 +10,7 @@ from random import (
 
 from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
+from django.db import IntegrityError
 from django_countries import countries as Countries
 from faker import Faker
 from faker.providers import BaseProvider
@@ -581,25 +582,28 @@ class Command(BaseCommand):
         if seed is not None:
             self.faker.seed(seed)
 
-        self.fake_airports()
-        self.fake_roles()
-        self.fake_groups()
-        self.fake_tags()
-        self.fake_badges()
-        self.fake_instructors()
-        self.fake_trainers()
-        self.fake_admins()
-        self.fake_organizations()
-        self.fake_memberships()
-        self.fake_current_events()
-        self.fake_uninvoiced_events()
-        self.fake_unpublished_events()
-        self.fake_self_organized_events()
-        self.fake_ttt_events()
-        self.fake_tasks()
-        self.fake_trainees()
-        self.fake_unmatched_training_requests()
-        self.fake_duplicated_people()
-        self.fake_workshop_requests()
-        self.fake_workshop_submissions()
-        self.fake_dc_selforganized_workshop_requests()
+        try:
+            self.fake_groups()
+            self.fake_airports()
+            self.fake_roles()
+            self.fake_tags()
+            self.fake_badges()
+            self.fake_instructors()
+            self.fake_trainers()
+            self.fake_admins()
+            self.fake_organizations()
+            self.fake_memberships()
+            self.fake_current_events()
+            self.fake_unpublished_events()
+            self.fake_self_organized_events()
+            self.fake_ttt_events()
+            self.fake_tasks()
+            self.fake_trainees()
+            self.fake_unmatched_training_requests()
+            self.fake_duplicated_people()
+            self.fake_workshop_requests()
+        except IntegrityError as e:
+            print("!!!" * 10)
+            print("Delete the database, and rerun this script.")
+            print("!!!" * 10)
+            raise e
