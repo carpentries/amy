@@ -203,18 +203,16 @@ class Command(BaseCommand):
             person.save()
 
     def fake_trainees(self, count=30):
-        self.stdout.write('Generating {} fake trainees '
-                          '(and their training progresses '
-                          'as well as training requests)...'.format(count))
+        self.stdout.write('Generating {} fake trainees (and their training '
+                          'progresses and training requests)...'.format(count))
         for _ in range(count):
             p = self.fake_person(is_instructor=randbool(0.1))
             training = choice(Event.objects.ttt())
             Task.objects.create(person=p, event=training,
                                 role=Role.objects.get(name='learner'))
 
+            self.fake_training_request(p)
             self.fake_training_progresses(p, training)
-            if randbool(0.8):
-                self.fake_training_request(p)
 
     def fake_training_progresses(self, p, training):
         trainers = Person.objects.filter(award__badge__name='trainer')
@@ -290,8 +288,6 @@ class Command(BaseCommand):
                 TrainingRequest.MAX_TRAVELLING_FREQUENCY_CHOICES)[0],
             max_travelling_frequency_other='',
             reason=self.faker.text(),
-            # there's no such field as `comment` anymore
-            # comment=self.faker.text() if randbool(0.3) else '',
             training_completion_agreement=training_completion_agreement,
             workshop_teaching_agreement=randbool(0.5) if training_completion_agreement else False,
         )
