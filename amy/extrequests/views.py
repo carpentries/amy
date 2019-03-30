@@ -21,6 +21,8 @@ from django.db.models import (
 )
 from django.shortcuts import redirect, render, get_object_or_404
 from django.urls import reverse
+from django_countries import countries
+from requests.exceptions import HTTPError, RequestException
 
 from extrequests.filters import (
     TrainingRequestFilter,
@@ -56,6 +58,7 @@ from workshops.models import (
     Task,
     Role,
     Person,
+    Language,
 )
 from workshops.util import (
     OnlyForAdminsMixin,
@@ -69,6 +72,9 @@ from workshops.util import (
     merge_objects,
     failed_to_delete,
     InternalError,
+    fetch_event_metadata,
+    parse_metadata_from_event_website,
+    WrongWorkshopURL,
 )
 
 
@@ -135,9 +141,7 @@ class WorkshopRequestSetState(OnlyForAdminsMixin, ChangeRequestStateView):
                      raise_exception=True)
 def workshoprequest_accept_event(request, request_id):
     """Accept event request by creating a new event."""
-    workshoprequest = get_object_or_404(WorkshopRequest, state='p',
-                                        pk=request_id)
-    form = EventCreateForm()
+    wr = get_object_or_404(WorkshopRequest, state='p', pk=request_id)
 
     if request.method == 'POST':
         form = EventCreateForm(request.POST)
@@ -145,16 +149,47 @@ def workshoprequest_accept_event(request, request_id):
         if form.is_valid():
             event = form.save()
 
-            workshoprequest.state = 'a'
-            workshoprequest.event = event
-            workshoprequest.save()
+            wr.state = 'a'
+            wr.event = event
+            wr.save()
             return redirect(reverse('event_details',
                                     args=[event.slug]))
         else:
             messages.error(request, 'Fix errors below.')
 
+    else:
+        # non-POST request
+        form = EventCreateForm()
+
+        # perhaps this WorkshopRequest has URL and we could pre-fill
+        # the form?
+        if wr.organization_type == 'self' and wr.self_organized_github:
+
+            try:
+                url = wr.self_organized_github.strip()
+                metadata = fetch_event_metadata(url)
+                data = parse_metadata_from_event_website(metadata)
+
+                if 'language' in data:
+                    lang = data['language'].lower()
+                    data['language'] = Language.objects.get(subtag=lang)
+
+                if 'instructors' in data or 'helpers' in data:
+                    instructors = data.get('instructors') or ['none']
+                    helpers = data.get('helpers') or ['none']
+                    data['comment'] = "Instructors: {}\n\nHelpers: {}" \
+                        .format(','.join(instructors), ','.join(helpers))
+
+                form = EventCreateForm(initial=data)
+
+            except (AttributeError, KeyError, ValueError, HTTPError,
+                    RequestException, WrongWorkshopURL, Language.DoesNotExist):
+                # ignore errors
+                messages.warning(request, "Cannot automatically fill the form "
+                                          "from provided workshop URL.")
+
     context = {
-        'object': workshoprequest,
+        'object': wr,
         'form': form,
     }
     return render(request, 'requests/workshoprequest_accept_event.html',
