@@ -10,16 +10,12 @@ from random import (
 
 from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
+from django.db import IntegrityError
 from django_countries import countries as Countries
 from faker import Faker
 from faker.providers import BaseProvider
 
 from extrequests.models import (
-    EventRequest,
-    EventSubmission,
-    DCSelfOrganizedEventRequest,
-    DCWorkshopDomain,
-    DCWorkshopTopic,
     DataAnalysisLevel,
 )
 from workshops.models import (
@@ -42,6 +38,8 @@ from workshops.models import (
     AcademicLevel,
     ComputingExperienceLevel,
     Language,
+    Curriculum,
+    WorkshopRequest,
 )
 from workshops.util import create_username
 
@@ -94,13 +92,12 @@ class Command(BaseCommand):
 
     def fake_airports(self):
         """Add some airports."""
-        # we're not doing anything here, since:
-        # 1. data migrations add some airports already
-        # 2. we'll have more airports as fixtures as of #626
-        pass
+        # we're not doing anything here, since data migrations already add some
+        # airports
+        self.stdout.write('Generating 0 fake airports...')
 
     def fake_roles(self):
-        self.stdout.write('Generating fake roles...')
+        """Provide fixed roles."""
         roles = [
             ('helper', 'Helper'),
             ('instructor', 'Instructor'),
@@ -109,44 +106,79 @@ class Command(BaseCommand):
             ('organizer', 'Workshop organizer'),
             ('contributor', 'Contributed to lesson materials')
         ]
-        """Provide fixed roles (before they end up in fixtures, see #626)."""
+        
+        self.stdout.write('Generating {} fake roles...'.format(len(roles)))
+
         for name, verbose_name in roles:
-            Role.objects.create(name=name, verbose_name=verbose_name)
+            Role.objects.get_or_create(
+                name=name,
+                defaults=dict(verbose_name=verbose_name)
+            )
 
     def fake_groups(self):
-        # Two groups are already in the migrations: Administrator
-        # and Steering Committee
-        self.stdout.write('Generating fake groups...')
-        Group.objects.create(name='invoicing')
-        Group.objects.create(name='trainers')
+        """Provide authentication groups."""
+        groups = ['administrators', 'invoicing', 'steering committee',
+                  'trainers']
+
+        self.stdout.write(
+            'Generating {} auth groups...'.format(len(groups)))
+
+        for group in groups:
+            Group.objects.get_or_create(name=group)
 
     def fake_tags(self):
-        """Provide fixed tags (before they end up in fixtures, see #626)."""
-        self.stdout.write('Generating fake tags...')
+        """Provide fixed tags. All other tags are pre-created through data
+        migrations."""
         tags = [
             ('SWC', 'Software Carpentry Workshop'),
             ('DC', 'Data Carpentry Workshop'),
             ('LC', 'Library Carpentry Workshop'),
             ('WiSE', 'Women in Science and Engineering'),
             ('TTT', 'Train the Trainers'),
+            ('online', 'Events taking place entirely online'),
+            ('stalled', 'Events with lost contact with the host or TTT events'
+                        ' that aren\'t running.'),
+            ('unresponsive', 'Events whose hosts and/or organizers aren\'t '
+                             'going to send attendance data'),
+            ('hackathon', 'Event is a hackathon'),
+            ('cancelled', 'Events that were supposed to happen but due to some'
+                          ' circumstances got cancelled'),
+            ('LSO', 'Lesson Specific Onboarding'),
+            ('ITT', 'Instructor Trainer Training (Trainer Training)'),
+            ('LMO', 'Lesson Maintainer Onboarding'),
         ]
+
+        self.stdout.write('Generating {} fake tags...'.format(len(tags)))
+
         for tag, details in tags:
-            Tag.objects.create(name=tag, details=details)
+            Tag.objects.get_or_create(name=tag, defaults=dict(details=details))
 
     def fake_badges(self):
         """Provide fixed badges."""
-        # Some badges are already in the migrations: swc-instructor,
-        # dc-instructor, maintainer, trainer, lc-instructor.
-        self.stdout.write('Generating fake badges...')
         badges = [
-            ('creator', 'Creator',
-             'Creating learning materials and other content'),
+            ('creator', 'Creator', 'Creating learning materials and other '
+                                   'content'),
+            ('swc-instructor', 'Software Carpentry Instructor',
+             'Teaching at Software Carpentry workshops or online'),
             ('member', 'Member', 'Software Carpentry Foundation member'),
-            ('organizer', 'Organizer',
-             'Organizing workshops and learning groups'),
+            ('organizer', 'Organizer', 'Organizing workshops and learning '
+                                       'groups'),
+            ('dc-instructor', 'Data Carpentry Instructor',
+             'Teaching at Data Carpentry workshops or online'),
+            ('maintainer', 'Maintainer', 'Maintainer of Software or Data '
+             'Carpentry lesson'),
+            ('trainer', 'Trainer', 'Teaching instructor training workshops'),
+            ('mentor', 'Mentor', 'Mentor of Carpentry Instructors'),
+            ('mentee', 'Mentee', 'Mentee in Carpentry Mentorship Program'),
+            ('lc-instructor', 'Library Carpentry Instructor',
+             'Teaching at Library Carpentry workshops or online'),
         ]
+
+        self.stdout.write('Generating {} fake badges...'.format(len(badges)))
+
         for name, title, criteria in badges:
-            Badge.objects.create(name=name, title=title, criteria=criteria)
+            Badge.objects.get_or_create(
+                name=name, defaults=dict(title=title, criteria=criteria))
 
     def fake_instructors(self, count=30):
         self.stdout.write('Generating {} fake instructors...'.format(count))
@@ -168,18 +200,16 @@ class Command(BaseCommand):
             person.save()
 
     def fake_trainees(self, count=30):
-        self.stdout.write('Generating {} fake trainees '
-                          '(and their training progresses '
-                          'as well as training requests)...'.format(count))
+        self.stdout.write('Generating {} fake trainees (and their training '
+                          'progresses and training requests)...'.format(count))
         for _ in range(count):
             p = self.fake_person(is_instructor=randbool(0.1))
             training = choice(Event.objects.ttt())
             Task.objects.create(person=p, event=training,
                                 role=Role.objects.get(name='learner'))
 
+            self.fake_training_request(p)
             self.fake_training_progresses(p, training)
-            if randbool(0.8):
-                self.fake_training_request(p)
 
     def fake_training_progresses(self, p, training):
         trainers = Person.objects.filter(award__badge__name='trainer')
@@ -255,8 +285,6 @@ class Command(BaseCommand):
                 TrainingRequest.MAX_TRAVELLING_FREQUENCY_CHOICES)[0],
             max_travelling_frequency_other='',
             reason=self.faker.text(),
-            # there's no such field as `comment` anymore
-            # comment=self.faker.text() if randbool(0.3) else '',
             training_completion_agreement=training_completion_agreement,
             workshop_teaching_agreement=randbool(0.5) if training_completion_agreement else False,
         )
@@ -368,17 +396,7 @@ class Command(BaseCommand):
         self.stdout.write('Generating {} fake current events...'.format(count))
 
         for _ in range(count):
-            self.fake_event(**kwargs)
-
-    def fake_uninvoiced_events(self, count=5):
-        """Preferably in the past, and with 'uninvoiced' status."""
-        self.stdout.write(
-            'Generating {} fake uninvoiced events...'.format(count))
-
-        for _ in range(count):
-            e = self.fake_event()
-            e.invoice_status = 'not-invoiced'
-            e.save()
+            self.fake_event(future_date=True, **kwargs)
 
     def fake_unpublished_events(self, count=5):
         """Events with missing location data (which is required for publishing
@@ -410,8 +428,12 @@ class Command(BaseCommand):
             e.save()
 
     def fake_event(self, *, location_data=True, self_organized=False,
-                   add_tags=True):
-        start = self.faker.date_time_between(start_date='-5y').date()
+                   add_tags=True, future_date=False):
+        if future_date:
+            start = self.faker.date_time_between(start_date='now',
+                                                 end_date='+120d').date()
+        else:
+            start = self.faker.date_time_between(start_date='-120d').date()
         city = self.faker.city().replace(' ', '-').lower()
         if self_organized:
             org = Organization.objects.get(domain='self-organized')
@@ -487,119 +509,123 @@ class Command(BaseCommand):
         self.stdout.write('Generating {} fake '
                           'workshop requests...'.format(count))
 
+        curricula = Curriculum.objects.filter(active=True)
+        organizations = Organization.objects.all()
+
         for _ in range(count):
             if randbool(0.5):
                 language = Language.objects.get(subtag='en')
             else:
                 language = choice(Language.objects.all())
 
-            req = EventRequest.objects.create(
-                name=self.faker.name(),
+            if randbool(0.3):
+                org = choice(organizations)
+                org_name = ''
+            else:
+                org = None
+                org_name = self.faker.company()
+
+            organization_type = choice(
+                    WorkshopRequest.ORGANIZATION_TYPE_CHOICES)[0]
+            if organization_type == 'self':
+                self_organized_github = self.faker.uri()
+                centrally_organized_fee = 'nonprofit'  # doesn't matter
+                waiver_circumstances = ""
+                travel_expences_agreement = False
+                travel_expences_management = ""
+                travel_expences_management_other = ""
+            else:
+                self_organized_github = ""
+                centrally_organized_fee = choice(WorkshopRequest.FEE_CHOICES)[0]
+                waiver_circumstances = (
+                    self.faker.sentence()
+                    if centrally_organized_fee == 'waiver'
+                    else "")
+                travel_expences_agreement = True
+                travel_expences_management = choice(
+                    WorkshopRequest.TRAVEL_EXPENCES_MANAGEMENT_CHOICES)[0]
+                travel_expences_management_other = (
+                    self.faker.sentence()
+                    if travel_expences_management == ''
+                    else "")
+
+
+            req = WorkshopRequest.objects.create(
+                state=choice(['p', 'd', 'a']),
+                data_privacy_agreement=randbool(0.5),
+                code_of_conduct_agreement=randbool(0.5),
+                host_responsibilities=randbool(0.5),
+
+                personal=self.faker.first_name(),
+                family=self.faker.last_name(),
                 email=self.faker.email(),
-                affiliation=self.faker.company(),
+
+                institution=org,
+                institution_name=org_name,
+                institution_department='',
                 location=self.faker.city(),
                 country=choice(Countries)[0],
-                conference='',
-                preferred_date=str(self.faker.date_time_between(
+
+                conference_details='',
+                preferred_dates=str(self.faker.date_time_between(
                     start_date='now', end_date='+1y').date()),
+
                 language=language,
-                workshop_type=choice(EventRequest.WORKSHOP_TYPE_CHOICES)[0],
-                approx_attendees=choice(
-                    EventRequest.ATTENDEES_NUMBER_CHOICES)[0],
-                attendee_domains_other='',
-                data_types=choice(EventRequest.DATA_TYPES_CHOICES)[0],
-                understand_admin_fee=True,
-                admin_fee_payment=choice(
-                    EventRequest.ADMIN_FEE_PAYMENT_CHOICES)[0],
-                fee_waiver_request=randbool(0.2),
-                cover_travel_accomodation=randbool(0.6),
-                travel_reimbursement=choice(
-                    EventRequest.TRAVEL_REIMBURSEMENT_CHOICES)[0],
-                travel_reimbursement_other='',
-                comment='',
+                number_attendees=choice(
+                    WorkshopRequest.ATTENDEES_NUMBER_CHOICES)[0],
+                # domains=[],  # will be selected below because it's M2M
+                domains_other='',
+                # academic_levels=[],  # will be selected below
+                # computing_levels=[],  # will be selected below
+                audience_description=self.faker.sentence(),
+
+                # requested_workshop_types=[],  # will be selected below
+
+                organization_type=organization_type,
+                self_organized_github=self_organized_github,
+                centrally_organized_fee=centrally_organized_fee,
+                waiver_circumstances=waiver_circumstances,
+                travel_expences_agreement=travel_expences_agreement,
+                travel_expences_management=travel_expences_management,
+                travel_expences_management_other=travel_expences_management_other,
+
+                user_notes = self.faker.sentence(),
             )
-            req.attendee_domains.set(sample(KnowledgeDomain.objects.all()))
-            req.attendee_academic_levels.set(sample(
-                AcademicLevel.objects.all()))
-            req.attendee_computing_levels.set(sample(
-                ComputingExperienceLevel.objects.all()))
-            req.attendee_data_analysis_level.set(sample(
-                DataAnalysisLevel.objects.all()))
+
+            req.domains.set(sample(KnowledgeDomain.objects.all()))
+            req.academic_levels.set(sample(AcademicLevel.objects.all()))
+            req.computing_levels.set(sample(ComputingExperienceLevel.objects.all()))
+            req.requested_workshop_types.set(sample(curricula))
             req.save()
 
-    def fake_workshop_submissions(self, count=10):
-        self.stdout.write('Generating {} fake '
-                          'workshop submissions...'.format(count))
-
-        for _ in range(count):
-            EventSubmission.objects.create(
-                url=self.faker.url(),
-                contact_name=self.faker.name(),
-                contact_email=self.faker.email(),
-                self_organized=randbool(0.5),
-                notes='',
-            )
-
-    def fake_dc_selforganized_workshop_requests(self, count=5):
-        self.stdout.write('Generating {} fake dc self-organized '
-                          'workshops requests...'.format(count))
-
-        for _ in range(count):
-            date = self.faker.date_time_between(start_date='now',
-                                                end_date='+1y')
-
-            req = DCSelfOrganizedEventRequest.objects.create(
-                name=self.faker.name(),
-                email=self.faker.email(),
-                organization=self.faker.company(),
-                instructor_status=choice(
-                    DCSelfOrganizedEventRequest.INSTRUCTOR_CHOICES)[0],
-                is_partner=choice(
-                    DCSelfOrganizedEventRequest.PARTNER_CHOICES)[0],
-                is_partner_other='',
-                location=self.faker.city(),
-                country=choice(Countries)[0],
-                associated_conference='',
-                dates=str(date.date()),
-                domains_other='',
-                topics_other='',
-                payment=choice(DCSelfOrganizedEventRequest.PAYMENT_CHOICES)[0],
-                fee_waiver_reason='',
-                handle_registration=True,
-                distribute_surveys=True,
-                follow_code_of_conduct=True,
-            )
-            req.domains.set(sample(DCWorkshopDomain.objects.all()))
-            req.topics.set(sample(DCWorkshopTopic.objects.all()))
-            req.attendee_academic_levels.set(sample(
-                AcademicLevel.objects.all()))
-            req.attendee_data_analysis_level.set(sample(
-                DataAnalysisLevel.objects.all()))
 
     def handle(self, *args, **options):
         seed = options['seed']
         if seed is not None:
             self.faker.seed(seed)
 
-        self.fake_airports()
-        self.fake_roles()
-        self.fake_groups()
-        self.fake_tags()
-        self.fake_badges()
-        self.fake_instructors()
-        self.fake_trainers()
-        self.fake_admins()
-        self.fake_organizations()
-        self.fake_memberships()
-        self.fake_current_events()
-        self.fake_uninvoiced_events()
-        self.fake_unpublished_events()
-        self.fake_self_organized_events()
-        self.fake_ttt_events()
-        self.fake_tasks()
-        self.fake_trainees()
-        self.fake_unmatched_training_requests()
-        self.fake_duplicated_people()
-        self.fake_workshop_requests()
-        self.fake_workshop_submissions()
-        self.fake_dc_selforganized_workshop_requests()
+        try:
+            self.fake_groups()
+            self.fake_airports()
+            self.fake_roles()
+            self.fake_tags()
+            self.fake_badges()
+            self.fake_instructors()
+            self.fake_trainers()
+            self.fake_admins()
+            self.fake_organizations()
+            self.fake_memberships()
+            self.fake_current_events()
+            self.fake_unpublished_events()
+            self.fake_self_organized_events()
+            self.fake_ttt_events()
+            self.fake_tasks()
+            self.fake_trainees()
+            self.fake_unmatched_training_requests()
+            self.fake_duplicated_people()
+            self.fake_workshop_requests()
+        except IntegrityError as e:
+            print("!!!" * 10)
+            print("Delete the database, and rerun this script.")
+            print("!!!" * 10)
+            raise e
