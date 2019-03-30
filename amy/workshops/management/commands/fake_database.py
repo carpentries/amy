@@ -38,6 +38,8 @@ from workshops.models import (
     AcademicLevel,
     ComputingExperienceLevel,
     Language,
+    Curriculum,
+    WorkshopRequest,
 )
 from workshops.util import create_username
 
@@ -507,45 +509,75 @@ class Command(BaseCommand):
         self.stdout.write('Generating {} fake '
                           'workshop requests...'.format(count))
 
+        curricula = Curriculum.objects.filter(active=True)
+        organizations = Organization.objects.all()
+
         for _ in range(count):
             if randbool(0.5):
                 language = Language.objects.get(subtag='en')
             else:
                 language = choice(Language.objects.all())
 
-            req = EventRequest.objects.create(
-                name=self.faker.name(),
+            if randbool(0.3):
+                org = choice(organizations)
+                org_name = ''
+            else:
+                org = None
+                org_name = self.faker.company()
+
+            organization_type = choice(
+                    WorkshopRequest.ORGANIZATION_TYPE_CHOICES)[0]
+            if organization_type == 'self':
+                self_organized_github = self.faker.uri()
+                centrally_organized_fee = 'nonprofit'  # doesn't matter
+                waiver_circumstances = ""
+                travel_expences_agreement = False
+                travel_expences_management = ""
+                travel_expences_management_other = ""
+            else:
+                self_organized_github = ""
+                centrally_organized_fee = choice(WorkshopRequest.FEE_CHOICES)[0]
+                waiver_circumstances = (
+                    self.faker.sentence()
+                    if centrally_organized_fee == 'waiver'
+                    else "")
+                travel_expences_agreement = True
+                travel_expences_management = choice(
+                    WorkshopRequest.TRAVEL_EXPENCES_MANAGEMENT_CHOICES)[0]
+                travel_expences_management_other = (
+                    self.faker.sentence()
+                    if travel_expences_management == ''
+                    else "")
+
+
+            req = WorkshopRequest.objects.create(
+                state=choice(['p', 'd', 'a']),
+                data_privacy_agreement=randbool(0.5),
+                code_of_conduct_agreement=randbool(0.5),
+                host_responsibilities=randbool(0.5),
+
+                personal=self.faker.first_name(),
+                family=self.faker.last_name(),
                 email=self.faker.email(),
-                affiliation=self.faker.company(),
+
+                institution=org,
+                institution_name=org_name,
+                institution_department='',
                 location=self.faker.city(),
                 country=choice(Countries)[0],
-                conference='',
-                preferred_date=str(self.faker.date_time_between(
+
+                conference_details='',
+                preferred_dates=str(self.faker.date_time_between(
                     start_date='now', end_date='+1y').date()),
+
                 language=language,
-                workshop_type=choice(EventRequest.WORKSHOP_TYPE_CHOICES)[0],
-                approx_attendees=choice(
-                    EventRequest.ATTENDEES_NUMBER_CHOICES)[0],
-                attendee_domains_other='',
-                data_types=choice(EventRequest.DATA_TYPES_CHOICES)[0],
-                understand_admin_fee=True,
-                admin_fee_payment=choice(
-                    EventRequest.ADMIN_FEE_PAYMENT_CHOICES)[0],
-                fee_waiver_request=randbool(0.2),
-                cover_travel_accomodation=randbool(0.6),
-                travel_reimbursement=choice(
-                    EventRequest.TRAVEL_REIMBURSEMENT_CHOICES)[0],
-                travel_reimbursement_other='',
-                comment='',
-            )
-            req.attendee_domains.set(sample(KnowledgeDomain.objects.all()))
-            req.attendee_academic_levels.set(sample(
-                AcademicLevel.objects.all()))
-            req.attendee_computing_levels.set(sample(
-                ComputingExperienceLevel.objects.all()))
-            req.attendee_data_analysis_level.set(sample(
-                DataAnalysisLevel.objects.all()))
-            req.save()
+                number_attendees=choice(
+                    WorkshopRequest.ATTENDEES_NUMBER_CHOICES)[0],
+                # domains=[],  # will be selected below because it's M2M
+                domains_other='',
+                # academic_levels=[],  # will be selected below
+                # computing_levels=[],  # will be selected below
+                audience_description=self.faker.sentence(),
 
                 # requested_workshop_types=[],  # will be selected below
 
