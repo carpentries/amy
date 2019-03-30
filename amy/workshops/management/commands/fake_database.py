@@ -426,8 +426,12 @@ class Command(BaseCommand):
             e.save()
 
     def fake_event(self, *, location_data=True, self_organized=False,
-                   add_tags=True):
-        start = self.faker.date_time_between(start_date='-5y').date()
+                   add_tags=True, future_date=False):
+        if future_date:
+            start = self.faker.date_time_between(start_date='now',
+                                                 end_date='+120d').date()
+        else:
+            start = self.faker.date_time_between(start_date='-120d').date()
         city = self.faker.city().replace(' ', '-').lower()
         if self_organized:
             org = Organization.objects.get(domain='self-organized')
