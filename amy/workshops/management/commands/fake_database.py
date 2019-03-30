@@ -399,17 +399,7 @@ class Command(BaseCommand):
         self.stdout.write('Generating {} fake current events...'.format(count))
 
         for _ in range(count):
-            self.fake_event(**kwargs)
-
-    def fake_uninvoiced_events(self, count=5):
-        """Preferably in the past, and with 'uninvoiced' status."""
-        self.stdout.write(
-            'Generating {} fake uninvoiced events...'.format(count))
-
-        for _ in range(count):
-            e = self.fake_event()
-            e.invoice_status = 'not-invoiced'
-            e.save()
+            self.fake_event(future_date=True, **kwargs)
 
     def fake_unpublished_events(self, count=5):
         """Events with missing location data (which is required for publishing
