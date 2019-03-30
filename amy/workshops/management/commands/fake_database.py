@@ -95,13 +95,12 @@ class Command(BaseCommand):
 
     def fake_airports(self):
         """Add some airports."""
-        # we're not doing anything here, since:
-        # 1. data migrations add some airports already
-        # 2. we'll have more airports as fixtures as of #626
-        pass
+        # we're not doing anything here, since data migrations already add some
+        # airports
+        self.stdout.write('Generating 0 fake airports...')
 
     def fake_roles(self):
-        self.stdout.write('Generating fake roles...')
+        """Provide fixed roles."""
         roles = [
             ('helper', 'Helper'),
             ('instructor', 'Instructor'),
@@ -110,44 +109,79 @@ class Command(BaseCommand):
             ('organizer', 'Workshop organizer'),
             ('contributor', 'Contributed to lesson materials')
         ]
-        """Provide fixed roles (before they end up in fixtures, see #626)."""
+        
+        self.stdout.write('Generating {} fake roles...'.format(len(roles)))
+
         for name, verbose_name in roles:
-            Role.objects.create(name=name, verbose_name=verbose_name)
+            Role.objects.get_or_create(
+                name=name,
+                defaults=dict(verbose_name=verbose_name)
+            )
 
     def fake_groups(self):
-        # Two groups are already in the migrations: Administrator
-        # and Steering Committee
-        self.stdout.write('Generating fake groups...')
-        Group.objects.create(name='invoicing')
-        Group.objects.create(name='trainers')
+        """Provide authentication groups."""
+        groups = ['administrators', 'invoicing', 'steering committee',
+                  'trainers']
+
+        self.stdout.write(
+            'Generating {} auth groups...'.format(len(groups)))
+
+        for group in groups:
+            Group.objects.get_or_create(name=group)
 
     def fake_tags(self):
-        """Provide fixed tags (before they end up in fixtures, see #626)."""
-        self.stdout.write('Generating fake tags...')
+        """Provide fixed tags. All other tags are pre-created through data
+        migrations."""
         tags = [
             ('SWC', 'Software Carpentry Workshop'),
             ('DC', 'Data Carpentry Workshop'),
             ('LC', 'Library Carpentry Workshop'),
             ('WiSE', 'Women in Science and Engineering'),
             ('TTT', 'Train the Trainers'),
+            ('online', 'Events taking place entirely online'),
+            ('stalled', 'Events with lost contact with the host or TTT events'
+                        ' that aren\'t running.'),
+            ('unresponsive', 'Events whose hosts and/or organizers aren\'t '
+                             'going to send attendance data'),
+            ('hackathon', 'Event is a hackathon'),
+            ('cancelled', 'Events that were supposed to happen but due to some'
+                          ' circumstances got cancelled'),
+            ('LSO', 'Lesson Specific Onboarding'),
+            ('ITT', 'Instructor Trainer Training (Trainer Training)'),
+            ('LMO', 'Lesson Maintainer Onboarding'),
         ]
+
+        self.stdout.write('Generating {} fake tags...'.format(len(tags)))
+
         for tag, details in tags:
-            Tag.objects.create(name=tag, details=details)
+            Tag.objects.get_or_create(name=tag, defaults=dict(details=details))
 
     def fake_badges(self):
         """Provide fixed badges."""
-        # Some badges are already in the migrations: swc-instructor,
-        # dc-instructor, maintainer, trainer, lc-instructor.
-        self.stdout.write('Generating fake badges...')
         badges = [
-            ('creator', 'Creator',
-             'Creating learning materials and other content'),
+            ('creator', 'Creator', 'Creating learning materials and other '
+                                   'content'),
+            ('swc-instructor', 'Software Carpentry Instructor',
+             'Teaching at Software Carpentry workshops or online'),
             ('member', 'Member', 'Software Carpentry Foundation member'),
-            ('organizer', 'Organizer',
-             'Organizing workshops and learning groups'),
+            ('organizer', 'Organizer', 'Organizing workshops and learning '
+                                       'groups'),
+            ('dc-instructor', 'Data Carpentry Instructor',
+             'Teaching at Data Carpentry workshops or online'),
+            ('maintainer', 'Maintainer', 'Maintainer of Software or Data '
+             'Carpentry lesson'),
+            ('trainer', 'Trainer', 'Teaching instructor training workshops'),
+            ('mentor', 'Mentor', 'Mentor of Carpentry Instructors'),
+            ('mentee', 'Mentee', 'Mentee in Carpentry Mentorship Program'),
+            ('lc-instructor', 'Library Carpentry Instructor',
+             'Teaching at Library Carpentry workshops or online'),
         ]
+
+        self.stdout.write('Generating {} fake badges...'.format(len(badges)))
+
         for name, title, criteria in badges:
-            Badge.objects.create(name=name, title=title, criteria=criteria)
+            Badge.objects.get_or_create(
+                name=name, defaults=dict(title=title, criteria=criteria))
 
     def fake_instructors(self, count=30):
         self.stdout.write('Generating {} fake instructors...'.format(count))
