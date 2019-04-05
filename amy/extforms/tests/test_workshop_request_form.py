@@ -1,4 +1,5 @@
 from django.core import mail
+from django.conf import settings
 from django.urls import reverse
 
 from extforms.forms import WorkshopRequestExternalForm
@@ -81,10 +82,31 @@ class TestWorkshopRequestExternalForm(TestBase):
         self.assertIn('Thank you for requesting a workshop', content)
         self.assertEqual(WorkshopRequest.objects.all().count(), 1)
         self.assertEqual(WorkshopRequest.objects.all()[0].state, 'p')
-        self.assertEqual(len(mail.outbox), 1)
+
+        # 1 email for autoresponder, 1 email for admins
+        self.assertEqual(len(mail.outbox), 2)
+
+        # save the email messages for test debuggig
+        # with open('email0.eml', 'wb') as f:
+        #     f.write(mail.outbox[0].message().as_bytes())
+        # with open('email1.eml', 'wb') as f:
+        #     f.write(mail.outbox[1].message().as_bytes())
+
+        # before tests, check if the template invalid string exists
+        self.assertTrue(settings.TEMPLATES[0]['OPTIONS']['string_if_invalid'])
+
+        # test autoresponder email
         msg = mail.outbox[0]
+        self.assertEqual(msg.subject, 'Workshop request confirmation')
+        self.assertEqual(msg.recipients(), ['hpotter@magic.gov'])
+        self.assertNotIn(settings.TEMPLATES[0]['OPTIONS']['string_if_invalid'],
+                         msg.body)
+        # test email for admins
+        msg = mail.outbox[1]
         self.assertEqual(
             msg.subject,
             'New workshop request: Ministry of Magic, 03-04 November, 2018',
         )
         self.assertEqual(msg.recipients(), ['admin-uk@carpentries.org'])
+        self.assertNotIn(settings.TEMPLATES[0]['OPTIONS']['string_if_invalid'],
+                         msg.body)

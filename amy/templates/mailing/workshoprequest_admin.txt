@@ -1,13 +1,13 @@
-Thank you for requesting a Carpentries workshop!
-
-Your request has been received, and a member of our team will get
-back to you within three business days. If you have any immediate 
-questions, please contact us at team@carpentries.org. A copy of your 
-request is included below for your reference.
+{% if link %}
+You can view the request here:
+{{ link_domain}}{{ link }}
+{% endif %}
 
 --------------------------------------------
 
 Submission date: {{ object.created_at }}
+State: {{ object.get_state_display }}
+Related event: {{ object.event|default:"---" }}
 Person: {{ object.personal }} {{ object.family }} &lt;{{ object.email }}&gt;
 Institution: {{ object.institution|default:object.institution_name }}{% if object.institution_department %}, {{ object.institution_department }}{% endif %}
 Location: {{ object.location }}
