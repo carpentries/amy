@@ -266,36 +266,77 @@ class PrepopulationSupportMixin:
 
 
 class AutoresponderMixin:
-    """Automatically emails the sender."""
+    """Automatically emails the form sender."""
 
     @property
-    def email_subject(self):
+    def autoresponder_subject(self):
+        """Autoresponder email subject."""
         raise NotImplementedError
 
     @property
-    def email_body_template(self):
+    def autoresponder_body_template_txt(self):
+        """Autoresponder email body template (TXT)."""
         raise NotImplementedError
 
-    def form_valid(self, form):
-        """Send email to form sender if the form is valid."""
+    @property
+    def autoresponder_body_template_html(self):
+        """Autoresponder email body template (HTML)."""
+        raise NotImplementedError
 
-        retval = super().form_valid(form)
+    @property
+    def autoresponder_form_field(self):
+        """Form field's name that contains autoresponder recipient email."""
+        return 'email'
 
-        body_template = get_template(self.email_body_template)
-        email_body = body_template.render({})
-        recipient = form.cleaned_data['email']
+    def autoresponder_email_context(self, form):
+        """Context for """
+        # list of fields allowed to show to the user
+        whitelist = []
+        form_data = [v for k, v in form.cleaned_data.items() if k in whitelist]
+        return dict(form_data=form_data)
 
-        email = EmailMessage(
-            subject=self.email_subject,
-            body=email_body,
-            to=[recipient],
+    def autoresponder_kwargs(self, form):
+        """Arguments passed to EmailMultiAlternatives."""
+        recipient = (
+            form.cleaned_data.get(self.autoresponder_form_field, None) or ""
         )
+        return dict(to=[recipient])
+
+    def autoresponder_prepare_email(self, form):
+        """Prepare EmailMultiAlternatives object with message."""
+        # get message subject
+        subject = self.autoresponder_subject
+
+        # get message body templates
+        body_txt_tpl = get_template(self.autoresponder_body_template_txt)
+        body_html_tpl = get_template(self.autoresponder_body_template_html)
+
+        # get message body (both in text and in HTML)
+        context = self.autoresponder_email_context(form)
+        body_txt = body_txt_tpl.render(context)
+        body_html = body_html_tpl.render(context)
+
+        # additional arguments, including recipients
+        kwargs = self.autoresponder_kwargs(form)
+
+        email = EmailMultiAlternatives(subject, body_txt, **kwargs)
+        email.attach_alternative(body_html, 'text/html')
+        return email
+
+    def autoresponder(self, form, fail_silently=True):
+        """Get email from `self.autoresponder_prepare_email`, then send it."""
+        email = self.autoresponder_prepare_email(form)
 
         try:
             email.send()
         except SMTPException as e:
-            pass  # fail silently
+            if not fail_silently:
+                raise e
 
+    def form_valid(self, form):
+        """Send email to form sender if the form is valid."""
+        retval = super().form_valid(form)
+        self.autoresponder(form, fail_silently=True)
         return retval
 
 
