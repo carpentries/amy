@@ -22,6 +22,8 @@ if READ_DOT_ENV_FILE:
     # OS environment variables take precedence over variables from .env
     env.read_env(str(ROOT_DIR.path('.env')))
 
+CONTINUOUS_INTEGRATION = env.bool('CONTINUOUS_INTEGRATION', default=False)
+
 # GENERAL
 # -----------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#debug
@@ -284,9 +286,14 @@ STATICFILES_FINDERS = [
 # DJANGO-COMPRESSOR
 # -----------------------------------------------------------------------------
 # https://django-compressor.readthedocs.io/en/stable/settings/
+COMPRESS_ENABLED = not CONTINUOUS_INTEGRATION
+
 COMPRESS_CSS_FILTERS = [
     'compressor.filters.css_default.CssAbsoluteFilter',
-    'compressor.filters.cssmin.CSSCompressorFilter',
+    'compressor.filters.cssmin.rCSSMinFilter',
+]
+COMPRESS_JS_FILTERS = [
+    'compressor.filters.jsmin.JSMinFilter',
 ]
 
 # MEDIA

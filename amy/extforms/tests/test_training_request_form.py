@@ -1,6 +1,8 @@
 from django.core import mail
 from django.urls import reverse
 
+from extforms.forms import TrainingRequestForm
+from extforms.views import TrainingRequestCreate
 from workshops.models import Role, TrainingRequest
 from workshops.tests.base import TestBase
 
@@ -59,6 +61,10 @@ class TestTrainingRequestForm(TestBase):
         self.assertEqual(len(mail.outbox), 1)
         msg = mail.outbox[0]
         self.assertEqual(msg.to, [email])
+        self.assertEqual(msg.subject,
+                         TrainingRequestCreate.autoresponder_subject)
+        # with open('email.eml', 'wb') as f:
+        #     f.write(msg.message().as_bytes())
 
 
 class GroupNameFieldTestsBase(TestBase):

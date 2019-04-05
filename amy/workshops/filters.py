@@ -511,6 +511,10 @@ class WorkshopStaffFilter(AMYFilterSet):
         widget=ModelSelect2Multiple(attrs=SIDEBAR_DAL_WIDTH),
         conjoined=False,  # `OR`
     )
+    is_trainer = django_filters.BooleanFilter(
+        widget=widgets.CheckboxInput,
+        method='filter_trainer',
+    )
     languages = django_filters.ModelMultipleChoiceFilter(
         label='Languages',
         queryset=Language.objects.all(),
@@ -542,6 +546,11 @@ class WorkshopStaffFilter(AMYFilterSet):
             return qs.filter(
                 Q(airport__country__in=v) | Q(country__in=v)
             )
+        return qs
+
+    def filter_trainer(self, qs, n, v):
+        if v:
+            return qs.filter(is_trainer__gte=1)
         return qs
 
     def filter_helper(self, qs, n, v):

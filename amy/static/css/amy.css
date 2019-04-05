@@ -24,6 +24,7 @@ footer {
 }
 .sidebar .select2-container {
     min-width: 1rem;
+    background-color: #FFF;
 }
 .sidebar label.col-form-label {
     padding-bottom: 0;

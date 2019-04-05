@@ -16,7 +16,9 @@ from django.db.models import (
     IntegerField,
     PositiveIntegerField,
     Sum, Case, When, Value,
+    Count,
 )
+from django.db.models.functions import Greatest
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.urls import reverse
@@ -786,9 +788,7 @@ class Language(models.Model):
 
 #------------------------------------------------------------
 
-# In order to make our custom filters chainable, we have to
-# define them on the QuerySet, not the Manager - see
-# http://www.dabapps.com/blog/higher-level-query-api-django-orm/
+
 class EventQuerySet(models.query.QuerySet):
     '''Handles finding past, ongoing and upcoming events'''
 
@@ -900,6 +900,28 @@ class EventQuerySet(models.query.QuerySet):
         """Return only TTT events."""
         return self.filter(tags__name='TTT').distinct()
 
+    def attendance(self):
+        """Instead of writing @cached_properties, that aren't available for
+        DB operations, we'd rather count some numerical properties here using
+        Django model annotations.
+
+        attendance: it's the greatest value of (manually entered attendance,
+        number of learner tasks).
+
+        This is NOT a part of ModelManager.get_queryset, because I ran into
+        Django bug (ticket???) that multiplied `filter` part (below) whenever
+        the query chaining happened (the result was obtainable through
+        `qs.query`), and resulted in SQLite error:
+        django.db.utils.OperationalError: wrong number of arguments to function COUNT()
+        """
+        return self.annotate(
+            learner_tasks_count=Count(
+                'task', filter=Q(task__role__name='learner'))
+        ).annotate(
+            attendance=Greatest(
+                'manual_attendance', 'learner_tasks_count'),
+        )
+
 
 @reversion.register
 class Event(AssignmentMixin, models.Model):
@@ -964,9 +986,17 @@ class Event(AssignmentMixin, models.Model):
                   'not repository.',
         verbose_name='URL',
     )
-    reg_key    = models.CharField(max_length=STR_REG_KEY, blank=True, verbose_name="Eventbrite key")
-    attendance = models.PositiveIntegerField(null=True, blank=True)
-    admin_fee  = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)])
+    reg_key = models.CharField(max_length=STR_REG_KEY, blank=True,
+                               verbose_name="Eventbrite key")
+    manual_attendance = models.PositiveIntegerField(
+        null=False, blank=True, default=0,
+        verbose_name="Manual attendance",
+        help_text="Manually entered attendance; for actual attendance, this "
+                  "number is compared with number of Learner tasks, and the "
+                  "higher value is shown.",
+    )
+    admin_fee = models.DecimalField(max_digits=6, decimal_places=2, null=True,
+                                    blank=True, validators=[MinValueValidator(0)])
     INVOICED_CHOICES = (
         ('unknown', 'Unknown'),
         ('invoiced', 'Invoice requested'),
@@ -1058,11 +1088,10 @@ class Event(AssignmentMixin, models.Model):
         verbose_name="Curricula taught at the workshop",
     )
 
+    objects = EventQuerySet.as_manager()
+
     class Meta:
         ordering = ('-start', )
-
-    # make a custom manager from our QuerySet derivative
-    objects = EventQuerySet.as_manager()
 
     def __str__(self):
         return self.slug
@@ -1165,6 +1194,19 @@ class Event(AssignmentMixin, models.Model):
         date2 = self.end
         return human_daterange(date1, date2)
 
+    @cached_property
+    def attendance(self):
+        """This completes the "manually" appended .attendance() annotation.
+
+        It's useful e.g. in cases when we access a single object that wasn't
+        annotated this way before."""
+        return max(
+            [
+                self.manual_attendance,
+                self.task_set.filter(role__name='learner').count()
+            ]
+        )
+
     def clean(self):
         """Additional model validation."""
 
@@ -1193,12 +1235,6 @@ class Event(AssignmentMixin, models.Model):
             self.address = 'Internet'
             self.latitude = -48.876667
             self.longitude = -123.393333
-
-        # Increase attendance if there's more learner tasks
-        learners = self.task_set.filter(role__name='learner').count()
-        if learners != 0:
-            if not self.attendance or self.attendance < learners:
-                self.attendance = learners
 
         super(Event, self).save(*args, **kwargs)
 

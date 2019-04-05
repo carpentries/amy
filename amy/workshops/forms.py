@@ -200,7 +200,7 @@ def continent_list():
     """This has to be as a callable, because otherwise Django evaluates this
     query and, if the database doesn't exist yet (e.g. during Travis-CI
     tests)."""
-    return Continent.objects.values_list('pk', 'name')
+    return [('', '')] + list(Continent.objects.values_list('pk', 'name'))
 
 
 class WorkshopStaffForm(forms.Form):
@@ -253,6 +253,10 @@ class WorkshopStaffForm(forms.Form):
         required=False,
     )
 
+    is_trainer = forms.BooleanField(
+        required=False,
+        label='Has Trainer badge')
+
     GENDER_CHOICES = ((None, '---------'), ) + Person.GENDER_CHOICES
     gender = forms.ChoiceField(choices=GENDER_CHOICES, required=False)
 
@@ -286,6 +290,7 @@ class WorkshopStaffForm(forms.Form):
                 css_class='card',
             ),
             'badges',
+            'is_trainer',
             HTML('<hr>'),
             'was_helper',
             'was_organizer',
@@ -410,13 +415,13 @@ class EventForm(forms.ModelForm):
         model = Event
         fields = ['slug', 'completed', 'start', 'end', 'host', 'administrator',
                   'assigned_to', 'tags', 'url', 'language', 'reg_key', 'venue',
-                  'attendance', 'contact',
+                  'manual_attendance', 'contact',
                   'country', 'address', 'latitude', 'longitude',
                   'open_TTT_applications', 'curricula',
                   'comment',
                   ]
         widgets = {
-            'attendance': TextInput,
+            'manual_attendance': TextInput,
             'latitude': TextInput,
             'longitude': TextInput,
             'invoice_status': RadioSelect,
@@ -452,7 +457,7 @@ class EventForm(forms.ModelForm):
             'url',
             'language',
             'reg_key',
-            'attendance',
+            'manual_attendance',
             'contact',
             Div(
                 Div(HTML('Location details'), css_class='card-header'),
@@ -911,7 +916,7 @@ class EventsMergeForm(forms.Form):
     invoice_status = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
-    attendance = forms.ChoiceField(
+    manual_attendance = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
     contact = forms.ChoiceField(

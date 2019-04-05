@@ -52,21 +52,21 @@ class TestIssuesViews(TestBase):
         attendance = Event.objects.create(
             slug='event-with-attendance',
             start=self.weekago, end=self.yesterday,
-            attendance=36, host=Organization.objects.first(),
+            manual_attendance=36, host=Organization.objects.first(),
             country='US', address='A', venue='B', latitude=89, longitude=179)
         attendance.task_set.create(person=Person.objects.first(),
                                    role=self.instructor_role)
         no_attendance = Event.objects.create(
             slug='event-with-no-attendance',
             start=self.weekago, end=self.yesterday,
-            attendance=0, host=Organization.objects.first(),
+            manual_attendance=0, host=Organization.objects.first(),
             country='US', address='A', venue='B', latitude=89, longitude=179)
         no_attendance.task_set.create(person=Person.objects.first(),
                                       role=self.instructor_role)
         no_attendance_unresponsive = Event.objects.create(
             slug='unresponsive-event-with-no-attendance',
             start=self.weekago, end=self.yesterday,
-            attendance=0, host=Organization.objects.first(),
+            manual_attendance=0, host=Organization.objects.first(),
             country='US', address='A', venue='B', latitude=89, longitude=179)
         no_attendance_unresponsive.task_set.create(
             person=Person.objects.first(), role=self.instructor_role)
@@ -83,14 +83,14 @@ class TestIssuesViews(TestBase):
         location = Event.objects.create(
             slug='event-with-location',
             start=self.weekago, end=self.yesterday,
-            attendance=36, host=Organization.objects.first(),
+            manual_attendance=36, host=Organization.objects.first(),
             country='US', address='A', venue='B', latitude=89, longitude=179)
         location.task_set.create(person=Person.objects.first(),
                                  role=self.instructor_role)
         no_location = Event.objects.create(
             slug='event-with-no-location',
             start=self.weekago, end=self.yesterday,
-            attendance=36, host=Organization.objects.first(),
+            manual_attendance=36, host=Organization.objects.first(),
             country='US', address='', venue='B', latitude=89, longitude=179)
         no_location.task_set.create(person=Person.objects.first(),
                                     role=self.instructor_role)
@@ -104,14 +104,14 @@ class TestIssuesViews(TestBase):
         okay = Event.objects.create(
             slug='event-with-okay-dates',
             start=self.weekago, end=self.yesterday,
-            attendance=36, host=Organization.objects.first(),
+            manual_attendance=36, host=Organization.objects.first(),
             country='US', address='A', venue='B', latitude=89, longitude=179)
         okay.task_set.create(person=Person.objects.first(),
                              role=self.instructor_role)
         invalid_dates = Event.objects.create(
             slug='event-with-invalid-dates',
             start=self.yesterday, end=self.weekago,
-            attendance=36, host=Organization.objects.first(),
+            manual_attendance=36, host=Organization.objects.first(),
             country='US', address='A', venue='B', latitude=89, longitude=179)
         invalid_dates.task_set.create(person=Person.objects.first(),
                                       role=self.instructor_role)
@@ -125,14 +125,14 @@ class TestIssuesViews(TestBase):
         instructor = Event.objects.create(
             slug='event-with-instructor',
             start=self.weekago, end=self.yesterday,
-            attendance=36, host=Organization.objects.first(),
+            manual_attendance=36, host=Organization.objects.first(),
             country='US', address='A', venue='B', latitude=89, longitude=179)
         instructor.task_set.create(person=Person.objects.first(),
                                    role=self.instructor_role)
         no_instructors = Event.objects.create(
             slug='event-with-no-instructors',
             start=self.weekago, end=self.yesterday,
-            attendance=36, host=Organization.objects.first(),
+            manual_attendance=36, host=Organization.objects.first(),
             country='US', address='A', venue='B', latitude=89, longitude=179)
 
         rv = self.client.get(self.url)

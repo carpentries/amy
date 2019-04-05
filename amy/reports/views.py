@@ -210,7 +210,7 @@ def workshop_issues(request):
                 output_field=IntegerField()
             )
         )
-    )
+    ).attendance()
 
     no_attendance = Q(attendance=None) | Q(attendance=0)
     no_location = (Q(country=None) |

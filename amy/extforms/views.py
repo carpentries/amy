@@ -35,8 +35,10 @@ class TrainingRequestCreate(
     form_class = TrainingRequestForm
     template_name = 'forms/trainingrequest.html'
     success_url = reverse_lazy('training_request_confirm')
-    email_subject = 'Thank you for your application'
-    email_body_template = 'mailing/training_request.txt'
+    autoresponder_subject = 'Thank you for your application'
+    autoresponder_body_template_txt = 'mailing/training_request.txt'
+    autoresponder_body_template_html = 'mailing/training_request.html'
+    autoresponder_form_field = 'email'
 
     def get_success_message(self, *args, **kwargs):
         """Don't display a success message."""
@@ -65,6 +67,7 @@ class TrainingRequestConfirm(LoginNotRequiredMixin, TemplateView):
 class WorkshopRequestCreate(
     LoginNotRequiredMixin,
     EmailSendMixin,
+    AutoresponderMixin,
     AMYCreateView,
 ):
     model = WorkshopRequest
@@ -73,6 +76,14 @@ class WorkshopRequestCreate(
     template_name = 'forms/workshoprequest.html'
     success_url = reverse_lazy('workshop_request_confirm')
     email_fail_silently = False
+
+    autoresponder_subject = 'Workshop request confirmation'
+    autoresponder_body_template_txt = 'mailing/workshoprequest.txt'
+    autoresponder_body_template_html = 'mailing/workshoprequest.html'
+    autoresponder_form_field = 'email'
+
+    def autoresponder_email_context(self, form):
+        return dict(object=self.object)
 
     def get_success_message(self, *args, **kwargs):
         """Don't display a success message."""
@@ -108,7 +119,7 @@ class WorkshopRequestCreate(
         link_domain = 'https://{}'.format(get_current_site(self.request))
 
         body_txt = get_template(
-            'mailing/workshoprequest.txt'
+            'mailing/workshoprequest_admin.txt'
         ).render({
             'object': self.object,
             'link': link,
@@ -116,7 +127,7 @@ class WorkshopRequestCreate(
         })
 
         body_html = get_template(
-            'mailing/workshoprequest.html'
+            'mailing/workshoprequest_admin.html'
         ).render({
             'object': self.object,
             'link': link,

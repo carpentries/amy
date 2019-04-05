@@ -233,6 +233,7 @@ class EventSerializer(serializers.ModelSerializer):
     )
     assigned_to = serializers.HyperlinkedRelatedField(
         read_only=True, view_name='api:person-detail')
+    attendance = serializers.IntegerField()
 
     class Meta:
         model = Event
