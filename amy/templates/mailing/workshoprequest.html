@@ -1,12 +1,16 @@
 {% load state %}
+<h1>Thank you for requesting a Carpentries workshop!</h1>
+
+<p>Your request has been received, and a member of our team will get 
+back to you within three business days. If you have any immediate 
+questions, please contact us at
+<a href="mailto:team@carpentries.org">team@carpentries.org</a>.
+A copy of your request is included below for your reference.</p>
+
 <table class="table table-striped">
   <tbody>
     <tr><th>Submission date:</th>
         <td>{{ object.created_at }}</td></tr>
-    <tr><th>State</th>
-        <td><span class="{% state_label object %}">{{ object.get_state_display }}</span></td></tr>
-    <tr><th>Related event:</th>
-        <td>{% if object.event %}<a href="{{ object.event.get_absolute_url }}">{{ object.event }}</a>{% else %}&mdash;{% endif %}</td></tr>
     <tr><th>Person:</th>
         <td>{{ object.personal }} {{ object.family }} &lt;{{ object.email|urlize }}&gt;</td></tr>
     <tr><th>Institution:</th>
@@ -100,27 +104,13 @@
         <td>{{ object.code_of_conduct_agreement|yesno }}</td></tr>
     <tr><th>Host responsibilities agreement:</th>
         <td>{{ object.host_responsibilities|yesno }}</td></tr>
-    <tr><th>Additional information:</th>
+    <tr><th>Additional notes:</th>
         <td>
-          {% if object.comment %}
-          <pre>{{ object.comment }}</pre>
-          {% else %}
-          &mdash;
-          {% endif %}
-        </td></tr>
-    <tr><th>Admin comment:</th>
-        <td>
-          {% if object.admin_comment %}
-          <pre>{{ object.admin_comment }}</pre>
+          {% if object.user_notes %}
+          <pre>{{ object.user_notes }}</pre>
           {% else %}
           &mdash;
           {% endif %}
         </td></tr>
   </tbody>
 </table>
-
-{% if link %}
-<p>You can view the request here:
-<a href="{{ link_domain }}{{ link }}">{{ link_domain }}{{ link }}</a>
-</p>
-{% endif %}

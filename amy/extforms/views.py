@@ -67,6 +67,7 @@ class TrainingRequestConfirm(LoginNotRequiredMixin, TemplateView):
 class WorkshopRequestCreate(
     LoginNotRequiredMixin,
     EmailSendMixin,
+    AutoresponderMixin,
     AMYCreateView,
 ):
     model = WorkshopRequest
@@ -75,6 +76,14 @@ class WorkshopRequestCreate(
     template_name = 'forms/workshoprequest.html'
     success_url = reverse_lazy('workshop_request_confirm')
     email_fail_silently = False
+
+    autoresponder_subject = 'Workshop request confirmation'
+    autoresponder_body_template_txt = 'mailing/workshoprequest.txt'
+    autoresponder_body_template_html = 'mailing/workshoprequest.html'
+    autoresponder_form_field = 'email'
+
+    def autoresponder_email_context(self, form):
+        return dict(object=self.object)
 
     def get_success_message(self, *args, **kwargs):
         """Don't display a success message."""
