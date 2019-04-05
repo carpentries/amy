@@ -35,8 +35,10 @@ class TrainingRequestCreate(
     form_class = TrainingRequestForm
     template_name = 'forms/trainingrequest.html'
     success_url = reverse_lazy('training_request_confirm')
-    email_subject = 'Thank you for your application'
-    email_body_template = 'mailing/training_request.txt'
+    autoresponder_subject = 'Thank you for your application'
+    autoresponder_body_template_txt = 'mailing/training_request.txt'
+    autoresponder_body_template_html = 'mailing/training_request.html'
+    autoresponder_form_field = 'email'
 
     def get_success_message(self, *args, **kwargs):
         """Don't display a success message."""
