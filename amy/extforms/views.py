@@ -110,7 +110,7 @@ class WorkshopRequestCreate(
         link_domain = 'https://{}'.format(get_current_site(self.request))
 
         body_txt = get_template(
-            'mailing/workshoprequest.txt'
+            'mailing/workshoprequest_admin.txt'
         ).render({
             'object': self.object,
             'link': link,
@@ -118,7 +118,7 @@ class WorkshopRequestCreate(
         })
 
         body_html = get_template(
-            'mailing/workshoprequest.html'
+            'mailing/workshoprequest_admin.html'
         ).render({
             'object': self.object,
             'link': link,
