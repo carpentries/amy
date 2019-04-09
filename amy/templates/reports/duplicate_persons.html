@@ -18,16 +18,31 @@
       {% for person in switched_persons %}
       <tr>
         <td><a href="{{ person.get_absolute_url }}">{{ person }}</a></td>
-        <td><input type="checkbox" name="id_something" value="{{ person.id }}"></td>
+        <td><input type="checkbox" name="person_id" value="{{ person.id }}" form="form_switched_names_review"></td>
         <td>{% if not forloop.last %}<input type="radio" name="person_a" value="{{ person.id }}" form="form_switched_names_merge">{% endif %}</td>
         <td>{% if not forloop.first %}<input type="radio" name="person_b" value="{{ person.id }}" form="form_switched_names_merge">{% endif %}</td>
       </tr>
       {% endfor %}
+      {% if switched_persons|length >= 2 %}
+      <tr>
+        <td></td>
+        <td>
+          <form method="POST" action="{% url 'review_duplicate_persons' %}" id="form_switched_names_review">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{% url 'duplicate_persons' %}">
+            <input type="submit" value="Mark as reviewed" class="btn btn-success">
+          </form>
+        </td>
+        <td colspan="2">
+          <form method="GET" action="{% url 'persons_merge' %}" id="form_switched_names_merge">
+            <input type="hidden" name="next" value="{% url 'duplicate_persons' %}">
+            <input type="submit" value="Merge selected" class="btn btn-primary">
+          </form>
+        </td>
+      </tr>
+      {% endif %}
     </tbody>
   </table>
-  <form method="GET" action="{% url 'persons_merge' %}" id="form_switched_names_merge">
-    <input type="submit" value="Merge selected" class="btn btn-primary">
-  </form>
   {% else %}
   <p>None.</p>
   {% endif %}
@@ -49,20 +64,31 @@
       {% for person in duplicate_persons %}
       <tr>
         <td><a href="{{ person.get_absolute_url }}">{{ person }}</a></td>
-        <td><input type="checkbox" name="id_something" value="{{ person.id }}"></td>
+        <td><input type="checkbox" name="person_id" value="{{ person.id }}" form="form_same_names_review"></td>
         <td>{% if not forloop.last %}<input type="radio" name="person_a" value="{{ person.id }}" form="form_same_names_merge">{% endif %}</td>
         <td>{% if not forloop.first %}<input type="radio" name="person_b" value="{{ person.id }}" form="form_same_names_merge">{% endif %}</td>
-        <!--{% if not forloop.first %}
-        <a href="{% url 'persons_merge' %}?person_b={{ person.pk }}&person_a={{ prev_person_pk }}" target="_blank">(merge up)</a>
-        {% endif %}
-        {% assign person.pk as prev_person_pk %}-->
       </tr>
       {% endfor %}
+      {% if duplicate_persons|length >= 2 %}
+      <tr>
+        <td></td>
+        <td>
+          <form method="POST" action="{% url 'review_duplicate_persons' %}" id="form_same_names_review">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{% url 'duplicate_persons' %}">
+            <input type="submit" value="Mark as reviewed" class="btn btn-success">
+          </form>
+        </td>
+        <td colspan="2">
+          <form method="GET" action="{% url 'persons_merge' %}" id="form_same_names_merge">
+            <input type="hidden" name="next" value="{% url 'duplicate_persons' %}">
+            <input type="submit" value="Merge selected" class="btn btn-primary">
+          </form>
+        </td>
+      </tr>
+      {% endif %}
     </tbody>
   </table>
-  <form method="GET" action="{% url 'persons_merge' %}" id="form_same_names_merge">
-    <input type="submit" value="Merge selected" class="btn btn-primary">
-  </form>
   {% else %}
   <p>None.</p>
   {% endif %}
