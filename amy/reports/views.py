@@ -1,5 +1,6 @@
 import datetime
 
+from django.contrib import messages
 from django.db.models import (
     Case,
     When,
@@ -10,7 +11,8 @@ from django.db.models import (
     F,
     Prefetch,
 )
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.utils import timezone
 from django.urls import reverse
 
 from api.filters import (
@@ -368,6 +370,24 @@ def duplicate_persons(request):
     }
 
     return render(request, 'reports/duplicate_persons.html', context)
+
+
+@admin_required
+def review_duplicate_persons(request):
+    if request.method == 'POST' and 'person_id' in request.POST:
+        ids = request.POST.getlist('person_id')
+        now = timezone.now()
+        number = Person.objects.filter(id__in=ids) \
+                               .update(duplication_reviewed_on=now)
+        messages.success(
+            request,
+            'Successfully marked {} persons as reviewed.'.format(number)
+        )
+
+    else:
+        messages.warning(request, 'Wrong request or request data missing.')
+
+    return redirect(reverse('duplicate_persons'))
 
 
 @admin_required
