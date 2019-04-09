@@ -23,7 +23,6 @@
         <td>{% if not forloop.first %}<input type="radio" name="person_b" value="{{ person.id }}" form="form_switched_names_merge">{% endif %}</td>
       </tr>
       {% endfor %}
-      {% if switched_persons|length >= 2 %}
       <tr>
         <td></td>
         <td>
@@ -34,13 +33,14 @@
           </form>
         </td>
         <td colspan="2">
+          {% if switched_persons|length >= 2 %}
           <form method="GET" action="{% url 'persons_merge' %}" id="form_switched_names_merge">
             <input type="hidden" name="next" value="{% url 'duplicate_persons' %}">
             <input type="submit" value="Merge selected" class="btn btn-primary">
           </form>
+          {% endif %}
         </td>
       </tr>
-      {% endif %}
     </tbody>
   </table>
   {% else %}
@@ -69,7 +69,6 @@
         <td>{% if not forloop.first %}<input type="radio" name="person_b" value="{{ person.id }}" form="form_same_names_merge">{% endif %}</td>
       </tr>
       {% endfor %}
-      {% if duplicate_persons|length >= 2 %}
       <tr>
         <td></td>
         <td>
@@ -80,13 +79,14 @@
           </form>
         </td>
         <td colspan="2">
+          {% if duplicate_persons|length >= 2 %}
           <form method="GET" action="{% url 'persons_merge' %}" id="form_same_names_merge">
             <input type="hidden" name="next" value="{% url 'duplicate_persons' %}">
             <input type="submit" value="Merge selected" class="btn btn-primary">
           </form>
+          {% endif %}
         </td>
       </tr>
-      {% endif %}
     </tbody>
   </table>
   {% else %}
