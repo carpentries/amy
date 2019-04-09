@@ -452,6 +452,12 @@ class PersonManager(BaseUserManager):
             )
         )
 
+    def duplication_review_expired(self):
+        return self.filter(
+            Q(duplication_reviewed_on__isnull=True) |
+            Q(last_updated_at__date__lt=F('duplication_reviewed_on'))
+        )
+
 
 @reversion.register
 class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin,
