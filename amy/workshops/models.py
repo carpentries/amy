@@ -454,7 +454,8 @@ class PersonManager(BaseUserManager):
 
 
 @reversion.register
-class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
+class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin,
+             CreatedUpdatedMixin):
     '''Represent a single person.'''
     UNDISCLOSED = 'U'
     MALE = 'M'
@@ -569,6 +570,13 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
                   'who has contributed via pull request as an author. If you '
                   'do make any contributions, would you like to be included '
                   'as an author when we publish the lesson?',
+    )
+
+    duplication_reviewed_on = models.DateField(
+        null=True, blank=True,
+        verbose_name='Date of duplication review by admin',
+        help_text='Set this to a newer / actual date when Person is '
+                  'reviewed by admin.',
     )
 
     USERNAME_FIELD = 'username'
