@@ -1,5 +1,6 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
+from django.utils import timezone
 from django.urls import reverse
 
 from workshops.models import Person
@@ -74,11 +75,11 @@ class TestFindingDuplicates(TestBase):
 
     def test_duplicate_persons(self):
         rv = self.client.get(self.url)
-        switched = rv.context['duplicate_persons']
-        self.assertIn(self.ron, switched)
-        self.assertIn(self.ron2, switched)
-        self.assertNotIn(self.harry, switched)
-        self.assertNotIn(self.potter, switched)
+        duplicated = rv.context['duplicate_persons']
+        self.assertIn(self.ron, duplicated)
+        self.assertIn(self.ron2, duplicated)
+        self.assertNotIn(self.harry, duplicated)
+        self.assertNotIn(self.potter, duplicated)
 
 
 class TestFindingReviewedDuplicates(TestBase):
@@ -106,6 +107,11 @@ class TestFindingReviewedDuplicates(TestBase):
         switched = rv.context['switched_persons']
         duplicates = rv.context['duplicate_persons']
 
+        self.assertEqual(self.harry.duplication_reviewed_on, None)
+        self.assertEqual(self.potter.duplication_reviewed_on, None)
+        self.assertEqual(self.ron.duplication_reviewed_on, None)
+        self.assertEqual(self.ron2.duplication_reviewed_on, None)
+
         self.assertIn(self.harry, switched)
         self.assertIn(self.potter, switched)
         self.assertNotIn(self.ron, switched)
@@ -117,10 +123,13 @@ class TestFindingReviewedDuplicates(TestBase):
         self.assertNotIn(self.potter, duplicates)
 
     def test_not_finding_reviewed_duplicates(self):
+        """Ensure records with `last_changed_at` timestamp close to their
+        `duplication_reviewed_on` timestamp don't show up in the results."""
+
         # modify duplication_reviewed_on to point to the
-        # same date that last_updated_at will after save()
-        # so that these records don't show up in results
-        review_date = date.today()
+        # same timestamp (or very close) that last_updated_at will
+        # after save() so that these records don't show up in results
+        review_date = timezone.now()
 
         self.harry.duplication_reviewed_on = review_date
         self.harry.save()
@@ -145,44 +154,40 @@ class TestFindingReviewedDuplicates(TestBase):
         self.assertNotIn(self.harry, duplicates)
         self.assertNotIn(self.potter, duplicates)
 
-    def test_not_finding_partially_reviewed_duplicates(self):
-        """Ensure that is some records from the duplicated/switched
-        names pair don't show up in the results, the other records won't
-        either."""
-
-        # modify duplication_reviewed_on to point to the
-        # same date that last_updated_at will after save()
-        # so that these records don't show up in results
-        review_date = date.today()
+    def test_finding_duplicates_changed_soon_after_reviewed(self):
+        # make sure after changing the timestamp difference between
+        # `last_updated_at` and `duplication_reviewed_on` to couple minutes,
+        # the records show up
+        review_date = timezone.now() - timedelta(minutes=2)
 
         self.harry.duplication_reviewed_on = review_date
         self.harry.save()
-        #self.potter.duplication_reviewed_on = review_date
-        #self.potter.save()
+        self.potter.duplication_reviewed_on = review_date
+        self.potter.save()
         self.ron.duplication_reviewed_on = review_date
         self.ron.save()
-        #self.ron2.duplication_reviewed_on = review_date
-        #self.ron2.save()
+        self.ron2.duplication_reviewed_on = review_date
+        self.ron2.save()
 
         rv = self.client.get(self.url)
         switched = rv.context['switched_persons']
         duplicates = rv.context['duplicate_persons']
         
-        self.assertNotIn(self.harry, switched)
-        self.assertNotIn(self.potter, switched)
+        self.assertIn(self.harry, switched)
+        self.assertIn(self.potter, switched)
         self.assertNotIn(self.ron, switched)
         self.assertNotIn(self.ron2, switched)
 
-        self.assertNotIn(self.ron, duplicates)
-        self.assertNotIn(self.ron2, duplicates)
+        self.assertIn(self.ron, duplicates)
+        self.assertIn(self.ron2, duplicates)
         self.assertNotIn(self.harry, duplicates)
         self.assertNotIn(self.potter, duplicates)
 
     def test_finding_reviewed_changed_duplicates(self):
         # modify last_updated_at and duplication_reviewed_on
         # so that these records don't show up in results
-        change_timestamp = datetime(2019, 4, 10, 0, 0, 0)
-        review_date = date(2019, 4, 9)
+        change_timestamp = timezone.now()
+        review_date = change_timestamp - timedelta(days=1)
 
         self.harry.duplication_reviewed_on = review_date
         self.harry.last_updated_at = change_timestamp
@@ -196,6 +201,39 @@ class TestFindingReviewedDuplicates(TestBase):
         self.ron2.duplication_reviewed_on = review_date
         self.ron2.last_updated_at = change_timestamp
         self.ron2.save()
+
+        rv = self.client.get(self.url)
+        switched = rv.context['switched_persons']
+        duplicates = rv.context['duplicate_persons']
+        
+        self.assertIn(self.harry, switched)
+        self.assertIn(self.potter, switched)
+        self.assertNotIn(self.ron, switched)
+        self.assertNotIn(self.ron2, switched)
+
+        self.assertIn(self.ron, duplicates)
+        self.assertIn(self.ron2, duplicates)
+        self.assertNotIn(self.harry, duplicates)
+        self.assertNotIn(self.potter, duplicates)
+
+    def test_not_finding_partially_reviewed_duplicates(self):
+        """Ensure that if some records from the duplicated/switched
+        names pair don't show up in the results, the other records won't
+        either."""
+
+        # modify duplication_reviewed_on to point to the
+        # same date that last_updated_at will after save()
+        # so that these records don't show up in results
+        review_date = timezone.now()
+
+        self.harry.duplication_reviewed_on = review_date
+        self.harry.save()
+        #self.potter.duplication_reviewed_on = review_date
+        #self.potter.save()
+        self.ron.duplication_reviewed_on = review_date
+        self.ron.save()
+        #self.ron2.duplication_reviewed_on = review_date
+        #self.ron2.save()
 
         rv = self.client.get(self.url)
         switched = rv.context['switched_persons']
