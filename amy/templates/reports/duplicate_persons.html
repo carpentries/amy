@@ -62,7 +62,7 @@
     </thead>
     <tbody>
       {% for person in duplicate_persons %}
-      <tr>
+      <tr {% ifchanged person.full_name %}class="table-row-distinctive"{% endifchanged %}>
         <td><a href="{{ person.get_absolute_url }}">{{ person }}</a></td>
         <td><input type="checkbox" name="person_id" value="{{ person.id }}" form="form_same_names_review"></td>
         <td>{% if not forloop.last %}<input type="radio" name="person_a" value="{{ person.id }}" form="form_same_names_merge">{% endif %}</td>
