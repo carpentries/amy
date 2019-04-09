@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='person',
             name='duplication_reviewed_on',
-            field=models.DateField(blank=True, help_text='Set this to a newer / actual date when Person is reviewed by admin.', null=True, verbose_name='Date of duplication review by admin'),
+            field=models.DateTimeField(blank=True, help_text='Set this to a newer / actual timestamp when Person is reviewed by admin.', null=True, verbose_name='Timestamp of duplication review by admin'),
         ),
         migrations.AddField(
             model_name='person',

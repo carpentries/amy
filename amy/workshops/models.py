@@ -578,10 +578,10 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin,
                   'as an author when we publish the lesson?',
     )
 
-    duplication_reviewed_on = models.DateField(
+    duplication_reviewed_on = models.DateTimeField(
         null=True, blank=True,
-        verbose_name='Date of duplication review by admin',
-        help_text='Set this to a newer / actual date when Person is '
+        verbose_name='Timestamp of duplication review by admin',
+        help_text='Set this to a newer / actual timestamp when Person is '
                   'reviewed by admin.',
     )
 
