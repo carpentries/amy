@@ -40,6 +40,9 @@ table .additional-links {
 table .additional-links-wider {
     width: 100px;
 }
+table .table-row-distinctive {
+    border-top: 4px solid #dee2e6 !important;
+}
 
 .form-group small {
     font-size: 0.8rem;

@@ -452,9 +452,17 @@ class PersonManager(BaseUserManager):
             )
         )
 
+    def duplication_review_expired(self):
+        return self.filter(
+            Q(duplication_reviewed_on__isnull=True) |
+            Q(last_updated_at__gte=F('duplication_reviewed_on') +
+                datetime.timedelta(minutes=1))
+        )
+
 
 @reversion.register
-class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
+class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin,
+             CreatedUpdatedMixin):
     '''Represent a single person.'''
     UNDISCLOSED = 'U'
     MALE = 'M'
@@ -569,6 +577,13 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
                   'who has contributed via pull request as an author. If you '
                   'do make any contributions, would you like to be included '
                   'as an author when we publish the lesson?',
+    )
+
+    duplication_reviewed_on = models.DateTimeField(
+        null=True, blank=True,
+        verbose_name='Timestamp of duplication review by admin',
+        help_text='Set this to a newer / actual timestamp when Person is '
+                  'reviewed by admin.',
     )
 
     USERNAME_FIELD = 'username'
