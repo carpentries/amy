@@ -460,6 +460,16 @@ REST_FRAMEWORK = {
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,  # merge with default configuration
+    'formatters': {
+        'verbose': {
+            'format': '{asctime}::{levelname}::{message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname}::{message}',
+            'style': '{',
+        },
+    },
     'handlers': {
         'null': {
             'class': 'logging.NullHandler',
@@ -470,12 +480,27 @@ LOGGING = {
             'email_backend': EMAIL_BACKEND,
             'include_html': True,
         },
+        'log_file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'formatter': 'verbose',
+            'filename': env.path('AMY_SERVER_LOGFILE', default='amy.log'),
+        },
     },
     'loggers': {
         # disable "Invalid HTTP_HOST" notifications
         'django.security.DisallowedHost': {
             'handlers': ['null'],
             'propagate': False,
+        },
+        'amy': {
+            'handlers': ['null', ],
+            'level': 'WARNING',
+        },
+        'amy.server_logs': {
+            'handlers': ['log_file', ],
+            'level': 'ERROR',
+            'propagate': True,
         },
     },
 }
