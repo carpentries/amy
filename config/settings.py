@@ -464,6 +464,12 @@ LOGGING = {
         'null': {
             'class': 'logging.NullHandler',
         },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+            'email_backend': EMAIL_BACKEND,
+            'include_html': True,
+        },
     },
     'loggers': {
         # disable "Invalid HTTP_HOST" notifications
