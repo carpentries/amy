@@ -108,9 +108,9 @@ class HostResponsibilitiesMixin(models.Model):
         null=False, blank=False,
         default=False,
         verbose_name='I understand <a href="https://docs.carpentries.org/'
-                     'topic_folders/hosts_instructors/index.html">the '
-                     'responsibilities of the workshop host</a>, including '
-                     'recruiting local helpers to support the workshop '
+                     'topic_folders/hosts_instructors/hosts_instructors_checklist.html'
+                     '#host-checklist">the responsibilities of the workshop host</a>,'
+                     'including recruiting local helpers to support the workshop '
                      '(1 helper for every 8-10 learners).'
     )
 
