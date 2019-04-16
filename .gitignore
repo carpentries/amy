@@ -29,3 +29,6 @@ mediafiles/*
 
 # Database backup files
 DB_backups/*
+
+# log file
+amy.log
