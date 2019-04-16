@@ -484,7 +484,8 @@ LOGGING = {
             'level': 'ERROR',
             'class': 'logging.FileHandler',
             'formatter': 'verbose',
-            'filename': env.path('AMY_SERVER_LOGFILE', default='amy.log'),
+            # `str()` prevents some strange bug on Py3.5
+            'filename': str(env.path('AMY_SERVER_LOGFILE', default='amy.log')),
         },
     },
     'loggers': {
