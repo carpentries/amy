@@ -15,7 +15,7 @@ All other issues will be reviewed on a weekly basis by @maneesha.  She will foll
 From there, one of the following will happen:
 
 * High priority issues will be included in an upcoming work cycle and labeled for an existing milestone.
-* Medium to low priority issues will be considered for a future workcycle and labeled "later."  These re-reviewed periodically to consider them for an upcoming work cycle. 
+* Medium to low priority issues will be considered for a future workcycle and labeled "later."  These will be re-reviewed periodically to consider them for an upcoming work cycle. 
 * Issues that are stale, redundant, or are otherwise assessed not to positively impact user workflows will be closed and labeled "wont-fix"
 
 
