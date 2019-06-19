@@ -460,9 +460,32 @@ REST_FRAMEWORK = {
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,  # merge with default configuration
+    'formatters': {
+        'verbose': {
+            'format': '{asctime}::{levelname}::{message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname}::{message}',
+            'style': '{',
+        },
+    },
     'handlers': {
         'null': {
             'class': 'logging.NullHandler',
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+            'email_backend': EMAIL_BACKEND,
+            'include_html': True,
+        },
+        'log_file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'formatter': 'verbose',
+            # `str()` prevents some strange bug on Py3.5
+            'filename': str(env.path('AMY_SERVER_LOGFILE', default='amy.log')),
         },
     },
     'loggers': {
@@ -470,6 +493,15 @@ LOGGING = {
         'django.security.DisallowedHost': {
             'handlers': ['null'],
             'propagate': False,
+        },
+        'amy': {
+            'handlers': ['null', ],
+            'level': 'WARNING',
+        },
+        'amy.server_logs': {
+            'handlers': ['log_file', ],
+            'level': 'ERROR',
+            'propagate': True,
         },
     },
 }

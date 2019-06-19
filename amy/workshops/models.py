@@ -108,9 +108,9 @@ class HostResponsibilitiesMixin(models.Model):
         null=False, blank=False,
         default=False,
         verbose_name='I understand <a href="https://docs.carpentries.org/'
-                     'topic_folders/hosts_instructors/index.html">the '
-                     'responsibilities of the workshop host</a>, including '
-                     'recruiting local helpers to support the workshop '
+                     'topic_folders/hosts_instructors/hosts_instructors_checklist.html'
+                     '#host-checklist">the responsibilities of the workshop host</a>,'
+                     'including recruiting local helpers to support the workshop '
                      '(1 helper for every 8-10 learners).'
     )
 
@@ -452,9 +452,17 @@ class PersonManager(BaseUserManager):
             )
         )
 
+    def duplication_review_expired(self):
+        return self.filter(
+            Q(duplication_reviewed_on__isnull=True) |
+            Q(last_updated_at__gte=F('duplication_reviewed_on') +
+                datetime.timedelta(minutes=1))
+        )
+
 
 @reversion.register
-class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
+class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin,
+             CreatedUpdatedMixin):
     '''Represent a single person.'''
     UNDISCLOSED = 'U'
     MALE = 'M'
@@ -569,6 +577,13 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin):
                   'who has contributed via pull request as an author. If you '
                   'do make any contributions, would you like to be included '
                   'as an author when we publish the lesson?',
+    )
+
+    duplication_reviewed_on = models.DateTimeField(
+        null=True, blank=True,
+        verbose_name='Timestamp of duplication review by admin',
+        help_text='Set this to a newer / actual timestamp when Person is '
+                  'reviewed by admin.',
     )
 
     USERNAME_FIELD = 'username'

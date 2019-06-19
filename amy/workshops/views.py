@@ -656,6 +656,19 @@ def persons_merge(request):
             'title': 'Merge Persons',
             'form': PersonsSelectionForm(),
         }
+        if 'next' in request.GET:
+            return redirect(request.GET.get('next', '/'))
+        return render(request, 'generic_form.html', context)
+
+    elif obj_a_pk == obj_b_pk:
+        context = {
+            'title': 'Merge Persons',
+            'form': PersonsSelectionForm(),
+        }
+        messages.warning(request, 'You cannot merge the same person with '
+                                  'themself.')
+        if 'next' in request.GET:
+            return redirect(request.GET.get('next', '/'))
         return render(request, 'generic_form.html', context)
 
     obj_a = get_object_or_404(Person, pk=obj_a_pk)
