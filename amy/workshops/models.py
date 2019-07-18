@@ -1938,6 +1938,18 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
 
 
 class Curriculum(ActiveMixin, models.Model):
+    CARPENTRIES_CHOICES = (
+        ("SWC", "Software Carpentry"),
+        ("DC", "Data Carpentry"),
+        ("LC", "Library Carpentry"),
+        ("", "unspecified / irrelevant")
+    )
+    carpentry = models.CharField(
+        max_length=5,
+        choices=CARPENTRIES_CHOICES,
+        null=False, blank=True, default="",
+        verbose_name="Which Carpentry does this curriculum belong to?",
+    )
     slug = models.CharField(
         max_length=STR_MED,
         null=False, blank=False, default="",
@@ -1952,6 +1964,19 @@ class Curriculum(ActiveMixin, models.Model):
         verbose_name="Curriculum name",
         help_text="Use user-friendly language, e.g. "
                   "'Data Carpentry (Ecology with R)'.",
+    )
+    description = models.TextField(
+        max_length=300,
+        null=False, blank=True, default="",
+        verbose_name="Curriculum longer description",
+        help_text="You can enter Markdown. It will be shown as a hover or "
+                  "popup over the curriculum entry on forms."
+    )
+    other = models.BooleanField(
+        null=False, blank=True, default=False,
+        verbose_name="Field marked as 'Other'",
+        help_text="Mark this curriculum record as '*Other' (eg. 'SWC Other', "
+                  "'DC Other', or simply 'Other')",
     )
     unknown = models.BooleanField(
         null=False, blank=True, default=False,
