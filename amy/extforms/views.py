@@ -104,13 +104,13 @@ class WorkshopRequestCreate(
         affiliation = (
             str(self.object.institution)
             if self.object.institution
-            else self.object.institution_name
+            else self.object.institution_other_name
         )
         subject = (
             'New workshop request: {affiliation}, {dates}'
         ).format(
             affiliation=affiliation,
-            dates=self.object.preferred_dates,
+            dates=self.object.dates(),
         )
         return subject
 

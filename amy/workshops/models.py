@@ -2079,10 +2079,11 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         help_text="If your institution isn't on the list, enter its name "
                   "in the field below.",
     )
-    institution_name = models.CharField(
+    institution_other_name = models.CharField(
         max_length=STR_LONGEST,
         blank=True, null=False, default="",
-        verbose_name="Name of institution you're affiliated with",
+        verbose_name="If your institutional affiliation is not listed, please "
+                     "enter the name",
     )
     institution_department = models.CharField(
         max_length=STR_LONGEST,
@@ -2106,13 +2107,11 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         help_text="If yes, please provide conference details "
                   "(name, description).",
     )
-    preferred_dates = models.CharField(
+    other_preferred_dates = models.CharField(
         max_length=STR_LONGEST,
-        blank=False, null=False, default="",
-        verbose_name="Preferred dates or date range",
-        help_text="Because we need to coordinate with instructors, a minimum"
-                  " of 2-3 months lead time is required for workshop"
-                  " planning.",
+        blank=True, null=False, default="",
+        verbose_name="If your dates are not set, please provide more "
+                     "information below",
     )
     language = models.ForeignKey(
         Language, on_delete=models.PROTECT,
@@ -2251,14 +2250,14 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         ("waiver", "I am requesting a waiver of the workshop fee (Instructor "
                    "travel costs will still apply)."),
     )
-    centrally_organized_fee = models.CharField(
+    administrative_fee = models.CharField(
         max_length=20,
         choices=FEE_CHOICES,
         blank=False, null=False, default="nonprofit",
         verbose_name="Which of the following applies to your payment for the "
                      "administrative fee?",
     )
-    waiver_circumstances = models.TextField(
+    scholarship_circumstances = models.TextField(
         blank=True,
         verbose_name="Please explain the circumstances for your waiver "
                      "request",
@@ -2311,11 +2310,17 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         return (
             'Workshop request ({institution}, {personal} {family}) - {state}'
         ).format(
-            institution=str(self.institution or self.institution_name),
+            institution=str(self.institution or self.institution_other_name),
             personal=self.personal,
             family=self.family,
             state=self.get_state_display(),
         )
+
+    def dates(self):
+        if self.preferred_dates:
+            return "{:%Y-%m-%d}".format(self.preferred_dates)
+        else:
+            return self.other_preferred_dates
 
     def get_absolute_url(self):
         return reverse('workshoprequest_details', args=[self.id])

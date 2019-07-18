@@ -529,17 +529,17 @@ class Command(BaseCommand):
                     WorkshopRequest.ORGANIZATION_TYPE_CHOICES)[0]
             if organization_type == 'self':
                 self_organized_github = self.faker.uri()
-                centrally_organized_fee = 'nonprofit'  # doesn't matter
-                waiver_circumstances = ""
+                administrative_fee = 'nonprofit'  # doesn't matter
+                scholarship_circumstances = ""
                 travel_expences_agreement = False
                 travel_expences_management = ""
                 travel_expences_management_other = ""
             else:
                 self_organized_github = ""
-                centrally_organized_fee = choice(WorkshopRequest.FEE_CHOICES)[0]
-                waiver_circumstances = (
+                administrative_fee = choice(WorkshopRequest.FEE_CHOICES)[0]
+                scholarship_circumstances = (
                     self.faker.sentence()
-                    if centrally_organized_fee == 'waiver'
+                    if administrative_fee == 'waiver'
                     else "")
                 travel_expences_agreement = True
                 travel_expences_management = choice(
@@ -561,7 +561,7 @@ class Command(BaseCommand):
                 email=self.faker.email(),
 
                 institution=org,
-                institution_name=org_name,
+                institution_other_name=org_name,
                 institution_department='',
                 location=self.faker.city(),
                 country=choice(Countries)[0],
@@ -569,6 +569,7 @@ class Command(BaseCommand):
                 conference_details='',
                 preferred_dates=str(self.faker.date_time_between(
                     start_date='now', end_date='+1y').date()),
+                other_preferred_dates='soon'
 
                 language=language,
                 number_attendees=choice(
@@ -583,8 +584,8 @@ class Command(BaseCommand):
 
                 organization_type=organization_type,
                 self_organized_github=self_organized_github,
-                centrally_organized_fee=centrally_organized_fee,
-                waiver_circumstances=waiver_circumstances,
+                administrative_fee=administrative_fee,
+                scholarship_circumstances=scholarship_circumstances,
                 travel_expences_agreement=travel_expences_agreement,
                 travel_expences_management=travel_expences_management,
                 travel_expences_management_other=travel_expences_management_other,

@@ -1034,8 +1034,8 @@ class TestMatchingNotificationEmail(TestBase):
     def setUp(self):
         self.request = WorkshopRequest.objects.create(
             state="p", personal="Harry", family="Potter", email="h@potter.com",
-            institution_name="Hogwarts", location="Scotland", country="GB",
-            preferred_dates="soon",
+            institution_other_name="Hogwarts", location="Scotland",
+            country="GB", preferred_dates="", other_preferred_dates="soon",
             language=Language.objects.get(name='English'),
             audience_description="Students of Hogwarts",
             organization_type='self',

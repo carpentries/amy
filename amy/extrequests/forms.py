@@ -276,12 +276,14 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             "family",
             "email",
             "institution",
-            "institution_name",
+            "institution_other_name",
+            "institution_other_URL",
             "institution_department",
             "location",
             "country",
             "conference_details",
             "preferred_dates",
+            "other_preferred_dates",
             "language",
             "number_attendees",
             "domains",
@@ -292,8 +294,8 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             "requested_workshop_types",
             "organization_type",
             "self_organized_github",
-            "centrally_organized_fee",
-            "waiver_circumstances",
+            "administrative_fee",
+            "scholarship_circumstances",
             "travel_expences_management",
             "travel_expences_management_other",
             "travel_expences_agreement",
@@ -311,7 +313,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             'computing_levels': forms.CheckboxSelectMultiple(),
             'requested_workshop_types': forms.CheckboxSelectMultiple(),
             'organization_type': forms.RadioSelect(),
-            'centrally_organized_fee': forms.RadioSelect(),
+            'administrative_fee': forms.RadioSelect(),
             'travel_expences_management':
                 RadioSelectWithOther('travel_expences_management_other'),
         }
@@ -348,8 +350,8 @@ class WorkshopRequestBaseForm(forms.ModelForm):
                 self['self_organized_github'],
             ],
             'central': [
-                self['centrally_organized_fee'],
-                self['waiver_circumstances'],
+                self['administrative_fee'],
+                self['scholarship_circumstances'],
             ],
         }
         self['organization_type'].field.widget.notes = {
@@ -358,8 +360,8 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         }
         self.helper.layout.fields.remove('organization_type')
         self.helper.layout.fields.remove('self_organized_github')
-        self.helper.layout.fields.remove('centrally_organized_fee')
-        self.helper.layout.fields.remove('waiver_circumstances')
+        self.helper.layout.fields.remove('administrative_fee')
+        self.helper.layout.fields.remove('scholarship_circumstances')
 
         # insert div+field at previously saved position
         self.helper.layout.insert(
@@ -391,9 +393,9 @@ class WorkshopRequestBaseForm(forms.ModelForm):
                 HTML('<hr class="col-lg-10 col-12 mx-0 px-0">'),
             )
 
-        # move "institution_name" field to "institution" subfield
-        self['institution'].field.widget.subfield = self['institution_name']
-        self.helper.layout.fields.remove('institution_name')
+        # move "institution_other_name" field to "institution" subfield
+        self['institution'].field.widget.subfield = self['institution_other_name']
+        self.helper.layout.fields.remove('institution_other_name')
 
     @staticmethod
     def institution_label_from_instance(obj):
@@ -407,18 +409,18 @@ class WorkshopRequestBaseForm(forms.ModelForm):
 
         # 1: make sure institution is valid
         institution = self.cleaned_data.get('institution', None)
-        institution_name = self.cleaned_data.get('institution_name', '')
-        if not institution and not institution_name:
+        institution_other_name = self.cleaned_data.get('institution_other_name', '')
+        if not institution and not institution_other_name:
             errors['institution'] = ValidationError('Institution is required.')
-        elif institution and institution_name:
-            errors['institution_name'] = ValidationError(
+        elif institution and institution_other_name:
+            errors['institution_other_name'] = ValidationError(
                 "You must select institution, or enter it's name. "
                 "You can't do both.")
 
         # 2: make sure there's institution selected when department is present
         institution_department = self.cleaned_data \
                                      .get('institution_department', '')
-        if institution_department and not institution and not institution_name:
+        if institution_department and not institution and not institution_other_name:
             errors['institution_department'] = ValidationError(
                 "You must select institution or enter it's name when you "
                 "enter department/school details.")
@@ -429,21 +431,21 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         organization_type = self.cleaned_data.get('organization_type', '')
         self_organized_github = self.cleaned_data \
                                     .get('self_organized_github', '')
-        centrally_organized_fee = self.cleaned_data \
-                                      .get('centrally_organized_fee', '')
-        waiver_circumstances = self.cleaned_data \
-                                   .get('waiver_circumstances', '')
+        administrative_fee = self.cleaned_data \
+                                 .get('administrative_fee', '')
+        scholarship_circumstances = self.cleaned_data \
+                                   .get('scholarship_circumstances', '')
 
         if organization_type == 'self' and not self_organized_github:
             errors['self_organized_github'] = ValidationError(
                 "Please enter workshop URL data.")
-        elif organization_type == 'central' and not centrally_organized_fee:
-            errors['centrally_organized_fee'] = ValidationError(
+        elif organization_type == 'central' and not administrative_fee:
+            errors['administrative_fee'] = ValidationError(
                 "Please select applicable administrative fee option.")
         elif organization_type == 'central' and \
-                centrally_organized_fee == 'waiver' and \
-                not waiver_circumstances:
-            errors['waiver_circumstances'] = ValidationError(
+                administrative_fee == 'waiver' and \
+                not scholarship_circumstances:
+            errors['scholarship_circumstances'] = ValidationError(
                 "Please describe your waiver circumstances.")
 
         # 5: don't allow empty domains and empty domains_other
@@ -480,12 +482,14 @@ class WorkshopRequestAdminForm(WorkshopRequestBaseForm):
             "family",
             "email",
             "institution",
-            "institution_name",
+            "institution_other_name",
+            "institution_other_URL",
             "institution_department",
             "location",
             "country",
             "conference_details",
             "preferred_dates",
+            "other_preferred_dates",
             "language",
             "number_attendees",
             "domains",
@@ -496,8 +500,8 @@ class WorkshopRequestAdminForm(WorkshopRequestBaseForm):
             "requested_workshop_types",
             "organization_type",
             "self_organized_github",
-            "centrally_organized_fee",
-            "waiver_circumstances",
+            "administrative_fee",
+            "scholarship_circumstances",
             "travel_expences_agreement",
             "travel_expences_management",
             "travel_expences_management_other",

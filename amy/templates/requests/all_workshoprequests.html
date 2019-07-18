@@ -26,10 +26,10 @@
       <td>{% if req.assigned_to %}<a href="{{ req.assigned_to.get_absolute_url }}">{{ req.assigned_to.get_short_name }}</a>{% else %}—{% endif %}</td>
       <td>{{ req.personal }} {{ req.family }} &lt;{{ req.email|urlize }}&gt;</td>
       <td>
-        {% if req.institution %}<a href="{{ req.institution.get_absolute_url }}">{{ req.institution }}</a>{% else %}{{ req.institution_name }}{% endif %}{% if req.institution_department %}, {{ req.institution_department }}{% endif %}
+        {% if req.institution %}<a href="{{ req.institution.get_absolute_url }}">{{ req.institution }}</a>{% else %}{{ req.institution_other_name }}{% endif %}{% if req.institution_department %}, {{ req.institution_department }}{% endif %}
       </td>
       <td>{{ req.country.name }} <img src="{{ req.country.flag }}" alt="{{ req.country }}" class="country-flag" /></td>
-      <td>{{ req.preferred_dates }}</td>
+      <td>{{ req.dates }}</td>
       <td>
         {% for type in req.requested_workshop_types.all %}
           {# limit to only 3 #}

@@ -15,7 +15,7 @@ A copy of your request is included below for your reference.</p>
         <td>{{ object.personal }} {{ object.family }} &lt;{{ object.email|urlize }}&gt;</td></tr>
     <tr><th>Institution:</th>
         <td>
-          {% if object.institution %}<a href="{{ object.institution.get_absolute_url }}">{{ object.institution }}</a>{% else %}{{ object.institution_name }}{% endif %}{% if object.institution_department %}, {{ object.institution_department }}{% endif %}
+          {% if object.institution %}<a href="{{ object.institution.get_absolute_url }}">{{ object.institution }}</a>{% else %}{{ object.institution_other_name }}{% endif %}{% if object.institution_department %}, {{ object.institution_department }}{% endif %}
         </td></tr>
     <tr><th>Location:</th>
         <td>{{ object.location }}</td></tr>
@@ -26,7 +26,7 @@ A copy of your request is included below for your reference.</p>
           {{ object.conference_details|default:"—" }}
         </td></tr>
     <tr><th>Preferred dates:</th>
-        <td>{{ object.preferred_dates }}</td></tr>
+        <td>{{ object.dates }}</td></tr>
     <tr><th>Language:</th>
         <td>{{ object.language }}</td></tr>
     <tr><th>Approx. number of attendees:</th>
@@ -80,11 +80,11 @@ A copy of your request is included below for your reference.</p>
     {% endif %}
     {% if object.organization_type == 'central' %}
     <tr><th>Administrative fee payment:</th>
-        <td>{{ object.get_centrally_organized_fee_display }}</td></tr>
-    <tr><th>Fee waiver circumstances:</th>
+        <td>{{ object.get_administrative_fee_display }}</td></tr>
+    <tr><th>Scholarship circumstances:</th>
         <td>
-          {% if object.waiver_circumstances %}
-          <pre>{{ object.waiver_circumstances }}</pre></td></tr>
+          {% if object.scholarship_circumstances %}
+          <pre>{{ object.scholarship_circumstances }}</pre></td></tr>
           {% else %}
           &mdash;
           {% endif %}
