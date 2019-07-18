@@ -13,6 +13,7 @@ from workshops.models import (
     TrainingRequirement,
     TrainingRequest,
     Curriculum,
+    InfoSource,
 )
 
 
@@ -22,6 +23,10 @@ class RoleAdmin(admin.ModelAdmin):
 
 class CurriculumAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'slug', 'name', 'active', 'unknown')
+
+
+class InfoSourceAdmin(admin.ModelAdmin):
+    list_display = ('name', )
 
 
 admin.site.register(AcademicLevel)
@@ -35,3 +40,4 @@ admin.site.register(Badge)
 admin.site.register(TrainingRequirement)
 admin.site.register(TrainingRequest)
 admin.site.register(Curriculum, CurriculumAdmin)
+admin.site.register(InfoSource, InfoSourceAdmin)

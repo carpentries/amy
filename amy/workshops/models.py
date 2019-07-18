@@ -2005,6 +2005,29 @@ class ComputingExperienceLevel(models.Model):
         return self.name
 
 
+class InfoSource(models.Model):
+    """
+    This class represents a single source of information about The Carpentries.
+    These sources answer the question "where did you hear about TC?" - eg.
+    "a colleague told me", etc.
+    """
+    name = models.CharField(
+        max_length=300,
+        null=False, blank=False, default="",
+        unique=True,
+        verbose_name="Name",
+        help_text="Source description (eg. 'colleague told me')",
+    )
+
+    class Meta:
+        verbose_name = "Information source"
+        verbose_name_plural = "Information sources"
+        ordering = ["id", ]
+
+    def __str__(self):
+        return self.name
+
+
 @reversion.register
 class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
                       DataPrivacyAgreementMixin, COCAgreementMixin,
