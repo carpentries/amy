@@ -2065,7 +2065,7 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     )
     family = models.CharField(
         max_length=STR_LONGEST,
-        blank=False, null=False,
+        blank=True, null=False, default="",
         verbose_name="Family name (surname)",
     )
     email = models.EmailField(
@@ -2085,6 +2085,13 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         verbose_name="If your institutional affiliation is not listed, please "
                      "enter the name",
     )
+    institution_other_URL = models.URLField(
+        max_length=STR_LONGEST,
+        blank=True, null=False, default="",
+        verbose_name="If your institutional affiliation is not listed, please "
+                     "enter the website",
+        help_text="Please provide URL."
+    )
     institution_department = models.CharField(
         max_length=STR_LONGEST,
         blank=True, null=False, default="",
@@ -2093,13 +2100,15 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     location = models.CharField(
         max_length=STR_LONGEST,
         blank=False, null=False, default="",
-        verbose_name="Location",
-        help_text="City, province/state.",
+        verbose_name="Workshop location",
+        help_text="City, state, or province.",
     )
     country = CountryField(
         null=False, blank=False,
         verbose_name="Country",
     )
+    # This field is no longer needed, and should be hidden in the form and
+    # templates.
     conference_details = models.CharField(
         max_length=STR_LONGEST,
         blank=True, null=False, default="",
@@ -2107,68 +2116,6 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         help_text="If yes, please provide conference details "
                   "(name, description).",
     )
-    other_preferred_dates = models.CharField(
-        max_length=STR_LONGEST,
-        blank=True, null=False, default="",
-        verbose_name="If your dates are not set, please provide more "
-                     "information below",
-    )
-    language = models.ForeignKey(
-        Language, on_delete=models.PROTECT,
-        blank=False, null=False,
-        verbose_name="Language",
-        help_text="Our workshops are offered primarily in English, with a few "
-                  "of our lessons available in Spanish. While materials are "
-                  "mainly in English, we know it can be valuable to have an "
-                  "instructor who speaks the native language of the learners. "
-                  "We will attempt to locate Instructors speaking a particular"
-                  " language, but cannot guarantee the availability of "
-                  "non-English speaking Instructors."
-    )
-    ATTENDEES_NUMBER_CHOICES = (
-        ('10-40', '10-40 (one room, two instructors)'),
-        ('40-80', '40-80 (two rooms, four instructors)'),
-        ('80-120', '80-120 (three rooms, six instructors)'),
-    )
-    number_attendees = models.CharField(
-        max_length=15,
-        choices=ATTENDEES_NUMBER_CHOICES,
-        blank=False, null=False, default='10-40',
-        verbose_name="Number of attendees",
-        help_text="This number doesn't need to be precise, but will help us "
-                  "decide how many instructors your workshop will need. "
-                  "Each workshop must have at least two instructors.",
-    )
-    domains = models.ManyToManyField(
-        KnowledgeDomain,
-        blank=False,
-        verbose_name="Domains or topic of interest for target audience",
-        help_text="The attendees' academic field(s) of study, if known.",
-    )
-    domains_other = models.CharField(
-        max_length=STR_LONGEST,
-        blank=True, default='',
-        verbose_name="Other domains",
-    )
-    academic_levels = models.ManyToManyField(
-        AcademicLevel,
-        verbose_name="Attendees' academic level / career stage",
-        help_text="If you know the academic level(s) of your attendees, "
-                  "indicate them here.",
-    )
-    computing_levels = models.ManyToManyField(
-        ComputingExperienceLevel,
-        verbose_name="Attendees' level of computing experience",
-        help_text="Indicate the attendees' level of computing experience, if "
-                  "known. We will ask attendees to fill in a skills survey "
-                  "before the workshop, so this answer can be an "
-                  "approximation.",
-    )
-    audience_description = models.TextField(
-        verbose_name="Please describe your anticipated audience, including "
-                     "their experience, background, and goals",
-    )
-
     SWC_LESSONS_LINK = (
         '<a href="https://software-carpentry.org/lessons/">'
         'Software Carpentry lessons page</a>'
@@ -2195,11 +2142,91 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
                   "software skills, Library Carpentry is the best choice. "
                   "Please visit the " + SWC_LESSONS_LINK + ", "
                   + DC_LESSONS_LINK + ", or the " + LC_LESSONS_LINK +
-                  " for more information about any of our lessons. If you’re "
-                  "not sure and would like to discuss with us, please select "
-                  'the "Don\'t know yet" option below.',
+                  " for more information about any of our lessons.",
     )
-
+    preferred_dates = models.DateField(
+        blank=True, null=True,
+        verbose_name="Preferred dates",
+        help_text="Our workshops typically run two full days. Please select "
+                  "your preferred first day for the workshop. If you do not "
+                  "have exact dates or are interested in an alternative "
+                  "schedule, please indicate so below. Because we need to "
+                  "coordinate with instructors, a minimum of 2-3 months lead "
+                  "time is required for workshop planning.",
+    )
+    other_preferred_dates = models.CharField(
+        max_length=STR_LONGEST,
+        blank=True, null=False, default="",
+        verbose_name="If your dates are not set, please provide more "
+                     "information below",
+    )
+    language = models.ForeignKey(
+        Language, on_delete=models.PROTECT,
+        blank=False, null=False,
+        verbose_name="What language will this workshop be conducted in?",
+        help_text="Our workshops are offered primarily in English, with a few "
+                  "of our lessons available in Spanish. While materials are "
+                  "mainly in English, we know it can be valuable to have an "
+                  "instructor who speaks the native language of the learners. "
+                  "We will attempt to locate Instructors speaking a particular"
+                  " language, but cannot guarantee the availability of "
+                  "non-English speaking Instructors."
+    )
+    ATTENDEES_NUMBER_CHOICES = (
+        ('10-40', '10-40 (one room, two instructors)'),
+        ('40-80', '40-80 (two rooms, four instructors)'),
+        ('80-120', '80-120 (three rooms, six instructors)'),
+    )
+    number_attendees = models.CharField(
+        max_length=15,
+        choices=ATTENDEES_NUMBER_CHOICES,
+        blank=False, null=False, default='10-40',
+        verbose_name="Anticipated number of attendees",
+        help_text="This number doesn't need to be precise, but will help us "
+                  "decide how many instructors your workshop will need. "
+                  "Each workshop must have at least two instructors.",
+    )
+    # MISSING
+    # This field is no longer needed, and should be hidden in the form and
+    # templates.
+    domains = models.ManyToManyField(
+        KnowledgeDomain,
+        blank=False,
+        verbose_name="Domains or topic of interest for target audience",
+        help_text="The attendees' academic field(s) of study, if known.",
+    )
+    # MISSING
+    # This field is no longer needed, and should be hidden in the form and
+    # templates.
+    domains_other = models.CharField(
+        max_length=STR_LONGEST,
+        blank=True, default='',
+        verbose_name="Other domains",
+    )
+    # MISSING
+    # This field is no longer needed, and should be hidden in the form and
+    # templates.
+    academic_levels = models.ManyToManyField(
+        AcademicLevel,
+        verbose_name="Attendees' academic level / career stage",
+        help_text="If you know the academic level(s) of your attendees, "
+                  "indicate them here.",
+    )
+    # MISSING
+    # This field is no longer needed, and should be hidden in the form and
+    # templates.
+    computing_levels = models.ManyToManyField(
+        ComputingExperienceLevel,
+        verbose_name="Attendees' level of computing experience",
+        help_text="Indicate the attendees' level of computing experience, if "
+                  "known. We will ask attendees to fill in a skills survey "
+                  "before the workshop, so this answer can be an "
+                  "approximation.",
+    )
+    audience_description = models.TextField(
+        verbose_name="Please describe your anticipated audience, including "
+                     "their experience, background, and goals",
+    )
     ORGANIZATION_TYPE_CHOICES = (
         ("self", "Self-organized"),
         ("central", "Centrally-organized"),
@@ -2223,13 +2250,17 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         "support all other logistical details. Fees due to The Carpentries "
         "are described below."
     )
+    # MISSING, but will be removed since self-org requests will be moved
+    # to the SelfOrganizedSubmission model
     organization_type = models.CharField(
         max_length=15,
         choices=ORGANIZATION_TYPE_CHOICES,
-        blank=False, null=False, default=None,
+        blank=False, null=False, default='central',
         verbose_name="Will this be a self-organized or "
                      "centrally-organized workshop?",
     )
+    # MISSING, but will be removed since self-org requests will be moved
+    # to the SelfOrganizedSubmission model
     self_organized_github = models.URLField(
         max_length=STR_LONGEST,
         blank=True, null=False,
@@ -2247,8 +2278,8 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
                       "invoicing process for the agreed upon fee."),
         ("member", "I am with a Member Organisation so the workshop fee does "
                    "not apply (Instructor travel costs will still apply)."),
-        ("waiver", "I am requesting a waiver of the workshop fee (Instructor "
-                   "travel costs will still apply)."),
+        ("waiver", "I am requesting a scholarship for the workshop fee "
+                   "(Instructor travel costs will still apply)."),
     )
     administrative_fee = models.CharField(
         max_length=20,
@@ -2259,9 +2290,9 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     )
     scholarship_circumstances = models.TextField(
         blank=True,
-        verbose_name="Please explain the circumstances for your waiver "
+        verbose_name="Please explain the circumstances for your scholarship "
                      "request",
-        help_text="Required only if you request a waiver."
+        help_text="Required only if you request a scholarship."
     )
     travel_expences_agreement = models.BooleanField(
         null=False, blank=False, default=False,
@@ -2297,7 +2328,63 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         null=False, blank=True, default='',
         verbose_name="Other travel expences management",
     )
-
+    PUBLIC_EVENT_CHOICES = (
+        ('public', 'Yes, this workshop is open to the public'),
+        ('closed', 'No, this is a closed event'),
+        ('', 'Other:'),
+    )
+    public_event = models.CharField(
+        max_length=20,
+        null=False, blank=False,
+        choices=PUBLIC_EVENT_CHOICES,
+        verbose_name="Is this workshop open to the public?",
+        help_text="Many of our workshops restrict registration to learners "
+                  "from the hosting institution. If your workshop will be open"
+                  " to registrants outside of your institution please let us "
+                  "know below."
+    )
+    public_event_other = models.CharField(
+        max_length=STR_LONGEST,
+        null=False, blank=True, default='',
+        verbose_name="Other (workshop open to the public)",
+    )
+    RESTRICTION_CHOICES = (
+        ('no_restrictions', 'No restrictions'),
+        ('', 'Other:'),
+    )
+    institution_restrictions = models.CharField(
+        max_length=20,
+        null=False, blank=False,
+        choices=RESTRICTION_CHOICES,
+        verbose_name="Our instructors live, teach, and travel globally. We "
+                     "understand that institutions may have citizenship or "
+                     "other requirements for employees or volunteers who "
+                     "facilitate workshops. If your institution fits this "
+                     "description, please share your requirements or note that"
+                     " there are no restrictions.",
+    )
+    institution_restrictions_other = models.CharField(
+        max_length=STR_LONGEST,
+        null=False, blank=True, default='',
+        verbose_name="Other (institution restrictions)",
+    )
+    additional_contact = models.CharField(
+        max_length=STR_LONGEST,
+        null=False, blank=True, default='',
+        verbose_name="Is there anyone you would like included on communication"
+                     " for this workshop? Please provide contact name(s) and "
+                     "e-mail(s) address",
+    )
+    carpentries_info_source = models.ManyToManyField(
+        InfoSource,
+        blank=True,
+        verbose_name="How did you hear about The Carpentries?",
+    )
+    carpentries_info_source_other = models.CharField(
+        max_length=STR_LONGEST,
+        null=False, blank=True, default='',
+        verbose_name="Other source for information about The Carpentries",
+    )
     user_notes = models.TextField(
         blank=True,
         verbose_name="Is there anything else you would like to share with us?",
