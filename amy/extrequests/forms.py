@@ -4,6 +4,10 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Case, When
 
+from extrequests.models import (
+    WorkshopInquiryRequest,
+    SelfOrganizedSubmission,
+)
 from workshops.forms import BootstrapHelper
 from workshops.models import (
     Event,
@@ -475,6 +479,364 @@ class WorkshopRequestAdminForm(WorkshopRequestBaseForm):
         widgets = WorkshopRequestBaseForm.Meta.widgets.copy()
         widgets.update(
             {'event': Select2Widget}
+        )
+
+
+# ----------------------------------------------------------
+# WorkshopInquiryRequest related forms
+
+class WorkshopInquiryRequestBaseForm(forms.ModelForm):
+    institution = forms.ModelChoiceField(
+        required=False,
+        queryset=Organization.objects.order_by('fullname'),
+        widget=ListSelect2(),
+        label=WorkshopRequest._meta.get_field('institution').verbose_name,
+        help_text=WorkshopRequest._meta.get_field('institution').help_text,
+    )
+    domains = forms.ModelMultipleChoiceField(
+        required=False,
+        queryset=KnowledgeDomain.objects.order_by(
+            # this crazy django-ninja-code sorts by 'name', but leaves
+            # "Don't know yet" entry last
+            Case(When(name="Don't know yet", then=-1)), 'name',
+        ),
+        widget=CheckboxSelectMultipleWithOthers('domains_other'),
+        label=WorkshopRequest._meta.get_field('domains').verbose_name,
+        help_text=WorkshopRequest._meta.get_field('domains').help_text,
+    )
+    travel_expences_agreement = forms.BooleanField(
+        required=True,
+        label=WorkshopRequest._meta.get_field('travel_expences_agreement')
+                                   .verbose_name,
+    )
+    data_privacy_agreement = forms.BooleanField(
+        required=True,
+        label=WorkshopRequest._meta.get_field('data_privacy_agreement')
+                                   .verbose_name,
+    )
+    code_of_conduct_agreement = forms.BooleanField(
+        required=True,
+        label=WorkshopRequest._meta.get_field('code_of_conduct_agreement')
+                                   .verbose_name,
+    )
+    host_responsibilities = forms.BooleanField(
+        required=True,
+        label=WorkshopRequest._meta.get_field('host_responsibilities')
+                                   .verbose_name,
+    )
+
+    requested_workshop_types = forms.ModelMultipleChoiceField(
+        required=True,
+        queryset=Curriculum.objects.default_order(allow_other=True,
+                                                  allow_unknown=True),
+        label=WorkshopRequest._meta.get_field('requested_workshop_types')
+                                   .verbose_name,
+        help_text=WorkshopRequest._meta.get_field('requested_workshop_types')
+                                       .help_text,
+        widget=forms.CheckboxSelectMultiple(),
+    )
+
+    helper = BootstrapHelper(add_cancel_button=False)
+
+    class Meta:
+        model = WorkshopInquiryRequest
+        fields = (
+            "personal",
+            "family",
+            "email",
+            "institution",
+            "institution_other_name",
+            "institution_other_URL",
+            "institution_department",
+            "location",
+            "country",
+            # "your audience" section starts now
+            "routine_data",
+            "routine_data_other",
+            "domains",
+            "domains_other",
+            "academic_levels",
+            "computing_levels",
+            "requested_workshop_types",
+            "preferred_dates",
+            "other_preferred_dates",
+            "language",
+            "number_attendees",
+            "audience_description",
+            "administrative_fee",
+            "travel_expences_management",
+            "travel_expences_management_other",
+            "travel_expences_agreement",
+            "public_event",
+            "public_event_other",
+            "institution_restrictions",
+            "institution_restrictions_other",
+            "additional_contact",
+            "carpentries_info_source",
+            "carpentries_info_source_other",
+            "user_notes",
+            "data_privacy_agreement",
+            "code_of_conduct_agreement",
+            "host_responsibilities",
+        )
+
+        widgets = {
+            'country': ListSelect2(),
+            'language': ListSelect2(),
+            'routine_data':
+                CheckboxSelectMultipleWithOthers('routine_data_other'),
+            'domains':
+                CheckboxSelectMultipleWithOthers('domains_other'),
+            'number_attendees': forms.RadioSelect(),
+            'academic_levels': forms.CheckboxSelectMultiple(),
+            'computing_levels': forms.CheckboxSelectMultiple(),
+            'requested_workshop_types': forms.CheckboxSelectMultiple(),
+            'administrative_fee': forms.RadioSelect(),
+            'travel_expences_management':
+                RadioSelectWithOther('travel_expences_management_other'),
+            'public_event':
+                RadioSelectWithOther('public_event_other'),
+            'institution_restrictions':
+                RadioSelectWithOther('institution_restrictions_other'),
+            'carpentries_info_source':
+                CheckboxSelectMultipleWithOthers('carpentries_info_source_other'),
+        }
+
+    @staticmethod
+    def institution_label_from_instance(obj):
+        """Static method that overrides ModelChoiceField choice labels,
+        essentially works just like `Model.__str__`."""
+        return "{}".format(obj.fullname)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # change institution object labels (originally Organization displays
+        # domain as well)
+        self.fields['institution'].label_from_instance = \
+            self.institution_label_from_instance
+
+        self.fields['travel_expences_management'].required = False
+
+        # set up a layout object for the helper
+        self.helper.layout = self.helper.build_default_layout(self)
+
+        # set up `*WithOther` widgets so that they can display additional
+        # fields inline
+        self['routine_data'].field.widget.other_field = self['routine_data_other']
+        self['domains'].field.widget.other_field = self['domains_other']
+        self['travel_expences_management'].field.widget.other_field = \
+            self['travel_expences_management_other']
+        self['public_event'].field.widget.other_field = \
+            self['public_event_other']
+        self['institution_restrictions'].field.widget.other_field = \
+            self['institution_restrictions_other']
+        self['carpentries_info_source'].field.widget.other_field = \
+            self['carpentries_info_source_other']
+
+        # move "institution_other_name" field to "institution" subfield
+        self['institution'].field.widget.subfields = [
+            (self['institution_other_name'], 'Institution name'),
+            (self['institution_other_URL'], 'Institution URL address'),
+        ]
+
+        # remove additional fields
+        # self.helper.layout.fields.remove('domains_other')
+        self.helper.layout.fields.remove('routine_data_other')
+        self.helper.layout.fields.remove('domains_other')
+        self.helper.layout.fields.remove('travel_expences_management_other')
+        self.helper.layout.fields.remove('public_event_other')
+        self.helper.layout.fields.remove('institution_restrictions_other')
+        self.helper.layout.fields.remove('carpentries_info_source_other')
+        self.helper.layout.fields.remove('institution_other_name')
+        self.helper.layout.fields.remove('institution_other_URL')
+
+        # add horizontal lines after some fields to visually group them
+        # together
+        hr_fields_after = (
+            'email', 'institution_department', 'audience_description',
+            'country',
+        )
+        hr_fields_before = (
+            'travel_expences_management',
+            'carpentries_info_source',
+        )
+        for field in hr_fields_after:
+            self.helper.layout.insert(
+                self.helper.layout.fields.index(field) + 1,
+                HTML('<hr class="col-lg-10 col-12 mx-0 px-0">'),
+            )
+        for field in hr_fields_before:
+            self.helper.layout.insert(
+                self.helper.layout.fields.index(field),
+                HTML('<hr class="col-lg-10 col-12 mx-0 px-0">'),
+            )
+
+
+class WorkshopInquiryRequestAdminForm(WorkshopInquiryRequestBaseForm):
+    helper = BootstrapHelper(add_cancel_button=False,
+                             duplicate_buttons_on_top=True)
+
+    class Meta(WorkshopInquiryRequestBaseForm.Meta):
+        fields = (
+            "state",
+            "event",
+        ) + WorkshopInquiryRequestBaseForm.Meta.fields
+
+        widgets = WorkshopInquiryRequestBaseForm.Meta.widgets.copy()
+        widgets.update(
+            {'event': ListSelect2()}
+        )
+
+
+# ----------------------------------------------------------
+# SelfOrganizedSubmission related forms
+
+class SelfOrganizedSubmissionBaseForm(forms.ModelForm):
+    institution = forms.ModelChoiceField(
+        required=False,
+        queryset=Organization.objects.order_by('fullname'),
+        widget=ListSelect2(),
+        label=WorkshopRequest._meta.get_field('institution').verbose_name,
+        help_text=WorkshopRequest._meta.get_field('institution').help_text,
+    )
+
+    data_privacy_agreement = forms.BooleanField(
+        required=True,
+        label=WorkshopRequest._meta.get_field('data_privacy_agreement')
+                                   .verbose_name,
+    )
+    code_of_conduct_agreement = forms.BooleanField(
+        required=True,
+        label=WorkshopRequest._meta.get_field('code_of_conduct_agreement')
+                                   .verbose_name,
+    )
+    host_responsibilities = forms.BooleanField(
+        required=True,
+        label=WorkshopRequest._meta.get_field('host_responsibilities')
+                                   .verbose_name,
+    )
+
+    workshop_types = forms.ModelMultipleChoiceField(
+        required=True,
+        queryset=Curriculum.objects.default_order(allow_other=True,
+                                                  allow_unknown=True),
+        label=WorkshopRequest._meta.get_field('requested_workshop_types')
+                                   .verbose_name,
+        help_text=WorkshopRequest._meta.get_field('requested_workshop_types')
+                                       .help_text,
+        widget=forms.CheckboxSelectMultiple(),
+    )
+
+    helper = BootstrapHelper(add_cancel_button=False)
+
+    class Meta:
+        model = SelfOrganizedSubmission
+        fields = (
+            "personal",
+            "family",
+            "email",
+            "institution",
+            "institution_other_name",
+            "institution_other_URL",
+            "institution_department",
+            "workshop_url",
+            "workshop_format",
+            "workshop_format_other",
+            "workshop_types",
+            "workshop_types_other",
+            "workshop_types_other_explain",
+            "language",
+            "public_event",
+            "public_event_other",
+            "additional_contact",
+            "data_privacy_agreement",
+            "code_of_conduct_agreement",
+            "host_responsibilities",
+        )
+
+        widgets = {
+            'country': ListSelect2(),
+            'language': ListSelect2(),
+            'workshop_format':
+                RadioSelectWithOther('workshop_format_other'),
+            'workshop_types':
+                RadioSelectWithOther('workshop_types_other'),
+            'public_event':
+                RadioSelectWithOther('public_event_other'),
+        }
+
+    @staticmethod
+    def institution_label_from_instance(obj):
+        """Static method that overrides ModelChoiceField choice labels,
+        essentially works just like `Model.__str__`."""
+        return "{}".format(obj.fullname)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # change institution object labels (originally Organization displays
+        # domain as well)
+        self.fields['institution'].label_from_instance = \
+            self.institution_label_from_instance
+
+        # set up a layout object for the helper
+        self.helper.layout = self.helper.build_default_layout(self)
+
+        # set up `*WithOther` widgets so that they can display additional
+        # fields inline
+        self['workshop_format'].field.widget.other_field = \
+            self['workshop_format_other']
+        self['workshop_types'].field.widget.other_field = \
+            self['workshop_types_other']
+        self['public_event'].field.widget.other_field = \
+            self['public_event_other']
+
+        # move "institution_other_name" field to "institution" subfield
+        self['institution'].field.widget.subfields = [
+            (self['institution_other_name'], 'Institution name'),
+            (self['institution_other_URL'], 'Institution URL address'),
+        ]
+
+        # remove additional fields
+        # self.helper.layout.fields.remove('domains_other')
+        self.helper.layout.fields.remove('workshop_format_other')
+        self.helper.layout.fields.remove('workshop_types_other')
+        self.helper.layout.fields.remove('public_event_other')
+        self.helper.layout.fields.remove('institution_other_name')
+        self.helper.layout.fields.remove('institution_other_URL')
+
+        # add horizontal lines after some fields to visually group them
+        # together
+        hr_fields_after = (
+            'email', 'institution_department',
+        )
+        hr_fields_before = []
+        for field in hr_fields_after:
+            self.helper.layout.insert(
+                self.helper.layout.fields.index(field) + 1,
+                HTML('<hr class="col-lg-10 col-12 mx-0 px-0">'),
+            )
+        for field in hr_fields_before:
+            self.helper.layout.insert(
+                self.helper.layout.fields.index(field),
+                HTML('<hr class="col-lg-10 col-12 mx-0 px-0">'),
+            )
+
+
+class SelfOrganizedSubmissionAdminForm(SelfOrganizedSubmissionBaseForm):
+    helper = BootstrapHelper(add_cancel_button=False,
+                             duplicate_buttons_on_top=True)
+
+    class Meta(SelfOrganizedSubmissionBaseForm.Meta):
+        fields = (
+            "state",
+            "event",
+        ) + SelfOrganizedSubmissionBaseForm.Meta.fields
+
+        widgets = SelfOrganizedSubmissionBaseForm.Meta.widgets.copy()
+        widgets.update(
+            {'event': ListSelect2()}
         )
 
 

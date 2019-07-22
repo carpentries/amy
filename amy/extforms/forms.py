@@ -4,6 +4,8 @@ from django import forms
 
 from extrequests.forms import (
     WorkshopRequestBaseForm,
+    WorkshopInquiryRequestBaseForm,
+    SelfOrganizedSubmissionBaseForm,
 )
 from workshops.fields import (
     RadioSelectWithOther,
@@ -158,6 +160,81 @@ class WorkshopRequestExternalForm(WorkshopRequestBaseForm):
             "carpentries_info_source",
             "carpentries_info_source_other",
             "user_notes",
+            "data_privacy_agreement",
+            "code_of_conduct_agreement",
+            "host_responsibilities",
+            "captcha",
+        )
+
+
+class WorkshopInquiryRequestExternalForm(WorkshopInquiryRequestBaseForm):
+    captcha = ReCaptchaField()
+
+    class Meta(WorkshopInquiryRequestBaseForm.Meta):
+        fields = (
+            "personal",
+            "family",
+            "email",
+            "institution",
+            "institution_other_name",
+            "institution_other_URL",
+            "institution_department",
+            "location",
+            "country",
+            # "your audience" section starts now
+            "routine_data",
+            "routine_data_other",
+            "domains",
+            "domains_other",
+            "academic_levels",
+            "computing_levels",
+            "requested_workshop_types",
+            "preferred_dates",
+            "other_preferred_dates",
+            "language",
+            "number_attendees",
+            "audience_description",
+            "administrative_fee",
+            "travel_expences_management",
+            "travel_expences_management_other",
+            "travel_expences_agreement",
+            "public_event",
+            "public_event_other",
+            "institution_restrictions",
+            "institution_restrictions_other",
+            "additional_contact",
+            "carpentries_info_source",
+            "carpentries_info_source_other",
+            "user_notes",
+            "data_privacy_agreement",
+            "code_of_conduct_agreement",
+            "host_responsibilities",
+            "captcha",
+        )
+
+
+class SelfOrganizedSubmissionExternalForm(SelfOrganizedSubmissionBaseForm):
+    captcha = ReCaptchaField()
+
+    class Meta(SelfOrganizedSubmissionBaseForm.Meta):
+        fields = (
+            "personal",
+            "family",
+            "email",
+            "institution",
+            "institution_other_name",
+            "institution_other_URL",
+            "institution_department",
+            "workshop_url",
+            "workshop_format",
+            "workshop_format_other",
+            "workshop_types",
+            "workshop_types_other",
+            "workshop_types_other_explain",
+            "language",
+            "public_event",
+            "public_event_other",
+            "additional_contact",
             "data_privacy_agreement",
             "code_of_conduct_agreement",
             "host_responsibilities",
