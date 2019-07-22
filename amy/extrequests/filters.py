@@ -4,6 +4,10 @@ import django_filters
 from django.db.models import Q
 from django.forms import widgets
 
+from extrequests.models import (
+    WorkshopInquiryRequest,
+    SelfOrganizedSubmission,
+)
 from workshops.fields import Select2Widget
 from workshops.filters import (
     AMYFilterSet,
@@ -163,6 +167,65 @@ class WorkshopRequestFilter(AMYFilterSet, StateFilterSet):
 
     class Meta:
         model = WorkshopRequest
+        fields = [
+            'state',
+            'assigned_to',
+            'requested_workshop_types',
+            'country',
+        ]
+
+
+# ------------------------------------------------------------
+# WorkshopInquiryRequest related filter and filter methods
+# ------------------------------------------------------------
+
+class WorkshopInquiryFilter(AMYFilterSet, StateFilterSet):
+    assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2Widget)
+    country = AllCountriesFilter(widget=Select2Widget)
+    requested_workshop_types = django_filters.ModelMultipleChoiceFilter(
+        label='Requested workshop types',
+        queryset=Curriculum.objects.all(),
+        widget=widgets.CheckboxSelectMultiple(),
+    )
+
+    order_by = django_filters.OrderingFilter(
+        fields=(
+            'created_at',
+        ),
+    )
+
+    class Meta:
+        model = WorkshopInquiryRequest
+        fields = [
+            'state',
+            'assigned_to',
+            'requested_workshop_types',
+            'country',
+        ]
+
+
+
+# ------------------------------------------------------------
+# SelfOrganizedSubmission related filter and filter methods
+# ------------------------------------------------------------
+
+class SelfOrganizedSubmissionFilter(AMYFilterSet, StateFilterSet):
+    assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2Widget)
+    country = AllCountriesFilter(widget=Select2Widget)
+    requested_workshop_types = django_filters.ModelMultipleChoiceFilter(
+        label='Requested workshop types',
+        queryset=Curriculum.objects.all(),
+        widget=widgets.CheckboxSelectMultiple(),
+    )
+
+    order_by = django_filters.OrderingFilter(
+        fields=(
+            'created_at',
+        ),
+    )
+
+    class Meta:
+        model = SelfOrganizedSubmission
         fields = [
             'state',
             'assigned_to',

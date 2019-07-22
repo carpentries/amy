@@ -27,6 +27,8 @@ from requests.exceptions import HTTPError, RequestException
 from extrequests.filters import (
     TrainingRequestFilter,
     WorkshopRequestFilter,
+    WorkshopInquiryFilter,
+    SelfOrganizedSubmissionFilter,
 )
 from extrequests.forms import (
     MatchTrainingRequestForm,
@@ -36,6 +38,12 @@ from extrequests.forms import (
     TrainingRequestsSelectionForm,
     TrainingRequestsMergeForm,
     WorkshopRequestAdminForm,
+    WorkshopInquiryRequestAdminForm,
+    SelfOrganizedSubmissionAdminForm,
+)
+from extrequests.models import (
+    WorkshopInquiryRequest,
+    SelfOrganizedSubmission,
 )
 from workshops.base_views import (
     AMYUpdateView,
@@ -200,6 +208,227 @@ class WorkshopRequestAssign(OnlyForAdminsMixin, AssignView):
     permission_required = 'workshops.change_workshoprequest'
     model = WorkshopRequest
     pk_url_kwarg = 'request_id'
+    person_url_kwarg = 'person_id'
+
+
+# ------------------------------------------------------------
+# WorkshopInquiryRequest related views
+# ------------------------------------------------------------
+
+
+class AllWorkshopInquiries(OnlyForAdminsMixin, StateFilterMixin, AMYListView):
+    context_object_name = 'inquiries'
+    template_name = 'requests/all_workshopinquiries.html'
+    filter_class = WorkshopInquiryFilter
+    queryset = (
+        WorkshopInquiryRequest.objects.select_related('assigned_to', 'institution')
+                                      .prefetch_related('requested_workshop_types')
+    )
+    title = 'Workshop inquiries'
+
+
+class WorkshopInquiryDetails(OnlyForAdminsMixin, AMYDetailView):
+    queryset = WorkshopInquiryRequest.objects.all()
+    context_object_name = 'object'
+    template_name = 'requests/workshopinquiry.html'
+    pk_url_kwarg = 'inquiry_id'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Workshop inquiry #{}'.format(self.get_object().pk)
+
+        person_lookup_form = AdminLookupForm()
+        if self.object.assigned_to:
+            person_lookup_form = AdminLookupForm(
+                initial={'person': self.object.assigned_to}
+            )
+
+        person_lookup_form.helper = BootstrapHelper(
+            form_action=reverse('workshopinquiry_assign',
+                                args=[self.object.pk]),
+            add_cancel_button=False)
+
+        context['person_lookup_form'] = person_lookup_form
+        return context
+
+
+class WorkshopInquiryChange(OnlyForAdminsMixin, PermissionRequiredMixin,
+                            AMYUpdateView):
+    permission_required = 'workshops.change_workshopinquiry'
+    model = WorkshopInquiryRequest
+    pk_url_kwarg = 'inquiry_id'
+    form_class = WorkshopInquiryRequestAdminForm
+    template_name = 'generic_form_with_comments.html'
+
+
+class WorkshopInquirySetState(OnlyForAdminsMixin, ChangeRequestStateView):
+    permission_required = 'workshops.change_workshopinquiry'
+    model = WorkshopInquiryRequest
+    pk_url_kwarg = 'inquiry_id'
+    state_url_kwarg = 'state'
+    permanent = False
+
+
+@admin_required
+@permission_required(['workshops.change_workshopinquiry',
+                      'workshops.add_event'],
+                     raise_exception=True)
+def workshopinquiry_accept_event(request, request_id):
+    """Accept workshop inquiry by creating a new event."""
+    wr = get_object_or_404(WorkshopInquiryRequest, state='p', pk=request_id)
+
+    if request.method == 'POST':
+        form = EventCreateForm(request.POST)
+
+        if form.is_valid():
+            event = form.save()
+
+            wr.state = 'a'
+            wr.event = event
+            wr.save()
+            return redirect(reverse('event_details',
+                                    args=[event.slug]))
+        else:
+            messages.error(request, 'Fix errors below.')
+
+    else:
+        # non-POST request
+        form = EventCreateForm()
+
+    context = {
+        'object': wr,
+        'form': form,
+    }
+    return render(request, 'requests/workshopinquiry_accept_event.html',
+                  context)
+
+
+class WorkshopInquiryAssign(OnlyForAdminsMixin, AssignView):
+    permission_required = 'workshops.change_workshopinquiry'
+    model = WorkshopInquiryRequest
+    pk_url_kwarg = 'inquiry_id'
+    person_url_kwarg = 'person_id'
+
+
+# ------------------------------------------------------------
+# SelfOrganizedSubmission related views
+# ------------------------------------------------------------
+
+
+class AllSelfOrganizedSubmissions(OnlyForAdminsMixin, StateFilterMixin, AMYListView):
+    context_object_name = 'submissions'
+    template_name = 'requests/all_selforganizedsubmissions.html'
+    filter_class = SelfOrganizedSubmissionFilter
+    queryset = (
+        SelfOrganizedSubmission.objects.select_related('assigned_to', 'institution')
+                                       .prefetch_related('requested_workshop_types')
+    )
+    title = 'Self-Organized submissions'
+
+
+class SelfOrganizedSubmissionDetails(OnlyForAdminsMixin, AMYDetailView):
+    queryset = SelfOrganizedSubmission.objects.all()
+    context_object_name = 'object'
+    template_name = 'requests/selforganizedsubmission.html'
+    pk_url_kwarg = 'submission_id'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Self-Organized submission #{}'.format(self.get_object().pk)
+
+        person_lookup_form = AdminLookupForm()
+        if self.object.assigned_to:
+            person_lookup_form = AdminLookupForm(
+                initial={'person': self.object.assigned_to}
+            )
+
+        person_lookup_form.helper = BootstrapHelper(
+            form_action=reverse('selforganized_submission_assign',
+                                args=[self.object.pk]),
+            add_cancel_button=False)
+
+        context['person_lookup_form'] = person_lookup_form
+        return context
+
+
+class SelfOrganizedSubmissionChange(OnlyForAdminsMixin, PermissionRequiredMixin,
+                            AMYUpdateView):
+    permission_required = 'workshops.change_selforganizedsubmission'
+    model = SelfOrganizedSubmission
+    pk_url_kwarg = 'submission_id'
+    form_class = SelfOrganizedSubmissionAdminForm
+    template_name = 'generic_form_with_comments.html'
+
+
+class SelfOrganizedSubmissionSetState(OnlyForAdminsMixin, ChangeRequestStateView):
+    permission_required = 'workshops.change_selforganizedsubmission'
+    model = SelfOrganizedSubmission
+    pk_url_kwarg = 'submission_id'
+    state_url_kwarg = 'state'
+    permanent = False
+
+
+@admin_required
+@permission_required(['workshops.change_selforganizedsubmission',
+                      'workshops.add_event'],
+                     raise_exception=True)
+def selforganizedsubmission_accept_event(request, submission_id):
+    """Accept event request by creating a new event."""
+    wr = get_object_or_404(SelfOrganizedSubmission, state='p', pk=submission_id)
+
+    if request.method == 'POST':
+        form = EventCreateForm(request.POST)
+
+        if form.is_valid():
+            event = form.save()
+
+            wr.state = 'a'
+            wr.event = event
+            wr.save()
+            return redirect(reverse('event_details',
+                                    args=[event.slug]))
+        else:
+            messages.error(request, 'Fix errors below.')
+
+    else:
+        # non-POST request
+        form = EventCreateForm()
+
+        try:
+            url = wr.workshop_url.strip()
+            metadata = fetch_event_metadata(url)
+            data = parse_metadata_from_event_website(metadata)
+
+            if 'language' in data:
+                lang = data['language'].lower()
+                data['language'] = Language.objects.get(subtag=lang)
+
+            if 'instructors' in data or 'helpers' in data:
+                instructors = data.get('instructors') or ['none']
+                helpers = data.get('helpers') or ['none']
+                data['comment'] = "Instructors: {}\n\nHelpers: {}" \
+                    .format(','.join(instructors), ','.join(helpers))
+
+            form = EventCreateForm(initial=data)
+
+        except (AttributeError, KeyError, ValueError, HTTPError,
+                RequestException, WrongWorkshopURL, Language.DoesNotExist):
+            # ignore errors
+            messages.warning(request, "Cannot automatically fill the form "
+                                      "from provided workshop URL.")
+
+    context = {
+        'object': wr,
+        'form': form,
+    }
+    return render(request, 'requests/selforganizedsubmission_accept_event.html',
+                  context)
+
+
+class SelfOrganizedSubmissionAssign(OnlyForAdminsMixin, AssignView):
+    permission_required = 'workshops.change_selforganizedsubmission'
+    model = SelfOrganizedSubmission
+    pk_url_kwarg = 'submission_id'
     person_url_kwarg = 'person_id'
 
 
