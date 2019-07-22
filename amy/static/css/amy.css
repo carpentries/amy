@@ -136,3 +136,8 @@ form input[name=honeypot] {
     width: 100%;
     resize: vertical;
 }
+
+/* this setting will display long "Other" field in forms */
+form .form-check label, form .checkbox label {
+    display: block;
+}
