@@ -71,6 +71,15 @@ class CheckboxSelectMultipleWithOthers(forms.CheckboxSelectMultiple):
         self.other_field_name = other_field_name
 
 
+class RadioSelectFakeMultiple(forms.RadioSelect):
+    """Pretend to be a radio-select with multiple selection possible. This
+    is intended to 'fool' Django into thinking that user selected 1 item on
+    a multi-select item list."""
+    allow_multiple_selected = True
+
+
+#------------------------------------------------------------
+
 class Select2BootstrapMixin:
     def build_attrs(self, *args, **kwargs):
         attrs = super().build_attrs(*args, **kwargs)
@@ -86,6 +95,7 @@ class Select2NoMinimumInputLength:
         self.attrs.setdefault('data-minimum-input-length', 0)
         attrs = super().build_attrs(*args, **kwargs)
         return attrs
+
 
 
 class Select2Widget(Select2BootstrapMixin, DS2_Select2Widget):
