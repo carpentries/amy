@@ -1937,6 +1937,43 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
 #------------------------------------------------------------
 
 
+class CurriculumManager(models.Manager):
+    def default_order(self, allow_unknown=True, allow_other=True):
+        """A specific order_by() clause with semi-ninja code."""
+
+        # This crazy django-ninja-code gives different weights to entries
+        # matching different criterias, and then sorts them by 'name'.
+        # For example when two entries (e.g. swc-r and swc-python) have the
+        # same weight (here: 10), then sorting by name comes in.
+        # Entries dc-other, swc-other, lc-other, or `I don't know` are made
+        # last of their "group".
+        qs = self.order_by(
+            Case(
+                When(carpentry='SWC', other=False, then=10),
+                When(carpentry='SWC', other=True, then=15),
+                When(carpentry='DC', other=False, then=20),
+                When(carpentry='DC', other=True, then=25),
+                When(carpentry='LC', other=False, then=30),
+                When(carpentry='LC', other=True, then=35),
+                When(carpentry='', then=100),
+                default=1,
+            ),
+            'name',
+        )
+
+        # conditionally disable unknown ("I don't know") entry from appearing
+        # in the list
+        if not allow_unknown:
+            qs = qs.filter(unknown=False)
+
+        # conditionally disable other entries (swc-other, etc.) from appearing
+        # in the list
+        if not allow_other:
+            qs = qs.filter(other=False)
+        
+        return qs
+
+
 class Curriculum(ActiveMixin, models.Model):
     CARPENTRIES_CHOICES = (
         ("SWC", "Software Carpentry"),
@@ -1985,6 +2022,8 @@ class Curriculum(ActiveMixin, models.Model):
                   "'Unknown', or 'Not sure yet'. There can be only one such "
                   "record in the database.",
     )
+
+    objects = CurriculumManager()
 
     class Meta:
         verbose_name = "Curriculum"
