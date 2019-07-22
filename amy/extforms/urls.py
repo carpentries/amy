@@ -10,6 +10,10 @@ urlpatterns = [
     path('request_training/confirm/', views.TrainingRequestConfirm.as_view(), name='training_request_confirm'),
     path('workshop/', views.WorkshopRequestCreate.as_view(), name='workshop_request'),
     path('workshop/confirm/', views.WorkshopRequestConfirm.as_view(), name='workshop_request_confirm'),
+    path('inquiry/', views.WorkshopInquiryRequestCreate.as_view(), name='workshop_inquiry'),
+    path('inquiry/confirm/', views.WorkshopInquiryRequestConfirm.as_view(), name='workshop_inquiry_confirm'),
+    path('self-organized/', views.SelfOrganizedSubmissionCreate.as_view(), name='selforganized_submission'),
+    path('self-organized/confirm/', views.SelfOrganizedSubmissionConfirm.as_view(), name='selforganized_submission_confirm'),
     # forms below have been turned off:
     path('swc/request/', views.SWCEventRequest.as_view(), name='swc_workshop_request'),
     path('dc/request/', views.DCEventRequest.as_view(), name='dc_workshop_request'),
