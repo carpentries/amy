@@ -20,6 +20,7 @@ from workshops.fields import (
     ModelSelect2Widget,
     RadioSelectWithOther,
     CheckboxSelectMultipleWithOthers,
+    RadioSelectFakeMultiple,
 )
 
 
@@ -208,17 +209,6 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         label=WorkshopRequest._meta.get_field('institution').verbose_name,
         help_text=WorkshopRequest._meta.get_field('institution').help_text,
     )
-    domains = forms.ModelMultipleChoiceField(
-        required=False,
-        queryset=KnowledgeDomain.objects.order_by(
-            # this crazy django-ninja-code sorts by 'name', but leaves
-            # "Don't know yet" entry last
-            Case(When(name="Don't know yet", then=-1)), 'name',
-        ),
-        widget=CheckboxSelectMultipleWithOthers('domains_other'),
-        label=WorkshopRequest._meta.get_field('domains').verbose_name,
-        help_text=WorkshopRequest._meta.get_field('domains').help_text,
-    )
 
     travel_expences_agreement = forms.BooleanField(
         required=True,
@@ -243,28 +233,13 @@ class WorkshopRequestBaseForm(forms.ModelForm):
 
     requested_workshop_types = forms.ModelMultipleChoiceField(
         required=True,
-        queryset=Curriculum.objects.order_by(
-            # This crazy django-ninja-code gives different weights to entries
-            # matching different criterias, and then sorts them by 'name'.
-            # For example when two entries (e.g. swc-r and swc-python) have the
-            # same weight (here: 5), then sorting by name comes in.
-            Case(
-                 When(slug="dc-other", then=2),
-                 When(slug="lc-other", then=4),
-                 When(slug="swc-other", then=6),
-                 When(slug="unknown", then=7),
-                 When(slug__startswith="dc", then=1),
-                 When(slug__startswith="lc", then=3),
-                 When(slug__startswith="swc", then=5),
-                 default=8,
-            ),
-            'name',
-        ),
+        queryset=Curriculum.objects.default_order(allow_unknown=False,
+                                                  allow_other=False),
         label=WorkshopRequest._meta.get_field('requested_workshop_types')
                                    .verbose_name,
         help_text=WorkshopRequest._meta.get_field('requested_workshop_types')
                                        .help_text,
-        widget=forms.CheckboxSelectMultiple(),
+        widget=RadioSelectFakeMultiple(),
     )
 
     helper = BootstrapHelper(add_cancel_button=False)
@@ -281,24 +256,24 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             "institution_department",
             "location",
             "country",
-            "conference_details",
+            "requested_workshop_types",
             "preferred_dates",
             "other_preferred_dates",
             "language",
             "number_attendees",
-            "domains",
-            "domains_other",
-            "academic_levels",
-            "computing_levels",
             "audience_description",
-            "requested_workshop_types",
-            "organization_type",
-            "self_organized_github",
             "administrative_fee",
             "scholarship_circumstances",
             "travel_expences_management",
             "travel_expences_management_other",
             "travel_expences_agreement",
+            "public_event",
+            "public_event_other",
+            "institution_restrictions",
+            "institution_restrictions_other",
+            "additional_contact",
+            "carpentries_info_source",
+            "carpentries_info_source_other",
             "user_notes",
             "data_privacy_agreement",
             "code_of_conduct_agreement",
@@ -316,6 +291,12 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             'administrative_fee': forms.RadioSelect(),
             'travel_expences_management':
                 RadioSelectWithOther('travel_expences_management_other'),
+            'public_event':
+                RadioSelectWithOther('public_event_other'),
+            'institution_restrictions':
+                RadioSelectWithOther('institution_restrictions_other'),
+            'carpentries_info_source':
+                CheckboxSelectMultipleWithOthers('carpentries_info_source_other'),
         }
 
     def __init__(self, *args, **kwargs):
@@ -333,45 +314,60 @@ class WorkshopRequestBaseForm(forms.ModelForm):
 
         # set up `*WithOther` widgets so that they can display additional
         # fields inline
-        self['domains'].field.widget.other_field = self['domains_other']
         self['travel_expences_management'].field.widget.other_field = \
             self['travel_expences_management_other']
+        self['public_event'].field.widget.other_field = \
+            self['public_event_other']
+        self['institution_restrictions'].field.widget.other_field = \
+            self['institution_restrictions_other']
+        self['carpentries_info_source'].field.widget.other_field = \
+            self['carpentries_info_source_other']
+
+        # move "institution_other_name" field to "institution" subfield
+        self['institution'].field.widget.subfields = [
+            (self['institution_other_name'], 'Institution name'),
+            (self['institution_other_URL'], 'Institution URL address'),
+        ]
 
         # remove additional fields
-        self.helper.layout.fields.remove('domains_other')
         self.helper.layout.fields.remove('travel_expences_management_other')
+        self.helper.layout.fields.remove('public_event_other')
+        self.helper.layout.fields.remove('institution_restrictions_other')
+        self.helper.layout.fields.remove('carpentries_info_source_other')
+        self.helper.layout.fields.remove('institution_other_name')
+        self.helper.layout.fields.remove('institution_other_URL')
 
-        # get current position of `organization_type` field
-        pos_index = self.helper.layout.fields.index('organization_type')
+        # # get current position of `organization_type` field
+        # pos_index = self.helper.layout.fields.index('organization_type')
 
-        # setup additional information for the field
-        self['organization_type'].field.widget.subfields = {
-            'self': [
-                self['self_organized_github'],
-            ],
-            'central': [
-                self['administrative_fee'],
-                self['scholarship_circumstances'],
-            ],
-        }
-        self['organization_type'].field.widget.notes = {
-            'self': WorkshopRequest.SELF_ORGANIZED_NOTES,
-            'central': WorkshopRequest.CENTRALLY_ORGANIZED_NOTES,
-        }
-        self.helper.layout.fields.remove('organization_type')
-        self.helper.layout.fields.remove('self_organized_github')
-        self.helper.layout.fields.remove('administrative_fee')
-        self.helper.layout.fields.remove('scholarship_circumstances')
+        # # setup additional information for the field
+        # self['organization_type'].field.widget.subfields = {
+        #     'self': [
+        #         self['self_organized_github'],
+        #     ],
+        #     'central': [
+        #         self['administrative_fee'],
+        #         self['scholarship_circumstances'],
+        #     ],
+        # }
+        # self['organization_type'].field.widget.notes = {
+        #     'self': WorkshopRequest.SELF_ORGANIZED_NOTES,
+        #     'central': WorkshopRequest.CENTRALLY_ORGANIZED_NOTES,
+        # }
+        # self.helper.layout.fields.remove('organization_type')
+        # self.helper.layout.fields.remove('self_organized_github')
+        # self.helper.layout.fields.remove('administrative_fee')
+        # self.helper.layout.fields.remove('scholarship_circumstances')
 
-        # insert div+field at previously saved position
-        self.helper.layout.insert(
-            pos_index,
-            Div(
-                Field('organization_type',
-                      template="bootstrap4/layout/radio-accordion.html"),
-                css_class='form-group row',
-            ),
-        )
+        # # insert div+field at previously saved position
+        # self.helper.layout.insert(
+        #     pos_index,
+        #     Div(
+        #         Field('organization_type',
+        #               template="bootstrap4/layout/radio-accordion.html"),
+        #         css_class='form-group row',
+        #     ),
+        # )
 
         # add horizontal lines after some fields to visually group them
         # together
@@ -380,7 +376,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         )
         hr_fields_before = (
             'travel_expences_management',
-            'user_notes',
+            'carpentries_info_source',
         )
         for field in hr_fields_after:
             self.helper.layout.insert(
@@ -392,10 +388,6 @@ class WorkshopRequestBaseForm(forms.ModelForm):
                 self.helper.layout.fields.index(field),
                 HTML('<hr class="col-lg-10 col-12 mx-0 px-0">'),
             )
-
-        # move "institution_other_name" field to "institution" subfield
-        self['institution'].field.widget.subfield = self['institution_other_name']
-        self.helper.layout.fields.remove('institution_other_name')
 
     @staticmethod
     def institution_label_from_instance(obj):
@@ -428,33 +420,33 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         # 3: * self-organized workshop, require URL
         #    * centrally-organized workshop, require fee description
         #    * fee waiver? require waiver circumstances description
-        organization_type = self.cleaned_data.get('organization_type', '')
-        self_organized_github = self.cleaned_data \
-                                    .get('self_organized_github', '')
-        administrative_fee = self.cleaned_data \
-                                 .get('administrative_fee', '')
-        scholarship_circumstances = self.cleaned_data \
-                                   .get('scholarship_circumstances', '')
+        # organization_type = self.cleaned_data.get('organization_type', '')
+        # self_organized_github = self.cleaned_data \
+        #                             .get('self_organized_github', '')
+        # administrative_fee = self.cleaned_data \
+        #                          .get('administrative_fee', '')
+        # scholarship_circumstances = self.cleaned_data \
+        #                            .get('scholarship_circumstances', '')
 
-        if organization_type == 'self' and not self_organized_github:
-            errors['self_organized_github'] = ValidationError(
-                "Please enter workshop URL data.")
-        elif organization_type == 'central' and not administrative_fee:
-            errors['administrative_fee'] = ValidationError(
-                "Please select applicable administrative fee option.")
-        elif organization_type == 'central' and \
-                administrative_fee == 'waiver' and \
-                not scholarship_circumstances:
-            errors['scholarship_circumstances'] = ValidationError(
-                "Please describe your waiver circumstances.")
+        # if organization_type == 'self' and not self_organized_github:
+        #     errors['self_organized_github'] = ValidationError(
+        #         "Please enter workshop URL data.")
+        # elif organization_type == 'central' and not administrative_fee:
+        #     errors['administrative_fee'] = ValidationError(
+        #         "Please select applicable administrative fee option.")
+        # elif organization_type == 'central' and \
+        #         administrative_fee == 'waiver' and \
+        #         not scholarship_circumstances:
+        #     errors['scholarship_circumstances'] = ValidationError(
+        #         "Please describe your waiver circumstances.")
 
         # 5: don't allow empty domains and empty domains_other
-        domains = self.cleaned_data.get('domains', '')
-        domains_other = self.cleaned_data.get('domains_other', '')
-        if not domains and not domains_other:
-            errors['domains'] = ValidationError(
-                "This field is required. If you're uncertain about what to "
-                'choose, select "Don\'t know yet".')
+        # domains = self.cleaned_data.get('domains', '')
+        # domains_other = self.cleaned_data.get('domains_other', '')
+        # if not domains and not domains_other:
+        #     errors['domains'] = ValidationError(
+        #         "This field is required. If you're uncertain about what to "
+        #         'choose, select "Don\'t know yet".')
 
         # 6: don't allow empty travel expences management
         travel_expences_management = \
@@ -478,38 +470,7 @@ class WorkshopRequestAdminForm(WorkshopRequestBaseForm):
         fields = (
             "state",
             "event",
-            "personal",
-            "family",
-            "email",
-            "institution",
-            "institution_other_name",
-            "institution_other_URL",
-            "institution_department",
-            "location",
-            "country",
-            "conference_details",
-            "preferred_dates",
-            "other_preferred_dates",
-            "language",
-            "number_attendees",
-            "domains",
-            "domains_other",
-            "academic_levels",
-            "computing_levels",
-            "audience_description",
-            "requested_workshop_types",
-            "organization_type",
-            "self_organized_github",
-            "administrative_fee",
-            "scholarship_circumstances",
-            "travel_expences_agreement",
-            "travel_expences_management",
-            "travel_expences_management_other",
-            "user_notes",
-            "data_privacy_agreement",
-            "code_of_conduct_agreement",
-            "host_responsibilities",
-        )
+        ) + WorkshopRequestBaseForm.Meta.fields
 
         widgets = WorkshopRequestBaseForm.Meta.widgets.copy()
         widgets.update(
