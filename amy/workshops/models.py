@@ -1445,6 +1445,7 @@ class Award(models.Model):
 class KnowledgeDomain(models.Model):
     """Represent a knowledge domain a person is engaged in."""
     name = models.CharField(max_length=STR_LONG)
+    # TODO: migrate to Boolean `unknown`
 
     def __str__(self):
         return self.name
@@ -2053,6 +2054,7 @@ class Curriculum(ActiveMixin, models.Model):
 # relationship with WorkshopRequest.
 class AcademicLevel(models.Model):
     name = models.CharField(max_length=STR_MED, null=False, blank=False)
+    # TODO: migrate to Boolean `unknown`
 
     def __str__(self):
         return self.name
@@ -2107,10 +2109,14 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         blank=True, null=False, default="",
         verbose_name="Family name (surname)",
     )
+    # TODO: **If there is a match -- The name/email of the person submitting 
+    # this form should get a task of "host" for this event. Regardless, they 
+    # should also be in the "contact" field for this event**
     email = models.EmailField(
         blank=False, null=False,
         verbose_name="Email address",
     )
+    # TODO: add "Other"?
     institution = models.ForeignKey(
         Organization, on_delete=models.PROTECT,
         blank=True, null=True,
@@ -2155,6 +2161,7 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         help_text="If yes, please provide conference details "
                   "(name, description).",
     )
+    # TODO: Curriculum without "Other" or "SWC/LC/DC Other" options
     SWC_LESSONS_LINK = (
         '<a href="https://software-carpentry.org/lessons/">'
         'Software Carpentry lessons page</a>'
@@ -2183,6 +2190,8 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
                   + DC_LESSONS_LINK + ", or the " + LC_LESSONS_LINK +
                   " for more information about any of our lessons.",
     )
+    # TODO: add visible warning here
+    # TODO: add validation of either(preferred_dates, preferred_dates_other)
     preferred_dates = models.DateField(
         blank=True, null=True,
         verbose_name="Preferred dates",
@@ -2266,10 +2275,12 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         verbose_name="Please describe your anticipated audience, including "
                      "their experience, background, and goals",
     )
+    # TODO: remove
     ORGANIZATION_TYPE_CHOICES = (
         ("self", "Self-organized"),
         ("central", "Centrally-organized"),
     )
+    # TODO: remove
     SELF_ORGANIZED_NOTES = (
         "If you are already connected with The Carpentries certified "
         "Instructors, we welcome you to organize and run your own workshop "
@@ -2284,6 +2295,7 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         "data. There is no fee (mandated or suggested) for running a "
         "self-organized workshop."
     )
+    # TODO: remove
     CENTRALLY_ORGANIZED_NOTES = (
         "The Carpentries staff will work with you to recruit Instructors and "
         "support all other logistical details. Fees due to The Carpentries "
@@ -2407,6 +2419,7 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         null=False, blank=True, default='',
         verbose_name="Other (institution restrictions)",
     )
+    # TODO: CSV for contact data (names, emails)? https://select2.org/tagging
     additional_contact = models.CharField(
         max_length=STR_LONGEST,
         null=False, blank=True, default='',

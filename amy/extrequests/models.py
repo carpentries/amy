@@ -515,10 +515,14 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         blank=True, null=False, default="",
         verbose_name="Family name (surname)",
     )
+    # TODO: **If there is a match -- The name/email of the person submitting 
+    # this form should get a task of "host" for this event. Regardless, they 
+    # should also be in the "contact" field for this event**
     email = models.EmailField(
         blank=False, null=False,
         verbose_name="Email address",
     )
+    # TODO: add "Other"?
     institution = models.ForeignKey(
         Organization, on_delete=models.PROTECT,
         blank=True, null=True,
@@ -573,6 +577,7 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         blank=True, default='',
         verbose_name="Other kinds of routinely worked-with data",
     )
+    # TODO: add validation for "Don't know yet"
     domains = models.ManyToManyField(
         KnowledgeDomain,
         blank=False,
@@ -584,6 +589,7 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         blank=True, default='',
         verbose_name="Other domains",
     )
+    # TODO: add validation for "Don't know yet"
     academic_levels = models.ManyToManyField(
         AcademicLevel,
         verbose_name="Attendees' academic level / career stage",
@@ -610,6 +616,7 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         '<a href="https://librarycarpentry.org/lessons/">'
         'Library Carpentry lessons page</a>'
     )
+    # TODO: group by Carpentry, add hovers, validate "Don't know yet"
     requested_workshop_types = models.ManyToManyField(
         Curriculum, limit_choices_to={'active': True},
         blank=False,
@@ -628,6 +635,8 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
                   "not sure and would like to discuss with us, please select "
                   'the "Don\'t know yet" option below.',
     )
+    # TODO: add if-conditional text for email response based on this field
+    # TODO: add visible warning here
     preferred_dates = models.DateField(
         blank=True, null=False,
         verbose_name="Preferred dates",
@@ -754,6 +763,7 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         null=False, blank=True, default='',
         verbose_name="Other (institution restrictions)",
     )
+    # TODO: CSV for contact data (names, emails)? https://select2.org/tagging
     additional_contact = models.CharField(
         max_length=STR_LONGEST,
         null=False, blank=True, default='',
@@ -819,10 +829,14 @@ class SelfOrganizedSubmission(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         blank=True, null=False, default="",
         verbose_name="Family name (surname)",
     )
+    # TODO: **If there is a match -- The name/email of the person submitting 
+    # this form should get a task of "host" for this event. Regardless, they 
+    # should also be in the "contact" field for this event**
     email = models.EmailField(
         blank=False, null=False,
         verbose_name="Email address",
     )
+    # TODO: add "Other"?
     institution = models.ForeignKey(
         Organization, on_delete=models.PROTECT,
         blank=True, null=True,
@@ -848,6 +862,11 @@ class SelfOrganizedSubmission(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         blank=True, null=False, default="",
         verbose_name="Department/school affiliation (if applicable)",
     )
+    # TODO: Form should validate that this isn't a GH repo. This should
+    # populate as much as possible in creating the event: SLUG, Start/End date,
+    # Host (from institutional affliliation), Administrator (self-organized),
+    # Tag (SWC, DC, or LC), Curricula, URL. Host role may already have been
+    # populated from person submitting form
     workshop_url = models.URLField(
         max_length=STR_LONGEST,
         blank=False, null=False,
@@ -886,6 +905,8 @@ class SelfOrganizedSubmission(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         '<a href="https://librarycarpentry.org/lessons/">'
         'Library Carpentry lessons page</a>'
     )
+    # TODO: group by Carpentry, add hovers, validate "Don't know yet"
+    # TODO: add "Other"!!!
     workshop_types = models.ManyToManyField(
         Curriculum, limit_choices_to={'active': True},
         blank=False,
@@ -902,6 +923,12 @@ class SelfOrganizedSubmission(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         null=False, blank=True, default='',
         verbose_name="Other workshop types",
     )
+    # TODO: if they select other above they should have a text box to describe
+    # what they are teaching. For now we can just have the text box. (For a
+    # future iteration of this project: If they check "other" then when the
+    # admin accepts the submission, they should get a multiple check box where 
+    # they can check off items from ALL of our lesson offerings. The person 
+    # submitting this form should not see that part)
     workshop_types_other_explain = models.TextField(
         blank=True,
         verbose_name='If you selected "Other", please provide more information'
@@ -935,6 +962,7 @@ class SelfOrganizedSubmission(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         null=False, blank=True, default='',
         verbose_name="Other (workshop open to the public)",
     )
+    # TODO: CSV for contact data (names, emails)? https://select2.org/tagging
     additional_contact = models.CharField(
         max_length=STR_LONGEST,
         null=False, blank=True, default='',
