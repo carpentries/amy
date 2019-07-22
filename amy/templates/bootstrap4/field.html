@@ -42,6 +42,16 @@
                         {% with subfield=field.field.widget.subfield %}
                         {% crispy_field subfield 'class' 'form-control-sm' %}
                         {% endwith %}
+                    {% elif field.field.widget.subfields %}
+                        <div class="row mb-3">
+                        {% for f in field.field.widget.subfields %}
+                            {% with subfield=f.0 placeholder=f.1 %}
+                            <div class="col">
+                            {% crispy_field subfield 'class' 'form-control-sm' 'placeholder' placeholder %}
+                            </div>
+                            {% endwith %}
+                        {% endfor %}
+                        </div>
                     {% endif %}
                 </div>
             {% endif %}
