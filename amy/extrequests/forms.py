@@ -491,8 +491,8 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         required=False,
         queryset=Organization.objects.order_by('fullname'),
         widget=ListSelect2(),
-        label=WorkshopRequest._meta.get_field('institution').verbose_name,
-        help_text=WorkshopRequest._meta.get_field('institution').help_text,
+        label=WorkshopInquiryRequest._meta.get_field('institution').verbose_name,
+        help_text=WorkshopInquiryRequest._meta.get_field('institution').help_text,
     )
     domains = forms.ModelMultipleChoiceField(
         required=False,
@@ -502,28 +502,28 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
             Case(When(name="Don't know yet", then=-1)), 'name',
         ),
         widget=CheckboxSelectMultipleWithOthers('domains_other'),
-        label=WorkshopRequest._meta.get_field('domains').verbose_name,
-        help_text=WorkshopRequest._meta.get_field('domains').help_text,
+        label=WorkshopInquiryRequest._meta.get_field('domains').verbose_name,
+        help_text=WorkshopInquiryRequest._meta.get_field('domains').help_text,
     )
     travel_expences_agreement = forms.BooleanField(
         required=True,
-        label=WorkshopRequest._meta.get_field('travel_expences_agreement')
-                                   .verbose_name,
+        label=WorkshopInquiryRequest._meta.get_field('travel_expences_agreement')
+                                    .verbose_name,
     )
     data_privacy_agreement = forms.BooleanField(
         required=True,
-        label=WorkshopRequest._meta.get_field('data_privacy_agreement')
-                                   .verbose_name,
+        label=WorkshopInquiryRequest._meta.get_field('data_privacy_agreement')
+                                    .verbose_name,
     )
     code_of_conduct_agreement = forms.BooleanField(
         required=True,
-        label=WorkshopRequest._meta.get_field('code_of_conduct_agreement')
-                                   .verbose_name,
+        label=WorkshopInquiryRequest._meta.get_field('code_of_conduct_agreement')
+                                    .verbose_name,
     )
     host_responsibilities = forms.BooleanField(
         required=True,
-        label=WorkshopRequest._meta.get_field('host_responsibilities')
-                                   .verbose_name,
+        label=WorkshopInquiryRequest._meta.get_field('host_responsibilities')
+                                    .verbose_name,
     )
 
     requested_workshop_types = forms.ModelMultipleChoiceField(
@@ -531,10 +531,10 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         queryset=Curriculum.objects.default_order(allow_other=True,
                                                   allow_unknown=True)
                                    .filter(active=True),
-        label=WorkshopRequest._meta.get_field('requested_workshop_types')
-                                   .verbose_name,
-        help_text=WorkshopRequest._meta.get_field('requested_workshop_types')
-                                       .help_text,
+        label=WorkshopInquiryRequest._meta.get_field('requested_workshop_types')
+                                    .verbose_name,
+        help_text=WorkshopInquiryRequest._meta.get_field('requested_workshop_types')
+                                        .help_text,
         widget=forms.CheckboxSelectMultiple(),
     )
 
@@ -699,23 +699,23 @@ class SelfOrganizedSubmissionBaseForm(forms.ModelForm):
         required=False,
         queryset=Organization.objects.order_by('fullname'),
         widget=ListSelect2(),
-        label=WorkshopRequest._meta.get_field('institution').verbose_name,
-        help_text=WorkshopRequest._meta.get_field('institution').help_text,
+        label=SelfOrganizedSubmission._meta.get_field('institution').verbose_name,
+        help_text=SelfOrganizedSubmission._meta.get_field('institution').help_text,
     )
 
     data_privacy_agreement = forms.BooleanField(
         required=True,
-        label=WorkshopRequest._meta.get_field('data_privacy_agreement')
+        label=SelfOrganizedSubmission._meta.get_field('data_privacy_agreement')
                                    .verbose_name,
     )
     code_of_conduct_agreement = forms.BooleanField(
         required=True,
-        label=WorkshopRequest._meta.get_field('code_of_conduct_agreement')
+        label=SelfOrganizedSubmission._meta.get_field('code_of_conduct_agreement')
                                    .verbose_name,
     )
     host_responsibilities = forms.BooleanField(
         required=True,
-        label=WorkshopRequest._meta.get_field('host_responsibilities')
+        label=SelfOrganizedSubmission._meta.get_field('host_responsibilities')
                                    .verbose_name,
     )
 
@@ -724,9 +724,9 @@ class SelfOrganizedSubmissionBaseForm(forms.ModelForm):
         queryset=Curriculum.objects.default_order(allow_other=False,
                                                   allow_unknown=False)
                                    .filter(active=True),
-        label=WorkshopRequest._meta.get_field('requested_workshop_types')
+        label=SelfOrganizedSubmission._meta.get_field('workshop_types')
                                    .verbose_name,
-        help_text=WorkshopRequest._meta.get_field('requested_workshop_types')
+        help_text=SelfOrganizedSubmission._meta.get_field('workshop_types')
                                        .help_text,
         widget=forms.CheckboxSelectMultiple(),
     )
