@@ -113,6 +113,9 @@ table .table-row-distinctive {
 .invalid-feedback {
     display: block;
 }
+p.invalid-feedback {
+    margin-bottom: 0;
+}
 
 
 /* general resizable class styles */

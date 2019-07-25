@@ -2271,7 +2271,7 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     number_attendees = models.CharField(
         max_length=15,
         choices=ATTENDEES_NUMBER_CHOICES,
-        blank=False, null=False, default='10-40',
+        blank=False, null=False, default=None,
         verbose_name="Anticipated number of attendees",
         help_text="This number doesn't need to be precise, but will help us "
                   "decide how many instructors your workshop will need. "
@@ -2378,7 +2378,7 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     administrative_fee = models.CharField(
         max_length=20,
         choices=FEE_CHOICES,
-        blank=False, null=False, default="nonprofit",
+        blank=False, null=False, default=None,
         verbose_name="Which of the following applies to your payment for the "
                      "administrative fee?",
     )
@@ -2412,7 +2412,7 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     )
     travel_expences_management = models.CharField(
         max_length=20,
-        null=False, blank=False,
+        null=False, blank=False, default=None,
         choices=TRAVEL_EXPENCES_MANAGEMENT_CHOICES,
         verbose_name="How will you manage travel expenses for Carpentries "
                      "Instructors?",

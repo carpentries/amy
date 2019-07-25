@@ -272,10 +272,10 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             "travel_expences_management",
             "travel_expences_management_other",
             "travel_expences_agreement",
-            "public_event",
-            "public_event_other",
             "institution_restrictions",
             "institution_restrictions_other",
+            "public_event",
+            "public_event_other",
             "additional_contact",
             "carpentries_info_source",
             "carpentries_info_source_other",
@@ -377,10 +377,12 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         # add horizontal lines after some fields to visually group them
         # together
         hr_fields_after = (
-            'email', 'institution_department', 'audience_description',
+            'email', 'institution_department',
+            'country',
+            'audience_description',
+            'user_notes',
         )
         hr_fields_before = (
-            'travel_expences_management',
             'carpentries_info_source',
         )
         for field in hr_fields_after:
@@ -489,7 +491,8 @@ class WorkshopRequestAdminForm(WorkshopRequestBaseForm):
 class WorkshopInquiryRequestBaseForm(forms.ModelForm):
     institution = forms.ModelChoiceField(
         required=False,
-        queryset=Organization.objects.order_by('fullname'),
+        queryset=Organization.objects.order_by('fullname')
+                                     .exclude(domain='self-organized'),
         widget=ListSelect2(),
         label=WorkshopInquiryRequest._meta.get_field('institution').verbose_name,
         help_text=WorkshopInquiryRequest._meta.get_field('institution').help_text,
@@ -559,20 +562,20 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
             "domains_other",
             "academic_levels",
             "computing_levels",
+            "audience_description",
             "requested_workshop_types",
             "preferred_dates",
             "other_preferred_dates",
             "language",
             "number_attendees",
-            "audience_description",
             "administrative_fee",
             "travel_expences_management",
             "travel_expences_management_other",
             "travel_expences_agreement",
-            "public_event",
-            "public_event_other",
             "institution_restrictions",
             "institution_restrictions_other",
+            "public_event",
+            "public_event_other",
             "additional_contact",
             "carpentries_info_source",
             "carpentries_info_source_other",
@@ -658,9 +661,10 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         hr_fields_after = (
             'email', 'institution_department', 'audience_description',
             'country',
+            'user_notes',
         )
         hr_fields_before = (
-            'travel_expences_management',
+            'administrative_fee',
             'carpentries_info_source',
         )
         for field in hr_fields_after:
@@ -728,7 +732,7 @@ class SelfOrganizedSubmissionBaseForm(forms.ModelForm):
                                    .verbose_name,
         help_text=SelfOrganizedSubmission._meta.get_field('workshop_types')
                                        .help_text,
-        widget=forms.CheckboxSelectMultiple(),
+        widget=RadioSelectFakeMultiple(),
     )
 
     helper = BootstrapHelper(add_cancel_button=False)
@@ -743,9 +747,9 @@ class SelfOrganizedSubmissionBaseForm(forms.ModelForm):
             "institution_other_name",
             "institution_other_URL",
             "institution_department",
-            "workshop_url",
             "workshop_format",
             "workshop_format_other",
+            "workshop_url",
             "workshop_types",
             "workshop_types_other",
             "workshop_types_other_explain",
@@ -813,6 +817,8 @@ class SelfOrganizedSubmissionBaseForm(forms.ModelForm):
         # together
         hr_fields_after = (
             'email', 'institution_department',
+            'additional_contact',
+            'language',
         )
         hr_fields_before = []
         for field in hr_fields_after:

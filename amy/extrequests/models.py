@@ -615,7 +615,7 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     language = models.ForeignKey(
         Language, on_delete=models.PROTECT,
         blank=False, null=False,
-        verbose_name="What language will this workshop be conducted in?",
+        verbose_name="What is the preferred language for the workshop?",
         help_text="Our workshops are offered primarily in English, with a few "
                   "of our lessons available in Spanish. While materials are "
                   "mainly in English, we know it can be valuable to have an "
@@ -632,7 +632,7 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     number_attendees = models.CharField(
         max_length=15,
         choices=ATTENDEES_NUMBER_CHOICES,
-        blank=False, null=False, default='10-40',
+        blank=False, null=False, default=None,
         verbose_name="Anticipated number of attendees",
         help_text="This number doesn't need to be precise, but will help us "
                   "decide how many instructors your workshop will need. "
@@ -659,9 +659,24 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     administrative_fee = models.CharField(
         max_length=20,
         choices=FEE_CHOICES,
-        blank=False, null=False, default="nonprofit",
+        blank=False, null=False, default=None,
         verbose_name="Which of the following applies to your payment for the "
                      "administrative fee?",
+    )
+    travel_expences_agreement = models.BooleanField(
+        null=False, blank=False, default=False,
+        verbose_name="Regardless of the fee due to The Carpentries, I "
+                     "understand I am also responsible for travel costs for "
+                     "the Instructors which can include airfare, ground "
+                     "travel, hotel, and meals/incidentals. I understand "
+                     "local Instructors will be prioritized but not "
+                     "guaranteed. Instructor travel costs are managed "
+                     "directly between the host site and the Instructors, not "
+                     "through The Carpentries. I will share detailed "
+                     "information regarding policies and procedures for "
+                     "travel arrangements with instructors. All "
+                     "reimbursements will be completed within 60 days of "
+                     "the workshop.",
     )
     TRAVEL_EXPENCES_MANAGEMENT_CHOICES = (
         ("booked", "Hotel and airfare will be booked by site; ground travel "
@@ -672,7 +687,7 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     )
     travel_expences_management = models.CharField(
         max_length=20,
-        null=False, blank=False,
+        null=False, blank=False, default=None,
         choices=TRAVEL_EXPENCES_MANAGEMENT_CHOICES,
         verbose_name="How will you manage travel expenses for Carpentries "
                      "Instructors?",
@@ -799,13 +814,7 @@ class SelfOrganizedSubmission(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     workshop_types = models.ManyToManyField(
         Curriculum, limit_choices_to={'active': True},
         blank=False,
-        verbose_name="Which Carpentry workshop is being taught?",
-        help_text="If you will be teaching The Carpentry Workshop as suggested"
-                  " in the curriculum without deviation, please select the "
-                  "appropriate curriculum. If you will not be teaching ALL "
-                  "parts of one Carpentry Curriculum please select \"Other\""
-                  " and list which sections will be taught. For example: Unix"
-                  " Shell & Open Refine; Python only, etc.",
+        verbose_name="Which Carpentry workshop are you teaching?",
     )
     workshop_types_other = models.CharField(
         max_length=STR_LONGEST,
