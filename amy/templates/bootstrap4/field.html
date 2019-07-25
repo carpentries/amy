@@ -35,19 +35,28 @@
                 {% include 'bootstrap4/layout/field_file.html' %}
             {% else %}
                 <div class="{{ field_class }}">
-                    {% crispy_field field %}
                     {% include 'bootstrap4/layout/help_text_and_errors.html' %}
+                    {% crispy_field field %}
 
                     {% if field.field.widget.subfield %}
                         {% with subfield=field.field.widget.subfield %}
+                        {% if field.help_text %}
+                        {% crispy_field subfield 'class' 'form-control-sm mt-2' %}
+                        {% else %}
                         {% crispy_field subfield 'class' 'form-control-sm' %}
+                        {% endif %}
                         {% endwith %}
                     {% elif field.field.widget.subfields %}
                         <div class="row mb-3">
                         {% for f in field.field.widget.subfields %}
-                            {% with subfield=f.0 placeholder=f.1 %}
+                            {% with superfield=field field=f.0 placeholder=f.1 %}
+                            {% if superfield.help_text %}
+                            <div class="col mt-2">
+                            {% else %}
                             <div class="col">
-                            {% crispy_field subfield 'class' 'form-control-sm' 'placeholder' placeholder %}
+                            {% endif %}
+                                {% include 'bootstrap4/layout/help_text_and_errors.html' %}
+                                {% crispy_field field 'class' 'form-control-sm' 'placeholder' placeholder %}
                             </div>
                             {% endwith %}
                         {% endfor %}
