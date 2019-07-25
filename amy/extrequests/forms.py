@@ -238,7 +238,8 @@ class WorkshopRequestBaseForm(forms.ModelForm):
     requested_workshop_types = forms.ModelMultipleChoiceField(
         required=True,
         queryset=Curriculum.objects.default_order(allow_unknown=False,
-                                                  allow_other=False),
+                                                  allow_other=False)
+                                   .filter(active=True),
         label=WorkshopRequest._meta.get_field('requested_workshop_types')
                                    .verbose_name,
         help_text=WorkshopRequest._meta.get_field('requested_workshop_types')
@@ -528,7 +529,8 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
     requested_workshop_types = forms.ModelMultipleChoiceField(
         required=True,
         queryset=Curriculum.objects.default_order(allow_other=True,
-                                                  allow_unknown=True),
+                                                  allow_unknown=True)
+                                   .filter(active=True),
         label=WorkshopRequest._meta.get_field('requested_workshop_types')
                                    .verbose_name,
         help_text=WorkshopRequest._meta.get_field('requested_workshop_types')
@@ -719,8 +721,9 @@ class SelfOrganizedSubmissionBaseForm(forms.ModelForm):
 
     workshop_types = forms.ModelMultipleChoiceField(
         required=True,
-        queryset=Curriculum.objects.default_order(allow_other=True,
-                                                  allow_unknown=True),
+        queryset=Curriculum.objects.default_order(allow_other=False,
+                                                  allow_unknown=False)
+                                   .filter(active=True),
         label=WorkshopRequest._meta.get_field('requested_workshop_types')
                                    .verbose_name,
         help_text=WorkshopRequest._meta.get_field('requested_workshop_types')
