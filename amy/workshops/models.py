@@ -2094,11 +2094,13 @@ class InfoSource(models.Model):
         return self.name
 
 
-@reversion.register
-class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
-                      DataPrivacyAgreementMixin, COCAgreementMixin,
-                      HostResponsibilitiesMixin,
-                      EventLink, models.Model):
+class CommonRequest(models.Model):
+    """
+    Common fields used across all *Requests, ie.:
+    * WorkshopRequest model
+    * WorkshopInquiryRequest model
+    * SelfOrganizedSubmission
+    """
     personal = models.CharField(
         max_length=STR_LONGEST,
         blank=False, null=False,
@@ -2129,6 +2131,8 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         blank=True, null=False, default="",
         verbose_name="If your institutional affiliation is not listed, please "
                      "enter the name",
+        help_text="Please enter institution name if it's not on the list "
+                  "above.",
     )
     institution_other_URL = models.URLField(
         max_length=STR_LONGEST,
@@ -2142,6 +2146,45 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         blank=True, null=False, default="",
         verbose_name="Department/school affiliation (if applicable)",
     )
+    PUBLIC_EVENT_CHOICES = (
+        ('public', 'Yes, this workshop is open to the public'),
+        ('closed', 'No, this is a closed event'),
+        ('', 'Other:'),
+    )
+    public_event = models.CharField(
+        max_length=20,
+        null=False, blank=False, default=None,
+        choices=PUBLIC_EVENT_CHOICES,
+        verbose_name="Is this workshop open to the public?",
+        help_text="Many of our workshops restrict registration to learners "
+                  "from the hosting institution. If your workshop will be open"
+                  " to registrants outside of your institution please let us "
+                  "know below."
+    )
+    public_event_other = models.CharField(
+        max_length=STR_LONGEST,
+        null=False, blank=True, default='',
+        verbose_name="Other (workshop open to the public)",
+    )
+    # TODO: CSV for contact data (names, emails)? https://select2.org/tagging
+    additional_contact = models.CharField(
+        max_length=STR_LONGEST,
+        null=False, blank=True, default='',
+        verbose_name="Is there anyone you would like included on communication"
+                     " for this workshop? Please provide contact name(s) and "
+                     "e-mail(s) address",
+    )
+
+    class Meta:
+        abstract = True
+
+
+@reversion.register
+class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
+                      CommonRequest,
+                      DataPrivacyAgreementMixin, COCAgreementMixin,
+                      HostResponsibilitiesMixin,
+                      EventLink, models.Model):
     location = models.CharField(
         max_length=STR_LONGEST,
         blank=False, null=False, default="",
@@ -2379,33 +2422,13 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         null=False, blank=True, default='',
         verbose_name="Other travel expences management",
     )
-    PUBLIC_EVENT_CHOICES = (
-        ('public', 'Yes, this workshop is open to the public'),
-        ('closed', 'No, this is a closed event'),
-        ('', 'Other:'),
-    )
-    public_event = models.CharField(
-        max_length=20,
-        null=False, blank=False,
-        choices=PUBLIC_EVENT_CHOICES,
-        verbose_name="Is this workshop open to the public?",
-        help_text="Many of our workshops restrict registration to learners "
-                  "from the hosting institution. If your workshop will be open"
-                  " to registrants outside of your institution please let us "
-                  "know below."
-    )
-    public_event_other = models.CharField(
-        max_length=STR_LONGEST,
-        null=False, blank=True, default='',
-        verbose_name="Other (workshop open to the public)",
-    )
     RESTRICTION_CHOICES = (
         ('no_restrictions', 'No restrictions'),
         ('', 'Other:'),
     )
     institution_restrictions = models.CharField(
         max_length=20,
-        null=False, blank=False,
+        null=False, blank=False, default=None,
         choices=RESTRICTION_CHOICES,
         verbose_name="Our instructors live, teach, and travel globally. We "
                      "understand that institutions may have citizenship or "
@@ -2418,14 +2441,6 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         max_length=STR_LONGEST,
         null=False, blank=True, default='',
         verbose_name="Other (institution restrictions)",
-    )
-    # TODO: CSV for contact data (names, emails)? https://select2.org/tagging
-    additional_contact = models.CharField(
-        max_length=STR_LONGEST,
-        null=False, blank=True, default='',
-        verbose_name="Is there anyone you would like included on communication"
-                     " for this workshop? Please provide contact name(s) and "
-                     "e-mail(s) address",
     )
     carpentries_info_source = models.ManyToManyField(
         InfoSource,

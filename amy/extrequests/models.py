@@ -26,6 +26,7 @@ from workshops.models import (
     ComputingExperienceLevel,
     Curriculum,
     InfoSource,
+    CommonRequest,
 )
 
 
@@ -498,6 +499,7 @@ class DCSelfOrganizedEventRequest(AssignmentMixin, StateMixin,
 
 
 class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
+                             CommonRequest,
                              DataPrivacyAgreementMixin, COCAgreementMixin,
                              HostResponsibilitiesMixin, EventLink,
                              models.Model):
@@ -505,49 +507,6 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     This model is used for storing inquiry information from anyone interested
     in The Carpentries and workshops in general.
     """
-    personal = models.CharField(
-        max_length=STR_LONGEST,
-        blank=False, null=False,
-        verbose_name="Personal (given) name",
-    )
-    family = models.CharField(
-        max_length=STR_LONGEST,
-        blank=True, null=False, default="",
-        verbose_name="Family name (surname)",
-    )
-    # TODO: **If there is a match -- The name/email of the person submitting 
-    # this form should get a task of "host" for this event. Regardless, they 
-    # should also be in the "contact" field for this event**
-    email = models.EmailField(
-        blank=False, null=False,
-        verbose_name="Email address",
-    )
-    # TODO: add "Other"?
-    institution = models.ForeignKey(
-        Organization, on_delete=models.PROTECT,
-        blank=True, null=True,
-        verbose_name="Institutional affiliation",
-        help_text="If your institution isn't on the list, enter its name "
-                  "in the field below.",
-    )
-    institution_other_name = models.CharField(
-        max_length=STR_LONGEST,
-        blank=True, null=False, default="",
-        verbose_name="If your institutional affiliation is not listed, please "
-                     "enter the name",
-    )
-    institution_other_URL = models.URLField(
-        max_length=STR_LONGEST,
-        blank=True, null=False, default="",
-        verbose_name="If your institutional affiliation is not listed, please "
-                     "enter the website",
-        help_text="Please provide URL."
-    )
-    institution_department = models.CharField(
-        max_length=STR_LONGEST,
-        blank=True, null=False, default="",
-        verbose_name="Department/school affiliation (if applicable)",
-    )
     location = models.CharField(
         max_length=STR_LONGEST,
         blank=False, null=False, default="",
@@ -723,26 +682,6 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         null=False, blank=True, default='',
         verbose_name="Other travel expences management",
     )
-    PUBLIC_EVENT_CHOICES = (
-        ('public', 'Yes, this workshop is open to the public'),
-        ('closed', 'No, this is a closed event'),
-        ('', 'Other:'),
-    )
-    public_event = models.CharField(
-        max_length=20,
-        null=False, blank=False,
-        choices=PUBLIC_EVENT_CHOICES,
-        verbose_name="Is this workshop open to the public?",
-        help_text="Many of our workshops restrict registration to learners "
-                  "from the hosting institution. If your workshop will be open"
-                  " to registrants outside of your institution please let us "
-                  "know below."
-    )
-    public_event_other = models.CharField(
-        max_length=STR_LONGEST,
-        null=False, blank=True, default='',
-        verbose_name="Other (workshop open to the public)",
-    )
     RESTRICTION_CHOICES = (
         ('no_restrictions', 'No restrictions'),
         ('', 'Other:'),
@@ -762,14 +701,6 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         max_length=STR_LONGEST,
         null=False, blank=True, default='',
         verbose_name="Other (institution restrictions)",
-    )
-    # TODO: CSV for contact data (names, emails)? https://select2.org/tagging
-    additional_contact = models.CharField(
-        max_length=STR_LONGEST,
-        null=False, blank=True, default='',
-        verbose_name="Is there anyone you would like included on communication"
-                     " for this workshop? Please provide contact name(s) and "
-                     "e-mail(s) address",
     )
     carpentries_info_source = models.ManyToManyField(
         InfoSource,
@@ -811,6 +742,7 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
 
 
 class SelfOrganizedSubmission(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
+                              CommonRequest,
                               DataPrivacyAgreementMixin, COCAgreementMixin,
                               HostResponsibilitiesMixin, EventLink,
                               models.Model):
@@ -819,49 +751,6 @@ class SelfOrganizedSubmission(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     information. It's very similar to Workshop Submission combined with
     DC Self-Organized Workshop Request.
     """
-    personal = models.CharField(
-        max_length=STR_LONGEST,
-        blank=False, null=False,
-        verbose_name="Personal (given) name",
-    )
-    family = models.CharField(
-        max_length=STR_LONGEST,
-        blank=True, null=False, default="",
-        verbose_name="Family name (surname)",
-    )
-    # TODO: **If there is a match -- The name/email of the person submitting 
-    # this form should get a task of "host" for this event. Regardless, they 
-    # should also be in the "contact" field for this event**
-    email = models.EmailField(
-        blank=False, null=False,
-        verbose_name="Email address",
-    )
-    # TODO: add "Other"?
-    institution = models.ForeignKey(
-        Organization, on_delete=models.PROTECT,
-        blank=True, null=True,
-        verbose_name="Institutional affiliation",
-        help_text="If your institution isn't on the list, enter its name "
-                  "in the field below.",
-    )
-    institution_other_name = models.CharField(
-        max_length=STR_LONGEST,
-        blank=True, null=False, default="",
-        verbose_name="If your institutional affiliation is not listed, please "
-                     "enter the name",
-    )
-    institution_other_URL = models.URLField(
-        max_length=STR_LONGEST,
-        blank=True, null=False, default="",
-        verbose_name="If your institutional affiliation is not listed, please "
-                     "enter the website",
-        help_text="Please provide URL."
-    )
-    institution_department = models.CharField(
-        max_length=STR_LONGEST,
-        blank=True, null=False, default="",
-        verbose_name="Department/school affiliation (if applicable)",
-    )
     # TODO: Form should validate that this isn't a GH repo. This should
     # populate as much as possible in creating the event: SLUG, Start/End date,
     # Host (from institutional affliliation), Administrator (self-organized),
@@ -941,34 +830,6 @@ class SelfOrganizedSubmission(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         Language, on_delete=models.PROTECT,
         blank=False, null=False,
         verbose_name="What language is this workshop being conducted in?",
-    )
-    PUBLIC_EVENT_CHOICES = (
-        ('public', 'Yes, this workshop is open to the public'),
-        ('closed', 'No, this is a closed event'),
-        ('', 'Other:'),
-    )
-    public_event = models.CharField(
-        max_length=20,
-        null=False, blank=False,
-        choices=PUBLIC_EVENT_CHOICES,
-        verbose_name="Is this workshop open to the public?",
-        help_text="Many of our workshops restrict registration to learners "
-                  "from the hosting institution. If your workshop will be open"
-                  " to registrants outside of your institution please let us "
-                  "know below."
-    )
-    public_event_other = models.CharField(
-        max_length=STR_LONGEST,
-        null=False, blank=True, default='',
-        verbose_name="Other (workshop open to the public)",
-    )
-    # TODO: CSV for contact data (names, emails)? https://select2.org/tagging
-    additional_contact = models.CharField(
-        max_length=STR_LONGEST,
-        null=False, blank=True, default='',
-        verbose_name="Is there anyone you would like included on communication"
-                     " for this workshop? Please provide contact name(s) and "
-                     "e-mail(s) address",
     )
 
     class Meta:
