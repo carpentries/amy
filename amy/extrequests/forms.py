@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import Case, When
 
 from extrequests.models import (
+    DataVariant,
     WorkshopInquiryRequest,
     SelfOrganizedSubmission,
 )
@@ -497,6 +498,14 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         label=WorkshopInquiryRequest._meta.get_field('institution').verbose_name,
         help_text=WorkshopInquiryRequest._meta.get_field('institution').help_text,
     )
+    routine_data = forms.ModelMultipleChoiceField(
+        required=False,
+        queryset=DataVariant.objects.all(),
+        widget=CheckboxSelectMultipleWithOthers('routine_data_other',
+                                                fake_required=True),
+        label=WorkshopInquiryRequest._meta.get_field('routine_data').verbose_name,
+        help_text=WorkshopInquiryRequest._meta.get_field('routine_data').help_text,
+    )
     domains = forms.ModelMultipleChoiceField(
         required=False,
         queryset=KnowledgeDomain.objects.order_by(
@@ -504,7 +513,8 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
             # "Don't know yet" entry last
             Case(When(name="Don't know yet", then=-1)), 'name',
         ),
-        widget=CheckboxSelectMultipleWithOthers('domains_other'),
+        widget=CheckboxSelectMultipleWithOthers('domains_other',
+                                                fake_required=True),
         label=WorkshopInquiryRequest._meta.get_field('domains').verbose_name,
         help_text=WorkshopInquiryRequest._meta.get_field('domains').help_text,
     )
@@ -588,21 +598,19 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         widgets = {
             'country': ListSelect2(),
             'language': ListSelect2(),
-            'routine_data':
-                CheckboxSelectMultipleWithOthers('routine_data_other'),
-            'domains':
-                CheckboxSelectMultipleWithOthers('domains_other'),
             'number_attendees': forms.RadioSelect(),
             'academic_levels': forms.CheckboxSelectMultiple(),
             'computing_levels': forms.CheckboxSelectMultiple(),
             'requested_workshop_types': forms.CheckboxSelectMultiple(),
             'administrative_fee': forms.RadioSelect(),
             'travel_expences_management':
-                RadioSelectWithOther('travel_expences_management_other'),
+                RadioSelectWithOther('travel_expences_management_other',
+                                     fake_required=True),
             'public_event':
-                RadioSelectWithOther('public_event_other'),
+                RadioSelectWithOther('public_event_other', fake_required=True),
             'institution_restrictions':
-                RadioSelectWithOther('institution_restrictions_other'),
+                RadioSelectWithOther('institution_restrictions_other',
+                                     fake_required=True),
             'carpentries_info_source':
                 CheckboxSelectMultipleWithOthers('carpentries_info_source_other'),
         }
@@ -622,6 +630,8 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
             self.institution_label_from_instance
 
         self.fields['travel_expences_management'].required = False
+        self.fields['institution_restrictions'].required = False
+        self.fields['public_event'].required = False
 
         # set up a layout object for the helper
         self.helper.layout = self.helper.build_default_layout(self)
@@ -656,6 +666,34 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         self.helper.layout.fields.remove('institution_other_name')
         self.helper.layout.fields.remove('institution_other_URL')
 
+        # add warning alert for proficiency computing level
+        pos_index = self.helper.layout.fields.index('computing_levels')
+        self.helper.layout.insert(
+            pos_index + 1,
+            Div(
+                Div(
+                    HTML("Our workshops are designed for novice or beginning level."),
+                    css_class='alert alert-warning offset-lg-2 col-lg-8 col-12',
+                ),
+                id='computing_levels_warning',
+                css_class='form-group row d-none',
+            ),
+        )
+
+        # add warning alert for dates falling within next 2-3 months
+        pos_index = self.helper.layout.fields.index('preferred_dates')
+        self.helper.layout.insert(
+            pos_index + 1,
+            Div(
+                Div(
+                    HTML("Selected date falls within next 3 months!"),
+                    css_class='alert alert-warning offset-lg-2 col-lg-8 col-12',
+                ),
+                id='preferred_dates_warning',
+                css_class='form-group row d-none',
+            ),
+        )
+
         # add horizontal lines after some fields to visually group them
         # together
         hr_fields_after = (
@@ -677,6 +715,134 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
                 self.helper.layout.fields.index(field),
                 HTML('<hr class="col-lg-10 col-12 mx-0 px-0">'),
             )
+
+    def clean(self):
+        super().clean()
+        errors = dict()
+
+        # 1: validate institution (allow for selected institution, or expect
+        #    two other fields - name and URL)
+        institution = self.cleaned_data.get('institution', None)
+        institution_other_name = self.cleaned_data.get('institution_other_name', '')
+        institution_other_URL = self.cleaned_data.get('institution_other_URL', '')
+        if not institution and not institution_other_name and not institution_other_URL:
+            errors['institution'] = ValidationError('Institution is required.')
+        elif institution and institution_other_name:
+            errors['institution_other_name'] = ValidationError(
+                "You must select institution from the list, or enter it's name below the list. "
+                "You can't do both.")
+        elif (
+            not institution and not institution_other_name and institution_other_URL
+            or
+            not institution and institution_other_name and not institution_other_URL
+        ):
+            errors['institution_other_name'] = ValidationError(
+                "You must enter both institution name and it's URL address.")
+
+        # 2: make sure routine data, domains, academic level, computing level,
+        #    workshop type all have something selected, but if it's "Don't know yet"
+        #    then it must be the only option
+        routine_data = self.cleaned_data.get("routine_data", None)
+        routine_data_other = self.cleaned_data.get("routine_data_other", None)
+        domains = self.cleaned_data.get("domains", None)
+        domains_other = self.cleaned_data.get("domains_other", None)
+        academic_levels = self.cleaned_data.get("academic_levels", None)
+        computing_levels = self.cleaned_data.get("computing_levels", None)
+        requested_workshop_types = self.cleaned_data.get("requested_workshop_types", None)
+        
+        # routine data required
+        if not routine_data and not routine_data_other:
+            errors['routine_data'] = ValidationError("This field is required.")
+        
+        # domains required
+        if not domains and not domains_other:
+            errors['domains'] = ValidationError("This field is required.")
+
+        if routine_data.filter(unknown=True):
+            if len(routine_data) > 1 or routine_data_other:
+                errors['routine_data'] = ValidationError(
+                    "If you select \"Don't know yet\", you can't select "
+                    "anything else or enter other values.")
+
+        if domains.filter(name="Don't know yet"):
+            if len(domains) > 1 or domains_other:
+                errors['domains'] = ValidationError(
+                    "If you select \"Don't know yet\", you can't select "
+                    "anything else or enter other values.")
+
+        if (
+            academic_levels.filter(name="Don't know yet") and
+            len(academic_levels) > 1
+        ):
+            errors['academic_levels'] = ValidationError(
+                "If you select \"Don't know yet\", you can't select "
+                "anything else.")
+
+        if (
+            computing_levels.filter(name="Don't know yet") and
+            len(computing_levels) > 1
+        ):
+            errors['computing_levels'] = ValidationError(
+                "If you select \"Don't know yet\", you can't select "
+                "anything else.")
+
+        if (
+            requested_workshop_types.filter(unknown=True) and
+            len(requested_workshop_types) > 1
+        ):
+            errors['requested_workshop_types'] = ValidationError(
+                "If you select \"Don't know yet\", you can't select "
+                "anything else.")
+
+        # 3: require preferred_dates or it's "other" counterpart
+        preferred_dates = self.cleaned_data.get('preferred_dates', None)
+        other_preferred_dates = self.cleaned_data.get('other_preferred_dates',
+                                                      None)
+        if not preferred_dates and not other_preferred_dates:
+            errors['preferred_dates'] = ValidationError(
+                "This field is required.")
+
+        # 4: require travel expenses
+        travel_expences_management = \
+            self.cleaned_data.get('travel_expences_management', '')
+        travel_expences_management_other = \
+            self.cleaned_data.get('travel_expences_management_other', '')
+        if not travel_expences_management and \
+                not travel_expences_management_other:
+            errors['travel_expences_management'] = ValidationError(
+                "This field is required.")
+        elif travel_expences_management and travel_expences_management_other:
+            errors['travel_expences_management'] = ValidationError(
+                "If you entered data in \"Other\" field, please select that "
+                "option.")
+
+        # 5: require institution restrictions
+        institution_restrictions = \
+            self.cleaned_data.get('institution_restrictions', '')
+        institution_restrictions_other = \
+            self.cleaned_data.get('institution_restrictions_other', '')
+        if not institution_restrictions and \
+                not institution_restrictions_other:
+            errors['institution_restrictions'] = ValidationError(
+                "This field is required.")
+        elif institution_restrictions and institution_restrictions_other:
+            errors['institution_restrictions'] = ValidationError(
+                "If you entered data in \"Other\" field, please select that "
+                "option.")
+
+        # 6: require public event
+        public_event =  self.cleaned_data.get('public_event', '')
+        public_event_other = self.cleaned_data.get('public_event_other', '')
+        if not public_event and not public_event_other:
+            errors['public_event'] = ValidationError("This field is required.")
+        elif public_event and public_event_other:
+            errors['public_event'] = ValidationError(
+                "If you entered data in \"Other\" field, please select that "
+                "option.")
+
+        # raise errors if any present
+        if errors:
+            raise ValidationError(errors)
 
 
 class WorkshopInquiryRequestAdminForm(WorkshopInquiryRequestBaseForm):

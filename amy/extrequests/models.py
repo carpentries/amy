@@ -597,7 +597,7 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     # TODO: add if-conditional text for email response based on this field
     # TODO: add visible warning here
     preferred_dates = models.DateField(
-        blank=True, null=False,
+        blank=False, null=False,
         verbose_name="Preferred dates",
         help_text="Our workshops typically run two full days. Please select "
                   "your preferred first day for the workshop. If you do not "
