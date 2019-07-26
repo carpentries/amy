@@ -39,7 +39,18 @@ class NullableGithubUsernameField(models.CharField):
     ]
 
 
-class RadioSelectWithOther(forms.RadioSelect):
+#------------------------------------------------------------
+
+class FakeRequiredMixin:
+    def __init__(self, *args, **kwargs):
+        # Intercept "fake_required" attribute that's used for marking field
+        # with "*" (asterisk) even though it's not required.
+        # Additionally `fake_required` doesn't trigger any validation.
+        self.fake_required = kwargs.pop('fake_required', False)
+        super().__init__(*args, **kwargs)
+
+
+class RadioSelectWithOther(FakeRequiredMixin, forms.RadioSelect):
     """A RadioSelect widget that should render additional field ('Other').
 
     We have a number of occurences of two model fields bound together: one
@@ -55,7 +66,7 @@ class RadioSelectWithOther(forms.RadioSelect):
         self.other_field_name = other_field_name
 
 
-class CheckboxSelectMultipleWithOthers(forms.CheckboxSelectMultiple):
+class CheckboxSelectMultipleWithOthers(FakeRequiredMixin, forms.CheckboxSelectMultiple):
     """A multiple choice widget that should render additional field ('Other').
 
     We have a number of occurences of two model fields bound together: one
@@ -71,7 +82,7 @@ class CheckboxSelectMultipleWithOthers(forms.CheckboxSelectMultiple):
         self.other_field_name = other_field_name
 
 
-class RadioSelectFakeMultiple(forms.RadioSelect):
+class RadioSelectFakeMultiple(FakeRequiredMixin, forms.RadioSelect):
     """Pretend to be a radio-select with multiple selection possible. This
     is intended to 'fool' Django into thinking that user selected 1 item on
     a multi-select item list."""

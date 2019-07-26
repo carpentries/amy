@@ -493,7 +493,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         required=False,
         queryset=Organization.objects.order_by('fullname')
                                      .exclude(domain='self-organized'),
-        widget=ListSelect2(),
+        widget=ListSelect2(fake_required=True),
         label=WorkshopInquiryRequest._meta.get_field('institution').verbose_name,
         help_text=WorkshopInquiryRequest._meta.get_field('institution').help_text,
     )
