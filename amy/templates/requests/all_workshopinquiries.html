@@ -1,0 +1,56 @@
+{% extends "base_nav_sidebar.html" %}
+
+{% load pagination %}
+{% load tags %}
+{% load state %}
+
+{% block content %}
+  {% if inquiries %}
+  <table class="table table-striped">
+    <tr>
+      <th>Assignee</th>
+      <th>Person</th>
+      <th>Institution</th>
+      <th>Country</th>
+      <th>Preferred dates</th>
+      <th>Types</th>
+      <th width="80">State
+        <i class="fas fa-question-circle"
+           data-toggle="popover" data-html="true"
+           data-content="<span class='badge badge-warning'>Pending</span> <span class='badge badge-danger'>Discarded</span> <span class='badge badge-success'>Accepted</span>"></i>
+      </th>
+      <th class="additional-links"></th>
+    </tr>
+    {% for req in inquiries %}
+    <tr {% if req.state == "a" %}class="table-success"{% elif req.state == "d" %}class="table-warning"{% endif %}>
+      <td>{% if req.assigned_to %}<a href="{{ req.assigned_to.get_absolute_url }}">{{ req.assigned_to.get_short_name }}</a>{% else %}—{% endif %}</td>
+      <td>{{ req.personal }} {{ req.family }} &lt;{{ req.email|urlize }}&gt;</td>
+      <td>
+        {% if req.institution %}<a href="{{ req.institution.get_absolute_url }}">{{ req.institution }}</a>{% else %}{{ req.institution_other_name }}{% endif %}{% if req.institution_department %}, {{ req.institution_department }}{% endif %}
+      </td>
+      <td>{{ req.country.name }} <img src="{{ req.country.flag }}" alt="{{ req.country }}" class="country-flag" /></td>
+      <td>{{ req.dates }}</td>
+      <td>
+        {% for type in req.requested_workshop_types.all %}
+          {# limit to only 3 #}
+          {% if forloop.counter0 < 3 %}
+            {% include "includes/curriculum.html" with curriculum=type %}
+          {% elif forloop.counter0 == 3 %}
+            {% bootstrap_tag "..." %}
+          {% endif %}
+        {% endfor %}
+      </td>
+      <td>
+        <span class="{% state_label req %}">
+          {{ req.get_state_display }}
+        </span>
+      </td>
+      <td><a href="{{ req.get_absolute_url }}"><i class="fas fa-info-circle"></i></a></td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% pagination requests %}
+  {% else %}
+  <p>No workshop requests matching the filter.</p>
+  {% endif %}
+{% endblock %}
