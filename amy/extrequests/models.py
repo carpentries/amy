@@ -517,13 +517,12 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         null=False, blank=False,
         verbose_name="Country",
     )
-    # here starts "Your Audience" part
+    # Here starts "Your Audience" part with this description:
     # The Carpentries offers several different workshops intended for audiences
     # from different domain backgrounds, with different computational
     # experience and learning goals. Your responses to the following questions
     # will help us advise you on which workshop(s) may best serve your
     # audience. All questions are optional so please share as much as you can.
-    # cdn.
     routine_data = models.ManyToManyField(
         DataVariant,
         blank=False,
@@ -536,7 +535,6 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         blank=True, default='',
         verbose_name="Other kinds of routinely worked-with data",
     )
-    # TODO: add validation for "Don't know yet"
     domains = models.ManyToManyField(
         KnowledgeDomain,
         blank=False,
@@ -548,7 +546,6 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         blank=True, default='',
         verbose_name="Other domains",
     )
-    # TODO: add validation for "Don't know yet"
     academic_levels = models.ManyToManyField(
         AcademicLevel,
         verbose_name="Attendees' academic level / career stage",
@@ -575,7 +572,6 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         '<a href="https://librarycarpentry.org/lessons/">'
         'Library Carpentry lessons page</a>'
     )
-    # TODO: group by Carpentry, add hovers, validate "Don't know yet"
     requested_workshop_types = models.ManyToManyField(
         Curriculum, limit_choices_to={'active': True},
         blank=False,
@@ -594,8 +590,6 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
                   "not sure and would like to discuss with us, please select "
                   'the "Don\'t know yet" option below.',
     )
-    # TODO: add if-conditional text for email response based on this field
-    # TODO: add visible warning here
     preferred_dates = models.DateField(
         blank=False, null=False,
         verbose_name="Preferred dates",
@@ -802,8 +796,6 @@ class SelfOrganizedSubmission(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         null=False, blank=True, default='',
         verbose_name="Other workshop format",
     )
-    # TODO: group by Carpentry, add hovers, validate "Don't know yet"
-    # TODO: add "Other"!!!
     workshop_types = models.ManyToManyField(
         Curriculum, limit_choices_to={'active': True},
         blank=False,

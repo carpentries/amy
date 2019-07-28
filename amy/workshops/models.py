@@ -2132,7 +2132,6 @@ class CommonRequest(models.Model):
         blank=False, null=False,
         verbose_name="Email address",
     )
-    # TODO: add "Other"?
     institution = models.ForeignKey(
         Organization, on_delete=models.PROTECT,
         blank=True, null=True,
@@ -2209,8 +2208,7 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         null=False, blank=False,
         verbose_name="Country",
     )
-    # This field is no longer needed, and should be hidden in the form and
-    # templates.
+    # This field is no longer needed, and is hidden in the form and templates.
     conference_details = models.CharField(
         max_length=STR_LONGEST,
         blank=True, null=False, default="",
@@ -2218,7 +2216,8 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         help_text="If yes, please provide conference details "
                   "(name, description).",
     )
-    # TODO: Curriculum without "Other" or "SWC/LC/DC Other" options
+    # In form, this is limited to Curricula without "Other/SWC/LC/DC Other"
+    # and "I don't know yet" options
     SWC_LESSONS_LINK = (
         '<a href="https://software-carpentry.org/lessons/">'
         'Software Carpentry lessons page</a>'
@@ -2247,8 +2246,8 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
                   + DC_LESSONS_LINK + ", or the " + LC_LESSONS_LINK +
                   " for more information about any of our lessons.",
     )
-    # TODO: add visible warning here
-    # TODO: add validation of either(preferred_dates, preferred_dates_other)
+    # Form shows a visible warning here if the selected dates are too soon
+    # (3 months)
     preferred_dates = models.DateField(
         blank=True, null=True,
         verbose_name="Preferred dates",
