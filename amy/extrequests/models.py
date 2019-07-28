@@ -773,7 +773,7 @@ class SelfOrganizedSubmission(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     # populated from person submitting form
     workshop_url = models.URLField(
         max_length=STR_LONGEST,
-        blank=False, null=False,
+        blank=True, null=False, default="",
         verbose_name="Please share your workshop URL",
         help_text="Use the link to the website, not the repository. This is "
                   "typically in the format <a>https://username.github.io/"
@@ -829,8 +829,8 @@ class SelfOrganizedSubmission(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     # submitting this form should not see that part)
     workshop_types_other_explain = models.TextField(
         blank=True,
-        verbose_name='If you selected "Other", please provide more information'
-                     ' here',
+        verbose_name='If you selected "Mix & Match", please provide more'
+                     ' information here',
         help_text='For example "We are teaching Software Carpentry\'s Git '
                   'lesson only" or "We are teaching Data Carpentry\'s Ecology '
                   'workshop, but not teaching a programming language."'

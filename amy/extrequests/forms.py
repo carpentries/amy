@@ -928,10 +928,11 @@ class SelfOrganizedSubmissionBaseForm(forms.ModelForm):
                                    .verbose_name,
     )
 
-    workshop_types = forms.ModelMultipleChoiceField(
+    workshop_types = CurriculumModelMultipleChoiceField(
         required=True,
         queryset=Curriculum.objects.default_order(allow_other=False,
-                                                  allow_unknown=False)
+                                                  allow_unknown=False,
+                                                  allow_mix_match=True)
                                    .filter(active=True),
         label=SelfOrganizedSubmission._meta.get_field('workshop_types')
                                    .verbose_name,
@@ -956,7 +957,6 @@ class SelfOrganizedSubmissionBaseForm(forms.ModelForm):
             "workshop_format_other",
             "workshop_url",
             "workshop_types",
-            "workshop_types_other",
             "workshop_types_other_explain",
             "language",
             "public_event",
@@ -972,8 +972,6 @@ class SelfOrganizedSubmissionBaseForm(forms.ModelForm):
             'language': ListSelect2(),
             'workshop_format':
                 RadioSelectWithOther('workshop_format_other'),
-            'workshop_types':
-                RadioSelectWithOther('workshop_types_other'),
             'public_event':
                 RadioSelectWithOther('public_event_other'),
         }
@@ -999,8 +997,6 @@ class SelfOrganizedSubmissionBaseForm(forms.ModelForm):
         # fields inline
         self['workshop_format'].field.widget.other_field = \
             self['workshop_format_other']
-        self['workshop_types'].field.widget.other_field = \
-            self['workshop_types_other']
         self['public_event'].field.widget.other_field = \
             self['public_event_other']
 
@@ -1011,9 +1007,7 @@ class SelfOrganizedSubmissionBaseForm(forms.ModelForm):
         ]
 
         # remove additional fields
-        # self.helper.layout.fields.remove('domains_other')
         self.helper.layout.fields.remove('workshop_format_other')
-        self.helper.layout.fields.remove('workshop_types_other')
         self.helper.layout.fields.remove('public_event_other')
         self.helper.layout.fields.remove('institution_other_name')
         self.helper.layout.fields.remove('institution_other_URL')
@@ -1036,6 +1030,73 @@ class SelfOrganizedSubmissionBaseForm(forms.ModelForm):
                 self.helper.layout.fields.index(field),
                 HTML('<hr class="col-lg-10 col-12 mx-0 px-0">'),
             )
+
+    def clean(self):
+        super().clean()
+        errors = dict()
+
+        # 1: validate institution (allow for selected institution, or expect
+        #    two other fields - name and URL)
+        institution = self.cleaned_data.get('institution', None)
+        institution_other_name = self.cleaned_data.get('institution_other_name', '')
+        institution_other_URL = self.cleaned_data.get('institution_other_URL', '')
+        if not institution and not institution_other_name and not institution_other_URL:
+            errors['institution'] = ValidationError('Institution is required.')
+        elif institution and institution_other_name:
+            errors['institution_other_name'] = ValidationError(
+                "You must select institution from the list, or enter it's name below the list. "
+                "You can't do both.")
+        elif institution and institution_other_URL:
+            errors['institution_other_URL'] = ValidationError(
+                "You can't enter institution URL if you select institution "
+                "from the list above.")
+        elif (
+            not institution and not institution_other_name and institution_other_URL
+            or
+            not institution and institution_other_name and not institution_other_URL
+        ):
+            errors['institution_other_name'] = ValidationError(
+                "You must enter both institution name and it's URL address.")
+
+        # 2: require workshop URL only if the format is standard 2-day workshop
+        workshop_format = self.cleaned_data.get('workshop_format', '') 
+        workshop_url = self.cleaned_data.get('workshop_url', '')
+        if workshop_format == 'standard' and not workshop_url:
+            errors['workshop_url'] = ValidationError(
+                'This field is required if workshop format is standard two-day'
+                ' Carpentries workshop.')
+
+        # 3: require "other" value for workshop format if it's selected
+        workshop_format_other = self.cleaned_data.get('workshop_format_other',
+                                                      '')
+        if workshop_format == '' and not workshop_format_other:
+            errors['workshop_format_other'] = ValidationError(
+                'This field is required.')
+
+        # 4: make sure workshop types has something selected, but if it's
+        #    "Mix & Match" then additionally require
+        #    `workshop_types_other_explain`
+        workshop_types = self.cleaned_data.get("workshop_types", None)
+        workshop_types_other_explain = self.cleaned_data.get(
+            "workshop_types_other_explain", None)
+        if workshop_types.filter(mix_match=True) and \
+                not workshop_types_other_explain:
+            errors['workshop_types_other_explain'] = ValidationError(
+                'This field is required if you select "Mix & Match".')
+
+        # 5: require public event
+        public_event =  self.cleaned_data.get('public_event', '')
+        public_event_other = self.cleaned_data.get('public_event_other', '')
+        if not public_event and not public_event_other:
+            errors['public_event'] = ValidationError("This field is required.")
+        elif public_event and public_event_other:
+            errors['public_event'] = ValidationError(
+                "If you entered data in \"Other\" field, please select that "
+                "option.")
+
+        # raise errors if any present
+        if errors:
+            raise ValidationError(errors)
 
 
 class SelfOrganizedSubmissionAdminForm(SelfOrganizedSubmissionBaseForm):
