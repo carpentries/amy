@@ -25,7 +25,7 @@
       <td>{% if req.assigned_to %}<a href="{{ req.assigned_to.get_absolute_url }}">{{ req.assigned_to.get_short_name }}</a>{% else %}—{% endif %}</td>
       <td>{{ req.personal }} {{ req.family }} &lt;{{ req.email|urlize }}&gt;</td>
       <td>
-        {% if req.institution %}<a href="{{ req.institution.get_absolute_url }}">{{ req.institution }}</a>{% else %}{{ req.institution_other_name }}{% endif %}{% if req.institution_department %}, {{ req.institution_department }}{% endif %}
+        {% if req.institution %}<a href="{{ req.institution.get_absolute_url }}">{{ req.institution }}</a>{% else %}<a href="{{ req.institution_other_URL }}">{{ req.institution_other_name }}</a>{% endif %}{% if req.institution_department %}, {{ req.institution_department }}{% endif %}
       </td>
       <td>{{ req.get_workshop_format_display }} {{ req.workshop_format_other }}</td>
       <td>
