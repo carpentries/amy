@@ -415,6 +415,10 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             errors['institution_other_name'] = ValidationError(
                 "You must select institution from the list, or enter it's name below the list. "
                 "You can't do both.")
+        elif institution and institution_other_URL:
+            errors['institution_other_URL'] = ValidationError(
+                "You can't enter institution URL if you select institution "
+                "from the list above.")
         elif (
             not institution and not institution_other_name and institution_other_URL
             or
@@ -762,6 +766,10 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
             errors['institution_other_name'] = ValidationError(
                 "You must select institution from the list, or enter it's name below the list. "
                 "You can't do both.")
+        elif institution and institution_other_URL:
+            errors['institution_other_URL'] = ValidationError(
+                "You can't enter institution URL if you select institution "
+                "from the list above.")
         elif (
             not institution and not institution_other_name and institution_other_URL
             or
