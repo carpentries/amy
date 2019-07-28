@@ -240,7 +240,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
                                    .verbose_name,
     )
 
-    requested_workshop_types = forms.ModelMultipleChoiceField(
+    requested_workshop_types = CurriculumModelMultipleChoiceField(
         required=True,
         queryset=Curriculum.objects.default_order(allow_unknown=False,
                                                   allow_other=False)
@@ -250,6 +250,17 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         help_text=WorkshopRequest._meta.get_field('requested_workshop_types')
                                        .help_text,
         widget=RadioSelectFakeMultiple(),
+    )
+
+    carpentries_info_source = SafeModelMultipleChoiceField(
+        required=WorkshopRequest._meta.get_field('carpentries_info_source')
+                                .blank,
+        queryset=InfoSource.objects.all(),
+        label=WorkshopRequest._meta.get_field('carpentries_info_source')
+                                   .verbose_name,
+        help_text=WorkshopRequest._meta.get_field('carpentries_info_source')
+                                       .help_text,
+        widget=CheckboxSelectMultipleWithOthers('carpentries_info_source_other'),
     )
 
     helper = BootstrapHelper(add_cancel_button=False)
@@ -305,8 +316,6 @@ class WorkshopRequestBaseForm(forms.ModelForm):
                 RadioSelectWithOther('public_event_other'),
             'institution_restrictions':
                 RadioSelectWithOther('institution_restrictions_other'),
-            'carpentries_info_source':
-                CheckboxSelectMultipleWithOthers('carpentries_info_source_other'),
         }
 
     def __init__(self, *args, **kwargs):
@@ -318,6 +327,8 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             self.institution_label_from_instance
 
         self.fields['travel_expences_management'].required = False
+        self.fields['institution_restrictions'].required = False
+        self.fields['public_event'].required = False
 
         # set up a layout object for the helper
         self.helper.layout = self.helper.build_default_layout(self)
@@ -347,37 +358,19 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         self.helper.layout.fields.remove('institution_other_name')
         self.helper.layout.fields.remove('institution_other_URL')
 
-        # # get current position of `organization_type` field
-        # pos_index = self.helper.layout.fields.index('organization_type')
-
-        # # setup additional information for the field
-        # self['organization_type'].field.widget.subfields = {
-        #     'self': [
-        #         self['self_organized_github'],
-        #     ],
-        #     'central': [
-        #         self['administrative_fee'],
-        #         self['scholarship_circumstances'],
-        #     ],
-        # }
-        # self['organization_type'].field.widget.notes = {
-        #     'self': WorkshopRequest.SELF_ORGANIZED_NOTES,
-        #     'central': WorkshopRequest.CENTRALLY_ORGANIZED_NOTES,
-        # }
-        # self.helper.layout.fields.remove('organization_type')
-        # self.helper.layout.fields.remove('self_organized_github')
-        # self.helper.layout.fields.remove('administrative_fee')
-        # self.helper.layout.fields.remove('scholarship_circumstances')
-
-        # # insert div+field at previously saved position
-        # self.helper.layout.insert(
-        #     pos_index,
-        #     Div(
-        #         Field('organization_type',
-        #               template="bootstrap4/layout/radio-accordion.html"),
-        #         css_class='form-group row',
-        #     ),
-        # )
+        # add warning alert for dates falling within next 2-3 months
+        pos_index = self.helper.layout.fields.index('preferred_dates')
+        self.helper.layout.insert(
+            pos_index + 1,
+            Div(
+                Div(
+                    HTML("Selected date falls within next 3 months!"),
+                    css_class='alert alert-warning offset-lg-2 col-lg-8 col-12',
+                ),
+                id='preferred_dates_warning',
+                css_class='form-group row d-none',
+            ),
+        )
 
         # add horizontal lines after some fields to visually group them
         # together
@@ -411,63 +404,85 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         super().clean()
         errors = dict()
 
-        # 1: make sure institution is valid
+        # 1: validate institution (allow for selected institution, or expect
+        #    two other fields - name and URL)
         institution = self.cleaned_data.get('institution', None)
         institution_other_name = self.cleaned_data.get('institution_other_name', '')
-        if not institution and not institution_other_name:
+        institution_other_URL = self.cleaned_data.get('institution_other_URL', '')
+        if not institution and not institution_other_name and not institution_other_URL:
             errors['institution'] = ValidationError('Institution is required.')
         elif institution and institution_other_name:
             errors['institution_other_name'] = ValidationError(
-                "You must select institution, or enter it's name. "
+                "You must select institution from the list, or enter it's name below the list. "
                 "You can't do both.")
+        elif (
+            not institution and not institution_other_name and institution_other_URL
+            or
+            not institution and institution_other_name and not institution_other_URL
+        ):
+            errors['institution_other_name'] = ValidationError(
+                "You must enter both institution name and it's URL address.")
 
-        # 2: make sure there's institution selected when department is present
-        institution_department = self.cleaned_data \
-                                     .get('institution_department', '')
-        if institution_department and not institution and not institution_other_name:
-            errors['institution_department'] = ValidationError(
-                "You must select institution or enter it's name when you "
-                "enter department/school details.")
+        # 2: require preferred_dates or it's "other" counterpart
+        preferred_dates = self.cleaned_data.get('preferred_dates', None)
+        other_preferred_dates = self.cleaned_data.get('other_preferred_dates',
+                                                      None)
+        if not preferred_dates and not other_preferred_dates:
+            errors['preferred_dates'] = ValidationError(
+                "This field is required.")
 
-        # 3: * self-organized workshop, require URL
-        #    * centrally-organized workshop, require fee description
-        #    * fee waiver? require waiver circumstances description
-        # organization_type = self.cleaned_data.get('organization_type', '')
-        # self_organized_github = self.cleaned_data \
-        #                             .get('self_organized_github', '')
-        # administrative_fee = self.cleaned_data \
-        #                          .get('administrative_fee', '')
-        # scholarship_circumstances = self.cleaned_data \
-        #                            .get('scholarship_circumstances', '')
+        # 3: circumstances for scholarship request only required if scholarship
+        #    is chosen
+        administrative_fee = self.cleaned_data.get('administrative_fee', '')
+        scholarship_circumstances = self.cleaned_data.get(
+            'scholarship_circumstances', '')
 
-        # if organization_type == 'self' and not self_organized_github:
-        #     errors['self_organized_github'] = ValidationError(
-        #         "Please enter workshop URL data.")
-        # elif organization_type == 'central' and not administrative_fee:
-        #     errors['administrative_fee'] = ValidationError(
-        #         "Please select applicable administrative fee option.")
-        # elif organization_type == 'central' and \
-        #         administrative_fee == 'waiver' and \
-        #         not scholarship_circumstances:
-        #     errors['scholarship_circumstances'] = ValidationError(
-        #         "Please describe your waiver circumstances.")
+        # 'waiver' is an old name for scholarship
+        if administrative_fee == 'waiver' and not scholarship_circumstances:
+            errors['scholarship_circumstances'] = ValidationError(
+                'This field is required if you\'re requesting a scholarship.')
+        elif administrative_fee != 'waiver' and scholarship_circumstances:
+            errors['scholarship_circumstances'] = ValidationError(
+                'This field should be empty if you\'re not requesting '
+                'a scholarship.')
 
-        # 5: don't allow empty domains and empty domains_other
-        # domains = self.cleaned_data.get('domains', '')
-        # domains_other = self.cleaned_data.get('domains_other', '')
-        # if not domains and not domains_other:
-        #     errors['domains'] = ValidationError(
-        #         "This field is required. If you're uncertain about what to "
-        #         'choose, select "Don\'t know yet".')
-
-        # 6: don't allow empty travel expences management
+        # 4: require travel expenses
         travel_expences_management = \
             self.cleaned_data.get('travel_expences_management', '')
         travel_expences_management_other = \
             self.cleaned_data.get('travel_expences_management_other', '')
         if not travel_expences_management and \
                 not travel_expences_management_other:
-            errors['travel_expences_management'] = "This field is required."
+            errors['travel_expences_management'] = ValidationError(
+                "This field is required.")
+        elif travel_expences_management and travel_expences_management_other:
+            errors['travel_expences_management'] = ValidationError(
+                "If you entered data in \"Other\" field, please select that "
+                "option.")
+
+        # 5: require institution restrictions
+        institution_restrictions = \
+            self.cleaned_data.get('institution_restrictions', '')
+        institution_restrictions_other = \
+            self.cleaned_data.get('institution_restrictions_other', '')
+        if not institution_restrictions and \
+                not institution_restrictions_other:
+            errors['institution_restrictions'] = ValidationError(
+                "This field is required.")
+        elif institution_restrictions and institution_restrictions_other:
+            errors['institution_restrictions'] = ValidationError(
+                "If you entered data in \"Other\" field, please select that "
+                "option.")
+
+        # 6: require public event
+        public_event =  self.cleaned_data.get('public_event', '')
+        public_event_other = self.cleaned_data.get('public_event_other', '')
+        if not public_event and not public_event_other:
+            errors['public_event'] = ValidationError("This field is required.")
+        elif public_event and public_event_other:
+            errors['public_event'] = ValidationError(
+                "If you entered data in \"Other\" field, please select that "
+                "option.")
 
         # raise errors if any present
         if errors:
