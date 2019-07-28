@@ -10,7 +10,7 @@
   </div>
 </div>
 
-{% include "mailing/workshoprequest.html" with object=object %}
+{% include "includes/workshoprequest_details.html" with admin=True object=object %}
 
 {% include "includes/requests_bottom_action_btns.html" with object=object obj_name='request' change_permission=perms.perms.workshops.change_workshoprequest add_event_permission=perms.workshops.add_event accept_event_URL='workshoprequest_accept_event' set_state_URL='workshoprequest_set_state' edit_URL='workshoprequest_edit' %}
 

@@ -1,4 +1,3 @@
-{% load state %}
 <h1>Thank you for submitting a self-organized Carpentries workshop!</h1>
 
 <p>Your submission has been received, and a member of our team will get 
@@ -7,60 +6,4 @@ questions, please contact us at
 <a href="mailto:team@carpentries.org">team@carpentries.org</a>.
 A copy of your submission is included below for your reference.</p>
 
-<table class="table table-striped">
-  <tbody>
-    <tr><th>Submission date:</th>
-        <td>{{ object.created_at }}</td></tr>
-    <tr><th>Person:</th>
-        <td>{{ object.personal }} {{ object.family }} &lt;{{ object.email|urlize }}&gt;</td></tr>
-    <tr><th>Institution:</th>
-        <td>
-          {% if object.institution %}<a href="{{ object.institution.domain }}">{{ object.institution }}</a>{% else %}<a href="{{ object.institution_other_URL }}">{{ object.institution_other_name }}</a>{% endif %}{% if object.institution_department %}, {{ object.institution_department }}{% endif %}
-        </td></tr>
-    <tr><th>Workshop format:</th>
-        <td>
-          {% if object.workshop_format %}
-          {{ object.workshop_format }}
-          {% else %}
-          Other: {{ object.workshop-format_other }}
-          {% endif %}
-        </td></tr>
-    <tr><th>Workshop URL:</th>
-        <td>{{ object.workshop_url|urlize }}</td></tr>
-    <tr><th>Taught workshop type:</th>
-        <td>
-          <ul>
-          {% for item in object.workshop_types.all %}
-            <li>{{ item }}</li>
-          {% endfor %}
-          </ul>
-        </td></tr>
-    <tr><th>Taught workshop mix & match:</th>
-        <td>
-          {% if object.workshop_types_other_explain %}
-          <pre>{{ object.workshop_types_other_explain }}</pre>
-          {% else %}
-          &mdash;
-          {% endif %}
-        </td></tr>
-    <tr><th>Workshop language:</th>
-        <td>{{ object.language }}</td></tr>
-    <tr><th>Is this workshop open to the public?</th>
-        <td>
-          {% if object.public_event %}
-          {{ object.public_event }}
-          {% else %}Other: {{ object.public_event_other }}
-          {% endif %}
-        </td></tr>
-    <tr><th>Additional contacts:</th>
-        <td>
-          {{ object.additional_contact|default:"&mdash;" }}
-        </td></tr>
-    <tr><th>Data privacy agreement:</th>
-        <td>{{ object.data_privacy_agreement|yesno }}</td></tr>
-    <tr><th>Code of Conduct agreement:</th>
-        <td>{{ object.code_of_conduct_agreement|yesno }}</td></tr>
-    <tr><th>Host responsibilities agreement:</th>
-        <td>{{ object.host_responsibilities|yesno }}</td></tr>
-  </tbody>
-</table>
+{% include "includes/selforganizedsubmission_details.html" with admin=False object=object %}
