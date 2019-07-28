@@ -6,6 +6,7 @@ from django.db.models import Case, When
 
 from extrequests.models import (
     DataVariant,
+    InfoSource,
     WorkshopInquiryRequest,
     SelfOrganizedSubmission,
 )
@@ -26,6 +27,8 @@ from workshops.fields import (
     RadioSelectWithOther,
     CheckboxSelectMultipleWithOthers,
     RadioSelectFakeMultiple,
+    SafeModelChoiceField,
+    SafeModelMultipleChoiceField,
 )
 
 
@@ -551,6 +554,19 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         widget=forms.CheckboxSelectMultiple(),
     )
 
+    carpentries_info_source = SafeModelMultipleChoiceField(
+        required=WorkshopInquiryRequest._meta
+                                       .get_field('carpentries_info_source')
+                                       .blank,
+        queryset=InfoSource.objects.all(),
+        label=WorkshopInquiryRequest._meta.get_field('carpentries_info_source')
+                                          .verbose_name,
+        help_text=WorkshopInquiryRequest._meta
+                                        .get_field('carpentries_info_source')
+                                        .help_text,
+        widget=CheckboxSelectMultipleWithOthers('carpentries_info_source_other'),
+    )
+
     helper = BootstrapHelper(add_cancel_button=False)
 
     class Meta:
@@ -611,8 +627,6 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
             'institution_restrictions':
                 RadioSelectWithOther('institution_restrictions_other',
                                      fake_required=True),
-            'carpentries_info_source':
-                CheckboxSelectMultipleWithOthers('carpentries_info_source_other'),
         }
 
     @staticmethod

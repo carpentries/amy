@@ -8,6 +8,7 @@ from django_select2.forms import (
 from django.core.validators import RegexValidator, MaxLengthValidator
 from django.db import models
 from django import forms
+from django.utils.safestring import mark_safe
 
 
 GHUSERNAME_MAX_LENGTH_VALIDATOR = MaxLengthValidator(39,
@@ -87,6 +88,20 @@ class RadioSelectFakeMultiple(FakeRequiredMixin, forms.RadioSelect):
     is intended to 'fool' Django into thinking that user selected 1 item on
     a multi-select item list."""
     allow_multiple_selected = True
+
+
+class SafeLabelFromInstanceMixin:
+    def label_from_instance(self, obj):
+        return mark_safe(obj)
+
+
+class SafeModelChoiceField(SafeLabelFromInstanceMixin, forms.ModelChoiceField):
+    pass
+
+
+class SafeModelMultipleChoiceField(SafeLabelFromInstanceMixin,
+                                   forms.ModelMultipleChoiceField):
+    pass
 
 
 #------------------------------------------------------------
