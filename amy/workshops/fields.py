@@ -104,6 +104,27 @@ class SafeModelMultipleChoiceField(SafeLabelFromInstanceMixin,
     pass
 
 
+class CurriculumModelMultipleChoiceField(SafeModelMultipleChoiceField):
+    def label_from_instance(self, obj):
+        # version 1: display in the popover
+        # data = (
+        #     '{obj} <a tabindex="0" role="button" data-toggle="popover" '
+        #     'data-content="{description}">(details)</a>'
+        #     .format(obj=obj, description=obj.description)
+        # )
+
+        # version 2: display in tooltip
+        # tooltip is a little better, because it auto-hides and doesn't
+        # require clicking on the element, whereas popover by clicking
+        # will automatically select the clicked item
+        data = (
+            '<a tabindex="0" role="button" data-toggle="tooltip" '
+            'data-placement="top" title="{description}">{obj}</a>'
+            .format(obj=obj, description=obj.description)
+        )
+        return super().label_from_instance(data)
+
+
 #------------------------------------------------------------
 
 class Select2BootstrapMixin:

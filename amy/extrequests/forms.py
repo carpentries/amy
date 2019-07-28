@@ -29,6 +29,7 @@ from workshops.fields import (
     RadioSelectFakeMultiple,
     SafeModelChoiceField,
     SafeModelMultipleChoiceField,
+    CurriculumModelMultipleChoiceField,
 )
 
 
@@ -542,14 +543,16 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
                                     .verbose_name,
     )
 
-    requested_workshop_types = forms.ModelMultipleChoiceField(
+    requested_workshop_types = CurriculumModelMultipleChoiceField(
         required=True,
         queryset=Curriculum.objects.default_order(allow_other=True,
                                                   allow_unknown=True)
                                    .filter(active=True),
-        label=WorkshopInquiryRequest._meta.get_field('requested_workshop_types')
+        label=WorkshopInquiryRequest._meta
+                                    .get_field('requested_workshop_types')
                                     .verbose_name,
-        help_text=WorkshopInquiryRequest._meta.get_field('requested_workshop_types')
+        help_text=WorkshopInquiryRequest._meta
+                                        .get_field('requested_workshop_types')
                                         .help_text,
         widget=forms.CheckboxSelectMultiple(),
     )
@@ -617,7 +620,6 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
             'number_attendees': forms.RadioSelect(),
             'academic_levels': forms.CheckboxSelectMultiple(),
             'computing_levels': forms.CheckboxSelectMultiple(),
-            'requested_workshop_types': forms.CheckboxSelectMultiple(),
             'administrative_fee': forms.RadioSelect(),
             'travel_expences_management':
                 RadioSelectWithOther('travel_expences_management_other',
