@@ -214,6 +214,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
     institution = forms.ModelChoiceField(
         required=False,
         queryset=Organization.objects.order_by('fullname'),
+                                     .exclude(fullname='self-organized'),
         widget=Select2Widget,
         label=WorkshopRequest._meta.get_field('institution').verbose_name,
         help_text=WorkshopRequest._meta.get_field('institution').help_text,
@@ -788,11 +789,11 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         academic_levels = self.cleaned_data.get("academic_levels", None)
         computing_levels = self.cleaned_data.get("computing_levels", None)
         requested_workshop_types = self.cleaned_data.get("requested_workshop_types", None)
-        
+
         # routine data required
         if not routine_data and not routine_data_other:
             errors['routine_data'] = ValidationError("This field is required.")
-        
+
         # domains required
         if not domains and not domains_other:
             errors['domains'] = ValidationError("This field is required.")
@@ -906,7 +907,8 @@ class WorkshopInquiryRequestAdminForm(WorkshopInquiryRequestBaseForm):
 class SelfOrganizedSubmissionBaseForm(forms.ModelForm):
     institution = forms.ModelChoiceField(
         required=False,
-        queryset=Organization.objects.order_by('fullname'),
+        queryset=Organization.objects.order_by('fullname')
+                                     .exclude(fullname='self-organized'),
         widget=ListSelect2(),
         label=SelfOrganizedSubmission._meta.get_field('institution').verbose_name,
         help_text=SelfOrganizedSubmission._meta.get_field('institution').help_text,
@@ -1059,7 +1061,7 @@ class SelfOrganizedSubmissionBaseForm(forms.ModelForm):
                 "You must enter both institution name and it's URL address.")
 
         # 2: require workshop URL only if the format is standard 2-day workshop
-        workshop_format = self.cleaned_data.get('workshop_format', '') 
+        workshop_format = self.cleaned_data.get('workshop_format', '')
         workshop_url = self.cleaned_data.get('workshop_url', '')
         if workshop_format == 'standard' and not workshop_url:
             errors['workshop_url'] = ValidationError(
