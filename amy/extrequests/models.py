@@ -1,3 +1,5 @@
+import datetime
+
 from django.db import models, transaction
 from django.db.models import (
     Q,
@@ -747,9 +749,11 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
             return self.other_preferred_dates
 
     def preferred_dates_too_soon(self):
-        today = datetime.date.today()
-        three_months = datetime.timedelta(days=3*30)
-        return (self.preferred_dates - today) < three_months
+        # set cutoff date at 3 months
+        cutoff = datetime.timedelta(days=3*30)
+        if self.preferred_dates:
+            return (self.preferred_dates - self.created_at.date()) < cutoff
+        return False
 
     def get_absolute_url(self):
         return reverse('workshopinquiry_details', args=[self.id])
