@@ -343,7 +343,7 @@ class SelfOrganizedSubmissionDetails(OnlyForAdminsMixin, AMYDetailView):
             )
 
         person_lookup_form.helper = BootstrapHelper(
-            form_action=reverse('selforganized_submission_assign',
+            form_action=reverse('selforganizedsubmission_assign',
                                 args=[self.object.pk]),
             add_cancel_button=False)
 
