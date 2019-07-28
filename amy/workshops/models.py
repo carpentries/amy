@@ -1939,7 +1939,8 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
 
 
 class CurriculumManager(models.Manager):
-    def default_order(self, allow_unknown=True, allow_other=True):
+    def default_order(self, allow_unknown=True, allow_other=True,
+                      allow_mix_match=False):
         """A specific order_by() clause with semi-ninja code."""
 
         # This crazy django-ninja-code gives different weights to entries
@@ -1971,6 +1972,10 @@ class CurriculumManager(models.Manager):
         # in the list
         if not allow_other:
             qs = qs.filter(other=False)
+
+        # conditionally disable Mix&Match entry from appearing in the list
+        if not allow_mix_match:
+            qs = qs.filter(mix_match=False)
         
         return qs
 
@@ -2023,6 +2028,12 @@ class Curriculum(ActiveMixin, models.Model):
                   "'Unknown', or 'Not sure yet'. There can be only one such "
                   "record in the database.",
     )
+    mix_match = models.BooleanField(
+        null=False, blank=True, default=False,
+        verbose_name="Mix & Match",
+        help_text="Mark this curriculum record as 'Mix & Match'."
+                  "There can be only one such record in the database.",
+    )
 
     objects = CurriculumManager()
 
@@ -2044,6 +2055,9 @@ class Curriculum(ActiveMixin, models.Model):
         # `unknown=False` when saving fails
         if self.unknown:
             Curriculum.objects.filter(unknown=True).update(unknown=False)
+        # same for mix_match
+        if self.mix_match:
+            Curriculum.objects.filter(mix_match=True).update(mix_match=False)
         return super().save(*args, **kwargs)
 
 
@@ -2124,7 +2138,7 @@ class CommonRequest(models.Model):
         blank=True, null=True,
         verbose_name="Institutional affiliation",
         help_text="If your institution isn't on the list, enter its name "
-                  "in the field below.",
+                  "below the list.",
     )
     institution_other_name = models.CharField(
         max_length=STR_LONGEST,
