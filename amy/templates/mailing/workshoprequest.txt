@@ -28,8 +28,8 @@ Administrative fee payment: {{ object.get_administrative_fee_display }}
 Scholarship circumstances: {{ object.scholarship_circumstances|default:"---" }}
 Travel expences management: {% if object.travel_expences_management %}{{ object.get_travel_expences_management_display }}{% else %}Other: {{ object.travel_expences_management_other }}{% endif %}
 Travel expences agreement: {{ object.travel_expences_agreement|yesno }}
-Intitutional restrictions regarding instructors: {% if object.institution_restrictions %}{{ object.institution_restrictions }}{% else %}Other: {{ object.institution_restrictions_other }}{% endif %}
-Is this workshop open to the public? {% if object.public_event %}{{ object.public_event }}{% else %}Other: {{ object.public_event_other }}{% endif %}
+Intitutional restrictions regarding instructors: {% if object.institution_restrictions %}{{ object.get_institution_restrictions_display }}{% else %}Other: {{ object.institution_restrictions_other }}{% endif %}
+Is this workshop open to the public? {% if object.public_event %}{{ object.get_public_event_display }}{% else %}Other: {{ object.public_event_other }}{% endif %}
 Additional contacts: {{ object.additional_contact|default:"---" }}
 How did you hear about The Carpentries? {% for item in object.carpentries_info_source.all %}{{ item }}, {% endfor %}{% if object.carpentries_info_source_other %}Other: {{ object.carpentries_info_source_other }}{% endif %}
 Additional notes: {{ object.user_notes|default:"---" }}

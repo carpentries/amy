@@ -10,12 +10,12 @@ submission is included below for your reference.
 Submission date: {{ object.created_at }}
 Person: {{ object.personal }} {{ object.family }} &lt;{{ object.email }}&gt;
 Institution: {{ object.institution|default:object.institution_other_name }}{% if object.institution_department %}, {{ object.institution_department }}{% endif %}
-Workshop format: {% if object.workshop_format %}{{ object.workshop_format }}{% else %}Other: {{ object.workshop-format_other }}{% endif %}
+Workshop format: {% if object.workshop_format %}{{ object.get_workshop_format_display }}{% else %}Other: {{ object.workshop_format_other }}{% endif %}
 Workshop URL: {{ object.workshop_url }}
 Taught workshop type: {% for item in object.workshop_types.all %}{{ item }}, {% endfor %}
 Taught workshop mix & match: {{ object.workshop_types_other_explain|default:"---" }}
 Workshop language: {{ object.language }}
-Is this workshop open to the public? {% if object.public_event %}{{ object.public_event }}{% else %}Other: {{ object.public_event_other }}{% endif %}
+Is this workshop open to the public? {% if object.public_event %}{{ object.get_public_event_display }}{% else %}Other: {{ object.public_event_other }}{% endif %}
 Additional contacts: {{ object.additional_contact|default:"---" }}
 Data privacy agreement: {{ object.data_privacy_agreement|yesno }}
 Code of Conduct agreement: {{ object.code_of_conduct_agreement|yesno }}
