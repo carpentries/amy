@@ -211,8 +211,7 @@ class WorkshopInquiryFilter(AMYFilterSet, StateFilterSet):
 
 class SelfOrganizedSubmissionFilter(AMYFilterSet, StateFilterSet):
     assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2Widget)
-    country = AllCountriesFilter(widget=Select2Widget)
-    requested_workshop_types = django_filters.ModelMultipleChoiceFilter(
+    workshop_types = django_filters.ModelMultipleChoiceFilter(
         label='Requested workshop types',
         queryset=Curriculum.objects.all(),
         widget=widgets.CheckboxSelectMultiple(),
@@ -229,6 +228,6 @@ class SelfOrganizedSubmissionFilter(AMYFilterSet, StateFilterSet):
         fields = [
             'state',
             'assigned_to',
-            'requested_workshop_types',
-            'country',
+            'workshop_types',
+            'workshop_format',
         ]

@@ -321,7 +321,7 @@ class AllSelfOrganizedSubmissions(OnlyForAdminsMixin, StateFilterMixin, AMYListV
     filter_class = SelfOrganizedSubmissionFilter
     queryset = (
         SelfOrganizedSubmission.objects.select_related('assigned_to', 'institution')
-                                       .prefetch_related('requested_workshop_types')
+                                       .prefetch_related('workshop_types')
     )
     title = 'Self-Organized submissions'
 
