@@ -117,6 +117,10 @@ p.invalid-feedback {
     margin-bottom: 0;
 }
 
+/* move radio-button circles down a little */
+input[type="radio"], input[type="checkbox"] {
+    top: 2px;
+}
 
 /* general resizable class styles */
 .resizable-vertical {
