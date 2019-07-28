@@ -1,32 +1,22 @@
-Thank you for requesting a Carpentries workshop!
+Thank you for submitting a self-organized Carpentries workshop!
 
-Your request has been received, and a member of our team will get
+Your submission has been received, and a member of our team will get
 back to you within three business days. If you have any immediate 
 questions, please contact us at team@carpentries.org. A copy of your 
-request is included below for your reference.
+submission is included below for your reference.
 
 --------------------------------------------
 
 Submission date: {{ object.created_at }}
 Person: {{ object.personal }} {{ object.family }} &lt;{{ object.email }}&gt;
 Institution: {{ object.institution|default:object.institution_other_name }}{% if object.institution_department %}, {{ object.institution_department }}{% endif %}
-Location: {{ object.location }}
-Country: {{ object.country.name }}
-Conference: {{ object.conference_details|default:"---" }}
-Language: {{ object.language }}
-Approx. number of attendees: {{ object.get_number_attendees_display }}
-Attendees' domains: {% for domain in object.domains.all %}{{ domain }}, {% endfor %}{{ object.domains_other }}
-Attendees' academic level: {% for level in object.academic_levels.all %}{{ level }}, {% endfor %}
-Attendees' computing levels: {% for level in object.attendee_computing_levels.all %}{{ level }}, {% endfor %}
-Audience description: {{ object.audience_description|default:"---" }}
-Requested workshop types: {% for type in object.requested_workshop_types.all %}{{ type.slug }}, {% endfor %}
-Self-organized or centrally-organized: {{ object.get_organization_type_display }}{% if object.organization_type == 'self' %}
-Link to self-organized workshop GitHub page: {{ object.self_organized_github|urlize }}
-{% elif object.organization_type == 'central' %}Administrative fee payment: {{ object.get_administrative_fee_display }}
-Scholarship circumstances: {{ object.scholarship_circumstances|default:"---" }}
-{% endif %}Travel expences agreement: {{ object.travel_expences_agreement|yesno }}
-Travel expences management: {% if object.travel_expences_management %}{{ object.get_travel_expences_management_display }}{% else %}Other: {{ object.travel_expences_management_other }}{% endif %}
+Workshop format: {% if object.workshop_format %}{{ object.workshop_format }}{% else %}Other: {{ object.workshop-format_other }}{% endif %}
+Workshop URL: {{ object.workshop_url }}
+Taught workshop type: {% for item in object.workshop_types.all %}{{ item }}, {% endfor %}
+Taught workshop mix & match: {{ object.workshop_types_other_explain|default:"---" }}
+Workshop language: {{ object.language }}
+Is this workshop open to the public? {% if object.public_event %}{{ object.public_event }}{% else %}Other: {{ object.public_event_other }}{% endif %}
+Additional contacts: {{ object.additional_contact|default:"---" }}
 Data privacy agreement: {{ object.data_privacy_agreement|yesno }}
 Code of Conduct agreement: {{ object.code_of_conduct_agreement|yesno }}
 Host responsibilities agreement: {{ object.host_responsibilities|yesno }}
-Additional notes: {{ object.user_notes|default:"---" }}

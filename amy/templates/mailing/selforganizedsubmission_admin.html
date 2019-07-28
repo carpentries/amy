@@ -1,7 +1,7 @@
 {% load state %}
 
 {% if link %}
-<p>You can view the request here:
+<p>You can view this submission here:
 <a href="{{ link_domain }}{{ link }}">{{ link_domain }}{{ link }}</a>
 </p>
 {% endif %}
@@ -12,94 +12,50 @@
         <td>{{ object.created_at }}</td></tr>
     <tr><th>State</th>
         <td><span class="{% state_label object %}">{{ object.get_state_display }}</span></td></tr>
-    <tr><th>Related event:</th>
-        <td>{% if object.event %}<a href="{{ object.event.get_absolute_url }}">{{ object.event }}</a>{% else %}&mdash;{% endif %}</td></tr>
     <tr><th>Person:</th>
         <td>{{ object.personal }} {{ object.family }} &lt;{{ object.email|urlize }}&gt;</td></tr>
     <tr><th>Institution:</th>
         <td>
-          {% if object.institution %}<a href="{{ object.institution.get_absolute_url }}">{{ object.institution }}</a>{% else %}{{ object.institution_other_name }}{% endif %}{% if object.institution_department %}, {{ object.institution_department }}{% endif %}
+          {% if object.institution %}<a href="{{ object.institution.domain }}">{{ object.institution }}</a>{% else %}<a href="{{ object.institution_other_URL }}">{{ object.institution_other_name }}</a>{% endif %}{% if object.institution_department %}, {{ object.institution_department }}{% endif %}
         </td></tr>
-    <tr><th>Location:</th>
-        <td>{{ object.location }}</td></tr>
-    <tr><th>Country:</th>
-        <td>{{ object.country.name }} <img src="{{ object.country.flag }}" alt="{{ object.country }}" class="country-flag" /></td></tr>
-    <tr><th>Conference:</th>
+    <tr><th>Workshop format:</th>
         <td>
-          {{ object.conference_details|default:"—" }}
+          {% if object.workshop_format %}
+          {{ object.workshop_format }}
+          {% else %}
+          Other: {{ object.workshop-format_other }}
+          {% endif %}
         </td></tr>
-    <tr><th>Preferred dates:</th>
-        <td>{{ object.dates }}</td></tr>
-    <tr><th>Language:</th>
-        <td>{{ object.language }}</td></tr>
-    <tr><th>Approx. number of attendees:</th>
-        <td>{{ object.get_number_attendees_display }}</td></tr>
-    <tr><th>Attendees' domains:</th>
+    <tr><th>Workshop URL:</th>
+        <td>{{ object.workshop_url|urlize }}</td></tr>
+    <tr><th>Taught workshop type:</th>
         <td>
           <ul>
-            {% for domain in object.domains.all %}
-            <li>{{ domain }}</li>
-            {% endfor %}
-            {% if object.domains_other %}
-            <li>{{ object.domains_other }}</li>
-            {% endif %}
+          {% for item in object.workshop_types.all %}
+            <li>{{ item }}</li>
+          {% endfor %}
           </ul>
-        </td>
-    </tr>
-    <tr><th>Attendees' academic levels:</th>
+        </td></tr>
+    <tr><th>Taught workshop mix & match:</th>
         <td>
-          <ul>
-            {% for level in object.academic_levels.all %}
-            <li>{{ level }}</li>
-            {% endfor %}
-          </ul>
-        </td>
-    </tr>
-    <tr><th>Attendees' computing levels:</th>
-        <td>
-          <ul>
-            {% for level in object.computing_levels.all %}
-            <li>{{ level }}</li>
-            {% endfor %}
-          </ul>
-        </td>
-    </tr>
-    <tr><th>Audience description:</th>
-        <td><pre>{{ object.audience_description }}</pre></td></tr>
-    <tr><th>Requested workshop types:</th>
-        <td>
-          <ul>
-            {% for type in object.requested_workshop_types.all %}
-            <li>{{ type }}</li>
-            {% endfor %}
-          </ul>
-        </td>
-    </tr>
-    <tr><th>Self- or centrally-organized workshop?</th>
-        <td>{{ object.get_organization_type_display }}</td></tr>
-    {% if object.organization_type == 'self' %}
-    <tr><th>Link to self-organized workshop GitHub page:</th>
-        <td>{{ object.self_organized_github|urlize }}</td></tr>
-    {% endif %}
-    {% if object.organization_type == 'central' %}
-    <tr><th>Administrative fee payment:</th>
-        <td>{{ object.get_administrative_fee_display }}</td></tr>
-    <tr><th>Scholarship circumstances:</th>
-        <td>
-          {% if object.scholarship_circumstances %}
-          <pre>{{ object.scholarship_circumstances }}</pre></td></tr>
+          {% if object.workshop_types_other_explain %}
+          <pre>{{ object.workshop_types_other_explain }}</pre>
           {% else %}
           &mdash;
           {% endif %}
-    {% endif %}
-    <tr><th>Travel expences agreement:</th>
-        <td>{{ object.travel_expences_agreement|yesno }}</td></tr>
-    <tr><th>Travel expences management:</th>
+        </td></tr>
+    <tr><th>Workshop language:</th>
+        <td>{{ object.language }}</td></tr>
+    <tr><th>Is this workshop open to the public?</th>
         <td>
-          {% if object.travel_expences_management %}
-          {{ object.get_travel_expences_management_display }}
-          {% else %}Other: {{ object.travel_expences_management_other }}
+          {% if object.public_event %}
+          {{ object.public_event }}
+          {% else %}Other: {{ object.public_event_other }}
           {% endif %}
+        </td></tr>
+    <tr><th>Additional contacts:</th>
+        <td>
+          {{ object.additional_contact|default:"&mdash;" }}
         </td></tr>
     <tr><th>Data privacy agreement:</th>
         <td>{{ object.data_privacy_agreement|yesno }}</td></tr>
@@ -107,13 +63,5 @@
         <td>{{ object.code_of_conduct_agreement|yesno }}</td></tr>
     <tr><th>Host responsibilities agreement:</th>
         <td>{{ object.host_responsibilities|yesno }}</td></tr>
-    <tr><th>Additional notes:</th>
-        <td>
-          {% if object.user_notes %}
-          <pre>{{ object.user_notes }}</pre>
-          {% else %}
-          &mdash;
-          {% endif %}
-        </td></tr>
   </tbody>
 </table>

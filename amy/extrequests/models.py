@@ -802,18 +802,6 @@ class SelfOrganizedSubmission(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         null=False, blank=True, default='',
         verbose_name="Other workshop format",
     )
-    SWC_LESSONS_LINK = (
-        '<a href="https://software-carpentry.org/lessons/">'
-        'Software Carpentry lessons page</a>'
-    )
-    DC_LESSONS_LINK = (
-        '<a href="http://www.datacarpentry.org/lessons/">'
-        'Data Carpentry lessons page</a>'
-    )
-    LC_LESSONS_LINK = (
-        '<a href="https://librarycarpentry.org/lessons/">'
-        'Library Carpentry lessons page</a>'
-    )
     # TODO: group by Carpentry, add hovers, validate "Don't know yet"
     # TODO: add "Other"!!!
     workshop_types = models.ManyToManyField(
