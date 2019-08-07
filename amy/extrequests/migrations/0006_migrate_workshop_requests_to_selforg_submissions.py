@@ -13,7 +13,6 @@ def migrate(apps, schema_editor):
     self_org_wr = WorkshopRequest.objects.filter(organization_type='self')
 
     for wr in self_org_wr:
-        print(wr)
         sos = SelfOrganizedSubmission.objects.create(
             personal=wr.personal,
             family=wr.family,
