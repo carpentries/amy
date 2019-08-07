@@ -798,19 +798,20 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         if not domains and not domains_other:
             errors['domains'] = ValidationError("This field is required.")
 
-        if routine_data.filter(unknown=True):
+        if routine_data and routine_data.filter(unknown=True):
             if len(routine_data) > 1 or routine_data_other:
                 errors['routine_data'] = ValidationError(
                     "If you select \"Don't know yet\", you can't select "
                     "anything else or enter other values.")
 
-        if domains.filter(name="Don't know yet"):
+        if domains and domains.filter(name="Don't know yet"):
             if len(domains) > 1 or domains_other:
                 errors['domains'] = ValidationError(
                     "If you select \"Don't know yet\", you can't select "
                     "anything else or enter other values.")
 
         if (
+            academic_levels and
             academic_levels.filter(name="Don't know yet") and
             len(academic_levels) > 1
         ):
@@ -819,6 +820,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
                 "anything else.")
 
         if (
+            computing_levels and
             computing_levels.filter(name="Don't know yet") and
             len(computing_levels) > 1
         ):
@@ -827,6 +829,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
                 "anything else.")
 
         if (
+            requested_workshop_types and
             requested_workshop_types.filter(unknown=True) and
             len(requested_workshop_types) > 1
         ):
@@ -1081,7 +1084,7 @@ class SelfOrganizedSubmissionBaseForm(forms.ModelForm):
         workshop_types = self.cleaned_data.get("workshop_types", None)
         workshop_types_other_explain = self.cleaned_data.get(
             "workshop_types_other_explain", None)
-        if workshop_types.filter(mix_match=True) and \
+        if workshop_types and workshop_types.filter(mix_match=True) and \
                 not workshop_types_other_explain:
             errors['workshop_types_other_explain'] = ValidationError(
                 'This field is required if you select "Mix & Match".')
