@@ -527,7 +527,7 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     # audience. All questions are optional so please share as much as you can.
     routine_data = models.ManyToManyField(
         DataVariant,
-        blank=False,
+        blank=True,
         verbose_name="What kinds of data does your target audience routinely "
                      "work with?",
         help_text="",
@@ -539,7 +539,7 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     )
     domains = models.ManyToManyField(
         KnowledgeDomain,
-        blank=False,
+        blank=True,
         verbose_name="Domains or topic of interest for target audience",
         help_text="The attendees' academic field(s) of study, if known.",
     )
@@ -550,17 +550,24 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     )
     academic_levels = models.ManyToManyField(
         AcademicLevel,
+        blank=True,
         verbose_name="Attendees' academic level / career stage",
         help_text="If you know the academic level(s) of your attendees, "
                   "indicate them here.",
     )
     computing_levels = models.ManyToManyField(
         ComputingExperienceLevel,
+        blank=True,
         verbose_name="Attendees' level of computing experience",
         help_text="Indicate the attendees' level of computing experience, if "
                   "known. We will ask attendees to fill in a skills survey "
                   "before the workshop, so this answer can be an "
                   "approximation.",
+    )
+    audience_description = models.TextField(
+        blank=True,
+        verbose_name="Please describe your anticipated audience, including "
+                     "their experience, background, and goals",
     )
     SWC_LESSONS_LINK = (
         '<a href="https://software-carpentry.org/lessons/">'
@@ -576,8 +583,8 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     )
     requested_workshop_types = models.ManyToManyField(
         Curriculum, limit_choices_to={'active': True},
-        blank=False,
-        verbose_name="Which Carpentry workshop are you requesting?",
+        blank=True,
+        verbose_name="Which Carpentries workshop are you requesting?",
         help_text="If your learners are new to programming and primarily "
                   "interested in working with data, Data Carpentry is likely "
                   "the best choice. If your learners are interested in "
@@ -593,7 +600,7 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
                   'the "Don\'t know yet" option below.',
     )
     preferred_dates = models.DateField(
-        blank=False, null=False,
+        blank=True, null=True,
         verbose_name="Preferred dates",
         help_text="Our workshops typically run two full days. Please select "
                   "your preferred first day for the workshop. If you do not "
@@ -610,7 +617,7 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     )
     language = models.ForeignKey(
         Language, on_delete=models.PROTECT,
-        blank=False, null=False,
+        blank=True, null=True,
         verbose_name="What is the preferred language for the workshop?",
         help_text="Our workshops are offered primarily in English, with a few "
                   "of our lessons available in Spanish. While materials are "
@@ -628,15 +635,11 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     number_attendees = models.CharField(
         max_length=15,
         choices=ATTENDEES_NUMBER_CHOICES,
-        blank=False, null=False, default=None,
+        blank=True, null=True, default=None,
         verbose_name="Anticipated number of attendees",
         help_text="This number doesn't need to be precise, but will help us "
                   "decide how many instructors your workshop will need. "
                   "Each workshop must have at least two instructors.",
-    )
-    audience_description = models.TextField(
-        verbose_name="Please describe your anticipated audience, including "
-                     "their experience, background, and goals",
     )
     FEE_CHOICES = (
         ("nonprofit", "I am with a government site, university, or other "
@@ -655,12 +658,31 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     administrative_fee = models.CharField(
         max_length=20,
         choices=FEE_CHOICES,
-        blank=False, null=False, default=None,
+        blank=True, null=True, default=None,
         verbose_name="Which of the following applies to your payment for the "
                      "administrative fee?",
     )
+    TRAVEL_EXPENCES_MANAGEMENT_CHOICES = (
+        ("booked", "Hotel and airfare will be booked by site; ground travel "
+                   "and meals/incidentals will be reimbursed within 60 days."),
+        ("reimbursed", "All expenses will be booked by instructors and "
+                       "reimbursed within 60 days."),
+        ("other", "Other:"),
+    )
+    travel_expences_management = models.CharField(
+        max_length=20,
+        null=False, blank=True, default="",
+        choices=TRAVEL_EXPENCES_MANAGEMENT_CHOICES,
+        verbose_name="How will you manage travel expenses for Carpentries "
+                     "Instructors?",
+    )
+    travel_expences_management_other = models.CharField(
+        max_length=STR_LONGEST,
+        null=False, blank=True, default='',
+        verbose_name="Other travel expences management",
+    )
     travel_expences_agreement = models.BooleanField(
-        null=False, blank=False, default=False,
+        null=False, blank=True, default=False,
         verbose_name="Regardless of the fee due to The Carpentries, I "
                      "understand I am also responsible for travel costs for "
                      "the Instructors which can include airfare, ground "
@@ -674,32 +696,13 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
                      "reimbursements will be completed within 60 days of "
                      "the workshop.",
     )
-    TRAVEL_EXPENCES_MANAGEMENT_CHOICES = (
-        ("booked", "Hotel and airfare will be booked by site; ground travel "
-                   "and meals/incidentals will be reimbursed within 60 days."),
-        ("reimbursed", "All expenses will be booked by instructors and "
-                       "reimbursed within 60 days."),
-        ("", "Other:"),
-    )
-    travel_expences_management = models.CharField(
-        max_length=20,
-        null=False, blank=False, default=None,
-        choices=TRAVEL_EXPENCES_MANAGEMENT_CHOICES,
-        verbose_name="How will you manage travel expenses for Carpentries "
-                     "Instructors?",
-    )
-    travel_expences_management_other = models.CharField(
-        max_length=STR_LONGEST,
-        null=False, blank=True, default='',
-        verbose_name="Other travel expences management",
-    )
     RESTRICTION_CHOICES = (
         ('no_restrictions', 'No restrictions'),
-        ('', 'Other:'),
+        ('other', 'Other:'),
     )
     institution_restrictions = models.CharField(
         max_length=20,
-        null=False, blank=False,
+        null=False, blank=True, default="",
         choices=RESTRICTION_CHOICES,
         verbose_name="Our instructors live, teach, and travel globally. We "
                      "understand that institutions may have citizenship or "
