@@ -27,6 +27,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('workshops', '0190_auto_20190728_1118'),
+        ('extrequests', '0008_auto_20190809_1004'),
     ]
 
     operations = [
