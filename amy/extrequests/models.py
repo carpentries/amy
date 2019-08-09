@@ -803,7 +803,7 @@ class SelfOrganizedSubmission(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     workshop_types = models.ManyToManyField(
         Curriculum, limit_choices_to={'active': True},
         blank=False,
-        verbose_name="Which Carpentry workshop are you teaching?",
+        verbose_name="Which Carpentries workshop are you teaching?",
     )
     workshop_types_other = models.CharField(
         max_length=STR_LONGEST,
