@@ -414,8 +414,8 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             errors['institution'] = ValidationError('Institution is required.')
         elif institution and institution_other_name:
             errors['institution_other_name'] = ValidationError(
-                "You must select institution from the list, or enter it's name below the list. "
-                "You can't do both.")
+                "You must select institution from the list, or enter its name "
+                "below the list. You can't do both.")
         elif institution and institution_other_URL:
             errors['institution_other_URL'] = ValidationError(
                 "You can't enter institution URL if you select institution "
@@ -426,9 +426,9 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             not institution and institution_other_name and not institution_other_URL
         ):
             errors['institution_other_name'] = ValidationError(
-                "You must enter both institution name and it's URL address.")
+                "You must enter both institution name and its URL address.")
 
-        # 2: require preferred_dates or it's "other" counterpart
+        # 2: require preferred_dates or its "other" counterpart
         preferred_dates = self.cleaned_data.get('preferred_dates', None)
         other_preferred_dates = self.cleaned_data.get('other_preferred_dates',
                                                       None)
@@ -765,8 +765,8 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
             errors['institution'] = ValidationError('Institution is required.')
         elif institution and institution_other_name:
             errors['institution_other_name'] = ValidationError(
-                "You must select institution from the list, or enter it's name below the list. "
-                "You can't do both.")
+                "You must select institution from the list, or enter its name "
+                "below the list. You can't do both.")
         elif institution and institution_other_URL:
             errors['institution_other_URL'] = ValidationError(
                 "You can't enter institution URL if you select institution "
@@ -777,7 +777,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
             not institution and institution_other_name and not institution_other_URL
         ):
             errors['institution_other_name'] = ValidationError(
-                "You must enter both institution name and it's URL address.")
+                "You must enter both institution name and its URL address.")
 
         # 2: make sure routine data, domains, academic level, computing level,
         #    workshop type all have something selected, but if it's "Don't know yet"
@@ -837,7 +837,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
                 "If you select \"Don't know yet\", you can't select "
                 "anything else.")
 
-        # 3: require preferred_dates or it's "other" counterpart
+        # 3: require preferred_dates or its "other" counterpart
         preferred_dates = self.cleaned_data.get('preferred_dates', None)
         other_preferred_dates = self.cleaned_data.get('other_preferred_dates',
                                                       None)
@@ -1049,8 +1049,8 @@ class SelfOrganizedSubmissionBaseForm(forms.ModelForm):
             errors['institution'] = ValidationError('Institution is required.')
         elif institution and institution_other_name:
             errors['institution_other_name'] = ValidationError(
-                "You must select institution from the list, or enter it's name below the list. "
-                "You can't do both.")
+                "You must select institution from the list, or enter its name "
+                "below the list. You can't do both.")
         elif institution and institution_other_URL:
             errors['institution_other_URL'] = ValidationError(
                 "You can't enter institution URL if you select institution "
@@ -1061,7 +1061,7 @@ class SelfOrganizedSubmissionBaseForm(forms.ModelForm):
             not institution and institution_other_name and not institution_other_URL
         ):
             errors['institution_other_name'] = ValidationError(
-                "You must enter both institution name and it's URL address.")
+                "You must enter both institution name and its URL address.")
 
         # 2: require workshop URL only if the format is standard 2-day workshop
         workshop_format = self.cleaned_data.get('workshop_format', '')
