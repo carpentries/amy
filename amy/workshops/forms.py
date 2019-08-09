@@ -136,7 +136,8 @@ class BootstrapHelper(FormHelper):
                 css_class='btn-secondary float-right',
                 onclick='window.history.back()'))
 
-        self.form_class = 'form-horizontal ' + additional_form_class
+        # offset here adds horizontal centering for all these forms
+        self.form_class = 'form-horizontal offset-lg-1' + additional_form_class
 
         self.form_tag = form_tag
 
