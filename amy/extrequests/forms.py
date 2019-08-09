@@ -215,7 +215,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         required=False,
         queryset=Organization.objects.order_by('fullname'),
                                      .exclude(fullname='self-organized'),
-        widget=Select2Widget,
+        widget=Select2Widget(fake_required=True),
         label=WorkshopRequest._meta.get_field('institution').verbose_name,
         help_text=WorkshopRequest._meta.get_field('institution').help_text,
     )
@@ -303,6 +303,9 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         )
 
         widgets = {
+            'preferred_dates': forms.DateInput(attrs={
+                'class': 'nopastdates'}),
+            'institution_other_URL': forms.TextInput(),
             'country': Select2Widget,
             'language': Select2Widget,
             'number_attendees': forms.RadioSelect(),
@@ -312,11 +315,14 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             'organization_type': forms.RadioSelect(),
             'administrative_fee': forms.RadioSelect(),
             'travel_expences_management':
-                RadioSelectWithOther('travel_expences_management_other'),
+                RadioSelectWithOther('travel_expences_management_other',
+                                     fake_required=True),
             'public_event':
-                RadioSelectWithOther('public_event_other'),
+                RadioSelectWithOther('public_event_other', fake_required=True),
             'institution_restrictions':
-                RadioSelectWithOther('institution_restrictions_other'),
+                RadioSelectWithOther('institution_restrictions_other',
+                                     fake_required=True),
+            'additional_contact': TagSelect2(),
         }
 
     def __init__(self, *args, **kwargs):
