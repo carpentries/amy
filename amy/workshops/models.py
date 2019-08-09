@@ -110,7 +110,7 @@ class HostResponsibilitiesMixin(models.Model):
         verbose_name='I understand <a href="https://docs.carpentries.org/'
                      'topic_folders/hosts_instructors/hosts_instructors_checklist.html'
                      '#host-checklist">the responsibilities of the workshop host</a>,'
-                     'including recruiting local helpers to support the workshop '
+                     ' including recruiting local helpers to support the workshop '
                      '(1 helper for every 8-10 learners).'
     )
 
@@ -2160,13 +2160,14 @@ class CommonRequest(models.Model):
         verbose_name="Department/school affiliation (if applicable)",
     )
     PUBLIC_EVENT_CHOICES = (
-        ('public', 'Yes, this workshop is open to the public'),
-        ('closed', 'No, this is a closed event'),
-        ('', 'Other:'),
+        ('invite', 'This event is open to learners by invitation only.'),
+        ('closed', 'This event is open to learners inside of my institution.'),
+        ('public', 'This event is open to learners outside of my institution.'),
+        ('other', 'Other:'),
     )
     public_event = models.CharField(
         max_length=20,
-        null=False, blank=False, default=None,
+        null=False, blank=True, default="",
         choices=PUBLIC_EVENT_CHOICES,
         verbose_name="Is this workshop open to the public?",
         help_text="Many of our workshops restrict registration to learners "
@@ -2233,7 +2234,7 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     requested_workshop_types = models.ManyToManyField(
         Curriculum, limit_choices_to={'active': True},
         blank=False,
-        verbose_name="Which Carpentry workshop are you requesting?",
+        verbose_name="Which Carpentries workshop are you requesting?",
         help_text="If your learners are new to programming and primarily "
                   "interested in working with data, Data Carpentry is likely "
                   "the best choice. If your learners are interested in "
@@ -2398,7 +2399,8 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     scholarship_circumstances = models.TextField(
         blank=True,
         verbose_name="Please explain the circumstances for your scholarship "
-                     "request",
+                     "request and let us know what budget you have towards "
+                     "The Carpentries workshop fees.",
         help_text="Required only if you request a scholarship."
     )
     travel_expences_agreement = models.BooleanField(
