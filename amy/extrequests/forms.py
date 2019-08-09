@@ -366,12 +366,19 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         self.helper.layout.fields.remove('institution_other_URL')
 
         # add warning alert for dates falling within next 2-3 months
+        DATES_TOO_SOON_WARNING = (
+            "The dates you have selected occurs outside of our 2-3 month "
+            "planning procedure. Please be advised that we will not be able "
+            "to guarantee that instructors will be available. If you have "
+            "flexibility with your dates please provide those dates or range "
+            "of dates."
+        )
         pos_index = self.helper.layout.fields.index('preferred_dates')
         self.helper.layout.insert(
             pos_index + 1,
             Div(
                 Div(
-                    HTML("Selected date falls within next 3 months!"),
+                    HTML(DATES_TOO_SOON_WARNING),
                     css_class='alert alert-warning offset-lg-2 col-lg-8 col-12',
                 ),
                 id='preferred_dates_warning',
@@ -709,12 +716,17 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         self.helper.layout.fields.remove('institution_other_URL')
 
         # add warning alert for proficiency computing level
+        PROFICIENCY_WARNING = (
+            "Our lessons are intended for novice or beginner level "
+            "programmers. Please be advised that the material covered in this "
+            "lesson may not match the skill set of your anticipated audience."
+        )
         pos_index = self.helper.layout.fields.index('computing_levels')
         self.helper.layout.insert(
             pos_index + 1,
             Div(
                 Div(
-                    HTML("Our workshops are designed for novice or beginning level."),
+                    HTML(PROFICIENCY_WARNING),
                     css_class='alert alert-warning offset-lg-2 col-lg-8 col-12',
                 ),
                 id='computing_levels_warning',
@@ -723,12 +735,19 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         )
 
         # add warning alert for dates falling within next 2-3 months
+        DATES_TOO_SOON_WARNING = (
+            "The dates you have selected occurs outside of our 2-3 month "
+            "planning procedure. Please be advised that we will not be able "
+            "to guarantee that instructors will be available. If you have "
+            "flexibility with your dates please provide those dates or range "
+            "of dates."
+        )
         pos_index = self.helper.layout.fields.index('preferred_dates')
         self.helper.layout.insert(
             pos_index + 1,
             Div(
                 Div(
-                    HTML("Selected date falls within next 3 months!"),
+                    HTML(DATES_TOO_SOON_WARNING),
                     css_class='alert alert-warning offset-lg-2 col-lg-8 col-12',
                 ),
                 id='preferred_dates_warning',
