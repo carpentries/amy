@@ -10,7 +10,7 @@
     "@fortawesome/fontawesome-free": "^5.1.1",
     "@ttskch/select2-bootstrap4-theme": "^1.0.5",
     "bootstrap": "^4.1.2",
-    "bootstrap-datepicker": "^1.8.0",
+    "bootstrap-datepicker": "^1.9.0",
     "datatables.net": "^1.10.19",
     "datatables.net-bs4": "^1.10.19",
     "datatables.net-dt": "^1.10.19",
