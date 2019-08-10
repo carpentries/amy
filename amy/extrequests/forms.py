@@ -560,11 +560,6 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         label=WorkshopInquiryRequest._meta.get_field('domains').verbose_name,
         help_text=WorkshopInquiryRequest._meta.get_field('domains').help_text,
     )
-    travel_expences_agreement = forms.BooleanField(
-        required=True,
-        label=WorkshopInquiryRequest._meta.get_field('travel_expences_agreement')
-                                    .verbose_name,
-    )
     data_privacy_agreement = forms.BooleanField(
         required=True,
         label=WorkshopInquiryRequest._meta.get_field('data_privacy_agreement')
@@ -790,9 +785,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         institution = self.cleaned_data.get('institution', None)
         institution_other_name = self.cleaned_data.get('institution_other_name', '')
         institution_other_URL = self.cleaned_data.get('institution_other_URL', '')
-        if not institution and not institution_other_name and not institution_other_URL:
-            errors['institution'] = ValidationError('Institution is required.')
-        elif institution and institution_other_name:
+        if institution and institution_other_name:
             errors['institution_other_name'] = ValidationError(
                 "You must select institution from the list, or enter its name "
                 "below the list. You can't do both.")
@@ -818,14 +811,6 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         academic_levels = self.cleaned_data.get("academic_levels", None)
         computing_levels = self.cleaned_data.get("computing_levels", None)
         requested_workshop_types = self.cleaned_data.get("requested_workshop_types", None)
-
-        # routine data required
-        if not routine_data and not routine_data_other:
-            errors['routine_data'] = ValidationError("This field is required.")
-
-        # domains required
-        if not domains and not domains_other:
-            errors['domains'] = ValidationError("This field is required.")
 
         if routine_data and routine_data.filter(unknown=True):
             if len(routine_data) > 1 or routine_data_other:
@@ -881,11 +866,16 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
             self.cleaned_data.get('travel_expences_management', '')
         travel_expences_management_other = \
             self.cleaned_data.get('travel_expences_management_other', '')
-        if not travel_expences_management and \
-                not travel_expences_management_other:
+        if (
+            travel_expences_management == "other" and
+            not travel_expences_management_other
+        ):
             errors['travel_expences_management'] = ValidationError(
-                "This field is required.")
-        elif travel_expences_management and travel_expences_management_other:
+                "Please provide description if you selected \"Other\".")
+        elif (
+            travel_expences_management != "other" and
+            travel_expences_management_other
+        ):
             errors['travel_expences_management'] = ValidationError(
                 "If you entered data in \"Other\" field, please select that "
                 "option.")
@@ -895,11 +885,16 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
             self.cleaned_data.get('institution_restrictions', '')
         institution_restrictions_other = \
             self.cleaned_data.get('institution_restrictions_other', '')
-        if not institution_restrictions and \
-                not institution_restrictions_other:
+        if (
+            institution_restrictions == "other" and
+            not institution_restrictions_other
+        ):
             errors['institution_restrictions'] = ValidationError(
-                "This field is required.")
-        elif institution_restrictions and institution_restrictions_other:
+                "Please provide description if you selected \"Other\".")
+        elif (
+            institution_restrictions != "other" and
+            institution_restrictions_other
+        ):
             errors['institution_restrictions'] = ValidationError(
                 "If you entered data in \"Other\" field, please select that "
                 "option.")
@@ -907,9 +902,10 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         # 6: require public event
         public_event =  self.cleaned_data.get('public_event', '')
         public_event_other = self.cleaned_data.get('public_event_other', '')
-        if not public_event and not public_event_other:
-            errors['public_event'] = ValidationError("This field is required.")
-        elif public_event and public_event_other:
+        if public_event == "other" and not public_event_other:
+            errors['public_event'] = ValidationError(
+                "Please provide description if you selected \"Other\".")
+        elif public_event != "other" and public_event_other:
             errors['public_event'] = ValidationError(
                 "If you entered data in \"Other\" field, please select that "
                 "option.")
