@@ -531,15 +531,14 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         required=False,
         queryset=Organization.objects.order_by('fullname')
                                      .exclude(domain='self-organized'),
-        widget=ListSelect2(fake_required=True),
+        widget=ListSelect2(),
         label=WorkshopInquiryRequest._meta.get_field('institution').verbose_name,
         help_text=WorkshopInquiryRequest._meta.get_field('institution').help_text,
     )
     routine_data = forms.ModelMultipleChoiceField(
         required=False,
         queryset=DataVariant.objects.all(),
-        widget=CheckboxSelectMultipleWithOthers('routine_data_other',
-                                                fake_required=True),
+        widget=CheckboxSelectMultipleWithOthers('routine_data_other'),
         label=WorkshopInquiryRequest._meta.get_field('routine_data').verbose_name,
         help_text=WorkshopInquiryRequest._meta.get_field('routine_data').help_text,
     )
@@ -550,8 +549,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
             # "Don't know yet" entry last
             Case(When(name="Don't know yet", then=-1)), 'name',
         ),
-        widget=CheckboxSelectMultipleWithOthers('domains_other',
-                                                fake_required=True),
+        widget=CheckboxSelectMultipleWithOthers('domains_other'),
         label=WorkshopInquiryRequest._meta.get_field('domains').verbose_name,
         help_text=WorkshopInquiryRequest._meta.get_field('domains').help_text,
     )
@@ -577,7 +575,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
     )
 
     requested_workshop_types = CurriculumModelMultipleChoiceField(
-        required=True,
+        required=False,
         queryset=Curriculum.objects.default_order(allow_other=True,
                                                   allow_unknown=True)
                                    .filter(active=True),
@@ -591,9 +589,8 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
     )
 
     carpentries_info_source = SafeModelMultipleChoiceField(
-        required=WorkshopInquiryRequest._meta
-                                       .get_field('carpentries_info_source')
-                                       .blank,
+        required=not WorkshopInquiryRequest
+                     ._meta.get_field('carpentries_info_source').blank,
         queryset=InfoSource.objects.all(),
         label=WorkshopInquiryRequest._meta.get_field('carpentries_info_source')
                                           .verbose_name,
@@ -655,13 +652,11 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
             'computing_levels': forms.CheckboxSelectMultiple(),
             'administrative_fee': forms.RadioSelect(),
             'travel_expences_management':
-                RadioSelectWithOther('travel_expences_management_other',
-                                     fake_required=True),
+                RadioSelectWithOther('travel_expences_management_other'),
             'public_event':
-                RadioSelectWithOther('public_event_other', fake_required=True),
+                RadioSelectWithOther('public_event_other'),
             'institution_restrictions':
-                RadioSelectWithOther('institution_restrictions_other',
-                                     fake_required=True),
+                RadioSelectWithOther('institution_restrictions_other'),
         }
 
     @staticmethod
