@@ -649,6 +649,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         widgets = {
             'preferred_dates': forms.DateInput(attrs={
                 'class': 'nopastdates'}),
+            'institution_other_URL': forms.TextInput(),
             'country': ListSelect2(),
             'language': ListSelect2(),
             'number_attendees': forms.RadioSelect(),
@@ -661,6 +662,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
                 RadioSelectWithOther('public_event_other'),
             'institution_restrictions':
                 RadioSelectWithOther('institution_restrictions_other'),
+            'additional_contact': TagSelect2(),
         }
 
     @staticmethod
@@ -1000,12 +1002,14 @@ class SelfOrganizedSubmissionBaseForm(forms.ModelForm):
         )
 
         widgets = {
+            'institution_other_URL': forms.TextInput(),
             'country': ListSelect2(),
             'language': ListSelect2(),
             'workshop_format':
                 RadioSelectWithOther('workshop_format_other'),
             'public_event':
                 RadioSelectWithOther('public_event_other'),
+            'additional_contact': TagSelect2(),
         }
 
     @staticmethod
