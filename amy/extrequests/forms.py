@@ -1,3 +1,5 @@
+import datetime
+
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.layout import Layout, Div, HTML, Submit, Field
 from django import forms
@@ -447,7 +449,12 @@ class WorkshopRequestBaseForm(forms.ModelForm):
                                                       None)
         if not preferred_dates and not other_preferred_dates:
             errors['preferred_dates'] = ValidationError(
-                "This field is required.")
+                "This field or the field below is required.")
+
+        yesterday = datetime.datetime.utcnow().date() - datetime.timedelta(days=1)
+        if preferred_dates and preferred_dates < yesterday:
+            errors['preferred_dates'] = ValidationError(
+                "You cannot select date in the past.")
 
         # 3: circumstances for scholarship request only required if scholarship
         #    is chosen
@@ -645,6 +652,8 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         )
 
         widgets = {
+            'preferred_dates': forms.DateInput(attrs={
+                'class': 'nopastdates'}),
             'country': ListSelect2(),
             'language': ListSelect2(),
             'number_attendees': forms.RadioSelect(),
@@ -861,9 +870,11 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         preferred_dates = self.cleaned_data.get('preferred_dates', None)
         other_preferred_dates = self.cleaned_data.get('other_preferred_dates',
                                                       None)
-        if not preferred_dates and not other_preferred_dates:
+
+        yesterday = datetime.datetime.utcnow().date() - datetime.timedelta(days=1)
+        if preferred_dates and preferred_dates < yesterday:
             errors['preferred_dates'] = ValidationError(
-                "This field is required.")
+                "You cannot select date in the past.")
 
         # 4: require travel expenses
         travel_expences_management = \
