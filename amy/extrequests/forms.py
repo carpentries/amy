@@ -941,7 +941,7 @@ class SelfOrganizedSubmissionBaseForm(forms.ModelForm):
         required=False,
         queryset=Organization.objects.order_by('fullname')
                                      .exclude(fullname='self-organized'),
-        widget=ListSelect2(),
+        widget=ListSelect2(fake_required=True),
         label=SelfOrganizedSubmission._meta.get_field('institution').verbose_name,
         help_text=SelfOrganizedSubmission._meta.get_field('institution').help_text,
     )
