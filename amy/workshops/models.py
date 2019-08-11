@@ -2332,49 +2332,6 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         verbose_name="Please describe your anticipated audience, including "
                      "their experience, background, and goals",
     )
-    # TODO: remove
-    ORGANIZATION_TYPE_CHOICES = (
-        ("self", "Self-organized"),
-        ("central", "Centrally-organized"),
-    )
-    # TODO: remove
-    SELF_ORGANIZED_NOTES = (
-        "If you are already connected with The Carpentries certified "
-        "Instructors, we welcome you to organize and run your own workshop "
-        "without administrative assistance from our staff. In the case of "
-        "self-organized workshops, you will work with your certified "
-        "Instructors on all aspects of workshop organization, including "
-        "curriculum and lesson planning, as well as logistical details such "
-        "as learner registration. In order to use our name and logo at your "
-        "event, we require that you follow our curriculum (described on the "
-        "lessons pages above), have at least one certified Carpentries "
-        "Instructor teaching at your event, and share workshop attendance "
-        "data. There is no fee (mandated or suggested) for running a "
-        "self-organized workshop."
-    )
-    # TODO: remove
-    CENTRALLY_ORGANIZED_NOTES = (
-        "The Carpentries staff will work with you to recruit Instructors and "
-        "support all other logistical details. Fees due to The Carpentries "
-        "are described below."
-    )
-    # MISSING, but will be removed since self-org requests will be moved
-    # to the SelfOrganizedSubmission model
-    organization_type = models.CharField(
-        max_length=15,
-        choices=ORGANIZATION_TYPE_CHOICES,
-        blank=False, null=False, default='central',
-        verbose_name="Will this be a self-organized or "
-                     "centrally-organized workshop?",
-    )
-    # MISSING, but will be removed since self-org requests will be moved
-    # to the SelfOrganizedSubmission model
-    self_organized_github = models.URLField(
-        max_length=STR_LONGEST,
-        blank=True, null=False,
-        verbose_name="Link to workshop GitHub page",
-        help_text="Please provide URL."
-    )
     FEE_CHOICES = (
         ("nonprofit", "I am with a government site, university, or other "
                       "nonprofit. I understand the workshop fee of US$2500, "
