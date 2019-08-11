@@ -15,6 +15,7 @@ from workshops.filters import (
     StateFilterSet,
     ForeignKeyAllValuesFilter,
     AllCountriesFilter,
+    ContinentFilter,
 )
 from workshops.models import (
     Person,
@@ -153,6 +154,7 @@ class TrainingRequestFilter(AMYFilterSet):
 class WorkshopRequestFilter(AMYFilterSet, StateFilterSet):
     assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2Widget)
     country = AllCountriesFilter(widget=Select2Widget)
+    continent = ContinentFilter(widget=Select2Widget, label="Continent")
     requested_workshop_types = django_filters.ModelMultipleChoiceFilter(
         label='Requested workshop types',
         queryset=Curriculum.objects.all(),
@@ -182,6 +184,7 @@ class WorkshopRequestFilter(AMYFilterSet, StateFilterSet):
 class WorkshopInquiryFilter(AMYFilterSet, StateFilterSet):
     assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2Widget)
     country = AllCountriesFilter(widget=Select2Widget)
+    continent = ContinentFilter(widget=Select2Widget, label="Continent")
     requested_workshop_types = django_filters.ModelMultipleChoiceFilter(
         label='Requested workshop types',
         queryset=Curriculum.objects.all(),
