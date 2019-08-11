@@ -337,7 +337,6 @@ class WorkshopRequestBaseForm(forms.ModelForm):
 
         self.fields['travel_expences_management'].required = False
         self.fields['institution_restrictions'].required = False
-        self.fields['public_event'].required = False
 
         # set up a layout object for the helper
         self.helper.layout = self.helper.build_default_layout(self)

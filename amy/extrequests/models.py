@@ -732,6 +732,15 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
                      "with us?",
     )
 
+    # override field `public_event` from CommonRequest mixin
+    public_event = models.CharField(
+        max_length=CommonRequest._meta.get_field('public_event').max_length,
+        null=False, blank=True, default="",
+        choices=CommonRequest._meta.get_field('public_event').choices,
+        verbose_name=CommonRequest._meta.get_field('public_event').verbose_name,
+        help_text=CommonRequest._meta.get_field('public_event').help_text,
+    )
+
     class Meta:
         ordering = ['created_at']
 

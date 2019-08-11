@@ -2167,7 +2167,7 @@ class CommonRequest(models.Model):
     )
     public_event = models.CharField(
         max_length=20,
-        null=False, blank=True, default="",
+        null=False, blank=False, default="",
         choices=PUBLIC_EVENT_CHOICES,
         verbose_name="Is this workshop open to the public?",
         help_text="Many of our workshops restrict registration to learners "
