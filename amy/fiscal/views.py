@@ -80,6 +80,14 @@ class OrganizationCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
     model = Organization
     form_class = OrganizationCreateForm
 
+    def get_initial(self):
+        initial = {
+            'domain': self.request.GET.get('domain', ''),
+            'fullname': self.request.GET.get('fullname', ''),
+            'comment': self.request.GET.get('comment', ''),
+        }
+        return initial
+
 
 class OrganizationUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
                          AMYUpdateView):

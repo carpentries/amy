@@ -23,7 +23,12 @@
         <td>{{ object.personal }} {{ object.family }} &lt;{{ object.email|urlize }}&gt;</td></tr>
     <tr><th>Institution:</th>
         <td>
-          {% if object.institution %}<a href="{{ object.institution.domain }}">{{ object.institution }}</a>{% else %}<a href="{{ object.institution_other_URL }}">{{ object.institution_other_name }}</a>{% endif %}{% if object.institution_department %}, {{ object.institution_department }}{% endif %}
+        {% if object.institution %}
+          <a href="{{ object.institution.get_absolute_url }}">{{ object.institution }}</a>{% if object.institution_department %}, {{ object.institution_department }}{% endif %}
+        {% else %}
+          {{ object.institution_other_name }}{% if object.institution_department %}, {{ object.institution_department }}{% endif %} <a href="{{ object.institution_other_URL }}">&lt;{{ object.institution_other_URL }}&gt;</a>
+          {% if admin %}<a href="{% url 'organization_add' %}?domain={{ object.institution_other_URL|urlencode }}&fullname={{ object.institution_other_name|urlencode }}&comment={{ object.institution_department|urlencode }}"><i class="fas fa-plus"></i></a>{% endif %}
+        {% endif %}
         </td></tr>
     <tr><th>Workshop format:</th>
         <td>
