@@ -17,6 +17,9 @@ from faker.providers import BaseProvider
 
 from extrequests.models import (
     DataAnalysisLevel,
+    DataVariant,
+    WorkshopInquiryRequest,
+    SelfOrganizedSubmission,
 )
 from workshops.models import (
     Airport,
@@ -39,6 +42,7 @@ from workshops.models import (
     ComputingExperienceLevel,
     Language,
     Curriculum,
+    InfoSource,
     WorkshopRequest,
 )
 from workshops.util import create_username
@@ -521,33 +525,34 @@ class Command(BaseCommand):
             if randbool(0.3):
                 org = choice(organizations)
                 org_name = ''
+                org_url = ''
             else:
                 org = None
                 org_name = self.faker.company()
+                org_url = self.faker.url()
 
-            organization_type = choice(
-                    WorkshopRequest.ORGANIZATION_TYPE_CHOICES)[0]
-            if organization_type == 'self':
-                self_organized_github = self.faker.uri()
-                administrative_fee = 'nonprofit'  # doesn't matter
-                scholarship_circumstances = ""
-                travel_expences_agreement = False
-                travel_expences_management = ""
-                travel_expences_management_other = ""
-            else:
-                self_organized_github = ""
-                administrative_fee = choice(WorkshopRequest.FEE_CHOICES)[0]
-                scholarship_circumstances = (
-                    self.faker.sentence()
-                    if administrative_fee == 'waiver'
-                    else "")
-                travel_expences_agreement = True
-                travel_expences_management = choice(
-                    WorkshopRequest.TRAVEL_EXPENCES_MANAGEMENT_CHOICES)[0]
-                travel_expences_management_other = (
-                    self.faker.sentence()
-                    if travel_expences_management == ''
-                    else "")
+            public_event = choice(WorkshopRequest.PUBLIC_EVENT_CHOICES)[0]
+            public_event_other = (
+                self.faker.sentence() if public_event == 'other'
+                else ""
+            )
+            administrative_fee = choice(WorkshopRequest.FEE_CHOICES)[0]
+            scholarship_circumstances = (
+                self.faker.sentence() if administrative_fee == 'waiver'
+                else ""
+            )
+            travel_expences_management = choice(
+                WorkshopRequest.TRAVEL_EXPENCES_MANAGEMENT_CHOICES)[0]
+            travel_expences_management_other = (
+                self.faker.sentence() if travel_expences_management == ''
+                else ""
+            )
+            institution_restrictions = choice(
+                WorkshopRequest.RESTRICTION_CHOICES)[0]
+            institution_restrictions_other = (
+                self.faker.sentence() if institution_restrictions == ''
+                else ""
+            )
 
 
             req = WorkshopRequest.objects.create(
@@ -562,43 +567,221 @@ class Command(BaseCommand):
 
                 institution=org,
                 institution_other_name=org_name,
+                institution_other_URL=org_url,
                 institution_department='',
+
+                public_event=public_event,
+                public_event_other=public_event_other,
+                additional_contact=(
+                    'Test Person <email@email.com>,'
+                    'Another Person <person@example.com>'
+                ),
+
                 location=self.faker.city(),
                 country=choice(Countries)[0],
 
-                conference_details='',
-                preferred_dates=str(self.faker.date_time_between(
-                    start_date='now', end_date='+1y').date()),
-                other_preferred_dates='soon'
+                preferred_dates=self.faker.date_time_between(
+                    start_date='now', end_date='+1y').date(),
+                other_preferred_dates='Alternatively: soon',
 
                 language=language,
                 number_attendees=choice(
                     WorkshopRequest.ATTENDEES_NUMBER_CHOICES)[0],
-                # domains=[],  # will be selected below because it's M2M
-                domains_other='',
-                # academic_levels=[],  # will be selected below
-                # computing_levels=[],  # will be selected below
                 audience_description=self.faker.sentence(),
 
-                # requested_workshop_types=[],  # will be selected below
-
-                organization_type=organization_type,
-                self_organized_github=self_organized_github,
                 administrative_fee=administrative_fee,
                 scholarship_circumstances=scholarship_circumstances,
-                travel_expences_agreement=travel_expences_agreement,
+                travel_expences_agreement=True,
                 travel_expences_management=travel_expences_management,
                 travel_expences_management_other=travel_expences_management_other,
 
+                institution_restrictions=institution_restrictions,
+                institution_restrictions_other=institution_restrictions_other,
+
+                carpentries_info_source_other='',
                 user_notes = self.faker.sentence(),
             )
 
+            req.requested_workshop_types.set(sample(curricula))
+            req.carpentries_info_source.set(sample(InfoSource.objects.all()))
+            req.save()
+
+    def fake_workshop_inquiries(self, count=10):
+        self.stdout.write('Generating {} fake '
+                          'workshop inquiries...'.format(count))
+
+        curricula = Curriculum.objects.filter(active=True)
+        organizations = Organization.objects.all()
+
+        for _ in range(count):
+            if randbool(0.5):
+                language = Language.objects.get(subtag='en')
+            else:
+                language = choice(Language.objects.all())
+
+            if randbool(0.3):
+                org = choice(organizations)
+                org_name = ''
+                org_url = ''
+            else:
+                org = None
+                org_name = self.faker.company()
+                org_url = self.faker.url()
+
+            public_event = choice(
+                WorkshopInquiryRequest.PUBLIC_EVENT_CHOICES)[0]
+            public_event_other = (
+                self.faker.sentence() if public_event == 'other'
+                else ""
+            )
+            administrative_fee = choice(WorkshopInquiryRequest.FEE_CHOICES)[0]
+            travel_expences_management = choice(
+                WorkshopInquiryRequest.TRAVEL_EXPENCES_MANAGEMENT_CHOICES)[0]
+            travel_expences_management_other = (
+                self.faker.sentence() if travel_expences_management == ''
+                else ""
+            )
+            institution_restrictions = choice(
+                WorkshopInquiryRequest.RESTRICTION_CHOICES)[0]
+            institution_restrictions_other = (
+                self.faker.sentence() if institution_restrictions == ''
+                else ""
+            )
+
+            req = WorkshopInquiryRequest.objects.create(
+                state=choice(['p', 'd', 'a']),
+                data_privacy_agreement=randbool(0.5),
+                code_of_conduct_agreement=randbool(0.5),
+                host_responsibilities=randbool(0.5),
+
+                personal=self.faker.first_name(),
+                family=self.faker.last_name(),
+                email=self.faker.email(),
+
+                institution=org,
+                institution_other_name=org_name,
+                institution_other_URL=org_url,
+                institution_department='',
+
+                public_event=public_event,
+                public_event_other=public_event_other,
+                additional_contact=(
+                    'Test Person <email@email.com>,'
+                    'Another Person <person@example.com>'
+                ),
+
+                location=self.faker.city(),
+                country=choice(Countries)[0],
+
+                routine_data_other='',
+                domains_other='',
+
+                audience_description=self.faker.sentence(),
+
+                preferred_dates=self.faker.date_time_between(
+                    start_date='now', end_date='+1y').date(),
+                other_preferred_dates='Alternatively: soon',
+
+                language=language,
+                number_attendees=choice(
+                    WorkshopInquiryRequest.ATTENDEES_NUMBER_CHOICES)[0],
+
+                administrative_fee=administrative_fee,
+                travel_expences_agreement=True,
+                travel_expences_management=travel_expences_management,
+                travel_expences_management_other=travel_expences_management_other,
+
+                institution_restrictions=institution_restrictions,
+                institution_restrictions_other=institution_restrictions_other,
+
+                carpentries_info_source_other='',
+                user_notes = self.faker.sentence(),
+            )
+
+            req.routine_data.set(sample(DataVariant.objects.all()))
             req.domains.set(sample(KnowledgeDomain.objects.all()))
             req.academic_levels.set(sample(AcademicLevel.objects.all()))
             req.computing_levels.set(sample(ComputingExperienceLevel.objects.all()))
             req.requested_workshop_types.set(sample(curricula))
+            req.carpentries_info_source.set(sample(InfoSource.objects.all()))
             req.save()
 
+
+    def fake_selforganized_submissions(self, count=10):
+        self.stdout.write('Generating {} fake '
+                          'self-organized submissions...'.format(count))
+
+        curricula = Curriculum.objects.filter(active=True)
+        organizations = Organization.objects.all()
+
+        for _ in range(count):
+            if randbool(0.5):
+                language = Language.objects.get(subtag='en')
+            else:
+                language = choice(Language.objects.all())
+
+            if randbool(0.3):
+                org = choice(organizations)
+                org_name = ''
+                org_url = ''
+            else:
+                org = None
+                org_name = self.faker.company()
+                org_url = self.faker.url()
+
+            public_event = choice(
+                SelfOrganizedSubmission.PUBLIC_EVENT_CHOICES)[0]
+            public_event_other = (
+                self.faker.sentence() if public_event == 'other'
+                else ""
+            )
+            workshop_format = choice(SelfOrganizedSubmission.FORMAT_CHOICES)[0]
+            workshop_format_other = (
+                self.faker.sentence() if workshop_format == ''
+                else ""
+            )
+            if randbool(0.5):
+                workshop_types = curricula.filter(mix_match=True)
+                workshop_types_explain = "\n".join([
+                    str(lesson) for lesson in Lesson.objects.order_by("?")[:10]
+                ])
+            else:
+                workshop_types = sample(curricula)
+                workshop_types_explain = ""
+
+            req = SelfOrganizedSubmission.objects.create(
+                state=choice(['p', 'd', 'a']),
+                data_privacy_agreement=randbool(0.5),
+                code_of_conduct_agreement=randbool(0.5),
+                host_responsibilities=randbool(0.5),
+
+                personal=self.faker.first_name(),
+                family=self.faker.last_name(),
+                email=self.faker.email(),
+
+                institution=org,
+                institution_other_name=org_name,
+                institution_other_URL=org_url,
+                institution_department='',
+
+                public_event=public_event,
+                public_event_other=public_event_other,
+                additional_contact=(
+                    'Test Person <email@email.com>,'
+                    'Another Person <person@example.com>'
+                ),
+
+                workshop_url=self.faker.url(),
+                workshop_format=workshop_format,
+                workshop_format_other=workshop_format_other,
+                workshop_types_other='',
+                workshop_types_other_explain=workshop_types_explain,
+
+                language=language,
+            )
+
+            req.workshop_types.set(workshop_types)
+            req.save()
 
     def handle(self, *args, **options):
         seed = options['seed']
@@ -625,6 +808,8 @@ class Command(BaseCommand):
             self.fake_unmatched_training_requests()
             self.fake_duplicated_people()
             self.fake_workshop_requests()
+            self.fake_workshop_inquiries()
+            self.fake_selforganized_submissions()
         except IntegrityError as e:
             print("!!!" * 10)
             print("Delete the database, and rerun this script.")
