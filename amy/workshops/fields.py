@@ -159,5 +159,13 @@ class ModelSelect2MultipleWidget(Select2BootstrapMixin,
 
 class Select2TagWidget(Select2BootstrapMixin, DS2_Select2TagWidget):
     def value_from_datadict(self, data, files, name):
-        data.setdefault(name, '')
-        return super().value_from_datadict(data, files, name)
+        # sometimes data is held as an immutable QueryDict
+        # in those cases, we need to make a copy of it to "disable"
+        # the mutability
+        try:
+            data_mutable = data.copy()
+        except AttributeError:
+            data_mutable = data
+
+        data_mutable.setdefault(name, '')
+        return super().value_from_datadict(data_mutable, files, name)
