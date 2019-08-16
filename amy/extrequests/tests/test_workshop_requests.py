@@ -1,3 +1,5 @@
+import datetime
+
 from django.conf import settings
 from django.urls import reverse
 
@@ -11,11 +13,12 @@ from workshops.models import (
     AcademicLevel,
     ComputingExperienceLevel,
     Curriculum,
+    InfoSource,
 )
-from workshops.tests.base import TestBase
+from workshops.tests.base import TestBase, FormTestHelper
 
 
-class TestWorkshopRequestBaseForm(TestBase):
+class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
     """Test base form validation."""
 
     def test_minimal_form(self):
@@ -25,28 +28,35 @@ class TestWorkshopRequestBaseForm(TestBase):
             'family': 'Potter',
             'email': 'hpotter@magic.gov',
             'institution_other_name': 'Ministry of Magic',
+            'institution_other_URL': 'magic.gov.uk',
             'location': 'London',
             'country': 'GB',
-            'preferred_dates': '',
-            'other_preferred_dates': '03-04 November, 2018',
+            'requested_workshop_types': [
+                Curriculum.objects.default_order(allow_unknown=False,
+                                                 allow_other=False)
+                                  .filter(active=True)
+                                  .first().pk,
+            ],
+            'preferred_dates': '2019-08-16',
+            'other_preferred_dates': '17-18 August, 2019',
             'language':  Language.objects.get(name='English').pk,
             'number_attendees': '10-40',
-            'domains': [],
-            'domains_other': 'Wizardry',
-            'academic_levels': [AcademicLevel.objects.first().pk],
-            'computing_levels': [ComputingExperienceLevel.objects.first().pk],
             'audience_description': 'Students of Hogwarts',
-            'requested_workshop_types': [
-                Curriculum.objects.first().pk,
-            ],
-            'organization_type': 'central',
-            'self_organized_github': '',
             'administrative_fee': 'waiver',
             'scholarship_circumstances': 'Bugdet cuts in Ministry of Magic',
-            'travel_expences_agreement': True,
             'travel_expences_management': 'booked',
             'travel_expences_management_other': '',
-            'comment': 'N/c',
+            'travel_expences_agreement': True,
+            'institution_restrictions': '',
+            'institution_restrictions_other': 'Only for wizards',
+            'public_event': 'closed',
+            'public_event_other': '',
+            'additional_contact': '',
+            'carpentries_info_source': [
+                InfoSource.objects.first().pk,
+            ],
+            'carpentries_info_source_other': '',
+            'user_notes': 'n/c',
             'data_privacy_agreement': True,
             'code_of_conduct_agreement': True,
             'host_responsibilities': True,
@@ -55,252 +65,226 @@ class TestWorkshopRequestBaseForm(TestBase):
         self.assertTrue(form.is_valid(), dict(form.errors))
 
     def test_institution_validation(self):
-        """Make sure some institution data is present, and validation
+        """Make sure institution data is present, and validation
         errors are triggered for various matrix of input data."""
 
         # 1: selected institution from the list
         data = {
             'institution': Organization.objects.first().pk,
             'institution_other_name': '',
+            'institution_other_URL': '',
             'institution_department': 'School of Wizardry',
         }
         form = WorkshopRequestBaseForm(data)
         self.assertNotIn('institution', form.errors)
         self.assertNotIn('institution_other_name', form.errors)
+        self.assertNotIn('institution_other_URL', form.errors)
         self.assertNotIn('institution_department', form.errors)
 
         # 2: institution name manually entered
         data = {
             'institution': '',
             'institution_other_name': 'Hogwarts',
+            'institution_other_URL': 'hogwarts.uk',
             'institution_department': 'School of Wizardry',
         }
         form = WorkshopRequestBaseForm(data)
         self.assertNotIn('institution', form.errors)
         self.assertNotIn('institution_other_name', form.errors)
+        self.assertNotIn('institution_other_URL', form.errors)
         self.assertNotIn('institution_department', form.errors)
 
         # 3: no institution and no department
         data = {
             'institution': '',
             'institution_other_name': '',
+            'institution_other_URL': '',
             'institution_department': '',
         }
         form = WorkshopRequestBaseForm(data)
         self.assertIn('institution', form.errors)  # institution is required
         self.assertNotIn('institution_other_name', form.errors)
+        self.assertNotIn('institution_other_URL', form.errors)
         self.assertNotIn('institution_department', form.errors)
 
-        # 4: no institution, but department selected
+        # 4: other name, but no other URL (+ no institution)
         data = {
             'institution': '',
-            'institution_other_name': '',
-            'institution_department': 'School of Wizardry',
-        }
-        form = WorkshopRequestBaseForm(data)
-        self.assertIn('institution', form.errors)  # institution is required
-        self.assertNotIn('institution_other_name', form.errors)
-        # institution is required for not-empty department
-        self.assertIn('institution_department', form.errors)
-
-        # 5: both institution and institution_other_name filled
-        data = {
-            'institution': Organization.objects.first().pk,
             'institution_other_name': 'Hogwarts',
+            'institution_other_URL': '',
             'institution_department': '',
         }
         form = WorkshopRequestBaseForm(data)
         self.assertNotIn('institution', form.errors)
-        self.assertIn('institution_other_name', form.errors)  # can't use both fields
+        self.assertIn('institution_other_name', form.errors)
+        self.assertNotIn('institution_other_URL', form.errors)
         self.assertNotIn('institution_department', form.errors)
 
-    def test_organization_type(self):
-        """Test validation of fields related to values in
-        `organization_type`."""
-
-        # 1: valid self-organized
+        # 5: other URL, but no other name (+ no institution)
         data = {
-            'organization_type': 'self',
-            'self_organized_github':
-                'http://hogwarts.github.io/2018-11-03-Hogwarts',
-            'administrative_fee': 'nonprofit',  # needs to be present
-            'scholarship_circumstances': '',
+            'institution': '',
+            'institution_other_name': '',
+            'institution_other_URL': 'hogwarts.uk',
+            'institution_department': '',
         }
         form = WorkshopRequestBaseForm(data)
-        self.assertNotIn('organization_type', form.errors)
-        self.assertNotIn('self_organized_github', form.errors)
-        self.assertNotIn('administrative_fee', form.errors)
-        self.assertNotIn('scholarship_circumstances', form.errors)
+        self.assertNotIn('institution', form.errors)
+        self.assertIn('institution_other_name', form.errors)
+        self.assertNotIn('institution_other_URL', form.errors)
+        self.assertNotIn('institution_department', form.errors)
 
-        # 2: valid centrally-organized (no waiver)
+        # 6: institution, other name, no other URL
         data = {
-            'organization_type': 'central',
-            'self_organized_github': '',
-            'administrative_fee': 'nonprofit',
-            'scholarship_circumstances': '',
+            'institution': Organization.objects.first().pk,
+            'institution_other_name': 'Hogwarts',
+            'institution_other_URL': '',
+            'institution_department': '',
         }
         form = WorkshopRequestBaseForm(data)
-        self.assertNotIn('organization_type', form.errors)
-        self.assertNotIn('self_organized_github', form.errors)
-        self.assertNotIn('administrative_fee', form.errors)
-        self.assertNotIn('scholarship_circumstances', form.errors)
+        self.assertNotIn('institution', form.errors)
+        self.assertIn('institution_other_name', form.errors)
+        self.assertNotIn('institution_other_URL', form.errors)
+        self.assertNotIn('institution_department', form.errors)
 
-        # 3: valid centrally-organized (with waiver)
+        # 7: institution, other URL, no other name
         data = {
-            'organization_type': 'central',
-            'self_organized_github': '',
+            'institution': Organization.objects.first().pk,
+            'institution_other_name': '',
+            'institution_other_URL': 'hogwarts.uk',
+            'institution_department': '',
+        }
+        form = WorkshopRequestBaseForm(data)
+        self.assertNotIn('institution', form.errors)
+        self.assertNotIn('institution_other_name', form.errors)
+        self.assertIn('institution_other_URL', form.errors)
+        self.assertNotIn('institution_department', form.errors)
+
+        # 8: wrong URL format
+        data = {
+            'institution': '',
+            'institution_other_name': 'Hogwarts',
+            'institution_other_URL': 'wrong_url',
+            'institution_department': '',
+        }
+        form = WorkshopRequestBaseForm(data)
+        self.assertNotIn('institution', form.errors)
+        self.assertIn('institution_other_name', form.errors)
+        self.assertIn('institution_other_URL', form.errors)
+        self.assertNotIn('institution_department', form.errors)
+
+    def test_dates_validation(self):
+        """Ensure preferred dates validation."""
+        # 1: both empty will trigger error
+        data = {
+            'preferred_dates': '',
+            'other_preferred_dates': '',
+        }
+        form = WorkshopRequestBaseForm(data)
+        self.assertIn('preferred_dates', form.errors)
+        self.assertNotIn('other_preferred_dates', form.errors)
+
+        # 2: either one present will work
+        data = {
+            'preferred_dates': '2019-08-16',
+            'other_preferred_dates': '',
+        }
+        form = WorkshopRequestBaseForm(data)
+        self.assertNotIn('preferred_dates', form.errors)
+        self.assertNotIn('other_preferred_dates', form.errors)
+
+        data = {
+            'preferred_dates': '',
+            'other_preferred_dates': 'Next weekend',
+        }
+        form = WorkshopRequestBaseForm(data)
+        self.assertNotIn('preferred_dates', form.errors)
+        self.assertNotIn('other_preferred_dates', form.errors)
+
+        # 3: preferred date from the past
+        data = {
+            'preferred_dates': '2000-01-01',
+            'other_preferred_dates': '',
+        }
+        form = WorkshopRequestBaseForm(data)
+        self.assertIn('preferred_dates', form.errors)
+        self.assertNotIn('other_preferred_dates', form.errors)
+
+        # 4: preferred date wrong format 
+        data = {
+            'preferred_dates': '{:d-m-Y}'.format(datetime.date.today()),
+            'other_preferred_dates': '',
+        }
+        form = WorkshopRequestBaseForm(data)
+        self.assertIn('preferred_dates', form.errors)
+        self.assertNotIn('other_preferred_dates', form.errors)
+
+    def test_scholarship_circumstances(self):
+        """Test validation of scholarship circumstances"""
+        # 1: waiver and scholarship circumstances provided
+        data = {
             'administrative_fee': 'waiver',
-            'scholarship_circumstances': "We're cheap",
+            'scholarship_circumstances': 'Budget cuts',
         }
         form = WorkshopRequestBaseForm(data)
-        self.assertNotIn('organization_type', form.errors)
-        self.assertNotIn('self_organized_github', form.errors)
         self.assertNotIn('administrative_fee', form.errors)
         self.assertNotIn('scholarship_circumstances', form.errors)
 
-        # 4: URL required for self-organized workshop type
+        # 2: circumstances missing
         data = {
-            'organization_type': 'self',
-            'self_organized_github': '',
-            'administrative_fee': 'nonprofit',  # field is required
-            'scholarship_circumstances': '',
-        }
-        form = WorkshopRequestBaseForm(data)
-        self.assertNotIn('organization_type', form.errors)
-        self.assertIn('self_organized_github', form.errors)
-        self.assertNotIn('administrative_fee', form.errors)
-        self.assertNotIn('scholarship_circumstances', form.errors)
-
-        # 5: fee required for centrally-organized workshop type
-        data = {
-            'organization_type': 'central',
-            'self_organized_github': '',
-            'administrative_fee': '',
-            'scholarship_circumstances': '',
-        }
-        form = WorkshopRequestBaseForm(data)
-        self.assertNotIn('organization_type', form.errors)
-        self.assertNotIn('self_organized_github', form.errors)
-        self.assertIn('administrative_fee', form.errors)
-        self.assertNotIn('scholarship_circumstances', form.errors)
-
-        # 6: waiver circumstances explanation required for centrally-organized
-        #    workshop type with waiver request
-        data = {
-            'organization_type': 'central',
-            'self_organized_github': '',
             'administrative_fee': 'waiver',
             'scholarship_circumstances': '',
         }
         form = WorkshopRequestBaseForm(data)
-        self.assertNotIn('organization_type', form.errors)
-        self.assertNotIn('self_organized_github', form.errors)
         self.assertNotIn('administrative_fee', form.errors)
         self.assertIn('scholarship_circumstances', form.errors)
 
-        # 7: special case - someone left garbage in URL field, but selected
-        #    centrally-organized workshop type; in this case URL field contents
-        #    is not removed, and shows up in errors
+        # 3: circumstances missing, but this time it's not for a waiver
         data = {
-            'organization_type': 'central',
-            'self_organized_github': 'not-a-real-URL',
             'administrative_fee': 'nonprofit',
             'scholarship_circumstances': '',
         }
         form = WorkshopRequestBaseForm(data)
-        self.assertNotIn('organization_type', form.errors)
-        self.assertIn('self_organized_github', form.errors)
         self.assertNotIn('administrative_fee', form.errors)
         self.assertNotIn('scholarship_circumstances', form.errors)
 
-        # 8: missing organization type
+        # 3: circumstances provided, but this time it's not for a waiver
         data = {
-            'organization_type': '',
-            'administrative_fee': 'nonprofit',  # field is required
+            'administrative_fee': 'nonprofit',
+            'scholarship_circumstances': 'Budget cuts',
         }
         form = WorkshopRequestBaseForm(data)
-        self.assertIn('organization_type', form.errors)
-        self.assertNotIn('self_organized_github', form.errors)
         self.assertNotIn('administrative_fee', form.errors)
-        self.assertNotIn('scholarship_circumstances', form.errors)
-
-    def test_domains(self):
-        """Test validation of domains."""
-
-        # 1: data required
-        data = {
-            'domains': [],
-            'domains_other': '',
-        }
-        form = WorkshopRequestBaseForm(data)
-        self.assertIn('domains', form.errors)
-        self.assertNotIn('domains_other', form.errors)
-
-        # 2: valid entry (domains only)
-        data = {
-            'domains': [KnowledgeDomain.objects.first().pk],
-            'domains_other': '',
-        }
-        form = WorkshopRequestBaseForm(data)
-        self.assertNotIn('domains', form.errors)
-        self.assertNotIn('domains_other', form.errors)
-
-        # 3: valid entry (domains_other only)
-        data = {
-            'domains': [],
-            'domains_other': 'Wizardry',
-        }
-        form = WorkshopRequestBaseForm(data)
-        self.assertNotIn('domains', form.errors)
-        self.assertNotIn('domains_other', form.errors)
+        self.assertIn('scholarship_circumstances', form.errors)
 
     def test_travel_expences_management(self):
         """Test validation of travel expences management."""
+        self._test_field_other(
+            Form=WorkshopRequestBaseForm,
+            first_name='travel_expences_management',
+            other_name='travel_expences_management_other',
+            valid_first='reimbursed',
+            valid_other="Local instructors don't need reimbursement",
+        )
 
-        # 1: data required
-        data = {
-            'travel_expences_management': '',
-            'travel_expences_management_other': '',
-        }
-        form = WorkshopRequestBaseForm(data)
-        self.assertIn('travel_expences_management', form.errors)
-        self.assertNotIn('travel_expences_management_other', form.errors)
+    def test_institution_restrictions(self):
+        """Test validation of institution restrictions."""
+        self._test_field_other(
+            Form=WorkshopRequestBaseForm,
+            first_name='institution_restrictions',
+            other_name='institution_restrictions_other',
+            valid_first='no_restrictions',
+            valid_other='Visa required',
+        )
 
-        # 2: valid entry (travel_expences_management only)
-        data = {
-            'travel_expences_management': 'reimbursed',
-            'travel_expences_management_other': '',
-        }
-        form = WorkshopRequestBaseForm(data)
-        self.assertNotIn('travel_expences_management', form.errors)
-        self.assertNotIn('travel_expences_management_other', form.errors)
-
-        # 3: valid entry (travel_expences_management_other only)
-        data = {
-            'travel_expences_management': '',
-            'travel_expences_management_other':
-                "Local instructors don't need reimbursement",
-        }
-        form = WorkshopRequestBaseForm(data)
-        self.assertNotIn('travel_expences_management', form.errors)
-        self.assertNotIn('travel_expences_management_other', form.errors)
-
-    def test_domains_order_preserved(self):
-        """In #1405 it was requested to have "Don't know yet" option always
-        last, and other options sorted alphabetically. It posed a serious
-        issue, but thankfully since Django 1.8 it's possible with Case(When())
-        added to the `.order_by` clause."""
-        form = WorkshopRequestBaseForm()
-        domains_qs = form.fields['domains'].queryset
-
-        # make sure that "Don't know yet" is last on the list
-        self.assertEqual(domains_qs.last(),
-                         KnowledgeDomain.objects.get(name="Don't know yet"))
-
-        # make sure other elements on the list [0..-1] are still sorted
-        # alphabetically by name
-        domain_names = list(domains_qs.values_list('name', flat=True))[:-1]
-        self.assertEqual(domain_names, sorted(domain_names))
+    def test_public_event(self):
+        """Test validation of event's openness to public."""
+        self._test_field_other(
+            Form=WorkshopRequestBaseForm,
+            first_name='public_event',
+            other_name='public_event_other',
+            valid_first='public',
+            valid_other='Open to conference attendees',
+        )
 
 
 class TestWorkshopRequestViews(TestBase):

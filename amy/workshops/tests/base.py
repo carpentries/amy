@@ -395,3 +395,52 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
         data_dictionary.update(
             {'g-recaptcha-response': 'PASSED'}  # to auto-pass RECAPTCHA
         )
+
+
+class FormTestHelper:
+    def _test_field_other(self, Form, first_name, other_name, valid_first,
+                          valid_other, empty_first='', empty_other=''):
+        """Universal way of testing field `name` and it's "_other" counterpart
+        `other_name`.
+
+        4 test scenarios are implemented:
+        1) no data in either field - first field throws error
+        2) valid entry in first, requiring no input in the other
+        3) valid entry in second, requiring no input in the first one
+        4) both entries filled, error in the second"""
+
+        # 1: data required
+        data = {
+            first_name: empty_first,
+            other_name: empty_other,
+        }
+        form = Form(data)
+        self.assertIn(first_name, form.errors)
+        self.assertNotIn(other_name, form.errors)
+
+        # 2: valid entry (public_event only)
+        data = {
+            first_name: valid_first,
+            other_name: empty_other,
+        }
+        form = Form(data)
+        self.assertNotIn(first_name, form.errors)
+        self.assertNotIn(other_name, form.errors)
+
+        # 3: valid entry (public_event_other only)
+        data = {
+            first_name: empty_first,
+            other_name: valid_other,
+        }
+        form = Form(data)
+        self.assertNotIn(first_name, form.errors)
+        self.assertNotIn(other_name, form.errors)
+
+        # 4: invalid entry, data in "other" is not needed
+        data = {
+            first_name: valid_first,
+            other_name: valid_other,
+        }
+        form = Form(data)
+        self.assertIn(first_name, form.errors)
+        self.assertNotIn(other_name, form.errors)
