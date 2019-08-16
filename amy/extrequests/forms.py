@@ -313,7 +313,6 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             'number_attendees': forms.RadioSelect(),
             'academic_levels': forms.CheckboxSelectMultiple(),
             'computing_levels': forms.CheckboxSelectMultiple(),
-            'requested_workshop_types': forms.CheckboxSelectMultiple(),
             'organization_type': forms.RadioSelect(),
             'administrative_fee': forms.RadioSelect(),
             'travel_expences_management':
@@ -337,6 +336,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
 
         self.fields['travel_expences_management'].required = False
         self.fields['institution_restrictions'].required = False
+        self.fields['public_event'].required = False
 
         # set up a layout object for the helper
         self.helper.layout = self.helper.build_default_layout(self)

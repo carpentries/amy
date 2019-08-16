@@ -158,4 +158,6 @@ class ModelSelect2MultipleWidget(Select2BootstrapMixin,
 
 
 class Select2TagWidget(Select2BootstrapMixin, DS2_Select2TagWidget):
-    pass
+    def value_from_datadict(self, data, files, name):
+        data.setdefault(name, '')
+        return super().value_from_datadict(data, files, name)
