@@ -319,7 +319,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
                 RadioSelectWithOther('travel_expences_management_other',
                                      fake_required=True),
             'public_event':
-                RadioSelectWithOther('public_event_other', fake_required=True),
+                RadioSelectWithOther('public_event_other'),
             'institution_restrictions':
                 RadioSelectWithOther('institution_restrictions_other',
                                      fake_required=True),
@@ -336,7 +336,6 @@ class WorkshopRequestBaseForm(forms.ModelForm):
 
         self.fields['travel_expences_management'].required = False
         self.fields['institution_restrictions'].required = False
-        self.fields['public_event'].required = False
 
         # set up a layout object for the helper
         self.helper.layout = self.helper.build_default_layout(self)
@@ -501,9 +500,10 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         # 6: require public event
         public_event =  self.cleaned_data.get('public_event', '')
         public_event_other = self.cleaned_data.get('public_event_other', '')
-        if not public_event and not public_event_other:
-            errors['public_event'] = ValidationError("This field is required.")
-        elif public_event and public_event_other:
+        if public_event == "other" and not public_event_other:
+            errors['public_event'] = ValidationError(
+                "Please provide description if you selected \"Other\".")
+        elif public_event != "other" and public_event_other:
             errors['public_event'] = ValidationError(
                 "If you entered data in \"Other\" field, please select that "
                 "option.")

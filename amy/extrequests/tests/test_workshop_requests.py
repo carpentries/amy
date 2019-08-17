@@ -284,6 +284,7 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
             other_name='public_event_other',
             valid_first='public',
             valid_other='Open to conference attendees',
+            first_when_other="other",
         )
 
 
