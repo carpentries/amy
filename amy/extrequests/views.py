@@ -273,9 +273,9 @@ class WorkshopInquirySetState(OnlyForAdminsMixin, ChangeRequestStateView):
 @permission_required(['workshops.change_workshopinquiry',
                       'workshops.add_event'],
                      raise_exception=True)
-def workshopinquiry_accept_event(request, request_id):
+def workshopinquiry_accept_event(request, inquiry_id):
     """Accept workshop inquiry by creating a new event."""
-    wr = get_object_or_404(WorkshopInquiryRequest, state='p', pk=request_id)
+    wr = get_object_or_404(WorkshopInquiryRequest, state='p', pk=inquiry_id)
 
     if request.method == 'POST':
         form = EventCreateForm(request.POST)
