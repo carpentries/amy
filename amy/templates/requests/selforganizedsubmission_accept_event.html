@@ -2,9 +2,9 @@
 
 {% load crispy_forms_tags %}
 
-{% block title-left %}<h1>Workshop request #{{ object.pk }}</h1>{% endblock %}
+{% block title-left %}<h1>Self-organized submission #{{ object.pk }}</h1>{% endblock %}
 {% block content-left %}
-{% include "includes/workshoprequest_details.html" with admin=True object=object info_host_task=True %}
+{% include "includes/selforganizedsubmission_details.html" with admin=True object=object info_host_task=True %}
 {% include "includes/comments.html" with object=object disable_commenting=True %}
 {% endblock %}
 {% block title-right %}<h1>New event</h1>{% endblock %}
