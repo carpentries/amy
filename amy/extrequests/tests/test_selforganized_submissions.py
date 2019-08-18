@@ -326,6 +326,31 @@ class TestSelfOrganizedSubmissionViews(TestBase):
                                .selforganizedsubmission
         self.assertEqual(request, self.sos1)
 
+    def test_lessons_shown_in_event_create_form(self):
+        """Ensure Mix&Match triggers "lessons" field on EventCreateForm."""
+        # self.sos1 has Mix&Match workshop type, so it should display "lessons"
+        # field in Event form
+        url = reverse('selforganizedsubmission_accept_event',
+                      args=[self.sos1.pk])
+        rv = self.client.get(url)
+        self.assertEqual(rv.status_code, 200)
+        self.assertIn(Curriculum.objects.get(mix_match=True),
+                      self.sos1.workshop_types.all())
+        self.assertIn("lessons", rv.context["form"].fields.keys())
+
+        # self.sos2 doesn't have Mix&Match workshop type, so it can't show
+        # "lessons" field in Event form
+        # but for tests we need a different status for that submission
+        self.sos2.state = "p"
+        self.sos2.save()
+        url = reverse('selforganizedsubmission_accept_event',
+                      args=[self.sos2.pk])
+        rv = self.client.get(url)
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotIn(Curriculum.objects.get(mix_match=True),
+                         self.sos2.workshop_types.all())
+        self.assertNotIn("lessons", rv.context["form"].fields.keys())
+
     def test_discarded_request_accepted_with_event(self):
         rv = self.client.get(reverse('selforganizedsubmission_accept_event',
                                      args=[self.sos2.pk]))
