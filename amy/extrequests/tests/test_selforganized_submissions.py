@@ -20,29 +20,32 @@ from workshops.tests.base import TestBase, FormTestHelper
 
 class TestSelfOrganizedSubmissionBaseForm(FormTestHelper, TestBase):
     """Test base form validation."""
-    minimal_data = {
-        'personal': 'Harry',
-        'family': 'Potter',
-        'email': 'hpotter@magic.gov',
-        'institution_other_name': 'Ministry of Magic',
-        'institution_other_URL': 'magic.gov.uk',
-        'workshop_format': 'periodic',
-        'workshop_format_other': '',
-        'workshop_url': '',
-        'workshop_types': [
-            Curriculum.objects.filter(active=True)
-                              .exclude(mix_match=True)
-                              .first().pk,
-        ],
-        'workshop_types_other_explain': '',
-        'language':  Language.objects.get(name='English').pk,
-        'public_event': 'closed',
-        'public_event_other': '',
-        'additional_contact': '',
-        'data_privacy_agreement': True,
-        'code_of_conduct_agreement': True,
-        'host_responsibilities': True,
-    }
+
+    def setUp(self):
+        super().setUp()
+        self.minimal_data = {
+            'personal': 'Harry',
+            'family': 'Potter',
+            'email': 'hpotter@magic.gov',
+            'institution_other_name': 'Ministry of Magic',
+            'institution_other_URL': 'magic.gov.uk',
+            'workshop_format': 'periodic',
+            'workshop_format_other': '',
+            'workshop_url': '',
+            'workshop_types': [
+                Curriculum.objects.filter(active=True)
+                                  .exclude(mix_match=True)
+                                  .first().pk,
+            ],
+            'workshop_types_other_explain': '',
+            'language':  Language.objects.get(name='English').pk,
+            'public_event': 'closed',
+            'public_event_other': '',
+            'additional_contact': '',
+            'data_privacy_agreement': True,
+            'code_of_conduct_agreement': True,
+            'host_responsibilities': True,
+        }
 
     def test_minimal_form(self):
         """Test if minimal form works."""
@@ -56,7 +59,9 @@ class TestSelfOrganizedSubmissionBaseForm(FormTestHelper, TestBase):
 
         # 1: selected institution from the list
         data = {
-            'institution': Organization.objects.first().pk,
+            'institution': Organization.objects
+                                       .exclude(fullname='self-organized')
+                                       .first().pk,
             'institution_other_name': '',
             'institution_other_URL': '',
             'institution_department': 'School of Wizardry',
