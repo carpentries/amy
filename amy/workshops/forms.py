@@ -414,13 +414,30 @@ class EventForm(forms.ModelForm):
 
     class Meta:
         model = Event
-        fields = ['slug', 'completed', 'start', 'end', 'host', 'administrator',
-                  'assigned_to', 'tags', 'url', 'language', 'reg_key', 'venue',
-                  'manual_attendance', 'contact',
-                  'country', 'address', 'latitude', 'longitude',
-                  'open_TTT_applications', 'curricula',
-                  'comment',
-                  ]
+        fields = [
+            'slug',
+            'completed',
+            'start',
+            'end',
+            'host',
+            'administrator',
+            'assigned_to',
+            'tags',
+            'url',
+            'language',
+            'reg_key',
+            'venue',
+            'manual_attendance',
+            'contact',
+            'country',
+            'address',
+            'latitude',
+            'longitude',
+            'open_TTT_applications',
+            'curricula',
+            'lessons',
+            'comment',
+        ]
         widgets = {
             'manual_attendance': TextInput,
             'latitude': TextInput,
@@ -430,6 +447,7 @@ class EventForm(forms.ModelForm):
                 'size': Tag.ITEMS_VISIBLE_IN_SELECT_WIDGET
             }),
             'curricula': CheckboxSelectMultiple(),
+            'lessons': CheckboxSelectMultiple(),
         }
 
     class Media:
@@ -442,6 +460,7 @@ class EventForm(forms.ModelForm):
         )
 
     def __init__(self, *args, **kwargs):
+        show_lessons = kwargs.pop('show_lessons', False)
         super().__init__(*args, **kwargs)
 
         self.helper.layout = Layout(
@@ -472,6 +491,17 @@ class EventForm(forms.ModelForm):
             ),
             'comment',
         )
+
+        # if we want to show lessons, we need to alter existing layout
+        # otherwise we should remove the field so it doesn't break validation
+        if show_lessons:
+            self.helper.layout.insert(
+                # insert AFTER the curricula
+                self.helper.layout.fields.index('curricula') + 1,
+                'lessons',
+            )
+        else:
+            del self.fields['lessons']
 
     def clean_slug(self):
         # Ensure slug is in "YYYY-MM-DD-location" format
