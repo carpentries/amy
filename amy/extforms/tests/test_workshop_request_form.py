@@ -69,7 +69,7 @@ class TestWorkshopRequestExternalForm(TestBase):
             'travel_expences_management': 'booked',
             'travel_expences_management_other': '',
             'travel_expences_agreement': True,
-            'institution_restrictions': '',
+            'institution_restrictions': 'other',
             'institution_restrictions_other': 'Only for wizards',
             'public_event': 'closed',
             'public_event_other': '',

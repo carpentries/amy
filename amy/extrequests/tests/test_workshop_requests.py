@@ -47,7 +47,7 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
             'travel_expences_management': 'booked',
             'travel_expences_management_other': '',
             'travel_expences_agreement': True,
-            'institution_restrictions': '',
+            'institution_restrictions': 'other',
             'institution_restrictions_other': 'Only for wizards',
             'public_event': 'closed',
             'public_event_other': '',
@@ -264,6 +264,7 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
             other_name='travel_expences_management_other',
             valid_first='reimbursed',
             valid_other="Local instructors don't need reimbursement",
+            first_when_other='other',
         )
 
     def test_institution_restrictions(self):
@@ -274,6 +275,7 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
             other_name='institution_restrictions_other',
             valid_first='no_restrictions',
             valid_other='Visa required',
+            first_when_other='other',
         )
 
     def test_public_event(self):
@@ -284,7 +286,7 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
             other_name='public_event_other',
             valid_first='public',
             valid_other='Open to conference attendees',
-            first_when_other="other",
+            first_when_other='other',
         )
 
 

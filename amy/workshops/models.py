@@ -2360,6 +2360,25 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
                      "The Carpentries workshop fees.",
         help_text="Required only if you request a scholarship."
     )
+    TRAVEL_EXPENCES_MANAGEMENT_CHOICES = (
+        ("booked", "Hotel and airfare will be booked by site; ground travel "
+                   "and meals/incidentals will be reimbursed within 60 days."),
+        ("reimbursed", "All expenses will be booked by instructors and "
+                       "reimbursed within 60 days."),
+        ("other", "Other:"),
+    )
+    travel_expences_management = models.CharField(
+        max_length=20,
+        null=False, blank=False, default='',
+        choices=TRAVEL_EXPENCES_MANAGEMENT_CHOICES,
+        verbose_name="How will you manage travel expenses for Carpentries "
+                     "Instructors?",
+    )
+    travel_expences_management_other = models.CharField(
+        max_length=STR_LONGEST,
+        null=False, blank=True, default='',
+        verbose_name="Other travel expences management",
+    )
     travel_expences_agreement = models.BooleanField(
         null=False, blank=False, default=False,
         verbose_name="Regardless of the fee due to The Carpentries, I "
@@ -2375,32 +2394,13 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
                      "reimbursements will be completed within 60 days of "
                      "the workshop.",
     )
-    TRAVEL_EXPENCES_MANAGEMENT_CHOICES = (
-        ("booked", "Hotel and airfare will be booked by site; ground travel "
-                   "and meals/incidentals will be reimbursed within 60 days."),
-        ("reimbursed", "All expenses will be booked by instructors and "
-                       "reimbursed within 60 days."),
-        ("", "Other:"),
-    )
-    travel_expences_management = models.CharField(
-        max_length=20,
-        null=False, blank=False, default=None,
-        choices=TRAVEL_EXPENCES_MANAGEMENT_CHOICES,
-        verbose_name="How will you manage travel expenses for Carpentries "
-                     "Instructors?",
-    )
-    travel_expences_management_other = models.CharField(
-        max_length=STR_LONGEST,
-        null=False, blank=True, default='',
-        verbose_name="Other travel expences management",
-    )
     RESTRICTION_CHOICES = (
-        ('no_restrictions', 'No restrictions'),
-        ('', 'Other:'),
+        ("no_restrictions", "No restrictions"),
+        ("other", "Other:"),
     )
     institution_restrictions = models.CharField(
         max_length=20,
-        null=False, blank=False, default=None,
+        null=False, blank=False, default='',
         choices=RESTRICTION_CHOICES,
         verbose_name="Our instructors live, teach, and travel globally. We "
                      "understand that institutions may have citizenship or "

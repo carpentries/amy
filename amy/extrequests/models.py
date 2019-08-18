@@ -671,7 +671,7 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     )
     travel_expences_management = models.CharField(
         max_length=20,
-        null=False, blank=True, default="",
+        null=False, blank=True, default='',
         choices=TRAVEL_EXPENCES_MANAGEMENT_CHOICES,
         verbose_name="How will you manage travel expenses for Carpentries "
                      "Instructors?",
@@ -702,7 +702,7 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     )
     institution_restrictions = models.CharField(
         max_length=20,
-        null=False, blank=True, default="",
+        null=False, blank=True, default='',
         choices=RESTRICTION_CHOICES,
         verbose_name="Our instructors live, teach, and travel globally. We "
                      "understand that institutions may have citizenship or "
@@ -799,11 +799,11 @@ class SelfOrganizedSubmission(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         ("short", "Short session (less than two days)"),
         ("periodic", "Modules taught over a period of time (several weeks, "
                      "one semester, etc.)"),
-        ("", "Other:"),
+        ("other", "Other:"),
     )
     workshop_format = models.CharField(
         max_length=20,
-        null=False, blank=False,
+        null=False, blank=False, default='',
         choices=FORMAT_CHOICES,
         verbose_name="What is the format of this workshop?",
     )

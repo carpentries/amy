@@ -316,13 +316,11 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             'organization_type': forms.RadioSelect(),
             'administrative_fee': forms.RadioSelect(),
             'travel_expences_management':
-                RadioSelectWithOther('travel_expences_management_other',
-                                     fake_required=True),
+                RadioSelectWithOther('travel_expences_management_other'),
             'public_event':
                 RadioSelectWithOther('public_event_other'),
             'institution_restrictions':
-                RadioSelectWithOther('institution_restrictions_other',
-                                     fake_required=True),
+                RadioSelectWithOther('institution_restrictions_other'),
             'additional_contact': TagSelect2(),
         }
 
@@ -333,9 +331,6 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         # domain as well)
         self.fields['institution'].label_from_instance = \
             self.institution_label_from_instance
-
-        self.fields['travel_expences_management'].required = False
-        self.fields['institution_restrictions'].required = False
 
         # set up a layout object for the helper
         self.helper.layout = self.helper.build_default_layout(self)
@@ -474,11 +469,12 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             self.cleaned_data.get('travel_expences_management', '')
         travel_expences_management_other = \
             self.cleaned_data.get('travel_expences_management_other', '')
-        if not travel_expences_management and \
+        if travel_expences_management == "other" and \
                 not travel_expences_management_other:
             errors['travel_expences_management'] = ValidationError(
                 "This field is required.")
-        elif travel_expences_management and travel_expences_management_other:
+        elif travel_expences_management != "other" and \
+                travel_expences_management_other:
             errors['travel_expences_management'] = ValidationError(
                 "If you entered data in \"Other\" field, please select that "
                 "option.")
@@ -488,11 +484,12 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             self.cleaned_data.get('institution_restrictions', '')
         institution_restrictions_other = \
             self.cleaned_data.get('institution_restrictions_other', '')
-        if not institution_restrictions and \
+        if institution_restrictions == "other" and \
                 not institution_restrictions_other:
             errors['institution_restrictions'] = ValidationError(
                 "This field is required.")
-        elif institution_restrictions and institution_restrictions_other:
+        elif institution_restrictions != "other" and \
+                institution_restrictions_other:
             errors['institution_restrictions'] = ValidationError(
                 "If you entered data in \"Other\" field, please select that "
                 "option.")
@@ -1005,7 +1002,8 @@ class SelfOrganizedSubmissionBaseForm(forms.ModelForm):
             'country': ListSelect2(),
             'language': ListSelect2(),
             'workshop_format':
-                RadioSelectWithOther('workshop_format_other'),
+                RadioSelectWithOther('workshop_format_other',
+                                     fake_required=True),
             'public_event':
                 RadioSelectWithOther('public_event_other'),
             'additional_contact': TagSelect2(),
@@ -1096,7 +1094,7 @@ class SelfOrganizedSubmissionBaseForm(forms.ModelForm):
         # 2: require workshop URL only if the format is standard 2-day workshop
         workshop_format = self.cleaned_data.get('workshop_format', '')
         workshop_url = self.cleaned_data.get('workshop_url', '')
-        if workshop_format == 'standard' and not workshop_url:
+        if workshop_format == "standard" and not workshop_url:
             errors['workshop_url'] = ValidationError(
                 'This field is required if workshop format is standard two-day'
                 ' Carpentries workshop.')
@@ -1104,9 +1102,13 @@ class SelfOrganizedSubmissionBaseForm(forms.ModelForm):
         # 3: require "other" value for workshop format if it's selected
         workshop_format_other = self.cleaned_data.get('workshop_format_other',
                                                       '')
-        if workshop_format == '' and not workshop_format_other:
-            errors['workshop_format_other'] = ValidationError(
-                'This field is required.')
+        if workshop_format == "other" and not workshop_format_other:
+            errors['workshop_format'] = ValidationError(
+                "Please provide description if you selected \"Other\".")
+        elif workshop_format != "other" and workshop_format_other:
+            errors['workshop_format'] = ValidationError(
+                "If you entered data in \"Other\" field, please select that "
+                "option.")
 
         # 4: make sure workshop types has something selected, but if it's
         #    "Mix & Match" then additionally require
@@ -1122,9 +1124,10 @@ class SelfOrganizedSubmissionBaseForm(forms.ModelForm):
         # 5: require public event
         public_event =  self.cleaned_data.get('public_event', '')
         public_event_other = self.cleaned_data.get('public_event_other', '')
-        if not public_event and not public_event_other:
-            errors['public_event'] = ValidationError("This field is required.")
-        elif public_event and public_event_other:
+        if public_event == "other" and not public_event_other:
+            errors['public_event'] = ValidationError(
+                "Please provide description if you selected \"Other\".")
+        elif public_event != "other" and public_event_other:
             errors['public_event'] = ValidationError(
                 "If you entered data in \"Other\" field, please select that "
                 "option.")
