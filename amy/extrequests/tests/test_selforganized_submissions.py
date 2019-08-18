@@ -6,6 +6,8 @@ from django.urls import reverse
 from extrequests.forms import SelfOrganizedSubmissionBaseForm
 from extrequests.models import SelfOrganizedSubmission
 from workshops.models import (
+    Task,
+    Role,
     Event,
     Organization,
     Language,
@@ -246,11 +248,13 @@ class TestSelfOrganizedSubmissionBaseForm(FormTestHelper, TestBase):
 
 class TestSelfOrganizedSubmissionViews(TestBase):
     def setUp(self):
+        super().setUp()
+        self._setUpRoles()
         self._setUpUsersAndLogin()
 
         self.sos1 = SelfOrganizedSubmission.objects.create(
             state="p", personal="Harry", family="Potter",
-            email="harry@potter.com",
+            email="harry@hogwarts.edu",
             institution_other_name="Hogwarts",
             workshop_url='',
             workshop_format='',
@@ -378,3 +382,28 @@ class TestSelfOrganizedSubmissionViews(TestBase):
         # no string_if_invalid found in the page
         invalid = settings.TEMPLATES[0]['OPTIONS']['string_if_invalid']
         self.assertNotIn(invalid, rv.content.decode('utf-8'))
+
+    def test_host_task_created(self):
+        """Ensure a host task is created when a person submitting already is in
+        our database."""
+
+        # Harry matched as a submitted for self.sos1, and he has no tasks so far
+        self.assertEqual(self.sos1.host(), self.harry)
+        self.assertFalse(self.harry.task_set.all())
+
+        # create event from that workshop inquiry
+        data = {
+            'slug': '2019-08-18-test-event',
+            'host': Organization.objects.first().pk,
+            'tags': [1],
+        }
+        rv = self.client.post(
+            reverse('selforganizedsubmission_accept_event',
+                    args=[self.sos1.pk]),
+            data)
+        self.assertEqual(rv.status_code, 302)
+        event = Event.objects.get(slug='2019-08-18-test-event')
+
+        # check if Harry gained a task
+        Task.objects.get(person=self.harry, event=event,
+                         role=Role.objects.get(name="host"))

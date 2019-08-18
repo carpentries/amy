@@ -157,6 +157,11 @@ def workshoprequest_accept_event(request, request_id):
         if form.is_valid():
             event = form.save()
 
+            person = wr.host()
+            if person:
+                Task.objects.create(event=event, person=person,
+                                    role=Role.objects.get(name="host"))
+
             wr.state = 'a'
             wr.event = event
             wr.save()
@@ -256,6 +261,11 @@ def workshopinquiry_accept_event(request, inquiry_id):
         if form.is_valid():
             event = form.save()
 
+            person = wr.host()
+            if person:
+                Task.objects.create(event=event, person=person,
+                                    role=Role.objects.get(name="host"))
+
             wr.state = 'a'
             wr.event = event
             wr.save()
@@ -354,6 +364,11 @@ def selforganizedsubmission_accept_event(request, submission_id):
 
         if form.is_valid():
             event = form.save()
+
+            person = wr.host()
+            if person:
+                Task.objects.create(event=event, person=person,
+                                    role=Role.objects.get(name="host"))
 
             wr.state = 'a'
             wr.event = event
