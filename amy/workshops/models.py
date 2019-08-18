@@ -2192,6 +2192,18 @@ class CommonRequest(models.Model):
     class Meta:
         abstract = True
 
+    def host(self):
+        """
+        Try to fetch matching host for the data stored in
+        (personal, family, email) attributes.
+        """
+        try:
+            return Person.objects.get(personal=self.personal,
+                                      family=self.family,
+                                      email=self.email)
+        except Person.DoesNotExist:
+            return None
+
 
 @reversion.register
 class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
