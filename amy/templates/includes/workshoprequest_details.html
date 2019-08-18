@@ -26,12 +26,7 @@
         </td></tr>
     <tr><th>Institution:</th>
         <td>
-        {% if object.institution %}
-          <a href="{{ object.institution.get_absolute_url }}">{{ object.institution }}</a>{% if object.institution_department %}, {{ object.institution_department }}{% endif %}
-        {% else %}
-          {{ object.institution_other_name }}{% if object.institution_department %}, {{ object.institution_department }}{% endif %} <a href="{{ object.institution_other_URL }}">&lt;{{ object.institution_other_URL }}&gt;</a>
-          {% if admin %}<a href="{% url 'organization_add' %}?domain={{ object.institution_other_URL|urlencode }}&fullname={{ object.institution_other_name|urlencode }}&comment={{ object.institution_department|urlencode }}"><i class="fas fa-plus"></i></a>{% endif %}
-        {% endif %}
+          {% include "includes/request_institution.html" with admin=admin object=object %}
         </td></tr>
     <tr><th>Workshop location:</th>
         <td>{{ object.location }}</td></tr>
