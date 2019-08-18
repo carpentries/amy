@@ -24,7 +24,14 @@
     {% for req in inquiries %}
     <tr {% if req.state == "a" %}class="table-success"{% elif req.state == "d" %}class="table-warning"{% endif %}>
       <td>{% if req.assigned_to %}<a href="{{ req.assigned_to.get_absolute_url }}">{{ req.assigned_to.get_short_name }}</a>{% else %}—{% endif %}</td>
-      <td>{{ req.personal }} {{ req.family }} &lt;{{ req.email|urlize }}&gt;</td>
+      <td>
+        {% if req.host %}
+          <a href="{{ req.host.get_absolute_url }}">{{ req.personal }} {{ req.family }} &lt;{{ req.email }}&gt;</a>
+        {% else %}
+          {{ req.personal }} {{ req.family }} &lt;{{ req.email|urlize }}&gt;
+          <a href="{% url 'person_add' %}?personal={{ req.personal|urlencode }}&family={{ req.family|urlencode }}&email={{ req.email|urlencode }}"><i class="fas fa-plus"></i></a>
+        {% endif %}
+      </td>
       <td>
         {% if req.institution %}
           <a href="{{ req.institution.get_absolute_url }}">{{ req.institution }}</a>{% if req.institution_department %}, {{ req.institution_department }}{% endif %}
