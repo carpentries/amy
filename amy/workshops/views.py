@@ -539,6 +539,14 @@ class PersonCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
             messages.success(self.request, success_message)
         return response
 
+    def get_initial(self):
+        initial = {
+            'personal': self.request.GET.get('personal', ''),
+            'family': self.request.GET.get('family', ''),
+            'email': self.request.GET.get('email', ''),
+        }
+        return initial
+
 
 class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin,
                    AMYUpdateView):
