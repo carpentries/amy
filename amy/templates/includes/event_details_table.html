@@ -45,6 +45,10 @@
   <tr class="{% if not event.latitude or not event.longitude %}table-danger{% endif %}"><th>Lat/long:</th><td>{{ event.latitude|default:"&mdash;" }} / {{ event.longitude|default:"&mdash;" }} {% if event.latitude and event.longitude %}<a href="https://www.google.com/maps/place/{{ event.latitude }},{{ event.longitude }}" target="_blank">(map)</a> <a href="{% url 'workshop_staff' %}?latitude={{ event.latitude|unlocalize }}&amp;longitude={{ event.longitude|unlocalize }}&amp;submit=Submit" class="btn btn-primary btn-sm float-right" id="find_closest_instructors">Find closest instructors</a>{% else %}<a class="btn btn-danger btn-sm float-right" id="error_closest_instructors" tabindex="0" role="button" data-toggle="popover" title="Search error" data-content="Cannot search for closest instructors without latitude and longitude of event's location.">Error</a>{% endif %}</td></tr>
   <tr><th>Related workshop request:</th>
     <td colspan="2">{% if event|one2one_exists:"workshoprequest" %}<a href="{{ event.workshoprequest.get_absolute_url }}">{{ event.workshoprequest }}</a>{% else %}&mdash;{% endif %}</td></tr>
+  <tr><th>Related workshop inquiry:</th>
+    <td colspan="2">{% if event|one2one_exists:"workshopinquiryrequest" %}<a href="{{ event.workshopinquiryrequest.get_absolute_url }}">{{ event.workshopinquiryrequest }}</a>{% else %}&mdash;{% endif %}</td></tr>
+  <tr><th>Related self-organized submission:</th>
+    <td colspan="2">{% if event|one2one_exists:"selforganizedsubmission" %}<a href="{{ event.selforganizedsubmission.get_absolute_url }}">{{ event.selforganizedsubmission }}</a>{% else %}&mdash;{% endif %}</td></tr>
   <tr>
     <th><span class="badge badge-secondary">deprecated</span> Invoice requests:</th>
     <td colspan="2">
