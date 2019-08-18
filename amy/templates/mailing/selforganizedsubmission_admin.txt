@@ -8,7 +8,7 @@ You can view this submission here:
 Submission date: {{ object.created_at }}
 State: {{ object.get_state_display }}
 Institution: {{ object.institution|default:object.institution_other_name }}{% if object.institution_department %}, {{ object.institution_department }}{% endif %}
-Workshop format: {% if object.workshop_format %}{{ object.get_workshop_format_display }}{% else %}Other: {{ object.workshop_format_other }}{% endif %}
+Workshop format: {{ object.get_workshop_format_display }} {% if object.workshop_format_other %}{{ object.workshop_format_other }}{% endif %}
 Workshop URL: {{ object.workshop_url }}
 Taught workshop type: {% for item in object.workshop_types.all %}{{ item }}, {% endfor %}
 Taught workshop mix & match: {{ object.workshop_types_other_explain|default:"---" }}

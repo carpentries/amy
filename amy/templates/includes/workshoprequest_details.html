@@ -68,25 +68,25 @@
         </td></tr>
     <tr><th>Travel expences management:</th>
         <td>
-          {% if object.travel_expences_management %}
           {{ object.get_travel_expences_management_display }}
-          {% else %}Other: {{ object.travel_expences_management_other }}
+          {% if object.travel_expences_management_other %}
+          {{ object.travel_expences_management_other }}
           {% endif %}
         </td></tr>
     <tr><th>Travel expences agreement:</th>
         <td>{{ object.travel_expences_agreement|yesno }}</td></tr>
     <tr><th>Intitutional restrictions regarding instructors:</th>
         <td>
-          {% if object.institution_restrictions %}
           {{ object.get_institution_restrictions_display }}
-          {% else %}Other: {{ object.institution_restrictions_other }}
+          {% if object.institution_restrictions_other %}
+          {{ object.institution_restrictions_other }}
           {% endif %}
         </td></tr>
     <tr><th>Is this workshop open to the public?</th>
         <td>
-          {% if object.public_event %}
           {{ object.get_public_event_display }}
-          {% else %}Other: {{ object.public_event_other }}
+          {% if object.public_event_other %}
+          {{ object.public_event_other }}
           {% endif %}
         </td></tr>
     <tr><th>Additional contacts:</th>

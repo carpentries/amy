@@ -32,10 +32,9 @@
         </td></tr>
     <tr><th>Workshop format:</th>
         <td>
-          {% if object.workshop_format %}
           {{ object.get_workshop_format_display }}
-          {% else %}
-          Other: {{ object.workshop_format_other }}
+          {% if object.workshop_format_other %}
+          {{ object.workshop_format_other }}
           {% endif %}
         </td></tr>
     <tr><th>Workshop URL:</th>
