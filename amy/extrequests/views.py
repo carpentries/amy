@@ -169,33 +169,6 @@ def workshoprequest_accept_event(request, request_id):
         # non-POST request
         form = EventCreateForm()
 
-        # perhaps this WorkshopRequest has URL and we could pre-fill
-        # the form?
-        if wr.organization_type == 'self' and wr.self_organized_github:
-
-            try:
-                url = wr.self_organized_github.strip()
-                metadata = fetch_event_metadata(url)
-                data = parse_metadata_from_event_website(metadata)
-
-                if 'language' in data:
-                    lang = data['language'].lower()
-                    data['language'] = Language.objects.get(subtag=lang)
-
-                if 'instructors' in data or 'helpers' in data:
-                    instructors = data.get('instructors') or ['none']
-                    helpers = data.get('helpers') or ['none']
-                    data['comment'] = "Instructors: {}\n\nHelpers: {}" \
-                        .format(','.join(instructors), ','.join(helpers))
-
-                form = EventCreateForm(initial=data)
-
-            except (AttributeError, KeyError, ValueError, HTTPError,
-                    RequestException, WrongWorkshopURL, Language.DoesNotExist):
-                # ignore errors
-                messages.warning(request, "Cannot automatically fill the form "
-                                          "from provided workshop URL.")
-
     context = {
         'object': wr,
         'form': form,
