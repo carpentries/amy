@@ -1103,6 +1103,12 @@ class Event(AssignmentMixin, models.Model):
         limit_choices_to={'active': True, 'unknown': False},
         verbose_name="Curricula taught at the workshop",
     )
+    lessons = models.ManyToManyField(
+        "Lesson",
+        blank=True,
+        verbose_name="Lessons covered",
+        help_text="Specific lessons covered during the event",
+    )
 
     objects = EventQuerySet.as_manager()
 
