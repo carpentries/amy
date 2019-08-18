@@ -37,7 +37,7 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
                                   .filter(active=True)
                                   .first().pk,
             ],
-            'preferred_dates': '2019-08-16',
+            'preferred_dates': '{:%Y-%m-%d}'.format(datetime.date.today()),
             'other_preferred_dates': '17-18 August, 2019',
             'language':  Language.objects.get(name='English').pk,
             'number_attendees': '10-40',
@@ -185,7 +185,7 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
 
         # 2: either one present will work
         data = {
-            'preferred_dates': '2019-08-16',
+            'preferred_dates': '{:%Y-%m-%d}'.format(datetime.date.today()),
             'other_preferred_dates': '',
         }
         form = WorkshopRequestBaseForm(data)
@@ -211,7 +211,7 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
 
         # 4: preferred date wrong format 
         data = {
-            'preferred_dates': '{:d-m-Y}'.format(datetime.date.today()),
+            'preferred_dates': '{:%d-%m-%Y}'.format(datetime.date.today()),
             'other_preferred_dates': '',
         }
         form = WorkshopRequestBaseForm(data)

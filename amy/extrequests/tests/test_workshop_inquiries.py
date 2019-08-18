@@ -266,7 +266,7 @@ class TestWorkshopInquiryBaseForm(FormTestHelper, TestBase):
 
         # 2: either one present will work
         data = {
-            'preferred_dates': '2019-08-16',
+            'preferred_dates': '{:%Y-%m-%d}'.format(datetime.date.today()),
             'other_preferred_dates': '',
         }
         form = WorkshopInquiryRequestBaseForm(data)
@@ -292,7 +292,7 @@ class TestWorkshopInquiryBaseForm(FormTestHelper, TestBase):
 
         # 4: preferred date wrong format 
         data = {
-            'preferred_dates': '{:d-m-Y}'.format(datetime.date.today()),
+            'preferred_dates': '{:%d-%m-%Y}'.format(datetime.date.today()),
             'other_preferred_dates': '',
         }
         form = WorkshopInquiryRequestBaseForm(data)
