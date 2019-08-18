@@ -1,4 +1,5 @@
 {% load state %}
+{% load utils %}
 <table class="table table-striped">
   <tbody>
 {% if admin %}
@@ -89,7 +90,11 @@
         </td></tr>
     <tr><th>Additional contacts:</th>
         <td>
-          {{ object.additional_contact|default:"&mdash;" }}
+          {% for contact in object.additional_contact|strip|split %}
+            {{ contact|urlize }}<br>
+          {% empty %}
+            &mdash;
+          {% endfor %}
         </td></tr>
     <tr><th>How did you hear about The Carpentries?</th>
         <td>
