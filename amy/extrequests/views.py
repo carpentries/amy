@@ -1,5 +1,6 @@
 import csv
 import datetime
+from functools import partial
 import io
 
 from django.conf import settings
@@ -359,8 +360,13 @@ def selforganizedsubmission_accept_event(request, submission_id):
     """Accept event request by creating a new event."""
     wr = get_object_or_404(SelfOrganizedSubmission, state='p', pk=submission_id)
 
+    FormClass = partial(
+        EventCreateForm,
+        show_lessons=wr.workshop_types.filter(mix_match=True).exists(),
+    )
+
     if request.method == 'POST':
-        form = EventCreateForm(request.POST)
+        form = FormClass(request.POST)
 
         if form.is_valid():
             event = form.save()
@@ -380,7 +386,7 @@ def selforganizedsubmission_accept_event(request, submission_id):
 
     else:
         # non-POST request
-        form = EventCreateForm()
+        form = FormClass()
 
         try:
             url = wr.workshop_url.strip()
@@ -397,7 +403,7 @@ def selforganizedsubmission_accept_event(request, submission_id):
                 data['comment'] = "Instructors: {}\n\nHelpers: {}" \
                     .format(','.join(instructors), ','.join(helpers))
 
-            form = EventCreateForm(initial=data)
+            form = FormClass(initial=data)
 
         except (AttributeError, KeyError, ValueError, HTTPError,
                 RequestException, WrongWorkshopURL, Language.DoesNotExist):
