@@ -2166,9 +2166,9 @@ class CommonRequest(models.Model):
         verbose_name="Department/school affiliation (if applicable)",
     )
     PUBLIC_EVENT_CHOICES = (
-        ('invite', 'This event is open to learners by invitation only.'),
-        ('closed', 'This event is open to learners inside of my institution.'),
-        ('public', 'This event is open to learners outside of my institution.'),
+        ('public', 'This event is open to the public.'),
+        ('closed', 'This event is open primarily to the people inside of my '
+                   'institution.'),
         ('other', 'Other:'),
     )
     public_event = models.CharField(
