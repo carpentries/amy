@@ -28,7 +28,7 @@ class TestSelfOrganizedSubmissionExternalForm(TestBase):
             "workshop_format", "workshop_format_other",
             "workshop_url",
             "workshop_types", "workshop_types_other_explain",
-            "language",
+            "country", "language",
             "public_event", "public_event_other",
             "additional_contact",
             "data_privacy_agreement", "code_of_conduct_agreement",
@@ -55,6 +55,7 @@ class TestSelfOrganizedSubmissionExternalForm(TestBase):
                                   .first().pk,
             ],
             'workshop_types_other_explain': '',
+            'country': 'GB',
             'language':  Language.objects.get(name='English').pk,
             'public_event': 'closed',
             'public_event_other': '',
@@ -102,6 +103,6 @@ class TestSelfOrganizedSubmissionExternalForm(TestBase):
             msg.subject,
             'New self-organized submission: Ministry of Magic',
         )
-        self.assertEqual(msg.recipients(), ['team@carpentries.org'])
+        self.assertEqual(msg.recipients(), ['admin-uk@carpentries.org'])
         self.assertNotIn(settings.TEMPLATES[0]['OPTIONS']['string_if_invalid'],
                          msg.body)

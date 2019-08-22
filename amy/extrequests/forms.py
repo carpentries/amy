@@ -988,6 +988,7 @@ class SelfOrganizedSubmissionBaseForm(forms.ModelForm):
             "workshop_url",
             "workshop_types",
             "workshop_types_other_explain",
+            "country",
             "language",
             "public_event",
             "public_event_other",

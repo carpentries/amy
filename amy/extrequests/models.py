@@ -843,6 +843,10 @@ class SelfOrganizedSubmission(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
                   'lesson only" or "We are teaching Data Carpentry\'s Ecology '
                   'workshop, but not teaching a programming language."'
     )
+    country = CountryField(
+        null=True, blank=False,
+        verbose_name="Country",
+    )
     language = models.ForeignKey(
         Language, on_delete=models.PROTECT,
         blank=False, null=False,

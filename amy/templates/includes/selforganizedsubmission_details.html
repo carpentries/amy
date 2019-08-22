@@ -54,6 +54,8 @@
           &mdash;
           {% endif %}
         </td></tr>
+    <tr><th>Country:</th>
+        <td>{{ object.country.name }} <img src="{{ object.country.flag }}" alt="{{ object.country }}" class="country-flag" /></td></tr>
     <tr><th>Workshop language:</th>
         <td>{{ object.language }}</td></tr>
     <tr><th>Is this workshop open to the public?</th>

@@ -40,6 +40,7 @@ class TestSelfOrganizedSubmissionBaseForm(FormTestHelper, TestBase):
                                   .first().pk,
             ],
             'workshop_types_other_explain': '',
+            'country': 'GB',
             'language':  Language.objects.get(name='English').pk,
             'public_event': 'closed',
             'public_event_other': '',
