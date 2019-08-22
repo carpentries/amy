@@ -21,7 +21,8 @@ from django.db.models import (
 from django.db.models.functions import Greatest
 from django.utils import timezone
 from django.utils.functional import cached_property
-from django.urls import reverse
+from django.utils.text import format_lazy
+from django.urls import reverse, reverse_lazy
 from django_countries.fields import CountryField
 from reversion import revisions as reversion
 from social_django.models import UserSocialAuth
@@ -2249,21 +2250,28 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         '<a href="https://librarycarpentry.org/lessons/">'
         'Library Carpentry lessons page</a>'
     )
+    INQUIRY_FORM = reverse_lazy("workshop_inquiry")
     requested_workshop_types = models.ManyToManyField(
         Curriculum, limit_choices_to={'active': True},
         blank=False,
         verbose_name="Which Carpentries workshop are you requesting?",
-        help_text="If your learners are new to programming and primarily "
-                  "interested in working with data, Data Carpentry is likely "
-                  "the best choice. If your learners are interested in "
-                  "learning more about programming, including version control"
-                  " and automation, Software Carpentry is likely the best "
-                  "match. If your learners are people working in library and "
-                  "information related roles interested in learning data and "
-                  "software skills, Library Carpentry is the best choice. "
-                  "Please visit the " + SWC_LESSONS_LINK + ", "
-                  + DC_LESSONS_LINK + ", or the " + LC_LESSONS_LINK +
-                  " for more information about any of our lessons.",
+        help_text=format_lazy(
+            "If your learners are new to programming and primarily interested "
+            "in working with data, Data Carpentry is likely the best choice. "
+            "If your learners are interested in learning more about "
+            "programming, including version control and automation, Software "
+            "Carpentry is likely the best match. If your learners are people "
+            "working in library and information related roles interested in "
+            "learning data and software skills, Library Carpentry is the best "
+            "choice. Please visit the {}, {}, or the {} for more information "
+            "about any of our lessons.<br>If you are not sure which workshop "
+            "curriculum you would like to have taught, please complete the "
+            "<a href='{}'>Workshop Inquiry Form</a>.",
+            SWC_LESSONS_LINK,
+            DC_LESSONS_LINK,
+            LC_LESSONS_LINK,
+            INQUIRY_FORM,
+        )
     )
     # Form shows a visible warning here if the selected dates are too soon
     # (3 months)
