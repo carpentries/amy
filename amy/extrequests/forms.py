@@ -999,6 +999,7 @@ class SelfOrganizedSubmissionBaseForm(forms.ModelForm):
 
         widgets = {
             'institution_other_URL': forms.TextInput(),
+            'workshop_url': forms.TextInput(),
             'country': ListSelect2(),
             'language': ListSelect2(),
             'workshop_format':
