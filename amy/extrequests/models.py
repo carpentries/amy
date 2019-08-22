@@ -509,6 +509,8 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     This model is used for storing inquiry information from anyone interested
     in The Carpentries and workshops in general.
     """
+    UNSURE_CHOICE = ("", "Not sure yet.")
+
     location = models.CharField(
         max_length=STR_LONGEST,
         blank=False, null=False, default="",
@@ -628,6 +630,7 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
                   "non-English speaking Instructors."
     )
     ATTENDEES_NUMBER_CHOICES = (
+        UNSURE_CHOICE,
         ('10-40', '10-40 (one room, two instructors)'),
         ('40-80', '40-80 (two rooms, four instructors)'),
         ('80-120', '80-120 (three rooms, six instructors)'),
@@ -642,6 +645,7 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
                   "Each workshop must have at least two instructors.",
     )
     FEE_CHOICES = (
+        UNSURE_CHOICE,
         ("nonprofit", "I am with a government site, university, or other "
                       "nonprofit. I understand the workshop fee of US$2500, "
                       "and agree to follow through on The Carpentries "
@@ -663,6 +667,7 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
                      "administrative fee?",
     )
     TRAVEL_EXPENCES_MANAGEMENT_CHOICES = (
+        UNSURE_CHOICE,
         ("booked", "Hotel and airfare will be booked by site; ground travel "
                    "and meals/incidentals will be reimbursed within 60 days."),
         ("reimbursed", "All expenses will be booked by instructors and "
@@ -697,7 +702,8 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
                      "the workshop.",
     )
     RESTRICTION_CHOICES = (
-        ('no_restrictions', 'No restrictions'),
+        UNSURE_CHOICE,
+        ('no_restrictions', 'No restrictions.'),
         ('other', 'Other:'),
     )
     institution_restrictions = models.CharField(
@@ -736,7 +742,8 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     public_event = models.CharField(
         max_length=CommonRequest._meta.get_field('public_event').max_length,
         null=False, blank=True, default="",
-        choices=CommonRequest._meta.get_field('public_event').choices,
+        choices=(UNSURE_CHOICE, ) +
+            CommonRequest._meta.get_field('public_event').choices,
         verbose_name=CommonRequest._meta.get_field('public_event').verbose_name,
         help_text=CommonRequest._meta.get_field('public_event').help_text,
     )
