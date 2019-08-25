@@ -5,6 +5,7 @@ from django.contrib.auth.models import Group
 from django.http import Http404
 from django.test import RequestFactory
 
+import requests.exceptions
 import requests_mock
 
 from workshops.tests.base import TestBase
@@ -105,6 +106,19 @@ Other content.
         mock.get(repo_url, text=self.yaml_content, status_code=200)
         metadata = fetch_event_metadata(website_url)
         self.assertEqual(metadata['slug'], 'workshop')
+
+    @requests_mock.Mocker()
+    def test_fetching_event_metadata_timeout(self, mock):
+        "Ensure 'fetch_event_metadata' reacts to timeout."
+        website_url = 'https://pbanaszkiewicz.github.io/workshop'
+        repo_url = ('https://raw.githubusercontent.com/pbanaszkiewicz/'
+                    'workshop/gh-pages/index.html')
+        mock.register_uri(
+            "GET", website_url,
+            exc=requests.exceptions.ConnectTimeout,
+        )
+        with self.assertRaises(requests.exceptions.ConnectTimeout):
+            metadata = fetch_event_metadata(website_url)
 
     def test_generating_url_to_index(self):
         tests = [
