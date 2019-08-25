@@ -64,10 +64,13 @@ from workshops.forms import (
 from workshops.models import (
     TrainingRequest,
     WorkshopRequest,
+    Tag,
     Task,
     Role,
     Person,
     Language,
+    Curriculum,
+    Organization,
 )
 from workshops.util import (
     OnlyForAdminsMixin,
@@ -360,9 +363,11 @@ def selforganizedsubmission_accept_event(request, submission_id):
     """Accept event request by creating a new event."""
     wr = get_object_or_404(SelfOrganizedSubmission, state='p', pk=submission_id)
 
+    mix_match = wr.workshop_types.filter(mix_match=True).exists()
+
     FormClass = partial(
         EventCreateForm,
-        show_lessons=wr.workshop_types.filter(mix_match=True).exists(),
+        show_lessons=mix_match,
     )
 
     if request.method == 'POST':
@@ -392,6 +397,18 @@ def selforganizedsubmission_accept_event(request, submission_id):
             url = wr.workshop_url.strip()
             metadata = fetch_event_metadata(url)
             data = parse_metadata_from_event_website(metadata)
+            data.update({
+                'url': url,
+                'curricula': list(wr.workshop_types.all()),
+                'host': wr.host_organization() or wr.institution,
+                'administrator':
+                    Organization.objects.get(domain='self-organized'),
+            })
+
+            if mix_match:
+                data.update({
+                    'tags': [Tag.objects.get(name='Circuits')],
+                })
 
             if 'language' in data:
                 lang = data['language'].lower()
