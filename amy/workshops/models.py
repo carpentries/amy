@@ -2207,6 +2207,14 @@ class CommonRequest(models.Model):
         except Person.DoesNotExist:
             return None
 
+    def host_organization(self):
+        """Try to fetch matching host organization."""
+        try: 
+            return Organization.objects \
+                               .get(fullname=self.institution_other_name)
+        except Organization.DoesNotExist:
+            return None
+
 
 @reversion.register
 class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,

@@ -3,6 +3,10 @@
 {% else %}
   {{ object.institution_other_name }}{% if object.institution_department %}, {{ object.institution_department }}{% endif %} <a href="{{ object.institution_other_URL }}">&lt;{{ object.institution_other_URL }}&gt;</a>
   {% if admin %}
-  <div class="alert alert-warning">This institution is not in the database. <a href="{% url 'organization_add' %}?domain={{ object.institution_other_URL|urlencode }}&fullname={{ object.institution_other_name|urlencode }}&comment={{ object.institution_department|urlencode }}">Click to add it</a>.</div>
+    {% if object.host_organization %}
+    <div class="alert alert-info">There's a <a href="{{ object.host_organization.get_absolute_url }}">matching organization</a> in database.</div>
+    {% else %}
+    <div class="alert alert-warning">This institution is not in the database. <a href="{% url 'organization_add' %}?domain={{ object.institution_other_URL|urlencode }}&fullname={{ object.institution_other_name|urlencode }}&comment={{ object.institution_department|urlencode }}">Click to add it</a>.</div>
+    {% endif %}
   {% endif %}
 {% endif %}
