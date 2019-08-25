@@ -201,6 +201,9 @@ $(document).ready(function() {
     }
   })
 
+  /* Additional messages for forms: they show up when a specific value is
+     entered into the field */
+
   // check initial value for this proficient computing level
   if ($("#id_computing_levels_3").is(":checked")) {
     $("#computing_levels_warning").removeClass("d-none");
@@ -217,6 +220,9 @@ $(document).ready(function() {
     }
   })
 
+  // default cutoff time: 60 days
+  var DEFAULT_WARNING_TIME = 1000 * 60 * 60 * 24 * 30 * 2;
+
   // check initial value for the preferred dates
   if ($("#id_preferred_dates").val()) {
     $("#id_preferred_dates").datepicker('update');
@@ -227,7 +233,7 @@ $(document).ready(function() {
     var time_diff = value.getTime() - today.getTime();
 
     // 3 months
-    if (time_diff < 1000 * 60 * 60 * 24 * 30 * 3) {
+    if (time_diff < DEFAULT_WARNING_TIME) {
       $("#preferred_dates_warning").removeClass("d-none");
     } else {
       $("#preferred_dates_warning").addClass("d-none");
@@ -244,7 +250,7 @@ $(document).ready(function() {
     var time_diff = value.getTime() - today.getTime();
 
     // 3 months
-    if (time_diff < 1000 * 60 * 60 * 24 * 30 * 3) {
+    if (time_diff < DEFAULT_WARNING_TIME) {
       $("#preferred_dates_warning").removeClass("d-none");
     } else {
       $("#preferred_dates_warning").addClass("d-none");
