@@ -788,11 +788,6 @@ class SelfOrganizedSubmission(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     information. It's very similar to Workshop Submission combined with
     DC Self-Organized Workshop Request.
     """
-    # TODO: Form should validate that this isn't a GH repo. This should
-    # populate as much as possible in creating the event: SLUG, Start/End date,
-    # Host (from institutional affliliation), Administrator (self-organized),
-    # Tag (SWC, DC, or LC), Curricula, URL. Host role may already have been
-    # populated from person submitting form
     workshop_url = models.URLField(
         max_length=STR_LONGEST,
         blank=True, null=False, default="",
@@ -829,12 +824,6 @@ class SelfOrganizedSubmission(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         null=False, blank=True, default='',
         verbose_name="Other workshop types",
     )
-    # TODO: if they select other above they should have a text box to describe
-    # what they are teaching. For now we can just have the text box. (For a
-    # future iteration of this project: If they check "other" then when the
-    # admin accepts the submission, they should get a multiple check box where 
-    # they can check off items from ALL of our lesson offerings. The person 
-    # submitting this form should not see that part)
     workshop_types_other_explain = models.TextField(
         blank=True,
         verbose_name='If you selected "Mix & Match", please provide more'

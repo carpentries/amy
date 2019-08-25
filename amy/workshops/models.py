@@ -2132,9 +2132,6 @@ class CommonRequest(models.Model):
         blank=True, null=False, default="",
         verbose_name="Family name (surname)",
     )
-    # TODO: **If there is a match -- The name/email of the person submitting 
-    # this form should get a task of "host" for this event. Regardless, they 
-    # should also be in the "contact" field for this event**
     email = models.EmailField(
         blank=False, null=False,
         verbose_name="Email address",
@@ -2187,7 +2184,6 @@ class CommonRequest(models.Model):
         null=False, blank=True, default='',
         verbose_name="Other (workshop open to the public)",
     )
-    # TODO: CSV for contact data (names, emails)? https://select2.org/tagging
     additional_contact = models.CharField(
         max_length=STR_LONGEST,
         null=False, blank=True, default='',
