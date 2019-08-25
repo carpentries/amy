@@ -315,9 +315,10 @@ class TestViews(TestBase):
 
                             self.assertNotEqual(
                                 len(found), 0,
-                                'This view lacks access control mixin and is '
-                                'probably accessible to every user. If this is '
-                                'what you want, use LoginNotRequiredMixin.')
+                                'The view {} ({}) lacks access control mixin '
+                                'and is probably accessible to every user. If '
+                                'this is what you want, use '
+                                'LoginNotRequiredMixin.'.format(class_.__name__, url))
                             self.assertEqual(
                                 len(found), 1,
                                 'You have more than one access control mixin '
