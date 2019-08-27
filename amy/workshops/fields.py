@@ -71,7 +71,7 @@ class Select2WidgetMixin(DALSelect2WidgetMixin):
         select2_bootstrap4_theme = ('@ttskch/select2-bootstrap4-theme/'
                                     'dist/select2-bootstrap4.css')
 
-        m._css['screen'] = m._css['screen'] + (select2_bootstrap4_theme, )
+        m._css['screen'] = m._css['screen'] + [select2_bootstrap4_theme]
 
         return forms.Media(css=m._css, js=js)
 
