@@ -91,7 +91,7 @@ class PersonLookupView(OnlyForAdminsNoRedirectMixin,
             ]
 
             # split query into first and last names
-            tokens = re.split('\s+', self.q)
+            tokens = re.split(r'\s+', self.q)
             if len(tokens) == 2:
                 name1, name2 = tokens
                 complex_q = (
@@ -179,7 +179,7 @@ class TrainingRequestLookupView(OnlyForAdminsNoRedirectMixin,
 
         if self.q:
             # search for name if two words provided
-            tok = re.split('\s+', self.q)
+            tok = re.split(r'\s+', self.q)
             if len(tok) == 2:
                 name_q = (
                     Q(personal__icontains=tok[0], family__icontains=tok[1]) |

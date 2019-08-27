@@ -34,7 +34,8 @@ class TestOrganization(TestBase):
                 Organization.objects.get(domain=org_domain)
 
     def test_organization_invalid_chars_in_domain(self):
-        """Ensure users can't put wrong characters in the organization's domain field.
+        r"""Ensure users can't put wrong characters in the organization's
+        domain field.
 
         Invalid characters are any that match `[^\w\.-]+`, ie. domain is
         allowed only to have alphabet-like chars, dot and dash.

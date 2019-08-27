@@ -280,7 +280,7 @@ def filter_all_persons(queryset, name, all_persons):
 def filter_trainees_by_trainee_name_or_email(queryset, name, value):
     if value:
         # 'Harry Potter' -> ['Harry', 'Potter']
-        tokens = re.split('\s+', value)
+        tokens = re.split(r'\s+', value)
         # Each token must match email address or github username or personal or
         # family name.
         for token in tokens:
