@@ -60,7 +60,7 @@ def admin_dashboard(request):
                     output_field=IntegerField()
                 )
             ),
-        )
+        ).order_by('-start')
 
     assigned_to, is_admin = assignment_selection(request)
 

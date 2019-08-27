@@ -212,7 +212,7 @@ def workshop_issues(request):
                 output_field=IntegerField()
             )
         )
-    ).attendance()
+    ).attendance().order_by('-start')
 
     no_attendance = Q(attendance=None) | Q(attendance=0)
     no_location = (Q(country=None) |
@@ -349,7 +349,7 @@ def duplicate_persons(request):
 
     duplicate_names = Person.objects.duplication_review_expired() \
                                     .values('personal', 'family') \
-                                    .order_by() \
+                                    .order_by('family', 'personal') \
                                     .annotate(count_id=Count('id')) \
                                     .filter(count_id__gt=1)
 
