@@ -8,8 +8,9 @@ urlpatterns = [
     # workshop
     path('request_training/', views.TrainingRequestCreate.as_view(), name='training_request'),
     path('request_training/confirm/', views.TrainingRequestConfirm.as_view(), name='training_request_confirm'),
-    path('workshop/', views.WorkshopRequestCreate.as_view(), name='workshop_request'),
-    path('workshop/confirm/', views.WorkshopRequestConfirm.as_view(), name='workshop_request_confirm'),
+    path('workshop/', views.WorkshopLanding.as_view(), name='workshop_landing'),
+    path('request_workshop/', views.WorkshopRequestCreate.as_view(), name='workshop_request'),
+    path('request_workshop/confirm/', views.WorkshopRequestConfirm.as_view(), name='workshop_request_confirm'),
     path('inquiry/', views.WorkshopInquiryRequestCreate.as_view(), name='workshop_inquiry'),
     path('inquiry/confirm/', views.WorkshopInquiryRequestConfirm.as_view(), name='workshop_inquiry_confirm'),
     path('self-organized/', views.SelfOrganizedSubmissionCreate.as_view(), name='selforganized_submission'),
