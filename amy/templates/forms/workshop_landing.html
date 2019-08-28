@@ -1,0 +1,27 @@
+{% extends "base_nav.html" %}
+
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block logo %}
+<img src="{% static 'carpentries-banner.svg' %}" alt='The Carpentries logo' class="img-fluid w-50 mx-auto d-block" />
+{% endblock %}
+
+{% block content %}
+
+<p>Thank you for inquiring about a Carpentries workshop. Please select which of
+the following options applies to you. Note this form is only for Data Carpentry,
+Library Carpentry, or Software Carpentry workshops. If you are interested in 
+Carpentries Instructor Training, please read more about our
+<a href="https://carpentries.org/membership/">institutional membership program</a>
+or contact <a href="mailto:memberships@carpentries.org">memberships@carpentries.org</a>.</p>
+
+<p><strong>Please select one of the options below.</strong></p>
+
+<ul>
+    <li><a href="{% url 'workshop_inquiry' %}">I would like to talk to someone to learn more about The Carpentries curricula and workshop operations.</a></li>    
+    <li><a href="{% url 'workshop_request' %}">I am familiar with The Carpentries lesson programs and workshops, and am ready to request a workshop.</a></li>    
+    <li><a href="{% url 'selforganized_submission' %}">I am registering a self-organized workshop. Such workshops have at least one certified Carpentries Instructor teaching, and don't require fee.</a></li>
+</ul>
+
+{% endblock %}

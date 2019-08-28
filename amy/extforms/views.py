@@ -68,6 +68,13 @@ class TrainingRequestConfirm(LoginNotRequiredMixin, TemplateView):
 
 
 # ------------------------------------------------------------
+# Workshop landing page view
+
+class WorkshopLanding(LoginNotRequiredMixin, TemplateView):
+    template_name = 'forms/workshop_landing.html'
+
+
+# ------------------------------------------------------------
 # WorkshopRequest views
 
 class WorkshopRequestCreate(
