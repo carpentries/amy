@@ -768,8 +768,8 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
             return self.other_preferred_dates
 
     def preferred_dates_too_soon(self):
-        # set cutoff date at 3 months
-        cutoff = datetime.timedelta(days=3*30)
+        # set cutoff date at 2 months
+        cutoff = datetime.timedelta(days=2*30)
         if self.preferred_dates:
             return (self.preferred_dates - self.created_at.date()) < cutoff
         return False
