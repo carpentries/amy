@@ -9,9 +9,7 @@
 
 {% block content %}
 
-<p>Thank you for requesting a workshop with The Carpentries! The questions
-below will help us match your workshop needs with our instructors and content.
-We look forward to working with you.</p>
+<p>This form is for registering a self-organized workshop once you have created the workshop website. If you would like to request a centrally-organized go <a href="{% url 'workshop_request' %}">here</a>. If you would like to inquire about a workshop go <a href="{% url 'workshop_inquiry' %}">here</a>.</p>
 
 {% crispy form %}
 {% endblock %}
