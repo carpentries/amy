@@ -46,7 +46,7 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
     def setUp(self):
         '''Create standard objects.'''
 
-        self.clear_sites_cache()
+        # self.clear_sites_cache()
         self._setUpOrganizations()
         self._setUpAirports()
         self._setUpLessons()
@@ -54,6 +54,12 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
         self._setUpInstructors()
         self._setUpNonInstructors()
         self._setUpPermissions()
+
+        from django.conf import settings
+        Site.objects.clear_cache()
+        Site.objects.get_or_create(pk=settings.SITE_ID,
+                                   defaults=dict(domain='amy.carpentries.org',
+                                                 name='AMY server'))
 
     def clear_sites_cache(self):
         # we need to clear Sites' cache, because after post_migration signal,
