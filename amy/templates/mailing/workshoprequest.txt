@@ -2,17 +2,17 @@ This email is to confirm that we have received your request for a Carpentries
 Workshop! Someone will be in contact with you soon. Below you will find
 a few important notes:
 
-* Organising a workshop requires a minimum of 2 months. If you are 
-  requesting a workshop less than 2 months, we cannot guarantee that 
-  instructors will be placed by your requested. We will do our very best to 
-  meet your request. If we are not able to meet your request, we do ask that 
+* Organising a workshop requires a minimum of 2 months. If you are
+  requesting a workshop less than 2 months, we cannot guarantee that
+  instructors will be placed by your requested. We will do our very best to
+  meet your request. If we are not able to meet your request, we do ask that
   you consider flexible dates.
-* There are certain criteria we use when selecting instructors. We pair 
-  experienced instructors with newly certified instructors. We ensure that 
-  all of our instructors are given an equal opportunity to teach. We look at 
-  the  location of the instructor. We have several factors to consider and 
+* There are certain criteria we use when selecting instructors. We pair
+  experienced instructors with newly certified instructors. We ensure that
+  all of our instructors are given an equal opportunity to teach. We look at
+  the  location of the instructor. We have several factors to consider and
   will try to locate instructors nearby.
-* We recommend budgeting $1000 per instructor to cover the cost of 
+* We recommend budgeting $1000 per instructor to cover the cost of
   accommodations (travel, ground transportation, lodging and meals).
 
 We look forward to working with you and ensuring you have a great workshop!
@@ -21,15 +21,13 @@ The Carpentries
 
 --------------------------------------------
 
-A copy of your inquiry is included below for your reference.
+A copy of your request is included below for your reference.
 
 {% if object.preferred_dates_too_soon %}
 **Warning:** selected preferred dates for the workshop fall
 in upcoming two months. The Carpentries team may not be able to find
 instructors in such short time.
 {% endif %}
-
---------------------------------------------
 
 Submission date: {{ object.created_at }}
 Person: {{ object.personal }} {{ object.family }} &lt;{{ object.email }}&gt;
