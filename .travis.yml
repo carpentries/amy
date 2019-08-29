@@ -33,7 +33,7 @@ before_script:
     fi;
 
 script:
-  - coverage run --source=amy manage.py test
+  - python manage.py test -v 2
 
 after_success:
   coveralls
