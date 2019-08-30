@@ -1983,7 +1983,7 @@ class CurriculumManager(models.Manager):
         # conditionally disable Mix&Match entry from appearing in the list
         if not allow_mix_match:
             qs = qs.filter(mix_match=False)
-        
+
         return qs
 
 
@@ -2016,7 +2016,7 @@ class Curriculum(ActiveMixin, models.Model):
                   "'Data Carpentry (Ecology with R)'.",
     )
     description = models.TextField(
-        max_length=300,
+        max_length=400,
         null=False, blank=True, default="",
         verbose_name="Curriculum longer description",
         help_text="You can enter Markdown. It will be shown as a hover or "
@@ -2209,7 +2209,7 @@ class CommonRequest(models.Model):
 
     def host_organization(self):
         """Try to fetch matching host organization."""
-        try: 
+        try:
             return Organization.objects \
                                .get(fullname=self.institution_other_name)
         except Organization.DoesNotExist:
