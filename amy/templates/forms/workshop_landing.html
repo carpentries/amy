@@ -9,19 +9,30 @@
 
 {% block content %}
 
-<p>Thank you for inquiring about a Carpentries workshop. Please select which of
-the following options applies to you. Note this form is only for Data Carpentry,
-Library Carpentry, or Software Carpentry workshops. If you are interested in 
-Carpentries Instructor Training, please read more about our
-<a href="https://carpentries.org/membership/">institutional membership program</a>
-or contact <a href="mailto:memberships@carpentries.org">memberships@carpentries.org</a>.</p>
+<div class="row">
+  <div class="col-lg-8 offset-lg-2">
+    <p class="lead">Thank you for inquiring about a Carpentries workshop. Please select which of
+    the following options applies to you. Note this form is only for Data Carpentry,
+    Library Carpentry, or Software Carpentry workshops. If you are interested in
+    Carpentries Instructor Training, please read more about our
+    <a href="https://carpentries.org/membership/">institutional membership program</a>
+    or contact <a href="mailto:memberships@carpentries.org">memberships@carpentries.org</a>.</p>
 
-<p><strong>Please select one of the options below.</strong></p>
+    <p class="lead"><strong>Please select one of the options below:</strong></p>
 
-<ul>
-    <li><a href="{% url 'workshop_inquiry' %}">I would like to talk to someone to learn more about The Carpentries curricula and workshop operations.</a></li>    
-    <li><a href="{% url 'workshop_request' %}">I am familiar with The Carpentries lesson programs and workshops, and am ready to request a workshop.</a></li>    
-    <li><a href="{% url 'selforganized_submission' %}">I am registering a self-organized workshop. Such workshops have at least one certified Carpentries Instructor teaching, and don't require fee.</a></li>
-</ul>
+    <div class="row">
+      <div class="col">
+        <a href="{% url 'workshop_inquiry' %}" class="btn btn-lg btn-primary">Request a workshop</a>
+      </div>
+      <div class="col">
+        <a href="{% url 'workshop_request' %}" class="btn btn-lg btn-primary">Inquiry about our workshop</a>
+      </div>
+      <div class="col">
+        <a href="{% url 'selforganized_submission' %}" class="btn btn-lg btn-primary">Register a self-organized workshop</a>
+      </div>
+    </div>
+  </div>
+</div>
+
 
 {% endblock %}
