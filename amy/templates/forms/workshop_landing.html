@@ -1,15 +1,14 @@
 {% extends "base_nav.html" %}
 
-{% load static %}
 {% load crispy_forms_tags %}
 
 {% block logo %}
-<img src="{% static 'carpentries-banner.svg' %}" alt='The Carpentries logo' class="img-fluid w-50 mx-auto d-block" />
+{% include "includes/logo.html" %}
 {% endblock %}
 
 {% block content %}
 
-<div class="row">
+<div class="row pb-5">
   <div class="col-lg-8 offset-lg-2">
     <p class="lead">Thank you for inquiring about a Carpentries workshop. Please select which of
     the following options applies to you. Note this form is only for Data Carpentry,
@@ -22,10 +21,10 @@
 
     <div class="row">
       <div class="col-lg text-center my-3">
-        <a href="{% url 'workshop_request' %}" class="btn btn-lg btn-primary">Request a workshop</a>
+        <a href="{% url 'workshop_inquiry' %}" class="btn btn-lg btn-primary">Request information about our workshops</a>
       </div>
       <div class="col-lg text-center my-3">
-        <a href="{% url 'workshop_inquiry' %}" class="btn btn-lg btn-primary">Inquiry about our workshop</a>
+        <a href="{% url 'workshop_request' %}" class="btn btn-lg btn-primary">Request a workshop</a>
       </div>
       <div class="col-lg text-center my-3">
         <a href="{% url 'selforganized_submission' %}" class="btn btn-lg btn-primary">Register a self-organized workshop</a>

@@ -1,15 +1,14 @@
-{% extends "base_nav.html" %}
+{% extends "base_forms.html" %}
 
-{% load static %}
 {% load crispy_forms_tags %}
 
 {% block logo %}
-<img src="{% static 'carpentries-banner.svg' %}" alt='The Carpentries logo' class="img-fluid w-50 mx-auto d-block" />
+{% include "includes/logo.html" %}
 {% endblock %}
 
 {% block content %}
 
-<p>This form is to inquire about hosting a workshop at your organization and you need clarification or would like to speak with someone about the process. Someone will contact you regarding this inquiry. If you would like to request a centrally-organized go <a href="{% url 'workshop_request' %}">here</a>. If you would like to register a self-organized workshop go <a href="{% url 'selforganized_submission' %}">here</a>.</p>
+<p class="lead">This form is to inquire about hosting a workshop at your organization and you need clarification or would like to speak with someone about the process. Someone will contact you regarding this inquiry. If you would like to request a centrally-organized go <a href="{% url 'workshop_request' %}">here</a>. If you would like to register a self-organized workshop go <a href="{% url 'selforganized_submission' %}">here</a>.</p>
 
 {% crispy form %}
 {% endblock %}

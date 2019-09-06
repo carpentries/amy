@@ -1,10 +1,9 @@
-{% extends "base_nav.html" %}
+{% extends "base_forms.html" %}
 
-{% load static %}
 {% load crispy_forms_tags %}
 
 {% block logo %}
-<img src="{% static 'carpentries-banner.svg' %}" alt='The Carpentries logo' class="img-fluid w-50 mx-auto d-block" />
+{% include "includes/logo.html" %}
 {% endblock %}
 
 {% block content %}

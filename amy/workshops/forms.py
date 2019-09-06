@@ -111,10 +111,10 @@ class BootstrapHelper(FormHelper):
         if wider_labels:
             assert display_labels
             self.label_class = 'col-12 col-lg-3'
-            self.field_class = 'col-12 col-lg-7'
+            self.field_class = 'col-12 col-lg-9'
         elif display_labels:
             self.label_class = 'col-12 col-lg-2'
-            self.field_class = 'col-12 col-lg-8'
+            self.field_class = 'col-12 col-lg-10'
         else:
             self.label_class = ''
             self.field_class = 'col-lg-12'
@@ -137,7 +137,7 @@ class BootstrapHelper(FormHelper):
                 onclick='window.history.back()'))
 
         # offset here adds horizontal centering for all these forms
-        self.form_class = 'form-horizontal offset-lg-1' + additional_form_class
+        self.form_class = 'form-horizontal ' + additional_form_class
 
         self.form_tag = form_tag
 
