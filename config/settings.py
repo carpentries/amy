@@ -397,7 +397,7 @@ ADMIN_NOTIFICATION_CRITERIA_DEFAULT = 'team@carpentries.org'
 ADMIN_URL = env('AMY_ADMIN_URL', default='admin/')
 # https://docs.djangoproject.com/en/dev/ref/settings/#admins
 ADMINS = [
-    ('Sysadmins ML', 'sysadmin@lists.carpentries.org'),
+    ('Sysadmins ML', 'sysadmin@carpentries.org'),
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#managers
 MANAGERS = ADMINS
