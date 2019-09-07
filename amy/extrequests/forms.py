@@ -591,7 +591,8 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
     requested_workshop_types = CurriculumModelMultipleChoiceField(
         required=False,
         queryset=Curriculum.objects.default_order(allow_other=False,
-                                                  allow_unknown=True)
+                                                  allow_unknown=True,
+                                                  dont_know_yet_first=True)
                                    .filter(active=True),
         label=WorkshopInquiryRequest._meta
                                     .get_field('requested_workshop_types')

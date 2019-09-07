@@ -1947,7 +1947,8 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
 
 class CurriculumManager(models.Manager):
     def default_order(self, allow_unknown=True, allow_other=True,
-                      allow_mix_match=False):
+                      allow_mix_match=False,
+                      dont_know_yet_first=False):
         """A specific order_by() clause with semi-ninja code."""
 
         # This crazy django-ninja-code gives different weights to entries
@@ -1964,6 +1965,7 @@ class CurriculumManager(models.Manager):
                 When(carpentry='DC', other=True, then=25),
                 When(carpentry='LC', other=False, then=30),
                 When(carpentry='LC', other=True, then=35),
+                When(unknown=True, then=1 if dont_know_yet_first else 200),
                 When(carpentry='', then=100),
                 default=1,
             ),
