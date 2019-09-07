@@ -1779,10 +1779,12 @@ class TrainingRequest(CreatedUpdatedMixin, DataPrivacyAgreementMixin,
         if self.underresourced:
             score += 1
 
-        # economics or social sciences, arts, humanities, or library science
+        # economics or social sciences, arts, humanities, library science, or
+        # chemistry
         scoring_domains = [
             'Humanities', 'Library and information science',
             'Economics/business', 'Social sciences',
+            'Chemistry',
         ]
         for domain in self.domains.all():
             if domain.name in scoring_domains:

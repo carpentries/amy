@@ -148,9 +148,33 @@ class TestTrainingRequestModelScoring(TestBase):
         domains = KnowledgeDomain.objects.filter(name__in=[
             'Humanities', 'Library and information science',
             'Economics/business', 'Social sciences',
+            'Chemistry',
         ])
         self.tr.domains.set(domains)
         self.assertEqual(self.tr.score_auto, 1)
+
+    def test_each_domain(self):
+        "Ensure each domain from the list counts for +1 score_auto."
+        domain_names = [
+            'Humanities',
+            'Library and information science',
+            'Economics/business',
+            'Social sciences',
+            'Chemistry',
+        ]
+
+        last_domain = None
+
+        for name in domain_names:
+            # we need to remove last domain added, but we can't use `.clear`
+            # because it doesn't trigger the m2m_changed signal
+            if last_domain:
+                self.tr.domains.remove(last_domain)
+
+            self.assertEqual(self.tr.score_auto, 0, name)
+            last_domain = KnowledgeDomain.objects.get(name=name)
+            self.tr.domains.add(last_domain)
+            self.assertEqual(self.tr.score_auto, 1, name)
 
     def test_underrepresented(self):
         """With change in https://github.com/swcarpentry/amy/issues/1468,
