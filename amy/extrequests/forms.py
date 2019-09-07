@@ -14,6 +14,7 @@ from extrequests.models import (
 )
 from workshops.forms import BootstrapHelper
 from workshops.models import (
+    AcademicLevel,
     Event,
     Person,
     Organization,
@@ -559,6 +560,18 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         label=WorkshopInquiryRequest._meta.get_field('domains').verbose_name,
         help_text=WorkshopInquiryRequest._meta.get_field('domains').help_text,
     )
+    academic_levels = forms.ModelMultipleChoiceField(
+        required=False,
+        queryset=AcademicLevel.objects.order_by(
+            # always leave "Don't know yet" last
+            Case(When(name="Don't know yet", then=-1)),
+        ),
+        widget=forms.CheckboxSelectMultiple(),
+        label=WorkshopInquiryRequest._meta.get_field('academic_levels')
+                                          .verbose_name,
+        help_text=WorkshopInquiryRequest._meta.get_field('academic_levels')
+                                              .help_text,
+    )
     data_privacy_agreement = forms.BooleanField(
         required=True,
         label=WorkshopInquiryRequest._meta.get_field('data_privacy_agreement')
@@ -652,7 +665,6 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
             'country': ListSelect2(),
             'language': ListSelect2(),
             'number_attendees': forms.RadioSelect(),
-            'academic_levels': forms.CheckboxSelectMultiple(),
             'computing_levels': forms.CheckboxSelectMultiple(),
             'administrative_fee': forms.RadioSelect(),
             'travel_expences_management':
