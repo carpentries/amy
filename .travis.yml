@@ -22,7 +22,6 @@ env:
 
 install:
   - pip install -r requirements.txt
-  - pip install coveralls
 
 before_script:
   - if [[ $CHECK_MIGRATION == true ]]; then
@@ -35,6 +34,3 @@ before_script:
 
 script:
   - python manage.py test -v 2
-
-after_success:
-  coveralls
