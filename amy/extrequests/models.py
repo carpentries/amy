@@ -532,7 +532,7 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         blank=True,
         verbose_name="What kinds of data does your target audience routinely "
                      "work with?",
-        help_text="",
+        help_text="Check all that apply.",
     )
     routine_data_other = models.CharField(
         max_length=STR_LONGEST,
@@ -543,7 +543,8 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         KnowledgeDomain,
         blank=True,
         verbose_name="Domains or topic of interest for target audience",
-        help_text="The attendees' academic field(s) of study, if known.",
+        help_text="The attendees' academic field(s) of study, if known. Check "
+                  "all that apply.",
     )
     domains_other = models.CharField(
         max_length=STR_LONGEST,
@@ -555,7 +556,7 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         blank=True,
         verbose_name="Attendees' academic level / career stage",
         help_text="If you know the academic level(s) of your attendees, "
-                  "indicate them here.",
+                  "indicate them here. Check all that apply.",
     )
     computing_levels = models.ManyToManyField(
         ComputingExperienceLevel,
@@ -564,7 +565,7 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         help_text="Indicate the attendees' level of computing experience, if "
                   "known. We will ask attendees to fill in a skills survey "
                   "before the workshop, so this answer can be an "
-                  "approximation.",
+                  "approximation. Check all that apply.",
     )
     audience_description = models.TextField(
         blank=True,
@@ -620,7 +621,8 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     language = models.ForeignKey(
         Language, on_delete=models.PROTECT,
         blank=True, null=True,
-        verbose_name="What is the preferred language for the workshop?",
+        verbose_name="What is the preferred language of communication for the "
+                     "workshop?",
         help_text="Our workshops are offered primarily in English, with a few "
                   "of our lessons available in Spanish. While materials are "
                   "mainly in English, we know it can be valuable to have an "
@@ -711,11 +713,12 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         null=False, blank=True, default='',
         choices=RESTRICTION_CHOICES,
         verbose_name="Our instructors live, teach, and travel globally. We "
-                     "understand that institutions may have citizenship or "
-                     "other requirements for employees or volunteers who "
-                     "facilitate workshops. If your institution fits this "
-                     "description, please share your requirements or note that"
-                     " there are no restrictions.",
+                     "understand that institutions may have citizenship, "
+                     "confindentiality agreements or other requirements for "
+                     "employees or volunteers who facilitate workshops. If "
+                     "your institution fits this description, please share "
+                     "your requirements or note that there are no "
+                     "restrictions.",
     )
     institution_restrictions_other = models.CharField(
         max_length=STR_LONGEST,
@@ -726,6 +729,7 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         InfoSource,
         blank=True,
         verbose_name="How did you hear about The Carpentries?",
+        help_text="Check all that apply.",
     )
     carpentries_info_source_other = models.CharField(
         max_length=STR_LONGEST,

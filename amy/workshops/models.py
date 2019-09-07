@@ -2125,12 +2125,12 @@ class CommonRequest(models.Model):
     personal = models.CharField(
         max_length=STR_LONGEST,
         blank=False, null=False,
-        verbose_name="Personal (given) name",
+        verbose_name="Personal (first) name",
     )
     family = models.CharField(
         max_length=STR_LONGEST,
         blank=True, null=False, default="",
-        verbose_name="Family name (surname)",
+        verbose_name="Family (last) name",
     )
     email = models.EmailField(
         blank=False, null=False,
@@ -2161,7 +2161,7 @@ class CommonRequest(models.Model):
     institution_department = models.CharField(
         max_length=STR_LONGEST,
         blank=True, null=False, default="",
-        verbose_name="Department/school affiliation (if applicable)",
+        verbose_name="Department/School/Library affiliation (if applicable)",
     )
     PUBLIC_EVENT_CHOICES = (
         ('public', 'This event is open to the public.'),
@@ -2188,8 +2188,7 @@ class CommonRequest(models.Model):
         max_length=STR_LONGEST,
         null=False, blank=True, default='',
         verbose_name="Is there anyone you would like included on communication"
-                     " for this workshop? Please provide contact name(s) and "
-                     "e-mail(s) address",
+                     " for this workshop? Please provide e-mail addresses.",
     )
 
     class Meta:
@@ -2298,7 +2297,8 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     language = models.ForeignKey(
         Language, on_delete=models.PROTECT,
         blank=False, null=False,
-        verbose_name="What language will this workshop be conducted in?",
+        verbose_name="What is the preferred language of communication for the "
+                     "workshop?",
         help_text="Our workshops are offered primarily in English, with a few "
                   "of our lessons available in Spanish. While materials are "
                   "mainly in English, we know it can be valuable to have an "
@@ -2433,11 +2433,12 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         null=False, blank=False, default='',
         choices=RESTRICTION_CHOICES,
         verbose_name="Our instructors live, teach, and travel globally. We "
-                     "understand that institutions may have citizenship or "
-                     "other requirements for employees or volunteers who "
-                     "facilitate workshops. If your institution fits this "
-                     "description, please share your requirements or note that"
-                     " there are no restrictions.",
+                     "understand that institutions may have citizenship, "
+                     "confindentiality agreements or other requirements for "
+                     "employees or volunteers who facilitate workshops. If "
+                     "your institution fits this description, please share "
+                     "your requirements or note that there are no "
+                     "restrictions.",
     )
     institution_restrictions_other = models.CharField(
         max_length=STR_LONGEST,
@@ -2448,6 +2449,7 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         InfoSource,
         blank=True,
         verbose_name="How did you hear about The Carpentries?",
+        help_text="Check all that apply.",
     )
     carpentries_info_source_other = models.CharField(
         max_length=STR_LONGEST,
