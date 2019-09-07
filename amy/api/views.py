@@ -539,7 +539,8 @@ class ReportsViewSet(ViewSet):
         return Response(data)
 
     def get_all_activity_over_time(self, start, end):
-        events_qs = Event.objects.filter(start__gte=start, start__lte=end)
+        events_qs = Event.objects.filter(start__gte=start, start__lte=end) \
+                                 .order_by('-start')
         swc_tag = Tag.objects.get(name='SWC')
         dc_tag = Tag.objects.get(name='DC')
         lc_tag = Tag.objects.get(name='LC')

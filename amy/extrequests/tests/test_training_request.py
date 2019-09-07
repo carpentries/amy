@@ -556,7 +556,7 @@ class TestTrainingRequestMerging(TestBase):
     # and `test_event`
 
     def setUp(self):
-        self.clear_sites_cache()
+        # self.clear_sites_cache()
         self._setUpAirports()
         self._setUpNonInstructors()
         self._setUpRoles()

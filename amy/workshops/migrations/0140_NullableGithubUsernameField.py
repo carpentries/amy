@@ -10,7 +10,8 @@ import workshops.fields
 def display_wrong_gh_usernames(apps, schema_editor):
     Person = apps.get_model('workshops', 'Person')
 
-    persons = Person.objects.annotate(github_length=Length('github'))
+    persons = Person.objects.annotate(github_length=Length('github')) \
+                            .order_by('family', 'personal')
 
     # filter by too long usernames (>39 characters)
     q1 = Q(github_length__gt=39)

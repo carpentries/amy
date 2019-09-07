@@ -19,7 +19,9 @@ def fix_truncated_language_names(apps, schema_editor):
     Language = apps.get_model('workshops', 'Language')
 
     # read list of languages
-    languages_json = json.load(open('data/registry.json', encoding='utf-8'))
+    with open('data/registry.json', encoding='utf-8') as f:
+        languages_json = json.load(f)
+
     # 1. (most inner) filter out non-language (sublanguages, dialects etc.)
     # 2. (middle) apply ' '.join(language['Description']) and therefore make it
     #    a list of descriptions

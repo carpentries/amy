@@ -11,7 +11,8 @@ def lowercase_emails(apps, schemat_editor):
     """Replace '.' with '_' in every username."""
     Person = apps.get_model('workshops', 'Person')
     # first: annotate everyone with their email lower-cased
-    persons = Person.objects.all().annotate(lower_email=Lower('email'))
+    persons = Person.objects.all().annotate(lower_email=Lower('email')) \
+                                  .order_by('family', 'personal')
     # then: update the email to the lower-cased email
     persons.update(email=F('lower_email'))
 

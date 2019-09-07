@@ -239,7 +239,7 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView):
                  to_attr='training_tasks',
                  queryset=Task.objects.filter(role__name='learner',
                                               event__tags__name='TTT')),
-    ).select_related('airport')
+    ).select_related('airport').order_by('family', 'personal')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -788,6 +788,7 @@ class AllEvents(OnlyForAdminsMixin, AMYListView):
                      output_field=IntegerField()),
             )
         )
+        .order_by('-start')
     )
     filter_class = EventFilter
     title = 'All Events'
@@ -1438,6 +1439,7 @@ def _workshop_staff_query(lat=None, lng=None):
                 queryset=Badge.objects.instructor_badges()
             ),
         )
+        .order_by('family', 'personal')
     )
 
     if lat and lng:
