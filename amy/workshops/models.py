@@ -567,10 +567,11 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin,
          'Yes, and use the name associated with my ORCID profile'),
         ('yes-github', 'Yes, and only use my GitHub handle'),
         ('no', 'No'),
+        ('unset', 'Unset'),
     )
     lesson_publication_consent = models.CharField(
         max_length=STR_MED, choices=LESSON_PUBLICATION_CHOICES,
-        blank=True, default='no', null=False,
+        blank=True, default='unset', null=False,
         verbose_name='Do you consent to have your name or identity associated '
                      'with lesson publications?',
         help_text='When we publish our lessons, we like to include everyone '
