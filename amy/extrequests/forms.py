@@ -540,7 +540,10 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
     )
     routine_data = forms.ModelMultipleChoiceField(
         required=False,
-        queryset=DataVariant.objects.all(),
+        queryset=DataVariant.objects.order_by(
+            # always leave "Don't know yet" last
+            Case(When(unknown=True, then=-1)),
+        ),
         widget=CheckboxSelectMultipleWithOthers('routine_data_other'),
         label=WorkshopInquiryRequest._meta.get_field('routine_data').verbose_name,
         help_text=WorkshopInquiryRequest._meta.get_field('routine_data').help_text,
