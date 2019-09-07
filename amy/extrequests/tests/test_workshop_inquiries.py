@@ -29,6 +29,7 @@ class TestWorkshopInquiryBaseForm(FormTestHelper, TestBase):
         'email': 'hpotter@magic.gov',
         'institution_other_name': 'Ministry of Magic',
         'institution_other_URL': 'magic.gov.uk',
+        'travel_expences_agreement': True,
         'location': 'London',
         'country': 'GB',
         'data_privacy_agreement': True,
@@ -292,7 +293,7 @@ class TestWorkshopInquiryBaseForm(FormTestHelper, TestBase):
         self.assertIn('preferred_dates', form.errors)
         self.assertNotIn('other_preferred_dates', form.errors)
 
-        # 4: preferred date wrong format 
+        # 4: preferred date wrong format
         data = {
             'preferred_dates': '{:%d-%m-%Y}'.format(datetime.date.today()),
             'other_preferred_dates': '',
