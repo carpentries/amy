@@ -8,6 +8,7 @@
 
     <div class="row">
       <div class="col-5">
+        <h4>For The Carpentries Administrators</h4>
         <form method="post" action="{% url 'login' %}">
           {% csrf_token %}
           <div class="form-group">
@@ -19,15 +20,19 @@
             <input type="password" class="form-control" id="id_password" placeholder="Password" name="password">
           </div>
           <input type="hidden" name="next" value="{{ next }}" />
-          <input type="submit" class="btn btn-primary" value="Log in">
+          <input type="submit" class="btn btn-primary" value="Log in to AMY">
         </form>
         <small><a href="{% url 'password_reset' %}">Forgotten your password?</a></small>
       </div>
+
       <div class="col">
         <p class="text-center"><strong>OR</strong></p>
       </div>
+
       <div class="col-5">
+        <h4>For The Carpentries Instructors</h4>
         <p><a class="btn btn-primary w-100" href="/login/github/"><i class="fab fa-github"></i> Log in with your GitHub account</a></p>
+        <p>Having trouble logging in? Contact us at <a href="mailto:team@carpentries.org">team@carpentries.org</a>.</p>
       </div>
     </div>
 {% endblock %}
