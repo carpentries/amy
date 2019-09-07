@@ -150,6 +150,12 @@ class BootstrapHelper(FormHelper):
         # don't prevent from loading media by default
         self.include_media = include_media
 
+    def hr(self):
+        """Horizontal line as a separator in forms is used very often. But
+        since from time to time the forms are changed (in terms of columns
+        width), we should rather use one global <hr>..."""
+        return '<hr class="col-12 mx-0 px-0">'
+
 
 class BootstrapHelperFilter(FormHelper):
     """A differently shaped forms (more space-efficient) for use in sidebar as

@@ -395,12 +395,12 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         for field in hr_fields_after:
             self.helper.layout.insert(
                 self.helper.layout.fields.index(field) + 1,
-                HTML('<hr class="col-lg-10 col-12 mx-0 px-0">'),
+                HTML(self.helper.hr()),
             )
         for field in hr_fields_before:
             self.helper.layout.insert(
                 self.helper.layout.fields.index(field),
-                HTML('<hr class="col-lg-10 col-12 mx-0 px-0">'),
+                HTML(self.helper.hr()),
             )
 
     @staticmethod
@@ -766,12 +766,12 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         for field in hr_fields_after:
             self.helper.layout.insert(
                 self.helper.layout.fields.index(field) + 1,
-                HTML('<hr class="col-lg-10 col-12 mx-0 px-0">'),
+                HTML(self.helper.hr()),
             )
         for field in hr_fields_before:
             self.helper.layout.insert(
                 self.helper.layout.fields.index(field),
-                HTML('<hr class="col-lg-10 col-12 mx-0 px-0">'),
+                HTML(self.helper.hr()),
             )
 
     def clean(self):
@@ -1058,12 +1058,12 @@ class SelfOrganizedSubmissionBaseForm(forms.ModelForm):
         for field in hr_fields_after:
             self.helper.layout.insert(
                 self.helper.layout.fields.index(field) + 1,
-                HTML('<hr class="col-lg-10 col-12 mx-0 px-0">'),
+                HTML(self.helper.hr()),
             )
         for field in hr_fields_before:
             self.helper.layout.insert(
                 self.helper.layout.fields.index(field),
-                HTML('<hr class="col-lg-10 col-12 mx-0 px-0">'),
+                HTML(self.helper.hr()),
             )
 
     def clean(self):

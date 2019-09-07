@@ -120,11 +120,11 @@ class TrainingRequestForm(forms.ModelForm):
         # add <HR> around "underrepresented*" fields
         index = self.helper.layout.fields.index('underrepresented')
         self.helper.layout.insert(
-            index, HTML('<hr class="col-lg-10 col-12 mx-0 px-0">'))
+            index, HTML(self.helper.hr()))
 
         index = self.helper.layout.fields.index('underrepresented_details')
         self.helper.layout.insert(
-            index + 1, HTML('<hr class="col-lg-10 col-12 mx-0 px-0">'))
+            index + 1, HTML(self.helper.hr()))
 
 
 class WorkshopRequestExternalForm(WorkshopRequestBaseForm):
