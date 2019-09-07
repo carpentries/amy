@@ -603,6 +603,13 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         widget=forms.CheckboxSelectMultiple(),
     )
 
+    travel_expences_agreement = forms.BooleanField(
+        required=True,
+        label=WorkshopInquiryRequest._meta
+                                    .get_field('travel_expences_agreement')
+                                    .verbose_name,
+    )
+
     carpentries_info_source = SafeModelMultipleChoiceField(
         required=not WorkshopInquiryRequest
                      ._meta.get_field('carpentries_info_source').blank,

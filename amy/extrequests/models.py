@@ -689,7 +689,7 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         verbose_name="Other travel expences management",
     )
     travel_expences_agreement = models.BooleanField(
-        null=False, blank=True, default=False,
+        null=False, blank=False, default=False,
         verbose_name="Regardless of the fee due to The Carpentries, I "
                      "understand I am also responsible for travel costs for "
                      "the Instructors which can include airfare, ground "
