@@ -34,7 +34,7 @@ def change_default_for_existing_users(apps, schema_editor):
             users_no_changes.append(user.pk)
 
     Person.objects.filter(pk__in=users_no_changes) \
-                  .update(lesson_publication_consent='undecided')
+                  .update(lesson_publication_consent='unset')
 
 
 class Migration(migrations.Migration):
@@ -47,7 +47,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='person',
             name='lesson_publication_consent',
-            field=models.CharField(blank=True, choices=[('yes-profile', 'Yes, and use the name associated with my profile'), ('yes-orcid', 'Yes, and use the name associated with my ORCID profile'), ('yes-github', 'Yes, and only use my GitHub handle'), ('no', 'No'), ('undecided', 'Undecided')], default='undecided', help_text='When we publish our lessons, we like to include everyone who has contributed via pull request as an author. If you do make any contributions, would you like to be included as an author when we publish the lesson?', max_length=40, verbose_name='Do you consent to have your name or identity associated with lesson publications?'),
+            field=models.CharField(blank=True, choices=[('yes-profile', 'Yes, and use the name associated with my profile'), ('yes-orcid', 'Yes, and use the name associated with my ORCID profile'), ('yes-github', 'Yes, and only use my GitHub handle'), ('no', 'No'), ('unset', 'Unset')], default='unset', help_text='When we publish our lessons, we like to include everyone who has contributed via pull request as an author. If you do make any contributions, would you like to be included as an author when we publish the lesson?', max_length=40, verbose_name='Do you consent to have your name or identity associated with lesson publications?'),
         ),
         migrations.RunPython(change_default_for_existing_users),
     ]
