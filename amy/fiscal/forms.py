@@ -7,6 +7,7 @@ from workshops.forms import (
     BootstrapHelper,
     WidgetOverrideMixin,
     form_saved_add_comment,
+    SELECT2_SIDEBAR,
 )
 from workshops.models import (
     Organization,
@@ -16,7 +17,7 @@ from workshops.models import (
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330: https://github.com/swcarpentry/amy/issues/1330
 from workshops.fields import (
-    ModelSelect2,
+    ModelSelect2Widget,
 )
 from workshops.signals import create_comment_signal
 
@@ -79,7 +80,7 @@ class MembershipForm(forms.ModelForm):
         label='Organization',
         required=True,
         queryset=Organization.objects.all(),
-        widget=ModelSelect2(url='organization-lookup')
+        widget=ModelSelect2Widget(data_view='organization-lookup')
     )
 
     class Meta:
@@ -125,9 +126,12 @@ class SponsorshipForm(WidgetOverrideMixin, forms.ModelForm):
         model = Sponsorship
         fields = '__all__'
         widgets = {
-            'organization': ModelSelect2(url='organization-lookup'),
-            'event': ModelSelect2(url='event-lookup'),
-            'contact': ModelSelect2(url='person-lookup'),
+            'organization': ModelSelect2Widget(data_view='organization-lookup',
+                                               attrs=SELECT2_SIDEBAR),
+            'event': ModelSelect2Widget(data_view='event-lookup',
+                                        attrs=SELECT2_SIDEBAR),
+            'contact': ModelSelect2Widget(data_view='person-lookup',
+                                          attrs=SELECT2_SIDEBAR),
         }
 
 
