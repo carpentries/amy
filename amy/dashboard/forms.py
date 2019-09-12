@@ -12,8 +12,8 @@ from workshops.forms import BootstrapHelper
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330: https://github.com/swcarpentry/amy/issues/1330
 from workshops.fields import (
-    ListSelect2,
-    ModelSelect2Multiple,
+    Select2Widget,
+    ModelSelect2MultipleWidget,
 )
 
 
@@ -33,14 +33,14 @@ class AutoUpdateProfileForm(forms.ModelForm):
     country = CountryField().formfield(
         required=False,
         help_text='Your country of residence.',
-        widget=ListSelect2(),
+        widget=Select2Widget,
     )
 
     languages = forms.ModelMultipleChoiceField(
         label='Languages',
         required=False,
         queryset=Language.objects.all(),
-        widget=ModelSelect2Multiple(url='language-lookup')
+        widget=ModelSelect2MultipleWidget(data_view='language-lookup')
     )
 
     helper = BootstrapHelper(add_cancel_button=False)
@@ -77,7 +77,7 @@ class AutoUpdateProfileForm(forms.ModelForm):
             'gender': forms.RadioSelect(),
             'domains': forms.CheckboxSelectMultiple(),
             'lessons': forms.CheckboxSelectMultiple(),
-            'airport': ListSelect2(),
+            'airport': Select2Widget,
         }
 
 

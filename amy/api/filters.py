@@ -7,7 +7,7 @@ from extrequests.filters import (
     TrainingRequestFilter,
 )
 from workshops.fields import (
-    Select2Multiple,
+    Select2MultipleWidget,
 )
 from workshops.filters import (
     AMYFilterSet,
@@ -92,7 +92,7 @@ class InstructorsOverTimeFilter(AMYFilterSet):
     )
     country = filters.MultipleChoiceFilter(
         choices=list(Countries()),
-        widget=Select2Multiple(),
+        widget=Select2MultipleWidget,
         help_text="Instructor's country",
     )
     date = filters.DateFromToRangeFilter(
@@ -116,7 +116,7 @@ class WorkshopsOverTimeFilter(AMYFilterSet):
     )
     country = filters.MultipleChoiceFilter(
         choices=list(Countries()),
-        widget=Select2Multiple(),
+        widget=Select2MultipleWidget,
     )
     start = filters.DateFromToRangeFilter(
         label='Date range (from - to)',
@@ -140,7 +140,7 @@ class LearnersOverTimeFilter(AMYFilterSet):
     )
     country = filters.MultipleChoiceFilter(
         choices=list(Countries()),
-        widget=Select2Multiple(),
+        widget=Select2MultipleWidget,
     )
     start = filters.DateFromToRangeFilter(
         label='Date range (from - to)',
