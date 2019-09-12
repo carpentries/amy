@@ -402,7 +402,7 @@ class ReportsViewSet(ViewSet):
         carpentries' workshops over time."""
         qs = self.event_queryset
         qs = LearnersOverTimeFilter(request.GET, queryset=qs).qs
-        qs = qs.annotate(count=Sum('attendance'))
+        qs = qs.annotate(count=F('attendance'))
 
         # we reuse the serializer because it works here too
         serializer = WorkshopsOverTimeSerializer(qs, many=True)
