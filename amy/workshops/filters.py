@@ -520,6 +520,7 @@ class WorkshopStaffFilter(AMYFilterSet):
         conjoined=False,  # `OR`
     )
     is_trainer = django_filters.BooleanFilter(
+        widget=widgets.CheckboxInput,
         method='filter_trainer',
     )
     languages = django_filters.ModelMultipleChoiceFilter(
@@ -532,12 +533,15 @@ class WorkshopStaffFilter(AMYFilterSet):
         choices=Person.GENDER_CHOICES,
     )
     was_helper = django_filters.BooleanFilter(
+        widget=widgets.CheckboxInput,
         method='filter_helper',
     )
     was_organizer = django_filters.BooleanFilter(
+        widget=widgets.CheckboxInput,
         method='filter_organizer',
     )
     is_in_progress_trainee = django_filters.BooleanFilter(
+        widget=widgets.CheckboxInput,
         method='filter_in_progress_trainee',
     )
 
