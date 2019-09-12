@@ -3,8 +3,8 @@ PyYAML==3.13
 requests==2.19.1
 requests-mock==1.5.2
 django-crispy-forms==1.7.2
-# replaces django-selectable:
-django-autocomplete-light==3.3.0
+# replaces django-autocomplete-light
+django-select2==7.1.1
 django-countries==5.3.2
 django-filter==2.0.0
 django-reversion==2.0.13
