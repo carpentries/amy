@@ -1,13 +1,9 @@
-from dal_select2.widgets import (
-    Select2WidgetMixin as DALSelect2WidgetMixin,
-)
-from dal.autocomplete import (
-    Select2 as DALSelect2,
-    Select2Multiple as DALSelect2Multiple,
-    ListSelect2 as DALListSelect2,
-    ModelSelect2 as DALModelSelect2,
-    ModelSelect2Multiple as DALModelSelect2Multiple,
-    TagSelect2 as DALTagSelect2,
+from django_select2.forms import (
+    Select2Widget as DS2_Select2Widget,
+    Select2MultipleWidget as DS2_Select2MultipleWidget,
+    ModelSelect2Widget as DS2_ModelSelect2Widget,
+    ModelSelect2MultipleWidget as DS2_ModelSelect2MultipleWidget,
+    Select2TagWidget as DS2_Select2TagWidget,
 )
 from django.core.validators import RegexValidator, MaxLengthValidator
 from django.db import models
@@ -43,69 +39,6 @@ class NullableGithubUsernameField(models.CharField):
     ]
 
 
-#------------------------------------------------------------
-# "Rewrite" select2 widgets from Django Autocomplete Light so
-# that they don't use Django's admin-provided jQuery, which
-# causes errors with jQuery provided by us.
-
-class Select2WidgetMixin(DALSelect2WidgetMixin):
-    @property
-    def media(self):
-        m = super().media
-        js = list(m._js)
-
-        # remove JS import that mess up jQuery
-        jquery_messing_imports = (
-            'admin/js/vendor/jquery/jquery.js',
-            'admin/js/vendor/jquery/jquery.min.js',
-            # 'admin/js/jquery.init.js',
-            # 'autocomplete_light/jquery.init.js',
-        )
-        for import_ in jquery_messing_imports:
-            try:
-                js.remove(import_)
-            except ValueError:
-                pass
-
-        # inject select2 bootstrap4 theme
-        select2_bootstrap4_theme = ('@ttskch/select2-bootstrap4-theme/'
-                                    'dist/select2-bootstrap4.css')
-
-        m._css['screen'] = m._css['screen'] + [select2_bootstrap4_theme]
-
-        return forms.Media(css=m._css, js=js)
-
-    def build_attrs(self, *args, **kwargs):
-        """Set select2 bootstrap4 theme by default."""
-        attrs = super().build_attrs(*args, **kwargs)
-        attrs.setdefault('data-theme', 'bootstrap4')
-        return attrs
-
-
-class Select2(Select2WidgetMixin, DALSelect2):
-    pass
-
-
-class Select2Multiple(Select2WidgetMixin, DALSelect2Multiple):
-    pass
-
-
-class ListSelect2(Select2WidgetMixin, DALListSelect2):
-    pass
-
-
-class ModelSelect2(Select2WidgetMixin, DALModelSelect2):
-    pass
-
-
-class ModelSelect2Multiple(Select2WidgetMixin, DALModelSelect2Multiple):
-    pass
-
-
-class TagSelect2(Select2WidgetMixin, DALTagSelect2):
-    pass
-
-
 class RadioSelectWithOther(forms.RadioSelect):
     """A RadioSelect widget that should render additional field ('Other').
 
@@ -136,3 +69,43 @@ class CheckboxSelectMultipleWithOthers(forms.CheckboxSelectMultiple):
     def __init__(self, other_field_name, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.other_field_name = other_field_name
+
+
+class Select2BootstrapMixin:
+    def build_attrs(self, *args, **kwargs):
+        attrs = super().build_attrs(*args, **kwargs)
+        attrs.setdefault('data-theme', 'bootstrap4')
+        return attrs
+
+
+class Select2NoMinimumInputLength:
+    def build_attrs(self, *args, **kwargs):
+        # Let's set up the minimum input length first!
+        # It will overwrite `setdefault('data-minimum-input-length')` from
+        # other mixins.
+        self.attrs.setdefault('data-minimum-input-length', 0)
+        attrs = super().build_attrs(*args, **kwargs)
+        return attrs
+
+
+class Select2Widget(Select2BootstrapMixin, DS2_Select2Widget):
+    pass
+
+
+class Select2MultipleWidget(Select2BootstrapMixin, DS2_Select2MultipleWidget):
+    pass
+
+
+class ModelSelect2Widget(Select2BootstrapMixin, Select2NoMinimumInputLength,
+                         DS2_ModelSelect2Widget):
+    pass
+
+
+class ModelSelect2MultipleWidget(Select2BootstrapMixin,
+                                 Select2NoMinimumInputLength,
+                                 DS2_ModelSelect2MultipleWidget):
+    pass
+
+
+class Select2TagWidget(Select2BootstrapMixin, DS2_Select2TagWidget):
+    pass
