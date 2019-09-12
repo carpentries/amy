@@ -14,13 +14,9 @@ from workshops.forms import (
 from workshops.models import (
     Language,
 )
-# this is used instead of Django Autocomplete Light widgets
-# see issue #1330: https://github.com/swcarpentry/amy/issues/1330
 from workshops.fields import (
-    Select2,
-    ListSelect2,
-    ModelSelect2,
-    ModelSelect2Multiple,
+    Select2Widget,
+    ModelSelect2Widget,
     RadioSelectWithOther,
     CheckboxSelectMultipleWithOthers,
 )
@@ -41,7 +37,7 @@ class SWCEventRequestNoCaptchaForm(PrivacyConsentMixin, forms.ModelForm):
         label='Language',
         required=False,
         queryset=Language.objects.all(),
-        widget=ModelSelect2(url='language-lookup')
+        widget=ModelSelect2Widget(data_view='language-lookup')
     )
 
     helper = BootstrapHelper(wider_labels=True, add_cancel_button=False,
@@ -53,7 +49,7 @@ class SWCEventRequestNoCaptchaForm(PrivacyConsentMixin, forms.ModelForm):
                    'data_types', 'data_types_other',
                    'attendee_data_analysis_level', 'fee_waiver_request', )
         widgets = {
-            'event': Select2(),
+            'event': Select2Widget,
             'approx_attendees': forms.RadioSelect(),
             'attendee_domains': CheckboxSelectMultipleWithOthers(
                 'attendee_domains_other'),
@@ -62,7 +58,7 @@ class SWCEventRequestNoCaptchaForm(PrivacyConsentMixin, forms.ModelForm):
             'travel_reimbursement': RadioSelectWithOther(
                 'travel_reimbursement_other'),
             'admin_fee_payment': forms.RadioSelect(),
-            'country': ListSelect2(),
+            'country': Select2Widget,
         }
 
     def __init__(self, *args, **kwargs):
@@ -104,7 +100,7 @@ class DCEventRequestNoCaptchaForm(SWCEventRequestNoCaptchaForm):
         exclude = ('created_at', 'last_updated_at', 'assigned_to',
                    'admin_fee_payment', 'attendee_computing_levels', )
         widgets = {
-            'event': Select2(),
+            'event': Select2Widget,
             'approx_attendees': forms.RadioSelect(),
             'attendee_domains': CheckboxSelectMultipleWithOthers(
                 'attendee_domains_other'),
@@ -141,7 +137,7 @@ class EventSubmitFormNoCaptcha(forms.ModelForm):
         model = EventSubmission
         exclude = ('created_at', 'last_updated_at', 'assigned_to', )
         widgets = {
-            'event': Select2(),
+            'event': Select2Widget,
         }
 
 
@@ -159,7 +155,7 @@ class DCSelfOrganizedEventRequestFormNoCaptcha(forms.ModelForm):
         model = DCSelfOrganizedEventRequest
         exclude = ('created_at', 'last_updated_at', 'assigned_to')
         widgets = {
-            'event': Select2(),
+            'event': Select2Widget,
             'instructor_status': forms.RadioSelect(),
             'is_partner': forms.RadioSelect(),
             'domains': forms.CheckboxSelectMultiple(),
