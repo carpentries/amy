@@ -19,6 +19,11 @@ from workshops.fields import (
 
 class AutoUpdateProfileForm(forms.ModelForm):
     username = forms.CharField(disabled=True, required=False)
+    email = forms.CharField(
+        disabled=True, required=False,
+        label=Person._meta.get_field('email').verbose_name,
+        help_text=Person._meta.get_field('email').help_text,
+    )
     github = forms.CharField(
         disabled=True, required=False,
         help_text='If you want to change your github username, please email '
