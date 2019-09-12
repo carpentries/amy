@@ -7,14 +7,14 @@ from django_countries import Countries
 
 from dashboard.models import Continent
 from workshops.fields import (
-    Select2,
-    Select2Multiple,
-    ModelSelect2,
-    ModelSelect2Multiple,
+    Select2Widget,
+    Select2MultipleWidget,
+    ModelSelect2Widget,
+    ModelSelect2MultipleWidget,
 )
 from workshops.forms import (
     bootstrap_helper_filter,
-    SIDEBAR_DAL_WIDTH,
+    SELECT2_SIDEBAR,
 )
 from workshops.models import (
     StateMixin,
@@ -175,9 +175,10 @@ class StateFilterSet(django_filters.FilterSet):
 
 
 class EventFilter(AMYFilterSet):
-    assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2())
-    host = ForeignKeyAllValuesFilter(Organization, widget=Select2())
-    administrator = ForeignKeyAllValuesFilter(Organization, widget=Select2())
+    assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2Widget)
+    host = ForeignKeyAllValuesFilter(Organization, widget=Select2Widget)
+    administrator = ForeignKeyAllValuesFilter(Organization,
+                                              widget=Select2Widget)
 
     STATUS_CHOICES = [
         ('', 'All'),
@@ -191,7 +192,7 @@ class EventFilter(AMYFilterSet):
         ('metadata_changed', 'Detected changes in metadata'),
     ]
     state = EventStateFilter(choices=STATUS_CHOICES, label='Status',
-                             widget=Select2())
+                             widget=Select2Widget)
 
     invoice_status = django_filters.ChoiceFilter(
         choices=Event.INVOICED_CHOICES,
@@ -199,11 +200,13 @@ class EventFilter(AMYFilterSet):
 
     tags = django_filters.ModelMultipleChoiceFilter(
         queryset=Tag.objects.all(), label='Tags',
-        widget=ModelSelect2Multiple(),
+        widget=ModelSelect2MultipleWidget(
+            data_view='tag-lookup',
+        ),
     )
 
-    country = AllCountriesFilter(widget=Select2())
-    continent = ContinentFilter(widget=Select2(), label="Continent")
+    country = AllCountriesFilter(widget=Select2Widget)
+    continent = ContinentFilter(widget=Select2Widget, label="Continent")
 
     order_by = django_filters.OrderingFilter(
         fields=(
@@ -246,12 +249,16 @@ def filter_taught_workshops(queryset, name, values):
 class PersonFilter(AMYFilterSet):
     badges = django_filters.ModelMultipleChoiceFilter(
         queryset=Badge.objects.all(), label='Badges',
-        widget=ModelSelect2Multiple(),
+        widget=ModelSelect2MultipleWidget(
+            data_view='badge-lookup',
+        ),
     )
     taught_workshops = django_filters.ModelMultipleChoiceFilter(
         queryset=Tag.objects.all(), label='Taught at workshops of type',
         method=filter_taught_workshops,
-        widget=ModelSelect2Multiple(),
+        widget=ModelSelect2MultipleWidget(
+            data_view='tag-lookup',
+        ),
     )
 
     order_by = NamesOrderingFilter(
@@ -379,9 +386,9 @@ class TraineeFilter(AMYFilterSet):
         queryset=Event.objects.ttt(),
         method=filter_trainees_by_training,
         label='Training',
-        widget=ModelSelect2(
-            url='ttt-event-lookup',
-            attrs=SIDEBAR_DAL_WIDTH,
+        widget=ModelSelect2Widget(
+            data_view='ttt-event-lookup',
+            attrs=SELECT2_SIDEBAR,
         ),
     )
 
@@ -407,9 +414,9 @@ class TaskFilter(AMYFilterSet):
     event = django_filters.ModelChoiceFilter(
         queryset=Event.objects.all(),
         label='Event',
-        widget=ModelSelect2(
-            url='event-lookup',
-            attrs=SIDEBAR_DAL_WIDTH,
+        widget=ModelSelect2Widget(
+            data_view='event-lookup',
+            attrs=SELECT2_SIDEBAR,
         ),
     )
 
@@ -440,7 +447,7 @@ class TaskFilter(AMYFilterSet):
 class AirportFilter(AMYFilterSet):
     fullname = django_filters.CharFilter(lookup_expr='icontains')
 
-    continent = ContinentFilter(widget=Select2(), label="Continent")
+    continent = ContinentFilter(widget=Select2Widget, label="Continent")
 
     order_by = django_filters.OrderingFilter(
         fields=(
@@ -468,9 +475,9 @@ class BadgeAwardsFilter(AMYFilterSet):
     event = django_filters.ModelChoiceFilter(
         queryset=Event.objects.all(),
         label='Event',
-        widget=ModelSelect2(
-            url='event-lookup',
-            attrs=SIDEBAR_DAL_WIDTH,
+        widget=ModelSelect2Widget(
+            data_view='event-lookup',
+            attrs=SELECT2_SIDEBAR,
         ),
     )
 
@@ -493,35 +500,31 @@ class BadgeAwardsFilter(AMYFilterSet):
 
 
 class WorkshopStaffFilter(AMYFilterSet):
+    """Form for this filter is never showed up, instead a custom form
+    (.forms.WorkshopStaffForm) is used. So there's no need to specify widgets
+    here.
+    """
     country = django_filters.MultipleChoiceFilter(
         choices=list(Countries()),
-        widget=Select2Multiple(),
         method="filter_country",
     )
-    continent = ContinentFilter(widget=Select2(), label="Continent")
+    continent = ContinentFilter(label="Continent")
     lessons = django_filters.ModelMultipleChoiceFilter(
         label='Lessons',
         queryset=Lesson.objects.all(),
-        widget=ModelSelect2Multiple(attrs=SIDEBAR_DAL_WIDTH),
         conjoined=True,  # `AND`
     )
     badges = django_filters.ModelMultipleChoiceFilter(
         label='Badges',
         queryset=Badge.objects.instructor_badges(),
-        widget=ModelSelect2Multiple(attrs=SIDEBAR_DAL_WIDTH),
         conjoined=False,  # `OR`
     )
     is_trainer = django_filters.BooleanFilter(
-        widget=widgets.CheckboxInput,
         method='filter_trainer',
     )
     languages = django_filters.ModelMultipleChoiceFilter(
         label='Languages',
         queryset=Language.objects.all(),
-        widget=ModelSelect2Multiple(
-            url='language-lookup',
-            attrs=SIDEBAR_DAL_WIDTH,
-        ),
         conjoined=True,  # `AND`
     )
     gender = django_filters.ChoiceFilter(
@@ -529,15 +532,12 @@ class WorkshopStaffFilter(AMYFilterSet):
         choices=Person.GENDER_CHOICES,
     )
     was_helper = django_filters.BooleanFilter(
-        widget=widgets.CheckboxInput,
         method='filter_helper',
     )
     was_organizer = django_filters.BooleanFilter(
-        widget=widgets.CheckboxInput,
         method='filter_organizer',
     )
     is_in_progress_trainee = django_filters.BooleanFilter(
-        widget=widgets.CheckboxInput,
         method='filter_in_progress_trainee',
     )
 

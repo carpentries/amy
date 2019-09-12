@@ -35,18 +35,17 @@ from workshops.models import (
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330: https://github.com/swcarpentry/amy/issues/1330
 from workshops.fields import (
-    Select2,
-    Select2Multiple,
-    ListSelect2,
-    ModelSelect2,
-    ModelSelect2Multiple,
+    Select2Widget,
+    Select2MultipleWidget,
+    ModelSelect2Widget,
+    ModelSelect2MultipleWidget,
 )
 from workshops.signals import create_comment_signal
 
 
-# settings for Select2
+#### settings for Select2
 # this makes it possible for autocomplete widget to fit in low-width sidebar
-SIDEBAR_DAL_WIDTH = {
+SELECT2_SIDEBAR = {
     'data-width': '100%',
     'width': 'style',
 }
@@ -218,27 +217,28 @@ class WorkshopStaffForm(forms.Form):
         label='Airport',
         required=False,
         queryset=Airport.objects.all(),
-        widget=ModelSelect2(
-            url='airport-lookup',
-            attrs=SIDEBAR_DAL_WIDTH,
+        widget=ModelSelect2Widget(
+            data_view='airport-lookup',
+            attrs=SELECT2_SIDEBAR,
         )
     )
     languages = forms.ModelMultipleChoiceField(
         label='Languages',
         required=False,
         queryset=Language.objects.all(),
-        widget=ModelSelect2Multiple(
-            url='language-lookup',
-            attrs=SIDEBAR_DAL_WIDTH,
+        widget=ModelSelect2MultipleWidget(
+            data_view='language-lookup',
+            attrs=SELECT2_SIDEBAR,
         )
     )
 
     country = forms.MultipleChoiceField(
-        choices=list(Countries()), required=False, widget=Select2Multiple,
+        choices=list(Countries()), required=False,
+        widget=Select2MultipleWidget,
     )
 
     continent = forms.ChoiceField(
-        choices=continent_list, required=False, widget=Select2,
+        choices=continent_list, required=False, widget=Select2Widget,
     )
 
     lessons = forms.ModelMultipleChoiceField(
@@ -369,7 +369,7 @@ class EventForm(forms.ModelForm):
         required=True,
         help_text=Event._meta.get_field('host').help_text,
         queryset=Organization.objects.all(),
-        widget=ModelSelect2(url='organization-lookup')
+        widget=ModelSelect2Widget(data_view='organization-lookup')
     )
 
     administrator = forms.ModelChoiceField(
@@ -377,27 +377,27 @@ class EventForm(forms.ModelForm):
         required=False,
         help_text=Event._meta.get_field('administrator').help_text,
         queryset=Organization.objects.all(),
-        widget=ModelSelect2(url='organization-lookup')
+        widget=ModelSelect2Widget(data_view='organization-lookup')
     )
 
     assigned_to = forms.ModelChoiceField(
         label='Assigned to',
         required=False,
         queryset=Person.objects.all(),
-        widget=ModelSelect2(url='admin-lookup')
+        widget=ModelSelect2Widget(data_view='admin-lookup')
     )
 
     language = forms.ModelChoiceField(
         label='Language',
         required=False,
         queryset=Language.objects.all(),
-        widget=ModelSelect2(url='language-lookup')
+        widget=ModelSelect2Widget(data_view='language-lookup')
     )
 
     country = CountryField().formfield(
         required=False,
         help_text=Event._meta.get_field('country').help_text,
-        widget=ListSelect2(),
+        widget=Select2Widget,
     )
 
     comment = MarkdownxFormField(
@@ -569,9 +569,9 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm):
         help_text=SEAT_MEMBERSHIP_HELP_TEXT,
         required=False,
         queryset=Membership.objects.all(),
-        widget=ModelSelect2(
-            url='membership-lookup',
-            attrs=SIDEBAR_DAL_WIDTH,
+        widget=ModelSelect2Widget(
+            data_view='membership-lookup',
+            attrs=SELECT2_SIDEBAR,
         )
     )
 
@@ -579,10 +579,10 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm):
         model = Task
         fields = '__all__'
         widgets = {
-            'person': ModelSelect2(url='person-lookup',
-                                   attrs=SIDEBAR_DAL_WIDTH),
-            'event': ModelSelect2(url='event-lookup',
-                                  attrs=SIDEBAR_DAL_WIDTH),
+            'person': ModelSelect2Widget(data_view='person-lookup',
+                                         attrs=SELECT2_SIDEBAR),
+            'event': ModelSelect2Widget(data_view='event-lookup',
+                                        attrs=SELECT2_SIDEBAR),
         }
 
 
@@ -591,13 +591,13 @@ class PersonForm(forms.ModelForm):
         label='Airport',
         required=False,
         queryset=Airport.objects.all(),
-        widget=ModelSelect2(url='airport-lookup')
+        widget=ModelSelect2Widget(data_view='airport-lookup')
     )
     languages = forms.ModelMultipleChoiceField(
         label='Languages',
         required=False,
         queryset=Language.objects.all(),
-        widget=ModelSelect2Multiple(url='language-lookup')
+        widget=ModelSelect2MultipleWidget(data_view='language-lookup')
     )
 
     helper = BootstrapHelper(add_cancel_button=False,
@@ -634,7 +634,7 @@ class PersonForm(forms.ModelForm):
         ]
 
         widgets = {
-            'country': ListSelect2(),
+            'country': Select2Widget,
         }
 
 
@@ -684,14 +684,14 @@ class PersonsSelectionForm(forms.Form):
         label='Person From',
         required=True,
         queryset=Person.objects.all(),
-        widget=ModelSelect2(url='person-lookup')
+        widget=ModelSelect2Widget(data_view='person-lookup')
     )
 
     person_b = forms.ModelChoiceField(
         label='Person To',
         required=True,
         queryset=Person.objects.all(),
-        widget=ModelSelect2(url='person-lookup')
+        widget=ModelSelect2Widget(data_view='person-lookup')
     )
 
     helper = BootstrapHelper(use_get_method=True, add_cancel_button=False)
@@ -800,12 +800,12 @@ class AwardForm(WidgetOverrideMixin, forms.ModelForm):
         model = Award
         fields = '__all__'
         widgets = {
-            'person': ModelSelect2(url='person-lookup',
-                                   attrs=SIDEBAR_DAL_WIDTH),
-            'event': ModelSelect2(url='event-lookup',
-                                  attrs=SIDEBAR_DAL_WIDTH),
-            'awarded_by': ModelSelect2(url='admin-lookup',
-                                       attrs=SIDEBAR_DAL_WIDTH),
+            'person': ModelSelect2Widget(data_view='person-lookup',
+                                         attrs=SELECT2_SIDEBAR),
+            'event': ModelSelect2Widget(data_view='event-lookup',
+                                        attrs=SELECT2_SIDEBAR),
+            'awarded_by': ModelSelect2Widget(data_view='admin-lookup',
+                                             attrs=SELECT2_SIDEBAR),
         }
 
 
@@ -814,7 +814,7 @@ class EventLookupForm(forms.Form):
         label='Event',
         required=True,
         queryset=Event.objects.all(),
-        widget=ModelSelect2(url='event-lookup')
+        widget=ModelSelect2Widget(data_view='event-lookup')
     )
 
     helper = BootstrapHelper(add_cancel_button=False)
@@ -825,7 +825,7 @@ class PersonLookupForm(forms.Form):
         label='Person',
         required=True,
         queryset=Person.objects.all(),
-        widget=ModelSelect2(url='person-lookup')
+        widget=ModelSelect2Widget(data_view='person-lookup')
     )
 
     helper = BootstrapHelper(use_get_method=True, add_cancel_button=False)
@@ -836,7 +836,7 @@ class AdminLookupForm(forms.Form):
         label='Administrator',
         required=True,
         queryset=Person.objects.all(),
-        widget=ModelSelect2(url='admin-lookup')
+        widget=ModelSelect2Widget(data_view='admin-lookup')
     )
 
     helper = BootstrapHelper(add_cancel_button=False)
@@ -847,14 +847,14 @@ class EventsSelectionForm(forms.Form):
         label='Event A',
         required=True,
         queryset=Event.objects.all(),
-        widget=ModelSelect2(url='event-lookup')
+        widget=ModelSelect2Widget(data_view='event-lookup')
     )
 
     event_b = forms.ModelChoiceField(
         label='Event B',
         required=True,
         queryset=Event.objects.all(),
-        widget=ModelSelect2(url='event-lookup')
+        widget=ModelSelect2Widget(data_view='event-lookup')
     )
 
     helper = BootstrapHelper(use_get_method=True, add_cancel_button=False)
