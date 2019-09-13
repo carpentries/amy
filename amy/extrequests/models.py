@@ -600,7 +600,8 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
                   + DC_LESSONS_LINK + ", or the " + LC_LESSONS_LINK +
                   " for more information about any of our lessons. If you’re "
                   "not sure and would like to discuss with us, please select "
-                  'the "Don\'t know yet" option below.',
+                  'the "Don\'t know yet" option below.<br class="mb-1">'
+                  "Check all that apply.",
     )
     preferred_dates = models.DateField(
         blank=True, null=True,
