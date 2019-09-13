@@ -4,7 +4,7 @@ import django_filters
 from django.db.models import Q
 from django.forms import widgets
 
-from workshops.fields import Select2
+from workshops.fields import Select2Widget
 from workshops.filters import (
     AMYFilterSet,
     NamesOrderingFilter,
@@ -147,8 +147,8 @@ class TrainingRequestFilter(AMYFilterSet):
 # ------------------------------------------------------------
 
 class WorkshopRequestFilter(AMYFilterSet, StateFilterSet):
-    assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2())
-    country = AllCountriesFilter(widget=Select2())
+    assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2Widget)
+    country = AllCountriesFilter(widget=Select2Widget)
     requested_workshop_types = django_filters.ModelMultipleChoiceFilter(
         label='Requested workshop types',
         queryset=Curriculum.objects.all(),

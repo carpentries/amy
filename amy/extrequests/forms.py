@@ -15,11 +15,9 @@ from workshops.models import (
     WorkshopRequest,
     Curriculum,
 )
-# this is used instead of Django Autocomplete Light widgets
-# see issue #1330: https://github.com/swcarpentry/amy/issues/1330
 from workshops.fields import (
-    ListSelect2,
-    ModelSelect2,
+    Select2Widget,
+    ModelSelect2Widget,
     RadioSelectWithOther,
     CheckboxSelectMultipleWithOthers,
 )
@@ -31,13 +29,6 @@ class BulkChangeTrainingRequestForm(forms.Form):
 
     requests = forms.ModelMultipleChoiceField(
         queryset=TrainingRequest.objects.all())
-    # TODO: add training-requests lookup?
-    # requests = forms.ModelMultipleChoiceField(
-    #     label='Requests',
-    #     required=False,
-    #     queryset=TrainingRequest.objects.all()
-    #     widget=ModelSelect2(url='???-lookup'),
-    # )
 
     helper = BootstrapHelper(add_submit_button=False,
                              form_tag=False,
@@ -92,7 +83,7 @@ class BulkMatchTrainingRequestForm(forms.Form):
         label='Training',
         required=True,
         queryset=Event.objects.filter(tags__name='TTT'),
-        widget=ModelSelect2(url='ttt-event-lookup')
+        widget=ModelSelect2Widget(data_view='ttt-event-lookup')
     )
 
     seat_membership = forms.ModelChoiceField(
@@ -101,7 +92,7 @@ class BulkMatchTrainingRequestForm(forms.Form):
         queryset=Membership.objects.all(),
         help_text='Assigned users will take instructor seats from selected '
                   'member site.',
-        widget=ModelSelect2(url='membership-lookup'),
+        widget=ModelSelect2Widget(data_view='membership-lookup'),
     )
 
     seat_open_training = forms.BooleanField(
@@ -168,7 +159,7 @@ class MatchTrainingRequestForm(forms.Form):
         label='Trainee Account',
         required=False,
         queryset=Person.objects.all(),
-        widget=ModelSelect2(url='person-lookup'),
+        widget=ModelSelect2Widget(data_view='person-lookup'),
     )
 
     helper = BootstrapHelper(add_submit_button=False,
@@ -213,7 +204,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
     institution = forms.ModelChoiceField(
         required=False,
         queryset=Organization.objects.order_by('fullname'),
-        widget=ListSelect2(),
+        widget=Select2Widget,
         label=WorkshopRequest._meta.get_field('institution').verbose_name,
         help_text=WorkshopRequest._meta.get_field('institution').help_text,
     )
@@ -313,8 +304,8 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         )
 
         widgets = {
-            'country': ListSelect2(),
-            'language': ListSelect2(),
+            'country': Select2Widget,
+            'language': Select2Widget,
             'number_attendees': forms.RadioSelect(),
             'academic_levels': forms.CheckboxSelectMultiple(),
             'computing_levels': forms.CheckboxSelectMultiple(),
@@ -518,7 +509,7 @@ class WorkshopRequestAdminForm(WorkshopRequestBaseForm):
 
         widgets = WorkshopRequestBaseForm.Meta.widgets.copy()
         widgets.update(
-            {'event': ListSelect2()}
+            {'event': Select2Widget}
         )
 
 
@@ -530,7 +521,7 @@ class TrainingRequestUpdateForm(forms.ModelForm):
         label='Matched Trainee',
         required=False,
         queryset=Person.objects.all(),
-        widget=ModelSelect2(url='person-lookup')
+        widget=ModelSelect2Widget(data_view='person-lookup')
     )
 
     score_auto = forms.IntegerField(
@@ -564,14 +555,14 @@ class TrainingRequestsSelectionForm(forms.Form):
         label='Training request A',
         required=True,
         queryset=TrainingRequest.objects.all(),
-        widget=ModelSelect2(url='trainingrequest-lookup')
+        widget=ModelSelect2Widget(data_view='trainingrequest-lookup')
     )
 
     trainingrequest_b = forms.ModelChoiceField(
         label='Training request B',
         required=True,
         queryset=TrainingRequest.objects.all(),
-        widget=ModelSelect2(url='trainingrequest-lookup')
+        widget=ModelSelect2Widget(data_view='trainingrequest-lookup')
     )
 
     helper = BootstrapHelper(use_get_method=True, add_cancel_button=False)

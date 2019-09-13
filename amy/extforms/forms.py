@@ -8,7 +8,7 @@ from extrequests.forms import (
 from workshops.fields import (
     RadioSelectWithOther,
     CheckboxSelectMultipleWithOthers,
-    ListSelect2,
+    Select2Widget,
 )
 from workshops.models import (
     TrainingRequest,
@@ -78,7 +78,7 @@ class TrainingRequestForm(forms.ModelForm):
                 'teaching_frequency_expectation_other'),
             'max_travelling_frequency': RadioSelectWithOther(
                 'max_travelling_frequency_other'),
-            'country': ListSelect2(),
+            'country': Select2Widget,
         }
 
     def __init__(self, *args, initial_group_name=None, **kwargs):

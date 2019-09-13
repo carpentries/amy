@@ -1,4 +1,3 @@
-from dal import autocomplete
 import django_filters
 
 from extrequests.models import (
@@ -6,14 +5,13 @@ from extrequests.models import (
     EventSubmission,
     DCSelfOrganizedEventRequest,
 )
-from workshops.fields import Select2
+from workshops.fields import Select2Widget
 from workshops.filters import (
     AMYFilterSet,
     StateFilterSet,
     ForeignKeyAllValuesFilter,
     AllCountriesFilter,
 )
-from workshops.forms import SIDEBAR_DAL_WIDTH
 from workshops.models import (
     Organization,
     Person,
@@ -26,8 +24,8 @@ from workshops.models import (
 # ------------------------------------------------------------
 
 class EventRequestFilter(AMYFilterSet, StateFilterSet):
-    assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2())
-    country = AllCountriesFilter(widget=Select2())
+    assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2Widget)
+    country = AllCountriesFilter(widget=Select2Widget)
     workshop_type = django_filters.ChoiceFilter(
         choices=(('swc', 'Software-Carpentry'),
                  ('dc', 'Data-Carpentry')),
@@ -57,7 +55,7 @@ class EventRequestFilter(AMYFilterSet, StateFilterSet):
 # ------------------------------------------------------------
 
 class EventSubmissionFilter(AMYFilterSet, StateFilterSet):
-    assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2())
+    assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2Widget)
 
     order_by = django_filters.OrderingFilter(
         fields=(
@@ -79,7 +77,7 @@ class EventSubmissionFilter(AMYFilterSet, StateFilterSet):
 # -------------------------------------------------------------
 
 class DCSelfOrganizedEventRequestFilter(AMYFilterSet, StateFilterSet):
-    assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2())
+    assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2Widget)
 
     order_by = django_filters.OrderingFilter(
         fields=(

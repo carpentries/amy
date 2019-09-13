@@ -7,6 +7,7 @@ from django.forms import (
 )
 
 from workshops.forms import (
+    SELECT2_SIDEBAR,
     BootstrapHelper,
 )
 from workshops.models import (
@@ -17,7 +18,7 @@ from workshops.models import (
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330: https://github.com/swcarpentry/amy/issues/1330
 from workshops.fields import (
-    ModelSelect2,
+    ModelSelect2Widget,
 )
 
 
@@ -26,19 +27,20 @@ class TrainingProgressForm(forms.ModelForm):
         label='Trainee',
         required=True,
         queryset=Person.objects.all(),
-        widget=ModelSelect2(url='person-lookup')
+        widget=ModelSelect2Widget(data_view='person-lookup')
     )
     evaluated_by = forms.ModelChoiceField(
         label='Evaluated by',
         required=False,
         queryset=Person.objects.all(),
-        widget=ModelSelect2(url='admin-lookup')
+        widget=ModelSelect2Widget(data_view='admin-lookup')
     )
     event = forms.ModelChoiceField(
         label='Event',
         required=False,
         queryset=Event.objects.all(),
-        widget=ModelSelect2(url='event-lookup')
+        widget=ModelSelect2Widget(data_view='event-lookup',
+                                  attrs=SELECT2_SIDEBAR)
     )
 
     # helper used in edit view
@@ -88,17 +90,11 @@ class BulkAddTrainingProgressForm(forms.ModelForm):
         label='Training',
         required=False,
         queryset=Event.objects.filter(tags__name='TTT'),
-        widget=ModelSelect2(url='ttt-event-lookup')
+        widget=ModelSelect2Widget(data_view='ttt-event-lookup',
+                                  attrs=SELECT2_SIDEBAR)
     )
 
     trainees = forms.ModelMultipleChoiceField(queryset=Person.objects.all())
-    # TODO: add trainees lookup?
-    # trainees = forms.ModelMultipleChoiceField(
-    #     label='Trainees',
-    #     required=False,
-    #     queryset=Person.objects.all(),
-    #     widget=ModelSelect2(url='person-lookup'),
-    # )
 
     helper = BootstrapHelper(additional_form_class='training-progress',
                              submit_label='Add',
@@ -150,13 +146,6 @@ class BulkDiscardProgressesForm(forms.Form):
     selected trainees."""
 
     trainees = forms.ModelMultipleChoiceField(queryset=Person.objects.all())
-    # TODO: add trainees lookup?
-    # trainees = forms.ModelMultipleChoiceField(
-    #     label='Trainees',
-    #     required=False,
-    #     queryset=Person.objects.all(),
-    #     widget=ModelSelect2(url='person-lookup'),
-    # )
 
     helper = BootstrapHelper(add_submit_button=False,
                              form_tag=False,

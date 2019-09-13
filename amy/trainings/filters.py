@@ -4,12 +4,12 @@ import django_filters
 from django.db.models import Q
 from django.forms import widgets
 
-from workshops.fields import ModelSelect2
+from workshops.fields import ModelSelect2Widget
 from workshops.filters import (
     AMYFilterSet,
     NamesOrderingFilter,
 )
-from workshops.forms import SIDEBAR_DAL_WIDTH
+from workshops.forms import SELECT2_SIDEBAR
 from workshops.models import (
     Event,
     Person,
@@ -128,9 +128,9 @@ class TraineeFilter(AMYFilterSet):
         queryset=Event.objects.ttt(),
         method=filter_trainees_by_training,
         label='Training',
-        widget=ModelSelect2(
-            url='ttt-event-lookup',
-            attrs=SIDEBAR_DAL_WIDTH,
+        widget=ModelSelect2Widget(
+            data_view='ttt-event-lookup',
+            attrs=SELECT2_SIDEBAR,
         ),
     )
 
