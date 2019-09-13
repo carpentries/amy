@@ -342,31 +342,31 @@ class SelfOrganizedSubmissionConfirm(LoginNotRequiredMixin, TemplateView):
 # ------------------------------------------------------------
 # Deprecated views
 
-class RedirectToWorkshopRequest(LoginNotRequiredMixin, RedirectView):
+class RedirectToWorkshopLandingPage(LoginNotRequiredMixin, RedirectView):
     """A single class for handling redirect to new, unified workshop request
     form, which replaces all other event-request(-kinda) forms."""
     permanent = False
     query_string = False
-    url = reverse_lazy('workshop_request')
+    url = reverse_lazy('workshop_landing')
 
 
 # This form is disabled
-class SWCEventRequest(RedirectToWorkshopRequest):
+class SWCEventRequest(RedirectToWorkshopLandingPage):
     pass
 
 
 # This form is disabled
-class DCEventRequest(RedirectToWorkshopRequest):
+class DCEventRequest(RedirectToWorkshopLandingPage):
     pass
 
 
 # This form is disabled
-class EventSubmission(RedirectToWorkshopRequest):
+class EventSubmission(RedirectToWorkshopLandingPage):
     pass
 
 
 # This form is disabled
-class DCSelfOrganizedEventRequest(RedirectToWorkshopRequest):
+class DCSelfOrganizedEventRequest(RedirectToWorkshopLandingPage):
     pass
 
 

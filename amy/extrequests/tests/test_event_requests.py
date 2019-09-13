@@ -30,7 +30,7 @@ class TestSWCEventRequestForm(TestBase):
     def test_request_form_redirects(self):
         self.assertEqual(len(EventRequest.objects.all()), 0)
         rv = self.client.get(reverse('swc_workshop_request'))
-        self.assertRedirects(rv, reverse('workshop_request'))
+        self.assertRedirects(rv, reverse('workshop_landing'))
         self.assertEqual(len(EventRequest.objects.all()), 0)
 
     def test_request_discarded(self):
@@ -71,7 +71,7 @@ class TestDCEventRequestForm(TestBase):
     def test_request_form_redirects(self):
         self.assertEqual(len(EventRequest.objects.all()), 0)
         rv = self.client.get(reverse('dc_workshop_request'))
-        self.assertRedirects(rv, reverse('workshop_request'))
+        self.assertRedirects(rv, reverse('workshop_landing'))
         self.assertEqual(len(EventRequest.objects.all()), 0)
 
     def test_request_discarded(self):
