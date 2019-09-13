@@ -37,14 +37,14 @@ urlpatterns = [
     ])),
 
     # self-organized submissions
-    path('selforganized_submissions/', views.AllSelfOrganizedSubmissions.as_view(), name='all_selforganizedsubmissions'),
-    path('selforganized_submission/<int:submission_id>/', include([
-        path('', views.SelfOrganizedSubmissionDetails.as_view(), name='selforganizedsubmission_details'),
-        path('set_state/<slug:state>/', views.SelfOrganizedSubmissionSetState.as_view(), name='selforganizedsubmission_set_state'),
-        path('accept_event/', views.selforganizedsubmission_accept_event, name='selforganizedsubmission_accept_event'),
-        path('edit/', views.SelfOrganizedSubmissionChange.as_view(), name='selforganizedsubmission_edit'),
-        path('assign/', views.SelfOrganizedSubmissionAssign.as_view(), name='selforganizedsubmission_assign'),
-        path('assign/<int:person_id>/', views.SelfOrganizedSubmissionAssign.as_view(), name='selforganizedsubmission_assign'),
+    path('selforganised_submissions/', views.AllSelfOrganisedSubmissions.as_view(), name='all_selforganisedsubmissions'),
+    path('selforganised_submission/<int:submission_id>/', include([
+        path('', views.SelfOrganisedSubmissionDetails.as_view(), name='selforganisedsubmission_details'),
+        path('set_state/<slug:state>/', views.SelfOrganisedSubmissionSetState.as_view(), name='selforganisedsubmission_set_state'),
+        path('accept_event/', views.selforganisedsubmission_accept_event, name='selforganisedsubmission_accept_event'),
+        path('edit/', views.SelfOrganisedSubmissionChange.as_view(), name='selforganisedsubmission_edit'),
+        path('assign/', views.SelfOrganisedSubmissionAssign.as_view(), name='selforganisedsubmission_assign'),
+        path('assign/<int:person_id>/', views.SelfOrganisedSubmissionAssign.as_view(), name='selforganisedsubmission_assign'),
     ])),
 
     # deprecated: old swc/dc workshop requests

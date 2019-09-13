@@ -29,7 +29,7 @@ from extrequests.filters import (
     TrainingRequestFilter,
     WorkshopRequestFilter,
     WorkshopInquiryFilter,
-    SelfOrganizedSubmissionFilter,
+    SelfOrganisedSubmissionFilter,
 )
 from extrequests.forms import (
     MatchTrainingRequestForm,
@@ -40,11 +40,11 @@ from extrequests.forms import (
     TrainingRequestsMergeForm,
     WorkshopRequestAdminForm,
     WorkshopInquiryRequestAdminForm,
-    SelfOrganizedSubmissionAdminForm,
+    SelfOrganisedSubmissionAdminForm,
 )
 from extrequests.models import (
     WorkshopInquiryRequest,
-    SelfOrganizedSubmission,
+    SelfOrganisedSubmission,
 )
 from workshops.base_views import (
     AMYUpdateView,
@@ -298,30 +298,33 @@ class WorkshopInquiryAssign(OnlyForAdminsMixin, AssignView):
 
 
 # ------------------------------------------------------------
-# SelfOrganizedSubmission related views
+# SelfOrganisedSubmission related views
 # ------------------------------------------------------------
 
 
-class AllSelfOrganizedSubmissions(OnlyForAdminsMixin, StateFilterMixin, AMYListView):
+class AllSelfOrganisedSubmissions(OnlyForAdminsMixin, StateFilterMixin,
+                                  AMYListView):
     context_object_name = 'submissions'
-    template_name = 'requests/all_selforganizedsubmissions.html'
-    filter_class = SelfOrganizedSubmissionFilter
+    template_name = 'requests/all_selforganisedsubmissions.html'
+    filter_class = SelfOrganisedSubmissionFilter
     queryset = (
-        SelfOrganizedSubmission.objects.select_related('assigned_to', 'institution')
+        SelfOrganisedSubmission.objects.select_related('assigned_to',
+                                                       'institution')
                                        .prefetch_related('workshop_types')
     )
-    title = 'Self-Organized submissions'
+    title = 'Self-Organised submissions'
 
 
-class SelfOrganizedSubmissionDetails(OnlyForAdminsMixin, AMYDetailView):
-    queryset = SelfOrganizedSubmission.objects.all()
+class SelfOrganisedSubmissionDetails(OnlyForAdminsMixin, AMYDetailView):
+    queryset = SelfOrganisedSubmission.objects.all()
     context_object_name = 'object'
-    template_name = 'requests/selforganizedsubmission.html'
+    template_name = 'requests/selforganisedsubmission.html'
     pk_url_kwarg = 'submission_id'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Self-Organized submission #{}'.format(self.get_object().pk)
+        context['title'] = 'Self-Organised submission #{}'.format(
+            self.get_object().pk)
 
         person_lookup_form = AdminLookupForm()
         if self.object.assigned_to:
@@ -330,7 +333,7 @@ class SelfOrganizedSubmissionDetails(OnlyForAdminsMixin, AMYDetailView):
             )
 
         person_lookup_form.helper = BootstrapHelper(
-            form_action=reverse('selforganizedsubmission_assign',
+            form_action=reverse('selforganisedsubmission_assign',
                                 args=[self.object.pk]),
             add_cancel_button=False)
 
@@ -338,30 +341,33 @@ class SelfOrganizedSubmissionDetails(OnlyForAdminsMixin, AMYDetailView):
         return context
 
 
-class SelfOrganizedSubmissionChange(OnlyForAdminsMixin, PermissionRequiredMixin,
-                            AMYUpdateView):
-    permission_required = 'workshops.change_selforganizedsubmission'
-    model = SelfOrganizedSubmission
+class SelfOrganisedSubmissionChange(OnlyForAdminsMixin,
+                                    PermissionRequiredMixin,
+                                    AMYUpdateView):
+    permission_required = 'workshops.change_selforganisedsubmission'
+    model = SelfOrganisedSubmission
     pk_url_kwarg = 'submission_id'
-    form_class = SelfOrganizedSubmissionAdminForm
+    form_class = SelfOrganisedSubmissionAdminForm
     template_name = 'generic_form_with_comments.html'
 
 
-class SelfOrganizedSubmissionSetState(OnlyForAdminsMixin, ChangeRequestStateView):
-    permission_required = 'workshops.change_selforganizedsubmission'
-    model = SelfOrganizedSubmission
+class SelfOrganisedSubmissionSetState(OnlyForAdminsMixin,
+                                      ChangeRequestStateView):
+    permission_required = 'workshops.change_selforganisedsubmission'
+    model = SelfOrganisedSubmission
     pk_url_kwarg = 'submission_id'
     state_url_kwarg = 'state'
     permanent = False
 
 
 @admin_required
-@permission_required(['workshops.change_selforganizedsubmission',
+@permission_required(['workshops.change_selforganisedsubmission',
                       'workshops.add_event'],
                      raise_exception=True)
-def selforganizedsubmission_accept_event(request, submission_id):
+def selforganisedsubmission_accept_event(request, submission_id):
     """Accept event request by creating a new event."""
-    wr = get_object_or_404(SelfOrganizedSubmission, state='p', pk=submission_id)
+    wr = get_object_or_404(SelfOrganisedSubmission, state='p',
+                           pk=submission_id)
 
     mix_match = wr.workshop_types.filter(mix_match=True).exists()
 
@@ -432,13 +438,14 @@ def selforganizedsubmission_accept_event(request, submission_id):
         'object': wr,
         'form': form,
     }
-    return render(request, 'requests/selforganizedsubmission_accept_event.html',
+    return render(request,
+                  'requests/selforganisedsubmission_accept_event.html',
                   context)
 
 
-class SelfOrganizedSubmissionAssign(OnlyForAdminsMixin, AssignView):
-    permission_required = 'workshops.change_selforganizedsubmission'
-    model = SelfOrganizedSubmission
+class SelfOrganisedSubmissionAssign(OnlyForAdminsMixin, AssignView):
+    permission_required = 'workshops.change_selforganisedsubmission'
+    model = SelfOrganisedSubmission
     pk_url_kwarg = 'submission_id'
     person_url_kwarg = 'person_id'
 

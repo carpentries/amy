@@ -6,7 +6,7 @@ from django.forms import widgets
 
 from extrequests.models import (
     WorkshopInquiryRequest,
-    SelfOrganizedSubmission,
+    SelfOrganisedSubmission,
 )
 from workshops.fields import Select2Widget
 from workshops.filters import (
@@ -209,10 +209,10 @@ class WorkshopInquiryFilter(AMYFilterSet, StateFilterSet):
 
 
 # ------------------------------------------------------------
-# SelfOrganizedSubmission related filter and filter methods
+# SelfOrganisedSubmission related filter and filter methods
 # ------------------------------------------------------------
 
-class SelfOrganizedSubmissionFilter(AMYFilterSet, StateFilterSet):
+class SelfOrganisedSubmissionFilter(AMYFilterSet, StateFilterSet):
     assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2Widget)
     country = AllCountriesFilter(widget=Select2Widget)
     continent = ContinentFilter(widget=Select2Widget, label="Continent")
@@ -229,7 +229,7 @@ class SelfOrganizedSubmissionFilter(AMYFilterSet, StateFilterSet):
     )
 
     class Meta:
-        model = SelfOrganizedSubmission
+        model = SelfOrganisedSubmission
         fields = [
             'state',
             'assigned_to',

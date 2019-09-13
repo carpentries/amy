@@ -5,7 +5,7 @@ from django import forms
 from extrequests.forms import (
     WorkshopRequestBaseForm,
     WorkshopInquiryRequestBaseForm,
-    SelfOrganizedSubmissionBaseForm,
+    SelfOrganisedSubmissionBaseForm,
 )
 from workshops.fields import (
     RadioSelectWithOther,
@@ -141,8 +141,8 @@ class WorkshopInquiryRequestExternalForm(WorkshopInquiryRequestBaseForm):
         fields = WorkshopInquiryRequestBaseForm.Meta.fields + ("captcha", )
 
 
-class SelfOrganizedSubmissionExternalForm(SelfOrganizedSubmissionBaseForm):
+class SelfOrganisedSubmissionExternalForm(SelfOrganisedSubmissionBaseForm):
     captcha = ReCaptchaField()
 
-    class Meta(SelfOrganizedSubmissionBaseForm.Meta):
-        fields = SelfOrganizedSubmissionBaseForm.Meta.fields + ("captcha", )
+    class Meta(SelfOrganisedSubmissionBaseForm.Meta):
+        fields = SelfOrganisedSubmissionBaseForm.Meta.fields + ("captcha", )

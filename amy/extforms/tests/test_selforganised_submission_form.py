@@ -2,8 +2,8 @@ from django.core import mail
 from django.conf import settings
 from django.urls import reverse
 
-from extforms.forms import SelfOrganizedSubmissionExternalForm
-from extrequests.models import SelfOrganizedSubmission
+from extforms.forms import SelfOrganisedSubmissionExternalForm
+from extrequests.models import SelfOrganisedSubmission
 from workshops.models import (
     Language,
     AcademicLevel,
@@ -14,12 +14,12 @@ from workshops.models import (
 from workshops.tests.base import TestBase
 
 
-class TestSelfOrganizedSubmissionExternalForm(TestBase):
+class TestSelfOrganisedSubmissionExternalForm(TestBase):
     """Test external (accessible to non-logged in users) form."""
 
     def test_fields_presence(self):
         """Test if the form shows correct fields."""
-        form = SelfOrganizedSubmissionExternalForm()
+        form = SelfOrganisedSubmissionExternalForm()
         fields_left = set(form.fields.keys())
         fields_right = set([
             "personal", "family", "email",
@@ -66,7 +66,7 @@ class TestSelfOrganizedSubmissionExternalForm(TestBase):
         }
         self.passCaptcha(data)
 
-        rv = self.client.post(reverse('selforganized_submission'), data,
+        rv = self.client.post(reverse('selforganised_submission'), data,
                               follow=True)
         self.assertEqual(rv.status_code, 200)
         content = rv.content.decode('utf-8')
@@ -74,10 +74,10 @@ class TestSelfOrganizedSubmissionExternalForm(TestBase):
             self.assertEqual(rv.context['form'].is_valid(), True,
                              dict(rv.context['form'].errors))
         self.assertNotIn('Please fix errors in the form below', content)
-        self.assertIn('Thank you for submitting self-organized workshop',
+        self.assertIn('Thank you for submitting self-organised workshop',
                       content)
-        self.assertEqual(SelfOrganizedSubmission.objects.all().count(), 1)
-        self.assertEqual(SelfOrganizedSubmission.objects.all()[0].state, 'p')
+        self.assertEqual(SelfOrganisedSubmission.objects.all().count(), 1)
+        self.assertEqual(SelfOrganisedSubmission.objects.all()[0].state, 'p')
 
         # 1 email for autoresponder, 1 email for admins
         self.assertEqual(len(mail.outbox), 2)
@@ -93,7 +93,7 @@ class TestSelfOrganizedSubmissionExternalForm(TestBase):
 
         # test autoresponder email
         msg = mail.outbox[0]
-        self.assertEqual(msg.subject, 'Self-organized submission confirmation')
+        self.assertEqual(msg.subject, 'Self-organised submission confirmation')
         self.assertEqual(msg.recipients(), ['hpotter@magic.gov'])
         self.assertNotIn(settings.TEMPLATES[0]['OPTIONS']['string_if_invalid'],
                          msg.body)
@@ -101,7 +101,7 @@ class TestSelfOrganizedSubmissionExternalForm(TestBase):
         msg = mail.outbox[1]
         self.assertEqual(
             msg.subject,
-            'New self-organized submission: Ministry of Magic',
+            'New self-organised submission: Ministry of Magic',
         )
         self.assertEqual(msg.recipients(), ['admin-uk@carpentries.org'])
         self.assertNotIn(settings.TEMPLATES[0]['OPTIONS']['string_if_invalid'],

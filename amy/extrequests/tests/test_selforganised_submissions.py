@@ -3,8 +3,8 @@ import datetime
 from django.conf import settings
 from django.urls import reverse
 
-from extrequests.forms import SelfOrganizedSubmissionBaseForm
-from extrequests.models import SelfOrganizedSubmission
+from extrequests.forms import SelfOrganisedSubmissionBaseForm
+from extrequests.models import SelfOrganisedSubmission
 from workshops.models import (
     Task,
     Role,
@@ -20,7 +20,7 @@ from workshops.models import (
 from workshops.tests.base import TestBase, FormTestHelper
 
 
-class TestSelfOrganizedSubmissionBaseForm(FormTestHelper, TestBase):
+class TestSelfOrganisedSubmissionBaseForm(FormTestHelper, TestBase):
     """Test base form validation."""
 
     def setUp(self):
@@ -53,7 +53,7 @@ class TestSelfOrganizedSubmissionBaseForm(FormTestHelper, TestBase):
     def test_minimal_form(self):
         """Test if minimal form works."""
         data = self.minimal_data.copy()
-        form = SelfOrganizedSubmissionBaseForm(data)
+        form = SelfOrganisedSubmissionBaseForm(data)
         self.assertTrue(form.is_valid(), dict(form.errors))
 
     def test_institution_validation(self):
@@ -63,13 +63,13 @@ class TestSelfOrganizedSubmissionBaseForm(FormTestHelper, TestBase):
         # 1: selected institution from the list
         data = {
             'institution': Organization.objects
-                                       .exclude(fullname='self-organized')
+                                       .exclude(fullname='self-organised')
                                        .first().pk,
             'institution_other_name': '',
             'institution_other_URL': '',
             'institution_department': 'School of Wizardry',
         }
-        form = SelfOrganizedSubmissionBaseForm(data)
+        form = SelfOrganisedSubmissionBaseForm(data)
         self.assertNotIn('institution', form.errors)
         self.assertNotIn('institution_other_name', form.errors)
         self.assertNotIn('institution_other_URL', form.errors)
@@ -82,7 +82,7 @@ class TestSelfOrganizedSubmissionBaseForm(FormTestHelper, TestBase):
             'institution_other_URL': 'hogwarts.uk',
             'institution_department': 'School of Wizardry',
         }
-        form = SelfOrganizedSubmissionBaseForm(data)
+        form = SelfOrganisedSubmissionBaseForm(data)
         self.assertNotIn('institution', form.errors)
         self.assertNotIn('institution_other_name', form.errors)
         self.assertNotIn('institution_other_URL', form.errors)
@@ -95,7 +95,7 @@ class TestSelfOrganizedSubmissionBaseForm(FormTestHelper, TestBase):
             'institution_other_URL': '',
             'institution_department': '',
         }
-        form = SelfOrganizedSubmissionBaseForm(data)
+        form = SelfOrganisedSubmissionBaseForm(data)
         self.assertIn('institution', form.errors)  # institution is required
         self.assertNotIn('institution_other_name', form.errors)
         self.assertNotIn('institution_other_URL', form.errors)
@@ -108,7 +108,7 @@ class TestSelfOrganizedSubmissionBaseForm(FormTestHelper, TestBase):
             'institution_other_URL': '',
             'institution_department': '',
         }
-        form = SelfOrganizedSubmissionBaseForm(data)
+        form = SelfOrganisedSubmissionBaseForm(data)
         self.assertNotIn('institution', form.errors)
         self.assertIn('institution_other_name', form.errors)
         self.assertNotIn('institution_other_URL', form.errors)
@@ -121,7 +121,7 @@ class TestSelfOrganizedSubmissionBaseForm(FormTestHelper, TestBase):
             'institution_other_URL': 'hogwarts.uk',
             'institution_department': '',
         }
-        form = SelfOrganizedSubmissionBaseForm(data)
+        form = SelfOrganisedSubmissionBaseForm(data)
         self.assertNotIn('institution', form.errors)
         self.assertIn('institution_other_name', form.errors)
         self.assertNotIn('institution_other_URL', form.errors)
@@ -134,7 +134,7 @@ class TestSelfOrganizedSubmissionBaseForm(FormTestHelper, TestBase):
             'institution_other_URL': '',
             'institution_department': '',
         }
-        form = SelfOrganizedSubmissionBaseForm(data)
+        form = SelfOrganisedSubmissionBaseForm(data)
         self.assertNotIn('institution', form.errors)
         self.assertIn('institution_other_name', form.errors)
         self.assertNotIn('institution_other_URL', form.errors)
@@ -147,7 +147,7 @@ class TestSelfOrganizedSubmissionBaseForm(FormTestHelper, TestBase):
             'institution_other_URL': 'hogwarts.uk',
             'institution_department': '',
         }
-        form = SelfOrganizedSubmissionBaseForm(data)
+        form = SelfOrganisedSubmissionBaseForm(data)
         self.assertNotIn('institution', form.errors)
         self.assertNotIn('institution_other_name', form.errors)
         self.assertIn('institution_other_URL', form.errors)
@@ -160,7 +160,7 @@ class TestSelfOrganizedSubmissionBaseForm(FormTestHelper, TestBase):
             'institution_other_URL': 'wrong_url',
             'institution_department': '',
         }
-        form = SelfOrganizedSubmissionBaseForm(data)
+        form = SelfOrganisedSubmissionBaseForm(data)
         self.assertNotIn('institution', form.errors)
         self.assertIn('institution_other_name', form.errors)
         self.assertIn('institution_other_URL', form.errors)
@@ -171,30 +171,30 @@ class TestSelfOrganizedSubmissionBaseForm(FormTestHelper, TestBase):
         # 1: required only when workshop format is "standard" 2-day workshop
         data = self.minimal_data.copy()
         data['workshop_format'] = 'short'
-        form = SelfOrganizedSubmissionBaseForm(data)
+        form = SelfOrganisedSubmissionBaseForm(data)
         self.assertNotIn('workshop_format', form.errors)
         self.assertNotIn('workshop_url', form.errors)
 
         data['workshop_format'] = 'standard'
-        form = SelfOrganizedSubmissionBaseForm(data)
+        form = SelfOrganisedSubmissionBaseForm(data)
         self.assertNotIn('workshop_format', form.errors)
         self.assertIn('workshop_url', form.errors)
 
         data['workshop_url'] = 'https://github.com/'
-        form = SelfOrganizedSubmissionBaseForm(data)
+        form = SelfOrganisedSubmissionBaseForm(data)
         self.assertNotIn('workshop_format', form.errors)
         self.assertNotIn('workshop_url', form.errors)
 
         # 2: wrong URL
         data = self.minimal_data.copy()
         data['workshop_url'] = 'not_an_URL'
-        form = SelfOrganizedSubmissionBaseForm(data)
+        form = SelfOrganisedSubmissionBaseForm(data)
         self.assertIn('workshop_url', form.errors)
 
     def test_workshop_format(self):
         """Test validation of workshop format."""
         self._test_field_other(
-            Form=SelfOrganizedSubmissionBaseForm,
+            Form=SelfOrganisedSubmissionBaseForm,
             first_name='workshop_format',
             other_name='workshop_format_other',
             valid_first='short',
@@ -214,7 +214,7 @@ class TestSelfOrganizedSubmissionBaseForm(FormTestHelper, TestBase):
         data['workshop_types'] = [curricula.exclude(mix_match=True).first().pk]
         data['workshop_types_other_explain'] = ("It doesn't matter when "
                                                 "mix&match is not selected.")
-        form = SelfOrganizedSubmissionBaseForm(data)
+        form = SelfOrganisedSubmissionBaseForm(data)
         self.assertNotIn('workshop_types', form.errors)
         self.assertNotIn('workshop_types_other_explain', form.errors)
 
@@ -222,7 +222,7 @@ class TestSelfOrganizedSubmissionBaseForm(FormTestHelper, TestBase):
         data = self.minimal_data.copy()
         data['workshop_types'] = [curricula.filter(mix_match=True).first().pk]
         data['workshop_types_other_explain'] = ""
-        form = SelfOrganizedSubmissionBaseForm(data)
+        form = SelfOrganisedSubmissionBaseForm(data)
         self.assertNotIn('workshop_types', form.errors)
         self.assertIn('workshop_types_other_explain', form.errors)
 
@@ -231,14 +231,14 @@ class TestSelfOrganizedSubmissionBaseForm(FormTestHelper, TestBase):
         data['workshop_types'] = [curricula.filter(mix_match=True).first().pk]
         data['workshop_types_other_explain'] = ("It does matter when "
                                                 "mix&match is selected.")
-        form = SelfOrganizedSubmissionBaseForm(data)
+        form = SelfOrganisedSubmissionBaseForm(data)
         self.assertNotIn('workshop_types', form.errors)
         self.assertNotIn('workshop_types_other_explain', form.errors)
 
     def test_public_event(self):
         """Test validation of event's openness to public."""
         self._test_field_other(
-            Form=SelfOrganizedSubmissionBaseForm,
+            Form=SelfOrganisedSubmissionBaseForm,
             first_name='public_event',
             other_name='public_event_other',
             valid_first='public',
@@ -247,13 +247,13 @@ class TestSelfOrganizedSubmissionBaseForm(FormTestHelper, TestBase):
         )
 
 
-class TestSelfOrganizedSubmissionViews(TestBase):
+class TestSelfOrganisedSubmissionViews(TestBase):
     def setUp(self):
         super().setUp()
         self._setUpRoles()
         self._setUpUsersAndLogin()
 
-        self.sos1 = SelfOrganizedSubmission.objects.create(
+        self.sos1 = SelfOrganisedSubmission.objects.create(
             state="p", personal="Harry", family="Potter",
             email="harry@hogwarts.edu",
             institution_other_name="Hogwarts",
@@ -265,7 +265,7 @@ class TestSelfOrganizedSubmissionViews(TestBase):
         )
         self.sos1.workshop_types.set(Curriculum.objects.filter(mix_match=True))
 
-        self.sos2 = SelfOrganizedSubmission.objects.create(
+        self.sos2 = SelfOrganisedSubmission.objects.create(
             state="d", personal="Harry", family="Potter",
             email="harry@potter.com",
             institution_other_name="Hogwarts",
@@ -281,36 +281,36 @@ class TestSelfOrganizedSubmissionViews(TestBase):
         )
 
     def test_pending_requests_list(self):
-        rv = self.client.get(reverse('all_selforganizedsubmissions'))
+        rv = self.client.get(reverse('all_selforganisedsubmissions'))
         self.assertIn(self.sos1, rv.context['submissions'])
         self.assertNotIn(self.sos2, rv.context['submissions'])
 
     def test_discarded_requests_list(self):
-        rv = self.client.get(reverse('all_selforganizedsubmissions') + '?state=d')
+        rv = self.client.get(reverse('all_selforganisedsubmissions') + '?state=d')
         self.assertNotIn(self.sos1, rv.context['submissions'])
         self.assertIn(self.sos2, rv.context['submissions'])
 
     def test_set_state_pending_request_view(self):
-        rv = self.client.get(reverse('selforganizedsubmission_set_state',
+        rv = self.client.get(reverse('selforganisedsubmission_set_state',
                                      args=[self.sos1.pk, 'discarded']))
         self.assertEqual(rv.status_code, 302)
         self.sos1.refresh_from_db()
         self.assertEqual(self.sos1.state, "d")
 
     def test_set_state_discarded_request_view(self):
-        rv = self.client.get(reverse('selforganizedsubmission_set_state',
+        rv = self.client.get(reverse('selforganisedsubmission_set_state',
                                      args=[self.sos2.pk, 'discarded']))
         self.assertEqual(rv.status_code, 302)
         self.sos2.refresh_from_db()
         self.assertEqual(self.sos2.state, "d")
 
     def test_pending_request_accept(self):
-        rv = self.client.get(reverse('selforganizedsubmission_set_state',
+        rv = self.client.get(reverse('selforganisedsubmission_set_state',
                                      args=[self.sos1.pk, 'accepted']))
         self.assertEqual(rv.status_code, 302)
 
     def test_pending_request_accepted_with_event(self):
-        """Ensure a backlink from Event to SelfOrganizedSubmission that created
+        """Ensure a backlink from Event to SelfOrganisedSubmission that created
         the event exists after ER is accepted."""
         data = {
             'slug': '2018-10-28-test-event',
@@ -319,19 +319,19 @@ class TestSelfOrganizedSubmissionViews(TestBase):
             'invoice_status': 'unknown',
         }
         rv = self.client.post(
-            reverse('selforganizedsubmission_accept_event',
+            reverse('selforganisedsubmission_accept_event',
                     args=[self.sos1.pk]),
             data)
         self.assertEqual(rv.status_code, 302)
         request = Event.objects.get(slug='2018-10-28-test-event') \
-                               .selforganizedsubmission
+                               .selforganisedsubmission
         self.assertEqual(request, self.sos1)
 
     def test_lessons_shown_in_event_create_form(self):
         """Ensure Mix&Match triggers "lessons" field on EventCreateForm."""
         # self.sos1 has Mix&Match workshop type, so it should display "lessons"
         # field in Event form
-        url = reverse('selforganizedsubmission_accept_event',
+        url = reverse('selforganisedsubmission_accept_event',
                       args=[self.sos1.pk])
         rv = self.client.get(url)
         self.assertEqual(rv.status_code, 200)
@@ -344,7 +344,7 @@ class TestSelfOrganizedSubmissionViews(TestBase):
         # but for tests we need a different status for that submission
         self.sos2.state = "p"
         self.sos2.save()
-        url = reverse('selforganizedsubmission_accept_event',
+        url = reverse('selforganisedsubmission_accept_event',
                       args=[self.sos2.pk])
         rv = self.client.get(url)
         self.assertEqual(rv.status_code, 200)
@@ -353,18 +353,18 @@ class TestSelfOrganizedSubmissionViews(TestBase):
         self.assertNotIn("lessons", rv.context["form"].fields.keys())
 
     def test_discarded_request_accepted_with_event(self):
-        rv = self.client.get(reverse('selforganizedsubmission_accept_event',
+        rv = self.client.get(reverse('selforganisedsubmission_accept_event',
                                      args=[self.sos2.pk]))
         self.assertEqual(rv.status_code, 404)
 
     def test_pending_request_discard(self):
-        rv = self.client.get(reverse('selforganizedsubmission_set_state',
+        rv = self.client.get(reverse('selforganisedsubmission_set_state',
                                      args=[self.sos1.pk, 'discarded']),
                              follow=True)
         self.assertEqual(rv.status_code, 200)
 
     def test_discarded_request_discard(self):
-        rv = self.client.get(reverse('selforganizedsubmission_set_state',
+        rv = self.client.get(reverse('selforganisedsubmission_set_state',
                                      args=[self.sos2.pk, 'discarded']),
                              follow=True)
         self.assertEqual(rv.status_code, 200)
@@ -373,7 +373,7 @@ class TestSelfOrganizedSubmissionViews(TestBase):
         self.sos1.state = "a"
         self.sos1.save()
         self.client.get(
-            reverse('selforganizedsubmission_set_state',
+            reverse('selforganisedsubmission_set_state',
                     args=[self.sos1.pk, 'pending']),
             follow=True)
         self.sos1.refresh_from_db()
@@ -382,7 +382,7 @@ class TestSelfOrganizedSubmissionViews(TestBase):
     def test_accepted_request_reopened(self):
         self.assertEqual(self.sos2.state, "d")
         self.client.get(
-            reverse('selforganizedsubmission_set_state',
+            reverse('selforganisedsubmission_set_state',
                     args=[self.sos2.pk, 'pending']),
             follow=True)
         self.sos2.refresh_from_db()
@@ -400,7 +400,7 @@ class TestSelfOrganizedSubmissionViews(TestBase):
         # make sure the `string_if_invalid` is not empty
         self.assertTrue(settings.TEMPLATES[0]['OPTIONS']['string_if_invalid'])
 
-        rv = self.client.get(reverse('all_selforganizedsubmissions'))
+        rv = self.client.get(reverse('all_selforganisedsubmissions'))
 
         # some objects available in the page
         self.assertNotEqual(len(rv.context['submissions']), 0)
@@ -424,7 +424,7 @@ class TestSelfOrganizedSubmissionViews(TestBase):
             'tags': [1],
         }
         rv = self.client.post(
-            reverse('selforganizedsubmission_accept_event',
+            reverse('selforganisedsubmission_accept_event',
                     args=[self.sos1.pk]),
             data)
         self.assertEqual(rv.status_code, 302)

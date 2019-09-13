@@ -8,11 +8,11 @@ from extforms.forms import (
     TrainingRequestForm,
     WorkshopRequestExternalForm,
     WorkshopInquiryRequestExternalForm,
-    SelfOrganizedSubmissionExternalForm,
+    SelfOrganisedSubmissionExternalForm,
 )
 from extrequests.models import (
     WorkshopInquiryRequest,
-    SelfOrganizedSubmission,
+    SelfOrganisedSubmission,
 )
 from workshops.models import (
     TrainingRequest,
@@ -253,24 +253,24 @@ class WorkshopInquiryRequestConfirm(LoginNotRequiredMixin, TemplateView):
 
 
 # ------------------------------------------------------------
-# SelfOrganizedSubmission views
+# SelfOrganisedSubmission views
 
-class SelfOrganizedSubmissionCreate(
+class SelfOrganisedSubmissionCreate(
     LoginNotRequiredMixin,
     EmailSendMixin,
     AutoresponderMixin,
     AMYCreateView,
 ):
-    model = SelfOrganizedSubmission
-    form_class = SelfOrganizedSubmissionExternalForm
-    page_title = 'Submit a self-organized workshop'
-    template_name = 'forms/selforganized_submission.html'
-    success_url = reverse_lazy('selforganized_submission_confirm')
+    model = SelfOrganisedSubmission
+    form_class = SelfOrganisedSubmissionExternalForm
+    page_title = 'Submit a self-organised workshop'
+    template_name = 'forms/selforganised_submission.html'
+    success_url = reverse_lazy('selforganised_submission_confirm')
     email_fail_silently = False
 
-    autoresponder_subject = 'Self-organized submission confirmation'
-    autoresponder_body_template_txt = 'mailing/selforganizedsubmission.txt'
-    autoresponder_body_template_html = 'mailing/selforganizedsubmission.html'
+    autoresponder_subject = 'Self-organised submission confirmation'
+    autoresponder_body_template_txt = 'mailing/selforganisedsubmission.txt'
+    autoresponder_body_template_html = 'mailing/selforganisedsubmission.html'
     autoresponder_form_field = 'email'
 
     def autoresponder_email_context(self, form):
@@ -298,7 +298,7 @@ class SelfOrganizedSubmissionCreate(
             else self.object.institution_other_name
         )
         subject = (
-            'New self-organized submission: {affiliation}'
+            'New self-organised submission: {affiliation}'
         ).format(
             affiliation=affiliation,
         )
@@ -309,7 +309,7 @@ class SelfOrganizedSubmissionCreate(
         link_domain = 'https://{}'.format(get_current_site(self.request))
 
         body_txt = get_template(
-            'mailing/selforganizedsubmission_admin.txt'
+            'mailing/selforganisedsubmission_admin.txt'
         ).render({
             'object': self.object,
             'link': link,
@@ -317,7 +317,7 @@ class SelfOrganizedSubmissionCreate(
         })
 
         body_html = get_template(
-            'mailing/selforganizedsubmission_admin.html'
+            'mailing/selforganisedsubmission_admin.html'
         ).render({
             'object': self.object,
             'link': link,
@@ -331,12 +331,12 @@ class SelfOrganizedSubmissionCreate(
         return result
 
 
-class SelfOrganizedSubmissionConfirm(LoginNotRequiredMixin, TemplateView):
-    template_name = 'forms/selforganizedsubmission_confirm.html'
+class SelfOrganisedSubmissionConfirm(LoginNotRequiredMixin, TemplateView):
+    template_name = 'forms/selforganisedsubmission_confirm.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Thank you for submitting self-organized workshop'
+        context['title'] = 'Thank you for submitting self-organised workshop'
         return context
 
 # ------------------------------------------------------------

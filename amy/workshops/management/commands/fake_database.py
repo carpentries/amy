@@ -19,7 +19,7 @@ from extrequests.models import (
     DataAnalysisLevel,
     DataVariant,
     WorkshopInquiryRequest,
-    SelfOrganizedSubmission,
+    SelfOrganisedSubmission,
 )
 from workshops.models import (
     Airport,
@@ -110,7 +110,7 @@ class Command(BaseCommand):
             ('organizer', 'Workshop organizer'),
             ('contributor', 'Contributed to lesson materials')
         ]
-        
+
         self.stdout.write('Generating {} fake roles...'.format(len(roles)))
 
         for name, verbose_name in roles:
@@ -707,9 +707,9 @@ class Command(BaseCommand):
             req.save()
 
 
-    def fake_selforganized_submissions(self, count=10):
+    def fake_selforganised_submissions(self, count=10):
         self.stdout.write('Generating {} fake '
-                          'self-organized submissions...'.format(count))
+                          'self-organised submissions...'.format(count))
 
         curricula = Curriculum.objects.filter(active=True)
         organizations = Organization.objects.all()
@@ -730,12 +730,12 @@ class Command(BaseCommand):
                 org_url = self.faker.url()
 
             public_event = choice(
-                SelfOrganizedSubmission.PUBLIC_EVENT_CHOICES)[0]
+                SelfOrganisedSubmission.PUBLIC_EVENT_CHOICES)[0]
             public_event_other = (
                 self.faker.sentence() if public_event == 'other'
                 else ""
             )
-            workshop_format = choice(SelfOrganizedSubmission.FORMAT_CHOICES)[0]
+            workshop_format = choice(SelfOrganisedSubmission.FORMAT_CHOICES)[0]
             workshop_format_other = (
                 self.faker.sentence() if workshop_format == ''
                 else ""
@@ -749,7 +749,7 @@ class Command(BaseCommand):
                 workshop_types = sample(curricula)
                 workshop_types_explain = ""
 
-            req = SelfOrganizedSubmission.objects.create(
+            req = SelfOrganisedSubmission.objects.create(
                 state=choice(['p', 'd', 'a']),
                 data_privacy_agreement=randbool(0.5),
                 code_of_conduct_agreement=randbool(0.5),
@@ -809,7 +809,7 @@ class Command(BaseCommand):
             self.fake_duplicated_people()
             self.fake_workshop_requests()
             self.fake_workshop_inquiries()
-            self.fake_selforganized_submissions()
+            self.fake_selforganised_submissions()
         except IntegrityError as e:
             print("!!!" * 10)
             print("Delete the database, and rerun this script.")

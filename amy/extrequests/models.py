@@ -783,13 +783,13 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         return reverse('workshopinquiry_details', args=[self.id])
 
 
-class SelfOrganizedSubmission(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
+class SelfOrganisedSubmission(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
                               CommonRequest,
                               DataPrivacyAgreementMixin, COCAgreementMixin,
                               HostResponsibilitiesMixin, EventLink,
                               models.Model):
     """
-    This model is used for storing user-submitted self-organized workshop
+    This model is used for storing user-submitted self-organised workshop
     information. It's very similar to Workshop Submission combined with
     DC Self-Organized Workshop Request.
     """
@@ -848,11 +848,13 @@ class SelfOrganizedSubmission(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     )
 
     class Meta:
+        verbose_name = 'Self-Organised Submission'
+        verbose_name_plural = 'Self-Organised Submissions'
         ordering = ['created_at']
 
     def __str__(self):
         return (
-            'Self-Organized submission ({institution}, {personal} {family}) - {state}'
+            'Self-Organised Submission ({institution}, {personal} {family}) - {state}'
         ).format(
             institution=str(self.institution or self.institution_other_name),
             personal=self.personal,
@@ -861,4 +863,4 @@ class SelfOrganizedSubmission(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         )
 
     def get_absolute_url(self):
-        return reverse('selforganizedsubmission_details', args=[self.id])
+        return reverse('selforganisedsubmission_details', args=[self.id])

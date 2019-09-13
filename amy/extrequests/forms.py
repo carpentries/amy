@@ -10,7 +10,7 @@ from extrequests.models import (
     DataVariant,
     InfoSource,
     WorkshopInquiryRequest,
-    SelfOrganizedSubmission,
+    SelfOrganisedSubmission,
 )
 from workshops.forms import BootstrapHelper
 from workshops.models import (
@@ -954,31 +954,31 @@ class WorkshopInquiryRequestAdminForm(WorkshopInquiryRequestBaseForm):
 
 
 # ----------------------------------------------------------
-# SelfOrganizedSubmission related forms
+# SelfOrganisedSubmission related forms
 
-class SelfOrganizedSubmissionBaseForm(forms.ModelForm):
+class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
     institution = forms.ModelChoiceField(
         required=False,
         queryset=Organization.objects.order_by('fullname')
                                      .exclude(fullname='self-organized'),
         widget=Select2Widget(fake_required=True),
-        label=SelfOrganizedSubmission._meta.get_field('institution').verbose_name,
-        help_text=SelfOrganizedSubmission._meta.get_field('institution').help_text,
+        label=SelfOrganisedSubmission._meta.get_field('institution').verbose_name,
+        help_text=SelfOrganisedSubmission._meta.get_field('institution').help_text,
     )
 
     data_privacy_agreement = forms.BooleanField(
         required=True,
-        label=SelfOrganizedSubmission._meta.get_field('data_privacy_agreement')
+        label=SelfOrganisedSubmission._meta.get_field('data_privacy_agreement')
                                    .verbose_name,
     )
     code_of_conduct_agreement = forms.BooleanField(
         required=True,
-        label=SelfOrganizedSubmission._meta.get_field('code_of_conduct_agreement')
+        label=SelfOrganisedSubmission._meta.get_field('code_of_conduct_agreement')
                                    .verbose_name,
     )
     host_responsibilities = forms.BooleanField(
         required=True,
-        label=SelfOrganizedSubmission._meta.get_field('host_responsibilities')
+        label=SelfOrganisedSubmission._meta.get_field('host_responsibilities')
                                    .verbose_name,
     )
 
@@ -988,9 +988,9 @@ class SelfOrganizedSubmissionBaseForm(forms.ModelForm):
                                                   allow_unknown=False,
                                                   allow_mix_match=True)
                                    .filter(active=True),
-        label=SelfOrganizedSubmission._meta.get_field('workshop_types')
+        label=SelfOrganisedSubmission._meta.get_field('workshop_types')
                                    .verbose_name,
-        help_text=SelfOrganizedSubmission._meta.get_field('workshop_types')
+        help_text=SelfOrganisedSubmission._meta.get_field('workshop_types')
                                        .help_text,
         widget=RadioSelectFakeMultiple(),
     )
@@ -998,7 +998,7 @@ class SelfOrganizedSubmissionBaseForm(forms.ModelForm):
     helper = BootstrapHelper(add_cancel_button=False)
 
     class Meta:
-        model = SelfOrganizedSubmission
+        model = SelfOrganisedSubmission
         fields = (
             "personal",
             "family",
@@ -1163,17 +1163,17 @@ class SelfOrganizedSubmissionBaseForm(forms.ModelForm):
             raise ValidationError(errors)
 
 
-class SelfOrganizedSubmissionAdminForm(SelfOrganizedSubmissionBaseForm):
+class SelfOrganisedSubmissionAdminForm(SelfOrganisedSubmissionBaseForm):
     helper = BootstrapHelper(add_cancel_button=False,
                              duplicate_buttons_on_top=True)
 
-    class Meta(SelfOrganizedSubmissionBaseForm.Meta):
+    class Meta(SelfOrganisedSubmissionBaseForm.Meta):
         fields = (
             "state",
             "event",
-        ) + SelfOrganizedSubmissionBaseForm.Meta.fields
+        ) + SelfOrganisedSubmissionBaseForm.Meta.fields
 
-        widgets = SelfOrganizedSubmissionBaseForm.Meta.widgets.copy()
+        widgets = SelfOrganisedSubmissionBaseForm.Meta.widgets.copy()
         widgets.update(
             {'event': Select2Widget}
         )
