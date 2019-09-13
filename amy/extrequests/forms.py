@@ -26,6 +26,7 @@ from workshops.models import (
 )
 from workshops.fields import (
     Select2Widget,
+    Select2TagWidget,
     ModelSelect2Widget,
     RadioSelectWithOther,
     CheckboxSelectMultipleWithOthers,
@@ -216,7 +217,7 @@ class MatchTrainingRequestForm(forms.Form):
 class WorkshopRequestBaseForm(forms.ModelForm):
     institution = forms.ModelChoiceField(
         required=False,
-        queryset=Organization.objects.order_by('fullname'),
+        queryset=Organization.objects.order_by('fullname')
                                      .exclude(fullname='self-organized'),
         widget=Select2Widget(fake_required=True),
         label=WorkshopRequest._meta.get_field('institution').verbose_name,
@@ -322,7 +323,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
                 RadioSelectWithOther('public_event_other'),
             'institution_restrictions':
                 RadioSelectWithOther('institution_restrictions_other'),
-            'additional_contact': TagSelect2(),
+            'additional_contact': Select2TagWidget,
         }
 
     def __init__(self, *args, **kwargs):
@@ -535,7 +536,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         required=False,
         queryset=Organization.objects.order_by('fullname')
                                      .exclude(domain='self-organized'),
-        widget=ListSelect2(),
+        widget=Select2Widget,
         label=WorkshopInquiryRequest._meta.get_field('institution').verbose_name,
         help_text=WorkshopInquiryRequest._meta.get_field('institution').help_text,
     )
@@ -670,8 +671,8 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
             'preferred_dates': forms.DateInput(attrs={
                 'class': 'nopastdates'}),
             'institution_other_URL': forms.TextInput(),
-            'country': ListSelect2(),
-            'language': ListSelect2(),
+            'country': Select2Widget,
+            'language': Select2Widget,
             'number_attendees': forms.RadioSelect(),
             'computing_levels': forms.CheckboxSelectMultiple(),
             'administrative_fee': forms.RadioSelect(),
@@ -681,7 +682,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
                 RadioSelectWithOther('public_event_other'),
             'institution_restrictions':
                 RadioSelectWithOther('institution_restrictions_other'),
-            'additional_contact': TagSelect2(),
+            'additional_contact': Select2TagWidget,
         }
 
     @staticmethod
@@ -948,7 +949,7 @@ class WorkshopInquiryRequestAdminForm(WorkshopInquiryRequestBaseForm):
 
         widgets = WorkshopInquiryRequestBaseForm.Meta.widgets.copy()
         widgets.update(
-            {'event': ListSelect2()}
+            {'event': Select2Widget}
         )
 
 
@@ -960,7 +961,7 @@ class SelfOrganizedSubmissionBaseForm(forms.ModelForm):
         required=False,
         queryset=Organization.objects.order_by('fullname')
                                      .exclude(fullname='self-organized'),
-        widget=ListSelect2(fake_required=True),
+        widget=Select2Widget(fake_required=True),
         label=SelfOrganizedSubmission._meta.get_field('institution').verbose_name,
         help_text=SelfOrganizedSubmission._meta.get_field('institution').help_text,
     )
@@ -1024,14 +1025,14 @@ class SelfOrganizedSubmissionBaseForm(forms.ModelForm):
         widgets = {
             'institution_other_URL': forms.TextInput(),
             'workshop_url': forms.TextInput(),
-            'country': ListSelect2(),
-            'language': ListSelect2(),
+            'country': Select2Widget,
+            'language': Select2Widget,
             'workshop_format':
                 RadioSelectWithOther('workshop_format_other',
                                      fake_required=True),
             'public_event':
                 RadioSelectWithOther('public_event_other'),
-            'additional_contact': TagSelect2(),
+            'additional_contact': Select2TagWidget,
         }
 
     @staticmethod
@@ -1174,7 +1175,7 @@ class SelfOrganizedSubmissionAdminForm(SelfOrganizedSubmissionBaseForm):
 
         widgets = SelfOrganizedSubmissionBaseForm.Meta.widgets.copy()
         widgets.update(
-            {'event': ListSelect2()}
+            {'event': Select2Widget}
         )
 
 
