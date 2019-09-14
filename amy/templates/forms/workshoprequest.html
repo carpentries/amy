@@ -8,8 +8,16 @@
 
 {% block content %}
 
-<p class="lead">This form is to be completed when you have all of the required information to begin the process for organising a workshop at your organisation. If you would like to inquire about a workshop go <a href="{% url 'workshop_inquiry' %}">here</a>. If you would like to register a self-organised workshop go <a href="{% url 'selforganised_submission' %}">here</a>.</p>
-
+<p class="lead">
+    Please fill out this form to request a Carpentries workshop. We will ask
+    you about dates, location and workshop type, so please plan to have this
+    information available. If you would like more information about our
+    workshops before scheduling, please
+    <a href="{% url 'workshop_inquiry' %}">request workshop information</a>.
+    If you are a Member Organisation or Instructor who is coordinating
+    a self-organised workshop please
+    <a href="{% url 'selforganised_submission' %}">use this form to register your workshop</a>.
+</p>
 
 {% crispy form %}
 {% endblock %}

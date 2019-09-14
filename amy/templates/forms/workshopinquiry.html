@@ -8,7 +8,16 @@
 
 {% block content %}
 
-<p class="lead">This form is to inquire about hosting a workshop at your organisation and you need clarification or would like to speak with someone about the process. Someone will contact you regarding this inquiry. If you would like to request a centrally-organised go <a href="{% url 'workshop_request' %}">here</a>. If you would like to register a self-organised workshop go <a href="{% url 'selforganised_submission' %}">here</a>.</p>
+<p class="lead">
+    Please fill out this form to request information about hosting a workshop
+    at your institution. We’ll get back to you shortly to provide information
+    and answer any questions you might have.
+</p>
+<p class="lead">
+    If you already know you would like a workshop at your institution, please
+    use our <a href="{% url 'workshop_request' %}">request a workshop</a> form
+    to get started with scheduling. Thank you!
+</p>
 
 {% crispy form %}
 {% endblock %}
