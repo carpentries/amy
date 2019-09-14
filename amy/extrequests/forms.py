@@ -801,6 +801,23 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
                 HTML(self.helper.hr()),
             )
 
+        AGREEMENTS_TEXT = (
+            "If we proceed with coordinating a workshop, you will agree to"
+            " the following:"
+        )
+        self.helper.layout.insert(
+            self.helper.layout.fields.index("data_privacy_agreement"),
+            HTML(f"<p class='lead offset-lg-2'>{AGREEMENTS_TEXT}</p>"),
+        )
+        TRAVEL_AGR_TEXT = (
+            "If we proceed with coordinating a workshop, I will agree to"
+            " the following:"
+        )
+        self.helper.layout.insert(
+            self.helper.layout.fields.index("travel_expences_agreement"),
+            HTML(f"<p class='lead offset-lg-2'>{TRAVEL_AGR_TEXT}</p>"),
+        )
+
     def clean(self):
         super().clean()
         errors = dict()
