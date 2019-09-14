@@ -2387,7 +2387,8 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     )
     scholarship_circumstances = models.TextField(
         blank=True,
-        verbose_name="Please explain the circumstances for your scholarship "
+        verbose_name="We have a limited number of scholarships available. "
+                     "Please explain the circumstances for your scholarship "
                      "request and let us know what budget you have towards "
                      "The Carpentries workshop fees.",
         help_text="Required only if you request a scholarship."
