@@ -67,16 +67,12 @@
       </div>
       {% endblock main %}
 
-      <div class="row">
+      <div class="row mt-5">
         <footer class="col-sm-12 text-center text-muted border-top pt-3">
           <p>
             Powered by <a href="https://github.com/swcarpentry/amy">AMY</a>
             version {{ workshops_version }}{% if workshops_git_hash %} (<a href="https://github.com/swcarpentry/amy/commit/{{ workshops_git_hash }}">{{ workshops_git_short_hash }}</a> {{ workshops_git_date }}{% if workshops_git_dirty %} dirty{% endif %}){% endif %}.
             View <a href="https://docs.carpentries.org/topic_folders/policies/privacy.html">our data privacy policy</a>.
-          </p>
-          <p>
-            This project was funded in part by a grant from the National Science Foundation (0953694)
-            to <a href="http://whitelab.weecology.org/">Prof. Ethan White</a>.
           </p>
         </footer>
       </div>
