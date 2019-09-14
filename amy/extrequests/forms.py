@@ -329,6 +329,9 @@ class WorkshopRequestBaseForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        # the field isn't required, but we want user to fill it
+        self.fields['preferred_dates'].widget.fake_required = True
+
         # change institution object labels (originally Organization displays
         # domain as well)
         self.fields['institution'].label_from_instance = \
