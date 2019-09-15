@@ -1,6 +1,7 @@
 from captcha.fields import ReCaptchaField
 from crispy_forms.layout import HTML, Div, Field
 from django import forms
+from django.core.exceptions import ValidationError
 
 from extrequests.forms import (
     WorkshopRequestBaseForm,
@@ -30,6 +31,7 @@ class TrainingRequestForm(forms.ModelForm):
     class Meta:
         model = TrainingRequest
         fields = (
+            'review_process',
             'group_name',
             'personal',
             'family',
@@ -66,6 +68,7 @@ class TrainingRequestForm(forms.ModelForm):
             'workshop_teaching_agreement',
         )
         widgets = {
+            'review_process': forms.RadioSelect(),
             'occupation': RadioSelectWithOther('occupation_other'),
             'domains': CheckboxSelectMultipleWithOthers('domains_other'),
             'gender': forms.RadioSelect(),
@@ -154,6 +157,32 @@ class TrainingRequestForm(forms.ModelForm):
         index = self.helper.layout.fields.index('underrepresented_details')
         self.helper.layout.insert(
             index + 1, HTML(self.helper.hr()))
+
+    def clean(self):
+        super().clean()
+        errors = dict()
+
+        # 1: validate registration code / group name
+        review_process = self.cleaned_data.get('review_process', '')
+        group_name = self.cleaned_data.get('group_name', '').split()
+
+        # it's required when review_process is 'preapproved', but not when
+        # 'open'
+        if review_process == 'preapproved' and not group_name:
+            errors['review_process'] = ValidationError(
+                "Registration code is required for pre-approved training "
+                "review process."
+            )
+
+        # it's required to be empty when review_process is 'open'
+        if review_process == 'open' and group_name:
+            errors['review_process'] = ValidationError(
+                "Registration code must be empty for open training review "
+                "process."
+            )
+
+        if errors:
+            raise ValidationError(errors)
 
 
 class WorkshopRequestExternalForm(WorkshopRequestBaseForm):
