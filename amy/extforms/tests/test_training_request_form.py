@@ -67,6 +67,31 @@ class TestTrainingRequestForm(TestBase):
         # with open('email.eml', 'wb') as f:
         #     f.write(msg.message().as_bytes())
 
+    def test_review_process_validation(self):
+        # 1: shouldn't pass when review_process requires group_name
+        self.data['review_process'] = 'preapproved'
+        self.data['group_name'] = ''
+        self.passCaptcha(self.data)
+
+        rv = self.client.post(reverse('training_request'), self.data,
+                              follow=True)
+        self.assertEqual(rv.status_code, 200)
+        content = rv.content.decode('utf-8')
+        self.assertIn('fix errors in the form below', content)
+        self.assertEqual(TrainingRequest.objects.all().count(), 0)
+
+        # 2: shouldn't pass when review_process requires *NO* group_name
+        self.data['review_process'] = 'open'
+        self.data['group_name'] = 'some_code'
+        self.passCaptcha(self.data)
+
+        rv = self.client.post(reverse('training_request'), self.data,
+                              follow=True)
+        self.assertEqual(rv.status_code, 200)
+        content = rv.content.decode('utf-8')
+        self.assertIn('fix errors in the form below', content)
+        self.assertEqual(TrainingRequest.objects.all().count(), 0)
+
 
 class GroupNameFieldTestsBase(TestBase):
     """Tests for [#1005] feature -- Allow pre-population of Group in training
