@@ -90,6 +90,7 @@ class TrainingRequestForm(forms.ModelForm):
         initial = kwargs.pop('initial', {})
         if initial_group_name is not None:
             initial['group_name'] = initial_group_name
+            initial['review_process'] = 'preapproved'
         super().__init__(*args, initial=initial, **kwargs)
         if initial_group_name is not None:
             field = self.fields['group_name']
