@@ -1,5 +1,5 @@
 from captcha.fields import ReCaptchaField
-from crispy_forms.layout import HTML
+from crispy_forms.layout import HTML, Div, Field
 from django import forms
 
 from extrequests.forms import (
@@ -116,6 +116,35 @@ class TrainingRequestForm(forms.ModelForm):
         self.helper.layout.fields.remove(
             'teaching_frequency_expectation_other')
         self.helper.layout.fields.remove('max_travelling_frequency_other')
+
+        # fake requiredness of the registration code / group name
+        self['group_name'].field.widget.fake_required = True
+
+        # special accordion display for the review process
+        self['review_process'].field.widget.subfields = {
+            'preapproved': [
+                self['group_name'],
+            ],
+            'open': [],  # this option doesn't require any additional fields
+        }
+        self['review_process'].field.widget.notes = \
+            TrainingRequest.REVIEW_CHOICES_NOTES
+
+        # get current position of `review_process` field
+        pos_index = self.helper.layout.fields.index('review_process')
+
+        self.helper.layout.fields.remove('review_process')
+        self.helper.layout.fields.remove('group_name')
+
+        # insert div+field at previously saved position
+        self.helper.layout.insert(
+            pos_index,
+            Div(
+                Field('review_process',
+                      template="bootstrap4/layout/radio-accordion.html"),
+                css_class='form-group row',
+            ),
+        )
 
         # add <HR> around "underrepresented*" fields
         index = self.helper.layout.fields.index('underrepresented')
