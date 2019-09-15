@@ -11,11 +11,9 @@ class TestTrainingRequestForm(TestBase):
     def setUp(self):
         self._setUpUsersAndLogin()
         self._setUpRoles()
-
-    def test_request_added(self):
-        email = 'john@smith.com'
-        data = {
-            'group': 'coolprogrammers',
+        self.data = {
+            'review_process': 'preapproved',
+            'group_name': 'coolprogrammers',
             'personal': 'John',
             'family': 'Smith',
             'email': 'john@smith.com',
@@ -48,13 +46,16 @@ class TestTrainingRequestForm(TestBase):
             'agreed_to_teach_workshops': 'on',
             'privacy_consent': True,
         }
-        self.passCaptcha(data)
 
-        rv = self.client.post(reverse('training_request'), data,
+    def test_request_added(self):
+        email = 'john@smith.com'
+        self.passCaptcha(self.data)
+
+        rv = self.client.post(reverse('training_request'), self.data,
                               follow=True)
         self.assertEqual(rv.status_code, 200)
         content = rv.content.decode('utf-8')
-        self.assertNotIn('Fix errors below', content)
+        self.assertNotIn('fix errors in the form below', content)
         self.assertEqual(TrainingRequest.objects.all().count(), 1)
 
         # Test that the sender was emailed
@@ -81,6 +82,10 @@ class GroupNameFieldTestsBase(TestBase):
 
     def fillin_and_submit(self):
         # fillin the form
+        if self.form['group_name'].value:
+            self.form['review_process'] = 'preapproved'
+        else:
+            self.form['review_process'] = 'open'
         self.form['personal'] = 'John'
         self.form['family'] = 'Smith'
         self.form['email'] = 'john@smith.com'

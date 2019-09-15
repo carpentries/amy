@@ -23,8 +23,10 @@ from workshops.models import (
 )
 
 
-def create_training_request(state, person):
+def create_training_request(state, person, open_review=True, reg_code=''):
     return TrainingRequest.objects.create(
+        review_process='open' if open_review else 'preapproved',
+        group_name=reg_code,
         personal='John',
         family='Smith',
         email='john@smith.com',
