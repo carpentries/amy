@@ -8,6 +8,7 @@ from django_select2.forms import (
 from django.core.validators import RegexValidator, MaxLengthValidator
 from django.db import models
 from django import forms
+from django.utils.safestring import mark_safe
 
 
 GHUSERNAME_MAX_LENGTH_VALIDATOR = MaxLengthValidator(39,
@@ -39,7 +40,18 @@ class NullableGithubUsernameField(models.CharField):
     ]
 
 
-class RadioSelectWithOther(forms.RadioSelect):
+#------------------------------------------------------------
+
+class FakeRequiredMixin:
+    def __init__(self, *args, **kwargs):
+        # Intercept "fake_required" attribute that's used for marking field
+        # with "*" (asterisk) even though it's not required.
+        # Additionally `fake_required` doesn't trigger any validation.
+        self.fake_required = kwargs.pop('fake_required', False)
+        super().__init__(*args, **kwargs)
+
+
+class RadioSelectWithOther(FakeRequiredMixin, forms.RadioSelect):
     """A RadioSelect widget that should render additional field ('Other').
 
     We have a number of occurences of two model fields bound together: one
@@ -55,7 +67,7 @@ class RadioSelectWithOther(forms.RadioSelect):
         self.other_field_name = other_field_name
 
 
-class CheckboxSelectMultipleWithOthers(forms.CheckboxSelectMultiple):
+class CheckboxSelectMultipleWithOthers(FakeRequiredMixin, forms.CheckboxSelectMultiple):
     """A multiple choice widget that should render additional field ('Other').
 
     We have a number of occurences of two model fields bound together: one
@@ -70,6 +82,42 @@ class CheckboxSelectMultipleWithOthers(forms.CheckboxSelectMultiple):
         super().__init__(*args, **kwargs)
         self.other_field_name = other_field_name
 
+
+class RadioSelectFakeMultiple(FakeRequiredMixin, forms.RadioSelect):
+    """Pretend to be a radio-select with multiple selection possible. This
+    is intended to 'fool' Django into thinking that user selected 1 item on
+    a multi-select item list."""
+    allow_multiple_selected = True
+
+
+class SafeLabelFromInstanceMixin:
+    def label_from_instance(self, obj):
+        return mark_safe(obj)
+
+
+class SafeModelChoiceField(SafeLabelFromInstanceMixin, forms.ModelChoiceField):
+    pass
+
+
+class SafeModelMultipleChoiceField(SafeLabelFromInstanceMixin,
+                                   forms.ModelMultipleChoiceField):
+    pass
+
+
+class CurriculumModelMultipleChoiceField(SafeModelMultipleChoiceField):
+    def label_from_instance(self, obj):
+        # Display in tooltip (it's a little better than popover, because it
+        # auto-hides and doesn't require clicking on the element, whereas
+        # popover by clicking will automatically select the clicked item)
+        data = (
+            '<a tabindex="0" role="button" data-toggle="tooltip" '
+            'data-placement="top" title="{description}">{obj}</a>'
+            .format(obj=obj, description=obj.description)
+        )
+        return super().label_from_instance(data)
+
+
+#------------------------------------------------------------
 
 class Select2BootstrapMixin:
     def build_attrs(self, *args, **kwargs):
@@ -88,7 +136,9 @@ class Select2NoMinimumInputLength:
         return attrs
 
 
-class Select2Widget(Select2BootstrapMixin, DS2_Select2Widget):
+
+class Select2Widget(FakeRequiredMixin, Select2BootstrapMixin,
+                    DS2_Select2Widget):
     pass
 
 
@@ -108,4 +158,14 @@ class ModelSelect2MultipleWidget(Select2BootstrapMixin,
 
 
 class Select2TagWidget(Select2BootstrapMixin, DS2_Select2TagWidget):
-    pass
+    def value_from_datadict(self, data, files, name):
+        # sometimes data is held as an immutable QueryDict
+        # in those cases, we need to make a copy of it to "disable"
+        # the mutability
+        try:
+            data_mutable = data.copy()
+        except AttributeError:
+            data_mutable = data
+
+        data_mutable.setdefault(name, '')
+        return super().value_from_datadict(data_mutable, files, name)

@@ -1,0 +1,27 @@
+{% extends "forms/selforganised_submission.html" %}
+{% block extrajs %}{% endblock %}
+{% block content %}
+
+<p>
+    Thank you for registering your upcoming self-organised Carpentries
+    Workshop. Your workshop will now be listed on the
+    <a href="https://carpentries.org/upcoming_workshops/">Upcoming workshops</a>
+    page and Instructor and Organisational Member profiles will be updated to
+    include this workshop. We will be in touch approximately 2 weeks before
+    your workshop to get you your workshop survey links. Please let us know
+    if you have any other questions, and we look forward to your workshop.
+    Thanks for all you do in our community!
+</p>
+
+<p>For more information please visit:</p>
+
+<ul>
+    <li><a href="http://www.datacarpentry.org/">Data Carpentry</a></li>
+    <li><a href="https://software-carpentry.org/">Software Carpentry</a></li>
+    <li><a href="https://librarycarpentry.org/">Library Carpentry</a></li>
+    <li><a href="https://carpentries.org/">The Carpentries</a></li>
+    <li>or contact <a href="mailto:team@carpentries.org">team@carpentries.org</a>.</li>
+</ul>
+
+<p><a href="{% url 'selforganised_submission' %}">Click here</a> to submit another self-organised workshop.</p>
+{% endblock %}

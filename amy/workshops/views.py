@@ -1,5 +1,6 @@
 import csv
 import datetime
+from functools import partial
 import io
 import re
 
@@ -539,6 +540,14 @@ class PersonCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
             messages.success(self.request, success_message)
         return response
 
+    def get_initial(self):
+        initial = {
+            'personal': self.request.GET.get('personal', ''),
+            'family': self.request.GET.get('family', ''),
+            'email': self.request.GET.get('email', ''),
+        }
+        return initial
+
 
 class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin,
                    AMYUpdateView):
@@ -930,7 +939,6 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
         'eventsubmission', 'dcselforganizedeventrequest'
     ).prefetch_related('sponsorship_set')
     slug_field = 'slug'
-    form_class = EventForm
     template_name = 'workshops/event_edit_form.html'
 
     def get_context_data(self, **kwargs):
@@ -947,6 +955,9 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
             'sponsor_form': SponsorshipForm(**kwargs),
         })
         return context
+
+    def get_form_class(self):
+        return partial(EventForm, show_lessons=True)
 
 
 class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin,

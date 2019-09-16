@@ -4,6 +4,10 @@ import django_filters
 from django.db.models import Q
 from django.forms import widgets
 
+from extrequests.models import (
+    WorkshopInquiryRequest,
+    SelfOrganisedSubmission,
+)
 from workshops.fields import Select2Widget
 from workshops.filters import (
     AMYFilterSet,
@@ -11,6 +15,7 @@ from workshops.filters import (
     StateFilterSet,
     ForeignKeyAllValuesFilter,
     AllCountriesFilter,
+    ContinentFilter,
 )
 from workshops.models import (
     Person,
@@ -149,6 +154,7 @@ class TrainingRequestFilter(AMYFilterSet):
 class WorkshopRequestFilter(AMYFilterSet, StateFilterSet):
     assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2Widget)
     country = AllCountriesFilter(widget=Select2Widget)
+    continent = ContinentFilter(widget=Select2Widget, label="Continent")
     requested_workshop_types = django_filters.ModelMultipleChoiceFilter(
         label='Requested workshop types',
         queryset=Curriculum.objects.all(),
@@ -168,4 +174,65 @@ class WorkshopRequestFilter(AMYFilterSet, StateFilterSet):
             'assigned_to',
             'requested_workshop_types',
             'country',
+        ]
+
+
+# ------------------------------------------------------------
+# WorkshopInquiryRequest related filter and filter methods
+# ------------------------------------------------------------
+
+class WorkshopInquiryFilter(AMYFilterSet, StateFilterSet):
+    assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2Widget)
+    country = AllCountriesFilter(widget=Select2Widget)
+    continent = ContinentFilter(widget=Select2Widget, label="Continent")
+    requested_workshop_types = django_filters.ModelMultipleChoiceFilter(
+        label='Requested workshop types',
+        queryset=Curriculum.objects.all(),
+        widget=widgets.CheckboxSelectMultiple(),
+    )
+
+    order_by = django_filters.OrderingFilter(
+        fields=(
+            'created_at',
+        ),
+    )
+
+    class Meta:
+        model = WorkshopInquiryRequest
+        fields = [
+            'state',
+            'assigned_to',
+            'requested_workshop_types',
+            'country',
+        ]
+
+
+
+# ------------------------------------------------------------
+# SelfOrganisedSubmission related filter and filter methods
+# ------------------------------------------------------------
+
+class SelfOrganisedSubmissionFilter(AMYFilterSet, StateFilterSet):
+    assigned_to = ForeignKeyAllValuesFilter(Person, widget=Select2Widget)
+    country = AllCountriesFilter(widget=Select2Widget)
+    continent = ContinentFilter(widget=Select2Widget, label="Continent")
+    workshop_types = django_filters.ModelMultipleChoiceFilter(
+        label='Requested workshop types',
+        queryset=Curriculum.objects.all(),
+        widget=widgets.CheckboxSelectMultiple(),
+    )
+
+    order_by = django_filters.OrderingFilter(
+        fields=(
+            'created_at',
+        ),
+    )
+
+    class Meta:
+        model = SelfOrganisedSubmission
+        fields = [
+            'state',
+            'assigned_to',
+            'workshop_types',
+            'workshop_format',
         ]

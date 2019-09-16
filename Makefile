@@ -98,8 +98,9 @@ clean :
 	rm -rf \
 		$$(find . -name '*~' -print) \
 		$$(find . -name '*.pyc' -print) \
+		$$(find . -name '__pycache__' -print) \
 		htmlerror \
-		$$(find . -name 'test_db*.sqlite3' -print) \
+		$$(find . -name 'test_db*.sqlite3*' -print) \
 
 ## coverage     : run tests and generate HTML coverage
 coverage :

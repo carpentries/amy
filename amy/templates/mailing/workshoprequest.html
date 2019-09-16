@@ -1,116 +1,23 @@
-{% load state %}
-<h1>Thank you for requesting a Carpentries workshop!</h1>
+<p>This email is to confirm that we have received your request for a Carpentries
+Workshop! Someone will be in contact with you soon. Below you will find a few important notes:</p>
 
-<p>Your request has been received, and a member of our team will get 
-back to you within three business days. If you have any immediate 
-questions, please contact us at
-<a href="mailto:team@carpentries.org">team@carpentries.org</a>.
-A copy of your request is included below for your reference.</p>
+<ul>
+    <li>Organising a workshop requires a minimum of 2 months. If you are requesting a workshop less than 2 months, we cannot guarantee that instructors will be placed by your requested. We will do our very best to meet your request. If we are not able to meet your request, we do ask that you consider flexible dates.</li>
+    <li>There are certain criteria we use when selecting instructors. We pair experienced instructors with newly certified instructors. We ensure that all of our instructors are given an equal opportunity to teach. We look at the location of the instructor. We have several factors to consider and will try to locate instructors nearby.</li>
+    <li>We recommend budgeting $1000 per instructor to cover the cost of accommodations (travel, ground transportation, lodging and meals).</li>
+</ul>
 
-<table class="table table-striped">
-  <tbody>
-    <tr><th>Submission date:</th>
-        <td>{{ object.created_at }}</td></tr>
-    <tr><th>Person:</th>
-        <td>{{ object.personal }} {{ object.family }} &lt;{{ object.email|urlize }}&gt;</td></tr>
-    <tr><th>Institution:</th>
-        <td>
-          {% if object.institution %}<a href="{{ object.institution.get_absolute_url }}">{{ object.institution }}</a>{% else %}{{ object.institution_name }}{% endif %}{% if object.institution_department %}, {{ object.institution_department }}{% endif %}
-        </td></tr>
-    <tr><th>Location:</th>
-        <td>{{ object.location }}</td></tr>
-    <tr><th>Country:</th>
-        <td>{{ object.country.name }} <img src="{{ object.country.flag }}" alt="{{ object.country }}" class="country-flag" /></td></tr>
-    <tr><th>Conference:</th>
-        <td>
-          {{ object.conference_details|default:"—" }}
-        </td></tr>
-    <tr><th>Preferred dates:</th>
-        <td>{{ object.preferred_dates }}</td></tr>
-    <tr><th>Language:</th>
-        <td>{{ object.language }}</td></tr>
-    <tr><th>Approx. number of attendees:</th>
-        <td>{{ object.get_number_attendees_display }}</td></tr>
-    <tr><th>Attendees' domains:</th>
-        <td>
-          <ul>
-            {% for domain in object.domains.all %}
-            <li>{{ domain }}</li>
-            {% endfor %}
-            {% if object.domains_other %}
-            <li>{{ object.domains_other }}</li>
-            {% endif %}
-          </ul>
-        </td>
-    </tr>
-    <tr><th>Attendees' academic levels:</th>
-        <td>
-          <ul>
-            {% for level in object.academic_levels.all %}
-            <li>{{ level }}</li>
-            {% endfor %}
-          </ul>
-        </td>
-    </tr>
-    <tr><th>Attendees' computing levels:</th>
-        <td>
-          <ul>
-            {% for level in object.computing_levels.all %}
-            <li>{{ level }}</li>
-            {% endfor %}
-          </ul>
-        </td>
-    </tr>
-    <tr><th>Audience description:</th>
-        <td><pre>{{ object.audience_description }}</pre></td></tr>
-    <tr><th>Requested workshop types:</th>
-        <td>
-          <ul>
-            {% for type in object.requested_workshop_types.all %}
-            <li>{{ type }}</li>
-            {% endfor %}
-          </ul>
-        </td>
-    </tr>
-    <tr><th>Self- or centrally-organized workshop?</th>
-        <td>{{ object.get_organization_type_display }}</td></tr>
-    {% if object.organization_type == 'self' %}
-    <tr><th>Link to self-organized workshop GitHub page:</th>
-        <td>{{ object.self_organized_github|urlize }}</td></tr>
-    {% endif %}
-    {% if object.organization_type == 'central' %}
-    <tr><th>Administrative fee payment:</th>
-        <td>{{ object.get_centrally_organized_fee_display }}</td></tr>
-    <tr><th>Fee waiver circumstances:</th>
-        <td>
-          {% if object.waiver_circumstances %}
-          <pre>{{ object.waiver_circumstances }}</pre></td></tr>
-          {% else %}
-          &mdash;
-          {% endif %}
-    {% endif %}
-    <tr><th>Travel expences agreement:</th>
-        <td>{{ object.travel_expences_agreement|yesno }}</td></tr>
-    <tr><th>Travel expences management:</th>
-        <td>
-          {% if object.travel_expences_management %}
-          {{ object.get_travel_expences_management_display }}
-          {% else %}Other: {{ object.travel_expences_management_other }}
-          {% endif %}
-        </td></tr>
-    <tr><th>Data privacy agreement:</th>
-        <td>{{ object.data_privacy_agreement|yesno }}</td></tr>
-    <tr><th>Code of Conduct agreement:</th>
-        <td>{{ object.code_of_conduct_agreement|yesno }}</td></tr>
-    <tr><th>Host responsibilities agreement:</th>
-        <td>{{ object.host_responsibilities|yesno }}</td></tr>
-    <tr><th>Additional notes:</th>
-        <td>
-          {% if object.user_notes %}
-          <pre>{{ object.user_notes }}</pre>
-          {% else %}
-          &mdash;
-          {% endif %}
-        </td></tr>
-  </tbody>
-</table>
+<p>We look forward to working with you and ensuring you have a great workshop!<br>
+The Carpentries</p>
+
+<hr>
+
+<p>A copy of your request is included below for your reference.</p>
+
+{% if object.preferred_dates_too_soon %}
+<p><strong>Warning:</strong> selected preferred dates for the workshop fall
+in upcoming two months. The Carpentries team may not be able to find
+instructors in such short time.</p>
+{% endif %}
+
+{% include "includes/workshoprequest_details.html" with admin=False object=object %}

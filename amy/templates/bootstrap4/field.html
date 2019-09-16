@@ -12,7 +12,7 @@
     <{% if tag %}{{ tag }}{% else %}div{% endif %} id="div_{{ field.auto_id }}" class="{% if not field|is_checkbox %}form-group{% if 'form-horizontal' in form_class %} row{% endif %}{% else %}form-check{% endif %}{% if wrapper_class %} {{ wrapper_class }}{% endif %}{% if field.css_classes %} {{ field.css_classes }}{% endif %}">
         {% if field.label and not field|is_checkbox and form_show_labels %}
             <label for="{{ field.id_for_label }}" class="col-form-label {{ label_class }}{% if field.field.required %} requiredField{% endif %}">
-                {{ field.label|safe }}{% if field.field.required %}<span class="asteriskField">*</span>{% endif %}
+                {{ field.label|safe }}{% if field.field.required or field.field.widget.fake_required %}<span class="asteriskField">*</span>{% endif %}
             </label>
         {% endif %}
 
@@ -35,13 +35,32 @@
                 {% include 'bootstrap4/layout/field_file.html' %}
             {% else %}
                 <div class="{{ field_class }}">
-                    {% crispy_field field %}
                     {% include 'bootstrap4/layout/help_text_and_errors.html' %}
+                    {% crispy_field field %}
 
                     {% if field.field.widget.subfield %}
                         {% with subfield=field.field.widget.subfield %}
+                        {% if field.help_text %}
+                        {% crispy_field subfield 'class' 'form-control-sm mt-2' %}
+                        {% else %}
                         {% crispy_field subfield 'class' 'form-control-sm' %}
+                        {% endif %}
                         {% endwith %}
+                    {% elif field.field.widget.subfields %}
+                        <div class="row mb-3">
+                        {% for f in field.field.widget.subfields %}
+                            {% with superfield=field field=f.0 placeholder=f.1 %}
+                            {% if superfield.help_text %}
+                            <div class="col mt-2">
+                            {% else %}
+                            <div class="col">
+                            {% endif %}
+                                {% include 'bootstrap4/layout/help_text_and_errors.html' %}
+                                {% crispy_field field 'class' 'form-control-sm' 'placeholder' placeholder %}
+                            </div>
+                            {% endwith %}
+                        {% endfor %}
+                        </div>
                     {% endif %}
                 </div>
             {% endif %}

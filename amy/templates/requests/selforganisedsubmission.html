@@ -1,0 +1,30 @@
+{% extends "base_nav.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+<div class="row">
+  <div class="col-md-6 offset-md-6 text-right">
+    {% include "includes/assigned_to.html" with object=object user=user assign_url='workshoprequest_assign' %}
+  </div>
+</div>
+
+{% include "includes/selforganisedsubmission_details.html" with admin=True object=object %}
+
+{% include "includes/requests_bottom_action_btns.html" with object=object obj_name='request' change_permission=perms.perms.workshops.change_selforganisedsubmission add_event_permission=perms.workshops.add_event accept_event_URL='selforganisedsubmission_accept_event' set_state_URL='selforganisedsubmission_set_state' edit_URL='selforganisedsubmission_edit' %}
+
+{% include "includes/assignment_modal.html" with form=person_lookup_form %}
+
+{% include "includes/comments.html" with object=object %}
+
+{% endblock %}
+
+{% block extrajs %}
+<script type="text/javascript">
+  $('#change_assignment').click(function() {
+    $('#assignment_modal').modal();
+    return false;
+  });
+</script>
+{% endblock %}

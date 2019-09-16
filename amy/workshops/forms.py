@@ -111,10 +111,10 @@ class BootstrapHelper(FormHelper):
         if wider_labels:
             assert display_labels
             self.label_class = 'col-12 col-lg-3'
-            self.field_class = 'col-12 col-lg-7'
+            self.field_class = 'col-12 col-lg-9'
         elif display_labels:
             self.label_class = 'col-12 col-lg-2'
-            self.field_class = 'col-12 col-lg-8'
+            self.field_class = 'col-12 col-lg-10'
         else:
             self.label_class = ''
             self.field_class = 'col-lg-12'
@@ -136,6 +136,7 @@ class BootstrapHelper(FormHelper):
                 css_class='btn-secondary float-right',
                 onclick='window.history.back()'))
 
+        # offset here adds horizontal centering for all these forms
         self.form_class = 'form-horizontal ' + additional_form_class
 
         self.form_tag = form_tag
@@ -148,6 +149,12 @@ class BootstrapHelper(FormHelper):
 
         # don't prevent from loading media by default
         self.include_media = include_media
+
+    def hr(self):
+        """Horizontal line as a separator in forms is used very often. But
+        since from time to time the forms are changed (in terms of columns
+        width), we should rather use one global <hr>..."""
+        return '<hr class="col-12 mx-0 px-0">'
 
 
 class BootstrapHelperFilter(FormHelper):
@@ -413,13 +420,30 @@ class EventForm(forms.ModelForm):
 
     class Meta:
         model = Event
-        fields = ['slug', 'completed', 'start', 'end', 'host', 'administrator',
-                  'assigned_to', 'tags', 'url', 'language', 'reg_key', 'venue',
-                  'manual_attendance', 'contact',
-                  'country', 'address', 'latitude', 'longitude',
-                  'open_TTT_applications', 'curricula',
-                  'comment',
-                  ]
+        fields = [
+            'slug',
+            'completed',
+            'start',
+            'end',
+            'host',
+            'administrator',
+            'assigned_to',
+            'tags',
+            'url',
+            'language',
+            'reg_key',
+            'venue',
+            'manual_attendance',
+            'contact',
+            'country',
+            'address',
+            'latitude',
+            'longitude',
+            'open_TTT_applications',
+            'curricula',
+            'lessons',
+            'comment',
+        ]
         widgets = {
             'manual_attendance': TextInput,
             'latitude': TextInput,
@@ -429,6 +453,7 @@ class EventForm(forms.ModelForm):
                 'size': Tag.ITEMS_VISIBLE_IN_SELECT_WIDGET
             }),
             'curricula': CheckboxSelectMultiple(),
+            'lessons': CheckboxSelectMultiple(),
         }
 
     class Media:
@@ -441,6 +466,7 @@ class EventForm(forms.ModelForm):
         )
 
     def __init__(self, *args, **kwargs):
+        show_lessons = kwargs.pop('show_lessons', False)
         super().__init__(*args, **kwargs)
 
         self.helper.layout = Layout(
@@ -471,6 +497,17 @@ class EventForm(forms.ModelForm):
             ),
             'comment',
         )
+
+        # if we want to show lessons, we need to alter existing layout
+        # otherwise we should remove the field so it doesn't break validation
+        if show_lessons:
+            self.helper.layout.insert(
+                # insert AFTER the curricula
+                self.helper.layout.fields.index('curricula') + 1,
+                'lessons',
+            )
+        else:
+            del self.fields['lessons']
 
     def clean_slug(self):
         # Ensure slug is in "YYYY-MM-DD-location" format

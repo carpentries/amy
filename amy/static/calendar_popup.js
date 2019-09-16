@@ -6,9 +6,19 @@ var DATEPICKER_DEFAULTS = {
     todayHighlight: true
 };
 
+var DATEPICKER_DEFAULTS_FUTUREONLY = {
+    autoclose: true,
+    clearBtn: true,
+    orientation: "bottom auto",
+    format: "yyyy-mm-dd",
+    todayHighlight: true,
+    startDate: new Date()
+}
+
 var first_startdate_selected = false;
 
 $(document).ready(function() {
+    $('input.nopastdates').datepicker(DATEPICKER_DEFAULTS_FUTUREONLY);
     $('input.dateinput').datepicker(DATEPICKER_DEFAULTS);
     $('#id_start').on('changeDate', function(e) {
         // if user selects start date for the first time, set end date to +1d

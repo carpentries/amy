@@ -1,0 +1,23 @@
+{% extends "base_forms.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block logo %}
+{% include "includes/logo.html" %}
+{% endblock %}
+
+{% block content %}
+
+<p class="lead">
+    Please fill out this form to request information about hosting a workshop
+    at your institution. We’ll get back to you shortly to provide information
+    and answer any questions you might have.
+</p>
+<p class="lead">
+    If you already know you would like a workshop at your institution, please
+    use our <a href="{% url 'workshop_request' %}">request a workshop</a> form
+    to get started with scheduling. Thank you!
+</p>
+
+{% crispy form %}
+{% endblock %}

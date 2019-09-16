@@ -4,6 +4,8 @@ from django import forms
 
 from extrequests.forms import (
     WorkshopRequestBaseForm,
+    WorkshopInquiryRequestBaseForm,
+    SelfOrganisedSubmissionBaseForm,
 )
 from workshops.fields import (
     RadioSelectWithOther,
@@ -118,46 +120,29 @@ class TrainingRequestForm(forms.ModelForm):
         # add <HR> around "underrepresented*" fields
         index = self.helper.layout.fields.index('underrepresented')
         self.helper.layout.insert(
-            index, HTML('<hr class="col-lg-10 col-12 mx-0 px-0">'))
+            index, HTML(self.helper.hr()))
 
         index = self.helper.layout.fields.index('underrepresented_details')
         self.helper.layout.insert(
-            index + 1, HTML('<hr class="col-lg-10 col-12 mx-0 px-0">'))
+            index + 1, HTML(self.helper.hr()))
 
 
 class WorkshopRequestExternalForm(WorkshopRequestBaseForm):
     captcha = ReCaptchaField()
 
     class Meta(WorkshopRequestBaseForm.Meta):
-        fields = (
-            "personal",
-            "family",
-            "email",
-            "institution",
-            "institution_name",
-            "institution_department",
-            "location",
-            "country",
-            "conference_details",
-            "preferred_dates",
-            "language",
-            "number_attendees",
-            "domains",
-            "domains_other",
-            "academic_levels",
-            "computing_levels",
-            "audience_description",
-            "requested_workshop_types",
-            "organization_type",
-            "self_organized_github",
-            "centrally_organized_fee",
-            "waiver_circumstances",
-            "travel_expences_management",
-            "travel_expences_management_other",
-            "travel_expences_agreement",
-            "user_notes",
-            "data_privacy_agreement",
-            "code_of_conduct_agreement",
-            "host_responsibilities",
-            "captcha",
-        )
+        fields = WorkshopRequestBaseForm.Meta.fields + ("captcha", )
+
+
+class WorkshopInquiryRequestExternalForm(WorkshopInquiryRequestBaseForm):
+    captcha = ReCaptchaField()
+
+    class Meta(WorkshopInquiryRequestBaseForm.Meta):
+        fields = WorkshopInquiryRequestBaseForm.Meta.fields + ("captcha", )
+
+
+class SelfOrganisedSubmissionExternalForm(SelfOrganisedSubmissionBaseForm):
+    captcha = ReCaptchaField()
+
+    class Meta(SelfOrganisedSubmissionBaseForm.Meta):
+        fields = SelfOrganisedSubmissionBaseForm.Meta.fields + ("captcha", )

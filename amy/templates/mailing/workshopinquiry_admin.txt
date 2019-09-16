@@ -1,0 +1,35 @@
+{% if link %}
+You can view this inquiry here:
+{{ link_domain}}{{ link }}
+{% endif %}
+
+--------------------------------------------
+
+Submission date: {{ object.created_at }}
+State: {{ object.get_state_display }}
+Person: {{ object.personal }} {{ object.family }} &lt;{{ object.email }}&gt;
+Institution: {% if object.institution %}{{ object.institution }}{% else %}{{ object.institution_other_name }}{% endif %}{% if object.institution_department %}, {{ object.institution_department }}{% endif %}
+Workshop location: {{ object.location }}
+Country: {{ object.country.name }}
+Kinds of data target audience routinely works with: {% for item in object.routine_data.all %}{{ item }}, {% endfor %}{% if object.routine_data_other %}Other: {{ object.routine_data_other }}{% endif %}
+Domains / topics of interest for target audience: {% for domain in object.domains.all %}{{ domain }}, {% endfor %}{% if object.domains_other %}Other: {{ object.domains_other }}{% endif %}
+Attendees' academic level / career stage: {% for level in object.academic_levels.all %}{{ level }}, {% endfor %}
+Attendees' level of computing experience: {% for level in object.attendee_computing_levels.all %}{{ level }}, {% endfor %}
+Audience description: {{ object.audience_description|default:"---" }}
+Requested workshop types: {% for type in object.requested_workshop_types.all %}{{ type.slug }}, {% endfor %}
+Preferred date: {{ object.preferred_dates|date:'Y-m-d' }}
+Other dates for the workshop: {{ object.other_preferred_dates }}
+"Dates too soon" warning shown: {{ object.preferred_dates_too_soon|yesno }}
+Preferred language for this workshop: {{ object.language }}
+Anticipated number of attendees: {{ object.get_number_attendees_display }}
+Administrative fee payment: {{ object.get_administrative_fee_display }}
+Travel expences management: {{ object.get_travel_expences_management_display }} {% if object.travel_expences_management_other %}{{ object.travel_expences_management_other }}{% endif %}
+Travel expences agreement: {{ object.travel_expences_agreement|yesno }}
+Intitutional restrictions regarding instructors: {{ object.get_institution_restrictions_display }} {% if object.institution_restrictions_other %}{{ object.institution_restrictions_other }}{% endif %}
+Is this workshop open to the public? {{ object.get_public_event_display }} {% if object.public_event_other %}{{ object.public_event_other }}{% endif %}
+Additional contacts: {{ object.additional_contact|default:"---" }}
+How did you hear about The Carpentries? {% for item in object.carpentries_info_source.all %}{{ item }}, {% endfor %}{% if object.carpentries_info_source_other %}Other: {{ object.carpentries_info_source_other }}{% endif %}
+Additional notes: {{ object.user_notes|default:"---" }}
+Data privacy agreement: {{ object.data_privacy_agreement|yesno }}
+Code of Conduct agreement: {{ object.code_of_conduct_agreement|yesno }}
+Host responsibilities agreement: {{ object.host_responsibilities|yesno }}

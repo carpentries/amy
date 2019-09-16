@@ -1,0 +1,18 @@
+{% extends "base_nav_twocolumn.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block title-left %}<h1>Self-organised submission #{{ object.pk }}</h1>{% endblock %}
+{% block content-left %}
+{% include "includes/selforganisedsubmission_details.html" with admin=True object=object info_host_task=True %}
+{% include "includes/comments.html" with object=object disable_commenting=True %}
+{% endblock %}
+{% block title-right %}<h1>New event</h1>{% endblock %}
+{% block content-right %}
+  <a href="#import_url_modal" class="btn btn-secondary" id="import_url_button" data-toggle="modal" data-target="#import_url_modal">Import from URL</a>
+  {% crispy form %}
+{% endblock %}
+
+{% block content-below %}
+{% include "includes/event_import_update_from_url.html" with update=False %}
+{% endblock %}

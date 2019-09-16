@@ -1,0 +1,83 @@
+{% load state %}
+{% load utils %}
+<table class="table table-striped">
+  <tbody>
+{% if admin %}
+    <tr><th>State</th>
+        <td><span class="{% state_label object %}">{{ object.get_state_display }}</span></td></tr>
+{% endif %}
+    <tr><th>Submission date:</th>
+        <td>{{ object.created_at }}</td></tr>
+{% if admin %}
+    <tr><th>Last change:</th>
+        <td>{{ object.last_updated_at|default:"&mdash;" }}</td></tr>
+    <tr><th>Related event:</th>
+        <td>
+          {% if object.event %}
+          <a href="{{ object.event.get_absolute_url }}">{{ object.event }}</a>
+          {% else %}
+          &mdash;
+          {% endif %}
+        </td></tr>
+{% endif %}
+    <tr><th>Person:</th>
+        <td>
+          {{ object.personal }} {{ object.family }} &lt;{{ object.email|urlize }}&gt;
+          {% if admin %}{% include "includes/request_host_person.html" with object=object info_host_task=info_host_task %}{% endif %}
+        </td></tr>
+    <tr><th>Institution:</th>
+        <td>
+          {% include "includes/request_institution.html" with admin=admin object=object %}
+        </td></tr>
+    <tr><th>Workshop format:</th>
+        <td>
+          {{ object.get_workshop_format_display }}
+          {% if object.workshop_format_other %}
+          {{ object.workshop_format_other }}
+          {% endif %}
+        </td></tr>
+    <tr><th>Workshop URL:</th>
+        <td>{{ object.workshop_url|urlize }}</td></tr>
+    <tr><th>Taught workshop type:</th>
+        <td>
+          <ul>
+          {% for item in object.workshop_types.all %}
+            <li>{{ item }}</li>
+          {% endfor %}
+          </ul>
+        </td></tr>
+    <tr><th>Taught workshop mix & match:</th>
+        <td>
+          {% if object.workshop_types_other_explain %}
+          <pre>{{ object.workshop_types_other_explain }}</pre>
+          {% else %}
+          &mdash;
+          {% endif %}
+        </td></tr>
+    <tr><th>Country:</th>
+        <td>{{ object.country.name }} <img src="{{ object.country.flag }}" alt="{{ object.country }}" class="country-flag" /></td></tr>
+    <tr><th>Workshop language:</th>
+        <td>{{ object.language }}</td></tr>
+    <tr><th>Is this workshop open to the public?</th>
+        <td>
+          {% if object.public_event %}
+          {{ object.get_public_event_display }}
+          {% else %}Other: {{ object.public_event_other }}
+          {% endif %}
+        </td></tr>
+    <tr><th>Additional contacts:</th>
+        <td>
+          {% for contact in object.additional_contact|strip|split %}
+            {{ contact|urlize }}<br>
+          {% empty %}
+            &mdash;
+          {% endfor %}
+        </td></tr>
+    <tr><th>Data privacy agreement:</th>
+        <td>{{ object.data_privacy_agreement|yesno }}</td></tr>
+    <tr><th>Code of Conduct agreement:</th>
+        <td>{{ object.code_of_conduct_agreement|yesno }}</td></tr>
+    <tr><th>Host responsibilities agreement:</th>
+        <td>{{ object.host_responsibilities|yesno }}</td></tr>
+  </tbody>
+</table>
