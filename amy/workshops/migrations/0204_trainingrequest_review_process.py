@@ -24,12 +24,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='trainingrequest',
             name='review_process',
-            field=models.CharField(choices=[('preapproved', 'Pre-approved Registration'), ('open', 'Individual Open Training Application')], default='', max_length=20, verbose_name='Review process workflow'),
+            field=models.CharField(choices=[('preapproved', 'Pre-approved Registration'), ('open', 'Open Training Application')], default='', max_length=20, verbose_name='Application Type'),
         ),
         migrations.RunPython(update_trainingrequest_review_process),
         migrations.AlterField(
             model_name='trainingrequest',
             name='group_name',
-            field=models.CharField(blank=True, default='', help_text='If you are scheduled to receive training at a member site, please enter the same code you were given to register on Eventbrite.', max_length=100, verbose_name='Registration Code'),
+            field=models.CharField(blank=True, default='', help_text='If you have been given a registration code through a Carpentries member site or for a specific scheduled event, please enter it here:', max_length=100, verbose_name='Registration Code'),
         ),
     ]

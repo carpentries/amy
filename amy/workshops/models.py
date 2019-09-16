@@ -1494,11 +1494,12 @@ class TrainingRequest(CreatedUpdatedMixin, DataPrivacyAgreementMixin,
 
     REVIEW_CHOICES = (
         ('preapproved', 'Pre-approved Registration'),
-        ('open', 'Individual Open Training Application'),
+        ('open', 'Open Training Application'),
     )
     REVIEW_CHOICES_NOTES = {
-        'preapproved': "If your organisation has Membership or other agreement"
-                       " with The Carpentries.",
+        'preapproved': "If you have been invited to apply through an "
+                       "institutional membership or other agreement "
+                       "with The Carpentries.",
         'open': "Submit application for review to receive a scholarship for "
                 "Instructor Training through our Open Application Program.",
     }
@@ -1506,15 +1507,16 @@ class TrainingRequest(CreatedUpdatedMixin, DataPrivacyAgreementMixin,
         blank=False, default='', null=False,
         max_length=20,
         choices=REVIEW_CHOICES,
-        verbose_name='Review process workflow',
+        verbose_name='Application Type',
     )
 
     group_name = models.CharField(
         blank=True, default='', null=False,
         max_length=STR_LONG,
         verbose_name='Registration Code',
-        help_text='If you are scheduled to receive training at a member site, '
-                  'please enter the same code you were given to register on Eventbrite.',
+        help_text='If you have been given a registration code through '
+                  'a Carpentries member site or for a specific scheduled '
+                  'event, please enter it here:',
     )
 
     personal = models.CharField(
