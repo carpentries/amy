@@ -28,13 +28,22 @@ def change_default_for_existing_users(apps, schema_editor):
 
     # 3. from these users, find out who has any revision made after migration
     #    application date
-    users_no_changes = []
-    for user in no_consent.prefetch_related('revision_set'):
-        if not user.revision_set.filter(date_created__gt=migration.applied):
-            users_no_changes.append(user.pk)
 
-    Person.objects.filter(pk__in=users_no_changes) \
-                  .update(lesson_publication_consent='unset')
+    # CAUTION: this nice set of instructions is INCOMPATIBLE with SQLite
+    #          when the number of objects is just huge... Therefore I had
+    #          to switch to lesser-SQL-greedy version, much much slower too,
+    #          below.
+    # users_no_changes = []
+    # for user in no_consent.prefetch_related('revision_set'):
+    #     if not user.revision_set.filter(date_created__gt=migration.applied):
+    #         users_no_changes.append(user.pk)
+    # Person.objects.filter(pk__in=users_no_changes) \
+    #               .update(lesson_publication_consent='unset')
+
+    for user in no_consent:
+        if not user.revision_set.filter(date_created__gt=migration.applied):
+            user.lesson_publication_consent = 'unset'
+            user.save()
 
 
 class Migration(migrations.Migration):
