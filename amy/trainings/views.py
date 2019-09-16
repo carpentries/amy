@@ -124,6 +124,7 @@ def all_trainees(request):
                                           default=0,
                                           output_field=IntegerField())),
             )
+            .order_by('family', 'personal')
     )
     trainees = get_pagination_items(request, filter.qs)
 

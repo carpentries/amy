@@ -1,0 +1,7 @@
+{% if link %}
+<p>You can view this submission here:
+<a href="{{ link_domain }}{{ link }}">{{ link_domain }}{{ link }}</a>
+</p>
+{% endif %}
+
+{% include "includes/selforganisedsubmission_details.html" with admin=True object=object %}

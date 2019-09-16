@@ -126,9 +126,8 @@ DJANGO_APPS = [
 ]
 THIRD_PARTY_APPS = [
     'crispy_forms',
-    'dal',
-    'dal_select2',
-    'django.contrib.admin',  # django admin needs to be after DAL
+    'django_select2',
+    'django.contrib.admin',
     'django_countries',
     'django_filters',
     'reversion',
@@ -397,7 +396,7 @@ ADMIN_NOTIFICATION_CRITERIA_DEFAULT = 'team@carpentries.org'
 ADMIN_URL = env('AMY_ADMIN_URL', default='admin/')
 # https://docs.djangoproject.com/en/dev/ref/settings/#admins
 ADMINS = [
-    ('Sysadmins ML', 'sysadmin@lists.carpentries.org'),
+    ('Sysadmins ML', 'sysadmin@carpentries.org'),
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#managers
 MANAGERS = ADMINS
@@ -515,3 +514,10 @@ INTERNAL_IPS = ['127.0.0.1', '::1']
 # -----------------------------------------------------------------------------
 # https://django-contrib-comments.readthedocs.io/en/latest/settings.html
 COMMENTS_APP = 'extcomments'
+
+# Django-Select2 settings
+# -----------------------------------------------------------------------------
+# https://django-select2.readthedocs.io/en/latest/django_select2.html
+SELECT2_JS = ''  # don't load JS on it's own - we're loading it in `base.html`
+SELECT2_CSS = ''  # the same for CSS
+SELECT2_I18N = 'select2/js/i18n'

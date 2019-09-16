@@ -3,7 +3,7 @@ from datetime import datetime
 import operator
 import re
 
-from dal import autocomplete
+from django_select2.views import AutoResponseView
 from django.contrib.auth.models import Group
 from django.conf.urls import url
 from django.db.models import Q, Count
@@ -12,63 +12,85 @@ from workshops import models
 from workshops.util import OnlyForAdminsNoRedirectMixin, LoginNotRequiredMixin
 
 
-class EventLookupView(OnlyForAdminsNoRedirectMixin,
-                      autocomplete.Select2QuerySetView):
+class TagLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+    def get_queryset(self):
+        q = models.Tag.objects.all()
+        if self.term:
+            return q.filter(name__icontains=self.term)
+        return q
+
+
+class BadgeLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+    def get_queryset(self):
+        q = models.Badge.objects.all()
+        if self.term:
+            return q.filter(Q(name__icontains=self.term) |
+                            Q(title__icontains=self.term))
+        return q
+
+
+class LessonLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+    def get_queryset(self):
+        q = models.Lesson.objects.all()
+        if self.term:
+            return q.filter(name__icontains=self.term)
+        return q
+
+
+class EventLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
     def get_queryset(self):
         results = models.Event.objects.all()
 
-        if self.q:
-            results = results.filter(slug__icontains=self.q)
+        if self.term:
+            results = results.filter(slug__icontains=self.term)
 
         return results
 
 
-class TTTEventLookupView(OnlyForAdminsNoRedirectMixin,
-                         autocomplete.Select2QuerySetView):
+class TTTEventLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
     def get_queryset(self):
         results = models.Event.objects.filter(tags__name='TTT')
 
-        if self.q:
-            results = results.filter(slug__icontains=self.q)
+        if self.term:
+            results = results.filter(slug__icontains=self.term)
 
         return results
 
 
-class OrganizationLookupView(OnlyForAdminsNoRedirectMixin,
-                             autocomplete.Select2QuerySetView):
+class OrganizationLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
     def get_queryset(self):
         results = models.Organization.objects.all()
 
-        if self.q:
+        if self.term:
             results = results.filter(
-                Q(domain__icontains=self.q) | Q(fullname__icontains=self.q)
+                Q(domain__icontains=self.term) | Q(fullname__icontains=self.term)
             )
 
         return results
 
 
-class MembershipLookupView(OnlyForAdminsNoRedirectMixin,
-                           autocomplete.Select2QuerySetView):
+class MembershipLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
     def get_queryset(self):
         results = models.Membership.objects.all()
 
-        if self.q:
+        if self.term:
             # parse query into date
             try:
-                date = datetime.strptime(self.q, '%Y-%m-%d').date()
+                date = datetime.strptime(self.term, '%Y-%m-%d').date()
             except ValueError:
                 date = None
 
             # filter by organization name
-            org_q = (Q(organization__domain__icontains=self.q) |
-                     Q(organization__fullname__icontains=self.q))
+            org_q = (Q(organization__domain__icontains=self.term) |
+                     Q(organization__fullname__icontains=self.term))
 
             # filter by variant
-            variant_q = Q(variant__icontains=self.q)
+            variant_q = Q(variant__icontains=self.term)
 
             if date:
                 # filter by agreement date range
-                agreement_q = Q(agreement_start__lte=date, agreement_end__gte=date)
+                agreement_q = Q(agreement_start__lte=date,
+                                agreement_end__gte=date)
 
                 results = results.filter(org_q | variant_q | agreement_q)
             else:
@@ -77,21 +99,20 @@ class MembershipLookupView(OnlyForAdminsNoRedirectMixin,
         return results
 
 
-class PersonLookupView(OnlyForAdminsNoRedirectMixin,
-                       autocomplete.Select2QuerySetView):
+class PersonLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
     def get_queryset(self):
         results = models.Person.objects.all()
 
-        if self.q:
+        if self.term:
             filters = [
-                Q(personal__icontains=self.q),
-                Q(family__icontains=self.q),
-                Q(email__icontains=self.q),
-                Q(username__icontains=self.q)
+                Q(personal__icontains=self.term),
+                Q(family__icontains=self.term),
+                Q(email__icontains=self.term),
+                Q(username__icontains=self.term)
             ]
 
             # split query into first and last names
-            tokens = re.split('\s+', self.q)
+            tokens = re.split(r'\s+', self.term)
             if len(tokens) == 2:
                 name1, name2 = tokens
                 complex_q = (
@@ -107,8 +128,7 @@ class PersonLookupView(OnlyForAdminsNoRedirectMixin,
         return results
 
 
-class AdminLookupView(OnlyForAdminsNoRedirectMixin,
-                      autocomplete.Select2QuerySetView):
+class AdminLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
     """The same as PersonLookup, but allows only to select administrators.
 
     Administrator is anyone with superuser power or in "administrators" group.
@@ -120,32 +140,30 @@ class AdminLookupView(OnlyForAdminsNoRedirectMixin,
             Q(is_superuser=True) | Q(groups__in=[admin_group])
         )
 
-        if self.q:
+        if self.term:
             results = results.filter(
-                Q(personal__icontains=self.q) |
-                Q(family__icontains=self.q) |
-                Q(email__icontains=self.q) |
-                Q(username__icontains=self.q)
+                Q(personal__icontains=self.term) |
+                Q(family__icontains=self.term) |
+                Q(email__icontains=self.term) |
+                Q(username__icontains=self.term)
             )
 
         return results
 
 
-class AirportLookupView(OnlyForAdminsNoRedirectMixin,
-                        autocomplete.Select2QuerySetView):
+class AirportLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
     def get_queryset(self):
         results = models.Airport.objects.all()
 
-        if self.q:
+        if self.term:
             results = results.filter(
-                Q(iata__icontains=self.q) | Q(fullname__icontains=self.q)
+                Q(iata__icontains=self.term) | Q(fullname__icontains=self.term)
             )
 
         return results
 
 
-class LanguageLookupView(LoginNotRequiredMixin,
-                         autocomplete.Select2QuerySetView):
+class LanguageLookupView(LoginNotRequiredMixin, AutoResponseView):
     def dispatch(self, request, *args, **kwargs):
         self.subtag = 'subtag' in request.GET.keys()
         return super().dispatch(request, *args, **kwargs)
@@ -153,13 +171,13 @@ class LanguageLookupView(LoginNotRequiredMixin,
     def get_queryset(self):
         results = models.Language.objects.all()
 
-        if self.q:
+        if self.term:
             results = results.filter(
-                Q(name__icontains=self.q) | Q(subtag__icontains=self.q)
+                Q(name__icontains=self.term) | Q(subtag__icontains=self.term)
             )
 
             if self.subtag:
-                return results.filter(subtag__iexact=self.q)
+                return results.filter(subtag__iexact=self.term)
 
         results = results.annotate(person_count=Count('person')) \
                          .order_by('-person_count')
@@ -168,7 +186,7 @@ class LanguageLookupView(LoginNotRequiredMixin,
 
 
 class TrainingRequestLookupView(OnlyForAdminsNoRedirectMixin,
-                                autocomplete.Select2QuerySetView):
+                                AutoResponseView):
     """The same as PersonLookup, but allows only to select administrators.
 
     Administrator is anyone with superuser power or in "administrators" group.
@@ -177,9 +195,9 @@ class TrainingRequestLookupView(OnlyForAdminsNoRedirectMixin,
     def get_queryset(self):
         results = models.TrainingRequest.objects.all()
 
-        if self.q:
+        if self.term:
             # search for name if two words provided
-            tok = re.split('\s+', self.q)
+            tok = re.split(r'\s+', self.term)
             if len(tok) == 2:
                 name_q = (
                     Q(personal__icontains=tok[0], family__icontains=tok[1]) |
@@ -190,18 +208,19 @@ class TrainingRequestLookupView(OnlyForAdminsNoRedirectMixin,
                 name_q = Q(id=0)
 
             results = results.filter(
-                Q(personal__icontains=self.q) |
-                Q(family__icontains=self.q) |
-                Q(email__icontains=self.q) |
+                Q(personal__icontains=self.term) |
+                Q(family__icontains=self.term) |
+                Q(email__icontains=self.term) |
                 name_q
             )
 
         return results
 
-# trainees lookup?
-
 
 urlpatterns = [
+    url(r'^tags/$', TagLookupView.as_view(), name='tag-lookup'),
+    url(r'^badges/$', BadgeLookupView.as_view(), name='badge-lookup'),
+    url(r'^lessons/$', LessonLookupView.as_view(), name='lesson-lookup'),
     url(r'^events/$', EventLookupView.as_view(), name='event-lookup'),
     url(r'^ttt_events/$', TTTEventLookupView.as_view(), name='ttt-event-lookup'),
     url(r'^organizations/$', OrganizationLookupView.as_view(), name='organization-lookup'),

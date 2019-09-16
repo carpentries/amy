@@ -1,0 +1,10 @@
+{% if object.host %}
+<div class="alert alert-info">
+  There's a <a href="{{ object.host.get_absolute_url }}">matching person</a> in database.
+  {% if info_host_task is True %}
+  A host task will be added for this person after creating an event.
+  {% endif %}
+</div>
+{% else %}
+<div class="alert alert-warning">This person is not in the database. <a href="{% url 'person_add' %}?personal={{ object.personal|urlencode }}&family={{ object.family|urlencode }}&email={{ object.email|urlencode }}">Click to add them</a>.</div>
+{% endif %}

@@ -1,4 +1,4 @@
-dist: xenial
+dist: bionic
 sudo: required
 
 language: python
@@ -6,7 +6,8 @@ language: python
 cache: pip
 
 python:
-  - 3.5
+  # After upgrading to Ubuntu 18.04 we lost ability to test against Py3.5
+  # - 3.5
   - 3.6
   - 3.7
 
@@ -21,7 +22,6 @@ env:
 
 install:
   - pip install -r requirements.txt
-  - pip install coveralls
 
 before_script:
   - if [[ $CHECK_MIGRATION == true ]]; then
@@ -33,7 +33,4 @@ before_script:
     fi;
 
 script:
-  - coverage run --source=amy manage.py test
-
-after_success:
-  coveralls
+  - python manage.py test -v 2

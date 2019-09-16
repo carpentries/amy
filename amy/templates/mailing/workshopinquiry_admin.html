@@ -1,0 +1,7 @@
+{% if link %}
+<p>You can view this inquiry here:
+<a href="{{ link_domain }}{{ link }}">{{ link_domain }}{{ link }}</a>
+</p>
+{% endif %}
+
+{% include "includes/workshopinquiry_details.html" with admin=True object=object %}

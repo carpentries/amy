@@ -57,7 +57,7 @@
   <tr><th>Can login with:</th><td>{% for auth in person.social_auth.all %}{{ auth.provider|title }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</td></tr>
   <tr><th>Twitter:</th><td id="twitter">{% if person.twitter %}<a href="https://twitter.com/{{ person.twitter }}" target="_blank">{{ person.twitter }}</a>{% else %}—{% endif %}</td></tr>
   <tr><th>URL:</th><td id="url">{{ person.url|urlize_newtab|default:"—" }}</td></tr>
-  <tr><th>Cccupation:</th><td>{{ person.occupation|default:"—" }}</td></tr>
+  <tr><th>Occupation:</th><td>{{ person.occupation|default:"—" }}</td></tr>
   <tr><th>ORCID ID:</th><td>{{ person.orcid|default:"—" }}</td></tr>
   <tr>
     <th>Knowledge domains:</th>

@@ -1,11 +1,3 @@
----
-name: issue_template
-about: Informs contributors of how issues will be reviewed
-title: ''
-labels: ''
-assignees: ''
-
----
 
 Thank you for submitting this issue to AMY.  If this represents an urgent problem such as AMY not loading at all, please contact team@carpentries.org so we can respond promptly.
 

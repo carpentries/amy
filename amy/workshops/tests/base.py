@@ -46,7 +46,7 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
     def setUp(self):
         '''Create standard objects.'''
 
-        self.clear_sites_cache()
+        # self.clear_sites_cache()
         self._setUpOrganizations()
         self._setUpAirports()
         self._setUpLessons()
@@ -54,6 +54,12 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
         self._setUpInstructors()
         self._setUpNonInstructors()
         self._setUpPermissions()
+
+        from django.conf import settings
+        Site.objects.clear_cache()
+        Site.objects.get_or_create(pk=settings.SITE_ID,
+                                   defaults=dict(domain='amy.carpentries.org',
+                                                 name='AMY server'))
 
     def clear_sites_cache(self):
         # we need to clear Sites' cache, because after post_migration signal,
@@ -389,3 +395,58 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
         data_dictionary.update(
             {'g-recaptcha-response': 'PASSED'}  # to auto-pass RECAPTCHA
         )
+
+
+class FormTestHelper:
+    def _test_field_other(self, Form, first_name, other_name, valid_first,
+                          valid_other, empty_first='', empty_other='',
+                          first_when_other="", blank=False):
+        """Universal way of testing field `name` and it's "_other" counterpart
+        `other_name`.
+
+        4 test scenarios are implemented:
+        1) no data in either field - first field throws error if required by
+           `blank`
+        2) valid entry in first, requiring no input in the other
+        3) valid entry in second, requiring no input in the first one
+        4) both entries filled, error in the second"""
+
+        # 1: data required
+        data = {
+            first_name: empty_first,
+            other_name: empty_other,
+        }
+        form = Form(data)
+        if blank:
+            self.assertNotIn(first_name, form.errors)
+            self.assertNotIn(other_name, form.errors)
+        else:
+            self.assertIn(first_name, form.errors)
+            self.assertNotIn(other_name, form.errors)
+
+        # 2: valid entry (original field only)
+        data = {
+            first_name: valid_first,
+            other_name: empty_other,
+        }
+        form = Form(data)
+        self.assertNotIn(first_name, form.errors)
+        self.assertNotIn(other_name, form.errors)
+
+        # 3: valid entry ("other" field only)
+        data = {
+            first_name: first_when_other,
+            other_name: valid_other,
+        }
+        form = Form(data)
+        self.assertNotIn(first_name, form.errors)
+        self.assertNotIn(other_name, form.errors)
+
+        # 4: invalid entry, data in "other" is not needed
+        data = {
+            first_name: valid_first,
+            other_name: valid_other,
+        }
+        form = Form(data)
+        self.assertIn(first_name, form.errors)
+        self.assertNotIn(other_name, form.errors)

@@ -53,7 +53,7 @@ class TestDCSelfOrganizedEventRequestForm(TestBase):
     def test_request_form_redirects(self):
         self.assertEqual(len(DCSelfOrganizedEventRequest.objects.all()), 1)
         rv = self.client.get(reverse('dc_workshop_selforganized_request'))
-        self.assertRedirects(rv, reverse('workshop_request'))
+        self.assertRedirects(rv, reverse('workshop_landing'))
         self.assertEqual(len(DCSelfOrganizedEventRequest.objects.all()), 1)
 
     def test_request_accepted_with_event(self):

@@ -18,3 +18,9 @@ def one2one_exists(obj, related_field_name):
 def get_key(obj, keyname):
     """Simply return key from sequence."""
     return obj[keyname]
+
+
+@register.filter
+def is_list(obj):
+    """Check if provided object is a list."""
+    return isinstance(obj, list)

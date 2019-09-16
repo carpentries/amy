@@ -113,7 +113,14 @@ table .table-row-distinctive {
 .invalid-feedback {
     display: block;
 }
+p.invalid-feedback {
+    margin-bottom: 0;
+}
 
+/* move radio-button circles down a little */
+input[type="radio"], input[type="checkbox"] {
+    top: 2px;
+}
 
 /* general resizable class styles */
 .resizable-vertical {
@@ -135,4 +142,9 @@ form input[name=honeypot] {
 .commentform textarea {
     width: 100%;
     resize: vertical;
+}
+
+/* this setting will display long "Other" field in forms */
+form .form-check label, form .checkbox label {
+    display: block;
 }

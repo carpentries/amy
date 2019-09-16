@@ -3,7 +3,7 @@ from datetime import date
 import django_filters
 from django.forms import widgets
 
-from workshops.fields import Select2, Select2Multiple
+from workshops.fields import Select2Widget, Select2MultipleWidget
 from workshops.filters import AMYFilterSet, AllCountriesFilter
 from workshops.models import (
     Organization,
@@ -12,12 +12,12 @@ from workshops.models import (
 
 
 class OrganizationFilter(AMYFilterSet):
-    country = AllCountriesFilter(widget=Select2())
+    country = AllCountriesFilter(widget=Select2Widget)
 
     membership__variant = django_filters.MultipleChoiceFilter(
         label='Memberships (current or past)',
         choices=Membership.MEMBERSHIP_CHOICES,
-        widget=Select2Multiple(),
+        widget=Select2MultipleWidget,
     )
 
     order_by = django_filters.OrderingFilter(

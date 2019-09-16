@@ -1,0 +1,21 @@
+{% extends "forms/workshopinquiry.html" %}
+{% block extrajs %}{% endblock %}
+{% block content %}
+
+<p>
+    Thank you for inquiring about a Carpentries workshop! A member of our team
+    will be in touch with you soon. We look forward to working with you.
+</p>
+
+<p>For more information please visit:</p>
+
+<ul>
+    <li><a href="http://www.datacarpentry.org/">Data Carpentry</a></li>
+    <li><a href="https://software-carpentry.org/">Software Carpentry</a></li>
+    <li><a href="https://librarycarpentry.org/">Library Carpentry</a></li>
+    <li><a href="https://carpentries.org/">The Carpentries</a></li>
+    <li>or contact <a href="mailto:team@carpentries.org">team@carpentries.org</a>.</li>
+</ul>
+
+<p><a href="{% url 'workshop_inquiry' %}">Click here</a> to submit another workshop inquiry.</p>
+{% endblock %}

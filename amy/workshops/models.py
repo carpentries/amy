@@ -21,7 +21,8 @@ from django.db.models import (
 from django.db.models.functions import Greatest
 from django.utils import timezone
 from django.utils.functional import cached_property
-from django.urls import reverse
+from django.utils.text import format_lazy
+from django.urls import reverse, reverse_lazy
 from django_countries.fields import CountryField
 from reversion import revisions as reversion
 from social_django.models import UserSocialAuth
@@ -110,7 +111,7 @@ class HostResponsibilitiesMixin(models.Model):
         verbose_name='I understand <a href="https://docs.carpentries.org/'
                      'topic_folders/hosts_instructors/hosts_instructors_checklist.html'
                      '#host-checklist">the responsibilities of the workshop host</a>,'
-                     'including recruiting local helpers to support the workshop '
+                     ' including recruiting local helpers to support the workshop '
                      '(1 helper for every 8-10 learners).'
     )
 
@@ -567,10 +568,11 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin,
          'Yes, and use the name associated with my ORCID profile'),
         ('yes-github', 'Yes, and only use my GitHub handle'),
         ('no', 'No'),
+        ('unset', 'Unset'),
     )
     lesson_publication_consent = models.CharField(
         max_length=STR_MED, choices=LESSON_PUBLICATION_CHOICES,
-        blank=True, default='no', null=False,
+        blank=True, default='unset', null=False,
         verbose_name='Do you consent to have your name or identity associated '
                      'with lesson publications?',
         help_text='When we publish our lessons, we like to include everyone '
@@ -769,7 +771,7 @@ class TagQuerySet(models.query.QuerySet):
 class Tag(models.Model):
     '''Label for grouping events.'''
 
-    ITEMS_VISIBLE_IN_SELECT_WIDGET = 13
+    ITEMS_VISIBLE_IN_SELECT_WIDGET = 14
 
     name       = models.CharField(max_length=STR_MED, unique=True)
     details    = models.CharField(max_length=STR_LONG)
@@ -1101,6 +1103,12 @@ class Event(AssignmentMixin, models.Model):
         blank=True,
         limit_choices_to={'active': True, 'unknown': False},
         verbose_name="Curricula taught at the workshop",
+    )
+    lessons = models.ManyToManyField(
+        "Lesson",
+        blank=True,
+        verbose_name="Lessons covered",
+        help_text="Specific lessons covered during the event",
     )
 
     objects = EventQuerySet.as_manager()
@@ -1444,6 +1452,7 @@ class Award(models.Model):
 class KnowledgeDomain(models.Model):
     """Represent a knowledge domain a person is engaged in."""
     name = models.CharField(max_length=STR_LONG)
+    # TODO: migrate to Boolean `unknown`
 
     def __str__(self):
         return self.name
@@ -1483,15 +1492,31 @@ class TrainingRequest(CreatedUpdatedMixin, DataPrivacyAgreementMixin,
                                verbose_name='Matched Trainee',
                                on_delete=models.SET_NULL)
 
-    # no association with Event
+    REVIEW_CHOICES = (
+        ('preapproved', 'Pre-approved Registration'),
+        ('open', 'Open Training Application'),
+    )
+    REVIEW_CHOICES_NOTES = {
+        'preapproved': "If you have been invited to apply through an "
+                       "institutional membership or other agreement "
+                       "with The Carpentries.",
+        'open': "Submit application for review to receive a scholarship for "
+                "Instructor Training through our Open Application Program.",
+    }
+    review_process = models.CharField(
+        blank=False, default='', null=False,
+        max_length=20,
+        choices=REVIEW_CHOICES,
+        verbose_name='Application Type',
+    )
 
     group_name = models.CharField(
         blank=True, default='', null=False,
         max_length=STR_LONG,
         verbose_name='Registration Code',
-        help_text='If you are scheduled to receive training at a member site, '
-                  'please enter the same code you were given to register on Eventbrite. Otherwise '
-                  'please leave this blank.',
+        help_text='If you have been given a registration code through '
+                  'a Carpentries member site or for a specific scheduled '
+                  'event, please enter it here:',
     )
 
     personal = models.CharField(
@@ -1778,10 +1803,12 @@ class TrainingRequest(CreatedUpdatedMixin, DataPrivacyAgreementMixin,
         if self.underresourced:
             score += 1
 
-        # economics or social sciences, arts, humanities, or library science
+        # economics or social sciences, arts, humanities, library science, or
+        # chemistry
         scoring_domains = [
             'Humanities', 'Library and information science',
             'Economics/business', 'Social sciences',
+            'Chemistry',
         ]
         for domain in self.domains.all():
             if domain.name in scoring_domains:
@@ -1934,7 +1961,63 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
 #------------------------------------------------------------
 
 
+class CurriculumManager(models.Manager):
+    def default_order(self, allow_unknown=True, allow_other=True,
+                      allow_mix_match=False,
+                      dont_know_yet_first=False):
+        """A specific order_by() clause with semi-ninja code."""
+
+        # This crazy django-ninja-code gives different weights to entries
+        # matching different criterias, and then sorts them by 'name'.
+        # For example when two entries (e.g. swc-r and swc-python) have the
+        # same weight (here: 10), then sorting by name comes in.
+        # Entries dc-other, swc-other, lc-other, or `I don't know` are made
+        # last of their "group".
+        qs = self.order_by(
+            Case(
+                When(carpentry='SWC', other=False, then=10),
+                When(carpentry='SWC', other=True, then=15),
+                When(carpentry='DC', other=False, then=20),
+                When(carpentry='DC', other=True, then=25),
+                When(carpentry='LC', other=False, then=30),
+                When(carpentry='LC', other=True, then=35),
+                When(unknown=True, then=1 if dont_know_yet_first else 200),
+                When(carpentry='', then=100),
+                default=1,
+            ),
+            'name',
+        )
+
+        # conditionally disable unknown ("I don't know") entry from appearing
+        # in the list
+        if not allow_unknown:
+            qs = qs.filter(unknown=False)
+
+        # conditionally disable other entries (swc-other, etc.) from appearing
+        # in the list
+        if not allow_other:
+            qs = qs.filter(other=False)
+
+        # conditionally disable Mix&Match entry from appearing in the list
+        if not allow_mix_match:
+            qs = qs.filter(mix_match=False)
+
+        return qs
+
+
 class Curriculum(ActiveMixin, models.Model):
+    CARPENTRIES_CHOICES = (
+        ("SWC", "Software Carpentry"),
+        ("DC", "Data Carpentry"),
+        ("LC", "Library Carpentry"),
+        ("", "unspecified / irrelevant")
+    )
+    carpentry = models.CharField(
+        max_length=5,
+        choices=CARPENTRIES_CHOICES,
+        null=False, blank=True, default="",
+        verbose_name="Which Carpentry does this curriculum belong to?",
+    )
     slug = models.CharField(
         max_length=STR_MED,
         null=False, blank=False, default="",
@@ -1950,6 +2033,19 @@ class Curriculum(ActiveMixin, models.Model):
         help_text="Use user-friendly language, e.g. "
                   "'Data Carpentry (Ecology with R)'.",
     )
+    description = models.TextField(
+        max_length=400,
+        null=False, blank=True, default="",
+        verbose_name="Curriculum longer description",
+        help_text="You can enter Markdown. It will be shown as a hover or "
+                  "popup over the curriculum entry on forms."
+    )
+    other = models.BooleanField(
+        null=False, blank=True, default=False,
+        verbose_name="Field marked as 'Other'",
+        help_text="Mark this curriculum record as '*Other' (eg. 'SWC Other', "
+                  "'DC Other', or simply 'Other')",
+    )
     unknown = models.BooleanField(
         null=False, blank=True, default=False,
         verbose_name="Unknown entry",
@@ -1957,6 +2053,14 @@ class Curriculum(ActiveMixin, models.Model):
                   "'Unknown', or 'Not sure yet'. There can be only one such "
                   "record in the database.",
     )
+    mix_match = models.BooleanField(
+        null=False, blank=True, default=False,
+        verbose_name="Mix & Match",
+        help_text="Mark this curriculum record as 'Mix & Match'."
+                  "There can be only one such record in the database.",
+    )
+
+    objects = CurriculumManager()
 
     class Meta:
         verbose_name = "Curriculum"
@@ -1976,6 +2080,9 @@ class Curriculum(ActiveMixin, models.Model):
         # `unknown=False` when saving fails
         if self.unknown:
             Curriculum.objects.filter(unknown=True).update(unknown=False)
+        # same for mix_match
+        if self.mix_match:
+            Curriculum.objects.filter(mix_match=True).update(mix_match=False)
         return super().save(*args, **kwargs)
 
 
@@ -1986,6 +2093,7 @@ class Curriculum(ActiveMixin, models.Model):
 # relationship with WorkshopRequest.
 class AcademicLevel(models.Model):
     name = models.CharField(max_length=STR_MED, null=False, blank=False)
+    # TODO: migrate to Boolean `unknown`
 
     def __str__(self):
         return self.name
@@ -2002,20 +2110,45 @@ class ComputingExperienceLevel(models.Model):
         return self.name
 
 
-@reversion.register
-class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
-                      DataPrivacyAgreementMixin, COCAgreementMixin,
-                      HostResponsibilitiesMixin,
-                      EventLink, models.Model):
+class InfoSource(models.Model):
+    """
+    This class represents a single source of information about The Carpentries.
+    These sources answer the question "where did you hear about TC?" - eg.
+    "a colleague told me", etc.
+    """
+    name = models.CharField(
+        max_length=300,
+        null=False, blank=False, default="",
+        unique=True,
+        verbose_name="Name",
+        help_text="Source description (eg. 'colleague told me')",
+    )
+
+    class Meta:
+        verbose_name = "Information source"
+        verbose_name_plural = "Information sources"
+        ordering = ["id", ]
+
+    def __str__(self):
+        return self.name
+
+
+class CommonRequest(models.Model):
+    """
+    Common fields used across all *Requests, ie.:
+    * WorkshopRequest model
+    * WorkshopInquiryRequest model
+    * SelfOrganizedSubmission
+    """
     personal = models.CharField(
         max_length=STR_LONGEST,
         blank=False, null=False,
-        verbose_name="Personal (given) name",
+        verbose_name="Personal (first) name",
     )
     family = models.CharField(
         max_length=STR_LONGEST,
-        blank=False, null=False,
-        verbose_name="Family name (surname)",
+        blank=True, null=False, default="",
+        verbose_name="Family (last) name",
     )
     email = models.EmailField(
         blank=False, null=False,
@@ -2026,28 +2159,97 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         blank=True, null=True,
         verbose_name="Institutional affiliation",
         help_text="If your institution isn't on the list, enter its name "
-                  "in the field below.",
+                  "below the list.",
     )
-    institution_name = models.CharField(
+    institution_other_name = models.CharField(
         max_length=STR_LONGEST,
         blank=True, null=False, default="",
-        verbose_name="Name of institution you're affiliated with",
+        verbose_name="If your institutional affiliation is not listed, please "
+                     "enter the name",
+        help_text="Please enter institution name if it's not on the list "
+                  "above.",
+    )
+    institution_other_URL = models.URLField(
+        max_length=STR_LONGEST,
+        blank=True, null=False, default="",
+        verbose_name="If your institutional affiliation is not listed, please "
+                     "enter the website",
+        help_text="Please provide URL."
     )
     institution_department = models.CharField(
         max_length=STR_LONGEST,
         blank=True, null=False, default="",
-        verbose_name="Department/school affiliation (if applicable)",
+        verbose_name="Department/School/Library affiliation (if applicable)",
     )
+    PUBLIC_EVENT_CHOICES = (
+        ('public', 'This event is open to the public.'),
+        ('closed', 'This event is open primarily to the people inside of my '
+                   'institution.'),
+        ('other', 'Other:'),
+    )
+    public_event = models.CharField(
+        max_length=20,
+        null=False, blank=False, default="",
+        choices=PUBLIC_EVENT_CHOICES,
+        verbose_name="Is this workshop open to the public?",
+        help_text="Many of our workshops restrict registration to learners "
+                  "from the hosting institution. If your workshop will be open"
+                  " to registrants outside of your institution please let us "
+                  "know below."
+    )
+    public_event_other = models.CharField(
+        max_length=STR_LONGEST,
+        null=False, blank=True, default='',
+        verbose_name="Other (workshop open to the public)",
+    )
+    additional_contact = models.CharField(
+        max_length=STR_LONGEST,
+        null=False, blank=True, default='',
+        verbose_name="Is there anyone you would like included on communication"
+                     " for this workshop? Please provide e-mail addresses.",
+    )
+
+    class Meta:
+        abstract = True
+
+    def host(self):
+        """
+        Try to fetch matching host for the data stored in
+        (personal, family, email) attributes.
+        """
+        try:
+            return Person.objects.get(personal=self.personal,
+                                      family=self.family,
+                                      email=self.email)
+        except Person.DoesNotExist:
+            return None
+
+    def host_organization(self):
+        """Try to fetch matching host organization."""
+        try:
+            return Organization.objects \
+                               .get(fullname=self.institution_other_name)
+        except Organization.DoesNotExist:
+            return None
+
+
+@reversion.register
+class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
+                      CommonRequest,
+                      DataPrivacyAgreementMixin, COCAgreementMixin,
+                      HostResponsibilitiesMixin,
+                      EventLink, models.Model):
     location = models.CharField(
         max_length=STR_LONGEST,
         blank=False, null=False, default="",
-        verbose_name="Location",
-        help_text="City, province/state.",
+        verbose_name="Workshop location",
+        help_text="City, state, or province.",
     )
     country = CountryField(
         null=False, blank=False,
         verbose_name="Country",
     )
+    # This field is no longer needed, and is hidden in the form and templates.
     conference_details = models.CharField(
         max_length=STR_LONGEST,
         blank=True, null=False, default="",
@@ -2055,18 +2257,66 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         help_text="If yes, please provide conference details "
                   "(name, description).",
     )
-    preferred_dates = models.CharField(
+    # In form, this is limited to Curricula without "Other/SWC/LC/DC Other"
+    # and "I don't know yet" options
+    SWC_LESSONS_LINK = (
+        '<a href="https://software-carpentry.org/lessons/">'
+        'Software Carpentry lessons page</a>'
+    )
+    DC_LESSONS_LINK = (
+        '<a href="http://www.datacarpentry.org/lessons/">'
+        'Data Carpentry lessons page</a>'
+    )
+    LC_LESSONS_LINK = (
+        '<a href="https://librarycarpentry.org/lessons/">'
+        'Library Carpentry lessons page</a>'
+    )
+    INQUIRY_FORM = reverse_lazy("workshop_inquiry")
+    requested_workshop_types = models.ManyToManyField(
+        Curriculum, limit_choices_to={'active': True},
+        blank=False,
+        verbose_name="Which Carpentries workshop are you requesting?",
+        help_text=format_lazy(
+            "If your learners are new to programming and primarily interested "
+            "in working with data, Data Carpentry is likely the best choice. "
+            "If your learners are interested in learning more about "
+            "programming, including version control and automation, Software "
+            "Carpentry is likely the best match. If your learners are people "
+            "working in library and information related roles interested in "
+            "learning data and software skills, Library Carpentry is the best "
+            "choice. Please visit the {}, {}, or the {} for more information "
+            "about any of our lessons.<br>If you are not sure which workshop "
+            "curriculum you would like to have taught, please complete the "
+            "<a href='{}'>Workshop Inquiry Form</a>.",
+            SWC_LESSONS_LINK,
+            DC_LESSONS_LINK,
+            LC_LESSONS_LINK,
+            INQUIRY_FORM,
+        )
+    )
+    # Form shows a visible warning here if the selected dates are too soon
+    # (3 months)
+    preferred_dates = models.DateField(
+        blank=True, null=True,
+        verbose_name="Preferred dates",
+        help_text="Our workshops typically run two full days. Please select "
+                  "your preferred first day for the workshop. If you do not "
+                  "have exact dates or are interested in an alternative "
+                  "schedule, please indicate so below. Because we need to "
+                  "coordinate with instructors, a minimum of 2-3 months lead "
+                  "time is required for workshop planning.",
+    )
+    other_preferred_dates = models.CharField(
         max_length=STR_LONGEST,
-        blank=False, null=False, default="",
-        verbose_name="Preferred dates or date range",
-        help_text="Because we need to coordinate with instructors, a minimum"
-                  " of 2-3 months lead time is required for workshop"
-                  " planning.",
+        blank=True, null=False, default="",
+        verbose_name="If your dates are not set, please provide more "
+                     "information below",
     )
     language = models.ForeignKey(
         Language, on_delete=models.PROTECT,
         blank=False, null=False,
-        verbose_name="Language",
+        verbose_name="What is the preferred language of communication for the "
+                     "workshop?",
         help_text="Our workshops are offered primarily in English, with a few "
                   "of our lessons available in Spanish. While materials are "
                   "mainly in English, we know it can be valuable to have an "
@@ -2083,29 +2333,41 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     number_attendees = models.CharField(
         max_length=15,
         choices=ATTENDEES_NUMBER_CHOICES,
-        blank=False, null=False, default='10-40',
-        verbose_name="Number of attendees",
+        blank=False, null=False, default=None,
+        verbose_name="Anticipated number of attendees",
         help_text="This number doesn't need to be precise, but will help us "
                   "decide how many instructors your workshop will need. "
                   "Each workshop must have at least two instructors.",
     )
+    # MISSING
+    # This field is no longer needed, and should be hidden in the form and
+    # templates.
     domains = models.ManyToManyField(
         KnowledgeDomain,
         blank=False,
         verbose_name="Domains or topic of interest for target audience",
         help_text="The attendees' academic field(s) of study, if known.",
     )
+    # MISSING
+    # This field is no longer needed, and should be hidden in the form and
+    # templates.
     domains_other = models.CharField(
         max_length=STR_LONGEST,
         blank=True, default='',
         verbose_name="Other domains",
     )
+    # MISSING
+    # This field is no longer needed, and should be hidden in the form and
+    # templates.
     academic_levels = models.ManyToManyField(
         AcademicLevel,
         verbose_name="Attendees' academic level / career stage",
         help_text="If you know the academic level(s) of your attendees, "
                   "indicate them here.",
     )
+    # MISSING
+    # This field is no longer needed, and should be hidden in the form and
+    # templates.
     computing_levels = models.ManyToManyField(
         ComputingExperienceLevel,
         verbose_name="Attendees' level of computing experience",
@@ -2118,74 +2380,6 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         verbose_name="Please describe your anticipated audience, including "
                      "their experience, background, and goals",
     )
-
-    SWC_LESSONS_LINK = (
-        '<a href="https://software-carpentry.org/lessons/">'
-        'Software Carpentry lessons page</a>'
-    )
-    DC_LESSONS_LINK = (
-        '<a href="http://www.datacarpentry.org/lessons/">'
-        'Data Carpentry lessons page</a>'
-    )
-    LC_LESSONS_LINK = (
-        '<a href="https://librarycarpentry.org/lessons/">'
-        'Library Carpentry lessons page</a>'
-    )
-    requested_workshop_types = models.ManyToManyField(
-        Curriculum, limit_choices_to={'active': True},
-        blank=False,
-        verbose_name="Which Carpentry workshop are you requesting?",
-        help_text="If your learners are new to programming and primarily "
-                  "interested in working with data, Data Carpentry is likely "
-                  "the best choice. If your learners are interested in "
-                  "learning more about programming, including version control"
-                  " and automation, Software Carpentry is likely the best "
-                  "match. If your learners are people working in library and "
-                  "information related roles interested in learning data and "
-                  "software skills, Library Carpentry is the best choice. "
-                  "Please visit the " + SWC_LESSONS_LINK + ", "
-                  + DC_LESSONS_LINK + ", or the " + LC_LESSONS_LINK +
-                  " for more information about any of our lessons. If you’re "
-                  "not sure and would like to discuss with us, please select "
-                  'the "Don\'t know yet" option below.',
-    )
-
-    ORGANIZATION_TYPE_CHOICES = (
-        ("self", "Self-organized"),
-        ("central", "Centrally-organized"),
-    )
-    SELF_ORGANIZED_NOTES = (
-        "If you are already connected with The Carpentries certified "
-        "Instructors, we welcome you to organize and run your own workshop "
-        "without administrative assistance from our staff. In the case of "
-        "self-organized workshops, you will work with your certified "
-        "Instructors on all aspects of workshop organization, including "
-        "curriculum and lesson planning, as well as logistical details such "
-        "as learner registration. In order to use our name and logo at your "
-        "event, we require that you follow our curriculum (described on the "
-        "lessons pages above), have at least one certified Carpentries "
-        "Instructor teaching at your event, and share workshop attendance "
-        "data. There is no fee (mandated or suggested) for running a "
-        "self-organized workshop."
-    )
-    CENTRALLY_ORGANIZED_NOTES = (
-        "The Carpentries staff will work with you to recruit Instructors and "
-        "support all other logistical details. Fees due to The Carpentries "
-        "are described below."
-    )
-    organization_type = models.CharField(
-        max_length=15,
-        choices=ORGANIZATION_TYPE_CHOICES,
-        blank=False, null=False, default=None,
-        verbose_name="Will this be a self-organized or "
-                     "centrally-organized workshop?",
-    )
-    self_organized_github = models.URLField(
-        max_length=STR_LONGEST,
-        blank=True, null=False,
-        verbose_name="Link to workshop GitHub page",
-        help_text="Please provide URL."
-    )
     FEE_CHOICES = (
         ("nonprofit", "I am with a government site, university, or other "
                       "nonprofit. I understand the workshop fee of US$2500, "
@@ -2197,21 +2391,42 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
                       "invoicing process for the agreed upon fee."),
         ("member", "I am with a Member Organisation so the workshop fee does "
                    "not apply (Instructor travel costs will still apply)."),
-        ("waiver", "I am requesting a waiver of the workshop fee (Instructor "
-                   "travel costs will still apply)."),
+        ("waiver", "I am requesting a scholarship for the workshop fee "
+                   "(Instructor travel costs will still apply)."),
     )
-    centrally_organized_fee = models.CharField(
+    administrative_fee = models.CharField(
         max_length=20,
         choices=FEE_CHOICES,
-        blank=False, null=False, default="nonprofit",
+        blank=False, null=False, default=None,
         verbose_name="Which of the following applies to your payment for the "
                      "administrative fee?",
     )
-    waiver_circumstances = models.TextField(
+    scholarship_circumstances = models.TextField(
         blank=True,
-        verbose_name="Please explain the circumstances for your waiver "
-                     "request",
-        help_text="Required only if you request a waiver."
+        verbose_name="We have a limited number of scholarships available. "
+                     "Please explain the circumstances for your scholarship "
+                     "request and let us know what budget you have towards "
+                     "The Carpentries workshop fees.",
+        help_text="Required only if you request a scholarship."
+    )
+    TRAVEL_EXPENCES_MANAGEMENT_CHOICES = (
+        ("booked", "Hotel and airfare will be booked by site; ground travel "
+                   "and meals/incidentals will be reimbursed within 60 days."),
+        ("reimbursed", "All expenses will be booked by instructors and "
+                       "reimbursed within 60 days."),
+        ("other", "Other:"),
+    )
+    travel_expences_management = models.CharField(
+        max_length=20,
+        null=False, blank=False, default='',
+        choices=TRAVEL_EXPENCES_MANAGEMENT_CHOICES,
+        verbose_name="How will you manage travel expenses for Carpentries "
+                     "Instructors?",
+    )
+    travel_expences_management_other = models.CharField(
+        max_length=STR_LONGEST,
+        null=False, blank=True, default='',
+        verbose_name="Other travel expences management",
     )
     travel_expences_agreement = models.BooleanField(
         null=False, blank=False, default=False,
@@ -2228,26 +2443,38 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
                      "reimbursements will be completed within 60 days of "
                      "the workshop.",
     )
-    TRAVEL_EXPENCES_MANAGEMENT_CHOICES = (
-        ("booked", "Hotel and airfare will be booked by site; ground travel "
-                   "and meals/incidentals will be reimbursed within 60 days."),
-        ("reimbursed", "All expenses will be booked by instructors and "
-                       "reimbursed within 60 days."),
-        ("", "Other:"),
+    RESTRICTION_CHOICES = (
+        ("no_restrictions", "No restrictions"),
+        ("other", "Other:"),
     )
-    travel_expences_management = models.CharField(
+    institution_restrictions = models.CharField(
         max_length=20,
-        null=False, blank=False,
-        choices=TRAVEL_EXPENCES_MANAGEMENT_CHOICES,
-        verbose_name="How will you manage travel expenses for Carpentries "
-                     "Instructors?",
+        null=False, blank=False, default='',
+        choices=RESTRICTION_CHOICES,
+        verbose_name="Our instructors live, teach, and travel globally. We "
+                     "understand that institutions may have citizenship, "
+                     "confindentiality agreements or other requirements for "
+                     "employees or volunteers who facilitate workshops. If "
+                     "your institution fits this description, please share "
+                     "your requirements or note that there are no "
+                     "restrictions.",
     )
-    travel_expences_management_other = models.CharField(
+    institution_restrictions_other = models.CharField(
         max_length=STR_LONGEST,
         null=False, blank=True, default='',
-        verbose_name="Other travel expences management",
+        verbose_name="Other (institution restrictions)",
     )
-
+    carpentries_info_source = models.ManyToManyField(
+        InfoSource,
+        blank=True,
+        verbose_name="How did you hear about The Carpentries?",
+        help_text="Check all that apply.",
+    )
+    carpentries_info_source_other = models.CharField(
+        max_length=STR_LONGEST,
+        null=False, blank=True, default='',
+        verbose_name="Other source for information about The Carpentries",
+    )
     user_notes = models.TextField(
         blank=True,
         verbose_name="Is there anything else you would like to share with us?",
@@ -2260,11 +2487,24 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         return (
             'Workshop request ({institution}, {personal} {family}) - {state}'
         ).format(
-            institution=str(self.institution or self.institution_name),
+            institution=str(self.institution or self.institution_other_name),
             personal=self.personal,
             family=self.family,
             state=self.get_state_display(),
         )
+
+    def dates(self):
+        if self.preferred_dates:
+            return "{:%Y-%m-%d}".format(self.preferred_dates)
+        else:
+            return self.other_preferred_dates
+
+    def preferred_dates_too_soon(self):
+        # set cutoff date at 3 months
+        cutoff = datetime.timedelta(days=3*30)
+        if self.preferred_dates:
+            return (self.preferred_dates - self.created_at.date()) < cutoff
+        return False
 
     def get_absolute_url(self):
         return reverse('workshoprequest_details', args=[self.id])

@@ -1,0 +1,38 @@
+{% extends "base_nav.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block logo %}
+{% include "includes/logo.html" %}
+{% endblock %}
+
+{% block content %}
+
+<div class="row pb-5">
+  <div class="col-lg-8 offset-lg-2">
+    <p class="lead">Thank you for inquiring about a Carpentries workshop. Please select which of
+    the following options applies to you. Note this form is only for Data Carpentry,
+    Library Carpentry, or Software Carpentry workshops. If you are interested in
+    The Carpentries Instructor Training, please read more about our
+    <a href="https://carpentries.org/membership/">Organisational Membership program</a>
+    or contact <a href="mailto:memberships@carpentries.org">memberships@carpentries.org</a>.</p>
+
+    <p class="lead"><strong>Please select one of the options below:</strong></p>
+
+    <div class="row">
+      <div class="col-lg text-center my-3">
+        <a href="{% url 'workshop_inquiry' %}" class="btn btn-lg btn-primary">Request information about our workshops</a>
+      </div>
+      <div class="col-lg text-center my-3">
+        <a href="{% url 'workshop_request' %}" class="btn btn-lg btn-primary">Request a workshop</a>
+      </div>
+      <div class="col-lg text-center my-3">
+        <a href="{% url 'selforganised_submission' %}" class="btn btn-lg btn-primary">Register a self-organised workshop</a><br>
+        <small>For Member Organisations and Instructors</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+{% endblock %}

@@ -1,17 +1,23 @@
-{% extends "base_nav.html" %}
+{% extends "base_forms.html" %}
 
-{% load static %}
 {% load crispy_forms_tags %}
 
 {% block logo %}
-<img src="{% static 'carpentries-banner.svg' %}" alt='The Carpentries logo' class="img-fluid w-50 mx-auto d-block" />
+{% include "includes/logo.html" %}
 {% endblock %}
 
 {% block content %}
 
-<p>Thank you for requesting a workshop with The Carpentries! The questions
-below will help us match your workshop needs with our instructors and content.
-We look forward to working with you.</p>
+<p class="lead">
+    Please fill out this form to request a Carpentries workshop. We will ask
+    you about dates, location and workshop type, so please plan to have this
+    information available. If you would like more information about our
+    workshops before scheduling, please
+    <a href="{% url 'workshop_inquiry' %}">request workshop information</a>.
+    If you are a Member Organisation or Instructor who is coordinating
+    a self-organised workshop please
+    <a href="{% url 'selforganised_submission' %}">use this form to register your workshop</a>.
+</p>
 
 {% crispy form %}
 {% endblock %}

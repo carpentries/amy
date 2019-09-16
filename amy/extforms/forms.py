@@ -1,14 +1,17 @@
 from captcha.fields import ReCaptchaField
-from crispy_forms.layout import HTML
+from crispy_forms.layout import HTML, Div, Field
 from django import forms
+from django.core.exceptions import ValidationError
 
 from extrequests.forms import (
     WorkshopRequestBaseForm,
+    WorkshopInquiryRequestBaseForm,
+    SelfOrganisedSubmissionBaseForm,
 )
 from workshops.fields import (
     RadioSelectWithOther,
     CheckboxSelectMultipleWithOthers,
-    ListSelect2,
+    Select2Widget,
 )
 from workshops.models import (
     TrainingRequest,
@@ -28,6 +31,7 @@ class TrainingRequestForm(forms.ModelForm):
     class Meta:
         model = TrainingRequest
         fields = (
+            'review_process',
             'group_name',
             'personal',
             'family',
@@ -64,6 +68,7 @@ class TrainingRequestForm(forms.ModelForm):
             'workshop_teaching_agreement',
         )
         widgets = {
+            'review_process': forms.RadioSelect(),
             'occupation': RadioSelectWithOther('occupation_other'),
             'domains': CheckboxSelectMultipleWithOthers('domains_other'),
             'gender': forms.RadioSelect(),
@@ -78,13 +83,14 @@ class TrainingRequestForm(forms.ModelForm):
                 'teaching_frequency_expectation_other'),
             'max_travelling_frequency': RadioSelectWithOther(
                 'max_travelling_frequency_other'),
-            'country': ListSelect2(),
+            'country': Select2Widget,
         }
 
     def __init__(self, *args, initial_group_name=None, **kwargs):
         initial = kwargs.pop('initial', {})
         if initial_group_name is not None:
             initial['group_name'] = initial_group_name
+            initial['review_process'] = 'preapproved'
         super().__init__(*args, initial=initial, **kwargs)
         if initial_group_name is not None:
             field = self.fields['group_name']
@@ -115,49 +121,87 @@ class TrainingRequestForm(forms.ModelForm):
             'teaching_frequency_expectation_other')
         self.helper.layout.fields.remove('max_travelling_frequency_other')
 
+        # fake requiredness of the registration code / group name
+        self['group_name'].field.widget.fake_required = True
+
+        # special accordion display for the review process
+        self['review_process'].field.widget.subfields = {
+            'preapproved': [
+                self['group_name'],
+            ],
+            'open': [],  # this option doesn't require any additional fields
+        }
+        self['review_process'].field.widget.notes = \
+            TrainingRequest.REVIEW_CHOICES_NOTES
+
+        # get current position of `review_process` field
+        pos_index = self.helper.layout.fields.index('review_process')
+
+        self.helper.layout.fields.remove('review_process')
+        self.helper.layout.fields.remove('group_name')
+
+        # insert div+field at previously saved position
+        self.helper.layout.insert(
+            pos_index,
+            Div(
+                Field('review_process',
+                      template="bootstrap4/layout/radio-accordion.html"),
+                css_class='form-group row',
+            ),
+        )
+
         # add <HR> around "underrepresented*" fields
         index = self.helper.layout.fields.index('underrepresented')
         self.helper.layout.insert(
-            index, HTML('<hr class="col-lg-10 col-12 mx-0 px-0">'))
+            index, HTML(self.helper.hr()))
 
         index = self.helper.layout.fields.index('underrepresented_details')
         self.helper.layout.insert(
-            index + 1, HTML('<hr class="col-lg-10 col-12 mx-0 px-0">'))
+            index + 1, HTML(self.helper.hr()))
+
+    def clean(self):
+        super().clean()
+        errors = dict()
+
+        # 1: validate registration code / group name
+        review_process = self.cleaned_data.get('review_process', '')
+        group_name = self.cleaned_data.get('group_name', '').split()
+
+        # it's required when review_process is 'preapproved', but not when
+        # 'open'
+        if review_process == 'preapproved' and not group_name:
+            errors['review_process'] = ValidationError(
+                "Registration code is required for pre-approved training "
+                "review process."
+            )
+
+        # it's required to be empty when review_process is 'open'
+        if review_process == 'open' and group_name:
+            errors['review_process'] = ValidationError(
+                "Registration code must be empty for open training review "
+                "process."
+            )
+
+        if errors:
+            raise ValidationError(errors)
 
 
 class WorkshopRequestExternalForm(WorkshopRequestBaseForm):
     captcha = ReCaptchaField()
 
     class Meta(WorkshopRequestBaseForm.Meta):
-        fields = (
-            "personal",
-            "family",
-            "email",
-            "institution",
-            "institution_name",
-            "institution_department",
-            "location",
-            "country",
-            "conference_details",
-            "preferred_dates",
-            "language",
-            "number_attendees",
-            "domains",
-            "domains_other",
-            "academic_levels",
-            "computing_levels",
-            "audience_description",
-            "requested_workshop_types",
-            "organization_type",
-            "self_organized_github",
-            "centrally_organized_fee",
-            "waiver_circumstances",
-            "travel_expences_management",
-            "travel_expences_management_other",
-            "travel_expences_agreement",
-            "user_notes",
-            "data_privacy_agreement",
-            "code_of_conduct_agreement",
-            "host_responsibilities",
-            "captcha",
-        )
+        fields = WorkshopRequestBaseForm.Meta.fields + ("captcha", )
+
+
+class WorkshopInquiryRequestExternalForm(WorkshopInquiryRequestBaseForm):
+    captcha = ReCaptchaField()
+
+    class Meta(WorkshopInquiryRequestBaseForm.Meta):
+        fields = WorkshopInquiryRequestBaseForm.Meta.fields + ("captcha", )
+
+
+class SelfOrganisedSubmissionExternalForm(SelfOrganisedSubmissionBaseForm):
+    captcha = ReCaptchaField()
+
+    class Meta(SelfOrganisedSubmissionBaseForm.Meta):
+        fields = SelfOrganisedSubmissionBaseForm.Meta.fields + ("captcha", )

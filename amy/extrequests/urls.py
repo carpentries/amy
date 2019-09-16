@@ -25,6 +25,28 @@ urlpatterns = [
         path('assign/<int:person_id>/', views.WorkshopRequestAssign.as_view(), name='workshoprequest_assign'),
     ])),
 
+    # workshop inquiries
+    path('workshop_inquiries/', views.AllWorkshopInquiries.as_view(), name='all_workshopinquiries'),
+    path('workshop_inquiry/<int:inquiry_id>/', include([
+        path('', views.WorkshopInquiryDetails.as_view(), name='workshopinquiry_details'),
+        path('set_state/<slug:state>/', views.WorkshopInquirySetState.as_view(), name='workshopinquiry_set_state'),
+        path('accept_event/', views.workshopinquiry_accept_event, name='workshopinquiry_accept_event'),
+        path('edit/', views.WorkshopInquiryChange.as_view(), name='workshopinquiry_edit'),
+        path('assign/', views.WorkshopInquiryAssign.as_view(), name='workshopinquiry_assign'),
+        path('assign/<int:person_id>/', views.WorkshopInquiryAssign.as_view(), name='workshopinquiry_assign'),
+    ])),
+
+    # self-organized submissions
+    path('selforganised_submissions/', views.AllSelfOrganisedSubmissions.as_view(), name='all_selforganisedsubmissions'),
+    path('selforganised_submission/<int:submission_id>/', include([
+        path('', views.SelfOrganisedSubmissionDetails.as_view(), name='selforganisedsubmission_details'),
+        path('set_state/<slug:state>/', views.SelfOrganisedSubmissionSetState.as_view(), name='selforganisedsubmission_set_state'),
+        path('accept_event/', views.selforganisedsubmission_accept_event, name='selforganisedsubmission_accept_event'),
+        path('edit/', views.SelfOrganisedSubmissionChange.as_view(), name='selforganisedsubmission_edit'),
+        path('assign/', views.SelfOrganisedSubmissionAssign.as_view(), name='selforganisedsubmission_assign'),
+        path('assign/<int:person_id>/', views.SelfOrganisedSubmissionAssign.as_view(), name='selforganisedsubmission_assign'),
+    ])),
+
     # deprecated: old swc/dc workshop requests
     path('eventrequests/', deprecated_views.AllEventRequests.as_view(), name='all_eventrequests'),
     path('eventrequest/<int:request_id>/', include([

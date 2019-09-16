@@ -200,4 +200,60 @@ $(document).ready(function() {
       }
     }
   })
+
+  /* Additional messages for forms: they show up when a specific value is
+     entered into the field */
+
+  // check initial value for this proficient computing level
+  if ($("#id_computing_levels_3").is(":checked")) {
+    $("#computing_levels_warning").removeClass("d-none");
+  } else {
+    $("#computing_levels_warning").addClass("d-none");
+  }
+
+  $("#id_computing_levels_3").change(function() {
+    // show warning if someone selects "Proficient"
+    if($(this).is(':checked')) {
+      $("#computing_levels_warning").removeClass("d-none");
+    } else {
+      $("#computing_levels_warning").addClass("d-none");
+    }
+  })
+
+  // default cutoff time: 60 days
+  var DEFAULT_WARNING_TIME = 1000 * 60 * 60 * 24 * 30 * 2;
+
+  // check initial value for the preferred dates
+  if ($("#id_preferred_dates").val()) {
+    $("#id_preferred_dates").datepicker('update');
+
+    // read current input value and today's date
+    var value = $("#id_preferred_dates").datepicker('getDate');
+    var today = new Date();
+    var time_diff = value.getTime() - today.getTime();
+
+    // 3 months
+    if (time_diff < DEFAULT_WARNING_TIME) {
+      $("#preferred_dates_warning").removeClass("d-none");
+    } else {
+      $("#preferred_dates_warning").addClass("d-none");
+    }
+  }
+
+  $("#id_preferred_dates").on("changeDate input", function(e){
+    // update datepicker with current input value
+    $(this).datepicker('update');
+
+    // read current input value and today's date
+    var value = $(this).datepicker('getDate');
+    var today = new Date();
+    var time_diff = value.getTime() - today.getTime();
+
+    // 3 months
+    if (time_diff < DEFAULT_WARNING_TIME) {
+      $("#preferred_dates_warning").removeClass("d-none");
+    } else {
+      $("#preferred_dates_warning").addClass("d-none");
+    }
+  })
  });

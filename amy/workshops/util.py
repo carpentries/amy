@@ -586,11 +586,11 @@ def get_pagination_items(request, all_objects):
     return result
 
 
-def fetch_event_metadata(event_url):
+def fetch_event_metadata(event_url, timeout=5):
     """Handle metadata from any event site (works with rendered <meta> metadata and
     YAML metadata in `index.html`)."""
     # fetch page
-    response = requests.get(event_url)
+    response = requests.get(event_url, timeout=timeout)
     response.raise_for_status()  # assert it's 200 OK
     content = response.text
 
@@ -602,7 +602,7 @@ def fetch_event_metadata(event_url):
         index_url, repository = generate_url_to_event_index(event_url)
 
         # fetch page
-        response = requests.get(index_url)
+        response = requests.get(index_url, timeout=timeout)
 
         if response.status_code == 200:
             # don't throw errors for pages we fall back to

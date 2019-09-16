@@ -1,19 +1,19 @@
-{% extends "base_nav.html" %}
+{% extends "base_forms.html" %}
 
-{% load static %}
 {% load crispy_forms_tags %}
 
 {% block logo %}
-<img src="{% static 'carpentries-banner.svg' %}" alt='The Carpentries logo' class="img-fluid w-50 mx-auto d-block" />
+{% include "includes/logo.html" %}
 {% endblock %}
 
 {% block content %}
 
-<p>Our instructor training classes are for people who wish to learn how to
-teach Carpentry workshops. We teach
-impactful pedagogical techniques and prepare you to become an Instructor
-in our community. We use this form to register interest and build new
-communities of Instructors around the world.</p>
+<p class="lead">
+  Our instructor training classes are for people who wish to learn how to
+  teach Carpentry workshops. We teach impactful pedagogical techniques and
+  prepare you to become an Instructor in our community. We use this form to
+  register interest and build new communities of Instructors around the world.
+</p>
 
 <p>If you wish to apply to our open instructor training program, please
 fill in the form below. Tell us about yourself, what excites you about

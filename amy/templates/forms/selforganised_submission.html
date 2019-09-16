@@ -1,0 +1,29 @@
+{% extends "base_forms.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block logo %}
+{% include "includes/logo.html" %}
+{% endblock %}
+
+{% block content %}
+
+<p class="lead">
+    Please fill out this form if you are a Carpentries Instructor or affiliated
+    with a Member Organisation to register a self-organised workshop. We use
+    the URL of your workshop website to collect information, so please set that
+    up using our
+    <a href="https://github.com/carpentries/workshop-template">workshop template</a>
+    before filling out this form. However, if
+    you need to use a workshop website that is different from our template, you
+    can still submit it through this form.
+</p>
+<p class="lead">
+    If you are not affiliated with a Member Organisation or are a Certified
+    Carpentries Instructor, please use our
+    <a href="{% url 'workshop_request' %}">request a workshop</a> form or
+    <a href="{% url 'workshop_inquiry' %}">request more information about a workshop</a>.
+</p>
+
+{% crispy form %}
+{% endblock %}

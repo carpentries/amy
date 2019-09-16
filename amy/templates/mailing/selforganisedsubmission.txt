@@ -1,0 +1,33 @@
+Thank you for informing us of your self-organised workshop! Your workshop 
+has been accepted.
+
+Approximately 2 weeks prior to the workshop, please send a reminder to your 
+learners to complete the pre-survey and install the necessary software prior
+to the workshop. Feel free to utilize the email template "Email Learners 
+before Workshop", found in The Carpentries Handbook. The survey links for 
+learners are found on the workshop GitHub page.
+
+You will receive the links to view the results of the surveys approximately 
+1 week prior to the workshop.
+
+Have a great workshop!
+The Carpentries
+
+--------------------------------------------
+
+A copy of your submission is included below for your reference.
+
+Submission date: {{ object.created_at }}
+Person: {{ object.personal }} {{ object.family }} &lt;{{ object.email }}&gt;
+Institution: {{ object.institution|default:object.institution_other_name }}{% if object.institution_department %}, {{ object.institution_department }}{% endif %}
+Workshop format: {{ object.get_workshop_format_display }} {% if object.workshop_format_other %}{{ object.workshop_format_other }}{% endif %}
+Workshop URL: {{ object.workshop_url }}
+Taught workshop type: {% for item in object.workshop_types.all %}{{ item }}, {% endfor %}
+Taught workshop mix & match: {{ object.workshop_types_other_explain|default:"---" }}
+Country: {{ object.country.name }}
+Workshop language: {{ object.language }}
+Is this workshop open to the public? {% if object.public_event %}{{ object.get_public_event_display }}{% else %}Other: {{ object.public_event_other }}{% endif %}
+Additional contacts: {{ object.additional_contact|default:"---" }}
+Data privacy agreement: {{ object.data_privacy_agreement|yesno }}
+Code of Conduct agreement: {{ object.code_of_conduct_agreement|yesno }}
+Host responsibilities agreement: {{ object.host_responsibilities|yesno }}
