@@ -14,6 +14,12 @@ def migrate(apps, schema_editor):
 
     for wr in self_org_wr:
         sos = SelfOrganizedSubmission.objects.create(
+            created_at=wr.created_at,
+            last_updated_at=wr.last_updated_at,
+            state=wr.state,
+            assigned_to=wr.assigned_to,
+            event=wr.event,
+
             personal=wr.personal,
             family=wr.family,
             email=wr.email,
@@ -27,6 +33,7 @@ def migrate(apps, schema_editor):
             workshop_url=wr.self_organized_github,
             workshop_types_other='',
             workshop_types_other_explain='',
+            country=wr.country,
             language=wr.language,
 
             public_event=wr.public_event,
