@@ -1,6 +1,6 @@
 # On the End of Each Milestone
 
-1.  Close milestone using [GitHub UI](https://github.com/swcarpentry/amy/milestones).
+1.  Close milestone using [GitHub UI](https://github.com/carpentries/amy/milestones).
 
 2.  Write down release notes and add it to the repository in `docs/releases` directory.
     Release notes should have two sections: new features and bugfixes, each one enumerating changes and mentioning their authors.
@@ -26,15 +26,15 @@ Execute the following commands on your local machine, not production.
 2.  Make sure you have configured repositories:
 
     - `origin` for your repository on GitHub
-    - `upstream` for [`swcarpentry/amy` repo on GitHub](https://github.com/swcarpentry/amy)
+    - `upstream` for [`carpentries/amy` repo on GitHub](https://github.com/carpentries/amy)
 
     For example, this is the correct configuration for `chrismedrela`:
 
         $ git remote -v
         origin	git@github.com:chrismedrela/amy.git (fetch)
         origin	git@github.com:chrismedrela/amy.git (push)
-        upstream	git@github.com:swcarpentry/amy.git (fetch)
-        upstream	git@github.com:swcarpentry/amy.git (push)
+        upstream	git@github.com:carpentries/amy.git (fetch)
+        upstream	git@github.com:carpentries/amy.git (push)
 
 3.  Make sure your local `develop` and `master` branches are up to date:
 
