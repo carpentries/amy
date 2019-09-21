@@ -236,7 +236,7 @@ class WorkshopInquiryDetails(OnlyForAdminsMixin, AMYDetailView):
 
 class WorkshopInquiryChange(OnlyForAdminsMixin, PermissionRequiredMixin,
                             AMYUpdateView):
-    permission_required = 'workshops.change_workshopinquiry'
+    permission_required = 'extrequests.change_workshopinquiry'
     model = WorkshopInquiryRequest
     pk_url_kwarg = 'inquiry_id'
     form_class = WorkshopInquiryRequestAdminForm
@@ -244,7 +244,7 @@ class WorkshopInquiryChange(OnlyForAdminsMixin, PermissionRequiredMixin,
 
 
 class WorkshopInquirySetState(OnlyForAdminsMixin, ChangeRequestStateView):
-    permission_required = 'workshops.change_workshopinquiry'
+    permission_required = 'extrequests.change_workshopinquiry'
     model = WorkshopInquiryRequest
     pk_url_kwarg = 'inquiry_id'
     state_url_kwarg = 'state'
@@ -252,7 +252,7 @@ class WorkshopInquirySetState(OnlyForAdminsMixin, ChangeRequestStateView):
 
 
 @admin_required
-@permission_required(['workshops.change_workshopinquiry',
+@permission_required(['extrequests.change_workshopinquiry',
                       'workshops.add_event'],
                      raise_exception=True)
 def workshopinquiry_accept_event(request, inquiry_id):
@@ -291,7 +291,7 @@ def workshopinquiry_accept_event(request, inquiry_id):
 
 
 class WorkshopInquiryAssign(OnlyForAdminsMixin, AssignView):
-    permission_required = 'workshops.change_workshopinquiry'
+    permission_required = 'extrequests.change_workshopinquiry'
     model = WorkshopInquiryRequest
     pk_url_kwarg = 'inquiry_id'
     person_url_kwarg = 'person_id'
@@ -344,7 +344,7 @@ class SelfOrganisedSubmissionDetails(OnlyForAdminsMixin, AMYDetailView):
 class SelfOrganisedSubmissionChange(OnlyForAdminsMixin,
                                     PermissionRequiredMixin,
                                     AMYUpdateView):
-    permission_required = 'workshops.change_selforganisedsubmission'
+    permission_required = 'extrequests.change_selforganisedsubmission'
     model = SelfOrganisedSubmission
     pk_url_kwarg = 'submission_id'
     form_class = SelfOrganisedSubmissionAdminForm
@@ -353,7 +353,7 @@ class SelfOrganisedSubmissionChange(OnlyForAdminsMixin,
 
 class SelfOrganisedSubmissionSetState(OnlyForAdminsMixin,
                                       ChangeRequestStateView):
-    permission_required = 'workshops.change_selforganisedsubmission'
+    permission_required = 'extrequests.change_selforganisedsubmission'
     model = SelfOrganisedSubmission
     pk_url_kwarg = 'submission_id'
     state_url_kwarg = 'state'
@@ -361,7 +361,7 @@ class SelfOrganisedSubmissionSetState(OnlyForAdminsMixin,
 
 
 @admin_required
-@permission_required(['workshops.change_selforganisedsubmission',
+@permission_required(['extrequests.change_selforganisedsubmission',
                       'workshops.add_event'],
                      raise_exception=True)
 def selforganisedsubmission_accept_event(request, submission_id):
@@ -444,7 +444,7 @@ def selforganisedsubmission_accept_event(request, submission_id):
 
 
 class SelfOrganisedSubmissionAssign(OnlyForAdminsMixin, AssignView):
-    permission_required = 'workshops.change_selforganisedsubmission'
+    permission_required = 'extrequests.change_selforganisedsubmission'
     model = SelfOrganisedSubmission
     pk_url_kwarg = 'submission_id'
     person_url_kwarg = 'person_id'
