@@ -47,6 +47,9 @@ urlpatterns += [
     path('workshops/', include('workshops.urls')),
     path('select_lookups/', include('workshops.lookups')),  # autocomplete lookups
 
+    # TODO: prevent unauthorised access or remove this endpoint
+    path('django-rq/', include('django_rq.urls')),  # Django-RQ views
+
     # django views for authentication
     path('account/login/',
          auth_views.LoginView.as_view(

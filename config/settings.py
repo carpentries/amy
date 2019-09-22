@@ -141,6 +141,7 @@ THIRD_PARTY_APPS = [
     'anymail',
     'django_comments',  # this used to be in django.contrib
     'markdownx',
+    'django_rq',
 ]
 PYDATA_APP = [
     'amy.pydata.apps.PyDataConfig',
@@ -558,3 +559,17 @@ SELECT2_JS = ''  # don't load JS on it's own - we're loading it in `base.html`
 SELECT2_CSS = ''  # the same for CSS
 SELECT2_I18N = 'select2/js/i18n'
 SELECT2_CACHE_BACKEND = 'select2'
+
+# Django-RQ (Redis Queueing) settings
+# -----------------------------------------------------------------------------
+# https://github.com/rq/django-rq
+RQ_QUEUES = {
+    'default': {
+        'HOST': 'localhost',
+        'PORT': 6379,
+        'DB': 2,
+        'DEFAULT_TIMEOUT': 360,
+    }
+}
+# If you need custom exception handlers
+# RQ_EXCEPTION_HANDLERS = ['path.to.my.handler']
