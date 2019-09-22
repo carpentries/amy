@@ -156,6 +156,7 @@ LOCAL_APPS = [
     'amy.reports.apps.ReportsConfig',
     'amy.trainings.apps.TrainingsConfig',
     'amy.extcomments.apps.ExtcommentsConfig',
+    'amy.autoemails.apps.AutoemailsConfig',
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 if ENABLE_PYDATA:
