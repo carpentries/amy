@@ -247,6 +247,20 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# CACHE
+# -----------------------------------------------------------------------------
+# https://docs.djangoproject.com/en/2.2/topics/cache/#database-caching
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'cache_default',
+    },
+    'select2': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'cache_select2',
+    }
+}
+
 # MIDDLEWARE
 # -----------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#middleware
@@ -521,3 +535,4 @@ COMMENTS_APP = 'extcomments'
 SELECT2_JS = ''  # don't load JS on it's own - we're loading it in `base.html`
 SELECT2_CSS = ''  # the same for CSS
 SELECT2_I18N = 'select2/js/i18n'
+SELECT2_CACHE_BACKEND = 'select2'
