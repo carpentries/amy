@@ -49,6 +49,7 @@ class TestListingTrainingRequests(APITestBase):
         self.tr1 = TrainingRequest(
             state='p',
             person=None,
+            review_process='preapproved',
             group_name='GummiBears',
             personal='Zummi',
             middle='',
@@ -95,6 +96,7 @@ class TestListingTrainingRequests(APITestBase):
         self.tr2 = TrainingRequest(
             state='a',
             person=self.admin,
+            review_process='preapproved',
             group_name='GummiBears',
             personal='Grammi',
             middle='',
@@ -176,6 +178,7 @@ class TestListingTrainingRequests(APITestBase):
                 'person_id': None,
                 'awards': '',
                 'training_tasks': '',
+                'review_process': 'preapproved',
                 'group_name': 'GummiBears',
                 'personal': 'Zummi',
                 'middle': '',
@@ -231,6 +234,7 @@ class TestListingTrainingRequests(APITestBase):
                 'awards': 'swc-instructor 2018-07-12, '
                           'dc-instructor 2018-07-12',
                 'training_tasks': '2018-07-12-TTT-event',
+                'review_process': 'preapproved',
                 'group_name': 'GummiBears',
                 'personal': 'Grammi',
                 'middle': '',
@@ -297,7 +301,8 @@ class TestListingTrainingRequests(APITestBase):
         firstline = content.splitlines()[0]
         expected_firstline = (
             'Created at,Last updated at,State,Matched Trainee,'
-            'Matched Trainee ID,Badges,Training Tasks,Registration Code,'
+            'Matched Trainee ID,Badges,Training Tasks,'
+            'Application Type,Registration Code,'
             'Personal,Middle,Family,Email,GitHub username,Underrepresented,'
             'Underrepresented (reason),Occupation,Occupation (other),'
             'Affiliation,Location,Country,Underresourced institution,'
