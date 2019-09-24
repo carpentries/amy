@@ -265,8 +265,9 @@ class TrainingRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = TrainingRequest
         fields = (
-            'created_at', 'last_updated_at',
-            'state', 'group_name', 'personal', 'middle', 'family', 'email',
+            'created_at', 'last_updated_at', 'state',
+            'review_process', 'group_name',
+            'personal', 'middle', 'family', 'email',
             'github', 'occupation', 'occupation_other', 'affiliation',
             'location', 'country', 'underresourced', 'underrepresented',
             'underrepresented_details',
@@ -327,7 +328,8 @@ class TrainingRequestWithPersonSerializer(TrainingRequestSerializer):
         fields = (
             'created_at', 'last_updated_at', 'state',
             'person', 'person_id', 'awards', 'training_tasks',
-            'group_name', 'personal', 'middle', 'family',
+            'review_process', 'group_name',
+            'personal', 'middle', 'family',
             'email', 'github', 'underrepresented', 'underrepresented_details',
             'occupation', 'occupation_other', 'affiliation',
             'location', 'country', 'underresourced',
@@ -355,6 +357,7 @@ class TrainingRequestForManualScoringSerializer(TrainingRequestSerializer):
             'request_id',
             'score_manual',
             'score_notes',
+            'review_process',
             'group_name',
             'personal',
             'middle',

@@ -873,7 +873,10 @@ class AdminLookupForm(forms.Form):
         label='Administrator',
         required=True,
         queryset=Person.objects.all(),
-        widget=ModelSelect2Widget(data_view='admin-lookup')
+        widget=ModelSelect2Widget(
+            data_view='admin-lookup',
+            attrs=SELECT2_SIDEBAR,
+        ),
     )
 
     helper = BootstrapHelper(add_cancel_button=False)
