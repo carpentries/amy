@@ -12,7 +12,7 @@
 
 {% include "includes/workshopinquiry_details.html" with admin=True object=object %}
 
-{% include "includes/requests_bottom_action_btns.html" with object=object obj_name='request' change_permission=perms.perms.workshops.change_workshopinquiryrequest add_event_permission=perms.workshops.add_event accept_event_URL='workshopinquiry_accept_event' set_state_URL='workshopinquiry_set_state' edit_URL='workshopinquiry_edit' %}
+{% include "includes/requests_bottom_action_btns.html" with object=object obj_name='request' change_permission=perms.perms.extrequests.change_workshopinquiryrequest add_event_permission=perms.workshops.add_event accept_event_URL='workshopinquiry_accept_event' set_state_URL='workshopinquiry_set_state' edit_URL='workshopinquiry_edit' %}
 
 {% include "includes/assignment_modal.html" with form=person_lookup_form %}
 
