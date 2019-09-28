@@ -4,6 +4,9 @@ body, .dropdown-menu, .btn, .form-control {
 .btn-sm, .btn-group-sm > .btn {
     font-size: 0.75rem;
 }
+.btn-lg, .btn-group-lg > btn {
+    font-size: 0.95rem;
+}
 .form-check-input {
     /* this accounts for change in font-size */
     margin-top: 0.125rem;
