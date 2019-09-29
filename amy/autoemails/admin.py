@@ -1,3 +1,11 @@
 from django.contrib import admin
 
-# Register your models here.
+
+from .models import EmailTemplate
+
+
+class EmailTemplateAdmin(admin.ModelAdmin):
+    list_display = ['slug', 'subject', 'to_header', 'from_header']
+
+
+admin.site.register(EmailTemplate, EmailTemplateAdmin)
