@@ -92,32 +92,40 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
         """Render template with given context."""
         return self.get_template(template).render(context)
 
-    def get_subject(self, subject: str = "",
+    def get_subject(self,
+                    subject: str = "",
                     context: Optional[dict] = None) -> str:
         return subject or self.render_template(self.subject, context)
 
-    def get_sender(self, sender: str = "",
+    def get_sender(self,
+                   sender: str = "",
                    context: Optional[dict] = None) -> str:
         return sender or self.render_template(self.from_header, context)
 
-    def get_recipients(self, recipients: Optional[List[str]] = None,
+    def get_recipients(self,
+                       recipients: Optional[List[str]] = None,
                        context: Optional[dict] = None) -> list:
         return recipients or [self.render_template(self.to_header, context)]
 
-    def get_cc_recipients(self, cc_recipients: Optional[List[str]] = None,
+    def get_cc_recipients(self,
+                          cc_recipients: Optional[List[str]] = None,
                           context: Optional[dict] = None) -> list:
         return cc_recipients or [self.render_template(self.cc_header, context)]
 
-    def get_bcc_recipients(self, bcc_recipients: Optional[List[str]] = None,
+    def get_bcc_recipients(self,
+                           bcc_recipients: Optional[List[str]] = None,
                            context: Optional[dict] = None) -> list:
         return bcc_recipients or [self.render_template(self.bcc_header,
                                                        context)]
 
-    def get_reply_to(self, reply_to: str = "",
+    def get_reply_to(self,
+                     reply_to: str = "",
                      context: Optional[dict]=None) -> str:
         return reply_to or [self.render_template(self.reply_to_header, context)]
 
-    def get_body(self, text: str = "", html: str = "",
+    def get_body(self,
+                 text: str = "",
+                 html: str = "",
                  context: Optional[dict] = None) -> EmailBody:
         """Get both text and HTML email bodies."""
         if text:
