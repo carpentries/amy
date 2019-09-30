@@ -2,6 +2,7 @@ from collections import namedtuple
 from typing import Optional, List
 
 from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
 from django.db import models
 from django.template import Template, Context
 
@@ -144,6 +145,40 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
 
         body = self.EmailBody(text=text_body, html=html_body)
         return body
+
+    def build_email(self,
+                    subject: str = "",
+                    sender: str = "",
+                    recipients: Optional[List[str]] = None,
+                    cc_recipients: Optional[List[str]] = None,
+                    bcc_recipients: Optional[List[str]] = None,
+                    reply_to: str = "",
+                    text: str = "",
+                    html: str = "",
+                    context: Optional[dict] = None) -> EmailMultiAlternatives:
+        """Build a Django email representation (see
+        https://docs.djangoproject.com/en/2.2/topics/email/#sending-alternative-content-types
+        for details).
+
+        A resulting EmailMultiAlternatives instance contains all headers/fields
+        used in database record (like subject, plain text contents, HTML
+        alternatives content), allows for adding attachments, and finally
+        provides `send()` method."""
+
+        body = self.get_body(text, html, context)
+
+        msg = EmailMultiAlternatives(
+            subject=self.get_subject(subject, context),
+            from_email=self.get_sender(sender, context),
+            to=self.get_recipients(recipients, context),
+            cc=self.get_cc_recipients(cc_recipients, context),
+            bcc=self.get_bcc_recipients(bcc_recipients, context),
+            reply_to=self.get_reply_to(reply_to, context),
+            body=body.text,
+        )
+        msg.attach_alternative(body.html, "text/html")
+
+        return msg
 
     def __str__(self):
         return f"Email Template '{self.slug}' ({self.subject})"
