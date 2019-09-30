@@ -572,5 +572,7 @@ RQ_QUEUES = {
         'DEFAULT_TIMEOUT': 360,
     }
 }
+# Add link to admin
+RQ_SHOW_ADMIN_LINK = False
 # If you need custom exception handlers
 # RQ_EXCEPTION_HANDLERS = ['path.to.my.handler']
