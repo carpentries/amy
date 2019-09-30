@@ -1,9 +1,9 @@
 from collections import namedtuple
 from typing import Optional, List
 
-from django import template
 from django.conf import settings
 from django.db import models
+from django.template import Template, Context
 
 from workshops.models import ActiveMixin, CreatedUpdatedMixin
 
@@ -84,13 +84,17 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
     )
     EmailBody = namedtuple('EmailBody', ['text', 'html'])
 
-    def get_template(self, content):
+    @staticmethod
+    def get_template(content: str) -> Template:
         """Translate text into Django Template object."""
-        return template.Template(content)
+        return Template(content)
 
-    def render_template(self, template, context):
+    @staticmethod
+    def render_template(tpl: str, context: dict) -> str:
         """Render template with given context."""
-        return self.get_template(template).render(context)
+        # turn context dictionary into a Context object
+        ctx = Context(context)
+        return EmailTemplate.get_template(tpl).render(ctx)
 
     def get_subject(self,
                     subject: str = "",
