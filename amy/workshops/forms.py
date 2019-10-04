@@ -557,10 +557,12 @@ class EventForm(forms.ModelForm):
         tags = self.cleaned_data['tags']
 
         try:
-            expected_tags = [
-                c.slug.split("-")[0].upper() for c in curricula
-                if c.active and not c.unknown
-            ]
+            expected_tags = []
+            for c in curricula:
+                if c.active and c.carpentry:
+                    expected_tags.append(c.carpentry)
+                elif c.active and c.mix_match:
+                    expected_tags.append('Circuits')
         except (ValueError, TypeError):
             expected_tags = []
 

@@ -737,6 +737,34 @@ class TestEventViews(TestBase):
         form = EventForm(data)
         self.assertNotIn('curricula', form.errors)
 
+    def test_curricula_circuits_tag(self):
+        """Ensure validation of `curricula` and `tags` fields."""
+        # missing tags
+        data = {
+            'slug': '2018-10-28-curriculum',
+            'host': self.org_alpha.pk,
+            # there has to be some tag
+            'tags': [Tag.objects.get(name='DC').pk],
+            'curricula': [
+                Curriculum.objects.get(slug='swc-python').pk,
+                Curriculum.objects.get(mix_match=True).pk,
+            ],
+        }
+        form = EventForm(data)
+        # we're missing SWC and Circuits
+        self.assertIn('curricula', form.errors)
+
+        # try adding SWC tag
+        data['tags'].append(Tag.objects.get(name='SWC').pk)
+        form = EventForm(data)
+        self.assertIn('curricula', form.errors)
+        # now we're missing only circuits
+
+        # try adding Circuits tag
+        data['tags'].append(Tag.objects.get(name='Circuits').pk)
+        form = EventForm(data)
+        self.assertNotIn('curricula', form.errors)
+
 
 class TestEventMerging(TestBase):
     def setUp(self):
