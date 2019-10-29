@@ -5,6 +5,10 @@ language: python
 
 cache: pip
 
+# used for caching purposes
+services:
+  - redis-server
+
 python:
   # After upgrading to Ubuntu 18.04 we lost ability to test against Py3.5
   # - 3.5
