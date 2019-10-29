@@ -32,3 +32,4 @@ DB_backups/*
 
 # log file
 amy.log
+amy_debug.log

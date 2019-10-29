@@ -524,6 +524,12 @@ LOGGING = {
             # `str()` prevents some strange bug on Py3.5
             'filename': str(env.path('AMY_SERVER_LOGFILE', default='amy.log')),
         },
+        'debug_log_file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'formatter': 'verbose',
+            'filename': 'amy_debug.log',
+        }
     },
     'loggers': {
         # disable "Invalid HTTP_HOST" notifications
@@ -534,6 +540,11 @@ LOGGING = {
         'amy': {
             'handlers': ['null', ],
             'level': 'WARNING',
+        },
+        'amy.signals': {
+            'handlers': ['debug_log_file', ],
+            'level': 'DEBUG',
+            'propagate': True,
         },
         'amy.server_logs': {
             'handlers': ['log_file', ],
