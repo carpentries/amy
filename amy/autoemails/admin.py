@@ -4,7 +4,8 @@ from django.urls import path
 
 import django_rq
 
-from .models import EmailTemplate, Trigger, RQJob
+from autoemails.models import EmailTemplate, Trigger, RQJob
+from workshops.util import admin_required
 
 
 scheduler = django_rq.get_scheduler('default')
@@ -16,8 +17,15 @@ class EmailTemplateAdmin(admin.ModelAdmin):
     def get_urls(self):
         original_urls = super().get_urls()
         new_urls = [
-            path('queue/', self.admin_site.admin_view(self.email_queue_view),
-                 name='autoemails_emailtemplate_queue'),
+            path(
+                'queue/',
+                # added `admin_required` for view-access permissions checking
+                # test
+                admin_required(
+                    self.admin_site.admin_view(self.email_queue_view)
+                ),
+                name='autoemails_emailtemplate_queue',
+            ),
         ]
         return new_urls + original_urls
 
