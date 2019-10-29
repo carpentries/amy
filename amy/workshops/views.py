@@ -2,6 +2,7 @@ import csv
 import datetime
 from functools import partial
 import io
+import logging
 import re
 
 import requests
@@ -43,10 +44,13 @@ from django.views.generic.edit import (
     ModelFormMixin,
 )
 from django_comments.models import Comment
+import django_rq
 from github.GithubException import GithubException
 from reversion.models import Version, Revision
 from reversion_compare.forms import SelectDiffForm
 
+from autoemails.triggers import NewInstructorAction
+from autoemails.models import Trigger
 from fiscal.forms import SponsorshipForm
 from workshops.base_views import (
     AMYCreateView,
@@ -123,6 +127,10 @@ from workshops.util import (
     login_required,
     add_comment,
 )
+
+
+logger = logging.getLogger('amy.signals')
+scheduler = django_rq.get_scheduler('default')
 
 
 @login_required
@@ -1260,9 +1268,17 @@ class TaskCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
         return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
-        """Check associated membership remaining seats and validity."""
+        """Additional functions for validating Task Create form:
+
+        * checking membership seats, availability
+        * maybe adding a mail job, if conditions are met
+        """
+
         seat_membership = form.cleaned_data['seat_membership']
         event = form.cleaned_data['event']
+        role = form.cleaned_data['role']
+
+        # check associated membership remaining seats and validity
         if hasattr(self, 'request') and seat_membership is not None:
             # check number of available seats
             if seat_membership.seats_instructor_training_remaining == 1:
@@ -1300,7 +1316,57 @@ class TaskCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
                     ),
                 )
 
-        return super().form_valid(form)
+        # save the object
+        res = super().form_valid(form)
+
+        # check conditions for running a NewInstructorAction
+        if NewInstructorAction.check(event, role):
+            # TODO: off-load these instructions to the NewInstructorAction?
+            logger.debug('new-instructor: conditions met')
+            # go through all enabled triggers
+            triggers = Trigger.objects.filter(active=True, action='new-instructor')
+            logger.debug('new-instructor: found %d triggers', triggers.count())
+
+            for trigger in triggers:
+                # self.object comes from `super().form_valid(form)` above
+                logger.debug('new-instructor: creating an action object')
+                action = NewInstructorAction(
+                    trigger=trigger,
+                    objects=dict(event=event, task=self.object),
+                )
+                launch_at = action.get_launch_at()
+                meta = dict(
+                    template=trigger.template,
+                    email=None,
+                    context=None,
+                    launch_at=launch_at,
+                )
+                logger.debug('new-instructor: enqueueing')
+                job = scheduler.enqueue_in(
+                    launch_at,
+                    action,
+                    meta=meta,
+                )
+                logger.debug('new-instructor: job created [%r]', job)
+
+                # save job ID in a object
+                logger.debug('new-instructor: saving job in [%r] object',
+                             self.object)
+                self.object.rq_jobs.create(job_id=job.id)
+
+                messages.info(
+                    self.request,
+                    'New email was scheduled: <a href="{}">{}</a>.'.format(
+                        reverse('admin:autoemails_rqjob_changelist'),
+                        job.id,
+                    )
+                )
+
+        else:
+            logger.debug('new-instructor: conditions NOT met')
+
+        # return remembered results
+        return res
 
 
 class TaskUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
