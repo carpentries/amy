@@ -4,7 +4,7 @@ from django.urls import path
 
 import django_rq
 
-from .models import EmailTemplate, Trigger
+from .models import EmailTemplate, Trigger, RQJob
 
 
 scheduler = django_rq.get_scheduler('default')
@@ -36,5 +36,10 @@ class TriggerAdmin(admin.ModelAdmin):
     list_display = ['active', 'created_at', 'action', 'template']
 
 
+class RQJobAdmin(admin.ModelAdmin):
+    list_display = ['job_id', ]
+
+
 admin.site.register(EmailTemplate, EmailTemplateAdmin)
 admin.site.register(Trigger, TriggerAdmin)
+admin.site.register(RQJob, RQJobAdmin)
