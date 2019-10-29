@@ -4,7 +4,7 @@ from django.urls import path
 
 import django_rq
 
-from .models import EmailTemplate
+from .models import EmailTemplate, Trigger
 
 
 scheduler = django_rq.get_scheduler('default')
@@ -32,4 +32,9 @@ class EmailTemplateAdmin(admin.ModelAdmin):
         return TemplateResponse(request, "queue.html", context)
 
 
+class TriggerAdmin(admin.ModelAdmin):
+    list_display = ['active', 'created_at', 'action', 'template']
+
+
 admin.site.register(EmailTemplate, EmailTemplateAdmin)
+admin.site.register(Trigger, TriggerAdmin)
