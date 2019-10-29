@@ -182,3 +182,30 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
 
     def __str__(self):
         return f"Email Template '{self.slug}' ({self.subject})"
+
+
+class Trigger(ActiveMixin, CreatedUpdatedMixin, models.Model):
+    """
+    A representation of action and related email template. User can select what
+    action triggers the email template. Time of the email being sent is
+    programmed-in, and it's not possible to change it in the trigger instance.
+    """
+    ACTION_CHOICES = (
+        ('new-instructor', 'Instructor is added to the workshop'),
+        ('week-after-workshop-completion',
+         '7 days past the end date of an active workshop'),
+    )
+    action = models.CharField(
+        max_length=50, blank=False, null=False,
+        choices=ACTION_CHOICES,
+        verbose_name="Action",
+        help_text="",
+    )
+    template = models.OneToOneField(
+        EmailTemplate,
+        on_delete=models.PROTECT,
+        limit_choices_to={'active': True},
+        verbose_name="Template",
+        help_text="Select desired template. Only active templates are "
+                  "available. Each template can only be used once.",
+    )
