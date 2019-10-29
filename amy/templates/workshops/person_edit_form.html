@@ -89,7 +89,7 @@
           {% if perms.workshops.edit_task %}
           <a href="{% url 'task_edit' t.pk %}" title="Edit {{ t }}"><i class="fas fa-edit"></i></a>
           {% endif %}
-          <form class="amy-form-inline" action="{% url 'task_delete' t.id %}?next={{ request.get_full_path|urlencode }}#tasks" onsubmit='return confirm("Are you sure you wish to remove \"{{ t.person.full_name }}\" from {{ object.slug }}?")' method="POST">
+          <form class="amy-form-inline" action="{% url 'task_delete' t.id %}?next={{ request.get_full_path|urlencode }}#tasks" onsubmit='return confirm("Are you sure you wish to remove \"{{ t }}\" from {{ t.event.slug }}?")' method="POST">
             {% csrf_token %}
             <button type="submit" class="no-btn"><i class="fas fa-times"></i></button>
           </form>
