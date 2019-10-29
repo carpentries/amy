@@ -1358,8 +1358,12 @@ class TaskManager(models.Manager):
         return self.get_queryset().filter(role__name="helper")
 
 
+# CAUTION: moved the import here so that it doens't cause circular dependencies
+from autoemails.models import RQJobsMixin
+
+
 @reversion.register
-class Task(models.Model):
+class Task(RQJobsMixin, models.Model):
     '''Represent who did what at events.'''
 
     event      = models.ForeignKey(Event, on_delete=models.PROTECT)

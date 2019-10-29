@@ -209,3 +209,40 @@ class Trigger(ActiveMixin, CreatedUpdatedMixin, models.Model):
         help_text="Select desired template. Only active templates are "
                   "available. Each template can only be used once.",
     )
+
+
+class RQJob(models.Model):
+    """Simple class for storing Redis Queue job's ID."""
+    job_id = models.CharField(
+        max_length=100,
+        blank=False, null=False,
+        verbose_name="RQ Job ID",
+    )
+
+    trigger = models.ForeignKey(
+        Trigger,
+        blank=False, null=False,
+        on_delete=models.PROTECT,
+        verbose_name="Trigger",
+    )
+
+    def __str__(self):
+        return "<RQJob [{}]>".format(self.job_id)
+
+    class Meta:
+        # add index on job_id for faster retrieval
+        indexes = [
+            models.Index(fields=["job_id"])
+        ]
+
+
+class RQJobsMixin(models.Model):
+    rq_jobs = models.ManyToManyField(
+        RQJob,
+        verbose_name="Related Redis Queue jobs",
+        help_text="This should be filled out by AMY itself.",
+        blank=True,
+    )
+
+    class Meta:
+        abstract = True
