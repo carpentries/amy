@@ -1,5 +1,5 @@
 {%  extends "admin/base_site.html" %}
-{% load i18n admin_urls static admin_list %}
+{% load i18n admin_urls static admin_list tz %}
 
 {% if not is_popup %}
 {% block breadcrumbs %}
@@ -17,19 +17,30 @@
     <table id="result_list">
       <thead>
         <tr>
-          <th scope="col">Outgoing on</th>
-          <th scope="col">Scheduled at</th>
+          <th scope="col">Job ID</th>
+          <th scope="col">Outgoing on (UTC)</th>
+          <th scope="col">Outgoing on (your time)</th>
+          <th scope="col">Created at</th>
           <th scope="col">Template</th>
-          <th scope="col">Rendered email</th>
+          <th scope="col" style="width: 30%;">Rendered email</th>
+          <th scope="col" style="width: 25%;">Provided context</th>
         </tr>
       </thead>
     <tbody>
-    {% for job in queue %}
+    {% for job, time in queue %}
       <tr class="{% cycle 'row1' 'row2' %}">
-        <td>A</td>
-        <td>B</td>
-        <td>C</td>
-        <td>D</td>
+        <td>{{ job.id }}</td>
+        <td>{{ time }}</td>
+        <td>{{ time|localtime }}</td>
+        <td>{{ job.created_at }}</td>
+        <td>{{ job.meta.template }}</td>
+        <td>
+          <strong>{{ job.meta.email.subject }}</strong>
+          <pre style="word-wrap: break-word; overflow-x: auto; white-space: pre-wrap;">{{ job.meta.email.body }}</pre>
+        </td>
+        <td>
+          <pre style="word-wrap: break-word; overflow-x: auto; white-space: pre-wrap;">{{ job.meta.context|pprint }}</pre>
+        </td>
       </tr>
     {% endfor %}
     </tbody>
