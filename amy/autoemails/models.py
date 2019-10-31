@@ -5,6 +5,7 @@ from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.db import models
 from django.template import Template, Context
+from django.urls import reverse
 
 from workshops.models import ActiveMixin, CreatedUpdatedMixin
 
@@ -228,6 +229,9 @@ class RQJob(models.Model):
 
     def __str__(self):
         return "<RQJob [{}]>".format(self.job_id)
+
+    def get_absolute_url(self):
+        return reverse('admin:autoemails_rqjob_change', args=[self.pk])
 
     class Meta:
         # add index on job_id for faster retrieval
