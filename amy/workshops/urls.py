@@ -70,7 +70,7 @@ urlpatterns = [
         path('add/', views.TaskCreate.as_view(), name='task_add'),
     ])),
     path('task/<int:task_id>/', include([
-        path('', views.task_details, name='task_details'),
+        path('', views.TaskDetails.as_view(), name='task_details'),
         path('edit/', views.TaskUpdate.as_view(), name='task_edit'),
         path('delete/', views.TaskDelete.as_view(), name='task_delete'),
     ])),

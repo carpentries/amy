@@ -1247,13 +1247,16 @@ class AllTasks(OnlyForAdminsMixin, AMYListView):
     title = 'All Tasks'
 
 
-@admin_required
-def task_details(request, task_id):
-    '''List details of a particular task.'''
-    task = get_object_or_404(Task, pk=task_id)
-    context = {'title': 'Task {0}'.format(task),
-               'task': task}
-    return render(request, 'workshops/task.html', context)
+class TaskDetails(OnlyForAdminsMixin, AMYDetailView):
+    queryset = Task.objects.all()
+    context_object_name = 'task'
+    pk_url_kwarg = 'task_id'
+    template_name = 'workshops/task.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Task {0}'.format(self.object)
+        return context
 
 
 class TaskCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
