@@ -39,7 +39,25 @@ class DummySubTestWhenTestsLaunchedInParallelMixin:
             return super().subTest(*args, **kwargs)
 
 
-class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
+class SuperuserMixin:
+    def _setUpSuperuser(self):
+        """Set up admin account that can log into the website."""
+        password = "admin"
+        self.admin = Person.objects.create_superuser(
+                username="admin", personal="Super", family="User",
+                email="sudo@example.org", password=password)
+        self.admin.data_privacy_agreement = True
+        self.admin.save()
+
+    def _logSuperuserIn(self):
+        """Log in superuser (administrator) account."""
+        password = "admin"
+        self.client.login(username=self.admin.username,
+                          password=password)
+
+
+class TestBase(SuperuserMixin,
+               DummySubTestWhenTestsLaunchedInParallelMixin,
                WebTest):  # Support for functional tests (django-webtest)
     '''Base class for AMY test cases.'''
 
@@ -214,21 +232,11 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
             country='RU')
 
     def _setUpUsersAndLogin(self):
-        """Set up one account for administrator that can log into the website.
-
-        Log this user in.
-        """
-        password = "admin"
-        self.admin = Person.objects.create_superuser(
-                username="admin", personal="Super", family="User",
-                email="sudo@example.org", password=password)
-        self.admin.data_privacy_agreement = True
-        self.admin.save()
-
-        # log user in
+        """Log superuser in."""
+        self._setUpSuperuser()  # creates self.admin
+        # log admin in
         # this user will be authenticated for all self.client requests
-        return self.client.login(username=self.admin.username,
-                                 password=password)
+        return self._logSuperuserIn()
 
     def _setUpPermissions(self):
         '''Set up permission objects for consistent form selection.'''
