@@ -30,7 +30,7 @@ class EmailTemplateAdmin(admin.ModelAdmin):
         return new_urls + original_urls
 
     def email_queue_view(self, request):
-        jobs = scheduler.get_jobs(with_times=True)
+        jobs = list(scheduler.get_jobs(with_times=True))
         context = dict(
             self.admin_site.each_context(request),
             title="Queue",
