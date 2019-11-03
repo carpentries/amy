@@ -49,7 +49,7 @@ from github.GithubException import GithubException
 from reversion.models import Version, Revision
 from reversion_compare.forms import SelectDiffForm
 
-from autoemails.triggers import NewInstructorAction
+from autoemails.actions import NewInstructorAction
 from autoemails.models import Trigger
 from autoemails.base_views import ActionManageMixin
 from fiscal.forms import SponsorshipForm
