@@ -7,7 +7,7 @@ from django.core.mail import EmailMultiAlternatives
 import django_rq
 
 from autoemails.models import Trigger, Template
-from workshops.models import Event, Role
+from workshops.models import Event, Task
 from workshops.util import match_notification_email, human_daterange
 
 
@@ -100,11 +100,17 @@ class NewInstructorAction(Action):
     launch_at = timedelta(hours=1)
 
     @staticmethod
-    def check(event: Event, role: Role):
+    def check(task: Task):
         """Conditions for creating a NewInstructorAction."""
         return (
-            role.name == 'instructor' and
-            event in Event.objects.upcoming_events()
+            # 2019-11-01: we accept instructors without `may_contact` agreement
+            #             because it was supposed to apply on for non-targeted
+            #             communication like newsletter
+            # task.person.may_contact and
+            task.role.name == 'instructor' and
+            task.event.tags.exclude(
+                name__in=['cancelled', 'unresponsive', 'stalled']) and
+            task.event in Event.objects.upcoming_events()
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
