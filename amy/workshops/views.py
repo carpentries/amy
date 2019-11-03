@@ -51,6 +51,7 @@ from reversion_compare.forms import SelectDiffForm
 
 from autoemails.triggers import NewInstructorAction
 from autoemails.models import Trigger
+from autoemails.base_views import ActionManageMixin
 from fiscal.forms import SponsorshipForm
 from workshops.base_views import (
     AMYCreateView,
@@ -131,6 +132,7 @@ from workshops.util import (
 
 logger = logging.getLogger('amy.signals')
 scheduler = django_rq.get_scheduler('default')
+redis_connection = django_rq.get_connection('default')
 
 
 @login_required
@@ -1260,7 +1262,7 @@ class TaskDetails(OnlyForAdminsMixin, AMYDetailView):
 
 
 class TaskCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                 RedirectSupportMixin, AMYCreateView):
+                 RedirectSupportMixin, AMYCreateView, ActionManageMixin):
     permission_required = 'workshops.add_task'
     model = Task
     form_class = TaskForm
@@ -1269,6 +1271,21 @@ class TaskCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
         """Save request in `self.request`."""
         self.request = request
         return super().post(request, *args, **kwargs)
+
+    def get_logger(self):
+        return logger
+
+    def get_scheduler(self):
+        return scheduler
+
+    def get_redis_connection(self):
+        return redis_connection
+
+    def get_triggers(self):
+        return Trigger.objects.filter(active=True, action='new-instructor')
+
+    def objects(self):
+        return dict(task=self.object, event=self.object.event)
 
     def form_valid(self, form):
         """Additional functions for validating Task Create form:
@@ -1279,7 +1296,6 @@ class TaskCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
 
         seat_membership = form.cleaned_data['seat_membership']
         event = form.cleaned_data['event']
-        role = form.cleaned_data['role']
 
         # check associated membership remaining seats and validity
         if hasattr(self, 'request') and seat_membership is not None:
@@ -1323,69 +1339,92 @@ class TaskCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
         res = super().form_valid(form)
 
         # check conditions for running a NewInstructorAction
-        if NewInstructorAction.check(event, role):
-            # TODO: off-load these instructions to the NewInstructorAction?
-            logger.debug('new-instructor: conditions met')
-            # go through all enabled triggers
-            triggers = Trigger.objects.filter(active=True, action='new-instructor')
-            logger.debug('new-instructor: found %d triggers', triggers.count())
-
-            for trigger in triggers:
-                # self.object comes from `super().form_valid(form)` above
-                logger.debug('new-instructor: creating an action object')
-                action = NewInstructorAction(
-                    trigger=trigger,
-                    objects=dict(event=event, task=self.object),
-                )
-                launch_at = action.get_launch_at()
-                meta = dict(
-                    template=trigger.template,
-                    email=None,
-                    context=None,
-                    launch_at=launch_at,
-                )
-                logger.debug('new-instructor: enqueueing')
-                job = scheduler.enqueue_in(
-                    launch_at,
-                    action,
-                    meta=meta,
-                )
-                logger.debug('new-instructor: job created [%r]', job)
-
-                # save job ID in a object
-                logger.debug('new-instructor: saving job in [%r] object',
-                             self.object)
-                self.object.rq_jobs.create(job_id=job.id)
-
-                messages.info(
-                    self.request,
-                    'New email was scheduled: <a href="{}">{}</a>.'.format(
-                        reverse('admin:autoemails_rqjob_changelist'),
-                        job.id,
-                    )
-                )
-
-        else:
-            logger.debug('new-instructor: conditions NOT met')
+        if NewInstructorAction.check(self.object):
+            self.action_add(NewInstructorAction)
 
         # return remembered results
         return res
 
 
 class TaskUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                 AMYUpdateView):
+                 AMYUpdateView, ActionManageMixin):
     permission_required = 'workshops.change_task'
     model = Task
+    queryset = Task.objects.select_related('event', 'role', 'person')
     form_class = TaskForm
     pk_url_kwarg = 'task_id'
 
+    def get_logger(self):
+        return logger
+
+    def get_scheduler(self):
+        return scheduler
+
+    def get_redis_connection(self):
+        return redis_connection
+
+    def get_triggers(self):
+        return Trigger.objects.filter(active=True, action='new-instructor')
+
+    def get_jobs(self, as_id_list=False):
+        trigg = Trigger.objects.get(action='new-instructor')
+        jobs = self.object.rq_jobs.filter(trigger=trigg)
+        if as_id_list:
+            return jobs.values_list('job_id', flat=True)
+        return jobs
+
+    def objects(self):
+        return dict(task=self.object, event=self.object.event)
+
+    def form_valid(self, form):
+        """Check if RQ job conditions changed, and add/delete jobs if
+        necessary."""
+        old = self.get_object()
+        check_old = NewInstructorAction.check(old)
+
+        res = super().form_valid(form)
+        new = self.object  # refreshed by `super().form_valid()`
+        check_new = NewInstructorAction.check(new)
+
+        # NewInstructorAction conditions are not met, but weren't before
+        if not check_old and check_new:
+            self.action_add(NewInstructorAction)
+
+        # NewInstructorAction conditions were met, but aren't anymore
+        elif check_old and not check_new:
+            self.action_remove(NewInstructorAction)
+
+        return res
+
 
 class TaskDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
-                 RedirectSupportMixin, AMYDeleteView):
+                 RedirectSupportMixin, AMYDeleteView, ActionManageMixin):
     model = Task
     permission_required = 'workshops.delete_task'
     success_url = reverse_lazy('all_tasks')
     pk_url_kwarg = 'task_id'
+
+    def get_logger(self):
+        return logger
+
+    def get_scheduler(self):
+        return scheduler
+
+    def get_redis_connection(self):
+        return redis_connection
+
+    def get_jobs(self, as_id_list=False):
+        trigg = Trigger.objects.get(action='new-instructor')
+        jobs = self.object.rq_jobs.filter(trigger=trigg)
+        if as_id_list:
+            return jobs.values_list('job_id', flat=True)
+        return jobs
+
+    def objects(self):
+        return dict(task=self.object, event=self.object.event)
+
+    def before_delete(self, *args, **kwargs):
+        return self.action_remove(NewInstructorAction)
 
 
 #------------------------------------------------------------
