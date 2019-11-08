@@ -82,28 +82,32 @@ class ActionManageMixin:
 
         # fetch all related jobs
         job_ids = self.get_jobs(as_id_list=True)
-        logger.debug('%s: found %d existing jobs in DB',
-                     action_name,
-                     job_ids.count())
+        if not job_ids:
+            logger.debug('%s: no Trigger available')
 
-        # fetch jobs from Redis
-        jobs = Job.fetch_many(job_ids,
-                              connection=self.get_redis_connection())
-        logger.debug('%s: fetched jobs from Redis', action_name)
+        else:
+            logger.debug('%s: found %d existing jobs in DB',
+                         action_name,
+                         job_ids.count())
 
-        for job in jobs:
-            # we don't need to check if job is finished or failed, we can
-            # blindly delete it
-            job.delete()
-            logger.debug('%s: job [%r] deleted', action_name, job)
+            # fetch jobs from Redis
+            jobs = Job.fetch_many(job_ids,
+                                  connection=self.get_redis_connection())
+            logger.debug('%s: fetched jobs from Redis', action_name)
 
-            # add message about removing the job
-            messages.info(
-                self.request,
-                'Scheduled email was removed because action conditions have '
-                'changed: {}'.format(job.id),
-            )
+            for job in jobs:
+                # we don't need to check if job is finished or failed, we can
+                # blindly delete it
+                job.delete()
+                logger.debug('%s: job [%r] deleted', action_name, job)
 
-        # remove DB job objects
-        self.object.rq_jobs.filter(job_id__in=job_ids).delete()
-        logger.debug('%s: jobs removed from %r', action_name, self.object)
+                # add message about removing the job
+                messages.info(
+                    self.request,
+                    'Scheduled email was removed because action conditions '
+                    'have changed: {}'.format(job.id),
+                )
+
+            # remove DB job objects
+            self.object.rq_jobs.filter(job_id__in=job_ids).delete()
+            logger.debug('%s: jobs removed from %r', action_name, self.object)

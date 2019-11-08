@@ -1414,7 +1414,11 @@ class TaskDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
         return redis_connection
 
     def get_jobs(self, as_id_list=False):
-        trigg = Trigger.objects.get(action='new-instructor')
+        try:
+            trigg = Trigger.objects.get(action='new-instructor')
+        except Trigger.DoesNotExist:
+            return None
+
         jobs = self.object.rq_jobs.filter(trigger=trigg)
         if as_id_list:
             return jobs.values_list('job_id', flat=True)
