@@ -4,9 +4,13 @@ from typing import Optional, List, Dict
 
 from django.contrib.sites.models import Site
 from django.core.mail import EmailMultiAlternatives
+from django.template.exceptions import (
+    TemplateSyntaxError,
+    TemplateDoesNotExist,
+)
 import django_rq
 
-from autoemails.models import Trigger, Template
+from autoemails.models import Trigger, EmailTemplate
 from workshops.models import Event, Task
 from workshops.util import match_notification_email, human_daterange
 
@@ -15,7 +19,7 @@ logger = logging.getLogger('amy.signals')
 scheduler = django_rq.get_scheduler('default')
 
 
-class Action:
+class BaseAction:
     """
     Base class interface for actions triggered by our predefined triggers.
     This class can handle condition checking for whether the action should
@@ -48,8 +52,17 @@ class Action:
     def get_launch_at(self, *args, **kwargs):
         return self.launch_at
 
-    def get_additional_context(self, *args, **kwargs):
-        return self.additional_context
+    def get_additional_context(self, objects=None, *args, **kwargs):
+        if self.additional_context:
+            ctx = self.additional_context.copy()
+        else:
+            ctx = dict()
+
+        try:
+            ctx.update(objects)
+        except (TypeError, ValueError):
+            pass
+        return ctx
 
     def _context(self, additional_context: Optional[Dict] = None) -> Dict:
         """Prepare general context for lazy-evaluated email message used later
@@ -69,18 +82,21 @@ class Action:
         self.template = self.trigger.template
 
         # build email
-        email = self.template.build_email(context)
+        email = self.template.build_email(context=self.context)
         return email
 
     def __call__(self, *args, **kwargs):
         # gather context and build email
-        self.email = self._email()
+        try:
+            self.email = self._email()
+            # send email
+            return self.email.send(fail_silently=False)
+        except (TemplateSyntaxError, TemplateDoesNotExist,
+                Trigger.DoesNotExist, EmailTemplate.DoesNotExist):
+            return False
 
-        # send email
-        return self.email.send(fail_silently=False)
 
-
-class NewInstructorAction(Action):
+class NewInstructorAction(BaseAction):
     """
     Action for informing instructors about workshop they've been accepted to.
 
