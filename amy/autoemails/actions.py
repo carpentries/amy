@@ -137,6 +137,7 @@ class NewInstructorAction(BaseAction):
         task.refresh_from_db()
 
         # prepare context
+        context = dict()
         context['workshop'] = event
         context['workshop_main_type'] = None
         tmp = event.tags.carpentries().first()
