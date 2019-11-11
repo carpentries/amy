@@ -1,7 +1,14 @@
+# test html output
 htmlerror
+# editor files
 *~
 .idea/*
+.vscode/*
+# Python cache files
 *.pyc
+__pycache__
+
+# databases
 db.sqlite3
 db.sqlite3.bak
 # in-file test database used when --keepdb flag is set
