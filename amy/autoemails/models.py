@@ -4,7 +4,7 @@ from typing import Optional, List
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.db import models
-from django.template import Template, Context
+from django.template import engines, Template
 from django.urls import reverse
 
 from workshops.models import ActiveMixin, CreatedUpdatedMixin
@@ -87,16 +87,22 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
     EmailBody = namedtuple('EmailBody', ['text', 'html'])
 
     @staticmethod
-    def get_template(content: str) -> Template:
-        """Translate text into Django Template object."""
-        return Template(content)
+    def get_template(content: str,
+                     default_engine: str='db_backend') -> Template:
+        """Translate text into Django Template object.
+        
+        default_engine: name of the template backend used for rendering
+        For more see:
+        https://docs.djangoproject.com/en/2.2/ref/settings/#std:setting-TEMPLATES-NAME
+        """
+        return engines[default_engine].from_string(content)
 
     @staticmethod
-    def render_template(tpl: str, context: dict) -> str:
+    def render_template(tpl: str, context: dict,
+                        default_engine: str='db_backend') -> str:
         """Render template with given context."""
-        # turn context dictionary into a Context object
-        ctx = Context(context)
-        return EmailTemplate.get_template(tpl).render(ctx)
+        return EmailTemplate.get_template(tpl, default_engine=default_engine) \
+                            .render(context)
 
     def get_subject(self,
                     subject: str = "",

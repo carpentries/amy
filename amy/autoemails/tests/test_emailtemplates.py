@@ -1,5 +1,8 @@
 from django.contrib.sites.models import Site
-from django.template.exceptions import TemplateSyntaxError
+from django.template.exceptions import (
+    TemplateSyntaxError,
+    TemplateDoesNotExist,
+)
 from django.test import TestCase
 
 from autoemails.models import EmailTemplate
@@ -107,6 +110,21 @@ Sincerely,
         data3 = dict(name='Harry')
         self.assertEqual(EmailTemplate.render_template(template3, data3),
                          "Hello, XXX-unset-variable-XXX!")
+    
+    def test_reading_file_from_disk(self):
+        """Non-default database engine backend shouldn't allow to read from
+        disk."""
+        # we're using a different backend than what's used for normal templates
+        # because we don't want to allow users to render what they shouldn't
+        template = "{% include 'base.html' %}"
+        data = dict()
+        with self.assertRaises(TemplateDoesNotExist):
+            # with this test, we're confirming that `db_backend`, a default for
+            # EmailTemplate, is unable to reach `base.html` file
+            EmailTemplate.render_template(template, data)
+        
+        # this must work, because we're using Django-main template engine
+        EmailTemplate.render_template(template, data, default_engine='django')
 
     def test_get_methods(self):
         tpl = self.prepare_template()
