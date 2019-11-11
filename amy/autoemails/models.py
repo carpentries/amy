@@ -111,23 +111,32 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
     def get_recipients(self,
                        recipients: Optional[List[str]] = None,
                        context: Optional[dict] = None) -> list:
-        return recipients or [self.render_template(self.to_header, context)]
+        return recipients or list(
+            # remove empty entries from the list
+            filter(bool, [self.render_template(self.to_header, context)])
+        )
 
     def get_cc_recipients(self,
                           cc_recipients: Optional[List[str]] = None,
                           context: Optional[dict] = None) -> list:
-        return cc_recipients or [self.render_template(self.cc_header, context)]
+        return cc_recipients or list(
+            # remove empty entries from the list
+            filter(bool, [self.render_template(self.cc_header, context)])
+        )
 
     def get_bcc_recipients(self,
                            bcc_recipients: Optional[List[str]] = None,
                            context: Optional[dict] = None) -> list:
-        return bcc_recipients or [self.render_template(self.bcc_header,
-                                                       context)]
+        return bcc_recipients or list(
+            # remove empty entries from the list
+            filter(bool, [self.render_template(self.bcc_header, context)])
+        )
 
     def get_reply_to(self,
                      reply_to: str = "",
                      context: Optional[dict]=None) -> str:
-        return reply_to or [self.render_template(self.reply_to_header, context)]
+        return reply_to or [self.render_template(self.reply_to_header,
+                                                 context)]
 
     def get_body(self,
                  text: str = "",
