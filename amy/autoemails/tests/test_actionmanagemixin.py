@@ -5,6 +5,8 @@ from django.test import TestCase, RequestFactory
 import django_rq
 from fakeredis import FakeStrictRedis
 from rq import Queue
+from rq.exceptions import NoSuchJobError
+from rq.job import Job
 from rq_scheduler.utils import to_unix
 
 from autoemails.actions import NewInstructorAction
@@ -21,7 +23,46 @@ from workshops.models import (
 )
 
 
+# dummy function that can be enqueued
+# it has easy code since it will be executed in a blocking way
+def dummy():
+    return 42
+
+
 class TestActionManageMixin(FakeRedisTestCaseMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+
+        # prepare some necessary objects
+        self.template = EmailTemplate.objects.create()
+        self.trigger = Trigger.objects.create(action='test-action',
+                                              template=self.template)
+        
+        # totally fake Task, Role and Event data
+        Tag.objects.bulk_create([
+            Tag(name='SWC'),
+            Tag(name='DC'),
+            Tag(name='LC'),
+        ])
+        self.event = Event.objects.create(
+            slug='test-event',
+            host=Organization.objects.first(),
+            start=date.today() + timedelta(days=7),
+            end=date.today() + timedelta(days=8),
+            country='GB',
+            venue='Ministry of Magic',
+            address='Underground',
+            latitude=20.0,
+            longitude=20.0,
+            url='https://test-event.example.com',
+        )
+        self.event.tags.set(Tag.objects.filter(name__in=['SWC', 'DC', 'LC']))
+        self.person = Person.objects.create(personal='Harry', family='Potter',
+                                            email='hp@magic.uk')
+        self.role = Role.objects.create(name='instructor')
+        self.task = Task.objects.create(event=self.event, person=self.person,
+                                        role=self.role)
+
     def testNotImplementedMethods(self):
         a = ActionManageMixin()
 
@@ -39,34 +80,8 @@ class TestActionManageMixin(FakeRedisTestCaseMixin, TestCase):
             a.objects()
 
     def testActionAdding(self):
-        # prepare some necessary objects
-        template = EmailTemplate.objects.create()
-        trigger = Trigger.objects.create(action='test-action',
-                                         template=template)
-
-        # totally fake Task, Role and Event data
-        Tag.objects.bulk_create([
-            Tag(name='SWC'),
-            Tag(name='DC'),
-            Tag(name='LC'),
-        ])
-        event = Event.objects.create(
-            slug='test-event',
-            host=Organization.objects.first(),
-            start=date.today() + timedelta(days=7),
-            end=date.today() + timedelta(days=8),
-            country='GB',
-            venue='Ministry of Magic',
-            address='Underground',
-            latitude=20.0,
-            longitude=20.0,
-            url='https://test-event.example.com',
-        )
-        event.tags.set(Tag.objects.filter(name__in=['SWC', 'DC', 'LC']))
-        person = Person.objects.create(personal='Harry', family='Potter',
-                                       email='hp@magic.uk')
-        role = Role.objects.create(name='instructor')
-        task = Task.objects.create(event=event, person=person, role=role)
+        trigger = self.trigger
+        task = self.task
 
         # Define a special class inheriting from the mixin we're about to test
         # so that we can (indirectly?) test the mixin itself. In some cases
@@ -124,8 +139,8 @@ class TestActionManageMixin(FakeRedisTestCaseMixin, TestCase):
         # view action invoke
         view.action_add(NewInstructorAction)
 
-        # ensure only one job is added (because we created only one trigger for
-        # it)
+        # ensure only one job is added (because we created only one trigger
+        # for it)
         self.assertEqual(self.scheduler.count(), 1)
         jobs = list(self.scheduler.get_jobs())
         self.assertEqual(len(jobs), 1)
@@ -159,7 +174,7 @@ class TestActionManageMixin(FakeRedisTestCaseMixin, TestCase):
             job.meta,
             dict(
                 action=action,
-                template=template,
+                template=trigger.template,
                 launch_at=action.get_launch_at(),
                 email=None,
                 context=None,
@@ -171,3 +186,99 @@ class TestActionManageMixin(FakeRedisTestCaseMixin, TestCase):
         rqjob = RQJob.objects.first()
         self.assertEqual(rqjob.job_id, job.get_id())
         self.assertEqual(rqjob.trigger, trigger)
+
+    def testActionRemove(self):
+        trigger = self.trigger
+        task = self.task
+        job_ids = MagicMock()  # it will mock a QuerySet
+        connection = self.connection
+        queue = self.queue
+        scheduler = self.scheduler
+
+        # Define a special class inheriting from the mixin we're about to test
+        # so that we can (indirectly?) test the mixin itself. In some cases
+        # the mock mechanism will have to be used, because - again - we can
+        # only indirectly test the behavior of `action_remove()`.
+        class MockView(ActionManageMixin):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self.object = task
+                self.logger = MagicMock()
+
+            def get_logger(self):
+                return self.logger
+
+            def get_scheduler(self):
+                self.queue = queue
+                self.scheduler = scheduler
+                return self.scheduler
+
+            def get_redis_connection(self):
+                self.connection = connection
+                return self.connection
+
+            def get_triggers(self):
+                objs = [trigger]
+                triggers = MagicMock()
+                triggers.__iter__.return_value = iter(objs)
+                triggers.count.return_value = len(objs)
+                return triggers
+
+            def objects(self):
+                return dict(task=self.object, event=self.object.event)
+
+            @property
+            def request(self):
+                # fake request created thanks to RequestFactory from Django
+                # Test Client
+                req = RequestFactory().post('/tasks/create')
+                return req
+
+            def get_jobs(self, as_id_list=True):
+                if not as_id_list:
+                    raise NotImplementedError()
+                return job_ids
+
+        view = MockView()
+        
+        # assertions before the view action is invoked
+        self.assertEqual(self.scheduler.count(), 0)
+        self.assertEqual(RQJob.objects.count(), 0)
+
+        # view action invoke - it schedules a job
+        view.action_add(NewInstructorAction)
+
+        # additionally enqueue (as opposite to schedule) a blocking job
+        enqueued_job = self.queue.enqueue(dummy)
+        self.assertTrue(enqueued_job.is_finished)
+
+        # ensure both a new Job and a corresponding RQJob were created
+        self.assertEqual(self.scheduler.count(), 1)
+        self.assertEqual(RQJob.objects.count(), 1)
+
+        # ensure it's the same job
+        job = next(self.scheduler.get_jobs())
+        rqjob = RQJob.objects.first()
+        self.assertEqual(job.get_id(), rqjob.job_id)
+
+        # mock a Query Set
+        # previously enqueued job is added here so that the action_remove
+        # interface is mocked into removing it from the enqueued jobs
+        real_job_ids = [job.get_id(), enqueued_job.id]
+        job_ids.__iter__.return_value = iter(real_job_ids)
+        job_ids.count.return_value = len(real_job_ids)
+
+        # invoke action_remove
+        view.action_remove(NewInstructorAction)
+
+        # ensure there are no scheduled jobs nor RQJob objects
+        self.assertEqual(self.scheduler.count(), 0)
+        self.assertEqual(RQJob.objects.count(), 0)
+
+        # ensure the previously enqueued job is no longer available
+        with self.assertRaises(NoSuchJobError):
+            Job.fetch(enqueued_job.id, connection=self.connection)
+
+        # logger.debug is called 6 times (for action_add) and 5 times
+        # (for action_remove)
+        self.assertEqual(view.get_logger().debug.call_count, 6 + 5)

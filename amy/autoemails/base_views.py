@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.urls import reverse
+from rq.exceptions import NoSuchJobError
 from rq.job import Job
 
 
@@ -85,29 +86,42 @@ class ActionManageMixin:
         # fetch all related jobs
         job_ids = self.get_jobs(as_id_list=True)
         if not job_ids:
-            logger.debug('%s: no Trigger available')
+            logger.debug('%s: no existing jobs available', action_name)
 
         else:
             logger.debug('%s: found %d existing jobs in DB',
                          action_name,
                          job_ids.count())
 
-            # fetch jobs from Redis
-            jobs = Job.fetch_many(job_ids,
-                                  connection=self.get_redis_connection())
-            logger.debug('%s: fetched jobs from Redis', action_name)
+            job_ids = list(job_ids)
 
-            for job in jobs:
-                # we don't need to check if job is finished or failed, we can
-                # blindly delete it
-                job.delete()
-                logger.debug('%s: job [%r] deleted', action_name, job)
+            scheduler = self.get_scheduler()
+            connection = self.get_redis_connection()
+
+            # cancel enqueued or scheduled jobs
+            for job in job_ids:
+                try:
+                    # fetch job from Reddit - if only it's already enqueued
+                    enqueued_job = Job.fetch(job, connection=connection)
+                    # we don't need to check if job is finished or failed, we
+                    # can blindly delete it
+                    enqueued_job.delete(remove_from_queue=True)
+                    logger.debug('%s: enqueued job [%r] deleted', action_name,
+                                 job)
+
+                except NoSuchJobError:
+                    # apparently the job is not enqueued yet, let's cancel
+                    # it from the scheduler interface
+                    scheduler.cancel(job)
+                    logger.debug('%s: scheduled job [%r] deleted', action_name,
+                                 job)
 
                 # add message about removing the job
                 messages.info(
                     self.request,
                     'Scheduled email was removed because action conditions '
-                    'have changed: {}'.format(job.id),
+                    'have changed: {}'.format(job),
+                    fail_silently=True,
                 )
 
             # remove DB job objects
