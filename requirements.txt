@@ -37,3 +37,6 @@ click==7.0
 django-rq==2.1.0
 rq-scheduler==0.9
 croniter==0.3.30
+# faking Redis server
+fakeredis==1.0.5
+lupa==1.8
