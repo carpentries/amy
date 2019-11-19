@@ -43,6 +43,16 @@ class BaseAction:
         self.context = None
         self.email = None
 
+    def __eq__(self, b):
+        return (
+            self.trigger == b.trigger and
+            self.template == b.template and
+            self.context_objects == b.context_objects and
+            self.context == b.context and
+            self.email == b.email and
+            self.get_launch_at() == b.get_launch_at()
+        )
+
     @staticmethod
     def check(cls, *args, **kwargs):
         """This static method can be used to determine if conditions are met

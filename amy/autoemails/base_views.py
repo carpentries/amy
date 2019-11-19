@@ -46,6 +46,7 @@ class ActionManageMixin:
             # prepare launch timestamp and some metadata
             launch_at = action.get_launch_at()
             meta = dict(
+                action=action,
                 template=trigger.template,
                 launch_at=launch_at,
                 email=None,
@@ -61,7 +62,7 @@ class ActionManageMixin:
             # save job ID in the object
             logger.debug('%s: saving job in [%r] object', action_name,
                          self.object)
-            self.object.rq_jobs.create(job_id=job.id, trigger=trigger)
+            self.object.rq_jobs.create(job_id=job.get_id(), trigger=trigger)
 
             # both `self.object` and `self.request` are made available by
             # other mixins
@@ -71,6 +72,7 @@ class ActionManageMixin:
                     reverse('admin:autoemails_rqjob_changelist'),
                     job.id,
                 ),
+                fail_silently=True,
             )
 
     def action_remove(self, action_class):
