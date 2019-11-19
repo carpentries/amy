@@ -255,14 +255,14 @@ AUTH_PASSWORD_VALIDATORS = [
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6379/0',
+        'LOCATION': env.str('AMY_REDIS_URL', 'redis://localhost:6379/') + '0',
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
         }
     },
     'select2': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6379/1',
+        'LOCATION': env.str('AMY_REDIS_URL', 'redis://localhost:6379/') + '1',
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
         }
@@ -595,9 +595,7 @@ SELECT2_CACHE_BACKEND = 'select2'
 # https://github.com/rq/django-rq
 RQ_QUEUES = {
     'default': {
-        'HOST': 'localhost',
-        'PORT': 6379,
-        'DB': 2,
+        'URL': env.str('AMY_REDIS_URL', 'redis://localhost:6379/') + '2',
         'DEFAULT_TIMEOUT': 360,
     }
 }
