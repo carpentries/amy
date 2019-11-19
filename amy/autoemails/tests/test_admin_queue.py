@@ -2,20 +2,18 @@ from datetime import timedelta
 
 from django.test import TestCase, Client
 from django.urls import reverse
-import django_rq
 
+from autoemails.tests.base import FakeRedisTestCaseMixin
 from workshops.tests.base import SuperuserMixin
-
-
-scheduler = django_rq.get_scheduler('default')
 
 
 def dummy_job():
     return 42
 
 
-class TestAdminQueueView(SuperuserMixin, TestCase):
+class TestAdminQueueView(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
     def setUp(self):
+        super().setUp()
         self.url = reverse('admin:autoemails_emailtemplate_queue')
         self._setUpSuperuser()  # creates self.admin
 
@@ -54,11 +52,7 @@ class TestAdminQueueView(SuperuserMixin, TestCase):
         self.assertEqual(rv.context['queue'], [])
 
         # schedule some dummy job
-        # WARNING: this uses real queue for the tests...
-        # for now the tested code (admin's email queue view) doesn't have
-        # option to switch to a FakeRedis server provided by us, so we
-        # use the "default" scheduler.
-        job = scheduler.enqueue_in(timedelta(hours=1), dummy_job)
+        job = self.scheduler.enqueue_in(timedelta(hours=1), dummy_job)
 
         # refresh queue list
         rv = self.client.get(self.url)
@@ -69,6 +63,3 @@ class TestAdminQueueView(SuperuserMixin, TestCase):
         queue = rv.context['queue']
         job2, time = queue[0]
         self.assertEqual(job, job2)
-
-        # remove the job
-        job.delete()
