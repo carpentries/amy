@@ -1,0 +1,41 @@
+version: '3'
+
+services:
+  redis_cache:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis:/data
+
+  amy:
+    build: .
+    image: amy:latest
+    environment:
+      - AMY_REDIS_URL=redis://redis_cache:6379/
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/amy
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis_cache
+  
+  redis_worker:
+    image: amy:latest
+    environment:
+      - AMY_REDIS_URL=redis://redis_cache:6379/
+    command: python manage.py rqworker
+    depends_on:
+      - redis_cache
+      - amy
+  
+  redis_scheduler:
+    image: amy:latest
+    environment:
+      - AMY_REDIS_URL=redis://redis_cache:6379/
+    command: python manage.py rqscheduler
+    depends_on:
+      - redis_cache
+      - amy
+      - redis_worker
