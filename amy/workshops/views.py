@@ -1368,8 +1368,7 @@ class TaskUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
         return Trigger.objects.filter(active=True, action='new-instructor')
 
     def get_jobs(self, as_id_list=False):
-        trigg = Trigger.objects.get(action='new-instructor')
-        jobs = self.object.rq_jobs.filter(trigger=trigg)
+        jobs = self.object.rq_jobs.filter(trigger__action='new-instructor')
         if as_id_list:
             return jobs.values_list('job_id', flat=True)
         return jobs
@@ -1415,12 +1414,7 @@ class TaskDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
         return redis_connection
 
     def get_jobs(self, as_id_list=False):
-        try:
-            trigg = Trigger.objects.get(action='new-instructor')
-        except Trigger.DoesNotExist:
-            return None
-
-        jobs = self.object.rq_jobs.filter(trigger=trigg)
+        jobs = self.object.rq_jobs.filter(trigger__action='new-instructor')
         if as_id_list:
             return jobs.values_list('job_id', flat=True)
         return jobs
