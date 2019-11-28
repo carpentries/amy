@@ -45,7 +45,7 @@ class TriggerAdmin(admin.ModelAdmin):
 
 
 class RQJobAdmin(admin.ModelAdmin):
-    list_display = ['job_id', ]
+    list_display = ['job_id', 'trigger']
 
 
 admin.site.register(EmailTemplate, EmailTemplateAdmin)

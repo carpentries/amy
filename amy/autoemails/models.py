@@ -226,6 +226,10 @@ class Trigger(ActiveMixin, CreatedUpdatedMixin, models.Model):
                   "available. Each template can only be used once.",
     )
 
+    def __str__(self):
+        return '<Trigger for "{}" (template "{}")>'.format(self.action,
+                                                           self.template.slug)
+
 
 class RQJob(models.Model):
     """Simple class for storing Redis Queue job's ID."""
@@ -249,6 +253,9 @@ class RQJob(models.Model):
         return reverse('admin:autoemails_rqjob_change', args=[self.pk])
 
     class Meta:
+        verbose_name = "RQ Job"
+        verbose_name_plural = "RQ Jobs"
+
         # add index on job_id for faster retrieval
         indexes = [
             models.Index(fields=["job_id"])
