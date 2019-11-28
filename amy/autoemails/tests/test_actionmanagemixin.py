@@ -37,7 +37,7 @@ class TestActionManageMixin(FakeRedisTestCaseMixin, TestCase):
         self.template = EmailTemplate.objects.create()
         self.trigger = Trigger.objects.create(action='test-action',
                                               template=self.template)
-        
+
         # totally fake Task, Role and Event data
         Tag.objects.bulk_create([
             Tag(name='SWC'),
@@ -88,23 +88,22 @@ class TestActionManageMixin(FakeRedisTestCaseMixin, TestCase):
         # the mock mechanism will have to be used, because - again - we can
         # only indirectly test the behavior of `action_add()`.
         class MockView(ActionManageMixin):
-            def __init__(self, *args, **kwargs):
+            def __init__(self, connection, queue, scheduler, *args, **kwargs):
                 super().__init__(*args, **kwargs)
                 self.object = task
                 self.logger = MagicMock()
+                self.connection = connection
+                self.queue = queue
+                self.scheduler = scheduler
 
             def get_logger(self):
                 return self.logger
 
             def get_scheduler(self):
-                self.queue = Queue(is_async=False,
-                                   connection=self.get_redis_connection())
-                self.scheduler = django_rq.get_scheduler('default',
-                                                         queue=self.queue)
+                self.get_redis_connection()
                 return self.scheduler
 
             def get_redis_connection(self):
-                self.connection = FakeStrictRedis()
                 return self.connection
 
             def get_triggers(self):
@@ -130,7 +129,7 @@ class TestActionManageMixin(FakeRedisTestCaseMixin, TestCase):
             objects=dict(task=task, event=task.event),
         )
 
-        view = MockView()
+        view = MockView(self.connection, self.queue, self.scheduler)
         
         # assertions before the view action is invoked
         self.assertEqual(self.scheduler.count(), 0)
@@ -191,30 +190,28 @@ class TestActionManageMixin(FakeRedisTestCaseMixin, TestCase):
         trigger = self.trigger
         task = self.task
         job_ids = MagicMock()  # it will mock a QuerySet
-        connection = self.connection
-        queue = self.queue
-        scheduler = self.scheduler
 
         # Define a special class inheriting from the mixin we're about to test
         # so that we can (indirectly?) test the mixin itself. In some cases
         # the mock mechanism will have to be used, because - again - we can
         # only indirectly test the behavior of `action_remove()`.
         class MockView(ActionManageMixin):
-            def __init__(self, *args, **kwargs):
+            def __init__(self, connection, queue, scheduler, *args, **kwargs):
                 super().__init__(*args, **kwargs)
                 self.object = task
                 self.logger = MagicMock()
+                self.connection = connection
+                self.queue = queue
+                self.scheduler = scheduler
 
             def get_logger(self):
                 return self.logger
 
             def get_scheduler(self):
-                self.queue = queue
-                self.scheduler = scheduler
+                self.get_redis_connection()
                 return self.scheduler
 
             def get_redis_connection(self):
-                self.connection = connection
                 return self.connection
 
             def get_triggers(self):
@@ -239,7 +236,7 @@ class TestActionManageMixin(FakeRedisTestCaseMixin, TestCase):
                     raise NotImplementedError()
                 return job_ids
 
-        view = MockView()
+        view = MockView(self.connection, self.queue, self.scheduler)
         
         # assertions before the view action is invoked
         self.assertEqual(self.scheduler.count(), 0)
