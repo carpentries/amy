@@ -5,6 +5,7 @@ import csv
 import datetime
 from functools import wraps
 from itertools import chain
+import logging
 import re
 
 import requests
@@ -30,7 +31,11 @@ from django.http import Http404
 from django.shortcuts import render, redirect
 from django.utils.http import is_safe_url
 from django_comments.models import Comment
+import django_rq
 
+from autoemails.actions import NewInstructorAction
+from autoemails.base_views import ActionManageMixin
+from autoemails.models import Trigger
 from dashboard.models import Criterium
 from workshops.models import (
     Event,
@@ -42,6 +47,9 @@ from workshops.models import (
     STR_MED,
     STR_LONG,
 )
+
+logger = logging.getLogger('amy.signals')
+scheduler = django_rq.get_scheduler('default')
 
 ITEMS_PER_PAGE = 25
 
@@ -254,7 +262,7 @@ def verify_upload_person_task(data, match=False):
     return errors_occur
 
 
-def create_uploaded_persons_tasks(data):
+def create_uploaded_persons_tasks(data, request=None):
     """
     Create persons and tasks from upload data.
     """
@@ -314,6 +322,27 @@ def create_uploaded_persons_tasks(data):
             except ObjectDoesNotExist as e:
                 raise ObjectDoesNotExist('{0} (for "{1}")'.format(str(e),
                                                                   row_repr))
+
+    jobs_created = []
+    rqjobs_created = []
+    
+    # for each created task, try to add a new-instructor action
+    with transaction.atomic():
+        for task in tasks_created:
+            # conditions check out
+            if NewInstructorAction.check(task):
+                # prepare context and everything and create corresponding RQJob
+                jobs, rqjobs = ActionManageMixin.add(
+                    action_class=NewInstructorAction,
+                    logger=logger,
+                    scheduler=scheduler,
+                    triggers=Trigger.objects.filter(),
+                    context_objects=dict(),
+                    object_=task,
+                    request=request,
+                )
+                jobs_created += jobs
+                rqjobs_created += rqjobs
 
     return persons_created, tasks_created
 

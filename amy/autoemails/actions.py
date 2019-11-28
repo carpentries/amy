@@ -12,7 +12,6 @@ import django_rq
 
 from autoemails.models import Trigger, EmailTemplate
 from workshops.models import Event, Task
-from workshops.util import match_notification_email, human_daterange
 
 
 logger = logging.getLogger('amy.signals')
@@ -140,6 +139,8 @@ class NewInstructorAction(BaseAction):
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
+        from workshops.util import match_notification_email, human_daterange
+
         # refresh related event
         event = objects['event']
         task = objects['task']

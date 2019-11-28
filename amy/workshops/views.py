@@ -391,7 +391,8 @@ def person_bulk_add_confirmation(request):
                 # constraints so we should call it first
                 verify_upload_person_task(persons_tasks)
                 persons_created, tasks_created = \
-                    create_uploaded_persons_tasks(persons_tasks)
+                    create_uploaded_persons_tasks(persons_tasks,
+                                                  request=request)
             except (IntegrityError, ObjectDoesNotExist, InternalError) as e:
                 messages.error(request,
                                "Error saving data to the database: {}. "
