@@ -2,6 +2,9 @@ from datetime import timedelta
 
 from django.test import TestCase, Client
 from django.urls import reverse
+import django_rq
+from fakeredis import FakeStrictRedis
+from rq import Queue
 
 from autoemails.tests.base import FakeRedisTestCaseMixin
 from workshops.tests.base import SuperuserMixin
@@ -16,6 +19,9 @@ class TestAdminQueueView(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         super().setUp()
         self.url = reverse('admin:autoemails_emailtemplate_queue')
         self._setUpSuperuser()  # creates self.admin
+        # self.connection = FakeStrictRedis()
+        # self.queue = Queue(is_async=False, connection=self.connection)
+        # self.scheduler = django_rq.get_scheduler('default', queue=self.queue)
 
     def test_view_access_by_anonymous(self):
         rv = self.client.get(self.url)

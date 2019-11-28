@@ -597,6 +597,10 @@ RQ_QUEUES = {
     'default': {
         'URL': env.str('AMY_REDIS_URL', 'redis://localhost:6379/') + '2',
         'DEFAULT_TIMEOUT': 360,
+    },
+    'testing': {
+        'URL': env.str('AMY_REDIS_URL', 'redis://localhost:6379/') + '15',
+        'DEFAULT_TIMEOUT': 360,
     }
 }
 # Add link to admin
