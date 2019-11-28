@@ -243,11 +243,7 @@ class TestBase(SuperuserMixin,
         badge_admin = Group.objects.create(name='Badge Admin')
         badge_admin.permissions.add(*Permission.objects.filter(
             codename__endswith='_badge'))
-        try:
-            add_badge = Permission.objects.get(codename='add_badge')
-        except:
-            print([p.codename for p in Permission.objects.all()])
-            raise
+        add_badge = Permission.objects.get(codename='add_badge')
         self.ironman.groups.add(badge_admin)
         self.ironman.user_permissions.add(add_badge)
         self.ron.groups.add(badge_admin)
