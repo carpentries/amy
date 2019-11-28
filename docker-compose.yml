@@ -17,7 +17,7 @@ services:
     volumes:
       - .:/amy
     ports:
-      - "8000:8000"
+      - "8080:8000"
     depends_on:
       - redis_cache
   
