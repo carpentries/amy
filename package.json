@@ -1,6 +1,6 @@
 {
   "name": "AMY",
-  "version": "v2.9.4",
+  "version": "v2.9.5",
   "description": "A web-based workshop administration application for The Carpentries",
   "main": "index.js",
   "repository": "git@github.com:swcarpentry/amy.git",
