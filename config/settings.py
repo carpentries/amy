@@ -607,3 +607,9 @@ RQ_QUEUES = {
 RQ_SHOW_ADMIN_LINK = False
 # If you need custom exception handlers
 # RQ_EXCEPTION_HANDLERS = ['path.to.my.handler']
+
+
+# Autoemails application settings
+# -----------------------------------------------------------------------------
+# These settings describe internal `autoemails` application behavior.
+AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS = 'amy-tests@carpentries.org'

@@ -2,6 +2,7 @@ from datetime import timedelta
 import logging
 from typing import Optional, List, Dict
 
+from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.mail import EmailMultiAlternatives
 from django.template.exceptions import (
@@ -98,6 +99,13 @@ class BaseAction:
         # gather context and build email
         try:
             self.email = self._email()
+
+            # check if the recipients are being overridden in the settings
+            if settings.AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS:
+                self.email.to = [settings.AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS]
+                self.email.cc = []
+                self.email.bcc = []
+
             # send email
             return self.email.send(fail_silently=False)
         except (TemplateSyntaxError, TemplateDoesNotExist,

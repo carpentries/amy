@@ -1,16 +1,18 @@
 from datetime import timedelta
 
 from django.contrib.sites.models import Site
+from django.core import mail
 from django.db.models import ProtectedError
 from django.template.exceptions import (
     TemplateSyntaxError,
 )
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from autoemails.actions import BaseAction
 from autoemails.models import Trigger, EmailTemplate
 
 
+@override_settings(AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS=None)
 class TestAction(TestCase):
     def testLaunchTimestamp(self):
         # the trigger and email template below are totally fake
@@ -148,6 +150,18 @@ Here are some activities you can do:
 
 Sincerely,
 Regional Coordinator""")
+        self.assertEqual(len(mail.outbox), 0)  # no email sent yet
+
+        # 5. send email!
+        a()
+        self.assertEqual(len(mail.outbox), 1)
+        email = mail.outbox[0]
+        self.assertEqual(email.to, [])
+        self.assertEqual(email.cc, ['copy@example.org'])
+        self.assertEqual(email.bcc, ['bcc@example.org'])
+        self.assertEqual(email.reply_to, ['regional@example.org'])
+        self.assertEqual(email.from_email, 'test@address.com')
+        self.assertEqual(email.subject, 'Welcome to AMY')
 
     def testEmailChangedTemplate(self):
         """Check email building when email template was changed."""
@@ -192,7 +206,6 @@ Regional Coordinator""")
                        objects=self.objects)
 
         # 3. change something in template from DB
-        # 3. change something in trigger from DB
         trigg = Trigger.objects.get(action='new-instructor')
         trigg.template = EmailTemplate.objects.create(
             slug='another-template',
@@ -248,7 +261,7 @@ Regional Coordinator""")
     def testEmailTemplateRemoved(self):
         """Remove referenced object (template) and ensure
         the email building fails correctly.
-        
+
         It's impossible to remove the email template from DB, because it's
         guarded by Django/DB protection mechanisms."""
         # 1. create Trigger and EmailTemplate
@@ -263,7 +276,6 @@ Regional Coordinator""")
         # 3. remove trigger
         with self.assertRaises(ProtectedError):
             EmailTemplate.objects.filter(slug='sample-template').delete()
-
 
     def testTriggerRemoved(self):
         """Remove referenced trigger and ensure the email building fails
@@ -283,3 +295,61 @@ Regional Coordinator""")
         # 4. build email
         with self.assertRaises(Trigger.DoesNotExist):
             email = a._email()
+
+    @override_settings(
+        AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS='test-address@example.org')
+    def testOverrideSettings(self):
+        """Check behavior with `AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS` setting.
+
+        This setting is used to force a different outgoing address in the
+        prepared email."""
+        # 1. create Trigger and EmailTemplate
+        self.prepare_template()
+        self.prepare_trigger()
+
+        # 2. create BaseAction, add context
+        self.prepare_context()
+        a = BaseAction(trigger=self.trigger,
+                       objects=self.objects)
+
+        # 3. change something in template from DB
+        trigg = Trigger.objects.get(action='new-instructor')
+        trigg.template = EmailTemplate.objects.create(
+            slug='another-template',
+            subject='Greetings',
+            to_header='recipient@example.org',
+            from_header='sender@example.org',
+            cc_header='copy@example.org',
+            bcc_header='bcc@example.org',
+            reply_to_header='reply-to@example.org',
+            html_template="<p>Content</p>",
+            text_template="Content",
+        )
+        trigg.save()
+
+        # 4. build email
+        email = a._email()
+
+        # 5. verify email - at this point the addresses stay the same, they are
+        # not overridden yet
+        self.assertEqual(email.to, ['recipient@example.org'])
+        self.assertEqual(email.cc, ['copy@example.org'])
+        self.assertEqual(email.bcc, ['bcc@example.org'])
+        self.assertEqual(email.reply_to, ['reply-to@example.org'])
+        self.assertEqual(email.from_email, 'sender@example.org')
+
+        # 6. verify no outgoing emails yet
+        self.assertEqual(len(mail.outbox), 0)
+
+        # 7. send email (by invoking action.__call__())
+        a()
+
+        # 8. check outgoing email
+        self.assertEqual(len(mail.outbox), 1)
+        email = mail.outbox[0]
+
+        self.assertEqual(email.to, ['test-address@example.org'])
+        self.assertEqual(email.cc, [])
+        self.assertEqual(email.bcc, [])
+        self.assertEqual(email.reply_to, ['reply-to@example.org'])
+        self.assertEqual(email.from_email, 'sender@example.org')
