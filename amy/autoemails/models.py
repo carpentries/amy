@@ -231,7 +231,7 @@ class Trigger(ActiveMixin, CreatedUpdatedMixin, models.Model):
                                                            self.template.slug)
 
 
-class RQJob(models.Model):
+class RQJob(CreatedUpdatedMixin, models.Model):
     """Simple class for storing Redis Queue job's ID."""
     job_id = models.CharField(
         max_length=100,

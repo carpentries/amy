@@ -14,6 +14,8 @@ class Migration(migrations.Migration):
             name='RQJob',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('last_updated_at', models.DateTimeField(auto_now=True, null=True)),
                 ('job_id', models.CharField(max_length=100, verbose_name='RQ Job ID')),
                 ('trigger', models.ForeignKey(on_delete=models.deletion.PROTECT, to='autoemails.Trigger', verbose_name='Trigger')),
             ],
