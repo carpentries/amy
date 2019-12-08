@@ -41,11 +41,11 @@ class EmailTemplateAdmin(admin.ModelAdmin):
 
 
 class TriggerAdmin(admin.ModelAdmin):
-    list_display = ['active', 'created_at', 'action', 'template']
+    list_display = ['action', 'active', 'created_at', 'template']
 
 
 class RQJobAdmin(admin.ModelAdmin):
-    list_display = ['job_id', 'trigger']
+    list_display = ['job_id', 'created_at', 'trigger']
 
 
 admin.site.register(EmailTemplate, EmailTemplateAdmin)
