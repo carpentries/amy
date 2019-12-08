@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.template.response import TemplateResponse
-from django.urls import path
-
+from django.urls import path, reverse
+from django.utils.html import format_html
 import django_rq
 from rq.job import Job
 
@@ -46,7 +46,12 @@ class TriggerAdmin(admin.ModelAdmin):
 
 
 class RQJobAdmin(admin.ModelAdmin):
-    list_display = ['job_id', 'created_at', 'trigger']
+    list_display = ['job_id', 'created_at', 'trigger', 'manage_links']
+
+    def manage_links(self, obj):
+        link = reverse('admin:autoemails_rqjob_preview', args=[obj.id])
+        return format_html('<a href="{}">Preview</a>', link)
+    manage_links.short_description = ('Manage')
 
     def get_urls(self):
         original_urls = super().get_urls()
@@ -71,8 +76,8 @@ class RQJobAdmin(admin.ModelAdmin):
         adn_context = instance.context
         context = dict(
             self.admin_site.each_context(request),
-            title="Preview",
             cl=self.get_changelist_instance(request),
+            title=f"Preview {rqjob}",
             rqjob=rqjob,
             job=job,
             instance=instance,
