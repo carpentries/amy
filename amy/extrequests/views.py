@@ -236,7 +236,7 @@ class WorkshopInquiryDetails(OnlyForAdminsMixin, AMYDetailView):
 
 class WorkshopInquiryChange(OnlyForAdminsMixin, PermissionRequiredMixin,
                             AMYUpdateView):
-    permission_required = 'extrequests.change_workshopinquiry'
+    permission_required = 'extrequests.change_workshopinquiryrequest'
     model = WorkshopInquiryRequest
     pk_url_kwarg = 'inquiry_id'
     form_class = WorkshopInquiryRequestAdminForm
@@ -244,7 +244,7 @@ class WorkshopInquiryChange(OnlyForAdminsMixin, PermissionRequiredMixin,
 
 
 class WorkshopInquirySetState(OnlyForAdminsMixin, ChangeRequestStateView):
-    permission_required = 'extrequests.change_workshopinquiry'
+    permission_required = 'extrequests.change_workshopinquiryrequest'
     model = WorkshopInquiryRequest
     pk_url_kwarg = 'inquiry_id'
     state_url_kwarg = 'state'
@@ -252,7 +252,7 @@ class WorkshopInquirySetState(OnlyForAdminsMixin, ChangeRequestStateView):
 
 
 @admin_required
-@permission_required(['extrequests.change_workshopinquiry',
+@permission_required(['extrequests.change_workshopinquiryrequest',
                       'workshops.add_event'],
                      raise_exception=True)
 def workshopinquiry_accept_event(request, inquiry_id):
