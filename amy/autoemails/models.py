@@ -90,7 +90,7 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
     def get_template(content: str,
                      default_engine: str='db_backend') -> Template:
         """Translate text into Django Template object.
-        
+
         default_engine: name of the template backend used for rendering
         For more see:
         https://docs.djangoproject.com/en/2.2/ref/settings/#std:setting-TEMPLATES-NAME
@@ -199,6 +199,9 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
     def __str__(self):
         return f"Email Template '{self.slug}' ({self.subject})"
 
+    def get_absolute_url(self):
+        return reverse('admin:autoemails_emailtemplate_change', args=[self.pk])
+
 
 class Trigger(ActiveMixin, CreatedUpdatedMixin, models.Model):
     """
@@ -230,6 +233,9 @@ class Trigger(ActiveMixin, CreatedUpdatedMixin, models.Model):
         return '<Trigger for "{}" (template "{}")>'.format(self.action,
                                                            self.template.slug)
 
+    def get_absolute_url(self):
+        return reverse('admin:autoemails_trigger_change', args=[self.pk])
+
 
 class RQJob(CreatedUpdatedMixin, models.Model):
     """Simple class for storing Redis Queue job's ID."""
@@ -250,7 +256,7 @@ class RQJob(CreatedUpdatedMixin, models.Model):
         return "<RQJob [{}]>".format(self.job_id)
 
     def get_absolute_url(self):
-        return reverse('admin:autoemails_rqjob_change', args=[self.pk])
+        return reverse('admin:autoemails_rqjob_preview', args=[self.pk])
 
     class Meta:
         verbose_name = "RQ Job"
