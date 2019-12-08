@@ -197,7 +197,7 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
         return msg
 
     def __str__(self):
-        return f"Email Template '{self.slug}' ({self.subject})"
+        return f"Email Template '{self.slug}' ({self.subject:.50}...)"
 
     def get_absolute_url(self):
         return reverse('admin:autoemails_emailtemplate_change', args=[self.pk])
