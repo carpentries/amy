@@ -39,6 +39,9 @@ class BaseAction:
         self.template = trigger.template
         self.context_objects = objects
 
+        # prepare logger
+        self.logger = logger
+
         # default values for fields that will become values later on
         self.context = None
         self.email = None
@@ -84,32 +87,41 @@ class BaseAction:
 
     def _email(self, *args, **kwargs) -> EmailMultiAlternatives:
         # gather context (it should refresh all related objects from DB)
+        self.logger.debug('Preparing email message context...')
         adt_context = self.get_additional_context(objects=self.context_objects)
         self.context = self._context(adt_context)
 
         # refresh trigger/template DB information
+        self.logger.debug('Refreshing related trigger from DB...')
         self.trigger.refresh_from_db()
         self.template = self.trigger.template
 
         # build email
+        self.logger.debug('Building email with provided context...')
         email = self.template.build_email(context=self.context)
         return email
 
     def __call__(self, *args, **kwargs):
         # gather context and build email
         try:
+            self.logger.debug('Preparing email to be sent...')
             self.email = self._email()
 
             # check if the recipients are being overridden in the settings
             if settings.AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS:
+                self.logger.debug('Overriding recipient address (due to '
+                                  '`AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS` '
+                                  'setting)...')
                 self.email.to = [settings.AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS]
                 self.email.cc = []
                 self.email.bcc = []
 
             # send email
+            self.logger.debug('Sending email...')
             return self.email.send(fail_silently=False)
         except (TemplateSyntaxError, TemplateDoesNotExist,
-                Trigger.DoesNotExist, EmailTemplate.DoesNotExist):
+                Trigger.DoesNotExist, EmailTemplate.DoesNotExist) as e:
+            self.logger.debug('Error occurred: {}', str(e))
             return False
 
 
