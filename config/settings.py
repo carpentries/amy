@@ -50,9 +50,9 @@ if not DEBUG and SECRET_KEY == DEFAULT_SECRET_KEY:
     raise ImproperlyConfigured('You must specify non-default value for '
                                'SECRET_KEY when running with Debug=FALSE.')
 
-SITE_ID = env.int('AMY_SITE_ID', default=1)
+SITE_ID = env.int('AMY_SITE_ID', default=2)
 ALLOWED_HOSTS = env.list('AMY_ALLOWED_HOSTS',
-                         default=['amy.software-carpentry.org'])
+                         default=['amy.carpentries.org'])
 if DEBUG:
     ALLOWED_HOSTS.append('127.0.0.1')
 
