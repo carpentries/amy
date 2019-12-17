@@ -541,14 +541,15 @@ LOGGING = {
             'level': 'ERROR',
             'class': 'logging.FileHandler',
             'formatter': 'verbose',
-            # `str()` prevents some strange bug on Py3.5
-            'filename': str(env.path('AMY_SERVER_LOGFILE', default='amy.log')),
+            'filename': env.path('AMY_SERVER_LOGFILE',
+                                 default=ROOT_DIR('amy.log')),
         },
         'debug_log_file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'formatter': 'verbose',
-            'filename': 'amy_debug.log',
+            'filename': env.path('AMY_DEBUG_LOGFILE',
+                                 default=ROOT_DIR('amy_debug.log')),
         }
     },
     'loggers': {
