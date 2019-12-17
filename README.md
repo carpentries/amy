@@ -49,6 +49,12 @@ before starting work on new features.
     $ make dev_database
     ~~~
 
+1. Create cache tables for use with the database cache backend.
+
+    ~~~
+    $ python manage.py createcachetable
+    ~~~
+
 1.  Create an administrator account:
 
     ~~~
