@@ -8,6 +8,7 @@ from rq.job import Job
 from rq_scheduler.utils import from_unix
 
 from autoemails.models import EmailTemplate, Trigger, RQJob
+from autoemails.utils import scheduled_execution_time
 from workshops.util import admin_required
 
 
@@ -75,11 +76,7 @@ class RQJobAdmin(admin.ModelAdmin):
 
         try:
             job = Job.fetch(rqjob.job_id, connection=scheduler.connection)
-            job_scheduled = scheduler.connection.zscore(
-                scheduler.scheduled_jobs_key, job.get_id()
-            )
-            if job_scheduled:
-                job_scheduled = from_unix(job_scheduled)
+            job_scheduled = scheduled_execution_time(job.get_id(), scheduler)
             instance = job.instance
             trigger = instance.trigger
             template = instance.template
