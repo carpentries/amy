@@ -3,7 +3,9 @@ from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.html import format_html
 import django_rq
+from rq.exceptions import NoSuchJobError
 from rq.job import Job
+from rq_scheduler.utils import from_unix
 
 from autoemails.models import EmailTemplate, Trigger, RQJob
 from workshops.util import admin_required
@@ -47,6 +49,7 @@ class TriggerAdmin(admin.ModelAdmin):
 
 class RQJobAdmin(admin.ModelAdmin):
     list_display = ['job_id', 'created_at', 'trigger', 'manage_links']
+    date_hierarchy = 'created_at'
 
     def manage_links(self, obj):
         link = reverse('admin:autoemails_rqjob_preview', args=[obj.id])
@@ -68,18 +71,35 @@ class RQJobAdmin(admin.ModelAdmin):
 
     def preview(self, request, object_id):
         rqjob = RQJob.objects.get(id=object_id)
-        job = Job.fetch(rqjob.job_id, connection=scheduler.connection)
-        instance = job.instance
-        trigger = instance.trigger
-        template = instance.template
-        email = instance._email()
-        adn_context = instance.context
+
+        try:
+            job = Job.fetch(rqjob.job_id, connection=scheduler.connection)
+            job_scheduled = scheduler.connection.zscore(
+                scheduler.scheduled_jobs_key, job.get_id()
+            )
+            if job_scheduled:
+                job_scheduled = from_unix(job_scheduled)
+            instance = job.instance
+            trigger = instance.trigger
+            template = instance.template
+            email = instance._email()
+            adn_context = instance.context
+        except NoSuchJobError:
+            job = None
+            job_scheduled = None
+            instance = None
+            trigger = None
+            template = None
+            email = None
+            adn_context = None
+
         context = dict(
             self.admin_site.each_context(request),
             cl=self.get_changelist_instance(request),
             title=f"Preview {rqjob}",
             rqjob=rqjob,
             job=job,
+            job_scheduled=job_scheduled,
             instance=instance,
             trigger=trigger,
             template=template,

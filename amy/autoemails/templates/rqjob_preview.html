@@ -16,64 +16,154 @@
 <table>
     <tr>
         <th>RQJob:</th>
-        <td><a href="{{ rqjob.get_absolute_url }}">{{ rqjob }}</a></td>
+        <td>
+            <a href="{{ rqjob.get_absolute_url }}">{{ rqjob }}</a><br>
+            Created at: {{ rqjob.created_at }}
+        </td>
     </tr>
     <tr>
-        <th>Job:</th>
-        <td>{{ job }}</td>
+        <th rowspan="2">Job:</th>
+        <td>{{ job|default:"Job was removed from Redis" }}</td>
+    </tr>
+    <tr>
+        <td>
+            <table>
+                <tr>
+                    <td>Status:</td>
+                    <td>{% if job %}{{ job.get_status|default_if_none:"scheduled" }}{% else %}&mdash;{% endif %}</td>
+                </tr>
+                <tr>
+                    <td>Scheduled run time:</td>
+                    <td>{% if job_scheduled %}{{ job_scheduled }}{% else %}&mdash;{% endif %}</td>
+                </tr>
+                <tr>
+                    <td>Enqueued at:</td>
+                    <td>{% if job %}{{ job.enqueued_at|default:"&mdash;" }}{% else %}&mdash;{% endif %}</td>
+                </tr>
+                <tr>
+                    <td>Started at:</td>
+                    <td>{% if job %}{{ job.started_at|default:"&mdash;" }}{% else %}&mdash;{% endif %}</td>
+                </tr>
+                <tr>
+                    <td>Ended at:</td>
+                    <td>{% if job %}{{ job.ended_at|default:"&mdash;" }}{% else %}&mdash;{% endif %}</td>
+                </tr>
+                <tr>
+                    <td>Result:</td>
+                    <td>{% if job %}<code>{{ job.result }}</code>{% else %}&mdash;{% endif %}</td>
+                </tr>
+            </table>
+        </td>
     </tr>
     <tr>
         <th>Trigger:</th>
-        <td><a href="{{ trigger.get_absolute_url }}">{{ trigger }}</a></td>
+        <td>
+            {% if trigger %}
+            <a href="{{ trigger.get_absolute_url }}">{{ trigger }}</a>
+            {% else %}
+            &mdash;
+            {% endif %}
+        </td>
     </tr>
     <tr>
         <th>Template:</th>
-        <td><a href="{{ template.get_absolute_url }}">{{ template }}</a></td>
+        <td>
+            {% if template %}
+            <a href="{{ template.get_absolute_url }}">{{ template }}</a>
+            {% else %}
+            &mdash;
+            {% endif %}
+        </td>
     </tr>
     <tr>
         <th colspan="2"><u>Email</u></th>
     </tr>
     <tr>
         <th>To:</th>
-        <td>{{ email.to }}</td>
+        <td>
+            {% if email %}
+            {{ email.to }}
+            {% else %}
+            &mdash;
+            {% endif %}
+        </td>
     </tr>
     <tr>
         <th>CC:</th>
-        <td>{{ email.cc }}</td>
+        <td>
+            {% if email %}
+            {{ email.cc }}
+            {% else %}
+            &mdash;
+            {% endif %}
+        </td>
     </tr>
     <tr>
         <th>BCC:</th>
-        <td>{{ email.bcc }}</td>
+        <td>
+            {% if email %}
+            {{ email.bcc }}
+            {% else %}
+            &mdash;
+            {% endif %}
+        </td>
     </tr>
     <tr>
         <th>Reply-To:</th>
-        <td>{{ email.reply_to }}</td>
+        <td>
+            {% if email %}
+            {{ email.reply_to }}
+            {% else %}
+            &mdash;
+            {% endif %}
+        </td>
     </tr>
     <tr>
         <th>From:</th>
-        <td>{{ email.from_email }}</td>
+        <td>
+            {% if email %}
+            {{ email.from_email }}
+            {% else %}
+            &mdash;
+            {% endif %}
+        </td>
     </tr>
     <tr>
         <th>Subject:</th>
-        <td>{{ email.subject }}</td>
+        <td>
+            {% if email %}
+            {{ email.subject }}
+            {% else %}
+            &mdash;
+            {% endif %}
+        </td>
     </tr>
     <tr>
         <th>Body:</th>
         <td>
+            {% if email %}
             <pre style="word-wrap: normal; white-space: pre-wrap;">{{ email.body }}</pre>
+            {% else %}
+            &mdash;
+            {% endif %}
         </td>
     </tr>
     <tr>
         <th>HTML Body:</th>
         <td>
+            {% if email %}
             {{ email.alternatives.0.0 }}
+            {% else %}
+            &mdash;
+            {% endif %}
         </td>
     </tr>
     <tr>
         <th>Prepared context:</th>
         <td>
-            <table>
-            {% for k, v in adn_context.items %}
+            {% if adn_context %}
+                <table>
+                {% for k, v in adn_context.items %}
                 <tr>
                     <th><code>{{ k }}</code></th>
                     <td>
@@ -92,8 +182,11 @@
                         {% endif %}
                     </td>
                 </tr>
-            {% endfor %}
-            </table>
+                {% endfor %}
+                </table>
+            {% else %}
+                &mdash;
+            {% endif %}
         </td>
     </tr>
 </table>
