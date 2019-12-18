@@ -618,11 +618,56 @@ class TestTaskDeleteAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
         # overwrite them
         workshops.views.scheduler = self.scheduler
         workshops.views.redis_connection = self.connection
-    
+
     def tearDown(self):
         super().tearDown()
         workshops.views.scheduler = self._saved_scheduler
         workshops.views.redis_connection = self._saved_redis_connection
+
+    def _prepare_data(self):
+        Tag.objects.bulk_create([
+            Tag(name='SWC'),
+            Tag(name='DC'),
+            Tag(name='LC'),
+        ])
+
+        self.instructor = Role.objects.create(name='instructor')
+        self.helper = Role.objects.create(name='helper')
+
+        self.host = Organization.objects.create(
+            domain='example.com', fullname='Test Organization')
+
+        self.person_1 = Person.objects.create(
+            personal='Test', family='Person1', username="person1")
+
+        self.event_1 = Event.objects.create(
+            slug='test-event',
+            host=self.host,
+            start=date.today() + timedelta(days=7),
+            end=date.today() + timedelta(days=8),
+            country='GB',
+            venue='Ministry of Magic',
+            address='Underground',
+            latitude=20.0,
+            longitude=20.0,
+            url='https://test-event.example.com',
+        )
+        self.event_1.tags.set(
+            Tag.objects.filter(name__in=['SWC', 'DC', 'LC']))
+
+        template = EmailTemplate.objects.create(
+            slug='sample-template',
+            subject='Welcome!',
+            to_header='',
+            from_header='test@address.com',
+            cc_header='copy@example.org',
+            bcc_header='bcc@example.org',
+            reply_to_header='',
+            html_template='<h1>Welcome</h1>',
+            text_template='*Welcome*',
+        )
+        trigger = Trigger.objects.create(action='new-instructor',
+                                         template=template)
 
     def test_methods_implemented(self):
         view = TaskDelete()
@@ -638,3 +683,57 @@ class TestTaskDeleteAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
         # it's fine
         with self.assertRaises(AttributeError):
             view.objects()
+
+    def test_job_unscheduled(self):
+        self._setUpSuperuser()
+        self._prepare_data()
+
+        # no jobs
+        self.assertEqual(self.scheduler.count(), 0)
+        # no rqjobs
+        self.assertFalse(RQJob.objects.all())
+
+        self.client.force_login(self.admin)
+        data = {
+            'event': self.event_1.pk,
+            'person': self.person_1.pk,
+            'role': self.instructor.pk,
+        }
+        response = self.client.post(reverse('task_add'), data, follow=True)
+        self.assertContains(response, "New email was scheduled")
+        # with open('test.html', 'w', encoding='utf-8') as f:
+        #     f.write(response.content.decode('utf-8'))
+
+        # new task appeared
+        self.assertEqual(Task.objects.count(), 1)
+
+        # ensure the new task passes action checks
+        task = Task.objects.first()
+        self.assertTrue(NewInstructorAction.check(task))
+
+        # 1 new jobs
+        self.assertEqual(self.scheduler.count(), 1)
+        job = next(self.scheduler.get_jobs())
+
+        # 1 new rqjobs
+        self.assertEqual(RQJob.objects.count(), 1)
+        rqjob = RQJob.objects.first()
+
+        # ensure it's the same job
+        self.assertEqual(job.get_id(), rqjob.job_id)
+
+        # now remove the task
+        response = self.client.post(reverse('task_delete', args=[task.pk]),
+                                    follow=True)
+        self.assertContains(response, 'Scheduled email was removed')
+        # with open('test.html', 'w', encoding='utf-8') as f:
+        #     f.write(response.content.decode('utf-8'))
+
+        # task is gone
+        with self.assertRaises(Task.DoesNotExist):
+            task.refresh_from_db()
+
+        # no job
+        self.assertEqual(self.scheduler.count(), 0)
+        # no rqjob
+        self.assertEqual(RQJob.objects.count(), 0)
