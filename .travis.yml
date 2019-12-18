@@ -12,8 +12,11 @@ services:
 python:
   # After upgrading to Ubuntu 18.04 we lost ability to test against Py3.5
   # - 3.5
-  - 3.6
+  # Python3.6 doesn't allow for pickling logger objects, and this functionality
+  # is required for autoemails application
+  # - 3.6
   - 3.7
+  - 3.8
 
 env:
   - AMY_ENABLE_PYDATA=true
