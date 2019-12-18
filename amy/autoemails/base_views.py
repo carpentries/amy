@@ -4,6 +4,8 @@ from django.utils.safestring import mark_safe
 from rq.exceptions import NoSuchJobError
 from rq.job import Job
 
+from autoemails.utils import scheduled_execution_time
+
 
 class ActionManageMixin:
     """Mixin used for adding/removing Actions related to an object.
@@ -61,12 +63,17 @@ class ActionManageMixin:
             # enqueue job at specified timestamp with metadata
             logger.debug('%s: enqueueing', action_name)
             job = scheduler.enqueue_in(launch_at, action, meta=meta)
+            scheduled_at = scheduled_execution_time(job.get_id(),
+                                                    scheduler=scheduler)
             logger.debug('%s: job created [%r]', action_name, job)
 
             # save job ID in the object
             logger.debug('%s: saving job in [%r] object', action_name,
                          object_)
-            rqj = object_.rq_jobs.create(job_id=job.get_id(), trigger=trigger)
+            rqj = object_.rq_jobs.create(
+                job_id=job.get_id(), trigger=trigger,
+                scheduled_execution=scheduled_at,
+            )
 
             created_jobs.append(job)
             created_rqjobs.append(rqj)
