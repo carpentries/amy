@@ -2,6 +2,7 @@ from datetime import timedelta, datetime
 
 from django.test import TestCase, override_settings
 from django_rq import get_scheduler
+import pytz
 from rq_scheduler.utils import to_unix
 
 from autoemails.utils import scheduled_execution_time
@@ -15,7 +16,7 @@ def dummy():
 
 class TestScheduledExecutionTime(FakeRedisTestCaseMixin, TestCase):
     def test_time_for_nonexisting_job(self):
-        job_id = 'doesnt exists'
+        job_id = "doesn't exists"
         rv = scheduled_execution_time(job_id, self.scheduler)
         self.assertEqual(rv, None)
 
@@ -48,3 +49,18 @@ class TestScheduledExecutionTime(FakeRedisTestCaseMixin, TestCase):
         # test
         rv = scheduled_execution_time(job_id, self.scheduler)
         self.assertEqual(rv, None)
+
+    def test_time_unaware_aware(self):
+        # add job
+        job = self.scheduler.enqueue_in(
+            timedelta(minutes=5),
+            dummy,
+        )
+        job_id = job.get_id()
+
+        # test
+        rv = scheduled_execution_time(job_id, self.scheduler, naive=True)
+        self.assertEqual(rv.tzinfo, None)
+
+        rv = scheduled_execution_time(job_id, self.scheduler, naive=False)
+        self.assertEqual(rv.tzinfo, pytz.UTC)

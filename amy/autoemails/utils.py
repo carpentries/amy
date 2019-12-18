@@ -1,8 +1,9 @@
 import django_rq
+import pytz
 from rq_scheduler.utils import from_unix
 
 
-def scheduled_execution_time(job_id, scheduler=None):
+def scheduled_execution_time(job_id, scheduler=None, naive=True):
     """Get RQ-Scheduler scheduled execution time for specific job."""
     _scheduler = scheduler
     if not scheduler:
@@ -18,4 +19,8 @@ def scheduled_execution_time(job_id, scheduler=None):
     # Convert linux time epoch to UTC.
     if time:
         time = from_unix(time)
+        if not naive:
+            # By default, RQ-Scheduler uses UTC naive (TZ-unaware) objects,
+            # which we can "convert" to TZ-aware UTC.
+            time = time.replace(tzinfo=pytz.UTC)
     return time

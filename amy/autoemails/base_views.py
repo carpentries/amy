@@ -64,7 +64,8 @@ class ActionManageMixin:
             logger.debug('%s: enqueueing', action_name)
             job = scheduler.enqueue_in(launch_at, action, meta=meta)
             scheduled_at = scheduled_execution_time(job.get_id(),
-                                                    scheduler=scheduler)
+                                                    scheduler=scheduler,
+                                                    naive=False)
             logger.debug('%s: job created [%r]', action_name, job)
 
             # save job ID in the object
