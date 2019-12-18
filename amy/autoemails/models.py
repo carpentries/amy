@@ -252,6 +252,11 @@ class RQJob(CreatedUpdatedMixin, models.Model):
         verbose_name="Trigger",
     )
 
+    scheduled_execution = models.DateTimeField(
+        blank=True, null=True, default=None,
+        verbose_name="Scheduled execution time",
+    )
+
     def __str__(self):
         return "<RQJob [{}]>".format(self.job_id)
 

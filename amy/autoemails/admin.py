@@ -48,7 +48,8 @@ class TriggerAdmin(admin.ModelAdmin):
 
 
 class RQJobAdmin(admin.ModelAdmin):
-    list_display = ['job_id', 'created_at', 'trigger', 'manage_links']
+    list_display = ['job_id', 'created_at', 'scheduled_execution', 'trigger',
+                    'manage_links']
     date_hierarchy = 'created_at'
 
     def manage_links(self, obj):
