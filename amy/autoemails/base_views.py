@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.urls import reverse
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from rq.exceptions import NoSuchJobError
 from rq.job import Job
 
@@ -82,11 +82,10 @@ class ActionManageMixin:
             if request:
                 messages.info(
                     request,
-                    mark_safe(
-                        'New email was scheduled: <a href="{}">{}</a>.'.format(
-                            reverse('admin:autoemails_rqjob_changelist'),
-                            job.id,
-                        ),
+                    format_html(
+                        'New email was scheduled: <a href="{}">{}</a>.',
+                        reverse('admin:autoemails_rqjob_changelist'),
+                        job.id,
                     ),
                     fail_silently=True,
                 )
