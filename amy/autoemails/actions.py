@@ -182,6 +182,7 @@ class NewInstructorAction(BaseAction):
         context['host'] = event.host
         context['regional_coordinator_email'] = \
             list(match_notification_email(event))
+        context['task'] = task
         context['person'] = task.person
         context['instructor'] = task.person
         context['role'] = task.role
