@@ -4,6 +4,9 @@ from redis import Redis
 from rq import Queue
 
 
+connection = FakeStrictRedis()
+
+
 class FakeRedisTestCaseMixin:
     """TestCase mixin that provides easy setup of FakeRedis connection to both
     Django-RQ and RQ-Scheduler, as well as test-teardown with scheduled jobs
@@ -11,8 +14,8 @@ class FakeRedisTestCaseMixin:
 
     def setUp(self):
         super().setUp()
-        # self.connection = FakeStrictRedis()
-        self.connection = Redis()
+        self.connection = connection
+        # self.connection = Redis()
         self.queue = Queue(is_async=False, connection=self.connection)
         self.scheduler = django_rq.get_scheduler('testing', queue=self.queue)
 
