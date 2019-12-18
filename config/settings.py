@@ -421,7 +421,7 @@ FIXTURE_DIRS = (
 # -----------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-backend
 EMAIL_BACKEND = 'anymail.backends.mailgun.EmailBackend'
-if DEBUG:
+if DEBUG and not env.bool('AMY_LIVE_EMAIL', default=False):
     # outgoing mails will be stored in `django.core.mail.outbox`
     EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
 
