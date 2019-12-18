@@ -311,7 +311,7 @@ class TestTaskCreateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
         # overwrite them
         workshops.views.scheduler = self.scheduler
         workshops.views.redis_connection = self.connection
-    
+
     def tearDown(self):
         super().tearDown()
         workshops.views.scheduler = self._saved_scheduler
@@ -346,7 +346,7 @@ class TestTaskCreateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
         )
         self.test_event_1.tags.set(
             Tag.objects.filter(name__in=['SWC', 'DC', 'LC']))
-        
+
         template = EmailTemplate.objects.create(
             slug='sample-template',
             subject='Welcome!',
@@ -374,13 +374,13 @@ class TestTaskCreateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
         except AttributeError:
             # it's fine
             pass
-    
+
     def test_job_scheduled(self):
         self._setUpSuperuser()
         self._prepare_data()
 
         role = Role.objects.get(name='instructor')
-        
+
         # no tasks
         self.assertFalse(Task.objects.all())
         # no jobs
@@ -397,7 +397,7 @@ class TestTaskCreateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
         response = self.client.post(reverse('task_add'), data, follow=True)
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
-        
+
         self.assertIn("New email was scheduled",
                       response.content.decode('utf-8'))
 
@@ -431,7 +431,7 @@ class TestTaskUpdateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
         # overwrite them
         workshops.views.scheduler = self.scheduler
         workshops.views.redis_connection = self.connection
-    
+
     def tearDown(self):
         super().tearDown()
         workshops.views.scheduler = self._saved_scheduler
@@ -467,7 +467,7 @@ class TestTaskUpdateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
         )
         self.event_1.tags.set(
             Tag.objects.filter(name__in=['SWC', 'DC', 'LC']))
-        
+
         template = EmailTemplate.objects.create(
             slug='sample-template',
             subject='Welcome!',
@@ -494,7 +494,7 @@ class TestTaskUpdateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
         # it's fine
         with self.assertRaises(AttributeError):
             view.objects()
-    
+
     def test_job_scheduled(self):
         self._setUpSuperuser()
         self._prepare_data()
@@ -523,10 +523,10 @@ class TestTaskUpdateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
                                     follow=True)
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
-        
+
         self.assertIn("New email was scheduled",
                       response.content.decode('utf-8'))
-        
+
         task.refresh_from_db()
         self.assertTrue(NewInstructorAction.check(task))
 
@@ -545,13 +545,13 @@ class TestTaskUpdateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
         self._setUpSuperuser()
         self._prepare_data()
 
-        # this task would trigger an action if we created it via a view
+        # this task won't trigger an action if we created it via a view
         task = Task.objects.create(
-            role=self.instructor,
+            role=self.helper,
             person=self.person_1,
             event=self.event_1,
         )
-        self.assertTrue(NewInstructorAction.check(task))
+        self.assertFalse(NewInstructorAction.check(task))
         # no jobs - again, due to not creating via WWW
         self.assertEqual(self.scheduler.count(), 0)
         # no rqjobs - again, due to not creating via WWW
@@ -560,12 +560,13 @@ class TestTaskUpdateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
         # change task's role to instructor and save
         self.client.force_login(self.admin)
         data = {
-            'event': self.event_1.pk,
+            'role': self.instructor.pk,
             'person': self.person_1.pk,
-            'role': self.instructor.pk
+            'event': self.event_1.pk,
         }
         response = self.client.post(reverse('task_edit', args=[task.pk]), data,
                                     follow=True)
+        self.assertContains(response, 'New email was scheduled')
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
@@ -592,6 +593,7 @@ class TestTaskUpdateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
         }
         response = self.client.post(reverse('task_edit', args=[task.pk]), data,
                                     follow=True)
+        self.assertContains(response, 'Scheduled email was removed')
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
@@ -605,7 +607,8 @@ class TestTaskUpdateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
         self.assertEqual(RQJob.objects.count(), 0)
 
 
-class TestTaskDeleteAutoEmails(FakeRedisTestCaseMixin, TestCase):
+class TestTaskDeleteAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
+                               TestCase):
     def setUp(self):
         super().setUp()
 
