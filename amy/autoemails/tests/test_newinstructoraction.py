@@ -20,7 +20,7 @@ class TestNewInstructorAction(TestCase):
         # and shouldn't pass validation
         a = NewInstructorAction(trigger=Trigger(action='test-action',
                                                 template=EmailTemplate()))
-        self.assertEqual(a.get_launch_at(), timedelta(hours=1))
+        self.assertEqual(a.get_launch_at(), timedelta(minutes=10))
 
     def testCheckConditions(self):
         """Make sure `check` works for various input data."""
@@ -132,6 +132,7 @@ class TestNewInstructorAction(TestCase):
                 person=p,
                 instructor=p,
                 role=r,
+                task=t,
                 assignee='Regional Coordinator',
             ),
         )
