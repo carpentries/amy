@@ -6,6 +6,7 @@ import django_rq
 from fakeredis import FakeStrictRedis
 from rq import Queue
 
+from autoemails import admin
 from autoemails.tests.base import FakeRedisTestCaseMixin
 from workshops.tests.base import SuperuserMixin
 
@@ -19,9 +20,16 @@ class TestAdminQueueView(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         super().setUp()
         self.url = reverse('admin:autoemails_emailtemplate_queue')
         self._setUpSuperuser()  # creates self.admin
-        # self.connection = FakeStrictRedis()
-        # self.queue = Queue(is_async=False, connection=self.connection)
-        # self.scheduler = django_rq.get_scheduler('default', queue=self.queue)
+
+        # save scheduler and connection data
+        self._saved_scheduler = admin.scheduler
+        # overwrite
+        admin.scheduler = self.scheduler
+
+    def tearDown(self):
+        super().tearDown()
+        # bring back saved scheduler
+        admin.scheduler = self._saved_scheduler
 
     def test_view_access_by_anonymous(self):
         rv = self.client.get(self.url)
@@ -59,6 +67,7 @@ class TestAdminQueueView(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
 
         # schedule some dummy job
         job = self.scheduler.enqueue_in(timedelta(hours=1), dummy_job)
+        self.assertNotEqual(list(self.scheduler.get_jobs(with_times=True)), [])
 
         # refresh queue list
         rv = self.client.get(self.url)
