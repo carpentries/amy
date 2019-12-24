@@ -30,12 +30,14 @@ class TestNewInstructorAction(TestCase):
             host=Organization.objects.first(),
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
-            country='GB',
-            venue='Ministry of Magic',
-            address='Underground',
-            latitude=20.0,
-            longitude=20.0,
-            url='https://test-event.example.com',
+            # 2019-12-24: we no longer require published conditions met for
+            #             the event, so the values below were commented out
+            # country='GB',
+            # venue='Ministry of Magic',
+            # address='Underground',
+            # latitude=20.0,
+            # longitude=20.0,
+            # url='https://test-event.example.com',
         )
         e.tags.set(Tag.objects.filter(name__in=['SWC', 'DC', 'LC']))
         p = Person(personal='Harry', family='Potter', email='hp@magic.uk')
@@ -45,19 +47,27 @@ class TestNewInstructorAction(TestCase):
         # 1st case: everything is good
         self.assertEqual(NewInstructorAction.check(t), True)
 
-        # 2nd case: event is no longer marked as "upcoming"
-        e.url = None
+        # 2nd case: event has no start date, but still valid tags
+        e.start = None
+        e.save()
+        self.assertEqual(NewInstructorAction.check(t), True)
+
+        # 3rd case: event start date in past, but still valid tags
+        e.start = date(2000, 1, 1)
         e.save()
         self.assertEqual(NewInstructorAction.check(t), False)
-        e.url = 'https://test-event.example.com'
-        e.save()
 
-        # 3rd case: event is tagged with one (or more) excluding tags
+        # bring back the good date
+        e.start = date.today() + timedelta(days=7)
+        e.save()
+        self.assertEqual(NewInstructorAction.check(t), True)
+
+        # 4th case: event is tagged with one (or more) excluding tags
         e.tags.add(Tag.objects.get(name='cancelled'))
         self.assertEqual(NewInstructorAction.check(t), False)
         e.tags.remove(Tag.objects.get(name='cancelled'))
 
-        # 4th case: role is different than 'instructor'
+        # 5th case: role is different than 'instructor'
         r.name = 'helper'
         self.assertEqual(NewInstructorAction.check(t), False)
         r.name = 'instructor'

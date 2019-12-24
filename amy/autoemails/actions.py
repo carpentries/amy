@@ -1,10 +1,11 @@
-from datetime import timedelta
+from datetime import timedelta, date
 import logging
 from typing import Optional, List, Dict
 
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.mail import EmailMultiAlternatives
+from django.db.models import Q
 from django.template.exceptions import (
     TemplateSyntaxError,
     TemplateDoesNotExist,
@@ -149,15 +150,21 @@ class NewInstructorAction(BaseAction):
     @staticmethod
     def check(task: Task):
         """Conditions for creating a NewInstructorAction."""
+        start_in_future = Q(start__gt=date.today())
+        no_start = Q(start__isnull=True)
         return (
             # 2019-11-01: we accept instructors without `may_contact` agreement
             #             because it was supposed to apply on for non-targeted
             #             communication like newsletter
             # task.person.may_contact and
             task.role.name == 'instructor' and
-            task.event.tags.exclude(
-                name__in=['cancelled', 'unresponsive', 'stalled']) and
-            task.event in Event.objects.upcoming_events()
+            not task.event.tags.filter(name__in=[
+                'cancelled', 'unresponsive', 'stalled'
+            ]) and
+            # 2019-12-24: instead of accepting only upcoming Events, let's
+            #             accept (more broadly) events starting in future
+            #             or some without start date
+            task.event in Event.objects.filter(start_in_future | no_start)
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
