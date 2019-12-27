@@ -85,7 +85,8 @@ class ActionManageMixin:
                     request,
                     format_html(
                         'New email was scheduled: <a href="{}">{}</a>.',
-                        reverse('admin:autoemails_rqjob_changelist'),
+                        reverse('admin:autoemails_rqjob_preview',
+                                args=[rqj.pk]),
                         job.id,
                     ),
                     fail_silently=True,
@@ -135,8 +136,13 @@ class ActionManageMixin:
                 if request:
                     messages.info(
                         request,
-                        'Scheduled email was removed because action conditions '
-                        'have changed: {}'.format(job),
+                        format_html(
+                            'Scheduled email {} was removed because action '
+                            'conditions have changed. '
+                            '<a href="{}">See other scheduled jobs</a>.',
+                            job,
+                            reverse('admin:autoemails_rqjob_changelist'),
+                        ),
                         fail_silently=True,
                     )
 

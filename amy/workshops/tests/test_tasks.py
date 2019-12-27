@@ -593,7 +593,8 @@ class TestTaskUpdateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
         }
         response = self.client.post(reverse('task_edit', args=[task.pk]), data,
                                     follow=True)
-        self.assertContains(response, 'Scheduled email was removed')
+        self.assertContains(response,
+                            f'Scheduled email {rqjob.job_id} was removed')
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
@@ -725,7 +726,8 @@ class TestTaskDeleteAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
         # now remove the task
         response = self.client.post(reverse('task_delete', args=[task.pk]),
                                     follow=True)
-        self.assertContains(response, 'Scheduled email was removed')
+        self.assertContains(response,
+                            f'Scheduled email {rqjob.job_id} was removed')
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
