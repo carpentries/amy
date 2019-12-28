@@ -89,13 +89,9 @@ class RQJobAdmin(admin.ModelAdmin):
             job = Job.fetch(rqjob.job_id, connection=scheduler.connection)
             job_scheduled = scheduled_execution_time(job.get_id(), scheduler)
             instance = job.instance
-            trigger = instance.trigger
-            template = instance.template
-            email = instance._email()
-            adn_context = instance.context
 
         # the job may not exist anymore, then we can't retrieve any data
-        except (NoSuchJobError, AttributeError):
+        except NoSuchJobError:
             job = None
             job_scheduled = None
             instance = None
@@ -103,6 +99,19 @@ class RQJobAdmin(admin.ModelAdmin):
             template = None
             email = None
             adn_context = None
+
+        # we can try and read properties
+        else:
+            try:
+                trigger = instance.trigger
+                template = instance.template
+                email = instance._email()
+                adn_context = instance.context
+            except AttributeError:
+                trigger = None
+                template = None
+                email = None
+                adn_context = None
 
         context = dict(
             self.admin_site.each_context(request),
