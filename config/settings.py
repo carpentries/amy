@@ -615,4 +615,7 @@ RQ_SHOW_ADMIN_LINK = False
 # Autoemails application settings
 # -----------------------------------------------------------------------------
 # These settings describe internal `autoemails` application behavior.
-AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS = 'amy-tests@carpentries.org'
+AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS = env.str(
+    'AMY_AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS',
+    default=None,  # On test server: 'amy-tests@carpentries.org'
+)

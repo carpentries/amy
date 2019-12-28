@@ -117,7 +117,9 @@ class BaseAction:
                 self.logger.debug('Overriding recipient address (due to '
                                   '`AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS` '
                                   'setting)...')
-                self.email.to = [settings.AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS]
+                self.email.to = [
+                    str(settings.AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS),
+                ]
                 self.email.cc = []
                 self.email.bcc = []
 
