@@ -37,8 +37,9 @@ before starting work on new features.
     $ python -m pip install --user -r requirements.txt
     ~~~
 
+    **Recommended:**
     If you're experienced Python programmer, feel free to create a
-    Python3-compatible [virtualenv][virtualenv] for AMY and install
+    Python3-compatible [virtualenv][virtualenv] / [venv][venv] for AMY and install
     dependencies from `requirements.txt`.
 
 1.  Install [yarn][yarn], the tool that manages AMY's JavaScript and CSS dependencies. [You can install it here][yarn].
@@ -58,7 +59,7 @@ before starting work on new features.
 1.  Create an administrator account:
 
     ~~~
-    $ python3 manage.py createsuperuser
+    $ python manage.py createsuperuser
     ~~~
 
 1.  Start a local Django development server by running:
@@ -107,10 +108,12 @@ before starting work on new features.
     $ make dev_database
     ~~~
 
+    **Note**:  this command requires removing (by hand) the old database file.
+
 1.  Run database migrations:
 
     ~~~~
-    $ python3 manage.py migrate
+    $ python manage.py migrate
     ~~~~
 
 1.  Enjoy your new version of AMY:
@@ -127,4 +130,5 @@ before starting work on new features.
 [issues]: https://github.com/swcarpentry/amy/issues
 [tc]: https://carpentries.org/
 [virtualenv]: https://virtualenv.pypa.io/en/latest/userguide.html
+[venv]: https://docs.python.org/3/library/venv.html
 [yarn]: https://yarnpkg.com/lang/en/docs/install
