@@ -24,3 +24,24 @@ def scheduled_execution_time(job_id, scheduler=None, naive=True):
             # which we can "convert" to TZ-aware UTC.
             time = time.replace(tzinfo=pytz.UTC)
     return time
+
+
+def compare_emails(a, b):
+    """EmailMultiAlternatives doesn't implement __eq__, so we have to
+    cheat our way."""
+    if a is None and b is None:
+        return True
+    elif a is None and b or b is None and a:
+        return False
+    else:
+        try:
+            return (
+                a.to == b.to and
+                a.cc == b.cc and
+                a.bcc == b.bcc and
+                a.reply_to == b.reply_to and
+                a.subject == b.subject and
+                a.body == b.body
+            )
+        except AttributeError:
+            return False

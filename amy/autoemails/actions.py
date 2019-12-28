@@ -13,6 +13,7 @@ from django.template.exceptions import (
 import django_rq
 
 from autoemails.models import Trigger, EmailTemplate
+from autoemails.utils import compare_emails
 from workshops.models import Event, Task
 
 
@@ -48,14 +49,17 @@ class BaseAction:
         self.email = None
 
     def __eq__(self, b):
-        return (
-            self.trigger == b.trigger and
-            self.template == b.template and
-            self.context_objects == b.context_objects and
-            self.context == b.context and
-            self.email == b.email and
-            self.get_launch_at() == b.get_launch_at()
-        )
+        try:
+            return (
+                self.trigger == b.trigger and
+                self.template == b.template and
+                self.context_objects == b.context_objects and
+                self.context == b.context and
+                compare_emails(self.email, b.email) and
+                self.get_launch_at() == b.get_launch_at()
+            )
+        except AttributeError:
+            return False
 
     @staticmethod
     def check(cls, *args, **kwargs):
