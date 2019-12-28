@@ -31,7 +31,7 @@ before starting work on new features.
     $ cd amy
     ~~~
 
-2.  Install Django and other dependencies:
+1.  Install Django and other dependencies:
 
     ~~~
     $ python -m pip install --user -r requirements.txt
@@ -41,21 +41,27 @@ before starting work on new features.
     Python3-compatible [virtualenv][virtualenv] for AMY and install
     dependencies from `requirements.txt`.
 
-3.  Install [yarn][yarn], the tool that manages AMY's JavaScript and CSS dependencies. [You can install it here][yarn].
+1.  Install [yarn][yarn], the tool that manages AMY's JavaScript and CSS dependencies. [You can install it here][yarn].
 
-4.  Set up your local database with fake (development-ready) data with:
+1.  Set up your local database with fake (development-ready) data with:
 
     ~~~
     $ make dev_database
     ~~~
 
-5.  Create an administrator account:
+1. Create cache tables for use with the database cache backend.
+
+    ~~~
+    $ python manage.py createcachetable
+    ~~~
+
+1.  Create an administrator account:
 
     ~~~
     $ python3 manage.py createsuperuser
     ~~~
 
-6.  Start a local Django development server by running:
+1.  Start a local Django development server by running:
 
     ~~~
     $ make serve
@@ -63,7 +69,7 @@ before starting work on new features.
 
     **Note**:  this also installs front-end dependencies for AMY, including [jQuery][jquery] and [Bootstrap][bootstrap] ([full list here](https://github.com/swcarpentry/amy/blob/develop/package.json)).
 
-7.  Open <http://127.0.0.1:8000/workshops/> in your browser and start clicking.
+1.  Open <http://127.0.0.1:8000/workshops/> in your browser and start clicking.
 
     Use the administrator account that you created.
 
@@ -77,37 +83,37 @@ before starting work on new features.
         $ git fetch
         ~~~
 
-    2.  Look for the newest tag:
+    1.  Look for the newest tag:
 
         ~~~~
         $ git tag -n
         ~~~~
 
-    3.  Get the code from the newest tag:
+    1.  Get the code from the newest tag:
 
         ~~~~
         $ git checkout tags/<tag_name>
         ~~~~
 
-2.  Update dependencies front-end and back-end dependencies:
+1.  Update dependencies front-end and back-end dependencies:
 
     ~~~
     $ make upgrade
     ~~~
 
-3.  (Optional) make fresh development-ready database:
+1.  (Optional) make fresh development-ready database:
 
     ~~~
     $ make dev_database
     ~~~
 
-4.  Run database migrations:
+1.  Run database migrations:
 
     ~~~~
     $ python3 manage.py migrate
     ~~~~
 
-5.  Enjoy your new version of AMY:
+1.  Enjoy your new version of AMY:
 
     ~~~
     $ make serve
