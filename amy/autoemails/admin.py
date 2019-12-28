@@ -1,4 +1,7 @@
-from django.contrib import admin
+from datetime import datetime
+
+from django.contrib import admin, messages
+from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.html import format_html
@@ -68,6 +71,13 @@ class RQJobAdmin(admin.ModelAdmin):
                 ),
                 name='autoemails_rqjob_preview',
             ),
+            path(
+                '<path:object_id>/send_now/',
+                admin_required(
+                    self.admin_site.admin_view(self.reschedule_now)
+                ),
+                name='autoemails_rqjob_sendnow',
+            ),
         ]
         return new_urls + original_urls
 
@@ -105,6 +115,36 @@ class RQJobAdmin(admin.ModelAdmin):
             adn_context=adn_context,
         )
         return TemplateResponse(request, "rqjob_preview.html", context)
+
+    def reschedule_now(self, request, object_id):
+        """Reschedule an existing job so it executes now (+/- refresh time
+        delta, about 1 minute in default settings)."""
+        rqjob = RQJob.objects.get(id=object_id)
+
+        link = reverse('admin:autoemails_rqjob_preview', args=[object_id])
+
+        # fetch job
+        try:
+            job = Job.fetch(rqjob.job_id, connection=scheduler.connection)
+            job_scheduled = scheduled_execution_time(job.get_id(), scheduler)
+        except NoSuchJobError:
+            messages.warning(request, 'The corresponding job in Redis was '
+                                      'probably already executed.')
+            return redirect(link)
+
+        # new scheduled time: now (in UTC)
+        now_utc = datetime.utcnow()
+
+        try:
+            scheduler.change_execution_time(job, now_utc)
+            messages.info(request,
+                          f'The job {rqjob.job_id} was rescheduled to now.')
+        except ValueError:
+            messages.warning(request, f"The job {rqjob.job_id} was not "
+                                      'rescheduled. It is probably already '
+                                      'executing or has recently executed.')
+
+        return redirect(link)
 
 
 admin.site.register(EmailTemplate, EmailTemplateAdmin)
