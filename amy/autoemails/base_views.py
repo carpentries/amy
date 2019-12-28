@@ -116,6 +116,16 @@ class ActionManageMixin:
 
             # cancel enqueued or scheduled jobs
             for job in jobs:
+                # Try remove (cancel) a scheduled job in RQ-Scheduler.  Behind
+                # the curtains, it accesses Redis' `zrem`, which ignores
+                # non-existing members of a set.
+                if scheduler.connection.zscore(scheduler.scheduled_jobs_key,
+                                               job):
+                    scheduler.cancel(job)
+                    logger.debug('%s: scheduled job [%r] deleted',
+                                 action_name,
+                                 job)
+
                 try:
                     # fetch job from Reddit - if only it's already enqueued
                     enqueued_job = Job.fetch(job, connection=connection)
@@ -126,11 +136,7 @@ class ActionManageMixin:
                                  job)
 
                 except NoSuchJobError:
-                    # apparently the job is not enqueued yet, let's cancel
-                    # it from the scheduler interface
-                    scheduler.cancel(job)
-                    logger.debug('%s: scheduled job [%r] deleted', action_name,
-                                 job)
+                    pass
 
                 # add message about removing the job
                 if request:

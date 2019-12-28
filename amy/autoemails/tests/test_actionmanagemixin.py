@@ -130,7 +130,7 @@ class TestActionManageMixin(FakeRedisTestCaseMixin, TestCase):
         )
 
         view = MockView(self.connection, self.queue, self.scheduler)
-        
+
         # assertions before the view action is invoked
         self.assertEqual(self.scheduler.count(), 0)
         self.assertEqual(RQJob.objects.count(), 0)
@@ -208,7 +208,6 @@ class TestActionManageMixin(FakeRedisTestCaseMixin, TestCase):
                 return self.logger
 
             def get_scheduler(self):
-                self.get_redis_connection()
                 return self.scheduler
 
             def get_redis_connection(self):
@@ -237,7 +236,7 @@ class TestActionManageMixin(FakeRedisTestCaseMixin, TestCase):
                 return job_ids
 
         view = MockView(self.connection, self.queue, self.scheduler)
-        
+
         # assertions before the view action is invoked
         self.assertEqual(self.scheduler.count(), 0)
         self.assertEqual(RQJob.objects.count(), 0)
@@ -276,6 +275,6 @@ class TestActionManageMixin(FakeRedisTestCaseMixin, TestCase):
         with self.assertRaises(NoSuchJobError):
             Job.fetch(enqueued_job.id, connection=self.connection)
 
-        # logger.debug is called 6 times (for action_add) and 5 times
+        # logger.debug is called 6 times (for action_add) and 6 times
         # (for action_remove)
-        self.assertEqual(view.get_logger().debug.call_count, 6 + 5)
+        self.assertEqual(view.get_logger().debug.call_count, 6 + 6)

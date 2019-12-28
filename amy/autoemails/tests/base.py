@@ -18,6 +18,7 @@ class FakeRedisTestCaseMixin:
         # self.connection = Redis()
         self.queue = Queue(is_async=False, connection=self.connection)
         self.scheduler = django_rq.get_scheduler('testing', queue=self.queue)
+        self.scheduler.connection = self.connection
 
     def tearDown(self):
         # clear job queue
@@ -25,4 +26,6 @@ class FakeRedisTestCaseMixin:
             self.scheduler.cancel(job)
         assert not bool(list(self.scheduler.get_jobs()))
         assert self.scheduler.count() == 0
+        self.queue.empty()
+        assert self.queue.count == 0
         super().tearDown()
