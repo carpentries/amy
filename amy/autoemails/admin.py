@@ -82,6 +82,7 @@ class RQJobAdmin(admin.ModelAdmin):
         return new_urls + original_urls
 
     def preview(self, request, object_id):
+        """Show job + email preview (all details and statuses)."""
         rqjob = RQJob.objects.get(id=object_id)
 
         try:
@@ -92,7 +93,9 @@ class RQJobAdmin(admin.ModelAdmin):
             template = instance.template
             email = instance._email()
             adn_context = instance.context
-        except NoSuchJobError:
+
+        # the job may not exist anymore, then we can't retrieve any data
+        except (NoSuchJobError, AttributeError):
             job = None
             job_scheduled = None
             instance = None
