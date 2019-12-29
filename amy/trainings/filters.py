@@ -58,27 +58,37 @@ def filter_trainees_by_training_request_presence(queryset, name, flag):
 
 
 def filter_trainees_by_instructor_status(queryset, name, choice):
-    if choice == '':
-        return queryset
-    elif choice == 'swc-and-dc':
-        return queryset.filter(is_swc_instructor=True, is_dc_instructor=True)
-    elif choice == 'swc-or-dc':
-        return queryset.filter(Q(is_swc_instructor=True) |
-                               Q(is_dc_instructor=True))
+    if choice == 'all':
+        return queryset.filter(
+            is_swc_instructor=True,
+            is_dc_instructor=True,
+            is_lc_instructor=True,
+        )
+    elif choice == 'any':
+        return queryset.filter(
+            Q(is_swc_instructor=True) |
+            Q(is_dc_instructor=True) |
+            Q(is_lc_instructor=True)
+        )
     elif choice == 'swc':
         return queryset.filter(is_swc_instructor=True)
     elif choice == 'dc':
         return queryset.filter(is_dc_instructor=True)
+    elif choice == 'lc':
+        return queryset.filter(is_lc_instructor=True)
     elif choice == 'eligible':
         # Instructor eligible but without any badge.
         # This code is kept in Q()-expressions to allow for fast condition
         # change.
         return queryset.filter(
-            Q(instructor_eligible=True) &
-            (Q(is_swc_instructor=False) & Q(is_dc_instructor=False))
+            Q(instructor_eligible__gte=1) & Q(is_instructor=False)
         )
-    else:  # choice == 'no'
-        return queryset.filter(is_swc_instructor=False, is_dc_instructor=False)
+    elif choice == 'no':
+        return queryset.filter(
+            is_instructor=False,
+        )
+    else:
+        return queryset
 
 
 def filter_trainees_by_training(queryset, name, training):
@@ -111,16 +121,17 @@ class TraineeFilter(AMYFilterSet):
     )
 
     is_instructor = django_filters.ChoiceFilter(
-        label='Is SWC/DC instructor?',
+        label='Is Instructor?',
         method=filter_trainees_by_instructor_status,
         choices=[
             ('', 'Unknown'),
-            ('swc-and-dc', 'Both SWC and DC'),
-            ('swc-or-dc', 'SWC or DC '),
+            ('all', 'All instructor badges'),
+            ('any', 'Any instructor badge '),
             ('swc', 'SWC instructor'),
             ('dc', 'DC instructor'),
+            ('lc', 'LC instructor'),
             ('eligible', 'No, but eligible to be certified'),
-            ('no', 'No'),
+            ('no', 'No instructor badge'),
         ]
     )
 
