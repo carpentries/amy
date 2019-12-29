@@ -438,7 +438,8 @@ class PersonManager(BaseUserManager):
             passed_swc_demo=passed('SWC Demo'),
             passed_dc_demo=passed('DC Demo'),
             passed_lc_demo=passed('LC Demo'),
-            passed_homework=passed_either('SWC Homework', 'DC Homework', 'LC Homework'),
+            passed_homework=passed_either('SWC Homework', 'DC Homework',
+                                          'LC Homework'),
             passed_demo=passed_either('SWC Demo', 'DC Demo', 'LC Demo'),
         ).annotate(
             # We're using Maths to calculate "binary" score for a person to
@@ -447,9 +448,9 @@ class PersonManager(BaseUserManager):
             # + means "OR"
             instructor_eligible=(
                 F('passed_training') *
-                (F('passed_swc_homework') + F('passed_dc_homework')) *
                 F('passed_discussion') *
-                (F('passed_swc_demo') + F('passed_dc_demo'))
+                F('passed_homework') *
+                F('passed_demo')
             )
         )
 
