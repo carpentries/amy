@@ -678,32 +678,15 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin,
     def is_admin(self):
         return is_admin(self)
 
-    def get_missing_swc_instructor_requirements(self):
+    def get_missing_instructor_requirements(self):
         """Returns set of requirements' names (list of strings) that are not
-        passed yet by the trainee and are mandatory to become SWC Instructor.
+        passed yet by the trainee and are mandatory to become an Instructor.
         """
-
         fields = [
             ('passed_training', 'Training'),
-            ('passed_homework', 'SWC or DC Homework'),
+            ('passed_homework', 'Homework (SWC/DC/LC)'),
             ('passed_discussion', 'Discussion'),
-            ('passed_demo', 'SWC or DC Demo'),
-        ]
-        try:
-            return [name for field, name in fields if not getattr(self, field)]
-        except AttributeError as e:
-            raise Exception('Did you forget to call '
-                            'annotate_with_instructor_eligibility()?') from e
-
-    def get_missing_dc_instructor_requirements(self):
-        """Returns set of requirements' names (list of strings) that are not
-        passed yet by the trainee and are mandatory to become DC Instructor."""
-
-        fields = [
-            ('passed_training', 'Training'),
-            ('passed_homework', 'SWC or DC Homework'),
-            ('passed_discussion', 'Discussion'),
-            ('passed_demo', 'SWC or DC Demo'),
+            ('passed_demo', 'Demo (SWC/DC/LC)'),
         ]
         try:
             return [name for field, name in fields if not getattr(self, field)]
