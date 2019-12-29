@@ -1907,8 +1907,8 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
         default=False,
         verbose_name='Discarded',
         help_text='Check when the trainee has gone silent or passed their '
-                  'training deadline. Discarded items are not permanently '
-                  'deleted permanently from AMY. If you want to remove this '
+                  'training deadline. Discarded items are not '
+                  'deleted permanently. If you want to remove this '
                   'record, click red "delete" button.')
 
     event = models.ForeignKey(Event, null=True, blank=True,
