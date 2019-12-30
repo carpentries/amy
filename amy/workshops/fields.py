@@ -168,4 +168,16 @@ class Select2TagWidget(Select2BootstrapMixin, DS2_Select2TagWidget):
             data_mutable = data
 
         data_mutable.setdefault(name, '')
-        return super().value_from_datadict(data_mutable, files, name)
+        values = super().value_from_datadict(data_mutable, files, name)
+        return ";".join(values)
+
+    def optgroups(self, name, value, attrs=None):
+        """Example from
+        https://django-select2.readthedocs.io/en/latest/django_select2.html#django_select2.forms.Select2TagWidget"""
+        values = value[0].split(';') if value[0] else []
+        selected = set(values)
+        subgroup = [
+            self.create_option(name, v, v, selected, i)
+            for i, v in enumerate(values)
+        ]
+        return [(None, subgroup, 0)]
