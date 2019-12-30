@@ -318,6 +318,10 @@ class Command(BaseCommand):
             personal_name = self.faker.first_name()
             family_name = self.faker.last_name()
 
+        gender_other = ''
+        if gender == 'O':
+            gender_other = self.faker.word().title()
+
         social_username = self.faker.user_name()
 
         if randbool(0.6):
@@ -336,6 +340,7 @@ class Command(BaseCommand):
             family=family_name,
             email=email,
             gender=gender,
+            gender_other=gender_other,
             may_contact=randbool(0.5),
             publish_profile=randbool(0.5),
             airport=airport,
