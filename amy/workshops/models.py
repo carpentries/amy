@@ -1413,6 +1413,7 @@ class Badge(models.Model):
 
     # just for easier access outside `models.py`
     INSTRUCTOR_BADGES = BadgeQuerySet.INSTRUCTOR_BADGES
+    IMPORTANT_BADGES = INSTRUCTOR_BADGES + ('trainer', )
 
     name       = models.CharField(max_length=STR_MED, unique=True)
     title      = models.CharField(max_length=STR_MED)

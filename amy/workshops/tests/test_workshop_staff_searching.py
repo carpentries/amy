@@ -368,7 +368,7 @@ class TestWorkshopStaffCSV(TestBase):
         rv = self.client.get(self.url)
         first_row = rv.content.decode('utf-8').splitlines()[0]
         first_row_expected = (
-            "Name,Email,Instructor badges,Has Trainer badge,Taught times,"
+            "Name,Email,Some badges,Has Trainer badge,Taught times,"
             "Is trainee,Airport,Country,Lessons,Affiliation"
         )
 
@@ -382,9 +382,9 @@ class TestWorkshopStaffCSV(TestBase):
         for row, expected in zip(reader, results):
             self.assertEqual(row['Name'], expected.full_name)
             self.assertEqual(row['Email'] or None, expected.email)
-            self.assertEqual(row['Instructor badges'],
+            self.assertEqual(row['Some badges'],
                              " ".join(map(lambda x: x.name,
-                                          expected.instructor_badges)))
+                                          expected.important_badges)))
             self.assertEqual(row['Has Trainer badge'],
                              'yes' if expected.is_trainer else 'no')
             self.assertEqual(row['Taught times'], str(expected.num_taught))

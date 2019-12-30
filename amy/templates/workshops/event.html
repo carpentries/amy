@@ -110,7 +110,8 @@
 <table id="event-tasks" class="table table-striped table-bordered">
   <thead>
     <tr>
-      <th width="150">Instr. badges</th>
+      <th class="badges-column">Some badges <i class="fas fa-question-circle" data-toggle="tooltip"
+          title="Only Instructor or Trainer badges shown."></i></th>
       <th>Person</th>
       <th>URL</th>
       <th>Role</th>
@@ -122,7 +123,9 @@
   <tbody>
   {% for t in tasks %}
   <tr>
-    <td>{% for badge in t.person.instructor_badges %}{% bootstrap_tag badge.name|cut:"-instructor"|upper %}{% empty %}&mdash;{% endfor %}</td>
+    <td>{% for badge in t.person.important_badges %}
+      {% bootstrap_tag badge.name|cut:"-instructor"|upper %}
+    {% empty %}&mdash;{% endfor %}</td>
     <td><a href="{{ t.person.get_absolute_url }}">{{ t.person.full_name }}</a>{% if t.person.email and t.person.may_contact %} &lt;{{ t.person.email|urlize }}&gt;{% endif %}</td>
     <td>{{ t.url|default:"&mdash;"|urlize_newtab }}</td>
     <td>{{ t.role.name }}</td>

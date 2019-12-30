@@ -37,6 +37,9 @@ label.col-form-label {
     font-weight: bold;
 }
 
+table .badges-column {
+    width: 13%;
+}
 table .additional-links {
     width: 70px;
 }
