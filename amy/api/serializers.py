@@ -195,10 +195,14 @@ class PersonSerializer(serializers.ModelSerializer):
     class Meta:
         model = Person
         fields = (
-            'personal', 'middle', 'family', 'email', 'gender', 'may_contact',
-            'publish_profile', 'lesson_publication_consent', 'airport',
-            'country', 'github', 'twitter', 'url', 'orcid', 'username',
-            'affiliation', 'badges', 'lessons', 'domains', 'awards', 'tasks',
+            'username', 'personal', 'middle', 'family', 'email',
+            'gender', 'gender_other',
+            'may_contact', 'publish_profile', 'lesson_publication_consent',
+            'data_privacy_agreement',
+            'airport', 'country',
+            'github', 'twitter', 'url', 'orcid',
+            'affiliation', 'occupation',
+            'badges', 'lessons', 'languages', 'domains', 'awards', 'tasks',
         )
 
 
@@ -447,11 +451,14 @@ class PersonSerializerAllData(PersonSerializer):
     class Meta:
         model = Person
         fields = (
-            'username', 'personal', 'middle', 'family', 'email', 'gender',
-            'may_contact', 'publish_profile', 'airport',
-            'github', 'twitter', 'url', 'affiliation',
-            'user_notes', 'occupation', 'orcid',
+            'username', 'personal', 'middle', 'family', 'email',
+            'gender', 'gender_other',
+            'may_contact', 'publish_profile', 'lesson_publication_consent',
             'data_privacy_agreement',
+            'airport', 'country',
+            'github', 'twitter', 'url', 'orcid',
+            'affiliation', 'occupation',
+            'user_notes',
             'badges', 'lessons', 'languages', 'domains', 'awards', 'tasks',
             'training_requests', 'training_progresses',
         )
