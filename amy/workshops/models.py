@@ -153,6 +153,36 @@ class StateMixin(models.Model):
         # cases with code refactoring; will be removed later
         return self.state == 'p'
 
+
+class GenderMixin(models.Model):
+    """Gender mixin for including gender fields in various models."""
+    UNDISCLOSED = 'U'  # Undisclosed (prefer not to say)
+    MALE = 'M'  # Male
+    FEMALE = 'F'  # Female
+    VARIANT = 'V'  # Gender variant / non-conforming
+    OTHER = 'O'  # Other
+
+    GENDER_CHOICES = (
+        (UNDISCLOSED, 'Prefer not to say (undisclosed)'),
+        (FEMALE, 'Female'),
+        (VARIANT, 'Gender variant / non-conforming'),
+        (MALE, 'Male'),
+        (OTHER, 'Other: '),
+    )
+    gender = models.CharField(
+        max_length=1,
+        choices=GENDER_CHOICES,
+        blank=False, null=False, default=UNDISCLOSED,
+    )
+    gender_other = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Other gender',
+        blank=True, null=False,
+    )
+
+    class Meta:
+        abstract = True
+
 #------------------------------------------------------------
 
 
@@ -463,33 +493,40 @@ class PersonManager(BaseUserManager):
 
 @reversion.register
 class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin,
-             CreatedUpdatedMixin):
+             CreatedUpdatedMixin, GenderMixin):
     '''Represent a single person.'''
-    UNDISCLOSED = 'U'
-    MALE = 'M'
-    FEMALE = 'F'
-    OTHER = 'O'
-    GENDER_CHOICES = (
-        (UNDISCLOSED, 'Prefer not to say (undisclosed)'),
-        (MALE, 'Male'),
-        (FEMALE, 'Female'),
-        (OTHER, 'Other'),
-    )
 
     # These attributes should always contain field names of Person
     PERSON_UPLOAD_FIELDS = ('personal', 'family', 'email')
     PERSON_TASK_EXTRA_FIELDS = ('event', 'role')
     PERSON_TASK_UPLOAD_FIELDS = PERSON_UPLOAD_FIELDS + PERSON_TASK_EXTRA_FIELDS
 
-    personal    = models.CharField(max_length=STR_LONG,
-                                   verbose_name='Personal (first) name')
-    middle      = models.CharField(max_length=STR_LONG, blank=True,
-                                   verbose_name='Middle name')
-    family      = models.CharField(max_length=STR_LONG, blank=True, null=True,
-                                   verbose_name='Family (last) name')
-    email       = models.CharField(max_length=STR_LONG, unique=True, null=True, blank=True,
-                                   verbose_name='Email address')
-    gender      = models.CharField(max_length=1, choices=GENDER_CHOICES, null=False, default=UNDISCLOSED)
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = [
+        'personal',
+        'family',
+        'email',
+    ]
+
+    personal = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Personal (first) name',
+    )
+    middle = models.CharField(
+        max_length=STR_LONG,
+        blank=True,
+        verbose_name='Middle name',
+    )
+    family = models.CharField(
+        max_length=STR_LONG,
+        blank=True, null=True,
+        verbose_name='Family (last) name',
+    )
+    email = models.CharField(
+        max_length=STR_LONG,
+        unique=True, null=True, blank=True,
+        verbose_name='Email address',
+    )
     may_contact = models.BooleanField(
         default=True,
         help_text='Allow to contact from The Carpentries according to the '
@@ -504,16 +541,31 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin,
                   '(website, Twitter) on our instructors website. Emails will'
                   ' not be posted.'
     )
-    country     = CountryField(null=False, blank=True, default='', help_text='Person\'s country of residence.')
-    airport     = models.ForeignKey(Airport, null=True, blank=True, on_delete=models.PROTECT,
-                                    verbose_name='Nearest major airport')
-    github      = NullableGithubUsernameField(unique=True, null=True, blank=True,
-                                              verbose_name='GitHub username',
-                                              help_text='Please put only a single username here.')
-    twitter     = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True,
-                                   verbose_name='Twitter username')
-    url         = models.CharField(max_length=STR_LONG, blank=True,
-                                   verbose_name='Personal website')
+    country = CountryField(
+        null=False, blank=True,
+        default='',
+        help_text="Person's country of residence.",
+    )
+    airport = models.ForeignKey(
+        Airport, on_delete=models.PROTECT,
+        null=True, blank=True,
+        verbose_name='Nearest major airport',
+    )
+    github = NullableGithubUsernameField(
+        unique=True, null=True, blank=True,
+        verbose_name='GitHub username',
+        help_text='Please put only a single username here.',
+    )
+    twitter = models.CharField(
+        max_length=STR_MED,
+        unique=True, null=True, blank=True,
+        verbose_name='Twitter username',
+    )
+    url = models.CharField(
+        max_length=STR_LONG,
+        blank=True,
+        verbose_name='Personal website',
+    )
     username = models.CharField(
         max_length=STR_MED, unique=True,
         validators=[RegexValidator(r'^[\w\-_]+$', flags=re.A)],
@@ -587,13 +639,6 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin,
         help_text='Set this to a newer / actual timestamp when Person is '
                   'reviewed by admin.',
     )
-
-    USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS = [
-        'personal',
-        'family',
-        'email',
-    ]
 
     objects = PersonManager()
 
@@ -739,7 +784,6 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin,
             self.family = self.family.strip()
         self.middle = self.middle.strip()
         self.email = self.email.strip() if self.email else None
-        self.gender = self.gender or None
         self.airport = self.airport or None
         self.github = self.github or None
         self.twitter = self.twitter or None

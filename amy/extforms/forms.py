@@ -71,7 +71,6 @@ class TrainingRequestForm(forms.ModelForm):
             'review_process': forms.RadioSelect(),
             'occupation': RadioSelectWithOther('occupation_other'),
             'domains': CheckboxSelectMultipleWithOthers('domains_other'),
-            'gender': forms.RadioSelect(),
             'underrepresented': forms.RadioSelect(),
             'previous_involvement': forms.CheckboxSelectMultiple(),
             'previous_training': RadioSelectWithOther(

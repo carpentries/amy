@@ -196,7 +196,8 @@ class TestBase(DummySubTestWhenTestsLaunchedInParallelMixin,
 
         self.spiderman = Person.objects.create(
             personal='Peter', middle='Q.', family='Parker',
-            email='peter@webslinger.net', gender='O', may_contact=True,
+            email='peter@webslinger.net', gender='O', gender_other='Spider',
+            may_contact=True,
             username="spiderman", airport=self.airport_55_105,
             country='US')
 

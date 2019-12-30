@@ -1225,7 +1225,6 @@ class TrainingRequestUpdateForm(forms.ModelForm):
         widgets = {
             'occupation': forms.RadioSelect(),
             'domains': forms.CheckboxSelectMultiple(),
-            'gender': forms.RadioSelect(),
             'previous_involvement': forms.CheckboxSelectMultiple(),
             'previous_training': forms.RadioSelect(),
             'previous_experience': forms.RadioSelect(),
