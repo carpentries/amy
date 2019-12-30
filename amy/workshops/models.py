@@ -508,14 +508,25 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin,
         'email',
     ]
 
-    personal    = models.CharField(max_length=STR_LONG,
-                                   verbose_name='Personal (first) name')
-    middle      = models.CharField(max_length=STR_LONG, blank=True,
-                                   verbose_name='Middle name')
-    family      = models.CharField(max_length=STR_LONG, blank=True, null=True,
-                                   verbose_name='Family (last) name')
-    email       = models.CharField(max_length=STR_LONG, unique=True, null=True, blank=True,
-                                   verbose_name='Email address')
+    personal = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Personal (first) name',
+    )
+    middle = models.CharField(
+        max_length=STR_LONG,
+        blank=True,
+        verbose_name='Middle name',
+    )
+    family = models.CharField(
+        max_length=STR_LONG,
+        blank=True, null=True,
+        verbose_name='Family (last) name',
+    )
+    email = models.CharField(
+        max_length=STR_LONG,
+        unique=True, null=True, blank=True,
+        verbose_name='Email address',
+    )
     may_contact = models.BooleanField(
         default=True,
         help_text='Allow to contact from The Carpentries according to the '
@@ -530,16 +541,31 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin,
                   '(website, Twitter) on our instructors website. Emails will'
                   ' not be posted.'
     )
-    country     = CountryField(null=False, blank=True, default='', help_text='Person\'s country of residence.')
-    airport     = models.ForeignKey(Airport, null=True, blank=True, on_delete=models.PROTECT,
-                                    verbose_name='Nearest major airport')
-    github      = NullableGithubUsernameField(unique=True, null=True, blank=True,
-                                              verbose_name='GitHub username',
-                                              help_text='Please put only a single username here.')
-    twitter     = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True,
-                                   verbose_name='Twitter username')
-    url         = models.CharField(max_length=STR_LONG, blank=True,
-                                   verbose_name='Personal website')
+    country = CountryField(
+        null=False, blank=True,
+        default='',
+        help_text="Person's country of residence.",
+    )
+    airport = models.ForeignKey(
+        Airport, on_delete=models.PROTECT,
+        null=True, blank=True,
+        verbose_name='Nearest major airport',
+    )
+    github = NullableGithubUsernameField(
+        unique=True, null=True, blank=True,
+        verbose_name='GitHub username',
+        help_text='Please put only a single username here.',
+    )
+    twitter = models.CharField(
+        max_length=STR_MED,
+        unique=True, null=True, blank=True,
+        verbose_name='Twitter username',
+    )
+    url = models.CharField(
+        max_length=STR_LONG,
+        blank=True,
+        verbose_name='Personal website',
+    )
     username = models.CharField(
         max_length=STR_MED, unique=True,
         validators=[RegexValidator(r'^[\w\-_]+$', flags=re.A)],
