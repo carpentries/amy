@@ -158,6 +158,17 @@ class ModelSelect2MultipleWidget(Select2BootstrapMixin,
 
 
 class Select2TagWidget(Select2BootstrapMixin, DS2_Select2TagWidget):
+    def build_attrs(self, base_attrs, extra_attrs=None):
+        """Select2's tag attributes. By default other token separators are
+        used, but we want to use "," and ";"."""
+        default_attrs = {
+            'data-minimum-input-length': 1,
+            'data-tags': 'true',
+            'data-token-separators': '[",", ";"]'
+        }
+        default_attrs.update(base_attrs)
+        return super().build_attrs(default_attrs, extra_attrs=extra_attrs)
+
     def value_from_datadict(self, data, files, name):
         # sometimes data is held as an immutable QueryDict
         # in those cases, we need to make a copy of it to "disable"
