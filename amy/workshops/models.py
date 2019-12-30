@@ -501,6 +501,13 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin,
     PERSON_TASK_EXTRA_FIELDS = ('event', 'role')
     PERSON_TASK_UPLOAD_FIELDS = PERSON_UPLOAD_FIELDS + PERSON_TASK_EXTRA_FIELDS
 
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = [
+        'personal',
+        'family',
+        'email',
+    ]
+
     personal    = models.CharField(max_length=STR_LONG,
                                    verbose_name='Personal (first) name')
     middle      = models.CharField(max_length=STR_LONG, blank=True,
@@ -606,13 +613,6 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin,
         help_text='Set this to a newer / actual timestamp when Person is '
                   'reviewed by admin.',
     )
-
-    USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS = [
-        'personal',
-        'family',
-        'email',
-    ]
 
     objects = PersonManager()
 
