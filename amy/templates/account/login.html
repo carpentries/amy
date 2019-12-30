@@ -7,7 +7,7 @@
     {% endif %}
 
     <div class="row">
-      <div class="col-5">
+      <div class="col-12 col-md-5">
         <h4>For The Carpentries Administrators</h4>
         <form method="post" action="{% url 'login' %}">
           {% csrf_token %}
@@ -25,11 +25,11 @@
         <small><a href="{% url 'password_reset' %}">Forgotten your password?</a></small>
       </div>
 
-      <div class="col">
+      <div class="col-12 col-md">
         <p class="text-center"><strong>OR</strong></p>
       </div>
 
-      <div class="col-5">
+      <div class="col-12 col-md-5">
         <h4>For The Carpentries Instructors</h4>
         <p><a class="btn btn-primary w-100" href="/login/github/"><i class="fab fa-github"></i> Log in with your GitHub account</a></p>
         <p>Having trouble logging in? Contact us at <a href="mailto:team@carpentries.org">team@carpentries.org</a>.</p>
