@@ -709,7 +709,8 @@ def persons_merge(request):
             # non-M2M-relationships
             easy = (
                 'username', 'personal', 'middle', 'family', 'email',
-                'may_contact', 'publish_profile', 'gender', 'airport',
+                'may_contact', 'publish_profile', 'gender', 'gender_other',
+                'airport',
                 'github', 'twitter', 'url', 'affiliation',
                 'occupation', 'orcid', 'is_active',
             )

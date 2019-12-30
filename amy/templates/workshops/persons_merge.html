@@ -67,6 +67,11 @@
     <th>{% include "includes/merge_radio.html" with field=form.gender %}</th>
   </tr>
   <tr>
+    <th>Other gender</th>
+    <td>{{ obj_a.gender_other|default:"—" }}</td><td>{{ obj_b.gender_other|default:"—" }}</td>
+    <th>{% include "includes/merge_radio.html" with field=form.gender_other %}</th>
+  </tr>
+  <tr>
     <th>Airport</th>
     <td>{% if obj_a.airport %}<a href="{{ obj_a.airport.get_absolute_url }}">{{ obj_a.airport }}</a>{% else %}—{% endif %}</td><td>{% if obj_b.airport %}<a href="{{ obj_b.airport.get_absolute_url }}">{{ obj_b.airport }}</a>{% else %}—{% endif %}</td>
     <th>{% include "includes/merge_radio.html" with field=form.airport %}</th>

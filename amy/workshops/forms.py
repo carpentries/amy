@@ -780,6 +780,9 @@ class PersonsMergeForm(forms.Form):
     gender = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
+    gender_other = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
     airport = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
