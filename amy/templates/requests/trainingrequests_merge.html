@@ -62,6 +62,12 @@
       <th>{% include "includes/merge_radio.html" with field=form.email %}</th>
     </tr>
     <tr>
+      <th>Secondary email</th>
+      <td>{{ obj_a.secondary_email|default:"—" }}</td>
+      <td>{{ obj_b.secondary_email|default:"—" }}</td>
+      <th>{% include "includes/merge_radio.html" with field=form.secondary_email %}</th>
+    </tr>
+    <tr>
       <th>GitHub</th>
       <td>{{ obj_a.github|default:"—" }}</td><td>{{ obj_b.github|default:"—" }}</td>
       <th>{% include "includes/merge_radio.html" with field=form.github %}</th>

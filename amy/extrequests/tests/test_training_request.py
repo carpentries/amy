@@ -591,9 +591,11 @@ class TestTrainingRequestMerging(TestBase):
 
         self.first_req = create_training_request(state='d',
                                                  person=self.spiderman)
+        self.first_req.secondary_email = 'notused@example.org'
         self.second_req = create_training_request(state='p', person=None)
         self.third_req = create_training_request(state='a',
                                                  person=self.ironman)
+        self.third_req.secondary_email = 'notused@amy.org'
 
         # comments regarding first request
         self.ca = Comment.objects.create(
@@ -644,6 +646,7 @@ class TestTrainingRequestMerging(TestBase):
             'middle': 'obj_a',
             'family': 'obj_a',
             'email': 'obj_a',
+            'secondary_email': 'obj_a',
             'github': 'obj_a',
             'occupation': 'obj_a',
             'occupation_other': 'obj_a',
@@ -688,6 +691,7 @@ class TestTrainingRequestMerging(TestBase):
             'middle': 'obj_b',
             'family': 'obj_b',
             'email': 'obj_b',
+            'secondary_email': 'obj_b',
             'github': 'obj_b',
             'occupation': 'obj_b',
             'occupation_other': 'obj_b',
@@ -750,6 +754,7 @@ class TestTrainingRequestMerging(TestBase):
             'middle': 'combine',
             'family': 'combine',
             'email': 'combine',
+            'secondary_email': 'combine',
             'github': 'combine',
             'occupation': 'combine',
             'occupation_other': 'combine',

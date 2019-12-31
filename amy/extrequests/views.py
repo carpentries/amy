@@ -741,7 +741,8 @@ def trainingrequests_merge(request):
             # non-M2M-relationships:
             easy = (
                 'state', 'person', 'group_name', 'personal', 'middle',
-                'family', 'email', 'github', 'occupation', 'occupation_other',
+                'family', 'email', 'secondary_email', 'github', 'occupation',
+                'occupation_other',
                 'affiliation', 'location', 'country', 'underresourced',
                 'domains_other', 'underrepresented',
                 'underrepresented_details', 'nonprofit_teaching_experience',
