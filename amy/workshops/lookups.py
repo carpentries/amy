@@ -108,6 +108,7 @@ class PersonLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
                 Q(personal__icontains=self.term),
                 Q(family__icontains=self.term),
                 Q(email__icontains=self.term),
+                Q(secondary_email__icontains=self.term),
                 Q(username__icontains=self.term)
             ]
 
@@ -145,6 +146,7 @@ class AdminLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
                 Q(personal__icontains=self.term) |
                 Q(family__icontains=self.term) |
                 Q(email__icontains=self.term) |
+                Q(secondary_email__icontains=self.term) |
                 Q(username__icontains=self.term)
             )
 
@@ -211,6 +213,7 @@ class TrainingRequestLookupView(OnlyForAdminsNoRedirectMixin,
                 Q(personal__icontains=self.term) |
                 Q(family__icontains=self.term) |
                 Q(email__icontains=self.term) |
+                Q(secondary_email__icontains=self.term) |
                 name_q
             )
 
