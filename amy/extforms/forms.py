@@ -36,6 +36,7 @@ class TrainingRequestForm(forms.ModelForm):
             'personal',
             'family',
             'email',
+            'secondary_email',
             'github',
             'occupation',
             'occupation_other',
