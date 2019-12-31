@@ -659,6 +659,7 @@ class PersonForm(forms.ModelForm):
             'lesson_publication_consent',
             'data_privacy_agreement',
             'email',
+            'secondary_email',
             'gender',
             'gender_other',
             'country',
