@@ -102,6 +102,7 @@ class TestListingTrainingRequests(APITestBase):
             middle='',
             family='Gummi-Glen',
             email='grammi@gummibears.com',
+            secondary_email='personal@gummibears.com',
             github=None,
             occupation='',
             occupation_other='Cook',
@@ -184,6 +185,7 @@ class TestListingTrainingRequests(APITestBase):
                 'middle': '',
                 'family': 'Gummi-Glen',
                 'email': 'zummi@gummibears.com',
+                'secondary_email': '',
                 'github': None,
                 'underrepresented': 'yes',
                 'underrepresented_details': 'LGBTQ',
@@ -240,6 +242,7 @@ class TestListingTrainingRequests(APITestBase):
                 'middle': '',
                 'family': 'Gummi-Glen',
                 'email': 'grammi@gummibears.com',
+                'secondary_email': 'personal@gummibears.com',
                 'github': None,
                 'underrepresented': 'no',
                 'underrepresented_details': 'Male',
@@ -303,7 +306,8 @@ class TestListingTrainingRequests(APITestBase):
             'Created at,Last updated at,State,Matched Trainee,'
             'Matched Trainee ID,Badges,Training Tasks,'
             'Application Type,Registration Code,'
-            'Personal,Middle,Family,Email,GitHub username,Underrepresented,'
+            'Personal,Middle,Family,Email,Secondary email,GitHub username,'
+            'Underrepresented,'
             'Underrepresented (reason),Occupation,Occupation (other),'
             'Affiliation,Location,Country,Underresourced institution,'
             'Expertise areas,Expertise areas (other),'
