@@ -35,6 +35,7 @@
   <tr><th>Consent to include name when publishing lessons:</th><td id="lesson_publication_consent">{{ person.get_lesson_publication_consent_display }}</td></tr>
   <tr><th>Privacy policy agreement:</th><td id="data_privacy_agreement">{{ person.data_privacy_agreement|yesno }}</td></tr>
   <tr><th>Email:</th><td id="email">{% if person.email %}{{ person.email|urlize }}{% else %}—{% endif %}</td></tr>
+  <tr><th>Secondary email:</th><td id="secondary_email">{{ person.secondary_email|default:"&mdash;"|urlize }}</td></tr>
   <tr><th>Gender:</th><td id="gender">{{ person.get_gender_display }}{{ person.gender_other }}</td></tr>
   <tr><th>Country:</th><td id="country">{% if person.country %}{{ person.country.name }} <img src="{{ person.country.flag }}" alt="{{ person.country }}" class="country-flag" />{% else %}—{% endif %}</td></tr>
   <tr><th>Airport:</th><td id="airport">{% if person.airport %}<a href="{{ person.airport.get_absolute_url }}">{{ person.airport }}</a>{% else %}—{% endif %}</td></tr>
