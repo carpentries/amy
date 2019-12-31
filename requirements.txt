@@ -16,7 +16,7 @@ djangorestframework-yaml==1.0.3
 drf-nested-routers==0.91
 django-recaptcha==1.4.0
 Faker==0.9.1
-django-compressor==2.2
+django-compressor==2.3
 PyGithub==1.43.2
 social-auth-core==1.7.0
 social-auth-app-django==2.1.0
