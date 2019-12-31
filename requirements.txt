@@ -10,7 +10,7 @@ django-filter==2.0.0
 django-reversion==2.0.13
 django-reversion-compare==0.8.4
 diff-match-patch==20121119
-djangorestframework==3.8.2
+djangorestframework==3.9.1
 djangorestframework-csv==2.1.0
 djangorestframework-yaml==1.0.3
 drf-nested-routers==0.91
