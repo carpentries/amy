@@ -22,7 +22,7 @@ class TestSelfOrganisedSubmissionExternalForm(TestBase):
         form = SelfOrganisedSubmissionExternalForm()
         fields_left = set(form.fields.keys())
         fields_right = set([
-            "personal", "family", "email",
+            "personal", "family", "email", "secondary_email",
             "institution", "institution_other_name", "institution_other_URL",
             "institution_department",
             "workshop_format", "workshop_format_other",

@@ -18,10 +18,11 @@ Your email address and GitHub id can not be updated here, as they are tied to yo
     <tr><th>Middle name:</th><td>{{ user.middle|default:"—" }}</td></tr>
     <tr><th>Family name:</th><td>{{ user.family|default:"—" }}</td></tr>
     <tr><th>Email:</th><td>{{ user.email|default:"—" }}</td></tr>
+    <tr><th>Secondary email:</th><td>{{ user.secondary_email|default:"—" }}</td></tr>
     <tr><th>Gender:</th><td>{{ user.get_gender_display }}{{ user.gender_other }}</td></tr>
     <tr><th>Can we contact you?</th><td>{{ user.may_contact|yesno }}</td></tr>
     <tr><th>Do you consent to publish your profile<br>on The Carpentries website?</th><td>{{ user.publish_profile|yesno }}</td></tr>
-    <tr><th>Do you consent to have your name or identity<br>associated with lesson publications?</th><td>{{ user.get_lesson_publication_consent_display }}</td></tr>
+    <tr><th>Do you consent to have your name or identity<br>associated with lesson publications?</th><td>{{ user.get_lesson_publication_consent_display|default:"—" }}</td></tr>
     <tr><th>Country:</th><td>{% if user.country %}{{ user.country.name }} <img src="{{ user.country.flag }}" alt="{{ user.country }}" class="country-flag" />{% else %}—{% endif %}</td></tr>
     <tr><th>Airport:</th><td>{{ user.airport|default:"—"  }}</td></tr>
     <tr><th>Github:</th><td>{{ user.github|default:"—" }}</td></tr>

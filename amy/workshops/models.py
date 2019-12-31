@@ -183,6 +183,19 @@ class GenderMixin(models.Model):
     class Meta:
         abstract = True
 
+
+class SecondaryEmailMixin(models.Model):
+    """Mixin for adding a secondary (optional) email field."""
+    secondary_email = models.EmailField(
+        null=False, blank=True, default="",
+        verbose_name="Secondary email address",
+        help_text="This is an optional, secondary email address we can "
+                  "use to contact you."
+    )
+
+    class Meta:
+        abstract = True
+
 #------------------------------------------------------------
 
 
@@ -493,7 +506,7 @@ class PersonManager(BaseUserManager):
 
 @reversion.register
 class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin,
-             CreatedUpdatedMixin, GenderMixin):
+             CreatedUpdatedMixin, GenderMixin, SecondaryEmailMixin):
     '''Represent a single person.'''
 
     # These attributes should always contain field names of Person
@@ -522,10 +535,12 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin,
         blank=True, null=True,
         verbose_name='Family (last) name',
     )
-    email = models.CharField(
+    email = models.CharField(  # emailfield?
         max_length=STR_LONG,
         unique=True, null=True, blank=True,
         verbose_name='Email address',
+        help_text="Primary email address, used for communication and "
+                  "as a login."
     )
     may_contact = models.BooleanField(
         default=True,
@@ -1527,7 +1542,8 @@ class TrainingRequestManager(models.Manager):
 
 @reversion.register
 class TrainingRequest(CreatedUpdatedMixin, DataPrivacyAgreementMixin,
-                      COCAgreementMixin, StateMixin, models.Model):
+                      COCAgreementMixin, StateMixin, SecondaryEmailMixin,
+                      models.Model):
 
     MANUAL_SCORE_UPLOAD_FIELDS = (
         'request_id', 'score_manual', 'score_notes',
@@ -2178,7 +2194,7 @@ class InfoSource(models.Model):
         return self.name
 
 
-class CommonRequest(models.Model):
+class CommonRequest(SecondaryEmailMixin, models.Model):
     """
     Common fields used across all *Requests, ie.:
     * WorkshopRequest model

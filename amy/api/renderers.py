@@ -21,6 +21,7 @@ class TrainingRequestCSVColumns:
         'middle': 'Middle',
         'family': 'Family',
         'email': 'Email',
+        'secondary_email': 'Secondary email',
         'github': 'GitHub username',
         'underrepresented': 'Underrepresented',
         'underrepresented_details': 'Underrepresented (reason)',

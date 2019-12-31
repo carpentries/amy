@@ -659,6 +659,7 @@ class PersonForm(forms.ModelForm):
             'lesson_publication_consent',
             'data_privacy_agreement',
             'email',
+            'secondary_email',
             'gender',
             'gender_other',
             'country',
@@ -802,6 +803,9 @@ class PersonsMergeForm(forms.Form):
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
     email = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    secondary_email = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
     may_contact = forms.ChoiceField(
