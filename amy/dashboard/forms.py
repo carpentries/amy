@@ -55,6 +55,7 @@ class AutoUpdateProfileForm(forms.ModelForm):
             'middle',
             'family',
             'email',
+            'secondary_email',
             'gender',
             'gender_other',
             'may_contact',
