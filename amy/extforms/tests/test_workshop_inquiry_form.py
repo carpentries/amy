@@ -22,7 +22,7 @@ class TestWorkshopInquiryExternalForm(TestBase):
         form = WorkshopInquiryRequestExternalForm()
         fields_left = set(form.fields.keys())
         fields_right = set([
-            "personal", "family", "email",
+            "personal", "family", "email", "secondary_email",
             "institution", "institution_other_name", "institution_other_URL",
             "institution_department",
             "location", "country",
@@ -30,7 +30,7 @@ class TestWorkshopInquiryExternalForm(TestBase):
             "domains", "domains_other",
             "academic_levels", "computing_levels",
             "audience_description",
-            "requested_workshop_types", 
+            "requested_workshop_types",
             "preferred_dates", "other_preferred_dates",
             "language", "number_attendees",
             "administrative_fee",
