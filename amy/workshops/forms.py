@@ -804,6 +804,9 @@ class PersonsMergeForm(forms.Form):
     email = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
+    secondary_email = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
     may_contact = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )

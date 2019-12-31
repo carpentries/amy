@@ -47,6 +47,12 @@
     <th>{% include "includes/merge_radio.html" with field=form.email %}</th>
   </tr>
   <tr>
+    <th>Secondary email</th>
+    <td>{{ obj_a.secondary_email|default:"—"|urlize_newtab }}</td>
+    <td>{{ obj_b.secondary_email|default:"—"|urlize_newtab }}</td>
+    <th>{% include "includes/merge_radio.html" with field=form.secondary_email %}</th>
+  </tr>
+  <tr>
     <th>May contact</th>
     <td>{{ obj_a.may_contact|yesno }}</td><td>{{ obj_b.may_contact|yesno }}</td>
     <th>{% include "includes/merge_radio.html" with field=form.may_contact %}</th>
