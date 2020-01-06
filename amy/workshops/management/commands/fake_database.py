@@ -578,7 +578,7 @@ class Command(BaseCommand):
                 public_event=public_event,
                 public_event_other=public_event_other,
                 additional_contact=(
-                    'Test Person <email@email.com>,'
+                    'Test Person <email@email.com>;'  # use ";" as separator
                     'Another Person <person@example.com>'
                 ),
 
@@ -671,7 +671,7 @@ class Command(BaseCommand):
                 public_event=public_event,
                 public_event_other=public_event_other,
                 additional_contact=(
-                    'Test Person <email@email.com>,'
+                    'Test Person <email@email.com>;'  # use ";" as separator
                     'Another Person <person@example.com>'
                 ),
 
@@ -772,7 +772,7 @@ class Command(BaseCommand):
                 public_event=public_event,
                 public_event_other=public_event_other,
                 additional_contact=(
-                    'Test Person <email@email.com>,'
+                    'Test Person <email@email.com>;'  # use ";" as separator
                     'Another Person <person@example.com>'
                 ),
 
