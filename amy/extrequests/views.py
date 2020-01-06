@@ -292,7 +292,7 @@ def workshopinquiry_accept_event(request, inquiry_id):
 
 
 class WorkshopInquiryAssign(OnlyForAdminsMixin, AssignView):
-    permission_required = 'extrequests.change_workshopinquiry'
+    permission_required = 'extrequests.change_workshopinquiryrequest'
     model = WorkshopInquiryRequest
     pk_url_kwarg = 'inquiry_id'
     person_url_kwarg = 'person_id'
