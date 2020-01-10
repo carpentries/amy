@@ -645,7 +645,7 @@ def find_metadata_on_event_homepage(content):
     have workshop-related data."""
     try:
         first, header, last = content.split('---')
-        metadata = yaml.load(header.strip())
+        metadata = yaml.load(header.strip(), Loader=yaml.SafeLoader)
 
         # get metadata to the form returned by `find_metadata_on_event_website`
         # because YAML tries to interpret values from index's header
