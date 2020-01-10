@@ -1,0 +1,153 @@
+{% load state %}
+{% load utils %}
+<table class="table table-striped">
+  <tbody>
+    <tr><th>Submission date:</th>
+        <td>{{ object.created_at }}</td></tr>
+{% if admin %}
+    <tr><th>State:</th>
+        <td><span class="{% state_label object %}">{{ object.get_state_display }}</span></td></tr>
+    <tr><th>Matched person:</th>
+        <td>
+          {% if object.person %}
+            <a href="{% url 'person_details' object.person.pk %}">
+              {{ object.person.full_name }}</a>
+            {% if object.person.email %}&lt;{{ object.person.email|urlize }}&gt;{% endif %}
+          {% else %}&mdash;{% endif %}
+        </td></tr>
+    <tr><th>Application score:</th>
+        <td>Automatic: {{ object.score_auto }} pts. <br>
+            Manual: {% if object.score_manual is not None %}{{ object.score_manual }} pts.{% else %}not scored{% endif %} <br>
+            <b>Total: {{ object.score_total }} pts.</b></td></tr>
+    <tr><th>Manual score notes:</th>
+        <td>{% if object.score_notes %}<pre>{{ object.score_notes }}</pre>{% else %}&mdash;{% endif %}</td></tr>
+{% endif %}
+    <tr><th>Application Type:</th>
+        <td>{{ object.get_review_process_display|default:"&mdash;" }}</td></tr>
+    <tr><th>Registration Code:</th>
+        <td>{{ object.group_name|default:"&mdash;" }}</td></tr>
+    <tr><th>Personal name:</th>
+        <td>{{ object.personal }}</td></tr>
+    <tr><th>Middle name:</th>
+        <td>{{ object.middle }}</td></tr>
+    <tr><th>Family name:</th>
+        <td>{{ object.family}}</td></tr>
+    <tr><th>Email:</th>
+        <td>{{ object.email|urlize }}</td></tr>
+    <tr><th>Github:</th>
+        <td>{{ object.github|default:"&mdash;" }}</td></tr>
+    <tr><th>Occupation:</th>
+        <td>{{ object.get_occupation_display }} {{ object.occupation_other }}</td></tr>
+    <tr><th>Affiliation:</th>
+        <td>{{ object.affiliation }}</td></tr>
+    <tr><th>Location:</th>
+        <td>{{ object.location}}</td></tr>
+    <tr><th>Country:</th>
+        <td>{{ object.get_country_display }}</td></tr>
+    <tr><th>This is a small, remote, or under-resourced institution:</th>
+        <td>{{ object.underresourced|yesno }}</td></tr>
+    <tr><th>Areas of expertise:</th>
+        <td>
+            {% if object.domains.all %}
+            <ul>
+            {% for domain in object.domains.all %}
+                <li>{{ domain }}</li>
+            {% endfor %}
+            </ul>
+            {% else %}
+            No areas of expertise.
+            {% endif %}
+        </td></tr>
+    <tr><th>Other areas of expertise:</th>
+        <td>{{ object.domains_other|default:"&mdash;" }}</td></tr>
+    <tr><th>I self-identify as a member of a group that is under-represented in research and/or computing:</th>
+        <td>{{ object.get_underrepresented_display }}</td></tr>
+    <tr><th>If you are comfortable doing so, please share more details. Your response is optional, and these details will not impact your application's ranking.</th>
+        <td>
+            {% if object.underrepresented_details %}
+            {{ object.underrepresented_details }}
+            {% else %}
+            &mdash;
+            {% endif %}
+        </td></tr>
+    <tr><th> I have been an active contributor to other volunteer or non-profit groups with significant teaching or training components.</th>
+        <td>{{ object.nonprofit_teaching_experience|default:"&mdash;" }}</td></tr>
+    <tr><th>In which of the following ways have you been involved with The Carpentries:</th>
+        <td>
+            {% if object.previous_involvement.all %}
+            <ul>
+            {% for involvement in object.previous_involvement.all %}
+                <li>{{ involvement }}</li>
+            {% endfor %}
+            </ul>
+            {% else %}
+            No previous involvement.
+            {% endif %}
+        </td></tr>
+    </tr>
+    <tr><th>Previous formal training as a teacher or instructor:</th>
+        <td>
+            {{ object.get_previous_training_display }}
+            {% if object.previous_training_other %}
+            {{ object.previous_training_other }}
+            {% endif %}
+        </td></tr>
+    <tr><th>Description of your previous training in teaching:</th>
+        <td>
+            {% if object.previous_training_explanation %}
+            <pre>{{ object.previous_training_explanation }}</pre>
+            {% else %}
+            &mdash;
+            {% endif %}
+        </td></tr>
+    <tr><th>Previous experience in teaching:</th>
+        <td>
+            {{ object.get_previous_experience_display }}
+            {% if object.previous_experience_other %}
+            {{ object.previous_experience_other }}
+            {% endif %}
+        </td></tr>
+    <tr><th>Description of your previous experience in teaching:</th>
+        <td>
+            {% if object.previous_experience_explanation %}
+            <pre>{{ object.previous_experience_explanation }}</pre>
+            {% else %}
+            &mdash;
+            {% endif %}
+        </td></tr>
+    <tr><th>How frequently do you work with the tools that The Carpentries teach, such as R, Python, MATLAB, Perl, SQL, Git, OpenRefine, and the Unix Shell?</th>
+        <td>{{ object.get_programming_language_usage_frequency_display }}</td></tr>
+    <tr><th>How often would you expect to teach Carpentry Workshops after this training?</th>
+        <td>
+            {{ object.get_teaching_frequency_expectation_display }}
+            {% if object.teaching_frequency_expectation_other %}
+            {{ object.teaching_frequency_expectation_other}}
+            {% endif %}
+        </td></tr>
+    <tr><th>How frequently would you be able to travel to teach such classes?:</th>
+        <td>
+            {{ object.get_max_travelling_frequency_display }}
+            {% if object.max_travelling_frequency_other %}
+            {{ object.max_travelling_frequency_other }}
+            {% endif %}
+        </td></tr>
+    <tr><th>Why do you want to attend this training course?:</th>
+        <td><pre>{{ object.reason }}</pre></td></tr>
+    <tr><th>Additional notes:</th>
+        <td>
+            {% if object.user_notes %}
+            <pre>{{ object.user_notes }}</pre>
+            {% else %}
+            &mdash;
+            {% endif %}
+        </td></tr>
+    <tr><th>Data privacy agreement:</th>
+        <td>{{ object.data_privacy_agreement|yesno }}</td></tr>
+    <tr><th>Code of Conduct agreement:</th>
+        <td>{{ object.code_of_conduct_agreement|yesno }}</td></tr>
+    <tr><th>Training completion within three months agreement:</th>
+        <td>{{ object.training_completion_agreement|yesno }}</td></tr>
+    <tr><th>Teach a workshop within 12 months agreement:</th>
+        <td>{{ object.workshop_teaching_agreement|yesno }}</td></tr>
+  </tbody>
+</table>

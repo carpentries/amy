@@ -26,87 +26,8 @@
 <div class="edit-object">
   <a href="{% url 'trainingrequest_edit' req.id %}" class="btn btn-primary">Edit</a>
 </div>
-<table class="table table-striped">
-  <tr><th>State:</th>
-      <td><span class="{% state_label req %}">
-            {{ req.get_state_display }}
-          </span>
-      </td></tr>
-  <tr><th>Matched person:</th>
-      <td>
-        {% if req.person %}
-          <a href="{% url 'person_details' req.person.pk %}">
-            {{ req.person.full_name }}</a>
-          {% if req.person.email %}&lt;{{ req.person.email|urlize }}&gt;{% endif %}
-        {% else %}&mdash;{% endif %}
-      </td></tr>
-  <tr><th>Created at:</th>
-      <td>{{ req.created_at }}</td></tr>
-  <tr><th>Application score:</th>
-      <td>Automatic: {{ req.score_auto }} pts. <br>
-          Manual: {% if req.score_manual is not None %}{{ req.score_manual }} pts.{% else %}not scored{% endif %} <br>
-          <b>Total: {{ req.score_total }} pts.</b></td></tr>
-  <tr><th>Manual score notes:</th>
-      <td>{% if req.score_notes %}<pre>{{ req.score_notes }}</pre>{% else %}&mdash;{% endif %}</td></tr>
-  <tr><th>Registration Code:</th>
-      <td>{{ req.group_name }}</td></tr>
-  <tr><th>Personal name:</th>
-      <td>{{ req.personal }}</td></tr>
-  <tr><th>Middle name:</th>
-      <td>{{ req.middle }}</td></tr>
-  <tr><th>Family name:</th>
-      <td>{{ req.family}}</td></tr>
-  <tr><th>Email:</th>
-      <td>{{ req.email|urlize }}</td></tr>
-  <tr><th>Github:</th>
-      <td>{{ req.github|default:"&mdash;" }}</td></tr>
-  <tr><th>Occupation:</th>
-      <td>{{ req.get_occupation_display }} {{ req.occupation_other }}</td></tr>
-  <tr><th>Affiliation:</th>
-      <td>{{ req.affiliation }}</td></tr>
-  <tr><th>Location:</th>
-      <td>{{ req.location}}</td></tr>
-  <tr><th>Country:</th>
-      <td>{{ req.get_country_display }}</td></tr>
-  <tr><th>Domains:</th>
-      <td><ul>
-          {% for domain in req.domains.all %}
-            <li>{{ domain }}</li>
-          {% empty %}
-            <li>No knowledge domain.</li>
-          {% endfor %}
-          </ul></td></tr>
-  <tr><th>Other areas of expertise:</th>
-      <td>{{ req.domains_other|default:"&mdash;" }}</td></tr>
-  <tr><th>Under-represented:</th>
-      <td>{{ req.get_underrepresented_display }}.{% if req.underrepresented_details %} Reason: {{ req.underrepresented_details }}{% endif %}</td></tr>
-  <tr><th>Previous involvement:</th>
-      <td><ul>
-          {% for involvement in req.previous_involvement.all %}
-            <li>{{ involvement }}</li>
-          {% empty %}
-            <li>No previous involvement.</li>
-          {% endfor %}
-          </ul></td></tr>
-  <tr><th>Previous training in teaching:</th>
-      <td>{{ req.get_previous_training_display }} {{ req.previous_training_other }}</td></tr>
-  <tr><th>Explanation of previous training in teaching:</th>
-      <td>{% if req.previous_training_explanation %}<pre>{{ req.previous_training_explanation }}</pre>{% else %}&mdash;{% endif %}</td></tr>
-  <tr><th>Previous experience in teaching:</th>
-      <td>{{ req.get_previous_experience_display }} {{ req.previous_experience_other }}</td></tr>
-  <tr><th>Explanation of previous experience in teaching:</th>
-      <td>{% if req.previous_experience_explanation %}<pre>{{ req.previous_experience_explanation }}</pre>{% else %}&mdash;{% endif %}</td></tr>
-  <tr><th>Programming language usage frequency:</th>
-      <td>{{ req.get_programming_language_usage_frequency_display }}</td></tr>
-  <tr><th>Why do you want to attend this training course?:</th>
-      <td><pre>{{ req.reason }}</pre></td></tr>
-  <tr><th>Teaching frequency expectation:</th>
-      <td>{{ req.get_teaching_frequency_expectation_display }} {{ req.teaching_frequency_expectation_other}}</td></tr>
-  <tr><th>Max travelling frequency:</th>
-      <td>{{ req.get_max_travelling_frequency_display }} {{ req.max_travelling_frequency_other }}</td></tr>
-  <tr><th>Additional comments by submitter:</th>
-      <td>{% if req.comment %}<pre>{{ req.comment }}</pre>{% else %}&mdash;{% endif %}</td></tr>
-</table>
+
+{% include "includes/trainingrequest_details.html" with admin=True object=req %}
 
 {% include "includes/comments.html" with object=req %}
 
