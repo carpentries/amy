@@ -10,17 +10,17 @@ app_name = 'api'
 
 # routers generate URLs for methods like `.list` or `.retrieve`
 router = routers.SimpleRouter()
-router.register('reports', views.ReportsViewSet, base_name='reports')
+router.register('reports', views.ReportsViewSet, basename='reports')
 router.register('persons', views.PersonViewSet)
 awards_router = routers.NestedSimpleRouter(router, 'persons', lookup='person')
-awards_router.register('awards', views.AwardViewSet, base_name='person-awards')
+awards_router.register('awards', views.AwardViewSet, basename='person-awards')
 person_task_router = routers.NestedSimpleRouter(router, 'persons',
                                                 lookup='person')
 person_task_router.register('tasks', views.PersonTaskViewSet,
-                            base_name='person-tasks')
+                            basename='person-tasks')
 router.register('events', views.EventViewSet)
 tasks_router = routers.NestedSimpleRouter(router, 'events', lookup='event')
-tasks_router.register('tasks', views.TaskViewSet, base_name='event-tasks')
+tasks_router.register('tasks', views.TaskViewSet, basename='event-tasks')
 router.register('organizations', views.OrganizationViewSet)
 router.register('airports', views.AirportViewSet)
 
