@@ -805,24 +805,33 @@ def is_admin(user):
 class TagQuerySet(models.query.QuerySet):
     def main_tags(self):
         names = ['SWC', 'DC', 'LC', 'TTT', 'ITT', 'WiSE']
-        return Tag.objects.filter(name__in=names).order_by('id')
+        return Tag.objects.filter(name__in=names)
 
     def carpentries(self):
-        return Tag.objects.filter(name__in=['SWC', 'DC', 'LC']).order_by('id')
+        return Tag.objects.filter(name__in=['SWC', 'DC', 'LC'])
 
 
 class Tag(models.Model):
     '''Label for grouping events.'''
 
-    ITEMS_VISIBLE_IN_SELECT_WIDGET = 14
+    ITEMS_VISIBLE_IN_SELECT_WIDGET = 15
 
-    name       = models.CharField(max_length=STR_MED, unique=True)
-    details    = models.CharField(max_length=STR_LONG)
+    name = models.CharField(max_length=STR_MED, unique=True)
+    details = models.CharField(max_length=STR_LONG)
+    priority = models.PositiveIntegerField(
+        default=0,
+        help_text="Sorting priority (ascending order). Entries with lower "
+                  "number will appear first on the list. If entries have the "
+                  "same number, they're sorted by name."
+    )
 
     def __str__(self):
         return self.name
 
     objects = TagQuerySet.as_manager()
+
+    class Meta:
+        ordering = ["priority", "name"]
 
 #------------------------------------------------------------
 
