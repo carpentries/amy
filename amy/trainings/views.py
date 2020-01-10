@@ -94,37 +94,50 @@ class TrainingProgressDelete(RedirectSupportMixin, OnlyForAdminsMixin,
     success_url = reverse_lazy('all_trainees')
 
 
+def all_trainees_queryset():
+    def has_badge(badge):
+        return Sum(Case(When(badges__name=badge, then=1),
+                        default=0,
+                        output_field=IntegerField()))
+
+    return (
+        Person.objects
+        .annotate_with_instructor_eligibility()
+        .prefetch_related(
+            Prefetch(
+                'task_set',
+                to_attr='training_tasks',
+                queryset=Task.objects.filter(role__name='learner',
+                                             event__tags__name='TTT')
+            ),
+            'training_tasks__event',
+            'trainingrequest_set',
+            'trainingprogress_set',
+            'trainingprogress_set__requirement',
+            'trainingprogress_set__evaluated_by',
+        ).annotate(
+            is_swc_instructor=has_badge('swc-instructor'),
+            is_dc_instructor=has_badge('dc-instructor'),
+            is_lc_instructor=has_badge('lc-instructor'),
+            is_instructor=Sum(
+                Case(
+                    When(
+                        badges__name__in=Badge.INSTRUCTOR_BADGES,
+                        then=1
+                    ),
+                    default=0,
+                    output_field=IntegerField()
+                )
+            ),
+        ).order_by('family', 'personal')
+    )
+
+
 @admin_required
 def all_trainees(request):
     filter = TraineeFilter(
         request.GET,
-        queryset=Person.objects
-            .annotate_with_instructor_eligibility()
-            .prefetch_related(
-                Prefetch('task_set',
-                         to_attr='training_tasks',
-                         queryset=Task.objects.filter(role__name='learner',
-                                                      event__tags__name='TTT')),
-                'training_tasks__event',
-                'trainingrequest_set',
-                'trainingprogress_set',
-                'trainingprogress_set__requirement',
-                'trainingprogress_set__evaluated_by',
-            ).annotate(
-                is_swc_instructor=Sum(Case(When(badges__name='swc-instructor',
-                                                then=1),
-                                           default=0,
-                                           output_field=IntegerField())),
-                is_dc_instructor=Sum(Case(When(badges__name='dc-instructor',
-                                               then=1),
-                                          default=0,
-                                          output_field=IntegerField())),
-                is_lc_instructor=Sum(Case(When(badges__name='lc-instructor',
-                                               then=1),
-                                          default=0,
-                                          output_field=IntegerField())),
-            )
-            .order_by('family', 'personal')
+        queryset=all_trainees_queryset(),
     )
     trainees = get_pagination_items(request, filter.qs)
 

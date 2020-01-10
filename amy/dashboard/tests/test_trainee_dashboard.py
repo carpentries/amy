@@ -100,8 +100,7 @@ class TestInstructorStatus(TestBase):
 
         admin = Person.objects.annotate_with_instructor_eligibility() \
                               .get(username='admin')
-        assert admin.get_missing_swc_instructor_requirements() == []
-        assert admin.get_missing_dc_instructor_requirements() == []
+        assert admin.get_missing_instructor_requirements() == []
 
         rv = self.client.get(self.progress_url)
 

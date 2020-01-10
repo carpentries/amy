@@ -481,7 +481,8 @@ class PersonManager(BaseUserManager):
             passed_swc_demo=passed('SWC Demo'),
             passed_dc_demo=passed('DC Demo'),
             passed_lc_demo=passed('LC Demo'),
-            passed_homework=passed_either('SWC Homework', 'DC Homework', 'LC Homework'),
+            passed_homework=passed_either('SWC Homework', 'DC Homework',
+                                          'LC Homework'),
             passed_demo=passed_either('SWC Demo', 'DC Demo', 'LC Demo'),
         ).annotate(
             # We're using Maths to calculate "binary" score for a person to
@@ -490,9 +491,9 @@ class PersonManager(BaseUserManager):
             # + means "OR"
             instructor_eligible=(
                 F('passed_training') *
-                (F('passed_swc_homework') + F('passed_dc_homework')) *
                 F('passed_discussion') *
-                (F('passed_swc_demo') + F('passed_dc_demo'))
+                F('passed_homework') *
+                F('passed_demo')
             )
         )
 
@@ -737,32 +738,15 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin,
     def is_admin(self):
         return is_admin(self)
 
-    def get_missing_swc_instructor_requirements(self):
+    def get_missing_instructor_requirements(self):
         """Returns set of requirements' names (list of strings) that are not
-        passed yet by the trainee and are mandatory to become SWC Instructor.
+        passed yet by the trainee and are mandatory to become an Instructor.
         """
-
         fields = [
             ('passed_training', 'Training'),
-            ('passed_homework', 'SWC or DC Homework'),
+            ('passed_homework', 'Homework (SWC/DC/LC)'),
             ('passed_discussion', 'Discussion'),
-            ('passed_demo', 'SWC or DC Demo'),
-        ]
-        try:
-            return [name for field, name in fields if not getattr(self, field)]
-        except AttributeError as e:
-            raise Exception('Did you forget to call '
-                            'annotate_with_instructor_eligibility()?') from e
-
-    def get_missing_dc_instructor_requirements(self):
-        """Returns set of requirements' names (list of strings) that are not
-        passed yet by the trainee and are mandatory to become DC Instructor."""
-
-        fields = [
-            ('passed_training', 'Training'),
-            ('passed_homework', 'SWC or DC Homework'),
-            ('passed_discussion', 'Discussion'),
-            ('passed_demo', 'SWC or DC Demo'),
+            ('passed_demo', 'Demo (SWC/DC/LC)'),
         ]
         try:
             return [name for field, name in fields if not getattr(self, field)]
@@ -1984,8 +1968,8 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
         default=False,
         verbose_name='Discarded',
         help_text='Check when the trainee has gone silent or passed their '
-                  'training deadline. Discarded items are not permanently '
-                  'deleted permanently from AMY. If you want to remove this '
+                  'training deadline. Discarded items are not '
+                  'deleted permanently. If you want to remove this '
                   'record, click red "delete" button.')
 
     event = models.ForeignKey(Event, null=True, blank=True,
