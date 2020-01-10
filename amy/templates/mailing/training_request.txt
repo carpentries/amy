@@ -5,3 +5,64 @@ with one of our institutional partners (listed at
 https://carpentries.org/members/), we will do our best to prioritize your
 application; if you or your institution would like to discuss partnership, we
 would welcome an opportunity to speak with you.
+
+
+
+--------------------------------------------
+
+A copy of your request is included below for your reference.
+
+ubmission date: {{ object.created_at }}
+Application Type: {{ object.get_review_process_display|default:"---" }}
+Registration Code: {{ object.group_name|default:"&mdash;" }}
+Person: {{object.personal}} {{object.middle}} {{object.family}} &lt;{{object.email}}&gt;
+Github: {{ object.github|default:"---" }}
+Occupation: {{ object.get_occupation_display }} {{ object.occupation_other }}
+Affiliation: {{ object.affiliation }}
+Location: {{ object.location}}
+Country: {{ object.country.name }}
+Underresourced institution: {{ object.underresourced|yesno }}
+Areas of expertise: {% for domain in object.domains.all %}{{ domain }}{% if not forloop.last %}, {%endif%}{%endfor%}
+Other areas of expertise: {{ object.domains_other|default:"---" }}
+I self-identify as a member of a group that is under-represented in research and/or computing: {{ object.get_underrepresented_display }}
+If you are comfortable doing so, please share more details. Your response is optional, and these details will not impact your application's ranking: {{ object.underrepresented_details|default:"---" }}
+I have been an active contributor to other volunteer or non-profit groups with significant teaching or training components: {{ object.nonprofit_teaching_experience|default:"---" }}
+Previous involvement with The Carpentries: {% for involvement in object.previous_involvement.all %}{{ involvement }}{% if not forloop.last %}, {%endif%}{%endfor%}
+Previous formal training as a teacher or instructor: {{ object.get_previous_training_display|default:"---" }}
+Other previous formal training as a teacher or instructor: {{ object.previous_training_other|default:"---" }}
+Description of your previous training in teaching:
+    {% if object.previous_training_explanation %}
+    {{ object.previous_training_explanation }}
+    {% else %}
+    ---
+    {% endif %}
+Previous experience in teaching: {{ object.get_previous_experience_display|default:"---" }}
+Other previous experience in teaching: {{ object.previous_experience_other|default:"---" }}
+Description of your previous experience in teaching:
+    {% if object.previous_experience_explanation %}
+    {{ object.previous_experience_explanation }}
+    {% else %}
+    ---
+    {% endif %}
+How frequently do you work with the tools that The Carpentries teach, such as R, Python, MATLAB, Perl, SQL, Git, OpenRefine, and the Unix Shell: {{ object.get_programming_language_usage_frequency_display }}
+How often would you expect to teach Carpentry Workshops after this training: {{ object.get_teaching_frequency_expectation_display|default:"---" }}
+    other: {{ object.teaching_frequency_expectation_other|default:"---" }}
+How frequently would you be able to travel to teach such classes? {{ object.get_max_travelling_frequency_display }}
+    other: {{ object.max_travelling_frequency_other|default:"---" }}
+Why do you want to attend this training course:
+    {% if object.reason %}
+    {{ object.reason }}
+    {% else %}
+    ---
+    {% endif %}
+Additional notes:
+    {% if object.user_notes %}
+    {{ object.user_notes }}
+    {% else %}
+    ---
+    {% endif %}
+
+Data privacy agreement: {{ object.data_privacy_agreement|yesno }}
+Code of Conduct agreement: {{ object.code_of_conduct_agreement|yesno }}
+Training completion within three months agreement: {{ object.training_completion_agreement|yesno }}
+Teach a workshop within 12 months agreement: {{ object.workshop_teaching_agreement|yesno }}
