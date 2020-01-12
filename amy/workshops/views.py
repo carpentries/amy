@@ -203,9 +203,9 @@ class AllPersons(OnlyForAdminsMixin, AMYListView):
     queryset = Person.objects.prefetch_related(
         Prefetch(
             'badges',
-            to_attr='instructor_badges',
-            queryset=Badge.objects.instructor_badges()
-        )
+            to_attr='important_badges',
+            queryset=Badge.objects.filter(name__in=Badge.IMPORTANT_BADGES),
+        ),
     )
     title = 'All Persons'
 
@@ -709,7 +709,9 @@ def persons_merge(request):
             # non-M2M-relationships
             easy = (
                 'username', 'personal', 'middle', 'family', 'email',
-                'may_contact', 'publish_profile', 'gender', 'airport',
+                'secondary_email',
+                'may_contact', 'publish_profile', 'gender', 'gender_other',
+                'airport',
                 'github', 'twitter', 'url', 'affiliation',
                 'occupation', 'orcid', 'is_active',
             )
@@ -836,16 +838,17 @@ def event_details(request, slug):
     except Event.DoesNotExist:
         raise Http404('Event matching query does not exist.')
 
-    person_instructor_badges = Prefetch(
+    person_important_badges = Prefetch(
         'person__badges',
-        to_attr='instructor_badges',
-        queryset=Badge.objects.instructor_badges()
+        to_attr='important_badges',
+        queryset=Badge.objects.filter(name__in=Badge.IMPORTANT_BADGES)
     )
+
     tasks = (
         Task.objects
             .filter(event__id=event.id)
             .select_related('event', 'person', 'role')
-            .prefetch_related(person_instructor_badges)
+            .prefetch_related(person_important_badges)
             .order_by('role__name')
     )
 
@@ -1409,11 +1412,11 @@ def _workshop_staff_query(lat=None, lng=None):
     TTT = Tag.objects.get(name='TTT')
     stalled = Tag.objects.get(name='stalled')
     learner = Role.objects.get(name='learner')
-    instructor_badges = Badge.objects.instructor_badges()
+    important_badges = Badge.objects.filter(name__in=Badge.IMPORTANT_BADGES)
 
     trainee_tasks = Task.objects.filter(event__tags=TTT, role=learner) \
                                 .exclude(event__tags=stalled) \
-                                .exclude(person__badges__in=instructor_badges)
+                                .exclude(person__badges__in=important_badges)
 
     # we need to count number of specific roles users had
     # and if they are SWC/DC/LC instructors
@@ -1446,8 +1449,8 @@ def _workshop_staff_query(lat=None, lng=None):
             'lessons',
             Prefetch(
                 'badges',
-                to_attr='instructor_badges',
-                queryset=Badge.objects.instructor_badges()
+                to_attr='important_badges',
+                queryset=Badge.objects.filter(name__in=Badge.IMPORTANT_BADGES)
             ),
         )
         .order_by('family', 'personal')
@@ -1523,7 +1526,7 @@ def workshop_staff_csv(request):
     people = f.qs
 
     # first row of the CSV output
-    header_row = ('Name', 'Email', 'Instructor badges', 'Has Trainer badge',
+    header_row = ('Name', 'Email', 'Some badges', 'Has Trainer badge',
                   'Taught times', 'Is trainee', 'Airport', 'Country',
                   'Lessons', 'Affiliation')
 
@@ -1539,7 +1542,7 @@ def workshop_staff_csv(request):
             person.full_name,
             person.email,
             " ".join([
-                badge.name for badge in person.instructor_badges
+                badge.name for badge in person.important_badges
             ]),
             "yes" if person.is_trainer else "no",
             person.num_taught,

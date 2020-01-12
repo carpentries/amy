@@ -195,10 +195,15 @@ class PersonSerializer(serializers.ModelSerializer):
     class Meta:
         model = Person
         fields = (
-            'personal', 'middle', 'family', 'email', 'gender', 'may_contact',
-            'publish_profile', 'lesson_publication_consent', 'airport',
-            'country', 'github', 'twitter', 'url', 'orcid', 'username',
-            'affiliation', 'badges', 'lessons', 'domains', 'awards', 'tasks',
+            'username', 'personal', 'middle', 'family', 'email',
+            'secondary_email',
+            'gender', 'gender_other',
+            'may_contact', 'publish_profile', 'lesson_publication_consent',
+            'data_privacy_agreement',
+            'airport', 'country',
+            'github', 'twitter', 'url', 'orcid',
+            'affiliation', 'occupation',
+            'badges', 'lessons', 'languages', 'domains', 'awards', 'tasks',
         )
 
 
@@ -267,7 +272,7 @@ class TrainingRequestSerializer(serializers.ModelSerializer):
         fields = (
             'created_at', 'last_updated_at', 'state',
             'review_process', 'group_name',
-            'personal', 'middle', 'family', 'email',
+            'personal', 'middle', 'family', 'email', 'secondary_email',
             'github', 'occupation', 'occupation_other', 'affiliation',
             'location', 'country', 'underresourced', 'underrepresented',
             'underrepresented_details',
@@ -330,7 +335,8 @@ class TrainingRequestWithPersonSerializer(TrainingRequestSerializer):
             'person', 'person_id', 'awards', 'training_tasks',
             'review_process', 'group_name',
             'personal', 'middle', 'family',
-            'email', 'github', 'underrepresented', 'underrepresented_details',
+            'email', 'secondary_email', 'github', 'underrepresented',
+            'underrepresented_details',
             'occupation', 'occupation_other', 'affiliation',
             'location', 'country', 'underresourced',
             'domains', 'domains_other', 'nonprofit_teaching_experience',
@@ -447,11 +453,15 @@ class PersonSerializerAllData(PersonSerializer):
     class Meta:
         model = Person
         fields = (
-            'username', 'personal', 'middle', 'family', 'email', 'gender',
-            'may_contact', 'publish_profile', 'airport',
-            'github', 'twitter', 'url', 'affiliation',
-            'user_notes', 'occupation', 'orcid',
+            'username', 'personal', 'middle', 'family', 'email',
+            'secondary_email',
+            'gender', 'gender_other',
+            'may_contact', 'publish_profile', 'lesson_publication_consent',
             'data_privacy_agreement',
+            'airport', 'country',
+            'github', 'twitter', 'url', 'orcid',
+            'affiliation', 'occupation',
+            'user_notes',
             'badges', 'lessons', 'languages', 'domains', 'awards', 'tasks',
             'training_requests', 'training_progresses',
         )

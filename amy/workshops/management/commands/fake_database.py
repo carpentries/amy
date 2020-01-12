@@ -246,6 +246,7 @@ class Command(BaseCommand):
             state = 'a'
             person = person_or_None
 
+        registration_code = self.faker.city() if randbool(0.1) else ''
         occupation = choice(TrainingRequest._meta.get_field('occupation')
                                            .choices)[0]
         training_completion_agreement = randbool(0.5)
@@ -255,7 +256,8 @@ class Command(BaseCommand):
         req = TrainingRequest.objects.create(
             state=state,
             person=person_or_None,
-            group_name=self.faker.city() if randbool(0.1) else '',
+            review_process='preapproved' if registration_code else 'open',
+            group_name=registration_code,
             personal=person.personal,
             middle='',
             family=person.family,
@@ -318,6 +320,10 @@ class Command(BaseCommand):
             personal_name = self.faker.first_name()
             family_name = self.faker.last_name()
 
+        gender_other = ''
+        if gender == 'O':
+            gender_other = self.faker.word().title()
+
         social_username = self.faker.user_name()
 
         if randbool(0.6):
@@ -336,6 +342,7 @@ class Command(BaseCommand):
             family=family_name,
             email=email,
             gender=gender,
+            gender_other=gender_other,
             may_contact=randbool(0.5),
             publish_profile=randbool(0.5),
             airport=airport,
@@ -573,7 +580,7 @@ class Command(BaseCommand):
                 public_event=public_event,
                 public_event_other=public_event_other,
                 additional_contact=(
-                    'Test Person <email@email.com>,'
+                    'Test Person <email@email.com>;'  # use ";" as separator
                     'Another Person <person@example.com>'
                 ),
 
@@ -666,7 +673,7 @@ class Command(BaseCommand):
                 public_event=public_event,
                 public_event_other=public_event_other,
                 additional_contact=(
-                    'Test Person <email@email.com>,'
+                    'Test Person <email@email.com>;'  # use ";" as separator
                     'Another Person <person@example.com>'
                 ),
 
@@ -767,7 +774,7 @@ class Command(BaseCommand):
                 public_event=public_event,
                 public_event_other=public_event_other,
                 additional_contact=(
-                    'Test Person <email@email.com>,'
+                    'Test Person <email@email.com>;'  # use ";" as separator
                     'Another Person <person@example.com>'
                 ),
 

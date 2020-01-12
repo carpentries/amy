@@ -1,8 +1,10 @@
 from django import forms
+from django.core.exceptions import ValidationError
 from django_countries.fields import CountryField
 
 from workshops.models import (
     Language,
+    GenderMixin,
     Person,
     TrainingProgress,
     TrainingRequirement,
@@ -14,6 +16,7 @@ from workshops.forms import BootstrapHelper
 from workshops.fields import (
     Select2Widget,
     ModelSelect2MultipleWidget,
+    RadioSelectWithOther,
 )
 
 
@@ -52,7 +55,9 @@ class AutoUpdateProfileForm(forms.ModelForm):
             'middle',
             'family',
             'email',
+            'secondary_email',
             'gender',
+            'gender_other',
             'may_contact',
             'publish_profile',
             'lesson_publication_consent',
@@ -74,11 +79,43 @@ class AutoUpdateProfileForm(forms.ModelForm):
             'github',
         )
         widgets = {
-            'gender': forms.RadioSelect(),
+            'gender': RadioSelectWithOther('gender_other'),
             'domains': forms.CheckboxSelectMultiple(),
             'lessons': forms.CheckboxSelectMultiple(),
             'airport': Select2Widget,
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # set up a layout object for the helper
+        self.helper.layout = self.helper.build_default_layout(self)
+
+        # set up `*WithOther` widgets so that they can display additional
+        # fields inline
+        self['gender'].field.widget.other_field = self['gender_other']
+
+        # remove additional fields
+        self.helper.layout.fields.remove('gender_other')
+
+    def clean(self):
+        super().clean()
+        errors = dict()
+
+        # 1: require "other gender" field if "other" was selected in
+        # "gender" field
+        gender = self.cleaned_data.get('gender', '')
+        gender_other = self.cleaned_data.get('gender_other', '')
+        if gender == GenderMixin.OTHER and not gender_other:
+            errors['gender'] = ValidationError("This field is required.")
+        elif gender != GenderMixin.OTHER and gender_other:
+            errors['gender'] = ValidationError(
+                'If you entered data in "Other" field, please select that '
+                "option.")
+
+        # raise errors if any present
+        if errors:
+            raise ValidationError(errors)
 
 
 class SendHomeworkForm(forms.ModelForm):

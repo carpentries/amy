@@ -203,8 +203,9 @@ class AllWorkshopInquiries(OnlyForAdminsMixin, StateFilterMixin, AMYListView):
     template_name = 'requests/all_workshopinquiries.html'
     filter_class = WorkshopInquiryFilter
     queryset = (
-        WorkshopInquiryRequest.objects.select_related('assigned_to', 'institution')
-                                      .prefetch_related('requested_workshop_types')
+        WorkshopInquiryRequest
+            .objects.select_related('assigned_to', 'institution')
+                    .prefetch_related('requested_workshop_types')
     )
     title = 'Workshop inquiries'
 
@@ -291,7 +292,7 @@ def workshopinquiry_accept_event(request, inquiry_id):
 
 
 class WorkshopInquiryAssign(OnlyForAdminsMixin, AssignView):
-    permission_required = 'extrequests.change_workshopinquiry'
+    permission_required = 'extrequests.change_workshopinquiryrequest'
     model = WorkshopInquiryRequest
     pk_url_kwarg = 'inquiry_id'
     person_url_kwarg = 'person_id'
@@ -606,13 +607,15 @@ def _match_training_request_to_person(request, training_request, create=False,
         training_request.person = person
 
     # as per #1270:
-    # https://github.com/swcarpentry/amy/issues/1270#issuecomment-407515948
+    # https://github.com/carpentries/amy/issues/1270#issuecomment-407515948
     # let's rewrite everything that's possible to rewrite
     try:
         training_request.person.personal = training_request.personal
         training_request.person.middle = training_request.middle
         training_request.person.family = training_request.family
         training_request.person.email = training_request.email
+        training_request.person.secondary_email = \
+            training_request.secondary_email
         training_request.person.country = training_request.country
         training_request.person.github = training_request.github
         training_request.person.affiliation = training_request.affiliation
@@ -741,7 +744,8 @@ def trainingrequests_merge(request):
             # non-M2M-relationships:
             easy = (
                 'state', 'person', 'group_name', 'personal', 'middle',
-                'family', 'email', 'github', 'occupation', 'occupation_other',
+                'family', 'email', 'secondary_email', 'github', 'occupation',
+                'occupation_other',
                 'affiliation', 'location', 'country', 'underresourced',
                 'domains_other', 'underrepresented',
                 'underrepresented_details', 'nonprofit_teaching_experience',

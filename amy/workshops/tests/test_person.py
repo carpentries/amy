@@ -378,12 +378,13 @@ class TestPerson(TestBase):
         # we want
         trainee.award_set.all().delete()
 
-        # Test workflow starting from clicking at "SWC" label
-        swc_res = trainees.click('^<strike>SWC</strike>$')
+        # Test workflow starting from clicking at "instructor badge" label
+        swc_res = trainees.click('^<strike>instructor badge</strike>$')
         self.assertSelected(swc_res.forms['main-form']['badge'],
-                            'Software Carpentry Instructor')
+                            '---------')
         self.assertEqual(int(swc_res.forms['main-form']['event'].value),
                          training.pk)
+        swc_res.forms['main-form']['badge'].select(self.swc_instructor.pk)
         res = swc_res.forms['main-form'].submit()
         self.assertRedirects(res, reverse('all_trainees'))
         self.assertEqual(trainee.award_set.last().badge, self.swc_instructor)
@@ -392,12 +393,13 @@ class TestPerson(TestBase):
         # we want
         trainee.award_set.all().delete()
 
-        # Test workflow starting from clicking at "DC" label
-        dc_res = trainees.click('^<strike>DC</strike>$')
+        # Test workflow starting from clicking at "instructor badge" label
+        dc_res = trainees.click('^<strike>instructor badge</strike>$')
         self.assertSelected(dc_res.forms['main-form']['badge'],
-                            'Data Carpentry Instructor')
+                            '---------')
         self.assertEqual(int(dc_res.forms['main-form']['event'].value),
                          training.pk)
+        dc_res.forms['main-form']['badge'].select(self.dc_instructor.pk)
         res = dc_res.forms['main-form'].submit()
         self.assertRedirects(res, reverse('all_trainees'))
         self.assertEqual(trainee.award_set.last().badge, self.dc_instructor)
@@ -609,6 +611,7 @@ class TestPersonMerging(TestBase):
         self.person_a = Person.objects.create(
             personal='Kelsi', middle='', family='Purdy',
             username='purdy_kelsi', email='purdy.kelsi@example.com',
+            secondary_email='notused@amy.org',
             gender='F', may_contact=True, airport=self.airport_0_0,
             github='purdy_kelsi', twitter='purdy_kelsi',
             url='http://kelsipurdy.com/',
@@ -650,6 +653,7 @@ class TestPersonMerging(TestBase):
         self.person_b = Person.objects.create(
             personal='Jayden', middle='', family='Deckow',
             username='deckow_jayden', email='deckow.jayden@example.com',
+            secondary_email='notused@example.org',
             gender='M', may_contact=True, airport=self.airport_0_50,
             github='deckow_jayden', twitter='deckow_jayden',
             url='http://jaydendeckow.com/',
@@ -692,10 +696,12 @@ class TestPersonMerging(TestBase):
             'middle': 'obj_a',
             'family': 'obj_a',
             'email': 'obj_b',
+            'secondary_email': 'obj_b',
             'may_contact': 'obj_a',
             'publish_profile': 'obj_a',
             'data_privacy_agreement': 'obj_b',
             'gender': 'obj_b',
+            'gender_other': 'obj_b',
             'airport': 'obj_a',
             'github': 'obj_b',
             'twitter': 'obj_a',
@@ -734,10 +740,12 @@ class TestPersonMerging(TestBase):
             'middle': 'combine',
             'family': 'combine',
             'email': 'combine',
+            'secondary_email': 'combine',
             'may_contact': 'combine',
             'publish_profile': 'combine',
             'data_privacy_agreement': 'combine',
             'gender': 'combine',
+            'gender_other': 'combine',
             'airport': 'combine',
             'github': 'combine',
             'twitter': 'combine',
@@ -797,8 +805,10 @@ class TestPersonMerging(TestBase):
             'middle': self.person_a.middle,
             'family': self.person_a.family,
             'email': self.person_b.email,
+            'secondary_email': self.person_b.secondary_email,
             'may_contact': self.person_a.may_contact,
             'gender': self.person_b.gender,
+            'gender_other': self.person_b.gender_other,
             'airport': self.person_a.airport,
             'github': self.person_b.github,
             'twitter': self.person_a.twitter,
@@ -1025,7 +1035,7 @@ class TestGetMissingSWCInstructorRequirements(TestBase):
 
         person = Person.objects.annotate_with_instructor_eligibility() \
                                .get(username='person')
-        self.assertEqual(person.get_missing_swc_instructor_requirements(), [])
+        self.assertEqual(person.get_missing_instructor_requirements(), [])
 
     def test_some_requirements_are_fulfilled(self):
         # Homework was accepted, the second time.
@@ -1048,15 +1058,15 @@ class TestGetMissingSWCInstructorRequirements(TestBase):
 
         person = Person.objects.annotate_with_instructor_eligibility() \
             .get(username='person')
-        self.assertEqual(person.get_missing_swc_instructor_requirements(),
+        self.assertEqual(person.get_missing_instructor_requirements(),
                          ['Training', 'Discussion'])
 
     def test_none_requirement_is_fulfilled(self):
         person = Person.objects.annotate_with_instructor_eligibility() \
                                .get(username='person')
-        self.assertEqual(person.get_missing_swc_instructor_requirements(),
-                         ['Training', 'SWC or DC Homework', 'Discussion',
-                          'SWC or DC Demo'])
+        self.assertEqual(person.get_missing_instructor_requirements(),
+                         ['Training', 'Homework (SWC/DC/LC)', 'Discussion',
+                          'Demo (SWC/DC/LC)'])
 
 
 class TestGetMissingDCInstructorRequirements(TestBase):
@@ -1082,7 +1092,7 @@ class TestGetMissingDCInstructorRequirements(TestBase):
 
         person = Person.objects.annotate_with_instructor_eligibility() \
                                .get(username='person')
-        self.assertEqual(person.get_missing_dc_instructor_requirements(), [])
+        self.assertEqual(person.get_missing_instructor_requirements(), [])
 
     def test_some_requirements_are_fulfilled(self):
         # Homework was accepted, the second time.
@@ -1105,15 +1115,15 @@ class TestGetMissingDCInstructorRequirements(TestBase):
 
         person = Person.objects.annotate_with_instructor_eligibility() \
                                .get(username='person')
-        self.assertEqual(person.get_missing_dc_instructor_requirements(),
+        self.assertEqual(person.get_missing_instructor_requirements(),
                          ['Training', 'Discussion'])
 
     def test_none_requirement_is_fulfilled(self):
         person = Person.objects.annotate_with_instructor_eligibility() \
                                .get(username='person')
-        self.assertEqual(person.get_missing_dc_instructor_requirements(),
-                         ['Training', 'SWC or DC Homework', 'Discussion',
-                          'SWC or DC Demo'])
+        self.assertEqual(person.get_missing_instructor_requirements(),
+                         ['Training', 'Homework (SWC/DC/LC)', 'Discussion',
+                          'Demo (SWC/DC/LC)'])
 
 
 class TestFilterTaughtWorkshops(TestBase):

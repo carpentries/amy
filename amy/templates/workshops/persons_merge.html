@@ -47,6 +47,12 @@
     <th>{% include "includes/merge_radio.html" with field=form.email %}</th>
   </tr>
   <tr>
+    <th>Secondary email</th>
+    <td>{{ obj_a.secondary_email|default:"—"|urlize_newtab }}</td>
+    <td>{{ obj_b.secondary_email|default:"—"|urlize_newtab }}</td>
+    <th>{% include "includes/merge_radio.html" with field=form.secondary_email %}</th>
+  </tr>
+  <tr>
     <th>May contact</th>
     <td>{{ obj_a.may_contact|yesno }}</td><td>{{ obj_b.may_contact|yesno }}</td>
     <th>{% include "includes/merge_radio.html" with field=form.may_contact %}</th>
@@ -65,6 +71,11 @@
     <th>Gender</th>
     <td>{{ obj_a.get_gender_display|default:"—"|urlize_newtab }}</td><td>{{ obj_b.get_gender_display|default:"—"|urlize_newtab }}</td>
     <th>{% include "includes/merge_radio.html" with field=form.gender %}</th>
+  </tr>
+  <tr>
+    <th>Other gender</th>
+    <td>{{ obj_a.gender_other|default:"—" }}</td><td>{{ obj_b.gender_other|default:"—" }}</td>
+    <th>{% include "includes/merge_radio.html" with field=form.gender_other %}</th>
   </tr>
   <tr>
     <th>Airport</th>

@@ -12,14 +12,15 @@
 {% if all_persons %}
     <table class="table table-striped">
       <tr>
-        <th width="25">Instr. badges</th>
+        <th class="badges-column">Some badges <i class="fas fa-question-circle" data-toggle="tooltip"
+            title="Only Instructor or Trainer badges shown."></i></th>
         <th>Name</th>
         <th>Email</th>
         <th class="additional-links"></th>
       </tr>
     {% for person in all_persons %}
       <tr>
-        <td class="text-center">{% for badge in person.instructor_badges %}
+        <td>{% for badge in person.important_badges %}
           {% bootstrap_tag badge.name|cut:"-instructor"|upper %}
         {% empty %}&mdash;{% endfor %}</td>
         <td><a href="{% url 'person_details' person.id %}">{{ person.full_name }}</a></td>

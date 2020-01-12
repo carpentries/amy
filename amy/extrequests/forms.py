@@ -276,6 +276,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             "personal",
             "family",
             "email",
+            "secondary_email",
             "institution",
             "institution_other_name",
             "institution_other_URL",
@@ -389,7 +390,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         # add horizontal lines after some fields to visually group them
         # together
         hr_fields_after = (
-            'email', 'institution_department',
+            'secondary_email', 'institution_department',
             'country',
             'audience_description',
             'user_notes',
@@ -634,6 +635,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
             "personal",
             "family",
             "email",
+            "secondary_email",
             "institution",
             "institution_other_name",
             "institution_other_URL",
@@ -782,7 +784,8 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         # add horizontal lines after some fields to visually group them
         # together
         hr_fields_after = (
-            'email', 'institution_department', 'audience_description',
+            'secondary_email', 'institution_department',
+            'audience_description',
             'country',
             'user_notes',
         )
@@ -1023,6 +1026,7 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
             "personal",
             "family",
             "email",
+            "secondary_email",
             "institution",
             "institution_other_name",
             "institution_other_URL",
@@ -1094,7 +1098,7 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
         # add horizontal lines after some fields to visually group them
         # together
         hr_fields_after = (
-            'email', 'institution_department',
+            'secondary_email', 'institution_department',
             'additional_contact',
             'language',
         )
@@ -1225,7 +1229,6 @@ class TrainingRequestUpdateForm(forms.ModelForm):
         widgets = {
             'occupation': forms.RadioSelect(),
             'domains': forms.CheckboxSelectMultiple(),
-            'gender': forms.RadioSelect(),
             'previous_involvement': forms.CheckboxSelectMultiple(),
             'previous_training': forms.RadioSelect(),
             'previous_experience': forms.RadioSelect(),
@@ -1290,6 +1293,9 @@ class TrainingRequestsMergeForm(forms.Form):
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
     email = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    secondary_email = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
     github = forms.ChoiceField(

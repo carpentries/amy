@@ -23,6 +23,7 @@ from workshops.models import (
     Award,
     Event,
     Lesson,
+    GenderMixin,
     Person,
     Task,
     Airport,
@@ -39,6 +40,7 @@ from workshops.fields import (
     Select2MultipleWidget,
     ModelSelect2Widget,
     ModelSelect2MultipleWidget,
+    RadioSelectWithOther,
 )
 from workshops.signals import create_comment_signal
 
@@ -657,7 +659,9 @@ class PersonForm(forms.ModelForm):
             'lesson_publication_consent',
             'data_privacy_agreement',
             'email',
+            'secondary_email',
             'gender',
+            'gender_other',
             'country',
             'airport',
             'affiliation',
@@ -674,7 +678,40 @@ class PersonForm(forms.ModelForm):
 
         widgets = {
             'country': Select2Widget,
+            'gender': RadioSelectWithOther('gender_other'),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # set up a layout object for the helper
+        self.helper.layout = self.helper.build_default_layout(self)
+
+        # set up `*WithOther` widgets so that they can display additional
+        # fields inline
+        self['gender'].field.widget.other_field = self['gender_other']
+
+        # remove additional fields
+        self.helper.layout.fields.remove('gender_other')
+
+    def clean(self):
+        super().clean()
+        errors = dict()
+
+        # 1: require "other gender" field if "other" was selected in
+        # "gender" field
+        gender = self.cleaned_data.get('gender', '')
+        gender_other = self.cleaned_data.get('gender_other', '')
+        if gender == GenderMixin.OTHER and not gender_other:
+            errors['gender'] = ValidationError("This field is required.")
+        elif gender != GenderMixin.OTHER and gender_other:
+            errors['gender'] = ValidationError(
+                'If you entered data in "Other" field, please select that '
+                "option.")
+
+        # raise errors if any present
+        if errors:
+            raise ValidationError(errors)
 
 
 class PersonCreateForm(PersonForm):
@@ -768,6 +805,9 @@ class PersonsMergeForm(forms.Form):
     email = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
+    secondary_email = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
     may_contact = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
@@ -778,6 +818,9 @@ class PersonsMergeForm(forms.Form):
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
     gender = forms.ChoiceField(
+        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
+    )
+    gender_other = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
     airport = forms.ChoiceField(

@@ -36,6 +36,7 @@ class TrainingRequestForm(forms.ModelForm):
             'personal',
             'family',
             'email',
+            'secondary_email',
             'github',
             'occupation',
             'occupation_other',
@@ -71,7 +72,6 @@ class TrainingRequestForm(forms.ModelForm):
             'review_process': forms.RadioSelect(),
             'occupation': RadioSelectWithOther('occupation_other'),
             'domains': CheckboxSelectMultipleWithOthers('domains_other'),
-            'gender': forms.RadioSelect(),
             'underrepresented': forms.RadioSelect(),
             'previous_involvement': forms.CheckboxSelectMultiple(),
             'previous_training': RadioSelectWithOther(

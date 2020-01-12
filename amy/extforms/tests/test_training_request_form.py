@@ -64,6 +64,7 @@ class TestTrainingRequestForm(TestBase):
         self.assertEqual(msg.to, [email])
         self.assertEqual(msg.subject,
                          TrainingRequestCreate.autoresponder_subject)
+        self.assertIn('A copy of your request', msg.body)
         # with open('email.eml', 'wb') as f:
         #     f.write(msg.message().as_bytes())
 

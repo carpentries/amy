@@ -67,7 +67,7 @@
         </td></tr>
     <tr><th>Additional contacts:</th>
         <td>
-          {% for contact in object.additional_contact|strip|split %}
+          {% for contact in object.additional_contact|strip|split:";" %}
             {{ contact|urlize }}<br>
           {% empty %}
             &mdash;

@@ -30,10 +30,14 @@ class InfoSourceAdmin(admin.ModelAdmin):
     list_display = ('name', )
 
 
+class TagAdmin(admin.ModelAdmin):
+    list_display = ('name', 'priority', 'details')
+
+
 admin.site.register(AcademicLevel)
 admin.site.register(ComputingExperienceLevel)
 
-admin.site.register(Tag)
+admin.site.register(Tag, TagAdmin)
 admin.site.register(Role, RoleAdmin)
 admin.site.register(Lesson)
 admin.site.register(KnowledgeDomain)

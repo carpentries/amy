@@ -15,7 +15,8 @@
     <table class="table table-striped">
       <tr>
         <th><input type="checkbox" value="Select all" select-all-checkbox /></th>
-        <th>Instr. badges</th>
+        <th class="badges-column">Some badges <i class="fas fa-question-circle" data-toggle="tooltip"
+            title="Only Instructor or Trainer badges shown."></i></th>
         <th>Has Trainer badge</th>
         <th>Person</th>
         <th>Taught</th>
@@ -28,9 +29,9 @@
       {% for p in persons %}
       <tr>
         <td><input type="checkbox" email="{{ p.email }}" respond-to-select-all-checkbox /></td>
-        <td>{% for badge in p.instructor_badges %}
+        <td>{% for badge in p.important_badges %}
           {% bootstrap_tag badge.name|cut:"-instructor"|upper %}
-        {% endfor %}</td>
+          {% empty %}&mdash;{% endfor %}</td>
         <td>{{ p.is_trainer|yesno }}</td>
         <td><a href="{{ p.get_absolute_url }}">{{ p.full_name }}</a>{% if p.email and p.may_contact %} &lt;{{ p.email|urlize }}&gt;{% endif %}</td>
         <td>{{ p.num_taught }}</td>

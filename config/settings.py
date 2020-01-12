@@ -258,6 +258,12 @@ CACHES = {
     'select2': {
         'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
         'LOCATION': 'cache_select2',
+    },
+    'compressor': {
+        # TODO: in future, either switch to offline compression or
+        #       install Memcached
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        # 'LOCATION': 'templates-media',  # required if >1 LocMemCache used
     }
 }
 
@@ -301,13 +307,23 @@ STATICFILES_FINDERS = [
 # https://django-compressor.readthedocs.io/en/stable/settings/
 COMPRESS_ENABLED = not CONTINUOUS_INTEGRATION
 
-COMPRESS_CSS_FILTERS = [
-    'compressor.filters.css_default.CssAbsoluteFilter',
-    'compressor.filters.cssmin.rCSSMinFilter',
-]
-COMPRESS_JS_FILTERS = [
-    'compressor.filters.jsmin.JSMinFilter',
-]
+COMPRESS_FILTERS = {
+    'css': [
+        'compressor.filters.css_default.CssAbsoluteFilter',
+        'compressor.filters.cssmin.rCSSMinFilter',
+    ],
+    'js': [
+        'compressor.filters.jsmin.JSMinFilter',
+    ]
+}
+
+# DB-backend cache is very slow when we're using SQLite. Therefore it is
+# advised to use a different cache, like MemCached. By default, AMY sets
+# LocMemCache for Django-Compressor. It has some drawbacks, biggest one
+# this cache being available only for one process. Therefore, for more
+# processes Django-Compressor will start regenerating the cache.
+# TODO: switch to Redis / Memcached once they're in place.
+COMPRESS_CACHE_BACKEND = 'compressor'
 
 # MEDIA
 # -----------------------------------------------------------------------------

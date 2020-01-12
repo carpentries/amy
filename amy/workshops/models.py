@@ -153,6 +153,49 @@ class StateMixin(models.Model):
         # cases with code refactoring; will be removed later
         return self.state == 'p'
 
+
+class GenderMixin(models.Model):
+    """Gender mixin for including gender fields in various models."""
+    UNDISCLOSED = 'U'  # Undisclosed (prefer not to say)
+    MALE = 'M'  # Male
+    FEMALE = 'F'  # Female
+    VARIANT = 'V'  # Gender variant / non-conforming
+    OTHER = 'O'  # Other
+
+    GENDER_CHOICES = (
+        (UNDISCLOSED, 'Prefer not to say (undisclosed)'),
+        (FEMALE, 'Female'),
+        (VARIANT, 'Gender variant / non-conforming'),
+        (MALE, 'Male'),
+        (OTHER, 'Other: '),
+    )
+    gender = models.CharField(
+        max_length=1,
+        choices=GENDER_CHOICES,
+        blank=False, null=False, default=UNDISCLOSED,
+    )
+    gender_other = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Other gender',
+        blank=True, null=False,
+    )
+
+    class Meta:
+        abstract = True
+
+
+class SecondaryEmailMixin(models.Model):
+    """Mixin for adding a secondary (optional) email field."""
+    secondary_email = models.EmailField(
+        null=False, blank=True, default="",
+        verbose_name="Secondary email address",
+        help_text="This is an optional, secondary email address we can "
+                  "use to contact you."
+    )
+
+    class Meta:
+        abstract = True
+
 #------------------------------------------------------------
 
 
@@ -438,7 +481,8 @@ class PersonManager(BaseUserManager):
             passed_swc_demo=passed('SWC Demo'),
             passed_dc_demo=passed('DC Demo'),
             passed_lc_demo=passed('LC Demo'),
-            passed_homework=passed_either('SWC Homework', 'DC Homework', 'LC Homework'),
+            passed_homework=passed_either('SWC Homework', 'DC Homework',
+                                          'LC Homework'),
             passed_demo=passed_either('SWC Demo', 'DC Demo', 'LC Demo'),
         ).annotate(
             # We're using Maths to calculate "binary" score for a person to
@@ -447,9 +491,9 @@ class PersonManager(BaseUserManager):
             # + means "OR"
             instructor_eligible=(
                 F('passed_training') *
-                (F('passed_swc_homework') + F('passed_dc_homework')) *
                 F('passed_discussion') *
-                (F('passed_swc_demo') + F('passed_dc_demo'))
+                F('passed_homework') *
+                F('passed_demo')
             )
         )
 
@@ -463,33 +507,42 @@ class PersonManager(BaseUserManager):
 
 @reversion.register
 class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin,
-             CreatedUpdatedMixin):
+             CreatedUpdatedMixin, GenderMixin, SecondaryEmailMixin):
     '''Represent a single person.'''
-    UNDISCLOSED = 'U'
-    MALE = 'M'
-    FEMALE = 'F'
-    OTHER = 'O'
-    GENDER_CHOICES = (
-        (UNDISCLOSED, 'Prefer not to say (undisclosed)'),
-        (MALE, 'Male'),
-        (FEMALE, 'Female'),
-        (OTHER, 'Other'),
-    )
 
     # These attributes should always contain field names of Person
     PERSON_UPLOAD_FIELDS = ('personal', 'family', 'email')
     PERSON_TASK_EXTRA_FIELDS = ('event', 'role')
     PERSON_TASK_UPLOAD_FIELDS = PERSON_UPLOAD_FIELDS + PERSON_TASK_EXTRA_FIELDS
 
-    personal    = models.CharField(max_length=STR_LONG,
-                                   verbose_name='Personal (first) name')
-    middle      = models.CharField(max_length=STR_LONG, blank=True,
-                                   verbose_name='Middle name')
-    family      = models.CharField(max_length=STR_LONG, blank=True, null=True,
-                                   verbose_name='Family (last) name')
-    email       = models.CharField(max_length=STR_LONG, unique=True, null=True, blank=True,
-                                   verbose_name='Email address')
-    gender      = models.CharField(max_length=1, choices=GENDER_CHOICES, null=False, default=UNDISCLOSED)
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = [
+        'personal',
+        'family',
+        'email',
+    ]
+
+    personal = models.CharField(
+        max_length=STR_LONG,
+        verbose_name='Personal (first) name',
+    )
+    middle = models.CharField(
+        max_length=STR_LONG,
+        blank=True,
+        verbose_name='Middle name',
+    )
+    family = models.CharField(
+        max_length=STR_LONG,
+        blank=True, null=True,
+        verbose_name='Family (last) name',
+    )
+    email = models.CharField(  # emailfield?
+        max_length=STR_LONG,
+        unique=True, null=True, blank=True,
+        verbose_name='Email address',
+        help_text="Primary email address, used for communication and "
+                  "as a login."
+    )
     may_contact = models.BooleanField(
         default=True,
         help_text='Allow to contact from The Carpentries according to the '
@@ -504,16 +557,31 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin,
                   '(website, Twitter) on our instructors website. Emails will'
                   ' not be posted.'
     )
-    country     = CountryField(null=False, blank=True, default='', help_text='Person\'s country of residence.')
-    airport     = models.ForeignKey(Airport, null=True, blank=True, on_delete=models.PROTECT,
-                                    verbose_name='Nearest major airport')
-    github      = NullableGithubUsernameField(unique=True, null=True, blank=True,
-                                              verbose_name='GitHub username',
-                                              help_text='Please put only a single username here.')
-    twitter     = models.CharField(max_length=STR_MED, unique=True, null=True, blank=True,
-                                   verbose_name='Twitter username')
-    url         = models.CharField(max_length=STR_LONG, blank=True,
-                                   verbose_name='Personal website')
+    country = CountryField(
+        null=False, blank=True,
+        default='',
+        help_text="Person's country of residence.",
+    )
+    airport = models.ForeignKey(
+        Airport, on_delete=models.PROTECT,
+        null=True, blank=True,
+        verbose_name='Nearest major airport',
+    )
+    github = NullableGithubUsernameField(
+        unique=True, null=True, blank=True,
+        verbose_name='GitHub username',
+        help_text='Please put only a single username here.',
+    )
+    twitter = models.CharField(
+        max_length=STR_MED,
+        unique=True, null=True, blank=True,
+        verbose_name='Twitter username',
+    )
+    url = models.CharField(
+        max_length=STR_LONG,
+        blank=True,
+        verbose_name='Personal website',
+    )
     username = models.CharField(
         max_length=STR_MED, unique=True,
         validators=[RegexValidator(r'^[\w\-_]+$', flags=re.A)],
@@ -587,13 +655,6 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin,
         help_text='Set this to a newer / actual timestamp when Person is '
                   'reviewed by admin.',
     )
-
-    USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS = [
-        'personal',
-        'family',
-        'email',
-    ]
 
     objects = PersonManager()
 
@@ -677,32 +738,15 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin,
     def is_admin(self):
         return is_admin(self)
 
-    def get_missing_swc_instructor_requirements(self):
+    def get_missing_instructor_requirements(self):
         """Returns set of requirements' names (list of strings) that are not
-        passed yet by the trainee and are mandatory to become SWC Instructor.
+        passed yet by the trainee and are mandatory to become an Instructor.
         """
-
         fields = [
             ('passed_training', 'Training'),
-            ('passed_homework', 'SWC or DC Homework'),
+            ('passed_homework', 'Homework (SWC/DC/LC)'),
             ('passed_discussion', 'Discussion'),
-            ('passed_demo', 'SWC or DC Demo'),
-        ]
-        try:
-            return [name for field, name in fields if not getattr(self, field)]
-        except AttributeError as e:
-            raise Exception('Did you forget to call '
-                            'annotate_with_instructor_eligibility()?') from e
-
-    def get_missing_dc_instructor_requirements(self):
-        """Returns set of requirements' names (list of strings) that are not
-        passed yet by the trainee and are mandatory to become DC Instructor."""
-
-        fields = [
-            ('passed_training', 'Training'),
-            ('passed_homework', 'SWC or DC Homework'),
-            ('passed_discussion', 'Discussion'),
-            ('passed_demo', 'SWC or DC Demo'),
+            ('passed_demo', 'Demo (SWC/DC/LC)'),
         ]
         try:
             return [name for field, name in fields if not getattr(self, field)]
@@ -739,7 +783,6 @@ class Person(AbstractBaseUser, PermissionsMixin, DataPrivacyAgreementMixin,
             self.family = self.family.strip()
         self.middle = self.middle.strip()
         self.email = self.email.strip() if self.email else None
-        self.gender = self.gender or None
         self.airport = self.airport or None
         self.github = self.github or None
         self.twitter = self.twitter or None
@@ -762,24 +805,33 @@ def is_admin(user):
 class TagQuerySet(models.query.QuerySet):
     def main_tags(self):
         names = ['SWC', 'DC', 'LC', 'TTT', 'ITT', 'WiSE']
-        return Tag.objects.filter(name__in=names).order_by('id')
+        return Tag.objects.filter(name__in=names)
 
     def carpentries(self):
-        return Tag.objects.filter(name__in=['SWC', 'DC', 'LC']).order_by('id')
+        return Tag.objects.filter(name__in=['SWC', 'DC', 'LC'])
 
 
 class Tag(models.Model):
     '''Label for grouping events.'''
 
-    ITEMS_VISIBLE_IN_SELECT_WIDGET = 14
+    ITEMS_VISIBLE_IN_SELECT_WIDGET = 15
 
-    name       = models.CharField(max_length=STR_MED, unique=True)
-    details    = models.CharField(max_length=STR_LONG)
+    name = models.CharField(max_length=STR_MED, unique=True)
+    details = models.CharField(max_length=STR_LONG)
+    priority = models.PositiveIntegerField(
+        default=0,
+        help_text="Sorting priority (ascending order). Entries with lower "
+                  "number will appear first on the list. If entries have the "
+                  "same number, they're sorted by name."
+    )
 
     def __str__(self):
         return self.name
 
     objects = TagQuerySet.as_manager()
+
+    class Meta:
+        ordering = ["priority", "name"]
 
 #------------------------------------------------------------
 
@@ -1413,6 +1465,7 @@ class Badge(models.Model):
 
     # just for easier access outside `models.py`
     INSTRUCTOR_BADGES = BadgeQuerySet.INSTRUCTOR_BADGES
+    IMPORTANT_BADGES = INSTRUCTOR_BADGES + ('trainer', )
 
     name       = models.CharField(max_length=STR_MED, unique=True)
     title      = models.CharField(max_length=STR_MED)
@@ -1482,7 +1535,8 @@ class TrainingRequestManager(models.Manager):
 
 @reversion.register
 class TrainingRequest(CreatedUpdatedMixin, DataPrivacyAgreementMixin,
-                      COCAgreementMixin, StateMixin, models.Model):
+                      COCAgreementMixin, StateMixin, SecondaryEmailMixin,
+                      models.Model):
 
     MANUAL_SCORE_UPLOAD_FIELDS = (
         'request_id', 'score_manual', 'score_notes',
@@ -1923,8 +1977,8 @@ class TrainingProgress(CreatedUpdatedMixin, models.Model):
         default=False,
         verbose_name='Discarded',
         help_text='Check when the trainee has gone silent or passed their '
-                  'training deadline. Discarded items are not permanently '
-                  'deleted permanently from AMY. If you want to remove this '
+                  'training deadline. Discarded items are not '
+                  'deleted permanently. If you want to remove this '
                   'record, click red "delete" button.')
 
     event = models.ForeignKey(Event, null=True, blank=True,
@@ -2133,7 +2187,7 @@ class InfoSource(models.Model):
         return self.name
 
 
-class CommonRequest(models.Model):
+class CommonRequest(SecondaryEmailMixin, models.Model):
     """
     Common fields used across all *Requests, ie.:
     * WorkshopRequest model
