@@ -7,20 +7,20 @@ def tags_priority(apps, schema_editor):
     Tag = apps.get_model('workshops', 'Tag')
 
     tag_order = [
-        'Circuits',
-        'Pilot',
-        'SWC',
         'DC',
         'LC',
-        'ITT',
+        'SWC',
+        'Circuits',
+        'Pilot',
         'TTT',
-        'LMO',
-        'LSO',
+        'online',
+        'ITT',
         'cancelled',
         'unresponsive',
         'stalled',
+        'LMO',
+        'LSO',
         'WiSE',
-        'online',
         'hackathon',
     ]
     for priority, tag in enumerate(tag_order):
