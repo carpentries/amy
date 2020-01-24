@@ -77,7 +77,8 @@ Your email address and GitHub id can not be updated here, as they are tied to yo
         {% endif %}
         <p>If you think that you're missing a badge, please email us at <a href="mailto:team@carpentries.org">team@carpentries.org</a></p>
     </td></tr>
-    <tr><th>Your workshop activity:</th><td>
+    <tr><th>Your workshop activity:<br>
+        <small>If you have run a self-organised workshop that is missing from this list,<br> please fill out our <a href="{% url 'selforganised_submission' %}">self organised workshop form</a> and we will update our records.</small></th><td>
         {% if workshops %}
         <table class="table">
           <tr>
