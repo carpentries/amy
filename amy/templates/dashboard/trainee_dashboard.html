@@ -17,8 +17,16 @@ Your email address and GitHub id can not be updated here, as they are tied to yo
     <tr><th>Personal name:</th><td>{{ user.personal|default:"—" }}</td></tr>
     <tr><th>Middle name:</th><td>{{ user.middle|default:"—" }}</td></tr>
     <tr><th>Family name:</th><td>{{ user.family|default:"—" }}</td></tr>
-    <tr><th>Email:</th><td>{{ user.email|default:"—" }}</td></tr>
-    <tr><th>Secondary email:</th><td>{{ user.secondary_email|default:"—" }}</td></tr>
+    <tr><th>Email:
+      <small><i>This is tied to your database record <br> 
+             and is the primary way we will contact you.<br>
+      </i></small>
+      </th><td>{{ user.email|default:"—" }}</td></tr>
+    <tr><th>Secondary email:
+      <small><i>You may optionally provide a secondary email address.<br> 
+             We will use this only if we have trouble with the primary email address.
+      </i></small>
+      </th><td>{{ user.secondary_email|default:"—" }}</td></tr>
     <tr><th>Gender:</th><td>{{ user.get_gender_display }}{{ user.gender_other }}</td></tr>
     <tr><th>Can we contact you?</th><td>{{ user.may_contact|yesno }}</td></tr>
     <tr><th>Do you consent to publish your profile<br>on The Carpentries website?</th><td>{{ user.publish_profile|yesno }}</td></tr>
