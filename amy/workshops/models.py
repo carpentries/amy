@@ -1034,7 +1034,7 @@ class Event(AssignmentMixin, models.Model):
     administrator = models.ForeignKey(
         Organization, related_name='administrator', null=True, blank=True,
         on_delete=models.PROTECT,
-        help_text='Organization responsible for administrative work.'
+        help_text='Lesson Program administered for this workshop.'
     )
     sponsors = models.ManyToManyField(
         Organization, related_name='sponsored_events', blank=True,
