@@ -199,13 +199,28 @@ class SecondaryEmailMixin(models.Model):
 #------------------------------------------------------------
 
 
+class OrganizationManager(models.Manager):
+    ADMIN_DOMAINS = [
+        'self-organized',
+        'software-carpentry.org',
+        'datacarpentry.org',
+        'librarycarpentry.org',
+        'carpentries.org',  # Instructor Training organisation
+    ]
+
+    def administrators(self):
+        return self.get_queryset().filter(domain__in=self.ADMIN_DOMAINS)
+
+
 @reversion.register
 class Organization(models.Model):
     '''Represent an organization, academic or business.'''
 
-    domain     = models.CharField(max_length=STR_LONG, unique=True)
-    fullname   = models.CharField(max_length=STR_LONG, unique=True)
-    country    = CountryField(null=True, blank=True)
+    domain = models.CharField(max_length=STR_LONG, unique=True)
+    fullname = models.CharField(max_length=STR_LONG, unique=True)
+    country = CountryField(null=True, blank=True)
+
+    objects = OrganizationManager()
 
     def __str__(self):
         return "{} <{}>".format(self.fullname, self.domain)
