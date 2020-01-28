@@ -423,13 +423,15 @@ class TestEventViews(TestBase):
 
     def test_add_minimal_event(self):
         host = Organization.objects.get(fullname='Test Organization')
+        # administrator can only be selected from `administrators`
+        admin = Organization.objects.administrators().first()
         response = self.client.post(
             reverse('event_add'),
             {
                 'slug': '2012-12-21-event-final',
                 'host': host.id,
                 'tags': [self.test_tag.id],
-                'administrator': host.id,
+                'administrator': admin.id,
                 'invoice_status': 'unknown',
             })
 
