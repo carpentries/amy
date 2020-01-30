@@ -387,6 +387,24 @@ class Command(BaseCommand):
                 country=choice(Countries)[0],
             )
 
+    def real_organizations(self):
+        """Add real Carpentries organizations."""
+        self.stdout.write('Adding real organizations.')
+        orgs = [
+            ("self-organized", "self-organized"),
+            ("Software Carpentry", "software-carpentry.org"),
+            ("Data Carpentry", "datacarpentry.org"),
+            ("Library Carpentry", "librarycarpentry.org"),
+            ("Instructor Training", "carpentries.org"),
+        ]
+        for name, domain in orgs:
+            _, created = Organization.objects.get_or_create(
+                domain=domain,
+                defaults=dict(fullname=name),
+            )
+            if created:
+                self.stdout.write('Added "{}" organization.'.format(domain))
+
     def fake_memberships(self, count=10):
         self.stdout.write('Generating {} fake memberships...'.format(count))
 
@@ -805,6 +823,7 @@ class Command(BaseCommand):
             self.fake_trainers()
             self.fake_admins()
             self.fake_organizations()
+            self.real_organizations()
             self.fake_memberships()
             self.fake_current_events()
             self.fake_unpublished_events()

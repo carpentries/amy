@@ -385,8 +385,8 @@ class EventForm(forms.ModelForm):
         label='Administrator',
         required=False,
         help_text=Event._meta.get_field('administrator').help_text,
-        queryset=Organization.objects.all(),
-        widget=ModelSelect2Widget(data_view='organization-lookup')
+        queryset=Organization.objects.administrators(),
+        widget=ModelSelect2Widget(data_view='administrator-org-lookup'),
     )
 
     assigned_to = forms.ModelChoiceField(
