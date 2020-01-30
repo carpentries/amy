@@ -135,7 +135,7 @@ class TestNewInstructorAction(TestCase):
             ctx,
             dict(
                 workshop=e,
-                workshop_main_type='SWC',
+                workshop_main_type='DC',  # DC is first due to sorting priority
                 dates=e.human_readable_date,
                 host=Organization.objects.first(),
                 regional_coordinator_email=['admin-uk@carpentries.org'],

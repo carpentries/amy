@@ -7,7 +7,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('autoemails', '0003_rqjob'),
-        ('workshops', '0204_trainingrequest_review_process'),
+        ('workshops', '0210_auto_20200124_1939'),
     ]
 
     operations = [
