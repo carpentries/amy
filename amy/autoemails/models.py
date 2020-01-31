@@ -255,6 +255,7 @@ class RQJob(CreatedUpdatedMixin, models.Model):
     scheduled_execution = models.DateTimeField(
         blank=True, null=True, default=None,
         verbose_name="Scheduled execution time",
+        help_text="Set automatically when scheduling an email.",
     )
 
     def __str__(self):

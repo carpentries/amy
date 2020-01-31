@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='rqjob',
             name='scheduled_execution',
-            field=models.DateTimeField(blank=True, default=None, null=True, verbose_name='Scheduled execution time'),
+            field=models.DateTimeField(blank=True, default=None, null=True, verbose_name='Scheduled execution time', help_text='Set automatically when scheduling an email.'),
         ),
     ]

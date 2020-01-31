@@ -55,6 +55,7 @@ class RQJobAdmin(admin.ModelAdmin):
     list_display = ['job_id', 'created_at', 'scheduled_execution', 'trigger',
                     'manage_links']
     date_hierarchy = 'created_at'
+    readonly_fields = ['scheduled_execution', ]
 
     def manage_links(self, obj):
         link = reverse('admin:autoemails_rqjob_preview', args=[obj.id])
