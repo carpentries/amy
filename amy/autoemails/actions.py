@@ -156,8 +156,6 @@ class NewInstructorAction(BaseAction):
     @staticmethod
     def check(task: Task):
         """Conditions for creating a NewInstructorAction."""
-        start_in_future = Q(start__gt=date.today())
-        no_start = Q(start__isnull=True)
         return (
             # 2019-11-01: we accept instructors without `may_contact` agreement
             #             because it was supposed to apply on for non-targeted
@@ -170,7 +168,8 @@ class NewInstructorAction(BaseAction):
             # 2019-12-24: instead of accepting only upcoming Events, let's
             #             accept (more broadly) events starting in future
             #             or some without start date
-            task.event in Event.objects.filter(start_in_future | no_start)
+            # 2020-01-31: slightly rewrite (less queries)
+            (not task.event.start or task.event.start >= date.today())
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
