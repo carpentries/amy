@@ -124,7 +124,7 @@ class TestNewInstructorAction(TestCase):
             longitude=20.0,
             url='https://test-event.example.com',
         )
-        e.tags.set(Tag.objects.filter(name__in=['SWC', 'DC', 'LC']))
+        e.tags.set(Tag.objects.filter(name='SWC'))
         p = Person.objects.create(personal='Harry', family='Potter',
                                   email='hp@magic.uk')
         r = Role.objects.create(name='instructor')
@@ -135,7 +135,7 @@ class TestNewInstructorAction(TestCase):
             ctx,
             dict(
                 workshop=e,
-                workshop_main_type='DC',  # DC is first due to sorting priority
+                workshop_main_type='SWC',
                 dates=e.human_readable_date,
                 host=Organization.objects.first(),
                 regional_coordinator_email=['admin-uk@carpentries.org'],
