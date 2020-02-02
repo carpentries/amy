@@ -49,7 +49,7 @@ from github.GithubException import GithubException
 from reversion.models import Version, Revision
 from reversion_compare.forms import SelectDiffForm
 
-from autoemails.actions import NewInstructorAction
+from autoemails.actions import NewInstructorAction, PostWorkshopAction
 from autoemails.models import Trigger
 from autoemails.base_views import ActionManageMixin
 from fiscal.forms import SponsorshipForm
@@ -934,15 +934,45 @@ def validate_event(request, slug):
 
 
 class EventCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                  AMYCreateView):
+                  AMYCreateView, ActionManageMixin):
     permission_required = 'workshops.add_event'
     model = Event
     form_class = EventCreateForm
     template_name = 'workshops/event_create_form.html'
 
+    def get_logger(self):
+        return logger
+
+    def get_scheduler(self):
+        return scheduler
+
+    def get_redis_connection(self):
+        return redis_connection
+
+    def get_triggers(self):
+        return Trigger.objects.filter(active=True,
+                                      action='week-after-workshop-completion')
+
+    def objects(self):
+        return dict(event=self.object)
+
+    def form_valid(self, form):
+        """Additional functions for validating Event Create form:
+        * maybe adding a mail job, if conditions are met
+        """
+        # save the object
+        res = super().form_valid(form)
+
+        # check conditions for running a PostWorkshopAction
+        if PostWorkshopAction.check(self.object):
+            self.action_add(PostWorkshopAction)
+
+        # return remembered results
+        return res
+
 
 class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                  AMYUpdateView):
+                  AMYUpdateView, ActionManageMixin):
     permission_required = [
         'workshops.change_event',
         'workshops.add_task',
@@ -973,12 +1003,77 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
     def get_form_class(self):
         return partial(EventForm, show_lessons=True)
 
+    def get_logger(self):
+        return logger
+
+    def get_scheduler(self):
+        return scheduler
+
+    def get_redis_connection(self):
+        return redis_connection
+
+    def get_triggers(self):
+        return Trigger.objects.filter(active=True,
+                                      action='week-after-workshop-completion')
+
+    def get_jobs(self, as_id_list=False):
+        jobs = self.object.rq_jobs.filter(
+            trigger__action='week-after-workshop-completion')
+        if as_id_list:
+            return jobs.values_list('job_id', flat=True)
+        return jobs
+
+    def objects(self):
+        return dict(event=self.object)
+
+    def form_valid(self, form):
+        """Check if RQ job conditions changed, and add/delete jobs if
+        necessary."""
+        old = self.get_object()
+        check_old = PostWorkshopAction.check(old)
+
+        res = super().form_valid(form)
+        new = self.object  # refreshed by `super().form_valid()`
+        check_new = PostWorkshopAction.check(new)
+
+        # PostWorkshopAction conditions are not met, but weren't before
+        if not check_old and check_new:
+            self.action_add(PostWorkshopAction)
+
+        # PostWorkshopAction conditions were met, but aren't anymore
+        elif check_old and not check_new:
+            self.action_remove(PostWorkshopAction)
+
+        return res
+
 
 class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
-                  AMYDeleteView):
+                  AMYDeleteView, ActionManageMixin):
     model = Event
     permission_required = 'workshops.delete_event'
     success_url = reverse_lazy('all_events')
+
+    def get_logger(self):
+        return logger
+
+    def get_scheduler(self):
+        return scheduler
+
+    def get_redis_connection(self):
+        return redis_connection
+
+    def get_jobs(self, as_id_list=False):
+        jobs = self.object.rq_jobs.filter(
+            trigger__action='week-after-workshop-completion')
+        if as_id_list:
+            return jobs.values_list('job_id', flat=True)
+        return jobs
+
+    def objects(self):
+        return dict(event=self.object)
+
+    def before_delete(self, *args, **kwargs):
+        return self.action_remove(PostWorkshopAction)
 
 
 @admin_required
