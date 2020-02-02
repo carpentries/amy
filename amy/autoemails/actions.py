@@ -148,9 +148,9 @@ class NewInstructorAction(BaseAction):
     ...     job = scheduler.enqueue_in(launch_at, action)
     """
 
-    # it should be at least 1 hour to give admin some time in case of mistakes
+    # It should be at least 1 hour to give admin some time in case of mistakes.
+    # launch_at = timedelta(hours=1)
     # Shortened to 10 minutes for tests!
-    #launch_at = timedelta(hours=1)
     launch_at = timedelta(minutes=10)
 
     @staticmethod
