@@ -69,9 +69,12 @@ class TestPostWorkshopAction(TestCase):
         self.assertEqual(PostWorkshopAction.check(e), True)
 
         # 5th case: no host/instructor tasks
+        # This is tricky case. Sometimes the workshop can be defined before
+        # there are any instructor/host tasks.
+        # result: OK
         r.name = 'helper'
         r.save()
-        self.assertEqual(PostWorkshopAction.check(e), False)
+        self.assertEqual(PostWorkshopAction.check(e), True)
         r.name = 'instructor'  # additionally check for instructor role
         r.save()
 

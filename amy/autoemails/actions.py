@@ -242,9 +242,7 @@ class PostWorkshopAction(BaseAction):
             # event cannot be cancelled / unresponsive / stalled
             not event.tags.filter(name__in=[
                 'cancelled', 'unresponsive', 'stalled'
-            ]) and
-            # there's someone to send the email to
-            event.task_set.filter(role__name__in=['host', 'instructor'])
+            ])
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
