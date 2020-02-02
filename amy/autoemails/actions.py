@@ -82,6 +82,42 @@ class BaseAction:
             pass
         return ctx
 
+    def subject(self):
+        """Overwrite in order to set own subject from descending Action."""
+        return ""
+
+    def sender(self):
+        """Overwrite in order to set own sender from descending Action."""
+        return ""
+
+    def recipients(self):
+        """Overwrite in order to set own recipients from descending Action."""
+        return None
+
+    def cc_recipients(self):
+        """Overwrite in order to set own CC recipients from descending
+        Action."""
+        return None
+
+    def bcc_recipients(self):
+        """Overwrite in order to set own BCC recipients from descending
+        Action."""
+        return None
+
+    def reply_to(self):
+        """Overwrite in order to set own reply-to from descending Action."""
+        return ""
+
+    def email_text(self):
+        """Overwrite in order to set own email text body from descending
+        Action."""
+        return ""
+
+    def email_html(self):
+        """Overwrite in order to set own email HTML body from descending
+        Action."""
+        return ""
+
     def _context(self, additional_context: Optional[Dict] = None) -> Dict:
         """Prepare general context for lazy-evaluated email message used later
         on."""
@@ -103,7 +139,17 @@ class BaseAction:
 
         # build email
         self.logger.debug('Building email with provided context...')
-        email = self.template.build_email(context=self.context)
+        email = self.template.build_email(
+            subject=self.subject(),
+            sender=self.sender(),
+            recipients=self.recipients(),
+            cc_recipients=self.cc_recipients(),
+            bcc_recipients=self.bcc_recipients(),
+            reply_to=self.reply_to(),
+            text=self.email_text(),
+            html=self.email_html(),
+            context=self.context,
+        )
         return email
 
     def __call__(self, *args, **kwargs):
