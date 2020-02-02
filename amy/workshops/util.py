@@ -325,7 +325,7 @@ def create_uploaded_persons_tasks(data, request=None):
 
     jobs_created = []
     rqjobs_created = []
-    
+
     # for each created task, try to add a new-instructor action
     with transaction.atomic():
         for task in tasks_created:
@@ -1296,11 +1296,14 @@ def match_notification_email(obj):
 
     # some objects may not have this attribute, in this case we should fall
     # back to default criteria email
-    if hasattr(obj, 'country'):
+    if hasattr(obj, 'country') and obj.country:
         results = (
             Criterium.objects.filter(countries__contains=obj.country)
                              .values_list('email', flat=True)
         )
+    else:
+        # use general notification criteria when event has no country
+        results = [settings.ADMIN_NOTIFICATION_CRITERIA_DEFAULT]
 
     # fallback to default address if nothing matches
     return results or [settings.ADMIN_NOTIFICATION_CRITERIA_DEFAULT]
