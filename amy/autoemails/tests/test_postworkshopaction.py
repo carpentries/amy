@@ -102,10 +102,6 @@ class TestPostWorkshopAction(TestCase):
             end=date.today() + timedelta(days=8),
             country='GB',
             venue='Ministry of Magic',
-            address='Underground',
-            latitude=20.0,
-            longitude=20.0,
-            url='https://test-event.example.com',
         )
         e.tags.set(Tag.objects.filter(name__in=['TTT', 'SWC']))
         p1 = Person.objects.create(personal='Harry', family='Potter',
@@ -137,7 +133,7 @@ class TestPostWorkshopAction(TestCase):
                 host=Organization.objects.first(),
                 regional_coordinator_email=['admin-uk@carpentries.org'],
                 helpers=[p1, p3],
-                all_emails=['hp@magic.uk', 'hg@magic.uk'],
+                all_emails=['hg@magic.uk', 'hp@magic.uk'],
                 assignee='Regional Coordinator',
             ),
         )

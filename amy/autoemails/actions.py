@@ -272,10 +272,13 @@ class PostWorkshopAction(BaseAction):
                 task__in=event.task_set.filter(role__name='helper')
             )
         )
+        # querying over Person.objects lets us get rid of duplicates
         context['all_emails'] = list(
-            event.task_set.filter(
-                role__name__in=['host', 'instructor']
-            ).values_list('person__email', flat=True)
+            Person.objects.filter(
+                task__in=event.task_set.filter(
+                    role__name__in=['host', 'instructor']
+                )
+            ).distinct().values_list('email', flat=True)
         )
         context['assignee'] = (
             event.assigned_to.full_name
