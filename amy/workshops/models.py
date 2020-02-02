@@ -1007,8 +1007,12 @@ class EventQuerySet(models.query.QuerySet):
         )
 
 
+# CAUTION: moved the import here so that it doens't cause circular dependencies
+from autoemails.models import RQJobsMixin
+
+
 @reversion.register
-class Event(AssignmentMixin, models.Model):
+class Event(AssignmentMixin, RQJobsMixin, models.Model):
     '''Represent a single event.'''
 
     REPO_REGEX = re.compile(r'https?://github\.com/(?P<name>[^/]+)/'
@@ -1356,10 +1360,6 @@ class TaskManager(models.Manager):
     def helpers(self):
         """Fetch tasks with role 'helper'."""
         return self.get_queryset().filter(role__name="helper")
-
-
-# CAUTION: moved the import here so that it doens't cause circular dependencies
-from autoemails.models import RQJobsMixin
 
 
 @reversion.register
