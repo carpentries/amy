@@ -279,6 +279,14 @@ class PostWorkshopAction(BaseAction):
     # Shortened to 10 minutes for tests!
     launch_at = timedelta(minutes=10)
 
+    def recipients(self):
+        """Assuming self.context is ready, overwrite email's recipients
+        with selected ones."""
+        try:
+            return self.context['all_emails']
+        except (AttributeError, KeyError):
+            return None
+
     @staticmethod
     def check(event: Event):
         """Conditions for creating a PostWorkshopAction."""

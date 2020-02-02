@@ -137,3 +137,57 @@ class TestPostWorkshopAction(TestCase):
                 assignee='Regional Coordinator',
             ),
         )
+
+    def testRecipients(self):
+        """Make sure PostWorkshopAction correctly renders recipients.
+
+        They should get overwritten by PostWorkshopAction during email
+        building."""
+        e = Event.objects.create(
+            slug='test-event',
+            host=Organization.objects.first(),
+            start=date.today() + timedelta(days=7),
+            end=date.today() + timedelta(days=8),
+            country='GB',
+            venue='Ministry of Magic',
+        )
+        e.tags.set(Tag.objects.filter(name='LC'))
+        p1 = Person.objects.create(personal='Harry', family='Potter',
+                                   username='hpotter',
+                                   email='hp@magic.uk')
+        p2 = Person.objects.create(personal='Hermione', family='Granger',
+                                   username='hgranger',
+                                   email='hg@magic.uk')
+        p3 = Person.objects.create(personal='Ron', family='Weasley',
+                                   username='rweasley',
+                                   email='rw@magic.uk')
+        host = Role.objects.create(name='host')
+        instructor = Role.objects.create(name='instructor')
+        Task.objects.bulk_create([
+            Task(event=e, person=p1, role=instructor),
+            Task(event=e, person=p2, role=instructor),
+            Task(event=e, person=p3, role=host),
+            Task(event=e, person=p1, role=host),
+        ])
+
+        template = EmailTemplate.objects.create(
+            slug='sample-template',
+            subject='Welcome to {{ site.name }}',
+            to_header='recipient@address.com',
+            from_header='test@address.com',
+            cc_header='copy@example.org',
+            bcc_header='bcc@example.org',
+            reply_to_header='{{ reply_to }}',
+            html_template="Sample text.",
+            text_template="Sample text.",
+        )
+        trigger = Trigger.objects.create(
+            action='week-after-workshop-completion',
+            template=template,
+        )
+        a = PostWorkshopAction(
+            trigger=trigger,
+            objects=dict(event=e),
+        )
+        email = a._email()
+        self.assertEqual(email.to, [p2.email, p1.email, p3.email])
