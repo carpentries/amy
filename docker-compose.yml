@@ -20,21 +20,21 @@ services:
       - "8080:8000"
     depends_on:
       - redis_cache
-  
+
   redis_worker:
     image: amy:latest
     environment:
       - AMY_REDIS_URL=redis://redis_cache:6379/
-    command: python manage.py rqworker
+    command: python manage.py rqworker -v 2
     depends_on:
       - redis_cache
       - amy
-  
+
   redis_scheduler:
     image: amy:latest
     environment:
       - AMY_REDIS_URL=redis://redis_cache:6379/
-    command: python manage.py rqscheduler
+    command: python manage.py rqscheduler -v 2
     depends_on:
       - redis_cache
       - amy
