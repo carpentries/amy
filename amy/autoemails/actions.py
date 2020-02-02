@@ -14,7 +14,7 @@ import django_rq
 
 from autoemails.models import Trigger, EmailTemplate
 from autoemails.utils import compare_emails
-from workshops.models import Event, Task
+from workshops.models import Event, Task, Person
 
 
 logger = logging.getLogger('amy.signals')
@@ -198,6 +198,87 @@ class NewInstructorAction(BaseAction):
         context['person'] = task.person
         context['instructor'] = task.person
         context['role'] = task.role
+        context['assignee'] = (
+            event.assigned_to.full_name
+            if event.assigned_to
+            else 'Regional Coordinator'
+        )
+
+        return context
+
+
+class PostWorkshopAction(BaseAction):
+    """
+    Action for thanking the instructors/organizers for their work, reminding
+    them about getting survey responses, and asking for any additional
+    information or feedback.
+    This email should be sent 7 days after the end date of an active workshop
+    (not cancelled, stalled, or unresponsive).
+
+    How to use it:
+
+    >>> triggers = Trigger.objects.filter(active=True,
+                                          action='week-after-workshop-completion')
+    >>> for trigger in triggers:
+    ...     action = PostWorkshopAction(
+    ...         trigger=trigger,
+    ...         objects=dict(event=event, tasks=tasks),
+    ...     )
+    ...     launch_at = action.get_launch_at()
+    ...     job = scheduler.enqueue_in(launch_at, action)
+    """
+
+    # The action should launch week after workshop's end date
+    # launch_at = timedelta(days=7)
+    # Shortened to 10 minutes for tests!
+    launch_at = timedelta(minutes=10)
+
+    @staticmethod
+    def check(event: Event):
+        """Conditions for creating a PostWorkshopAction."""
+        return bool(
+            # end date is mandatory
+            event.end and
+            # event cannot be cancelled / unresponsive / stalled
+            not event.tags.filter(name__in=[
+                'cancelled', 'unresponsive', 'stalled'
+            ]) and
+            # there's someone to send the email to
+            event.task_set.filter(role__name__in=['host', 'instructor'])
+        )
+
+    def get_additional_context(self, objects, *args, **kwargs):
+        from workshops.util import match_notification_email, human_daterange
+
+        # refresh related event
+        event = objects['event']
+        event.refresh_from_db()
+
+        # prepare context
+        context = dict()
+        context['workshop'] = event
+        context['workshop_main_type'] = None
+        tmp = event.tags.carpentries().first()
+        if tmp:
+            context['workshop_main_type'] = tmp.name
+        context['dates'] = None
+        if event.end:
+            context['dates'] = human_daterange(event.start, event.end)
+        context['host'] = event.host
+        context['regional_coordinator_email'] = \
+            list(match_notification_email(event))
+
+        # to get only people from the task set
+        context['helpers'] = list(
+            Person.objects.filter(
+                task__in=event.task_set.filter(role__name='helper')
+            )
+        )
+        context['all_emails'] = list(
+            event.task_set.filter(
+                role__name__in=['host', 'instructor']
+            ).values_list('person__email', flat=True)
+        )
         context['assignee'] = (
             event.assigned_to.full_name
             if event.assigned_to
