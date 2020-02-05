@@ -46,6 +46,9 @@ class TrainingRequestCreate(
     autoresponder_body_template_html = 'mailing/training_request.html'
     autoresponder_form_field = 'email'
 
+    def autoresponder_email_context(self, form):
+        return dict(object=self.object)
+
     def get_success_message(self, *args, **kwargs):
         """Don't display a success message."""
         return ''
