@@ -3,8 +3,9 @@ from typing import Optional, List
 
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
+from django.core.exceptions import ValidationError
 from django.db import models
-from django.template import engines, Template
+from django.template import engines, Template, TemplateSyntaxError
 from django.urls import reverse
 import markdown
 
@@ -204,6 +205,37 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
 
     def get_absolute_url(self):
         return reverse('admin:autoemails_emailtemplate_change', args=[self.pk])
+
+    def clean(self):
+        errors = dict()
+
+        fields = [
+            'subject',
+            'to_header',
+            'from_header',
+            'cc_header',
+            'bcc_header',
+            'reply_to_header',
+            'body_template',
+        ]
+
+        for field in fields:
+            # check field for template syntax errors
+            try:
+                tpl = EmailTemplate.get_template(getattr(self, field))
+                out = tpl.render(dict())
+            except TemplateSyntaxError:
+                errors[field] = 'Invalid Django Template syntax.'
+            else:
+                # check for missing open/close tags
+                if '{{' in out or '}}' in out or '{%' in out or '%}' in out:
+                    errors[field] = (
+                        'Missing opening or closing tags: "{%", "%}",'
+                        ' "{{", or "}}".'
+                    )
+
+        if errors:
+            raise ValidationError(errors)
 
 
 class Trigger(ActiveMixin, CreatedUpdatedMixin, models.Model):

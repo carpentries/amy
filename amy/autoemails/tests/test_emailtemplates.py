@@ -1,4 +1,5 @@
 from django.contrib.sites.models import Site
+from django.core.exceptions import ValidationError
 from django.template.exceptions import (
     TemplateSyntaxError,
     TemplateDoesNotExist,
@@ -168,3 +169,64 @@ Regional Coordinator""")
 </ul>
 <p>Sincerely,
 Regional Coordinator</p>""")
+
+    def test_syntax_check(self):
+        """All fields should have Django syntax check validation enabled."""
+        # case 1: wrong tag
+        tpl1 = EmailTemplate(
+            slug='test-template-1',
+            subject='Wrong tag {% tag %}',
+            to_header='Wrong tag {% tag %}',
+            from_header='Wrong tag {% tag %}',
+            cc_header='Wrong tag {% tag %}',
+            bcc_header='Wrong tag {% tag %}',
+            reply_to_header='Wrong tag {% tag %}',
+            body_template='Wrong tag {% tag %}',
+        )
+        with self.assertRaises(ValidationError) as e:
+            tpl1.clean()
+
+        self.assertIn('subject', e.exception.error_dict)
+        self.assertIn('to_header', e.exception.error_dict)
+        self.assertIn('from_header', e.exception.error_dict)
+        self.assertIn('cc_header', e.exception.error_dict)
+        self.assertIn('bcc_header', e.exception.error_dict)
+        self.assertIn('reply_to_header', e.exception.error_dict)
+        self.assertIn('body_template', e.exception.error_dict)
+        self.assertIn('Invalid', e.exception.message_dict['subject'][0])
+
+        # case 2: missing opening or closing tags
+        tpl2 = EmailTemplate(
+            slug='test-template-2',
+            subject='Missing {% url ',
+            to_header='Missing {{ tag',
+            from_header='Missing %}',
+            cc_header='Missing }}',
+            bcc_header='Missing {% tag }',
+            reply_to_header='Missing {{ tag }',
+            body_template='Missing { tag }}',
+        )
+        with self.assertRaises(ValidationError) as e:
+            tpl2.clean()
+
+        self.assertIn('subject', e.exception.error_dict)
+        self.assertIn('to_header', e.exception.error_dict)
+        self.assertIn('from_header', e.exception.error_dict)
+        self.assertIn('cc_header', e.exception.error_dict)
+        self.assertIn('bcc_header', e.exception.error_dict)
+        self.assertIn('reply_to_header', e.exception.error_dict)
+        self.assertIn('body_template', e.exception.error_dict)
+        self.assertIn('Missing', e.exception.message_dict['subject'][0])
+
+        # case 3: empty values should pass
+        tpl3 = EmailTemplate(
+            slug='test-template-3',
+            subject='',
+            to_header='',
+            from_header='',
+            cc_header='',
+            bcc_header='',
+            reply_to_header='',
+            body_template='',
+        )
+        tpl3.clean()
