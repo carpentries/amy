@@ -13,6 +13,7 @@ class TestNewInstructorAction(TestCase):
             Tag(name='SWC'),
             Tag(name='DC'),
             Tag(name='LC'),
+            Tag(name='Pilot'),
         ])
 
     def testLaunchAt(self):
@@ -39,7 +40,7 @@ class TestNewInstructorAction(TestCase):
             # longitude=20.0,
             # url='https://test-event.example.com',
         )
-        e.tags.set(Tag.objects.filter(name__in=['SWC', 'DC', 'LC']))
+        e.tags.set(Tag.objects.filter(name__in=['SWC', 'DC', 'LC', 'Pilot']))
         p = Person(personal='Harry', family='Potter', email='hp@magic.uk')
         r = Role(name='instructor')
         t = Task(event=e, person=p, role=r)
@@ -87,7 +88,7 @@ class TestNewInstructorAction(TestCase):
             longitude=20.0,
             url='https://test-event.example.com',
         )
-        e.tags.set(Tag.objects.filter(name__in=['SWC', 'DC', 'LC']))
+        e.tags.set(Tag.objects.filter(name__in=['SWC', 'DC', 'LC', 'Pilot']))
         p = Person(personal='Harry', family='Potter', email='hp@magic.uk',
                    may_contact=True)  # contact allowed
         r = Role(name='instructor')
