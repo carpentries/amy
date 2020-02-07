@@ -1,11 +1,13 @@
 from datetime import datetime
 
 from django.contrib import admin, messages
+from django.db import models
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.html import format_html
 import django_rq
+from markdownx.widgets import AdminMarkdownxWidget
 from rq.exceptions import NoSuchJobError
 from rq.job import Job
 from rq_scheduler.utils import from_unix
@@ -20,6 +22,9 @@ scheduler = django_rq.get_scheduler('default')
 
 class EmailTemplateAdmin(admin.ModelAdmin):
     list_display = ['slug', 'subject', 'to_header', 'from_header']
+    formfield_overrides = {
+        models.TextField: {'widget': AdminMarkdownxWidget},
+    }
 
     def get_urls(self):
         original_urls = super().get_urls()
