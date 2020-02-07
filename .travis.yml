@@ -19,12 +19,6 @@ python:
   - 3.8
 
 env:
-  - AMY_ENABLE_PYDATA=true
-    AMY_PYDATA_USERNAME=username
-    AMY_PYDATA_PASSWORD=password
-    # With PyData enabled, there's always one migration missing,
-    # so let's not check migrations.
-    # CHECK_MIGRATION=true
   - CHECK_MIGRATION=true
 
 install:
