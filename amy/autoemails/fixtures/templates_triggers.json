@@ -1,0 +1,58 @@
+[
+{
+  "model": "autoemails.emailtemplate",
+  "pk": 1,
+  "fields": {
+    "active": true,
+    "created_at": "2019-12-06T14:42:44.688Z",
+    "last_updated_at": "2020-02-07T16:26:00.336Z",
+    "slug": "confirming-instructing-workshop",
+    "subject": "Confirmation of your participation as an instructor for {% if workshop_main_type %}{{ workshop_main_type }}{% endif %} workshop @ {{ workshop.venue }}{% if dates %} ({{ dates }}){% endif %}",
+    "to_header": "{{ instructor.email }}",
+    "from_header": "no-reply@carpentries.org",
+    "cc_header": "",
+    "bcc_header": "team+EA@carpentries.org",
+    "reply_to_header": "{{ regional_coordinator_email.0 }}",
+    "body_template": "Thank you for volunteering to teach! You are confirmed to teach a workshop at {{ host.fullname }}{% if dates %} ({{ dates }}){% endif %}.\r\n\r\nWe\u2019ll be following up shortly to introduce you to your host and your co-instructor. Your host will be the best resource for planning travel arrangements. Please let me know if you have any other questions, and we're looking forward to working with you on this workshop!\r\n\r\nThanks for all you do!\r\n\r\nBest,  \r\n{{ assignee }}"
+  }
+},
+{
+  "model": "autoemails.emailtemplate",
+  "pk": 2,
+  "fields": {
+    "active": true,
+    "created_at": "2020-02-02T11:01:07.240Z",
+    "last_updated_at": "2020-02-07T16:25:51.443Z",
+    "slug": "7days-post-workshop",
+    "subject": "Completed {% if workshop_main_type %}{{ workshop_main_type }}{% endif %} workshop at {{ workshop.venue }} on {{ dates }}",
+    "to_header": "{# This gets overwritten anyway #}",
+    "from_header": "no-reply@carpentries.org",
+    "cc_header": "",
+    "bcc_header": "team+EA@carpentries.org",
+    "reply_to_header": "{{ regional_coordinator_email.0 }}",
+    "body_template": "Thank you for teaching the workshop at {{ workshop.venue }}!\r\n\r\nThis workshop slug is {{ workshop.slug }}. (The \u2018workshop slug\u2019 is a stand in for being able to generate the survey link in the future, because it\u2019s generated from the slug.)\r\n\r\nWe want to be sure to give credit to all of our instructors and helpers in our database.\r\n\r\n{% if helpers %}We currently have these helpers listed:\r\n{% for helper in helpers %}\r\n* {{ helper }}{% endfor %}\r\n\r\nIf you have additional helpers, please send us their names and email addresses.\r\n{% else %}\r\nWe don\u2019t have the names of any of your helpers. To include them on our website please send us their name and email address.\r\n{% endif %}\r\n\r\nWeekly instructors discussion sessions where you can share your feedback and hear from other instructors. Feel free to join us whenever you are available. Check out the calendar <a href=\"https://pad.carpentries.org/community-discussions\">here</a>. Be sure to check your timezone when you sign up.\r\n\r\nIf you have any questions regarding anything I\u2019ve shared do not hesitate to email me directly. Thanks for all of your hard work running this workshop!\r\n\r\nThanks for all you do!\r\n\r\nBest,  \r\n{{ assignee }}"
+  }
+},
+{
+  "model": "autoemails.trigger",
+  "pk": 1,
+  "fields": {
+    "active": true,
+    "created_at": "2019-12-06T14:49:07.349Z",
+    "last_updated_at": "2019-12-06T14:49:07.349Z",
+    "action": "new-instructor",
+    "template": 1
+  }
+},
+{
+  "model": "autoemails.trigger",
+  "pk": 2,
+  "fields": {
+    "active": true,
+    "created_at": "2020-02-02T11:15:39.356Z",
+    "last_updated_at": "2020-02-02T11:15:39.356Z",
+    "action": "week-after-workshop-completion",
+    "template": 2
+  }
+}
+]
