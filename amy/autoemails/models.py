@@ -6,6 +6,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.db import models
 from django.template import engines, Template
 from django.urls import reverse
+import markdown
 
 from workshops.models import ActiveMixin, CreatedUpdatedMixin
 
@@ -68,18 +69,10 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
         help_text="Default value for 'Reply-To' field. It may be overridden by"
                   " the email trigger. Use single address.",
     )
-    html_template = models.TextField(
+    body_template = models.TextField(
         blank=True, null=False, default="",
-        verbose_name="HTML body",
-        help_text="Enter HTML for email body. If you need to use loops, "
-                  "conditions, etc., use "
-                  "<a href='{}'>Django templates language</a>."
-                  .format(DJANGO_TEMPLATE_DOCS),
-    )
-    text_template = models.TextField(
-        blank=True, null=False, default="",
-        verbose_name="Plain text body",
-        help_text="Enter plain text for email body. If you need to use loops, "
+        verbose_name="Markdown body",
+        help_text="Enter Markdown for email body. If you need to use loops, "
                   "conditions, etc., use "
                   "<a href='{}'>Django templates language</a>."
                   .format(DJANGO_TEMPLATE_DOCS),
@@ -148,16 +141,26 @@ class EmailTemplate(ActiveMixin, CreatedUpdatedMixin, models.Model):
                  text: str = "",
                  html: str = "",
                  context: Optional[dict] = None) -> EmailBody:
-        """Get both text and HTML email bodies."""
+        """Get both text and HTML email bodies.
+
+        If not provided through method parameters, the text and HTML versions
+        are generated using Markdown->HTML converter.
+
+        Text: is just pure Markdown version.
+        HTML: is converted from Markdown."""
+        # when either text or HTML parameters aren't provided
+        if not text or not html:
+            base_template = self.render_template(self.body_template, context)
+
         if text:
             text_body = self.render_template(text, context)
         else:
-            text_body = self.render_template(self.text_template, context)
+            text_body = base_template
 
         if html:
             html_body = self.render_template(html, context)
         else:
-            html_body = self.render_template(self.html_template, context)
+            html_body = markdown.markdown(base_template)
 
         body = self.EmailBody(text=text_body, html=html_body)
         return body

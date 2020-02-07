@@ -46,20 +46,7 @@ class TestAction(TestCase):
 
     def prepare_template(self):
         """Create a sample email template."""
-        html = """<p>Welcome, {{ user }}!</p>
-<p>It's a pleasure to have you here.</p>
-{% if activities %}
-<p>Here are some activities you can do:</p>
-<ul>
-    {% for item in activities %}
-    <li>{{ item }}</li>
-    {% endfor %}
-</ul>
-{% else %}
-<p>We haven't prepared you any activities yet.</p>
-{% endif %}
-<p>Sincerely,<br>{{ admin }}</p>"""
-        text = """Welcome, {{ user }}!
+        md = """Welcome, {{ user }}!
 
 It's a pleasure to have you here.
 
@@ -83,8 +70,7 @@ Sincerely,
             cc_header='copy@example.org',
             bcc_header='bcc@example.org',
             reply_to_header='{{ reply_to }}',
-            html_template=html,
-            text_template=text,
+            body_template=md,
         )
         return self.template
 
@@ -150,6 +136,22 @@ Here are some activities you can do:
 
 Sincerely,
 Regional Coordinator""")
+        self.assertEqual(email.alternatives[0][0], """<p>Welcome, Harry!</p>
+<p>It's a pleasure to have you here.</p>
+<p>Here are some activities you can do:</p>
+<ul>
+<li>
+<p>Charms</p>
+</li>
+<li>
+<p>Potions</p>
+</li>
+<li>
+<p>Astronomy</p>
+</li>
+</ul>
+<p>Sincerely,
+Regional Coordinator</p>""")
         self.assertEqual(len(mail.outbox), 0)  # no email sent yet
 
         # 5. send email!
@@ -178,7 +180,7 @@ Regional Coordinator""")
         # 3. change something in template from DB
         tpl = EmailTemplate.objects.get(slug='sample-template')
         tpl.to_header = '{{ user_email }}'
-        tpl.text_template = "Short template!!!"
+        tpl.body_template = "Short template!!!"
         tpl.save()
 
         # 4. build email
@@ -215,8 +217,7 @@ Regional Coordinator""")
             cc_header='copy@example.org',
             bcc_header='bcc@example.org',
             reply_to_header='reply-to@example.org',
-            html_template="<p>Content</p>",
-            text_template="Content",
+            body_template="# Content",
         )
         trigg.save()
 
@@ -230,7 +231,8 @@ Regional Coordinator""")
         self.assertEqual(email.reply_to, ['reply-to@example.org'])
         self.assertEqual(email.from_email, 'sender@example.org')
         self.assertEqual(email.subject, 'Greetings')  # changed
-        self.assertEqual(email.body, "Content")  # changed
+        self.assertEqual(email.body, "# Content")  # changed
+        self.assertEqual(email.alternatives[0][0], "<h1>Content</h1>")
 
     def testEmailInvalidSyntax(self):
         """Check email building for invalid email."""
@@ -239,7 +241,7 @@ Regional Coordinator""")
         self.prepare_template()
 
         # 2a. change template so that it has invalid syntax
-        self.template.text_template = """Invalid syntax:
+        self.template.body_template = """Invalid syntax:
         * {{ unknown_variable }}
         * {{ user|unknown_filter }}
         * {% unknown_tag user %}
@@ -322,8 +324,7 @@ Regional Coordinator""")
             cc_header='copy@example.org',
             bcc_header='bcc@example.org',
             reply_to_header='reply-to@example.org',
-            html_template="<p>Content</p>",
-            text_template="Content",
+            body_template="# Content",
         )
         trigg.save()
 

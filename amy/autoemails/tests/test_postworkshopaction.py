@@ -178,8 +178,7 @@ class TestPostWorkshopAction(TestCase):
             cc_header='copy@example.org',
             bcc_header='bcc@example.org',
             reply_to_header='{{ reply_to }}',
-            html_template="Sample text.",
-            text_template="Sample text.",
+            body_template="Sample text.",
         )
         trigger = Trigger.objects.create(
             action='week-after-workshop-completion',

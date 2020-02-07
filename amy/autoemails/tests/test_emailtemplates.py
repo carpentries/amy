@@ -11,20 +11,7 @@ from autoemails.models import EmailTemplate
 class TestEmailTemplate(TestCase):
     def prepare_template(self):
         """Create a sample email template."""
-        html = """<p>Welcome, {{ user }}!</p>
-<p>It's a pleasure to have you here.</p>
-{% if activities %}
-<p>Here are some activities you can do:</p>
-<ul>
-    {% for item in activities %}
-    <li>{{ item }}</li>
-    {% endfor %}
-</ul>
-{% else %}
-<p>We haven't prepared you any activities yet.</p>
-{% endif %}
-<p>Sincerely,<br>{{ admin }}</p>"""
-        text = """Welcome, {{ user }}!
+        md = """Welcome, {{ user }}!
 
 It's a pleasure to have you here.
 
@@ -48,8 +35,7 @@ Sincerely,
             cc_header='copy@example.org',
             bcc_header='bcc@example.org',
             reply_to_header='{{ reply_to }}',
-            html_template=html,
-            text_template=text,
+            body_template=md,
         )
         return self.template
 
@@ -91,7 +77,7 @@ Sincerely,
         expected_output3 = "Hello, Harry Potter"
         self.assertEqual(EmailTemplate.render_template(template, data3),
                          expected_output3)
-    
+
     def test_rendering_invalid_template(self):
         """Invalid filter or template tag should raise TemplateSyntaxError,
         whereas invalid variable should be changed to
@@ -110,7 +96,7 @@ Sincerely,
         data3 = dict(name='Harry')
         self.assertEqual(EmailTemplate.render_template(template3, data3),
                          "Hello, XXX-unset-variable-XXX!")
-    
+
     def test_reading_file_from_disk(self):
         """Non-default database engine backend shouldn't allow to read from
         disk."""
@@ -122,7 +108,7 @@ Sincerely,
             # with this test, we're confirming that `db_backend`, a default for
             # EmailTemplate, is unable to reach `base.html` file
             EmailTemplate.render_template(template, data)
-        
+
         # this must work, because we're using Django-main template engine
         EmailTemplate.render_template(template, data, default_engine='django')
 
@@ -139,3 +125,46 @@ Sincerely,
                          ['bcc@example.org'])
         self.assertEqual(tpl.get_reply_to(context=ctx),
                          ['regional@example.org'])
+        body = tpl.get_body(context=ctx)
+        self.assertEqual(len(body), 2)
+        self.assertTrue(body.text)
+        self.assertTrue(body.html)
+
+    def test_rendering_markdown(self):
+        tpl = self.prepare_template()
+        ctx = self.prepare_context()
+        body = tpl.get_body(context=ctx)
+        self.assertEqual(body.text, """Welcome, Harry!
+
+It's a pleasure to have you here.
+
+
+Here are some activities you can do:
+
+* Charms
+
+* Potions
+
+* Astronomy
+
+
+
+Sincerely,
+Regional Coordinator""")
+
+        self.assertEqual(body.html, """<p>Welcome, Harry!</p>
+<p>It's a pleasure to have you here.</p>
+<p>Here are some activities you can do:</p>
+<ul>
+<li>
+<p>Charms</p>
+</li>
+<li>
+<p>Potions</p>
+</li>
+<li>
+<p>Astronomy</p>
+</li>
+</ul>
+<p>Sincerely,
+Regional Coordinator</p>""")

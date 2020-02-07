@@ -355,8 +355,7 @@ class TestTaskCreateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
             cc_header='copy@example.org',
             bcc_header='bcc@example.org',
             reply_to_header='',
-            html_template='<h1>Welcome</h1>',
-            text_template='*Welcome*',
+            body_template='# Welcome',
         )
         trigger = Trigger.objects.create(action='new-instructor',
                                          template=template)
@@ -476,8 +475,7 @@ class TestTaskUpdateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
             cc_header='copy@example.org',
             bcc_header='bcc@example.org',
             reply_to_header='',
-            html_template='<h1>Welcome</h1>',
-            text_template='*Welcome*',
+            body_template='# Welcome',
         )
         trigger = Trigger.objects.create(action='new-instructor',
                                          template=template)
@@ -664,8 +662,7 @@ class TestTaskDeleteAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
             cc_header='copy@example.org',
             bcc_header='bcc@example.org',
             reply_to_header='',
-            html_template='<h1>Welcome</h1>',
-            text_template='*Welcome*',
+            body_template='# Welcome',
         )
         trigger = Trigger.objects.create(action='new-instructor',
                                          template=template)
