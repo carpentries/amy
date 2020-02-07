@@ -39,7 +39,10 @@ class BaseAction:
         # save parameters just in case
         self.trigger = trigger
         self.template = trigger.template
-        self.context_objects = objects
+        try:
+            self.context_objects = objects.copy()
+        except AttributeError:
+            self.context_objects = dict()
 
         # prepare logger
         self.logger = logger
@@ -281,6 +284,26 @@ class PostWorkshopAction(BaseAction):
     # launch_at = timedelta(days=7)
     # Shortened to 10 minutes for tests!
     launch_at = timedelta(minutes=10)
+
+    def get_launch_at(self):
+        event = self.context_objects.get('event', None)
+        try:
+            # if the event runs in 3 weeks, then we should get
+            # timedelta(days=21) + self.launch_at
+            # and this is correct output because `get_launch_at` returns
+            # a timedelta()
+            td = (event.end - date.today()) + self.launch_at
+
+            # checking if td is in negative values
+            if td > timedelta(0):
+                return td
+            else:
+                return self.launch_at
+
+        except (AttributeError, TypeError):
+            # if the event wasn't passed through, we should return default
+            # timedelta() - just in case
+            return self.launch_at
 
     def recipients(self):
         """Assuming self.context is ready, overwrite email's recipients

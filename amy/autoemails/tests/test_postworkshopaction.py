@@ -27,11 +27,49 @@ class TestPostWorkshopAction(TestCase):
         ])
 
     def testLaunchAt(self):
-        # the trigger and email template below are totally fake
-        # and shouldn't pass validation
-        a = PostWorkshopAction(trigger=Trigger(action='test-action',
-                                               template=EmailTemplate()))
-        self.assertEqual(a.get_launch_at(), timedelta(minutes=10))
+        e1 = Event(
+            slug='test-event1',
+            host=Organization.objects.first(),
+        )
+        e2 = Event(
+            slug='test-event2',
+            host=Organization.objects.first(),
+            start=date.today() + timedelta(days=7),
+            end=date.today() + timedelta(days=8),
+        )
+        e3 = Event(
+            slug='test-event3',
+            host=Organization.objects.first(),
+            start=date.today() + timedelta(days=-8),
+            end=date.today() + timedelta(days=-7),
+        )
+
+        # case 1: no context event
+        a1 = PostWorkshopAction(
+            trigger=Trigger(action='test-action', template=EmailTemplate()),
+        )
+        self.assertEqual(a1.get_launch_at(), timedelta(minutes=10))
+
+        # case 2: event with no end date
+        a2 = PostWorkshopAction(
+            trigger=Trigger(action='test-action', template=EmailTemplate()),
+            objects=dict(event=e1),
+        )
+        self.assertEqual(a2.get_launch_at(), timedelta(minutes=10))
+
+        # case 3: event with end date
+        a3 = PostWorkshopAction(
+            trigger=Trigger(action='test-action', template=EmailTemplate()),
+            objects=dict(event=e2),
+        )
+        self.assertEqual(a3.get_launch_at(), timedelta(days=8, minutes=10))
+
+        # case 4: event with negative end date
+        a4 = PostWorkshopAction(
+            trigger=Trigger(action='test-action', template=EmailTemplate()),
+            objects=dict(event=e3),
+        )
+        self.assertEqual(a4.get_launch_at(), timedelta(minutes=10))
 
     def testCheckConditions(self):
         """Make sure `check` works for various input data."""
