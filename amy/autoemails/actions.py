@@ -300,6 +300,7 @@ class PostWorkshopAction(BaseAction):
             not event.tags.filter(name__in=[
                 'cancelled', 'unresponsive', 'stalled'
             ]) and
+            # 2020-02-07: changed conditions below
             # must have "Pilot" tag
             event.tags.filter(name__icontains='Pilot') and
             # must have LC, DC, or SWC tags
