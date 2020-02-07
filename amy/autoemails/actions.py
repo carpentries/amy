@@ -294,8 +294,9 @@ class PostWorkshopAction(BaseAction):
     def check(event: Event):
         """Conditions for creating a PostWorkshopAction."""
         return bool(
-            # end date is required
+            # end date is required and in future
             event.end and
+            event.end >= date.today() and
             # event cannot be cancelled / unresponsive / stalled
             not event.tags.filter(name__in=[
                 'cancelled', 'unresponsive', 'stalled'
