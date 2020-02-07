@@ -291,12 +291,20 @@ class PostWorkshopAction(BaseAction):
     def check(event: Event):
         """Conditions for creating a PostWorkshopAction."""
         return bool(
-            # end date is mandatory
+            # end date is required
             event.end and
             # event cannot be cancelled / unresponsive / stalled
             not event.tags.filter(name__in=[
                 'cancelled', 'unresponsive', 'stalled'
-            ])
+            ]) and
+            # must have "Pilot" tag
+            event.tags.filter(name__icontains='Pilot') and
+            # must have LC, DC, or SWC tags
+            event.tags.filter(name__in=['LC', 'DC', 'SWC']) and
+            # must not be self-organized or instructor training
+            event.administrator and
+            event.administrator.domain != 'self-organized' and
+            event.administrator.domain != 'carpentries.org'
         )
 
     def get_additional_context(self, objects, *args, **kwargs):

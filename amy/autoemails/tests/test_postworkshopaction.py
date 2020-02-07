@@ -9,11 +9,21 @@ from workshops.models import Task, Role, Person, Event, Tag, Organization
 
 class TestPostWorkshopAction(TestCase):
     def setUp(self):
+        # we're missing some tags
         Tag.objects.bulk_create([
             Tag(name='SWC'),
             Tag(name='DC'),
             Tag(name='LC'),
             Tag(name='TTT'),
+            Tag(name='Pilot'),
+        ])
+        # by default there's only self-organized organization, but it can't be
+        # used in PostWorkshopAction
+        Organization.objects.bulk_create([
+            Organization(domain='carpentries.org',
+                         fullname='Instructor Training'),
+            Organization(domain='librarycarpentry.org',
+                         fullname='Library Carpentry'),
         ])
 
     def testLaunchAt(self):
@@ -29,10 +39,12 @@ class TestPostWorkshopAction(TestCase):
         e = Event.objects.create(
             slug='test-event',
             host=Organization.objects.first(),
+            administrator=Organization.objects.get(
+                domain='librarycarpentry.org'),
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
         )
-        e.tags.set(Tag.objects.filter(name__in=['LC', 'TTT']))
+        e.tags.set(Tag.objects.filter(name__in=['LC', 'TTT', 'Pilot']))
         p = Person.objects.create(personal='Harry', family='Potter',
                                   email='hp@magic.uk')
         r = Role.objects.create(name='host')
