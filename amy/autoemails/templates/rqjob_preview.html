@@ -152,7 +152,7 @@
         <th>HTML Body:</th>
         <td>
             {% if email %}
-            {{ email.alternatives.0.0 }}
+            {% autoescape off %}{{ email.alternatives.0.0 }}{% endautoescape %}
             {% else %}
             &mdash;
             {% endif %}
