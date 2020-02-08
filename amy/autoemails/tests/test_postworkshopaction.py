@@ -15,7 +15,7 @@ class TestPostWorkshopAction(TestCase):
             Tag(name='DC'),
             Tag(name='LC'),
             Tag(name='TTT'),
-            Tag(name='Pilot'),
+            Tag(name='automated-email'),
         ])
         # by default there's only self-organized organization, but it can't be
         # used in PostWorkshopAction
@@ -82,7 +82,8 @@ class TestPostWorkshopAction(TestCase):
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
         )
-        e.tags.set(Tag.objects.filter(name__in=['LC', 'TTT', 'Pilot']))
+        e.tags.set(Tag.objects.filter(name__in=['LC', 'TTT',
+                                                'automated-email']))
         p = Person.objects.create(personal='Harry', family='Potter',
                                   email='hp@magic.uk')
         r = Role.objects.create(name='host')

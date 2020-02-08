@@ -322,7 +322,7 @@ class TestTaskCreateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
             Tag(name='SWC'),
             Tag(name='DC'),
             Tag(name='LC'),
-            Tag(name='Pilot'),
+            Tag(name='automated-email'),
         ])
 
         Role.objects.create(name='instructor')
@@ -346,7 +346,7 @@ class TestTaskCreateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
             url='https://test-event.example.com',
         )
         self.test_event_1.tags.set(
-            Tag.objects.filter(name__in=['SWC', 'DC', 'LC', 'Pilot']))
+            Tag.objects.filter(name__in=['SWC', 'DC', 'LC', 'automated-email']))
 
         template = EmailTemplate.objects.create(
             slug='sample-template',
@@ -442,7 +442,7 @@ class TestTaskUpdateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
             Tag(name='SWC'),
             Tag(name='DC'),
             Tag(name='LC'),
-            Tag(name='Pilot'),
+            Tag(name='automated-email'),
         ])
 
         self.instructor = Role.objects.create(name='instructor')
@@ -467,7 +467,7 @@ class TestTaskUpdateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
             url='https://test-event.example.com',
         )
         self.event_1.tags.set(
-            Tag.objects.filter(name__in=['SWC', 'DC', 'LC', 'Pilot']))
+            Tag.objects.filter(name__in=['SWC', 'DC', 'LC', 'automated-email']))
 
         template = EmailTemplate.objects.create(
             slug='sample-template',
@@ -630,7 +630,7 @@ class TestTaskDeleteAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
             Tag(name='SWC'),
             Tag(name='DC'),
             Tag(name='LC'),
-            Tag(name='Pilot'),
+            Tag(name='automated-email'),
         ])
 
         self.instructor = Role.objects.create(name='instructor')
@@ -655,7 +655,7 @@ class TestTaskDeleteAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
             url='https://test-event.example.com',
         )
         self.event_1.tags.set(
-            Tag.objects.filter(name__in=['SWC', 'DC', 'LC', 'Pilot']))
+            Tag.objects.filter(name__in=['SWC', 'DC', 'LC', 'automated-email']))
 
         template = EmailTemplate.objects.create(
             slug='sample-template',

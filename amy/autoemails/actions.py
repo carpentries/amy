@@ -219,9 +219,9 @@ class NewInstructorAction(BaseAction):
             #             or some without start date
             # 2020-01-31: slightly rewrite (less queries)
             (not task.event.start or task.event.start >= date.today()) and
-            # 2020-02-07: the task must have "Pilot" tag in order to be used
-            #             for Email Automation
-            task.event.tags.filter(name__icontains='Pilot')
+            # 2020-02-07: the task must have "automated-email" tag in order to
+            #             be used for Email Automation
+            task.event.tags.filter(name__icontains='automated-email')
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
@@ -325,8 +325,8 @@ class PostWorkshopAction(BaseAction):
                 'cancelled', 'unresponsive', 'stalled'
             ]) and
             # 2020-02-07: changed conditions below
-            # must have "Pilot" tag
-            event.tags.filter(name__icontains='Pilot') and
+            # must have "automated-email" tag
+            event.tags.filter(name__icontains='automated-email') and
             # must have LC, DC, or SWC tags
             event.tags.filter(name__in=['LC', 'DC', 'SWC']) and
             # must not be self-organized or instructor training

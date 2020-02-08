@@ -1290,7 +1290,7 @@ class TestEventCreateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
             Tag(name='SWC'),
             Tag(name='DC'),
             Tag(name='LC'),
-            Tag(name='Pilot'),
+            Tag(name='automated-email'),
         ])
 
         self.LC_org = Organization.objects.create(
@@ -1344,7 +1344,7 @@ class TestEventCreateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
             'start': date.today(),
             'end': date.today() + timedelta(days=2),
             'administrator': self.LC_org.pk,
-            'tags': Tag.objects.filter(name__in=['LC', 'Pilot'])
+            'tags': Tag.objects.filter(name__in=['LC', 'automated-email'])
                                .values_list('pk', flat=True),
         }
         response = self.client.post(reverse('event_add'), data, follow=True)
@@ -1395,7 +1395,7 @@ class TestEventUpdateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
             Tag(name='SWC'),
             Tag(name='DC'),
             Tag(name='LC'),
-            Tag(name='Pilot'),
+            Tag(name='automated-email'),
         ])
 
         self.LC_org = Organization.objects.create(
@@ -1442,7 +1442,7 @@ class TestEventUpdateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
             end=None,
             administrator=self.LC_org,
         )
-        event.tags.set(Tag.objects.filter(name__in=['LC', 'Pilot']))
+        event.tags.set(Tag.objects.filter(name__in=['LC', 'automated-email']))
         self.assertFalse(PostWorkshopAction.check(event))
 
         # no jobs
@@ -1458,7 +1458,7 @@ class TestEventUpdateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
             'start': date.today(),
             'end': date.today() + timedelta(days=2),
             'administrator': self.LC_org.pk,
-            'tags': Tag.objects.filter(name__in=['LC', 'Pilot'])
+            'tags': Tag.objects.filter(name__in=['LC', 'automated-email'])
                                .values_list('pk', flat=True),
         }
         response = self.client.post(reverse('event_edit', args=[event.slug]),
@@ -1496,7 +1496,7 @@ class TestEventUpdateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
             end=None,
             administrator=self.LC_org,
         )
-        event.tags.set(Tag.objects.filter(name__in=['LC', 'Pilot']))
+        event.tags.set(Tag.objects.filter(name__in=['LC', 'automated-email']))
         self.assertFalse(PostWorkshopAction.check(event))
 
         # no jobs - again, due to not creating via WWW
@@ -1512,7 +1512,7 @@ class TestEventUpdateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
             'start': date.today(),
             'end': date.today() + timedelta(days=2),
             'administrator': self.LC_org.pk,
-            'tags': Tag.objects.filter(name__in=['LC', 'Pilot'])
+            'tags': Tag.objects.filter(name__in=['LC', 'automated-email'])
                                .values_list('pk', flat=True),
         }
         response = self.client.post(reverse('event_edit', args=[event.slug]),
@@ -1544,7 +1544,7 @@ class TestEventUpdateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
             'start': '',
             'end': '',
             'administrator': self.LC_org.pk,
-            'tags': Tag.objects.filter(name__in=['LC', 'Pilot'])
+            'tags': Tag.objects.filter(name__in=['LC', 'automated-email'])
                                .values_list('pk', flat=True),
         }
         response = self.client.post(reverse('event_edit', args=[event.slug]),
@@ -1587,7 +1587,7 @@ class TestEventDeleteAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
             Tag(name='SWC'),
             Tag(name='DC'),
             Tag(name='LC'),
-            Tag(name='Pilot'),
+            Tag(name='automated-email'),
         ])
 
         self.LC_org = Organization.objects.create(
@@ -1640,7 +1640,7 @@ class TestEventDeleteAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
             'start': date.today(),
             'end': date.today() + timedelta(days=2),
             'administrator': self.LC_org.pk,
-            'tags': Tag.objects.filter(name__in=['LC', 'Pilot'])
+            'tags': Tag.objects.filter(name__in=['LC', 'automated-email'])
                                .values_list('pk', flat=True),
         }
         response = self.client.post(reverse('event_add'), data, follow=True)
