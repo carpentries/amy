@@ -324,6 +324,12 @@ class TestTaskCreateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
             Tag(name='LC'),
             Tag(name='automated-email'),
         ])
+        Organization.objects.bulk_create([
+            Organization(domain='librarycarpentry.org',
+                         fullname='Library Carpentry'),
+            Organization(domain='carpentries.org',
+                         fullname='Instructor Training'),
+        ])
 
         Role.objects.create(name='instructor')
 
@@ -336,6 +342,8 @@ class TestTaskCreateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
         self.test_event_1 = Event.objects.create(
             slug='test-event',
             host=Organization.objects.first(),
+            administrator=Organization.objects.get(
+                domain='librarycarpentry.org'),
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
             country='GB',
@@ -444,6 +452,12 @@ class TestTaskUpdateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
             Tag(name='LC'),
             Tag(name='automated-email'),
         ])
+        Organization.objects.bulk_create([
+            Organization(domain='librarycarpentry.org',
+                         fullname='Library Carpentry'),
+            Organization(domain='carpentries.org',
+                         fullname='Instructor Training'),
+        ])
 
         self.instructor = Role.objects.create(name='instructor')
         self.helper = Role.objects.create(name='helper')
@@ -457,6 +471,8 @@ class TestTaskUpdateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
         self.event_1 = Event.objects.create(
             slug='test-event',
             host=self.host,
+            administrator=Organization.objects.get(
+                domain='librarycarpentry.org'),
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
             country='GB',
@@ -632,6 +648,12 @@ class TestTaskDeleteAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
             Tag(name='LC'),
             Tag(name='automated-email'),
         ])
+        Organization.objects.bulk_create([
+            Organization(domain='librarycarpentry.org',
+                         fullname='Library Carpentry'),
+            Organization(domain='carpentries.org',
+                         fullname='Instructor Training'),
+        ])
 
         self.instructor = Role.objects.create(name='instructor')
         self.helper = Role.objects.create(name='helper')
@@ -645,6 +667,8 @@ class TestTaskDeleteAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
         self.event_1 = Event.objects.create(
             slug='test-event',
             host=self.host,
+            administrator=Organization.objects.get(
+                domain='librarycarpentry.org'),
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
             country='GB',

@@ -133,6 +133,17 @@ class TestPostWorkshopAction(TestCase):
         # (note: role was changed to "instructor")
         self.assertEqual(PostWorkshopAction.check(e), True)
 
+        # 6th case: wrong administrator (Instructor Training)
+        # result: FAIL
+        e.administrator = Organization.objects.get(domain='carpentries.org')
+        e.save()
+        self.assertEqual(PostWorkshopAction.check(e), False)
+
+        # retest to make sure it's back to normal
+        e.administrator = Organization.objects.get(
+            domain='librarycarpentry.org')
+        self.assertEqual(PostWorkshopAction.check(e), True)
+
     def testContext(self):
         """Make sure `get_additional_context` works correctly."""
         a = PostWorkshopAction(trigger=Trigger(action='test-action',

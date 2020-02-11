@@ -221,7 +221,11 @@ class NewInstructorAction(BaseAction):
             (not task.event.start or task.event.start >= date.today()) and
             # 2020-02-07: the task must have "automated-email" tag in order to
             #             be used for Email Automation
-            task.event.tags.filter(name__icontains='automated-email')
+            task.event.tags.filter(name__icontains='automated-email') and
+            # 2020-02-11: only for workshops administered by LC/DC/SWC
+            task.event.administrator and
+            task.event.administrator.domain != 'self-organized' and
+            task.event.administrator.domain != 'carpentries.org'
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
@@ -330,8 +334,9 @@ class PostWorkshopAction(BaseAction):
             # must have LC, DC, or SWC tags
             event.tags.filter(name__in=['LC', 'DC', 'SWC']) and
             # must not be self-organized or instructor training
+            # 2020-02-11: only for workshops administered by other than
+            #             Instructor Training
             event.administrator and
-            event.administrator.domain != 'self-organized' and
             event.administrator.domain != 'carpentries.org'
         )
 

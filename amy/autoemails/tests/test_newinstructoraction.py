@@ -15,6 +15,16 @@ class TestNewInstructorAction(TestCase):
             Tag(name='LC'),
             Tag(name='automated-email'),
         ])
+        Organization.objects.bulk_create([
+            Organization(domain='librarycarpentry.org',
+                         fullname='Library Carpentry'),
+            Organization(domain='datacarpentry.org',
+                         fullname='Data Carpentry'),
+            Organization(domain='software-carpentry.org',
+                         fullname='Software Carpentry'),
+            Organization(domain='carpentries.org',
+                         fullname='Instructor Training'),
+        ])
 
     def testLaunchAt(self):
         # the trigger and email template below are totally fake
@@ -26,9 +36,11 @@ class TestNewInstructorAction(TestCase):
     def testCheckConditions(self):
         """Make sure `check` works for various input data."""
         # totally fake Task, Role and Event data
+        LC_org = Organization.objects.get(domain='librarycarpentry.org')
         e = Event.objects.create(
             slug='test-event',
             host=Organization.objects.first(),
+            administrator=LC_org,
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
             # 2019-12-24: we no longer require published conditions met for
@@ -74,12 +86,28 @@ class TestNewInstructorAction(TestCase):
         self.assertEqual(NewInstructorAction.check(t), False)
         r.name = 'instructor'
 
+        # 6th case: no administrator
+        e.administrator = None
+        e.save()
+        self.assertEqual(NewInstructorAction.check(t), False)
+        e.administrator = LC_org
+
+        # 7th case: wrong administrator (self organized or instructor training)
+        e.administrator = Organization.objects.get(domain='self-organized')
+        e.save()
+        self.assertEqual(NewInstructorAction.check(t), False)
+        e.administrator = Organization.objects.get(domain='carpentries.org')
+        e.save()
+        self.assertEqual(NewInstructorAction.check(t), False)
+
     def testCheckForNonContactablePerson(self):
         """Make sure `may_contact` doesn't impede `check()`."""
         # totally fake Task, Role and Event data
+        LC_org = Organization.objects.get(domain='librarycarpentry.org')
         e = Event.objects.create(
             slug='test-event',
             host=Organization.objects.first(),
+            administrator=LC_org,
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
             country='GB',
