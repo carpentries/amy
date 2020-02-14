@@ -1,7 +1,7 @@
 Django==2.2.10
 PyYAML==5.1
-requests==2.19.1
-requests-mock==1.5.2
+requests==2.22.0
+requests-mock==1.7.0
 django-crispy-forms==1.7.2
 # replaces django-autocomplete-light
 django-select2==7.1.1
