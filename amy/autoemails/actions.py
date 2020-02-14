@@ -38,6 +38,7 @@ class BaseAction:
     def __init__(self, trigger: Trigger, objects: Optional[Dict] = None):
         # save parameters just in case
         self.trigger = trigger
+        # TODO: perhaps save in dict?
         self.template = trigger.template
         try:
             self.context_objects = objects.copy()
@@ -135,10 +136,11 @@ class BaseAction:
         adt_context = self.get_additional_context(objects=self.context_objects)
         self.context = self._context(adt_context)
 
-        # refresh trigger/template DB information
+        # refresh trigger DB information
         self.logger.debug('Refreshing related trigger from DB...')
         self.trigger.refresh_from_db()
-        self.template = self.trigger.template
+        # Don't refresh template from database!
+        # self.template = self.trigger.template
 
         # build email
         self.logger.debug('Building email with provided context...')

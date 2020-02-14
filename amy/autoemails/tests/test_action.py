@@ -165,8 +165,8 @@ Regional Coordinator</p>""")
         self.assertEqual(email.from_email, 'test@address.com')
         self.assertEqual(email.subject, 'Welcome to AMY')
 
-    def testEmailChangedTemplate(self):
-        """Check email building when email template was changed."""
+    def testEmailNotChangedTemplate(self):
+        """Ensure email didn't change when template changed."""
 
         # 1. create Trigger and EmailTemplate
         self.prepare_template()
@@ -187,13 +187,29 @@ Regional Coordinator</p>""")
         email = a._email()
 
         # 5. verify email
-        self.assertEqual(email.to, ['XXX-unset-variable-XXX'])
+        self.assertEqual(email.to, [])
         self.assertEqual(email.cc, ['copy@example.org'])
         self.assertEqual(email.bcc, ['bcc@example.org'])
         self.assertEqual(email.reply_to, ['regional@example.org'])
         self.assertEqual(email.from_email, 'test@address.com')
         self.assertEqual(email.subject, 'Welcome to AMY')
-        self.assertEqual(email.body, "Short template!!!")
+        self.assertEqual(email.body, """Welcome, Harry!
+
+It's a pleasure to have you here.
+
+
+Here are some activities you can do:
+
+* Charms
+
+* Potions
+
+* Astronomy
+
+
+
+Sincerely,
+Regional Coordinator""")
 
     def testEmailChangedTrigger(self):
         """Check email building when trigger was changed."""
@@ -206,33 +222,18 @@ Regional Coordinator</p>""")
         self.prepare_context()
         a = BaseAction(trigger=self.trigger,
                        objects=self.objects)
+        self.assertEqual(a.trigger.action, 'new-instructor')
 
         # 3. change something in template from DB
         trigg = Trigger.objects.get(action='new-instructor')
-        trigg.template = EmailTemplate.objects.create(
-            slug='another-template',
-            subject='Greetings',
-            to_header='recipient@example.org',
-            from_header='sender@example.org',
-            cc_header='copy@example.org',
-            bcc_header='bcc@example.org',
-            reply_to_header='reply-to@example.org',
-            body_template="# Content",
-        )
+        trigg.action = 'week-after-workshop-completion'
         trigg.save()
 
         # 4. build email
         email = a._email()
 
-        # 5. verify email
-        self.assertEqual(email.to, ['recipient@example.org'])  # changed
-        self.assertEqual(email.cc, ['copy@example.org'])
-        self.assertEqual(email.bcc, ['bcc@example.org'])
-        self.assertEqual(email.reply_to, ['reply-to@example.org'])
-        self.assertEqual(email.from_email, 'sender@example.org')
-        self.assertEqual(email.subject, 'Greetings')  # changed
-        self.assertEqual(email.body, "# Content")  # changed
-        self.assertEqual(email.alternatives[0][0], "<h1>Content</h1>")
+        # 5. verify
+        self.assertEqual(a.trigger.action, 'week-after-workshop-completion')
 
     def testEmailInvalidSyntax(self):
         """Check email building for invalid email."""
@@ -308,30 +309,21 @@ Regional Coordinator</p>""")
         # 1. create Trigger and EmailTemplate
         self.prepare_template()
         self.prepare_trigger()
+        self.template.to_header = 'recipient@example.org'
+        self.template.from_header = 'sender@example.org'
+        self.template.cc_header = 'copy@example.org'
+        self.template.bcc_header = 'bcc@example.org'
+        self.template.reply_to_header = 'reply-to@example.org'
 
         # 2. create BaseAction, add context
         self.prepare_context()
         a = BaseAction(trigger=self.trigger,
                        objects=self.objects)
 
-        # 3. change something in template from DB
-        trigg = Trigger.objects.get(action='new-instructor')
-        trigg.template = EmailTemplate.objects.create(
-            slug='another-template',
-            subject='Greetings',
-            to_header='recipient@example.org',
-            from_header='sender@example.org',
-            cc_header='copy@example.org',
-            bcc_header='bcc@example.org',
-            reply_to_header='reply-to@example.org',
-            body_template="# Content",
-        )
-        trigg.save()
-
-        # 4. build email
+        # 3. build email
         email = a._email()
 
-        # 5. verify email - at this point the addresses stay the same, they are
+        # 4. verify email - at this point the addresses stay the same, they are
         # not overridden yet
         self.assertEqual(email.to, ['recipient@example.org'])
         self.assertEqual(email.cc, ['copy@example.org'])
@@ -339,13 +331,13 @@ Regional Coordinator</p>""")
         self.assertEqual(email.reply_to, ['reply-to@example.org'])
         self.assertEqual(email.from_email, 'sender@example.org')
 
-        # 6. verify no outgoing emails yet
+        # 5. verify no outgoing emails yet
         self.assertEqual(len(mail.outbox), 0)
 
-        # 7. send email (by invoking action.__call__())
+        # 6. send email (by invoking action.__call__())
         a()
 
-        # 8. check outgoing email
+        # 7. check outgoing email
         self.assertEqual(len(mail.outbox), 1)
         email = mail.outbox[0]
 
