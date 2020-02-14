@@ -293,6 +293,13 @@ class RQJob(CreatedUpdatedMixin, models.Model):
         help_text="Set automatically when scheduling an email.",
     )
 
+    status = models.CharField(
+        max_length=100,
+        blank=True, null=False, default="",
+        verbose_name="Job status",
+        help_text="This field is cached from Redis.",
+    )
+
     def __str__(self):
         return "<RQJob [{}]>".format(self.job_id)
 
