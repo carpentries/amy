@@ -78,17 +78,6 @@ ROOT_URLCONF = 'config.urls'
 # https://docs.djangoproject.com/en/dev/ref/settings/#wsgi-application
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# PyData extension
-# -----------------------------------------------------------------------------
-ENABLE_PYDATA = env.bool('AMY_ENABLE_PYDATA', False)
-if ENABLE_PYDATA:
-    PYDATA_USERNAME_SECRET = env.str('AMY_PYDATA_USERNAME', default='')
-    PYDATA_PASSWORD_SECRET = env.str('AMY_PYDATA_PASSWORD', default='')
-    if not PYDATA_USERNAME_SECRET or not PYDATA_PASSWORD_SECRET:
-        raise ImproperlyConfigured(
-            "PyData username and password are required when using "
-            "AMY_ENABLE_PYDATA=true.")
-
 # ReCaptcha
 # -----------------------------------------------------------------------------
 RECAPTCHA_PUBLIC_KEY = env.str('AMY_RECAPTCHA_PUBLIC_KEY', default='')
@@ -143,9 +132,6 @@ THIRD_PARTY_APPS = [
     'markdownx',
     'django_rq',
 ]
-PYDATA_APP = [
-    'amy.pydata.apps.PyDataConfig',
-]
 LOCAL_APPS = [
     'amy.workshops.apps.WorkshopsConfig',
     'amy.api.apps.ApiConfig',
@@ -159,10 +145,7 @@ LOCAL_APPS = [
     'amy.autoemails.apps.AutoemailsConfig',
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
-if ENABLE_PYDATA:
-    INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + PYDATA_APP + LOCAL_APPS
-else:
-    INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
+INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 # MIGRATIONS
 # -----------------------------------------------------------------------------

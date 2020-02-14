@@ -28,15 +28,7 @@ from workshops.util import login_required
 urlpatterns = [
     path('', RedirectView.as_view(pattern_name='dispatch')),
     path(settings.ADMIN_URL, admin.site.urls),  # {% url 'admin:index' %}
-]
 
-if settings.ENABLE_PYDATA:
-    PyData_urlpatterns = [
-        path('workshops/', include('pydata.urls')),
-    ]
-    urlpatterns += PyData_urlpatterns
-
-urlpatterns += [
     path('api/v1/', include('api.urls')),  # REST API v1
     path('dashboard/', include('dashboard.urls')),
     path('requests/', include('extrequests.urls')),
