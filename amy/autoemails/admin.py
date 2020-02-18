@@ -1,8 +1,8 @@
 from datetime import datetime
 
 from django.contrib import admin, messages
-from django.db import models
-from django.shortcuts import redirect
+from django.db.models import TextField
+from django.shortcuts import get_object_or_404, redirect
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.html import format_html
@@ -23,7 +23,7 @@ scheduler = django_rq.get_scheduler('default')
 class EmailTemplateAdmin(admin.ModelAdmin):
     list_display = ['slug', 'subject', 'to_header', 'from_header']
     formfield_overrides = {
-        models.TextField: {'widget': AdminMarkdownxWidget},
+        TextField: {'widget': AdminMarkdownxWidget},
     }
 
     def get_urls(self):
@@ -57,10 +57,25 @@ class TriggerAdmin(admin.ModelAdmin):
 
 
 class RQJobAdmin(admin.ModelAdmin):
-    list_display = ['job_id', 'created_at', 'scheduled_execution', 'trigger',
-                    'manage_links']
+    list_display = [
+        'job_id',
+        'created_at',
+        'scheduled_execution',
+        'trigger',
+        'status',
+        'mail_status',
+        'event_slug',
+        'recipients',
+        'manage_links',
+    ]
     date_hierarchy = 'created_at'
-    readonly_fields = ['scheduled_execution', ]
+    readonly_fields = [
+        'scheduled_execution',
+        'status',
+        'mail_status',
+        'event_slug',
+        'recipients',
+    ]
 
     def manage_links(self, obj):
         link = reverse('admin:autoemails_rqjob_preview', args=[obj.id])
@@ -89,7 +104,7 @@ class RQJobAdmin(admin.ModelAdmin):
 
     def preview(self, request, object_id):
         """Show job + email preview (all details and statuses)."""
-        rqjob = RQJob.objects.get(id=object_id)
+        rqjob = get_object_or_404(RQJob, id=object_id)
 
         try:
             job = Job.fetch(rqjob.job_id, connection=scheduler.connection)
@@ -137,7 +152,7 @@ class RQJobAdmin(admin.ModelAdmin):
     def reschedule_now(self, request, object_id):
         """Reschedule an existing job so it executes now (+/- refresh time
         delta, about 1 minute in default settings)."""
-        rqjob = RQJob.objects.get(id=object_id)
+        rqjob = get_object_or_404(RQJob, id=object_id)
 
         link = reverse('admin:autoemails_rqjob_preview', args=[object_id])
 
