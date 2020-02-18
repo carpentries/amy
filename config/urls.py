@@ -39,8 +39,8 @@ urlpatterns = [
     path('workshops/', include('workshops.urls')),
     path('select_lookups/', include('workshops.lookups')),  # autocomplete lookups
 
-    # TODO: prevent unauthorised access or remove this endpoint
-    # path('django-rq/', include('django_rq.urls')),  # Django-RQ views
+    # for webhooks from Mailgun
+    path('mail_hooks/', include('anymail.urls')),
 
     # django views for authentication
     path('account/login/',

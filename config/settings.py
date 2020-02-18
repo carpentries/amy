@@ -418,6 +418,15 @@ DEFAULT_FROM_EMAIL = env('AMY_DEFAULT_FROM_EMAIL', default='webmaster@localhost'
 ANYMAIL = {
     'MAILGUN_API_KEY': env('AMY_MAILGUN_API_KEY', default=None),
     'MAILGUN_SENDER_DOMAIN': env('AMY_MAILGUN_SENDER_DOMAIN', default=None),
+
+    # This should be in format `long_random:another_long_random`, as it's used
+    # for HTTP Basic Auth when Mailgun logs in to tell us about email tracking
+    # event.
+    'WEBHOOK_SECRET': env('AMY_MAILGUN_WEBHOOK_SECRET', default=None),
+
+    'SEND_DEFAULTS': {
+        'tags': ['amy'],
+    },
 }
 if not DEBUG and (not ANYMAIL['MAILGUN_API_KEY'] or
                   not ANYMAIL['MAILGUN_SENDER_DOMAIN']):
