@@ -6,12 +6,14 @@ from django.shortcuts import get_object_or_404, redirect
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.html import format_html
+from django.views.decorators.http import require_POST
 import django_rq
 from markdownx.widgets import AdminMarkdownxWidget
 from rq.exceptions import NoSuchJobError
 from rq.job import Job
 from rq_scheduler.utils import from_unix
 
+from autoemails.forms import RescheduleForm
 from autoemails.models import EmailTemplate, Trigger, RQJob
 from autoemails.utils import scheduled_execution_time
 from workshops.util import admin_required
@@ -93,6 +95,13 @@ class RQJobAdmin(admin.ModelAdmin):
                 name='autoemails_rqjob_preview',
             ),
             path(
+                '<path:object_id>/reschedule/',
+                admin_required(
+                    self.admin_site.admin_view(self.reschedule)
+                ),
+                name='autoemails_rqjob_reschedule',
+            ),
+            path(
                 '<path:object_id>/send_now/',
                 admin_required(
                     self.admin_site.admin_view(self.reschedule_now)
@@ -134,6 +143,11 @@ class RQJobAdmin(admin.ModelAdmin):
                 email = None
                 adn_context = None
 
+        now_utc = datetime.utcnow()
+        form = RescheduleForm(
+            initial=dict(scheduled_execution=job_scheduled or now_utc)
+        )
+
         context = dict(
             self.admin_site.each_context(request),
             cl=self.get_changelist_instance(request),
@@ -146,8 +160,47 @@ class RQJobAdmin(admin.ModelAdmin):
             template=template,
             email=email,
             adn_context=adn_context,
+            form=form,
         )
         return TemplateResponse(request, "rqjob_preview.html", context)
+
+    @require_POST
+    def reschedule(self, request, object_id):
+        """Change scheduled execution time to a different timestamp."""
+        rqjob = get_object_or_404(RQJob, id=object_id)
+
+        link = reverse('admin:autoemails_rqjob_preview', args=[object_id])
+
+        # fetch job
+        try:
+            job = Job.fetch(rqjob.job_id, connection=scheduler.connection)
+            job_scheduled = scheduled_execution_time(job.get_id(), scheduler)
+        except NoSuchJobError:
+            messages.warning(request, 'The corresponding job in Redis was '
+                                      'probably already executed.')
+            return redirect(link)
+
+        if request.method == "POST":
+            form = RescheduleForm(request.POST)
+            if form.is_valid():
+                new_exec = form.cleaned_data['scheduled_execution']
+
+                try:
+                    scheduler.change_execution_time(job, new_exec)
+                    messages.info(
+                        request,
+                        f'The job {rqjob.job_id} was rescheduled to '
+                        f'{new_exec} UTC.'
+                    )
+                except ValueError:
+                    messages.warning(
+                        request,
+                        f"The job {rqjob.job_id} was not "
+                        "rescheduled. It is probably already "
+                        "executing or has recently executed."
+                    )
+
+        return redirect(link)
 
     def reschedule_now(self, request, object_id):
         """Reschedule an existing job so it executes now (+/- refresh time

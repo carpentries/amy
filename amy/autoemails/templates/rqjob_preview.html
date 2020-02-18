@@ -1,6 +1,10 @@
 {% extends "admin/base_site.html" %}
 {% load i18n admin_urls static admin_list tz type_extras %}
 
+{% block extrahead %}
+<script type="text/javascript" src="{% static 'admin/i18n/' %}"></script>
+{% endblock %}
+
 {% if not is_popup %}
 {% block breadcrumbs %}
 <div class="breadcrumbs">
@@ -190,6 +194,13 @@
         </td>
     </tr>
 </table>
+
+<form method="POST" action="{% url 'admin:autoemails_rqjob_reschedule' object_id=rqjob.pk %}">
+    <table>
+    {{ form.as_table }}
+    </table>
+{{ form.media }}
+</form>
 
 <p><a href="{% url 'admin:autoemails_rqjob_sendnow' object_id=rqjob.pk %}" class="button">Send now</a></p>
 
