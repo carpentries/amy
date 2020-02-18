@@ -300,6 +300,26 @@ class RQJob(CreatedUpdatedMixin, models.Model):
         help_text="This field is cached from Redis.",
     )
 
+    mail_status = models.CharField(
+        max_length=100,
+        blank=True, null=False, default="",
+        verbose_name="Mail status",
+        help_text="This field is updated from Mailgun.",
+    )
+
+    event_slug = models.CharField(
+        max_length=100,
+        blank=True, null=False, default="",
+        verbose_name="Event slug",
+        help_text="Related event's slug.",
+    )
+
+    recipients = models.CharField(
+        max_length=300,
+        blank=True, null=False, default="",
+        verbose_name="Mail recipients",
+    )
+
     def __str__(self):
         return "<RQJob [{}]>".format(self.job_id)
 
