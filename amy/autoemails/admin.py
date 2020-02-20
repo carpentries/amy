@@ -166,7 +166,6 @@ class RQJobAdmin(admin.ModelAdmin):
         )
         return TemplateResponse(request, "rqjob_preview.html", context)
 
-    @require_POST
     def reschedule(self, request, object_id):
         """Change scheduled execution time to a different timestamp."""
         rqjob = get_object_or_404(RQJob, id=object_id)
@@ -192,7 +191,7 @@ class RQJobAdmin(admin.ModelAdmin):
                     messages.info(
                         request,
                         f'The job {rqjob.job_id} was rescheduled to '
-                        f'{new_exec} UTC.'
+                        f'{new_exec}.'
                     )
                 except ValueError:
                     messages.warning(
@@ -201,6 +200,8 @@ class RQJobAdmin(admin.ModelAdmin):
                         "rescheduled. It is probably already "
                         "executing or has recently executed."
                     )
+            else:
+                messages.warning(request, "Please fix errors below.")
 
         return redirect(link)
 
