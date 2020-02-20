@@ -224,6 +224,10 @@
 </form>
 {% endif %}
 
-<p><a href="{% url 'admin:autoemails_rqjob_sendnow' object_id=rqjob.pk %}" class="button">Send now</a></p>
+{% if job.is_failed %}
+<div class="submit-row">
+    <p class="deletelink-box"><a href="{% url 'admin:autoemails_rqjob_retry' object_id=rqjob.pk %}" class="deletelink">Re-try</a></p>
+</div>
+{% endif %}
 
 {% endblock %}

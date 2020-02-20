@@ -108,6 +108,13 @@ class RQJobAdmin(admin.ModelAdmin):
                 ),
                 name='autoemails_rqjob_sendnow',
             ),
+            path(
+                '<path:object_id>/retry/',
+                admin_required(
+                    self.admin_site.admin_view(self.retry)
+                ),
+                name='autoemails_rqjob_retry',
+            ),
         ]
         return new_urls + original_urls
 
@@ -232,6 +239,30 @@ class RQJobAdmin(admin.ModelAdmin):
             messages.warning(request, f"The job {rqjob.job_id} was not "
                                       'rescheduled. It is probably already '
                                       'executing or has recently executed.')
+
+        return redirect(link)
+
+    def retry(self, request, object_id):
+        """Fetch job and re-try to execute it."""
+        rqjob = get_object_or_404(RQJob, id=object_id)
+
+        link = reverse('admin:autoemails_rqjob_preview', args=[object_id])
+
+        # fetch job
+        try:
+            job = Job.fetch(rqjob.job_id, connection=scheduler.connection)
+        except NoSuchJobError:
+            messages.warning(request, 'The corresponding job in Redis was '
+                                      'probably already executed.')
+            return redirect(link)
+
+        if job.is_failed:
+            job.requeue()
+            messages.info(request,
+                            f'The job {rqjob.job_id} was requeued. '
+                            'It will be run shortly.')
+        else:
+            messages.warning(request, "You cannot re-try a non-failed job.")
 
         return redirect(link)
 
