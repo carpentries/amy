@@ -33,7 +33,10 @@ class TestAdminQueueView(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
 
     def test_view_access_by_anonymous(self):
         rv = self.client.get(self.url)
-        self.assertNotEqual(rv.status_code, 200)
+        self.assertEqual(rv.status_code, 302)
+        # cannot check by assertRedirect because there's additional `?next`
+        # parameter
+        self.assertTrue(rv.url.startswith(reverse('login')))
 
     def test_view_access_by_admin(self):
         # log admin user

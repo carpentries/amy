@@ -45,6 +45,9 @@ class TestAdminJobSendnow(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         url = reverse('admin:autoemails_rqjob_sendnow', args=[self.rqjob.pk])
         rv = self.client.get(url)
         self.assertEqual(rv.status_code, 302)
+        # cannot check by assertRedirect because there's additional `?next`
+        # parameter
+        self.assertTrue(rv.url.startswith(reverse('login')))
 
     def test_view_access_by_admin(self):
         # log admin user
