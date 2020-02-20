@@ -41,6 +41,10 @@
                     <td>{% if job %}{{ job.get_status|default_if_none:"scheduled" }}{% else %}&mdash;{% endif %}</td>
                 </tr>
                 <tr>
+                    <td>Exception info:</td>
+                    <td>{% if job.exc_info %}{{ job.exc_info }}{% else %}&mdash;{% endif %}</td>
+                </tr>
+                <tr>
                     <td>Scheduled run time:</td>
                     <td>{% if job_scheduled %}{{ job_scheduled }}{% else %}&mdash;{% endif %}</td>
                 </tr>
