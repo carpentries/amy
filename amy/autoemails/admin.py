@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.contrib import admin, messages
 from django.db.models import TextField
@@ -143,10 +143,12 @@ class RQJobAdmin(admin.ModelAdmin):
                 email = None
                 adn_context = None
 
-        now_utc = datetime.utcnow()
-        form = RescheduleForm(
-            initial=dict(scheduled_execution=job_scheduled or now_utc)
-        )
+        form = None
+        if job and not job.is_failed:
+            now_utc = datetime.utcnow() + timedelta(minutes=10)
+            form = RescheduleForm(
+                initial=dict(scheduled_execution=job_scheduled or now_utc)
+            )
 
         context = dict(
             self.admin_site.each_context(request),

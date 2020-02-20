@@ -2,7 +2,11 @@
 {% load i18n admin_urls static admin_list tz type_extras %}
 
 {% block extrahead %}
-<script type="text/javascript" src="{% static 'admin/i18n/' %}"></script>
+<script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/core.js' %}"></script>
+
+<link rel="stylesheet" type="text/css" href="{% static 'admin/css/forms.css' %}"/>
+<link rel="stylesheet" type="text/css" href="{% static 'admin/css/widgets.css' %}"/>
 {% endblock %}
 
 {% if not is_popup %}
@@ -195,12 +199,26 @@
     </tr>
 </table>
 
+{% if form %}
 <form method="POST" action="{% url 'admin:autoemails_rqjob_reschedule' object_id=rqjob.pk %}">
-    <table>
-    {{ form.as_table }}
-    </table>
-{{ form.media }}
+    {% csrf_token %}
+    <div>
+        {% if errors %}
+            <p class="errornote">Please correct the errors below.</p>
+            {{ form.non_field_errors }}
+        {% endif %}
+        <fieldset class="module aligned">
+            <h2>Change scheduled execution time</h2>
+            {{ form }}
+        </fieldset>
+    </div>
+    <div class="submit-row">
+        <p class="deletelink-box"><a href="{% url 'admin:autoemails_rqjob_sendnow' object_id=rqjob.pk %}" class="deletelink">Send now</a></p>
+        <input type="submit" value="Reschedule" class="default">
+    </div>
+    {{ form.media }}
 </form>
+{% endif %}
 
 <p><a href="{% url 'admin:autoemails_rqjob_sendnow' object_id=rqjob.pk %}" class="button">Send now</a></p>
 
