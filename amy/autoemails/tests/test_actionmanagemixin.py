@@ -2,9 +2,6 @@ from datetime import date, timedelta, datetime
 from unittest.mock import MagicMock
 
 from django.test import TestCase, RequestFactory
-import django_rq
-from fakeredis import FakeStrictRedis
-from rq import Queue
 from rq.exceptions import NoSuchJobError
 from rq.job import Job
 from rq_scheduler.utils import to_unix
@@ -12,7 +9,7 @@ from rq_scheduler.utils import to_unix
 from autoemails.actions import NewInstructorAction
 from autoemails.base_views import ActionManageMixin
 from autoemails.models import EmailTemplate, Trigger, RQJob
-from autoemails.tests.base import FakeRedisTestCaseMixin
+from autoemails.tests.base import FakeRedisTestCaseMixin, dummy_job
 from workshops.models import (
     Tag,
     Event,
@@ -21,12 +18,6 @@ from workshops.models import (
     Task,
     Organization,
 )
-
-
-# dummy function that can be enqueued
-# it has easy code since it will be executed in a blocking way
-def dummy():
-    return 42
 
 
 class TestActionManageMixin(FakeRedisTestCaseMixin, TestCase):
@@ -245,7 +236,7 @@ class TestActionManageMixin(FakeRedisTestCaseMixin, TestCase):
         view.action_add(NewInstructorAction)
 
         # additionally enqueue (as opposite to schedule) a blocking job
-        enqueued_job = self.queue.enqueue(dummy)
+        enqueued_job = self.queue.enqueue(dummy_job)
         self.assertTrue(enqueued_job.is_finished)
 
         # ensure both a new Job and a corresponding RQJob were created

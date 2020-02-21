@@ -1,18 +1,11 @@
 from datetime import timedelta
 
-from django.test import TestCase, Client
+from django.test import TestCase
 from django.urls import reverse
-import django_rq
-from fakeredis import FakeStrictRedis
-from rq import Queue
 
 from autoemails import admin
-from autoemails.tests.base import FakeRedisTestCaseMixin
+from autoemails.tests.base import FakeRedisTestCaseMixin, dummy_job
 from workshops.tests.base import SuperuserMixin
-
-
-def dummy_job():
-    return 42
 
 
 class TestAdminQueueView(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):

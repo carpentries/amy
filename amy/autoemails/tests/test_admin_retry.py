@@ -1,9 +1,7 @@
 from datetime import datetime, timedelta
 
-from django.test import TestCase, Client
+from django.test import TestCase
 from django.urls import reverse
-import django_rq
-from fakeredis import FakeStrictRedis
 from rq import Queue
 from rq.exceptions import NoSuchJobError
 from rq.job import Job
@@ -11,15 +9,12 @@ from rq_scheduler.utils import to_unix
 
 from autoemails import admin
 from autoemails.models import EmailTemplate, Trigger, RQJob
-from autoemails.tests.base import FakeRedisTestCaseMixin
+from autoemails.tests.base import (
+    FakeRedisTestCaseMixin,
+    dummy_job,
+    dummy_fail_job,
+)
 from workshops.tests.base import SuperuserMixin
-
-
-def dummy_job():
-    return 42
-
-def dummy_failed_job():
-    return 42 / 0
 
 
 class TestAdminJobRetry(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):

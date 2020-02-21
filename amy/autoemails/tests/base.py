@@ -7,6 +7,14 @@ from rq import Queue
 connection = FakeStrictRedis()
 
 
+def dummy_job():
+    return 42
+
+
+def dummy_fail_job():
+    return 42 / 0
+
+
 class FakeRedisTestCaseMixin:
     """TestCase mixin that provides easy setup of FakeRedis connection to both
     Django-RQ and RQ-Scheduler, as well as test-teardown with scheduled jobs

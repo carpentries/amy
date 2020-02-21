@@ -1,15 +1,12 @@
 from datetime import date, timedelta
 
-from django.test import TestCase, Client
+from django.test import TestCase
 from django.urls import reverse
-import django_rq
-from fakeredis import FakeStrictRedis
-from rq import Queue
 
 from autoemails import admin
 from autoemails.actions import NewInstructorAction
 from autoemails.models import EmailTemplate, Trigger, RQJob
-from autoemails.tests.base import FakeRedisTestCaseMixin
+from autoemails.tests.base import FakeRedisTestCaseMixin, dummy_job
 from autoemails.utils import scheduled_execution_time, compare_emails
 from workshops.models import (
     Tag,
@@ -20,10 +17,6 @@ from workshops.models import (
     Organization,
 )
 from workshops.tests.base import SuperuserMixin
-
-
-def dummy_job():
-    return 42
 
 
 class TestAdminJobPreview(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
