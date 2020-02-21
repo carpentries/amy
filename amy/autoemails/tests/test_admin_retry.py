@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 from django.test import TestCase
 from django.urls import reverse
-from rq import Queue
+from rq import Queue, SimpleWorker
 from rq.exceptions import NoSuchJobError
 from rq.job import Job
 from rq_scheduler.utils import to_unix
@@ -112,16 +112,28 @@ class TestAdminJobRetry(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         )
 
     def test_job_retried_correctly(self):
+        """To check if the job was correctly failed etc., we should use
+        a Worker and not the queue provided with FakeRedisTestCaseMixin."""
+        # Create an asynchronous queue.
+        # The name `separate_queue` used here is to ensure the queue isn't used
+        # anywhere else.
+        queue = Queue('separate_queue', connection=self.connection)
+        worker = SimpleWorker([queue], connection=queue.connection)
+
         # log admin user
         self._logSuperuserIn()
 
         # this job will successfully run, but we're changing its status to
         # failed in Redis itself
-        job = self.queue.enqueue(dummy_job)
-        job.set_status('failed')
-        self.assertEqual(job.get_status(), 'failed')
+        job = queue.enqueue(dummy_fail_job)
+        self.assertEqual(job.get_status(), 'queued')
 
+        # log the job in our system as RQJob
         rqjob = RQJob.objects.create(job_id=job.id, trigger=self.trigger)
+
+        # run the worker
+        worker.work(burst=True)
+        self.assertEqual(job.get_status(), 'failed')
 
         url = reverse('admin:autoemails_rqjob_retry', args=[rqjob.pk])
         rv = self.client.get(url, follow=True)
@@ -130,4 +142,4 @@ class TestAdminJobRetry(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
             rv.content.decode('utf-8'),
         )
 
-        self.assertEqual(job.get_status(refresh=True), 'finished')
+        self.assertEqual(job.get_status(refresh=True), 'queued')
