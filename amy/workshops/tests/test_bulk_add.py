@@ -103,7 +103,7 @@ class CSVBulkUploadTestBase(TestBase):
         test_host = Organization.objects.create(domain='example.com',
                                                 fullname='Test Organization')
 
-        Role.objects.create(name='Instructor')
+        Role.objects.create(name='instructor')
         Role.objects.create(name='learner')
         Event.objects.create(start=datetime.date.today(),
                              host=test_host,
@@ -117,7 +117,7 @@ class CSVBulkUploadTestBase(TestBase):
         Sample CSV data
         """
         return """personal,family,email,event,role
-John,Doe,notin@db.com,foobar,Instructor
+John,Doe,notin@db.com,foobar,instructor
 """
 
     def make_data(self):
@@ -409,11 +409,11 @@ Harry,Potter,harry@hogwarts.edu,foobar,Helper
         user is silent (ie. no Task nor Person is being created).
         """
         foobar = Event.objects.get(slug="foobar")
-        instructor = Role.objects.get(name="Instructor")
+        instructor = Role.objects.get(name="instructor")
         Task.objects.create(person=self.harry, event=foobar, role=instructor)
 
         csv = """personal,family,email,event,role
-Harry,Potter,harry@hogwarts.edu,foobar,Instructor
+Harry,Potter,harry@hogwarts.edu,foobar,instructor
 """
         data, _ = upload_person_task_csv(StringIO(csv))
 
