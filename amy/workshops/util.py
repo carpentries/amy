@@ -331,13 +331,14 @@ def create_uploaded_persons_tasks(data, request=None):
         for task in tasks_created:
             # conditions check out
             if NewInstructorAction.check(task):
+                objs = dict(task=task, event=task.event)
                 # prepare context and everything and create corresponding RQJob
                 jobs, rqjobs = ActionManageMixin.add(
                     action_class=NewInstructorAction,
                     logger=logger,
                     scheduler=scheduler,
-                    triggers=Trigger.objects.filter(),
-                    context_objects=dict(),
+                    triggers=Trigger.objects.filter(action="new-instructor"),
+                    context_objects=objs,
                     object_=task,
                     request=request,
                 )
