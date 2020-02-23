@@ -14,6 +14,7 @@ import django_rq
 
 from autoemails.models import Trigger, EmailTemplate
 from autoemails.utils import compare_emails
+from workshops.fields import TAG_SEPARATOR
 from workshops.models import Event, Task, Person
 
 
@@ -377,6 +378,107 @@ class PostWorkshopAction(BaseAction):
                 )
             ).distinct().values_list('email', flat=True)
         )
+        context['assignee'] = (
+            event.assigned_to.full_name
+            if event.assigned_to
+            else 'Regional Coordinator'
+        )
+
+        return context
+
+
+class SelfOrganisedRequestAction(BaseAction):
+    """
+    Action for confirming the self-organised event being accepted. It will be
+    sent an hour after the event has been accepted.
+
+    How to use it:
+
+    >>> triggers = Trigger.objects.filter(active=True,
+                                          action='self-organised-request-form')
+    >>> for trigger in triggers:
+    ...     action = SelfOrganisedRequestAction(
+    ...         trigger=trigger,
+    ...         objects=dict(event=event, request=request),
+    ...     )
+    ...     launch_at = action.get_launch_at()
+    ...     job = scheduler.enqueue_in(launch_at, action)
+    """
+
+    # It should be at least 1 hour to give admin some time in case of mistakes.
+    # launch_at = timedelta(hours=1)
+    # Shortened to 10 minutes for tests!
+    launch_at = timedelta(minutes=10)
+
+    def recipients(self):
+        """Assuming self.context is ready, overwrite email's recipients
+        with selected ones."""
+        try:
+            return self.context['all_emails']
+        except (AttributeError, KeyError):
+            return None
+
+    @staticmethod
+    def check(event: Event):
+        """Conditions for creating a SelfOrganisedRequestAction."""
+        try:
+            return bool(
+                # is self-organized
+                event.administrator and
+                event.administrator.domain == 'self-organized' and
+                # starts in future
+                event.start and
+                event.start >= date.today() and
+                # no "cancelled", "unresponsive", or "stalled" tags
+                not event.tags.filter(name__in=[
+                    'cancelled', 'unresponsive', 'stalled'
+                ]) and
+                # special "automated-email" tag
+                event.tags.filter(name__icontains='automated-email') and
+                # there should be a related object `SelfOrganisedSubmission`
+                event.selforganisedsubmission
+            )
+        except Event.selforganisedsubmission.RelatedObjectDoesNotExist:
+            # Simply accessing `event.selforganisedsubmission` to check for
+            # non-None value will throw this exception :(
+            return False
+
+    def get_additional_context(self, objects, *args, **kwargs):
+        from workshops.util import match_notification_email, human_daterange
+
+        # refresh related event and request
+        event = objects['event']
+        event.refresh_from_db()
+        request = objects['request']  # SelfOrganisedSubmission
+        request.refresh_from_db()
+
+        # prepare context
+        context = dict()
+        context['workshop'] = event
+        context['request'] = request
+        context['workshop_main_type'] = None
+        tmp = event.tags.carpentries().first()
+        if tmp:
+            context['workshop_main_type'] = tmp.name
+        context['dates'] = None
+        if event.end:
+            context['dates'] = human_daterange(event.start, event.end)
+        context['host'] = event.host
+        context['regional_coordinator_email'] = \
+            list(match_notification_email(event))
+
+        # event starts in less (or equal) than 10 days
+        context['short_notice'] = (
+            event.start <= (date.today() + timedelta(days=10))
+        )
+
+        # querying over Person.objects lets us get rid of duplicates
+        context['all_emails'] = [request.email]
+        # additional contact info (see CommonRequest for details)
+        if request.additional_contact:
+            for email in request.additional_contact.split(TAG_SEPARATOR):
+                context['all_emails'].append(email)
+
         context['assignee'] = (
             event.assigned_to.full_name
             if event.assigned_to
