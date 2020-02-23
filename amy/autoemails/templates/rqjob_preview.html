@@ -203,7 +203,7 @@
     </tr>
 </table>
 
-{% if form %}
+{% if form and job and job_scheduled %}
 <form method="POST" action="{% url 'admin:autoemails_rqjob_reschedule' object_id=rqjob.pk %}">
     {% csrf_token %}
     <div>
@@ -224,7 +224,7 @@
 </form>
 {% endif %}
 
-{% if job.is_failed %}
+{% if job and job.is_failed %}
 <div class="submit-row">
     <p class="deletelink-box"><a href="{% url 'admin:autoemails_rqjob_retry' object_id=rqjob.pk %}" class="deletelink">Re-try</a></p>
 </div>

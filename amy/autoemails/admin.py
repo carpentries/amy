@@ -259,8 +259,8 @@ class RQJobAdmin(admin.ModelAdmin):
         if job.is_failed:
             job.requeue()
             messages.info(request,
-                            f'The job {rqjob.job_id} was requeued. '
-                            'It will be run shortly.')
+                          f'The job {rqjob.job_id} was requeued. '
+                          'It will be run shortly.')
         else:
             messages.warning(request, "You cannot re-try a non-failed job.")
 

@@ -123,8 +123,7 @@ class TestAdminJobRetry(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         # log admin user
         self._logSuperuserIn()
 
-        # this job will successfully run, but we're changing its status to
-        # failed in Redis itself
+        # this job will fail
         job = queue.enqueue(dummy_fail_job)
         self.assertEqual(job.get_status(), 'queued')
 
