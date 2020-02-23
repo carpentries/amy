@@ -115,6 +115,13 @@ class RQJobAdmin(admin.ModelAdmin):
                 ),
                 name='autoemails_rqjob_retry',
             ),
+            path(
+                '<path:object_id>/cancel/',
+                admin_required(
+                    self.admin_site.admin_view(self.cancel)
+                ),
+                name='autoemails_rqjob_cancel',
+            ),
         ]
         return new_urls + original_urls
 
@@ -263,6 +270,40 @@ class RQJobAdmin(admin.ModelAdmin):
                           'It will be run shortly.')
         else:
             messages.warning(request, "You cannot re-try a non-failed job.")
+
+        return redirect(link)
+
+    def cancel(self, request, object_id):
+        """Fetch job and re-try to execute it."""
+        rqjob = get_object_or_404(RQJob, id=object_id)
+
+        link = reverse('admin:autoemails_rqjob_preview', args=[object_id])
+
+        # fetch job
+        try:
+            job = Job.fetch(rqjob.job_id, connection=scheduler.connection)
+        except NoSuchJobError:
+            messages.warning(request, 'The corresponding job in Redis was '
+                                      'probably already executed.')
+            return redirect(link)
+
+        if job.is_queued or not job.get_status():
+            job.cancel()  # for "pure" jobs
+            scheduler.cancel(job)  # for scheduler-based jobs
+
+            messages.info(request,
+                          f'The job {rqjob.job_id} was cancelled.')
+
+        elif job.is_started:
+            # Right now we don't know how to test a started job, so we simply
+            # don't allow such jobs to be cancelled.
+            messages.warning(request,
+                             f'Job {rqjob.job_id} has started and cannot be '
+                             'cancelled.')
+
+        elif job.get_status() not in ("", None):
+            messages.warning(request, 'Job has unknown status or '
+                                      'was already executed.')
 
         return redirect(link)
 

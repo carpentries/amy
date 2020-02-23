@@ -38,7 +38,7 @@
             <table>
                 <tr>
                     <td>Status:</td>
-                    <td>{% if job %}{{ job.get_status|default_if_none:"scheduled" }}{% else %}&mdash;{% endif %}</td>
+                    <td>{% if job and job_scheduled %}{{ job.get_status|default_if_none:"scheduled" }}{% elif job %}{{ job.get_status|default:"cancelled" }}{% else %}&mdash;{% endif %}</td>
                 </tr>
                 <tr>
                     <td>Exception info:</td>
@@ -227,6 +227,13 @@
 {% if job and job.is_failed %}
 <div class="submit-row">
     <p class="deletelink-box"><a href="{% url 'admin:autoemails_rqjob_retry' object_id=rqjob.pk %}" class="deletelink">Re-try</a></p>
+</div>
+{% endif %}
+
+
+{% if job and job.is_queued or job and job_scheduled %}
+<div class="submit-row">
+    <p class="deletelink-box"><a href="{% url 'admin:autoemails_rqjob_cancel' object_id=rqjob.pk %}" class="deletelink">Cancel job</a></p>
 </div>
 {% endif %}
 
