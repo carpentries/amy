@@ -191,6 +191,8 @@
                             <li><code>{{ vv|pprint }}</code></li>
                             {% endfor %}
                         </ul>
+                        {% elif v|is_bool %}
+                        {{ v|yesno }}
                         {% endif %}
                     </td>
                 </tr>

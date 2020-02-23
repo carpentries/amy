@@ -25,3 +25,8 @@ def is_iterable(value):
 @register.filter
 def is_str(value):
     return isinstance(value, str)
+
+
+@register.filter
+def is_bool(value):
+    return isinstance(value, bool)
