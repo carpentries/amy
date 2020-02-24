@@ -567,6 +567,24 @@ class TestEventViews(TestBase):
         f = EventForm(data)
         self.assertTrue(f.is_valid())
 
+    def test_empty_manual_attendance(self):
+        """Ensure we don't get 500 server error when field is left with empty
+        value.
+
+        This is a regression test for
+        https://github.com/swcarpentry/amy/issues/1608."""
+
+        data = {
+            'slug': '2016-06-30-test-event',
+            'host': self.test_host.id,
+            'tags': [self.test_tag.id],
+            'manual_attendance': '',
+        }
+        f = EventForm(data)
+        self.assertTrue(f.is_valid())
+        event = f.save()
+        self.assertEqual(event.manual_attendance, 0)
+
     def test_number_of_attendees_increasing(self):
         """Ensure event.attendance gets bigger after adding new learners."""
         event = Event.objects.get(slug='test_event_0')
