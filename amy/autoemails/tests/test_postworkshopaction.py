@@ -48,28 +48,28 @@ class TestPostWorkshopAction(TestCase):
         a1 = PostWorkshopAction(
             trigger=Trigger(action='test-action', template=EmailTemplate()),
         )
-        self.assertEqual(a1.get_launch_at(), timedelta(minutes=10))
+        self.assertEqual(a1.get_launch_at(), timedelta(days=7))
 
         # case 2: event with no end date
         a2 = PostWorkshopAction(
             trigger=Trigger(action='test-action', template=EmailTemplate()),
             objects=dict(event=e1),
         )
-        self.assertEqual(a2.get_launch_at(), timedelta(minutes=10))
+        self.assertEqual(a2.get_launch_at(), timedelta(days=7))
 
         # case 3: event with end date
         a3 = PostWorkshopAction(
             trigger=Trigger(action='test-action', template=EmailTemplate()),
             objects=dict(event=e2),
         )
-        self.assertEqual(a3.get_launch_at(), timedelta(days=8, minutes=10))
+        self.assertEqual(a3.get_launch_at(), timedelta(days=8 + 7))
 
         # case 4: event with negative end date
         a4 = PostWorkshopAction(
             trigger=Trigger(action='test-action', template=EmailTemplate()),
             objects=dict(event=e3),
         )
-        self.assertEqual(a4.get_launch_at(), timedelta(minutes=10))
+        self.assertEqual(a4.get_launch_at(), timedelta(days=7))
 
     def testCheckConditions(self):
         """Make sure `check` works for various input data."""

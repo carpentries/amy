@@ -201,9 +201,7 @@ class NewInstructorAction(BaseAction):
     """
 
     # It should be at least 1 hour to give admin some time in case of mistakes.
-    # launch_at = timedelta(hours=1)
-    # Shortened to 10 minutes for tests!
-    launch_at = timedelta(minutes=10)
+    launch_at = timedelta(hours=1)
 
     @staticmethod
     def check(task: Task):
@@ -288,9 +286,7 @@ class PostWorkshopAction(BaseAction):
     """
 
     # The action should launch week after workshop's end date
-    # launch_at = timedelta(days=7)
-    # Shortened to 10 minutes for tests!
-    launch_at = timedelta(minutes=10)
+    launch_at = timedelta(days=7)
 
     def get_launch_at(self):
         event = self.context_objects.get('event', None)
@@ -406,9 +402,7 @@ class SelfOrganisedRequestAction(BaseAction):
     """
 
     # It should be at least 1 hour to give admin some time in case of mistakes.
-    # launch_at = timedelta(hours=1)
-    # Shortened to 10 minutes for tests!
-    launch_at = timedelta(minutes=10)
+    launch_at = timedelta(hours=1)
 
     def recipients(self):
         """Assuming self.context is ready, overwrite email's recipients
