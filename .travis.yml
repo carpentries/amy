@@ -5,19 +5,20 @@ language: python
 
 cache: pip
 
+# used for caching purposes
+services:
+  - redis-server
+
 python:
   # After upgrading to Ubuntu 18.04 we lost ability to test against Py3.5
   # - 3.5
-  - 3.6
+  # Python3.6 doesn't allow for pickling logger objects, and this functionality
+  # is required for autoemails application
+  # - 3.6
   - 3.7
+  - 3.8
 
 env:
-  - AMY_ENABLE_PYDATA=true
-    AMY_PYDATA_USERNAME=username
-    AMY_PYDATA_PASSWORD=password
-    # With PyData enabled, there's always one migration missing,
-    # so let's not check migrations.
-    # CHECK_MIGRATION=true
   - CHECK_MIGRATION=true
 
 install:

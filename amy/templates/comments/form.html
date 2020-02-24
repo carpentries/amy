@@ -9,22 +9,10 @@
     {{ form.object_pk }}
     {{ form.timestamp }}
     {{ form.security_hash }}
-    <div class="markdownx">
-      <div class="card comment-form">
-        <div class="card-header">
-          <ul class="nav nav-tabs card-header-tabs">
-            <li class="nav-item">
-              <a class="nav-link active" href="#write" id="write-tab" data-toggle="tab" role="tab" aria-controls="write" aria-selected="true">Write comment</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#preview" id="preview-tab" data-toggle="tab" role="tab" aria-controls="preview" aria-selected="true">Preview</a>
-            </li>
-          </ul>
-        </div>
-        <div class="card-body tab-content">
-          {{ form.comment }}
-          <input type="submit" value="Comment" id="id_submit" class="btn btn-success" />
-        </div>
+    <div class="card comment-form">
+      <div class="card-body">
+        {{ form.comment }}
+        <input type="submit" value="Comment" id="id_submit" class="btn btn-success" />
       </div>
     </div>
   </form>

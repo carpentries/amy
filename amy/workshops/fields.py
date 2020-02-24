@@ -157,6 +157,9 @@ class ModelSelect2MultipleWidget(Select2BootstrapMixin,
     pass
 
 
+TAG_SEPARATOR = ';'
+
+
 class Select2TagWidget(Select2BootstrapMixin, DS2_Select2TagWidget):
     def build_attrs(self, base_attrs, extra_attrs=None):
         """Select2's tag attributes. By default other token separators are
@@ -166,6 +169,8 @@ class Select2TagWidget(Select2BootstrapMixin, DS2_Select2TagWidget):
             'data-tags': 'true',
             'data-token-separators': '[",", ";"]'
         }
+        assert TAG_SEPARATOR in default_attrs['data-token-separators']
+
         default_attrs.update(base_attrs)
         return super().build_attrs(default_attrs, extra_attrs=extra_attrs)
 
@@ -180,12 +185,12 @@ class Select2TagWidget(Select2BootstrapMixin, DS2_Select2TagWidget):
 
         data_mutable.setdefault(name, '')
         values = super().value_from_datadict(data_mutable, files, name)
-        return ";".join(values)
+        return TAG_SEPARATOR.join(values)
 
     def optgroups(self, name, value, attrs=None):
         """Example from
         https://django-select2.readthedocs.io/en/latest/django_select2.html#django_select2.forms.Select2TagWidget"""
-        values = value[0].split(';') if value[0] else []
+        values = value[0].split(TAG_SEPARATOR) if value[0] else []
         selected = set(values)
         subgroup = [
             self.create_option(name, v, v, selected, i)

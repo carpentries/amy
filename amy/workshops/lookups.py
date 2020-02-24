@@ -69,6 +69,19 @@ class OrganizationLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
         return results
 
 
+class AdministratorOrganizationLookupView(OnlyForAdminsNoRedirectMixin,
+                                          AutoResponseView):
+    def get_queryset(self):
+        results = models.Organization.objects.administrators()
+
+        if self.term:
+            results = results.filter(
+                Q(domain__icontains=self.term) | Q(fullname__icontains=self.term)
+            )
+
+        return results
+
+
 class MembershipLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
     def get_queryset(self):
         results = models.Membership.objects.all()
@@ -227,6 +240,7 @@ urlpatterns = [
     url(r'^events/$', EventLookupView.as_view(), name='event-lookup'),
     url(r'^ttt_events/$', TTTEventLookupView.as_view(), name='ttt-event-lookup'),
     url(r'^organizations/$', OrganizationLookupView.as_view(), name='organization-lookup'),
+    url(r'^admin_orgs/$', AdministratorOrganizationLookupView.as_view(), name='administrator-org-lookup'),
     url(r'^memberships/$', MembershipLookupView.as_view(), name='membership-lookup'),
     url(r'^persons/$', PersonLookupView.as_view(), name='person-lookup'),
     url(r'^admins/$', AdminLookupView.as_view(), name='admin-lookup'),

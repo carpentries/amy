@@ -2,6 +2,7 @@ import csv
 import datetime
 from functools import partial
 import io
+import logging
 
 from django.conf import settings
 from django.contrib import messages
@@ -23,8 +24,12 @@ from django.db.models import (
 from django.shortcuts import redirect, render, get_object_or_404
 from django.urls import reverse
 from django_countries import countries
+import django_rq
 from requests.exceptions import HTTPError, RequestException
 
+from autoemails.actions import SelfOrganisedRequestAction
+from autoemails.base_views import ActionManageMixin
+from autoemails.models import Trigger
 from extrequests.filters import (
     TrainingRequestFilter,
     WorkshopRequestFilter,
@@ -88,6 +93,10 @@ from workshops.util import (
     parse_metadata_from_event_website,
     WrongWorkshopURL,
 )
+
+logger = logging.getLogger('amy.signals')
+scheduler = django_rq.get_scheduler('default')
+redis_connection = django_rq.get_connection('default')
 
 
 # ------------------------------------------------------------
@@ -391,6 +400,21 @@ def selforganisedsubmission_accept_event(request, submission_id):
             wr.state = 'a'
             wr.event = event
             wr.save()
+
+            if SelfOrganisedRequestAction.check(event):
+                objs = dict(event=event, request=wr)
+                jobs, rqjobs = ActionManageMixin.add(
+                    action_class=SelfOrganisedRequestAction,
+                    logger=logger,
+                    scheduler=scheduler,
+                    triggers=Trigger.objects.filter(
+                        active=True, action="self-organised-request-form"
+                    ),
+                    context_objects=objs,
+                    object_=event,
+                    request=request,
+                )
+
             return redirect(reverse('event_details',
                                     args=[event.slug]))
         else:

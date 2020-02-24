@@ -385,8 +385,8 @@ class EventForm(forms.ModelForm):
         label='Administrator',
         required=False,
         help_text=Event._meta.get_field('administrator').help_text,
-        queryset=Organization.objects.all(),
-        widget=ModelSelect2Widget(data_view='organization-lookup')
+        queryset=Organization.objects.administrators(),
+        widget=ModelSelect2Widget(data_view='administrator-org-lookup'),
     )
 
     assigned_to = forms.ModelChoiceField(
@@ -575,6 +575,11 @@ class EventForm(forms.ModelForm):
 
         return curricula
 
+    def clean_manual_attendance(self):
+        """Regression: #1608 - fix 500 server error when field is cleared."""
+        manual_attendance = self.cleaned_data['manual_attendance'] or 0
+        return manual_attendance
+
     def save(self, *args, **kwargs):
         res = super().save(*args, **kwargs)
 
@@ -618,7 +623,10 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm):
 
     class Meta:
         model = Task
-        fields = '__all__'
+        fields = [
+            'event', 'person', 'role', 'title', 'url',
+            'seat_membership', 'seat_open_training',
+        ]
         widgets = {
             'person': ModelSelect2Widget(data_view='person-lookup',
                                          attrs=SELECT2_SIDEBAR),

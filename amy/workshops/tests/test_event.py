@@ -7,9 +7,13 @@ from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.db import connection
 from django.db.utils import IntegrityError
+from django.test import TestCase
 from django.urls import reverse
 from django_comments.models import Comment
 
+from autoemails.actions import PostWorkshopAction
+from autoemails.models import EmailTemplate, Trigger, RQJob
+from autoemails.tests.base import FakeRedisTestCaseMixin
 from workshops.management.commands.check_for_workshop_websites_updates import (
     Command as WebsiteUpdatesCommand)
 from workshops.models import (
@@ -23,7 +27,9 @@ from workshops.models import (
     Curriculum,
 )
 from workshops.forms import EventForm, EventCreateForm, EventsMergeForm
-from workshops.tests.base import TestBase
+from workshops.tests.base import TestBase, SuperuserMixin
+import workshops.views
+from workshops.views import EventCreate, EventUpdate, EventDelete
 
 
 class TestEvent(TestBase):
@@ -423,13 +429,15 @@ class TestEventViews(TestBase):
 
     def test_add_minimal_event(self):
         host = Organization.objects.get(fullname='Test Organization')
+        # administrator can only be selected from `administrators`
+        admin = Organization.objects.administrators().first()
         response = self.client.post(
             reverse('event_add'),
             {
                 'slug': '2012-12-21-event-final',
                 'host': host.id,
                 'tags': [self.test_tag.id],
-                'administrator': host.id,
+                'administrator': admin.id,
                 'invoice_status': 'unknown',
             })
 
@@ -558,6 +566,24 @@ class TestEventViews(TestBase):
         data['manual_attendance'] = 36
         f = EventForm(data)
         self.assertTrue(f.is_valid())
+
+    def test_empty_manual_attendance(self):
+        """Ensure we don't get 500 server error when field is left with empty
+        value.
+
+        This is a regression test for
+        https://github.com/swcarpentry/amy/issues/1608."""
+
+        data = {
+            'slug': '2016-06-30-test-event',
+            'host': self.test_host.id,
+            'tags': [self.test_tag.id],
+            'manual_attendance': '',
+        }
+        f = EventForm(data)
+        self.assertTrue(f.is_valid())
+        event = f.save()
+        self.assertEqual(event.manual_attendance, 0)
 
     def test_number_of_attendees_increasing(self):
         """Ensure event.attendance gets bigger after adding new learners."""
@@ -1258,3 +1284,419 @@ class TestEventAttendance(TestBase):
         self.event.task_set.create(person=self.spiderman,
                                    role=Role.objects.get(name='learner'))
         self.assertEqual(self.event.attendance, 2)
+
+
+class TestEventCreateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
+                                TestCase):
+    def setUp(self):
+        super().setUp()
+
+        # save scheduler and connection data
+        self._saved_scheduler = workshops.views.scheduler
+        self._saved_redis_connection = workshops.views.redis_connection
+        # overwrite them
+        workshops.views.scheduler = self.scheduler
+        workshops.views.redis_connection = self.connection
+
+    def tearDown(self):
+        super().tearDown()
+        workshops.views.scheduler = self._saved_scheduler
+        workshops.views.redis_connection = self._saved_redis_connection
+
+    def _prepare_data(self):
+        Tag.objects.bulk_create([
+            Tag(name='SWC'),
+            Tag(name='DC'),
+            Tag(name='LC'),
+            Tag(name='automated-email'),
+        ])
+
+        self.LC_org = Organization.objects.create(
+            domain='librarycarpentry.org', fullname='Library Carpentry',
+        )
+
+        template = EmailTemplate.objects.create(
+            slug='sample-template',
+            subject='Welcome!',
+            to_header='',
+            from_header='test@address.com',
+            cc_header='copy@example.org',
+            bcc_header='bcc@example.org',
+            reply_to_header='',
+            body_template='# Welcome',
+        )
+        trigger = Trigger.objects.create(
+            action='week-after-workshop-completion',
+            template=template,
+        )
+
+    def test_methods_implemented(self):
+        view = EventCreate()
+        view.get_logger()
+        view.get_scheduler()
+        view.get_redis_connection()
+        view.get_triggers()
+        # unnecessary for a view that only uses `action_add`
+        # view.get_jobs()
+        try:
+            view.objects()
+        except AttributeError:
+            # it's fine
+            pass
+
+    def test_job_scheduled(self):
+        self._setUpSuperuser()
+        self._prepare_data()
+
+        # no events
+        self.assertFalse(Event.objects.all())
+        # no jobs
+        self.assertEqual(self.scheduler.count(), 0)
+        # no rqjobs
+        self.assertFalse(RQJob.objects.all())
+
+        self.client.force_login(self.admin)
+        data = {
+            'slug': '2020-02-07-test-event',
+            'host': Organization.objects.first().pk,
+            'start': date.today(),
+            'end': date.today() + timedelta(days=2),
+            'administrator': self.LC_org.pk,
+            'tags': Tag.objects.filter(name__in=['LC', 'automated-email'])
+                               .values_list('pk', flat=True),
+        }
+        response = self.client.post(reverse('event_add'), data, follow=True)
+        # with open('test.html', 'w', encoding='utf-8') as f:
+        #     f.write(response.content.decode('utf-8'))
+
+        self.assertIn("New email was scheduled",
+                      response.content.decode('utf-8'))
+
+        # new event appeared
+        self.assertEqual(Event.objects.count(), 1)
+
+        # ensure the new event passes action checks
+        event = Event.objects.first()
+        self.assertTrue(PostWorkshopAction.check(event))
+
+        # 1 new jobs
+        self.assertEqual(self.scheduler.count(), 1)
+        job = next(self.scheduler.get_jobs())
+
+        # 1 new rqjobs
+        self.assertEqual(RQJob.objects.count(), 1)
+        rqjob = RQJob.objects.first()
+
+        # ensure it's the same job
+        self.assertEqual(job.get_id(), rqjob.job_id)
+
+
+class TestEventUpdateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
+                                TestCase):
+    def setUp(self):
+        super().setUp()
+
+        # save scheduler and connection data
+        self._saved_scheduler = workshops.views.scheduler
+        self._saved_redis_connection = workshops.views.redis_connection
+        # overwrite them
+        workshops.views.scheduler = self.scheduler
+        workshops.views.redis_connection = self.connection
+
+    def tearDown(self):
+        super().tearDown()
+        workshops.views.scheduler = self._saved_scheduler
+        workshops.views.redis_connection = self._saved_redis_connection
+
+    def _prepare_data(self):
+        Tag.objects.bulk_create([
+            Tag(name='SWC'),
+            Tag(name='DC'),
+            Tag(name='LC'),
+            Tag(name='automated-email'),
+        ])
+
+        self.LC_org = Organization.objects.create(
+            domain='librarycarpentry.org', fullname='Library Carpentry',
+        )
+
+        template = EmailTemplate.objects.create(
+            slug='sample-template',
+            subject='Welcome!',
+            to_header='',
+            from_header='test@address.com',
+            cc_header='copy@example.org',
+            bcc_header='bcc@example.org',
+            reply_to_header='',
+            body_template='# Welcome',
+        )
+        trigger = Trigger.objects.create(
+            action='week-after-workshop-completion',
+            template=template,
+        )
+
+    def test_methods_implemented(self):
+        view = EventUpdate()
+        view.get_logger()
+        view.get_scheduler()
+        view.get_redis_connection()
+        view.get_triggers()
+        # it's fine
+        with self.assertRaises(AttributeError):
+            view.get_jobs()
+        # it's fine
+        with self.assertRaises(AttributeError):
+            view.objects()
+
+    def test_job_scheduled(self):
+        self._setUpSuperuser()
+        self._prepare_data()
+
+        # this event shouldn't trigger action
+        event = Event.objects.create(
+            slug='2020-02-07-test-event',
+            host=Organization.objects.first(),
+            start=None,
+            end=None,
+            administrator=self.LC_org,
+        )
+        event.tags.set(Tag.objects.filter(name__in=['LC', 'automated-email']))
+        self.assertFalse(PostWorkshopAction.check(event))
+
+        # no jobs
+        self.assertEqual(self.scheduler.count(), 0)
+        # no rqjobs
+        self.assertFalse(RQJob.objects.all())
+
+        # add start & end date and save
+        self.client.force_login(self.admin)
+        data = {
+            'slug': '2020-02-07-test-event',
+            'host': Organization.objects.first().pk,
+            'start': date.today(),
+            'end': date.today() + timedelta(days=2),
+            'administrator': self.LC_org.pk,
+            'tags': Tag.objects.filter(name__in=['LC', 'automated-email'])
+                               .values_list('pk', flat=True),
+        }
+        response = self.client.post(reverse('event_edit', args=[event.slug]),
+                                    data,
+                                    follow=True)
+        # with open('test.html', 'w', encoding='utf-8') as f:
+        #     f.write(response.content.decode('utf-8'))
+
+        self.assertIn("New email was scheduled",
+                      response.content.decode('utf-8'))
+
+        event.refresh_from_db()
+        self.assertTrue(PostWorkshopAction.check(event))
+
+        # 1 new job
+        self.assertEqual(self.scheduler.count(), 1)
+        job = next(self.scheduler.get_jobs())
+
+        # 1 new rqjob
+        self.assertEqual(RQJob.objects.count(), 1)
+        rqjob = RQJob.objects.first()
+
+        # ensure it's the same job
+        self.assertEqual(job.get_id(), rqjob.job_id)
+
+    def test_job_unscheduled(self):
+        self._setUpSuperuser()
+        self._prepare_data()
+
+        # this event won't trigger an action if we created it via a view
+        event = Event.objects.create(
+            slug='2020-02-07-test-event',
+            host=Organization.objects.first(),
+            start=None,
+            end=None,
+            administrator=self.LC_org,
+        )
+        event.tags.set(Tag.objects.filter(name__in=['LC', 'automated-email']))
+        self.assertFalse(PostWorkshopAction.check(event))
+
+        # no jobs - again, due to not creating via WWW
+        self.assertEqual(self.scheduler.count(), 0)
+        # no rqjobs - again, due to not creating via WWW
+        self.assertFalse(RQJob.objects.all())
+
+        # change event's start and end dates
+        self.client.force_login(self.admin)
+        data = {
+            'slug': '2020-02-07-test-event',
+            'host': Organization.objects.first().pk,
+            'start': date.today(),
+            'end': date.today() + timedelta(days=2),
+            'administrator': self.LC_org.pk,
+            'tags': Tag.objects.filter(name__in=['LC', 'automated-email'])
+                               .values_list('pk', flat=True),
+        }
+        response = self.client.post(reverse('event_edit', args=[event.slug]),
+                                    data,
+                                    follow=True)
+        self.assertContains(response, 'New email was scheduled')
+        # with open('test.html', 'w', encoding='utf-8') as f:
+        #     f.write(response.content.decode('utf-8'))
+
+        # ensure now we have the job
+        event.refresh_from_db()
+        self.assertTrue(PostWorkshopAction.check(event))
+
+        # 1 new job
+        self.assertEqual(self.scheduler.count(), 1)
+        job = next(self.scheduler.get_jobs())
+
+        # 1 new rqjob
+        self.assertEqual(RQJob.objects.count(), 1)
+        rqjob = RQJob.objects.first()
+
+        # ensure it's the same job
+        self.assertEqual(job.get_id(), rqjob.job_id)
+
+        # now change the event back to no start and no end dates
+        data = {
+            'slug': '2020-02-07-test-event',
+            'host': Organization.objects.first().pk,
+            'start': '',
+            'end': '',
+            'administrator': self.LC_org.pk,
+            'tags': Tag.objects.filter(name__in=['LC', 'automated-email'])
+                               .values_list('pk', flat=True),
+        }
+        response = self.client.post(reverse('event_edit', args=[event.slug]),
+                                    data,
+                                    follow=True)
+        self.assertContains(response,
+                            f'Scheduled email {rqjob.job_id} was removed')
+        # with open('test.html', 'w', encoding='utf-8') as f:
+        #     f.write(response.content.decode('utf-8'))
+
+        # ensure the event doesn't pass checks anymore
+        event.refresh_from_db()
+        self.assertFalse(PostWorkshopAction.check(event))
+
+        # no job
+        self.assertEqual(self.scheduler.count(), 0)
+        # no rqjob
+        self.assertEqual(RQJob.objects.count(), 0)
+
+
+class TestEventDeleteAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
+                                TestCase):
+    def setUp(self):
+        super().setUp()
+
+        # save scheduler and connection data
+        self._saved_scheduler = workshops.views.scheduler
+        self._saved_redis_connection = workshops.views.redis_connection
+        # overwrite them
+        workshops.views.scheduler = self.scheduler
+        workshops.views.redis_connection = self.connection
+
+    def tearDown(self):
+        super().tearDown()
+        workshops.views.scheduler = self._saved_scheduler
+        workshops.views.redis_connection = self._saved_redis_connection
+
+    def _prepare_data(self):
+        Tag.objects.bulk_create([
+            Tag(name='SWC'),
+            Tag(name='DC'),
+            Tag(name='LC'),
+            Tag(name='automated-email'),
+        ])
+
+        self.LC_org = Organization.objects.create(
+            domain='librarycarpentry.org', fullname='Library Carpentry',
+        )
+
+        template = EmailTemplate.objects.create(
+            slug='sample-template',
+            subject='Welcome!',
+            to_header='',
+            from_header='test@address.com',
+            cc_header='copy@example.org',
+            bcc_header='bcc@example.org',
+            reply_to_header='',
+            body_template='# Welcome',
+        )
+        trigger = Trigger.objects.create(
+            action='week-after-workshop-completion',
+            template=template,
+        )
+
+    def test_methods_implemented(self):
+        view = EventDelete()
+        view.get_logger()
+        view.get_scheduler()
+        view.get_redis_connection()
+        # unnecessary for a view that only uses `action_remove`
+        # view.get_triggers()
+
+        # it's fine
+        with self.assertRaises(AttributeError):
+            view.get_jobs()
+        # it's fine
+        with self.assertRaises(AttributeError):
+            view.objects()
+
+    def test_job_unscheduled(self):
+        self._setUpSuperuser()
+        self._prepare_data()
+
+        # no jobs
+        self.assertEqual(self.scheduler.count(), 0)
+        # no rqjobs
+        self.assertFalse(RQJob.objects.all())
+
+        self.client.force_login(self.admin)
+        data = {
+            'slug': '2020-02-07-test-event',
+            'host': Organization.objects.first().pk,
+            'start': date.today(),
+            'end': date.today() + timedelta(days=2),
+            'administrator': self.LC_org.pk,
+            'tags': Tag.objects.filter(name__in=['LC', 'automated-email'])
+                               .values_list('pk', flat=True),
+        }
+        response = self.client.post(reverse('event_add'), data, follow=True)
+        self.assertContains(response, "New email was scheduled")
+        # with open('test.html', 'w', encoding='utf-8') as f:
+        #     f.write(response.content.decode('utf-8'))
+
+        # new event appeared
+        self.assertEqual(Event.objects.count(), 1)
+
+        # ensure the new event passes action checks
+        event = Event.objects.first()
+        self.assertTrue(PostWorkshopAction.check(event))
+
+        # 1 new jobs
+        self.assertEqual(self.scheduler.count(), 1)
+        job = next(self.scheduler.get_jobs())
+
+        # 1 new rqjobs
+        self.assertEqual(RQJob.objects.count(), 1)
+        rqjob = RQJob.objects.first()
+
+        # ensure it's the same job
+        self.assertEqual(job.get_id(), rqjob.job_id)
+
+        # now remove the event
+        response = self.client.post(reverse('event_delete', args=[event.slug]),
+                                    follow=True)
+        self.assertContains(response,
+                            f'Scheduled email {rqjob.job_id} was removed')
+        # with open('test.html', 'w', encoding='utf-8') as f:
+        #     f.write(response.content.decode('utf-8'))
+
+        # event is gone
+        with self.assertRaises(Event.DoesNotExist):
+            event.refresh_from_db()
+
+        # no job
+        self.assertEqual(self.scheduler.count(), 0)
+        # no rqjob
+        self.assertEqual(RQJob.objects.count(), 0)

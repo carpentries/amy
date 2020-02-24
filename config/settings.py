@@ -50,9 +50,9 @@ if not DEBUG and SECRET_KEY == DEFAULT_SECRET_KEY:
     raise ImproperlyConfigured('You must specify non-default value for '
                                'SECRET_KEY when running with Debug=FALSE.')
 
-SITE_ID = env.int('AMY_SITE_ID', default=1)
+SITE_ID = env.int('AMY_SITE_ID', default=2)
 ALLOWED_HOSTS = env.list('AMY_ALLOWED_HOSTS',
-                         default=['amy.software-carpentry.org'])
+                         default=['amy.carpentries.org'])
 if DEBUG:
     ALLOWED_HOSTS.append('127.0.0.1')
 
@@ -77,17 +77,6 @@ if '--keepdb' in sys.argv:
 ROOT_URLCONF = 'config.urls'
 # https://docs.djangoproject.com/en/dev/ref/settings/#wsgi-application
 WSGI_APPLICATION = 'config.wsgi.application'
-
-# PyData extension
-# -----------------------------------------------------------------------------
-ENABLE_PYDATA = env.bool('AMY_ENABLE_PYDATA', False)
-if ENABLE_PYDATA:
-    PYDATA_USERNAME_SECRET = env.str('AMY_PYDATA_USERNAME', default='')
-    PYDATA_PASSWORD_SECRET = env.str('AMY_PYDATA_PASSWORD', default='')
-    if not PYDATA_USERNAME_SECRET or not PYDATA_PASSWORD_SECRET:
-        raise ImproperlyConfigured(
-            "PyData username and password are required when using "
-            "AMY_ENABLE_PYDATA=true.")
 
 # ReCaptcha
 # -----------------------------------------------------------------------------
@@ -141,9 +130,7 @@ THIRD_PARTY_APPS = [
     'anymail',
     'django_comments',  # this used to be in django.contrib
     'markdownx',
-]
-PYDATA_APP = [
-    'amy.pydata.apps.PyDataConfig',
+    'django_rq',
 ]
 LOCAL_APPS = [
     'amy.workshops.apps.WorkshopsConfig',
@@ -155,12 +142,10 @@ LOCAL_APPS = [
     'amy.reports.apps.ReportsConfig',
     'amy.trainings.apps.TrainingsConfig',
     'amy.extcomments.apps.ExtcommentsConfig',
+    'amy.autoemails.apps.AutoemailsConfig',
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
-if ENABLE_PYDATA:
-    INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + PYDATA_APP + LOCAL_APPS
-else:
-    INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
+INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 # MIGRATIONS
 # -----------------------------------------------------------------------------
@@ -252,19 +237,25 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/2.2/topics/cache/#database-caching
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
-        'LOCATION': 'cache_default',
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': env.str('AMY_REDIS_URL', 'redis://localhost:6379/') + '0',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
     },
     'select2': {
-        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
-        'LOCATION': 'cache_select2',
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': env.str('AMY_REDIS_URL', 'redis://localhost:6379/') + '1',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
     },
     'compressor': {
         # TODO: in future, either switch to offline compression or
         #       install Memcached
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         # 'LOCATION': 'templates-media',  # required if >1 LocMemCache used
-    }
+    },
 }
 
 # MIDDLEWARE
@@ -380,6 +371,24 @@ TEMPLATES = [
             'string_if_invalid': 'XXX-unset-variable-XXX',
         },
     },
+    # backend used for reading templates from the database
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'NAME': 'db_backend',
+        # not-allowed to fetch from disk
+        'DIRS': [],
+        'APP_DIRS': False,
+        'OPTIONS': {
+            'debug': False,
+            'loaders': [],
+            'context_processors': [
+                'django.template.context_processors.i18n',
+                'django.template.context_processors.tz',
+            ],
+            # Warn about invalid template variables
+            'string_if_invalid': 'XXX-unset-variable-XXX',
+        }
+    },
 ]
 # http://django-crispy-forms.readthedocs.io/en/latest/install.html#template-packs
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
@@ -395,7 +404,7 @@ FIXTURE_DIRS = (
 # -----------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-backend
 EMAIL_BACKEND = 'anymail.backends.mailgun.EmailBackend'
-if DEBUG:
+if DEBUG and not env.bool('AMY_LIVE_EMAIL', default=False):
     # outgoing mails will be stored in `django.core.mail.outbox`
     EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
 
@@ -409,6 +418,15 @@ DEFAULT_FROM_EMAIL = env('AMY_DEFAULT_FROM_EMAIL', default='webmaster@localhost'
 ANYMAIL = {
     'MAILGUN_API_KEY': env('AMY_MAILGUN_API_KEY', default=None),
     'MAILGUN_SENDER_DOMAIN': env('AMY_MAILGUN_SENDER_DOMAIN', default=None),
+
+    # This should be in format `long_random:another_long_random`, as it's used
+    # for HTTP Basic Auth when Mailgun logs in to tell us about email tracking
+    # event.
+    'WEBHOOK_SECRET': env('AMY_MAILGUN_WEBHOOK_SECRET', default=None),
+
+    'SEND_DEFAULTS': {
+        'tags': ['amy'],
+    },
 }
 if not DEBUG and (not ANYMAIL['MAILGUN_API_KEY'] or
                   not ANYMAIL['MAILGUN_SENDER_DOMAIN']):
@@ -424,6 +442,8 @@ ADMIN_NOTIFICATION_CRITERIA_DEFAULT = 'team@carpentries.org'
 # ------------------------------------------------------------------------------
 # Django Admin URL.
 ADMIN_URL = env('AMY_ADMIN_URL', default='admin/')
+if not ADMIN_URL.endswith('/'):
+    ADMIN_URL += '/'
 # https://docs.djangoproject.com/en/dev/ref/settings/#admins
 ADMINS = [
     ('Sysadmins ML', 'sysadmin@carpentries.org'),
@@ -513,9 +533,16 @@ LOGGING = {
             'level': 'ERROR',
             'class': 'logging.FileHandler',
             'formatter': 'verbose',
-            # `str()` prevents some strange bug on Py3.5
-            'filename': str(env.path('AMY_SERVER_LOGFILE', default='amy.log')),
+            'filename': env.path('AMY_SERVER_LOGFILE',
+                                 default=ROOT_DIR('amy.log')),
         },
+        'debug_log_file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'formatter': 'verbose',
+            'filename': env.path('AMY_DEBUG_LOGFILE',
+                                 default=ROOT_DIR('amy_debug.log')),
+        }
     },
     'loggers': {
         # disable "Invalid HTTP_HOST" notifications
@@ -526,6 +553,11 @@ LOGGING = {
         'amy': {
             'handlers': ['null', ],
             'level': 'WARNING',
+        },
+        'amy.signals': {
+            'handlers': ['debug_log_file', ],
+            'level': 'DEBUG',
+            'propagate': True,
         },
         'amy.server_logs': {
             'handlers': ['log_file', ],
@@ -552,3 +584,30 @@ SELECT2_JS = ''  # don't load JS on it's own - we're loading it in `base.html`
 SELECT2_CSS = ''  # the same for CSS
 SELECT2_I18N = 'select2/js/i18n'
 SELECT2_CACHE_BACKEND = 'select2'
+
+# Django-RQ (Redis Queueing) settings
+# -----------------------------------------------------------------------------
+# https://github.com/rq/django-rq
+RQ_QUEUES = {
+    'default': {
+        'URL': env.str('AMY_REDIS_URL', 'redis://localhost:6379/') + '2',
+        'DEFAULT_TIMEOUT': 360,
+    },
+    'testing': {
+        'URL': env.str('AMY_REDIS_URL', 'redis://localhost:6379/') + '15',
+        'DEFAULT_TIMEOUT': 360,
+    }
+}
+# Add link to admin
+RQ_SHOW_ADMIN_LINK = False
+# If you need custom exception handlers
+# RQ_EXCEPTION_HANDLERS = ['path.to.my.handler']
+
+
+# Autoemails application settings
+# -----------------------------------------------------------------------------
+# These settings describe internal `autoemails` application behavior.
+AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS = env.str(
+    'AMY_AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS',
+    default=None,  # On test server: 'amy-tests@carpentries.org'
+)

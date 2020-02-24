@@ -1137,3 +1137,7 @@ class TestMatchingNotificationEmail(TestBase):
         self.assertFalse(hasattr(self, 'country'))
         results = match_notification_email(self)
         self.assertEqual(results, ['team@carpentries.org'])
+
+        self.country = None
+        results = match_notification_email(self)
+        self.assertEqual(results, ['team@carpentries.org'])

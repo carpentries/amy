@@ -14,6 +14,20 @@
   <tr><th>URL:</th><td>{{ task.url|urlize_newtab }}</td></tr>
   <tr><th>Member site seat <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events"></i>:</th><td>{% if task.seat_membership %}<a href="{{ task.seat_membership.get_absolute_url }}">{{ task.seat_membership }}</a>{% else %}&mdash;{% endif %}</td></tr>
   <tr><th>Open applicant <i class="fas fa-question-circle" data-toggle="tooltip" title="Applies only to TTT events with open applications"></i>:</th><td>{{ task.seat_open_training|yesno }}</td></tr>
+  <tr><th>RQ Jobs:</th>
+      <td>
+        {% with jobs=task.rq_jobs.all %}
+          {% if jobs %}
+          <ul>
+          {% for job in jobs %}
+            <li><a href="{{ job.get_absolute_url }}">{{ job }}</a></li>
+          {% endfor %}
+          </ul>
+          {% else %}
+          &mdash;
+          {% endif %}
+        {% endwith %}
+      </td></tr>
 </table>
 
 <div class="clearfix">
