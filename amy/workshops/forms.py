@@ -575,6 +575,11 @@ class EventForm(forms.ModelForm):
 
         return curricula
 
+    def clean_manual_attendance(self):
+        """Regression: #1608 - fix 500 server error when field is cleared."""
+        manual_attendance = self.cleaned_data['manual_attendance'] or 0
+        return manual_attendance
+
     def save(self, *args, **kwargs):
         res = super().save(*args, **kwargs)
 
