@@ -42,7 +42,7 @@ class TestSelfOrganisedRequestAction(TestCase):
         # and shouldn't pass validation
         trigger = Trigger(action='test-action', template=EmailTemplate())
         a = SelfOrganisedRequestAction(trigger=trigger)
-        self.assertEqual(a.get_launch_at(), timedelta(minutes=10))
+        self.assertEqual(a.get_launch_at(), timedelta(hours=1))
 
     def testCheckConditions(self):
         """Make sure `check` works for various input data."""
