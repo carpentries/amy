@@ -1,0 +1,242 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_list tz type_extras %}
+
+{% block extrahead %}
+<script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/core.js' %}"></script>
+
+<link rel="stylesheet" type="text/css" href="{% static 'admin/css/forms.css' %}"/>
+<link rel="stylesheet" type="text/css" href="{% static 'admin/css/widgets.css' %}"/>
+{% endblock %}
+
+{% if not is_popup %}
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    &rsaquo; <a href="{% url 'admin:app_list' app_label=cl.opts.app_label %}">{{ cl.opts.app_config.verbose_name }}</a>
+    &rsaquo; <a href="{% url cl.opts|admin_urlname:'changelist' %}">{{ cl.opts.verbose_name_plural|capfirst }}</a>
+    &rsaquo; {{ title|capfirst }}
+</div>
+{% endblock %}
+{% endif %}
+
+{%  block content %}
+<table>
+    <tr>
+        <th>RQJob:</th>
+        <td>
+            <a href="{{ rqjob.get_absolute_url }}">{{ rqjob }}</a><br>
+            Created at: {{ rqjob.created_at }}
+        </td>
+    </tr>
+    <tr>
+        <th rowspan="2">Job:</th>
+        <td>{{ job|default:"Job was removed from Redis" }}</td>
+    </tr>
+    <tr>
+        <td>
+            <table>
+                <tr>
+                    <td>Status:</td>
+                    <td>{% if job and job_scheduled %}{{ job.get_status|default_if_none:"scheduled" }}{% elif job %}{{ job.get_status|default:"cancelled" }}{% else %}&mdash;{% endif %}</td>
+                </tr>
+                <tr>
+                    <td>Exception info:</td>
+                    <td>{% if job.exc_info %}{{ job.exc_info }}{% else %}&mdash;{% endif %}</td>
+                </tr>
+                <tr>
+                    <td>Scheduled run time:</td>
+                    <td>{% if job_scheduled %}{{ job_scheduled }}{% else %}&mdash;{% endif %}</td>
+                </tr>
+                <tr>
+                    <td>Enqueued at:</td>
+                    <td>{% if job %}{{ job.enqueued_at|default:"&mdash;" }}{% else %}&mdash;{% endif %}</td>
+                </tr>
+                <tr>
+                    <td>Started at:</td>
+                    <td>{% if job %}{{ job.started_at|default:"&mdash;" }}{% else %}&mdash;{% endif %}</td>
+                </tr>
+                <tr>
+                    <td>Ended at:</td>
+                    <td>{% if job %}{{ job.ended_at|default:"&mdash;" }}{% else %}&mdash;{% endif %}</td>
+                </tr>
+                <tr>
+                    <td>Result:</td>
+                    <td>{% if job %}<code>{{ job.result }}</code>{% else %}&mdash;{% endif %}</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <th>Trigger:</th>
+        <td>
+            {% if trigger %}
+            <a href="{{ trigger.get_absolute_url }}">{{ trigger }}</a>
+            {% else %}
+            &mdash;
+            {% endif %}
+        </td>
+    </tr>
+    <tr>
+        <th>Template:</th>
+        <td>
+            {% if template %}
+            <a href="{{ template.get_absolute_url }}">{{ template }}</a>
+            {% else %}
+            &mdash;
+            {% endif %}
+        </td>
+    </tr>
+    <tr>
+        <th colspan="2"><u>Email</u></th>
+    </tr>
+    <tr>
+        <th>To:</th>
+        <td>
+            {% if email %}
+            {{ email.to }}
+            {% else %}
+            &mdash;
+            {% endif %}
+        </td>
+    </tr>
+    <tr>
+        <th>CC:</th>
+        <td>
+            {% if email %}
+            {{ email.cc }}
+            {% else %}
+            &mdash;
+            {% endif %}
+        </td>
+    </tr>
+    <tr>
+        <th>BCC:</th>
+        <td>
+            {% if email %}
+            {{ email.bcc }}
+            {% else %}
+            &mdash;
+            {% endif %}
+        </td>
+    </tr>
+    <tr>
+        <th>Reply-To:</th>
+        <td>
+            {% if email %}
+            {{ email.reply_to }}
+            {% else %}
+            &mdash;
+            {% endif %}
+        </td>
+    </tr>
+    <tr>
+        <th>From:</th>
+        <td>
+            {% if email %}
+            {{ email.from_email }}
+            {% else %}
+            &mdash;
+            {% endif %}
+        </td>
+    </tr>
+    <tr>
+        <th>Subject:</th>
+        <td>
+            {% if email %}
+            {{ email.subject }}
+            {% else %}
+            &mdash;
+            {% endif %}
+        </td>
+    </tr>
+    <tr>
+        <th>Body:</th>
+        <td>
+            {% if email %}
+            <pre style="word-wrap: normal; white-space: pre-wrap;">{{ email.body }}</pre>
+            {% else %}
+            &mdash;
+            {% endif %}
+        </td>
+    </tr>
+    <tr>
+        <th>HTML Body:</th>
+        <td>
+            {% if email %}
+            {% autoescape off %}{{ email.alternatives.0.0 }}{% endautoescape %}
+            {% else %}
+            &mdash;
+            {% endif %}
+        </td>
+    </tr>
+    <tr>
+        <th>Prepared context:</th>
+        <td>
+            {% if adn_context %}
+                <table>
+                {% for k, v in adn_context.items %}
+                <tr>
+                    <th><code>{{ k }}</code></th>
+                    <td>
+                        {% if v|is_model and v.get_absolute_url %}
+                        <a href="{{ v.get_absolute_url }}">{{ v }}</a>
+                        {% elif v|is_model %}
+                        {{ v }}
+                        {% elif v|is_str %}
+                        <code>{{ v|pprint }}</code>
+                        {% elif v|is_iterable %}
+                        <ul>
+                            {% for vv in v %}
+                            <li><code>{{ vv|pprint }}</code></li>
+                            {% endfor %}
+                        </ul>
+                        {% elif v|is_bool %}
+                        {{ v|yesno }}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                </table>
+            {% else %}
+                &mdash;
+            {% endif %}
+        </td>
+    </tr>
+</table>
+
+{% if form and job and job_scheduled %}
+<form method="POST" action="{% url 'admin:autoemails_rqjob_reschedule' object_id=rqjob.pk %}">
+    {% csrf_token %}
+    <div>
+        {% if errors %}
+            <p class="errornote">Please correct the errors below.</p>
+            {{ form.non_field_errors }}
+        {% endif %}
+        <fieldset class="module aligned">
+            <h2>Change scheduled execution time</h2>
+            {{ form }}
+        </fieldset>
+    </div>
+    <div class="submit-row">
+        <p class="deletelink-box"><a href="{% url 'admin:autoemails_rqjob_sendnow' object_id=rqjob.pk %}" class="deletelink">Send now</a></p>
+        <input type="submit" value="Reschedule" class="default">
+    </div>
+    {{ form.media }}
+</form>
+{% endif %}
+
+{% if job and job.is_failed %}
+<div class="submit-row">
+    <p class="deletelink-box"><a href="{% url 'admin:autoemails_rqjob_retry' object_id=rqjob.pk %}" class="deletelink">Re-try</a></p>
+</div>
+{% endif %}
+
+
+{% if job and job.is_queued or job and job_scheduled %}
+<div class="submit-row">
+    <p class="deletelink-box"><a href="{% url 'admin:autoemails_rqjob_cancel' object_id=rqjob.pk %}" class="deletelink">Cancel job</a></p>
+</div>
+{% endif %}
+
+{% endblock %}

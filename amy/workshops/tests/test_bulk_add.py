@@ -1,18 +1,20 @@
 # coding: utf-8
 import cgi
-import datetime
+from datetime import date, timedelta
 from io import StringIO
 
 from django.contrib.sessions.serializers import JSONSerializer
 from django.urls import reverse
 
-from workshops.models import Organization, Event, Role, Person, Task
+from autoemails.models import EmailTemplate, Trigger, RQJob
+from autoemails.tests.base import FakeRedisTestCaseMixin
+from workshops.models import Organization, Event, Role, Person, Task, Tag
 from workshops.util import (
     upload_person_task_csv,
     verify_upload_person_task,
 )
-
 from workshops.tests.base import TestBase
+import workshops.views
 
 
 class UploadPersonTaskCSVTestCase(TestBase):
@@ -103,9 +105,9 @@ class CSVBulkUploadTestBase(TestBase):
         test_host = Organization.objects.create(domain='example.com',
                                                 fullname='Test Organization')
 
-        Role.objects.create(name='Instructor')
+        Role.objects.create(name='instructor')
         Role.objects.create(name='learner')
-        Event.objects.create(start=datetime.date.today(),
+        Event.objects.create(start=date.today(),
                              host=test_host,
                              slug='foobar',
                              admin_fee=100)
@@ -117,7 +119,7 @@ class CSVBulkUploadTestBase(TestBase):
         Sample CSV data
         """
         return """personal,family,email,event,role
-John,Doe,notin@db.com,foobar,Instructor
+John,Doe,notin@db.com,foobar,instructor
 """
 
     def make_data(self):
@@ -409,11 +411,11 @@ Harry,Potter,harry@hogwarts.edu,foobar,Helper
         user is silent (ie. no Task nor Person is being created).
         """
         foobar = Event.objects.get(slug="foobar")
-        instructor = Role.objects.get(name="Instructor")
+        instructor = Role.objects.get(name="instructor")
         Task.objects.create(person=self.harry, event=foobar, role=instructor)
 
         csv = """personal,family,email,event,role
-Harry,Potter,harry@hogwarts.edu,foobar,Instructor
+Harry,Potter,harry@hogwarts.edu,foobar,instructor
 """
         data, _ = upload_person_task_csv(StringIO(csv))
 
@@ -565,3 +567,145 @@ Harry,Potter,harry@hogwarts.edu,foobar,learner
 Hermione,Granger,hermione@hogwarts.edu,foobar,learner
 Ron,Weasley,ron@hogwarts.edu,foobar,learner
 """
+
+
+class TestBulkUploadAddsEmailAction(FakeRedisTestCaseMixin,
+                                    CSVBulkUploadTestBase):
+    def setUp(self):
+        super().setUp()
+        Role.objects.create(name='host')
+
+        Tag.objects.bulk_create([
+            Tag(name='SWC'),
+            Tag(name='DC'),
+            Tag(name='LC'),
+            Tag(name='automated-email'),
+        ])
+        Organization.objects.bulk_create([
+            Organization(domain='librarycarpentry.org',
+                         fullname='Library Carpentry'),
+            Organization(domain='carpentries.org',
+                         fullname='Instructor Training'),
+        ])
+        test_event_1 = Event.objects.create(
+            slug='test-event',
+            host=Organization.objects.first(),
+            administrator=Organization.objects.get(
+                domain='librarycarpentry.org'),
+            start=date.today() + timedelta(days=7),
+            end=date.today() + timedelta(days=8),
+            country='GB',
+            venue='Ministry of Magic',
+            address='Underground',
+            latitude=20.0,
+            longitude=20.0,
+            url='https://test-event.example.com',
+        )
+        test_event_1.tags.set(
+            Tag.objects.filter(
+                name__in=['SWC', 'DC', 'LC','automated-email']
+            )
+        )
+        template = EmailTemplate.objects.create(
+            slug='sample-template',
+            subject='Welcome!',
+            to_header='',
+            from_header='test@address.com',
+            cc_header='copy@example.org',
+            bcc_header='bcc@example.org',
+            reply_to_header='',
+            body_template='# Welcome',
+        )
+        trigger = Trigger.objects.create(action='new-instructor',
+                                         template=template)
+
+        # save scheduler and connection data
+        self._saved_scheduler = workshops.views.scheduler
+        self._saved_redis_connection = workshops.views.redis_connection
+        # overwrite them
+        workshops.views.scheduler = self.scheduler
+        workshops.views.redis_connection = self.connection
+
+        self.csv = """personal,family,email,event,role
+Harry,Potter,harry@hogwarts.edu,test-event,host
+Hermione,Granger,hermione@hogwarts.edu,test-event,instructor
+Ron,Weasley,ron@hogwarts.edu,test-event,instructor
+"""
+
+    def tearDown(self):
+        super().tearDown()
+        workshops.views.scheduler = self._saved_scheduler
+        workshops.views.redis_connection = self._saved_redis_connection
+
+    def test_jobs_created(self):
+        data, _ = upload_person_task_csv(StringIO(self.csv))
+
+        # simulate user clicking "Use this user" next to matched person
+        data[0]['existing_person_id'] = \
+            Person.objects.get(email='harry@hogwarts.edu').pk
+        data[1]['existing_person_id'] = \
+            Person.objects.get(email='hermione@granger.co.uk').pk
+        data[2]['existing_person_id'] = \
+            Person.objects.get(email='rweasley@ministry.gov.uk').pk
+
+        # self.client is authenticated user so we have access to the session
+        store = self.client.session
+        store['bulk-add-people'] = data
+        store.save()
+
+        # send exactly what's in 'data'
+        payload = {
+            "personal": [
+                data[0]['personal'], data[1]['personal'], data[2]['personal']
+            ],
+            "family": [
+                data[0]['family'], data[1]['family'], data[2]['family']
+            ],
+            "email": [
+                data[0]['email'], data[1]['email'], data[2]['email']
+            ],
+            "event": [
+                data[0]['event'], data[1]['event'], data[2]['event']
+            ],
+            "role": [
+                data[0]['role'], data[1]['role'], data[2]['role']
+            ],
+            "confirm": "Confirm",
+        }
+
+        # empty tasks and no jobs scheduled
+        tasks_pre = Task.objects.filter(
+            person__in=Person.objects.filter(email__in=[
+                'harry@hogwarts.edu',
+                'hermione@granger.co.uk',
+                'rweasley@ministry.gov.uk',
+            ]),
+            event__slug="test-event",
+        )
+        self.assertQuerysetEqual(tasks_pre, [])
+        rqjobs_pre = RQJob.objects.all()
+        self.assertQuerysetEqual(rqjobs_pre, [])
+
+        # send data in
+        rv = self.client.post(reverse('person_bulk_add_confirmation'), payload,
+                              follow=True)
+        self.assertEqual(rv.status_code, 200)
+
+        # 3 tasks created
+        tasks_post = Task.objects.filter(
+            person__in=Person.objects.filter(email__in=[
+                'harry@hogwarts.edu',
+                'hermione@granger.co.uk',
+                'rweasley@ministry.gov.uk',
+            ]),
+            event__slug="test-event",
+        )
+        self.assertEqual(len(tasks_post), 3)
+        # 2 jobs created (because only 2 entries have right role='instructor')
+        rqjobs_post = RQJob.objects.all()
+        self.assertEqual(len(rqjobs_post), 2)
+
+        # ensure the job ids are mentioned in the page output
+        content = rv.content.decode('utf-8')
+        for job in rqjobs_post:
+            self.assertIn(job.job_id, content)

@@ -820,10 +820,10 @@ def is_admin(user):
 class TagQuerySet(models.query.QuerySet):
     def main_tags(self):
         names = ['SWC', 'DC', 'LC', 'TTT', 'ITT', 'WiSE']
-        return Tag.objects.filter(name__in=names)
+        return self.filter(name__in=names)
 
     def carpentries(self):
-        return Tag.objects.filter(name__in=['SWC', 'DC', 'LC'])
+        return self.filter(name__in=['SWC', 'DC', 'LC'])
 
 
 class Tag(models.Model):
@@ -1007,8 +1007,12 @@ class EventQuerySet(models.query.QuerySet):
         )
 
 
+# CAUTION: moved the import here so that it doens't cause circular dependencies
+from autoemails.models import RQJobsMixin
+
+
 @reversion.register
-class Event(AssignmentMixin, models.Model):
+class Event(AssignmentMixin, RQJobsMixin, models.Model):
     '''Represent a single event.'''
 
     REPO_REGEX = re.compile(r'https?://github\.com/(?P<name>[^/]+)/'
@@ -1359,7 +1363,7 @@ class TaskManager(models.Manager):
 
 
 @reversion.register
-class Task(models.Model):
+class Task(RQJobsMixin, models.Model):
     '''Represent who did what at events.'''
 
     event      = models.ForeignKey(Event, on_delete=models.PROTECT)

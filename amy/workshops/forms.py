@@ -618,7 +618,10 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm):
 
     class Meta:
         model = Task
-        fields = '__all__'
+        fields = [
+            'event', 'person', 'role', 'title', 'url',
+            'seat_membership', 'seat_open_training',
+        ]
         widgets = {
             'person': ModelSelect2Widget(data_view='person-lookup',
                                          attrs=SELECT2_SIDEBAR),

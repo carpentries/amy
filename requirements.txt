@@ -1,10 +1,10 @@
-Django==2.2.9
+Django==2.2.10
 PyYAML==5.1
-requests==2.19.1
-requests-mock==1.5.2
+requests==2.22.0
+requests-mock==1.7.0
 django-crispy-forms==1.7.2
 # replaces django-autocomplete-light
-django-select2==7.1.1
+django-select2==7.2.0
 django-countries==5.3.2
 django-filter==2.2.0
 django-reversion==2.0.13
@@ -23,10 +23,20 @@ social-auth-app-django==3.1.0
 django-webtest==1.9.3
 django-debug-toolbar==1.10.1
 django-extensions==2.2.5
-django-anymail==3.0
+django-anymail==7.0
 django-environ==0.4.5
-argon2-cffi==18.3.0
+argon2-cffi==19.2.0
 django-contrib-comments==1.9.0
-django-markdownx==2.0.28
-Markdown==3.1.1
+django-markdownx==3.0.1
+Markdown==3.2.1
 Pillow==6.2.0
+redis==3.4.1
+django-redis==4.11.0
+rq==1.2.2
+django-rq==2.3.0
+rq-scheduler==0.9.1
+click==7.0
+croniter==0.3.30
+# faking Redis server
+fakeredis==1.2.1
+lupa==1.9

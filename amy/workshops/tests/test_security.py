@@ -222,6 +222,23 @@ class TestViews(TestBase):
         'complete',
         'disconnect',
         'disconnect_individual',
+
+        # anymail
+        'amazon_ses_inbound_webhook',
+        'mailgun_inbound_webhook',
+        'mailjet_inbound_webhook',
+        'postmark_inbound_webhook',
+        'sendgrid_inbound_webhook',
+        'sparkpost_inbound_webhook',
+        'amazon_ses_tracking_webhook',
+        'mailgun_tracking_webhook',
+        'mailjet_tracking_webhook',
+        'postmark_tracking_webhook',
+        'sendgrid_tracking_webhook',
+        'sendinblue_tracking_webhook',
+        'sparkpost_tracking_webhook',
+        'mandrill_webhook',
+        'mandrill_tracking_webhook',
     ]
 
     def test_all_views_have_explicit_access_control_defined(self):

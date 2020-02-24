@@ -49,6 +49,20 @@
     <td colspan="2">{% if event|one2one_exists:"workshopinquiryrequest" %}<a href="{{ event.workshopinquiryrequest.get_absolute_url }}">{{ event.workshopinquiryrequest }}</a>{% else %}&mdash;{% endif %}</td></tr>
   <tr><th>Related self-organised submission:</th>
     <td colspan="2">{% if event|one2one_exists:"selforganisedsubmission" %}<a href="{{ event.selforganisedsubmission.get_absolute_url }}">{{ event.selforganisedsubmission }}</a>{% else %}&mdash;{% endif %}</td></tr>
+  <tr><th>RQ Jobs:</th>
+    <td colspan="2">
+      {% with jobs=event.rq_jobs.all %}
+        {% if jobs %}
+        <ul>
+        {% for job in jobs %}
+          <li><a href="{{ job.get_absolute_url }}">{{ job }}</a></li>
+        {% endfor %}
+        </ul>
+        {% else %}
+        &mdash;
+        {% endif %}
+      {% endwith %}
+    </td></tr>
   <tr>
     <th><span class="badge badge-secondary">deprecated</span> Invoice requests:</th>
     <td colspan="2">

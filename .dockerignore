@@ -1,0 +1,40 @@
+# editor files
+*~
+.idea/*
+.vscode/*
+
+# Jupyter Notebooks
+*.ipynb
+
+# test html output
+htmlerror
+
+# coverage reports
+.coverage
+htmlcov
+
+# dir for collected static files
+staticfiles/*
+# JS, CSS dependencies (installed via yarn)
+node_modules
+# dir for media (uploaded by users) files
+mediafiles/*
+
+# Python cache files
+*.pyc
+__pycache__
+
+# databases
+*.sqlite3*
+# test database files
+test_db*
+
+# Database backup files
+DB_backups/*
+
+# log file
+amy.log
+amy_debug.log
+
+# Redis Docker local volume
+redis/*

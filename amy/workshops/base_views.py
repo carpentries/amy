@@ -134,13 +134,21 @@ class AMYDeleteView(DeleteView):
     """
     success_message = '{} was deleted successfully.'
 
+    def before_delete(self, *args, **kwargs):
+        return None
+
+    def after_delete(self, *args, **kwargs):
+        return None
+
     def delete(self, request, *args, **kwargs):
         # Workaround for https://code.djangoproject.com/ticket/21926
         # Replicates the `delete` method of DeleteMixin
         self.object = self.get_object()
         success_url = self.get_success_url()
         try:
+            self.before_delete()
             self.object.delete()
+            self.after_delete()
             messages.success(
                 self.request,
                 self.success_message.format(self.object)
