@@ -1,3 +1,5 @@
+from urllib.parse import urljoin
+
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -6,6 +8,7 @@ from django.urls import reverse
 from django.utils.deprecation import MiddlewareMixin
 from github import Github
 from github.GithubException import UnknownObjectException
+from social_core.backends.github import GithubOAuth2
 from social_core.exceptions import SocialAuthBaseException
 
 from workshops.fields import (
@@ -60,3 +63,18 @@ def validate_github_username(username):
     """Run GitHub username validators in sequence."""
     GHUSERNAME_MAX_LENGTH_VALIDATOR(username)
     GHUSERNAME_REGEX_VALIDATOR(username)
+
+
+class GithubOAuth2HeaderFix(GithubOAuth2):
+    """
+    Hotfix Github OAuth backend to use basic auth instead of token.
+
+    Borrowed from:
+    https://github.com/python-social-auth/social-core/pull/428
+    https://github.com/python-social-auth/social-core/pull/428#issuecomment-594085060
+    """
+
+    def _user_data(self, access_token, path=None):
+        url = urljoin(self.api_url(), 'user{0}'.format(path or ''))
+        headers = {'Authorization': 'token {0}'.format(access_token)}
+        return self.get_json(url, headers=headers)

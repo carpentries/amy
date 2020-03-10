@@ -158,7 +158,10 @@ MIGRATION_MODULES = {
 # -----------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#authentication-backends
 AUTHENTICATION_BACKENDS = [
-    'social_core.backends.github.GithubOAuth2',
+    # temporary fix until upstream catches up
+    # https://github.com/python-social-auth/social-core/pull/428
+    # 'social_core.backends.github.GithubOAuth2',
+    'workshops.github_auth.GithubOAuth2HeaderFix',
     'django.contrib.auth.backends.ModelBackend',
 ]
 SOCIAL_AUTH_ADMIN_USER_SEARCH_FIELDS = ['github']
