@@ -485,6 +485,19 @@ class TestMatchingTrainingRequestAndDetailedView(TestBase):
 
         self.assertEqual(rv.context['form'].initial['person'], p)
 
+    def test_person_is_suggested_based_on_secondary_email(self):
+        """Having just secondary email matching should show the person
+        in results."""
+        req = create_training_request(state='p', person=None)
+        p = Person.objects.create(username='john_kowalsky',
+                                  personal='Johnny',
+                                  family='Kowalsky',
+                                  email='asdf@gmail.com',
+                                  secondary_email='john@smith.com')
+        rv = self.client.get(reverse('trainingrequest_details', args=[req.pk]))
+
+        self.assertEqual(rv.context['form'].initial['person'], p)
+
     def test_new_person(self):
         req = create_training_request(state='p', person=None)
         rv = self.client.get(reverse('trainingrequest_details', args=[req.pk]))
