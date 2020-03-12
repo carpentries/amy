@@ -2,6 +2,7 @@ version: '3'
 
 services:
   redis_cache:
+    command: redis-server --appendonly yes
     image: redis:latest
     ports:
       - "6379:6379"
