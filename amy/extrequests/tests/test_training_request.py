@@ -2,14 +2,19 @@ from datetime import datetime, timezone
 import unittest
 from urllib.parse import urlencode
 
+from django.contrib.messages import WARNING
+from django.contrib.messages.middleware import MessageMiddleware
+from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.template import Context
 from django.template import Template
+from django.test import RequestFactory
 from django.urls import reverse
 from django_comments.models import Comment
 
 from extrequests.forms import TrainingRequestsMergeForm
+from extrequests.views import _match_training_request_to_person
 from workshops.tests.base import TestBase
 from workshops.models import (
     Person,
@@ -553,6 +558,48 @@ class TestMatchingTrainingRequestAndDetailedView(TestBase):
             self.assertEqual(getattr(req.person, key), value,
                              'Attribute: {}'.format(key))
         self.assertEqual(set(req.person.domains.all()), set(req.domains.all()))
+
+    def test_matching_in_transaction(self):
+        """This is a regression test.
+
+        In case of automatic person data rewrite, when matching a Training
+        Request with Person, uniqueness constraint can be broken. In such
+        scenario AMY must inform correctly about the issue, not throw 500
+        error."""
+        # this email conflicts with `duplicate` person below
+        tr = create_training_request(state='p', person=None)
+        tr.personal = 'John'
+        tr.family = 'Smith'
+        tr.email = 'john@corporate.edu'
+        tr.save()
+
+        # a fake request
+        factory = RequestFactory()
+        request = factory.get("/")  # doesn't really matter where
+        # adding session middleware, because it's required by messages
+        session_middleware = SessionMiddleware()
+        session_middleware.process_request(request)
+        request.session.save()
+        # adding messages because they're used in
+        # _match_training_request_to_person
+        messages_middleware = MessageMiddleware()
+        messages_middleware.process_request(request)
+
+        create = False
+        person = Person.objects.create(username='john_smith', personal='john',
+                                       family='smith', email='john@smith.com')
+        duplicate = Person.objects.create(username='jonny_smith',
+                                          personal='jonny', family='smith',
+                                          email='john@corporate.edu')
+
+        # matching fails because it can't rewrite email address due to
+        # uniqueness constraint
+        self.assertFalse(
+            _match_training_request_to_person(request, tr, create, person)
+        )
+        messages = request._messages._queued_messages
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(messages[0].level, WARNING)
 
 
 class TestTrainingRequestTemplateTags(TestBase):

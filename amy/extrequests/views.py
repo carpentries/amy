@@ -15,6 +15,7 @@ from django.core.exceptions import (
 )
 from django.db import (
     IntegrityError,
+    transaction,
 )
 from django.db.models import (
     Prefetch,
@@ -609,6 +610,7 @@ def all_trainingrequests(request):
     return render(request, 'requests/all_trainingrequests.html', context)
 
 
+@transaction.atomic
 def _match_training_request_to_person(request, training_request, create=False,
                                       person=None):
     if create:
@@ -663,10 +665,10 @@ def _match_training_request_to_person(request, training_request, create=False,
         return True
     except IntegrityError:
         # email or github not unique
-        messages.error(request, "It was impossible to update related person's "
-                                "data. Probably email address or GitHub "
-                                "handle used in the training request are not "
-                                " unique amongst person entries.")
+        messages.warning(request, "It was impossible to update related "
+                                  "person's data. Probably email address or "
+                                  "Github handle used in the training request "
+                                  "are not unique amongst person entries.")
         return False
 
 
