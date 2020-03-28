@@ -697,11 +697,24 @@ def trainingrequest_details(request, pk):
         else:
             # No person is matched to the TrainingRequest yet. Suggest a
             # person from existing records.
-            person = Person.objects.filter(Q(email__iexact=req.email) |
-                                           Q(personal__iexact=req.personal,
-                                             middle__iexact=req.middle,
-                                             family__iexact=req.family)) \
-                                   .first()  # may return None
+            primary_email = (
+                Q(email__iexact=req.email) |
+                Q(secondary_email__iexact=req.email)
+            )
+            # only match secondary email if there's one provided, otherwise
+            # we could get false-positive matches for empty email.
+            secondary_email = Q() if not req.secondary_email else (
+                Q(email__iexact=req.secondary_email) |
+                Q(secondary_email__iexact=req.secondary_email)
+            )
+            name = Q(
+                personal__iexact=req.personal,
+                middle__iexact=req.middle,
+                family__iexact=req.family,
+            )
+            person = Person.objects \
+                           .filter(primary_email | secondary_email | name) \
+                           .first()  # may return None
         form = MatchTrainingRequestForm(initial={'person': person})
 
     context = {
