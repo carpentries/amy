@@ -173,6 +173,66 @@ Other content.
 
         self.assertEqual(expected, find_workshop_HTML_metadata(content))
 
+    def test_finding_metadata_empty_tags(self):
+        content = """
+            <html><head>
+            <meta name="slug" content="" />
+            <meta name="startdate" content="" />
+            <meta name="enddate" content="" />
+            <meta name="country" content="" />
+            <meta name="venue" content="" />
+            <meta name="address" content="" />
+            <meta name="latlng" content="" />
+            <meta name="language" content="" />
+            <meta name="invalid" content="" />
+            <meta name="instructor" content="" />
+            <meta name="helper" content="" />
+            <meta name="contact" content="" />
+            <meta name="eventbrite" content="" />
+            <meta name="charset" content="" />
+            </head>
+            <body>
+            <h1>test</h1>
+            </body></html>
+        """
+        expected = {
+            'slug': '',
+            'startdate': '',
+            'enddate': '',
+            'country': '',
+            'venue': '',
+            'address': '',
+            'latlng': '',
+            'language': '',
+            'instructor': '',
+            'helper': '',
+            'contact': '',
+            'eventbrite': '',
+        }
+        self.assertEqual(expected, find_workshop_HTML_metadata(content))
+
+    def test_finding_metadata_missing_tags(self):
+        content = """
+            <html><head>
+            <meta name="slug" content="" />
+            <meta name="charset" content="utf-8" />
+            </head>
+            <body>
+            <h1>test</h1>
+            </body></html>
+        """
+        expected = {
+            'slug': '',
+        }
+        self.assertEqual(expected, find_workshop_HTML_metadata(content))
+
+    def test_finding_metadata_empty_page(self):
+        content1 = "<html><head></head><body></body></html>"
+        content2 = ""
+        expected = {}
+        self.assertEqual(expected, find_workshop_HTML_metadata(content1))
+        self.assertEqual(expected, find_workshop_HTML_metadata(content2))
+
     def test_parsing_empty_metadata(self):
         empty_dict = {}
         expected = {

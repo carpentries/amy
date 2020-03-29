@@ -628,7 +628,7 @@ def fetch_workshop_metadata(event_url, timeout=5):
     # find metadata
     metadata = find_workshop_HTML_metadata(content)
 
-    if 'slug' not in metadata:
+    if not metadata:
         # there are no HTML metadata, so let's try the old method
         index_url, repository = generate_url_to_event_index(event_url)
 
@@ -701,11 +701,14 @@ def find_workshop_HTML_metadata(content):
     """Given website content, find and take <meta> metadata that have
     workshop-related data."""
 
-    R = r'<meta name="(?P<name>[\w-]+)" content="(?P<content>.+)" />$'
-    regexp = re.compile(R, re.M)
+    R = r'<meta\s+name="(?P<name>\w+?)"\s+content="(?P<content>.*?)"\s*?/?>'
+    regexp = re.compile(R, re.MULTILINE)
 
-    return {name: content for name, content in regexp.findall(content)
-            if name in ALLOWED_METADATA_NAMES}
+    return {
+        name: content
+        for name, content in regexp.findall(content)
+        if name in ALLOWED_METADATA_NAMES
+    }
 
 
 def parse_workshop_metadata(metadata):
