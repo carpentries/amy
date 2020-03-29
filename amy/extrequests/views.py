@@ -90,8 +90,8 @@ from workshops.util import (
     merge_objects,
     failed_to_delete,
     InternalError,
-    fetch_event_metadata,
-    parse_metadata_from_event_website,
+    fetch_workshop_metadata,
+    parse_workshop_metadata,
     WrongWorkshopURL,
 )
 
@@ -427,8 +427,8 @@ def selforganisedsubmission_accept_event(request, submission_id):
 
         try:
             url = wr.workshop_url.strip()
-            metadata = fetch_event_metadata(url)
-            data = parse_metadata_from_event_website(metadata)
+            metadata = fetch_workshop_metadata(url)
+            data = parse_workshop_metadata(metadata)
             data.update({
                 'url': url,
                 'curricula': list(wr.workshop_types.all()),
