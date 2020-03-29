@@ -226,6 +226,21 @@ Other content.
         }
         self.assertEqual(expected, find_workshop_HTML_metadata(content))
 
+    def test_finding_metadata_single_line(self):
+        content = (
+            '<html><head>'
+            '<meta name="slug" content="" />'
+            '<meta name="charset" content="utf-8" />'
+            '</head>'
+            '<body>'
+            '<h1>test</h1>'
+            '</body></html>'
+        )
+        expected = {
+            'slug': '',
+        }
+        self.assertEqual(expected, find_workshop_HTML_metadata(content))
+
     def test_finding_metadata_empty_page(self):
         content1 = "<html><head></head><body></body></html>"
         content2 = ""

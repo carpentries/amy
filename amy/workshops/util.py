@@ -702,7 +702,7 @@ def find_workshop_HTML_metadata(content):
     workshop-related data."""
 
     R = r'<meta\s+name="(?P<name>\w+?)"\s+content="(?P<content>.*?)"\s*?/?>'
-    regexp = re.compile(R, re.MULTILINE)
+    regexp = re.compile(R)
 
     return {
         name: content
