@@ -115,9 +115,9 @@ from workshops.util import (
     create_uploaded_persons_tasks,
     InternalError,
     WrongWorkshopURL,
-    fetch_event_metadata,
-    parse_metadata_from_event_website,
-    validate_metadata_from_event_website,
+    fetch_workshop_metadata,
+    parse_workshop_metadata,
+    validate_workshop_metadata,
     assignment_selection,
     get_pagination_items,
     failed_to_delete,
@@ -905,10 +905,10 @@ def validate_event(request, slug):
     warning_messages = []
 
     try:
-        metadata = fetch_event_metadata(page_url)
+        metadata = fetch_workshop_metadata(page_url)
         # validate metadata
         error_messages, warning_messages = \
-            validate_metadata_from_event_website(metadata)
+            validate_workshop_metadata(metadata)
 
     except WrongWorkshopURL as e:
         error_messages.append(str(e))
@@ -1086,9 +1086,9 @@ def event_import(request):
     url = request.GET.get('url', '').strip()
 
     try:
-        metadata = fetch_event_metadata(url)
+        metadata = fetch_workshop_metadata(url)
         # normalize the metadata
-        metadata = parse_metadata_from_event_website(metadata)
+        metadata = parse_workshop_metadata(metadata)
         return JsonResponse(metadata)
 
     except requests.exceptions.HTTPError as e:
@@ -1240,14 +1240,14 @@ def event_review_metadata_changes(request, slug):
         raise Http404('No event found matching the query.')
 
     try:
-        metadata = fetch_event_metadata(event.website_url)
+        metadata = fetch_workshop_metadata(event.website_url)
     except requests.exceptions.RequestException:
         messages.error(request, "There was an error while fetching event's "
                                 "website. Make sure the event has website URL "
                                 "provided, and that it's reachable.")
         return redirect(event.get_absolute_url())
 
-    metadata = parse_metadata_from_event_website(metadata)
+    metadata = parse_workshop_metadata(metadata)
 
     # save serialized metadata in session so in case of acceptance we don't
     # reload them

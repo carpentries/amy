@@ -21,12 +21,12 @@ from workshops.models import (
     Language,
 )
 from workshops.util import (
-    fetch_event_metadata,
+    fetch_workshop_metadata,
     generate_url_to_event_index,
-    find_metadata_on_event_homepage,
-    find_metadata_on_event_website,
-    parse_metadata_from_event_website,
-    validate_metadata_from_event_website,
+    find_workshop_YAML_metadata,
+    find_workshop_HTML_metadata,
+    parse_workshop_metadata,
+    validate_workshop_metadata,
     get_members,
     default_membership_cutoff,
     assignment_selection,
@@ -87,29 +87,29 @@ Other content.
 
     @requests_mock.Mocker()
     def test_fetching_event_metadata_html(self, mock):
-        "Ensure 'fetch_event_metadata' works correctly with HTML metadata provided."
+        "Ensure 'fetch_workshop_metadata' works correctly with HTML metadata provided."
         website_url = 'https://pbanaszkiewicz.github.io/workshop'
         repo_url = ('https://raw.githubusercontent.com/pbanaszkiewicz/'
                     'workshop/gh-pages/index.html')
         mock.get(website_url, text=self.html_content, status_code=200)
         mock.get(repo_url, text='', status_code=200)
-        metadata = fetch_event_metadata(website_url)
+        metadata = fetch_workshop_metadata(website_url)
         self.assertEqual(metadata['slug'], '2015-07-13-test')
 
     @requests_mock.Mocker()
     def test_fetching_event_metadata_yaml(self, mock):
-        "Ensure 'fetch_event_metadata' works correctly with YAML metadata provided."
+        "Ensure 'fetch_workshop_metadata' works correctly with YAML metadata provided."
         website_url = 'https://pbanaszkiewicz.github.io/workshop'
         repo_url = ('https://raw.githubusercontent.com/pbanaszkiewicz/'
                     'workshop/gh-pages/index.html')
         mock.get(website_url, text='', status_code=200)
         mock.get(repo_url, text=self.yaml_content, status_code=200)
-        metadata = fetch_event_metadata(website_url)
+        metadata = fetch_workshop_metadata(website_url)
         self.assertEqual(metadata['slug'], 'workshop')
 
     @requests_mock.Mocker()
     def test_fetching_event_metadata_timeout(self, mock):
-        "Ensure 'fetch_event_metadata' reacts to timeout."
+        "Ensure 'fetch_workshop_metadata' reacts to timeout."
         website_url = 'https://pbanaszkiewicz.github.io/workshop'
         repo_url = ('https://raw.githubusercontent.com/pbanaszkiewicz/'
                     'workshop/gh-pages/index.html')
@@ -118,7 +118,7 @@ Other content.
             exc=requests.exceptions.ConnectTimeout,
         )
         with self.assertRaises(requests.exceptions.ConnectTimeout):
-            metadata = fetch_event_metadata(website_url)
+            metadata = fetch_workshop_metadata(website_url)
 
     def test_generating_url_to_index(self):
         tests = [
@@ -152,7 +152,7 @@ Other content.
             'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
             'eventbrite': '10000000',
         }
-        self.assertEqual(expected, find_metadata_on_event_homepage(content))
+        self.assertEqual(expected, find_workshop_YAML_metadata(content))
 
     def test_finding_metadata_on_website(self):
         content = self.html_content
@@ -171,7 +171,82 @@ Other content.
             'eventbrite': '10000000',
         }
 
-        self.assertEqual(expected, find_metadata_on_event_website(content))
+        self.assertEqual(expected, find_workshop_HTML_metadata(content))
+
+    def test_finding_metadata_empty_tags(self):
+        content = """
+            <html><head>
+            <meta name="slug" content="" />
+            <meta name="startdate" content="" />
+            <meta name="enddate" content="" />
+            <meta name="country" content="" />
+            <meta name="venue" content="" />
+            <meta name="address" content="" />
+            <meta name="latlng" content="" />
+            <meta name="language" content="" />
+            <meta name="invalid" content="" />
+            <meta name="instructor" content="" />
+            <meta name="helper" content="" />
+            <meta name="contact" content="" />
+            <meta name="eventbrite" content="" />
+            <meta name="charset" content="" />
+            </head>
+            <body>
+            <h1>test</h1>
+            </body></html>
+        """
+        expected = {
+            'slug': '',
+            'startdate': '',
+            'enddate': '',
+            'country': '',
+            'venue': '',
+            'address': '',
+            'latlng': '',
+            'language': '',
+            'instructor': '',
+            'helper': '',
+            'contact': '',
+            'eventbrite': '',
+        }
+        self.assertEqual(expected, find_workshop_HTML_metadata(content))
+
+    def test_finding_metadata_missing_tags(self):
+        content = """
+            <html><head>
+            <meta name="slug" content="" />
+            <meta name="charset" content="utf-8" />
+            </head>
+            <body>
+            <h1>test</h1>
+            </body></html>
+        """
+        expected = {
+            'slug': '',
+        }
+        self.assertEqual(expected, find_workshop_HTML_metadata(content))
+
+    def test_finding_metadata_single_line(self):
+        content = (
+            '<html><head>'
+            '<meta name="slug" content="" />'
+            '<meta name="charset" content="utf-8" />'
+            '</head>'
+            '<body>'
+            '<h1>test</h1>'
+            '</body></html>'
+        )
+        expected = {
+            'slug': '',
+        }
+        self.assertEqual(expected, find_workshop_HTML_metadata(content))
+
+    def test_finding_metadata_empty_page(self):
+        content1 = "<html><head></head><body></body></html>"
+        content2 = ""
+        expected = {}
+        self.assertEqual(expected, find_workshop_HTML_metadata(content1))
+        self.assertEqual(expected, find_workshop_HTML_metadata(content2))
 
     def test_parsing_empty_metadata(self):
         empty_dict = {}
@@ -190,7 +265,7 @@ Other content.
             'helpers': [],
             'contact': '',
         }
-        self.assertEqual(expected, parse_metadata_from_event_website(empty_dict))
+        self.assertEqual(expected, parse_workshop_metadata(empty_dict))
 
     def test_parsing_correct_metadata(self):
         metadata = {
@@ -222,7 +297,7 @@ Other content.
             'helpers': ['Peter Parker', 'Tony Stark', 'Natasha Romanova'],
             'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
         }
-        self.assertEqual(expected, parse_metadata_from_event_website(metadata))
+        self.assertEqual(expected, parse_workshop_metadata(metadata))
 
     def test_parsing_tricky_country_language(self):
         """Ensure we always get a 2-char string or nothing."""
@@ -252,7 +327,7 @@ Other content.
                 metadata = dict(country=country, language=language)
                 expected['country'] = country_exp
                 expected['language'] = language_exp
-                self.assertEqual(expected, parse_metadata_from_event_website(metadata))
+                self.assertEqual(expected, parse_workshop_metadata(metadata))
 
     def test_parsing_tricky_dates(self):
         """Test if non-dates don't get parsed."""
@@ -281,7 +356,7 @@ Other content.
                 metadata = dict(startdate=startdate, enddate=enddate)
                 expected['start'] = start
                 expected['end'] = end
-                self.assertEqual(expected, parse_metadata_from_event_website(metadata))
+                self.assertEqual(expected, parse_workshop_metadata(metadata))
 
     def test_parsing_tricky_list_of_names(self):
         """Ensure we always get a list."""
@@ -315,7 +390,7 @@ Other content.
                 metadata = dict(instructor=instructor, helper=helper)
                 expected['instructors'] = instructors
                 expected['helpers'] = helpers
-                self.assertEqual(expected, parse_metadata_from_event_website(metadata))
+                self.assertEqual(expected, parse_workshop_metadata(metadata))
 
     def test_parsing_tricky_latitude_longitude(self):
         tests = [
@@ -345,7 +420,7 @@ Other content.
                 metadata = dict(latlng=latlng)
                 expected['latitude'] = latitude
                 expected['longitude'] = longitude
-                self.assertEqual(expected, parse_metadata_from_event_website(metadata))
+                self.assertEqual(expected, parse_workshop_metadata(metadata))
 
     def test_parsing_tricky_eventbrite_id(self):
         tests = [
@@ -372,7 +447,7 @@ Other content.
             with self.subTest(eventbrite_id=eventbrite_id):
                 metadata = dict(eventbrite=eventbrite_id)
                 expected['reg_key'] = reg_key
-                self.assertEqual(expected, parse_metadata_from_event_website(metadata))
+                self.assertEqual(expected, parse_workshop_metadata(metadata))
 
     def test_validating_invalid_metadata(self):
         metadata = {
@@ -389,14 +464,14 @@ Other content.
             'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
             'eventbrite': 'bigmoney',
         }
-        errors, warnings = validate_metadata_from_event_website(metadata)
+        errors, warnings = validate_workshop_metadata(metadata)
         assert len(errors) == 7
         assert not warnings
         assert all([error.startswith('Invalid value') for error in errors])
 
     def test_validating_missing_metadata(self):
         metadata = {}
-        errors, warnings = validate_metadata_from_event_website(metadata)
+        errors, warnings = validate_workshop_metadata(metadata)
         assert len(errors) == 9  # There are nine required fields
         assert len(warnings) == 3  # There are three optional fields
         assert all([issue.startswith('Missing')
@@ -419,7 +494,7 @@ Other content.
         }
         expected_errors = ['slug', 'startdate', 'country', 'latlng',
                            'instructor', 'helper', 'contact']
-        errors, warnings = validate_metadata_from_event_website(metadata)
+        errors, warnings = validate_workshop_metadata(metadata)
         assert not warnings
         for error, key in zip(errors, expected_errors):
             self.assertIn(key, error)
@@ -439,7 +514,7 @@ Other content.
             'helper': 'FIXME',
             'contact': 'FIXME',
         }
-        errors, warnings = validate_metadata_from_event_website(metadata)
+        errors, warnings = validate_workshop_metadata(metadata)
         assert len(errors) == 12
         assert not warnings
         assert all([
@@ -462,7 +537,7 @@ Other content.
             'helper': 'Peter Parker, Tony Stark, Natasha Romanova',
             'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
         }
-        errors, warnings = validate_metadata_from_event_website(metadata)
+        errors, warnings = validate_workshop_metadata(metadata)
         assert not warnings
         assert not errors
 
@@ -495,7 +570,7 @@ Other content.
                 metadata = dict(instructor=instructor, helper=helper)
                 expected['instructors'] = instructors
                 expected['helpers'] = helpers
-                self.assertEqual(expected, parse_metadata_from_event_website(metadata))
+                self.assertEqual(expected, parse_workshop_metadata(metadata))
 
 
 class TestAlternativeLatitudeLongitude(TestBase):
@@ -539,28 +614,28 @@ Other content.
         expected = {
             'latlng': '36.998977, -109.045173',
         }
-        self.assertEqual(expected, find_metadata_on_event_homepage(content))
+        self.assertEqual(expected, find_workshop_YAML_metadata(content))
 
         content = self.yaml_content_new
         expected = {
             'lat': '36.998977',
             'lng': '-109.045173',
         }
-        self.assertEqual(expected, find_metadata_on_event_homepage(content))
+        self.assertEqual(expected, find_workshop_YAML_metadata(content))
 
     def test_finding_metadata_on_website(self):
         content = self.html_content_old
         expected = {
             'latlng': '36.998977, -109.045173',
         }
-        self.assertEqual(expected, find_metadata_on_event_website(content))
+        self.assertEqual(expected, find_workshop_HTML_metadata(content))
 
         content = self.html_content_new
         expected = {
             'lat': '36.998977',
             'lng': '-109.045173',
         }
-        self.assertEqual(expected, find_metadata_on_event_website(content))
+        self.assertEqual(expected, find_workshop_HTML_metadata(content))
 
     def test_parsing_old_latlng(self):
         metadata = {
@@ -592,7 +667,7 @@ Other content.
             'helpers': ['Peter Parker', 'Tony Stark', 'Natasha Romanova'],
             'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
         }
-        self.assertEqual(expected, parse_metadata_from_event_website(metadata))
+        self.assertEqual(expected, parse_workshop_metadata(metadata))
 
     def test_parsing_new_latlng(self):
         metadata = {
@@ -625,7 +700,7 @@ Other content.
             'helpers': ['Peter Parker', 'Tony Stark', 'Natasha Romanova'],
             'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
         }
-        self.assertEqual(expected, parse_metadata_from_event_website(metadata))
+        self.assertEqual(expected, parse_workshop_metadata(metadata))
 
     def test_validating_old_latlng(self):
         """"""
@@ -643,7 +718,7 @@ Other content.
             'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
             'latlng': '36.998977, -109.045173',
         }
-        errors, warnings = validate_metadata_from_event_website(metadata)
+        errors, warnings = validate_workshop_metadata(metadata)
         self.assertEqual(errors, [])
         self.assertEqual(warnings, [])
 
@@ -664,7 +739,7 @@ Other content.
             'lat': '36.998977',
             'lng': '-109.045173',
         }
-        errors, warnings = validate_metadata_from_event_website(metadata)
+        errors, warnings = validate_workshop_metadata(metadata)
         self.assertEqual(errors, [])
         self.assertEqual(warnings, [])
 

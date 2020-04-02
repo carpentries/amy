@@ -617,18 +617,18 @@ def get_pagination_items(request, all_objects):
     return result
 
 
-def fetch_event_metadata(event_url, timeout=5):
-    """Handle metadata from any event site (works with rendered <meta> metadata and
-    YAML metadata in `index.html`)."""
+def fetch_workshop_metadata(event_url, timeout=5):
+    """Handle metadata from any event site (works with rendered <meta> tags
+    metadata or YAML metadata in `index.html`)."""
     # fetch page
     response = requests.get(event_url, timeout=timeout)
     response.raise_for_status()  # assert it's 200 OK
     content = response.text
 
     # find metadata
-    metadata = find_metadata_on_event_website(content)
+    metadata = find_workshop_HTML_metadata(content)
 
-    if 'slug' not in metadata:
+    if not metadata:
         # there are no HTML metadata, so let's try the old method
         index_url, repository = generate_url_to_event_index(event_url)
 
@@ -638,7 +638,7 @@ def fetch_event_metadata(event_url, timeout=5):
         if response.status_code == 200:
             # don't throw errors for pages we fall back to
             content = response.text
-            metadata = find_metadata_on_event_homepage(content)
+            metadata = find_workshop_YAML_metadata(content)
 
             # add 'slug' metadata if missing
             if 'slug' not in metadata:
@@ -649,13 +649,13 @@ def fetch_event_metadata(event_url, timeout=5):
 
 
 class WrongWorkshopURL(ValueError):
-    """Raised when we fall back to reading metadata from event's YAML front matter,
-    which requires a link to GitHub raw hosted file, but we can't get that link
-    because provided URL doesn't match Event.WEBSITE_REGEX
+    """Raised when we fall back to reading metadata from event's YAML front
+    matter, which requires a link to GitHub raw hosted file, but we can't get
+    that link because provided URL doesn't match Event.WEBSITE_REGEX
     (see `generate_url_to_event_index` below)."""
 
     def __str__(self):
-        return 'Event\'s URL doesn\'t match Github website or repo format.'
+        return "Event's URL doesn't match Github website or repo format."
 
 
 def generate_url_to_event_index(website_url):
@@ -671,14 +671,14 @@ def generate_url_to_event_index(website_url):
     raise WrongWorkshopURL()
 
 
-def find_metadata_on_event_homepage(content):
+def find_workshop_YAML_metadata(content):
     """Given workshop's raw `index.html`, find and take YAML metadata that
     have workshop-related data."""
     try:
         first, header, last = content.split('---')
         metadata = yaml.load(header.strip(), Loader=yaml.SafeLoader)
 
-        # get metadata to the form returned by `find_metadata_on_event_website`
+        # get metadata to the form returned by `find_workshop_HTML_metadata`
         # because YAML tries to interpret values from index's header
         filtered_metadata = {key: value for key, value in metadata.items()
                              if key in ALLOWED_METADATA_NAMES}
@@ -697,18 +697,21 @@ def find_metadata_on_event_homepage(content):
         return dict()
 
 
-def find_metadata_on_event_website(content):
+def find_workshop_HTML_metadata(content):
     """Given website content, find and take <meta> metadata that have
     workshop-related data."""
 
-    R = r'<meta name="(?P<name>[\w-]+)" content="(?P<content>.+)" />$'
-    regexp = re.compile(R, re.M)
+    R = r'<meta\s+name="(?P<name>\w+?)"\s+content="(?P<content>.*?)"\s*?/?>'
+    regexp = re.compile(R)
 
-    return {name: content for name, content in regexp.findall(content)
-            if name in ALLOWED_METADATA_NAMES}
+    return {
+        name: content
+        for name, content in regexp.findall(content)
+        if name in ALLOWED_METADATA_NAMES
+    }
 
 
-def parse_metadata_from_event_website(metadata):
+def parse_workshop_metadata(metadata):
     """Simple preprocessing of the metadata from event website."""
     # no compatibility with old-style names
     country = metadata.get('country', '').upper()[0:2]
@@ -785,7 +788,7 @@ def parse_metadata_from_event_website(metadata):
     }
 
 
-def validate_metadata_from_event_website(metadata):
+def validate_workshop_metadata(metadata):
     errors = []
     warnings = []
 

@@ -90,8 +90,8 @@ from workshops.util import (
     merge_objects,
     failed_to_delete,
     InternalError,
-    fetch_event_metadata,
-    parse_metadata_from_event_website,
+    fetch_workshop_metadata,
+    parse_workshop_metadata,
     WrongWorkshopURL,
 )
 
@@ -423,28 +423,40 @@ def selforganisedsubmission_accept_event(request, submission_id):
 
     else:
         # non-POST request
-        form = FormClass()
+        url = wr.workshop_url.strip()
+        data = {
+            'url': url,
+            'curricula': list(wr.workshop_types.all()),
+            'host': wr.host_organization() or wr.institution,
+            'administrator': Organization.objects.get(domain='self-organized'),
+        }
+        if mix_match:
+            data['tags'] = [Tag.objects.get(name='Circuits')]
 
         try:
-            url = wr.workshop_url.strip()
-            metadata = fetch_event_metadata(url)
-            data = parse_metadata_from_event_website(metadata)
-            data.update({
-                'url': url,
-                'curricula': list(wr.workshop_types.all()),
-                'host': wr.host_organization() or wr.institution,
-                'administrator':
-                    Organization.objects.get(domain='self-organized'),
-            })
+            metadata = fetch_workshop_metadata(url)
+            parsed_data = parse_workshop_metadata(metadata)
+        except (AttributeError, HTTPError, RequestException, WrongWorkshopURL):
+            # ignore errors, but show warning instead
+            messages.warning(request, "Cannot automatically fill the form "
+                                      "from provided workshop URL.")
+        else:
+            # keep working only if no exception occurred
+            try:
+                lang = parsed_data['language'].lower()
+                parsed_data['language'] = Language.objects.get(subtag=lang)
+            except (KeyError, ValueError, Language.DoesNotExist):
+                # ignore non-existing
+                messages.warning(request,
+                                 "Cannot automatically fill language.")
+                # it's easier to remove bad value than to leave
+                # 500 Server Error when the form is rendered
+                if 'language' in parsed_data:
+                    del parsed_data['language']
 
-            if mix_match:
-                data.update({
-                    'tags': [Tag.objects.get(name='Circuits')],
-                })
-
-            if 'language' in data:
-                lang = data['language'].lower()
-                data['language'] = Language.objects.get(subtag=lang)
+            # even if for some reason language doesn't exist, we can push
+            # an update
+            data.update(parsed_data)
 
             if 'instructors' in data or 'helpers' in data:
                 instructors = data.get('instructors') or ['none']
@@ -452,13 +464,8 @@ def selforganisedsubmission_accept_event(request, submission_id):
                 data['comment'] = "Instructors: {}\n\nHelpers: {}" \
                     .format(','.join(instructors), ','.join(helpers))
 
-            form = FormClass(initial=data)
-
-        except (AttributeError, KeyError, ValueError, HTTPError,
-                RequestException, WrongWorkshopURL, Language.DoesNotExist):
-            # ignore errors
-            messages.warning(request, "Cannot automatically fill the form "
-                                      "from provided workshop URL.")
+        # there's some data that we can push as initial for the form
+        form = FormClass(initial=data)
 
     context = {
         'object': wr,
