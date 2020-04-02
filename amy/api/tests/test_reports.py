@@ -2,10 +2,16 @@ import datetime
 import json
 from unittest.mock import MagicMock
 
+from django.db.models import (
+    IntegerField,
+    Min,
+    Value,
+)
 from django.http import QueryDict
 from django.urls import reverse
 from rest_framework import status
 
+from api.filters import InstructorsOverTimeFilter
 from api.tests.base import APITestBase
 from api.views import (
     ReportsViewSet,
@@ -223,3 +229,19 @@ class TestNotCountingInstructorsTwice(BaseReportingTest):
             {'count': 1, 'date': '2016-10-02'},
             {'count': 2, 'date': '2016-10-04'},
         ])
+
+
+class TestInstructorsOverTime(TestBase):
+
+    def test_badge_non_iterable(self):
+        """Regression test: ensure badges are correctly selected by filter."""
+        badges = Badge.objects.instructor_badges()
+        qs = Person.objects.annotate(
+            date=Min('award__awarded'),
+            count=Value(1, output_field=IntegerField())
+        ).order_by('date')
+        params = QueryDict("badges=1&badges=2")
+        filter_ = InstructorsOverTimeFilter(params, queryset=qs)
+
+        # would throw an error if the regression is still present
+        self.assertTrue(filter_.qs)
