@@ -626,8 +626,8 @@ class TestAcceptingSelfOrgSubmPrefilledform(TestBase):
             self.assertEqual(init, value, f"Issue with {key}")
 
 
-class TestAcceptSelfOrganisedSubmissionAddsEmailAction(FakeRedisTestCaseMixin,
-                                                       TestBase):
+class TestAcceptSelfOrganisedSubmissionAddsEmailActions(FakeRedisTestCaseMixin,
+                                                        TestBase):
     def setUp(self):
         super().setUp()
         self._setUpRoles()
@@ -654,8 +654,8 @@ class TestAcceptSelfOrganisedSubmissionAddsEmailAction(FakeRedisTestCaseMixin,
         )
         self.sos.workshop_types.set(Curriculum.objects.filter(carpentry="LC"))
 
-        template = EmailTemplate.objects.create(
-            slug='sample-template',
+        template1 = EmailTemplate.objects.create(
+            slug='sample-template1',
             subject='Welcome to {{ site.name }}',
             to_header='recipient@address.com',
             from_header='test@address.com',
@@ -664,8 +664,27 @@ class TestAcceptSelfOrganisedSubmissionAddsEmailAction(FakeRedisTestCaseMixin,
             reply_to_header='{{ reply_to }}',
             body_template="Sample text.",
         )
-        trigger = Trigger.objects.create(action='self-organised-request-form',
-                                         template=template)
+        template2 = EmailTemplate.objects.create(
+            slug='sample-template2',
+            subject='Welcome to {{ site.name }}',
+            to_header='recipient@address.com',
+            from_header='test@address.com',
+            cc_header='copy@example.org',
+            bcc_header='bcc@example.org',
+            reply_to_header='{{ reply_to }}',
+            body_template="Sample text.",
+        )
+        self.trigger1 = Trigger.objects.create(
+            action='self-organised-request-form',
+            template=template1,
+        )
+        self.trigger2 = Trigger.objects.create(
+            action='week-after-workshop-completion',
+            template=template2,
+        )
+
+        self.url = reverse('selforganisedsubmission_accept_event',
+                           args=[self.sos.pk])
 
         # save scheduler and connection data
         self._saved_scheduler = extrequests.views.scheduler
@@ -679,7 +698,7 @@ class TestAcceptSelfOrganisedSubmissionAddsEmailAction(FakeRedisTestCaseMixin,
         extrequests.views.scheduler = self._saved_scheduler
         extrequests.views.redis_connection = self._saved_redis_connection
 
-    def test_job_created(self):
+    def test_jobs_created(self):
         data = {
             'slug': 'xxxx-xx-xx-test-event',
             'host': Organization.objects.first().pk,
@@ -696,22 +715,22 @@ class TestAcceptSelfOrganisedSubmissionAddsEmailAction(FakeRedisTestCaseMixin,
         self.assertQuerysetEqual(rqjobs_pre, [])
 
         # send data in
-        rv = self.client.post(
-            reverse('selforganisedsubmission_accept_event',
-                    args=[self.sos.pk]),
-            data,
-            follow=True,
-        )
+        rv = self.client.post(self.url, data, follow=True)
         self.assertEqual(rv.status_code, 200)
         event = Event.objects.get(slug='xxxx-xx-xx-test-event')
         request = event.selforganisedsubmission
         self.assertEqual(request, self.sos)
 
-        # 1 job created
+        # 2 jobs created
         rqjobs_post = RQJob.objects.all()
-        self.assertEqual(len(rqjobs_post), 1)
+        self.assertEqual(len(rqjobs_post), 2)
 
         # ensure the job ids are mentioned in the page output
         content = rv.content.decode('utf-8')
         for job in rqjobs_post:
             self.assertIn(job.job_id, content)
+
+        # ensure 1 job is for SelfOrganisedRequestAction,
+        # and 1 for PostWorkshopAction
+        rqjobs_post[0].trigger = self.trigger1
+        rqjobs_post[1].trigger = self.trigger2

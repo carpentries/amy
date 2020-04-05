@@ -27,7 +27,10 @@ from django_countries import countries
 import django_rq
 from requests.exceptions import HTTPError, RequestException
 
-from autoemails.actions import SelfOrganisedRequestAction
+from autoemails.actions import (
+    SelfOrganisedRequestAction,
+    PostWorkshopAction,
+)
 from autoemails.base_views import ActionManageMixin
 from autoemails.models import Trigger
 from extrequests.base_views import AMYCreateAndFetchObjectView
@@ -188,6 +191,20 @@ class WorkshopRequestAcceptEvent(OnlyForAdminsMixin, PermissionRequiredMixin,
             Task.objects.create(event=event, person=person,
                                 role=Role.objects.get(name="host"))
 
+        if PostWorkshopAction.check(event):
+            objs = dict(event=event, request=wr)
+            jobs, rqjobs = ActionManageMixin.add(
+                action_class=PostWorkshopAction,
+                logger=logger,
+                scheduler=scheduler,
+                triggers=Trigger.objects.filter(
+                    active=True, action="week-after-workshop-completion",
+                ),
+                context_objects=objs,
+                object_=event,
+                request=self.request,
+            )
+
         wr.state = 'a'
         wr.event = event
         wr.save()
@@ -289,6 +306,20 @@ class WorkshopInquiryAcceptEvent(OnlyForAdminsMixin, PermissionRequiredMixin,
         if person:
             Task.objects.create(event=event, person=person,
                                 role=Role.objects.get(name="host"))
+
+        if PostWorkshopAction.check(event):
+            objs = dict(event=event, request=wr)
+            jobs, rqjobs = ActionManageMixin.add(
+                action_class=PostWorkshopAction,
+                logger=logger,
+                scheduler=scheduler,
+                triggers=Trigger.objects.filter(
+                    active=True, action="week-after-workshop-completion",
+                ),
+                context_objects=objs,
+                object_=event,
+                request=self.request,
+            )
 
         wr.state = 'a'
         wr.event = event
@@ -469,6 +500,20 @@ class SelfOrganisedSubmissionAcceptEvent(OnlyForAdminsMixin,
                 scheduler=scheduler,
                 triggers=Trigger.objects.filter(
                     active=True, action="self-organised-request-form"
+                ),
+                context_objects=objs,
+                object_=event,
+                request=self.request,
+            )
+
+        if PostWorkshopAction.check(event):
+            objs = dict(event=event, request=wr)
+            jobs, rqjobs = ActionManageMixin.add(
+                action_class=PostWorkshopAction,
+                logger=logger,
+                scheduler=scheduler,
+                triggers=Trigger.objects.filter(
+                    active=True, action="week-after-workshop-completion",
                 ),
                 context_objects=objs,
                 object_=event,

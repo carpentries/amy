@@ -1,11 +1,15 @@
-import datetime
+from datetime import date, timedelta
 
 from django.conf import settings
 from django.urls import reverse
 
+from autoemails.models import Trigger, EmailTemplate, RQJob
+from autoemails.tests.base import FakeRedisTestCaseMixin
 from extrequests.forms import WorkshopRequestBaseForm
+import extrequests.views
 from workshops.forms import EventCreateForm
 from workshops.models import (
+    Tag,
     WorkshopRequest,
     Task,
     Role,
@@ -40,7 +44,7 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
                                   .filter(active=True)
                                   .first().pk,
             ],
-            'preferred_dates': '{:%Y-%m-%d}'.format(datetime.date.today()),
+            'preferred_dates': '{:%Y-%m-%d}'.format(date.today()),
             'other_preferred_dates': '17-18 August, 2019',
             'language':  Language.objects.get(name='English').pk,
             'number_attendees': '10-40',
@@ -188,7 +192,7 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
 
         # 2: either one present will work
         data = {
-            'preferred_dates': '{:%Y-%m-%d}'.format(datetime.date.today()),
+            'preferred_dates': '{:%Y-%m-%d}'.format(date.today()),
             'other_preferred_dates': '',
         }
         form = WorkshopRequestBaseForm(data)
@@ -214,7 +218,7 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
 
         # 4: preferred date wrong format
         data = {
-            'preferred_dates': '{:%d-%m-%Y}'.format(datetime.date.today()),
+            'preferred_dates': '{:%d-%m-%Y}'.format(date.today()),
             'other_preferred_dates': '',
         }
         form = WorkshopRequestBaseForm(data)
@@ -507,3 +511,102 @@ class TestAcceptingWorkshopInquiry(TestBase):
         # check if Harry gained a task
         Task.objects.get(person=self.harry, event=event,
                          role=Role.objects.get(name="host"))
+
+
+class TestAcceptWorkshopRequestAddsEmailAction(FakeRedisTestCaseMixin,
+                                               TestBase):
+    def setUp(self):
+        super().setUp()
+        self._setUpRoles()
+        self._setUpUsersAndLogin()
+        # we're missing some tags
+        Tag.objects.bulk_create([
+            Tag(name='SWC'),
+            Tag(name='DC'),
+            Tag(name='LC'),
+            Tag(name='TTT'),
+            Tag(name='automated-email'),
+        ])
+
+        self.wr1 = WorkshopRequest.objects.create(
+            state="p", personal="Harry", family="Potter",
+            email="harry@hogwarts.edu",
+            institution_other_name="Hogwarts", location="Scotland", country="GB",
+            preferred_dates=None, other_preferred_dates="soon",
+            language=Language.objects.get(name='English'),
+            number_attendees='10-40',
+            audience_description="Students of Hogwarts",
+            administrative_fee='nonprofit',
+            scholarship_circumstances='',
+            travel_expences_management='booked',
+            travel_expences_management_other='',
+            institution_restrictions='no_restrictions',
+            institution_restrictions_other='',
+            carpentries_info_source_other='',
+            user_notes='',
+        )
+
+        template1 = EmailTemplate.objects.create(
+            slug='sample-template1',
+            subject='Welcome to {{ site.name }}',
+            to_header='recipient@address.com',
+            from_header='test@address.com',
+            cc_header='copy@example.org',
+            bcc_header='bcc@example.org',
+            reply_to_header='{{ reply_to }}',
+            body_template="Sample text.",
+        )
+        self.trigger1 = Trigger.objects.create(
+            action='week-after-workshop-completion',
+            template=template1,
+        )
+
+        self.url = reverse('workshoprequest_accept_event',
+                           args=[self.wr1.pk])
+
+        # save scheduler and connection data
+        self._saved_scheduler = extrequests.views.scheduler
+        self._saved_redis_connection = extrequests.views.redis_connection
+        # overwrite them
+        extrequests.views.scheduler = self.scheduler
+        extrequests.views.redis_connection = self.connection
+
+    def tearDown(self):
+        super().tearDown()
+        extrequests.views.scheduler = self._saved_scheduler
+        extrequests.views.redis_connection = self._saved_redis_connection
+
+    def test_jobs_created(self):
+        data = {
+            'slug': 'xxxx-xx-xx-test-event',
+            'host': Organization.objects.first().pk,
+            'administrator': Organization.objects
+                                         .get(domain='self-organized').pk,
+            'start': date.today() + timedelta(days=7),
+            'end': date.today() + timedelta(days=8),
+            'tags': Tag.objects.filter(name__in=['automated-email', 'LC'])
+                       .values_list('pk', flat=True),
+        }
+
+        # no jobs scheduled
+        rqjobs_pre = RQJob.objects.all()
+        self.assertQuerysetEqual(rqjobs_pre, [])
+
+        # send data in
+        rv = self.client.post(self.url, data, follow=True)
+        self.assertEqual(rv.status_code, 200)
+        event = Event.objects.get(slug='xxxx-xx-xx-test-event')
+        request = event.workshoprequest
+        self.assertEqual(request, self.wr1)
+
+        # 1 job created
+        rqjobs_post = RQJob.objects.all()
+        self.assertEqual(len(rqjobs_post), 1)
+
+        # ensure the job ids are mentioned in the page output
+        content = rv.content.decode('utf-8')
+        for job in rqjobs_post:
+            self.assertIn(job.job_id, content)
+
+        # ensure the job is for PostWorkshopAction
+        rqjobs_post[0].trigger = self.trigger1
