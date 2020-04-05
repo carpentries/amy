@@ -5,6 +5,7 @@ from django.urls import reverse
 
 from extrequests.forms import WorkshopInquiryRequestBaseForm
 from extrequests.models import WorkshopInquiryRequest, DataVariant
+from workshops.forms import EventCreateForm
 from workshops.models import (
     Task,
     Role,
@@ -436,7 +437,7 @@ class TestWorkshopInquiryViews(TestBase):
                                .workshopinquiryrequest
         self.assertEqual(request, self.wi1)
 
-    def test_discarded_request_accepted_with_event(self):
+    def test_discarded_request_not_accepted_with_event(self):
         rv = self.client.get(reverse('workshopinquiry_accept_event',
                                      args=[self.wi2.pk]))
         self.assertEqual(rv.status_code, 404)
@@ -493,6 +494,62 @@ class TestWorkshopInquiryViews(TestBase):
         invalid = settings.TEMPLATES[0]['OPTIONS']['string_if_invalid']
         self.assertNotIn(invalid, rv.content.decode('utf-8'))
 
+
+class TestAcceptingWorkshopInquiry(TestBase):
+    def setUp(self):
+        super().setUp()
+        self._setUpRoles()
+        self._setUpUsersAndLogin()
+
+        self.wi1 = WorkshopInquiryRequest.objects.create(
+            state="p", personal="Harry", family="Potter",
+            email="harry@hogwarts.edu",
+            institution_other_name="Hogwarts",
+            institution_other_URL='hogwarts.uk',
+            location="Scotland", country="GB",
+            routine_data_other="",
+            domains_other="",
+            audience_description="Students of Hogwarts",
+            preferred_dates=None, other_preferred_dates="soon",
+            language=Language.objects.get(name='English'),
+            number_attendees='10-40',
+            administrative_fee='nonprofit',
+            travel_expences_management='booked',
+            travel_expences_management_other='',
+            travel_expences_agreement=True,
+            institution_restrictions='no_restrictions',
+            institution_restrictions_other='',
+            public_event='invite',
+            carpentries_info_source_other='',
+            user_notes='n/c',
+        )
+
+        self.url = reverse('workshopinquiry_accept_event',
+                           args=[self.wi1.pk])
+
+    def test_page_context(self):
+        """Ensure proper objects render in the page."""
+        rv = self.client.get(self.url)
+        self.assertIn('form', rv.context)
+        self.assertIn('object', rv.context)  # this is our request
+        form = rv.context['form']
+        wi = rv.context['object']
+        self.assertEqual(wi, self.wi1)
+        self.assertTrue(isinstance(form, EventCreateForm))
+
+    def test_state_changed(self):
+        """Ensure request's state is changed after accepting."""
+        self.assertTrue(self.wi1.state == 'p')
+        data = {
+            'slug': '2018-10-28-test-event',
+            'host': Organization.objects.first().pk,
+            'tags': [1],
+        }
+        rv = self.client.post(self.url, data)
+        self.assertEqual(rv.status_code, 302)
+        self.wi1.refresh_from_db()
+        self.assertTrue(self.wi1.state == 'a')
+
     def test_host_task_created(self):
         """Ensure a host task is created when a person submitting the inquiry
         already is in our database."""
@@ -507,9 +564,7 @@ class TestWorkshopInquiryViews(TestBase):
             'host': Organization.objects.first().pk,
             'tags': [1],
         }
-        rv = self.client.post(
-            reverse('workshopinquiry_accept_event', args=[self.wi1.pk]),
-            data)
+        rv = self.client.post(self.url, data)
         self.assertEqual(rv.status_code, 302)
         event = Event.objects.get(slug='2019-08-18-test-event')
 

@@ -9,6 +9,7 @@ from autoemails.tests.base import FakeRedisTestCaseMixin
 from extrequests.forms import SelfOrganisedSubmissionBaseForm
 from extrequests.models import SelfOrganisedSubmission
 import extrequests.views
+from workshops.forms import EventCreateForm
 from workshops.models import (
     Task,
     Role,
@@ -321,7 +322,6 @@ class TestSelfOrganisedSubmissionViews(TestBase):
             'slug': '2018-10-28-test-event',
             'host': Organization.objects.first().pk,
             'tags': [1],
-            'invoice_status': 'unknown',
         }
         rv = self.client.post(
             reverse('selforganisedsubmission_accept_event',
@@ -332,32 +332,7 @@ class TestSelfOrganisedSubmissionViews(TestBase):
                                .selforganisedsubmission
         self.assertEqual(request, self.sos1)
 
-    def test_lessons_shown_in_event_create_form(self):
-        """Ensure Mix&Match triggers "lessons" field on EventCreateForm."""
-        # self.sos1 has Mix&Match workshop type, so it should display "lessons"
-        # field in Event form
-        url = reverse('selforganisedsubmission_accept_event',
-                      args=[self.sos1.pk])
-        rv = self.client.get(url)
-        self.assertEqual(rv.status_code, 200)
-        self.assertIn(Curriculum.objects.get(mix_match=True),
-                      self.sos1.workshop_types.all())
-        self.assertIn("lessons", rv.context["form"].fields.keys())
-
-        # self.sos2 doesn't have Mix&Match workshop type, so it can't show
-        # "lessons" field in Event form
-        # but for tests we need a different status for that submission
-        self.sos2.state = "p"
-        self.sos2.save()
-        url = reverse('selforganisedsubmission_accept_event',
-                      args=[self.sos2.pk])
-        rv = self.client.get(url)
-        self.assertEqual(rv.status_code, 200)
-        self.assertNotIn(Curriculum.objects.get(mix_match=True),
-                         self.sos2.workshop_types.all())
-        self.assertNotIn("lessons", rv.context["form"].fields.keys())
-
-    def test_discarded_request_accepted_with_event(self):
+    def test_discarded_request_not_accepted_with_event(self):
         rv = self.client.get(reverse('selforganisedsubmission_accept_event',
                                      args=[self.sos2.pk]))
         self.assertEqual(rv.status_code, 404)
@@ -414,11 +389,75 @@ class TestSelfOrganisedSubmissionViews(TestBase):
         invalid = settings.TEMPLATES[0]['OPTIONS']['string_if_invalid']
         self.assertNotIn(invalid, rv.content.decode('utf-8'))
 
+
+class TestAcceptingSelfOrgSubmission(TestBase):
+    def setUp(self):
+        super().setUp()
+        self._setUpRoles()
+        self._setUpUsersAndLogin()
+
+        self.sos1 = SelfOrganisedSubmission.objects.create(
+            state="p", personal="Harry", family="Potter",
+            email="harry@hogwarts.edu",
+            institution=self.org_alpha,
+            institution_other_name="Hogwarts",
+            workshop_url='http://nonexistent-url/',
+            workshop_format='',
+            workshop_format_other='',
+            workshop_types_other_explain='',
+            language=Language.objects.get(name='English'),
+        )
+        self.sos1.workshop_types.set(Curriculum.objects.filter(mix_match=True))
+
+        self.url = reverse('selforganisedsubmission_accept_event',
+                           args=[self.sos1.pk])
+
+        self.sos2 = SelfOrganisedSubmission.objects.create(
+            state="d", personal="Harry", family="Potter",
+            email="harry@potter.com",
+            institution_other_name="Hogwarts",
+            workshop_url='',
+            workshop_format='',
+            workshop_format_other='',
+            workshop_types_other_explain='',
+            language=Language.objects.get(name='English'),
+        )
+        self.sos2.workshop_types.set(
+            Curriculum.objects.filter(mix_match=False, unknown=False,
+                                      other=False)[:1]
+        )
+        self.url2 = reverse('selforganisedsubmission_accept_event',
+                            args=[self.sos2.pk])
+
+    def test_page_context(self):
+        """Ensure proper objects render in the page."""
+        rv = self.client.get(self.url)
+        self.assertIn('form', rv.context)
+        self.assertIn('object', rv.context)  # this is our request
+        form = rv.context['form']
+        sos = rv.context['object']
+        self.assertEqual(sos, self.sos1)
+        self.assertTrue(isinstance(form, EventCreateForm))
+
+    def test_state_changed(self):
+        """Ensure request's state is changed after accepting."""
+        self.assertTrue(self.sos1.state == 'p')
+        data = {
+            'slug': '2018-10-28-test-event',
+            'host': Organization.objects.first().pk,
+            'tags': [1],
+        }
+        rv = self.client.post(self.url, data)
+        self.assertEqual(rv.status_code, 302)
+        self.sos1.refresh_from_db()
+        self.assertTrue(self.sos1.state == 'a')
+
     def test_host_task_created(self):
         """Ensure a host task is created when a person submitting already is in
         our database."""
 
-        # Harry matched as a submitted for self.sos1, and he has no tasks so far
+        # Harry matched as a submitted for self.sos1, and he has no tasks
+        # so far
         self.assertEqual(self.sos1.host(), self.harry)
         self.assertFalse(self.harry.task_set.all())
 
@@ -428,16 +467,34 @@ class TestSelfOrganisedSubmissionViews(TestBase):
             'host': Organization.objects.first().pk,
             'tags': [1],
         }
-        rv = self.client.post(
-            reverse('selforganisedsubmission_accept_event',
-                    args=[self.sos1.pk]),
-            data)
+        rv = self.client.post(self.url, data)
         self.assertEqual(rv.status_code, 302)
         event = Event.objects.get(slug='2019-08-18-test-event')
 
         # check if Harry gained a task
         Task.objects.get(person=self.harry, event=event,
                          role=Role.objects.get(name="host"))
+
+    def test_lessons_shown_in_event_create_form(self):
+        """Ensure Mix&Match triggers "lessons" field on EventCreateForm."""
+        # self.sos1 has Mix&Match workshop type, so it should display "lessons"
+        # field in Event form
+        rv = self.client.get(self.url)
+        self.assertEqual(rv.status_code, 200)
+        self.assertIn(Curriculum.objects.get(mix_match=True),
+                      self.sos1.workshop_types.all())
+        self.assertIn("lessons", rv.context["form"].fields.keys())
+
+        # self.sos2 doesn't have Mix&Match workshop type, so it can't show
+        # "lessons" field in Event form
+        # but for tests we need a different status for that submission
+        self.sos2.state = "p"
+        self.sos2.save()
+        rv = self.client.get(self.url2)
+        self.assertEqual(rv.status_code, 200)
+        self.assertNotIn(Curriculum.objects.get(mix_match=True),
+                         self.sos2.workshop_types.all())
+        self.assertNotIn("lessons", rv.context["form"].fields.keys())
 
 
 class TestAcceptingSelfOrgSubmPrefilledform(TestBase):

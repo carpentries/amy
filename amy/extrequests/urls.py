@@ -19,7 +19,7 @@ urlpatterns = [
     path('workshop_request/<int:request_id>/', include([
         path('', views.WorkshopRequestDetails.as_view(), name='workshoprequest_details'),
         path('set_state/<slug:state>/', views.WorkshopRequestSetState.as_view(), name='workshoprequest_set_state'),
-        path('accept_event/', views.workshoprequest_accept_event, name='workshoprequest_accept_event'),
+        path('accept_event/', views.WorkshopRequestAcceptEvent.as_view(), name='workshoprequest_accept_event'),
         path('edit/', views.WorkshopRequestChange.as_view(), name='workshoprequest_edit'),
         path('assign/', views.WorkshopRequestAssign.as_view(), name='workshoprequest_assign'),
         path('assign/<int:person_id>/', views.WorkshopRequestAssign.as_view(), name='workshoprequest_assign'),
@@ -30,7 +30,7 @@ urlpatterns = [
     path('workshop_inquiry/<int:inquiry_id>/', include([
         path('', views.WorkshopInquiryDetails.as_view(), name='workshopinquiry_details'),
         path('set_state/<slug:state>/', views.WorkshopInquirySetState.as_view(), name='workshopinquiry_set_state'),
-        path('accept_event/', views.workshopinquiry_accept_event, name='workshopinquiry_accept_event'),
+        path('accept_event/', views.WorkshopInquiryAcceptEvent.as_view(), name='workshopinquiry_accept_event'),
         path('edit/', views.WorkshopInquiryChange.as_view(), name='workshopinquiry_edit'),
         path('assign/', views.WorkshopInquiryAssign.as_view(), name='workshopinquiry_assign'),
         path('assign/<int:person_id>/', views.WorkshopInquiryAssign.as_view(), name='workshopinquiry_assign'),
@@ -41,7 +41,7 @@ urlpatterns = [
     path('selforganised_submission/<int:submission_id>/', include([
         path('', views.SelfOrganisedSubmissionDetails.as_view(), name='selforganisedsubmission_details'),
         path('set_state/<slug:state>/', views.SelfOrganisedSubmissionSetState.as_view(), name='selforganisedsubmission_set_state'),
-        path('accept_event/', views.selforganisedsubmission_accept_event, name='selforganisedsubmission_accept_event'),
+        path('accept_event/', views.SelfOrganisedSubmissionAcceptEvent.as_view(), name='selforganisedsubmission_accept_event'),
         path('edit/', views.SelfOrganisedSubmissionChange.as_view(), name='selforganisedsubmission_edit'),
         path('assign/', views.SelfOrganisedSubmissionAssign.as_view(), name='selforganisedsubmission_assign'),
         path('assign/<int:person_id>/', views.SelfOrganisedSubmissionAssign.as_view(), name='selforganisedsubmission_assign'),
