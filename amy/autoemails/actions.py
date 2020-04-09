@@ -361,11 +361,17 @@ class PostWorkshopAction(BaseAction):
             list(match_notification_email(event))
 
         # to get only people from the task set
+        context['instructors'] = list(
+            Person.objects.filter(
+                task__in=event.task_set.filter(role__name='instructor')
+            )
+        )
         context['helpers'] = list(
             Person.objects.filter(
                 task__in=event.task_set.filter(role__name='helper')
             )
         )
+
         # querying over Person.objects lets us get rid of duplicates
         context['all_emails'] = list(
             Person.objects.filter(

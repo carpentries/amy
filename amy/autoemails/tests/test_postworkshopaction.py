@@ -194,6 +194,7 @@ class TestPostWorkshopAction(TestCase):
                 dates=e.human_readable_date,
                 host=Organization.objects.first(),
                 regional_coordinator_email=['admin-uk@carpentries.org'],
+                instructors=[p2],
                 helpers=[p1, p3],
                 all_emails=['hg@magic.uk', 'hp@magic.uk'],
                 assignee='Regional Coordinator',
