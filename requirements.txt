@@ -18,7 +18,7 @@ django-recaptcha==1.4.0
 Faker==0.9.1
 django-compressor==2.3
 PyGithub==1.43.2
-social-auth-core==3.2.0
+social-auth-core==3.3.3
 social-auth-app-django==3.1.0
 django-webtest==1.9.3
 django-debug-toolbar==1.10.1
@@ -40,3 +40,4 @@ croniter==0.3.30
 # faking Redis server
 fakeredis==1.2.1
 lupa==1.9
+cryptography==2.9
