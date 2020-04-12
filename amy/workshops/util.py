@@ -4,6 +4,7 @@ from collections.abc import Sequence
 import csv
 import datetime
 from functools import wraps
+from hashlib import sha1
 from itertools import chain
 import logging
 import re
@@ -1330,3 +1331,12 @@ def add_comment(content_object, comment, **kwargs):
         submit_date=submit_date,
         site=site,
     )
+
+
+def reports_link_hash(slug: str) -> str:
+    """Generate hash for accessing workshop reports repository."""
+    lowered = slug.lower()
+    salt_front = settings.REPORTS_SALT_FRONT
+    salt_back = settings.REPORTS_SALT_BACK
+    hashed = sha1(f"{salt_front}{lowered}{salt_back}".encode("utf-8"))
+    return hashed.hexdigest()

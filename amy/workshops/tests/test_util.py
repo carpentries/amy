@@ -37,6 +37,7 @@ from workshops.util import (
     str2bool,
     human_daterange,
     match_notification_email,
+    reports_link_hash,
 )
 
 
@@ -1216,3 +1217,33 @@ class TestMatchingNotificationEmail(TestBase):
         self.country = None
         results = match_notification_email(self)
         self.assertEqual(results, ['team@carpentries.org'])
+
+
+class TestReportsLinkHash(TestBase):
+    def setUp(self):
+        self.slug = '2020-04-12-Krakow'
+
+    def test_lowercased_nonlowercased(self):
+        self.assertEqual(reports_link_hash(self.slug),
+                         reports_link_hash(self.slug.lower()))
+
+    def test_salts_alter_hash(self):
+        hash_pre = reports_link_hash(self.slug)
+
+        with self.settings(REPORTS_SALT_FRONT='test12345'):
+            hash_salt_front = reports_link_hash(self.slug)
+
+        with self.settings(REPORTS_SALT_BACK='test12345'):
+            hash_salt_back = reports_link_hash(self.slug)
+
+        with self.settings(REPORTS_SALT_FRONT='test12345',
+                           REPORTS_SALT_BACK='test12345'):
+            hash_both_salts = reports_link_hash(self.slug)
+
+        self.assertNotEqual(hash_pre, hash_salt_front)
+        self.assertNotEqual(hash_pre, hash_salt_back)
+        self.assertNotEqual(hash_pre, hash_both_salts)
+
+        self.assertNotEqual(hash_salt_front, hash_both_salts)
+        self.assertNotEqual(hash_salt_front, hash_salt_back)
+        self.assertNotEqual(hash_salt_back, hash_both_salts)
