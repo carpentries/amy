@@ -230,7 +230,10 @@ class NewInstructorAction(BaseAction):
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
-        from workshops.util import match_notification_email, human_daterange
+        from workshops.util import (
+            human_daterange,
+            match_notification_email,
+        )
 
         # refresh related event
         event = objects['event']
@@ -340,7 +343,11 @@ class PostWorkshopAction(BaseAction):
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
-        from workshops.util import match_notification_email, human_daterange
+        from workshops.util import (
+            human_daterange,
+            match_notification_email,
+            reports_link,
+        )
 
         # refresh related event
         event = objects['event']
@@ -379,6 +386,8 @@ class PostWorkshopAction(BaseAction):
             if event.assigned_to
             else 'Regional Coordinator'
         )
+
+        context['reports_link'] = reports_link(event.slug)
 
         return context
 
