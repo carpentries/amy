@@ -622,3 +622,8 @@ if not DEBUG and not (REPORTS_SALT_FRONT and REPORTS_SALT_BACK):
         "Report salts are required. See REPORT_SALT_FRONT and REPORT_SALT_BACK"
         " in settings."
     )
+
+REPORTS_LINK = env.str(
+    'AMY_REPORTS_LINK',
+    default='https://workshop-reports.carpentries.org/?key={hash}slug={slug}',
+)
