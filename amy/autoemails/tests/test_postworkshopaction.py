@@ -197,7 +197,7 @@ class TestPostWorkshopAction(TestCase):
                 helpers=[p1, p3],
                 all_emails=['hg@magic.uk', 'hp@magic.uk'],
                 assignee='Regional Coordinator',
-                reports_link='https://workshop-reports.carpentries.org/?key=e18dd84d093be5cd6c6ccaf63d38a8477ca126f4slug=test-event',
+                reports_link='https://workshop-reports.carpentries.org/?key=e18dd84d093be5cd6c6ccaf63d38a8477ca126f4&slug=test-event',
             ),
         )
 
