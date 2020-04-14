@@ -37,6 +37,8 @@ from workshops.util import (
     str2bool,
     human_daterange,
     match_notification_email,
+    reports_link_hash,
+    reports_link,
 )
 
 
@@ -1216,3 +1218,50 @@ class TestMatchingNotificationEmail(TestBase):
         self.country = None
         results = match_notification_email(self)
         self.assertEqual(results, ['team@carpentries.org'])
+
+
+class TestReportsLink(TestBase):
+    def setUp(self):
+        self.slug = '2020-04-12-Krakow'
+
+    def test_hash_lowercased_nonlowercased(self):
+        self.assertEqual(reports_link_hash(self.slug),
+                         reports_link_hash(self.slug.lower()))
+
+    def test_salts_alter_hash(self):
+        hash_pre = reports_link_hash(self.slug)
+
+        with self.settings(REPORTS_SALT_FRONT='test12345'):
+            hash_salt_front = reports_link_hash(self.slug)
+
+        with self.settings(REPORTS_SALT_BACK='test12345'):
+            hash_salt_back = reports_link_hash(self.slug)
+
+        with self.settings(REPORTS_SALT_FRONT='test12345',
+                           REPORTS_SALT_BACK='test12345'):
+            hash_both_salts = reports_link_hash(self.slug)
+
+        self.assertNotEqual(hash_pre, hash_salt_front)
+        self.assertNotEqual(hash_pre, hash_salt_back)
+        self.assertNotEqual(hash_pre, hash_both_salts)
+
+        self.assertNotEqual(hash_salt_front, hash_both_salts)
+        self.assertNotEqual(hash_salt_front, hash_salt_back)
+        self.assertNotEqual(hash_salt_back, hash_both_salts)
+
+    def test_link(self):
+        """Ensure the link gets correctly generated."""
+
+        with self.settings(REPORTS_LINK=''):
+            link = reports_link(self.slug)
+            self.assertEqual(link, '')
+
+        with self.settings(REPORTS_LINK='{slug}'):
+            link = reports_link(self.slug)
+            self.assertEqual(link, self.slug)
+
+        with self.settings(REPORTS_LINK='{slug}.{hash}'):
+            link = reports_link(self.slug)
+            parts = link.split('.')
+            self.assertEqual(parts[0], self.slug)
+            self.assertEqual(parts[1], reports_link_hash(self.slug))

@@ -611,3 +611,19 @@ AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS = env.str(
     'AMY_AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS',
     default=None,  # On test server: 'amy-tests@carpentries.org'
 )
+
+# Reports
+# -----------------------------------------------------------------------------
+# Settings for workshop-reports integration
+REPORTS_SALT_FRONT = env.str('AMY_REPORTS_SALT_FRONT', default='')
+REPORTS_SALT_BACK = env.str('AMY_REPORTS_SALT_BACK', default='')
+if not DEBUG and not (REPORTS_SALT_FRONT and REPORTS_SALT_BACK):
+    raise ImproperlyConfigured(
+        "Report salts are required. See REPORT_SALT_FRONT and REPORT_SALT_BACK"
+        " in settings."
+    )
+
+REPORTS_LINK = env.str(
+    'AMY_REPORTS_LINK',
+    default='https://workshop-reports.carpentries.org/?key={hash}&slug={slug}',
+)
