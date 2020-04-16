@@ -799,7 +799,8 @@ class SelfOrganisedSubmission(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         verbose_name="Please share your workshop URL",
         help_text="Use the link to the website, not the repository. This is "
                   "typically in the format <a>https://username.github.io/"
-                  "YYYY-MM-DD-sitename</a>."
+                  "YYYY-MM-DD-sitename</a>.  If you are running an online workshop, "
+                  "please use the format YYYY-MM-DD-sitename-online."
     )
     FORMAT_CHOICES = (
         ("standard", "Standard two-day Carpentries workshop"),
