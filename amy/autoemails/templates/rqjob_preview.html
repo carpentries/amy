@@ -7,6 +7,7 @@
 
 <link rel="stylesheet" type="text/css" href="{% static 'admin/css/forms.css' %}"/>
 <link rel="stylesheet" type="text/css" href="{% static 'admin/css/widgets.css' %}"/>
+<link rel="stylesheet" type="text/css" href="{% static 'css/rqjob_admin.css' %}"/>
 {% endblock %}
 
 {% if not is_popup %}
@@ -21,6 +22,17 @@
 {% endif %}
 
 {%  block content %}
+{% if previous or next %}
+<div class="box">
+    {% if previous %}
+    <a href="{% url 'admin:autoemails_rqjob_preview' object_id=previous.pk %}" class="prev-link">Previous</a>
+    {% endif %}
+    {% if next %}
+    <a href="{% url 'admin:autoemails_rqjob_preview' object_id=next.pk %}" class="next-link">Next</a>
+    {% endif %}
+</div>
+{% endif %}
+
 <table>
     <tr>
         <th>RQJob:</th>
@@ -204,6 +216,17 @@
         </td>
     </tr>
 </table>
+
+{% if previous or next %}
+<div class="box">
+    {% if previous %}
+    <a href="{% url 'admin:autoemails_rqjob_preview' object_id=previous.pk %}" class="prev-link">Previous</a>
+    {% endif %}
+    {% if next %}
+    <a href="{% url 'admin:autoemails_rqjob_preview' object_id=next.pk %}" class="next-link">Next</a>
+    {% endif %}
+</div>
+{% endif %}
 
 {% if form and job and job_scheduled %}
 <form method="POST" action="{% url 'admin:autoemails_rqjob_reschedule' object_id=rqjob.pk %}">

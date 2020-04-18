@@ -164,6 +164,10 @@ class RQJobAdmin(admin.ModelAdmin):
                 initial=dict(scheduled_execution=job_scheduled or now_utc)
             )
 
+        # find prev / next RQJob in the list
+        previous = RQJob.objects.filter(pk__lt=rqjob.pk).order_by("id").last()
+        next_ = RQJob.objects.filter(pk__gt=rqjob.pk).order_by("id").first()
+
         context = dict(
             self.admin_site.each_context(request),
             cl=self.get_changelist_instance(request),
@@ -177,6 +181,8 @@ class RQJobAdmin(admin.ModelAdmin):
             email=email,
             adn_context=adn_context,
             form=form,
+            previous=previous,
+            next=next_,
         )
         return TemplateResponse(request, "rqjob_preview.html", context)
 

@@ -1,0 +1,23 @@
+.box {
+    padding: 1em;
+    margin: 0.5em 0 1.5em 0;
+    background: #f8f8f8;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.box .prev-link,
+.box .next-link {
+    padding: 0.5em 1em;
+}
+.box .prev-link {
+    grid-column: 1 / 2;
+    justify-self: start;
+}
+.box .next-link {
+    grid-column: 2 / 3;
+    justify-self: end;
+}
