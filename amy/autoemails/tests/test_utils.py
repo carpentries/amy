@@ -26,10 +26,7 @@ class TestScheduledExecutionTime(FakeRedisTestCaseMixin, TestCase):
 
     def test_time_for_scheduled_job(self):
         # add job
-        job = self.scheduler.enqueue_in(
-            timedelta(minutes=5),
-            dummy_job,
-        )
+        job = self.scheduler.enqueue_in(timedelta(minutes=5), dummy_job,)
         job_id = job.get_id()
 
         # test
@@ -41,10 +38,7 @@ class TestScheduledExecutionTime(FakeRedisTestCaseMixin, TestCase):
 
     def test_time_for_run_job(self):
         # add job
-        job = self.scheduler.enqueue_in(
-            timedelta(minutes=5),
-            dummy_job,
-        )
+        job = self.scheduler.enqueue_in(timedelta(minutes=5), dummy_job,)
         job_id = job.get_id()
 
         # move the job to queue
@@ -56,10 +50,7 @@ class TestScheduledExecutionTime(FakeRedisTestCaseMixin, TestCase):
 
     def test_time_unaware_aware(self):
         # add job
-        job = self.scheduler.enqueue_in(
-            timedelta(minutes=5),
-            dummy_job,
-        )
+        job = self.scheduler.enqueue_in(timedelta(minutes=5), dummy_job,)
         job_id = job.get_id()
 
         # test
@@ -78,10 +69,7 @@ class TestCheckStatus(FakeRedisTestCaseMixin, TestCase):
 
     def test_status_scheduled_job(self):
         # add job
-        job = self.scheduler.enqueue_in(
-            timedelta(minutes=5),
-            dummy_job,
-        )
+        job = self.scheduler.enqueue_in(timedelta(minutes=5), dummy_job,)
 
         # test
         rv = check_status(job, self.scheduler)
@@ -89,10 +77,7 @@ class TestCheckStatus(FakeRedisTestCaseMixin, TestCase):
 
     def test_status_queued_job(self):
         # add job
-        job = self.scheduler.enqueue_in(
-            timedelta(minutes=5),
-            dummy_job,
-        )
+        job = self.scheduler.enqueue_in(timedelta(minutes=5), dummy_job,)
 
         # move the job to queue
         self.scheduler.enqueue_job(job)
@@ -105,14 +90,14 @@ class TestCheckStatus(FakeRedisTestCaseMixin, TestCase):
         # Create an asynchronous queue.
         # The name `separate_queue` used here is to ensure the queue isn't
         # used anywhere else.
-        queue = Queue('separate_queue', connection=self.connection)
+        queue = Queue("separate_queue", connection=self.connection)
 
         # add job to the queue
         job = queue.enqueue(dummy_job)
-        self.assertEqual(job.get_status(), 'queued')
+        self.assertEqual(job.get_status(), "queued")
 
         # force the job status to be "started"
-        job.set_status('started')
+        job.set_status("started")
         self.assertTrue(job.is_started)
 
         # test
@@ -123,12 +108,12 @@ class TestCheckStatus(FakeRedisTestCaseMixin, TestCase):
         # Create an asynchronous queue.
         # The name `separate_queue` used here is to ensure the queue isn't used
         # anywhere else.
-        queue = Queue('separate_queue', connection=self.connection)
+        queue = Queue("separate_queue", connection=self.connection)
         worker = SimpleWorker([queue], connection=queue.connection)
 
         # this job will fail
         job = queue.enqueue(dummy_fail_job)
-        self.assertEqual(job.get_status(), 'queued')
+        self.assertEqual(job.get_status(), "queued")
 
         # run the worker
         worker.work(burst=True)
@@ -139,10 +124,7 @@ class TestCheckStatus(FakeRedisTestCaseMixin, TestCase):
 
     def test_status_cancelled_job(self):
         # add job
-        job = self.scheduler.enqueue_in(
-            timedelta(minutes=5),
-            dummy_job,
-        )
+        job = self.scheduler.enqueue_in(timedelta(minutes=5), dummy_job,)
 
         # cancel job
         self.scheduler.cancel(job)
@@ -155,14 +137,14 @@ class TestCheckStatus(FakeRedisTestCaseMixin, TestCase):
         # Create an asynchronous queue.
         # The name `separate_queue` used here is to ensure the queue isn't
         # used anywhere else.
-        queue = Queue('separate_queue', connection=self.connection)
+        queue = Queue("separate_queue", connection=self.connection)
 
         # add job to the queue
         job = queue.enqueue(dummy_job)
-        self.assertEqual(job.get_status(), 'queued')
+        self.assertEqual(job.get_status(), "queued")
 
         # force the job status to be "started"
-        job.set_status('deferred')
+        job.set_status("deferred")
         self.assertTrue(job.is_deferred)
 
         # test
