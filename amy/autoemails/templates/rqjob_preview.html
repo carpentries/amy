@@ -50,7 +50,7 @@
             <table>
                 <tr>
                     <td>Status:</td>
-                    <td>{% if job and job_scheduled %}{{ job.get_status|default_if_none:"scheduled" }}{% elif job %}{{ job.get_status|default:"cancelled" }}{% else %}&mdash;{% endif %}</td>
+                    <td>{{ status|default:"&mdash;" }}</td>
                 </tr>
                 <tr>
                     <td>Exception info:</td>

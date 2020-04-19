@@ -4,7 +4,10 @@ from django.utils.html import format_html
 from rq.exceptions import NoSuchJobError
 from rq.job import Job
 
-from autoemails.utils import scheduled_execution_time
+from autoemails.utils import (
+    check_status,
+    scheduled_execution_time,
+)
 
 
 class ActionManageMixin:
@@ -74,7 +77,7 @@ class ActionManageMixin:
             rqj = object_.rq_jobs.create(
                 job_id=job.get_id(), trigger=trigger,
                 scheduled_execution=scheduled_at,
-                status="",
+                status=check_status(job),
                 mail_status="",
                 event_slug=action.event_slug(),
                 recipients=action.all_recipients(),

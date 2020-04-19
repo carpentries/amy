@@ -16,7 +16,10 @@ from rq_scheduler.utils import from_unix
 
 from autoemails.forms import RescheduleForm
 from autoemails.models import EmailTemplate, Trigger, RQJob
-from autoemails.utils import scheduled_execution_time
+from autoemails.utils import (
+    check_status,
+    scheduled_execution_time,
+)
 from workshops.util import admin_required
 
 
@@ -78,6 +81,22 @@ class RQJobAdmin(admin.ModelAdmin):
         "event_slug",
         "recipients",
     ]
+    actions = [
+        "action_refresh_state",
+    ]
+
+    def action_refresh_state(self, request, queryset):
+        counter = 0
+        for rqjob in queryset:
+            status = check_status(rqjob.job_id)
+            if status is not None:
+                rqjob.status = status
+                rqjob.save()
+                counter += 1
+
+        self.message_user(request, "Refreshed status of %d RQJob(s)." % counter)
+
+    action_refresh_state.short_description = "Refresh status from Redis"
 
     def manage_links(self, obj):
         link = reverse("admin:autoemails_rqjob_preview", args=[obj.id])
@@ -126,6 +145,7 @@ class RQJobAdmin(admin.ModelAdmin):
             job = Job.fetch(rqjob.job_id, connection=scheduler.connection)
             job_scheduled = scheduled_execution_time(job.get_id(), scheduler)
             instance = job.instance
+            status = check_status(job)
             logger.debug(f"Job {rqjob.job_id} fetched")
 
         # the job may not exist anymore, then we can't retrieve any data
@@ -133,6 +153,7 @@ class RQJobAdmin(admin.ModelAdmin):
             job = None
             job_scheduled = None
             instance = None
+            status = None
             trigger = None
             template = None
             email = None
@@ -171,6 +192,7 @@ class RQJobAdmin(admin.ModelAdmin):
             job=job,
             job_scheduled=job_scheduled,
             instance=instance,
+            status=status,
             trigger=trigger,
             template=template,
             email=email,
