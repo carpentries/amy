@@ -123,6 +123,14 @@ class BaseAction:
         Action."""
         return ""
 
+    def event_slug(self) -> str:
+        """If available, return event's slug."""
+        return ""
+
+    def all_recipients(self) -> str:
+        """If available, return string of all recipients."""
+        return ""
+
     def _context(self, additional_context: Optional[Dict] = None) -> Dict:
         """Prepare general context for lazy-evaluated email message used later
         on."""
@@ -202,6 +210,14 @@ class NewInstructorAction(BaseAction):
 
     # It should be at least 1 hour to give admin some time in case of mistakes.
     launch_at = timedelta(hours=1)
+
+    def event_slug(self) -> str:
+        """If available, return event's slug."""
+        return self.context_objects["event"].slug
+
+    def all_recipients(self) -> str:
+        """If available, return string of all recipients."""
+        return self.context_objects["task"].person.email
 
     @staticmethod
     def check(task: Task):
@@ -319,6 +335,24 @@ class PostWorkshopAction(BaseAction):
         except (AttributeError, KeyError):
             return None
 
+    def event_slug(self) -> str:
+        """If available, return event's slug."""
+        return self.context_objects["event"].slug
+
+    def all_recipients(self) -> str:
+        """If available, return string of all recipients."""
+        return ", ".join(
+            list(
+                Person.objects.filter(
+                    task__in=self.context_objects["event"].task_set.filter(
+                        role__name__in=["host", "instructor"]
+                    )
+                )
+                .distinct()
+                .values_list("email", flat=True)
+            )
+        )
+
     @staticmethod
     def check(event: Event):
         """Conditions for creating a PostWorkshopAction."""
@@ -426,6 +460,19 @@ class SelfOrganisedRequestAction(BaseAction):
             return self.context['all_emails']
         except (AttributeError, KeyError):
             return None
+
+    def event_slug(self) -> str:
+        """If available, return event's slug."""
+        return self.context_objects["event"].slug
+
+    def all_recipients(self) -> str:
+        """If available, return string of all recipients."""
+        request = self.context_objects["request"]
+        emails = [request.email]
+        if request.additional_contact:
+            for email in request.additional_contact.split(TAG_SEPARATOR):
+                emails.append(email)
+        return ", ".join(emails)
 
     @staticmethod
     def check(event: Event):

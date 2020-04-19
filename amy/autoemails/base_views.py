@@ -74,6 +74,10 @@ class ActionManageMixin:
             rqj = object_.rq_jobs.create(
                 job_id=job.get_id(), trigger=trigger,
                 scheduled_execution=scheduled_at,
+                status="",
+                mail_status="",
+                event_slug=action.event_slug(),
+                recipients=action.all_recipients(),
             )
 
             created_jobs.append(job)
