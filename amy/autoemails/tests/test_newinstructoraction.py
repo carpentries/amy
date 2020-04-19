@@ -177,3 +177,54 @@ class TestNewInstructorAction(TestCase):
                 assignee='Regional Coordinator',
             ),
         )
+
+    def test_event_slug(self):
+        e = Event.objects.create(
+            slug='test-event',
+            host=Organization.objects.first(),
+            start=date.today() + timedelta(days=7),
+            end=date.today() + timedelta(days=8),
+            country='GB',
+            venue='Ministry of Magic',
+            address='Underground',
+            latitude=20.0,
+            longitude=20.0,
+            url='https://test-event.example.com',
+        )
+        e.tags.set(Tag.objects.filter(name='SWC'))
+        p = Person.objects.create(personal='Harry', family='Potter',
+                                  email='hp@magic.uk')
+        r = Role.objects.create(name='instructor')
+        t = Task.objects.create(event=e, person=p, role=r)
+
+        a = NewInstructorAction(trigger=Trigger(action='test-action',
+                                                template=EmailTemplate()),
+                                objects=dict(event=e, task=t))
+
+        self.assertEqual(a.event_slug(), "test-event")
+
+    def test_all_recipients(self):
+        e = Event.objects.create(
+            slug='test-event',
+            host=Organization.objects.first(),
+            start=date.today() + timedelta(days=7),
+            end=date.today() + timedelta(days=8),
+            country='GB',
+            venue='Ministry of Magic',
+            address='Underground',
+            latitude=20.0,
+            longitude=20.0,
+            url='https://test-event.example.com',
+
+        )
+        e.tags.set(Tag.objects.filter(name='SWC'))
+        p = Person.objects.create(personal='Harry', family='Potter',
+                                  email='hp@magic.uk')
+        r = Role.objects.create(name='instructor')
+        t = Task.objects.create(event=e, person=p, role=r)
+
+        a = NewInstructorAction(trigger=Trigger(action='test-action',
+                                                template=EmailTemplate()),
+                                objects=dict(event=e, task=t))
+
+        self.assertEqual(a.all_recipients(), "hp@magic.uk")

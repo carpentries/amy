@@ -254,3 +254,59 @@ class TestPostWorkshopAction(TestCase):
         )
         email = a._email()
         self.assertEqual(email.to, [p2.email, p1.email, p3.email])
+
+    def test_event_slug(self):
+        e = Event.objects.create(
+            slug='test-event',
+            host=Organization.objects.first(),
+            start=date.today() + timedelta(days=7),
+            end=date.today() + timedelta(days=8),
+            country='GB',
+            venue='Ministry of Magic',
+        )
+        e.tags.set(Tag.objects.filter(name='LC'))
+        p1 = Person.objects.create(personal='Harry', family='Potter',
+                                   username='hpotter',
+                                   email='hp@magic.uk')
+        r = Role.objects.create(name='instructor')
+        t = Task.objects.create(event=e, person=p1, role=r)
+
+        a = PostWorkshopAction(trigger=Trigger(action='test-action',
+                                               template=EmailTemplate()),
+                               objects=dict(event=e, task=t))
+
+        self.assertEqual(a.event_slug(), "test-event")
+
+    def test_all_recipients(self):
+        e = Event.objects.create(
+            slug='test-event',
+            host=Organization.objects.first(),
+            start=date.today() + timedelta(days=7),
+            end=date.today() + timedelta(days=8),
+            country='GB',
+            venue='Ministry of Magic',
+        )
+        e.tags.set(Tag.objects.filter(name='LC'))
+        p1 = Person.objects.create(personal='Harry', family='Potter',
+                                   username='hpotter',
+                                   email='hp@magic.uk')
+        p2 = Person.objects.create(personal='Hermione', family='Granger',
+                                   username='hgranger',
+                                   email='hg@magic.uk')
+        p3 = Person.objects.create(personal='Ron', family='Weasley',
+                                   username='rweasley',
+                                   email='rw@magic.uk')
+        host = Role.objects.create(name='host')
+        instructor = Role.objects.create(name='instructor')
+        Task.objects.bulk_create([
+            Task(event=e, person=p1, role=instructor),
+            Task(event=e, person=p2, role=instructor),
+            Task(event=e, person=p3, role=host),
+            Task(event=e, person=p1, role=host),
+        ])
+
+        a = PostWorkshopAction(trigger=Trigger(action='test-action',
+                                               template=EmailTemplate()),
+                               objects=dict(event=e))
+
+        self.assertEqual(a.all_recipients(), "hg@magic.uk, hp@magic.uk, rw@magic.uk")

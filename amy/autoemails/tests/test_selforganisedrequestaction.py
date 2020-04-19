@@ -231,3 +231,53 @@ class TestSelfOrganisedRequestAction(TestCase):
         email = a._email()
         self.assertEqual(email.to, ['harry@hogwarts.edu', 'hg@magic.uk',
                                     'rw@magic.uk'])
+
+    def test_event_slug(self):
+        e = Event.objects.create(
+            slug='test-event',
+            host=Organization.objects.first(),
+            start=date.today() + timedelta(days=7),
+            end=date.today() + timedelta(days=8),
+            country='GB',
+            venue='Ministry of Magic',
+        )
+        e.tags.set(Tag.objects.filter(name='LC'))
+
+        a = SelfOrganisedRequestAction(trigger=Trigger(action='test-action',
+                                               template=EmailTemplate()),
+                               objects=dict(event=e))
+
+        self.assertEqual(a.event_slug(), "test-event")
+
+    def test_all_recipients(self):
+        # totally fake Event and SelfOrganisedSubmission
+        e = Event.objects.create(
+            slug='test-event',
+            host=Organization.objects.first(),
+            administrator=Organization.objects.get(domain='self-organized'),
+            start=date.today() + timedelta(days=7),
+            end=date.today() + timedelta(days=8),
+            country='GB',
+        )
+        e.tags.set(Tag.objects.filter(name__in=['LC', 'Circuits',
+                                                'automated-email']))
+        r = SelfOrganisedSubmission.objects.create(
+            state="p", personal="Harry", family="Potter",
+            email="harry@hogwarts.edu",
+            institution_other_name="Hogwarts",
+            workshop_url='',
+            workshop_format='',
+            workshop_format_other='',
+            workshop_types_other_explain='',
+            language=Language.objects.get(name='English'),
+            event=e,
+            additional_contact=
+                TAG_SEPARATOR.join(['hg@magic.uk', 'rw@magic.uk'])
+        )
+        r.workshop_types.set(Curriculum.objects.filter(carpentry="LC"))
+
+        a = SelfOrganisedRequestAction(trigger=Trigger(action='test-action',
+                                               template=EmailTemplate()),
+                               objects=dict(event=e, request=r))
+
+        self.assertEqual(a.all_recipients(), "harry@hogwarts.edu, hg@magic.uk, rw@magic.uk")

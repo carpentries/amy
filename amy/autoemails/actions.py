@@ -219,11 +219,17 @@ class NewInstructorAction(BaseAction):
 
     def event_slug(self) -> str:
         """If available, return event's slug."""
-        return self.context_objects["event"].slug
+        try:
+            return self.context_objects["event"].slug
+        except (KeyError, AttributeError):
+            return ""
 
     def all_recipients(self) -> str:
         """If available, return string of all recipients."""
-        return self.context_objects["task"].person.email
+        try:
+            return self.context_objects["task"].person.email or ""
+        except (KeyError, AttributeError):
+            return ""
 
     @staticmethod
     def check(task: Task):
@@ -343,21 +349,27 @@ class PostWorkshopAction(BaseAction):
 
     def event_slug(self) -> str:
         """If available, return event's slug."""
-        return self.context_objects["event"].slug
+        try:
+            return self.context_objects["event"].slug
+        except (KeyError, AttributeError):
+            return ""
 
     def all_recipients(self) -> str:
         """If available, return string of all recipients."""
-        return ", ".join(
-            list(
-                Person.objects.filter(
-                    task__in=self.context_objects["event"].task_set.filter(
-                        role__name__in=["host", "instructor"]
+        try:
+            return ", ".join(
+                list(
+                    Person.objects.filter(
+                        task__in=self.context_objects["event"].task_set.filter(
+                            role__name__in=["host", "instructor"]
+                        )
                     )
+                    .distinct()
+                    .values_list("email", flat=True)
                 )
-                .distinct()
-                .values_list("email", flat=True)
             )
-        )
+        except (KeyError, AttributeError):
+            return ""
 
     @staticmethod
     def check(event: Event):
@@ -466,16 +478,22 @@ class SelfOrganisedRequestAction(BaseAction):
 
     def event_slug(self) -> str:
         """If available, return event's slug."""
-        return self.context_objects["event"].slug
+        try:
+            return self.context_objects["event"].slug
+        except (KeyError, AttributeError):
+            return ""
 
     def all_recipients(self) -> str:
         """If available, return string of all recipients."""
-        request = self.context_objects["request"]
-        emails = [request.email]
-        if request.additional_contact:
-            for email in request.additional_contact.split(TAG_SEPARATOR):
-                emails.append(email)
-        return ", ".join(emails)
+        try:
+            request = self.context_objects["request"]
+            emails = [request.email]
+            if request.additional_contact:
+                for email in request.additional_contact.split(TAG_SEPARATOR):
+                    emails.append(email)
+            return ", ".join(emails)
+        except (KeyError, AttributeError):
+            return ""
 
     @staticmethod
     def check(event: Event):
