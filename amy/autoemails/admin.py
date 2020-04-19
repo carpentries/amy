@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import logging
 
 from django.contrib import admin, messages
 from django.db.models import TextField
@@ -19,6 +20,7 @@ from autoemails.utils import scheduled_execution_time
 from workshops.util import admin_required
 
 
+logger = logging.getLogger("amy.signals")
 scheduler = django_rq.get_scheduler('default')
 
 
@@ -129,10 +131,13 @@ class RQJobAdmin(admin.ModelAdmin):
         """Show job + email preview (all details and statuses)."""
         rqjob = get_object_or_404(RQJob, id=object_id)
 
+        logger.debug(f"Previewing job {rqjob.job_id}...")
+
         try:
             job = Job.fetch(rqjob.job_id, connection=scheduler.connection)
             job_scheduled = scheduled_execution_time(job.get_id(), scheduler)
             instance = job.instance
+            logger.debug(f"Job {rqjob.job_id} fetched")
 
         # the job may not exist anymore, then we can't retrieve any data
         except NoSuchJobError:
@@ -143,6 +148,7 @@ class RQJobAdmin(admin.ModelAdmin):
             template = None
             email = None
             adn_context = None
+            logger.debug(f"Job {rqjob.job_id} unavailable")
 
         # we can try and read properties
         else:
@@ -190,13 +196,18 @@ class RQJobAdmin(admin.ModelAdmin):
         """Change scheduled execution time to a different timestamp."""
         rqjob = get_object_or_404(RQJob, id=object_id)
 
+        logger.debug(f"Rescheduling job {rqjob.job_id}...")
+
         link = reverse('admin:autoemails_rqjob_preview', args=[object_id])
 
         # fetch job
         try:
             job = Job.fetch(rqjob.job_id, connection=scheduler.connection)
             job_scheduled = scheduled_execution_time(job.get_id(), scheduler)
+            logger.debug(f"Job {rqjob.job_id} fetched")
+
         except NoSuchJobError:
+            logger.debug(f"Job {rqjob.job_id} unavailable")
             messages.warning(request, 'The corresponding job in Redis was '
                                       'probably already executed.')
             return redirect(link)
@@ -208,12 +219,15 @@ class RQJobAdmin(admin.ModelAdmin):
 
                 try:
                     scheduler.change_execution_time(job, new_exec)
+                    logger.debug(f"Job {rqjob.job_id} rescheduled")
                     messages.info(
                         request,
                         f'The job {rqjob.job_id} was rescheduled to '
                         f'{new_exec}.'
                     )
+
                 except ValueError:
+                    logger.debug(f"Job {rqjob.job_id} could not be rescheduled.")
                     messages.warning(
                         request,
                         f"The job {rqjob.job_id} was not "
@@ -230,13 +244,18 @@ class RQJobAdmin(admin.ModelAdmin):
         delta, about 1 minute in default settings)."""
         rqjob = get_object_or_404(RQJob, id=object_id)
 
+        logger.debug(f"Executing job {rqjob.job_id} now (scheduling to +- 1min)...")
+
         link = reverse('admin:autoemails_rqjob_preview', args=[object_id])
 
         # fetch job
         try:
             job = Job.fetch(rqjob.job_id, connection=scheduler.connection)
             job_scheduled = scheduled_execution_time(job.get_id(), scheduler)
+            logger.debug(f"Job {rqjob.job_id} fetched")
+
         except NoSuchJobError:
+            logger.debug(f"Job {rqjob.job_id} unavailable")
             messages.warning(request, 'The corresponding job in Redis was '
                                       'probably already executed.')
             return redirect(link)
@@ -246,9 +265,12 @@ class RQJobAdmin(admin.ModelAdmin):
 
         try:
             scheduler.change_execution_time(job, now_utc)
+            logger.debug(f"Job {rqjob.job_id} rescheduled to now")
             messages.info(request,
                           f'The job {rqjob.job_id} was rescheduled to now.')
+
         except ValueError:
+            logger.debug(f"Job {rqjob.job_id} could not be rescheduled.")
             messages.warning(request, f"The job {rqjob.job_id} was not "
                                       'rescheduled. It is probably already '
                                       'executing or has recently executed.')
@@ -259,22 +281,31 @@ class RQJobAdmin(admin.ModelAdmin):
         """Fetch job and re-try to execute it."""
         rqjob = get_object_or_404(RQJob, id=object_id)
 
+        logger.debug(f"Re-trying job {rqjob.job_id}...")
+
         link = reverse('admin:autoemails_rqjob_preview', args=[object_id])
 
         # fetch job
         try:
             job = Job.fetch(rqjob.job_id, connection=scheduler.connection)
+            logger.debug(f"Job {rqjob.job_id} fetched")
+
         except NoSuchJobError:
+            logger.debug(f"Job {rqjob.job_id} unavailable")
             messages.warning(request, 'The corresponding job in Redis was '
                                       'probably already executed.')
             return redirect(link)
 
         if job.is_failed:
             job.requeue()
+            logger.debug(f"Job {rqjob.job_id} retried. Will run shortly.")
             messages.info(request,
                           f'The job {rqjob.job_id} was requeued. '
                           'It will be run shortly.')
         else:
+            logger.debug(
+                f"Job {rqjob.job_id} can't be retried, because it was successful."
+            )
             messages.warning(request, "You cannot re-try a non-failed job.")
 
         return redirect(link)
@@ -283,12 +314,17 @@ class RQJobAdmin(admin.ModelAdmin):
         """Fetch job and re-try to execute it."""
         rqjob = get_object_or_404(RQJob, id=object_id)
 
+        logger.debug(f"Cancelling job {rqjob.job_id}...")
+
         link = reverse('admin:autoemails_rqjob_preview', args=[object_id])
 
         # fetch job
         try:
             job = Job.fetch(rqjob.job_id, connection=scheduler.connection)
+            logger.debug(f"Job {rqjob.job_id} fetched")
+
         except NoSuchJobError:
+            logger.debug(f"Job {rqjob.job_id} unavailable")
             messages.warning(request, 'The corresponding job in Redis was '
                                       'probably already executed.')
             return redirect(link)
@@ -297,17 +333,22 @@ class RQJobAdmin(admin.ModelAdmin):
             job.cancel()  # for "pure" jobs
             scheduler.cancel(job)  # for scheduler-based jobs
 
+            logger.debug(f"Job {rqjob.job_id} was cancelled.")
             messages.info(request,
                           f'The job {rqjob.job_id} was cancelled.')
 
         elif job.is_started:
             # Right now we don't know how to test a started job, so we simply
             # don't allow such jobs to be cancelled.
+            logger.debug(f"Job {rqjob.job_id} has started and cannot be cancelled.")
             messages.warning(request,
                              f'Job {rqjob.job_id} has started and cannot be '
                              'cancelled.')
 
         elif job.get_status() not in ("", None):
+            logger.debug(
+                f"Job {rqjob.job_id} has unknown status or was already executed."
+            )
             messages.warning(request, 'Job has unknown status or '
                                       'was already executed.')
 
