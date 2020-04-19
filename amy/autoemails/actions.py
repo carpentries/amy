@@ -18,8 +18,8 @@ from workshops.fields import TAG_SEPARATOR
 from workshops.models import Event, Task, Person
 
 
-logger = logging.getLogger('amy.signals')
-scheduler = django_rq.get_scheduler('default')
+logger = logging.getLogger("amy.signals")
+scheduler = django_rq.get_scheduler("default")
 
 
 class BaseAction:
@@ -56,12 +56,12 @@ class BaseAction:
     def __eq__(self, b):
         try:
             return (
-                self.trigger == b.trigger and
-                self.template == b.template and
-                self.context_objects == b.context_objects and
-                self.context == b.context and
-                compare_emails(self.email, b.email) and
-                self.get_launch_at() == b.get_launch_at()
+                self.trigger == b.trigger
+                and self.template == b.template
+                and self.context_objects == b.context_objects
+                and self.context == b.context
+                and compare_emails(self.email, b.email)
+                and self.get_launch_at() == b.get_launch_at()
             )
         except AttributeError:
             return False
@@ -141,18 +141,18 @@ class BaseAction:
 
     def _email(self, *args, **kwargs) -> EmailMultiAlternatives:
         # gather context (it should refresh all related objects from DB)
-        self.logger.debug('Preparing email message context...')
+        self.logger.debug("Preparing email message context...")
         adt_context = self.get_additional_context(objects=self.context_objects)
         self.context = self._context(adt_context)
 
         # refresh trigger DB information
-        self.logger.debug('Refreshing related trigger from DB...')
+        self.logger.debug("Refreshing related trigger from DB...")
         self.trigger.refresh_from_db()
         # Don't refresh template from database!
         # self.template = self.trigger.template
 
         # build email
-        self.logger.debug('Building email with provided context...')
+        self.logger.debug("Building email with provided context...")
         email = self.template.build_email(
             subject=self.subject(),
             sender=self.sender(),
@@ -169,14 +169,16 @@ class BaseAction:
     def __call__(self, *args, **kwargs):
         # gather context and build email
         try:
-            self.logger.debug('Preparing email to be sent...')
+            self.logger.debug("Preparing email to be sent...")
             self.email = self._email()
 
             # check if the recipients are being overridden in the settings
             if settings.AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS:
-                self.logger.debug('Overriding recipient address (due to '
-                                  '`AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS` '
-                                  'setting)...')
+                self.logger.debug(
+                    "Overriding recipient address (due to "
+                    "`AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS` "
+                    "setting)..."
+                )
                 self.email.to = [
                     str(settings.AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS),
                 ]
@@ -184,11 +186,15 @@ class BaseAction:
                 self.email.bcc = []
 
             # send email
-            self.logger.debug('Sending email...')
+            self.logger.debug("Sending email...")
             return self.email.send(fail_silently=False)
-        except (TemplateSyntaxError, TemplateDoesNotExist,
-                Trigger.DoesNotExist, EmailTemplate.DoesNotExist) as e:
-            self.logger.debug('Error occurred: {}', str(e))
+        except (
+            TemplateSyntaxError,
+            TemplateDoesNotExist,
+            Trigger.DoesNotExist,
+            EmailTemplate.DoesNotExist,
+        ) as e:
+            self.logger.debug("Error occurred: {}", str(e))
             return False
 
 
@@ -227,22 +233,25 @@ class NewInstructorAction(BaseAction):
             #             because it was supposed to apply on for non-targeted
             #             communication like newsletter
             # task.person.may_contact and
-            task.role.name == 'instructor' and
-            not task.event.tags.filter(name__in=[
-                'cancelled', 'unresponsive', 'stalled'
-            ]) and
+            task.role.name == "instructor"
+            and not task.event.tags.filter(
+                name__in=["cancelled", "unresponsive", "stalled"]
+            )
+            and
             # 2019-12-24: instead of accepting only upcoming Events, let's
             #             accept (more broadly) events starting in future
             #             or some without start date
             # 2020-01-31: slightly rewrite (less queries)
-            (not task.event.start or task.event.start >= date.today()) and
+            (not task.event.start or task.event.start >= date.today())
+            and
             # 2020-02-07: the task must have "automated-email" tag in order to
             #             be used for Email Automation
-            task.event.tags.filter(name__icontains='automated-email') and
+            task.event.tags.filter(name__icontains="automated-email")
+            and
             # 2020-02-11: only for workshops administered by LC/DC/SWC
-            task.event.administrator and
-            task.event.administrator.domain != 'self-organized' and
-            task.event.administrator.domain != 'carpentries.org'
+            task.event.administrator
+            and task.event.administrator.domain != "self-organized"
+            and task.event.administrator.domain != "carpentries.org"
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
@@ -252,32 +261,29 @@ class NewInstructorAction(BaseAction):
         )
 
         # refresh related event
-        event = objects['event']
-        task = objects['task']
+        event = objects["event"]
+        task = objects["task"]
         event.refresh_from_db()
         task.refresh_from_db()
 
         # prepare context
         context = dict()
-        context['workshop'] = event
-        context['workshop_main_type'] = None
+        context["workshop"] = event
+        context["workshop_main_type"] = None
         tmp = event.tags.carpentries().first()
         if tmp:
-            context['workshop_main_type'] = tmp.name
-        context['dates'] = None
+            context["workshop_main_type"] = tmp.name
+        context["dates"] = None
         if event.start and event.end:
-            context['dates'] = human_daterange(event.start, event.end)
-        context['host'] = event.host
-        context['regional_coordinator_email'] = \
-            list(match_notification_email(event))
-        context['task'] = task
-        context['person'] = task.person
-        context['instructor'] = task.person
-        context['role'] = task.role
-        context['assignee'] = (
-            event.assigned_to.full_name
-            if event.assigned_to
-            else 'Regional Coordinator'
+            context["dates"] = human_daterange(event.start, event.end)
+        context["host"] = event.host
+        context["regional_coordinator_email"] = list(match_notification_email(event))
+        context["task"] = task
+        context["person"] = task.person
+        context["instructor"] = task.person
+        context["role"] = task.role
+        context["assignee"] = (
+            event.assigned_to.full_name if event.assigned_to else "Regional Coordinator"
         )
 
         return context
@@ -308,7 +314,7 @@ class PostWorkshopAction(BaseAction):
     launch_at = timedelta(days=7)
 
     def get_launch_at(self):
-        event = self.context_objects.get('event', None)
+        event = self.context_objects.get("event", None)
         try:
             # if the event runs in 3 weeks, then we should get
             # timedelta(days=21) + self.launch_at
@@ -331,7 +337,7 @@ class PostWorkshopAction(BaseAction):
         """Assuming self.context is ready, overwrite email's recipients
         with selected ones."""
         try:
-            return self.context['all_emails']
+            return self.context["all_emails"]
         except (AttributeError, KeyError):
             return None
 
@@ -358,22 +364,24 @@ class PostWorkshopAction(BaseAction):
         """Conditions for creating a PostWorkshopAction."""
         return bool(
             # end date is required and in future
-            event.end and
-            event.end >= date.today() and
+            event.end
+            and event.end >= date.today()
+            and
             # event cannot be cancelled / unresponsive / stalled
-            not event.tags.filter(name__in=[
-                'cancelled', 'unresponsive', 'stalled'
-            ]) and
+            not event.tags.filter(name__in=["cancelled", "unresponsive", "stalled"])
+            and
             # 2020-02-07: changed conditions below
             # must have "automated-email" tag
-            event.tags.filter(name__icontains='automated-email') and
+            event.tags.filter(name__icontains="automated-email")
+            and
             # must have LC, DC, or SWC tags
-            event.tags.filter(name__in=['LC', 'DC', 'SWC']) and
+            event.tags.filter(name__in=["LC", "DC", "SWC"])
+            and
             # must not be self-organized or instructor training
             # 2020-02-11: only for workshops administered by other than
             #             Instructor Training
-            event.administrator and
-            event.administrator.domain != 'carpentries.org'
+            event.administrator
+            and event.administrator.domain != "carpentries.org"
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
@@ -384,50 +392,45 @@ class PostWorkshopAction(BaseAction):
         )
 
         # refresh related event
-        event = objects['event']
+        event = objects["event"]
         event.refresh_from_db()
 
         # prepare context
         context = dict()
-        context['workshop'] = event
-        context['workshop_main_type'] = None
+        context["workshop"] = event
+        context["workshop_main_type"] = None
         tmp = event.tags.carpentries().first()
         if tmp:
-            context['workshop_main_type'] = tmp.name
-        context['dates'] = None
+            context["workshop_main_type"] = tmp.name
+        context["dates"] = None
         if event.end:
-            context['dates'] = human_daterange(event.start, event.end)
-        context['host'] = event.host
-        context['regional_coordinator_email'] = \
-            list(match_notification_email(event))
+            context["dates"] = human_daterange(event.start, event.end)
+        context["host"] = event.host
+        context["regional_coordinator_email"] = list(match_notification_email(event))
 
         # to get only people from the task set
-        context['instructors'] = list(
+        context["instructors"] = list(
             Person.objects.filter(
-                task__in=event.task_set.filter(role__name='instructor')
+                task__in=event.task_set.filter(role__name="instructor")
             )
         )
-        context['helpers'] = list(
-            Person.objects.filter(
-                task__in=event.task_set.filter(role__name='helper')
-            )
+        context["helpers"] = list(
+            Person.objects.filter(task__in=event.task_set.filter(role__name="helper"))
         )
 
         # querying over Person.objects lets us get rid of duplicates
-        context['all_emails'] = list(
+        context["all_emails"] = list(
             Person.objects.filter(
-                task__in=event.task_set.filter(
-                    role__name__in=['host', 'instructor']
-                )
-            ).distinct().values_list('email', flat=True)
+                task__in=event.task_set.filter(role__name__in=["host", "instructor"])
+            )
+            .distinct()
+            .values_list("email", flat=True)
         )
-        context['assignee'] = (
-            event.assigned_to.full_name
-            if event.assigned_to
-            else 'Regional Coordinator'
+        context["assignee"] = (
+            event.assigned_to.full_name if event.assigned_to else "Regional Coordinator"
         )
 
-        context['reports_link'] = reports_link(event.slug)
+        context["reports_link"] = reports_link(event.slug)
 
         return context
 
@@ -457,7 +460,7 @@ class SelfOrganisedRequestAction(BaseAction):
         """Assuming self.context is ready, overwrite email's recipients
         with selected ones."""
         try:
-            return self.context['all_emails']
+            return self.context["all_emails"]
         except (AttributeError, KeyError):
             return None
 
@@ -480,17 +483,19 @@ class SelfOrganisedRequestAction(BaseAction):
         try:
             return bool(
                 # is self-organized
-                event.administrator and
-                event.administrator.domain == 'self-organized' and
+                event.administrator
+                and event.administrator.domain == "self-organized"
+                and
                 # starts in future
-                event.start and
-                event.start >= date.today() and
+                event.start
+                and event.start >= date.today()
+                and
                 # no "cancelled", "unresponsive", or "stalled" tags
-                not event.tags.filter(name__in=[
-                    'cancelled', 'unresponsive', 'stalled'
-                ]) and
+                not event.tags.filter(name__in=["cancelled", "unresponsive", "stalled"])
+                and
                 # special "automated-email" tag
-                event.tags.filter(name__icontains='automated-email') and
+                event.tags.filter(name__icontains="automated-email")
+                and
                 # there should be a related object `SelfOrganisedSubmission`
                 event.selforganisedsubmission
             )
@@ -503,42 +508,37 @@ class SelfOrganisedRequestAction(BaseAction):
         from workshops.util import match_notification_email, human_daterange
 
         # refresh related event and request
-        event = objects['event']
+        event = objects["event"]
         event.refresh_from_db()
-        request = objects['request']  # SelfOrganisedSubmission
+        request = objects["request"]  # SelfOrganisedSubmission
         request.refresh_from_db()
 
         # prepare context
         context = dict()
-        context['workshop'] = event
-        context['request'] = request
-        context['workshop_main_type'] = None
+        context["workshop"] = event
+        context["request"] = request
+        context["workshop_main_type"] = None
         tmp = event.tags.carpentries().first()
         if tmp:
-            context['workshop_main_type'] = tmp.name
-        context['dates'] = None
+            context["workshop_main_type"] = tmp.name
+        context["dates"] = None
         if event.end:
-            context['dates'] = human_daterange(event.start, event.end)
-        context['host'] = event.host
-        context['regional_coordinator_email'] = \
-            list(match_notification_email(event))
+            context["dates"] = human_daterange(event.start, event.end)
+        context["host"] = event.host
+        context["regional_coordinator_email"] = list(match_notification_email(event))
 
         # event starts in less (or equal) than 10 days
-        context['short_notice'] = (
-            event.start <= (date.today() + timedelta(days=10))
-        )
+        context["short_notice"] = event.start <= (date.today() + timedelta(days=10))
 
         # querying over Person.objects lets us get rid of duplicates
-        context['all_emails'] = [request.email]
+        context["all_emails"] = [request.email]
         # additional contact info (see CommonRequest for details)
         if request.additional_contact:
             for email in request.additional_contact.split(TAG_SEPARATOR):
-                context['all_emails'].append(email)
+                context["all_emails"].append(email)
 
-        context['assignee'] = (
-            event.assigned_to.full_name
-            if event.assigned_to
-            else 'Regional Coordinator'
+        context["assignee"] = (
+            event.assigned_to.full_name if event.assigned_to else "Regional Coordinator"
         )
 
         return context
