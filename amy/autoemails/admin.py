@@ -192,7 +192,6 @@ class RQJobAdmin(admin.ModelAdmin):
         # fetch job
         try:
             job = Job.fetch(rqjob.job_id, connection=scheduler.connection)
-            job_scheduled = scheduled_execution_time(job.get_id(), scheduler)
             logger.debug(f"Job {rqjob.job_id} fetched")
 
         except NoSuchJobError:
@@ -241,7 +240,6 @@ class RQJobAdmin(admin.ModelAdmin):
         # fetch job
         try:
             job = Job.fetch(rqjob.job_id, connection=scheduler.connection)
-            job_scheduled = scheduled_execution_time(job.get_id(), scheduler)
             logger.debug(f"Job {rqjob.job_id} fetched")
 
         except NoSuchJobError:
