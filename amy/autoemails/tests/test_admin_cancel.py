@@ -165,7 +165,7 @@ class TestAdminJobCancel(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
 
         # force the job status to be "started"
         job.set_status('started')
-        self.assertEqual(job.get_status(), 'started')
+        self.assertTrue(job.is_started)
 
         url = reverse('admin:autoemails_rqjob_cancel', args=[rqjob.pk])
         rv = self.client.get(url, follow=True)
@@ -194,7 +194,7 @@ class TestAdminJobCancel(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         # force the job status to be "deferred" (could be something else,
         # except for "started" and "queued")
         job.set_status('deferred')
-        self.assertEqual(job.get_status(), 'deferred')
+        self.assertTrue(job.is_deferred)
 
         url = reverse('admin:autoemails_rqjob_cancel', args=[rqjob.pk])
         rv = self.client.get(url, follow=True)
