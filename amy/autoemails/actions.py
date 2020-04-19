@@ -72,10 +72,10 @@ class BaseAction:
         for creating an Action instance."""
         raise NotImplementedError()
 
-    def get_launch_at(self, *args, **kwargs):
+    def get_launch_at(self, *args, **kwargs) -> Optional[timedelta]:
         return self.launch_at
 
-    def get_additional_context(self, objects=None, *args, **kwargs):
+    def get_additional_context(self, objects=None, *args, **kwargs) -> dict:
         if self.additional_context:
             ctx = self.additional_context.copy()
         else:
@@ -87,38 +87,38 @@ class BaseAction:
             pass
         return ctx
 
-    def subject(self):
+    def subject(self) -> str:
         """Overwrite in order to set own subject from descending Action."""
         return ""
 
-    def sender(self):
+    def sender(self) -> str:
         """Overwrite in order to set own sender from descending Action."""
         return ""
 
-    def recipients(self):
+    def recipients(self) -> Optional[str]:
         """Overwrite in order to set own recipients from descending Action."""
         return None
 
-    def cc_recipients(self):
+    def cc_recipients(self) -> Optional[str]:
         """Overwrite in order to set own CC recipients from descending
         Action."""
         return None
 
-    def bcc_recipients(self):
+    def bcc_recipients(self) -> Optional[str]:
         """Overwrite in order to set own BCC recipients from descending
         Action."""
         return None
 
-    def reply_to(self):
+    def reply_to(self) -> str:
         """Overwrite in order to set own reply-to from descending Action."""
         return ""
 
-    def email_text(self):
+    def email_text(self) -> str:
         """Overwrite in order to set own email text body from descending
         Action."""
         return ""
 
-    def email_html(self):
+    def email_html(self) -> str:
         """Overwrite in order to set own email HTML body from descending
         Action."""
         return ""
