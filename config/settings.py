@@ -614,6 +614,10 @@ RQ_SHOW_ADMIN_LINK = False
 # If you need custom exception handlers
 # RQ_EXCEPTION_HANDLERS = ['path.to.my.handler']
 
+RQ = {
+    'JOB_CLASS': 'autoemails.job.Job',
+}
+
 
 # Autoemails application settings
 # -----------------------------------------------------------------------------
