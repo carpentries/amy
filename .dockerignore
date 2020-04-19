@@ -35,6 +35,7 @@ DB_backups/*
 # log file
 amy.log
 amy_debug.log
+worker_debug.log
 
 # Redis Docker local volume
 redis/*
