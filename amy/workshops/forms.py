@@ -471,6 +471,7 @@ class EventForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         show_lessons = kwargs.pop('show_lessons', False)
+        add_comment = kwargs.pop('add_comment', True)
         super().__init__(*args, **kwargs)
 
         self.helper.layout = Layout(
@@ -499,7 +500,6 @@ class EventForm(forms.ModelForm):
                     css_class='card-body'),
                 css_class='card mb-2'
             ),
-            'comment',
         )
 
         # if we want to show lessons, we need to alter existing layout
@@ -512,6 +512,11 @@ class EventForm(forms.ModelForm):
             )
         else:
             del self.fields['lessons']
+
+        if add_comment:
+            self.helper.layout.append('comment')
+        else:
+            del self.fields['comment']
 
     def clean_slug(self):
         # Ensure slug is in "YYYY-MM-DD-location" format
@@ -585,10 +590,12 @@ class EventForm(forms.ModelForm):
     def save(self, *args, **kwargs):
         res = super().save(*args, **kwargs)
 
-        create_comment_signal.send(sender=self.__class__,
-                                   content_object=res,
-                                   comment=self.cleaned_data['comment'],
-                                   timestamp=None)
+        comment = self.cleaned_data.get('comment')
+        if comment:
+            create_comment_signal.send(sender=self.__class__,
+                                       content_object=res,
+                                       comment=comment,
+                                       timestamp=None)
 
         return res
 
@@ -603,9 +610,6 @@ class EventCreateForm(EventForm):
 
 
 class TaskForm(WidgetOverrideMixin, forms.ModelForm):
-
-    helper = BootstrapHelper(add_cancel_button=False)
-
     SEAT_MEMBERSHIP_HELP_TEXT = (
         '{}<br><b>Hint:</b> you can use input format YYYY-MM-DD to display '
         'memberships available on that date.'.format(
@@ -635,6 +639,11 @@ class TaskForm(WidgetOverrideMixin, forms.ModelForm):
             'event': ModelSelect2Widget(data_view='event-lookup',
                                         attrs=SELECT2_SIDEBAR),
         }
+
+    def __init__(self, *args, **kwargs):
+        form_tag = kwargs.pop('form_tag', True)
+        super().__init__(*args, **kwargs)
+        self.helper = BootstrapHelper(add_cancel_button=False, form_tag=form_tag)
 
 
 class PersonForm(forms.ModelForm):
