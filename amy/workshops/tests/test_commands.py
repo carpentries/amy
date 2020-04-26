@@ -162,7 +162,7 @@ class TestWebsiteUpdatesCommand(TestBase):
 <meta name="invalid" content="invalid" />
 <meta name="instructor" content="Hermione Granger|Ron Weasley" />
 <meta name="helper" content="Peter Parker|Tony Stark|Natasha Romanova" />
-<meta name="contact" content="hermione@granger.co.uk, rweasley@ministry.gov" />
+<meta name="contact" content="hermione@granger.co.uk|rweasley@ministry.gov" />
 <meta name="eventbrite" content="10000000" />
 <meta name="charset" content="utf-8" />
 </head>
@@ -183,7 +183,7 @@ class TestWebsiteUpdatesCommand(TestBase):
             'reg_key': 10000000,
             'instructors': ['Hermione Granger', 'Ron Weasley'],
             'helpers': ['Peter Parker', 'Tony Stark', 'Natasha Romanova'],
-            'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
+            'contact': ['hermione@granger.co.uk', 'rweasley@ministry.gov'],
         }
 
         self.date_serialization_tests = [
@@ -315,7 +315,7 @@ class TestWebsiteUpdatesCommand(TestBase):
         self.assertIn('2015-07-13-test', serialized_json)
         self.assertIn('-109.045173', serialized_json)
         self.assertIn('36.998977', serialized_json)
-        self.assertIn('hermione@granger.co.uk, rweasley@ministry.gov',
+        self.assertIn('["hermione@granger.co.uk", "rweasley@ministry.gov"]',
                       serialized_json)
 
         deserialized_data = self.cmd.deserialize(serialized_json)

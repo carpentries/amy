@@ -36,8 +36,9 @@ from workshops.models import (
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330: https://github.com/swcarpentry/amy/issues/1330
 from workshops.fields import (
-    Select2Widget,
     Select2MultipleWidget,
+    Select2TagWidget,
+    Select2Widget,
     ModelSelect2Widget,
     ModelSelect2MultipleWidget,
     RadioSelectWithOther,
@@ -456,6 +457,7 @@ class EventForm(forms.ModelForm):
             }),
             'curricula': CheckboxSelectMultiple(),
             'lessons': CheckboxSelectMultiple(),
+            'contact': Select2TagWidget,
         }
 
     class Media:
