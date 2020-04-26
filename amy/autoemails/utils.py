@@ -1,5 +1,9 @@
+from typing import Union
+
 import django_rq
 import pytz
+from rq.exceptions import NoSuchJobError
+from rq.job import Job
 from rq_scheduler.utils import from_unix
 
 
@@ -45,3 +49,22 @@ def compare_emails(a, b):
             )
         except AttributeError:
             return False
+
+
+def check_status(job: Union[str, Job], scheduler=None):
+    _scheduler = scheduler
+    if not scheduler:
+        _scheduler = django_rq.get_scheduler('default')
+
+    if not isinstance(job, Job):
+        try:
+            job = Job.fetch(job, connection=_scheduler.connection)
+        except NoSuchJobError:
+            return None
+
+    scheduled = scheduled_execution_time(job.get_id(), scheduler)
+
+    if scheduled:
+        return job.get_status() or "scheduled"
+    else:
+        return job.get_status() or "cancelled"

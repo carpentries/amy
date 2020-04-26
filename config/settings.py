@@ -542,7 +542,14 @@ LOGGING = {
             'formatter': 'verbose',
             'filename': env.path('AMY_DEBUG_LOGFILE',
                                  default=ROOT_DIR('amy_debug.log')),
-        }
+        },
+        'worker_log_file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'formatter': 'verbose',
+            'filename': env.path('AMY_WORKER_LOGFILE',
+                                 default=ROOT_DIR('worker_debug.log')),
+        },
     },
     'loggers': {
         # disable "Invalid HTTP_HOST" notifications
@@ -563,6 +570,10 @@ LOGGING = {
             'handlers': ['log_file', ],
             'level': 'ERROR',
             'propagate': True,
+        },
+        'rq.worker': {
+            'handlers': ['worker_log_file', ],
+            'level': 'DEBUG',
         },
     },
 }
@@ -602,6 +613,10 @@ RQ_QUEUES = {
 RQ_SHOW_ADMIN_LINK = False
 # If you need custom exception handlers
 # RQ_EXCEPTION_HANDLERS = ['path.to.my.handler']
+
+RQ = {
+    'JOB_CLASS': 'autoemails.job.Job',
+}
 
 
 # Autoemails application settings

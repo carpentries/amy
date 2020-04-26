@@ -38,6 +38,7 @@ amy/workshops/git_version.py
 # log file
 amy.log
 amy_debug.log
+worker_debug.log
 
 # Redis Docker local volume
 redis/*
