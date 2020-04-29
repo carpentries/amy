@@ -239,26 +239,30 @@
         <fieldset class="module aligned">
             <h2>Change scheduled execution time</h2>
             {{ form }}
+            <p><input type="submit" value="Reschedule"></p>
         </fieldset>
-    </div>
-    <div class="submit-row">
-        <p class="deletelink-box"><a href="{% url 'admin:autoemails_rqjob_sendnow' object_id=rqjob.pk %}" class="deletelink">Send now</a></p>
-        <input type="submit" value="Reschedule" class="default">
     </div>
     {{ form.media }}
 </form>
 {% endif %}
+<div class="box">
+    {% if job and job.is_queued or job and job_scheduled %}
+    <form method="POST" action="{% url 'admin:autoemails_rqjob_cancel' object_id=rqjob.pk %}" class="prev-link">
+        {% csrf_token %}
+        <input type="submit" value="Cancel job" class="danger">
+    </form>
+    {% endif %}
+    {% if form and job and job_scheduled %}
+    <form method="POST" action="{% url 'admin:autoemails_rqjob_sendnow' object_id=rqjob.pk %}" class="next-link">
+        {% csrf_token %}
+        <input type="submit" value="Send now" class="warning">
+    </form>
+    {% endif %}
+</div>
 
 {% if job and job.is_failed %}
 <div class="submit-row">
     <p class="deletelink-box"><a href="{% url 'admin:autoemails_rqjob_retry' object_id=rqjob.pk %}" class="deletelink">Re-try</a></p>
-</div>
-{% endif %}
-
-
-{% if job and job.is_queued or job and job_scheduled %}
-<div class="submit-row">
-    <p class="deletelink-box"><a href="{% url 'admin:autoemails_rqjob_cancel' object_id=rqjob.pk %}" class="deletelink">Cancel job</a></p>
 </div>
 {% endif %}
 

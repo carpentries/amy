@@ -34,10 +34,18 @@ class TestAdminJobReschedule(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         # bring back saved scheduler
         admin.scheduler = self._saved_scheduler
 
+    def test_view_doesnt_allow_GET(self):
+        # log admin user
+        self._logSuperuserIn()
+
+        url = reverse('admin:autoemails_rqjob_reschedule', args=[self.rqjob.pk])
+        rv = self.client.get(url)
+        self.assertEqual(rv.status_code, 405)  # Method not allowed
+
     def test_view_access_by_anonymous(self):
         url = reverse('admin:autoemails_rqjob_reschedule',
                       args=[self.rqjob.pk])
-        rv = self.client.get(url)
+        rv = self.client.post(url)
         self.assertEqual(rv.status_code, 302)
         # cannot check by assertRedirect because there's additional `?next`
         # parameter
@@ -50,7 +58,7 @@ class TestAdminJobReschedule(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         # try accessing the view again
         url = reverse('admin:autoemails_rqjob_reschedule',
                       args=[self.rqjob.pk])
-        rv = self.client.get(url)
+        rv = self.client.post(url)
         self.assertEqual(rv.status_code, 302)
         self.assertRedirects(rv, reverse('admin:autoemails_rqjob_preview',
                                          args=[self.rqjob.pk]))
@@ -63,7 +71,7 @@ class TestAdminJobReschedule(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
             Job.fetch(self.rqjob.job_id, connection=self.scheduler.connection)
 
         url = reverse('admin:autoemails_rqjob_reschedule', args=[self.rqjob.pk])
-        rv = self.client.get(url, follow=True)
+        rv = self.client.post(url, follow=True)
         self.assertIn(
             'The corresponding job in Redis was probably already executed',
             rv.content.decode('utf-8'),

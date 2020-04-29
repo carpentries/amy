@@ -39,9 +39,17 @@ class TestAdminJobRetry(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         # bring back saved scheduler
         admin.scheduler = self._saved_scheduler
 
-    def test_view_access_by_anonymous(self):
+    def test_view_doesnt_allow_GET(self):
+        # log admin user
+        self._logSuperuserIn()
+
         url = reverse('admin:autoemails_rqjob_retry', args=[self.rqjob.pk])
         rv = self.client.get(url)
+        self.assertEqual(rv.status_code, 405)  # Method not allowed
+
+    def test_view_access_by_anonymous(self):
+        url = reverse('admin:autoemails_rqjob_retry', args=[self.rqjob.pk])
+        rv = self.client.post(url)
         self.assertEqual(rv.status_code, 302)
         # cannot check by assertRedirect because there's additional `?next`
         # parameter
@@ -53,7 +61,7 @@ class TestAdminJobRetry(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
 
         # try accessing the view again
         url = reverse('admin:autoemails_rqjob_retry', args=[self.rqjob.pk])
-        rv = self.client.get(url)
+        rv = self.client.post(url)
         self.assertEqual(rv.status_code, 302)
         self.assertRedirects(rv, reverse('admin:autoemails_rqjob_preview',
                                          args=[self.rqjob.pk]))
@@ -66,7 +74,7 @@ class TestAdminJobRetry(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
             Job.fetch(self.rqjob.job_id, connection=self.scheduler.connection)
 
         url = reverse('admin:autoemails_rqjob_retry', args=[self.rqjob.pk])
-        rv = self.client.get(url, follow=True)
+        rv = self.client.post(url, follow=True)
         self.assertIn(
             'The corresponding job in Redis was probably already executed',
             rv.content.decode('utf-8'),
@@ -88,7 +96,7 @@ class TestAdminJobRetry(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
                 )
             )
         url = reverse('admin:autoemails_rqjob_retry', args=[rqjob1.pk])
-        rv = self.client.get(url, follow=True)
+        rv = self.client.post(url, follow=True)
         self.assertIn(
             "You cannot re-try a non-failed job.",
             rv.content.decode('utf-8'),
@@ -105,7 +113,7 @@ class TestAdminJobRetry(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         self.scheduler.enqueue_job(job2)
         Job.fetch(job2.id, connection=self.scheduler.connection)  # no error
         url = reverse('admin:autoemails_rqjob_retry', args=[rqjob2.pk])
-        rv = self.client.get(url, follow=True)
+        rv = self.client.post(url, follow=True)
         self.assertIn(
             "You cannot re-try a non-failed job.",
             rv.content.decode('utf-8'),
@@ -135,7 +143,7 @@ class TestAdminJobRetry(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         self.assertEqual(job.get_status(), 'failed')
 
         url = reverse('admin:autoemails_rqjob_retry', args=[rqjob.pk])
-        rv = self.client.get(url, follow=True)
+        rv = self.client.post(url, follow=True)
         self.assertIn(
             f'The job {job.id} was requeued. It will be run shortly.',
             rv.content.decode('utf-8'),

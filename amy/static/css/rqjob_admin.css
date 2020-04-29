@@ -21,3 +21,44 @@
     grid-column: 2 / 3;
     justify-self: end;
 }
+a.next-link,
+a.prev-link {
+    background-color: #79aec8;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    cursor: pointer;
+}
+a.next-link:hover,
+a.next-link:focus,
+a.prev-link:hover,
+a.prev-link:focus {
+    background: #609ab6;
+}
+
+.btn.danger,
+input[type=submit].danger {
+    background-color: hsl(0, 92%, 70%);
+    color: #fff;
+    cursor: pointer;
+}
+.btn.danger:hover,
+.btn.danger:focus,
+input[type=submit].danger:hover,
+input[type=submit].danger:focus {
+    background-color: hsl(0, 100%, 60%);
+}
+
+.btn.warning,
+input[type=submit].warning {
+    background-color: hsl(45, 92%, 70%);
+    color: #333;
+}
+
+.btn.warning:hover,
+.btn.warning:focus,
+input[type=submit].warning:hover,
+input[type=submit].warning:focus {
+    background-color: hsl(45, 92%, 55%);
+}

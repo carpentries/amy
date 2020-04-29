@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.html import format_html
+from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
 import django_rq
 from markdownx.widgets import AdminMarkdownxWidget
@@ -203,6 +204,7 @@ class RQJobAdmin(admin.ModelAdmin):
         )
         return TemplateResponse(request, "rqjob_preview.html", context)
 
+    @method_decorator(require_POST)
     def reschedule(self, request, object_id):
         """Change scheduled execution time to a different timestamp."""
         rqjob = get_object_or_404(RQJob, id=object_id)
@@ -250,6 +252,7 @@ class RQJobAdmin(admin.ModelAdmin):
 
         return redirect(link)
 
+    @method_decorator(require_POST)
     def reschedule_now(self, request, object_id):
         """Reschedule an existing job so it executes now (+/- refresh time
         delta, about 1 minute in default settings)."""
@@ -291,6 +294,7 @@ class RQJobAdmin(admin.ModelAdmin):
 
         return redirect(link)
 
+    @method_decorator(require_POST)
     def retry(self, request, object_id):
         """Fetch job and re-try to execute it."""
         rqjob = get_object_or_404(RQJob, id=object_id)
@@ -327,6 +331,7 @@ class RQJobAdmin(admin.ModelAdmin):
 
         return redirect(link)
 
+    @method_decorator(require_POST)
     def cancel(self, request, object_id):
         """Fetch job and re-try to execute it."""
         rqjob = get_object_or_404(RQJob, id=object_id)
