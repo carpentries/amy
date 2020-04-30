@@ -228,21 +228,38 @@
 </div>
 {% endif %}
 
-{% if form and job and job_scheduled %}
+{% if template_form and job and job_scheduled %}
+<form method="POST" action="{% url 'admin:autoemails_rqjob_edit_template' object_id=rqjob.pk %}">
+    {% csrf_token %}
+    <div>
+        {% if template_form.errors %}
+            <p class="errornote">Please correct the errors below.</p>
+            {{ template_form.non_field_errors }}
+        {% endif %}
+        <fieldset class="module aligned">
+            <h2>Change email template</h2>
+            {{ template_form }}
+            <p><input type="submit" value="Update"></p>
+        </fieldset>
+    </div>
+    {{ template_form.media }}
+</form>
+{% endif %}
+{% if reschedule_form and job and job_scheduled %}
 <form method="POST" action="{% url 'admin:autoemails_rqjob_reschedule' object_id=rqjob.pk %}">
     {% csrf_token %}
     <div>
-        {% if errors %}
+        {% if reschedule_form.errors %}
             <p class="errornote">Please correct the errors below.</p>
-            {{ form.non_field_errors }}
+            {{ reschedule_form.non_field_errors }}
         {% endif %}
         <fieldset class="module aligned">
             <h2>Change scheduled execution time</h2>
-            {{ form }}
+            {{ reschedule_form }}
             <p><input type="submit" value="Reschedule"></p>
         </fieldset>
     </div>
-    {{ form.media }}
+    {{ reschedule_form.media }}
 </form>
 {% endif %}
 <div class="box">
@@ -252,7 +269,7 @@
         <input type="submit" value="Cancel job" class="danger">
     </form>
     {% endif %}
-    {% if form and job and job_scheduled %}
+    {% if job and job_scheduled %}
     <form method="POST" action="{% url 'admin:autoemails_rqjob_sendnow' object_id=rqjob.pk %}" class="next-link">
         {% csrf_token %}
         <input type="submit" value="Send now" class="warning">

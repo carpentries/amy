@@ -15,7 +15,7 @@ from rq.exceptions import NoSuchJobError
 from rq.job import Job
 from rq_scheduler.utils import from_unix
 
-from autoemails.forms import RescheduleForm
+from autoemails.forms import RescheduleForm, TemplateForm
 from autoemails.models import EmailTemplate, Trigger, RQJob
 from autoemails.utils import (
     check_status,
@@ -133,6 +133,11 @@ class RQJobAdmin(admin.ModelAdmin):
                 admin_required(self.admin_site.admin_view(self.cancel)),
                 name="autoemails_rqjob_cancel",
             ),
+            path(
+                "<path:object_id>/template/",
+                admin_required(self.admin_site.admin_view(self.edit_template)),
+                name="autoemails_rqjob_edit_template",
+            ),
         ]
         return new_urls + original_urls
 
@@ -174,11 +179,17 @@ class RQJobAdmin(admin.ModelAdmin):
                 email = None
                 adn_context = None
 
-        form = None
+        reschedule_form = None
         if job and not job.is_failed:
             now_utc = datetime.utcnow() + timedelta(minutes=10)
-            form = RescheduleForm(
+            reschedule_form = RescheduleForm(
                 initial=dict(scheduled_execution=job_scheduled or now_utc)
+            )
+
+        template_form = None
+        if instance and job and not job.is_failed:
+            template_form = TemplateForm(
+                initial=dict(template=instance.template.body_template)
             )
 
         # find prev / next RQJob in the list
@@ -198,7 +209,8 @@ class RQJobAdmin(admin.ModelAdmin):
             template=template,
             email=email,
             adn_context=adn_context,
-            form=form,
+            reschedule_form=reschedule_form,
+            template_form=template_form,
             previous=previous,
             next=next_,
         )
@@ -373,6 +385,55 @@ class RQJobAdmin(admin.ModelAdmin):
                 f"Job {rqjob.job_id} has unknown status or was already executed."
             )
             messages.warning(request, "Job has unknown status or was already executed.")
+
+        return redirect(link)
+
+    @method_decorator(require_POST)
+    def edit_template(self, request, object_id):
+        """Edit email template of a scheduled job."""
+        rqjob = get_object_or_404(RQJob, id=object_id)
+
+        logger.debug(f"Editing job email template {rqjob.job_id}...")
+
+        link = reverse("admin:autoemails_rqjob_preview", args=[object_id])
+
+        # fetch job
+        try:
+            job = Job.fetch(rqjob.job_id, connection=scheduler.connection)
+            logger.debug(f"Job {rqjob.job_id} fetched")
+
+        except NoSuchJobError:
+            logger.debug(f"Job {rqjob.job_id} unavailable")
+            messages.warning(
+                request,
+                "The corresponding job in Redis was probably already executed.",
+            )
+            return redirect(link)
+
+        if request.method == "POST":
+            form = TemplateForm(request.POST)
+            if form.is_valid():
+                new_tmpl = form.cleaned_data["template"]
+
+                try:
+                    inst = job.instance
+                    inst.template.body_template = new_tmpl
+                    job.instance = inst
+                    job.save()
+                    logger.debug(f"Job {rqjob.job_id} template updated")
+                    messages.info(
+                        request,
+                        f"The job {rqjob.job_id} template was updated.",
+                    )
+
+                except AttributeError:
+                    logger.debug(f"Job {rqjob.job_id} template can't be updated.")
+                    messages.warning(
+                        request,
+                        f"The job {rqjob.job_id} template cannot be updated.",
+                    )
+            else:
+                messages.warning(request, "Please fix errors below.")
 
         return redirect(link)
 
