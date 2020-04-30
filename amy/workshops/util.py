@@ -689,7 +689,7 @@ def find_workshop_YAML_metadata(content):
             elif isinstance(value, datetime.date):
                 filtered_metadata[key] = '{:%Y-%m-%d}'.format(value)
             elif isinstance(value, list):
-                filtered_metadata[key] = ', '.join(value)
+                filtered_metadata[key] = '|'.join(value)
 
         return filtered_metadata
 
@@ -766,11 +766,13 @@ def parse_workshop_metadata(metadata):
         end = None
 
     # Split string of comma-separated names into a list, but return empty list
-    # instead of [''] when there are no instructors/helpers.
+    # instead of [''] when there are no instructors/helpers/contacts.
     instructors = (metadata.get('instructor') or '').split('|')
     instructors = [instr.strip() for instr in instructors if instr]
     helpers = (metadata.get('helper') or '').split('|')
     helpers = [helper.strip() for helper in helpers if helper]
+    contact = (metadata.get('contact') or '').split('|')
+    contact = [c.strip() for c in contact if c]
 
     return {
         'slug': metadata.get('slug', ''),
@@ -785,7 +787,7 @@ def parse_workshop_metadata(metadata):
         'reg_key': reg_key,
         'instructors': instructors,
         'helpers': helpers,
-        'contact': metadata.get('contact', ''),
+        'contact': contact,
     }
 
 

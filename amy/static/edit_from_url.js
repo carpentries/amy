@@ -14,7 +14,16 @@ function import_from_url(url) {
     // Select2 doesn't support programmatical search
     // so we're not going to fill the language for now
 
-    $("#id_contact").val(data.contact);
+    // contact requires a couple of steps
+    // 1. clear options
+    $("#id_contact").find("option").remove();
+    // 2. add options
+    data.contact.forEach(element => {
+      $("#id_contact").append(new Option(element, element, false, false))
+    });
+    // 3. select
+    $("#id_contact").val(data.contact).trigger("change");
+
     $('#id_venue').val(data.venue);
     $('#id_address').val(data.address);
     $('#id_country').val(data.country);
@@ -46,7 +55,16 @@ function update_from_url(url, action) {
         // Select2 doesn't support programmatical search
         // so we're not going to fill the language for now
 
-        $("#id_contact").val(data.contact);
+        // contact requires a couple of steps
+        // 1. clear options
+        $("#id_contact").find("option").remove();
+        // 2. add options
+        data.contact.forEach(element => {
+          $("#id_contact").append(new Option(element, element, false, false))
+        });
+        // 3. select
+        $("#id_contact").val(data.contact).trigger("change");
+
         $('#id_venue').val(data.venue);
         $('#id_address').val(data.address);
         $('#id_country').val(data.country);
@@ -80,7 +98,15 @@ function update_from_url(url, action) {
           // so we're not going to fill the language for now
         }
         if ($("#id_contact").val() == "") {
-          $("#id_contact").val(data.contact);
+          // contact requires a couple of steps
+          // 1. clear options
+          $("#id_contact").find("option").remove();
+          // 2. add options
+          data.contact.forEach(element => {
+            $("#id_contact").append(new Option(element, element, false, false))
+          });
+          // 3. select
+          $("#id_contact").val(data.contact).trigger("change");
         }
         if ($("#id_venue").val() == "") {
           $("#id_venue").val(data.venue);

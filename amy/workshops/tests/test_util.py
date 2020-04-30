@@ -58,7 +58,7 @@ class TestHandlingEventMetadata(TestBase):
 <meta name="invalid" content="invalid" />
 <meta name="instructor" content="Hermione Granger|Ron Weasley" />
 <meta name="helper" content="Peter Parker|Tony Stark|Natasha Romanova" />
-<meta name="contact" content="hermione@granger.co.uk, rweasley@ministry.gov" />
+<meta name="contact" content="hermione@granger.co.uk|rweasley@ministry.gov" />
 <meta name="eventbrite" content="10000000" />
 <meta name="charset" content="utf-8" />
 </head>
@@ -80,7 +80,7 @@ startdate: 2015-07-13
 enddate: "2015-07-14"
 instructor: ["Hermione Granger", "Ron Weasley",]
 helper: ["Peter Parker", "Tony Stark", "Natasha Romanova",]
-contact: hermione@granger.co.uk, rweasley@ministry.gov
+contact: ["hermione@granger.co.uk", "rweasley@ministry.gov"]
 etherpad:
 eventbrite: 10000000
 ----
@@ -149,9 +149,9 @@ Other content.
             'address': 'Highway to Heaven 42, Academipolis',
             'latlng': '36.998977, -109.045173',
             'language': 'us',
-            'instructor': 'Hermione Granger, Ron Weasley',
-            'helper': 'Peter Parker, Tony Stark, Natasha Romanova',
-            'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
+            'instructor': 'Hermione Granger|Ron Weasley',
+            'helper': 'Peter Parker|Tony Stark|Natasha Romanova',
+            'contact': 'hermione@granger.co.uk|rweasley@ministry.gov',
             'eventbrite': '10000000',
         }
         self.assertEqual(expected, find_workshop_YAML_metadata(content))
@@ -169,7 +169,7 @@ Other content.
             'language': 'us',
             'instructor': 'Hermione Granger|Ron Weasley',
             'helper': 'Peter Parker|Tony Stark|Natasha Romanova',
-            'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
+            'contact': 'hermione@granger.co.uk|rweasley@ministry.gov',
             'eventbrite': '10000000',
         }
 
@@ -265,7 +265,7 @@ Other content.
             'reg_key': None,
             'instructors': [],
             'helpers': [],
-            'contact': '',
+            'contact': [],
         }
         self.assertEqual(expected, parse_workshop_metadata(empty_dict))
 
@@ -281,7 +281,7 @@ Other content.
             'language': 'us',
             'instructor': 'Hermione Granger|Ron Weasley',
             'helper': 'Peter Parker|Tony Stark|Natasha Romanova',
-            'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
+            'contact': 'hermione@granger.co.uk|rweasley@ministry.gov',
             'eventbrite': '10000000',
         }
         expected = {
@@ -297,7 +297,7 @@ Other content.
             'reg_key': 10000000,
             'instructors': ['Hermione Granger', 'Ron Weasley'],
             'helpers': ['Peter Parker', 'Tony Stark', 'Natasha Romanova'],
-            'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
+            'contact': ['hermione@granger.co.uk', 'rweasley@ministry.gov'],
         }
         self.assertEqual(expected, parse_workshop_metadata(metadata))
 
@@ -321,7 +321,7 @@ Other content.
             'reg_key': None,
             'instructors': [],
             'helpers': [],
-            'contact': '',
+            'contact': [],
         }
 
         for (country, language), (country_exp, language_exp) in tests:
@@ -350,7 +350,7 @@ Other content.
             'reg_key': None,
             'instructors': [],
             'helpers': [],
-            'contact': '',
+            'contact': [],
         }
 
         for (startdate, enddate), (start, end) in tests:
@@ -384,7 +384,7 @@ Other content.
             'reg_key': None,
             'instructors': [],
             'helpers': [],
-            'contact': '',
+            'contact': [],
         }
 
         for (instructor, helper), (instructors, helpers) in tests:
@@ -415,7 +415,7 @@ Other content.
             'reg_key': None,
             'instructors': [],
             'helpers': [],
-            'contact': '',
+            'contact': [],
         }
         for latlng, (latitude, longitude) in tests:
             with self.subTest(latlng=latlng):
@@ -443,7 +443,7 @@ Other content.
             'reg_key': None,
             'instructors': [],
             'helpers': [],
-            'contact': '',
+            'contact': [],
         }
         for eventbrite_id, reg_key in tests:
             with self.subTest(eventbrite_id=eventbrite_id):
@@ -564,7 +564,7 @@ Other content.
             'reg_key': None,
             'instructors': [],
             'helpers': [],
-            'contact': '',
+            'contact': [],
         }
 
         for (instructor, helper), (instructors, helpers) in tests:
@@ -651,7 +651,7 @@ Other content.
             'language': 'us',
             'instructor': 'Hermione Granger|Ron Weasley',
             'helper': 'Peter Parker|Tony Stark|Natasha Romanova',
-            'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
+            'contact': 'hermione@granger.co.uk|rweasley@ministry.gov',
             'eventbrite': '10000000',
         }
         expected = {
@@ -667,7 +667,7 @@ Other content.
             'reg_key': 10000000,
             'instructors': ['Hermione Granger', 'Ron Weasley'],
             'helpers': ['Peter Parker', 'Tony Stark', 'Natasha Romanova'],
-            'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
+            'contact': ['hermione@granger.co.uk', 'rweasley@ministry.gov'],
         }
         self.assertEqual(expected, parse_workshop_metadata(metadata))
 
@@ -684,7 +684,7 @@ Other content.
             'language': 'us',
             'instructor': 'Hermione Granger|Ron Weasley',
             'helper': 'Peter Parker|Tony Stark|Natasha Romanova',
-            'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
+            'contact': 'hermione@granger.co.uk|rweasley@ministry.gov',
             'eventbrite': '10000000',
         }
         expected = {
@@ -700,7 +700,7 @@ Other content.
             'reg_key': 10000000,
             'instructors': ['Hermione Granger', 'Ron Weasley'],
             'helpers': ['Peter Parker', 'Tony Stark', 'Natasha Romanova'],
-            'contact': 'hermione@granger.co.uk, rweasley@ministry.gov',
+            'contact': ['hermione@granger.co.uk', 'rweasley@ministry.gov'],
         }
         self.assertEqual(expected, parse_workshop_metadata(metadata))
 

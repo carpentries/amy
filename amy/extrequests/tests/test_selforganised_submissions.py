@@ -572,7 +572,7 @@ class TestAcceptingSelfOrgSubmPrefilledform(TestBase):
             <meta name="invalid" content="invalid" />
             <meta name="instructor" content="Hermione Granger|Ron Weasley" />
             <meta name="helper" content="Peter Parker|Tony Stark|Natasha Romanova" />
-            <meta name="contact" content="hermione@granger.co.uk, rweasley@ministry.gov" />
+            <meta name="contact" content="hermione@granger.co.uk|rweasley@ministry.gov" />
             <meta name="eventbrite" content="10000000" />
             <meta name="charset" content="utf-8" />
             </head>
@@ -617,7 +617,7 @@ class TestAcceptingSelfOrgSubmPrefilledform(TestBase):
             'latitude': 36.998977,
             'longitude': -109.045173,
             'reg_key': 10000000,
-            'contact': "hermione@granger.co.uk, rweasley@ministry.gov",
+            'contact': ["hermione@granger.co.uk", "rweasley@ministry.gov"],
             'comment': "Instructors: Hermione Granger,Ron Weasley\n\n"
                        "Helpers: Peter Parker,Tony Stark,Natasha Romanova",
         }

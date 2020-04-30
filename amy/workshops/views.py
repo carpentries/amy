@@ -995,13 +995,13 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
             'tasks': self.get_object().task_set
                          .select_related('person', 'role')
                          .order_by('role__name'),
-            'task_form': TaskForm(**kwargs),
-            'sponsor_form': SponsorshipForm(**kwargs),
+            'task_form': TaskForm(form_tag=False, prefix="task", **kwargs),
+            'sponsor_form': SponsorshipForm(form_tag=False, prefix="sponsor", **kwargs),
         })
         return context
 
     def get_form_class(self):
-        return partial(EventForm, show_lessons=True)
+        return partial(EventForm, show_lessons=True, add_comment=False)
 
     def get_logger(self):
         return logger

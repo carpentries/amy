@@ -134,6 +134,11 @@ class SponsorshipForm(WidgetOverrideMixin, forms.ModelForm):
                                           attrs=SELECT2_SIDEBAR),
         }
 
+    def __init__(self, *args, **kwargs):
+        form_tag = kwargs.pop('form_tag', True)
+        super().__init__(*args, **kwargs)
+        self.helper = BootstrapHelper(add_cancel_button=False, form_tag=form_tag)
+
 
 # ----------------------------------------------------------
 # Signals
