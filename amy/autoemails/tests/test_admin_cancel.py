@@ -35,9 +35,17 @@ class TestAdminJobCancel(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         # bring back saved scheduler
         admin.scheduler = self._saved_scheduler
 
-    def test_view_access_by_anonymous(self):
+    def test_view_doesnt_allow_GET(self):
+        # log admin user
+        self._logSuperuserIn()
+
         url = reverse('admin:autoemails_rqjob_cancel', args=[self.rqjob.pk])
         rv = self.client.get(url)
+        self.assertEqual(rv.status_code, 405)  # Method not allowed
+
+    def test_view_access_by_anonymous(self):
+        url = reverse('admin:autoemails_rqjob_cancel', args=[self.rqjob.pk])
+        rv = self.client.post(url)
         self.assertEqual(rv.status_code, 302)
         # cannot check by assertRedirect because there's additional `?next`
         # parameter
@@ -49,7 +57,7 @@ class TestAdminJobCancel(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
 
         # try accessing the view again
         url = reverse('admin:autoemails_rqjob_cancel', args=[self.rqjob.pk])
-        rv = self.client.get(url)
+        rv = self.client.post(url)
         self.assertEqual(rv.status_code, 302)
         self.assertRedirects(rv, reverse('admin:autoemails_rqjob_preview',
                                          args=[self.rqjob.pk]))
@@ -62,7 +70,7 @@ class TestAdminJobCancel(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
             Job.fetch(self.rqjob.job_id, connection=self.scheduler.connection)
 
         url = reverse('admin:autoemails_rqjob_cancel', args=[self.rqjob.pk])
-        rv = self.client.get(url, follow=True)
+        rv = self.client.post(url, follow=True)
         self.assertIn(
             'The corresponding job in Redis was probably already executed',
             rv.content.decode('utf-8'),
@@ -87,7 +95,7 @@ class TestAdminJobCancel(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
             )
 
         url = reverse('admin:autoemails_rqjob_cancel', args=[rqjob.pk])
-        rv = self.client.get(url, follow=True)
+        rv = self.client.post(url, follow=True)
         self.assertIn(
             'Job has unknown status or was already executed.',
             rv.content.decode('utf-8'),
@@ -125,7 +133,7 @@ class TestAdminJobCancel(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
 
         # cancel the job
         url = reverse('admin:autoemails_rqjob_cancel', args=[rqjob.pk])
-        rv = self.client.get(url, follow=True)
+        rv = self.client.post(url, follow=True)
         self.assertIn(
             f'The job {rqjob.job_id} was cancelled.',
             rv.content.decode('utf-8'),
@@ -168,7 +176,7 @@ class TestAdminJobCancel(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         self.assertTrue(job.is_started)
 
         url = reverse('admin:autoemails_rqjob_cancel', args=[rqjob.pk])
-        rv = self.client.get(url, follow=True)
+        rv = self.client.post(url, follow=True)
         self.assertIn(
             f'Job {rqjob.job_id} has started and cannot be cancelled.',
             rv.content.decode('utf-8'),
@@ -197,7 +205,7 @@ class TestAdminJobCancel(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         self.assertTrue(job.is_deferred)
 
         url = reverse('admin:autoemails_rqjob_cancel', args=[rqjob.pk])
-        rv = self.client.get(url, follow=True)
+        rv = self.client.post(url, follow=True)
         self.assertIn(
             'Job has unknown status or was already executed.',
             rv.content.decode('utf-8'),
