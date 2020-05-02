@@ -65,24 +65,25 @@ class AMYCreateView(SuccessMessageMixin, FormInvalidMessageMixin, CreateView):
 
     template_name = 'generic_form.html'
 
-    def get_context_data(self, **kwargs):
-        context = super(AMYCreateView, self).get_context_data(**kwargs)
-
-        # self.model is available in CreateView as the model class being
-        # used to create new model instance
-        context['model'] = self.model
-
-        if self.model and issubclass(self.model, Model):
-            context['title'] = 'New {}'.format(self.model._meta.verbose_name)
-        else:
-            context['title'] = 'New object'
-
-        form = context['form']
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class=form_class)
         if not hasattr(form, 'helper'):
             # This is a default helper if no other is available.
             form.helper = BootstrapHelper(submit_label='Add')
+        return form
 
-        return context
+    def get_context_data(self, **kwargs):
+        # self.model is available in CreateView as the model class being
+        # used to create new model instance
+        kwargs['model'] = self.model
+
+        if 'title' not in kwargs:
+            if self.model and issubclass(self.model, Model):
+                kwargs['title'] = 'New {}'.format(self.model._meta.verbose_name)
+            else:
+                kwargs['title'] = 'New object'
+
+        return super().get_context_data(**kwargs)
 
     def get_success_message(self, cleaned_data):
         "Format self.success_message, used by messages framework from Django."
@@ -98,25 +99,26 @@ class AMYUpdateView(SuccessMessageMixin, UpdateView):
 
     template_name = 'generic_form.html'
 
-    def get_context_data(self, **kwargs):
-        context = super(AMYUpdateView, self).get_context_data(**kwargs)
-
-        # self.model is available in UpdateView as the model class being
-        # used to update model instance
-        context['model'] = self.model
-
-        context['view'] = self
-
-        # self.object is available in UpdateView as the object being currently
-        # edited
-        context['title'] = str(self.object)
-
-        form = context['form']
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class=form_class)
         if not hasattr(form, 'helper'):
             # This is a default helper if no other is available.
             form.helper = BootstrapHelper(submit_label='Update')
+        return form
 
-        return context
+    def get_context_data(self, **kwargs):
+        # self.model is available in UpdateView as the model class being
+        # used to update model instance
+        kwargs['model'] = self.model
+
+        kwargs['view'] = self
+
+        # self.object is available in UpdateView as the object being currently
+        # edited
+        if 'title' not in kwargs:
+            kwargs['title'] = str(self.object)
+
+        return super().get_context_data(**kwargs)
 
     def get_success_message(self, cleaned_data):
         "Format self.success_message, used by messages framework from Django."

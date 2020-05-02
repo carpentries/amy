@@ -21,26 +21,30 @@ from workshops.models import (
 class TestSelfOrganisedRequestAction(TestCase):
     def setUp(self):
         # we're missing some tags
-        Tag.objects.bulk_create([
-            Tag(name='SWC'),
-            Tag(name='DC'),
-            Tag(name='LC'),
-            Tag(name='TTT'),
-            Tag(name='automated-email'),
-        ])
+        Tag.objects.bulk_create(
+            [
+                Tag(name="SWC"),
+                Tag(name="DC"),
+                Tag(name="LC"),
+                Tag(name="TTT"),
+                Tag(name="automated-email"),
+            ]
+        )
         # by default there's only self-organized organization, but it can't be
         # used in SelfOrganisedRequestAction
-        Organization.objects.bulk_create([
-            Organization(domain='carpentries.org',
-                         fullname='Instructor Training'),
-            Organization(domain='librarycarpentry.org',
-                         fullname='Library Carpentry'),
-        ])
+        Organization.objects.bulk_create(
+            [
+                Organization(domain="carpentries.org", fullname="Instructor Training"),
+                Organization(
+                    domain="librarycarpentry.org", fullname="Library Carpentry"
+                ),
+            ]
+        )
 
     def testLaunchAt(self):
         # the trigger and email template below are totally fake
         # and shouldn't pass validation
-        trigger = Trigger(action='test-action', template=EmailTemplate())
+        trigger = Trigger(action="test-action", template=EmailTemplate())
         a = SelfOrganisedRequestAction(trigger=trigger)
         self.assertEqual(a.get_launch_at(), timedelta(hours=1))
 
@@ -48,24 +52,24 @@ class TestSelfOrganisedRequestAction(TestCase):
         """Make sure `check` works for various input data."""
         # totally fake Event and SelfOrganisedSubmission
         e = Event.objects.create(
-            slug='test-event',
+            slug="test-event",
             host=Organization.objects.first(),
-            administrator=Organization.objects.get(
-                domain='self-organized'),
+            administrator=Organization.objects.get(domain="self-organized"),
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
         )
-        e.tags.set(Tag.objects.filter(name__in=['LC', 'Circuits',
-                                                'automated-email']))
+        e.tags.set(Tag.objects.filter(name__in=["LC", "Circuits", "automated-email"]))
         r = SelfOrganisedSubmission.objects.create(
-            state="p", personal="Harry", family="Potter",
+            state="p",
+            personal="Harry",
+            family="Potter",
             email="harry@hogwarts.edu",
             institution_other_name="Hogwarts",
-            workshop_url='',
-            workshop_format='',
-            workshop_format_other='',
-            workshop_types_other_explain='',
-            language=Language.objects.get(name='English'),
+            workshop_url="",
+            workshop_format="",
+            workshop_format_other="",
+            workshop_types_other_explain="",
+            language=Language.objects.get(name="English"),
             event=e,
         )
         r.workshop_types.set(Curriculum.objects.filter(carpentry="LC"))
@@ -86,7 +90,7 @@ class TestSelfOrganisedRequestAction(TestCase):
 
         # 4th case: event is tagged with one (or more) excluding tags
         # result: FAIL
-        for tag in ['cancelled', 'stalled', 'unresponsive']:
+        for tag in ["cancelled", "stalled", "unresponsive"]:
             e.tags.add(Tag.objects.get(name=tag))
             self.assertEqual(SelfOrganisedRequestAction.check(e), False)
             e.tags.remove(Tag.objects.get(name=tag))
@@ -99,7 +103,7 @@ class TestSelfOrganisedRequestAction(TestCase):
         e.administrator = None
         e.save()
         self.assertEqual(SelfOrganisedRequestAction.check(e), False)
-        e.administrator = Organization.objects.get(domain='self-organized')
+        e.administrator = Organization.objects.get(domain="self-organized")
         e.save()
 
         # retest to make sure it's back to normal
@@ -107,12 +111,12 @@ class TestSelfOrganisedRequestAction(TestCase):
 
         # 4th case: wrong administrator (Instructor Training)
         # result: FAIL
-        e.administrator = Organization.objects.get(domain='carpentries.org')
+        e.administrator = Organization.objects.get(domain="carpentries.org")
         e.save()
         self.assertEqual(SelfOrganisedRequestAction.check(e), False)
 
         # retest to make sure it's back to normal
-        e.administrator = Organization.objects.get(domain='self-organized')
+        e.administrator = Organization.objects.get(domain="self-organized")
         e.save()
         self.assertEqual(SelfOrganisedRequestAction.check(e), True)
 
@@ -124,8 +128,9 @@ class TestSelfOrganisedRequestAction(TestCase):
 
     def testContext(self):
         """Make sure `get_additional_context` works correctly."""
-        a = SelfOrganisedRequestAction(trigger=Trigger(action='test-action',
-                                               template=EmailTemplate()))
+        a = SelfOrganisedRequestAction(
+            trigger=Trigger(action="test-action", template=EmailTemplate())
+        )
 
         # method fails when obligatory objects are missing
         with self.assertRaises(KeyError):
@@ -133,31 +138,31 @@ class TestSelfOrganisedRequestAction(TestCase):
         with self.assertRaises(AttributeError):
             # now both objects are present, but the method tries to execute
             # `refresh_from_db` on them
-            a.get_additional_context(dict(event='dummy', request='dummy'))
+            a.get_additional_context(dict(event="dummy", request="dummy"))
 
         # totally fake Event and SelfOrganisedSubmission
         e = Event.objects.create(
-            slug='test-event',
+            slug="test-event",
             host=Organization.objects.first(),
-            administrator=Organization.objects.get(domain='self-organized'),
+            administrator=Organization.objects.get(domain="self-organized"),
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
-            country='GB',
+            country="GB",
         )
-        e.tags.set(Tag.objects.filter(name__in=['LC', 'Circuits',
-                                                'automated-email']))
+        e.tags.set(Tag.objects.filter(name__in=["LC", "Circuits", "automated-email"]))
         r = SelfOrganisedSubmission.objects.create(
-            state="p", personal="Harry", family="Potter",
+            state="p",
+            personal="Harry",
+            family="Potter",
             email="harry@hogwarts.edu",
             institution_other_name="Hogwarts",
-            workshop_url='',
-            workshop_format='',
-            workshop_format_other='',
-            workshop_types_other_explain='',
-            language=Language.objects.get(name='English'),
+            workshop_url="",
+            workshop_format="",
+            workshop_format_other="",
+            workshop_types_other_explain="",
+            language=Language.objects.get(name="English"),
             event=e,
-            additional_contact=
-                TAG_SEPARATOR.join(['hg@magic.uk', 'rw@magic.uk'])
+            additional_contact=TAG_SEPARATOR.join(["hg@magic.uk", "rw@magic.uk"]),
         )
         r.workshop_types.set(Curriculum.objects.filter(carpentry="LC"))
 
@@ -168,14 +173,14 @@ class TestSelfOrganisedRequestAction(TestCase):
             dict(
                 workshop=e,
                 request=r,
-                workshop_main_type='LC',
+                workshop_main_type="LC",
                 dates=e.human_readable_date,
                 host=Organization.objects.first(),
-                regional_coordinator_email=['admin-uk@carpentries.org'],
+                regional_coordinator_email=["admin-uk@carpentries.org"],
                 short_notice=True,
-                all_emails=['harry@hogwarts.edu', 'hg@magic.uk',
-                            'rw@magic.uk'],
-                assignee='Regional Coordinator',
+                all_emails=["harry@hogwarts.edu", "hg@magic.uk", "rw@magic.uk"],
+                assignee="Regional Coordinator",
+                tags=['LC', 'automated-email', 'Circuits'],
             ),
         )
 
@@ -186,48 +191,100 @@ class TestSelfOrganisedRequestAction(TestCase):
         building."""
         # totally fake Event and SelfOrganisedSubmission
         e = Event.objects.create(
-            slug='test-event',
+            slug="test-event",
             host=Organization.objects.first(),
-            administrator=Organization.objects.get(domain='self-organized'),
+            administrator=Organization.objects.get(domain="self-organized"),
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
-            country='GB',
+            country="GB",
         )
-        e.tags.set(Tag.objects.filter(name__in=['LC', 'Circuits',
-                                                'automated-email']))
+        e.tags.set(Tag.objects.filter(name__in=["LC", "Circuits", "automated-email"]))
         r = SelfOrganisedSubmission.objects.create(
-            state="p", personal="Harry", family="Potter",
+            state="p",
+            personal="Harry",
+            family="Potter",
             email="harry@hogwarts.edu",
             institution_other_name="Hogwarts",
-            workshop_url='',
-            workshop_format='',
-            workshop_format_other='',
-            workshop_types_other_explain='',
-            language=Language.objects.get(name='English'),
+            workshop_url="",
+            workshop_format="",
+            workshop_format_other="",
+            workshop_types_other_explain="",
+            language=Language.objects.get(name="English"),
             event=e,
-            additional_contact=
-                TAG_SEPARATOR.join(['hg@magic.uk', 'rw@magic.uk'])
+            additional_contact=TAG_SEPARATOR.join(["hg@magic.uk", "rw@magic.uk"]),
         )
         r.workshop_types.set(Curriculum.objects.filter(carpentry="LC"))
 
         template = EmailTemplate.objects.create(
-            slug='sample-template',
-            subject='Welcome to {{ site.name }}',
-            to_header='recipient@address.com',
-            from_header='test@address.com',
-            cc_header='copy@example.org',
-            bcc_header='bcc@example.org',
-            reply_to_header='{{ reply_to }}',
+            slug="sample-template",
+            subject="Welcome to {{ site.name }}",
+            to_header="recipient@address.com",
+            from_header="test@address.com",
+            cc_header="copy@example.org",
+            bcc_header="bcc@example.org",
+            reply_to_header="{{ reply_to }}",
             body_template="Sample text.",
         )
         trigger = Trigger.objects.create(
-            action='self-organised-request-form',
-            template=template,
+            action="self-organised-request-form", template=template,
         )
         a = SelfOrganisedRequestAction(
-            trigger=trigger,
-            objects=dict(event=e, request=r),
+            trigger=trigger, objects=dict(event=e, request=r),
         )
         email = a._email()
-        self.assertEqual(email.to, ['harry@hogwarts.edu', 'hg@magic.uk',
-                                    'rw@magic.uk'])
+        self.assertEqual(email.to, ["harry@hogwarts.edu", "hg@magic.uk", "rw@magic.uk"])
+
+    def test_event_slug(self):
+        e = Event.objects.create(
+            slug="test-event",
+            host=Organization.objects.first(),
+            start=date.today() + timedelta(days=7),
+            end=date.today() + timedelta(days=8),
+            country="GB",
+            venue="Ministry of Magic",
+        )
+        e.tags.set(Tag.objects.filter(name="LC"))
+
+        a = SelfOrganisedRequestAction(
+            trigger=Trigger(action="test-action", template=EmailTemplate()),
+            objects=dict(event=e),
+        )
+
+        self.assertEqual(a.event_slug(), "test-event")
+
+    def test_all_recipients(self):
+        # totally fake Event and SelfOrganisedSubmission
+        e = Event.objects.create(
+            slug="test-event",
+            host=Organization.objects.first(),
+            administrator=Organization.objects.get(domain="self-organized"),
+            start=date.today() + timedelta(days=7),
+            end=date.today() + timedelta(days=8),
+            country="GB",
+        )
+        e.tags.set(Tag.objects.filter(name__in=["LC", "Circuits", "automated-email"]))
+        r = SelfOrganisedSubmission.objects.create(
+            state="p",
+            personal="Harry",
+            family="Potter",
+            email="harry@hogwarts.edu",
+            institution_other_name="Hogwarts",
+            workshop_url="",
+            workshop_format="",
+            workshop_format_other="",
+            workshop_types_other_explain="",
+            language=Language.objects.get(name="English"),
+            event=e,
+            additional_contact=TAG_SEPARATOR.join(["hg@magic.uk", "rw@magic.uk"]),
+        )
+        r.workshop_types.set(Curriculum.objects.filter(carpentry="LC"))
+
+        a = SelfOrganisedRequestAction(
+            trigger=Trigger(action="test-action", template=EmailTemplate()),
+            objects=dict(event=e, request=r),
+        )
+
+        self.assertEqual(
+            a.all_recipients(), "harry@hogwarts.edu, hg@magic.uk, rw@magic.uk"
+        )
+

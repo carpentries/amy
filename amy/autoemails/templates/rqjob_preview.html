@@ -7,6 +7,7 @@
 
 <link rel="stylesheet" type="text/css" href="{% static 'admin/css/forms.css' %}"/>
 <link rel="stylesheet" type="text/css" href="{% static 'admin/css/widgets.css' %}"/>
+<link rel="stylesheet" type="text/css" href="{% static 'css/rqjob_admin.css' %}"/>
 {% endblock %}
 
 {% if not is_popup %}
@@ -21,6 +22,17 @@
 {% endif %}
 
 {%  block content %}
+{% if previous or next %}
+<div class="box">
+    {% if previous %}
+    <a href="{% url 'admin:autoemails_rqjob_preview' object_id=previous.pk %}" class="prev-link">Previous</a>
+    {% endif %}
+    {% if next %}
+    <a href="{% url 'admin:autoemails_rqjob_preview' object_id=next.pk %}" class="next-link">Next</a>
+    {% endif %}
+</div>
+{% endif %}
+
 <table>
     <tr>
         <th>RQJob:</th>
@@ -38,7 +50,7 @@
             <table>
                 <tr>
                     <td>Status:</td>
-                    <td>{% if job and job_scheduled %}{{ job.get_status|default_if_none:"scheduled" }}{% elif job %}{{ job.get_status|default:"cancelled" }}{% else %}&mdash;{% endif %}</td>
+                    <td>{{ status|default:"&mdash;" }}</td>
                 </tr>
                 <tr>
                     <td>Exception info:</td>
@@ -205,37 +217,69 @@
     </tr>
 </table>
 
-{% if form and job and job_scheduled %}
+{% if previous or next %}
+<div class="box">
+    {% if previous %}
+    <a href="{% url 'admin:autoemails_rqjob_preview' object_id=previous.pk %}" class="prev-link">Previous</a>
+    {% endif %}
+    {% if next %}
+    <a href="{% url 'admin:autoemails_rqjob_preview' object_id=next.pk %}" class="next-link">Next</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% if template_form and job and job_scheduled %}
+<form method="POST" action="{% url 'admin:autoemails_rqjob_edit_template' object_id=rqjob.pk %}">
+    {% csrf_token %}
+    <div>
+        {% if template_form.errors %}
+            <p class="errornote">Please correct the errors below.</p>
+            {{ template_form.non_field_errors }}
+        {% endif %}
+        <fieldset class="module aligned">
+            <h2>Change email template</h2>
+            {{ template_form }}
+            <p><input type="submit" value="Update"></p>
+        </fieldset>
+    </div>
+    {{ template_form.media }}
+</form>
+{% endif %}
+{% if reschedule_form and job and job_scheduled %}
 <form method="POST" action="{% url 'admin:autoemails_rqjob_reschedule' object_id=rqjob.pk %}">
     {% csrf_token %}
     <div>
-        {% if errors %}
+        {% if reschedule_form.errors %}
             <p class="errornote">Please correct the errors below.</p>
-            {{ form.non_field_errors }}
+            {{ reschedule_form.non_field_errors }}
         {% endif %}
         <fieldset class="module aligned">
             <h2>Change scheduled execution time</h2>
-            {{ form }}
+            {{ reschedule_form }}
+            <p><input type="submit" value="Reschedule"></p>
         </fieldset>
     </div>
-    <div class="submit-row">
-        <p class="deletelink-box"><a href="{% url 'admin:autoemails_rqjob_sendnow' object_id=rqjob.pk %}" class="deletelink">Send now</a></p>
-        <input type="submit" value="Reschedule" class="default">
-    </div>
-    {{ form.media }}
+    {{ reschedule_form.media }}
 </form>
 {% endif %}
+<div class="box">
+    {% if job and job.is_queued or job and job_scheduled %}
+    <form method="POST" action="{% url 'admin:autoemails_rqjob_cancel' object_id=rqjob.pk %}" class="prev-link">
+        {% csrf_token %}
+        <input type="submit" value="Cancel job" class="danger">
+    </form>
+    {% endif %}
+    {% if job and job_scheduled %}
+    <form method="POST" action="{% url 'admin:autoemails_rqjob_sendnow' object_id=rqjob.pk %}" class="next-link">
+        {% csrf_token %}
+        <input type="submit" value="Send now" class="warning">
+    </form>
+    {% endif %}
+</div>
 
 {% if job and job.is_failed %}
 <div class="submit-row">
     <p class="deletelink-box"><a href="{% url 'admin:autoemails_rqjob_retry' object_id=rqjob.pk %}" class="deletelink">Re-try</a></p>
-</div>
-{% endif %}
-
-
-{% if job and job.is_queued or job and job_scheduled %}
-<div class="submit-row">
-    <p class="deletelink-box"><a href="{% url 'admin:autoemails_rqjob_cancel' object_id=rqjob.pk %}" class="deletelink">Cancel job</a></p>
 </div>
 {% endif %}
 

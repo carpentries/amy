@@ -2,6 +2,7 @@
 {% load links %}
 {% load tags %}
 {% load attrs %}
+{% load utils %}
 <table class="table table-striped">
   <tr><th>Slug:</th><td colspan="2">{{ event.slug|default:"&mdash;" }}</td></tr>
   <tr><th>Completed:</th><td colspan="2">{{ event.completed|yesno }}</td></tr>
@@ -28,7 +29,16 @@
       {% endif %}
     </td>
   </tr>
-  <tr><th>Contact:</th><td colspan="2">{{ event.contact|default_if_none:"&mdash;"|urlize }}</td></tr>
+  <tr>
+    <th>Contact:</th>
+    <td colspan="2">
+      {% for contact in event.contact|strip|split:";" %}
+        {{ contact|urlize }}<br>
+      {% empty %}
+        &mdash;
+      {% endfor %}
+    </td>
+  </tr>
   <tr>
     <th rowspan="4">Location details:</th>
     <th class="{% if not event.country %}table-danger{% endif %}">Country:</th>

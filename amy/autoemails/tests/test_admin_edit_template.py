@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from django.test import TestCase
 from django.urls import reverse
@@ -7,8 +7,10 @@ from rq.job import Job
 from rq_scheduler.utils import to_unix
 
 from autoemails import admin
+from autoemails.actions import NewInstructorAction
 from autoemails.models import EmailTemplate, Trigger, RQJob
 from autoemails.tests.base import FakeRedisTestCaseMixin, dummy_job
+from workshops.models import Event, Organization, Person, Role, Task
 from workshops.tests.base import SuperuserMixin
 
 
@@ -29,6 +31,22 @@ class TestAdminJobReschedule(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         self.rqjob = RQJob.objects.create(job_id="fake-id",
                                           trigger=self.trigger)
 
+        self.new_template = "Welcome to AMY!"
+
+        # test event and task
+        LC_org = Organization.objects.create(domain="librarycarpentry.org",
+                                             fullname="Library Carpentry")
+        self.event =Event.objects.create(
+            slug="test-event",
+            host=Organization.objects.first(),
+            administrator=LC_org,
+            start=date.today() + timedelta(days=7),
+            end=date.today() + timedelta(days=8),
+        )
+        p = Person.objects.create(personal="Harry", family="Potter", email="hp@magic.uk")
+        r = Role.objects.create(name="instructor")
+        self.task = Task.objects.create(event=self.event, person=p, role=r)
+
     def tearDown(self):
         super().tearDown()
         # bring back saved scheduler
@@ -38,12 +56,12 @@ class TestAdminJobReschedule(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         # log admin user
         self._logSuperuserIn()
 
-        url = reverse('admin:autoemails_rqjob_reschedule', args=[self.rqjob.pk])
+        url = reverse('admin:autoemails_rqjob_edit_template', args=[self.rqjob.pk])
         rv = self.client.get(url)
         self.assertEqual(rv.status_code, 405)  # Method not allowed
 
     def test_view_access_by_anonymous(self):
-        url = reverse('admin:autoemails_rqjob_reschedule',
+        url = reverse('admin:autoemails_rqjob_edit_template',
                       args=[self.rqjob.pk])
         rv = self.client.post(url)
         self.assertEqual(rv.status_code, 302)
@@ -56,7 +74,7 @@ class TestAdminJobReschedule(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         self._logSuperuserIn()
 
         # try accessing the view again
-        url = reverse('admin:autoemails_rqjob_reschedule',
+        url = reverse('admin:autoemails_rqjob_edit_template',
                       args=[self.rqjob.pk])
         rv = self.client.post(url)
         self.assertEqual(rv.status_code, 302)
@@ -70,7 +88,7 @@ class TestAdminJobReschedule(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         with self.assertRaises(NoSuchJobError):
             Job.fetch(self.rqjob.job_id, connection=self.scheduler.connection)
 
-        url = reverse('admin:autoemails_rqjob_reschedule', args=[self.rqjob.pk])
+        url = reverse('admin:autoemails_rqjob_edit_template', args=[self.rqjob.pk])
         rv = self.client.post(url, follow=True)
         self.assertIn(
             'The corresponding job in Redis was probably already executed',
@@ -92,20 +110,13 @@ class TestAdminJobReschedule(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
                     self.scheduler.scheduled_jobs_key, job1.id
                 )
             )
-        url = reverse('admin:autoemails_rqjob_reschedule', args=[rqjob1.pk])
-        scheduled_execution = (
-            datetime.now(tz=timezone.utc) + timedelta(days=1, minutes=15)
-        )
-        scheduled_execution = scheduled_execution.replace(microsecond=0)
+        url = reverse('admin:autoemails_rqjob_edit_template', args=[rqjob1.pk])
         payload = {
-            'scheduled_execution': scheduled_execution,
-            'scheduled_execution_0': f'{scheduled_execution:%Y-%m-%d}',
-            'scheduled_execution_1': f'{scheduled_execution:%H:%M:%S}',
+            'template': self.new_template,
         }
         rv = self.client.post(url, payload, follow=True)
         self.assertIn(
-            f"The job {job1.id} was not rescheduled. It is probably "
-            'already executing or has recently executed',
+            f"The job {job1.id} template cannot be updated.",
             rv.content.decode('utf-8'),
         )
 
@@ -119,44 +130,35 @@ class TestAdminJobReschedule(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         # move job to the queue so it's executed
         self.scheduler.enqueue_job(job2)
         Job.fetch(job2.id, connection=self.scheduler.connection)  # no error
-        url = reverse('admin:autoemails_rqjob_reschedule', args=[rqjob2.pk])
+        url = reverse('admin:autoemails_rqjob_edit_template', args=[rqjob2.pk])
         rv = self.client.post(url, payload, follow=True)
         self.assertIn(
-            f"The job {job2.id} was not rescheduled. It is probably "
-            'already executing or has recently executed',
+            f"The job {job2.id} template cannot be updated.",
             rv.content.decode('utf-8'),
         )
 
-    def test_job_rescheduled_correctly(self):
+    def test_job_template_updated_correctly(self):
         # log admin user
         self._logSuperuserIn()
 
+        action = NewInstructorAction(
+            self.trigger,
+            objects={"event": self.event, "task": self.task},
+        )
         job = self.scheduler.enqueue_in(
             timedelta(minutes=60),
-            dummy_job,
+            action,
         )
         rqjob = RQJob.objects.create(job_id=job.id, trigger=self.trigger)
         Job.fetch(job.id, connection=self.scheduler.connection)  # no error
-        url = reverse('admin:autoemails_rqjob_reschedule', args=[rqjob.pk])
-        scheduled_execution = (
-            datetime.now(tz=timezone.utc) + timedelta(days=1, minutes=15)
-        )
-        scheduled_execution = scheduled_execution.replace(microsecond=0)
+        url = reverse('admin:autoemails_rqjob_edit_template', args=[rqjob.pk])
         payload = {
-            'scheduled_execution': scheduled_execution,
-            'scheduled_execution_0': f'{scheduled_execution:%Y-%m-%d}',
-            'scheduled_execution_1': f'{scheduled_execution:%H:%M:%S}',
+            'template': self.new_template,
         }
         rv = self.client.post(url, payload, follow=True)
         self.assertIn(
-            f'The job {job.id} was rescheduled to {scheduled_execution}',
-            rv.content.decode('utf-8'),
+            f'The job {job.id} template was updated', rv.content.decode('utf-8'),
         )
 
-        for _job, time in self.scheduler.get_jobs(with_times=True):
-            if _job.id == job.id:
-                scheduled = to_unix(
-                    datetime.utcnow() + timedelta(days=1, minutes=15)
-                )
-                epochtime = to_unix(time)
-                self.assertAlmostEqual(epochtime, scheduled, delta=60)  # +- 60s
+        job.refresh()
+        self.assertEqual(job.instance.template.body_template, "Welcome to AMY!")

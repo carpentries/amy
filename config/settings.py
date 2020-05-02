@@ -542,7 +542,14 @@ LOGGING = {
             'formatter': 'verbose',
             'filename': env.path('AMY_DEBUG_LOGFILE',
                                  default=ROOT_DIR('amy_debug.log')),
-        }
+        },
+        'worker_log_file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'formatter': 'verbose',
+            'filename': env.path('AMY_WORKER_LOGFILE',
+                                 default=ROOT_DIR('worker_debug.log')),
+        },
     },
     'loggers': {
         # disable "Invalid HTTP_HOST" notifications
@@ -563,6 +570,10 @@ LOGGING = {
             'handlers': ['log_file', ],
             'level': 'ERROR',
             'propagate': True,
+        },
+        'rq.worker': {
+            'handlers': ['worker_log_file', ],
+            'level': 'DEBUG',
         },
     },
 }
@@ -603,6 +614,10 @@ RQ_SHOW_ADMIN_LINK = False
 # If you need custom exception handlers
 # RQ_EXCEPTION_HANDLERS = ['path.to.my.handler']
 
+RQ = {
+    'JOB_CLASS': 'autoemails.job.Job',
+}
+
 
 # Autoemails application settings
 # -----------------------------------------------------------------------------
@@ -610,4 +625,20 @@ RQ_SHOW_ADMIN_LINK = False
 AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS = env.str(
     'AMY_AUTOEMAIL_OVERRIDE_OUTGOING_ADDRESS',
     default=None,  # On test server: 'amy-tests@carpentries.org'
+)
+
+# Reports
+# -----------------------------------------------------------------------------
+# Settings for workshop-reports integration
+REPORTS_SALT_FRONT = env.str('AMY_REPORTS_SALT_FRONT', default='')
+REPORTS_SALT_BACK = env.str('AMY_REPORTS_SALT_BACK', default='')
+if not DEBUG and not (REPORTS_SALT_FRONT and REPORTS_SALT_BACK):
+    raise ImproperlyConfigured(
+        "Report salts are required. See REPORT_SALT_FRONT and REPORT_SALT_BACK"
+        " in settings."
+    )
+
+REPORTS_LINK = env.str(
+    'AMY_REPORTS_LINK',
+    default='https://workshop-reports.carpentries.org/?key={hash}&slug={slug}',
 )

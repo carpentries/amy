@@ -739,8 +739,11 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     )
     user_notes = models.TextField(
         blank=True,
-        verbose_name="Is there any other information you would like to share "
+        verbose_name="Will this workshop be conducted in-person or online? " 
+                     "Is there any other information you would like to share "
                      "with us?",
+        help_text="Knowing if this workshop is on-line or in-person will "
+                  "help ensure we can best support you in coordinating the event."
     )
 
     # override field `public_event` from CommonRequest mixin
@@ -799,7 +802,8 @@ class SelfOrganisedSubmission(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         verbose_name="Please share your workshop URL",
         help_text="Use the link to the website, not the repository. This is "
                   "typically in the format <a>https://username.github.io/"
-                  "YYYY-MM-DD-sitename</a>."
+                  "YYYY-MM-DD-sitename</a>.  If you are running an online workshop, "
+                  "please use the format YYYY-MM-DD-sitename-online."
     )
     FORMAT_CHOICES = (
         ("standard", "Standard two-day Carpentries workshop"),

@@ -13,8 +13,8 @@ from rest_framework.utils.encoders import JSONEncoder
 
 from workshops.models import Event
 from workshops.util import (
-    fetch_event_metadata,
-    parse_metadata_from_event_website,
+    fetch_workshop_metadata,
+    parse_workshop_metadata,
     WrongWorkshopURL,
 )
 
@@ -124,14 +124,14 @@ class Command(BaseCommand):
 
     def get_event_metadata(self, event_url):
         """Get metadata from event (location, instructors, helpers, etc.)."""
-        metadata = fetch_event_metadata(event_url)
+        metadata = fetch_workshop_metadata(event_url)
         # normalize the metadata
-        metadata = parse_metadata_from_event_website(metadata)
+        metadata = parse_workshop_metadata(metadata)
         return metadata
 
     def empty_metadata(self):
         """Prepare basic, empty metadata."""
-        return parse_metadata_from_event_website({})
+        return parse_workshop_metadata({})
 
     def serialize(self, obj):
         """Serialize object to be put in the database."""

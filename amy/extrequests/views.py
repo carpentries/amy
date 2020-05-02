@@ -10,26 +10,30 @@ from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import (
     PermissionRequiredMixin,
 )
-from django.core.exceptions import (
-    ObjectDoesNotExist,
-)
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import (
     IntegrityError,
+    transaction,
 )
 from django.db.models import (
     Prefetch,
     Q,
     ProtectedError,
 )
+from django.http import Http404
 from django.shortcuts import redirect, render, get_object_or_404
 from django.urls import reverse
 from django_countries import countries
 import django_rq
 from requests.exceptions import HTTPError, RequestException
 
-from autoemails.actions import SelfOrganisedRequestAction
+from autoemails.actions import (
+    SelfOrganisedRequestAction,
+    PostWorkshopAction,
+)
 from autoemails.base_views import ActionManageMixin
 from autoemails.models import Trigger
+from extrequests.base_views import AMYCreateAndFetchObjectView
 from extrequests.filters import (
     TrainingRequestFilter,
     WorkshopRequestFilter,
@@ -67,6 +71,7 @@ from workshops.forms import (
     EventCreateForm,
 )
 from workshops.models import (
+    Event,
     TrainingRequest,
     WorkshopRequest,
     Tag,
@@ -89,8 +94,8 @@ from workshops.util import (
     merge_objects,
     failed_to_delete,
     InternalError,
-    fetch_event_metadata,
-    parse_metadata_from_event_website,
+    fetch_workshop_metadata,
+    parse_workshop_metadata,
     WrongWorkshopURL,
 )
 
@@ -156,43 +161,54 @@ class WorkshopRequestSetState(OnlyForAdminsMixin, ChangeRequestStateView):
     permanent = False
 
 
-@admin_required
-@permission_required(['workshops.change_workshoprequest',
-                      'workshops.add_event'],
-                     raise_exception=True)
-def workshoprequest_accept_event(request, request_id):
-    """Accept event request by creating a new event."""
-    wr = get_object_or_404(WorkshopRequest, state='p', pk=request_id)
+class WorkshopRequestAcceptEvent(OnlyForAdminsMixin, PermissionRequiredMixin,
+                                 AMYCreateAndFetchObjectView):
+    permission_required = ['workshops.change_workshoprequest',
+                           'workshops.add_event']
+    model = Event
+    form_class = EventCreateForm
+    template_name = 'requests/workshoprequest_accept_event.html'
 
-    if request.method == 'POST':
-        form = EventCreateForm(request.POST)
+    queryset_other = WorkshopRequest.objects.filter(state='p')
+    context_other_object_name = 'object'
+    pk_url_kwarg = 'request_id'
 
-        if form.is_valid():
-            event = form.save()
+    def get_context_data(self, **kwargs):
+        kwargs['title'] = "Accept and create a new event"
+        return super().get_context_data(**kwargs)
 
-            person = wr.host()
-            if person:
-                Task.objects.create(event=event, person=person,
-                                    role=Role.objects.get(name="host"))
+    def get_success_url(self):
+        return reverse('event_details', args=[self.object.slug])
 
-            wr.state = 'a'
-            wr.event = event
-            wr.save()
-            return redirect(reverse('event_details',
-                                    args=[event.slug]))
-        else:
-            messages.error(request, 'Fix errors below.')
+    def form_valid(self, form):
+        self.object = form.save()
 
-    else:
-        # non-POST request
-        form = EventCreateForm()
+        event = self.object
+        wr = self.other_object
 
-    context = {
-        'object': wr,
-        'form': form,
-    }
-    return render(request, 'requests/workshoprequest_accept_event.html',
-                  context)
+        person = wr.host()
+        if person:
+            Task.objects.create(event=event, person=person,
+                                role=Role.objects.get(name="host"))
+
+        if PostWorkshopAction.check(event):
+            objs = dict(event=event, request=wr)
+            jobs, rqjobs = ActionManageMixin.add(
+                action_class=PostWorkshopAction,
+                logger=logger,
+                scheduler=scheduler,
+                triggers=Trigger.objects.filter(
+                    active=True, action="week-after-workshop-completion",
+                ),
+                context_objects=objs,
+                object_=event,
+                request=self.request,
+            )
+
+        wr.state = 'a'
+        wr.event = event
+        wr.save()
+        return super().form_valid(form)
 
 
 class WorkshopRequestAssign(OnlyForAdminsMixin, AssignView):
@@ -261,43 +277,54 @@ class WorkshopInquirySetState(OnlyForAdminsMixin, ChangeRequestStateView):
     permanent = False
 
 
-@admin_required
-@permission_required(['extrequests.change_workshopinquiryrequest',
-                      'workshops.add_event'],
-                     raise_exception=True)
-def workshopinquiry_accept_event(request, inquiry_id):
-    """Accept workshop inquiry by creating a new event."""
-    wr = get_object_or_404(WorkshopInquiryRequest, state='p', pk=inquiry_id)
+class WorkshopInquiryAcceptEvent(OnlyForAdminsMixin, PermissionRequiredMixin,
+                                 AMYCreateAndFetchObjectView):
+    permission_required = ['workshops.change_workshopinquiryrequest',
+                           'workshops.add_event']
+    model = Event
+    form_class = EventCreateForm
+    template_name = 'requests/workshopinquiry_accept_event.html'
 
-    if request.method == 'POST':
-        form = EventCreateForm(request.POST)
+    queryset_other = WorkshopInquiryRequest.objects.filter(state='p')
+    context_other_object_name = 'object'
+    pk_url_kwarg = 'inquiry_id'
 
-        if form.is_valid():
-            event = form.save()
+    def get_context_data(self, **kwargs):
+        kwargs['title'] = "Accept and create a new event"
+        return super().get_context_data(**kwargs)
 
-            person = wr.host()
-            if person:
-                Task.objects.create(event=event, person=person,
-                                    role=Role.objects.get(name="host"))
+    def get_success_url(self):
+        return reverse('event_details', args=[self.object.slug])
 
-            wr.state = 'a'
-            wr.event = event
-            wr.save()
-            return redirect(reverse('event_details',
-                                    args=[event.slug]))
-        else:
-            messages.error(request, 'Fix errors below.')
+    def form_valid(self, form):
+        self.object = form.save()
 
-    else:
-        # non-POST request
-        form = EventCreateForm()
+        event = self.object
+        wr = self.other_object
 
-    context = {
-        'object': wr,
-        'form': form,
-    }
-    return render(request, 'requests/workshopinquiry_accept_event.html',
-                  context)
+        person = wr.host()
+        if person:
+            Task.objects.create(event=event, person=person,
+                                role=Role.objects.get(name="host"))
+
+        if PostWorkshopAction.check(event):
+            objs = dict(event=event, request=wr)
+            jobs, rqjobs = ActionManageMixin.add(
+                action_class=PostWorkshopAction,
+                logger=logger,
+                scheduler=scheduler,
+                triggers=Trigger.objects.filter(
+                    active=True, action="week-after-workshop-completion",
+                ),
+                context_objects=objs,
+                object_=event,
+                request=self.request,
+            )
+
+        wr.state = 'a'
+        wr.event = event
+        wr.save()
+        return super().form_valid(form)
 
 
 class WorkshopInquiryAssign(OnlyForAdminsMixin, AssignView):
@@ -370,102 +397,130 @@ class SelfOrganisedSubmissionSetState(OnlyForAdminsMixin,
     permanent = False
 
 
-@admin_required
-@permission_required(['extrequests.change_selforganisedsubmission',
-                      'workshops.add_event'],
-                     raise_exception=True)
-def selforganisedsubmission_accept_event(request, submission_id):
-    """Accept event request by creating a new event."""
-    wr = get_object_or_404(SelfOrganisedSubmission, state='p',
-                           pk=submission_id)
+class SelfOrganisedSubmissionAcceptEvent(OnlyForAdminsMixin,
+                                         PermissionRequiredMixin,
+                                         AMYCreateAndFetchObjectView):
+    permission_required = ['workshops.change_selforganisedsubmission',
+                           'workshops.add_event']
+    model = Event
+    form_class = EventCreateForm
+    template_name = 'requests/selforganisedsubmission_accept_event.html'
 
-    mix_match = wr.workshop_types.filter(mix_match=True).exists()
+    queryset_other = SelfOrganisedSubmission.objects.filter(state='p')
+    context_other_object_name = 'object'
+    pk_url_kwarg = 'submission_id'
 
-    FormClass = partial(
-        EventCreateForm,
-        show_lessons=mix_match,
-    )
+    def get_form_kwargs(self):
+        """Extend form kwargs with `initial` values.
 
-    if request.method == 'POST':
-        form = FormClass(request.POST)
+        The initial values are read from SelfOrganisedSubmission request
+        object, and from corresponding workshop page (if it's possible)."""
+        kwargs = super().get_form_kwargs()
 
-        if form.is_valid():
-            event = form.save()
+        mix_match = (
+            self.other_object.workshop_types.filter(mix_match=True).exists()
+        )
 
-            person = wr.host()
-            if person:
-                Task.objects.create(event=event, person=person,
-                                    role=Role.objects.get(name="host"))
+        kwargs['show_lessons'] = mix_match
 
-            wr.state = 'a'
-            wr.event = event
-            wr.save()
+        url = self.other_object.workshop_url.strip()
+        data = {
+            'url': url,
+            'curricula': list(self.other_object.workshop_types.all()),
+            'host': self.other_object.host_organization() or
+                self.other_object.institution,
+            'administrator': Organization.objects.get(domain='self-organized'),
+        }
 
-            if SelfOrganisedRequestAction.check(event):
-                objs = dict(event=event, request=wr)
-                jobs, rqjobs = ActionManageMixin.add(
-                    action_class=SelfOrganisedRequestAction,
-                    logger=logger,
-                    scheduler=scheduler,
-                    triggers=Trigger.objects.filter(
-                        active=True, action="self-organised-request-form"
-                    ),
-                    context_objects=objs,
-                    object_=event,
-                    request=request,
-                )
-
-            return redirect(reverse('event_details',
-                                    args=[event.slug]))
-        else:
-            messages.error(request, 'Fix errors below.')
-
-    else:
-        # non-POST request
-        form = FormClass()
+        if mix_match:
+            data['tags'] = [Tag.objects.get(name='Circuits')]
 
         try:
-            url = wr.workshop_url.strip()
-            metadata = fetch_event_metadata(url)
-            data = parse_metadata_from_event_website(metadata)
-            data.update({
-                'url': url,
-                'curricula': list(wr.workshop_types.all()),
-                'host': wr.host_organization() or wr.institution,
-                'administrator':
-                    Organization.objects.get(domain='self-organized'),
-            })
+            metadata = fetch_workshop_metadata(url)
+            parsed_data = parse_workshop_metadata(metadata)
+        except (AttributeError, HTTPError, RequestException, WrongWorkshopURL):
+            # ignore errors, but show warning instead
+            messages.warning(self.request,
+                             "Cannot automatically fill the form "
+                             "from provided workshop URL.")
+        else:
+            # keep working only if no exception occurred
+            try:
+                lang = parsed_data['language'].lower()
+                parsed_data['language'] = Language.objects.get(subtag=lang)
+            except (KeyError, ValueError, Language.DoesNotExist):
+                # ignore non-existing
+                messages.warning(self.request,
+                                 "Cannot automatically fill language.")
+                # it's easier to remove bad value than to leave
+                # 500 Server Error when the form is rendered
+                if 'language' in parsed_data:
+                    del parsed_data['language']
 
-            if mix_match:
-                data.update({
-                    'tags': [Tag.objects.get(name='Circuits')],
-                })
-
-            if 'language' in data:
-                lang = data['language'].lower()
-                data['language'] = Language.objects.get(subtag=lang)
+            data.update(parsed_data)
 
             if 'instructors' in data or 'helpers' in data:
                 instructors = data.get('instructors') or ['none']
                 helpers = data.get('helpers') or ['none']
-                data['comment'] = "Instructors: {}\n\nHelpers: {}" \
-                    .format(','.join(instructors), ','.join(helpers))
+                data['comment'] = (
+                    f"Instructors: {','.join(instructors)}\n\n"
+                    f"Helpers: {','.join(helpers)}"
+                )
 
-            form = FormClass(initial=data)
+        kwargs['initial'] = data
+        return kwargs
 
-        except (AttributeError, KeyError, ValueError, HTTPError,
-                RequestException, WrongWorkshopURL, Language.DoesNotExist):
-            # ignore errors
-            messages.warning(request, "Cannot automatically fill the form "
-                                      "from provided workshop URL.")
+    def get_context_data(self, **kwargs):
+        kwargs['title'] = "Accept and create a new event"
+        return super().get_context_data(**kwargs)
 
-    context = {
-        'object': wr,
-        'form': form,
-    }
-    return render(request,
-                  'requests/selforganisedsubmission_accept_event.html',
-                  context)
+    def get_success_url(self):
+        return reverse('event_details', args=[self.object.slug])
+
+    def form_valid(self, form):
+        self.object = form.save()
+
+        event = self.object
+        wr = self.other_object
+
+        person = wr.host()
+        if person:
+            Task.objects.create(event=event, person=person,
+                                role=Role.objects.get(name="host"))
+
+        wr.state = 'a'
+        wr.event = event
+        wr.save()
+
+        if SelfOrganisedRequestAction.check(event):
+            objs = dict(event=event, request=wr)
+            jobs, rqjobs = ActionManageMixin.add(
+                action_class=SelfOrganisedRequestAction,
+                logger=logger,
+                scheduler=scheduler,
+                triggers=Trigger.objects.filter(
+                    active=True, action="self-organised-request-form"
+                ),
+                context_objects=objs,
+                object_=event,
+                request=self.request,
+            )
+
+        if PostWorkshopAction.check(event):
+            objs = dict(event=event, request=wr)
+            jobs, rqjobs = ActionManageMixin.add(
+                action_class=PostWorkshopAction,
+                logger=logger,
+                scheduler=scheduler,
+                triggers=Trigger.objects.filter(
+                    active=True, action="week-after-workshop-completion",
+                ),
+                context_objects=objs,
+                object_=event,
+                request=self.request,
+            )
+
+        return super().form_valid(form)
 
 
 class SelfOrganisedSubmissionAssign(OnlyForAdminsMixin, AssignView):
@@ -609,6 +664,7 @@ def all_trainingrequests(request):
     return render(request, 'requests/all_trainingrequests.html', context)
 
 
+@transaction.atomic
 def _match_training_request_to_person(request, training_request, create=False,
                                       person=None):
     if create:
@@ -663,10 +719,10 @@ def _match_training_request_to_person(request, training_request, create=False,
         return True
     except IntegrityError:
         # email or github not unique
-        messages.error(request, "It was impossible to update related person's "
-                                "data. Probably email address or GitHub "
-                                "handle used in the training request are not "
-                                " unique amongst person entries.")
+        messages.warning(request, "It was impossible to update related "
+                                  "person's data. Probably email address or "
+                                  "Github handle used in the training request "
+                                  "are not unique amongst person entries.")
         return False
 
 
@@ -695,11 +751,24 @@ def trainingrequest_details(request, pk):
         else:
             # No person is matched to the TrainingRequest yet. Suggest a
             # person from existing records.
-            person = Person.objects.filter(Q(email__iexact=req.email) |
-                                           Q(personal__iexact=req.personal,
-                                             middle__iexact=req.middle,
-                                             family__iexact=req.family)) \
-                                   .first()  # may return None
+            primary_email = (
+                Q(email__iexact=req.email) |
+                Q(secondary_email__iexact=req.email)
+            )
+            # only match secondary email if there's one provided, otherwise
+            # we could get false-positive matches for empty email.
+            secondary_email = Q() if not req.secondary_email else (
+                Q(email__iexact=req.secondary_email) |
+                Q(secondary_email__iexact=req.secondary_email)
+            )
+            name = Q(
+                personal__iexact=req.personal,
+                middle__iexact=req.middle,
+                family__iexact=req.family,
+            )
+            person = Person.objects \
+                           .filter(primary_email | secondary_email | name) \
+                           .first()  # may return None
         form = MatchTrainingRequestForm(initial={'person': person})
 
     context = {

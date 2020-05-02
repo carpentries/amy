@@ -34,9 +34,17 @@ class TestAdminJobSendnow(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         # bring back saved scheduler
         admin.scheduler = self._saved_scheduler
 
-    def test_view_access_by_anonymous(self):
+    def test_view_doesnt_allow_GET(self):
+        # log admin user
+        self._logSuperuserIn()
+
         url = reverse('admin:autoemails_rqjob_sendnow', args=[self.rqjob.pk])
         rv = self.client.get(url)
+        self.assertEqual(rv.status_code, 405)  # Method not allowed
+
+    def test_view_access_by_anonymous(self):
+        url = reverse('admin:autoemails_rqjob_sendnow', args=[self.rqjob.pk])
+        rv = self.client.post(url)
         self.assertEqual(rv.status_code, 302)
         # cannot check by assertRedirect because there's additional `?next`
         # parameter
@@ -48,7 +56,7 @@ class TestAdminJobSendnow(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
 
         # try accessing the view again
         url = reverse('admin:autoemails_rqjob_sendnow', args=[self.rqjob.pk])
-        rv = self.client.get(url)
+        rv = self.client.post(url)
         self.assertEqual(rv.status_code, 302)
         self.assertRedirects(rv, reverse('admin:autoemails_rqjob_preview',
                                          args=[self.rqjob.pk]))
@@ -61,7 +69,7 @@ class TestAdminJobSendnow(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
             Job.fetch(self.rqjob.job_id, connection=self.scheduler.connection)
 
         url = reverse('admin:autoemails_rqjob_sendnow', args=[self.rqjob.pk])
-        rv = self.client.get(url, follow=True)
+        rv = self.client.post(url, follow=True)
         self.assertIn(
             'The corresponding job in Redis was probably already executed',
             rv.content.decode('utf-8'),
@@ -83,7 +91,7 @@ class TestAdminJobSendnow(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
                 )
             )
         url = reverse('admin:autoemails_rqjob_sendnow', args=[rqjob1.pk])
-        rv = self.client.get(url, follow=True)
+        rv = self.client.post(url, follow=True)
         self.assertIn(
             f"The job {job1.id} was not rescheduled. It is probably "
             'already executing or has recently executed',
@@ -101,7 +109,7 @@ class TestAdminJobSendnow(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         self.scheduler.enqueue_job(job2)
         Job.fetch(job2.id, connection=self.scheduler.connection)  # no error
         url = reverse('admin:autoemails_rqjob_sendnow', args=[rqjob2.pk])
-        rv = self.client.get(url, follow=True)
+        rv = self.client.post(url, follow=True)
         self.assertIn(
             f"The job {job2.id} was not rescheduled. It is probably "
             'already executing or has recently executed',
@@ -119,7 +127,7 @@ class TestAdminJobSendnow(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         rqjob = RQJob.objects.create(job_id=job.id, trigger=self.trigger)
         Job.fetch(job.id, connection=self.scheduler.connection)  # no error
         url = reverse('admin:autoemails_rqjob_sendnow', args=[rqjob.pk])
-        rv = self.client.get(url, follow=True)
+        rv = self.client.post(url, follow=True)
         self.assertIn(
             f'The job {job.id} was rescheduled to now.',
             rv.content.decode('utf-8'),

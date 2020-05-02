@@ -88,7 +88,6 @@ class InstructorsOverTimeFilter(AMYFilterSet):
     badges = filters.ModelMultipleChoiceFilter(
         queryset=Badge.objects.instructor_badges(),
         label='Badges',
-        lookup_expr='in',
     )
     country = filters.MultipleChoiceFilter(
         choices=list(Countries()),
