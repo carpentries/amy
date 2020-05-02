@@ -181,6 +181,7 @@ class TestNewInstructorAction(TestCase):
                 role=r,
                 task=t,
                 assignee="Regional Coordinator",
+                tags=['SWC'],
             ),
         )
 
