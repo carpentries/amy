@@ -291,6 +291,7 @@ class NewInstructorAction(BaseAction):
         context["assignee"] = (
             event.assigned_to.full_name if event.assigned_to else "Regional Coordinator"
         )
+        context["tags"] = list(event.tags.values_list("name", flat=True))
 
         return context
 
@@ -443,6 +444,7 @@ class PostWorkshopAction(BaseAction):
         )
 
         context["reports_link"] = reports_link(event.slug)
+        context["tags"] = list(event.tags.values_list("name", flat=True))
 
         return context
 
@@ -558,5 +560,6 @@ class SelfOrganisedRequestAction(BaseAction):
         context["assignee"] = (
             event.assigned_to.full_name if event.assigned_to else "Regional Coordinator"
         )
+        context["tags"] = list(event.tags.values_list("name", flat=True))
 
         return context

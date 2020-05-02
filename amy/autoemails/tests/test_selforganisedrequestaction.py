@@ -180,6 +180,7 @@ class TestSelfOrganisedRequestAction(TestCase):
                 short_notice=True,
                 all_emails=["harry@hogwarts.edu", "hg@magic.uk", "rw@magic.uk"],
                 assignee="Regional Coordinator",
+                tags=['LC', 'automated-email', 'Circuits'],
             ),
         )
 
