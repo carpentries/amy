@@ -2318,6 +2318,19 @@ class WorkshopRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
         verbose_name="Workshop location",
         help_text="City, state, or province.",
     )
+
+    ONLINE_INPERSON_CHOICES = (
+        ('online', 'Online'),
+        ('inperson', 'In-person'),
+        ('unsure', 'Not sure')
+
+    )
+    online_inperson = models.CharField(
+        max_length=15,
+        choices=ONLINE_INPERSON_CHOICES,
+        blank=False, null=False, default=None,
+        verbose_name="Will this workshop be held online or in-person?")
+
     country = CountryField(
         null=False, blank=False,
         verbose_name="Country",
