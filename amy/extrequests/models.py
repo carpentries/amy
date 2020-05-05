@@ -739,11 +739,8 @@ class WorkshopInquiryRequest(AssignmentMixin, StateMixin, CreatedUpdatedMixin,
     )
     user_notes = models.TextField(
         blank=True,
-        verbose_name="Will this workshop be conducted in-person or online? " 
-                     "Is there any other information you would like to share "
+        verbose_name="Is there any other information you would like to share "
                      "with us?",
-        help_text="Knowing if this workshop is on-line or in-person will "
-                  "help ensure we can best support you in coordinating the event."
     )
 
     # override field `public_event` from CommonRequest mixin
