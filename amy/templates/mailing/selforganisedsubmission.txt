@@ -10,6 +10,10 @@ learners are found on the workshop GitHub page.
 You will receive the links to view the results of the surveys approximately 
 1 week prior to the workshop.
 
+If you are planning to teach the workshop online, you can look at resources
+that will help you get ready in the handbook:
+https://docs.carpentries.org/topic_folders/hosts_instructors/index_online.html.
+
 Have a great workshop!
 The Carpentries
 

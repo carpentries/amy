@@ -14,6 +14,9 @@ a few important notes:
   will try to locate instructors nearby.
 * We recommend budgeting $1000 per instructor to cover the cost of
   accommodations (travel, ground transportation, lodging and meals).
+* If you are planning to teach the workshop online, you can look at resources
+  that will help you get ready in the handbook
+  https://docs.carpentries.org/topic_folders/hosts_instructors/index_online.html
 
 We look forward to working with you and ensuring you have a great workshop!
 The Carpentries
