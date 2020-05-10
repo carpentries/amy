@@ -6,6 +6,10 @@ how our workshops are organised please visit our website
 (https://carpentries.org/). For more information about our curricula go
 here (https://carpentries.org/workshops-curricula/).
 
+If you are interested in learning more about how we teach workshops online in
+response to the COVID-19 pandemic, you can read about it in our handbook
+(https://docs.carpentries.org/topic_folders/hosts_instructors/resources_for_online_workshops.html).
+
 A member from our team will be following up with you. We look forward to
 working with you!
 The Carpentries
