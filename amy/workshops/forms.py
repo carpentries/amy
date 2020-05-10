@@ -894,9 +894,6 @@ class PersonsMergeForm(forms.Form):
 
 
 class AwardForm(WidgetOverrideMixin, forms.ModelForm):
-
-    helper = BootstrapHelper(add_cancel_button=False)
-
     class Meta:
         model = Award
         fields = '__all__'
@@ -908,6 +905,11 @@ class AwardForm(WidgetOverrideMixin, forms.ModelForm):
             'awarded_by': ModelSelect2Widget(data_view='admin-lookup',
                                              attrs=SELECT2_SIDEBAR),
         }
+
+    def __init__(self, *args, **kwargs):
+        form_tag = kwargs.pop('form_tag', True)
+        super().__init__(*args, **kwargs)
+        self.helper = BootstrapHelper(add_cancel_button=False, form_tag=form_tag)
 
 
 class EventLookupForm(forms.Form):

@@ -593,9 +593,9 @@ class TestEventViews(TestBase):
         self.assertEqual(event.attendance, 0)
 
         data = {
-            'role': self.learner.pk,
-            'event': event.pk,
-            'person': self.spiderman.pk,
+            'task-role': self.learner.pk,
+            'task-event': event.pk,
+            'task-person': self.spiderman.pk,
         }
         self.client.post(reverse('task_add'), data)
 
