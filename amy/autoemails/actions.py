@@ -1,11 +1,10 @@
 from datetime import timedelta, date
 import logging
-from typing import Optional, List, Dict
+from typing import Optional, Dict
 
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.mail import EmailMultiAlternatives
-from django.db.models import Q
 from django.template.exceptions import (
     TemplateSyntaxError,
     TemplateDoesNotExist,
@@ -50,7 +49,7 @@ class BaseAction:
         self.logger = logger
 
         # default values for fields that will become values later on
-        self.context = None
+        self.context: Optional[dict] = None
         self.email = None
 
     def __eq__(self, b):
@@ -67,7 +66,7 @@ class BaseAction:
             return False
 
     @staticmethod
-    def check(cls, *args, **kwargs):
+    def check(*args, **kwargs):
         """This static method can be used to determine if conditions are met
         for creating an Action instance."""
         raise NotImplementedError()
@@ -243,19 +242,16 @@ class NewInstructorAction(BaseAction):
             and not task.event.tags.filter(
                 name__in=["cancelled", "unresponsive", "stalled"]
             )
-            and
             # 2019-12-24: instead of accepting only upcoming Events, let's
             #             accept (more broadly) events starting in future
             #             or some without start date
             # 2020-01-31: slightly rewrite (less queries)
-            (not task.event.start or task.event.start >= date.today())
-            and
+            and (not task.event.start or task.event.start >= date.today())
             # 2020-02-07: the task must have "automated-email" tag in order to
             #             be used for Email Automation
-            task.event.tags.filter(name__icontains="automated-email")
-            and
+            and task.event.tags.filter(name__icontains="automated-email")
             # 2020-02-11: only for workshops administered by LC/DC/SWC
-            task.event.administrator
+            and task.event.administrator
             and task.event.administrator.domain != "self-organized"
             and task.event.administrator.domain != "carpentries.org"
         )
@@ -379,21 +375,17 @@ class PostWorkshopAction(BaseAction):
             # end date is required and in future
             event.end
             and event.end >= date.today()
-            and
             # event cannot be cancelled / unresponsive / stalled
-            not event.tags.filter(name__in=["cancelled", "unresponsive", "stalled"])
-            and
+            and not event.tags.filter(name__in=["cancelled", "unresponsive", "stalled"])
             # 2020-02-07: changed conditions below
             # must have "automated-email" tag
-            event.tags.filter(name__icontains="automated-email")
-            and
+            and event.tags.filter(name__icontains="automated-email")
             # must have LC, DC, or SWC tags
-            event.tags.filter(name__in=["LC", "DC", "SWC"])
-            and
+            and event.tags.filter(name__in=["LC", "DC", "SWC"])
             # must not be self-organized or instructor training
             # 2020-02-11: only for workshops administered by other than
             #             Instructor Training
-            event.administrator
+            and event.administrator
             and event.administrator.domain != "carpentries.org"
         )
 
@@ -505,19 +497,17 @@ class SelfOrganisedRequestAction(BaseAction):
                 # is self-organized
                 event.administrator
                 and event.administrator.domain == "self-organized"
-                and
                 # starts in future
-                event.start
+                and event.start
                 and event.start >= date.today()
-                and
                 # no "cancelled", "unresponsive", or "stalled" tags
-                not event.tags.filter(name__in=["cancelled", "unresponsive", "stalled"])
-                and
+                and not event.tags.filter(
+                    name__in=["cancelled", "unresponsive", "stalled"]
+                )
                 # special "automated-email" tag
-                event.tags.filter(name__icontains="automated-email")
-                and
+                and event.tags.filter(name__icontains="automated-email")
                 # there should be a related object `SelfOrganisedSubmission`
-                event.selforganisedsubmission
+                and event.selforganisedsubmission
             )
         except Event.selforganisedsubmission.RelatedObjectDoesNotExist:
             # Simply accessing `event.selforganisedsubmission` to check for
