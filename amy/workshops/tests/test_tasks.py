@@ -398,9 +398,9 @@ class TestTaskCreateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
 
         self.client.force_login(self.admin)
         data = {
-            'event': self.test_event_1.pk,
-            'person': self.test_person_1.pk,
-            'role': role.pk,
+            'task-event': self.test_event_1.pk,
+            'task-person': self.test_person_1.pk,
+            'task-role': role.pk,
         }
         response = self.client.post(reverse('task_add'), data, follow=True)
         # with open('test.html', 'w', encoding='utf-8') as f:
@@ -720,9 +720,9 @@ class TestTaskDeleteAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
 
         self.client.force_login(self.admin)
         data = {
-            'event': self.event_1.pk,
-            'person': self.person_1.pk,
-            'role': self.instructor.pk,
+            'task-event': self.event_1.pk,
+            'task-person': self.person_1.pk,
+            'task-role': self.instructor.pk,
         }
         response = self.client.post(reverse('task_add'), data, follow=True)
         self.assertContains(response, "New email was scheduled")

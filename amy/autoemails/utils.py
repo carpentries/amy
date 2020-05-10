@@ -11,14 +11,12 @@ def scheduled_execution_time(job_id, scheduler=None, naive=True):
     """Get RQ-Scheduler scheduled execution time for specific job."""
     _scheduler = scheduler
     if not scheduler:
-        _scheduler = django_rq.get_scheduler('default')
+        _scheduler = django_rq.get_scheduler("default")
 
     # Scheduler keeps jobs in a single key, they are sorted by score, which is
     # scheduled execution time (linux epoch).  We can retrieve single
     # entry's score.
-    time = _scheduler.connection.zscore(
-        _scheduler.scheduled_jobs_key, job_id
-    )
+    time = _scheduler.connection.zscore(_scheduler.scheduled_jobs_key, job_id)
 
     # Convert linux time epoch to UTC.
     if time:
@@ -40,12 +38,12 @@ def compare_emails(a, b):
     else:
         try:
             return (
-                a.to == b.to and
-                a.cc == b.cc and
-                a.bcc == b.bcc and
-                a.reply_to == b.reply_to and
-                a.subject == b.subject and
-                a.body == b.body
+                a.to == b.to
+                and a.cc == b.cc
+                and a.bcc == b.bcc
+                and a.reply_to == b.reply_to
+                and a.subject == b.subject
+                and a.body == b.body
             )
         except AttributeError:
             return False
@@ -54,7 +52,7 @@ def compare_emails(a, b):
 def check_status(job: Union[str, Job], scheduler=None):
     _scheduler = scheduler
     if not scheduler:
-        _scheduler = django_rq.get_scheduler('default')
+        _scheduler = django_rq.get_scheduler("default")
 
     if not isinstance(job, Job):
         try:

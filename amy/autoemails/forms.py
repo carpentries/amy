@@ -6,7 +6,8 @@ from markdownx.widgets import AdminMarkdownxWidget
 
 class RescheduleForm(forms.Form):
     scheduled_execution = forms.SplitDateTimeField(
-        required=True, initial=None,
+        required=True,
+        initial=None,
         label="New execution time",
         widget=AdminSplitDateTime(),
     )
@@ -14,7 +15,5 @@ class RescheduleForm(forms.Form):
 
 class TemplateForm(forms.Form):
     template = MarkdownxFormField(
-        label="Markdown body",
-        widget=AdminMarkdownxWidget,
-        required=True,
+        label="Markdown body", widget=AdminMarkdownxWidget, required=True,
     )
