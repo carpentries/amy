@@ -97,7 +97,7 @@ class TestPerson(TestBase):
         url = reverse('person_edit', args=[self.spiderman.pk])
         person_edit = self.app.get(url, user='admin')
         award_form = person_edit.forms[2]
-        award_form['badge'] = self.swc_instructor.pk
+        award_form['award-badge'] = self.swc_instructor.pk
 
         self.assertEqual(self.spiderman.award_set.count(), 0)
         self.assertRedirects(award_form.submit(), url)
@@ -111,9 +111,9 @@ class TestPerson(TestBase):
 
         url = reverse('person_edit', args=[self.spiderman.pk])
         person_edit = self.app.get(url, user='admin')
-        task_form = person_edit.forms[4]
-        task_form['event'].force_value(Event.objects.first().pk)
-        task_form['role'] = role.pk
+        task_form = person_edit.forms[3]
+        task_form['task-event'].force_value(Event.objects.first().pk)
+        task_form['task-role'] = role.pk
 
         self.assertEqual(self.spiderman.task_set.count(), 0)
         self.assertRedirects(task_form.submit(), url)
@@ -380,11 +380,11 @@ class TestPerson(TestBase):
 
         # Test workflow starting from clicking at "instructor badge" label
         swc_res = trainees.click('^<strike>instructor badge</strike>$')
-        self.assertSelected(swc_res.forms['main-form']['badge'],
+        self.assertSelected(swc_res.forms['main-form']['award-badge'],
                             '---------')
-        self.assertEqual(int(swc_res.forms['main-form']['event'].value),
+        self.assertEqual(int(swc_res.forms['main-form']['award-event'].value),
                          training.pk)
-        swc_res.forms['main-form']['badge'].select(self.swc_instructor.pk)
+        swc_res.forms['main-form']['award-badge'].select(self.swc_instructor.pk)
         res = swc_res.forms['main-form'].submit()
         self.assertRedirects(res, reverse('all_trainees'))
         self.assertEqual(trainee.award_set.last().badge, self.swc_instructor)
@@ -395,11 +395,11 @@ class TestPerson(TestBase):
 
         # Test workflow starting from clicking at "instructor badge" label
         dc_res = trainees.click('^<strike>instructor badge</strike>$')
-        self.assertSelected(dc_res.forms['main-form']['badge'],
+        self.assertSelected(dc_res.forms['main-form']['award-badge'],
                             '---------')
-        self.assertEqual(int(dc_res.forms['main-form']['event'].value),
+        self.assertEqual(int(dc_res.forms['main-form']['award-event'].value),
                          training.pk)
-        dc_res.forms['main-form']['badge'].select(self.dc_instructor.pk)
+        dc_res.forms['main-form']['award-badge'].select(self.dc_instructor.pk)
         res = dc_res.forms['main-form'].submit()
         self.assertRedirects(res, reverse('all_trainees'))
         self.assertEqual(trainee.award_set.last().badge, self.dc_instructor)

@@ -582,10 +582,10 @@ class PersonUpdate(OnlyForAdminsMixin, UserPassesTestMixin,
         context.update({
             'awards': self.object.award_set.select_related('event', 'badge')
                           .order_by('badge__name'),
-            'award_form': AwardForm(**kwargs),
             'tasks': self.object.task_set.select_related('role', 'event')
                          .order_by('-event__slug'),
-            'task_form': TaskForm(**kwargs),
+            'award_form': AwardForm(form_tag=False, prefix="award", **kwargs),
+            'task_form': TaskForm(form_tag=False, prefix="task", **kwargs),
         })
         return context
 
@@ -1363,6 +1363,13 @@ class TaskCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
     model = Task
     form_class = TaskForm
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({
+            'prefix': "task"
+        })
+        return kwargs
+
     def post(self, request, *args, **kwargs):
         """Save request in `self.request`."""
         self.request = request
@@ -1530,6 +1537,13 @@ class MockAwardCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
     model = Award
     form_class = AwardForm
     populate_fields = ['badge', 'person']
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({
+            'prefix': "award"
+        })
+        return kwargs
 
     def get_initial(self, **kwargs):
         initial = super().get_initial(**kwargs)
