@@ -24,6 +24,12 @@ mediafiles/*
 *.pyc
 __pycache__
 
+# MyPy cache files
+.mypy_cache
+
+# Pytest cache files
+.pytest_cache
+
 # databases
 *.sqlite3*
 # test database files
