@@ -279,6 +279,10 @@ class Trigger(ActiveMixin, CreatedUpdatedMixin, models.Model):
             "self-organised-request-form",
             "A new event is created from Self-Organised Request Form",
         ),
+        (
+            "instructors-host-introduction",
+            "Introduction of instrutors and host (centr. org. workshop)",
+        ),
     )
     action = models.CharField(
         max_length=50,
