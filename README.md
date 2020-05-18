@@ -63,6 +63,13 @@ before starting work on new features.
     $ python manage.py createsuperuser
     ~~~
 
+
+1. Start running a local instance of Redis. This requires Docker to be installed locally.  Redis is required to have certain features (like creating a new person and viewing a workshop request) work correctly.
+
+    ~~~
+    $ docker-compose up -d redis_cache
+    ~~~
+
 1.  Start a local Django development server by running:
 
     ~~~
@@ -74,6 +81,13 @@ before starting work on new features.
 1.  Open <http://127.0.0.1:8000/workshops/> in your browser and start clicking.
 
     Use the administrator account that you created.
+
+
+1. Shut down the local server by typing `Ctrl-C`.  Shut down the Docker Redis instance with:
+
+    ~~~
+    $ docker-compose down
+    ~~~
 
 ## Upgrading
 
