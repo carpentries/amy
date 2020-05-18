@@ -383,7 +383,7 @@ class EventForm(forms.ModelForm):
 
     administrator = forms.ModelChoiceField(
         label="Administrator",
-        required=False,
+        required=True,
         help_text=Event._meta.get_field("administrator").help_text,
         queryset=Organization.objects.administrators(),
         widget=ModelSelect2Widget(data_view="administrator-org-lookup"),
