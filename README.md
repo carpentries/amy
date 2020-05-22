@@ -63,6 +63,13 @@ before starting work on new features.
     $ python manage.py createsuperuser
     ~~~
 
+
+1. Start running a local instance of Redis. This requires Docker to be installed locally.  Redis is required to have certain features (like creating a new person and viewing a workshop request) work correctly.
+
+    ~~~
+    $ docker-compose up -d redis_cache
+    ~~~
+
 1.  Start a local Django development server by running:
 
     ~~~
@@ -74,6 +81,13 @@ before starting work on new features.
 1.  Open <http://127.0.0.1:8000/workshops/> in your browser and start clicking.
 
     Use the administrator account that you created.
+
+
+1. Shut down the local server by typing `Ctrl-C`.  Shut down the Docker Redis instance with:
+
+    ~~~
+    $ docker-compose down
+    ~~~
 
 ## Upgrading
 
@@ -122,6 +136,42 @@ before starting work on new features.
     ~~~
     $ make serve
     ~~~
+
+
+## Start hacking on email automation
+
+1. Make sure you have Redis running. See instructions above.
+
+1. Install required objects in database:
+
+    ~~~
+    $ python manage.py loaddata amy/autoemails/fixtures/templates_triggers.json
+    ~~~
+
+1. Create dev database (it will add a super user, too!):
+
+    ~~~
+    $ make dev_database
+    ~~~
+
+1. Run the server:
+
+    ~~~
+    $ python manage.py runserver
+    ~~~
+
+1. Check if you have a Tag `automated-email` available. If not, create one (you can use
+   Django admin interface for that). Use superuser account (admin:admin). Now scheduling
+   the emails should work, however there's no worker to execute them.
+
+1. (Optional) Run the RQ worker and scheduler (use separate terminals or processes for
+   each command):
+
+    ~~~
+    $ python manage.py rqworker
+    $ python manage.py rqscheduler
+    ~~~
+
 
 [bootstrap]: https://getbootstrap.com/
 [contact-address]: mailto:team@carpentries.org
