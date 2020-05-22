@@ -279,7 +279,7 @@ class WorkshopInquirySetState(OnlyForAdminsMixin, ChangeRequestStateView):
 
 class WorkshopInquiryAcceptEvent(OnlyForAdminsMixin, PermissionRequiredMixin,
                                  AMYCreateAndFetchObjectView):
-    permission_required = ['workshops.change_workshopinquiryrequest',
+    permission_required = ['extrequests.change_workshopinquiryrequest',
                            'workshops.add_event']
     model = Event
     form_class = EventCreateForm
@@ -400,7 +400,7 @@ class SelfOrganisedSubmissionSetState(OnlyForAdminsMixin,
 class SelfOrganisedSubmissionAcceptEvent(OnlyForAdminsMixin,
                                          PermissionRequiredMixin,
                                          AMYCreateAndFetchObjectView):
-    permission_required = ['workshops.change_selforganisedsubmission',
+    permission_required = ['extrequests.change_selforganisedsubmission',
                            'workshops.add_event']
     model = Event
     form_class = EventCreateForm
