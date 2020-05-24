@@ -112,7 +112,6 @@ class ActionManageMixin:
         scheduler,
         connection,
         jobs,
-        context_objects,
         object_,
         request=None,
     ):
@@ -187,7 +186,6 @@ class ActionManageMixin:
             scheduler=self.get_scheduler(),
             connection=self.get_redis_connection(),
             jobs=self.get_jobs(as_id_list=True),
-            context_objects=self.objects(),
             object_=self.object,
             request=self.request,
         )
