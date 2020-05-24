@@ -1,6 +1,5 @@
 import csv
 import datetime
-from functools import partial
 import io
 import logging
 
@@ -20,10 +19,8 @@ from django.db.models import (
     Q,
     ProtectedError,
 )
-from django.http import Http404
 from django.shortcuts import redirect, render, get_object_or_404
 from django.urls import reverse
-from django_countries import countries
 import django_rq
 from requests.exceptions import HTTPError, RequestException
 
@@ -79,7 +76,6 @@ from workshops.models import (
     Role,
     Person,
     Language,
-    Curriculum,
     Organization,
 )
 from workshops.util import (
@@ -89,7 +85,6 @@ from workshops.util import (
     upload_trainingrequest_manual_score_csv,
     clean_upload_trainingrequest_manual_score,
     update_manual_score,
-    get_pagination_items,
     create_username,
     merge_objects,
     failed_to_delete,

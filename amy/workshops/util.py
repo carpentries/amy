@@ -7,6 +7,7 @@ from hashlib import sha1
 from itertools import chain
 import logging
 import re
+from typing import Optional, Union
 
 import requests
 import yaml
@@ -1269,8 +1270,8 @@ def choice_field_with_other(choices, default, verbose_name=None, help_text=None)
 
 
 def human_daterange(
-    date_left,
-    date_right,
+    date_left: Optional[Union[datetime.date, datetime.datetime]],
+    date_right: Optional[Union[datetime.date, datetime.datetime]],
     no_date="???",
     range_char=" - ",
     common_month_left="%b %d",

@@ -1,6 +1,6 @@
 from datetime import timedelta, date
 import logging
-from typing import Optional, Dict, List
+from typing import Optional, Dict
 
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -625,7 +625,8 @@ class InstructorsHostIntroductionAction(BaseAction):
             # special "automated-email" tag
             and event.tags.filter(name__icontains="automated-email")
             # roles: 1 host and 2+ instructors
-            and host and len(instructors) >= 2
+            and host
+            and len(instructors) >= 2
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
@@ -650,8 +651,8 @@ class InstructorsHostIntroductionAction(BaseAction):
         tasks = event.task_set.filter(role__name__in=["host", "instructor"]).order_by(
             "role__name"
         )
-        hosts = tasks.filter(role__name='host')
-        instructors = tasks.filter(role__name='instructor')
+        hosts = tasks.filter(role__name="host")
+        instructors = tasks.filter(role__name="instructor")
         context["host"] = hosts[0].person
         context["instructor1"] = instructors[0].person
         context["instructor2"] = instructors[1].person
