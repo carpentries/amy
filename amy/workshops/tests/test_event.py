@@ -275,6 +275,7 @@ class TestEventFormComments(TestBase):
         data = {
             "slug": "2018-12-28-test-event",
             "host": self.org_alpha.id,
+            "administrator": Organization.objects.administrators().first().id,
             "tags": [self.test_tag.id],
             "comment": "",
         }
@@ -289,6 +290,7 @@ class TestEventFormComments(TestBase):
         data = {
             "slug": "2018-12-28-test-event",
             "host": self.org_alpha.id,
+            "administrator": Organization.objects.administrators().first().id,
             "tags": [self.test_tag.id],
             "comment": "This is a test comment.",
         }
@@ -464,6 +466,7 @@ class TestEventViews(TestBase):
         data = {
             "slug": "2016-07-09-test",
             "host": self.test_host.id,
+            "administrator": Organization.objects.administrators().first().id,
             "tags": [self.test_tag.id],
             "assigned_to": self.admin.pk,
             "invoice_status": "unknown",
@@ -494,6 +497,7 @@ class TestEventViews(TestBase):
         https://github.com/swcarpentry/amy/issues/436"""
         data = {
             "host": self.test_host.id,
+            "administrator": Organization.objects.administrators().first().id,
             "tags": [self.test_tag.id],
             "slug": "2016-06-30-test-event",
             "start": date(2015, 7, 20),
@@ -507,6 +511,7 @@ class TestEventViews(TestBase):
 
         data = {
             "host": self.test_host.id,
+            "administrator": Organization.objects.administrators().first().id,
             "tags": [self.test_tag.id],
             "slug": "2016-06-30-test-event",
             "start": date(2015, 7, 20),
@@ -518,6 +523,7 @@ class TestEventViews(TestBase):
 
         data = {
             "host": self.test_host.id,
+            "administrator": Organization.objects.administrators().first().id,
             "tags": [self.test_tag.id],
             "slug": "2016-06-30-test-event2",
             "start": date(2015, 7, 20),
@@ -540,6 +546,7 @@ class TestEventViews(TestBase):
 
         data = {
             "host": self.test_host.id,
+            "administrator": Organization.objects.administrators().first().id,
             "tags": [self.test_tag.id],
             "slug": "2016-06-30-test-event",
             "manual_attendance": -36,
@@ -570,6 +577,7 @@ class TestEventViews(TestBase):
         data = {
             "slug": "2016-06-30-test-event",
             "host": self.test_host.id,
+            "administrator": Organization.objects.administrators().first().id,
             "tags": [self.test_tag.id],
             "manual_attendance": "",
         }
@@ -662,6 +670,7 @@ class TestEventViews(TestBase):
         data = {
             "slug": "",
             "host": Organization.objects.all()[0].pk,
+            "administrator": Organization.objects.administrators().first().id,
             "tags": [Tag.objects.first().pk],
             "invoice_status": "unknown",
         }
@@ -707,6 +716,7 @@ class TestEventViews(TestBase):
         data = {
             "slug": "2018-09-02-open-applications",
             "host": self.org_alpha.pk,
+            "administrator": Organization.objects.administrators().first().id,
             "tags": [Tag.objects.get(name="SWC").pk],
             "invoice_status": "unknown",
             "open_TTT_applications": True,

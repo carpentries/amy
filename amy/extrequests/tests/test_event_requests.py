@@ -139,6 +139,7 @@ class TestEventRequestsViews(TestBase):
         data = {
             'slug': '2016-06-30-test-event',
             'host': Organization.objects.first().pk,
+            'administrator': Organization.objects.administrators().first().id,
             'tags': [1],
             'invoice_status': 'unknown',
         }
