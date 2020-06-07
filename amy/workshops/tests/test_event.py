@@ -1291,7 +1291,9 @@ class TestEventAttendance(TestBase):
         self.assertEqual(self.event.attendance, 2)
 
 
-class TestEventCreatePostWorkshopAction(FakeRedisTestCaseMixin, SuperuserMixin, TestCase):
+class TestEventCreatePostWorkshopAction(
+    FakeRedisTestCaseMixin, SuperuserMixin, TestCase
+):
     def setUp(self):
         super().setUp()
 
@@ -1382,7 +1384,9 @@ class TestEventCreatePostWorkshopAction(FakeRedisTestCaseMixin, SuperuserMixin, 
         self.assertEqual(job.get_id(), rqjob.job_id)
 
 
-class TestEventUpdatePostWorkshopAction(FakeRedisTestCaseMixin, SuperuserMixin, TestCase):
+class TestEventUpdatePostWorkshopAction(
+    FakeRedisTestCaseMixin, SuperuserMixin, TestCase
+):
     def setUp(self):
         super().setUp()
 
@@ -1562,7 +1566,9 @@ class TestEventUpdatePostWorkshopAction(FakeRedisTestCaseMixin, SuperuserMixin, 
         self.assertEqual(RQJob.objects.count(), 0)
 
 
-class TestEventDeletePostWorkshopAction(FakeRedisTestCaseMixin, SuperuserMixin, TestCase):
+class TestEventDeletePostWorkshopAction(
+    FakeRedisTestCaseMixin, SuperuserMixin, TestCase
+):
     def setUp(self):
         super().setUp()
 
@@ -1674,7 +1680,9 @@ class TestEventCreateInstructorsHostIntroduction(TestCase):
     pass
 
 
-class TestEventUpdateInstructorsHostIntroduction(FakeRedisTestCaseMixin, SuperuserMixin, TestCase):
+class TestEventUpdateInstructorsHostIntroduction(
+    FakeRedisTestCaseMixin, SuperuserMixin, TestCase
+):
     def setUp(self):
         super().setUp()
 
@@ -1704,8 +1712,8 @@ class TestEventUpdateInstructorsHostIntroduction(FakeRedisTestCaseMixin, Superus
             domain="librarycarpentry.org", fullname="Library Carpentry",
         )
 
-        self.instructor = Role.objects.create(name='instructor')
-        self.host = Role.objects.create(name='host')
+        self.instructor = Role.objects.create(name="instructor")
+        self.host = Role.objects.create(name="host")
 
         template = EmailTemplate.objects.create(
             slug="sample-template",
@@ -1722,22 +1730,22 @@ class TestEventUpdateInstructorsHostIntroduction(FakeRedisTestCaseMixin, Superus
         )
 
         self.instructor1 = Person.objects.create(
-            personal='Hermione',
-            family='Granger',
-            email='hermione@granger.co.uk',
-            username='granger_hermione',
+            personal="Hermione",
+            family="Granger",
+            email="hermione@granger.co.uk",
+            username="granger_hermione",
         )
         self.instructor2 = Person.objects.create(
-            personal='Ron',
-            family='Weasley',
-            email='rw@magic.uk',
-            username='weasley_ron',
+            personal="Ron",
+            family="Weasley",
+            email="rw@magic.uk",
+            username="weasley_ron",
         )
         self.host1 = Person.objects.create(
-            personal='Harry',
-            family='Potter',
-            email='hp@magic.uk',
-            username='potter_harry',
+            personal="Harry",
+            family="Potter",
+            email="hp@magic.uk",
+            username="potter_harry",
         )
 
     def test_job_scheduled(self):
@@ -1753,11 +1761,13 @@ class TestEventUpdateInstructorsHostIntroduction(FakeRedisTestCaseMixin, Superus
             administrator=self.LC_org,
         )
         event.tags.set(Tag.objects.filter(name__in=["LC", "automated-email"]))
-        Task.objects.bulk_create([
-            Task(event=event, person=self.instructor1, role=self.instructor),
-            Task(event=event, person=self.instructor2, role=self.instructor),
-            Task(event=event, person=self.host1, role=self.host),
-        ])
+        Task.objects.bulk_create(
+            [
+                Task(event=event, person=self.instructor1, role=self.instructor),
+                Task(event=event, person=self.instructor2, role=self.instructor),
+                Task(event=event, person=self.host1, role=self.host),
+            ]
+        )
         self.assertFalse(InstructorsHostIntroductionAction.check(event))
 
         # no jobs
@@ -1812,11 +1822,13 @@ class TestEventUpdateInstructorsHostIntroduction(FakeRedisTestCaseMixin, Superus
             administrator=self.LC_org,
         )
         event.tags.set(Tag.objects.filter(name__in=["LC", "automated-email"]))
-        Task.objects.bulk_create([
-            Task(event=event, person=self.instructor1, role=self.instructor),
-            Task(event=event, person=self.instructor2, role=self.instructor),
-            Task(event=event, person=self.host1, role=self.host),
-        ])
+        Task.objects.bulk_create(
+            [
+                Task(event=event, person=self.instructor1, role=self.instructor),
+                Task(event=event, person=self.instructor2, role=self.instructor),
+                Task(event=event, person=self.host1, role=self.host),
+            ]
+        )
         self.assertFalse(InstructorsHostIntroductionAction.check(event))
 
         # no jobs - again, due to not creating via WWW
@@ -1886,7 +1898,9 @@ class TestEventUpdateInstructorsHostIntroduction(FakeRedisTestCaseMixin, Superus
         self.assertEqual(RQJob.objects.count(), 0)
 
 
-class TestEventDeleteInstructorsHostIntroduction(FakeRedisTestCaseMixin, SuperuserMixin, TestCase):
+class TestEventDeleteInstructorsHostIntroduction(
+    FakeRedisTestCaseMixin, SuperuserMixin, TestCase
+):
     def setUp(self):
         super().setUp()
 
@@ -1916,8 +1930,8 @@ class TestEventDeleteInstructorsHostIntroduction(FakeRedisTestCaseMixin, Superus
             domain="librarycarpentry.org", fullname="Library Carpentry",
         )
 
-        self.instructor = Role.objects.create(name='instructor')
-        self.host = Role.objects.create(name='host')
+        self.instructor = Role.objects.create(name="instructor")
+        self.host = Role.objects.create(name="host")
 
         template = EmailTemplate.objects.create(
             slug="sample-template",
@@ -1934,22 +1948,22 @@ class TestEventDeleteInstructorsHostIntroduction(FakeRedisTestCaseMixin, Superus
         )
 
         self.instructor1 = Person.objects.create(
-            personal='Hermione',
-            family='Granger',
-            email='hermione@granger.co.uk',
-            username='granger_hermione',
+            personal="Hermione",
+            family="Granger",
+            email="hermione@granger.co.uk",
+            username="granger_hermione",
         )
         self.instructor2 = Person.objects.create(
-            personal='Ron',
-            family='Weasley',
-            email='rw@magic.uk',
-            username='weasley_ron',
+            personal="Ron",
+            family="Weasley",
+            email="rw@magic.uk",
+            username="weasley_ron",
         )
         self.host1 = Person.objects.create(
-            personal='Harry',
-            family='Potter',
-            email='hp@magic.uk',
-            username='potter_harry',
+            personal="Harry",
+            family="Potter",
+            email="hp@magic.uk",
+            username="potter_harry",
         )
 
     def test_job_unscheduled(self):
@@ -1968,11 +1982,13 @@ class TestEventDeleteInstructorsHostIntroduction(FakeRedisTestCaseMixin, Superus
             end=None,
             administrator=self.LC_org,
         )
-        Task.objects.bulk_create([
-            Task(event=event, person=self.instructor1, role=self.instructor),
-            Task(event=event, person=self.instructor2, role=self.instructor),
-            Task(event=event, person=self.host1, role=self.host),
-        ])
+        Task.objects.bulk_create(
+            [
+                Task(event=event, person=self.instructor1, role=self.instructor),
+                Task(event=event, person=self.instructor2, role=self.instructor),
+                Task(event=event, person=self.host1, role=self.host),
+            ]
+        )
 
         self.client.force_login(self.admin)
         data = {
@@ -1985,7 +2001,9 @@ class TestEventDeleteInstructorsHostIntroduction(FakeRedisTestCaseMixin, Superus
                 "pk", flat=True
             ),
         }
-        response = self.client.post(reverse("event_edit", args=[event.slug]), data, follow=True)
+        response = self.client.post(
+            reverse("event_edit", args=[event.slug]), data, follow=True
+        )
 
         self.assertContains(response, "New email was scheduled")
         # with open('test.html', 'w', encoding='utf-8') as f:
