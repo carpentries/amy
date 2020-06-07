@@ -107,13 +107,7 @@ class ActionManageMixin:
 
     @staticmethod
     def remove(
-        action_class,
-        logger,
-        scheduler,
-        connection,
-        jobs,
-        object_,
-        request=None,
+        action_class, logger, scheduler, connection, jobs, object_, request=None,
     ):
         Action = action_class
         action_name = Action.__name__
