@@ -32,6 +32,7 @@ class TestEventSubmitForm(TestBase):
         minimal_event = {
             'slug': '1970-01-01-first-event',
             'host': Organization.objects.first().pk,
+            'administrator': Organization.objects.administrators().first().id,
             'tags': [Tag.objects.first().pk],
             'invoice_status': 'not-invoiced',
         }
