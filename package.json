@@ -14,7 +14,7 @@
     "datatables.net": "^1.10.19",
     "datatables.net-bs4": "^1.10.19",
     "datatables.net-dt": "^1.10.19",
-    "jquery": "^3.4.1",
+    "jquery": "^3.5.0",
     "jquery-stickytabs": "^1.2.4",
     "metrics-graphics": "^2.15.6",
     "popper.js": "^1.14.3",
