@@ -1128,7 +1128,7 @@ class EventUpdate(
         if not check_ihi_old and check_ihi_new:
             triggers = Trigger.objects.filter(
                 active=True, action="instructors-host-introduction"
-            ),
+            )
             ActionManageMixin.add(
                 action_class=InstructorsHostIntroductionAction,
                 logger=logger,
@@ -1667,7 +1667,7 @@ class TaskUpdate(
         if not check_ihi_old and check_ihi_new:
             triggers = Trigger.objects.filter(
                 active=True, action="instructors-host-introduction"
-            ),
+            )
             ActionManageMixin.add(
                 action_class=InstructorsHostIntroductionAction,
                 logger=logger,

@@ -6,7 +6,7 @@ from django.db import IntegrityError
 from django.test import TestCase
 from django.urls import reverse
 
-from autoemails.actions import NewInstructorAction
+from autoemails.actions import NewInstructorAction, InstructorsHostIntroductionAction
 from autoemails.models import EmailTemplate, Trigger, RQJob
 from autoemails.tests.base import FakeRedisTestCaseMixin
 from workshops.tests.base import TestBase, SuperuserMixin
@@ -20,7 +20,6 @@ from workshops.models import (
     Membership,
 )
 import workshops.views
-from workshops.views import TaskCreate, TaskUpdate, TaskDelete
 
 
 class TestTask(TestBase):
@@ -300,8 +299,8 @@ class TestTask(TestBase):
         self.assertNotIn('seat_open_training', exception.error_dict)
 
 
-class TestTaskCreateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
-                               TestCase):
+class TestTaskCreateNewInstructor(FakeRedisTestCaseMixin, SuperuserMixin,
+                                  TestCase):
     def setUp(self):
         super().setUp()
 
@@ -369,19 +368,19 @@ class TestTaskCreateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
         trigger = Trigger.objects.create(action='new-instructor',
                                          template=template)
 
-    def test_methods_implemented(self):
-        view = TaskCreate()
-        view.get_logger()
-        view.get_scheduler()
-        view.get_redis_connection()
-        view.get_triggers()
-        # unnecessary for a view that only uses `action_add`
-        # view.get_jobs()
-        try:
-            view.objects()
-        except AttributeError:
-            # it's fine
-            pass
+    # def test_methods_implemented(self):
+    #     view = TaskCreate()
+    #     view.get_logger()
+    #     view.get_scheduler()
+    #     view.get_redis_connection()
+    #     view.get_triggers()
+    #     # unnecessary for a view that only uses `action_add`
+    #     # view.get_jobs()
+    #     try:
+    #         view.objects()
+    #     except AttributeError:
+    #         # it's fine
+    #         pass
 
     def test_job_scheduled(self):
         self._setUpSuperuser()
@@ -428,8 +427,8 @@ class TestTaskCreateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
         self.assertEqual(job.get_id(), rqjob.job_id)
 
 
-class TestTaskUpdateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
-                               TestCase):
+class TestTaskUpdateNewInstructor(FakeRedisTestCaseMixin, SuperuserMixin,
+                                  TestCase):
     def setUp(self):
         super().setUp()
 
@@ -498,18 +497,18 @@ class TestTaskUpdateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
         trigger = Trigger.objects.create(action='new-instructor',
                                          template=template)
 
-    def test_methods_implemented(self):
-        view = TaskUpdate()
-        view.get_logger()
-        view.get_scheduler()
-        view.get_redis_connection()
-        view.get_triggers()
-        # it's fine
-        with self.assertRaises(AttributeError):
-            view.get_jobs()
-        # it's fine
-        with self.assertRaises(AttributeError):
-            view.objects()
+    # def test_methods_implemented(self):
+    #     view = TaskUpdate()
+    #     view.get_logger()
+    #     view.get_scheduler()
+    #     view.get_redis_connection()
+    #     view.get_triggers()
+    #     # it's fine
+    #     with self.assertRaises(AttributeError):
+    #         view.get_jobs()
+    #     # it's fine
+    #     with self.assertRaises(AttributeError):
+    #         view.objects()
 
     def test_job_scheduled(self):
         self._setUpSuperuser()
@@ -624,8 +623,8 @@ class TestTaskUpdateAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
         self.assertEqual(RQJob.objects.count(), 0)
 
 
-class TestTaskDeleteAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
-                               TestCase):
+class TestTaskDeleteNewInstructor(FakeRedisTestCaseMixin, SuperuserMixin,
+                                  TestCase):
     def setUp(self):
         super().setUp()
 
@@ -694,20 +693,20 @@ class TestTaskDeleteAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
         trigger = Trigger.objects.create(action='new-instructor',
                                          template=template)
 
-    def test_methods_implemented(self):
-        view = TaskDelete()
-        view.get_logger()
-        view.get_scheduler()
-        view.get_redis_connection()
-        # unnecessary for a view that only uses `action_remove`
-        # view.get_triggers()
+    # def test_methods_implemented(self):
+    #     view = TaskDelete()
+    #     view.get_logger()
+    #     view.get_scheduler()
+    #     view.get_redis_connection()
+    #     # unnecessary for a view that only uses `action_remove`
+    #     # view.get_triggers()
 
-        # it's fine
-        with self.assertRaises(AttributeError):
-            view.get_jobs()
-        # it's fine
-        with self.assertRaises(AttributeError):
-            view.objects()
+    #     # it's fine
+    #     with self.assertRaises(AttributeError):
+    #         view.get_jobs()
+    #     # it's fine
+    #     with self.assertRaises(AttributeError):
+    #         view.objects()
 
     def test_job_unscheduled(self):
         self._setUpSuperuser()
@@ -750,14 +749,474 @@ class TestTaskDeleteAutoEmails(FakeRedisTestCaseMixin, SuperuserMixin,
         # now remove the task
         response = self.client.post(reverse('task_delete', args=[task.pk]),
                                     follow=True)
+
+        # with open('test.html', 'w', encoding='utf-8') as f:
+        #     f.write(response.content.decode('utf-8'))
+        self.assertContains(response,
+                            f'Scheduled email {rqjob.job_id} was removed')
+
+        # task is gone
+        with self.assertRaises(Task.DoesNotExist):
+            task.refresh_from_db()
+
+        # no job
+        self.assertEqual(self.scheduler.count(), 0)
+        # no rqjob
+        self.assertEqual(RQJob.objects.count(), 0)
+
+
+class TestTaskCreateInstructorsHostIntroduction(FakeRedisTestCaseMixin, SuperuserMixin,
+                                                TestCase):
+    def setUp(self):
+        super().setUp()
+
+        # save scheduler and connection data
+        self._saved_scheduler = workshops.views.scheduler
+        self._saved_redis_connection = workshops.views.redis_connection
+        # overwrite them
+        workshops.views.scheduler = self.scheduler
+        workshops.views.redis_connection = self.connection
+
+    def tearDown(self):
+        super().tearDown()
+        workshops.views.scheduler = self._saved_scheduler
+        workshops.views.redis_connection = self._saved_redis_connection
+
+    def _prepare_data(self):
+        Tag.objects.bulk_create([
+            Tag(name='SWC'),
+            Tag(name='automated-email'),
+        ])
+        Organization.objects.bulk_create([
+            Organization(domain='software-carpentry.org',
+                         fullname='Software Carpentry'),
+            Organization(domain='carpentries.org',
+                         fullname='Instructor Training'),
+        ])
+
+        self.instructor = Role.objects.create(name='instructor')
+        self.host = Role.objects.create(name='host')
+
+        self.instructor1 = Person.objects.create(
+            personal='Hermione',
+            family='Granger',
+            email='hermione@granger.co.uk',
+            username='granger_hermione',
+        )
+        self.instructor2 = Person.objects.create(
+            personal='Ron',
+            family='Weasley',
+            email='rw@magic.uk',
+            username='weasley_ron',
+        )
+        self.host1 = Person.objects.create(
+            personal='Harry',
+            family='Potter',
+            email='hp@magic.uk',
+            username='potter_harry',
+        )
+
+        self.test_event = Event.objects.create(
+            slug='2020-06-07-test-event',
+            host=Organization.objects.first(),
+            administrator=Organization.objects.get(
+                domain='software-carpentry.org'),
+            start=date.today() + timedelta(days=7),
+            end=date.today() + timedelta(days=8),
+        )
+        self.test_event.tags.set(
+            Tag.objects.filter(name__in=['SWC', 'automated-email']))
+
+        template = EmailTemplate.objects.create(
+            slug='sample-template',
+            subject='Welcome!',
+            to_header='',
+            from_header='test@address.com',
+            cc_header='copy@example.org',
+            bcc_header='bcc@example.org',
+            reply_to_header='',
+            body_template='# Welcome',
+        )
+        Trigger.objects.create(action='instructors-host-introduction', template=template)
+
+    def test_job_scheduled(self):
+        self._setUpSuperuser()
+        self._prepare_data()
+
+        # no tasks
+        self.assertFalse(Task.objects.all())
+        # no jobs
+        self.assertEqual(self.scheduler.count(), 0)
+        # no rqjobs
+        self.assertFalse(RQJob.objects.all())
+        # the even doesn't pass check
+        self.assertFalse(InstructorsHostIntroductionAction.check(self.test_event))
+
+        self.client.force_login(self.admin)
+        # add 3 tasks
+        data = {
+            'task-event': self.test_event.pk,
+            'task-person': self.instructor1.pk,
+            'task-role': self.instructor.pk,
+        }
+        response = self.client.post(reverse('task_add'), data, follow=True)
+        data = {
+            'task-event': self.test_event.pk,
+            'task-person': self.instructor2.pk,
+            'task-role': self.instructor.pk,
+        }
+        response = self.client.post(reverse('task_add'), data, follow=True)
+        data = {
+            'task-event': self.test_event.pk,
+            'task-person': self.host1.pk,
+            'task-role': self.host.pk,
+        }
+        response = self.client.post(reverse('task_add'), data, follow=True)
+        # with open('test.html', 'w', encoding='utf-8') as f:
+        #     f.write(response.content.decode('utf-8'))
+
+        self.assertIn("New email was scheduled",
+                      response.content.decode('utf-8'))
+
+        # new tasks
+        self.assertEqual(Task.objects.count(), 3)
+
+        # ensure the event now passes
+        self.assertTrue(InstructorsHostIntroductionAction.check(self.test_event))
+
+        # 1 new jobs
+        self.assertEqual(self.scheduler.count(), 1)
+        job = next(self.scheduler.get_jobs())
+
+        # 1 new rqjobs
+        self.assertEqual(RQJob.objects.count(), 1)
+        rqjob = RQJob.objects.first()
+
+        # ensure it's the same job
+        self.assertEqual(job.get_id(), rqjob.job_id)
+
+
+class TestTaskUpdateInstructorsHostIntroduction(FakeRedisTestCaseMixin, SuperuserMixin,
+                                                TestCase):
+    def setUp(self):
+        super().setUp()
+
+        # save scheduler and connection data
+        self._saved_scheduler = workshops.views.scheduler
+        self._saved_redis_connection = workshops.views.redis_connection
+        # overwrite them
+        workshops.views.scheduler = self.scheduler
+        workshops.views.redis_connection = self.connection
+
+    def tearDown(self):
+        super().tearDown()
+        workshops.views.scheduler = self._saved_scheduler
+        workshops.views.redis_connection = self._saved_redis_connection
+
+    def _prepare_data(self):
+        Tag.objects.bulk_create([
+            Tag(name='SWC'),
+            Tag(name='automated-email'),
+        ])
+        Organization.objects.bulk_create([
+            Organization(domain='software-carpentry.org',
+                         fullname='Software Carpentry'),
+            Organization(domain='carpentries.org',
+                         fullname='Instructor Training'),
+        ])
+
+        self.instructor = Role.objects.create(name='instructor')
+        self.host = Role.objects.create(name='host')
+        self.helper = Role.objects.create(name='helper')
+
+        self.instructor1 = Person.objects.create(
+            personal='Hermione',
+            family='Granger',
+            email='hermione@granger.co.uk',
+            username='granger_hermione',
+        )
+        self.instructor2 = Person.objects.create(
+            personal='Ron',
+            family='Weasley',
+            email='rw@magic.uk',
+            username='weasley_ron',
+        )
+        self.host1 = Person.objects.create(
+            personal='Harry',
+            family='Potter',
+            email='hp@magic.uk',
+            username='potter_harry',
+        )
+
+        self.test_event = Event.objects.create(
+            slug='2020-06-07-test-event',
+            host=Organization.objects.first(),
+            administrator=Organization.objects.get(
+                domain='software-carpentry.org'),
+            start=date.today() + timedelta(days=7),
+            end=date.today() + timedelta(days=8),
+        )
+        self.test_event.tags.set(
+            Tag.objects.filter(name__in=['SWC', 'automated-email']))
+
+        template = EmailTemplate.objects.create(
+            slug='sample-template',
+            subject='Welcome!',
+            to_header='',
+            from_header='test@address.com',
+            cc_header='copy@example.org',
+            bcc_header='bcc@example.org',
+            reply_to_header='',
+            body_template='# Welcome',
+        )
+        Trigger.objects.create(action='instructors-host-introduction', template=template)
+
+        self.instructor1_task = Task.objects.create(
+            event=self.test_event,
+            person=self.instructor1,
+            role=self.instructor,
+        )
+        self.instructor2_task = Task.objects.create(
+            event=self.test_event,
+            person=self.instructor2,
+            role=self.instructor,
+        )
+        self.host1_task = Task.objects.create(
+            event=self.test_event,
+            person=self.host1,
+            role=self.helper,  # intentionally
+        )
+
+    def test_job_scheduled(self):
+        self._setUpSuperuser()
+        self._prepare_data()
+
+        # assure the event doesn't pass yet
+        self.assertFalse(InstructorsHostIntroductionAction.check(self.test_event))
+
+        # no jobs
+        self.assertEqual(self.scheduler.count(), 0)
+        # no rqjobs
+        self.assertFalse(RQJob.objects.all())
+
+        # change task's role to host and save
+        self.client.force_login(self.admin)
+        data = {
+            'event': self.test_event.pk,
+            'person': self.host1.pk,
+            'role': self.host.pk
+        }
+        response = self.client.post(reverse('task_edit', args=[self.host1_task.pk]), data,
+                                    follow=True)
+        # with open('test.html', 'w', encoding='utf-8') as f:
+        #     f.write(response.content.decode('utf-8'))
+
+        self.assertIn("New email was scheduled",
+                      response.content.decode('utf-8'))
+
+        self.test_event.refresh_from_db()
+        self.assertTrue(InstructorsHostIntroductionAction.check(self.test_event))
+
+        # 1 new job
+        self.assertEqual(self.scheduler.count(), 1)
+        job = next(self.scheduler.get_jobs())
+
+        # 1 new rqjob
+        self.assertEqual(RQJob.objects.count(), 1)
+        rqjob = RQJob.objects.first()
+
+        # ensure it's the same job
+        self.assertEqual(job.get_id(), rqjob.job_id)
+
+    def test_job_unscheduled(self):
+        self._setUpSuperuser()
+        self._prepare_data()
+
+        # assure the event doesn't pass yet
+        self.assertFalse(InstructorsHostIntroductionAction.check(self.test_event))
+
+        # no jobs
+        self.assertEqual(self.scheduler.count(), 0)
+        # no rqjobs
+        self.assertFalse(RQJob.objects.all())
+
+        # change task's role to host and save
+        self.client.force_login(self.admin)
+        data = {
+            'event': self.test_event.pk,
+            'person': self.host1.pk,
+            'role': self.host.pk
+        }
+        self.client.post(reverse('task_edit', args=[self.host1_task.pk]), data)
+
+        # 1 new job
+        self.assertEqual(self.scheduler.count(), 1)
+        job = next(self.scheduler.get_jobs())
+
+        # 1 new rqjob
+        self.assertEqual(RQJob.objects.count(), 1)
+        rqjob = RQJob.objects.first()
+
+        # ensure it's the same job
+        self.assertEqual(job.get_id(), rqjob.job_id)
+
+        # now change the task back to helper
+        data = {
+            'event': self.test_event.pk,
+            'person': self.host1.pk,
+            'role': self.helper.pk
+        }
+        response = self.client.post(reverse('task_edit', args=[self.host1_task.pk]), data,
+                                    follow=True)
         self.assertContains(response,
                             f'Scheduled email {rqjob.job_id} was removed')
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
-        # task is gone
-        with self.assertRaises(Task.DoesNotExist):
-            task.refresh_from_db()
+        # ensure the task doesn't pass checks anymore
+        self.test_event.refresh_from_db()
+        self.assertFalse(InstructorsHostIntroductionAction.check(self.test_event))
+
+        # no job
+        self.assertEqual(self.scheduler.count(), 0)
+        # no rqjob
+        self.assertEqual(RQJob.objects.count(), 0)
+
+
+class TestTaskDeleteInstructorsHostIntroduction(FakeRedisTestCaseMixin, SuperuserMixin,
+                                                TestCase):
+    def setUp(self):
+        super().setUp()
+
+        # save scheduler and connection data
+        self._saved_scheduler = workshops.views.scheduler
+        self._saved_redis_connection = workshops.views.redis_connection
+        # overwrite them
+        workshops.views.scheduler = self.scheduler
+        workshops.views.redis_connection = self.connection
+
+    def tearDown(self):
+        super().tearDown()
+        workshops.views.scheduler = self._saved_scheduler
+        workshops.views.redis_connection = self._saved_redis_connection
+
+    def _prepare_data(self):
+        Tag.objects.bulk_create([
+            Tag(name='SWC'),
+            Tag(name='automated-email'),
+        ])
+        Organization.objects.bulk_create([
+            Organization(domain='software-carpentry.org',
+                         fullname='Software Carpentry'),
+            Organization(domain='carpentries.org',
+                         fullname='Instructor Training'),
+        ])
+
+        self.instructor = Role.objects.create(name='instructor')
+        self.host = Role.objects.create(name='host')
+        self.helper = Role.objects.create(name='helper')
+
+        self.instructor1 = Person.objects.create(
+            personal='Hermione',
+            family='Granger',
+            email='hermione@granger.co.uk',
+            username='granger_hermione',
+        )
+        self.instructor2 = Person.objects.create(
+            personal='Ron',
+            family='Weasley',
+            email='rw@magic.uk',
+            username='weasley_ron',
+        )
+        self.host1 = Person.objects.create(
+            personal='Harry',
+            family='Potter',
+            email='hp@magic.uk',
+            username='potter_harry',
+        )
+
+        self.test_event = Event.objects.create(
+            slug='2020-06-07-test-event',
+            host=Organization.objects.first(),
+            administrator=Organization.objects.get(
+                domain='software-carpentry.org'),
+            start=date.today() + timedelta(days=7),
+            end=date.today() + timedelta(days=8),
+        )
+        self.test_event.tags.set(
+            Tag.objects.filter(name__in=['SWC', 'automated-email']))
+
+        template = EmailTemplate.objects.create(
+            slug='sample-template',
+            subject='Welcome!',
+            to_header='',
+            from_header='test@address.com',
+            cc_header='copy@example.org',
+            bcc_header='bcc@example.org',
+            reply_to_header='',
+            body_template='# Welcome',
+        )
+        Trigger.objects.create(action='instructors-host-introduction', template=template)
+
+        self.instructor1_task = Task.objects.create(
+            event=self.test_event,
+            person=self.instructor1,
+            role=self.instructor,
+        )
+        self.instructor2_task = Task.objects.create(
+            event=self.test_event,
+            person=self.instructor2,
+            role=self.instructor,
+        )
+        self.host1_task = Task.objects.create(
+            event=self.test_event,
+            person=self.host1,
+            role=self.helper,  # intentionally
+        )
+
+    def test_job_unscheduled(self):
+        self._setUpSuperuser()
+        self._prepare_data()
+
+        # assure the event doesn't pass yet
+        self.assertFalse(InstructorsHostIntroductionAction.check(self.test_event))
+
+        # no jobs
+        self.assertEqual(self.scheduler.count(), 0)
+        # no rqjobs
+        self.assertFalse(RQJob.objects.all())
+
+        # change task's role to host and save
+        self.client.force_login(self.admin)
+        data = {
+            'event': self.test_event.pk,
+            'person': self.host1.pk,
+            'role': self.host.pk
+        }
+        self.client.post(reverse('task_edit', args=[self.host1_task.pk]), data)
+
+        # 1 new job
+        self.assertEqual(self.scheduler.count(), 1)
+        job = next(self.scheduler.get_jobs())
+
+        # 1 new rqjob
+        self.assertEqual(RQJob.objects.count(), 1)
+        rqjob = RQJob.objects.first()
+
+        # ensure it's the same job
+        self.assertEqual(job.get_id(), rqjob.job_id)
+
+        # now remove the task
+        response = self.client.post(reverse('task_delete', args=[self.host1_task.pk]),
+                                    follow=True)
+        self.assertContains(response,
+                            f'Scheduled email {rqjob.job_id} was removed')
+        # with open('test.html', 'w', encoding='utf-8') as f:
+        #     f.write(response.content.decode('utf-8'))
+
+        # ensure the task doesn't pass checks anymore
+        self.test_event.refresh_from_db()
+        self.assertFalse(InstructorsHostIntroductionAction.check(self.test_event))
 
         # no job
         self.assertEqual(self.scheduler.count(), 0)
