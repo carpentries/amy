@@ -1781,8 +1781,8 @@ class TestEventUpdateInstructorsHostIntroduction(
             "slug": "2020-06-07-test-event",
             "host": Organization.objects.first().pk,
             "administrator": self.LC_org.pk,
-            "start": date.today() + timedelta(days=1),
-            "end": date.today() + timedelta(days=3),
+            "start": date.today() + timedelta(days=7),
+            "end": date.today() + timedelta(days=9),
             "tags": Tag.objects.filter(name__in=["LC", "automated-email"]).values_list(
                 "pk", flat=True
             ),
@@ -1841,8 +1841,8 @@ class TestEventUpdateInstructorsHostIntroduction(
         data = {
             "slug": "2020-06-07-test-event",
             "host": Organization.objects.first().pk,
-            "start": date.today() + timedelta(days=1),
-            "end": date.today() + timedelta(days=3),
+            "start": date.today() + timedelta(days=7),
+            "end": date.today() + timedelta(days=9),
             "administrator": self.LC_org.pk,
             "tags": Tag.objects.filter(name__in=["LC", "automated-email"]).values_list(
                 "pk", flat=True
@@ -1994,8 +1994,8 @@ class TestEventDeleteInstructorsHostIntroduction(
         data = {
             "slug": "2020-06-07-test-event",
             "host": Organization.objects.first().pk,
-            "start": date.today() + timedelta(days=1),
-            "end": date.today() + timedelta(days=3),
+            "start": date.today() + timedelta(days=7),
+            "end": date.today() + timedelta(days=9),
             "administrator": self.LC_org.pk,
             "tags": Tag.objects.filter(name__in=["LC", "automated-email"]).values_list(
                 "pk", flat=True

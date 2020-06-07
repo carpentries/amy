@@ -619,7 +619,7 @@ class InstructorsHostIntroductionAction(BaseAction):
             and event.administrator.domain != "self-organized"
             # starts in future
             and event.start
-            and event.start > date.today()
+            and event.start >= (date.today() + timedelta(days=7))
             # no "cancelled", "unresponsive", or "stalled" tags
             and not event.tags.filter(name__in=["cancelled", "unresponsive", "stalled"])
             # special "automated-email" tag
