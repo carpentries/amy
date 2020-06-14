@@ -1067,7 +1067,7 @@ class EventUpdate(
         return context
 
     def get_form_class(self):
-        return partial(EventForm, show_lessons=True, add_comment=False)
+        return partial(EventForm, show_lessons=True, add_comment=True)
 
     def get_logger(self):
         return logger
