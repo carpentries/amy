@@ -648,14 +648,26 @@ class InstructorsHostIntroductionAction(BaseAction):
         context["regional_coordinator_email"] = list(match_notification_email(event))
 
         # people
-        tasks = event.task_set.filter(role__name__in=["host", "instructor"]).order_by(
-            "role__name"
-        )
+        tasks = event.task_set.filter(
+            role__name__in=["host", "instructor", "supporting-instructor"]
+        ).order_by("role__name")
         hosts = tasks.filter(role__name="host")
         instructors = tasks.filter(role__name="instructor")
+        support = tasks.filter(role__name="supporting-instructor")
         context["host"] = hosts[0].person
         context["instructor1"] = instructors[0].person
         context["instructor2"] = instructors[1].person
+
+        # supporting instructors are optional
+        try:
+            context["supporting_instructor1"] = support[0].person
+        except IndexError:
+            context["supporting_instructor1"] = None
+
+        try:
+            context["supporting_instructor2"] = support[1].person
+        except IndexError:
+            context["supporting_instructor2"] = None
 
         additional_contacts = [email for email in event.contact.split(TAG_SEPARATOR)]
         context["all_emails"] = [t.person.email for t in tasks] + additional_contacts

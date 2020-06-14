@@ -34,6 +34,7 @@ class TestInstructorsHostIntroductionAction(TestCase):
 
         self.host = Role.objects.create(name="host")
         self.instructor = Role.objects.create(name="instructor")
+        self.supporting_instructor = Role.objects.create(name="supporting-instructor")
 
         self.person1 = Person.objects.create(
             personal="Harry", family="Potter", email="hp@magic.uk", username="hp",
@@ -43,6 +44,15 @@ class TestInstructorsHostIntroductionAction(TestCase):
         )
         self.person3 = Person.objects.create(
             personal="Hermione", family="Granger", email="hg@magic.uk", username="hg",
+        )
+        self.person4 = Person.objects.create(
+            personal="Peter",
+            family="Parker",
+            email="peter@webslinger.net",
+            username="spiderman",
+        )
+        self.person5 = Person.objects.create(
+            personal="Tony", family="Stark", email="me@stark.com", username="ironman",
         )
 
     def testLaunchAt(self):
@@ -167,6 +177,12 @@ class TestInstructorsHostIntroductionAction(TestCase):
         instructor2 = Task.objects.create(
             person=self.person3, role=self.instructor, event=e,
         )
+        supporting_instructor1 = Task.objects.create(
+            person=self.person4, role=self.supporting_instructor, event=e,
+        )
+        supporting_instructor2 = Task.objects.create(
+            person=self.person5, role=self.supporting_instructor, event=e,
+        )
 
         ctx = a.get_additional_context(objects=dict(event=e))
         self.maxDiff = None
@@ -179,10 +195,14 @@ class TestInstructorsHostIntroductionAction(TestCase):
             host=host.person,
             instructor1=instructor1.person,
             instructor2=instructor2.person,
+            supporting_instructor1=supporting_instructor1.person,
+            supporting_instructor2=supporting_instructor2.person,
             all_emails=[
                 "hp@magic.uk",
                 "rw@magic.uk",
                 "hg@magic.uk",
+                "peter@webslinger.net",
+                "me@stark.com",
                 "test@hogwart.com",
                 "test2@magic.uk",
             ],
