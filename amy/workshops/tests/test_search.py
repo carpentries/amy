@@ -89,6 +89,26 @@ class TestSearchOrganization(TestBase):
         self.assertIn(org, response.context['organizations'])
         self.assertIn(self.hermione, response.context['persons'])
 
+    def test_search_for_people_by_secondary_email(self):
+        """Test if searching by secondary email yields people correctly."""
+        # Let's add Hermione Granger email as some organisation's name.
+        # This is required because of redirection if only 1 person matches.
+        org = Organization.objects.create(fullname='hermione2@granger.co.uk',
+                                          domain='hgr.com')
+
+        # make sure Hermione has individual secondary email
+        self.hermione.secondary_email = 'hermione2@granger.co.uk'
+        self.hermione.save()
+
+        response = self.search_for(
+            'hermione2@granger.co.uk', in_organizations=True, in_persons=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context['persons'])
+                         + len(response.context['organizations']),
+                         2, 'Expected two search results')
+        self.assertIn(org, response.context['organizations'])
+        self.assertIn(self.hermione, response.context['persons'])
+
     def test_search_for_training_requests(self):
         """Make sure that finding training requests works."""
 
