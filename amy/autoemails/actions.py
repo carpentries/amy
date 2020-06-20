@@ -553,3 +553,128 @@ class SelfOrganisedRequestAction(BaseAction):
         context["tags"] = list(event.tags.values_list("name", flat=True))
 
         return context
+
+
+class InstructorsHostIntroductionAction(BaseAction):
+    """
+    Action for introducing centrally organised event host and instructors.
+
+    How to use it:
+
+    >>> triggers = Trigger.objects.filter(active=True,
+                                          action='instructors-host-introduction')
+    >>> for trigger in triggers:
+    ...     action = InstructorsHostIntroductionAction(
+    ...         trigger=trigger,
+    ...         objects=dict(event=event, tasks=tasks),
+    ...     )
+    ...     launch_at = action.get_launch_at()
+    ...     job = scheduler.enqueue_in(launch_at, action)
+    """
+
+    # Send within an hour from when the conditions are met.
+    launch_at = timedelta(hours=1)
+
+    def event_slug(self) -> str:
+        """If available, return event's slug."""
+        try:
+            return self.context_objects["event"].slug
+        except (KeyError, AttributeError):
+            return ""
+
+    def all_recipients(self) -> str:
+        """If available, return string of all recipients."""
+        try:
+            event = self.context_objects["event"]
+            contacts = [email for email in event.contact.split(TAG_SEPARATOR)]
+            task_emails = [
+                t.person.email
+                for t in event.task_set.filter(role__name__in=["host", "instructor"])
+            ]
+            return ", ".join(task_emails + contacts)
+        except KeyError:
+            return ""
+
+    def recipients(self):
+        """Assuming self.context is ready, overwrite email's recipients
+        with selected ones."""
+        try:
+            return self.context["all_emails"]
+        except KeyError:
+            return None
+
+    @staticmethod
+    def check(event: Event):
+        """Conditions for creating a SelfOrganisedRequestAction."""
+        # there is 1 host task and 2 instructor tasks
+        try:
+            host = event.task_set.filter(role__name="host").first()
+            instructors = event.task_set.filter(role__name="instructor")
+        except (Task.DoesNotExist, ValueError):
+            return False
+
+        return bool(
+            # is NOT self-organized
+            event.administrator
+            and event.administrator.domain != "self-organized"
+            # starts in future
+            and event.start
+            and event.start >= (date.today() + timedelta(days=7))
+            # no "cancelled", "unresponsive", or "stalled" tags
+            and not event.tags.filter(name__in=["cancelled", "unresponsive", "stalled"])
+            # special "automated-email" tag
+            and event.tags.filter(name__icontains="automated-email")
+            # roles: 1 host and 2+ instructors
+            and host
+            and len(instructors) >= 2
+        )
+
+    def get_additional_context(self, objects, *args, **kwargs):
+        from workshops.util import match_notification_email, human_daterange
+
+        # refresh related event
+        event = objects["event"]
+        event.refresh_from_db()
+
+        # prepare context
+        context = dict()
+        context["workshop"] = event
+        context["workshop_main_type"] = None
+        tmp = event.tags.carpentries().first()
+        if tmp:
+            context["workshop_main_type"] = tmp.name
+        context["dates"] = human_daterange(event.start, event.end)
+        context["workshop_host"] = event.host
+        context["regional_coordinator_email"] = list(match_notification_email(event))
+
+        # people
+        tasks = event.task_set.filter(
+            role__name__in=["host", "instructor", "supporting-instructor"]
+        ).order_by("role__name")
+        hosts = tasks.filter(role__name="host")
+        instructors = tasks.filter(role__name="instructor")
+        support = tasks.filter(role__name="supporting-instructor")
+        context["host"] = hosts[0].person
+        context["instructor1"] = instructors[0].person
+        context["instructor2"] = instructors[1].person
+
+        # supporting instructors are optional
+        try:
+            context["supporting_instructor1"] = support[0].person
+        except IndexError:
+            context["supporting_instructor1"] = None
+
+        try:
+            context["supporting_instructor2"] = support[1].person
+        except IndexError:
+            context["supporting_instructor2"] = None
+
+        additional_contacts = [email for email in event.contact.split(TAG_SEPARATOR)]
+        context["all_emails"] = [t.person.email for t in tasks] + additional_contacts
+
+        context["assignee"] = (
+            event.assigned_to.full_name if event.assigned_to else "Regional Coordinator"
+        )
+        context["tags"] = list(event.tags.values_list("name", flat=True))
+
+        return context

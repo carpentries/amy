@@ -107,14 +107,7 @@ class ActionManageMixin:
 
     @staticmethod
     def remove(
-        action_class,
-        logger,
-        scheduler,
-        connection,
-        jobs,
-        context_objects,
-        object_,
-        request=None,
+        action_class, logger, scheduler, connection, jobs, object_, request=None,
     ):
         Action = action_class
         action_name = Action.__name__
@@ -187,7 +180,6 @@ class ActionManageMixin:
             scheduler=self.get_scheduler(),
             connection=self.get_redis_connection(),
             jobs=self.get_jobs(as_id_list=True),
-            context_objects=self.objects(),
             object_=self.object,
             request=self.request,
         )

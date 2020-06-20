@@ -88,7 +88,7 @@ class TestSelfOrganisedRequestAction(TestCase):
         e.save()
         self.assertEqual(SelfOrganisedRequestAction.check(e), True)
 
-        # 4th case: event is tagged with one (or more) excluding tags
+        # 3rd case: event is tagged with one (or more) excluding tags
         # result: FAIL
         for tag in ["cancelled", "stalled", "unresponsive"]:
             e.tags.add(Tag.objects.get(name=tag))
@@ -98,7 +98,7 @@ class TestSelfOrganisedRequestAction(TestCase):
         # retest to make sure it's back to normal
         self.assertEqual(SelfOrganisedRequestAction.check(e), True)
 
-        # 3rd case: no administrator
+        # 4th case: no administrator
         # result: FAIL
         e.administrator = None
         e.save()
@@ -109,7 +109,7 @@ class TestSelfOrganisedRequestAction(TestCase):
         # retest to make sure it's back to normal
         self.assertEqual(SelfOrganisedRequestAction.check(e), True)
 
-        # 4th case: wrong administrator (Instructor Training)
+        # 5th case: wrong administrator (Instructor Training)
         # result: FAIL
         e.administrator = Organization.objects.get(domain="carpentries.org")
         e.save()
@@ -120,7 +120,7 @@ class TestSelfOrganisedRequestAction(TestCase):
         e.save()
         self.assertEqual(SelfOrganisedRequestAction.check(e), True)
 
-        # 5th case: no related SelfOrganisedSubmission
+        # 6th case: no related SelfOrganisedSubmission
         # result: FAIL
         e.selforganisedsubmission = None
         e.save()
