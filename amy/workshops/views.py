@@ -48,6 +48,7 @@ from reversion_compare.forms import SelectDiffForm
 
 from autoemails.actions import (
     NewInstructorAction,
+    NewSupportingInstructorAction,
     PostWorkshopAction,
     InstructorsHostIntroductionAction,
 )
@@ -992,9 +993,7 @@ def validate_event(request, slug):
     return render(request, "workshops/validate_event.html", context)
 
 
-class EventCreate(
-    OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView
-):
+class EventCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView):
     permission_required = "workshops.add_event"
     model = Event
     form_class = EventCreateForm
@@ -1041,9 +1040,7 @@ class EventCreate(
         return res
 
 
-class EventUpdate(
-    OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView
-):
+class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
     permission_required = [
         "workshops.change_event",
         "workshops.add_task",
@@ -1157,9 +1154,7 @@ class EventUpdate(
         return res
 
 
-class EventDelete(
-    OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView
-):
+class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
     model = Event
     permission_required = "workshops.delete_event"
     success_url = reverse_lazy("all_events")
@@ -1510,10 +1505,7 @@ class TaskDetails(OnlyForAdminsMixin, AMYDetailView):
 
 
 class TaskCreate(
-    OnlyForAdminsMixin,
-    PermissionRequiredMixin,
-    RedirectSupportMixin,
-    AMYCreateView,
+    OnlyForAdminsMixin, PermissionRequiredMixin, RedirectSupportMixin, AMYCreateView,
 ):
     permission_required = "workshops.add_task"
     model = Task
@@ -1597,6 +1589,20 @@ class TaskCreate(
                 request=self.request,
             )
 
+        # check conditions for running a NewSupportingInstructorAction
+        if NewSupportingInstructorAction.check(self.object):
+            ActionManageMixin.add(
+                action_class=NewSupportingInstructorAction,
+                logger=logger,
+                scheduler=scheduler,
+                triggers=Trigger.objects.filter(
+                    active=True, action="new-supporting-instructor"
+                ),
+                context_objects=dict(task=self.object, event=self.object.event),
+                object_=self.object,
+                request=self.request,
+            )
+
         # check conditions for running a InstructorsHostIntroductionAction
         if InstructorsHostIntroductionAction.check(self.object.event):
             triggers = Trigger.objects.filter(
@@ -1630,11 +1636,13 @@ class TaskUpdate(
         necessary."""
         old = self.get_object()
         check_nia_old = NewInstructorAction.check(old)
+        check_nsia_old = NewSupportingInstructorAction.check(old)
         check_ihi_old = InstructorsHostIntroductionAction.check(old.event)
 
         res = super().form_valid(form)
         new = self.object  # refreshed by `super().form_valid()`
         check_nia_new = NewInstructorAction.check(new)
+        check_nsia_new = NewSupportingInstructorAction.check(new)
         check_ihi_new = InstructorsHostIntroductionAction.check(new.event)
 
         # NewInstructorAction conditions are not met, but weren't before
@@ -1655,6 +1663,36 @@ class TaskUpdate(
             jobs = self.object.rq_jobs.filter(trigger__action="new-instructor")
             ActionManageMixin.remove(
                 action_class=NewInstructorAction,
+                logger=logger,
+                scheduler=scheduler,
+                connection=redis_connection,
+                jobs=jobs.values_list("job_id", flat=True),
+                object_=self.object,
+                request=self.request,
+            )
+
+        # NewSupportingInstructorAction conditions are not met, but weren't before
+        if not check_nsia_old and check_nsia_new:
+            triggers = Trigger.objects.filter(
+                active=True, action="new-supporting-instructor"
+            )
+            ActionManageMixin.add(
+                action_class=NewSupportingInstructorAction,
+                logger=logger,
+                scheduler=scheduler,
+                triggers=triggers,
+                context_objects=dict(task=self.object, event=self.object.event),
+                object_=self.object,
+                request=self.request,
+            )
+
+        # NewSupportingInstructorAction conditions were met, but aren't anymore
+        elif check_nsia_old and not check_nsia_new:
+            jobs = self.object.rq_jobs.filter(
+                trigger__action="new-supporting-instructor"
+            )
+            ActionManageMixin.remove(
+                action_class=NewSupportingInstructorAction,
                 logger=logger,
                 scheduler=scheduler,
                 connection=redis_connection,
@@ -1697,10 +1735,7 @@ class TaskUpdate(
 
 
 class TaskDelete(
-    OnlyForAdminsMixin,
-    PermissionRequiredMixin,
-    RedirectSupportMixin,
-    AMYDeleteView,
+    OnlyForAdminsMixin, PermissionRequiredMixin, RedirectSupportMixin, AMYDeleteView,
 ):
     model = Task
     permission_required = "workshops.delete_task"
@@ -1711,6 +1746,17 @@ class TaskDelete(
         jobs = self.object.rq_jobs.filter(trigger__action="new-instructor")
         ActionManageMixin.remove(
             action_class=NewInstructorAction,
+            logger=logger,
+            scheduler=scheduler,
+            connection=redis_connection,
+            jobs=jobs.values_list("job_id", flat=True),
+            object_=self.object,
+            request=self.request,
+        )
+
+        jobs = self.object.rq_jobs.filter(trigger__action="new-supporting-instructor")
+        ActionManageMixin.remove(
+            action_class=NewSupportingInstructorAction,
             logger=logger,
             scheduler=scheduler,
             connection=redis_connection,
