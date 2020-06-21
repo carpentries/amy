@@ -271,6 +271,7 @@ class Trigger(ActiveMixin, CreatedUpdatedMixin, models.Model):
 
     ACTION_CHOICES = (
         ("new-instructor", "Instructor is added to the workshop"),
+        ("new-supporting-instructor", "Supporting Instructor is added to the workshop"),
         (
             "week-after-workshop-completion",
             "7 days past the end date of an active workshop",

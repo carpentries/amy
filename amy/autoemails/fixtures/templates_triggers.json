@@ -68,6 +68,23 @@
   }
 },
 {
+  "model": "autoemails.emailtemplate",
+  "pk": 5,
+  "fields": {
+    "active": true,
+    "created_at": "2020-06-20T20:44:09.300Z",
+    "last_updated_at": "2020-06-20T20:44:09.300Z",
+    "slug": "confirming-supporting-instructing-workshop",
+    "subject": "Confirmation of your participation as a Supporting-Instructor for {% if workshop_main_type %}{{ workshop_main_type }}{% endif %} workshop @ {{ workshop.venue }} {% if dates %}({{ dates }}){% endif %}",
+    "to_header": "{{ instructor.email }}",
+    "from_header": "amy-no-reply@carpentries.org",
+    "cc_header": "",
+    "bcc_header": "amy-auto-emails@carpentries.org",
+    "reply_to_header": "{{ regional_coordinator_email.0 }}",
+    "body_template": "Hi {{ instructor.personal }},\r\n\r\nThank you for volunteering to teach! You are confirmed to teach a workshop at {{ host.fullname }}{% if dates %} ({{ dates }}){% endif %}.\r\n\r\n{% if \"online\" in tags %}\r\nWe\u2019ll be following up shortly to introduce you to your host and your co-instructor. As you prepare to teach this online workshop, be sure to review our [online workshop resources](https://docs.carpentries.org/topic_folders/hosts_instructors/resources_for_online_workshops.html) in our handbook. Please let me know if you have any other questions, and we're looking forward to working with you on this workshop!\r\n\r\n{% else  %}\r\nWe\u2019ll be following up shortly to introduce you to your host and your co-instructor. Your host will be the best resource for planning travel arrangements. Please let me know if you have any other questions, and we're looking forward to working with you on this workshop!\r\n\r\n{% endif %}\r\n\r\nThanks for all you do!\r\n\r\nBest,\r\n{{ assignee }}"
+  }
+},
+{
   "model": "autoemails.trigger",
   "pk": 1,
   "fields": {
@@ -109,6 +126,17 @@
     "last_updated_at": "2020-06-07T13:20:56.737Z",
     "action": "instructors-host-introduction",
     "template": 4
+  }
+},
+{
+  "model": "autoemails.trigger",
+  "pk": 5,
+  "fields": {
+    "active": true,
+    "created_at": "2020-06-20T20:44:24.120Z",
+    "last_updated_at": "2020-06-20T20:44:24.121Z",
+    "action": "new-supporting-instructor",
+    "template": 5
   }
 }
 ]

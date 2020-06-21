@@ -292,6 +292,91 @@ class NewInstructorAction(BaseAction):
         return context
 
 
+class NewSupportingInstructorAction(BaseAction):
+    """
+    Action for informing supporting instructors about workshop they've been accepted to.
+
+    How to use it:
+
+    >>> triggers = Trigger.objects.filter(active=True,
+                                          action='new-supporting-instructor')
+    >>> for trigger in triggers:
+    ...     action = NewSupportingInstructorAction(
+    ...         trigger=trigger,
+    ...         objects=dict(event=event, task=task),
+    ...     )
+    ...     launch_at = action.get_launch_at()
+    ...     job = scheduler.enqueue_in(launch_at, action)
+    """
+
+    # It should be at least 1 hour to give admin some time in case of mistakes.
+    launch_at = timedelta(hours=1)
+
+    def event_slug(self) -> str:
+        """If available, return event's slug."""
+        try:
+            return self.context_objects["event"].slug
+        except (KeyError, AttributeError):
+            return ""
+
+    def all_recipients(self) -> str:
+        """If available, return string of all recipients."""
+        try:
+            return self.context_objects["task"].person.email or ""
+        except (KeyError, AttributeError):
+            return ""
+
+    @staticmethod
+    def check(task: Task):
+        """Conditions for creating a NewSupportingInstructorAction."""
+        return bool(
+            task.role.name == "supporting-instructor"
+            and not task.event.tags.filter(
+                name__in=["cancelled", "unresponsive", "stalled"]
+            )
+            and (not task.event.start or task.event.start >= date.today())
+            and task.event.tags.filter(name__in=["automated-email", "online"])
+            and task.event.administrator
+            and task.event.administrator.domain != "self-organized"
+            and task.event.administrator.domain != "carpentries.org"
+        )
+
+    def get_additional_context(self, objects, *args, **kwargs):
+        from workshops.util import (
+            human_daterange,
+            match_notification_email,
+        )
+
+        # refresh related event
+        event = objects["event"]
+        task = objects["task"]
+        event.refresh_from_db()
+        task.refresh_from_db()
+
+        # prepare context
+        context = dict()
+        context["workshop"] = event
+        context["workshop_main_type"] = None
+        tmp = event.tags.carpentries().first()
+        if tmp:
+            context["workshop_main_type"] = tmp.name
+        context["dates"] = None
+        if event.start and event.end:
+            context["dates"] = human_daterange(event.start, event.end)
+        context["host"] = event.host
+        context["regional_coordinator_email"] = list(match_notification_email(event))
+        context["task"] = task
+        context["person"] = task.person
+        context["instructor"] = task.person
+        context["role"] = task.role
+        context["assignee"] = (
+            event.assigned_to.full_name if event.assigned_to else "Regional Coordinator"
+        )
+        context["tags"] = list(event.tags.values_list("name", flat=True))
+
+        return context
+
+
 class PostWorkshopAction(BaseAction):
     """
     Action for thanking the instructors/organizers for their work, reminding
