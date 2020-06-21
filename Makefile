@@ -13,7 +13,6 @@ QUERY = sqlite3 ${APP_DB}
 # Error messages.
 E_CERT_PATH = "error: must set CERT_PATH before running command"
 
-.PHONY: amy/workshops/git_version.py
 
 all : commands
 
@@ -62,21 +61,8 @@ node_modules : package.json
 	yarn install --frozen-lockfile
 	touch node_modules
 
-## git_version  : store details about the current commit and tree state.
-amy/workshops/git_version.py :
-	@if test -d .git; \
-	then \
-		git log -1 --date=short --format="HASH = '%H'%nSHORT_HASH = '%h'%nDATE = '%cd'%n" >$@; \
-		if (git describe --dirty 2>/dev/null | grep dirty >/dev/null); \
-		then \
-			echo 'DIRTY = True' >>$@; \
-		else \
-			echo 'DIRTY = False' >>$@; \
-		fi \
-	fi
-
 ## serve        : run a server
-serve : node_modules amy/workshops/git_version.py
+serve : node_modules
 	${MANAGE} runserver
 
 ## serve_now    : run a server now

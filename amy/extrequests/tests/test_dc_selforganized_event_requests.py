@@ -61,6 +61,7 @@ class TestDCSelfOrganizedEventRequestForm(TestBase):
         minimal_event = {
             'slug': '2018-08-29-first-event',
             'host': Organization.objects.first().pk,
+            'administrator': Organization.objects.administrators().first().id,
             'tags': [Tag.objects.first().pk],
             'invoice_status': 'not-invoiced',
         }

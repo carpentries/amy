@@ -46,7 +46,12 @@ from github.GithubException import GithubException
 from reversion.models import Version, Revision
 from reversion_compare.forms import SelectDiffForm
 
-from autoemails.actions import NewInstructorAction, PostWorkshopAction
+from autoemails.actions import (
+    NewInstructorAction,
+    NewSupportingInstructorAction,
+    PostWorkshopAction,
+    InstructorsHostIntroductionAction,
+)
 from autoemails.models import Trigger
 from autoemails.base_views import ActionManageMixin
 from fiscal.forms import SponsorshipForm
@@ -988,30 +993,11 @@ def validate_event(request, slug):
     return render(request, "workshops/validate_event.html", context)
 
 
-class EventCreate(
-    OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView, ActionManageMixin
-):
+class EventCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView):
     permission_required = "workshops.add_event"
     model = Event
     form_class = EventCreateForm
     template_name = "workshops/event_create_form.html"
-
-    def get_logger(self):
-        return logger
-
-    def get_scheduler(self):
-        return scheduler
-
-    def get_redis_connection(self):
-        return redis_connection
-
-    def get_triggers(self):
-        return Trigger.objects.filter(
-            active=True, action="week-after-workshop-completion"
-        )
-
-    def objects(self):
-        return dict(event=self.object)
 
     def form_valid(self, form):
         """Additional functions for validating Event Create form:
@@ -1022,15 +1008,39 @@ class EventCreate(
 
         # check conditions for running a PostWorkshopAction
         if PostWorkshopAction.check(self.object):
-            self.action_add(PostWorkshopAction)
+            triggers = Trigger.objects.filter(
+                active=True, action="week-after-workshop-completion"
+            )
+            ActionManageMixin.add(
+                action_class=PostWorkshopAction,
+                logger=logger,
+                scheduler=scheduler,
+                triggers=triggers,
+                context_objects=dict(event=self.object),
+                object_=self.object,
+                request=self.request,
+            )
+
+        # check conditions for running a InstructorsHostIntroductionAction
+        if InstructorsHostIntroductionAction.check(self.object):
+            triggers = Trigger.objects.filter(
+                active=True, action="instructors-host-introduction"
+            )
+            ActionManageMixin.add(
+                action_class=InstructorsHostIntroductionAction,
+                logger=logger,
+                scheduler=scheduler,
+                triggers=triggers,
+                context_objects=dict(event=self.object),
+                object_=self.object,
+                request=self.request,
+            )
 
         # return remembered results
         return res
 
 
-class EventUpdate(
-    OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView, ActionManageMixin
-):
+class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
     permission_required = [
         "workshops.change_event",
         "workshops.add_task",
@@ -1067,83 +1077,114 @@ class EventUpdate(
         return context
 
     def get_form_class(self):
-        return partial(EventForm, show_lessons=True, add_comment=False)
-
-    def get_logger(self):
-        return logger
-
-    def get_scheduler(self):
-        return scheduler
-
-    def get_redis_connection(self):
-        return redis_connection
-
-    def get_triggers(self):
-        return Trigger.objects.filter(
-            active=True, action="week-after-workshop-completion"
-        )
-
-    def get_jobs(self, as_id_list=False):
-        jobs = self.object.rq_jobs.filter(
-            trigger__action="week-after-workshop-completion"
-        )
-        if as_id_list:
-            return jobs.values_list("job_id", flat=True)
-        return jobs
-
-    def objects(self):
-        return dict(event=self.object)
+        return partial(EventForm, show_lessons=True, add_comment=True)
 
     def form_valid(self, form):
         """Check if RQ job conditions changed, and add/delete jobs if
         necessary."""
         old = self.get_object()
-        check_old = PostWorkshopAction.check(old)
+        check_pwa_old = PostWorkshopAction.check(old)
+        check_ihi_old = InstructorsHostIntroductionAction.check(old)
 
         res = super().form_valid(form)
         new = self.object  # refreshed by `super().form_valid()`
-        check_new = PostWorkshopAction.check(new)
+        check_pwa_new = PostWorkshopAction.check(new)
+        check_ihi_new = InstructorsHostIntroductionAction.check(new)
 
         # PostWorkshopAction conditions are not met, but weren't before
-        if not check_old and check_new:
-            self.action_add(PostWorkshopAction)
+        if not check_pwa_old and check_pwa_new:
+            triggers = Trigger.objects.filter(
+                active=True, action="week-after-workshop-completion"
+            )
+            ActionManageMixin.add(
+                action_class=PostWorkshopAction,
+                logger=logger,
+                scheduler=scheduler,
+                triggers=triggers,
+                context_objects=dict(event=self.object),
+                object_=self.object,
+                request=self.request,
+            )
 
         # PostWorkshopAction conditions were met, but aren't anymore
-        elif check_old and not check_new:
-            self.action_remove(PostWorkshopAction)
+        elif check_pwa_old and not check_pwa_new:
+            jobs = self.object.rq_jobs.filter(
+                trigger__action="week-after-workshop-completion"
+            )
+            ActionManageMixin.remove(
+                action_class=PostWorkshopAction,
+                logger=logger,
+                scheduler=scheduler,
+                connection=redis_connection,
+                jobs=jobs.values_list("job_id", flat=True),
+                object_=self.object,
+                request=self.request,
+            )
+
+        # InstructorsHostIntroductionAction conditions are not met, but weren't before
+        if not check_ihi_old and check_ihi_new:
+            triggers = Trigger.objects.filter(
+                active=True, action="instructors-host-introduction"
+            )
+            ActionManageMixin.add(
+                action_class=InstructorsHostIntroductionAction,
+                logger=logger,
+                scheduler=scheduler,
+                triggers=triggers,
+                context_objects=dict(event=self.object),
+                object_=self.object,
+                request=self.request,
+            )
+
+        # InstructorsHostIntroductionAction conditions were met, but aren't anymore
+        elif check_ihi_old and not check_ihi_new:
+            jobs = self.object.rq_jobs.filter(
+                trigger__action="instructors-host-introduction"
+            )
+            ActionManageMixin.remove(
+                action_class=InstructorsHostIntroductionAction,
+                logger=logger,
+                scheduler=scheduler,
+                connection=redis_connection,
+                jobs=jobs.values_list("job_id", flat=True),
+                object_=self.object,
+                request=self.request,
+            )
 
         return res
 
 
-class EventDelete(
-    OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView, ActionManageMixin
-):
+class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
     model = Event
     permission_required = "workshops.delete_event"
     success_url = reverse_lazy("all_events")
 
-    def get_logger(self):
-        return logger
-
-    def get_scheduler(self):
-        return scheduler
-
-    def get_redis_connection(self):
-        return redis_connection
-
-    def get_jobs(self, as_id_list=False):
+    def before_delete(self, *args, **kwargs):
         jobs = self.object.rq_jobs.filter(
             trigger__action="week-after-workshop-completion"
         )
-        if as_id_list:
-            return jobs.values_list("job_id", flat=True)
-        return jobs
+        ActionManageMixin.remove(
+            action_class=PostWorkshopAction,
+            logger=logger,
+            scheduler=scheduler,
+            connection=redis_connection,
+            jobs=jobs.values_list("job_id", flat=True),
+            object_=self.object,
+            request=self.request,
+        )
 
-    def objects(self):
-        return dict(event=self.object)
-
-    def before_delete(self, *args, **kwargs):
-        return self.action_remove(PostWorkshopAction)
+        jobs = self.object.rq_jobs.filter(
+            trigger__action="instructors-host-introduction"
+        )
+        ActionManageMixin.remove(
+            action_class=InstructorsHostIntroductionAction,
+            logger=logger,
+            scheduler=scheduler,
+            connection=redis_connection,
+            jobs=jobs.values_list("job_id", flat=True),
+            object_=self.object,
+            request=self.request,
+        )
 
 
 @admin_required
@@ -1464,11 +1505,7 @@ class TaskDetails(OnlyForAdminsMixin, AMYDetailView):
 
 
 class TaskCreate(
-    OnlyForAdminsMixin,
-    PermissionRequiredMixin,
-    RedirectSupportMixin,
-    AMYCreateView,
-    ActionManageMixin,
+    OnlyForAdminsMixin, PermissionRequiredMixin, RedirectSupportMixin, AMYCreateView,
 ):
     permission_required = "workshops.add_task"
     model = Task
@@ -1483,21 +1520,6 @@ class TaskCreate(
         """Save request in `self.request`."""
         self.request = request
         return super().post(request, *args, **kwargs)
-
-    def get_logger(self):
-        return logger
-
-    def get_scheduler(self):
-        return scheduler
-
-    def get_redis_connection(self):
-        return redis_connection
-
-    def get_triggers(self):
-        return Trigger.objects.filter(active=True, action="new-instructor")
-
-    def objects(self):
-        return dict(task=self.object, event=self.object.event)
 
     def form_valid(self, form):
         """Additional functions for validating Task Create form:
@@ -1557,14 +1579,51 @@ class TaskCreate(
 
         # check conditions for running a NewInstructorAction
         if NewInstructorAction.check(self.object):
-            self.action_add(NewInstructorAction)
+            ActionManageMixin.add(
+                action_class=NewInstructorAction,
+                logger=logger,
+                scheduler=scheduler,
+                triggers=Trigger.objects.filter(active=True, action="new-instructor"),
+                context_objects=dict(task=self.object, event=self.object.event),
+                object_=self.object,
+                request=self.request,
+            )
+
+        # check conditions for running a NewSupportingInstructorAction
+        if NewSupportingInstructorAction.check(self.object):
+            ActionManageMixin.add(
+                action_class=NewSupportingInstructorAction,
+                logger=logger,
+                scheduler=scheduler,
+                triggers=Trigger.objects.filter(
+                    active=True, action="new-supporting-instructor"
+                ),
+                context_objects=dict(task=self.object, event=self.object.event),
+                object_=self.object,
+                request=self.request,
+            )
+
+        # check conditions for running a InstructorsHostIntroductionAction
+        if InstructorsHostIntroductionAction.check(self.object.event):
+            triggers = Trigger.objects.filter(
+                active=True, action="instructors-host-introduction"
+            )
+            ActionManageMixin.add(
+                action_class=InstructorsHostIntroductionAction,
+                logger=logger,
+                scheduler=scheduler,
+                triggers=triggers,
+                context_objects=dict(event=self.object.event),
+                object_=self.object,
+                request=self.request,
+            )
 
         # return remembered results
         return res
 
 
 class TaskUpdate(
-    OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView, ActionManageMixin
+    OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView,
 ):
     permission_required = "workshops.change_task"
     model = Task
@@ -1572,80 +1631,152 @@ class TaskUpdate(
     form_class = TaskForm
     pk_url_kwarg = "task_id"
 
-    def get_logger(self):
-        return logger
-
-    def get_scheduler(self):
-        return scheduler
-
-    def get_redis_connection(self):
-        return redis_connection
-
-    def get_triggers(self):
-        return Trigger.objects.filter(active=True, action="new-instructor")
-
-    def get_jobs(self, as_id_list=False):
-        jobs = self.object.rq_jobs.filter(trigger__action="new-instructor")
-        if as_id_list:
-            return jobs.values_list("job_id", flat=True)
-        return jobs
-
-    def objects(self):
-        return dict(task=self.object, event=self.object.event)
-
     def form_valid(self, form):
         """Check if RQ job conditions changed, and add/delete jobs if
         necessary."""
         old = self.get_object()
-        check_old = NewInstructorAction.check(old)
+        check_nia_old = NewInstructorAction.check(old)
+        check_nsia_old = NewSupportingInstructorAction.check(old)
+        check_ihi_old = InstructorsHostIntroductionAction.check(old.event)
 
         res = super().form_valid(form)
         new = self.object  # refreshed by `super().form_valid()`
-        check_new = NewInstructorAction.check(new)
+        check_nia_new = NewInstructorAction.check(new)
+        check_nsia_new = NewSupportingInstructorAction.check(new)
+        check_ihi_new = InstructorsHostIntroductionAction.check(new.event)
 
         # NewInstructorAction conditions are not met, but weren't before
-        if not check_old and check_new:
-            self.action_add(NewInstructorAction)
+        if not check_nia_old and check_nia_new:
+            triggers = Trigger.objects.filter(active=True, action="new-instructor")
+            ActionManageMixin.add(
+                action_class=NewInstructorAction,
+                logger=logger,
+                scheduler=scheduler,
+                triggers=triggers,
+                context_objects=dict(task=self.object, event=self.object.event),
+                object_=self.object,
+                request=self.request,
+            )
 
         # NewInstructorAction conditions were met, but aren't anymore
-        elif check_old and not check_new:
-            self.action_remove(NewInstructorAction)
+        elif check_nia_old and not check_nia_new:
+            jobs = self.object.rq_jobs.filter(trigger__action="new-instructor")
+            ActionManageMixin.remove(
+                action_class=NewInstructorAction,
+                logger=logger,
+                scheduler=scheduler,
+                connection=redis_connection,
+                jobs=jobs.values_list("job_id", flat=True),
+                object_=self.object,
+                request=self.request,
+            )
+
+        # NewSupportingInstructorAction conditions are not met, but weren't before
+        if not check_nsia_old and check_nsia_new:
+            triggers = Trigger.objects.filter(
+                active=True, action="new-supporting-instructor"
+            )
+            ActionManageMixin.add(
+                action_class=NewSupportingInstructorAction,
+                logger=logger,
+                scheduler=scheduler,
+                triggers=triggers,
+                context_objects=dict(task=self.object, event=self.object.event),
+                object_=self.object,
+                request=self.request,
+            )
+
+        # NewSupportingInstructorAction conditions were met, but aren't anymore
+        elif check_nsia_old and not check_nsia_new:
+            jobs = self.object.rq_jobs.filter(
+                trigger__action="new-supporting-instructor"
+            )
+            ActionManageMixin.remove(
+                action_class=NewSupportingInstructorAction,
+                logger=logger,
+                scheduler=scheduler,
+                connection=redis_connection,
+                jobs=jobs.values_list("job_id", flat=True),
+                object_=self.object,
+                request=self.request,
+            )
+
+        # InstructorsHostIntroductionAction conditions are not met, but weren't before
+        if not check_ihi_old and check_ihi_new:
+            triggers = Trigger.objects.filter(
+                active=True, action="instructors-host-introduction"
+            )
+            ActionManageMixin.add(
+                action_class=InstructorsHostIntroductionAction,
+                logger=logger,
+                scheduler=scheduler,
+                triggers=triggers,
+                context_objects=dict(event=self.object.event),
+                object_=self.object,
+                request=self.request,
+            )
+
+        # InstructorsHostIntroductionAction conditions were met, but aren't anymore
+        elif check_ihi_old and not check_ihi_new:
+            jobs = self.object.rq_jobs.filter(
+                trigger__action="instructors-host-introduction"
+            )
+            ActionManageMixin.remove(
+                action_class=InstructorsHostIntroductionAction,
+                logger=logger,
+                scheduler=scheduler,
+                connection=redis_connection,
+                jobs=jobs.values_list("job_id", flat=True),
+                object_=self.object,
+                request=self.request,
+            )
 
         return res
 
 
 class TaskDelete(
-    OnlyForAdminsMixin,
-    PermissionRequiredMixin,
-    RedirectSupportMixin,
-    AMYDeleteView,
-    ActionManageMixin,
+    OnlyForAdminsMixin, PermissionRequiredMixin, RedirectSupportMixin, AMYDeleteView,
 ):
     model = Task
     permission_required = "workshops.delete_task"
     success_url = reverse_lazy("all_tasks")
     pk_url_kwarg = "task_id"
 
-    def get_logger(self):
-        return logger
-
-    def get_scheduler(self):
-        return scheduler
-
-    def get_redis_connection(self):
-        return redis_connection
-
-    def get_jobs(self, as_id_list=False):
-        jobs = self.object.rq_jobs.filter(trigger__action="new-instructor")
-        if as_id_list:
-            return jobs.values_list("job_id", flat=True)
-        return jobs
-
-    def objects(self):
-        return dict(task=self.object, event=self.object.event)
-
     def before_delete(self, *args, **kwargs):
-        return self.action_remove(NewInstructorAction)
+        jobs = self.object.rq_jobs.filter(trigger__action="new-instructor")
+        ActionManageMixin.remove(
+            action_class=NewInstructorAction,
+            logger=logger,
+            scheduler=scheduler,
+            connection=redis_connection,
+            jobs=jobs.values_list("job_id", flat=True),
+            object_=self.object,
+            request=self.request,
+        )
+
+        jobs = self.object.rq_jobs.filter(trigger__action="new-supporting-instructor")
+        ActionManageMixin.remove(
+            action_class=NewSupportingInstructorAction,
+            logger=logger,
+            scheduler=scheduler,
+            connection=redis_connection,
+            jobs=jobs.values_list("job_id", flat=True),
+            object_=self.object,
+            request=self.request,
+        )
+
+        jobs = self.object.rq_jobs.filter(
+            trigger__action="instructors-host-introduction"
+        )
+        ActionManageMixin.remove(
+            action_class=InstructorsHostIntroductionAction,
+            logger=logger,
+            scheduler=scheduler,
+            connection=redis_connection,
+            jobs=jobs.values_list("job_id", flat=True),
+            object_=self.object,
+            request=self.request,
+        )
 
 
 # ------------------------------------------------------------
@@ -1947,6 +2078,7 @@ def search(request):
                         (Q(personal__icontains=name1) & Q(family__icontains=name2))
                         | (Q(personal__icontains=name2) & Q(family__icontains=name1))
                         | Q(email__icontains=term)
+                        | Q(secondary_email__icontains=term)
                         | Q(github__icontains=term)
                     )
                     persons = Person.objects.filter(complex_q)
@@ -1955,6 +2087,7 @@ def search(request):
                         Q(personal__icontains=term)
                         | Q(family__icontains=term)
                         | Q(email__icontains=term)
+                        | Q(secondary_email__icontains=term)
                         | Q(github__icontains=term)
                     ).order_by("family")
                 results += list(persons)

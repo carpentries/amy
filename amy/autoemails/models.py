@@ -271,6 +271,7 @@ class Trigger(ActiveMixin, CreatedUpdatedMixin, models.Model):
 
     ACTION_CHOICES = (
         ("new-instructor", "Instructor is added to the workshop"),
+        ("new-supporting-instructor", "Supporting Instructor is added to the workshop"),
         (
             "week-after-workshop-completion",
             "7 days past the end date of an active workshop",
@@ -278,6 +279,10 @@ class Trigger(ActiveMixin, CreatedUpdatedMixin, models.Model):
         (
             "self-organised-request-form",
             "A new event is created from Self-Organised Request Form",
+        ),
+        (
+            "instructors-host-introduction",
+            "Introduction of instrutors and host (centr. org. workshop)",
         ),
     )
     action = models.CharField(

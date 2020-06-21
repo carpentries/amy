@@ -430,6 +430,7 @@ class TestWorkshopInquiryViews(TestBase):
         data = {
             'slug': '2018-10-28-test-event',
             'host': Organization.objects.first().pk,
+            'administrator': Organization.objects.administrators().first().id,
             'tags': [1],
             'invoice_status': 'unknown',
         }
@@ -547,6 +548,7 @@ class TestAcceptingWorkshopInquiry(TestBase):
         data = {
             'slug': '2018-10-28-test-event',
             'host': Organization.objects.first().pk,
+            'administrator': Organization.objects.administrators().first().id,
             'tags': [1],
         }
         rv = self.client.post(self.url, data)
@@ -566,6 +568,7 @@ class TestAcceptingWorkshopInquiry(TestBase):
         data = {
             'slug': '2019-08-18-test-event',
             'host': Organization.objects.first().pk,
+            'administrator': Organization.objects.administrators().first().id,
             'tags': [1],
         }
         rv = self.client.post(self.url, data)

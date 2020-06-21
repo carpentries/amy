@@ -7,6 +7,7 @@ from hashlib import sha1
 from itertools import chain
 import logging
 import re
+from typing import Optional, Union
 
 import requests
 import yaml
@@ -33,7 +34,7 @@ from django.utils.http import is_safe_url
 from django_comments.models import Comment
 import django_rq
 
-from autoemails.actions import NewInstructorAction
+from autoemails.actions import NewInstructorAction, NewSupportingInstructorAction
 from autoemails.base_views import ActionManageMixin
 from autoemails.models import Trigger
 from dashboard.models import Criterium
@@ -336,7 +337,7 @@ def create_uploaded_persons_tasks(data, request=None):
     jobs_created = []
     rqjobs_created = []
 
-    # for each created task, try to add a new-instructor action
+    # for each created task, try to add a new-(supporting)-instructor action
     with transaction.atomic():
         for task in tasks_created:
             # conditions check out
@@ -349,6 +350,24 @@ def create_uploaded_persons_tasks(data, request=None):
                     scheduler=scheduler,
                     triggers=Trigger.objects.filter(
                         active=True, action="new-instructor"
+                    ),
+                    context_objects=objs,
+                    object_=task,
+                    request=request,
+                )
+                jobs_created += jobs
+                rqjobs_created += rqjobs
+
+            # conditions check out
+            if NewSupportingInstructorAction.check(task):
+                objs = dict(task=task, event=task.event)
+                # prepare context and everything and create corresponding RQJob
+                jobs, rqjobs = ActionManageMixin.add(
+                    action_class=NewSupportingInstructorAction,
+                    logger=logger,
+                    scheduler=scheduler,
+                    triggers=Trigger.objects.filter(
+                        active=True, action="new-supporting-instructor"
                     ),
                     context_objects=objs,
                     object_=task,
@@ -1269,8 +1288,8 @@ def choice_field_with_other(choices, default, verbose_name=None, help_text=None)
 
 
 def human_daterange(
-    date_left,
-    date_right,
+    date_left: Optional[Union[datetime.date, datetime.datetime]],
+    date_right: Optional[Union[datetime.date, datetime.datetime]],
     no_date="???",
     range_char=" - ",
     common_month_left="%b %d",
