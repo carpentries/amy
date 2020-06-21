@@ -154,26 +154,22 @@ Execute the following commands on your local machine, not production.
 
         $ ./manage.py migrate
 
-12. Regenerate version number in the footer:
-
-        $ make amy/workshops/git_version.py
-
-13. Update static files:
+12. Update static files:
 
         $ ./manage.py collectstatic --noinput
 
-14. Execute any additional stuff like one-off commands.
+13. Execute any additional stuff like one-off commands.
     If necessary, load environment variables before launching one-off commands.
 
         $ source ../uwsgi_env
 
-15. Start server again:
+14. Start server again:
 
         $ sudo start uwsgi-emperor
 
-16. Make sure in your browser that AMY works by loading [admin dashboard](https://amy.software-carpentry.org/workshops/admin-dashboard/).
+15. Make sure in your browser that AMY works by loading [admin dashboard](https://amy.software-carpentry.org/workshops/admin-dashboard/).
 
-17. Log out production:
+16. Log out production:
 
         $ exit
 
