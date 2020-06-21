@@ -416,7 +416,9 @@ class SelfOrganisedSubmissionAcceptEvent(OnlyForAdminsMixin,
             self.other_object.workshop_types.filter(mix_match=True).exists()
         )
 
-        kwargs['show_lessons'] = mix_match
+        # no matter what, don't show "lessons" field; previously they were shown
+        # when mix&match was selected
+        kwargs['show_lessons'] = False
 
         url = self.other_object.workshop_url.strip()
         data = {
