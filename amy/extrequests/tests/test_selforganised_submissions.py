@@ -478,19 +478,18 @@ class TestAcceptingSelfOrgSubmission(TestBase):
         Task.objects.get(person=self.harry, event=event,
                          role=Role.objects.get(name="host"))
 
-    def test_lessons_shown_in_event_create_form(self):
-        """Ensure Mix&Match triggers "lessons" field on EventCreateForm."""
-        # self.sos1 has Mix&Match workshop type, so it should display "lessons"
+    def test_lessons_hidden_in_event_create_form(self):
+        """Ensure Mix&Match doesn't trigger "lessons" field on EventCreateForm."""
+        # self.sos1 has Mix&Match workshop type, so it should hide "lessons"
         # field in Event form
         rv = self.client.get(self.url)
         self.assertEqual(rv.status_code, 200)
         self.assertIn(Curriculum.objects.get(mix_match=True),
                       self.sos1.workshop_types.all())
-        self.assertIn("lessons", rv.context["form"].fields.keys())
+        self.assertNotIn("lessons", rv.context["form"].fields.keys())
 
-        # self.sos2 doesn't have Mix&Match workshop type, so it can't show
-        # "lessons" field in Event form
-        # but for tests we need a different status for that submission
+        # self.sos2 doesn't have Mix&Match workshop type, and the "lessons" field
+        # should remain hidden in Event form
         self.sos2.state = "p"
         self.sos2.save()
         rv = self.client.get(self.url2)
