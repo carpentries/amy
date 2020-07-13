@@ -1050,7 +1050,11 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         default="not-invoiced",
         blank=False,
     )
-    contact = models.CharField(max_length=STR_LONGEST, default="", blank=True)
+    contact = models.CharField(
+        max_length=STR_LONGEST,
+        default="",
+        blank=True,
+        verbose_name="Additional people to contact")
     country = CountryField(
         null=True,
         blank=True,
