@@ -25,7 +25,7 @@
           {{ object.personal }} {{ object.family }} &lt;{{ object.email|urlize }}&gt;
           {% if admin %}{% include "includes/request_host_person.html" with object=object info_host_task=info_host_task %}{% endif %}
         </td></tr>
-    <tr><th>Institution:</th>
+    <tr><th>Host Institution:</th>
         <td>
           {% include "includes/request_institution.html" with admin=admin object=object %}
         </td></tr>
