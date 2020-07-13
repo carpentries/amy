@@ -33,7 +33,7 @@
         <td>{{ object.location }}</td></tr>
     <tr><th>Country:</th>
         <td>{{ object.country.name }} <img src="{{ object.country.flag }}" alt="{{ object.country }}" class="country-flag" /></td></tr>
-    <tr><th>Requested workshop type:</th>
+    <tr><th>Requested curricula:</th>
         <td>
           <ul>
           {% for item in object.requested_workshop_types.all %}
