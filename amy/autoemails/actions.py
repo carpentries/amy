@@ -695,8 +695,13 @@ class InstructorsHostIntroductionAction(BaseAction):
         try:
             host = event.task_set.filter(role__name="host").first()
             instructors = event.task_set.filter(role__name="instructor")
+            supporting_instructors = event.task_set.filter(
+                role__name="supporting-instructor"
+            )
         except (Task.DoesNotExist, ValueError):
             return False
+
+        online = event.tags.filter(name="online")
 
         return bool(
             # is NOT self-organized
@@ -712,6 +717,7 @@ class InstructorsHostIntroductionAction(BaseAction):
             # roles: 1 host and 2+ instructors
             and host
             and len(instructors) >= 2
+            and (online and len(supporting_instructors) >= 2 or not online)
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
