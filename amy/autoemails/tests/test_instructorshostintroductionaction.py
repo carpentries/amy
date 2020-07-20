@@ -144,6 +144,23 @@ class TestInstructorsHostIntroductionAction(TestCase):
         )
         self.assertEqual(InstructorsHostIntroductionAction.check(e), True)
 
+        # 8th case: for online require also 2 supporting instructors
+        e.tags.add(Tag.objects.get(name="online"))
+        self.assertEqual(InstructorsHostIntroductionAction.check(e), False)
+        Task.objects.create(
+            person=self.person4, role=self.supporting_instructor, event=e,
+        )
+        Task.objects.create(
+            person=self.person5, role=self.supporting_instructor, event=e,
+        )
+        self.assertEqual(InstructorsHostIntroductionAction.check(e), True)
+
+        # 9th case: for online, more than 2 supporting instructors should still work
+        Task.objects.create(
+            person=self.person1, role=self.supporting_instructor, event=e,
+        )
+        self.assertEqual(InstructorsHostIntroductionAction.check(e), True)
+
     def testContext(self):
         """Make sure `get_additional_context` works correctly."""
         a = InstructorsHostIntroductionAction(
