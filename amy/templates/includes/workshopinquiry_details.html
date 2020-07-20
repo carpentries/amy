@@ -20,12 +20,12 @@
           {% endif %}
         </td></tr>
 {% endif %}
-    <tr><th>Person:</th>
+    <tr><th>Host Contact:</th>
         <td>
           {{ object.personal }} {{ object.family }} &lt;{{ object.email|urlize }}&gt;
           {% if admin %}{% include "includes/request_host_person.html" with object=object info_host_task=info_host_task %}{% endif %}
         </td></tr>
-    <tr><th>Institution:</th>
+    <tr><th>Host Institution:</th>
         <td>
           {% include "includes/request_institution.html" with admin=admin object=object %}
         </td></tr>
@@ -77,7 +77,7 @@
     </tr>
     <tr><th>Audience description:</th>
         <td><pre>{{ object.audience_description }}</pre></td></tr>
-    <tr><th>Requested workshop types:</th>
+    <tr><th>Requested Curricula:</th>
         <td>
           <ul>
           {% for type in object.requested_workshop_types.all %}
