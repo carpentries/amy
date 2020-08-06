@@ -714,10 +714,10 @@ class InstructorsHostIntroductionAction(BaseAction):
             and not event.tags.filter(name__in=["cancelled", "unresponsive", "stalled"])
             # special "automated-email" tag
             and event.tags.filter(name__icontains="automated-email")
-            # roles: 1 host and 2+ instructors
+            # roles: 1 host and 2+ instructors, and perhaps 1+ supporting instr.
             and host
             and len(instructors) >= 2
-            and (online and len(supporting_instructors) >= 2 or not online)
+            and (online and len(supporting_instructors) >= 1 or not online)
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
@@ -745,6 +745,8 @@ class InstructorsHostIntroductionAction(BaseAction):
         hosts = tasks.filter(role__name="host")
         instructors = tasks.filter(role__name="instructor")
         support = tasks.filter(role__name="supporting-instructor")
+        context["instructors"] = [instr.person for instr in instructors]
+        context["supporting_instructors"] = [instr.person for instr in support]
         context["host"] = hosts[0].person
         context["instructor1"] = instructors[0].person
         context["instructor2"] = instructors[1].person
