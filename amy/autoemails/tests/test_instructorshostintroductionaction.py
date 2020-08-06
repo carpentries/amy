@@ -158,19 +158,12 @@ class TestInstructorsHostIntroductionAction(TestCase):
         )
         self.assertEqual(InstructorsHostIntroductionAction.check(e), True)
 
-    def testContext(self):
-        """Make sure `get_additional_context` works correctly."""
+    def testContextEmptyContact(self):
+        """Make sure `get_additional_context` works correctly when contacts are empty
+        for the event."""
         a = InstructorsHostIntroductionAction(
             trigger=Trigger(action="test-action", template=EmailTemplate())
         )
-
-        # method fails when obligatory objects are missing
-        with self.assertRaises(KeyError):
-            a.get_additional_context(dict())  # missing 'event'
-        with self.assertRaises(AttributeError):
-            # now event is present, but the method tries to execute `refresh_from_db`
-            # on it
-            a.get_additional_context(dict(event="dummy"))
 
         # totally fake Event
         e = Event.objects.create(
@@ -179,7 +172,7 @@ class TestInstructorsHostIntroductionAction(TestCase):
             administrator=Organization.objects.get(domain="carpentries.org"),
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
-            contact=TAG_SEPARATOR.join(["test@hogwart.com", "test2@magic.uk"]),
+            contact="",
             country="GB",
         )
         e.tags.set(Tag.objects.filter(name__in=["LC", "automated-email"]))
@@ -222,8 +215,6 @@ class TestInstructorsHostIntroductionAction(TestCase):
                 "hg@magic.uk",
                 "peter@webslinger.net",
                 "me@stark.com",
-                "test@hogwart.com",
-                "test2@magic.uk",
             ],
             assignee="Regional Coordinator",
             tags=["LC", "automated-email"],

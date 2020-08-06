@@ -762,7 +762,9 @@ class InstructorsHostIntroductionAction(BaseAction):
         except IndexError:
             context["supporting_instructor2"] = None
 
-        additional_contacts = [email for email in event.contact.split(TAG_SEPARATOR)]
+        additional_contacts = [
+            email for email in event.contact.split(TAG_SEPARATOR) if email
+        ]
         context["all_emails"] = [t.person.email for t in tasks] + additional_contacts
 
         context["assignee"] = (
