@@ -143,6 +143,29 @@ class TestPostWorkshopAction(TestCase):
         e.administrator = Organization.objects.get(domain="librarycarpentry.org")
         self.assertEqual(PostWorkshopAction.check(e), True)
 
+    def testCheckConditionsCircuits(self):
+        """Make sure `check` works for "Circuits" workshops too."""
+        e = Event.objects.create(
+            slug="test-event",
+            host=Organization.objects.first(),
+            administrator=Organization.objects.get(domain="librarycarpentry.org"),
+            start=date.today() + timedelta(days=7),
+            end=date.today() + timedelta(days=8),
+        )
+        e.tags.set(Tag.objects.filter(name__in=["automated-email"]))
+        p = Person.objects.create(
+            personal="Harry", family="Potter", email="hp@magic.uk"
+        )
+        r = Role.objects.create(name="host")
+        Task.objects.create(event=e, person=p, role=r)
+
+        # 1st case: fail
+        self.assertEqual(PostWorkshopAction.check(e), False)
+
+        # 2nd case: success
+        e.tags.add(Tag.objects.get(name="Circuits"))
+        self.assertEqual(PostWorkshopAction.check(e), True)
+
     def testContext(self):
         """Make sure `get_additional_context` works correctly."""
         a = PostWorkshopAction(

@@ -466,7 +466,7 @@ class PostWorkshopAction(BaseAction):
             # must have "automated-email" tag
             and event.tags.filter(name__icontains="automated-email")
             # must have LC, DC, or SWC tags
-            and event.tags.filter(name__in=["LC", "DC", "SWC"])
+            and event.tags.filter(name__in=["LC", "DC", "SWC", "Circuits"])
             # must not be self-organized or instructor training
             # 2020-02-11: only for workshops administered by other than
             #             Instructor Training
