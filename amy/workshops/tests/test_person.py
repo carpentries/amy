@@ -42,6 +42,19 @@ class TestPerson(TestBase):
         super().setUp()
         self._setUpUsersAndLogin()
 
+    def test_family_name_notnull(self):
+        """This is a regression test against #1682
+        (https://github.com/carpentries/amy/issues/1682).
+
+        The error was: family name was allowed to be null, which caused 500 errors
+        when trying to save person without the family name.
+        The actual error happened in the name normalization (util.normalize_name)."""
+        p1 = Person.objects.create(personal="Harry", username="hp")
+        p2 = Person.objects.create(personal="Hermione", username="hg")
+
+        self.assertEqual(p1.family, "")
+        self.assertEqual(p2.family, "")
+
     def test_login_with_email(self):
         """ Make sure we can login with user's email too, not only with the
         username."""

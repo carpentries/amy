@@ -445,10 +445,10 @@ class Person(
         max_length=STR_LONG, verbose_name="Personal (first) name",
     )
     middle = models.CharField(
-        max_length=STR_LONG, blank=True, verbose_name="Middle name",
+        max_length=STR_LONG, blank=True, default="", verbose_name="Middle name",
     )
     family = models.CharField(
-        max_length=STR_LONG, blank=True, null=True, verbose_name="Family (last) name",
+        max_length=STR_LONG, blank=True, default="", verbose_name="Family (last) name",
     )
     email = models.CharField(  # emailfield?
         max_length=STR_LONG,

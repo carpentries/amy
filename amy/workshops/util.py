@@ -161,9 +161,9 @@ def verify_upload_person_task(data, match=False):
 
         # check if the user exists, and if so: check if existing user's
         # personal and family names are the same as uploaded
-        email = item.get("email", None)
-        personal = item.get("personal", None)
-        family = item.get("family", None)
+        email = item.get("email", "")
+        personal = item.get("personal", "")
+        family = item.get("family", "")
         person_id = item.get("existing_person_id", None)
         person = None
 
@@ -501,7 +501,7 @@ def update_manual_score(cleaned_data):
 
 def create_username(personal, family, tries=NUM_TRIES):
     """Generate unique username."""
-    stem = normalize_name(family) + "_" + normalize_name(personal)
+    stem = normalize_name(family or "") + "_" + normalize_name(personal or "")
 
     counter = None
     for i in range(tries):  # let's limit ourselves to only 100 tries
