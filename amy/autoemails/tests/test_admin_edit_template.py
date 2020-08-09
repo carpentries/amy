@@ -1,14 +1,13 @@
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, timedelta
 
 from django.test import TestCase
 from django.urls import reverse
 from rq.exceptions import NoSuchJobError
-from rq.job import Job
-from rq_scheduler.utils import to_unix
 
 from autoemails import admin
 from autoemails.actions import NewInstructorAction
 from autoemails.models import EmailTemplate, Trigger, RQJob
+from autoemails.job import Job
 from autoemails.tests.base import FakeRedisTestCaseMixin, dummy_job
 from workshops.models import Event, Organization, Person, Role, Task
 from workshops.tests.base import SuperuserMixin
@@ -36,14 +35,15 @@ class TestAdminJobReschedule(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         # test event and task
         LC_org = Organization.objects.create(domain="librarycarpentry.org",
                                              fullname="Library Carpentry")
-        self.event =Event.objects.create(
+        self.event = Event.objects.create(
             slug="test-event",
             host=Organization.objects.first(),
             administrator=LC_org,
             start=date.today() + timedelta(days=7),
             end=date.today() + timedelta(days=8),
         )
-        p = Person.objects.create(personal="Harry", family="Potter", email="hp@magic.uk")
+        p = Person.objects.create(personal="Harry", family="Potter",
+                                  email="hp@magic.uk")
         r = Role.objects.create(name="instructor")
         self.task = Task.objects.create(event=self.event, person=p, role=r)
 

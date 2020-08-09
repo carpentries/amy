@@ -1,7 +1,8 @@
 import django_rq
 from fakeredis import FakeStrictRedis
-from redis import Redis
 from rq import Queue
+
+from autoemails.job import Job
 
 
 connection = FakeStrictRedis()
@@ -24,7 +25,7 @@ class FakeRedisTestCaseMixin:
         super().setUp()
         self.connection = connection
         # self.connection = Redis()
-        self.queue = Queue(is_async=False, connection=self.connection)
+        self.queue = Queue(is_async=False, connection=self.connection, job_class=Job)
         self.scheduler = django_rq.get_scheduler('testing', queue=self.queue)
         self.scheduler.connection = self.connection
 
