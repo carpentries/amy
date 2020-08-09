@@ -178,15 +178,21 @@ class TestPostWorkshopAction(TestCase):
         p3 = Person.objects.create(
             personal="Ron", family="Weasley", username="rweasley", email="rw@magic.uk"
         )
+        p4 = Person.objects.create(
+            personal="Draco", family="Malfoy", username="dmalfoy",
+            email="draco@malfoy.com"
+        )
         host = Role.objects.create(name="host")
         instructor = Role.objects.create(name="instructor")
         helper = Role.objects.create(name="helper")
+        supporting_instructor = Role.objects.create(name="supporting-instructor")
         Task.objects.bulk_create(
             [
                 Task(event=e, person=p1, role=host),
                 Task(event=e, person=p2, role=instructor),
                 Task(event=e, person=p3, role=helper),
                 Task(event=e, person=p1, role=helper),
+                Task(event=e, person=p4, role=supporting_instructor),
             ]
         )
 
@@ -200,10 +206,13 @@ class TestPostWorkshopAction(TestCase):
                 host=Organization.objects.first(),
                 regional_coordinator_email=["admin-uk@carpentries.org"],
                 instructors=[p2],
+                supporting_instructors=[p4],
                 helpers=[p1, p3],
-                all_emails=["hg@magic.uk", "hp@magic.uk"],
+                all_emails=["hg@magic.uk", "draco@malfoy.com", "hp@magic.uk"],
                 assignee="Regional Coordinator",
-                reports_link="https://workshop-reports.carpentries.org/?key=e18dd84d093be5cd6c6ccaf63d38a8477ca126f4&slug=test-event",
+                reports_link="https://workshop-reports.carpentries.org/"
+                             "?key=e18dd84d093be5cd6c6ccaf63d38a8477ca126f4"
+                             "&slug=test-event",
                 tags=['SWC', 'TTT'],
             ),
         )
@@ -234,14 +243,20 @@ class TestPostWorkshopAction(TestCase):
         p3 = Person.objects.create(
             personal="Ron", family="Weasley", username="rweasley", email="rw@magic.uk"
         )
+        p4 = Person.objects.create(
+            personal="Draco", family="Malfoy", username="dmalfoy",
+            email="draco@malfoy.com"
+        )
         host = Role.objects.create(name="host")
         instructor = Role.objects.create(name="instructor")
+        supporting_instructor = Role.objects.create(name="supporting-instructor")
         Task.objects.bulk_create(
             [
                 Task(event=e, person=p1, role=instructor),
                 Task(event=e, person=p2, role=instructor),
                 Task(event=e, person=p3, role=host),
                 Task(event=e, person=p1, role=host),
+                Task(event=e, person=p4, role=supporting_instructor),
             ]
         )
 
@@ -260,7 +275,7 @@ class TestPostWorkshopAction(TestCase):
         )
         a = PostWorkshopAction(trigger=trigger, objects=dict(event=e),)
         email = a._email()
-        self.assertEqual(email.to, [p2.email, p1.email, p3.email])
+        self.assertEqual(email.to, [p2.email, p4.email, p1.email, p3.email])
 
     def test_event_slug(self):
         e = Event.objects.create(
@@ -307,14 +322,20 @@ class TestPostWorkshopAction(TestCase):
         p3 = Person.objects.create(
             personal="Ron", family="Weasley", username="rweasley", email="rw@magic.uk"
         )
+        p4 = Person.objects.create(
+            personal="Draco", family="Malfoy", username="dmalfoy",
+            email="draco@malfoy.com"
+        )
         host = Role.objects.create(name="host")
         instructor = Role.objects.create(name="instructor")
+        supporting_instructor = Role.objects.create(name="supporting-instructor")
         Task.objects.bulk_create(
             [
                 Task(event=e, person=p1, role=instructor),
                 Task(event=e, person=p2, role=instructor),
                 Task(event=e, person=p3, role=host),
                 Task(event=e, person=p1, role=host),
+                Task(event=e, person=p4, role=supporting_instructor),
             ]
         )
 
@@ -323,4 +344,4 @@ class TestPostWorkshopAction(TestCase):
             objects=dict(event=e),
         )
 
-        self.assertEqual(a.all_recipients(), "hg@magic.uk, hp@magic.uk, rw@magic.uk")
+        self.assertEqual(a.all_recipients(), "hg@magic.uk, draco@malfoy.com, hp@magic.uk, rw@magic.uk")
