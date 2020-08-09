@@ -1,7 +1,7 @@
 import datetime
 
 from crispy_forms.bootstrap import FormActions
-from crispy_forms.layout import Layout, Div, HTML, Submit, Field
+from crispy_forms.layout import Layout, Div, HTML, Submit
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Case, When
@@ -31,7 +31,6 @@ from workshops.fields import (
     RadioSelectWithOther,
     CheckboxSelectMultipleWithOthers,
     RadioSelectFakeMultiple,
-    SafeModelChoiceField,
     SafeModelMultipleChoiceField,
     CurriculumModelMultipleChoiceField,
 )
@@ -226,23 +225,19 @@ class WorkshopRequestBaseForm(forms.ModelForm):
 
     travel_expences_agreement = forms.BooleanField(
         required=True,
-        label=WorkshopRequest._meta.get_field('travel_expences_agreement')
-                                   .verbose_name,
+        label=WorkshopRequest._meta.get_field('travel_expences_agreement').verbose_name,
     )
     data_privacy_agreement = forms.BooleanField(
         required=True,
-        label=WorkshopRequest._meta.get_field('data_privacy_agreement')
-                                   .verbose_name,
+        label=WorkshopRequest._meta.get_field('data_privacy_agreement').verbose_name,
     )
     code_of_conduct_agreement = forms.BooleanField(
         required=True,
-        label=WorkshopRequest._meta.get_field('code_of_conduct_agreement')
-                                   .verbose_name,
+        label=WorkshopRequest._meta.get_field('code_of_conduct_agreement').verbose_name,
     )
     host_responsibilities = forms.BooleanField(
         required=True,
-        label=WorkshopRequest._meta.get_field('host_responsibilities')
-                                   .verbose_name,
+        label=WorkshopRequest._meta.get_field('host_responsibilities').verbose_name,
     )
     instructor_availability = forms.BooleanField(
         required=True,
@@ -506,7 +501,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
                 "option.")
 
         # 6: require public event
-        public_event =  self.cleaned_data.get('public_event', '')
+        public_event = self.cleaned_data.get('public_event', '')
         public_event_other = self.cleaned_data.get('public_event_other', '')
         if public_event == "other" and not public_event_other:
             errors['public_event'] = ValidationError(
@@ -866,7 +861,10 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         domains_other = self.cleaned_data.get("domains_other", None)
         academic_levels = self.cleaned_data.get("academic_levels", None)
         computing_levels = self.cleaned_data.get("computing_levels", None)
-        requested_workshop_types = self.cleaned_data.get("requested_workshop_types", None)
+        requested_workshop_types = self.cleaned_data.get(
+            "requested_workshop_types",
+            None,
+        )
 
         if routine_data and routine_data.filter(unknown=True):
             if len(routine_data) > 1 or routine_data_other:
@@ -956,7 +954,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
                 "option.")
 
         # 6: require public event
-        public_event =  self.cleaned_data.get('public_event', '')
+        public_event = self.cleaned_data.get('public_event', '')
         public_event_other = self.cleaned_data.get('public_event_other', '')
         if public_event == "other" and not public_event_other:
             errors['public_event'] = ValidationError(
@@ -1183,7 +1181,7 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
                 'This field is required if you select "Mix & Match".')
 
         # 5: require public event
-        public_event =  self.cleaned_data.get('public_event', '')
+        public_event = self.cleaned_data.get('public_event', '')
         public_event_other = self.cleaned_data.get('public_event_other', '')
         if public_event == "other" and not public_event_other:
             errors['public_event'] = ValidationError(
