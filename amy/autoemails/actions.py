@@ -441,17 +441,18 @@ class PostWorkshopAction(BaseAction):
     def all_recipients(self) -> str:
         """If available, return string of all recipients."""
         try:
-            return ", ".join(
-                list(
-                    Person.objects.filter(
-                        task__in=self.context_objects["event"].task_set.filter(
-                            role__name__in=self.ROLES
-                        )
-                    )
-                    .distinct()
-                    .values_list("email", flat=True)
+            event = self.context_objects["event"]
+            person_emails = list(
+                Person.objects.filter(
+                    task__in=event.task_set.filter(role__name__in=self.ROLES)
                 )
+                .distinct()
+                .values_list("email", flat=True)
             )
+            additional_contacts = event.contact.split(TAG_SEPARATOR)
+            all_emails = list(filter(bool, person_emails + additional_contacts))
+            return ", ".join(all_emails)
+
         except (KeyError, AttributeError):
             return ""
 
@@ -516,13 +517,17 @@ class PostWorkshopAction(BaseAction):
         )
 
         # querying over Person.objects lets us get rid of duplicates
-        context["all_emails"] = list(
+        person_emails = list(
             Person.objects.filter(
                 task__in=event.task_set.filter(role__name__in=self.ROLES)
             )
             .distinct()
             .values_list("email", flat=True)
         )
+        additional_contacts = event.contact.split(TAG_SEPARATOR)
+        all_emails = list(filter(bool, person_emails + additional_contacts))
+        context["all_emails"] = all_emails
+
         context["assignee"] = (
             event.assigned_to.full_name if event.assigned_to else "Regional Coordinator"
         )
