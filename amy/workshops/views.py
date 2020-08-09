@@ -1530,6 +1530,7 @@ class TaskCreate(
 
         seat_membership = form.cleaned_data["seat_membership"]
         event = form.cleaned_data["event"]
+        check_ihia_old = InstructorsHostIntroductionAction.check(event)
 
         # check associated membership remaining seats and validity
         if hasattr(self, "request") and seat_membership is not None:
@@ -1604,7 +1605,10 @@ class TaskCreate(
             )
 
         # check conditions for running a InstructorsHostIntroductionAction
-        if InstructorsHostIntroductionAction.check(self.object.event):
+        if (
+            not check_ihia_old
+            and InstructorsHostIntroductionAction.check(self.object.event)
+        ):
             triggers = Trigger.objects.filter(
                 active=True, action="instructors-host-introduction"
             )
@@ -1614,7 +1618,7 @@ class TaskCreate(
                 scheduler=scheduler,
                 triggers=triggers,
                 context_objects=dict(event=self.object.event),
-                object_=self.object,
+                object_=self.object.event,
                 request=self.request,
             )
 
@@ -1712,13 +1716,13 @@ class TaskUpdate(
                 scheduler=scheduler,
                 triggers=triggers,
                 context_objects=dict(event=self.object.event),
-                object_=self.object,
+                object_=self.object.event,
                 request=self.request,
             )
 
         # InstructorsHostIntroductionAction conditions were met, but aren't anymore
         elif check_ihi_old and not check_ihi_new:
-            jobs = self.object.rq_jobs.filter(
+            jobs = self.object.event.rq_jobs.filter(
                 trigger__action="instructors-host-introduction"
             )
             ActionManageMixin.remove(
@@ -1727,7 +1731,7 @@ class TaskUpdate(
                 scheduler=scheduler,
                 connection=redis_connection,
                 jobs=jobs.values_list("job_id", flat=True),
-                object_=self.object,
+                object_=self.object.event,
                 request=self.request,
             )
 
@@ -1765,7 +1769,7 @@ class TaskDelete(
             request=self.request,
         )
 
-        jobs = self.object.rq_jobs.filter(
+        jobs = self.object.event.rq_jobs.filter(
             trigger__action="instructors-host-introduction"
         )
         ActionManageMixin.remove(
@@ -1774,7 +1778,7 @@ class TaskDelete(
             scheduler=scheduler,
             connection=redis_connection,
             jobs=jobs.values_list("job_id", flat=True),
-            object_=self.object,
+            object_=self.object.event,
             request=self.request,
         )
 

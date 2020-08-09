@@ -3,11 +3,11 @@ from unittest.mock import MagicMock
 
 from django.test import TestCase, RequestFactory
 from rq.exceptions import NoSuchJobError
-from rq.job import Job
 from rq_scheduler.utils import to_unix
 
 from autoemails.actions import NewInstructorAction
 from autoemails.base_views import ActionManageMixin
+from autoemails.job import Job
 from autoemails.models import EmailTemplate, Trigger, RQJob
 from autoemails.tests.base import FakeRedisTestCaseMixin, dummy_job
 from workshops.models import (

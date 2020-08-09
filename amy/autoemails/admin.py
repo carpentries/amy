@@ -12,10 +12,9 @@ from django.views.decorators.http import require_POST
 import django_rq
 from markdownx.widgets import AdminMarkdownxWidget
 from rq.exceptions import NoSuchJobError
-from rq.job import Job
-from rq_scheduler.utils import from_unix
 
 from autoemails.forms import RescheduleForm, TemplateForm
+from autoemails.job import Job
 from autoemails.models import EmailTemplate, Trigger, RQJob
 from autoemails.utils import (
     check_status,
@@ -368,6 +367,8 @@ class RQJobAdmin(admin.ModelAdmin):
         if job.is_queued or not job.get_status():
             job.cancel()  # for "pure" jobs
             scheduler.cancel(job)  # for scheduler-based jobs
+            rqjob.status = "cancelled"
+            rqjob.save()
 
             logger.debug(f"Job {rqjob.job_id} was cancelled.")
             messages.info(request, f"The job {rqjob.job_id} was cancelled.")
