@@ -148,6 +148,10 @@ class TestAdminJobCancel(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
                 )
             )
 
+        # job status updated
+        rqjob.refresh_from_db()
+        self.assertEqual(rqjob.status, "cancelled")
+
         # job data still available
         Job.fetch(rqjob.job_id, connection=self.scheduler.connection)
         # ...but nothing is scheduled

@@ -367,6 +367,8 @@ class RQJobAdmin(admin.ModelAdmin):
         if job.is_queued or not job.get_status():
             job.cancel()  # for "pure" jobs
             scheduler.cancel(job)  # for scheduler-based jobs
+            rqjob.status = "cancelled"
+            rqjob.save()
 
             logger.debug(f"Job {rqjob.job_id} was cancelled.")
             messages.info(request, f"The job {rqjob.job_id} was cancelled.")
