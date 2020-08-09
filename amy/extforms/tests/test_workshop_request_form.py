@@ -40,6 +40,7 @@ class TestWorkshopRequestExternalForm(TestBase):
             "user_notes",
             "data_privacy_agreement", "code_of_conduct_agreement",
             "host_responsibilities",
+            "instructor_availability",
             "captcha",
         ])
         self.assertEqual(fields_left, fields_right)
@@ -82,6 +83,7 @@ class TestWorkshopRequestExternalForm(TestBase):
             'data_privacy_agreement': True,
             'code_of_conduct_agreement': True,
             'host_responsibilities': True,
+            'instructor_availability': True,
         }
         self.passCaptcha(data)
 

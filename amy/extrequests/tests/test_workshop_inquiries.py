@@ -40,6 +40,7 @@ class TestWorkshopInquiryBaseForm(FormTestHelper, TestBase):
         'data_privacy_agreement': True,
         'code_of_conduct_agreement': True,
         'host_responsibilities': True,
+        'instructor_availability': True,
     }
 
     def _test_dont_know_yet_option(self, Form, field, value_normal,

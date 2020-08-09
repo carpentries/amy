@@ -244,6 +244,10 @@ class WorkshopRequestBaseForm(forms.ModelForm):
         label=WorkshopRequest._meta.get_field('host_responsibilities')
                                    .verbose_name,
     )
+    instructor_availability = forms.BooleanField(
+        required=True,
+        label=WorkshopRequest._meta.get_field('instructor_availability').verbose_name,
+    )
 
     requested_workshop_types = CurriculumModelMultipleChoiceField(
         required=True,
@@ -305,6 +309,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             "data_privacy_agreement",
             "code_of_conduct_agreement",
             "host_responsibilities",
+            "instructor_availability",
         )
 
         widgets = {
@@ -592,6 +597,11 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
         label=WorkshopInquiryRequest._meta.get_field('host_responsibilities')
                                     .verbose_name,
     )
+    instructor_availability = forms.BooleanField(
+        required=True,
+        label=WorkshopInquiryRequest._meta.get_field('instructor_availability')
+                                    .verbose_name,
+    )
 
     requested_workshop_types = CurriculumModelMultipleChoiceField(
         required=False,
@@ -670,6 +680,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
             "data_privacy_agreement",
             "code_of_conduct_agreement",
             "host_responsibilities",
+            "instructor_availability",
         )
 
         widgets = {

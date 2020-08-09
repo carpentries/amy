@@ -67,6 +67,7 @@ class TestWorkshopRequestBaseForm(FormTestHelper, TestBase):
             'data_privacy_agreement': True,
             'code_of_conduct_agreement': True,
             'host_responsibilities': True,
+            'instructor_availability': True,
         }
         form = WorkshopRequestBaseForm(data)
         self.assertTrue(form.is_valid(), dict(form.errors))
