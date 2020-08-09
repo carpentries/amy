@@ -232,7 +232,7 @@ $(document).ready(function() {
     var today = new Date();
     var time_diff = value.getTime() - today.getTime();
 
-    // 3 months
+    // 2 months
     if (time_diff < DEFAULT_WARNING_TIME) {
       $("#preferred_dates_warning").removeClass("d-none");
     } else {
@@ -249,7 +249,7 @@ $(document).ready(function() {
     var today = new Date();
     var time_diff = value.getTime() - today.getTime();
 
-    // 3 months
+    // 2 months
     if (time_diff < DEFAULT_WARNING_TIME) {
       $("#preferred_dates_warning").removeClass("d-none");
     } else {

@@ -92,6 +92,23 @@ class HostResponsibilitiesMixin(models.Model):
         abstract = True
 
 
+class InstructorAvailabilityMixin(models.Model):
+    """This mixin provides a checkbox for confirming agreement to no guarantee of
+    instructors availability in case of short-notice workshops."""
+
+    instructor_availability = models.BooleanField(
+        null=False,
+        blank=True,  # special condition check in the form
+        default=False,
+        verbose_name="I understand that if my workshop is less than two months away,"
+                     " The Carpentries can not guarantee availability of Instructors"
+                     " and I may not be able to hold my workshop as scheduled.",
+    )
+
+    class Meta:
+        abstract = True
+
+
 class EventLinkMixin(models.Model):
     """This mixin provides a one-to-one link between a model, in which it's
     used, and single Event instance."""

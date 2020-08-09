@@ -12,6 +12,7 @@ from workshops.mixins import (
     EventLinkMixin,
     HostResponsibilitiesMixin,
     StateMixin,
+    InstructorAvailabilityMixin,
 )
 from workshops.models import (
     STR_MED,
@@ -527,6 +528,7 @@ class WorkshopInquiryRequest(
     DataPrivacyAgreementMixin,
     COCAgreementMixin,
     HostResponsibilitiesMixin,
+    InstructorAvailabilityMixin,
     EventLinkMixin,
     models.Model,
 ):

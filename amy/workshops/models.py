@@ -43,6 +43,7 @@ from workshops.mixins import (
     HostResponsibilitiesMixin,
     SecondaryEmailMixin,
     StateMixin,
+    InstructorAvailabilityMixin,
 )
 from workshops.fields import NullableGithubUsernameField
 
@@ -2431,6 +2432,7 @@ class WorkshopRequest(
     DataPrivacyAgreementMixin,
     COCAgreementMixin,
     HostResponsibilitiesMixin,
+    InstructorAvailabilityMixin,
     EventLinkMixin,
     models.Model,
 ):
