@@ -398,6 +398,8 @@ class PostWorkshopAction(BaseAction):
     ...     job = scheduler.enqueue_in(launch_at, action)
     """
 
+    ROLES = ["host", "instructor", "supporting-instructor"]
+
     # The action should launch week after workshop's end date
     launch_at = timedelta(days=7)
 
@@ -443,7 +445,7 @@ class PostWorkshopAction(BaseAction):
                 list(
                     Person.objects.filter(
                         task__in=self.context_objects["event"].task_set.filter(
-                            role__name__in=["host", "instructor"]
+                            role__name__in=self.ROLES
                         )
                     )
                     .distinct()
@@ -504,6 +506,11 @@ class PostWorkshopAction(BaseAction):
                 task__in=event.task_set.filter(role__name="instructor")
             )
         )
+        context["supporting_instructors"] = list(
+            Person.objects.filter(
+                task__in=event.task_set.filter(role__name="supporting-instructor")
+            )
+        )
         context["helpers"] = list(
             Person.objects.filter(task__in=event.task_set.filter(role__name="helper"))
         )
@@ -511,7 +518,7 @@ class PostWorkshopAction(BaseAction):
         # querying over Person.objects lets us get rid of duplicates
         context["all_emails"] = list(
             Person.objects.filter(
-                task__in=event.task_set.filter(role__name__in=["host", "instructor"])
+                task__in=event.task_set.filter(role__name__in=self.ROLES)
             )
             .distinct()
             .values_list("email", flat=True)
