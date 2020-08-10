@@ -1,14 +1,13 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from django.test import TestCase
 from django.urls import reverse
 from rq import Queue
 from rq.exceptions import NoSuchJobError
-from rq.job import Job
-from rq_scheduler.utils import to_unix
 
 from autoemails import admin
 from autoemails.models import EmailTemplate, Trigger, RQJob
+from autoemails.job import Job
 from autoemails.tests.base import FakeRedisTestCaseMixin, dummy_job
 from workshops.tests.base import SuperuserMixin
 
@@ -148,6 +147,10 @@ class TestAdminJobCancel(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
                     self.scheduler.scheduled_jobs_key, job.id
                 )
             )
+
+        # job status updated
+        rqjob.refresh_from_db()
+        self.assertEqual(rqjob.status, "cancelled")
 
         # job data still available
         Job.fetch(rqjob.job_id, connection=self.scheduler.connection)

@@ -930,6 +930,15 @@ class TestUsernameGeneration(TestBase):
         username = create_username(personal='Andy', family='Blanking-Crush')
         self.assertEqual(username, 'blanking-crush_andy')
 
+    def test_noned_names(self):
+        """This is a regression test against #1682
+        (https://github.com/carpentries/amy/issues/1682).
+
+        The error was: family name was allowed to be null, which caused 500 errors
+        when trying to save person without the family name due to name normalization."""
+        username = create_username(personal=None, family=None)
+        self.assertEqual(username, "_")
+
 
 class TestPaginatorSections(TestBase):
     def make_paginator(self, num_pages, page_index=None):

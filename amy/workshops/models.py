@@ -43,6 +43,7 @@ from workshops.mixins import (
     HostResponsibilitiesMixin,
     SecondaryEmailMixin,
     StateMixin,
+    InstructorAvailabilityMixin,
 )
 from workshops.fields import NullableGithubUsernameField
 
@@ -445,10 +446,10 @@ class Person(
         max_length=STR_LONG, verbose_name="Personal (first) name",
     )
     middle = models.CharField(
-        max_length=STR_LONG, blank=True, verbose_name="Middle name",
+        max_length=STR_LONG, blank=True, default="", verbose_name="Middle name",
     )
     family = models.CharField(
-        max_length=STR_LONG, blank=True, null=True, verbose_name="Family (last) name",
+        max_length=STR_LONG, blank=True, default="", verbose_name="Family (last) name",
     )
     email = models.CharField(  # emailfield?
         max_length=STR_LONG,
@@ -1050,7 +1051,11 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         default="not-invoiced",
         blank=False,
     )
-    contact = models.CharField(max_length=STR_LONGEST, default="", blank=True)
+    contact = models.CharField(
+        max_length=STR_LONGEST,
+        default="",
+        blank=True,
+        verbose_name="Additional people to contact")
     country = CountryField(
         null=True,
         blank=True,
@@ -2427,6 +2432,7 @@ class WorkshopRequest(
     DataPrivacyAgreementMixin,
     COCAgreementMixin,
     HostResponsibilitiesMixin,
+    InstructorAvailabilityMixin,
     EventLinkMixin,
     models.Model,
 ):

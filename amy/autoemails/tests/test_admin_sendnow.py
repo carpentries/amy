@@ -1,13 +1,13 @@
 from datetime import datetime, timedelta
 
-from django.test import TestCase, Client
+from django.test import TestCase
 from django.urls import reverse
 from rq.exceptions import NoSuchJobError
-from rq.job import Job
 from rq_scheduler.utils import to_unix
 
 from autoemails import admin
 from autoemails.models import EmailTemplate, Trigger, RQJob
+from autoemails.job import Job
 from autoemails.tests.base import FakeRedisTestCaseMixin, dummy_job
 from workshops.tests.base import SuperuserMixin
 

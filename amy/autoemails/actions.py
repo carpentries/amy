@@ -398,6 +398,8 @@ class PostWorkshopAction(BaseAction):
     ...     job = scheduler.enqueue_in(launch_at, action)
     """
 
+    ROLES = ["host", "instructor", "supporting-instructor"]
+
     # The action should launch week after workshop's end date
     launch_at = timedelta(days=7)
 
@@ -443,7 +445,7 @@ class PostWorkshopAction(BaseAction):
                 list(
                     Person.objects.filter(
                         task__in=self.context_objects["event"].task_set.filter(
-                            role__name__in=["host", "instructor"]
+                            role__name__in=self.ROLES
                         )
                     )
                     .distinct()
@@ -504,6 +506,11 @@ class PostWorkshopAction(BaseAction):
                 task__in=event.task_set.filter(role__name="instructor")
             )
         )
+        context["supporting_instructors"] = list(
+            Person.objects.filter(
+                task__in=event.task_set.filter(role__name="supporting-instructor")
+            )
+        )
         context["helpers"] = list(
             Person.objects.filter(task__in=event.task_set.filter(role__name="helper"))
         )
@@ -511,7 +518,7 @@ class PostWorkshopAction(BaseAction):
         # querying over Person.objects lets us get rid of duplicates
         context["all_emails"] = list(
             Person.objects.filter(
-                task__in=event.task_set.filter(role__name__in=["host", "instructor"])
+                task__in=event.task_set.filter(role__name__in=self.ROLES)
             )
             .distinct()
             .values_list("email", flat=True)
@@ -695,8 +702,13 @@ class InstructorsHostIntroductionAction(BaseAction):
         try:
             host = event.task_set.filter(role__name="host").first()
             instructors = event.task_set.filter(role__name="instructor")
+            supporting_instructors = event.task_set.filter(
+                role__name="supporting-instructor"
+            )
         except (Task.DoesNotExist, ValueError):
             return False
+
+        online = event.tags.filter(name="online")
 
         return bool(
             # is NOT self-organized
@@ -709,9 +721,10 @@ class InstructorsHostIntroductionAction(BaseAction):
             and not event.tags.filter(name__in=["cancelled", "unresponsive", "stalled"])
             # special "automated-email" tag
             and event.tags.filter(name__icontains="automated-email")
-            # roles: 1 host and 2+ instructors
+            # roles: 1 host and 2+ instructors, and perhaps 1+ supporting instr.
             and host
             and len(instructors) >= 2
+            and (online and len(supporting_instructors) >= 1 or not online)
         )
 
     def get_additional_context(self, objects, *args, **kwargs):
@@ -739,6 +752,8 @@ class InstructorsHostIntroductionAction(BaseAction):
         hosts = tasks.filter(role__name="host")
         instructors = tasks.filter(role__name="instructor")
         support = tasks.filter(role__name="supporting-instructor")
+        context["instructors"] = [instr.person for instr in instructors]
+        context["supporting_instructors"] = [instr.person for instr in support]
         context["host"] = hosts[0].person
         context["instructor1"] = instructors[0].person
         context["instructor2"] = instructors[1].person
@@ -754,7 +769,9 @@ class InstructorsHostIntroductionAction(BaseAction):
         except IndexError:
             context["supporting_instructor2"] = None
 
-        additional_contacts = [email for email in event.contact.split(TAG_SEPARATOR)]
+        additional_contacts = [
+            email for email in event.contact.split(TAG_SEPARATOR) if email
+        ]
         context["all_emails"] = [t.person.email for t in tasks] + additional_contacts
 
         context["assignee"] = (

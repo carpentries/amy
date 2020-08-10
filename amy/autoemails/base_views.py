@@ -2,8 +2,8 @@ from django.contrib import messages
 from django.urls import reverse
 from django.utils.html import format_html
 from rq.exceptions import NoSuchJobError
-from rq.job import Job
 
+from autoemails.job import Job
 from autoemails.utils import (
     check_status,
     scheduled_execution_time,

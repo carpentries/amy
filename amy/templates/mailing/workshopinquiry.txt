@@ -50,3 +50,4 @@ Additional notes: {{ object.user_notes|default:"---" }}
 Data privacy agreement: {{ object.data_privacy_agreement|yesno }}
 Code of Conduct agreement: {{ object.code_of_conduct_agreement|yesno }}
 Host responsibilities agreement: {{ object.host_responsibilities|yesno }}
+Instructor availability agreement: {{ object.instructor_availability|yesno }}
