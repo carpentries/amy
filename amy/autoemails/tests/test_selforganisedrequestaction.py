@@ -7,9 +7,6 @@ from autoemails.models import Trigger, EmailTemplate
 from extrequests.models import SelfOrganisedSubmission
 from workshops.fields import TAG_SEPARATOR
 from workshops.models import (
-    Task,
-    Role,
-    Person,
     Event,
     Tag,
     Organization,
@@ -180,7 +177,7 @@ class TestSelfOrganisedRequestAction(TestCase):
                 short_notice=True,
                 all_emails=["harry@hogwarts.edu", "hg@magic.uk", "rw@magic.uk"],
                 assignee="Regional Coordinator",
-                tags=['LC', 'automated-email', 'Circuits'],
+                tags=["LC", "automated-email", "Circuits"],
             ),
         )
 
@@ -288,3 +285,39 @@ class TestSelfOrganisedRequestAction(TestCase):
             a.all_recipients(), "harry@hogwarts.edu, hg@magic.uk, rw@magic.uk"
         )
 
+    def test_drop_empty_contacts(self):
+        e = Event.objects.create(
+            slug="test-event",
+            host=Organization.objects.first(),
+            administrator=Organization.objects.get(domain="self-organized"),
+            start=date.today() + timedelta(days=7),
+            end=date.today() + timedelta(days=8),
+            country="GB",
+            contact="test@example.com",  # this won't be picked up
+        )
+        e.tags.set(Tag.objects.filter(name__in=["LC", "Circuits", "automated-email"]))
+        r = SelfOrganisedSubmission.objects.create(
+            state="p",
+            personal="Harry",
+            family="Potter",
+            email="",
+            institution_other_name="Hogwarts",
+            workshop_url="",
+            workshop_format="",
+            workshop_format_other="",
+            workshop_types_other_explain="",
+            language=Language.objects.get(name="English"),
+            event=e,
+            additional_contact=TAG_SEPARATOR,
+        )
+        r.workshop_types.set(Curriculum.objects.filter(carpentry="LC"))
+
+        a = SelfOrganisedRequestAction(
+            trigger=Trigger(action="test-action", template=EmailTemplate()),
+            objects=dict(event=e, request=r),
+        )
+
+        self.assertEqual(a.all_recipients(), "")
+        self.assertEqual(
+            a.get_additional_context(dict(event=e, request=r))["all_emails"], []
+        )
