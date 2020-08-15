@@ -284,6 +284,7 @@ class Trigger(ActiveMixin, CreatedUpdatedMixin, models.Model):
             "instructors-host-introduction",
             "Introduction of instrutors and host (centr. org. workshop)",
         ),
+        ("ask-for-website", "Website URL is missing"),
     )
     action = models.CharField(
         max_length=50,
