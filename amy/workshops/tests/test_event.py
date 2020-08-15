@@ -1373,7 +1373,10 @@ class TestEventCreatePostWorkshopAction(
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
-        self.assertIn("New email was scheduled", response.content.decode("utf-8"))
+        self.assertContains(
+            response,
+            "New email (7 days past the end date of an active workshop) was scheduled",
+        )
 
         # new event appeared
         self.assertEqual(Event.objects.count(), 1)
@@ -1478,7 +1481,10 @@ class TestEventUpdatePostWorkshopAction(
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
-        self.assertIn("New email was scheduled", response.content.decode("utf-8"))
+        self.assertContains(
+            response,
+            "New email (7 days past the end date of an active workshop) was scheduled",
+        )
 
         event.refresh_from_db()
         self.assertTrue(PostWorkshopAction.check(event))
@@ -1529,7 +1535,10 @@ class TestEventUpdatePostWorkshopAction(
         response = self.client.post(
             reverse("event_edit", args=[event.slug]), data, follow=True
         )
-        self.assertContains(response, "New email was scheduled")
+        self.assertContains(
+            response,
+            "New email (7 days past the end date of an active workshop) was scheduled",
+        )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
@@ -1643,7 +1652,10 @@ class TestEventDeletePostWorkshopAction(
             ),
         }
         response = self.client.post(reverse("event_add"), data, follow=True)
-        self.assertContains(response, "New email was scheduled")
+        self.assertContains(
+            response,
+            "New email (7 days past the end date of an active workshop) was scheduled",
+        )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
@@ -1803,7 +1815,11 @@ class TestEventUpdateInstructorsHostIntroduction(
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
-        self.assertIn("New email was scheduled", response.content.decode("utf-8"))
+        self.assertContains(
+            response,
+            "New email (Introduction of instrutors and host (centr. org. workshop))"
+            " was scheduled",
+        )
 
         event.refresh_from_db()
         self.assertTrue(InstructorsHostIntroductionAction.check(event))
@@ -1861,7 +1877,11 @@ class TestEventUpdateInstructorsHostIntroduction(
         response = self.client.post(
             reverse("event_edit", args=[event.slug]), data, follow=True
         )
-        self.assertContains(response, "New email was scheduled")
+        self.assertContains(
+            response,
+            "New email (Introduction of instrutors and host (centr. org. workshop))"
+            " was scheduled",
+        )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
@@ -2015,7 +2035,11 @@ class TestEventDeleteInstructorsHostIntroduction(
             reverse("event_edit", args=[event.slug]), data, follow=True
         )
 
-        self.assertContains(response, "New email was scheduled")
+        self.assertContains(
+            response,
+            "New email (Introduction of instrutors and host (centr. org. workshop))"
+            " was scheduled",
+        )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 

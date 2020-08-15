@@ -398,7 +398,10 @@ class TestTaskCreateNewInstructor(FakeRedisTestCaseMixin, SuperuserMixin, TestCa
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
-        self.assertIn("New email was scheduled", response.content.decode("utf-8"))
+        self.assertContains(
+            response,
+            "New email (Instructor is added to the workshop) was scheduled",
+        )
 
         # new task appeared
         self.assertEqual(Task.objects.count(), 1)
@@ -521,7 +524,10 @@ class TestTaskUpdateNewInstructor(FakeRedisTestCaseMixin, SuperuserMixin, TestCa
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
-        self.assertIn("New email was scheduled", response.content.decode("utf-8"))
+        self.assertContains(
+            response,
+            "New email (Instructor is added to the workshop) was scheduled",
+        )
 
         task.refresh_from_db()
         self.assertTrue(NewInstructorAction.check(task))
@@ -561,7 +567,10 @@ class TestTaskUpdateNewInstructor(FakeRedisTestCaseMixin, SuperuserMixin, TestCa
         response = self.client.post(
             reverse("task_edit", args=[task.pk]), data, follow=True
         )
-        self.assertContains(response, "New email was scheduled")
+        self.assertContains(
+            response,
+            "New email (Instructor is added to the workshop) was scheduled",
+        )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
@@ -693,7 +702,10 @@ class TestTaskDeleteNewInstructor(FakeRedisTestCaseMixin, SuperuserMixin, TestCa
             "task-role": self.instructor.pk,
         }
         response = self.client.post(reverse("task_add"), data, follow=True)
-        self.assertContains(response, "New email was scheduled")
+        self.assertContains(
+            response,
+            "New email (Instructor is added to the workshop) was scheduled",
+        )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
@@ -828,7 +840,10 @@ class TestTaskCreateNewSupportingInstructor(FakeRedisTestCaseMixin, SuperuserMix
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
-        self.assertIn("New email was scheduled", response.content.decode("utf-8"))
+        self.assertContains(
+            response,
+            "New email (Supporting Instructor is added to the workshop) was scheduled",
+        )
 
         # new task appeared
         self.assertEqual(Task.objects.count(), 1)
@@ -951,7 +966,10 @@ class TestTaskUpdateNewSupportingInstructor(FakeRedisTestCaseMixin, SuperuserMix
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
-        self.assertIn("New email was scheduled", response.content.decode("utf-8"))
+        self.assertContains(
+            response,
+            "New email (Supporting Instructor is added to the workshop) was scheduled",
+        )
 
         task.refresh_from_db()
         self.assertTrue(NewSupportingInstructorAction.check(task))
@@ -991,7 +1009,10 @@ class TestTaskUpdateNewSupportingInstructor(FakeRedisTestCaseMixin, SuperuserMix
         response = self.client.post(
             reverse("task_edit", args=[task.pk]), data, follow=True
         )
-        self.assertContains(response, "New email was scheduled")
+        self.assertContains(
+            response,
+            "New email (Supporting Instructor is added to the workshop) was scheduled",
+        )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
@@ -1123,7 +1144,10 @@ class TestTaskDeleteNewSupportingInstructor(FakeRedisTestCaseMixin, SuperuserMix
             "task-role": self.support_instructor.pk,
         }
         response = self.client.post(reverse("task_add"), data, follow=True)
-        self.assertContains(response, "New email was scheduled")
+        self.assertContains(
+            response,
+            "New email (Supporting Instructor is added to the workshop) was scheduled",
+        )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
@@ -1274,7 +1298,11 @@ class TestTaskCreateInstructorsHostIntroduction(
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
-        self.assertIn("New email was scheduled", response.content.decode("utf-8"))
+        self.assertContains(
+            response,
+            "New email (Introduction of instrutors and host (centr. org. workshop))"
+            " was scheduled",
+        )
 
         # new tasks
         self.assertEqual(Task.objects.count(), 3)
@@ -1406,7 +1434,11 @@ class TestTaskUpdateInstructorsHostIntroduction(
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
-        self.assertIn("New email was scheduled", response.content.decode("utf-8"))
+        self.assertContains(
+            response,
+            "New email (Introduction of instrutors and host (centr. org. workshop))"
+            " was scheduled",
+        )
 
         self.test_event.refresh_from_db()
         self.assertTrue(InstructorsHostIntroductionAction.check(self.test_event))
