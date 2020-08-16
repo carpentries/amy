@@ -4,6 +4,7 @@ from django.test import TestCase
 
 from autoemails.actions import PostWorkshopAction
 from autoemails.models import Trigger, EmailTemplate
+from workshops.fields import TAG_SEPARATOR
 from workshops.models import Task, Role, Person, Event, Tag, Organization
 
 
@@ -143,6 +144,29 @@ class TestPostWorkshopAction(TestCase):
         e.administrator = Organization.objects.get(domain="librarycarpentry.org")
         self.assertEqual(PostWorkshopAction.check(e), True)
 
+    def testCheckConditionsCircuits(self):
+        """Make sure `check` works for "Circuits" workshops too."""
+        e = Event.objects.create(
+            slug="test-event",
+            host=Organization.objects.first(),
+            administrator=Organization.objects.get(domain="librarycarpentry.org"),
+            start=date.today() + timedelta(days=7),
+            end=date.today() + timedelta(days=8),
+        )
+        e.tags.set(Tag.objects.filter(name__in=["automated-email"]))
+        p = Person.objects.create(
+            personal="Harry", family="Potter", email="hp@magic.uk"
+        )
+        r = Role.objects.create(name="host")
+        Task.objects.create(event=e, person=p, role=r)
+
+        # 1st case: fail
+        self.assertEqual(PostWorkshopAction.check(e), False)
+
+        # 2nd case: success
+        e.tags.add(Tag.objects.get(name="Circuits"))
+        self.assertEqual(PostWorkshopAction.check(e), True)
+
     def testContext(self):
         """Make sure `get_additional_context` works correctly."""
         a = PostWorkshopAction(
@@ -164,6 +188,8 @@ class TestPostWorkshopAction(TestCase):
             end=date.today() + timedelta(days=8),
             country="GB",
             venue="Ministry of Magic",
+            # additionally testing the empty email
+            contact=TAG_SEPARATOR.join(["peter@webslinger.net", ""])
         )
         e.tags.set(Tag.objects.filter(name__in=["TTT", "SWC"]))
         p1 = Person.objects.create(
@@ -208,7 +234,12 @@ class TestPostWorkshopAction(TestCase):
                 instructors=[p2],
                 supporting_instructors=[p4],
                 helpers=[p1, p3],
-                all_emails=["hg@magic.uk", "draco@malfoy.com", "hp@magic.uk"],
+                all_emails=[
+                    "hg@magic.uk",
+                    "draco@malfoy.com",
+                    "hp@magic.uk",
+                    "peter@webslinger.net",
+                ],
                 assignee="Regional Coordinator",
                 reports_link="https://workshop-reports.carpentries.org/"
                              "?key=e18dd84d093be5cd6c6ccaf63d38a8477ca126f4"

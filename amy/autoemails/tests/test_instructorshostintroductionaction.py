@@ -29,7 +29,7 @@ class TestInstructorsHostIntroductionAction(TestCase):
         )
         # by default there's only self-organized organization
         Organization.objects.bulk_create(
-            [Organization(domain="carpentries.org", fullname="Instructor Training"),]
+            [Organization(domain="carpentries.org", fullname="Instructor Training")]
         )
 
         self.host = Role.objects.create(name="host")
@@ -230,69 +230,6 @@ class TestInstructorsHostIntroductionAction(TestCase):
         )
         self.assertEqual(ctx, expected)
 
-    def testContextEmptyContact(self):
-        """Make sure `get_additional_context` works correctly when contacts are empty
-        for the event."""
-        a = InstructorsHostIntroductionAction(
-            trigger=Trigger(action="test-action", template=EmailTemplate())
-        )
-
-        # totally fake Event
-        e = Event.objects.create(
-            slug="test-event",
-            host=Organization.objects.first(),
-            administrator=Organization.objects.get(domain="carpentries.org"),
-            start=date.today() + timedelta(days=7),
-            end=date.today() + timedelta(days=8),
-            contact="",
-            country="GB",
-        )
-        e.tags.set(Tag.objects.filter(name__in=["LC", "automated-email"]))
-        # tasks
-        host = Task.objects.create(person=self.person1, role=self.host, event=e)
-        instructor1 = Task.objects.create(
-            person=self.person2, role=self.instructor, event=e,
-        )
-        instructor2 = Task.objects.create(
-            person=self.person3, role=self.instructor, event=e,
-        )
-        supporting_instructor1 = Task.objects.create(
-            person=self.person4, role=self.supporting_instructor, event=e,
-        )
-        supporting_instructor2 = Task.objects.create(
-            person=self.person5, role=self.supporting_instructor, event=e,
-        )
-
-        ctx = a.get_additional_context(objects=dict(event=e))
-        self.maxDiff = None
-        expected = dict(
-            workshop=e,
-            workshop_main_type="LC",
-            dates=e.human_readable_date,
-            workshop_host=Organization.objects.first(),
-            regional_coordinator_email=["admin-uk@carpentries.org"],
-            host=host.person,
-            instructors=[instructor1.person, instructor2.person],
-            instructor1=instructor1.person,
-            instructor2=instructor2.person,
-            supporting_instructors=[
-                supporting_instructor1.person,
-                supporting_instructor2.person,
-            ],
-            supporting_instructor1=supporting_instructor1.person,
-            supporting_instructor2=supporting_instructor2.person,
-            all_emails=[
-                "hp@magic.uk",
-                "rw@magic.uk",
-                "hg@magic.uk",
-                "peter@webslinger.net",
-                "me@stark.com",
-            ],
-            assignee="Regional Coordinator",
-            tags=["LC", "automated-email"],
-        )
-        self.assertEqual(ctx, expected)
-
     def testRecipients(self):
         """Make sure InstructorsHostIntroductionAction correctly renders recipients.
 
@@ -392,3 +329,37 @@ class TestInstructorsHostIntroductionAction(TestCase):
             a.all_recipients(),
             "hp@magic.uk, rw@magic.uk, hg@magic.uk, test@hogwart.com, test2@magic.uk",
         )
+
+    def test_drop_empty_contacts(self):
+        """Make sure `get_additional_context` works correctly when contacts are empty
+        for the event."""
+        e = Event.objects.create(
+            slug="test-event",
+            host=Organization.objects.first(),
+            administrator=Organization.objects.get(domain="carpentries.org"),
+            start=date.today() + timedelta(days=7),
+            end=date.today() + timedelta(days=8),
+            contact="",
+            country="GB",
+        )
+        e.tags.set(Tag.objects.filter(name__in=["LC", "automated-email"]))
+
+        a = InstructorsHostIntroductionAction(
+            trigger=Trigger(action="test-action", template=EmailTemplate()),
+            objects=dict(event=e),
+        )
+
+        self.person1.email = ""
+        self.person1.save()
+        Task.objects.create(person=self.person1, role=self.host, event=e)
+        Task.objects.create(
+            person=self.person2, role=self.instructor, event=e,
+        )
+        Task.objects.create(
+            person=self.person3, role=self.instructor, event=e,
+        )
+
+        ctx = a.get_additional_context(objects=dict(event=e))
+        expected = ["rw@magic.uk", "hg@magic.uk"]
+        self.assertEqual(ctx["all_emails"], expected)
+        self.assertEqual(a.all_recipients(), "rw@magic.uk, hg@magic.uk")

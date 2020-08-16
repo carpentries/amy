@@ -441,17 +441,18 @@ class PostWorkshopAction(BaseAction):
     def all_recipients(self) -> str:
         """If available, return string of all recipients."""
         try:
-            return ", ".join(
-                list(
-                    Person.objects.filter(
-                        task__in=self.context_objects["event"].task_set.filter(
-                            role__name__in=self.ROLES
-                        )
-                    )
-                    .distinct()
-                    .values_list("email", flat=True)
+            event = self.context_objects["event"]
+            person_emails = list(
+                Person.objects.filter(
+                    task__in=event.task_set.filter(role__name__in=self.ROLES)
                 )
+                .distinct()
+                .values_list("email", flat=True)
             )
+            additional_contacts = event.contact.split(TAG_SEPARATOR)
+            all_emails = list(filter(bool, person_emails + additional_contacts))
+            return ", ".join(all_emails)
+
         except (KeyError, AttributeError):
             return ""
 
@@ -468,7 +469,7 @@ class PostWorkshopAction(BaseAction):
             # must have "automated-email" tag
             and event.tags.filter(name__icontains="automated-email")
             # must have LC, DC, or SWC tags
-            and event.tags.filter(name__in=["LC", "DC", "SWC"])
+            and event.tags.filter(name__in=["LC", "DC", "SWC", "Circuits"])
             # must not be self-organized or instructor training
             # 2020-02-11: only for workshops administered by other than
             #             Instructor Training
@@ -516,13 +517,17 @@ class PostWorkshopAction(BaseAction):
         )
 
         # querying over Person.objects lets us get rid of duplicates
-        context["all_emails"] = list(
+        person_emails = list(
             Person.objects.filter(
                 task__in=event.task_set.filter(role__name__in=self.ROLES)
             )
             .distinct()
             .values_list("email", flat=True)
         )
+        additional_contacts = event.contact.split(TAG_SEPARATOR)
+        all_emails = list(filter(bool, person_emails + additional_contacts))
+        context["all_emails"] = all_emails
+
         context["assignee"] = (
             event.assigned_to.full_name if event.assigned_to else "Regional Coordinator"
         )
@@ -573,11 +578,9 @@ class SelfOrganisedRequestAction(BaseAction):
         """If available, return string of all recipients."""
         try:
             request = self.context_objects["request"]
-            emails = [request.email]
-            if request.additional_contact:
-                for email in request.additional_contact.split(TAG_SEPARATOR):
-                    emails.append(email)
-            return ", ".join(emails)
+            emails = [request.email] + request.additional_contact.split(TAG_SEPARATOR)
+            all_emails = list(filter(bool, emails))
+            return ", ".join(all_emails)
         except (KeyError, AttributeError):
             return ""
 
@@ -632,12 +635,9 @@ class SelfOrganisedRequestAction(BaseAction):
         # event starts in less (or equal) than 10 days
         context["short_notice"] = event.start <= (date.today() + timedelta(days=10))
 
-        # querying over Person.objects lets us get rid of duplicates
-        context["all_emails"] = [request.email]
         # additional contact info (see CommonRequest for details)
-        if request.additional_contact:
-            for email in request.additional_contact.split(TAG_SEPARATOR):
-                context["all_emails"].append(email)
+        emails = [request.email] + request.additional_contact.split(TAG_SEPARATOR)
+        context["all_emails"] = list(filter(bool, emails))
 
         context["assignee"] = (
             event.assigned_to.full_name if event.assigned_to else "Regional Coordinator"
@@ -678,12 +678,13 @@ class InstructorsHostIntroductionAction(BaseAction):
         """If available, return string of all recipients."""
         try:
             event = self.context_objects["event"]
-            contacts = [email for email in event.contact.split(TAG_SEPARATOR)]
             task_emails = [
                 t.person.email
                 for t in event.task_set.filter(role__name__in=["host", "instructor"])
             ]
-            return ", ".join(task_emails + contacts)
+            contacts = event.contact.split(TAG_SEPARATOR)
+            all_emails = list(filter(bool, task_emails + contacts))
+            return ", ".join(all_emails)
         except KeyError:
             return ""
 
@@ -769,10 +770,9 @@ class InstructorsHostIntroductionAction(BaseAction):
         except IndexError:
             context["supporting_instructor2"] = None
 
-        additional_contacts = [
-            email for email in event.contact.split(TAG_SEPARATOR) if email
-        ]
-        context["all_emails"] = [t.person.email for t in tasks] + additional_contacts
+        task_emails = [t.person.email for t in tasks]
+        contacts = event.contact.split(TAG_SEPARATOR)
+        context["all_emails"] = list(filter(bool, task_emails + contacts))
 
         context["assignee"] = (
             event.assigned_to.full_name if event.assigned_to else "Regional Coordinator"
