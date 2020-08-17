@@ -96,7 +96,12 @@ class ActionManageMixin:
                 messages.info(
                     request,
                     format_html(
-                        'New email was scheduled: <a href="{}">{}</a>.',
+                        'New email ({}) was scheduled to run '
+                        '<relative-time datetime="{}">{}</relative-time>: '
+                        '<a href="{}">{}</a>.',
+                        trigger.get_action_display(),
+                        scheduled_at.isoformat(),
+                        '{:%Y-%m-%d %H:%M}'.format(scheduled_at),
                         reverse("admin:autoemails_rqjob_preview", args=[rqj.pk]),
                         job.id,
                     ),
