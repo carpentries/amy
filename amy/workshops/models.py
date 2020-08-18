@@ -2364,6 +2364,19 @@ class CommonRequest(SecondaryEmailMixin, models.Model):
         default="",
         verbose_name="Department/School/Library affiliation (if applicable)",
     )
+
+    ONLINE_INPERSON_CHOICES = (
+        ('online', 'Online'),
+        ('inperson', 'In-person'),
+        ('unsure', 'Not sure')
+
+    )
+    online_inperson = models.CharField(
+        max_length=15,
+        choices=ONLINE_INPERSON_CHOICES,
+        blank=False, null=False, default=None,
+        verbose_name="Will this workshop be held online or in-person?")
+
     PUBLIC_EVENT_CHOICES = (
         ("public", "This event is open to the public."),
         (
