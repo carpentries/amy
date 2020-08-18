@@ -11,6 +11,7 @@ from autoemails.actions import (
     NewSupportingInstructorAction,
     InstructorsHostIntroductionAction,
     AskForWebsiteAction,
+    RecruitHelpersAction,
 )
 from autoemails.models import EmailTemplate, Trigger, RQJob
 from autoemails.tests.base import FakeRedisTestCaseMixin
@@ -1892,7 +1893,7 @@ class TestTaskUpdateAskForWebsite(FakeRedisTestCaseMixin, SuperuserMixin, TestCa
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
 
-        # ensure the evemt doesn't pass checks anymore
+        # ensure the event doesn't pass checks anymore
         self.test_event.refresh_from_db()
         self.assertFalse(AskForWebsiteAction.check(self.test_event))
 
@@ -2002,6 +2003,548 @@ class TestTaskDeleteAskForWebsite(FakeRedisTestCaseMixin, SuperuserMixin, TestCa
         # ensure the task doesn't pass checks anymore
         self.test_event.refresh_from_db()
         self.assertFalse(AskForWebsiteAction.check(self.test_event))
+
+        # no job
+        self.assertEqual(self.scheduler.count(), 0)
+        # no rqjob
+        self.assertEqual(RQJob.objects.count(), 0)
+
+
+class TestTaskCreateRecruitHelpers(FakeRedisTestCaseMixin, SuperuserMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+
+        # save scheduler and connection data
+        self._saved_scheduler = workshops.views.scheduler
+        self._saved_redis_connection = workshops.views.redis_connection
+        # overwrite them
+        workshops.views.scheduler = self.scheduler
+        workshops.views.redis_connection = self.connection
+
+    def tearDown(self):
+        super().tearDown()
+        workshops.views.scheduler = self._saved_scheduler
+        workshops.views.redis_connection = self._saved_redis_connection
+
+    def _prepare_data(self):
+        Tag.objects.bulk_create([Tag(name="SWC"), Tag(name="automated-email")])
+
+        self.host_role = Role.objects.create(name="host")
+        self.instructor_role = Role.objects.create(name="instructor")
+        self.helper_role = Role.objects.create(name="helper")
+
+        self.host = Person.objects.create(
+            personal="Harry",
+            family="Potter",
+            email="hp@magic.uk",
+            username="potter_harry",
+        )
+        self.instructor = Person.objects.create(
+            personal="Hermione",
+            family="Granger",
+            email="hermione@granger.co.uk",
+            username="granger_hermione",
+        )
+        self.helper = Person.objects.create(
+            personal="Ron",
+            family="Weasley",
+            email="rw@magic.uk",
+            username="weasley_ron",
+        )
+
+        self.host_org = Organization.objects.first()
+
+        self.test_event = Event.objects.create(
+            slug="2020-08-18-test-event",
+            host=self.host_org,
+            administrator=self.host_org,
+            start=date.today() + timedelta(days=40),
+            end=date.today() + timedelta(days=41),
+        )
+        self.test_event.tags.set(
+            Tag.objects.filter(name__in=["SWC", "automated-email"])
+        )
+
+        template = EmailTemplate.objects.create(
+            slug="sample-template",
+            subject="Welcome!",
+            to_header="",
+            from_header="test@address.com",
+            cc_header="copy@example.org",
+            bcc_header="bcc@example.org",
+            reply_to_header="",
+            body_template="# Welcome",
+        )
+        Trigger.objects.create(action="recruit-helpers", template=template)
+
+    def test_job_scheduled(self):
+        self._setUpSuperuser()
+        self._prepare_data()
+
+        # no tasks
+        self.assertFalse(Task.objects.all())
+        # no jobs
+        self.assertEqual(self.scheduler.count(), 0)
+        # no rqjobs
+        self.assertFalse(RQJob.objects.all())
+        # the even doesn't pass check
+        self.assertFalse(RecruitHelpersAction.check(self.test_event))
+
+        self.client.force_login(self.admin)
+        # add instructor task
+        data = {
+            "task-event": self.test_event.pk,
+            "task-person": self.instructor.pk,
+            "task-role": self.instructor_role.pk,
+        }
+        response = self.client.post(reverse("task_add"), data, follow=True)
+        # with open('test.html', 'w', encoding='utf-8') as f:
+        #     f.write(response.content.decode('utf-8'))
+
+        self.assertContains(
+            response,
+            "New email (Recruit helpers) was scheduled",
+        )
+
+        # new tasks
+        self.assertEqual(Task.objects.count(), 1)
+
+        # ensure the event now passes
+        self.assertTrue(RecruitHelpersAction.check(self.test_event))
+
+        # 1 new jobs
+        self.assertEqual(self.scheduler.count(), 1)
+        job = next(self.scheduler.get_jobs())
+
+        # 1 new rqjobs
+        self.assertEqual(RQJob.objects.count(), 1)
+        rqjob = RQJob.objects.first()
+
+        # ensure it's the same job
+        self.assertEqual(job.get_id(), rqjob.job_id)
+
+    def test_job_unscheduled(self):
+        self._setUpSuperuser()
+        self._prepare_data()
+
+        # no tasks
+        self.assertFalse(Task.objects.all())
+        # no jobs
+        self.assertEqual(self.scheduler.count(), 0)
+        # no rqjobs
+        self.assertFalse(RQJob.objects.all())
+        # the even doesn't pass check
+        self.assertFalse(RecruitHelpersAction.check(self.test_event))
+
+        self.client.force_login(self.admin)
+        # add host task
+        data = {
+            "task-event": self.test_event.pk,
+            "task-person": self.host.pk,
+            "task-role": self.host_role.pk,
+        }
+        response = self.client.post(reverse("task_add"), data, follow=True)
+        # with open('test.html', 'w', encoding='utf-8') as f:
+        #     f.write(response.content.decode('utf-8'))
+
+        self.assertContains(
+            response,
+            "New email (Recruit helpers) was scheduled",
+        )
+
+        # new tasks
+        self.assertEqual(Task.objects.count(), 1)
+
+        # ensure the event now passes
+        self.assertTrue(RecruitHelpersAction.check(self.test_event))
+
+        # 1 new jobs
+        self.assertEqual(self.scheduler.count(), 1)
+        job = next(self.scheduler.get_jobs())
+
+        # 1 new rqjobs
+        self.assertEqual(RQJob.objects.count(), 1)
+        rqjob = RQJob.objects.first()
+
+        # ensure it's the same job
+        self.assertEqual(job.get_id(), rqjob.job_id)
+
+        # now add a helper task, which should remove the job
+        data = {
+            "task-event": self.test_event.pk,
+            "task-person": self.helper.pk,
+            "task-role": self.helper_role.pk,
+        }
+        response = self.client.post(reverse("task_add"), data, follow=True)
+        # with open('test.html', 'w', encoding='utf-8') as f:
+        #     f.write(response.content.decode('utf-8'))
+        self.assertContains(response, f"Scheduled email {rqjob.job_id} was removed")
+
+        # ensure the event doesn't pass checks anymore
+        self.test_event.refresh_from_db()
+        self.assertFalse(RecruitHelpersAction.check(self.test_event))
+
+        # no job
+        self.assertEqual(self.scheduler.count(), 0)
+        # no rqjob
+        self.assertEqual(RQJob.objects.count(), 0)
+
+
+class TestTaskUpdateRecruitHelpers(FakeRedisTestCaseMixin, SuperuserMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+
+        # save scheduler and connection data
+        self._saved_scheduler = workshops.views.scheduler
+        self._saved_redis_connection = workshops.views.redis_connection
+        # overwrite them
+        workshops.views.scheduler = self.scheduler
+        workshops.views.redis_connection = self.connection
+
+    def tearDown(self):
+        super().tearDown()
+        workshops.views.scheduler = self._saved_scheduler
+        workshops.views.redis_connection = self._saved_redis_connection
+
+    def _prepare_data(self):
+        Tag.objects.bulk_create([Tag(name="SWC"), Tag(name="automated-email")])
+
+        self.host_role = Role.objects.create(name="host")
+        self.instructor_role = Role.objects.create(name="instructor")
+        self.helper_role = Role.objects.create(name="helper")
+
+        self.host = Person.objects.create(
+            personal="Harry",
+            family="Potter",
+            email="hp@magic.uk",
+            username="potter_harry",
+        )
+        self.instructor = Person.objects.create(
+            personal="Hermione",
+            family="Granger",
+            email="hermione@granger.co.uk",
+            username="granger_hermione",
+        )
+        self.helper = Person.objects.create(
+            personal="Ron",
+            family="Weasley",
+            email="rw@magic.uk",
+            username="weasley_ron",
+        )
+
+        self.host_org = Organization.objects.first()
+
+        self.test_event = Event.objects.create(
+            slug="2020-08-18-test-event",
+            host=self.host_org,
+            administrator=self.host_org,
+            start=date.today() + timedelta(days=40),
+            end=date.today() + timedelta(days=41),
+        )
+        self.test_event.tags.set(
+            Tag.objects.filter(name__in=["SWC", "automated-email"])
+        )
+
+        template = EmailTemplate.objects.create(
+            slug="sample-template",
+            subject="Welcome!",
+            to_header="",
+            from_header="test@address.com",
+            cc_header="copy@example.org",
+            bcc_header="bcc@example.org",
+            reply_to_header="",
+            body_template="# Welcome",
+        )
+        Trigger.objects.create(action="recruit-helpers", template=template)
+
+        self.host_task = Task.objects.create(
+            event=self.test_event,
+            person=self.host,
+            role=self.host_role,
+        )
+        self.instructor_task = Task.objects.create(
+            event=self.test_event,
+            person=self.instructor,
+            role=self.helper_role,
+        )
+
+    def test_job_scheduled(self):
+        self._setUpSuperuser()
+        self._prepare_data()
+
+        # assure the event doesn't pass yet
+        self.assertFalse(RecruitHelpersAction.check(self.test_event))
+
+        # no jobs
+        self.assertEqual(self.scheduler.count(), 0)
+        # no rqjobs
+        self.assertFalse(RQJob.objects.all())
+
+        # change task's role to instructor and save
+        self.client.force_login(self.admin)
+        data = {
+            "event": self.test_event.pk,
+            "person": self.instructor.pk,
+            "role": self.instructor_role.pk,
+        }
+        response = self.client.post(
+            reverse("task_edit", args=[self.instructor_task.pk]), data, follow=True
+        )
+        # with open('test.html', 'w', encoding='utf-8') as f:
+        #     f.write(response.content.decode('utf-8'))
+
+        self.assertContains(
+            response,
+            "New email (Recruit helpers) was scheduled",
+        )
+
+        self.test_event.refresh_from_db()
+        self.assertTrue(RecruitHelpersAction.check(self.test_event))
+
+        # 1 new job
+        self.assertEqual(self.scheduler.count(), 1)
+        job = next(self.scheduler.get_jobs())
+
+        # 1 new rqjob
+        self.assertEqual(RQJob.objects.count(), 1)
+        rqjob = RQJob.objects.first()
+
+        # ensure it's the same job
+        self.assertEqual(job.get_id(), rqjob.job_id)
+
+    def test_job_unscheduled(self):
+        self._setUpSuperuser()
+        self._prepare_data()
+
+        # assure the event doesn't pass yet
+        self.assertFalse(RecruitHelpersAction.check(self.test_event))
+
+        # no jobs
+        self.assertEqual(self.scheduler.count(), 0)
+        # no rqjobs
+        self.assertFalse(RQJob.objects.all())
+
+        # change task's role to instructor and save
+        self.client.force_login(self.admin)
+        data = {
+            "event": self.test_event.pk,
+            "person": self.instructor.pk,
+            "role": self.instructor_role.pk,
+        }
+        self.client.post(reverse("task_edit", args=[self.instructor_task.pk]), data)
+
+        # 1 new job
+        self.assertEqual(self.scheduler.count(), 1)
+        job = next(self.scheduler.get_jobs())
+
+        # 1 new rqjob
+        self.assertEqual(RQJob.objects.count(), 1)
+        rqjob = RQJob.objects.first()
+
+        # ensure it's the same job
+        self.assertEqual(job.get_id(), rqjob.job_id)
+
+        # now change the task back to helper
+        data = {
+            "event": self.test_event.pk,
+            "person": self.instructor.pk,
+            "role": self.helper_role.pk,
+        }
+        response = self.client.post(
+            reverse("task_edit", args=[self.instructor_task.pk]), data, follow=True
+        )
+        self.assertContains(response, f"Scheduled email {rqjob.job_id} was removed")
+        # with open('test.html', 'w', encoding='utf-8') as f:
+        #     f.write(response.content.decode('utf-8'))
+
+        # ensure the event doesn't pass checks anymore
+        self.test_event.refresh_from_db()
+        self.assertFalse(RecruitHelpersAction.check(self.test_event))
+
+        # no job
+        self.assertEqual(self.scheduler.count(), 0)
+        # no rqjob
+        self.assertEqual(RQJob.objects.count(), 0)
+
+
+class TestTaskDeleteRecruitHelpers(FakeRedisTestCaseMixin, SuperuserMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+
+        # save scheduler and connection data
+        self._saved_scheduler = workshops.views.scheduler
+        self._saved_redis_connection = workshops.views.redis_connection
+        # overwrite them
+        workshops.views.scheduler = self.scheduler
+        workshops.views.redis_connection = self.connection
+
+    def tearDown(self):
+        super().tearDown()
+        workshops.views.scheduler = self._saved_scheduler
+        workshops.views.redis_connection = self._saved_redis_connection
+
+    def _prepare_data(self):
+        Tag.objects.bulk_create([Tag(name="SWC"), Tag(name="automated-email")])
+
+        self.host_role = Role.objects.create(name="host")
+        self.instructor_role = Role.objects.create(name="instructor")
+        self.helper_role = Role.objects.create(name="helper")
+
+        self.host = Person.objects.create(
+            personal="Harry",
+            family="Potter",
+            email="hp@magic.uk",
+            username="potter_harry",
+        )
+        self.instructor = Person.objects.create(
+            personal="Hermione",
+            family="Granger",
+            email="hermione@granger.co.uk",
+            username="granger_hermione",
+        )
+        self.helper = Person.objects.create(
+            personal="Ron",
+            family="Weasley",
+            email="rw@magic.uk",
+            username="weasley_ron",
+        )
+
+        self.host_org = Organization.objects.first()
+
+        self.test_event = Event.objects.create(
+            slug="2020-08-18-test-event",
+            host=self.host_org,
+            administrator=self.host_org,
+            start=date.today() + timedelta(days=40),
+            end=date.today() + timedelta(days=41),
+        )
+        self.test_event.tags.set(
+            Tag.objects.filter(name__in=["SWC", "automated-email"])
+        )
+
+        template = EmailTemplate.objects.create(
+            slug="sample-template",
+            subject="Welcome!",
+            to_header="",
+            from_header="test@address.com",
+            cc_header="copy@example.org",
+            bcc_header="bcc@example.org",
+            reply_to_header="",
+            body_template="# Welcome",
+        )
+        Trigger.objects.create(action="recruit-helpers", template=template)
+
+        self.host_task = Task.objects.create(
+            event=self.test_event,
+            person=self.host,
+            role=self.host_role,
+        )
+        self.helper_task = Task.objects.create(
+            event=self.test_event,
+            person=self.helper,
+            role=self.helper_role,
+        )
+
+    def test_job_scheduled(self):
+        self._setUpSuperuser()
+        self._prepare_data()
+
+        # 2 tasks
+        self.assertEqual(Task.objects.count(), 2)
+        # no jobs
+        self.assertEqual(self.scheduler.count(), 0)
+        # no rqjobs
+        self.assertFalse(RQJob.objects.all())
+        # the even doesn't pass check
+        self.assertFalse(RecruitHelpersAction.check(self.test_event))
+
+        self.client.force_login(self.admin)
+        # remove the helper task
+        response = self.client.post(
+            reverse("task_delete", args=[self.helper_task.pk]),
+            follow=True,
+        )
+        # with open('test.html', 'w', encoding='utf-8') as f:
+        #     f.write(response.content.decode('utf-8'))
+
+        self.assertContains(
+            response,
+            "New email (Recruit helpers) was scheduled",
+        )
+
+        # new tasks
+        self.assertEqual(Task.objects.count(), 1)
+
+        # ensure the event now passes
+        self.assertTrue(RecruitHelpersAction.check(self.test_event))
+
+        # 1 new jobs
+        self.assertEqual(self.scheduler.count(), 1)
+        job = next(self.scheduler.get_jobs())
+
+        # 1 new rqjobs
+        self.assertEqual(RQJob.objects.count(), 1)
+        rqjob = RQJob.objects.first()
+
+        # ensure it's the same job
+        self.assertEqual(job.get_id(), rqjob.job_id)
+
+    def test_job_unscheduled(self):
+        self._setUpSuperuser()
+        self._prepare_data()
+
+        # 2 tasks
+        self.assertEqual(Task.objects.count(), 2)
+        # no jobs
+        self.assertEqual(self.scheduler.count(), 0)
+        # no rqjobs
+        self.assertFalse(RQJob.objects.all())
+        # the even doesn't pass check
+        self.assertFalse(RecruitHelpersAction.check(self.test_event))
+
+        self.client.force_login(self.admin)
+        # remove the helper task
+        response = self.client.post(
+            reverse("task_delete", args=[self.helper_task.pk]),
+            follow=True,
+        )
+        # with open('test.html', 'w', encoding='utf-8') as f:
+        #     f.write(response.content.decode('utf-8'))
+
+        self.assertContains(
+            response,
+            "New email (Recruit helpers) was scheduled",
+        )
+
+        # new tasks
+        self.assertEqual(Task.objects.count(), 1)
+
+        # ensure the event now passes
+        self.assertTrue(RecruitHelpersAction.check(self.test_event))
+
+        # 1 new jobs
+        self.assertEqual(self.scheduler.count(), 1)
+        job = next(self.scheduler.get_jobs())
+
+        # 1 new rqjobs
+        self.assertEqual(RQJob.objects.count(), 1)
+        rqjob = RQJob.objects.first()
+
+        # ensure it's the same job
+        self.assertEqual(job.get_id(), rqjob.job_id)
+
+        # now remove the host task, which should also remove the job
+        response = self.client.post(
+            reverse("task_delete", args=[self.host_task.pk]),
+            follow=True,
+        )
+        # with open('test.html', 'w', encoding='utf-8') as f:
+        #     f.write(response.content.decode('utf-8'))
+        self.assertContains(response, f"Scheduled email {rqjob.job_id} was removed")
+
+        # ensure the event doesn't pass checks anymore
+        self.test_event.refresh_from_db()
+        self.assertFalse(RecruitHelpersAction.check(self.test_event))
 
         # no job
         self.assertEqual(self.scheduler.count(), 0)
