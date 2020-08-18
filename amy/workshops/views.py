@@ -52,6 +52,7 @@ from autoemails.actions import (
     PostWorkshopAction,
     InstructorsHostIntroductionAction,
     AskForWebsiteAction,
+    RecruitHelpersAction,
 )
 from autoemails.models import Trigger
 from autoemails.base_views import ActionManageMixin
@@ -1087,12 +1088,14 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
         check_pwa_old = PostWorkshopAction.check(old)
         check_ihia_old = InstructorsHostIntroductionAction.check(old)
         check_afwa_old = AskForWebsiteAction.check(old)
+        check_rha_old = RecruitHelpersAction.check(old)
 
         res = super().form_valid(form)
         new = self.object  # refreshed by `super().form_valid()`
         check_pwa_new = PostWorkshopAction.check(new)
         check_ihia_new = InstructorsHostIntroductionAction.check(new)
         check_afwa_new = AskForWebsiteAction.check(new)
+        check_rha_new = RecruitHelpersAction.check(new)
 
         # PostWorkshopAction conditions are not met, but weren't before
         if not check_pwa_old and check_pwa_new:
@@ -1180,6 +1183,32 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
                 request=self.request,
             )
 
+        # RecruitHelpersAction conditions are met, but weren't before
+        if not check_rha_old and check_rha_new:
+            triggers = Trigger.objects.filter(active=True, action="recruit-helpers")
+            ActionManageMixin.add(
+                action_class=RecruitHelpersAction,
+                logger=logger,
+                scheduler=scheduler,
+                triggers=triggers,
+                context_objects=dict(event=self.object),
+                object_=self.object,
+                request=self.request,
+            )
+
+        # RecruitHelpersAction conditions were met, but aren't anymore
+        elif check_rha_old and not check_rha_new:
+            jobs = self.object.rq_jobs.filter(trigger__action="recruit-helpers")
+            ActionManageMixin.remove(
+                action_class=RecruitHelpersAction,
+                logger=logger,
+                scheduler=scheduler,
+                connection=redis_connection,
+                jobs=jobs.values_list("job_id", flat=True),
+                object_=self.object,
+                request=self.request,
+            )
+
         return res
 
 
@@ -1220,6 +1249,17 @@ class EventDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
         jobs = self.object.rq_jobs.filter(trigger__action="ask-for-website")
         ActionManageMixin.remove(
             action_class=AskForWebsiteAction,
+            logger=logger,
+            scheduler=scheduler,
+            connection=redis_connection,
+            jobs=jobs.values_list("job_id", flat=True),
+            object_=self.object,
+            request=self.request,
+        )
+
+        jobs = self.object.rq_jobs.filter(trigger__action="recruit-helpers")
+        ActionManageMixin.remove(
+            action_class=RecruitHelpersAction,
             logger=logger,
             scheduler=scheduler,
             connection=redis_connection,
