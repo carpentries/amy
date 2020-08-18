@@ -649,6 +649,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
             "institution_department",
             "location",
             "country",
+            "online_inperson",
             # "your audience" section starts now
             "routine_data",
             "routine_data_other",
@@ -685,6 +686,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
                 'class': 'nopastdates'}),
             'institution_other_URL': forms.TextInput(),
             'country': Select2Widget,
+            'online_inperson':forms.RadioSelect(),
             'language': Select2Widget,
             'number_attendees': forms.RadioSelect(),
             'computing_levels': forms.CheckboxSelectMultiple(),
