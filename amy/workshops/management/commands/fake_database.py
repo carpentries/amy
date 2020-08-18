@@ -556,11 +556,17 @@ class Command(BaseCommand):
                 org_name = self.faker.company()
                 org_url = self.faker.url()
 
+
+
             public_event = choice(WorkshopRequest.PUBLIC_EVENT_CHOICES)[0]
             public_event_other = (
                 self.faker.sentence() if public_event == 'other'
                 else ""
             )
+
+            online_inperson = choice(
+                WorkshopRequest.ONLINE_INPERSON_CHOICES)[0]
+
             administrative_fee = choice(WorkshopRequest.FEE_CHOICES)[0]
             scholarship_circumstances = (
                 self.faker.sentence() if administrative_fee == 'waiver'
@@ -594,6 +600,8 @@ class Command(BaseCommand):
                 institution_other_name=org_name,
                 institution_other_URL=org_url,
                 institution_department='',
+
+                online_inperson=online_inperson,
 
                 public_event=public_event,
                 public_event_other=public_event_other,
@@ -659,6 +667,10 @@ class Command(BaseCommand):
                 self.faker.sentence() if public_event == 'other'
                 else ""
             )
+
+            online_inperson = choice(
+                WorkshopInquiryRequest.ONLINE_INPERSON_CHOICES)[0]
+
             administrative_fee = choice(WorkshopInquiryRequest.FEE_CHOICES)[0]
             travel_expences_management = choice(
                 WorkshopInquiryRequest.TRAVEL_EXPENCES_MANAGEMENT_CHOICES)[0]
@@ -687,6 +699,8 @@ class Command(BaseCommand):
                 institution_other_name=org_name,
                 institution_other_URL=org_url,
                 institution_department='',
+
+                online_inperson=online_inperson,
 
                 public_event=public_event,
                 public_event_other=public_event_other,
@@ -760,6 +774,10 @@ class Command(BaseCommand):
                 self.faker.sentence() if public_event == 'other'
                 else ""
             )
+
+            online_inperson = choice(
+                SelfOrganisedSubmission.ONLINE_INPERSON_CHOICES)[0]
+
             workshop_format = choice(SelfOrganisedSubmission.FORMAT_CHOICES)[0]
             workshop_format_other = (
                 self.faker.sentence() if workshop_format == ''
@@ -788,6 +806,9 @@ class Command(BaseCommand):
                 institution_other_name=org_name,
                 institution_other_URL=org_url,
                 institution_department='',
+
+                online_inperson=online_inperson,
+
 
                 public_event=public_event,
                 public_event_other=public_event_other,
