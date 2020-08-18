@@ -1044,6 +1044,7 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
             "institution_other_name",
             "institution_other_URL",
             "institution_department",
+            "online_inperson",
             "workshop_format",
             "workshop_format_other",
             "workshop_url",
@@ -1063,6 +1064,7 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
             'institution_other_URL': forms.TextInput(),
             'workshop_url': forms.TextInput(),
             'country': Select2Widget,
+            'online_inperson':forms.RadioSelect(),
             'language': Select2Widget,
             'workshop_format':
                 RadioSelectWithOther('workshop_format_other',
