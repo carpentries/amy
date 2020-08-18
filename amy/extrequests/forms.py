@@ -395,7 +395,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             'secondary_email', 'institution_department',
             'country',
             'audience_description',
-            'user_notes',
+            'user_notes', 'online_inperson',
         )
         hr_fields_before = (
             'carpentries_info_source',
@@ -797,7 +797,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
             'secondary_email', 'institution_department',
             'audience_description',
             'country',
-            'user_notes',
+            'user_notes', 'online_inperson',
         )
         hr_fields_before = (
             'administrative_fee',
@@ -1115,7 +1115,7 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
         hr_fields_after = (
             'secondary_email', 'institution_department',
             'additional_contact',
-            'language',
+            'language', 'online_inperson',
         )
         hr_fields_before = []
         for field in hr_fields_after:
