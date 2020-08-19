@@ -124,7 +124,7 @@ class ActionManageMixin:
             logger.debug("%s: no existing jobs available", action_name)
 
         else:
-            logger.debug("%s: found %d existing jobs in DB", action_name, jobs.count())
+            logger.debug("%s: found %d existing jobs in DB", action_name, len(jobs))
 
             # turn into a list, just in case
             jobs = list(jobs)
@@ -139,7 +139,7 @@ class ActionManageMixin:
                     logger.debug("%s: scheduled job [%r] deleted", action_name, job)
 
                 try:
-                    # fetch job from Reddit - if only it's already enqueued
+                    # fetch job from Redis - if only it's already enqueued
                     enqueued_job = Job.fetch(job, connection=connection)
                     # we don't need to check if job is finished or failed, we
                     # can blindly delete it
