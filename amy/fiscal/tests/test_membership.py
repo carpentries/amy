@@ -1,5 +1,4 @@
 from datetime import timedelta, date
-import itertools
 
 from django.urls import reverse
 from django_comments.models import Comment
@@ -16,10 +15,10 @@ class TestMembership(TestBase):
         self._setUpRoles()
         self._setUpTags()
 
-        self.learner = Role.objects.get(name='learner')
-        self.instructor = Role.objects.get(name='instructor')
-        self.TTT = Tag.objects.get(name='TTT')
-        self.cancelled = Tag.objects.get(name='cancelled')
+        self.learner = Role.objects.get(name="learner")
+        self.instructor = Role.objects.get(name="instructor")
+        self.TTT = Tag.objects.get(name="TTT")
+        self.cancelled = Tag.objects.get(name="cancelled")
 
         # parametrize membership creation
         self.agreement_start = date.today() - timedelta(days=180)
@@ -29,10 +28,10 @@ class TestMembership(TestBase):
 
         # let's add a membership for one of the organizations
         self.current = Membership.objects.create(
-            variant='partner',
+            variant="partner",
             agreement_start=self.agreement_start,
             agreement_end=self.agreement_end,
-            contribution_type='financial',
+            contribution_type="financial",
             workshops_without_admin_fee_per_agreement=10,
             self_organized_workshops_per_agreement=20,
             seats_instructor_training=25,
@@ -40,7 +39,7 @@ class TestMembership(TestBase):
             organization=self.org_beta,
         )
 
-        self_organized_admin = Organization.objects.get(domain='self-organized')
+        self_organized_admin = Organization.objects.get(domain="self-organized")
 
         # create a couple of workshops that span outside of agreement duration
         data = [
@@ -51,7 +50,7 @@ class TestMembership(TestBase):
         ]
         for i, (start_date, admin, fee) in enumerate(data):
             Event.objects.create(
-                slug='event-outside-agreement-range-{}'.format(i),
+                slug="event-outside-agreement-range-{}".format(i),
                 host=self.org_beta,
                 # create each event starts roughly month later
                 start=start_date,
@@ -64,7 +63,7 @@ class TestMembership(TestBase):
         for i in range(10):
             # a self-organized event
             e1 = Event.objects.create(
-                slug='event-self-org-{}'.format(i),
+                slug="event-self-org-{}".format(i),
                 host=self.org_beta,
                 # create each event starts roughly month later
                 start=self.agreement_start + i * self.workshop_interval,
@@ -75,7 +74,7 @@ class TestMembership(TestBase):
 
             # an event without fee
             e2 = Event.objects.create(
-                slug='event-no-fee-{}'.format(i),
+                slug="event-no-fee-{}".format(i),
                 host=self.org_beta,
                 # create each event starts roughly month later
                 start=self.agreement_start + i * self.workshop_interval,
@@ -88,7 +87,7 @@ class TestMembership(TestBase):
 
             # a cancelled event
             e3 = Event.objects.create(
-                slug='event-cancelled-{}'.format(i),
+                slug="event-cancelled-{}".format(i),
                 host=self.org_beta,
                 # create each event starts roughly month later
                 start=self.agreement_start + i * self.workshop_interval,
@@ -102,7 +101,8 @@ class TestMembership(TestBase):
             # add a number of tasks for counting instructor training seats
             if i < 5:
                 Task.objects.create(
-                    event=e1, person=self.admin,
+                    event=e1,
+                    person=self.admin,
                     role=self.learner,
                     seat_membership=self.current,
                 )
@@ -111,7 +111,8 @@ class TestMembership(TestBase):
             # counted
             if i > 10:
                 Task.objects.create(
-                    event=e2, person=self.admin,
+                    event=e2,
+                    person=self.admin,
                     role=self.instructor,
                     seat_membership=self.current,
                 )
@@ -119,10 +120,10 @@ class TestMembership(TestBase):
     def test_multiple_memberships(self):
         """Ensure we can have multiple memberships (even overlapping)."""
         overlapping = Membership.objects.create(
-            variant='partner',
+            variant="partner",
             agreement_start=date(2015, 7, 1),
             agreement_end=date(2016, 6, 30),
-            contribution_type='financial',
+            contribution_type="financial",
             workshops_without_admin_fee_per_agreement=10,
             self_organized_workshops_per_agreement=20,
             organization=self.org_beta,
@@ -133,70 +134,53 @@ class TestMembership(TestBase):
 
     def test_workshops_without_admin_fee(self):
         """Ensure we calculate properly number of workshops per year."""
-        self.assertEqual(
-            self.current.workshops_without_admin_fee_per_agreement, 10)
-        self.assertEqual(
-            self.current.workshops_without_admin_fee_completed, 6)
-        self.assertEqual(
-            self.current.workshops_without_admin_fee_planned, 4)
-        self.assertEqual(
-            self.current.workshops_without_admin_fee_remaining, 0)
+        self.assertEqual(self.current.workshops_without_admin_fee_per_agreement, 10)
+        self.assertEqual(self.current.workshops_without_admin_fee_completed, 6)
+        self.assertEqual(self.current.workshops_without_admin_fee_planned, 4)
+        self.assertEqual(self.current.workshops_without_admin_fee_remaining, 0)
 
     def test_self_organized_workshops(self):
         """Ensure we calculate properly number of workshops per year."""
-        self.assertEqual(
-            self.current.self_organized_workshops_per_agreement, 20)
-        self.assertEqual(
-            self.current.self_organized_workshops_completed, 6)
-        self.assertEqual(
-            self.current.self_organized_workshops_planned, 4)
-        self.assertEqual(
-            self.current.self_organized_workshops_remaining, 10)
+        self.assertEqual(self.current.self_organized_workshops_per_agreement, 20)
+        self.assertEqual(self.current.self_organized_workshops_completed, 6)
+        self.assertEqual(self.current.self_organized_workshops_planned, 4)
+        self.assertEqual(self.current.self_organized_workshops_remaining, 10)
 
     def test_delete_membership(self):
-        '''Test that we can delete membership instance'''
+        """Test that we can delete membership instance"""
         # first we need to remove all tasks refering to the membership
         Task.objects.all().delete()
         response = self.client.post(
-            reverse('membership_delete', args=[self.current.pk]),
-            follow=True
+            reverse("membership_delete", args=[self.current.pk]), follow=True
         )
         self.assertRedirects(
             response,
-            reverse('organization_details', args=[self.current.organization.domain]),
+            reverse("organization_details", args=[self.current.organization.domain]),
         )
-        self.assertFalse(response.context['organization'].membership_set.all())
-        self.assertEqual(response.context['organization'].membership_set.count(), 0)
+        self.assertFalse(response.context["organization"].membership_set.all())
+        self.assertEqual(response.context["organization"].membership_set.count(), 0)
         with self.assertRaises(Membership.DoesNotExist):
             self.current.refresh_from_db()
 
     def test_number_of_instructor_training_seats(self):
         """Ensure calculation of seats in the instructor training events is
         correct."""
-        self.assertEqual(
-            self.current.seats_instructor_training, 25
-        )
-        self.assertEqual(
-            self.current.additional_instructor_training_seats, 3
-        )
-        self.assertEqual(
-            self.current.seats_instructor_training_utilized, 5
-        )
-        self.assertEqual(
-            self.current.seats_instructor_training_remaining, 23
-        )
+        self.assertEqual(self.current.seats_instructor_training, 25)
+        self.assertEqual(self.current.additional_instructor_training_seats, 3)
+        self.assertEqual(self.current.seats_instructor_training_utilized, 5)
+        self.assertEqual(self.current.seats_instructor_training_remaining, 23)
 
     def test_creating_membership_with_no_comment(self):
         """Ensure that no comment is added when MembershipCreateForm without
         comment content is saved."""
         self.assertEqual(Comment.objects.count(), 0)
         data = {
-            'organization': self.org_alpha.pk,
-            'variant': 'partner',
-            'contribution_type': 'financial',
-            'additional_instructor_training_seats': 0,
-            'seats_instructor_training': 0,
-            'comment': '',
+            "organization": self.org_alpha.pk,
+            "variant": "partner",
+            "contribution_type": "financial",
+            "additional_instructor_training_seats": 0,
+            "seats_instructor_training": 0,
+            "comment": "",
         }
         form = MembershipCreateForm(data)
         form.save()
@@ -207,18 +191,18 @@ class TestMembership(TestBase):
         comment content is saved."""
         self.assertEqual(Comment.objects.count(), 0)
         data = {
-            'organization': self.org_alpha.pk,
-            'variant': 'partner',
-            'contribution_type': 'financial',
-            'additional_instructor_training_seats': 0,
-            'seats_instructor_training': 0,
-            'comment': 'This is a test comment.',
+            "organization": self.org_alpha.pk,
+            "variant": "partner",
+            "contribution_type": "financial",
+            "additional_instructor_training_seats": 0,
+            "seats_instructor_training": 0,
+            "comment": "This is a test comment.",
         }
         form = MembershipCreateForm(data)
         obj = form.save()
         self.assertEqual(Comment.objects.count(), 1)
         comment = Comment.objects.first()
-        self.assertEqual(comment.comment, 'This is a test comment.')
+        self.assertEqual(comment.comment, "This is a test comment.")
         self.assertIn(comment, Comment.objects.for_model(obj))
 
     def test_membership_edit_form_no_comment(self):
@@ -227,15 +211,15 @@ class TestMembership(TestBase):
         This is a regression test against #1437:
         https://github.com/swcarpentry/amy/issues/1437
         """
-        self.assertNotIn('comment', MembershipForm.Meta.fields)
+        self.assertNotIn("comment", MembershipForm.Meta.fields)
 
         self.assertEqual(Comment.objects.count(), 0)
         data = {
-            'organization': self.org_alpha.pk,
-            'variant': 'partner',
-            'contribution_type': 'financial',
-            'additional_instructor_training_seats': 0,
-            'seats_instructor_training': 0,
+            "organization": self.org_alpha.pk,
+            "variant": "partner",
+            "contribution_type": "financial",
+            "additional_instructor_training_seats": 0,
+            "seats_instructor_training": 0,
         }
         form = MembershipForm(data, instance=self.current)
         form.save()
