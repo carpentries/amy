@@ -19,12 +19,13 @@ class TestMembership(TestBase):
         self.learner = Role.objects.get(name='learner')
         self.instructor = Role.objects.get(name='instructor')
         self.TTT = Tag.objects.get(name='TTT')
+        self.cancelled = Tag.objects.get(name='cancelled')
 
         # parametrize membership creation
-        self.agreement_start = date(2018, 8, 2)
+        self.agreement_start = date.today() - timedelta(days=180)
         self.agreement_start_next_day = self.agreement_start + timedelta(days=1)
-        self.agreement_end = date(2018, 12, 31)
-        self.workshop_interval = timedelta(days=13)
+        self.agreement_end = date.today() + timedelta(days=180)
+        self.workshop_interval = timedelta(days=30)
 
         # let's add a membership for one of the organizations
         self.current = Membership.objects.create(
@@ -60,55 +61,60 @@ class TestMembership(TestBase):
             )
 
         # let's add a few events for that organization
-        type_ = itertools.cycle(['self-organized', 'no-fee', 'self-organized'])
-        for i in range(20):
-            next_type = next(type_)
-            e = None
+        for i in range(10):
+            # a self-organized event
+            e1 = Event.objects.create(
+                slug='event-self-org-{}'.format(i),
+                host=self.org_beta,
+                # create each event starts roughly month later
+                start=self.agreement_start + i * self.workshop_interval,
+                end=self.agreement_start_next_day + i * self.workshop_interval,
+                administrator=self_organized_admin,
+            )
+            e1.tags.set([self.TTT])
 
-            if next_type == 'self-organized':
-                e = Event.objects.create(
-                    slug='event-under-umbrella{}'.format(i),
-                    host=self.org_beta,
-                    # create each event starts roughly month later
-                    start=self.agreement_start + i * self.workshop_interval,
-                    end=self.agreement_start_next_day + i * self.workshop_interval,
-                    administrator=self_organized_admin,
-                )
-                e.tags.set([self.TTT])
+            # an event without fee
+            e2 = Event.objects.create(
+                slug='event-no-fee-{}'.format(i),
+                host=self.org_beta,
+                # create each event starts roughly month later
+                start=self.agreement_start + i * self.workshop_interval,
+                end=self.agreement_start_next_day + i * self.workshop_interval,
+                # just to satisfy the criteria
+                administrator=self.org_beta,
+                admin_fee=0,
+            )
+            e2.tags.set([self.TTT])
 
-            elif next_type == 'no-fee':
-                e = Event.objects.create(
-                    slug='event-under-umbrella{}'.format(i),
-                    host=self.org_beta,
-                    # create each event starts roughly month later
-                    start=self.agreement_start + i * self.workshop_interval,
-                    end=self.agreement_start_next_day + i * self.workshop_interval,
-                    # just to satisfy the criteria
-                    administrator=self.org_beta,
-                    admin_fee=0,
-                )
-                e.tags.set([self.TTT])
+            # a cancelled event
+            e3 = Event.objects.create(
+                slug='event-cancelled-{}'.format(i),
+                host=self.org_beta,
+                # create each event starts roughly month later
+                start=self.agreement_start + i * self.workshop_interval,
+                end=self.agreement_start_next_day + i * self.workshop_interval,
+                # just to satisfy the criteria
+                administrator=self.org_beta,
+                admin_fee=0,
+            )
+            e3.tags.set([self.cancelled])
 
             # add a number of tasks for counting instructor training seats
-            if e and i < 10:
+            if i < 5:
                 Task.objects.create(
-                    event=e, person=self.admin,
+                    event=e1, person=self.admin,
                     role=self.learner,
                     seat_membership=self.current,
                 )
             # add a number of tasks for counting instructor training seats, but
             # this time make these tasks instructor tasks - should not be
             # counted
-            if e and i > 10:
+            if i > 10:
                 Task.objects.create(
-                    event=e, person=self.admin,
+                    event=e2, person=self.admin,
                     role=self.instructor,
                     seat_membership=self.current,
                 )
-        # above code should create 11 events that start in 2018:
-        # self-organized, no-fee, self-organized, self-organized, no-fee,
-        # self-organized, self-organized, no-fee, self-organized,
-        # self-organized, no-fee, self-organized,
 
     def test_multiple_memberships(self):
         """Ensure we can have multiple memberships (even overlapping)."""
@@ -130,18 +136,22 @@ class TestMembership(TestBase):
         self.assertEqual(
             self.current.workshops_without_admin_fee_per_agreement, 10)
         self.assertEqual(
-            self.current.workshops_without_admin_fee_completed, 4)
+            self.current.workshops_without_admin_fee_completed, 6)
         self.assertEqual(
-            self.current.workshops_without_admin_fee_remaining, 6)
+            self.current.workshops_without_admin_fee_planned, 4)
+        self.assertEqual(
+            self.current.workshops_without_admin_fee_remaining, 0)
 
     def test_self_organized_workshops(self):
         """Ensure we calculate properly number of workshops per year."""
         self.assertEqual(
             self.current.self_organized_workshops_per_agreement, 20)
         self.assertEqual(
-            self.current.self_organized_workshops_completed, 8)
+            self.current.self_organized_workshops_completed, 6)
         self.assertEqual(
-            self.current.self_organized_workshops_remaining, 12)
+            self.current.self_organized_workshops_planned, 4)
+        self.assertEqual(
+            self.current.self_organized_workshops_remaining, 10)
 
     def test_delete_membership(self):
         '''Test that we can delete membership instance'''
@@ -170,13 +180,13 @@ class TestMembership(TestBase):
             self.current.additional_instructor_training_seats, 3
         )
         self.assertEqual(
-            self.current.seats_instructor_training_utilized, 10
+            self.current.seats_instructor_training_utilized, 5
         )
         self.assertEqual(
-            self.current.seats_instructor_training_remaining, 18
+            self.current.seats_instructor_training_remaining, 23
         )
 
-    def test_creating_event_with_no_comment(self):
+    def test_creating_membership_with_no_comment(self):
         """Ensure that no comment is added when MembershipCreateForm without
         comment content is saved."""
         self.assertEqual(Comment.objects.count(), 0)
@@ -192,7 +202,7 @@ class TestMembership(TestBase):
         form.save()
         self.assertEqual(Comment.objects.count(), 0)
 
-    def test_creating_event_with_comment(self):
+    def test_creating_membership_with_comment(self):
         """Ensure that a comment is added when MembershipCreateForm with
         comment content is saved."""
         self.assertEqual(Comment.objects.count(), 0)
@@ -211,8 +221,8 @@ class TestMembership(TestBase):
         self.assertEqual(comment.comment, 'This is a test comment.')
         self.assertIn(comment, Comment.objects.for_model(obj))
 
-    def test_workshop_edit_form_no_comment(self):
-        """Ensure workshop edit form works and doesn't provide `comment` field.
+    def test_membership_edit_form_no_comment(self):
+        """Ensure membership edit form works and doesn't provide `comment` field.
 
         This is a regression test against #1437:
         https://github.com/swcarpentry/amy/issues/1437
