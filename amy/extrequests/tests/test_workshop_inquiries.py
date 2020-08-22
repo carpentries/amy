@@ -40,6 +40,7 @@ class TestWorkshopInquiryBaseForm(FormTestHelper, TestBase):
         "code_of_conduct_agreement": True,
         "host_responsibilities": True,
         "instructor_availability": True,
+        "online_inperson": "inperson",
     }
 
     def _test_dont_know_yet_option(

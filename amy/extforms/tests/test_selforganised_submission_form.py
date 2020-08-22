@@ -6,10 +6,7 @@ from extforms.forms import SelfOrganisedSubmissionExternalForm
 from extrequests.models import SelfOrganisedSubmission
 from workshops.models import (
     Language,
-    AcademicLevel,
-    ComputingExperienceLevel,
     Curriculum,
-    InfoSource,
 )
 from workshops.tests.base import TestBase
 
@@ -33,6 +30,7 @@ class TestSelfOrganisedSubmissionExternalForm(TestBase):
             "additional_contact",
             "data_privacy_agreement", "code_of_conduct_agreement",
             "host_responsibilities",
+            "online_inperson",
             "captcha",
         ])
         self.assertEqual(fields_left, fields_right)
@@ -63,6 +61,7 @@ class TestSelfOrganisedSubmissionExternalForm(TestBase):
             'data_privacy_agreement': True,
             'code_of_conduct_agreement': True,
             'host_responsibilities': True,
+            "online_inperson": "inperson",
         }
         self.passCaptcha(data)
 

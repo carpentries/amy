@@ -16,11 +16,7 @@ from workshops.models import (
     Event,
     Organization,
     Language,
-    KnowledgeDomain,
-    AcademicLevel,
-    ComputingExperienceLevel,
     Curriculum,
-    InfoSource,
     Tag,
 )
 from workshops.tests.base import TestBase, FormTestHelper
@@ -54,6 +50,7 @@ class TestSelfOrganisedSubmissionBaseForm(FormTestHelper, TestBase):
             'data_privacy_agreement': True,
             'code_of_conduct_agreement': True,
             'host_responsibilities': True,
+            "online_inperson": "inperson",
         }
 
     def test_minimal_form(self):

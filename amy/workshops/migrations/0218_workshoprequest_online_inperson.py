@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='workshoprequest',
             name='online_inperson',
-            field=models.CharField(choices=[('online', 'Online'), ('inperson', 'In-person'), ('unsure', 'Not sure')], default=None, max_length=15, verbose_name='Will this workshop be held online or in-person?'),
+            field=models.CharField(choices=[('online', 'Online'), ('inperson', 'In-person'), ('unsure', 'Not sure')], default='', max_length=15, verbose_name='Will this workshop be held online or in-person?'),
         ),
     ]
