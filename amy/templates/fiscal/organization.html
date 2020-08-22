@@ -77,14 +77,14 @@
     <th rowspan="2">Agreement start</th>
     <th rowspan="2">Agreement end</th>
     <th rowspan="2">Contribution type</th>
-    <th colspan="3">Workshops w/o admin fee <i class="fas fa-question-circle" data-toggle="tooltip" title="Per agreement duration"></i></th>
-    <th colspan="3">Self-organized workshops <i class="fas fa-question-circle" data-toggle="tooltip" title="Per agreement duration"></i></th>
+    <th colspan="4">Workshops w/o admin fee <i class="fas fa-question-circle" data-toggle="tooltip" title="Per agreement duration"></i></th>
+    <th colspan="2">Self-organized workshops <i class="fas fa-question-circle" data-toggle="tooltip" title="Per agreement duration"></i></th>
     <th colspan="3">Instructor training seats</th>
     <th class="additional-links"></th>
   </tr>
   <tr>
-    <th><small>Allowed</small></th><th><small>Completed</small></th><th><small>Remaining</small></th>
-    <th><small>Expected</small></th><th><small>Completed</small></th><th><small>Remaining</small></th>
+    <th><small>Allowed</small></th><th><small>Completed</small></th><th><small>Planned</small></th><th><small>Remaining</small></th>
+    <th><small>Completed</small></th><th><small>Planned</small></th>
     <th><small>Allowed</small></th><th><small>Utilized</small></th><th><small>Remaining</small></th>
     <th></th>
   </tr>
@@ -96,10 +96,10 @@
     <td>{{ membership.get_contribution_type_display }}</td>
     <td>{{ membership.workshops_without_admin_fee_per_agreement|default:"—" }}</td>
     <td>{{ membership.workshops_without_admin_fee_completed|default:"—" }}</td>
+    <td>{{ membership.workshops_without_admin_fee_planned|default:"—" }}</td>
     <td>{{ membership.workshops_without_admin_fee_remaining|default:"—" }}</td>
-    <td>{{ membership.self_organized_workshops_per_agreement|default:"—" }}</td>
     <td>{{ membership.self_organized_workshops_completed|default:"—" }}</td>
-    <td>{{ membership.self_organized_workshops_remaining|default:"—" }}</td>
+    <td>{{ membership.self_organized_workshops_planned|default:"—" }}</td>
     <td>{{ membership.seats_instructor_training_total }}</td>
     <td>{{ membership.seats_instructor_training_utilized }}</td>
     <td {% if membership.seats_instructor_training_remaining <= 0 and membership.seats_instructor_training_total > 0 or membership.seats_instructor_training_remaining < 0 and membership.seats_instructor_training_total == 0 %}class="table-danger"{% endif %}>{{ membership.seats_instructor_training_remaining }}</td>
