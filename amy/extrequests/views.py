@@ -29,7 +29,7 @@ from autoemails.actions import (
     PostWorkshopAction,
 )
 from autoemails.base_views import ActionManageMixin
-from autoemails.models import Trigger
+from autoemails.models import Trigger, EmailTemplate
 from extrequests.base_views import AMYCreateAndFetchObjectView
 from extrequests.filters import (
     TrainingRequestFilter,
@@ -136,6 +136,8 @@ class WorkshopRequestDetails(OnlyForAdminsMixin, AMYDetailView):
             add_cancel_button=False)
 
         context['person_lookup_form'] = person_lookup_form
+
+        context['templates'] = EmailTemplate.objects.filter(slug__startswith="request-review", active=True).order_by("slug")
         return context
 
 
