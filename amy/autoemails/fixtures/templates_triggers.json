@@ -1,5 +1,14 @@
 [
 {
+  "model": "workshops.tag",
+  "pk": 15,
+  "fields": {
+    "name": "automated-email",
+    "details": "Only for EMAIL AUTOMATION",
+    "priority": 0
+  }
+},
+{
   "model": "autoemails.emailtemplate",
   "pk": 1,
   "fields": {

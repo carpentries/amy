@@ -40,6 +40,7 @@ dev_database :
 		exit 1; \
 	fi
 	${MANAGE} migrate
+	${MANAGE} loaddata amy/autoemails/fixtures/templates_triggers.json
 	${MANAGE} fake_database
 	${MANAGE} createinitialrevisions
 	${MANAGE} create_superuser
