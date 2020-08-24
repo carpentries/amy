@@ -157,7 +157,7 @@ class Membership(models.Model):
         null=True,
         blank=True,
         unique=True,
-        verbose_name = "Registration Code",
+        verbose_name="Registration Code",
         help_text="Unique registration code used for Eventbrite and trainee application."
         )
 
