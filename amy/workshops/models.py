@@ -152,6 +152,17 @@ class Membership(models.Model):
         Organization, null=False, blank=False, on_delete=models.PROTECT
     )
 
+    registration_code = models.CharField(
+        max_length=STR_MED,
+        null=True,
+        blank=True,
+        unique=True,
+        verbose_name="Registration Code",
+        help_text="Unique registration code used for Eventbrite and trainee application."
+        )
+
+
+
     def __str__(self):
         from workshops.util import human_daterange
 
