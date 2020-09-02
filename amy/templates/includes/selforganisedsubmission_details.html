@@ -29,6 +29,10 @@
         <td>
           {% include "includes/request_institution.html" with admin=admin object=object %}
         </td></tr>
+
+    <tr><th>Online or Inperson:</th>
+      <td>{{ object.online_inperson }}</td></tr>
+        
     <tr><th>Workshop format:</th>
         <td>
           {{ object.get_workshop_format_display }}

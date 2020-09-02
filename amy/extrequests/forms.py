@@ -282,6 +282,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             "institution_department",
             "location",
             "country",
+            "online_inperson",
             "requested_workshop_types",
             "preferred_dates",
             "other_preferred_dates",
@@ -312,6 +313,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
                 'class': 'nopastdates'}),
             'institution_other_URL': forms.TextInput(),
             'country': Select2Widget,
+            'online_inperson':forms.RadioSelect(),
             'language': Select2Widget,
             'number_attendees': forms.RadioSelect(),
             'academic_levels': forms.CheckboxSelectMultiple(),
@@ -393,7 +395,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             'secondary_email', 'institution_department',
             'country',
             'audience_description',
-            'user_notes',
+            'user_notes', 'online_inperson',
         )
         hr_fields_before = (
             'carpentries_info_source',
@@ -647,6 +649,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
             "institution_department",
             "location",
             "country",
+            "online_inperson",
             # "your audience" section starts now
             "routine_data",
             "routine_data_other",
@@ -683,6 +686,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
                 'class': 'nopastdates'}),
             'institution_other_URL': forms.TextInput(),
             'country': Select2Widget,
+            'online_inperson':forms.RadioSelect(),
             'language': Select2Widget,
             'number_attendees': forms.RadioSelect(),
             'computing_levels': forms.CheckboxSelectMultiple(),
@@ -793,7 +797,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
             'secondary_email', 'institution_department',
             'audience_description',
             'country',
-            'user_notes',
+            'user_notes', 'online_inperson',
         )
         hr_fields_before = (
             'administrative_fee',
@@ -1040,6 +1044,7 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
             "institution_other_name",
             "institution_other_URL",
             "institution_department",
+            "online_inperson",
             "workshop_format",
             "workshop_format_other",
             "workshop_url",
@@ -1059,6 +1064,7 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
             'institution_other_URL': forms.TextInput(),
             'workshop_url': forms.TextInput(),
             'country': Select2Widget,
+            'online_inperson':forms.RadioSelect(),
             'language': Select2Widget,
             'workshop_format':
                 RadioSelectWithOther('workshop_format_other',
@@ -1109,7 +1115,7 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
         hr_fields_after = (
             'secondary_email', 'institution_department',
             'additional_contact',
-            'language',
+            'language', 'online_inperson',
         )
         hr_fields_before = []
         for field in hr_fields_after:
