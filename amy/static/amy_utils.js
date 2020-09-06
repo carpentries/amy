@@ -256,4 +256,16 @@ $(document).ready(function() {
       $("#preferred_dates_warning").addClass("d-none");
     }
   })
+
+  // load template by the slug when someone opens up the modal for editing template
+  // before its sent
+  $("#email_edit").on("show.bs.modal", function(e) {
+    var btn = $(e.relatedTarget);
+    var template_slug = btn.data("templateSlug");
+    var modal = $(this);
+
+    $.get("/autoemails/templates/" + template_slug, {}, function(data) {
+      module.find(".modal-body markdownx-editor").text("# asdasdasd")
+    });
+  })
  });
