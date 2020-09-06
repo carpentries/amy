@@ -59,6 +59,7 @@ class TestWorkshopInquiryExternalForm(TestBase):
                 "code_of_conduct_agreement",
                 "host_responsibilities",
                 "instructor_availability",
+                "online_inperson",
                 "captcha",
             ]
         )
@@ -101,6 +102,7 @@ class TestWorkshopInquiryExternalForm(TestBase):
             "code_of_conduct_agreement": True,
             "host_responsibilities": True,
             "instructor_availability": True,
+            "online_inperson": "inperson",
         }
         self.passCaptcha(data)
 

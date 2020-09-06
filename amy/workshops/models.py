@@ -152,6 +152,17 @@ class Membership(models.Model):
         Organization, null=False, blank=False, on_delete=models.PROTECT
     )
 
+    registration_code = models.CharField(
+        max_length=STR_MED,
+        null=True,
+        blank=True,
+        unique=True,
+        verbose_name="Registration Code",
+        help_text="Unique registration code used for Eventbrite and trainee application."
+        )
+
+
+
     def __str__(self):
         from workshops.util import human_daterange
 
@@ -170,13 +181,40 @@ class Membership(models.Model):
             administrator__domain="self-organized"
         )
         no_fee = Q(admin_fee=0) | Q(admin_fee=None)
-        date_started = Q(start__gte=self.agreement_start, start__lt=self.agreement_end)
+        date_started = (
+            Q(start__gte=self.agreement_start, start__lt=self.agreement_end)
+            & Q(start__lt=datetime.date.today())
+        )
+        cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
 
         return (
             Event.objects.filter(host=self.organization)
             .filter(date_started)
             .filter(no_fee)
             .exclude(self_organized)
+            .exclude(cancelled)
+            .count()
+        )
+
+    @cached_property
+    def workshops_without_admin_fee_planned(self):
+        """Count workshops without admin fee hosted in future during the agreement."""
+        self_organized = Q(administrator=None) | Q(
+            administrator__domain="self-organized"
+        )
+        no_fee = Q(admin_fee=0) | Q(admin_fee=None)
+        date_started = (
+            Q(start__gte=self.agreement_start, start__lt=self.agreement_end)
+            & Q(start__gte=datetime.date.today())
+        )
+        cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
+
+        return (
+            Event.objects.filter(host=self.organization)
+            .filter(date_started)
+            .filter(no_fee)
+            .exclude(self_organized)
+            .exclude(cancelled)
             .count()
         )
 
@@ -187,20 +225,48 @@ class Membership(models.Model):
             return None
         a = self.workshops_without_admin_fee_per_agreement
         b = self.workshops_without_admin_fee_completed
-        return a - b
+        c = self.workshops_without_admin_fee_planned
+        return a - b - c
 
     @cached_property
     def self_organized_workshops_completed(self):
-        """Count self-organized workshops hosted the year agreement started."""
+        """Count self-organized workshops hosted the year agreement started (completed,
+        ie. in past)."""
         self_organized = Q(administrator=None) | Q(
             administrator__domain="self-organized"
         )
-        date_started = Q(start__gte=self.agreement_start, start__lt=self.agreement_end)
+        date_started = (
+            Q(start__gte=self.agreement_start, start__lt=self.agreement_end)
+            & Q(start__lt=datetime.date.today())
+        )
+        cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
 
         return (
             Event.objects.filter(host=self.organization)
             .filter(date_started)
             .filter(self_organized)
+            .exclude(cancelled)
+            .count()
+        )
+
+    @cached_property
+    def self_organized_workshops_planned(self):
+        """Count self-organized workshops hosted the year agreement started (planned,
+        ie. in future)."""
+        self_organized = Q(administrator=None) | Q(
+            administrator__domain="self-organized"
+        )
+        date_started = (
+            Q(start__gte=self.agreement_start, start__lt=self.agreement_end)
+            & Q(start__gte=datetime.date.today())
+        )
+        cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
+
+        return (
+            Event.objects.filter(host=self.organization)
+            .filter(date_started)
+            .filter(self_organized)
+            .exclude(cancelled)
             .count()
         )
 
@@ -212,7 +278,8 @@ class Membership(models.Model):
             return None
         a = self.self_organized_workshops_per_agreement
         b = self.self_organized_workshops_completed
-        return a - b
+        c = self.self_organized_workshops_planned
+        return a - b - c
 
     @cached_property
     def seats_instructor_training_total(self):
@@ -2364,11 +2431,23 @@ class CommonRequest(SecondaryEmailMixin, models.Model):
         default="",
         verbose_name="Department/School/Library affiliation (if applicable)",
     )
+
+    ONLINE_INPERSON_CHOICES = (
+        ('online', 'Online'),
+        ('inperson', 'In-person'),
+        ('unsure', 'Not sure'),
+    )
+    online_inperson = models.CharField(
+        max_length=15,
+        choices=ONLINE_INPERSON_CHOICES,
+        blank=False, null=False, default="",
+        verbose_name="Will this workshop be held online or in-person?")
+
     PUBLIC_EVENT_CHOICES = (
         ("public", "This event is open to the public."),
         (
             "closed",
-            "This event is open primarily to the people inside of my " "institution.",
+            "This event is open primarily to the people inside of my institution.",
         ),
         ("other", "Other:"),
     )

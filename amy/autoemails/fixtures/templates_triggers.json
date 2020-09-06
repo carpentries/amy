@@ -85,6 +85,23 @@
   }
 },
 {
+  "model": "autoemails.emailtemplate",
+  "pk": 6,
+  "fields": {
+    "active": true,
+    "created_at": "2020-08-15T12:34:55.057Z",
+    "last_updated_at": "2020-08-15T14:10:01.955Z",
+    "slug": "ask-for-website",
+    "subject": "Workshop Website needed for {% if workshop_main_type %}{{ workshop_main_type }}{% endif %} workshop at {{ workshop.venue }} {% if dates %} on {{ dates }}{% endif %}",
+    "to_header": "{# This gets overwritten anyway #}",
+    "from_header": "amy-no-reply@carpentries.org",
+    "cc_header": "",
+    "bcc_header": "",
+    "reply_to_header": "{regional coordinator assigned to WRF}",
+    "body_template": "Hi {% for person in instructors %}{{ person.full_name }}, {% endfor %}\r\n\r\nThis is a friendly reminder to please share with me the workshop website once it has been completed. \r\n\r\nHere is the [template](https://github.com/carpentries/workshop-template) for guidance. Please use the workshop id: {{ event.slug }}\r\n\r\nPlease let me know if you have any questions,\r\n\r\nBest, {{ assignee }}"
+  }
+},
+{
   "model": "autoemails.trigger",
   "pk": 1,
   "fields": {
@@ -137,6 +154,17 @@
     "last_updated_at": "2020-06-20T20:44:24.121Z",
     "action": "new-supporting-instructor",
     "template": 5
+  }
+},
+{
+  "model": "autoemails.trigger",
+  "pk": 6,
+  "fields": {
+    "active": true,
+    "created_at": "2020-08-15T14:30:16.081Z",
+    "last_updated_at": "2020-08-15T14:30:16.081Z",
+    "action": "ask-for-website",
+    "template": 6
   }
 }
 ]

@@ -8,6 +8,7 @@
   "license": "MIT",
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.1.1",
+    "@github/time-elements": "^3.1.1",
     "@ttskch/select2-bootstrap4-theme": "^1.0.5",
     "bootstrap": "^4.3.1",
     "bootstrap-datepicker": "^1.9.0",
@@ -18,7 +19,7 @@
     "jquery-stickytabs": "^1.2.4",
     "metrics-graphics": "^2.15.6",
     "popper.js": "^1.14.3",
-    "urijs": "^1.19.1",
-    "select2": "^4.0.10"
+    "select2": "^4.0.10",
+    "urijs": "^1.19.1"
   }
 }

@@ -780,3 +780,267 @@ class InstructorsHostIntroductionAction(BaseAction):
         context["tags"] = list(event.tags.values_list("name", flat=True))
 
         return context
+
+
+class AskForWebsiteAction(BaseAction):
+    """
+    Action for asking centrally-organised events for the website & slug. This email
+    should be sent about 1 month before the event's start date, and only if it has
+    no website URL.
+
+    How to use it:
+
+    >>> triggers = Trigger.objects.filter(active=True,
+                                          action='ask-for-slug')
+    >>> for trigger in triggers:
+    ...     action = AskForWebsiteAction(
+    ...         trigger=trigger,
+    ...         objects=dict(event=event, tasks=tasks),
+    ...     )
+    ...     launch_at = action.get_launch_at()
+    ...     job = scheduler.enqueue_in(launch_at, action)
+    """
+
+    # The action should launch a month before workshop's start date
+    launch_at = timedelta(days=-30)
+    short_launch_at = timedelta(hours=1)
+
+    def get_launch_at(self):
+        event = self.context_objects.get("event", None)
+        try:
+            # If the event runs in 10 weeks (70 days), then we should get
+            # timedelta(days=40) + self.short_launch_at.
+            td = event.start - date.today() + self.launch_at
+
+            # checking if td is in negative values
+            if td > timedelta(0):
+                return td + self.short_launch_at
+            else:
+                # This happens if we're already past -30days before event start.
+                return self.short_launch_at
+
+        except (AttributeError, TypeError):
+            # if the event wasn't passed through, we should return default
+            # timedelta() - just in case
+            return self.launch_at
+
+    def recipients(self) -> Optional[str]:
+        """Assuming self.context is ready, overwrite email's recipients
+        with selected ones."""
+        try:
+            return self.context["all_emails"]
+        except (AttributeError, KeyError):
+            return None
+
+    def event_slug(self) -> str:
+        """If available, return event's slug."""
+        try:
+            return self.context_objects["event"].slug
+        except (KeyError, AttributeError):
+            return ""
+
+    def all_recipients(self) -> str:
+        """If available, return string of all recipients."""
+        try:
+            event = self.context_objects["event"]
+            task_set = event.task_set.filter(role__name="instructor")
+            person_emails = list(
+                Person.objects.filter(task__in=task_set)
+                .distinct()
+                .values_list("email", flat=True)
+            )
+            all_emails = list(filter(bool, person_emails))
+            return ", ".join(all_emails)
+
+        except (KeyError, AttributeError):
+            return ""
+
+    @staticmethod
+    def check(event: Event):
+        """Conditions for creating a AskForWebsiteAction."""
+        instructors = event.task_set.filter(role__name="instructor")
+
+        return bool(
+            # start date is required and in future
+            event.start
+            and event.start >= date.today()
+            # event cannot be cancelled / unresponsive / stalled
+            and not event.tags.filter(name__in=["cancelled", "unresponsive", "stalled"])
+            # must have "automated-email" tag
+            and event.tags.filter(name__icontains="automated-email")
+            # must be self-organized
+            and event.administrator
+            and event.administrator.domain == "self-organized"
+            # cannot have a URL
+            and not event.url
+            # must have someone to send the email to
+            and len(instructors) >= 1
+        )
+
+    def get_additional_context(self, objects, *args, **kwargs):
+        from workshops.util import match_notification_email, human_daterange
+
+        # refresh related event
+        event = objects["event"]
+        event.refresh_from_db()
+
+        # prepare context
+        context = dict()
+        context["workshop"] = event
+        context["workshop_main_type"] = None
+        tmp = event.tags.carpentries().first()
+        if tmp:
+            context["workshop_main_type"] = tmp.name
+        context["dates"] = human_daterange(event.start, event.end)
+        context["workshop_host"] = event.host
+        context["regional_coordinator_email"] = list(match_notification_email(event))
+
+        # people
+        instructors = event.task_set.filter(role__name="instructor")
+        context["instructors"] = [instr.person for instr in instructors]
+
+        task_emails = [task.person.email for task in instructors]
+        context["all_emails"] = list(filter(bool, task_emails))
+
+        context["assignee"] = (
+            event.assigned_to.full_name if event.assigned_to else "Regional Coordinator"
+        )
+        context["tags"] = list(event.tags.values_list("name", flat=True))
+
+        return context
+
+
+class RecruitHelpersAction(BaseAction):
+    """
+    Action for reminding workshop organizers to recruit helpers. This email
+    should be sent 21 days before the event's start date, and only if it has
+    no helpers.
+
+    How to use it:
+
+    >>> triggers = Trigger.objects.filter(active=True,
+                                          action='recruit-helpers')
+    >>> for trigger in triggers:
+    ...     action = RecruitHelpersAction(
+    ...         trigger=trigger,
+    ...         objects=dict(event=event, tasks=tasks),
+    ...     )
+    ...     launch_at = action.get_launch_at()
+    ...     job = scheduler.enqueue_in(launch_at, action)
+    """
+
+    # The action should launch a month before workshop's start date
+    launch_at = timedelta(days=-21)
+    short_launch_at = timedelta(hours=1)
+
+    def get_launch_at(self):
+        event = self.context_objects.get("event", None)
+        try:
+            # If the event runs in 10 weeks (70 days), then we should get
+            # timedelta(days=49) + self.short_launch_at.
+            td = event.start - date.today() + self.launch_at
+
+            # checking if td is in negative values
+            if td > timedelta(0):
+                return td + self.short_launch_at
+            else:
+                # This happens if we're already past -21days before event start.
+                return self.short_launch_at
+
+        except (AttributeError, TypeError):
+            # if the event wasn't passed through, we should return default
+            # timedelta() - just in case
+            return self.launch_at
+
+    def recipients(self) -> Optional[str]:
+        """Assuming self.context is ready, overwrite email's recipients
+        with selected ones."""
+        try:
+            return self.context["all_emails"]
+        except (AttributeError, KeyError):
+            return None
+
+    def event_slug(self) -> str:
+        """If available, return event's slug."""
+        try:
+            return self.context_objects["event"].slug
+        except (KeyError, AttributeError):
+            return ""
+
+    def all_recipients(self) -> str:
+        """If available, return string of all recipients."""
+        try:
+            event = self.context_objects["event"]
+            task_set = event.task_set.filter(role__name="instructor")
+            person_emails = list(
+                Person.objects.filter(task__in=task_set)
+                .distinct()
+                .values_list("email", flat=True)
+            )
+            all_emails = list(filter(bool, person_emails))
+            return ", ".join(all_emails)
+
+        except (KeyError, AttributeError):
+            return ""
+
+    @staticmethod
+    def check(event: Event):
+        """Conditions for creating a AskForWebsiteAction."""
+        hosts = event.task_set.filter(role__name="host")
+        instructors = event.task_set.filter(role__name="instructor")
+        helpers = event.task_set.filter(role__name="helper")
+
+        return bool(
+            # start date is required and in future
+            event.start
+            and event.start >= date.today()
+            # additionally it can't be sooner than 14 days
+            and (event.start - date.today()) >= timedelta(days=14)
+            # event cannot be cancelled / unresponsive / stalled
+            and not event.tags.filter(name__in=["cancelled", "unresponsive", "stalled"])
+            # must have "automated-email" tag
+            and event.tags.filter(name__icontains="automated-email")
+            # must have someone to send the email to
+            and (len(instructors) >= 1 or len(hosts) >= 1)
+            # can't have any helpers
+            and len(helpers) == 0
+        )
+
+    def get_additional_context(self, objects, *args, **kwargs):
+        from workshops.util import match_notification_email, human_daterange
+
+        # refresh related event
+        event = objects["event"]
+        event.refresh_from_db()
+
+        # prepare context
+        context = dict()
+        context["workshop"] = event
+        context["workshop_main_type"] = None
+        tmp = event.tags.carpentries().first()
+        if tmp:
+            context["workshop_main_type"] = tmp.name
+        context["dates"] = human_daterange(event.start, event.end)
+        context["workshop_host"] = event.host
+        context["regional_coordinator_email"] = list(match_notification_email(event))
+
+        # people
+        hosts = event.task_set.filter(role__name="host")
+        context["hosts"] = [host.person for host in hosts]
+        instructors = event.task_set.filter(role__name="instructor")
+        context["instructors"] = [instr.person for instr in instructors]
+
+        task_emails = [
+            task.person.email
+            for task in event.task_set.filter(
+                role__name__in=["host", "instructor"]
+            ).order_by("role__name")
+        ]
+        context["all_emails"] = list(filter(bool, task_emails))
+
+        context["assignee"] = (
+            event.assigned_to.full_name if event.assigned_to else "Regional Coordinator"
+        )
+        context["tags"] = list(event.tags.values_list("name", flat=True))
+
+        return context
