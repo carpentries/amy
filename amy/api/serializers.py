@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from autoemails.models import EmailTemplate
 from workshops.models import (
     Badge,
     Airport,
@@ -65,6 +66,7 @@ class BadgeSerializer(serializers.ModelSerializer):
 
 class ExportBadgesByPersonSerializer(serializers.ModelSerializer):
     badges = BadgeSerializer(many=True)
+
     class Meta:
         model = Person
         fields = ('username', 'personal', 'middle', 'family', 'email',
@@ -465,3 +467,24 @@ class PersonSerializerAllData(PersonSerializer):
             'badges', 'lessons', 'languages', 'domains', 'awards', 'tasks',
             'training_requests', 'training_progresses',
         )
+
+
+class EmailTemplateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmailTemplate
+        fields = [
+            'id',
+            'active',
+            'created_at',
+            'last_updated_at',
+            'slug',
+            'subject',
+            'to_header',
+            'from_header',
+            'cc_header',
+            'bcc_header',
+            'reply_to_header',
+            'body_template',
+        ]
+        lookup_field = "slug"
+        extra_kwargs = {"url": {"lookup_field": "slug"}}
