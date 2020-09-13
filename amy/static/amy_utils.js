@@ -260,12 +260,21 @@ $(document).ready(function() {
   // load template by the slug when someone opens up the modal for editing template
   // before its sent
   $("#email_edit").on("show.bs.modal", function(e) {
-    var btn = $(e.relatedTarget);
-    var template_slug = btn.data("templateSlug");
-    var modal = $(this);
+    let btn = $(e.relatedTarget);
+    let template_slug = btn.data("templateSlug");
+    let modal = $(this);
 
-    $.get("/autoemails/templates/" + template_slug, {}, function(data) {
-      module.find(".modal-body markdownx-editor").text("# asdasdasd")
+    $.get("/api/v1/emailtemplates/" + template_slug, {}, function(data) {
+      modal.find(".modal-body #id_subject").val(data.subject);
+      modal.find(".modal-body #id_template").text(data.body_template);
+      // TODO: force reload of markdownx
     });
+  })
+
+  $("#email_edit").on("hide.bs.modal", function(e) {
+    let modal = $(this);
+
+    modal.find(".modal-body #id_subject").val("");
+    modal.find(".modal-body #id_template").text("");
   })
  });
