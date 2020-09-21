@@ -10,15 +10,15 @@ The primary tables used in AMY (that will likely appear in every query) are thos
 
 * `id` Sequential, automatically assigned integer
 * `start` and `end` Event start and end dates 
-* `slug` Event's unique identifier, in the form YYYY-MM-DD-sitename
-* `url` Event's website. Typically in the format username.github.io/YYYY-MM-DD-sitename
+* `slug` Event's unique identifier in the form YYYY-MM-DD-sitename
+* `url` Event's website. Typically in the format username.github.io/YYYY-MM-DD-sitename (but not required) 
 * `host_id` An integer representing the Event Host.  This is linked to the `workshops_organization` table
 * Location based fields:
     * `venue` The venue name of the event
     * `address` The street address of the event
     * `latitude` and `longitude` Stored as floating point (decimal) numbers
     * `country` Stored as the [two digit country code](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)
-* `contact` A pipe-separated (`|`) list of email addresses listed as contacts for that workshop
+* `contact` A list of email addresses listed as contacts for that workshop
 * `completed` A Boolean field to note that all work (including workshop coordination and data entry) is complete. 
 * `assigned_to_id` The id of the Regional Coordinator or other Carpentries Core Team member assigned to this event. This is linked to the `workshops_person` table.
 * `language_id` The integer id of the language used at the workshop. This is not typically recorded. This is linked to the `workshops_language` table
@@ -31,7 +31,7 @@ The primary tables used in AMY (that will likely appear in every query) are thos
 
 * `manual_attendance` We are no longer collecting or recording attendance
 * `admin_fee`, `invoice_status` We are not recording financial data in AMY
-* `repository_last_commit_hash`, `repository_metadata`, `metadata_all_changes`, `metadata_changed` Unknown
+* `repository_last_commit_hash`, `repository_metadata`, `metadata_all_changes`, `metadata_changed` Previously used to store metadata changes
 * `instructors_post` `instructors_pre` `learners_longterm` `learners_post` `learners_pre` Previously used to store links to surveys.
 
 ## Persons
@@ -41,9 +41,9 @@ The primary tables used in AMY (that will likely appear in every query) are thos
 ### Commonly used fields
 
 * `id` Sequential, automatically assigned integer
-* `personal` `middle` `family` Three fields to hold the individual's name
+* `personal` `middle` `family` Three fields to hold the individual's name.  Only `personal` is required.
 * `email` Individual's primary email address. Used for user log in
-* `secondary_email` Alternate email address.
+* `secondary_email` Alternate email address. Optional.
 * `gender` Options are `Prefer not to say (undisclosed)` `Female` `Gender variant / non-conforming` `Male` `Other`. 
     * `gender_other` Text if individual selected `Other`
 * `may_contact` A boolean field. We may not contact people if this field is false
