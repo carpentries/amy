@@ -100,31 +100,31 @@ The primary tables used in AMY (that will likely appear in every query) are thos
 
 ## Badges 
 
-`workshops_badge` Lists all available badges (SWC/DC/LC Instructor, Trainer, etc.)
-`workshops_award` Connects `workshops_badge` and `workshops_person` tables to show what Badges have been awarded to what Persons
+* `workshops_badge` Lists all available badges (SWC/DC/LC Instructor, Trainer, etc.)
+* `workshops_award` Connects `workshops_badge` and `workshops_person` tables to show what Badges have been awarded to what Persons
 
 More information to come
 
 
 ## Roles
 
-`workshops_role` Lists all available roles (Instructor, Helper, Learner, etc.)
-`workshops_task` Connects `workshops_role`, `workshops_event`, and `workshops_person` tables to show what what Persons have served in what Roles at what Events
+* `workshops_role` Lists all available roles (Instructor, Helper, Learner, etc.)
+* `workshops_task` Connects `workshops_role`, `workshops_event`, and `workshops_person` tables to show what what Persons have served in what Roles at what Events
 
 More information to come
 
 ## Tags
 
-`workshops_tag` Lists all availabe tags for an Event (SWC, DC, LC, Online, Pilot, Circuits, etc.)
-`workshops_event_tags` Connects `workshops_tag` and `workshops_event` to show what Tags have been applied to what Events 
+* `workshops_tag` Lists all availabe tags for an Event (SWC, DC, LC, Online, Pilot, Circuits, etc.)
+* `workshops_event_tags` Connects `workshops_tag` and `workshops_event` to show what Tags have been applied to what Events 
 
 More information to come
 
 
 ## Training progress 
 
-`workshops_trainingrequirement`  Lists all available steps towards Instructor certification (Training Event, Discussion, etc.)
-`workshops_training_progress` Connects `workshops_trainingrequirement` and `workshops_person` to show what Persons have completed what steps of the checkout process.
+* `workshops_trainingrequirement`  Lists all available steps towards Instructor certification (Training Event, Discussion, etc.)
+* `workshops_training_progress` Connects `workshops_trainingrequirement` and `workshops_person` to show what Persons have completed what steps of the checkout process.
 
 More information to come
 
