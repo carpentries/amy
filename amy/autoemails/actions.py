@@ -1000,6 +1000,9 @@ class RecruitHelpersAction(BaseAction):
             and not event.tags.filter(name__in=["cancelled", "unresponsive", "stalled"])
             # must have "automated-email" tag
             and event.tags.filter(name__icontains="automated-email")
+            # must be centrally-organised
+            and event.administrator
+            and event.administrator.domain != "self-organized"
             # must have someone to send the email to
             and (len(instructors) >= 1 or len(hosts) >= 1)
             # can't have any helpers
