@@ -868,9 +868,9 @@ class AskForWebsiteAction(BaseAction):
             and not event.tags.filter(name__in=["cancelled", "unresponsive", "stalled"])
             # must have "automated-email" tag
             and event.tags.filter(name__icontains="automated-email")
-            # must be self-organized
+            # must be self-organized or centrally-organised (ie. must have
+            # an administrator)
             and event.administrator
-            and event.administrator.domain == "self-organized"
             # cannot have a URL
             and not event.url
             # must have someone to send the email to
