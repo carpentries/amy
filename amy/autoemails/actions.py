@@ -985,7 +985,7 @@ class RecruitHelpersAction(BaseAction):
 
     @staticmethod
     def check(event: Event):
-        """Conditions for creating a AskForWebsiteAction."""
+        """Conditions for creating a RecruitHelpersAction."""
         hosts = event.task_set.filter(role__name="host")
         instructors = event.task_set.filter(role__name="instructor")
         helpers = event.task_set.filter(role__name="helper")
