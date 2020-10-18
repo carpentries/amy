@@ -1212,6 +1212,20 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         help_text="Specific lessons covered during the event",
     )
 
+    # indicate that the workshop is either private or public
+    PUBLIC_STATUS_CHOICES = [
+        ("public", "Public"),
+        ("private", "Private"),
+    ]
+    public_status = models.CharField(
+        max_length=10,
+        choices=PUBLIC_STATUS_CHOICES,
+        default="public",
+        blank=True,
+        verbose_name="Is this workshop public?",
+        help_text="Public workshops will show up in public Carpentries feeds.",
+    )
+
     objects = EventQuerySet.as_manager()
 
     class Meta:
