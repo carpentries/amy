@@ -132,13 +132,13 @@ class TestAskForWebsiteAction(TestCase):
         # retest to make sure it's back to normal
         self.assertEqual(AskForWebsiteAction.check(e), True)
 
-        # 5th case: not self-organized
-        # result: FAIL
+        # 5th case: not self-organized (centrally-organised)
+        # result: OK
         e.administrator = Organization.objects.get(domain="carpentries.org")
         e.save()
-        self.assertEqual(AskForWebsiteAction.check(e), False)
+        self.assertEqual(AskForWebsiteAction.check(e), True)
 
-        # retest to make sure it's back to normal
+        # retest to make sure it stays the same
         e.administrator = Organization.objects.get(domain="self-organized")
         self.assertEqual(AskForWebsiteAction.check(e), True)
 

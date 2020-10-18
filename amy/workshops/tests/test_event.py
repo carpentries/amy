@@ -2441,7 +2441,10 @@ class TestEventUpdateRecruitHelpers(
         self.host_role = Role.objects.create(name="host")
         self.instructor_role = Role.objects.create(name="instructor")
         self.helper_role = Role.objects.create(name="helper")
-        self.host_org = Organization.objects.first()
+        self.host_org = Organization.objects.create(
+            domain="librarycarpentry.org",
+            fullname="Library Carpentry",
+        )
 
         self.instructor = Person.objects.create(
             personal="Hermione",
@@ -2637,7 +2640,10 @@ class TestEventDeleteRecruitHelpers(
         self.host_role = Role.objects.create(name="host")
         self.instructor_role = Role.objects.create(name="instructor")
         self.helper_role = Role.objects.create(name="helper")
-        self.host_org = Organization.objects.first()
+        self.host_org = Organization.objects.create(
+            domain="librarycarpentry.org",
+            fullname="Library Carpentry",
+        )
 
         self.instructor = Person.objects.create(
             personal="Hermione",
