@@ -443,6 +443,7 @@ class EventForm(forms.ModelForm):
             "open_TTT_applications",
             "curricula",
             "lessons",
+            "public_status",
             "comment",
         ]
         widgets = {
@@ -486,6 +487,7 @@ class EventForm(forms.ModelForm):
             "reg_key",
             "manual_attendance",
             "contact",
+            "public_status",
             Div(
                 Div(HTML("Location details"), css_class="card-header"),
                 Div(

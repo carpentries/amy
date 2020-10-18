@@ -107,6 +107,7 @@ class TestRecruitHelpersAction(TestCase):
             host=Organization.objects.first(),
             start=date.today() + timedelta(days=30),
             end=date.today() + timedelta(days=31),
+            administrator=Organization.objects.first(),
         )
         e.tags.set(Tag.objects.filter(name__in=["automated-email"]))
         Task.objects.bulk_create(
@@ -178,6 +179,18 @@ class TestRecruitHelpersAction(TestCase):
 
         # retest to make sure it's back to normal
         self.assertEqual(RecruitHelpersAction.check(e), True)
+
+        # 8th case: self-organised
+        # result: FAIL
+        e.administrator = Organization.objects.get(domain="self-organized")
+        e.save()
+        self.assertEqual(RecruitHelpersAction.check(e), False)
+        e.administrator = Organization.objects.first()
+        e.save()
+
+        # retest to make sure it's back to normal
+        self.assertEqual(RecruitHelpersAction.check(e), True)
+
 
     def testContext(self):
         """Make sure `get_additional_context` works correctly."""

@@ -247,6 +247,13 @@ class PersonDetails(OnlyForAdminsMixin, AMYDetailView):
                     output_field=IntegerField(),
                 )
             ),
+
+            num_supporting=Count(
+                Case(
+                    When(task__role__name="supporting-instructor", then=Value(1)),
+                    output_field=IntegerField(),
+                )
+            ),
         )
         .prefetch_related(
             "award_set__badge",

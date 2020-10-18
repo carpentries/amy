@@ -2052,7 +2052,10 @@ class TestTaskCreateRecruitHelpers(FakeRedisTestCaseMixin, SuperuserMixin, TestC
             username="weasley_ron",
         )
 
-        self.host_org = Organization.objects.first()
+        self.host_org = Organization.objects.create(
+            domain="librarycarpentry.org",
+            fullname="Library Carpentry",
+        )
 
         self.test_event = Event.objects.create(
             slug="2020-08-18-test-event",
@@ -2232,7 +2235,10 @@ class TestTaskUpdateRecruitHelpers(FakeRedisTestCaseMixin, SuperuserMixin, TestC
             username="weasley_ron",
         )
 
-        self.host_org = Organization.objects.first()
+        self.host_org = Organization.objects.create(
+            domain="librarycarpentry.org",
+            fullname="Library Carpentry",
+        )
 
         self.test_event = Event.objects.create(
             slug="2020-08-18-test-event",
@@ -2409,7 +2415,10 @@ class TestTaskDeleteRecruitHelpers(FakeRedisTestCaseMixin, SuperuserMixin, TestC
             username="weasley_ron",
         )
 
-        self.host_org = Organization.objects.first()
+        self.host_org = Organization.objects.create(
+            domain="librarycarpentry.org",
+            fullname="Library Carpentry",
+        )
 
         self.test_event = Event.objects.create(
             slug="2020-08-18-test-event",
