@@ -43,7 +43,7 @@
   <tr><th>GitHub:</th>
       <td>
         {% if person.github %}
-          <a href="https://github.com/{{ person.github }}" target="_blank">{{ person.github }}</a>
+          <a href="https://github.com/{{ person.github }}" target="_blank" rel="noreferrer">{{ person.github }}</a>
           {% if is_usersocialauth_in_sync == 'unknown' %}
             <a id="socialauth_sync_btn" tabindex="0" role="button" class="btn btn-warning btn-sm float-right" data-toggle="popover" data-html="true" data-trigger="hover" title="Unknown error" data-content="Cannot check if person can log in due to errors in GitHub API access">Allow logging in with GitHub</a>
           {% elif is_usersocialauth_in_sync == True %}
@@ -56,7 +56,7 @@
         {% endif %}
       </td></tr>
   <tr><th>Can login with:</th><td>{% for auth in person.social_auth.all %}{{ auth.provider|title }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</td></tr>
-  <tr><th>Twitter:</th><td id="twitter">{% if person.twitter %}<a href="https://twitter.com/{{ person.twitter }}" target="_blank">{{ person.twitter }}</a>{% else %}—{% endif %}</td></tr>
+  <tr><th>Twitter:</th><td id="twitter">{% if person.twitter %}<a href="https://twitter.com/{{ person.twitter }}" target="_blank" rel="noreferrer">{{ person.twitter }}</a>{% else %}—{% endif %}</td></tr>
   <tr><th>URL:</th><td id="url">{{ person.url|urlize_newtab|default:"—" }}</td></tr>
   <tr><th>Occupation:</th><td>{{ person.occupation|default:"—" }}</td></tr>
   <tr><th>ORCID ID:</th><td>{{ person.orcid|default:"—" }}</td></tr>
@@ -152,7 +152,7 @@
       <p>Summary:</p>
       <ul>
         <li>Instructor: {{ person.num_taught }} times</li>
-        <li>Supporting Instructor: {{ person.num_supporting }} times</li>        
+        <li>Supporting Instructor: {{ person.num_supporting }} times</li>
         <li>Helper: {{ person.num_helper }} times</li>
         <li>Learner: {{ person.num_learner }} times</li>
       </ul>

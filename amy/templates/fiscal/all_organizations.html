@@ -19,7 +19,7 @@
     {% for organization in all_organizations %}
         <tr>
             <td><a href="{% url 'organization_details' organization.domain %}">{{ organization.fullname }}</a></td>
-            <td><a href="http://{{ organization.domain }}" target="_blank">{{ organization.domain }}</a></td>
+            <td><a href="http://{{ organization.domain }}" target="_blank" rel="noreferrer">{{ organization.domain }}</a></td>
             <td>
               {% for membership in organization.current_memberships %}
                 <a href="{% url 'membership_details' membership.pk %}">

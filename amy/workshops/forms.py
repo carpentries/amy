@@ -202,8 +202,8 @@ bootstrap_helper_inline_formsets = BootstrapHelperFormsetInline()
 class PrivacyConsentMixin(forms.Form):
     privacy_consent = forms.BooleanField(
         label="*I have read and agree to <a href="
-        '"https://docs.carpentries.org/topic_folders/policies/'
-        'privacy.html" target="_blank">'
+        '"https://docs.carpentries.org/topic_folders/policies/privacy.html"'
+        ' target="_blank" rel="noreferrer">'
         "the data privacy policy of The Carpentries</a>.",
         required=True,
     )
@@ -1044,8 +1044,8 @@ class EventsMergeForm(forms.Form):
 class ActionRequiredPrivacyForm(forms.ModelForm):
     data_privacy_agreement = forms.BooleanField(
         label="*I have read and agree to <a href="
-        '"https://docs.carpentries.org/topic_folders/policies/'
-        'privacy.html" target="_blank">'
+        '"https://docs.carpentries.org/topic_folders/policies/privacy.html"'
+        ' target="_blank" rel="noreferrer">'
         "the data privacy policy of The Carpentries</a>.",
         required=True,
     )

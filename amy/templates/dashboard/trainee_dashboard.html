@@ -98,7 +98,7 @@ Your email address and GitHub id can not be updated here, as they are tied to yo
           {% for task in workshops %}
             <tr>
             {% if task.event.website_url %}
-              <td><a href="{{ task.event.website_url }}" target="_blank">{{ task.event.slug }}</a></td>
+              <td><a href="{{ task.event.website_url }}" target="_blank" rel="noreferrer">{{ task.event.slug }}</a></td>
             {% else %}
               <td>{{ task.event.slug }}</td>
             {% endif %}

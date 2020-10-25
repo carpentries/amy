@@ -10,7 +10,7 @@
     <li>
       <a href="{{ req.get_absolute_url }}">{{ req }}</a>
       {% if not forloop.first %}
-      <a href="{% url 'trainingrequests_merge' %}?trainingrequest_b={{ req.pk }}&trainingrequest_a={{ prev_pk }}" target="_blank">(merge up)</a>
+      <a href="{% url 'trainingrequests_merge' %}?trainingrequest_b={{ req.pk }}&trainingrequest_a={{ prev_pk }}" target="_blank" rel="noreferrer">(merge up)</a>
       {% endif %}
       {% assign req.pk as prev_pk %}
     </li>
@@ -27,7 +27,7 @@
     <li>
       <a href="{{ req.get_absolute_url }}">{{ req }}</a>
       {% if not forloop.first %}
-      <a href="{% url 'trainingrequests_merge' %}?trainingrequest_b={{ req.pk }}&trainingrequest_a={{ prev_pk }}" target="_blank">(merge up)</a>
+      <a href="{% url 'trainingrequests_merge' %}?trainingrequest_b={{ req.pk }}&trainingrequest_a={{ prev_pk }}" target="_blank" rel="noreferrer">(merge up)</a>
       {% endif %}
       {% assign req.pk as prev_pk %}
     </li>
