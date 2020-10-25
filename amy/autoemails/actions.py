@@ -1047,3 +1047,63 @@ class RecruitHelpersAction(BaseAction):
         context["tags"] = list(event.tags.values_list("name", flat=True))
 
         return context
+
+
+class GenericAction(BaseAction):
+    """
+    A generic action intended for use outside of typical automated email workflows.
+    It is not intended to use with any triggers.
+    """
+
+    launch_at = timedelta(hours=1)
+
+    def get_additional_context(self, objects, *args, **kwargs):
+        from workshops.util import match_notification_email, human_daterange
+
+        # prepare context
+        context = dict()
+
+        # current design allows for creating a response when there's no connected
+        # event
+        event = objects.get("event")
+        request = objects.get("request")
+
+        context["request"] = request
+
+        if event:
+            # refresh related event if it exists
+            event.refresh_from_db()
+            context["workshop"] = event
+            context["workshop_main_type"] = None
+            tmp = event.tags.carpentries().first()
+            if tmp:
+                context["workshop_main_type"] = tmp.name
+            context["dates"] = human_daterange(event.start, event.end)
+            context["workshop_host"] = event.host
+            context["regional_coordinator_email"] = list(
+                match_notification_email(event)
+            )
+
+            task_emails = [
+                task.person.email
+                for task in event.task_set.filter(
+                    role__name__in=["host", "instructor"]
+                ).order_by("role__name")
+            ]
+            context["all_emails"] = list(filter(bool, task_emails))
+
+            context["assignee"] = (
+                event.assigned_to.full_name
+                if event.assigned_to
+                else "Regional Coordinator"
+            )
+            context["tags"] = list(event.tags.values_list("name", flat=True))
+
+        else:
+            context["assignee"] = (
+                request.assigned_to.full_name
+                if request.assigned_to
+                else "Regional Coordinator"
+            )
+
+        return context
