@@ -17,51 +17,54 @@ from workshops.models import (
 
 
 class AwardPersonSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source='person.full_name')
-    user = serializers.CharField(source='person.username')
+    name = serializers.CharField(source="person.full_name")
+    user = serializers.CharField(source="person.username")
 
     class Meta:
         model = Award
-        fields = ('name', 'user', 'awarded')
+        fields = ("name", "user", "awarded")
 
 
 class PersonUsernameSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source='full_name')
-    user = serializers.CharField(source='username')
+    name = serializers.CharField(source="full_name")
+    user = serializers.CharField(source="username")
 
     class Meta:
         model = Person
-        fields = ('name', 'user', )
+        fields = (
+            "name",
+            "user",
+        )
 
 
 class PersonNameEmailUsernameSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source='full_name')
+    name = serializers.CharField(source="full_name")
 
     class Meta:
         model = Person
-        fields = ('name', 'email', 'username')
+        fields = ("name", "email", "username")
 
 
 class PersonNameSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source='full_name')
+    name = serializers.CharField(source="full_name")
 
     class Meta:
         model = Person
-        fields = ('name', )
+        fields = ("name",)
 
 
 class ExportBadgesSerializer(serializers.ModelSerializer):
-    persons = AwardPersonSerializer(many=True, source='award_set')
+    persons = AwardPersonSerializer(many=True, source="award_set")
 
     class Meta:
         model = Badge
-        fields = ('name', 'persons')
+        fields = ("name", "persons")
 
 
 class BadgeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Badge
-        fields = ('name', 'title', 'criteria')
+        fields = ("name", "title", "criteria")
 
 
 class ExportBadgesByPersonSerializer(serializers.ModelSerializer):
@@ -69,46 +72,54 @@ class ExportBadgesByPersonSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Person
-        fields = ('username', 'personal', 'middle', 'family', 'email',
-                  'badges')
+        fields = ("username", "personal", "middle", "family", "email", "badges")
 
 
 class ExportInstructorLocationsSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source='fullname')
-    instructors = PersonUsernameSerializer(many=True,
-                                           source='public_instructor_set')
+    name = serializers.CharField(source="fullname")
+    instructors = PersonUsernameSerializer(many=True, source="public_instructor_set")
 
     class Meta:
         model = Airport
-        fields = ('name', 'latitude', 'longitude', 'instructors', 'country')
+        fields = ("name", "latitude", "longitude", "instructors", "country")
 
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
-        fields = ('name', )
+        fields = ("name",)
 
 
 class ExportEventSerializer(serializers.ModelSerializer):
-    humandate = serializers.CharField(source='human_readable_date')
+    humandate = serializers.CharField(source="human_readable_date")
     country = serializers.CharField()
     start = serializers.DateField(format=None)
     end = serializers.DateField(format=None)
-    url = serializers.URLField(source='website_url')
-    eventbrite_id = serializers.CharField(source='reg_key')
+    url = serializers.URLField(source="website_url")
+    eventbrite_id = serializers.CharField(source="reg_key")
     tags = TagSerializer(many=True)
 
     class Meta:
         model = Event
         fields = (
-            'slug', 'start', 'end', 'url', 'humandate', 'contact', 'country',
-            'venue', 'address', 'latitude', 'longitude', 'eventbrite_id',
-            'tags',
+            "slug",
+            "start",
+            "end",
+            "url",
+            "humandate",
+            "contact",
+            "country",
+            "venue",
+            "address",
+            "latitude",
+            "longitude",
+            "eventbrite_id",
+            "tags",
         )
 
 
 class WorkshopsOverTimeSerializer(serializers.Serializer):
-    date = serializers.DateField(format=None, source='start')
+    date = serializers.DateField(format=None, source="start")
     count = serializers.IntegerField()
 
 
@@ -119,9 +130,9 @@ class InstructorsOverTimeSerializer(serializers.Serializer):
 
 class InstructorNumTaughtSerializer(serializers.Serializer):
     person = serializers.HyperlinkedRelatedField(
-        read_only=True, view_name='api:person-detail', lookup_field='pk',
-        source='*')
-    name = serializers.CharField(source='full_name')
+        read_only=True, view_name="api:person-detail", lookup_field="pk", source="*"
+    )
+    name = serializers.CharField(source="full_name")
     country = serializers.CharField()
     num_taught_SWC = serializers.IntegerField()
     num_taught_DC = serializers.IntegerField()
@@ -131,14 +142,19 @@ class InstructorNumTaughtSerializer(serializers.Serializer):
 
 
 class InstructorsByTimePeriodSerializer(serializers.ModelSerializer):
-    event_slug = serializers.CharField(source='event.slug')
-    person_name = serializers.CharField(source='person.full_name')
-    person_email = serializers.EmailField(source='person.email')
+    event_slug = serializers.CharField(source="event.slug")
+    person_name = serializers.CharField(source="person.full_name")
+    person_email = serializers.EmailField(source="person.email")
     num_taught = serializers.IntegerField()
 
     class Meta:
         model = Task
-        fields = ('event_slug', 'person_name', 'person_email', 'num_taught', )
+        fields = (
+            "event_slug",
+            "person_name",
+            "person_email",
+            "num_taught",
+        )
 
 
 # ----------------------
@@ -151,7 +167,7 @@ class OrganizationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Organization
-        fields = ('domain', 'fullname', 'country')
+        fields = ("domain", "fullname", "country")
 
 
 class AirportSerializer(serializers.ModelSerializer):
@@ -159,67 +175,83 @@ class AirportSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Airport
-        fields = ('iata', 'fullname', 'country', 'latitude', 'longitude')
+        fields = ("iata", "fullname", "country", "latitude", "longitude")
 
 
 class AwardSerializer(serializers.ModelSerializer):
-    badge = serializers.SlugRelatedField(
-        many=False, read_only=True, slug_field='name')
+    badge = serializers.SlugRelatedField(many=False, read_only=True, slug_field="name")
     event = serializers.HyperlinkedRelatedField(
-        read_only=True, view_name='api:event-detail', lookup_field='slug')
+        read_only=True, view_name="api:event-detail", lookup_field="slug"
+    )
 
     class Meta:
         model = Award
-        fields = ('badge', 'awarded', 'event')
+        fields = ("badge", "awarded", "event")
 
 
 class PersonSerializer(serializers.ModelSerializer):
     airport = serializers.HyperlinkedRelatedField(
-        read_only=True, view_name='api:airport-detail', lookup_field='iata')
+        read_only=True, view_name="api:airport-detail", lookup_field="iata"
+    )
     country = serializers.CharField()
-    lessons = serializers.SlugRelatedField(
-        many=True, read_only=True, slug_field='name')
-    domains = serializers.SlugRelatedField(
-        many=True, read_only=True, slug_field='name')
-    badges = serializers.SlugRelatedField(
-        many=True, read_only=True, slug_field='name')
+    lessons = serializers.SlugRelatedField(many=True, read_only=True, slug_field="name")
+    domains = serializers.SlugRelatedField(many=True, read_only=True, slug_field="name")
+    badges = serializers.SlugRelatedField(many=True, read_only=True, slug_field="name")
     awards = serializers.HyperlinkedIdentityField(
-        view_name='api:person-awards-list',
-        lookup_field='pk',
-        lookup_url_kwarg='person_pk',
+        view_name="api:person-awards-list",
+        lookup_field="pk",
+        lookup_url_kwarg="person_pk",
     )
     tasks = serializers.HyperlinkedIdentityField(
-        view_name='api:person-tasks-list',
-        lookup_field='pk',
-        lookup_url_kwarg='person_pk',
+        view_name="api:person-tasks-list",
+        lookup_field="pk",
+        lookup_url_kwarg="person_pk",
     )
 
     class Meta:
         model = Person
         fields = (
-            'username', 'personal', 'middle', 'family', 'email',
-            'secondary_email',
-            'gender', 'gender_other',
-            'may_contact', 'publish_profile', 'lesson_publication_consent',
-            'data_privacy_agreement',
-            'airport', 'country',
-            'github', 'twitter', 'url', 'orcid',
-            'affiliation', 'occupation',
-            'badges', 'lessons', 'languages', 'domains', 'awards', 'tasks',
+            "username",
+            "personal",
+            "middle",
+            "family",
+            "email",
+            "secondary_email",
+            "gender",
+            "gender_other",
+            "may_contact",
+            "publish_profile",
+            "lesson_publication_consent",
+            "data_privacy_agreement",
+            "airport",
+            "country",
+            "github",
+            "twitter",
+            "url",
+            "orcid",
+            "affiliation",
+            "occupation",
+            "badges",
+            "lessons",
+            "languages",
+            "domains",
+            "awards",
+            "tasks",
         )
 
 
 class TaskSerializer(serializers.ModelSerializer):
     event = serializers.HyperlinkedRelatedField(
-        read_only=True, view_name='api:event-detail', lookup_field='slug')
+        read_only=True, view_name="api:event-detail", lookup_field="slug"
+    )
     person = serializers.HyperlinkedRelatedField(
-        read_only=True, view_name='api:person-detail')
-    role = serializers.SlugRelatedField(
-        many=False, read_only=True, slug_field='name')
+        read_only=True, view_name="api:person-detail"
+    )
+    role = serializers.SlugRelatedField(many=False, read_only=True, slug_field="name")
 
     class Meta:
         model = Task
-        fields = ('event', 'person', 'role')
+        fields = ("event", "person", "role")
 
 
 class EventSerializer(serializers.ModelSerializer):
@@ -228,95 +260,138 @@ class EventSerializer(serializers.ModelSerializer):
     end = serializers.DateField(format=None)
 
     host = serializers.HyperlinkedRelatedField(
-        read_only=True, view_name='api:organization-detail', lookup_field='domain')
+        read_only=True, view_name="api:organization-detail", lookup_field="domain"
+    )
     administrator = serializers.HyperlinkedRelatedField(
-        read_only=True, view_name='api:organization-detail', lookup_field='domain')
-    tags = serializers.SlugRelatedField(
-        many=True, read_only=True, slug_field='name')
+        read_only=True, view_name="api:organization-detail", lookup_field="domain"
+    )
+    tags = serializers.SlugRelatedField(many=True, read_only=True, slug_field="name")
     tasks = serializers.HyperlinkedIdentityField(
-        view_name='api:event-tasks-list',
-        lookup_field='slug',
-        lookup_url_kwarg='event_slug',
+        view_name="api:event-tasks-list",
+        lookup_field="slug",
+        lookup_url_kwarg="event_slug",
     )
     assigned_to = serializers.HyperlinkedRelatedField(
-        read_only=True, view_name='api:person-detail')
+        read_only=True, view_name="api:person-detail"
+    )
     attendance = serializers.IntegerField()
 
     class Meta:
         model = Event
         fields = (
-            'slug', 'completed', 'start', 'end', 'host', 'administrator',
-            'tags', 'website_url', 'reg_key',
-            'attendance', 'contact', 'country', 'venue', 'address',
-            'latitude', 'longitude', 'tasks', 'assigned_to',
+            "slug",
+            "completed",
+            "start",
+            "end",
+            "host",
+            "administrator",
+            "tags",
+            "website_url",
+            "reg_key",
+            "attendance",
+            "contact",
+            "country",
+            "venue",
+            "address",
+            "latitude",
+            "longitude",
+            "tasks",
+            "assigned_to",
         )
 
 
 class TrainingRequestSerializer(serializers.ModelSerializer):
-    state = serializers.CharField(source='get_state_display')
-    domains = serializers.SlugRelatedField(
-        many=True, read_only=True, slug_field='name')
+    state = serializers.CharField(source="get_state_display")
+    domains = serializers.SlugRelatedField(many=True, read_only=True, slug_field="name")
     previous_involvement = serializers.SlugRelatedField(
-        many=True, read_only=True, slug_field='name')
-    previous_training = serializers.CharField(
-        source='get_previous_training_display')
+        many=True, read_only=True, slug_field="name"
+    )
+    previous_training = serializers.CharField(source="get_previous_training_display")
     previous_experience = serializers.CharField(
-        source='get_previous_experience_display')
+        source="get_previous_experience_display"
+    )
     programming_language_usage_frequency = serializers.CharField(
-        source='get_programming_language_usage_frequency_display')
+        source="get_programming_language_usage_frequency_display"
+    )
     teaching_frequency_expectation = serializers.CharField(
-        source='get_teaching_frequency_expectation_display')
+        source="get_teaching_frequency_expectation_display"
+    )
     max_travelling_frequency = serializers.CharField(
-        source='get_max_travelling_frequency_display')
+        source="get_max_travelling_frequency_display"
+    )
 
     class Meta:
         model = TrainingRequest
         fields = (
-            'created_at', 'last_updated_at', 'state',
-            'review_process', 'group_name',
-            'personal', 'middle', 'family', 'email', 'secondary_email',
-            'github', 'occupation', 'occupation_other', 'affiliation',
-            'location', 'country', 'underresourced', 'underrepresented',
-            'underrepresented_details',
-            'domains', 'domains_other', 'nonprofit_teaching_experience',
-            'previous_involvement', 'previous_training',
-            'previous_training_other', 'previous_training_explanation',
-            'previous_experience', 'previous_experience_other',
-            'previous_experience_explanation',
-            'programming_language_usage_frequency',
-            'teaching_frequency_expectation',
-            'teaching_frequency_expectation_other',
-            'max_travelling_frequency', 'max_travelling_frequency_other',
-            'reason', 'user_notes',
-            'training_completion_agreement', 'workshop_teaching_agreement',
-            'data_privacy_agreement', 'code_of_conduct_agreement',
+            "created_at",
+            "last_updated_at",
+            "state",
+            "review_process",
+            "group_name",
+            "personal",
+            "middle",
+            "family",
+            "email",
+            "secondary_email",
+            "github",
+            "occupation",
+            "occupation_other",
+            "affiliation",
+            "location",
+            "country",
+            "underresourced",
+            "underrepresented",
+            "underrepresented_details",
+            "domains",
+            "domains_other",
+            "nonprofit_teaching_experience",
+            "previous_involvement",
+            "previous_training",
+            "previous_training_other",
+            "previous_training_explanation",
+            "previous_experience",
+            "previous_experience_other",
+            "previous_experience_explanation",
+            "programming_language_usage_frequency",
+            "teaching_frequency_expectation",
+            "teaching_frequency_expectation_other",
+            "max_travelling_frequency",
+            "max_travelling_frequency_other",
+            "reason",
+            "user_notes",
+            "training_completion_agreement",
+            "workshop_teaching_agreement",
+            "data_privacy_agreement",
+            "code_of_conduct_agreement",
         )
 
 
 class TrainingRequestWithPersonSerializer(TrainingRequestSerializer):
-    person = serializers.SlugRelatedField(many=False, read_only=True,
-                                          slug_field='full_name')
-    person_id = serializers.PrimaryKeyRelatedField(many=False, read_only=True,
-                                                   source='person')
+    person = serializers.SlugRelatedField(
+        many=False, read_only=True, slug_field="full_name"
+    )
+    person_id = serializers.PrimaryKeyRelatedField(
+        many=False, read_only=True, source="person"
+    )
     domains = serializers.SerializerMethodField()
     previous_involvement = serializers.SerializerMethodField()
     awards = serializers.SerializerMethodField()
     training_tasks = serializers.SerializerMethodField()
 
     def get_domains(self, obj):
-        return ", ".join(map(lambda x: getattr(x, 'name'),
-                             obj.domains.all()))
+        return ", ".join(map(lambda x: getattr(x, "name"), obj.domains.all()))
 
     def get_previous_involvement(self, obj):
-        return ", ".join(map(lambda x: getattr(x, 'name'),
-                             obj.previous_involvement.all()))
+        return ", ".join(
+            map(lambda x: getattr(x, "name"), obj.previous_involvement.all())
+        )
 
     def get_awards(self, obj):
         if obj.person:
             return ", ".join(
                 map(
                     lambda x: "{} {:%Y-%m-%d}".format(x.badge.name, x.awarded),
-                              obj.person.award_set.all()
+                    obj.person.award_set.all(),
                 )
             )
         else:
@@ -324,66 +399,88 @@ class TrainingRequestWithPersonSerializer(TrainingRequestSerializer):
 
     def get_training_tasks(self, obj):
         if obj.person:
-            return ", ".join(
-                map(lambda x: x.event.slug, obj.person.training_tasks)
-            )
+            return ", ".join(map(lambda x: x.event.slug, obj.person.training_tasks))
         else:
             return ""
 
     class Meta:
         model = TrainingRequest
         fields = (
-            'created_at', 'last_updated_at', 'state',
-            'person', 'person_id', 'awards', 'training_tasks',
-            'review_process', 'group_name',
-            'personal', 'middle', 'family',
-            'email', 'secondary_email', 'github', 'underrepresented',
-            'underrepresented_details',
-            'occupation', 'occupation_other', 'affiliation',
-            'location', 'country', 'underresourced',
-            'domains', 'domains_other', 'nonprofit_teaching_experience',
-            'previous_involvement', 'previous_training',
-            'previous_training_other', 'previous_training_explanation',
-            'previous_experience', 'previous_experience_other',
-            'previous_experience_explanation',
-            'programming_language_usage_frequency',
-            'teaching_frequency_expectation',
-            'teaching_frequency_expectation_other',
-            'max_travelling_frequency', 'max_travelling_frequency_other',
-            'reason', 'user_notes',
-            'training_completion_agreement', 'workshop_teaching_agreement',
-            'data_privacy_agreement', 'code_of_conduct_agreement',
+            "created_at",
+            "last_updated_at",
+            "state",
+            "person",
+            "person_id",
+            "awards",
+            "training_tasks",
+            "review_process",
+            "group_name",
+            "personal",
+            "middle",
+            "family",
+            "email",
+            "secondary_email",
+            "github",
+            "underrepresented",
+            "underrepresented_details",
+            "occupation",
+            "occupation_other",
+            "affiliation",
+            "location",
+            "country",
+            "underresourced",
+            "domains",
+            "domains_other",
+            "nonprofit_teaching_experience",
+            "previous_involvement",
+            "previous_training",
+            "previous_training_other",
+            "previous_training_explanation",
+            "previous_experience",
+            "previous_experience_other",
+            "previous_experience_explanation",
+            "programming_language_usage_frequency",
+            "teaching_frequency_expectation",
+            "teaching_frequency_expectation_other",
+            "max_travelling_frequency",
+            "max_travelling_frequency_other",
+            "reason",
+            "user_notes",
+            "training_completion_agreement",
+            "workshop_teaching_agreement",
+            "data_privacy_agreement",
+            "code_of_conduct_agreement",
         )
 
 
 class TrainingRequestForManualScoringSerializer(TrainingRequestSerializer):
-    request_id = serializers.IntegerField(source='pk')
+    request_id = serializers.IntegerField(source="pk")
 
     class Meta:
         model = TrainingRequest
         fields = (
-            'request_id',
-            'score_manual',
-            'score_notes',
-            'review_process',
-            'group_name',
-            'personal',
-            'middle',
-            'family',
-            'affiliation',
-            'nonprofit_teaching_experience',
-            'previous_training',
-            'previous_training_other',
-            'previous_training_explanation',
-            'previous_experience',
-            'previous_experience_other',
-            'previous_experience_explanation',
-            'teaching_frequency_expectation',
-            'teaching_frequency_expectation_other',
-            'max_travelling_frequency',
-            'max_travelling_frequency_other',
-            'reason',
-            'user_notes',
+            "request_id",
+            "score_manual",
+            "score_notes",
+            "review_process",
+            "group_name",
+            "personal",
+            "middle",
+            "family",
+            "affiliation",
+            "nonprofit_teaching_experience",
+            "previous_training",
+            "previous_training_other",
+            "previous_training_explanation",
+            "previous_experience",
+            "previous_experience_other",
+            "previous_experience_explanation",
+            "teaching_frequency_expectation",
+            "teaching_frequency_expectation_other",
+            "max_travelling_frequency",
+            "max_travelling_frequency_other",
+            "reason",
+            "user_notes",
         )
 
 
@@ -397,8 +494,16 @@ class EventSerializerSimplified(EventSerializer):
     class Meta:
         model = Event
         fields = (
-            'slug', 'start', 'end', 'tags', 'website_url', 'venue',
-            'address', 'country', 'latitude', 'longitude',
+            "slug",
+            "start",
+            "end",
+            "tags",
+            "website_url",
+            "venue",
+            "address",
+            "country",
+            "latitude",
+            "longitude",
         )
 
 
@@ -410,62 +515,88 @@ class TrainingRequirementSerializer(serializers.ModelSerializer):
     class Meta:
         model = TrainingRequirement
         fields = (
-            'name', 'url_required', 'event_required',
+            "name",
+            "url_required",
+            "event_required",
         )
 
 
 class TrainingProgressSerializer(serializers.ModelSerializer):
     requirement = TrainingRequirementSerializer(many=False, read_only=True)
-    state = serializers.CharField(source='get_state_display')
+    state = serializers.CharField(source="get_state_display")
     event = EventSerializerSimplified(many=False, read_only=True)
     evaluated_by = PersonNameSerializer(many=False, read_only=True)
 
     class Meta:
         model = TrainingProgress
         fields = (
-            'created_at', 'last_updated_at',
-            'requirement', 'state', 'discarded',
-            'evaluated_by', 'event', 'url',
+            "created_at",
+            "last_updated_at",
+            "requirement",
+            "state",
+            "discarded",
+            "evaluated_by",
+            "event",
+            "url",
         )
 
 
 class TaskSerializerNoPerson(TaskSerializer):
     event = EventSerializerSimplified(many=False, read_only=True)
-    role = serializers.SlugRelatedField(
-        many=False, read_only=True, slug_field='name')
+    role = serializers.SlugRelatedField(many=False, read_only=True, slug_field="name")
 
     class Meta:
         model = Task
-        fields = ('event', 'role')
+        fields = ("event", "role")
 
 
 class PersonSerializerAllData(PersonSerializer):
     airport = AirportSerializer(many=False, read_only=True)
     badges = BadgeSerializer(many=True, read_only=True)
-    awards = AwardSerializerExpandEvent(many=True, read_only=True, source='award_set')
-    tasks = TaskSerializerNoPerson(many=True, read_only=True,
-                                   source='task_set')
+    awards = AwardSerializerExpandEvent(many=True, read_only=True, source="award_set")
+    tasks = TaskSerializerNoPerson(many=True, read_only=True, source="task_set")
     languages = serializers.SlugRelatedField(
-        many=True, read_only=True, slug_field='name')
+        many=True, read_only=True, slug_field="name"
+    )
     training_requests = TrainingRequestSerializer(
-        many=True, read_only=True, source='trainingrequest_set')
+        many=True, read_only=True, source="trainingrequest_set"
+    )
     training_progresses = TrainingProgressSerializer(
-        many=True, read_only=True, source='trainingprogress_set')
+        many=True, read_only=True, source="trainingprogress_set"
+    )
 
     class Meta:
         model = Person
         fields = (
-            'username', 'personal', 'middle', 'family', 'email',
-            'secondary_email',
-            'gender', 'gender_other',
-            'may_contact', 'publish_profile', 'lesson_publication_consent',
-            'data_privacy_agreement',
-            'airport', 'country',
-            'github', 'twitter', 'url', 'orcid',
-            'affiliation', 'occupation',
-            'user_notes',
-            'badges', 'lessons', 'languages', 'domains', 'awards', 'tasks',
-            'training_requests', 'training_progresses',
+            "username",
+            "personal",
+            "middle",
+            "family",
+            "email",
+            "secondary_email",
+            "gender",
+            "gender_other",
+            "may_contact",
+            "publish_profile",
+            "lesson_publication_consent",
+            "data_privacy_agreement",
+            "airport",
+            "country",
+            "github",
+            "twitter",
+            "url",
+            "orcid",
+            "affiliation",
+            "occupation",
+            "user_notes",
+            "badges",
+            "lessons",
+            "languages",
+            "domains",
+            "awards",
+            "tasks",
+            "training_requests",
+            "training_progresses",
         )
 
 
@@ -473,16 +604,16 @@ class EmailTemplateSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmailTemplate
         fields = [
-            'id',
-            'active',
-            'created_at',
-            'last_updated_at',
-            'slug',
-            'subject',
-            'to_header',
-            'from_header',
-            'cc_header',
-            'bcc_header',
-            'reply_to_header',
-            'body_template',
+            "id",
+            "active",
+            "created_at",
+            "last_updated_at",
+            "slug",
+            "subject",
+            "to_header",
+            "from_header",
+            "cc_header",
+            "bcc_header",
+            "reply_to_header",
+            "body_template",
         ]
