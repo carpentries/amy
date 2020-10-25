@@ -486,5 +486,3 @@ class EmailTemplateSerializer(serializers.ModelSerializer):
             'reply_to_header',
             'body_template',
         ]
-        lookup_field = "slug"
-        extra_kwargs = {"url": {"lookup_field": "slug"}}

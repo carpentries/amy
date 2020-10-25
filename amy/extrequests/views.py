@@ -29,7 +29,7 @@ from autoemails.actions import (
     PostWorkshopAction,
 )
 from autoemails.base_views import ActionManageMixin
-from autoemails.forms import EmailEditForm
+from autoemails.forms import GenericEmailScheduleForm
 from autoemails.models import Trigger, EmailTemplate
 from extrequests.base_views import AMYCreateAndFetchObjectView
 from extrequests.filters import (
@@ -138,8 +138,11 @@ class WorkshopRequestDetails(OnlyForAdminsMixin, AMYDetailView):
 
         context['person_lookup_form'] = person_lookup_form
 
-        context['templates'] = EmailTemplate.objects.filter(slug__startswith="request-review", active=True).order_by("slug")
-        context['template_form'] = EmailEditForm()
+        context['templates'] = EmailTemplate.objects.filter(
+            slug__startswith="request-review",
+            active=True
+        ).order_by("slug")
+        context['template_form'] = GenericEmailScheduleForm()
         return context
 
 

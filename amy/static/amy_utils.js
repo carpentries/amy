@@ -265,9 +265,21 @@ $(document).ready(function() {
     let modal = $(this);
 
     $.get("/api/v1/emailtemplates/" + template_slug, {}, function(data) {
+      modal.find(".modal-body #email_slug").text(data.slug);
+      modal.find(".modal-body #email_subject").text(data.subject);
+
+      // form below
+      modal.find(".modal-body #id_slug").val(data.slug);
       modal.find(".modal-body #id_subject").val(data.subject);
-      modal.find(".modal-body #id_template").text(data.body_template);
-      // TODO: force reload of markdownx
+      modal.find(".modal-body #id_to_header").val(data.to_header);
+      modal.find(".modal-body #id_from_header").val(data.from_header);
+      modal.find(".modal-body #id_cc_header").val(data.cc_header);
+      modal.find(".modal-body #id_bcc_header").val(data.bcc_header);
+      modal.find(".modal-body #id_reply_to_header").val(data.reply_to_header);
+      modal.find(".modal-body #id_body_template").text(data.body_template);
+
+      // force reload of markdownx
+      modal.find(".modal-body #id_body_template").trigger("input");
     });
   })
 
