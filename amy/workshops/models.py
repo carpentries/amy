@@ -529,9 +529,8 @@ class Person(
     may_contact = models.BooleanField(
         default=True,
         help_text="Allow to contact from The Carpentries according to the "
-        '<a href="https://docs.carpentries.org/'
-        'topic_folders/policies/privacy.html" target="_blank">'
-        "Privacy Policy</a>.",
+        '<a href="https://docs.carpentries.org/topic_folders/policies/privacy.html" '
+        'target="_blank" rel="noreferrer">Privacy Policy</a>.',
     )
     publish_profile = models.BooleanField(
         default=False,
