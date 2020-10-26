@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.views.decorators.http import require_POST
 import django_rq
 from workshops.models import WorkshopRequest
+from workshops.util import admin_required
 
 from .actions import GenericAction
 from .forms import GenericEmailScheduleForm
@@ -22,6 +23,7 @@ redis_connection = django_rq.get_connection("default")
 
 
 @require_POST
+@admin_required
 def generic_schedule_email(request, pk):
     """
     Generic view for scheduling an email to be sent.
