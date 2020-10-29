@@ -143,8 +143,8 @@ class GroupNameFieldTestsBase(TestBase):
 class WhenGroupNameIsPrefilledIn(GroupNameFieldTestsBase):
     url_suffix = '?group=asdf qwer'
 
-    def test_then_the_group_name_field_should_be_not_displayed(self):
-        self.assertEqual(self.form['group_name'].attrs.get('type'), 'hidden')
+    def test_then_the_group_name_field_should_be_displayed(self):
+        self.assertNotEqual(self.form['group_name'].attrs.get('type'), 'hidden')
 
     def test_then_the_prefilled_in_value_should_be_used(self):
         self.fillin_and_submit()
