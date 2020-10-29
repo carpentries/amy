@@ -92,9 +92,6 @@ class TrainingRequestForm(forms.ModelForm):
             initial['group_name'] = initial_group_name
             initial['review_process'] = 'preapproved'
         super().__init__(*args, initial=initial, **kwargs)
-        if initial_group_name is not None:
-            field = self.fields['group_name']
-            field.widget = field.hidden_widget()
 
         # set up a layout object for the helper
         self.helper.layout = self.helper.build_default_layout(self)

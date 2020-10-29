@@ -31,4 +31,9 @@
     </div>
     {% endfor %}
   </div>
+  {% for option in field %}
+    <script>
+      $('#collapse_{{ field.auto_id }}_{{ forloop.counter }}').collapse('{% if option.data.attrs.checked %}show{% else %}hide{% endif %}');
+    </script>
+  {% endfor %}
 </div>
