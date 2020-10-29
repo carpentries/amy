@@ -12,7 +12,7 @@ would welcome an opportunity to speak with you.
 
 A copy of your request is included below for your reference.
 
-ubmission date: {{ object.created_at }}
+Submission date: {{ object.created_at }}
 Application Type: {{ object.get_review_process_display|default:"---" }}
 Registration Code: {{ object.group_name|default:"&mdash;" }}
 Person: {{object.personal}} {{object.middle}} {{object.family}} &lt;{{object.email}}&gt;
