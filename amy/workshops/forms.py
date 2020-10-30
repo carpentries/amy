@@ -477,6 +477,7 @@ class EventForm(forms.ModelForm):
             Field("start", placeholder="YYYY-MM-DD"),
             Field("end", placeholder="YYYY-MM-DD"),
             "host",
+            "public_status",
             "administrator",
             "assigned_to",
             "tags",
@@ -487,7 +488,6 @@ class EventForm(forms.ModelForm):
             "reg_key",
             "manual_attendance",
             "contact",
-            "public_status",
             Div(
                 Div(HTML("Location details"), css_class="card-header"),
                 Div(

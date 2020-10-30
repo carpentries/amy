@@ -9,6 +9,9 @@
   <tr class="{% if event.start > event.end %}table-danger{% endif %}"><th>Start date:</th><td colspan="2">{{ event.start|default:"&mdash;" }}</td></tr>
   <tr class="{% if event.start > event.end %}table-danger{% endif %}"><th>End date: </th><td colspan="2">{{ event.end|default:"&mdash;" }}</td></tr>
   <tr><th>Host:</th><td colspan="2"><a href="{% url 'organization_details' event.host.domain %}">{{ event.host }}</a></td></tr>
+  <tr><th>Is this workshop public?<br><small>Public workshops will show up in public Carpentries feeds.
+  </small></th><td colspan="2">{{ event.get_public_status_display }}</td></tr>
+
   <tr><th>Administrator:</th><td colspan="2">{% if event.administrator %}<a href="{{ event.administrator.get_absolute_url }}">{{ event.administrator }}</a>{% else %}&mdash;{% endif %}</td></tr>
   <tr><th>Tags:</th><td colspan="2">{% for tag in event.tags.all %}{% include "includes/tag.html" with tag=tag %}{% endfor %}</td></tr>
   <tr><th>Curricula:</th><td colspan="2">{% for curriculum in event.curricula.all %}{% include "includes/curriculum.html" with curriculum=curriculum %}{% empty %}&mdash;{% endfor %}</td></tr>
@@ -64,7 +67,6 @@
       {% endif %}
     </td>
   </tr>
-  <tr><th>Is this workshop public?</th><td colspan="2">{{ event.get_public_status_display }}</td></tr>
   <tr><th>Related workshop request:</th>
     <td colspan="2">{% if event|one2one_exists:"workshoprequest" %}<a href="{{ event.workshoprequest.get_absolute_url }}">{{ event.workshoprequest }}</a>{% else %}&mdash;{% endif %}</td></tr>
   <tr><th>Related workshop inquiry:</th>
