@@ -1,5 +1,4 @@
-Template hierarchy
-==================
+# Template hierarchy
 
 Here's a description of base templates, which almost all the other templates
 inherit from.
