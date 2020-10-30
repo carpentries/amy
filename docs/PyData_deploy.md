@@ -2,26 +2,26 @@
 
  -  Export `AMY_ENABLE_PYDATA` environment variable.
 
-    ```sh
+```sh
     export AMY_ENABLE_PYDATA=true
-    ```
+```
 
- -  Export the username and password of a superuser of the conference site 
+ -  Export the username and password of a superuser of the conference site
     as environment variables.
 
-    ```sh
+```sh
     export AMY_PYDATA_USERNAME = "username"
     export AMY_PYDATA_PASSWORD = "password"
-    ```
+```
 
  -  Install fixtures from the `pydata/fixtures/` directory.
 
-    ```sh
+```sh
     python manage.py loaddata pydata/fixtures/*
-    ```
+```
 
  -  Ensure that all checks pass.
 
-    ```sh
+```sh
     python manage.py check
-    ```
+```
