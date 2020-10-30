@@ -1,0 +1,16 @@
+site_name: AMY documentation
+repo_url: https://github.com/carpentries/amy/
+theme: readthedocs
+nav:
+    - 'Home': 'index.md'
+    - 'User Guide': 'user_guide.md'
+    - 'Procedures': 'procedures.md'
+    - 'Database Structure': 'amy_database_structure.md'
+    - 'Template Hierarchy': 'template_hierarchy.md'
+    - 'Sending Mails': 'sending_mails.md'
+    - 'PyData Deploy': 'PyData_deploy.md'
+    - 'Design':
+        - 'Design': 'design/index.md'
+        - 'Database Models': 'design/database_models.md'
+        - 'Server Infrastructure': 'design/server_infrastructure.md'
+    - 'Releases': 'releases'
