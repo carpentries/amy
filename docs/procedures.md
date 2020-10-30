@@ -1,4 +1,6 @@
-# On the End of Each Milestone
+# Procedures
+
+## On the End of Each Milestone
 
 1.  Close milestone using [GitHub UI](https://github.com/carpentries/amy/milestones).
 
@@ -15,7 +17,7 @@
 5.  Write to <amy@lists.carpentries.org> mailing list.
     The suggested subject of the new thread is "[AMY] New release v2.X.Y".
 
-# Release Procedure
+## Release Procedure
 
 We assume that you want to release AMY v2.X.Y.
 
@@ -98,7 +100,7 @@ Execute the following commands on your local machine, not production.
         $ git push origin develop
 
 
-# Deployment Procedure - manual method
+## Deployment Procedure - manual method
 
 1.  Log into production:
 
@@ -174,7 +176,7 @@ Execute the following commands on your local machine, not production.
         $ exit
 
 
-# Deployment procedure using Ansible
+## Deployment procedure using Ansible
 
 If you have access to Ansible playbook files for AMY, you can automate
 deployment.
