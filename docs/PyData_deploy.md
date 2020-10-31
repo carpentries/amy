@@ -10,8 +10,8 @@
     as environment variables.
 
 ```sh
-    export AMY_PYDATA_USERNAME = "username"
-    export AMY_PYDATA_PASSWORD = "password"
+    export AMY_PYDATA_USERNAME="username"
+    export AMY_PYDATA_PASSWORD="password"
 ```
 
  -  Install fixtures from the `pydata/fixtures/` directory.
