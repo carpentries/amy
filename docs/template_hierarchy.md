@@ -9,6 +9,7 @@ All templates use [fluid container](https://getbootstrap.com/docs/4.1/layout/ove
 from [Bootstrap 4.1](https://getbootstrap.com/docs/4.1/).
 
 There are multiple types of views in AMY:
+
 * wide (e.g. 'Dashboard') -- `base_nav.html`,
 * wide with sidebar (e.g. 'All Events') -- `base_nav_sidebar.html`,
 * wide with two content columns (e.g. `EventRequest` accept view, rarely used) -- `base_nav_twocolumn.html`.
@@ -45,6 +46,7 @@ Django template blocks used in `base.html` template:
 
 Additionally there were created widgets to support some of the tedious
 components:
+
 * `assignment.html` displays a dropdown to change filtering events assigned to
   specific person (user, unassigned, or no filtering),
 * `assignment_modal.html` displays a modal "window" on the page; this window
