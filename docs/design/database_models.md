@@ -8,7 +8,7 @@ This document describes and summarizes roles of database models used in AMY
 Following classes are used to extend Django models with the same features:
 
 * `PermissionsMixin`: Django mechanism for extending custom user classes,
-see [documentation](https://docs.djangoproject.com/en/1.11/topics/auth/customizing/#custom-users-and-permissions).
+see [documentation](https://docs.djangoproject.com/en/2.2/topics/auth/customizing/#custom-users-and-permissions).
 * `AssignmentMixin`: adds `assigned_to` field to the model.
 * `ActiveMixin`: adds `active` boolean field to the model.
 * `CreatedUpdatedMixin`: adds `created_at` and `last_updated_at` datetime
