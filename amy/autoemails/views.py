@@ -6,9 +6,9 @@ from django.utils.html import format_html
 from django.shortcuts import get_object_or_404, redirect
 from django.views.decorators.http import require_POST
 import django_rq
+
 from workshops.models import WorkshopRequest
 from workshops.util import admin_required
-
 from .actions import GenericAction
 from .forms import GenericEmailScheduleForm
 from .models import EmailTemplate, Trigger

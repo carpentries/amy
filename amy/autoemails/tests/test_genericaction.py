@@ -4,7 +4,15 @@ from django.test import TestCase
 
 from autoemails.actions import GenericAction
 from autoemails.models import Trigger, EmailTemplate
-from workshops.models import Event, Organization, Tag, WorkshopRequest, Task, Person, Role
+from workshops.models import (
+    Event,
+    Organization,
+    Tag,
+    WorkshopRequest,
+    Task,
+    Person,
+    Role,
+)
 
 
 class TestGenericAction(TestCase):
