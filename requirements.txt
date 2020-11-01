@@ -40,4 +40,4 @@ croniter==0.3.30
 # faking Redis server
 fakeredis==1.2.1
 lupa==1.9
-cryptography==2.9
+cryptography==3.2
