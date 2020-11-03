@@ -2,8 +2,8 @@
   {% if object.state == 'p' %}
   <div class="btn-group float-left" role="group" aria-label="Accept or discard this {{ obj_name }}">
     <div class="btn-group" role="group">
-      <button type="button" id="btnGroupDrop1" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Accept this {{ obj_name }}</button>
-      <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+      <button type="button" id="btnAcceptDiscardGroup" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Accept this {{ obj_name }}</button>
+      <div class="dropdown-menu" aria-labelledby="btnAcceptDiscardGroup">
         {% if change_permission and add_event_permission %}
         <a href="{% url accept_event_URL object.pk %}" class="dropdown-item">Accept and create a new event</a>
         {% else %}

@@ -3,8 +3,8 @@ from django.urls import reverse
 from django.utils.html import format_html
 from rq.exceptions import NoSuchJobError
 
-from autoemails.job import Job
-from autoemails.utils import (
+from .job import Job
+from .utils import (
     check_status,
     scheduled_execution_time,
 )

@@ -16,7 +16,6 @@ from faker import Faker
 from faker.providers import BaseProvider
 
 from extrequests.models import (
-    DataAnalysisLevel,
     DataVariant,
     WorkshopInquiryRequest,
     SelfOrganisedSubmission,
@@ -585,7 +584,6 @@ class Command(BaseCommand):
                 else ""
             )
 
-
             req = WorkshopRequest.objects.create(
                 state=choice(['p', 'd', 'a']),
                 data_privacy_agreement=randbool(0.5),
@@ -632,7 +630,7 @@ class Command(BaseCommand):
                 institution_restrictions_other=institution_restrictions_other,
 
                 carpentries_info_source_other='',
-                user_notes = self.faker.sentence(),
+                user_notes=self.faker.sentence(),
             )
 
             req.requested_workshop_types.set(sample(curricula))
@@ -734,7 +732,7 @@ class Command(BaseCommand):
                 institution_restrictions_other=institution_restrictions_other,
 
                 carpentries_info_source_other='',
-                user_notes = self.faker.sentence(),
+                user_notes=self.faker.sentence(),
             )
 
             req.routine_data.set(sample(DataVariant.objects.all()))
@@ -744,7 +742,6 @@ class Command(BaseCommand):
             req.requested_workshop_types.set(sample(curricula))
             req.carpentries_info_source.set(sample(InfoSource.objects.all()))
             req.save()
-
 
     def fake_selforganised_submissions(self, count=10):
         self.stdout.write('Generating {} fake '

@@ -154,3 +154,7 @@ form input[name=honeypot] {
 form .form-check label, form .checkbox label {
     display: block;
 }
+
+.markdownx.row .col textarea {
+    width: 100%;
+}

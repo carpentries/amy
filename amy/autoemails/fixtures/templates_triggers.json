@@ -1,4 +1,13 @@
 [
+  {
+    "model": "workshops.tag",
+    "pk": 15,
+    "fields": {
+      "name": "automated-email",
+      "details": "Only for EMAIL AUTOMATION",
+      "priority": 0
+    }
+  },
 {
   "model": "autoemails.emailtemplate",
   "pk": 1,
@@ -102,6 +111,74 @@
   }
 },
 {
+  "model": "autoemails.emailtemplate",
+  "pk": 7,
+  "fields": {
+    "active": true,
+    "created_at": "2020-09-13T12:24:13.469Z",
+    "last_updated_at": "2020-09-13T12:24:13.470Z",
+    "slug": "request-review1-less-than-2-months",
+    "subject": "Processed/Reviewed {% if workshop_main_type %}{{ workshop_main_type }}{% endif %} workshop at {{ workshop.venue }} {% if dates %} on {{ dates }}{% endif %}",
+    "to_header": "{{ request.email }}",
+    "from_header": "amy-no-reply@carpentries.org",
+    "cc_header": "",
+    "bcc_header": "amy-auto-emails@carpentries.org",
+    "reply_to_header": "{{ regional_coordinator_email.0 }}",
+    "body_template": "Hi {{ request.personal }},\r\n\r\nThank you! We have received your request for a Carpentries Workshop. We ask that you provide us 2-3 months advance notice of a workshop to allow sufficient time to organise a workshop. The dates you have provided are outside of our normal recruitment timeline. I will begin recruiting instructors immediately, however I cannot guarantee that we can secure instructors in time for your requested dates. Please let us know if you have flexibility with your dates.\r\n\r\nIf the instructors are confirmed, you will receive an introduction email that will explain the next steps. If instructors are not confirmed within 3 weeks, we will need to look at other dates.  Please let me know if you have any questions or concerns.\r\n\r\nBest, {{ assignee }}"
+  }
+},
+{
+  "model": "autoemails.emailtemplate",
+  "pk": 8,
+  "fields": {
+    "active": true,
+    "created_at": "2020-09-13T12:24:15.997Z",
+    "last_updated_at": "2020-09-13T12:24:15.997Z",
+    "slug": "request-review2-2-to-3-months",
+    "subject": "Processed/Reviewed {% if workshop_main_type %}{{ workshop_main_type }}{% endif %} workshop at {{ workshop.venue }} {% if dates %} on {{ dates }}{% endif %}",
+    "to_header": "{{ request.email }}",
+    "from_header": "amy-no-reply@carpentries.org",
+    "cc_header": "",
+    "bcc_header": "amy-auto-emails@carpentries.org",
+    "reply_to_header": "{{ regional_coordinator_email.0 }}",
+    "body_template": "Hi {{ request.personal }},\r\n\r\nThank you! We have received your request for a Carpentries Workshop. We will begin recruiting instructors immediately. Once they are confirmed, you will receive an introduction email that will explain the next steps. Please let me know if you have any questions or concerns.\r\n\r\nBest, {{ assignee }}"
+  }
+},
+{
+  "model": "autoemails.emailtemplate",
+  "pk": 9,
+  "fields": {
+    "active": true,
+    "created_at": "2020-09-13T12:24:19.017Z",
+    "last_updated_at": "2020-09-13T12:24:19.017Z",
+    "slug": "request-review3-over-3-months",
+    "subject": "Processed/Reviewed {% if workshop_main_type %}{{ workshop_main_type }}{% endif %} workshop at {{ workshop.venue }} {% if dates %} on {{ dates }}{% endif %}",
+    "to_header": "{{ request.email }}",
+    "from_header": "amy-no-reply@carpentries.org",
+    "cc_header": "",
+    "bcc_header": "amy-auto-emails@carpentries.org",
+    "reply_to_header": "{{ regional_coordinator_email.0 }}",
+    "body_template": "Hi {{ request.personal }},\r\n\r\nThank you! We have received your request for a Carpentries Workshop. We will begin recruiting instructors around { CHANGE ME: date_start_workshop - 2 months }. Once the instructors are confirmed we will let you know via email and we will explain the next steps. Please let me know if you have any questions or concerns.\r\n\r\nBest, {{ assignee }}"
+  }
+},
+{
+  "model": "autoemails.emailtemplate",
+  "pk": 10,
+  "fields": {
+    "active": true,
+    "created_at": "2020-09-14T20:35:29.650Z",
+    "last_updated_at": "2020-09-14T20:35:29.650Z",
+    "slug": "recruit-helpers",
+    "subject": "Time to Recruit Helpers for {% if workshop_main_type %}{{ workshop_main_type }}{% endif %} workshop at {{ workshop.venue }} {% if dates %} on {{ dates }}{% endif %}",
+    "to_header": "{# This gets overwritten anyway #}",
+    "from_header": "amy-no-reply@carpentries.org",
+    "cc_header": "",
+    "bcc_header": "",
+    "reply_to_header": "{{ regional_coordinator_email.0 }}",
+    "body_template": "Hi Everyone, \r\n\r\nWe know that there are several things to think about when preparing to teach a Carpentries workshop. With approximately 3 weeks until your {% if workshop_main_type %}{{ workshop_main_type }}{% endif %} workshop at {{ workshop.venue }} {% if dates %} on {{ dates }}{% endif %}, you should begin thinking about recruiting [helpers](https://docs.carpentries.org/topic_folders/hosts_instructors/hosts_instructors_checklist.html#helper-checklist). In order to assist you, we have developed text for you to use to recruit potential helpers. Remember, Helpers do not have to be affiliated with [The Carpentries](https://carpentries.org/).\r\n\r\n{% if \"online\" in tags %}\r\nBe sure to review the recommended ways to [utilise the Helpers](https://carpentries.org/online-workshop-recommendations/#instructional-roles) for online workshops.\r\n{% endif %}\r\n\r\nPlease let us know if you have any questions.\r\n{{ assignee }}"
+  }
+},
+{
   "model": "autoemails.trigger",
   "pk": 1,
   "fields": {
@@ -165,6 +242,39 @@
     "last_updated_at": "2020-08-15T14:30:16.081Z",
     "action": "ask-for-website",
     "template": 6
+  }
+},
+{
+  "model": "autoemails.trigger",
+  "pk": 7,
+  "fields": {
+    "active": true,
+    "created_at": "2020-10-25T18:33:29.042Z",
+    "last_updated_at": "2020-10-25T18:54:45.406Z",
+    "action": "workshop-request-response1",
+    "template": 7
+  }
+},
+{
+  "model": "autoemails.trigger",
+  "pk": 8,
+  "fields": {
+    "active": true,
+    "created_at": "2020-10-25T18:54:50.067Z",
+    "last_updated_at": "2020-10-25T18:54:50.067Z",
+    "action": "workshop-request-response2",
+    "template": 8
+  }
+},
+{
+  "model": "autoemails.trigger",
+  "pk": 9,
+  "fields": {
+    "active": true,
+    "created_at": "2020-10-25T18:54:55.628Z",
+    "last_updated_at": "2020-10-25T18:54:55.628Z",
+    "action": "workshop-request-response3",
+    "template": 9
   }
 }
 ]

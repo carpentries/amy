@@ -23,6 +23,8 @@ tasks_router = routers.NestedSimpleRouter(router, 'events', lookup='event')
 tasks_router.register('tasks', views.TaskViewSet, basename='event-tasks')
 router.register('organizations', views.OrganizationViewSet)
 router.register('airports', views.AirportViewSet)
+router.register('emailtemplates', views.EmailTemplateViewSet,
+                basename='emailtemplate')
 
 urlpatterns = [
     path('', views.ApiRoot.as_view(), name='root'),

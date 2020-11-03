@@ -2526,6 +2526,7 @@ class WorkshopRequest(
     HostResponsibilitiesMixin,
     InstructorAvailabilityMixin,
     EventLinkMixin,
+    RQJobsMixin,
     models.Model,
 ):
     location = models.CharField(
