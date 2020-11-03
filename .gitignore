@@ -45,3 +45,6 @@ worker_debug.log
 
 # Redis Docker local volume
 redis/*
+
+# mkdocs output folder
+site/

@@ -101,3 +101,11 @@ bumpversion :
 		sed -i "s/$(CURRENT)/$(NEXT)/" amy/workshops/__init__.py ; \
 		sed -i "s/$(CURRENT)/$(NEXT)/" package.json ; \
 	fi
+
+## build_docs      : build static docs in `site`
+build_docs :
+	mkdocs build
+
+## serve_docs      : serve docs at `localhost:8000`
+serve_docs :
+	mkdocs serve

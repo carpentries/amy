@@ -1,5 +1,4 @@
-Sending mails
-=============
+# Sending mails
 
 ## Command
 
