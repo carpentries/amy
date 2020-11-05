@@ -284,7 +284,6 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             "institution_department",
             "location",
             "country",
-            "workshop_listed",
             "online_inperson",
             "requested_workshop_types",
             "preferred_dates",
@@ -299,6 +298,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             "travel_expences_agreement",
             "institution_restrictions",
             "institution_restrictions_other",
+            "workshop_listed",
             "public_event",
             "public_event_other",
             "additional_contact",
@@ -315,7 +315,6 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             "preferred_dates": forms.DateInput(attrs={"class": "nopastdates"}),
             "institution_other_URL": forms.TextInput(),
             "country": Select2Widget,
-            "workshop_listed": forms.RadioSelect(),
             "online_inperson": forms.RadioSelect(),
             "language": Select2Widget,
             "number_attendees": forms.RadioSelect(),
@@ -326,6 +325,7 @@ class WorkshopRequestBaseForm(forms.ModelForm):
             "travel_expences_management": RadioSelectWithOther(
                 "travel_expences_management_other"
             ),
+            "workshop_listed": forms.RadioSelect(),
             "public_event": RadioSelectWithOther("public_event_other"),
             "institution_restrictions": RadioSelectWithOther(
                 "institution_restrictions_other"
@@ -667,7 +667,6 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
             "institution_department",
             "location",
             "country",
-            "workshop_listed",
             "online_inperson",
             # "your audience" section starts now
             "routine_data",
@@ -688,6 +687,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
             "travel_expences_agreement",
             "institution_restrictions",
             "institution_restrictions_other",
+            "workshop_listed",
             "public_event",
             "public_event_other",
             "additional_contact",
@@ -704,7 +704,6 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
             "preferred_dates": forms.DateInput(attrs={"class": "nopastdates"}),
             "institution_other_URL": forms.TextInput(),
             "country": Select2Widget,
-            "workshop_listed": forms.RadioSelect(),
             "online_inperson": forms.RadioSelect(),
             "language": Select2Widget,
             "number_attendees": forms.RadioSelect(),
@@ -713,6 +712,7 @@ class WorkshopInquiryRequestBaseForm(forms.ModelForm):
             "travel_expences_management": RadioSelectWithOther(
                 "travel_expences_management_other"
             ),
+            "workshop_listed": forms.RadioSelect(),
             "public_event": RadioSelectWithOther("public_event_other"),
             "institution_restrictions": RadioSelectWithOther(
                 "institution_restrictions_other"
@@ -1065,7 +1065,6 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
             "institution_other_name",
             "institution_other_URL",
             "institution_department",
-            "workshop_listed",
             "online_inperson",
             "workshop_format",
             "workshop_format_other",
@@ -1074,6 +1073,7 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
             "workshop_types_other_explain",
             "country",
             "language",
+            "workshop_listed",
             "public_event",
             "public_event_other",
             "additional_contact",
@@ -1086,12 +1086,12 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
             "institution_other_URL": forms.TextInput(),
             "workshop_url": forms.TextInput(),
             "country": Select2Widget,
-            "workshop_listed": forms.RadioSelect(),
             "online_inperson": forms.RadioSelect(),
             "language": Select2Widget,
             "workshop_format": RadioSelectWithOther(
                 "workshop_format_other", fake_required=True
             ),
+            "workshop_listed": forms.RadioSelect(),
             "public_event": RadioSelectWithOther("public_event_other"),
             "additional_contact": Select2TagWidget,
         }
