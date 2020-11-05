@@ -161,8 +161,6 @@ class Membership(models.Model):
         help_text="Unique registration code used for Eventbrite and trainee application."
         )
 
-
-
     def __str__(self):
         from workshops.util import human_daterange
 
@@ -1371,7 +1369,7 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
             self.latitude = -48.876667
             self.longitude = -123.393333
 
-        super(Event, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
 
 # ------------------------------------------------------------
