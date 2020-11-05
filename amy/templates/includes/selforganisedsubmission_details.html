@@ -32,7 +32,7 @@
 
     <tr><th>Online or Inperson:</th>
       <td>{{ object.online_inperson }}</td></tr>
-        
+
     <tr><th>Workshop format:</th>
         <td>
           {{ object.get_workshop_format_display }}
@@ -62,6 +62,8 @@
         <td>{{ object.country.name }} <img src="{{ object.country.flag }}" alt="{{ object.country }}" class="country-flag" /></td></tr>
     <tr><th>Workshop language:</th>
         <td>{{ object.language }}</td></tr>
+    <tr><th>Would you like to have this workshop listed on our websites?</th>
+        <td>{{ object.workshop_listed|yesno }}</td></tr>
     <tr><th>Is this workshop open to the public?</th>
         <td>
           {% if object.public_event %}

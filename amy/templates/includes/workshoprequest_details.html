@@ -84,6 +84,8 @@
           {{ object.institution_restrictions_other }}
           {% endif %}
         </td></tr>
+    <tr><th>Would you like to have this workshop listed on our websites?</th>
+        <td>{{ object.workshop_listed|yesno }}</td></tr>
     <tr><th>Is this workshop open to the public?</th>
         <td>
           {{ object.get_public_event_display }}
