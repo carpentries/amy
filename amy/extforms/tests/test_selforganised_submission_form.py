@@ -41,6 +41,7 @@ class TestSelfOrganisedSubmissionExternalForm(TestBase):
                 "data_privacy_agreement",
                 "code_of_conduct_agreement",
                 "host_responsibilities",
+                "workshop_listed",
                 "online_inperson",
                 "captcha",
             ]
