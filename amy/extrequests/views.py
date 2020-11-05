@@ -171,6 +171,12 @@ class WorkshopRequestAcceptEvent(
     context_other_object_name = "object"
     pk_url_kwarg = "request_id"
 
+    def get_initial(self):
+        listed = self.other_object.workshop_listed
+        return {
+            "public_status": "public" if listed else "private",
+        }
+
     def get_context_data(self, **kwargs):
         kwargs["title"] = "Accept and create a new event"
         return super().get_context_data(**kwargs)
@@ -287,6 +293,12 @@ class WorkshopInquiryAcceptEvent(
     queryset_other = WorkshopInquiryRequest.objects.filter(state="p")
     context_other_object_name = "object"
     pk_url_kwarg = "inquiry_id"
+
+    def get_initial(self):
+        listed = self.other_object.workshop_listed
+        return {
+            "public_status": "public" if listed else "private",
+        }
 
     def get_context_data(self, **kwargs):
         kwargs["title"] = "Accept and create a new event"
@@ -423,12 +435,14 @@ class SelfOrganisedSubmissionAcceptEvent(
         kwargs["show_lessons"] = False
 
         url = self.other_object.workshop_url.strip()
+        listed = self.other_object.workshop_listed
         data = {
             "url": url,
             "curricula": list(self.other_object.workshop_types.all()),
             "host": self.other_object.host_organization()
             or self.other_object.institution,
             "administrator": Organization.objects.get(domain="self-organized"),
+            "public_status": "public" if listed else "private",
         }
 
         if mix_match:
