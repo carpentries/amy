@@ -35,6 +35,8 @@ class TestSelfOrganisedSubmissionBaseForm(FormTestHelper, TestBase):
             "institution_other_URL": "magic.gov.uk",
             "workshop_format": "periodic",
             "workshop_format_other": "",
+            "start": date(2020, 11, 7),
+            "end": date(2020, 11, 8),
             "workshop_url": "",
             "workshop_types": [
                 Curriculum.objects.filter(active=True)
