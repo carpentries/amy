@@ -161,8 +161,6 @@ class Membership(models.Model):
         help_text="Unique registration code used for Eventbrite and trainee application."
         )
 
-
-
     def __str__(self):
         from workshops.util import human_daterange
 
@@ -1371,7 +1369,7 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
             self.latitude = -48.876667
             self.longitude = -123.393333
 
-        super(Event, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
 
 # ------------------------------------------------------------
@@ -2456,6 +2454,22 @@ class CommonRequest(SecondaryEmailMixin, models.Model):
         blank=False, null=False, default="",
         verbose_name="Will this workshop be held online or in-person?")
 
+    WORKSHOP_LISTED_CHOICES = (
+        (True, "Yes"),
+        (False, "No"),
+    )
+    workshop_listed = models.BooleanField(
+        null=False,
+        default=True,
+        blank=True,
+        choices=WORKSHOP_LISTED_CHOICES,
+        verbose_name="Would you like to have this workshop listed on our websites?",
+        help_text='If selected "Yes", the workshop will be published on following '
+        'websites: <a href="https://carpentries.org/">The Carpentries</a>,'
+        ' <a href="https://datacarpentry.org/">Data Carpentry</a>,'
+        ' <a href="https://software-carpentry.org/">Software Carpentry</a>,'
+        ' <a href="https://librarycarpentry.org/">Library Carpentry</a>.'
+    )
     PUBLIC_EVENT_CHOICES = (
         ("public", "This event is open to the public."),
         (

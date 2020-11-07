@@ -26,6 +26,7 @@ Administrative fee payment: {{ object.get_administrative_fee_display }}
 Travel expences management: {{ object.get_travel_expences_management_display }} {% if object.travel_expences_management_other %}{{ object.travel_expences_management_other }}{% endif %}
 Travel expences agreement: {{ object.travel_expences_agreement|yesno }}
 Intitutional restrictions regarding instructors: {{ object.get_institution_restrictions_display }} {% if object.institution_restrictions_other %}{{ object.institution_restrictions_other }}{% endif %}
+Would you like to have this workshop listed on our websites? {{ object.workshop_listed|yesno }}
 Is this workshop open to the public? {{ object.get_public_event_display }} {% if object.public_event_other %}{{ object.public_event_other }}{% endif %}
 Additional contacts: {{ object.additional_contact|default:"---" }}
 How did you hear about The Carpentries? {% for item in object.carpentries_info_source.all %}{{ item }}, {% endfor %}{% if object.carpentries_info_source_other %}Other: {{ object.carpentries_info_source_other }}{% endif %}

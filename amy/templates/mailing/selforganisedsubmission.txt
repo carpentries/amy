@@ -22,6 +22,7 @@ Taught workshop type: {% for item in object.workshop_types.all %}{{ item }}, {% 
 Taught workshop mix & match: {{ object.workshop_types_other_explain|default:"---" }}
 Country: {{ object.country.name }}
 Workshop language: {{ object.language }}
+Would you like to have this workshop listed on our websites? {{ object.workshop_listed|yesno }}
 Is this workshop open to the public? {% if object.public_event %}{{ object.get_public_event_display }}{% else %}Other: {{ object.public_event_other }}{% endif %}
 Additional contacts: {{ object.additional_contact|default:"---" }}
 Data privacy agreement: {{ object.data_privacy_agreement|yesno }}

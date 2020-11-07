@@ -59,6 +59,7 @@ class TestWorkshopInquiryExternalForm(TestBase):
                 "code_of_conduct_agreement",
                 "host_responsibilities",
                 "instructor_availability",
+                "workshop_listed",
                 "online_inperson",
                 "captcha",
             ]
