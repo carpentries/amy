@@ -1068,6 +1068,8 @@ class SelfOrganisedSubmissionBaseForm(forms.ModelForm):
             "online_inperson",
             "workshop_format",
             "workshop_format_other",
+            "start",
+            "end",
             "workshop_url",
             "workshop_types",
             "workshop_types_other_explain",
