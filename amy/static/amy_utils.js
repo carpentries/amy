@@ -289,4 +289,22 @@ $(document).ready(function() {
     modal.find(".modal-body #id_subject").val("");
     modal.find(".modal-body #id_template").text("");
   })
+
+  // when "TTT" tag is selected on new event form, automatically select
+  // "TTT Open applications" checkbox
+  $("#id_tags").on("change", function(event) {
+    const checkbox = $("#id_open_TTT_applications");
+    $.each(event.target.selectedOptions, function(idx, val) {
+      if (val.text == "TTT") {
+        checkbox.prop("checked", true);
+      }
+    })
+  })
+  // on page load, select the checkbox if "TTT" option was preselected
+  $("#id_tags").find(":selected").each(function(idx, val) {
+    const checkbox = $("#id_open_TTT_applications");
+    if (val.text == "TTT") {
+      checkbox.prop("checked", true);
+    }
+  })
  });
