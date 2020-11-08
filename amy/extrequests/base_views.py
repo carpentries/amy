@@ -1,6 +1,64 @@
+from datetime import timedelta
+
 from django.core.exceptions import ImproperlyConfigured
 
 from workshops.base_views import AMYCreateView
+from workshops.models import Tag, Curriculum
+
+
+class WRFInitial:
+    def get_initial(self):
+        curricula = Curriculum.objects.none()
+
+        if hasattr(self.other_object, "workshop_types"):
+            curricula = self.other_object.workshop_types.all()
+        elif hasattr(self.other_object, "requested_workshop_types"):
+            curricula = self.other_object.requested_workshop_types.all()
+
+        tag_names = [
+            C.carpentry for C in curricula if C.carpentry
+        ]
+        if curricula.filter(mix_match=True).exists():
+            tag_names.append("Circuits")
+        if self.other_object.online_inperson == "online":
+            tag_names.append("online")
+
+        listed = self.other_object.workshop_listed
+        if not listed:
+            tag_names.append("private-event")
+
+        initial = {
+            "public_status": "public" if listed else "private",
+            "curricula": curricula,
+            "tags": Tag.objects.filter(name__in=tag_names),
+            "contact": self.other_object.additional_contact,
+        }
+
+        host = self.other_object.institution
+        if host:
+            initial["host"] = host
+
+        start = None
+        end = None
+        if hasattr(self.other_object, "preferred_dates"):
+            start = self.other_object.preferred_dates
+            if start:
+                end = start + timedelta(days=1)
+        elif hasattr(self.other_object, "start"):
+            start = self.other_object.start
+            end = self.other_object.end
+
+        if start:
+            initial["start"] = start
+            location = getattr(self.other_object, "location", "XXX")
+            initial["slug"] = "{:%Y-%m-%d}-{}".format(
+                start, location.replace(" ", "-").lower()
+            )
+
+        if end:
+            initial["end"] = end
+
+        return initial
 
 
 class AMYCreateAndFetchObjectView(AMYCreateView):

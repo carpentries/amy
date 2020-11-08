@@ -452,6 +452,7 @@ class EventForm(forms.ModelForm):
             "longitude": TextInput,
             "invoice_status": RadioSelect,
             "tags": SelectMultiple(attrs={"size": Tag.ITEMS_VISIBLE_IN_SELECT_WIDGET}),
+            # "tags": CheckboxSelectMultiple(),
             "curricula": CheckboxSelectMultiple(),
             "lessons": CheckboxSelectMultiple(),
             "contact": Select2TagWidget,
