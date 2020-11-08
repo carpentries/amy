@@ -15,9 +15,7 @@ class WRFInitial:
         elif hasattr(self.other_object, "requested_workshop_types"):
             curricula = self.other_object.requested_workshop_types.all()
 
-        tag_names = [
-            C.carpentry for C in curricula if C.carpentry
-        ]
+        tag_names = [C.carpentry for C in curricula if C.carpentry]
         if curricula.filter(mix_match=True).exists():
             tag_names.append("Circuits")
         if self.other_object.online_inperson == "online":
@@ -67,10 +65,10 @@ class AMYCreateAndFetchObjectView(AMYCreateView):
 
     model_other = None
     queryset_other = None
-    context_other_object_name = 'other_object'
-    pk_url_kwarg = 'pk'
-    slug_field = 'slug'
-    slug_url_kwarg = 'slug'
+    context_other_object_name = "other_object"
+    pk_url_kwarg = "pk"
+    slug_field = "slug"
+    slug_url_kwarg = "slug"
     query_pk_and_slug = False
 
     def __init__(self, *args, **kwargs):
@@ -119,8 +117,8 @@ class AMYCreateAndFetchObjectView(AMYCreateView):
         This is necessary because having `pk_url_kwarg` / `slug_url_kwarg`
         makes this form into edit form."""
         kwargs = super().get_form_kwargs()
-        if 'instance' in kwargs:
-            del kwargs['instance']
+        if "instance" in kwargs:
+            del kwargs["instance"]
         return kwargs
 
     def get_context_data(self, **kwargs):
