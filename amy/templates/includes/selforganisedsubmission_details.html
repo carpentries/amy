@@ -40,6 +40,10 @@
           {{ object.workshop_format_other }}
           {% endif %}
         </td></tr>
+    <tr><th>Workshop start:</th>
+        <td>{{ object.start|default:"&mdash;" }}</td></tr>
+    <tr><th>Workshop end:</th>
+        <td>{{ object.end|default:"&mdash;" }}</td></tr>
     <tr><th>Workshop URL:</th>
         <td>{{ object.workshop_url|urlize }}</td></tr>
     <tr><th>Curricula taught:</th>

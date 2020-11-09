@@ -881,6 +881,16 @@ class SelfOrganisedSubmission(
     DC Self-Organized Workshop Request.
     """
 
+    start = models.DateField(
+        null=True,
+        verbose_name="Workshop start date",
+        help_text="Please provide the dates that your Self-Organised workshop will"
+        " run.",
+    )
+    end = models.DateField(
+        null=True,
+        verbose_name="Workshop end date"
+    )
     workshop_url = models.URLField(
         max_length=STR_LONGEST,
         blank=True,

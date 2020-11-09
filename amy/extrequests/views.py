@@ -443,6 +443,8 @@ class SelfOrganisedSubmissionAcceptEvent(
             or self.other_object.institution,
             "administrator": Organization.objects.get(domain="self-organized"),
             "public_status": "public" if listed else "private",
+            "start": self.other_object.start,
+            "end": self.other_object.end,
         }
 
         if mix_match:
