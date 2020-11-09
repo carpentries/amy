@@ -61,10 +61,10 @@ class TestTask(TestBase):
             start=datetime.now(), slug="test_event_3", host=test_host, admin_fee=0
         )
 
-        instructor_role = Role.objects.get(name="instructor")
+        self.instructor = Role.objects.get(name="instructor")
         self.learner = Role.objects.get(name="learner")
-        helper_role = Role.objects.get(name="helper")
-        roles = [instructor_role, self.learner, helper_role]
+        self.helper = Role.objects.get(name="helper")
+        roles = [self.instructor, self.learner, self.helper]
         people = [self.test_person_1, self.test_person_2]
 
         for role, person in product(roles, people):
@@ -302,6 +302,55 @@ class TestTask(TestBase):
         exception = cm.exception
         self.assertNotIn("seat_membership", exception.error_dict)
         self.assertNotIn("seat_open_training", exception.error_dict)
+
+    def test_seats_for_learners_only(self):
+        """Ensure that only learners can be assigned seats."""
+
+        # first wrong task
+        task1 = Task(
+            event=self.ttt_event_open,
+            person=self.test_person_1,
+            role=self.instructor,
+            seat_membership=self.membership,
+            seat_open_training=False,
+        )
+        # second wrong task
+        task2 = Task(
+            event=self.ttt_event_open,
+            person=self.test_person_2,
+            role=self.helper,
+            seat_membership=None,
+            seat_open_training=True,
+        )
+
+        with self.assertRaises(ValidationError) as cm:
+            task1.full_clean()
+        exception = cm.exception
+        self.assertEqual({"role"}, exception.error_dict.keys())
+
+        with self.assertRaises(ValidationError) as cm:
+            task2.full_clean()
+        exception = cm.exception
+        self.assertEqual({"role"}, exception.error_dict.keys())
+
+        # first good task
+        task3 = Task(
+            event=self.ttt_event_open,
+            person=self.test_person_2,
+            role=self.learner,
+            seat_membership=self.membership,
+            seat_open_training=False,
+        )
+        # second good task
+        task4 = Task(
+            event=self.ttt_event_open,
+            person=self.test_person_2,
+            role=self.learner,
+            seat_membership=None,
+            seat_open_training=True,
+        )
+        task3.full_clean()
+        task4.full_clean()
 
 
 class TestTaskCreateNewInstructor(FakeRedisTestCaseMixin, SuperuserMixin, TestCase):
