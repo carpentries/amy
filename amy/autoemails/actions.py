@@ -801,6 +801,8 @@ class AskForWebsiteAction(BaseAction):
     ...     job = scheduler.enqueue_in(launch_at, action)
     """
 
+    role_names = ["instructor", "supporting-instructor"]
+
     # The action should launch a month before workshop's start date
     launch_at = timedelta(days=-30)
     short_launch_at = timedelta(hours=1)
@@ -843,7 +845,7 @@ class AskForWebsiteAction(BaseAction):
         """If available, return string of all recipients."""
         try:
             event = self.context_objects["event"]
-            task_set = event.task_set.filter(role__name="instructor")
+            task_set = event.task_set.filter(role__name__in=self.role_names)
             person_emails = list(
                 Person.objects.filter(task__in=task_set)
                 .distinct()
@@ -858,7 +860,9 @@ class AskForWebsiteAction(BaseAction):
     @staticmethod
     def check(event: Event):
         """Conditions for creating a AskForWebsiteAction."""
-        instructors = event.task_set.filter(role__name="instructor")
+        instructors = event.task_set.filter(
+            role__name__in=AskForWebsiteAction.role_names
+        )
 
         return bool(
             # start date is required and in future
@@ -896,7 +900,7 @@ class AskForWebsiteAction(BaseAction):
         context["regional_coordinator_email"] = list(match_notification_email(event))
 
         # people
-        instructors = event.task_set.filter(role__name="instructor")
+        instructors = event.task_set.filter(role__name__in=self.role_names)
         context["instructors"] = [instr.person for instr in instructors]
 
         task_emails = [task.person.email for task in instructors]
