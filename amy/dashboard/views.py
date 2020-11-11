@@ -16,7 +16,6 @@ from workshops.models import (
     Tag,
     Qualification,
     Person,
-    TrainingRequirement,
     TrainingProgress,
 )
 from workshops.util import (
@@ -57,6 +56,7 @@ def admin_dashboard(request):
             num_instructors=Count(
                 Case(
                     When(task__role__name='instructor', then=Value(1)),
+                    When(task__role__name='supporting-instructor', then=Value(1)),
                     output_field=IntegerField()
                 )
             ),
