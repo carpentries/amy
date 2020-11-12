@@ -29,7 +29,7 @@ from autoemails.actions import (
 from autoemails.base_views import ActionManageMixin
 from autoemails.forms import GenericEmailScheduleForm
 from autoemails.models import Trigger, EmailTemplate
-from extrequests.base_views import AMYCreateAndFetchObjectView
+from extrequests.base_views import AMYCreateAndFetchObjectView, WRFInitial
 from extrequests.filters import (
     TrainingRequestFilter,
     WorkshopRequestFilter,
@@ -70,7 +70,6 @@ from workshops.models import (
     Event,
     TrainingRequest,
     WorkshopRequest,
-    Tag,
     Task,
     Role,
     Person,
@@ -160,7 +159,7 @@ class WorkshopRequestSetState(OnlyForAdminsMixin, ChangeRequestStateView):
 
 
 class WorkshopRequestAcceptEvent(
-    OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateAndFetchObjectView
+    OnlyForAdminsMixin, PermissionRequiredMixin, WRFInitial, AMYCreateAndFetchObjectView
 ):
     permission_required = ["workshops.change_workshoprequest", "workshops.add_event"]
     model = Event
@@ -170,12 +169,6 @@ class WorkshopRequestAcceptEvent(
     queryset_other = WorkshopRequest.objects.filter(state="p")
     context_other_object_name = "object"
     pk_url_kwarg = "request_id"
-
-    def get_initial(self):
-        listed = self.other_object.workshop_listed
-        return {
-            "public_status": "public" if listed else "private",
-        }
 
     def get_context_data(self, **kwargs):
         kwargs["title"] = "Accept and create a new event"
@@ -280,7 +273,7 @@ class WorkshopInquirySetState(OnlyForAdminsMixin, ChangeRequestStateView):
 
 
 class WorkshopInquiryAcceptEvent(
-    OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateAndFetchObjectView
+    OnlyForAdminsMixin, PermissionRequiredMixin, WRFInitial, AMYCreateAndFetchObjectView
 ):
     permission_required = [
         "extrequests.change_workshopinquiryrequest",
@@ -293,12 +286,6 @@ class WorkshopInquiryAcceptEvent(
     queryset_other = WorkshopInquiryRequest.objects.filter(state="p")
     context_other_object_name = "object"
     pk_url_kwarg = "inquiry_id"
-
-    def get_initial(self):
-        listed = self.other_object.workshop_listed
-        return {
-            "public_status": "public" if listed else "private",
-        }
 
     def get_context_data(self, **kwargs):
         kwargs["title"] = "Accept and create a new event"
@@ -407,7 +394,7 @@ class SelfOrganisedSubmissionSetState(OnlyForAdminsMixin, ChangeRequestStateView
 
 
 class SelfOrganisedSubmissionAcceptEvent(
-    OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateAndFetchObjectView
+    OnlyForAdminsMixin, PermissionRequiredMixin, WRFInitial, AMYCreateAndFetchObjectView
 ):
     permission_required = [
         "extrequests.change_selforganisedsubmission",
@@ -428,27 +415,17 @@ class SelfOrganisedSubmissionAcceptEvent(
         object, and from corresponding workshop page (if it's possible)."""
         kwargs = super().get_form_kwargs()
 
-        mix_match = self.other_object.workshop_types.filter(mix_match=True).exists()
-
         # no matter what, don't show "lessons" field; previously they were shown
         # when mix&match was selected
         kwargs["show_lessons"] = False
 
         url = self.other_object.workshop_url.strip()
-        listed = self.other_object.workshop_listed
         data = {
             "url": url,
-            "curricula": list(self.other_object.workshop_types.all()),
             "host": self.other_object.host_organization()
             or self.other_object.institution,
             "administrator": Organization.objects.get(domain="self-organized"),
-            "public_status": "public" if listed else "private",
-            "start": self.other_object.start,
-            "end": self.other_object.end,
         }
-
-        if mix_match:
-            data["tags"] = [Tag.objects.get(name="Circuits")]
 
         try:
             metadata = fetch_workshop_metadata(url)
@@ -482,7 +459,9 @@ class SelfOrganisedSubmissionAcceptEvent(
                     f"Helpers: {','.join(helpers)}"
                 )
 
-        kwargs["initial"] = data
+        initial = super().get_initial()
+        initial.update(data)
+        kwargs["initial"] = initial
         return kwargs
 
     def get_context_data(self, **kwargs):
