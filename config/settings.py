@@ -58,11 +58,8 @@ if DEBUG:
 # -----------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#databases
 
-db_url = 'postgres://amy:amypostgresql@localhost/amy'
-if CONTINUOUS_INTEGRATION:
-    db_url = 'postgres://postgres@localhost/amy'
 DATABASES = {
-    'default': env.db('DATABASE_URL', default=db_url),
+    'default': env.db('DATABASE_URL', default='postgres://postgres@localhost/amy'),
 }
 DATABASES['default']['ATOMIC_REQUESTS'] = True
 
