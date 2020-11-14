@@ -1,7 +1,5 @@
-import contextlib
 import datetime
 import itertools
-import sys
 
 from django.contrib.auth.models import Group, Permission
 from django.contrib.sites.models import Site
@@ -22,21 +20,6 @@ from workshops.models import (
     Language,
 )
 from workshops.util import universal_date_format
-
-
-@contextlib.contextmanager
-def dummy_subTest():
-    yield
-
-
-class DummySubTestWhenTestsLaunchedInParallelMixin:
-    def subTest(self, *args, **kwargs):
-        # If you launch tests in parallel, subTest is not supported yet. To
-        # fix that, we provide a dummy subTest implementation in that case.
-        if "--parallel" in sys.argv:
-            return dummy_subTest()
-        else:
-            return super().subTest(*args, **kwargs)
 
 
 class SuperuserMixin:
@@ -60,7 +43,7 @@ class SuperuserMixin:
 
 
 class TestBase(
-    SuperuserMixin, DummySubTestWhenTestsLaunchedInParallelMixin, WebTest
+    SuperuserMixin, WebTest
 ):  # Support for functional tests (django-webtest)
     """Base class for AMY test cases."""
 
@@ -104,11 +87,11 @@ class TestBase(
         """Set up organization objects."""
 
         self.org_alpha = Organization.objects.create(
-            domain="alpha.edu", fullname="Alpha Organization", country="Azerbaijan"
+            domain="alpha.edu", fullname="Alpha Organization", country="AZ"
         )
 
         self.org_beta = Organization.objects.create(
-            domain="beta.com", fullname="Beta Organization", country="Brazil"
+            domain="beta.com", fullname="Beta Organization", country="BR"
         )
 
     def _setUpAirports(self):

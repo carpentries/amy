@@ -10,9 +10,9 @@ from django.db.models import (
 from django.http import QueryDict
 from django.urls import reverse
 from rest_framework import status
+from rest_framework.test import APITestCase
 
 from api.filters import InstructorsOverTimeFilter
-from api.tests.base import APITestBase
 from api.views import (
     ReportsViewSet,
 )
@@ -29,7 +29,7 @@ from workshops.models import (
 from workshops.tests.base import TestBase
 
 
-class BaseReportingTest(APITestBase):
+class BaseReportingTest(APITestCase):
 
     def setUp(self):
         self.login()

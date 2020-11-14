@@ -1,13 +1,12 @@
 import datetime
-import json
 from unittest.mock import patch
 
 from django.http import QueryDict
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
+from rest_framework.test import APITestCase
 
-from api.tests.base import APITestBase
 from api.views import (
     TrainingRequests,
 )
@@ -24,7 +23,7 @@ from workshops.models import (
 )
 
 
-class TestListingTrainingRequests(APITestBase):
+class TestListingTrainingRequests(APITestCase):
     view = TrainingRequests
     url = 'api:training-requests'
     maxDiff = None

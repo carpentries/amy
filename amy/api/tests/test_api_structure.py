@@ -1,8 +1,6 @@
-import datetime
-
 from django.urls import reverse
+from rest_framework.test import APITestCase
 
-from api.tests.base import APITestBase
 from workshops.models import (
     Person,
     Award,
@@ -15,7 +13,7 @@ from workshops.models import (
 )
 
 
-class TestAPIStructure(APITestBase):
+class TestAPIStructure(APITestCase):
     def setUp(self):
         self.admin = Person.objects.create_superuser(
             username='admin', personal='Super', family='User',

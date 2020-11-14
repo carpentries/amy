@@ -3,8 +3,6 @@ Django settings for AMY project.
 """
 
 import os
-import sys
-
 import environ
 
 from django.core.exceptions import ImproperlyConfigured
@@ -60,16 +58,13 @@ if DEBUG:
 # -----------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#databases
 
+db_url = 'postgres://amy:amypostgresql@localhost/amy'
+if CONTINUOUS_INTEGRATION:
+    db_url = 'postgres://postgres@localhost/amy'
 DATABASES = {
-    'default': env.db('DATABASE_URL', default='sqlite:///db.sqlite3'),
+    'default': env.db('DATABASE_URL', default=db_url),
 }
 DATABASES['default']['ATOMIC_REQUESTS'] = True
-if '--keepdb' in sys.argv:
-    # By default, Django uses in-memory sqlite3 database, which is much
-    # faster than sqlite3 database in a file. However, we may want to keep
-    # database between test launches, so that we avoid the overhead of
-    # applying migrations on each test launch.
-    DATABASES['default'].update(dict(TEST=dict(NAME='test_db.sqlite3')))
 
 # URLS
 # -----------------------------------------------------------------------------

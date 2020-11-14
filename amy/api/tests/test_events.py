@@ -5,8 +5,8 @@ from unittest.mock import patch
 from django.http import QueryDict
 from django.urls import reverse
 from rest_framework import status
+from rest_framework.test import APITestCase
 
-from api.tests.base import APITestBase
 from api.views import (
     PublishedEvents,
 )
@@ -17,7 +17,7 @@ from workshops.models import (
 from workshops.util import universal_date_format
 
 
-class TestListingPublishedEvents(APITestBase):
+class TestListingPublishedEvents(APITestCase):
     view = PublishedEvents
     serializer_class = PublishedEvents.serializer_class
     url = 'api:events-published'

@@ -1250,10 +1250,6 @@ class TestEventAttendance(TestBase):
         )
         self.event.tags.set(Tag.objects.filter(name__in=["LC", "DC"]))
 
-    @unittest.skipIf(
-        _db_engine == "django.db.backends.sqlite3",
-        "SQLite drops integer field validation",
-    )
     def test_correct_values_for_manual_attendance(self):
         # `manual_attendance` doesn't accept anything below 0
         with self.assertRaises(ValidationError):

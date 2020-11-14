@@ -1,12 +1,11 @@
 import datetime
 import json
-import unittest
 from unittest.mock import patch
 
 from django.urls import reverse
 from rest_framework import status
+from rest_framework.test import APITestCase, APIRequestFactory
 
-from api.tests.base import APITestBase
 from api.views import (
     ExportBadgesView,
     ExportBadgesByPersonView,
@@ -30,7 +29,7 @@ from workshops.models import (
 from workshops.util import universal_date_format
 
 
-class BaseExportingTest(APITestBase):
+class BaseExportingTest(APITestCase):
     def setUp(self):
         # remove all existing badges (this will be rolled back anyway)
         # including swc-instructor and dc-instructor introduced by migration

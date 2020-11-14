@@ -133,28 +133,31 @@ class Command(BaseCommand):
         """Provide fixed tags. All other tags are pre-created through data
         migrations."""
         tags = [
-            ('SWC', 'Software Carpentry Workshop'),
-            ('DC', 'Data Carpentry Workshop'),
-            ('LC', 'Library Carpentry Workshop'),
-            ('WiSE', 'Women in Science and Engineering'),
-            ('TTT', 'Train the Trainers'),
-            ('online', 'Events taking place entirely online'),
-            ('stalled', 'Events with lost contact with the host or TTT events'
-                        ' that aren\'t running.'),
-            ('unresponsive', 'Events whose hosts and/or organizers aren\'t '
-                             'going to send attendance data'),
-            ('hackathon', 'Event is a hackathon'),
-            ('cancelled', 'Events that were supposed to happen but due to some'
-                          ' circumstances got cancelled'),
-            ('LSO', 'Lesson Specific Onboarding'),
-            ('ITT', 'Instructor Trainer Training (Trainer Training)'),
-            ('LMO', 'Lesson Maintainer Onboarding'),
+            ("automated-email", 10, "For the pilot run of email automation project"),
+            ("DC", 20, "Data Carpentry Workshop"),
+            ("LC", 30, "Library Carpentry Workshop"),
+            ("SWC", 40, "Software Carpentry Workshop"),
+            ("Circuits", 50, "Events with only partial Carpentries curriculum"),
+            ("online", 60, "Events taking place entirely online"),
+            ("TTT", 70, "Train the Trainers"),
+            ("ITT", 80, "Instructor Trainer Training (Trainer Training)"),
+            ("Pilot", 90, "To use for pilots of new or revamped curricula"),
+            ("for-profit", 100, "Corporate or for-profit institutions that may be paying higher fees"),
+            ("scholarship", 110, "Events that have been granted a scholarship and have fees waived"),
+            ("private-event", 120, "Workshops with this tag will not be displayed in our feeds and websites"),
+            ("cancelled", 130, "Events that were supposed to happen but due to some circumstances got cancelled"),
+            ("unresponsive", 140, "Events whose hosts and/or organizers aren't going to send attendance data"),
+            ("stalled", 150, "Events with lost contact with the host or TTT events that aren't running."),
+            ("LMO", 160, "Lesson Maintainer Onboarding"),
+            ("LSO", 170, "Lesson Specific Onboarding"),
+            ("hackathon", 180, "Event is a hackathon"),
+            ("WiSE", 190, "Women in Science and Engineering"),
         ]
 
         self.stdout.write('Generating {} fake tags...'.format(len(tags)))
 
-        for tag, details in tags:
-            Tag.objects.get_or_create(name=tag, defaults=dict(details=details))
+        for tag, priority, details in tags:
+            Tag.objects.get_or_create(name=tag, defaults=dict(priority=priority, details=details))
 
     def fake_badges(self):
         """Provide fixed badges."""
@@ -470,10 +473,9 @@ class Command(BaseCommand):
 
         # The following line may result in IntegrityError from time to time,
         # because we don't guarantee that the url is unique. In that case,
-        # simply create new database (rm db.sqlite3 && python manage.py migrate)
-        # and rerun fake_database command (python manage.py fake_database). Be
-        # aware that creating a database deletes all data in the existing
-        # database!
+        # simply clear database and rerun fake_database command
+        # (python manage.py fake_database). Be aware that recreating a database
+        # deletes all data in the existing database!
         e = Event.objects.create(
             slug='{:%Y-%m-%d}-{}'.format(start, city),
             start=start,
