@@ -8,6 +8,7 @@ import unittest
 from unittest.mock import MagicMock
 
 from django.core.management import call_command
+from faker import Faker
 import requests_mock
 
 from workshops.tests.base import TestBase
@@ -144,7 +145,7 @@ class TestWebsiteUpdatesCommand(TestBase):
         self.cmd = WebsiteUpdatesCommand()
         self.fake_cmd = FakeDatabaseCommand()
         self.seed = 12345
-        self.fake_cmd.faker.seed(self.seed)
+        Faker.seed(self.seed)
         self.fake_cmd.stdout = StringIO()
 
         self.fake_cmd.fake_organizations()

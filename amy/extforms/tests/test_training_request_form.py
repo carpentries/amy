@@ -1,7 +1,7 @@
 from django.core import mail
 from django.urls import reverse
+from webtest import forms
 
-from extforms.forms import TrainingRequestForm
 from extforms.views import TrainingRequestCreate
 from workshops.models import Role, TrainingRequest
 from workshops.tests.base import TestBase
@@ -123,7 +123,11 @@ class GroupNameFieldTestsBase(TestBase):
         self.form['code_of_conduct_agreement'] = True
         self.form['training_completion_agreement'] = True
         self.form['workshop_teaching_agreement'] = True
-        self.form['g-recaptcha-response'] = 'PASSED'
+        # g-recaptcha-response doesn't exist in the form, so this tricks the webtest
+        # form by adding the non-existing field to it
+        field = forms.Text(self.form, 'input', 'g-recaptcha-response', 0, 'PASSED')
+        self.form.fields['g-recaptcha-response'] = field
+        self.form.field_order.append(('g-recaptcha-response', field))
 
         # submit the form
         self.rs = self.form.submit().maybe_follow()

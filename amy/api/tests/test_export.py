@@ -415,20 +415,29 @@ class TestExportingInstructorsEmptyAirportRegression(BaseExportingTest):
         # about it, because we're already doing some pretty advanced querying
         # in `ExportInstructorLocationsView.queryset` thanks to Django's
         # Prefetch() object
-        self.expecting = []
+        self.expecting = [
+            {
+                "name": "Airport1",
+                "latitude": 1.0,
+                "longitude": 2.0,
+                "instructors": [],
+                "country": "PL",
+            }
+        ]
 
-    @unittest.expectedFailure
     def test_serialization(self):
+        request = APIRequestFactory().get('/?publish_profile=true')
         view = ExportInstructorLocationsView()
+        view.request = view.initialize_request(request)
         serializer = view.get_serializer_class()
         response = serializer(view.get_queryset(), many=True)
         self.assertEqual(response.data, self.expecting)
 
-    @unittest.expectedFailure
     def test_view(self):
         # test only JSON output
         url = reverse('api:export-instructors')
-        response = self.client.get(url, format='json')
+        self.login()
+        response = self.client.get(url, {'publish_profile': True}, format='json')
         content = response.content.decode('utf-8')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(json.loads(content), self.expecting)

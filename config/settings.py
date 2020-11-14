@@ -75,21 +75,20 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 # ReCaptcha
 # -----------------------------------------------------------------------------
-RECAPTCHA_PUBLIC_KEY = env.str('AMY_RECAPTCHA_PUBLIC_KEY', default='')
-RECAPTCHA_PRIVATE_KEY = env.str('AMY_RECAPTCHA_PRIVATE_KEY', default='')
+RECAPTCHA_PUBLIC_KEY = env.str(
+    'AMY_RECAPTCHA_PUBLIC_KEY',
+    default='6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI',
+)
+RECAPTCHA_PRIVATE_KEY = env.str(
+    'AMY_RECAPTCHA_PRIVATE_KEY',
+    default='6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe',
+)
 RECAPTCHA_USE_SSL = True
 NOCAPTCHA = True
 if DEBUG:
-    os.environ['RECAPTCHA_TESTING'] = 'True'
-    if not RECAPTCHA_PUBLIC_KEY:
-        RECAPTCHA_PUBLIC_KEY = '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'
-    if not RECAPTCHA_PRIVATE_KEY:
-        RECAPTCHA_PRIVATE_KEY = '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'
-else:
-    # ensure the keys are present on production
-    if not RECAPTCHA_PUBLIC_KEY or not RECAPTCHA_PRIVATE_KEY:
-        raise ImproperlyConfigured(
-            "Both ReCaptcha keys (public and private) must be present.")
+    SILENCED_SYSTEM_CHECKS = [
+        'captcha.recaptcha_test_key_error'
+    ]
 
 # APPS
 # -----------------------------------------------------------------------------
