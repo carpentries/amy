@@ -2,7 +2,6 @@
 Django settings for AMY project.
 """
 
-import os
 import environ
 
 from django.core.exceptions import ImproperlyConfigured
@@ -59,7 +58,10 @@ if DEBUG:
 # https://docs.djangoproject.com/en/dev/ref/settings/#databases
 
 DATABASES = {
-    'default': env.db('DATABASE_URL', default='postgres://postgres@localhost/amy'),
+    'default': env.db(
+        'DATABASE_URL',
+        default='postgres://amy:amypostgresql@localhost/amy'
+    ),
 }
 DATABASES['default']['ATOMIC_REQUESTS'] = True
 
