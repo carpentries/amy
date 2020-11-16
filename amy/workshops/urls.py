@@ -83,13 +83,6 @@ urlpatterns = [
     path('badges/', views.AllBadges.as_view(), name='all_badges'),
     path('badge/<slug:badge_name>/', views.BadgeDetails.as_view(), name='badge_details'),
 
-    # exporting views
-    path('export/', include([
-        path('badges/', views.export_badges, name='export_badges'),
-        path('instructors/', views.export_instructors, name='export_instructors'),
-        path('members/', views.export_members, name='export_members'),
-    ])),
-
     # action-required views
     path('action_required/privacy/',
          views.action_required_privacy, name='action_required_privacy'),

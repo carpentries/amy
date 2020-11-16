@@ -2414,62 +2414,6 @@ def search(request):
 
 
 @admin_required
-def export_badges(request):
-    title = "Export Badges"
-
-    badges_api_link = reverse("api:export-badges")
-    badges_json_link = reverse("api:export-badges", kwargs={"format": "json"})
-    badges_yaml_link = reverse("api:export-badges", kwargs={"format": "yaml"})
-
-    by_person_api_link = reverse("api:export-badges-by-person")
-    by_person_json_link = reverse(
-        "api:export-badges-by-person", kwargs={"format": "json"}
-    )
-    by_person_yaml_link = reverse(
-        "api:export-badges-by-person", kwargs={"format": "yaml"}
-    )
-    context = {
-        "title": title,
-        "badges_api_link": badges_api_link,
-        "badges_json_link": badges_json_link,
-        "badges_yaml_link": badges_yaml_link,
-        "by_person_api_link": by_person_api_link,
-        "by_person_json_link": by_person_json_link,
-        "by_person_yaml_link": by_person_yaml_link,
-    }
-    return render(request, "workshops/export_badges.html", context)
-
-
-@admin_required
-def export_instructors(request):
-    title = "Instructor Locations"
-    json_link = reverse("api:export-instructors", kwargs={"format": "json"})
-    yaml_link = reverse("api:export-instructors", kwargs={"format": "yaml"})
-    context = {
-        "title": title,
-        "json_link": json_link,
-        "yaml_link": yaml_link,
-    }
-    return render(request, "workshops/export.html", context)
-
-
-@admin_required
-def export_members(request):
-    title = "SCF Members"
-    json_link = reverse("api:export-members", kwargs={"format": "json"})
-    yaml_link = reverse("api:export-members", kwargs={"format": "yaml"})
-    context = {
-        "title": title,
-        "json_link": json_link,
-        "yaml_link": yaml_link,
-    }
-    return render(request, "workshops/export.html", context)
-
-
-# ------------------------------------------------------------
-
-
-@admin_required
 def object_changes(request, version_id):
     """This view is highly inspired by `HistoryCompareDetailView` from
     `django-reversion-compare`:

@@ -6,7 +6,6 @@ from workshops.models import (
     Airport,
     Person,
     Event,
-    Tag,
     Organization,
     Task,
     Award,
@@ -14,35 +13,6 @@ from workshops.models import (
     TrainingRequirement,
     TrainingProgress,
 )
-
-
-class AwardPersonSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source="person.full_name")
-    user = serializers.CharField(source="person.username")
-
-    class Meta:
-        model = Award
-        fields = ("name", "user", "awarded")
-
-
-class PersonUsernameSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source="full_name")
-    user = serializers.CharField(source="username")
-
-    class Meta:
-        model = Person
-        fields = (
-            "name",
-            "user",
-        )
-
-
-class PersonNameEmailUsernameSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source="full_name")
-
-    class Meta:
-        model = Person
-        fields = ("name", "email", "username")
 
 
 class PersonNameSerializer(serializers.ModelSerializer):
@@ -53,41 +23,10 @@ class PersonNameSerializer(serializers.ModelSerializer):
         fields = ("name",)
 
 
-class ExportBadgesSerializer(serializers.ModelSerializer):
-    persons = AwardPersonSerializer(many=True, source="award_set")
-
-    class Meta:
-        model = Badge
-        fields = ("name", "persons")
-
-
 class BadgeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Badge
         fields = ("name", "title", "criteria")
-
-
-class ExportBadgesByPersonSerializer(serializers.ModelSerializer):
-    badges = BadgeSerializer(many=True)
-
-    class Meta:
-        model = Person
-        fields = ("username", "personal", "middle", "family", "email", "badges")
-
-
-class ExportInstructorLocationsSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source="fullname")
-    instructors = PersonUsernameSerializer(many=True, source="public_instructor_set")
-
-    class Meta:
-        model = Airport
-        fields = ("name", "latitude", "longitude", "instructors", "country")
-
-
-class TagSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Tag
-        fields = ("name",)
 
 
 class ExportEventSerializer(serializers.ModelSerializer):

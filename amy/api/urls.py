@@ -4,8 +4,6 @@ from rest_framework.urlpatterns import format_suffix_patterns
 
 from api import views
 
-# new in Django 1.9: this defines a namespace for URLs; there's no need for
-# `namespace='api'` in the include()
 app_name = 'api'
 
 # routers generate URLs for methods like `.list` or `.retrieve`
@@ -28,19 +26,6 @@ router.register('emailtemplates', views.EmailTemplateViewSet,
 
 urlpatterns = [
     path('', views.ApiRoot.as_view(), name='root'),
-    # TODO: turn these export views into ViewSets and add them to the router
-    path('export/badges/',
-         views.ExportBadgesView.as_view(),
-         name='export-badges'),
-    path('export/badges_by_person/',
-         views.ExportBadgesByPersonView.as_view(),
-         name='export-badges-by-person'),
-    path('export/instructors/',
-         views.ExportInstructorLocationsView.as_view(),
-         name='export-instructors'),
-    path('export/members/',
-         views.ExportMembersView.as_view(),
-         name='export-members'),
     path('export/person_data/',
          views.ExportPersonDataView.as_view(),
          name='export-person-data'),

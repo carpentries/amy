@@ -43,13 +43,8 @@ from workshops.models import (
     TrainingRequest,
     is_admin,
 )
-from workshops.util import get_members, default_membership_cutoff, str2bool
 
 from api.serializers import (
-    PersonNameEmailUsernameSerializer,
-    ExportBadgesSerializer,
-    ExportBadgesByPersonSerializer,
-    ExportInstructorLocationsSerializer,
     ExportEventSerializer,
     WorkshopsOverTimeSerializer,
     InstructorsOverTimeSerializer,
@@ -125,15 +120,6 @@ class StandardResultsSetPagination(PageNumberPagination):
 class ApiRoot(APIView):
     def get(self, request, format=None):
         return Response(OrderedDict([
-            ('export-badges', reverse('api:export-badges', request=request,
-                                      format=format)),
-            ('export-badges-by-person', reverse('api:export-badges-by-person',
-                                                request=request,
-                                                format=format)),
-            ('export-instructors', reverse('api:export-instructors',
-                                           request=request, format=format)),
-            ('export-members', reverse('api:export-members', request=request,
-                                       format=format)),
             ('export-person-data', reverse('api:export-person-data',
                                            request=request, format=format)),
             ('events-published', reverse('api:events-published',
@@ -157,125 +143,6 @@ class ApiRoot(APIView):
                                             request=request,
                                             format=format)),
         ]))
-
-
-class ExportBadgesView(ListAPIView):
-    """List all badges and people who have them."""
-    permission_classes = (IsAuthenticated, HasRestrictedPermission, )
-    paginator = None  # disable pagination
-
-    queryset = Badge.objects.prefetch_related('award_set', 'award_set__person')
-    serializer_class = ExportBadgesSerializer
-
-
-class ExportBadgesByPersonView(ListAPIView):
-    """List all badges and people who have them grouped by person."""
-    permission_classes = (IsAuthenticated, HasRestrictedPermission, )
-    paginator = None  # disable pagination
-
-    queryset = Person.objects.exclude(badges=None).prefetch_related('badges')
-    serializer_class = ExportBadgesByPersonSerializer
-
-
-class ExportInstructorLocationsView(ListAPIView):
-    """List all airports and instructors located near them."""
-    permission_classes = (IsAuthenticated, HasRestrictedPermission, )
-    paginator = None  # disable pagination
-
-    serializer_class = ExportInstructorLocationsSerializer
-
-    metadata_class = QueryMetadata
-
-    def get_queryset(self):
-        """This queryset uses a special object `Prefetch` to apply specific
-        filters to the Airport.person_set objects; this way we can "filter" on
-        Airport.person_set objects - something that wasn't available a few
-        years ago... Additionally, there's no way to filter out Airports with
-        no instructors."""
-
-        # adjust queryset for the request params
-        person_qs = Person.objects.all()
-
-        publish_profile = None
-        may_contact = None
-        # `self.request` is only available during "real" request-response cycle
-        if hasattr(self, 'request'):
-            publish_profile = str2bool(
-                self.request.query_params.get('publish_profile', None)
-            )
-            may_contact = str2bool(
-                self.request.query_params.get('may_contact', None)
-            )
-
-        if publish_profile is not None:
-            person_qs = person_qs.filter(publish_profile=publish_profile)
-        if may_contact is not None:
-            person_qs = person_qs.filter(may_contact=may_contact)
-
-        return (
-            Airport.objects
-            .exclude(person=None)
-            .distinct()
-            .prefetch_related(
-                Prefetch(
-                    'person_set',
-                    queryset=person_qs.filter(
-                        badges__in=Badge.objects.instructor_badges()
-                    ).distinct(),
-                    to_attr='public_instructor_set',
-                )
-            )
-        )
-
-    def get_query_params_description(self):
-        return {
-            'publish_profile': 'Filter on user `publish_profile` bool value.',
-            'may_contact': 'Filter on user `may_contact` bool value.',
-        }
-
-
-class ExportMembersView(ListAPIView):
-    """Show everyone who qualifies as an SCF member."""
-    permission_classes = (IsAuthenticated, IsAdmin, HasRestrictedPermission, )
-    paginator = None  # disable pagination
-
-    renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES + [CSVRenderer, ]
-
-    serializer_class = PersonNameEmailUsernameSerializer
-
-    metadata_class = QueryMetadata
-
-    def get_queryset(self):
-        earliest_default, latest_default = default_membership_cutoff()
-
-        earliest = self.request.query_params.get('earliest', None)
-        if earliest is not None:
-            try:
-                earliest = datetime.datetime.strptime(earliest, '%Y-%m-%d') \
-                                            .date()
-            except ValueError:
-                earliest = earliest_default
-        else:
-            earliest = earliest_default
-
-        latest = self.request.query_params.get('latest', None)
-        if latest is not None:
-            try:
-                latest = datetime.datetime.strptime(latest, '%Y-%m-%d').date()
-            except ValueError:
-                latest = latest_default
-        else:
-            latest = latest_default
-
-        return get_members(earliest, latest)
-
-    def get_query_params_description(self):
-        return {
-            'earliest': 'Date of earliest workshop someone taught at.'
-                        '  Defaults to -2*365 days from current date.',
-            'latest': 'Date of latest workshop someone taught at.'
-                      '  Defaults to current date.',
-        }
 
 
 class ExportPersonDataView(RetrieveAPIView):
@@ -332,7 +199,6 @@ class TrainingRequests(ListAPIView):
             return TrainingRequestForManualScoringSerializer
         else:
             return TrainingRequestWithPersonSerializer
-
 
 
 class ReportsViewSet(ViewSet):

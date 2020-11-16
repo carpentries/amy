@@ -29,10 +29,6 @@
               {% navbar_element_permed "Merge training requests" "trainingrequests_merge" "workshops.change_trainingrequest,workshops.delete_trainingrequest" True %}
               {% navbar_element "Find Workshop Staff" "workshop_staff" True %}
               <div class="dropdown-divider"></div>
-              {% url "export_badges" as export_badges_url %}
-              {% url "export_instructors" as export_instructors_url %}
-              {% navbar_element_url "Export badges" export_badges_url True %}
-              {% navbar_element_url "Export instructors" export_instructors_url True %}
               {% navbar_element "Search" "search" True %}
               {% navbar_element "Recently changed" "changes_log" True %}
             </div>
