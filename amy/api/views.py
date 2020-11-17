@@ -19,7 +19,7 @@ from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.metadata import SimpleMetadata
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import (
-    IsAuthenticatedOrReadOnly, IsAuthenticated, BasePermission
+    IsAuthenticated, BasePermission
 )
 from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
 from rest_framework.response import Response
@@ -45,7 +45,6 @@ from workshops.models import (
 )
 
 from api.serializers import (
-    ExportEventSerializer,
     WorkshopsOverTimeSerializer,
     InstructorsOverTimeSerializer,
     InstructorNumTaughtSerializer,
@@ -122,8 +121,6 @@ class ApiRoot(APIView):
         return Response(OrderedDict([
             ('export-person-data', reverse('api:export-person-data',
                                            request=request, format=format)),
-            ('events-published', reverse('api:events-published',
-                                         request=request, format=format)),
             ('reports-list', reverse('api:reports-list',
                                      request=request, format=format)),
             ('training-requests', reverse('api:training-requests',
@@ -159,16 +156,6 @@ class ExportPersonDataView(RetrieveAPIView):
             return self.get_queryset().none()
         else:
             return self.get_queryset().get(pk=user.pk)
-
-
-class PublishedEvents(ListAPIView):
-    """List published events."""
-    # only events that have both a starting date and a URL
-    permission_classes = (IsAuthenticatedOrReadOnly, )
-    paginator = None  # disable pagination
-    serializer_class = ExportEventSerializer
-    filterset_class = EventFilter
-    queryset = Event.objects.published_events().attendance()
 
 
 class TrainingRequests(ListAPIView):

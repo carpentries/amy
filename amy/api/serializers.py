@@ -29,34 +29,6 @@ class BadgeSerializer(serializers.ModelSerializer):
         fields = ("name", "title", "criteria")
 
 
-class ExportEventSerializer(serializers.ModelSerializer):
-    humandate = serializers.CharField(source="human_readable_date")
-    country = serializers.CharField()
-    start = serializers.DateField(format=None)
-    end = serializers.DateField(format=None)
-    url = serializers.URLField(source="website_url")
-    eventbrite_id = serializers.CharField(source="reg_key")
-    tags = TagSerializer(many=True)
-
-    class Meta:
-        model = Event
-        fields = (
-            "slug",
-            "start",
-            "end",
-            "url",
-            "humandate",
-            "contact",
-            "country",
-            "venue",
-            "address",
-            "latitude",
-            "longitude",
-            "eventbrite_id",
-            "tags",
-        )
-
-
 class WorkshopsOverTimeSerializer(serializers.Serializer):
     date = serializers.DateField(format=None, source="start")
     count = serializers.IntegerField()
