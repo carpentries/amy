@@ -162,6 +162,15 @@ class Membership(models.Model):
         "application.",
     )
 
+    agreement_link = models.URLField(
+        null=True,
+        blank=True,
+        default="",
+        verbose_name="Link to member agreement",
+        help_text="Link to member agreement document or folder in Google Drive",
+    )
+
+
     def __str__(self):
         from workshops.util import human_daterange
 
