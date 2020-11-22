@@ -118,12 +118,6 @@ redirect_urlpatterns = [
     path('workshops/organizations/', RedirectView.as_view(pattern_name='all_organizations')),
     path('workshops/memberships/', RedirectView.as_view(pattern_name='all_memberships')),
 
-    path('workshops/reports/instructors_by_date/', RedirectView.as_view(pattern_name='instructors_by_date')),
-    path('workshops/reports/workshops_over_time/', RedirectView.as_view(pattern_name='workshops_over_time')),
-    path('workshops/reports/learners_over_time/', RedirectView.as_view(pattern_name='learners_over_time')),
-    path('workshops/reports/instructors_over_time/', RedirectView.as_view(pattern_name='instructors_over_time')),
-    path('workshops/reports/instructor_num_taught/', RedirectView.as_view(pattern_name='instructor_num_taught')),
-    path('workshops/reports/all_activity_over_time/', RedirectView.as_view(pattern_name='all_activity_over_time')),
     path('workshops/reports/membership_trainings_stats/', RedirectView.as_view(pattern_name='membership_trainings_stats')),
     path('workshops/reports/workshop_issues/', RedirectView.as_view(pattern_name='workshop_issues')),
     path('workshops/reports/instructor_issues/', RedirectView.as_view(pattern_name='instructor_issues')),

@@ -1,5 +1,3 @@
-import datetime
-
 from django.contrib import messages
 from django.db.models import (
     Case,
@@ -15,17 +13,7 @@ from django.shortcuts import render, redirect
 from django.utils import timezone
 from django.urls import reverse
 
-from api.filters import (
-    InstructorsOverTimeFilter,
-    WorkshopsOverTimeFilter,
-    LearnersOverTimeFilter,
-)
-from api.views import ReportsViewSet
 from fiscal.filters import MembershipTrainingsFilter
-from reports.forms import (
-    DebriefForm,
-    AllActivityOverTimeForm,
-)
 from workshops.models import (
     Badge,
     Event,
@@ -41,125 +29,6 @@ from workshops.util import (
     get_pagination_items,
     admin_required,
 )
-
-
-@admin_required
-def instructors_by_date(request):
-    '''Show who taught between begin_date and end_date.'''
-
-    form = DebriefForm()
-    if 'begin_date' in request.GET and 'end_date' in request.GET:
-        form = DebriefForm(request.GET)
-
-    if form.is_valid():
-        start_date = form.cleaned_data['begin_date']
-        end_date = form.cleaned_data['end_date']
-        mode = form.cleaned_data['mode']
-        rvs = ReportsViewSet()
-        tasks = rvs.instructors_by_time_queryset(
-            start_date, end_date,
-            only_TTT=(mode == 'TTT'),
-            only_non_TTT=(mode == 'nonTTT'),
-        )
-        emails = tasks.filter(person__may_contact=True) \
-                      .exclude(person__email=None) \
-                      .values_list('person__email', flat=True)
-    else:
-        start_date = None
-        end_date = None
-        tasks = None
-        emails = None
-        mode = 'all'
-
-    context = {
-        'title': 'List of instructors by time period',
-        'form': form,
-        'all_tasks': tasks,
-        'emails': emails,
-        'start_date': start_date,
-        'end_date': end_date,
-        'mode': mode,
-    }
-    return render(request, 'reports/instructors_by_date.html', context)
-
-
-@admin_required
-def workshops_over_time(request):
-    '''Export JSON of count of workshops vs. time.'''
-    endpoint = '{}?{}'.format(reverse('api:reports-workshops-over-time'),
-                              request.GET.urlencode())
-    context = {
-        'api_endpoint': endpoint,
-        'filter': WorkshopsOverTimeFilter(request.GET),
-        'title': 'Workshops over time',
-    }
-    return render(request, 'reports/time_series.html', context)
-
-
-@admin_required
-def learners_over_time(request):
-    '''Export JSON of count of learners vs. time.'''
-    endpoint = '{}?{}'.format(reverse('api:reports-learners-over-time'),
-                              request.GET.urlencode())
-    context = {
-        'api_endpoint': endpoint,
-        'filter': LearnersOverTimeFilter(request.GET),
-        'title': 'Learners over time',
-    }
-    return render(request, 'reports/time_series.html', context)
-
-
-@admin_required
-def instructors_over_time(request):
-    '''Export JSON of count of instructors vs. time.'''
-    endpoint = '{}?{}'.format(reverse('api:reports-instructors-over-time'),
-                              request.GET.urlencode())
-    context = {
-        'api_endpoint': endpoint,
-        'filter': InstructorsOverTimeFilter(request.GET),
-        'title': 'Instructors over time',
-    }
-    return render(request, 'reports/time_series.html', context)
-
-
-@admin_required
-def instructor_num_taught(request):
-    '''Export JSON of how often instructors have taught.'''
-    context = {
-        'api_endpoint': reverse('api:reports-instructor-num-taught'),
-        'title': 'Frequency of Instruction',
-    }
-    return render(request, 'reports/instructor_num_taught.html', context)
-
-
-@admin_required
-def all_activity_over_time(request):
-    """Display number of workshops (of differend kinds), instructors and
-    learners over some specific period of time."""
-
-    if 'submit' in request.GET:
-        form = AllActivityOverTimeForm(request.GET)
-
-        if form.is_valid():
-            data = ReportsViewSet().get_all_activity_over_time(
-                start=form.cleaned_data['start'],
-                end=form.cleaned_data['end'],
-            )
-        else:
-            data = None
-    else:
-        form = AllActivityOverTimeForm(initial={
-            'start': datetime.date.today() - datetime.timedelta(days=365),
-            'end': datetime.date.today(),
-        })
-        data = None
-
-    context = {
-        'title': 'All activity over time',
-        'form': form,
-        'data': data,
-    }
-    return render(request, 'reports/all_activity_over_time.html', context)
 
 
 @admin_required
