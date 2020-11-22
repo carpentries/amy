@@ -972,19 +972,6 @@ class EventQuerySet(models.query.QuerySet):
             .distinct()
         )
 
-    def uninvoiced_events(self):
-        """Return a queryset for events that have not yet been invoiced.
-
-        These are marked as uninvoiced, and have occurred.
-        Events are sorted oldest first."""
-
-        return (
-            self.not_cancelled()
-            .past_events()
-            .filter(invoice_status="not-invoiced")
-            .order_by("start")
-        )
-
     def metadata_changed(self):
         """Return events for which remote metatags have been updated."""
         return self.filter(metadata_changed=True)
@@ -1101,24 +1088,6 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         null=True,
         blank=True,
         validators=[MinValueValidator(0)],
-    )
-    INVOICED_CHOICES = (
-        ("unknown", "Unknown"),
-        ("invoiced", "Invoice requested"),
-        ("not-invoiced", "Invoice not requested"),
-        ("na-historic", "Not applicable for historical reasons"),
-        ("na-member", "Not applicable because of membership"),
-        ("na-self-org", "Not applicable because self-organized"),
-        ("na-waiver", "Not applicable because waiver granted"),
-        ("na-other", "Not applicable because other arrangements made"),
-        ("paid", "Paid"),
-    )
-    invoice_status = models.CharField(
-        max_length=STR_MED,
-        choices=INVOICED_CHOICES,
-        verbose_name="Invoice status",
-        default="not-invoiced",
-        blank=False,
     )
     contact = models.CharField(
         max_length=STR_LONGEST,
@@ -1279,11 +1248,6 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
             return self.url
 
     @cached_property
-    def uninvoiced(self):
-        """Indicate if the event has been invoiced or not."""
-        return self.invoice_status == "not-invoiced"
-
-    @cached_property
     def contacts(self):
         return (
             self.task_set.filter(
@@ -1305,27 +1269,6 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
 
         emails = find_emails(self.contact)
         return emails
-
-    def get_invoice_form_url(self):
-        from workshops.util import universal_date_format
-
-        query = {
-            "entry.823772951": self.venue,  # Organization to invoice
-            "entry.351294200": "Workshop administrative fee",  # Reason
-            # Date of event
-            "entry.1749215879": (
-                universal_date_format(self.start) if self.start else ""
-            ),
-            "entry.508035854": self.slug,  # Event or item ID
-            "entry.821460022": self.admin_fee,  # Total invoice amount
-            "entry.1316946828": "US dollars",  # Currency
-        }
-        url = (
-            "https://docs.google.com/forms/d/"
-            "1XljyEam4LERRXW0ebyh5eoZXjT1xR4bHkPxITLWiIyA/viewform?"
-        )
-        url += urlencode(query)
-        return url
 
     @property
     def human_readable_date(self):

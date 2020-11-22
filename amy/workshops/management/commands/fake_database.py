@@ -445,7 +445,6 @@ class Command(BaseCommand):
 
         for _ in range(count):
             e = self.fake_event(self_organized=True)
-            e.invoice_status = choice(Event.INVOICED_CHOICES)[0]
             e.save()
 
     def fake_ttt_events(self, count=10):

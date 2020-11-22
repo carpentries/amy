@@ -450,7 +450,6 @@ class EventForm(forms.ModelForm):
             "manual_attendance": TextInput,
             "latitude": TextInput,
             "longitude": TextInput,
-            "invoice_status": RadioSelect,
             "tags": SelectMultiple(attrs={"size": Tag.ITEMS_VISIBLE_IN_SELECT_WIDGET}),
             # "tags": CheckboxSelectMultiple(),
             "curricula": CheckboxSelectMultiple(),
@@ -993,9 +992,6 @@ class EventsMergeForm(forms.Form):
     )
     reg_key = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,)
     admin_fee = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
-    )
-    invoice_status = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
     manual_attendance = forms.ChoiceField(

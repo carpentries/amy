@@ -87,11 +87,6 @@
     <th>{% include "includes/merge_radio.html" with field=form.admin_fee %}</th>
   </tr>
   <tr>
-    <th scope="row">Invoice</th>
-    <td>{{ obj_a.get_invoice_status_display }}</td><td>{{ obj_b.get_invoice_status_display }}</td>
-    <th>{% include "includes/merge_radio.html" with field=form.invoice_status %}</th>
-  </tr>
-  <tr>
     <th scope="row">Attendance</th>
     <td>{{ obj_a.manual_attendance|default_if_none:"—" }}</td><td>{{ obj_b.manual_attendance|default_if_none:"—" }}</td>
     <th>{% include "includes/merge_radio.html" with field=form.manual_attendance %}</th>

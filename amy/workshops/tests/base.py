@@ -331,7 +331,6 @@ class TestBase(
                 host=test_host,
                 admin_fee=100,
                 url=url,
-                invoice_status="not-invoiced",
                 country="US",
                 venue="School",
                 address="Overthere",
@@ -339,9 +338,7 @@ class TestBase(
                 longitude=2,
             )
 
-        # Create one new event for each day from 10 days ago to
-        # 3 days ago, half invoiced
-        invoice = itertools.cycle(["invoiced", "not-invoiced"])
+        # Create one new event for each day from 10 days ago to 3 days ago
         for t in range(3, 11):
             event_start = today + datetime.timedelta(days=-t)
             date_string = universal_date_format(event_start)
@@ -350,11 +347,9 @@ class TestBase(
                 slug="{0}-past".format(date_string),
                 host=test_host,
                 admin_fee=100,
-                invoice_status=next(invoice),
             )
 
-        # create a past event that has no admin fee specified, yet it needs
-        # invoice
+        # create a past event that has no admin fee specified
         event_start = today + datetime.timedelta(days=-4)
         Event.objects.create(
             start=event_start,
@@ -362,12 +357,10 @@ class TestBase(
             slug="{}-past-uninvoiced".format(universal_date_format(event_start)),
             host=test_host,
             admin_fee=None,
-            invoice_status="not-invoiced",
         )
 
         # Create an event that started yesterday and ends tomorrow
-        # with no fee, and without specifying whether they've been
-        # invoiced.
+        # with no fee
         event_start = today + datetime.timedelta(days=-1)
         event_end = today + datetime.timedelta(days=1)
         Event.objects.create(
@@ -384,8 +377,7 @@ class TestBase(
             longitude=2,
         )
 
-        # Create an event that ends today with no fee, and without
-        # specifying whether the fee has been invoiced.
+        # Create an event that ends today with no fee
         event_start = today + datetime.timedelta(days=-1)
         event_end = today
         Event.objects.create(
@@ -402,8 +394,7 @@ class TestBase(
             longitude=2,
         )
 
-        # Create an event that starts today with a fee, and without
-        # specifying whether the fee has been invoiced.
+        # Create an event that starts today with a fee
         event_start = today
         event_end = today + datetime.timedelta(days=1)
         Event.objects.create(
@@ -431,12 +422,9 @@ class TestBase(
         e.tags.set(tags)
 
         # Record some statistics about events.
-        self.num_uninvoiced_events = 0
         self.num_upcoming = 0
         for e in Event.objects.all():
             e.is_past_event = e.start < today and (e.end is None or e.end < today)
-            if e.invoice_status == "not-invoiced" and e.is_past_event:
-                self.num_uninvoiced_events += 1
             if e.url and (e.start > today):
                 self.num_upcoming += 1
 

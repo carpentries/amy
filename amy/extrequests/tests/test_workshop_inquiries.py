@@ -447,7 +447,6 @@ class TestWorkshopInquiryViews(TestBase):
             "host": Organization.objects.first().pk,
             "administrator": Organization.objects.administrators().first().id,
             "tags": [1],
-            "invoice_status": "unknown",
         }
         rv = self.client.post(
             reverse("workshopinquiry_accept_event", args=[self.wi1.pk]), data

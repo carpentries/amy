@@ -87,18 +87,4 @@
         {% endif %}
       {% endwith %}
     </td></tr>
-  <tr>
-    <th><span class="badge badge-secondary">deprecated</span> Invoice requests:</th>
-    <td colspan="2">
-      {% if event.invoicerequest_set.all %}
-      <ul>
-        {% for request in event.invoicerequest_set.all %}
-        <li><a href="{{ request.get_absolute_url }}" target="_blank" rel="noreferrer">{{ request }}</a> (status: {{ request.long_status }})</li>
-        {% endfor %}
-      </ul>
-      {% else %}
-      &mdash;
-      {% endif %}
-    </td>
-  </tr>
 </table>
