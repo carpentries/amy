@@ -52,13 +52,6 @@ class TrainingRequestCreate(
         """Don't display a success message."""
         return ''
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        # replace empty string with None
-        group_name = self.request.GET.get('group', None) or None
-        kwargs['initial_group_name'] = group_name
-        return kwargs
-
 
 class TrainingRequestConfirm(LoginNotRequiredMixin, TemplateView):
     template_name = 'forms/trainingrequest_confirm.html'
