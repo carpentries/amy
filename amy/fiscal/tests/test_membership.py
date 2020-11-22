@@ -26,6 +26,10 @@ class TestMembership(TestBase):
         self.agreement_end = date.today() + timedelta(days=180)
         self.workshop_interval = timedelta(days=30)
 
+        self.dc = Organization.objects.create(
+            domain="datacarpentry.org", fullname="Data Carpentry",
+        )
+
         # let's add a membership for one of the organizations
         self.current = Membership.objects.create(
             variant="partner",
@@ -43,12 +47,12 @@ class TestMembership(TestBase):
 
         # create a couple of workshops that span outside of agreement duration
         data = [
-            [self.agreement_start - timedelta(days=180), self_organized_admin, None],
-            [self.agreement_start - timedelta(days=1), self.org_beta, 500],
-            [self.agreement_start - timedelta(days=1), self_organized_admin, None],
-            [self.agreement_end + timedelta(days=1), self.org_beta, 500],
+            [self.agreement_start - timedelta(days=180), self_organized_admin],
+            [self.agreement_start - timedelta(days=1), self.dc],
+            [self.agreement_start - timedelta(days=1), self_organized_admin],
+            [self.agreement_end + timedelta(days=1), self.dc],
         ]
-        for i, (start_date, admin, fee) in enumerate(data):
+        for i, (start_date, admin) in enumerate(data):
             Event.objects.create(
                 slug="event-outside-agreement-range-{}".format(i),
                 host=self.org_beta,
@@ -56,7 +60,6 @@ class TestMembership(TestBase):
                 start=start_date,
                 end=start_date + timedelta(days=1),
                 administrator=admin,
-                admin_fee=fee,
             )
 
         # let's add a few events for that organization
@@ -80,8 +83,7 @@ class TestMembership(TestBase):
                 start=self.agreement_start + i * self.workshop_interval,
                 end=self.agreement_start_next_day + i * self.workshop_interval,
                 # just to satisfy the criteria
-                administrator=self.org_beta,
-                admin_fee=0,
+                administrator=self.dc,
             )
             e2.tags.set([self.TTT])
 
@@ -93,8 +95,7 @@ class TestMembership(TestBase):
                 start=self.agreement_start + i * self.workshop_interval,
                 end=self.agreement_start_next_day + i * self.workshop_interval,
                 # just to satisfy the criteria
-                administrator=self.org_beta,
-                admin_fee=0,
+                administrator=self.dc,
             )
             e3.tags.set([self.cancelled])
 

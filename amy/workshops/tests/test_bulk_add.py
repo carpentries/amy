@@ -109,8 +109,7 @@ class CSVBulkUploadTestBase(TestBase):
         Role.objects.create(name='learner')
         Event.objects.create(start=date.today(),
                              host=test_host,
-                             slug='foobar',
-                             admin_fee=100)
+                             slug='foobar')
 
         self._setUpUsersAndLogin()
 

@@ -329,7 +329,6 @@ class TestBase(
                 start=event_start,
                 slug=slug,
                 host=test_host,
-                admin_fee=100,
                 url=url,
                 country="US",
                 venue="School",
@@ -346,7 +345,6 @@ class TestBase(
                 start=event_start,
                 slug="{0}-past".format(date_string),
                 host=test_host,
-                admin_fee=100,
             )
 
         # create a past event that has no admin fee specified
@@ -356,7 +354,6 @@ class TestBase(
             end=today + datetime.timedelta(days=-1),
             slug="{}-past-uninvoiced".format(universal_date_format(event_start)),
             host=test_host,
-            admin_fee=None,
         )
 
         # Create an event that started yesterday and ends tomorrow
@@ -368,7 +365,6 @@ class TestBase(
             end=event_end,
             slug="ends-tomorrow-ongoing",
             host=test_host,
-            admin_fee=0,
             url="http://example.org/ends-tomorrow-ongoing",
             country="US",
             venue="School",
@@ -385,7 +381,6 @@ class TestBase(
             end=event_end,
             slug="ends-today-ongoing",
             host=test_host,
-            admin_fee=0,
             url="http://example.org/ends-today-ongoing",
             country="US",
             venue="School",
@@ -402,7 +397,6 @@ class TestBase(
             end=event_end,
             slug="starts-today-ongoing",
             host=test_host,
-            admin_fee=100,
         )
 
         # create a full-blown event that got cancelled

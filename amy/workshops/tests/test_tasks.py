@@ -50,15 +50,15 @@ class TestTask(TestBase):
         )
 
         test_event_1 = Event.objects.create(
-            start=datetime.now(), slug="test_event_1", host=test_host, admin_fee=0
+            start=datetime.now(), slug="test_event_1", host=test_host,
         )
 
         test_event_2 = Event.objects.create(
-            start=datetime.now(), slug="test_event_2", host=test_host, admin_fee=0
+            start=datetime.now(), slug="test_event_2", host=test_host,
         )
 
         test_event_3 = Event.objects.create(
-            start=datetime.now(), slug="test_event_3", host=test_host, admin_fee=0
+            start=datetime.now(), slug="test_event_3", host=test_host,
         )
 
         self.instructor = Role.objects.get(name="instructor")

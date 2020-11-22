@@ -183,11 +183,7 @@ class Membership(models.Model):
 
     @cached_property
     def workshops_without_admin_fee_completed(self):
-        """Count workshops without admin fee hosted the during agreement."""
-        self_organized = Q(administrator=None) | Q(
-            administrator__domain="self-organized"
-        )
-        no_fee = Q(admin_fee=0) | Q(admin_fee=None)
+        """Count centrally-organised workshops already hosted during the agreement."""
         date_started = Q(
             start__gte=self.agreement_start, start__lt=self.agreement_end
         ) & Q(start__lt=datetime.date.today())
@@ -196,19 +192,15 @@ class Membership(models.Model):
         return (
             Event.objects.filter(host=self.organization)
             .filter(date_started)
-            .filter(no_fee)
-            .exclude(self_organized)
+            .filter(administrator__in=Organization.objects.administrators())
+            .exclude(administrator__domain="self-organized")
             .exclude(cancelled)
             .count()
         )
 
     @cached_property
     def workshops_without_admin_fee_planned(self):
-        """Count workshops without admin fee hosted in future during the agreement."""
-        self_organized = Q(administrator=None) | Q(
-            administrator__domain="self-organized"
-        )
-        no_fee = Q(admin_fee=0) | Q(admin_fee=None)
+        """Count centrally-organised workshops hosted in future during the agreement."""
         date_started = Q(
             start__gte=self.agreement_start, start__lt=self.agreement_end
         ) & Q(start__gte=datetime.date.today())
@@ -217,15 +209,15 @@ class Membership(models.Model):
         return (
             Event.objects.filter(host=self.organization)
             .filter(date_started)
-            .filter(no_fee)
-            .exclude(self_organized)
+            .filter(administrator__in=Organization.objects.administrators())
+            .exclude(administrator__domain="self-organized")
             .exclude(cancelled)
             .count()
         )
 
     @cached_property
     def workshops_without_admin_fee_remaining(self):
-        """Count remaining workshops w/o admin fee for the agreement."""
+        """Count remaining centrally-organised workshops for the agreement."""
         if not self.workshops_without_admin_fee_per_agreement:
             return None
         a = self.workshops_without_admin_fee_per_agreement
@@ -1081,13 +1073,6 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         help_text="Manually entered attendance; for actual attendance, this "
         "number is compared with number of Learner tasks, and the "
         "higher value is shown.",
-    )
-    admin_fee = models.DecimalField(
-        max_digits=6,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        validators=[MinValueValidator(0)],
     )
     contact = models.CharField(
         max_length=STR_LONGEST,

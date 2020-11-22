@@ -971,37 +971,34 @@ class EventsMergeForm(forms.Form):
         queryset=Event.objects.all(), widget=forms.HiddenInput
     )
 
-    id = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,)
-    slug = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,)
+    id = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
+    slug = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     completed = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
     assigned_to = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
-    start = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,)
-    end = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,)
-    host = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,)
+    start = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
+    end = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
+    host = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     administrator = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
-    tags = forms.ChoiceField(choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,)
-    url = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,)
+    tags = forms.ChoiceField(choices=THREE, initial=DEFAULT, widget=forms.RadioSelect)
+    url = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     language = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
-    reg_key = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,)
-    admin_fee = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
-    )
+    reg_key = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     manual_attendance = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
     contact = forms.ChoiceField(
         choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
     )
-    country = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,)
-    venue = forms.ChoiceField(choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,)
+    country = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
+    venue = forms.ChoiceField(choices=THREE, initial=DEFAULT, widget=forms.RadioSelect)
     address = forms.ChoiceField(
         choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
     )

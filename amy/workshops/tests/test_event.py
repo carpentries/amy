@@ -342,7 +342,6 @@ class TestEventViews(TestBase):
                 start=event_start,
                 slug="test_event_{0}".format(i),
                 host=self.test_host,
-                admin_fee=0,
             )
 
     def test_events_view_paginated(self):
@@ -523,11 +522,7 @@ class TestEventViews(TestBase):
         """Ensure we disallow negative manual attendance.
 
         This is a regression test for
-        https://github.com/swcarpentry/amy/issues/435.
-
-        Warning: this used to test `admin_fee` for negative value, but since
-        #1411 (https://github.com/swcarpentry/amy/pull/1411) we don't have
-        `admin_fee` in the form nor on Event Details page."""
+        https://github.com/swcarpentry/amy/issues/435."""
         error_str = "Ensure this value is greater than or equal to 0."
 
         data = {
@@ -804,7 +799,6 @@ class TestEventMerging(TestBase):
             url="http://reichel.com/event-a",
             language=self.french,
             reg_key="123456",
-            admin_fee=2500,
             manual_attendance=30,
             contact="moore.buna@schuppe.info",
             country="US",
@@ -842,7 +836,6 @@ class TestEventMerging(TestBase):
             url="http://www.cummings.biz/event-b",
             language=self.english,
             reg_key="654321",
-            admin_fee=2500,
             manual_attendance=40,
             contact="haleigh.schneider@hotmail.com",
             country="GB",
@@ -882,7 +875,6 @@ class TestEventMerging(TestBase):
             "url": "obj_b",
             "language": "obj_b",
             "reg_key": "obj_a",
-            "admin_fee": "obj_b",
             "manual_attendance": "obj_b",
             "country": "obj_a",
             "latitude": "obj_b",
@@ -922,7 +914,6 @@ class TestEventMerging(TestBase):
             "url": "combine",
             "language": "combine",
             "reg_key": "combine",
-            "admin_fee": "combine",
             "manual_attendance": "combine",
             "country": "combine",
             "latitude": "combine",
@@ -986,7 +977,6 @@ class TestEventMerging(TestBase):
             "url": self.event_b.url,
             "language": self.event_b.language,
             "reg_key": self.event_a.reg_key,
-            "admin_fee": self.event_b.admin_fee,
             "manual_attendance": self.event_b.manual_attendance,
             "country": self.event_a.country,
             "latitude": self.event_b.latitude,

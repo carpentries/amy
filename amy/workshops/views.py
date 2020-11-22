@@ -1365,7 +1365,6 @@ def events_merge(request):
                 "url",
                 "language",
                 "reg_key",
-                "admin_fee",
                 "attendance",
                 "contact",
                 "country",
