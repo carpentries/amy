@@ -110,10 +110,6 @@ redirect_urlpatterns = [
     path('workshops/bulk_upload_training_request_scores/confirm', RedirectView.as_view(pattern_name='bulk_upload_training_request_scores_confirmation')),
 
     path('workshops/workshop_requests/', RedirectView.as_view(pattern_name='all_workshoprequests')),
-    path('workshops/requests/', RedirectView.as_view(pattern_name='all_eventrequests')),
-    path('workshops/dc_selforganized_requests/', RedirectView.as_view(pattern_name='all_dcselforganizedeventrequests')),
-    path('workshops/submissions/', RedirectView.as_view(pattern_name='all_eventsubmissions')),
-    path('workshops/profile_updates/', RedirectView.as_view(pattern_name='all_profileupdaterequests')),
 
     path('workshops/organizations/', RedirectView.as_view(pattern_name='all_organizations')),
     path('workshops/memberships/', RedirectView.as_view(pattern_name='all_memberships')),
@@ -126,16 +122,6 @@ redirect_urlpatterns = [
 
     path('workshops/trainings/', RedirectView.as_view(pattern_name='all_trainings')),
     path('workshops/trainees/', RedirectView.as_view(pattern_name='all_trainees')),
-
-    # old form addresses below, to be removed in future
-    path('workshops/swc/request/', RedirectView.as_view(pattern_name='swc_workshop_request', permanent=True)),
-    path('workshops/swc/request/confirm/', RedirectView.as_view(pattern_name='swc_workshop_request_confirm', permanent=True)),
-    path('workshops/dc/request/', RedirectView.as_view(pattern_name='dc_workshop_request', permanent=True)),
-    path('workshops/dc/request/confirm/', RedirectView.as_view(pattern_name='dc_workshop_request_confirm', permanent=True)),
-    path('workshops/dc/request_selforganized/', RedirectView.as_view(pattern_name='dc_workshop_selforganized_request', permanent=True)),
-    path('workshops/dc/request_selforganized/confirm/', RedirectView.as_view(pattern_name='dc_workshop_selforganized_request_confirm', permanent=True)),
-    path('workshops/submit/', RedirectView.as_view(pattern_name='event_submit', permanent=True)),
-    path('workshops/update_profile/', RedirectView.as_view(pattern_name='profileupdate_request', permanent=True)),
     path('workshops/request_training/', RedirectView.as_view(pattern_name='training_request', permanent=True)),
 ]
 

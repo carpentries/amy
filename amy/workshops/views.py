@@ -909,9 +909,6 @@ def event_details(request, slug):
             Event.objects.attendance()
             .prefetch_related(sponsorship_prefetch, task_prefetch)
             .select_related(
-                "eventrequest",
-                "eventsubmission",
-                "dcselforganizedeventrequest",
                 "assigned_to",
                 "host",
                 "administrator",
@@ -1059,9 +1056,6 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
         "assigned_to",
         "administrator",
         "language",
-        "eventrequest",
-        "eventsubmission",
-        "dcselforganizedeventrequest",
     ).prefetch_related("sponsorship_set")
     slug_field = "slug"
     template_name = "workshops/event_edit_form.html"

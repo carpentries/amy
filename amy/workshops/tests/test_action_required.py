@@ -83,12 +83,6 @@ class TestActionRequiredPrivacyMiddleware(TestBase):
             reverse('training_request_confirm'),
             reverse('workshop_request'),
             reverse('workshop_request_confirm'),
-            # below always redirects, as it's been deprecated
-            # reverse('swc_workshop_request'),
-            # reverse('dc_workshop_request'),
-            # reverse('dc_workshop_selforganized_request'),
-            # reverse('event_submit'),
-            # reverse('profileupdate_request'),
         ]
         # ensure we're not logged in
         self.client.logout()

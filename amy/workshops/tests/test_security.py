@@ -176,7 +176,7 @@ class TestViews(TestBase):
         """
         Test that a view with OnlyForAdminsMixin is accessible only for Admins.
         """
-        view_name = 'all_eventsubmissions'
+        view_name = 'all_workshoprequests'
         view = get_view_by_name(view_name)
         assert OnlyForAdminsMixin in view.view_class.__mro__
         url = reverse(view_name)
