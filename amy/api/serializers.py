@@ -29,45 +29,6 @@ class BadgeSerializer(serializers.ModelSerializer):
         fields = ("name", "title", "criteria")
 
 
-class WorkshopsOverTimeSerializer(serializers.Serializer):
-    date = serializers.DateField(format=None, source="start")
-    count = serializers.IntegerField()
-
-
-class InstructorsOverTimeSerializer(serializers.Serializer):
-    date = serializers.DateField(format=None)
-    count = serializers.IntegerField()
-
-
-class InstructorNumTaughtSerializer(serializers.Serializer):
-    person = serializers.HyperlinkedRelatedField(
-        read_only=True, view_name="api:person-detail", lookup_field="pk", source="*"
-    )
-    name = serializers.CharField(source="full_name")
-    country = serializers.CharField()
-    num_taught_SWC = serializers.IntegerField()
-    num_taught_DC = serializers.IntegerField()
-    num_taught_LC = serializers.IntegerField()
-    num_taught_TTT = serializers.IntegerField()
-    num_taught_total = serializers.IntegerField()
-
-
-class InstructorsByTimePeriodSerializer(serializers.ModelSerializer):
-    event_slug = serializers.CharField(source="event.slug")
-    person_name = serializers.CharField(source="person.full_name")
-    person_email = serializers.EmailField(source="person.email")
-    num_taught = serializers.IntegerField()
-
-    class Meta:
-        model = Task
-        fields = (
-            "event_slug",
-            "person_name",
-            "person_email",
-            "num_taught",
-        )
-
-
 # ----------------------
 # "new" API starts below
 # ----------------------

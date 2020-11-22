@@ -55,7 +55,6 @@ class TestAPIStructure(APITestCase):
             'event-list': reverse('api:event-list'),
             'organization-list': reverse('api:organization-list'),
             'airport-list': reverse('api:airport-list'),
-            'reports-list': reverse('api:reports-list'),
         }
         for endpoint, link in index_links.items():
             self.assertIn(link, index.data[endpoint])
@@ -75,24 +74,6 @@ class TestAPIStructure(APITestCase):
         }
         for endpoint, link in event_links.items():
             self.assertIn(link, event.data[endpoint])
-
-    def test_structure_for_reports(self):
-        """Ensure we have good links to all the reports."""
-        reports = self.client.get(reverse('api:reports-list'))
-        reports_links = {
-            'reports-all-activity-over-time':
-                reverse('api:reports-all-activity-over-time'),
-            'reports-instructor-num-taught':
-                reverse('api:reports-instructor-num-taught'),
-            'reports-instructors-over-time':
-                reverse('api:reports-instructors-over-time'),
-            'reports-learners-over-time':
-                reverse('api:reports-learners-over-time'),
-            'reports-workshops-over-time':
-                reverse('api:reports-workshops-over-time'),
-        }
-        for endpoint, link in reports_links.items():
-            self.assertIn(link, reports.data[endpoint])
 
     def test_links_between_resources(self):
         # event

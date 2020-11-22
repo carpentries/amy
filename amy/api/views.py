@@ -1,41 +1,24 @@
 from collections import OrderedDict
-import datetime
-from itertools import accumulate
 
 from django.db.models import (
-    Case,
-    Count,
-    F,
-    IntegerField,
-    Min,
     Prefetch,
-    Sum,
-    Value,
-    When,
 )
 from rest_framework import viewsets
-from rest_framework.decorators import action
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.metadata import SimpleMetadata
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import (
     IsAuthenticated, BasePermission
 )
-from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
-from rest_framework.viewsets import ViewSet
-from rest_framework_csv.renderers import CSVRenderer
-from rest_framework_yaml.renderers import YAMLRenderer
 
 from autoemails.models import EmailTemplate
 from workshops.models import (
-    Badge,
     Airport,
     Event,
-    Tag,
     Organization,
     Task,
     Award,
@@ -45,10 +28,6 @@ from workshops.models import (
 )
 
 from api.serializers import (
-    WorkshopsOverTimeSerializer,
-    InstructorsOverTimeSerializer,
-    InstructorNumTaughtSerializer,
-    InstructorsByTimePeriodSerializer,
     OrganizationSerializer,
     EventSerializer,
     TaskSerializer,
@@ -65,9 +44,6 @@ from api.filters import (
     EventFilter,
     TaskFilter,
     PersonFilter,
-    InstructorsOverTimeFilter,
-    WorkshopsOverTimeFilter,
-    LearnersOverTimeFilter,
     TrainingRequestFilterIDs,
 )
 
@@ -121,8 +97,6 @@ class ApiRoot(APIView):
         return Response(OrderedDict([
             ('export-person-data', reverse('api:export-person-data',
                                            request=request, format=format)),
-            ('reports-list', reverse('api:reports-list',
-                                     request=request, format=format)),
             ('training-requests', reverse('api:training-requests',
                                      request=request, format=format)),
 
@@ -186,424 +160,6 @@ class TrainingRequests(ListAPIView):
             return TrainingRequestForManualScoringSerializer
         else:
             return TrainingRequestWithPersonSerializer
-
-
-class ReportsViewSet(ViewSet):
-    """This viewset will return data for many of our reports.
-
-    This is implemented as a ViewSet, but actions like create/list/retrieve/etc
-    are missing, because we want to still have the power and simplicity of
-    a router."""
-    permission_classes = (IsAuthenticated, IsAdmin)
-    event_queryset = Event.objects.past_events().attendance().order_by('start')
-    award_queryset = Award.objects.order_by('awarded')
-
-    renderer_classes = (BrowsableAPIRenderer, JSONRenderer, CSVRenderer,
-                        YAMLRenderer)
-
-    # YAML and CSV renderers don't understand generators (>.<) so we had to
-    # turn the `accumulate` generator results into a list
-    formats_requiring_lists = ('csv', 'yaml')
-
-    def _add_counts(self, a, b):
-        c = b
-        c['count'] = (a.get('count') or 0) + (b.get('count') or 0)
-        return c
-
-    def _only_latest_date(self, iterable):
-        it = iter(iterable)
-        try:
-            prev_ = next(it)
-        except StopIteration:
-            return
-        next_ = None
-        for next_ in it:
-            if prev_['date'] != next_['date']:
-                yield prev_
-            prev_ = next_
-        if next_ is not None:
-            yield next_
-
-    def listify(self, iterable, request, format=None):
-        """Some renderers require lists instead of any iterables for rendering.
-        This function conditionally turns iterables into lists based on the
-        format requested by browser."""
-        # choose either '?format=...' or '/url.format' or None
-        format_ = (request.query_params.get('format') or format or '').lower()
-
-        if format_ in self.formats_requiring_lists:
-            # list-ify the generator for renderers requiring lists
-            return list(iterable)
-
-        return iterable
-
-    @action(detail=False, methods=['GET'])
-    def workshops_over_time(self, request, format=None):
-        """Cumulative number of workshops run by Software Carpentry and other
-        carpentries over time."""
-        qs = self.event_queryset
-        qs = WorkshopsOverTimeFilter(request.GET, queryset=qs).qs
-        qs = qs.annotate(count=Count('id'))
-
-        serializer = WorkshopsOverTimeSerializer(qs, many=True)
-
-        # run a cumulative generator over the data
-        data = accumulate(serializer.data, self._add_counts)
-
-        data = self.listify(data, request, format)
-
-        return Response(data)
-
-    @action(detail=False, methods=['GET'])
-    def learners_over_time(self, request, format=None):
-        """Cumulative number of learners attending Software-Carpentry and other
-        carpentries' workshops over time."""
-        qs = self.event_queryset
-        qs = LearnersOverTimeFilter(request.GET, queryset=qs).qs
-        qs = qs.annotate(count=F('attendance'))
-
-        # we reuse the serializer because it works here too
-        serializer = WorkshopsOverTimeSerializer(qs, many=True)
-
-        # run a cumulative generator over the data
-        data = accumulate(serializer.data, self._add_counts)
-
-        data = self.listify(data, request, format)
-
-        return Response(data)
-
-    @action(detail=False, methods=['GET'])
-    def instructors_over_time(self, request, format=None):
-        """Cumulative number of instructor appearances on workshops over
-        time."""
-
-        badges = Badge.objects.instructor_badges()
-
-        qs = Person.objects.filter(badges__in=badges).annotate(
-            date=Min('award__awarded'),
-            count=Value(1, output_field=IntegerField())
-        ).order_by('date')
-
-        filter = InstructorsOverTimeFilter(request.GET, queryset=qs)
-
-        serializer = InstructorsOverTimeSerializer(filter.qs, many=True)
-
-        # run a cumulative generator over the data
-        data = accumulate(serializer.data, self._add_counts)
-
-        # drop data for the same days by showing the last record for
-        # particular date
-        data = self._only_latest_date(data)
-
-        data = self.listify(data, request, format)
-
-        return Response(data)
-
-    @action(detail=False, methods=['GET'])
-    def instructor_num_taught(self, request, format=None):
-        badges = Badge.objects.instructor_badges()
-        persons = Person.objects.filter(badges__in=badges).annotate(
-            num_taught_SWC=Count(
-                Case(
-                    When(
-                        task__role__name='instructor',
-                        task__event__tags__name='SWC',
-                        then=F('task'),
-                    ),
-                ),
-                distinct=True
-            ),
-            num_taught_DC=Count(
-                Case(
-                    When(
-                        task__role__name='instructor',
-                        task__event__tags__name='DC',
-                        then=F('task'),
-                    ),
-                ),
-                distinct=True
-            ),
-            num_taught_LC=Count(
-                Case(
-                    When(
-                        task__role__name='instructor',
-                        task__event__tags__name='LC',
-                        then=F('task'),
-                    ),
-                ),
-                distinct=True
-            ),
-            num_taught_TTT=Count(
-                Case(
-                    When(
-                        task__role__name='instructor',
-                        task__event__tags__name='TTT',
-                        then=F('task'),
-                    ),
-                ),
-                distinct=True
-            ),
-            num_taught_total=Count(
-                Case(
-                    When(
-                        task__role__name='instructor',
-                        then=F('task'),
-                    ),
-                ),
-                distinct=True
-            ),
-        ).order_by('-num_taught_total')
-        serializer = InstructorNumTaughtSerializer(
-            persons, many=True, context=dict(request=request))
-        return Response(serializer.data)
-
-    def _default_start_end_dates(self, start=None, end=None):
-        """Parse GET start and end dates or return default values for them."""
-        today = datetime.date.today()
-        start_of_year = datetime.date(today.year, 1, 1)
-        end_of_year = (datetime.date(today.year + 1, 1, 1) -
-                       datetime.timedelta(days=1))
-
-        if start is not None:
-            try:
-                start = datetime.datetime.strptime(start, '%Y-%m-%d').date()
-            except ValueError:
-                start = start_of_year
-        else:
-            start = start_of_year
-
-        if end is not None:
-            try:
-                end = datetime.datetime.strptime(end, '%Y-%m-%d').date()
-            except ValueError:
-                end = end_of_year
-        else:
-            end = end_of_year
-
-        return start, end
-
-    @action(detail=False, methods=['GET'])
-    def all_activity_over_time(self, request, format=None):
-        """Workshops, instructors, and missing data in specific periods."""
-        start, end = self._default_start_end_dates(
-            start=request.query_params.get('start', None),
-            end=request.query_params.get('end', None))
-
-        data = self.get_all_activity_over_time(start, end)
-        data['missing']['attendance'] = self.listify(
-            data['missing']['attendance'], request, format=format)
-        data['missing']['instructors'] = self.listify(
-            data['missing']['instructors'], request, format=format)
-        return Response(data)
-
-    def get_all_activity_over_time(self, start, end):
-        events_qs = Event.objects.filter(start__gte=start, start__lte=end) \
-                                 .order_by('-start')
-        swc_tag = Tag.objects.get(name='SWC')
-        dc_tag = Tag.objects.get(name='DC')
-        lc_tag = Tag.objects.get(name='LC')
-        wise_tag = Tag.objects.get(name='WiSE')
-        TTT_tag = Tag.objects.get(name='TTT')
-        self_organized_host = Organization.objects.get(domain='self-organized')
-
-        # count workshops: SWC, DC, LC, total (SWC, DC and LC), self-organized,
-        # WiSE, TTT
-        swc_workshops = events_qs.filter(tags=swc_tag)
-        dc_workshops = events_qs.filter(tags=dc_tag)
-        lc_workshops = events_qs.filter(tags=lc_tag)
-        total_workshops = events_qs.filter(
-            tags__in=[swc_tag, dc_tag, lc_tag]).count()
-        wise_workshops = events_qs.filter(tags=wise_tag).count()
-        ttt_workshops = events_qs.filter(tags=TTT_tag).count()
-        self_organized_workshops = events_qs \
-            .filter(administrator=self_organized_host).count()
-
-        # total and unique instructors for SWC, DC, LC workshops
-        swc_total_instr = Person.objects \
-            .filter(task__event__in=swc_workshops,
-                    task__role__name='instructor')
-        swc_unique_instr = swc_total_instr.distinct().count()
-        swc_total_instr = swc_total_instr.count()
-
-        dc_total_instr = Person.objects \
-            .filter(task__event__in=dc_workshops,
-                    task__role__name='instructor')
-        dc_unique_instr = dc_total_instr.distinct().count()
-        dc_total_instr = dc_total_instr.count()
-
-        lc_total_instr = Person.objects \
-            .filter(task__event__in=lc_workshops,
-                    task__role__name='instructor')
-        lc_unique_instr = lc_total_instr.distinct().count()
-        lc_total_instr = lc_total_instr.count()
-
-        # total learners for SWC, DC, LC workshops
-        swc_total_learners = swc_workshops.attendance().aggregate(
-            learners_total=Sum('attendance')
-        )['learners_total']
-        dc_total_learners = dc_workshops.attendance().aggregate(
-            learners_total=Sum('attendance')
-        )['learners_total']
-        lc_total_learners = lc_workshops.attendance().aggregate(
-            learners_total=Sum('attendance')
-        )['learners_total']
-
-        # Workshops missing any of this data.
-        missing_attendance = events_qs.attendance().filter(attendance=None) \
-                                      .values_list('slug', flat=True)
-        missing_instructors = events_qs.annotate(
-            instructors=Sum(
-                Case(
-                    When(task__role__name='instructor', then=Value(1)),
-                    default=Value(0),
-                    output_field=IntegerField()
-                )
-            )
-        ).filter(instructors=0).values_list('slug', flat=True)
-
-        return {
-            'start': start,
-            'end': end,
-            'workshops': {
-                'SWC': swc_workshops.count(),
-                'DC': dc_workshops.count(),
-                'LC': lc_workshops.count(),
-
-                # This dictionary is traversed in a template where we cannot
-                # write "{{ data.workshops.SWC,DC }}", because commas are
-                # disallowed in templates. Therefore, we include
-                # total_workshops under different keys:
-                # - 'SWC,DC' and 'SWC_or_DC' - for backward compatibility,
-                # - 'carpentries' - new name for SWC/DC/LC collective
-                'SWC,DC': total_workshops,
-                'SWC_or_DC': total_workshops,
-                'carpentries': total_workshops,
-
-                'WiSE': wise_workshops,
-                'TTT': ttt_workshops,
-
-                # We include self_organized_workshops twice, under two
-                # different keys, for the same reason as total_workshops.
-                'self-organized': self_organized_workshops,
-                'self_organized': self_organized_workshops,
-            },
-            'instructors': {
-                'SWC': {
-                    'total': swc_total_instr,
-                    'unique': swc_unique_instr,
-                },
-                'DC': {
-                    'total': dc_total_instr,
-                    'unique': dc_unique_instr,
-                },
-                'LC': {
-                    'total': lc_total_instr,
-                    'unique': lc_unique_instr,
-                },
-            },
-            'learners': {
-                'SWC': swc_total_learners,
-                'DC': dc_total_learners,
-                'LC': lc_total_learners,
-            },
-            'missing': {
-                'attendance': missing_attendance,
-                'instructors': missing_instructors,
-            }
-        }
-
-    def instructors_by_time_queryset(self, start, end, only_TTT=False,
-                                     only_non_TTT=False):
-        """Just a queryset to be reused in other view.
-
-        `start` and `end` define a timerange for events.
-        `only_TTT` limits output to only TTT events, and
-        `only_non_TTT` excludes TTT events from the results."""
-        tasks = Task.objects.filter(
-            event__start__gte=start,
-            event__end__lte=end,
-            role__name='instructor',
-            person__may_contact=True,
-        )
-
-        # include only TTT events
-        if only_TTT:
-            tags = Tag.objects.filter(name__in=['TTT'])
-            tasks = (
-                tasks.filter(event__tags__in=tags)
-            )
-
-        # exclude TTT events
-        elif only_non_TTT:
-            tags = Tag.objects.filter(name__in=['TTT'])
-            tasks = (
-                tasks.exclude(event__tags__in=tags)
-            )
-
-        # exclude stalled or unresponsive events
-        rejected_tags = Tag.objects.filter(name__in=['stalled',
-                                                     'unresponsive'])
-
-        tasks = (
-            tasks
-            .exclude(event__tags__in=rejected_tags)
-            .order_by('event', 'person', 'role')
-            .select_related('event', 'person', 'role')
-            .prefetch_related('event__tags')
-            .annotate(
-                num_taught=Sum(
-                    Case(
-                        When(person__task__role__name='instructor',
-                             then=Value(1)),
-                        default=Value(0),
-                        output_field=IntegerField(),
-                    ),
-                )
-            )
-        )
-        return tasks
-
-    @action(detail=False, methods=['GET'])
-    def instructors_by_time(self, request, format=None):
-        """Workshops and instructors who taught in specific time period."""
-        start, end = self._default_start_end_dates(
-            start=self.request.query_params.get('start', None),
-            end=self.request.query_params.get('end', None))
-
-        mode = self.request.query_params.get('mode', 'all')
-
-        tasks = self.instructors_by_time_queryset(
-            start, end,
-            only_TTT=(mode == 'TTT'),
-            only_non_TTT=(mode == 'nonTTT'),
-        )
-
-        serializer = InstructorsByTimePeriodSerializer(
-            tasks, many=True, context=dict(request=request))
-        return Response(serializer.data)
-
-    def list(self, request, format=None):
-        """Display list of links to the reports."""
-        return Response({
-            'reports-all-activity-over-time': reverse(
-                'api:reports-all-activity-over-time', request=request,
-                format=format),
-            'reports-instructor-num-taught': reverse(
-                'api:reports-instructor-num-taught', request=request,
-                format=format),
-            'reports-instructors-over-time': reverse(
-                'api:reports-instructors-over-time', request=request,
-                format=format),
-            'reports-learners-over-time': reverse(
-                'api:reports-learners-over-time', request=request,
-                format=format),
-            'reports-workshops-over-time': reverse(
-                'api:reports-workshops-over-time', request=request,
-                format=format),
-            'reports-instructors-by-time': reverse(
-                'api:reports-instructors-by-time', request=request,
-                format=format),
-        })
 
 
 # ----------------------
