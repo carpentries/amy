@@ -286,6 +286,9 @@ class Trigger(ActiveMixin, CreatedUpdatedMixin, models.Model):
         ),
         ("ask-for-website", "Website URL is missing"),
         ("recruit-helpers", "Recruit helpers"),
+        ("workshop-request-response1", "Response to Workshop Request 1"),
+        ("workshop-request-response2", "Response to Workshop Request 2"),
+        ("workshop-request-response3", "Response to Workshop Request 3"),
     )
     action = models.CharField(
         max_length=50,

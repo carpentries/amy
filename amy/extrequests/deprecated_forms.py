@@ -30,8 +30,8 @@ class SWCEventRequestNoCaptchaForm(PrivacyConsentMixin, forms.ModelForm):
         label='I understand the Software Carpentry Foundation\'s '
               'administration fee.',
         help_text='<a href="http://software-carpentry.org/blog/2015/07/changes'
-                  '-to-admin-fee.html" target="_blank">Look up administration '
-                  'fees</a>.',
+                  '-to-admin-fee.html" target="_blank" rel="noreferrer">'
+                  'Look up administration fees</a>.',
     )
     language = forms.ModelChoiceField(
         label='Language',

@@ -30,6 +30,7 @@ from rest_framework.viewsets import ViewSet
 from rest_framework_csv.renderers import CSVRenderer
 from rest_framework_yaml.renderers import YAMLRenderer
 
+from autoemails.models import EmailTemplate
 from workshops.models import (
     Badge,
     Airport,
@@ -63,6 +64,7 @@ from api.serializers import (
     PersonSerializerAllData,
     TrainingRequestWithPersonSerializer,
     TrainingRequestForManualScoringSerializer,
+    EmailTemplateSerializer,
 )
 
 from api.filters import (
@@ -151,6 +153,9 @@ class ApiRoot(APIView):
             ('organization-list', reverse('api:organization-list',
                                           request=request,
                                           format=format)),
+            ('emailtemplate-list', reverse('api:emailtemplate-list',
+                                            request=request,
+                                            format=format)),
         ]))
 
 
@@ -861,3 +866,11 @@ class AirportViewSet(viewsets.ReadOnlyModelViewSet):
     lookup_field = 'iata__iexact'
     lookup_url_kwarg = 'iata'
     pagination_class = StandardResultsSetPagination
+
+
+class EmailTemplateViewSet(viewsets.ReadOnlyModelViewSet):
+    """List email templates ReadOnly."""
+    permission_classes = (IsAuthenticated, IsAdmin)
+    queryset = EmailTemplate.objects.all()
+    serializer_class = EmailTemplateSerializer
+    lookup_field = "slug"

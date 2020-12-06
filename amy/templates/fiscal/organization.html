@@ -15,7 +15,7 @@
 </p>
 <table class="table table-striped">
   <tr><th>Full name:</th><td>{{ organization.fullname }}</td></tr>
-  <tr><th>Domain:</th><td><a href="http://{{ organization.domain }}" target="_blank">{{ organization.domain }}</a></td></tr>
+  <tr><th>Domain:</th><td><a href="http://{{ organization.domain }}" target="_blank" rel="noreferrer">{{ organization.domain }}</a></td></tr>
   <tr><th>Country:</th><td>{{ organization.country.name|default:"—" }} <img src="{{ organization.country.flag }}" alt="{{ organization.country }}" class="country-flag" /></td></tr>
 </table>
 

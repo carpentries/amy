@@ -29,6 +29,7 @@ urlpatterns = [
     path('', RedirectView.as_view(pattern_name='dispatch')),
     path(settings.ADMIN_URL, admin.site.urls),  # {% url 'admin:index' %}
 
+    path('autoemails/', include('autoemails.urls')),
     path('api/v1/', include('api.urls')),  # REST API v1
     path('dashboard/', include('dashboard.urls')),
     path('requests/', include('extrequests.urls')),

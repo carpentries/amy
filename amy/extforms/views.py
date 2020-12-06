@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.contrib.sites.shortcuts import get_current_site
 from django.template.loader import get_template
 from django.urls import reverse_lazy
@@ -341,6 +340,7 @@ class SelfOrganisedSubmissionConfirm(LoginNotRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Thank you for submitting self-organised workshop'
         return context
+
 
 # ------------------------------------------------------------
 # Deprecated views

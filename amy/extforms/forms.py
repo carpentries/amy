@@ -13,12 +13,8 @@ from workshops.fields import (
     CheckboxSelectMultipleWithOthers,
     Select2Widget,
 )
-from workshops.models import (
-    TrainingRequest,
-)
-from workshops.forms import (
-    BootstrapHelper,
-)
+from workshops.models import TrainingRequest
+from workshops.forms import BootstrapHelper
 
 
 class TrainingRequestForm(forms.ModelForm):

@@ -6,9 +6,7 @@ import logging
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
-from django.contrib.auth.mixins import (
-    PermissionRequiredMixin,
-)
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import (
     IntegrityError,
@@ -29,8 +27,9 @@ from autoemails.actions import (
     PostWorkshopAction,
 )
 from autoemails.base_views import ActionManageMixin
-from autoemails.models import Trigger
-from extrequests.base_views import AMYCreateAndFetchObjectView
+from autoemails.forms import GenericEmailScheduleForm
+from autoemails.models import Trigger, EmailTemplate
+from extrequests.base_views import AMYCreateAndFetchObjectView, WRFInitial
 from extrequests.filters import (
     TrainingRequestFilter,
     WorkshopRequestFilter,
@@ -71,7 +70,6 @@ from workshops.models import (
     Event,
     TrainingRequest,
     WorkshopRequest,
-    Tag,
     Task,
     Role,
     Person,
@@ -94,86 +92,90 @@ from workshops.util import (
     WrongWorkshopURL,
 )
 
-logger = logging.getLogger('amy.signals')
-scheduler = django_rq.get_scheduler('default')
-redis_connection = django_rq.get_connection('default')
+logger = logging.getLogger("amy.signals")
+scheduler = django_rq.get_scheduler("default")
+redis_connection = django_rq.get_connection("default")
 
 
 # ------------------------------------------------------------
 # WorkshopRequest related views
 # ------------------------------------------------------------
 
+
 class AllWorkshopRequests(OnlyForAdminsMixin, StateFilterMixin, AMYListView):
-    context_object_name = 'requests'
-    template_name = 'requests/all_workshoprequests.html'
+    context_object_name = "requests"
+    template_name = "requests/all_workshoprequests.html"
     filter_class = WorkshopRequestFilter
-    queryset = (
-        WorkshopRequest.objects.select_related('assigned_to', 'institution')
-                               .prefetch_related('requested_workshop_types')
-    )
-    title = 'Workshop requests'
+    queryset = WorkshopRequest.objects.select_related(
+        "assigned_to", "institution"
+    ).prefetch_related("requested_workshop_types")
+    title = "Workshop requests"
 
 
 class WorkshopRequestDetails(OnlyForAdminsMixin, AMYDetailView):
     queryset = WorkshopRequest.objects.all()
-    context_object_name = 'object'
-    template_name = 'requests/workshoprequest.html'
-    pk_url_kwarg = 'request_id'
+    context_object_name = "object"
+    template_name = "requests/workshoprequest.html"
+    pk_url_kwarg = "request_id"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Workshop request #{}'.format(self.get_object().pk)
+        context["title"] = "Workshop request #{}".format(self.get_object().pk)
 
         person_lookup_form = AdminLookupForm()
         if self.object.assigned_to:
             person_lookup_form = AdminLookupForm(
-                initial={'person': self.object.assigned_to}
+                initial={"person": self.object.assigned_to}
             )
 
         person_lookup_form.helper = BootstrapHelper(
-            form_action=reverse('workshoprequest_assign',
-                                args=[self.object.pk]),
-            add_cancel_button=False)
+            form_action=reverse("workshoprequest_assign", args=[self.object.pk]),
+            add_cancel_button=False,
+        )
 
-        context['person_lookup_form'] = person_lookup_form
+        context["person_lookup_form"] = person_lookup_form
+
+        context["templates"] = EmailTemplate.objects.filter(
+            slug__startswith="request-review", active=True
+        ).order_by("slug")
+        context["template_form"] = GenericEmailScheduleForm()
         return context
 
 
-class WorkshopRequestChange(OnlyForAdminsMixin, PermissionRequiredMixin,
-                            AMYUpdateView):
-    permission_required = 'workshops.change_workshoprequest'
+class WorkshopRequestChange(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
+    permission_required = "workshops.change_workshoprequest"
     model = WorkshopRequest
-    pk_url_kwarg = 'request_id'
+    pk_url_kwarg = "request_id"
     form_class = WorkshopRequestAdminForm
-    template_name = 'generic_form_with_comments.html'
+    template_name = "generic_form_with_comments.html"
 
 
 class WorkshopRequestSetState(OnlyForAdminsMixin, ChangeRequestStateView):
-    permission_required = 'workshops.change_workshoprequest'
+    permission_required = "workshops.change_workshoprequest"
     model = WorkshopRequest
-    pk_url_kwarg = 'request_id'
-    state_url_kwarg = 'state'
+    pk_url_kwarg = "request_id"
+    state_url_kwarg = "state"
     permanent = False
 
 
-class WorkshopRequestAcceptEvent(OnlyForAdminsMixin, PermissionRequiredMixin,
-                                 AMYCreateAndFetchObjectView):
-    permission_required = ['workshops.change_workshoprequest',
-                           'workshops.add_event']
+class WorkshopRequestAcceptEvent(
+    OnlyForAdminsMixin, PermissionRequiredMixin, WRFInitial, AMYCreateAndFetchObjectView
+):
+    permission_required = ["workshops.change_workshoprequest", "workshops.add_event"]
     model = Event
     form_class = EventCreateForm
-    template_name = 'requests/workshoprequest_accept_event.html'
+    template_name = "requests/workshoprequest_accept_event.html"
 
-    queryset_other = WorkshopRequest.objects.filter(state='p')
-    context_other_object_name = 'object'
-    pk_url_kwarg = 'request_id'
+    queryset_other = WorkshopRequest.objects.filter(state="p")
+    context_other_object_name = "object"
+    pk_url_kwarg = "request_id"
 
     def get_context_data(self, **kwargs):
-        kwargs['title'] = "Accept and create a new event"
+        kwargs["title"] = "Accept and create a new event"
         return super().get_context_data(**kwargs)
 
     def get_success_url(self):
-        return reverse('event_details', args=[self.object.slug])
+        return reverse("event_details", args=[self.object.slug])
 
     def form_valid(self, form):
         self.object = form.save()
@@ -183,8 +185,9 @@ class WorkshopRequestAcceptEvent(OnlyForAdminsMixin, PermissionRequiredMixin,
 
         person = wr.host()
         if person:
-            Task.objects.create(event=event, person=person,
-                                role=Role.objects.get(name="host"))
+            Task.objects.create(
+                event=event, person=person, role=Role.objects.get(name="host")
+            )
 
         if PostWorkshopAction.check(event):
             objs = dict(event=event, request=wr)
@@ -200,17 +203,17 @@ class WorkshopRequestAcceptEvent(OnlyForAdminsMixin, PermissionRequiredMixin,
                 request=self.request,
             )
 
-        wr.state = 'a'
+        wr.state = "a"
         wr.event = event
         wr.save()
         return super().form_valid(form)
 
 
 class WorkshopRequestAssign(OnlyForAdminsMixin, AssignView):
-    permission_required = 'workshops.change_workshoprequest'
+    permission_required = "workshops.change_workshoprequest"
     model = WorkshopRequest
-    pk_url_kwarg = 'request_id'
-    person_url_kwarg = 'person_id'
+    pk_url_kwarg = "request_id"
+    person_url_kwarg = "person_id"
 
 
 # ------------------------------------------------------------
@@ -219,77 +222,77 @@ class WorkshopRequestAssign(OnlyForAdminsMixin, AssignView):
 
 
 class AllWorkshopInquiries(OnlyForAdminsMixin, StateFilterMixin, AMYListView):
-    context_object_name = 'inquiries'
-    template_name = 'requests/all_workshopinquiries.html'
+    context_object_name = "inquiries"
+    template_name = "requests/all_workshopinquiries.html"
     filter_class = WorkshopInquiryFilter
-    queryset = (
-        WorkshopInquiryRequest
-            .objects.select_related('assigned_to', 'institution')
-                    .prefetch_related('requested_workshop_types')
-    )
-    title = 'Workshop inquiries'
+    queryset = WorkshopInquiryRequest.objects.select_related(
+        "assigned_to", "institution"
+    ).prefetch_related("requested_workshop_types")
+    title = "Workshop inquiries"
 
 
 class WorkshopInquiryDetails(OnlyForAdminsMixin, AMYDetailView):
     queryset = WorkshopInquiryRequest.objects.all()
-    context_object_name = 'object'
-    template_name = 'requests/workshopinquiry.html'
-    pk_url_kwarg = 'inquiry_id'
+    context_object_name = "object"
+    template_name = "requests/workshopinquiry.html"
+    pk_url_kwarg = "inquiry_id"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Workshop inquiry #{}'.format(self.get_object().pk)
+        context["title"] = "Workshop inquiry #{}".format(self.get_object().pk)
 
         person_lookup_form = AdminLookupForm()
         if self.object.assigned_to:
             person_lookup_form = AdminLookupForm(
-                initial={'person': self.object.assigned_to}
+                initial={"person": self.object.assigned_to}
             )
 
         person_lookup_form.helper = BootstrapHelper(
-            form_action=reverse('workshopinquiry_assign',
-                                args=[self.object.pk]),
-            add_cancel_button=False)
+            form_action=reverse("workshopinquiry_assign", args=[self.object.pk]),
+            add_cancel_button=False,
+        )
 
-        context['person_lookup_form'] = person_lookup_form
+        context["person_lookup_form"] = person_lookup_form
         return context
 
 
-class WorkshopInquiryChange(OnlyForAdminsMixin, PermissionRequiredMixin,
-                            AMYUpdateView):
-    permission_required = 'extrequests.change_workshopinquiryrequest'
+class WorkshopInquiryChange(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
+    permission_required = "extrequests.change_workshopinquiryrequest"
     model = WorkshopInquiryRequest
-    pk_url_kwarg = 'inquiry_id'
+    pk_url_kwarg = "inquiry_id"
     form_class = WorkshopInquiryRequestAdminForm
-    template_name = 'generic_form_with_comments.html'
+    template_name = "generic_form_with_comments.html"
 
 
 class WorkshopInquirySetState(OnlyForAdminsMixin, ChangeRequestStateView):
-    permission_required = 'extrequests.change_workshopinquiryrequest'
+    permission_required = "extrequests.change_workshopinquiryrequest"
     model = WorkshopInquiryRequest
-    pk_url_kwarg = 'inquiry_id'
-    state_url_kwarg = 'state'
+    pk_url_kwarg = "inquiry_id"
+    state_url_kwarg = "state"
     permanent = False
 
 
-class WorkshopInquiryAcceptEvent(OnlyForAdminsMixin, PermissionRequiredMixin,
-                                 AMYCreateAndFetchObjectView):
-    permission_required = ['extrequests.change_workshopinquiryrequest',
-                           'workshops.add_event']
+class WorkshopInquiryAcceptEvent(
+    OnlyForAdminsMixin, PermissionRequiredMixin, WRFInitial, AMYCreateAndFetchObjectView
+):
+    permission_required = [
+        "extrequests.change_workshopinquiryrequest",
+        "workshops.add_event",
+    ]
     model = Event
     form_class = EventCreateForm
-    template_name = 'requests/workshopinquiry_accept_event.html'
+    template_name = "requests/workshopinquiry_accept_event.html"
 
-    queryset_other = WorkshopInquiryRequest.objects.filter(state='p')
-    context_other_object_name = 'object'
-    pk_url_kwarg = 'inquiry_id'
+    queryset_other = WorkshopInquiryRequest.objects.filter(state="p")
+    context_other_object_name = "object"
+    pk_url_kwarg = "inquiry_id"
 
     def get_context_data(self, **kwargs):
-        kwargs['title'] = "Accept and create a new event"
+        kwargs["title"] = "Accept and create a new event"
         return super().get_context_data(**kwargs)
 
     def get_success_url(self):
-        return reverse('event_details', args=[self.object.slug])
+        return reverse("event_details", args=[self.object.slug])
 
     def form_valid(self, form):
         self.object = form.save()
@@ -299,8 +302,9 @@ class WorkshopInquiryAcceptEvent(OnlyForAdminsMixin, PermissionRequiredMixin,
 
         person = wr.host()
         if person:
-            Task.objects.create(event=event, person=person,
-                                role=Role.objects.get(name="host"))
+            Task.objects.create(
+                event=event, person=person, role=Role.objects.get(name="host")
+            )
 
         if PostWorkshopAction.check(event):
             objs = dict(event=event, request=wr)
@@ -316,17 +320,17 @@ class WorkshopInquiryAcceptEvent(OnlyForAdminsMixin, PermissionRequiredMixin,
                 request=self.request,
             )
 
-        wr.state = 'a'
+        wr.state = "a"
         wr.event = event
         wr.save()
         return super().form_valid(form)
 
 
 class WorkshopInquiryAssign(OnlyForAdminsMixin, AssignView):
-    permission_required = 'extrequests.change_workshopinquiryrequest'
+    permission_required = "extrequests.change_workshopinquiryrequest"
     model = WorkshopInquiryRequest
-    pk_url_kwarg = 'inquiry_id'
-    person_url_kwarg = 'person_id'
+    pk_url_kwarg = "inquiry_id"
+    person_url_kwarg = "person_id"
 
 
 # ------------------------------------------------------------
@@ -334,76 +338,75 @@ class WorkshopInquiryAssign(OnlyForAdminsMixin, AssignView):
 # ------------------------------------------------------------
 
 
-class AllSelfOrganisedSubmissions(OnlyForAdminsMixin, StateFilterMixin,
-                                  AMYListView):
-    context_object_name = 'submissions'
-    template_name = 'requests/all_selforganisedsubmissions.html'
+class AllSelfOrganisedSubmissions(OnlyForAdminsMixin, StateFilterMixin, AMYListView):
+    context_object_name = "submissions"
+    template_name = "requests/all_selforganisedsubmissions.html"
     filter_class = SelfOrganisedSubmissionFilter
-    queryset = (
-        SelfOrganisedSubmission.objects.select_related('assigned_to',
-                                                       'institution')
-                                       .prefetch_related('workshop_types')
-    )
-    title = 'Self-Organised submissions'
+    queryset = SelfOrganisedSubmission.objects.select_related(
+        "assigned_to", "institution"
+    ).prefetch_related("workshop_types")
+    title = "Self-Organised submissions"
 
 
 class SelfOrganisedSubmissionDetails(OnlyForAdminsMixin, AMYDetailView):
     queryset = SelfOrganisedSubmission.objects.all()
-    context_object_name = 'object'
-    template_name = 'requests/selforganisedsubmission.html'
-    pk_url_kwarg = 'submission_id'
+    context_object_name = "object"
+    template_name = "requests/selforganisedsubmission.html"
+    pk_url_kwarg = "submission_id"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Self-Organised submission #{}'.format(
-            self.get_object().pk)
+        context["title"] = "Self-Organised submission #{}".format(self.get_object().pk)
 
         person_lookup_form = AdminLookupForm()
         if self.object.assigned_to:
             person_lookup_form = AdminLookupForm(
-                initial={'person': self.object.assigned_to}
+                initial={"person": self.object.assigned_to}
             )
 
         person_lookup_form.helper = BootstrapHelper(
-            form_action=reverse('selforganisedsubmission_assign',
-                                args=[self.object.pk]),
-            add_cancel_button=False)
+            form_action=reverse(
+                "selforganisedsubmission_assign", args=[self.object.pk]
+            ),
+            add_cancel_button=False,
+        )
 
-        context['person_lookup_form'] = person_lookup_form
+        context["person_lookup_form"] = person_lookup_form
         return context
 
 
-class SelfOrganisedSubmissionChange(OnlyForAdminsMixin,
-                                    PermissionRequiredMixin,
-                                    AMYUpdateView):
-    permission_required = 'extrequests.change_selforganisedsubmission'
+class SelfOrganisedSubmissionChange(
+    OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView
+):
+    permission_required = "extrequests.change_selforganisedsubmission"
     model = SelfOrganisedSubmission
-    pk_url_kwarg = 'submission_id'
+    pk_url_kwarg = "submission_id"
     form_class = SelfOrganisedSubmissionAdminForm
-    template_name = 'generic_form_with_comments.html'
+    template_name = "generic_form_with_comments.html"
 
 
-class SelfOrganisedSubmissionSetState(OnlyForAdminsMixin,
-                                      ChangeRequestStateView):
-    permission_required = 'extrequests.change_selforganisedsubmission'
+class SelfOrganisedSubmissionSetState(OnlyForAdminsMixin, ChangeRequestStateView):
+    permission_required = "extrequests.change_selforganisedsubmission"
     model = SelfOrganisedSubmission
-    pk_url_kwarg = 'submission_id'
-    state_url_kwarg = 'state'
+    pk_url_kwarg = "submission_id"
+    state_url_kwarg = "state"
     permanent = False
 
 
-class SelfOrganisedSubmissionAcceptEvent(OnlyForAdminsMixin,
-                                         PermissionRequiredMixin,
-                                         AMYCreateAndFetchObjectView):
-    permission_required = ['extrequests.change_selforganisedsubmission',
-                           'workshops.add_event']
+class SelfOrganisedSubmissionAcceptEvent(
+    OnlyForAdminsMixin, PermissionRequiredMixin, WRFInitial, AMYCreateAndFetchObjectView
+):
+    permission_required = [
+        "extrequests.change_selforganisedsubmission",
+        "workshops.add_event",
+    ]
     model = Event
     form_class = EventCreateForm
-    template_name = 'requests/selforganisedsubmission_accept_event.html'
+    template_name = "requests/selforganisedsubmission_accept_event.html"
 
-    queryset_other = SelfOrganisedSubmission.objects.filter(state='p')
-    context_other_object_name = 'object'
-    pk_url_kwarg = 'submission_id'
+    queryset_other = SelfOrganisedSubmission.objects.filter(state="p")
+    context_other_object_name = "object"
+    pk_url_kwarg = "submission_id"
 
     def get_form_kwargs(self):
         """Extend form kwargs with `initial` values.
@@ -412,67 +415,61 @@ class SelfOrganisedSubmissionAcceptEvent(OnlyForAdminsMixin,
         object, and from corresponding workshop page (if it's possible)."""
         kwargs = super().get_form_kwargs()
 
-        mix_match = (
-            self.other_object.workshop_types.filter(mix_match=True).exists()
-        )
-
         # no matter what, don't show "lessons" field; previously they were shown
         # when mix&match was selected
-        kwargs['show_lessons'] = False
+        kwargs["show_lessons"] = False
 
         url = self.other_object.workshop_url.strip()
         data = {
-            'url': url,
-            'curricula': list(self.other_object.workshop_types.all()),
-            'host': self.other_object.host_organization() or
-                self.other_object.institution,
-            'administrator': Organization.objects.get(domain='self-organized'),
+            "url": url,
+            "host": self.other_object.host_organization()
+            or self.other_object.institution,
+            "administrator": Organization.objects.get(domain="self-organized"),
         }
-
-        if mix_match:
-            data['tags'] = [Tag.objects.get(name='Circuits')]
 
         try:
             metadata = fetch_workshop_metadata(url)
             parsed_data = parse_workshop_metadata(metadata)
         except (AttributeError, HTTPError, RequestException, WrongWorkshopURL):
             # ignore errors, but show warning instead
-            messages.warning(self.request,
-                             "Cannot automatically fill the form "
-                             "from provided workshop URL.")
+            messages.warning(
+                self.request,
+                "Cannot automatically fill the form " "from provided workshop URL.",
+            )
         else:
             # keep working only if no exception occurred
             try:
-                lang = parsed_data['language'].lower()
-                parsed_data['language'] = Language.objects.get(subtag=lang)
+                lang = parsed_data["language"].lower()
+                parsed_data["language"] = Language.objects.get(subtag=lang)
             except (KeyError, ValueError, Language.DoesNotExist):
                 # ignore non-existing
-                messages.warning(self.request,
-                                 "Cannot automatically fill language.")
+                messages.warning(self.request, "Cannot automatically fill language.")
                 # it's easier to remove bad value than to leave
                 # 500 Server Error when the form is rendered
-                if 'language' in parsed_data:
-                    del parsed_data['language']
+                if "language" in parsed_data:
+                    del parsed_data["language"]
 
             data.update(parsed_data)
 
-            if 'instructors' in data or 'helpers' in data:
-                instructors = data.get('instructors') or ['none']
-                helpers = data.get('helpers') or ['none']
-                data['comment'] = (
+            if "instructors" in data or "helpers" in data:
+                instructors = data.get("instructors") or ["none"]
+                helpers = data.get("helpers") or ["none"]
+                data["comment"] = (
                     f"Instructors: {','.join(instructors)}\n\n"
                     f"Helpers: {','.join(helpers)}"
                 )
 
-        kwargs['initial'] = data
+        initial = super().get_initial()
+        initial.update(data)
+        kwargs["initial"] = initial
         return kwargs
 
     def get_context_data(self, **kwargs):
-        kwargs['title'] = "Accept and create a new event"
+        kwargs["title"] = "Accept and create a new event"
         return super().get_context_data(**kwargs)
 
     def get_success_url(self):
-        return reverse('event_details', args=[self.object.slug])
+        return reverse("event_details", args=[self.object.slug])
 
     def form_valid(self, form):
         self.object = form.save()
@@ -482,10 +479,11 @@ class SelfOrganisedSubmissionAcceptEvent(OnlyForAdminsMixin,
 
         person = wr.host()
         if person:
-            Task.objects.create(event=event, person=person,
-                                role=Role.objects.get(name="host"))
+            Task.objects.create(
+                event=event, person=person, role=Role.objects.get(name="host")
+            )
 
-        wr.state = 'a'
+        wr.state = "a"
         wr.event = event
         wr.save()
 
@@ -521,15 +519,16 @@ class SelfOrganisedSubmissionAcceptEvent(OnlyForAdminsMixin,
 
 
 class SelfOrganisedSubmissionAssign(OnlyForAdminsMixin, AssignView):
-    permission_required = 'extrequests.change_selforganisedsubmission'
+    permission_required = "extrequests.change_selforganisedsubmission"
     model = SelfOrganisedSubmission
-    pk_url_kwarg = 'submission_id'
-    person_url_kwarg = 'person_id'
+    pk_url_kwarg = "submission_id"
+    person_url_kwarg = "person_id"
 
 
 # ------------------------------------------------------------
 # TrainingRequest related views
 # ------------------------------------------------------------
+
 
 @admin_required
 def all_trainingrequests(request):
@@ -537,49 +536,51 @@ def all_trainingrequests(request):
         request.GET,
         queryset=TrainingRequest.objects.all().prefetch_related(
             Prefetch(
-                'person__task_set',
-                to_attr='training_tasks',
-                queryset=Task.objects
-                .filter(role__name='learner', event__tags__name='TTT')
-                .select_related('event')
+                "person__task_set",
+                to_attr="training_tasks",
+                queryset=Task.objects.filter(
+                    role__name="learner", event__tags__name="TTT"
+                ).select_related("event"),
             ),
-        )
+        ),
     )
 
     form = BulkChangeTrainingRequestForm()
     match_form = BulkMatchTrainingRequestForm()
 
-    if request.method == 'POST' and 'match' in request.POST:
+    if request.method == "POST" and "match" in request.POST:
         # Bulk match people associated with selected TrainingRequests to
         # trainings.
         match_form = BulkMatchTrainingRequestForm(request.POST)
 
         if match_form.is_valid():
-            event = match_form.cleaned_data['event']
-            member_site = match_form.cleaned_data['seat_membership']
-            open_seat = match_form.cleaned_data['seat_open_training']
+            event = match_form.cleaned_data["event"]
+            member_site = match_form.cleaned_data["seat_membership"]
+            open_seat = match_form.cleaned_data["seat_open_training"]
 
             # Perform bulk match
-            for r in match_form.cleaned_data['requests']:
+            for r in match_form.cleaned_data["requests"]:
                 # automatically accept this request
-                r.state = 'a'
+                r.state = "a"
                 r.save()
 
                 # assign to an event
                 Task.objects.get_or_create(
                     person=r.person,
-                    role=Role.objects.get(name='learner'),
+                    role=Role.objects.get(name="learner"),
                     event=event,
                     seat_membership=member_site,
                     seat_open_training=open_seat,
                 )
 
-            requests_count = len(match_form.cleaned_data['requests'])
+            requests_count = len(match_form.cleaned_data["requests"])
             today = datetime.date.today()
 
             if member_site:
-                if (member_site.seats_instructor_training_remaining -
-                        requests_count <= 0):
+                if (
+                    member_site.seats_instructor_training_remaining - requests_count
+                    <= 0
+                ):
                     messages.warning(
                         request,
                         'Membership "{}" is using more training seats than '
@@ -587,56 +588,59 @@ def all_trainingrequests(request):
                     )
 
                 # check if membership is active
-                if not (member_site.agreement_start <= today <=
-                        member_site.agreement_end):
+                if not (
+                    member_site.agreement_start <= today <= member_site.agreement_end
+                ):
                     messages.warning(
                         request,
-                        'Membership "{}" is not active.'.format(
-                            str(member_site))
+                        'Membership "{}" is not active.'.format(str(member_site)),
                     )
 
                 # show warning if training falls out of agreement dates
-                if event.start and event.start < member_site.agreement_start \
-                        or event.end and event.end > member_site.agreement_end:
+                if (
+                    event.start
+                    and event.start < member_site.agreement_start
+                    or event.end
+                    and event.end > member_site.agreement_end
+                ):
                     messages.warning(
                         request,
                         'Training "{}" has start or end date outside '
                         'membership "{}" agreement dates.'.format(
-                            str(event),
-                            str(member_site),
+                            str(event), str(member_site),
                         ),
                     )
 
-            messages.success(request, 'Successfully accepted and matched '
-                                      'selected people to training.')
+            messages.success(
+                request,
+                "Successfully accepted and matched " "selected people to training.",
+            )
 
-    elif request.method == 'POST' and 'accept' in request.POST:
+    elif request.method == "POST" and "accept" in request.POST:
         # Bulk discard selected TrainingRequests.
         form = BulkChangeTrainingRequestForm(request.POST)
 
         if form.is_valid():
             # Perform bulk discard
-            for r in form.cleaned_data['requests']:
-                r.state = 'a'
+            for r in form.cleaned_data["requests"]:
+                r.state = "a"
                 r.save()
 
-            messages.success(request, 'Successfully accepted selected '
-                                      'requests.')
+            messages.success(request, "Successfully accepted selected " "requests.")
 
-    elif request.method == 'POST' and 'discard' in request.POST:
+    elif request.method == "POST" and "discard" in request.POST:
         # Bulk discard selected TrainingRequests.
         form = BulkChangeTrainingRequestForm(request.POST)
 
         if form.is_valid():
             # Perform bulk discard
-            for r in form.cleaned_data['requests']:
-                r.state = 'd'
+            for r in form.cleaned_data["requests"]:
+                r.state = "d"
                 r.save()
 
-            messages.success(request, 'Successfully discarded selected '
-                                      'requests.')
+            messages.success(request, "Successfully discarded selected " "requests.")
 
-    elif request.method == 'POST' and 'unmatch' in request.POST:
+    elif request.method == "POST" and "unmatch" in request.POST:
         # Bulk unmatch people associated with selected TrainingRequests from
         # trainings.
         form = BulkChangeTrainingRequestForm(request.POST)
@@ -644,40 +648,46 @@ def all_trainingrequests(request):
         form.check_person_matched = True
         if form.is_valid():
             # Perform bulk unmatch
-            for r in form.cleaned_data['requests']:
+            for r in form.cleaned_data["requests"]:
                 r.person.get_training_tasks().delete()
 
-            messages.success(request, 'Successfully unmatched selected '
-                                      'people from trainings.')
+            messages.success(
+                request, "Successfully unmatched selected " "people from trainings."
+            )
 
     context = {
-        'title': 'Training Requests',
-        'requests': filter_.qs,
-        'filter': filter_,
-        'form': form,
-        'match_form': match_form,
+        "title": "Training Requests",
+        "requests": filter_.qs,
+        "filter": filter_,
+        "form": form,
+        "match_form": match_form,
     }
 
-    return render(request, 'requests/all_trainingrequests.html', context)
+    return render(request, "requests/all_trainingrequests.html", context)
 
 
 @transaction.atomic
-def _match_training_request_to_person(request, training_request, create=False,
-                                      person=None):
+def _match_training_request_to_person(
+    request, training_request, create=False, person=None
+):
     if create:
         try:
             training_request.person = Person.objects.create_user(
-                username=create_username(training_request.personal,
-                                         training_request.family),
+                username=create_username(
+                    training_request.personal, training_request.family
+                ),
                 personal=training_request.personal,
                 family=training_request.family,
                 email=training_request.email,
             )
         except IntegrityError:
             # email address is not unique
-            messages.error(request, 'Could not create a new person, because '
-                                    'there already exists a person with '
-                                    'exact email address.')
+            messages.error(
+                request,
+                "Could not create a new person, because "
+                "there already exists a person with "
+                "exact email address.",
+            )
             return False
 
     else:
@@ -691,18 +701,19 @@ def _match_training_request_to_person(request, training_request, create=False,
         training_request.person.middle = training_request.middle
         training_request.person.family = training_request.family
         training_request.person.email = training_request.email
-        training_request.person.secondary_email = \
-            training_request.secondary_email
+        training_request.person.secondary_email = training_request.secondary_email
         training_request.person.country = training_request.country
         training_request.person.github = training_request.github
         training_request.person.affiliation = training_request.affiliation
         training_request.person.domains.set(training_request.domains.all())
         training_request.person.occupation = (
             training_request.get_occupation_display()
-            if training_request.occupation else
-            training_request.occupation_other)
-        training_request.person.data_privacy_agreement = \
+            if training_request.occupation
+            else training_request.occupation_other
+        )
+        training_request.person.data_privacy_agreement = (
             training_request.data_privacy_agreement
+        )
 
         training_request.person.may_contact = True
         training_request.person.is_active = True
@@ -711,15 +722,18 @@ def _match_training_request_to_person(request, training_request, create=False,
         training_request.person.synchronize_usersocialauth()
         training_request.save()
 
-        messages.success(request, 'Request matched with the person.')
+        messages.success(request, "Request matched with the person.")
 
         return True
     except IntegrityError:
         # email or github not unique
-        messages.warning(request, "It was impossible to update related "
-                                  "person's data. Probably email address or "
-                                  "Github handle used in the training request "
-                                  "are not unique amongst person entries.")
+        messages.warning(
+            request,
+            "It was impossible to update related "
+            "person's data. Probably email address or "
+            "Github handle used in the training request "
+            "are not unique amongst person entries.",
+        )
         return False
 
 
@@ -727,19 +741,19 @@ def _match_training_request_to_person(request, training_request, create=False,
 def trainingrequest_details(request, pk):
     req = get_object_or_404(TrainingRequest, pk=int(pk))
 
-    if request.method == 'POST':
+    if request.method == "POST":
         form = MatchTrainingRequestForm(request.POST)
 
         if form.is_valid():
-            create = (form.action == "create")
-            person = form.cleaned_data['person']
-            ok = _match_training_request_to_person(request,
-                                                   training_request=req,
-                                                   create=create,
-                                                   person=person)
+            create = form.action == "create"
+            person = form.cleaned_data["person"]
+            ok = _match_training_request_to_person(
+                request, training_request=req, create=create, person=person
+            )
             if ok:
                 return redirect_with_next_support(
-                    request, 'trainingrequest_details', req.pk)
+                    request, "trainingrequest_details", req.pk
+                )
 
     else:  # GET request
         # Provide initial value for form.person
@@ -748,67 +762,70 @@ def trainingrequest_details(request, pk):
         else:
             # No person is matched to the TrainingRequest yet. Suggest a
             # person from existing records.
-            primary_email = (
-                Q(email__iexact=req.email) |
-                Q(secondary_email__iexact=req.email)
+            primary_email = Q(email__iexact=req.email) | Q(
+                secondary_email__iexact=req.email
             )
             # only match secondary email if there's one provided, otherwise
             # we could get false-positive matches for empty email.
-            secondary_email = Q() if not req.secondary_email else (
-                Q(email__iexact=req.secondary_email) |
-                Q(secondary_email__iexact=req.secondary_email)
+            secondary_email = (
+                Q()
+                if not req.secondary_email
+                else (
+                    Q(email__iexact=req.secondary_email)
+                    | Q(secondary_email__iexact=req.secondary_email)
+                )
             )
             name = Q(
                 personal__iexact=req.personal,
                 middle__iexact=req.middle,
                 family__iexact=req.family,
             )
-            person = Person.objects \
-                           .filter(primary_email | secondary_email | name) \
-                           .first()  # may return None
-        form = MatchTrainingRequestForm(initial={'person': person})
+            person = Person.objects.filter(
+                primary_email | secondary_email | name
+            ).first()  # may return None
+        form = MatchTrainingRequestForm(initial={"person": person})
 
     context = {
-        'title': 'Training request #{}'.format(req.pk),
-        'req': req,
-        'form': form,
+        "title": "Training request #{}".format(req.pk),
+        "req": req,
+        "form": form,
     }
-    return render(request, 'requests/trainingrequest.html', context)
+    return render(request, "requests/trainingrequest.html", context)
 
 
-class TrainingRequestUpdate(RedirectSupportMixin,
-                            OnlyForAdminsMixin,
-                            AMYUpdateView):
+class TrainingRequestUpdate(RedirectSupportMixin, OnlyForAdminsMixin, AMYUpdateView):
     model = TrainingRequest
     form_class = TrainingRequestUpdateForm
-    template_name = 'generic_form_with_comments.html'
+    template_name = "generic_form_with_comments.html"
 
 
 @admin_required
-@permission_required(['workshops.delete_trainingrequest',
-                      'workshops.change_trainingrequest'],
-                     raise_exception=True)
+@permission_required(
+    ["workshops.delete_trainingrequest", "workshops.change_trainingrequest"],
+    raise_exception=True,
+)
 def trainingrequests_merge(request):
     """Display two training requests side by side on GET and merge them on
     POST.
 
     If no requests are supplied via GET params, display event selection
     form."""
-    obj_a_pk = request.GET.get('trainingrequest_a')
-    obj_b_pk = request.GET.get('trainingrequest_b')
+    obj_a_pk = request.GET.get("trainingrequest_a")
+    obj_b_pk = request.GET.get("trainingrequest_b")
 
     if not obj_a_pk or not obj_b_pk:
         context = {
-            'title': 'Select Training Requests to merge',
-            'form': TrainingRequestsSelectionForm(),
+            "title": "Select Training Requests to merge",
+            "form": TrainingRequestsSelectionForm(),
         }
-        return render(request, 'generic_form.html', context)
+        return render(request, "generic_form.html", context)
 
     obj_a = get_object_or_404(TrainingRequest, pk=obj_a_pk)
     obj_b = get_object_or_404(TrainingRequest, pk=obj_b_pk)
 
-    form = TrainingRequestsMergeForm(initial=dict(trainingrequest_a=obj_a,
-                                                  trainingrequest_b=obj_b))
+    form = TrainingRequestsMergeForm(
+        initial=dict(trainingrequest_a=obj_a, trainingrequest_b=obj_b)
+    )
 
     if request.method == "POST":
         form = TrainingRequestsMergeForm(request.POST)
@@ -817,12 +834,12 @@ def trainingrequests_merge(request):
             # merging in process
             data = form.cleaned_data
 
-            obj_a = data['trainingrequest_a']
-            obj_b = data['trainingrequest_b']
+            obj_a = data["trainingrequest_a"]
+            obj_b = data["trainingrequest_b"]
 
             # `base_obj` stays in the database after merge
             # `merging_obj` will be removed from DB after merge
-            if data['id'] == 'obj_a':
+            if data["id"] == "obj_a":
                 base_obj = obj_a
                 merging_obj = obj_b
                 base_a = True
@@ -833,82 +850,104 @@ def trainingrequests_merge(request):
 
             # non-M2M-relationships:
             easy = (
-                'state', 'person', 'group_name', 'personal', 'middle',
-                'family', 'email', 'secondary_email', 'github', 'occupation',
-                'occupation_other',
-                'affiliation', 'location', 'country', 'underresourced',
-                'domains_other', 'underrepresented',
-                'underrepresented_details', 'nonprofit_teaching_experience',
-                'previous_training', 'previous_training_other',
-                'previous_training_explanation', 'previous_experience',
-                'previous_experience_other', 'previous_experience_explanation',
-                'programming_language_usage_frequency',
-                'teaching_frequency_expectation',
-                'teaching_frequency_expectation_other',
-                'max_travelling_frequency', 'max_travelling_frequency_other',
-                'reason', 'user_notes', 'training_completion_agreement',
-                'workshop_teaching_agreement',
-                'data_privacy_agreement', 'code_of_conduct_agreement',
-                'created_at', 'last_updated_at',
+                "state",
+                "person",
+                "group_name",
+                "personal",
+                "middle",
+                "family",
+                "email",
+                "secondary_email",
+                "github",
+                "occupation",
+                "occupation_other",
+                "affiliation",
+                "location",
+                "country",
+                "underresourced",
+                "domains_other",
+                "underrepresented",
+                "underrepresented_details",
+                "nonprofit_teaching_experience",
+                "previous_training",
+                "previous_training_other",
+                "previous_training_explanation",
+                "previous_experience",
+                "previous_experience_other",
+                "previous_experience_explanation",
+                "programming_language_usage_frequency",
+                "teaching_frequency_expectation",
+                "teaching_frequency_expectation_other",
+                "max_travelling_frequency",
+                "max_travelling_frequency_other",
+                "reason",
+                "user_notes",
+                "training_completion_agreement",
+                "workshop_teaching_agreement",
+                "data_privacy_agreement",
+                "code_of_conduct_agreement",
+                "created_at",
+                "last_updated_at",
             )
             # M2M relationships
             difficult = (
-                'domains', 'previous_involvement',
+                "domains",
+                "previous_involvement",
             )
 
             try:
-                _, integrity_errors = merge_objects(obj_a, obj_b, easy,
-                                                    difficult, choices=data,
-                                                    base_a=base_a)
+                _, integrity_errors = merge_objects(
+                    obj_a, obj_b, easy, difficult, choices=data, base_a=base_a
+                )
 
                 if integrity_errors:
-                    msg = ('There were integrity errors when merging related '
-                           'objects:\n' '\n'.join(integrity_errors))
+                    msg = (
+                        "There were integrity errors when merging related "
+                        "objects:\n"
+                        "\n".join(integrity_errors)
+                    )
                     messages.warning(request, msg)
 
             except ProtectedError as e:
-                return failed_to_delete(request, object=merging_obj,
-                                        protected_objects=e.protected_objects)
+                return failed_to_delete(
+                    request, object=merging_obj, protected_objects=e.protected_objects
+                )
 
             else:
                 return redirect(base_obj.get_absolute_url())
         else:
-            messages.error(request, 'Fix errors in the form.')
+            messages.error(request, "Fix errors in the form.")
 
     context = {
-        'title': 'Merge two training requets',
-        'obj_a': obj_a,
-        'obj_b': obj_b,
-        'form': form,
+        "title": "Merge two training requets",
+        "obj_a": obj_a,
+        "obj_b": obj_b,
+        "form": form,
     }
-    return render(request, 'requests/trainingrequests_merge.html', context)
+    return render(request, "requests/trainingrequests_merge.html", context)
 
 
 @admin_required
-@permission_required(['workshops.change_trainingrequest'],
-                     raise_exception=True)
+@permission_required(["workshops.change_trainingrequest"], raise_exception=True)
 def bulk_upload_training_request_scores(request):
     if request.method == "POST":
         form = BulkUploadCSVForm(request.POST, request.FILES)
         if form.is_valid():
-            charset = request.FILES['file'].charset or settings.DEFAULT_CHARSET
-            stream = io.TextIOWrapper(request.FILES['file'].file, charset)
+            charset = request.FILES["file"].charset or settings.DEFAULT_CHARSET
+            stream = io.TextIOWrapper(request.FILES["file"].file, charset)
             try:
                 data = upload_trainingrequest_manual_score_csv(stream)
             except csv.Error as e:
                 messages.error(
-                    request,
-                    "Error processing uploaded .CSV file: {}".format(e))
+                    request, "Error processing uploaded .CSV file: {}".format(e)
+                )
             except UnicodeDecodeError:
                 messages.error(
-                    request,
-                    "Please provide a file in {} encoding."
-                    .format(charset))
-            else:
-                request.session['bulk-upload-training-request-scores'] = data
-                return redirect(
-                    'bulk_upload_training_request_scores_confirmation'
+                    request, "Please provide a file in {} encoding.".format(charset)
                 )
+            else:
+                request.session["bulk-upload-training-request-scores"] = data
+                return redirect("bulk_upload_training_request_scores_confirmation")
 
         else:
             messages.error(request, "Fix errors below.")
@@ -917,84 +956,82 @@ def bulk_upload_training_request_scores(request):
         form = BulkUploadCSVForm()
 
     context = {
-        'title': 'Bulk upload Training Requests manual score',
-        'form': form,
-        'charset': settings.DEFAULT_CHARSET,
+        "title": "Bulk upload Training Requests manual score",
+        "form": form,
+        "charset": settings.DEFAULT_CHARSET,
     }
     return render(
-        request,
-        'requests/trainingrequest_bulk_upload_manual_score_form.html',
-        context,
+        request, "requests/trainingrequest_bulk_upload_manual_score_form.html", context,
     )
 
 
 @admin_required
-@permission_required(['workshops.change_trainingrequest'],
-                     raise_exception=True)
+@permission_required(["workshops.change_trainingrequest"], raise_exception=True)
 def bulk_upload_training_request_scores_confirmation(request):
     """This view allows for verifying and saving of uploaded training
     request scores."""
-    data = request.session.get('bulk-upload-training-request-scores')
+    data = request.session.get("bulk-upload-training-request-scores")
 
     if not data:
-        messages.warning(request,
-                         "Could not locate CSV data, please upload again.")
-        return redirect('bulk_upload_training_request_scores')
+        messages.warning(request, "Could not locate CSV data, please upload again.")
+        return redirect("bulk_upload_training_request_scores")
 
     if request.method == "POST":
-        if (request.POST.get('confirm', None) and
-                not request.POST.get('cancel', None)):
+        if request.POST.get("confirm", None) and not request.POST.get("cancel", None):
 
-            errors, cleaned_data = \
-                clean_upload_trainingrequest_manual_score(data)
+            errors, cleaned_data = clean_upload_trainingrequest_manual_score(data)
 
             if not errors:
                 try:
                     records_count = update_manual_score(cleaned_data)
-                except (IntegrityError, ObjectDoesNotExist, InternalError,
-                        TypeError, ValueError) as e:
+                except (
+                    IntegrityError,
+                    ObjectDoesNotExist,
+                    InternalError,
+                    TypeError,
+                    ValueError,
+                ) as e:
                     messages.error(
                         request,
                         "Error saving data to the database: {}. Please make "
-                        "sure to fix all errors listed below.".format(e)
+                        "sure to fix all errors listed below.".format(e),
                     )
-                    errors, cleaned_data = \
-                        clean_upload_trainingrequest_manual_score(data)
+                    errors, cleaned_data = clean_upload_trainingrequest_manual_score(
+                        data
+                    )
                 else:
-                    request.session['bulk-upload-training-request-scores'] = \
-                        None
+                    request.session["bulk-upload-training-request-scores"] = None
                     messages.success(
                         request,
-                        "Successfully updated {} Training Requests."
-                        .format(records_count)
+                        "Successfully updated {} Training Requests.".format(
+                            records_count
+                        ),
                     )
-                    return redirect('bulk_upload_training_request_scores')
+                    return redirect("bulk_upload_training_request_scores")
             else:
                 messages.warning(
-                    request,
-                    "Please fix the data according to error messages below.",
+                    request, "Please fix the data according to error messages below.",
                 )
 
         else:
             # any "cancel" or lack of "confirm" in POST cancels the upload
-            request.session['bulk-upload-training-request-scores'] = None
-            return redirect('bulk_upload_training_request_scores')
+            request.session["bulk-upload-training-request-scores"] = None
+            return redirect("bulk_upload_training_request_scores")
 
     else:
         errors, cleaned_data = clean_upload_trainingrequest_manual_score(data)
         if errors:
             messages.warning(
-                request,
-                'Please fix errors in the provided CSV file and re-upload.',
+                request, "Please fix errors in the provided CSV file and re-upload.",
             )
 
     context = {
-        'title': 'Confirm uploaded Training Requests manual score data',
-        'any_errors': errors,
-        'zipped': zip(cleaned_data, data),
+        "title": "Confirm uploaded Training Requests manual score data",
+        "any_errors": errors,
+        "zipped": zip(cleaned_data, data),
     }
     return render(
         request,
-        'requests/trainingrequest_bulk_upload_manual_score_confirmation.html',
+        "requests/trainingrequest_bulk_upload_manual_score_confirmation.html",
         context,
     )

@@ -46,9 +46,8 @@ class DataPrivacyAgreementMixin(models.Model):
         blank=False,
         default=False,  # for 'normal' migration purposes
         verbose_name="I have read and agree to <a href="
-        '"https://docs.carpentries.org/'
-        'topic_folders/policies/privacy.html", '
-        'target="_blank">the data privacy policy</a> '
+        '"https://docs.carpentries.org/topic_folders/policies/privacy.html" '
+        'target="_blank" rel="noreferrer">the data privacy policy</a> '
         "of The Carpentries.",
     )
 
@@ -65,9 +64,9 @@ class COCAgreementMixin(models.Model):
         null=False,
         blank=False,
         default=False,  # for 'normal' migration purposes
-        verbose_name='I agree to abide by The Carpentries\' <a target="_blank"'
-        'href="https://docs.carpentries.org/topic_folders'
-        '/policies/code-of-conduct.html">Code of Conduct</a>.',
+        verbose_name="I agree to abide by The Carpentries' <a href="
+        '"https://docs.carpentries.org/topic_folders/policies/code-of-conduct.html" '
+        'target="_blank" rel="noreferrer">Code of Conduct</a>.',
     )
 
     class Meta:

@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 
 from django.conf import settings
+from django.db.models import QuerySet
 from django.urls import reverse
 from requests_mock import Mocker
 
@@ -35,6 +36,8 @@ class TestSelfOrganisedSubmissionBaseForm(FormTestHelper, TestBase):
             "institution_other_URL": "magic.gov.uk",
             "workshop_format": "periodic",
             "workshop_format_other": "",
+            "start": date(2020, 11, 7),
+            "end": date(2020, 11, 8),
             "workshop_url": "",
             "workshop_types": [
                 Curriculum.objects.filter(active=True)
@@ -561,10 +564,10 @@ class TestAcceptingSelfOrgSubmPrefilledform(TestBase):
         expected = {
             # fields below are pre-filled without accessing the website
             "url": "http://nonexistent-url/",
-            "curricula": [Curriculum.objects.get(mix_match=True)],
+            "curricula": Curriculum.objects.filter(mix_match=True),
             "host": self.org_alpha,
             "administrator": Organization.objects.get(domain="self-organized"),
-            "tags": [Tag.objects.get(name="Circuits")],
+            "tags": Tag.objects.filter(name="Circuits"),
             # fields below can't get populated because the website doesn't
             # work
             "slug": None,
@@ -582,6 +585,9 @@ class TestAcceptingSelfOrgSubmPrefilledform(TestBase):
         }
         for key, value in expected.items():
             init = form[key].initial
+            if isinstance(value, QuerySet):
+                init = list(init)
+                value = list(value)
             self.assertEqual(init, value, f"Issue with {key}")
 
     @Mocker()
@@ -629,10 +635,10 @@ class TestAcceptingSelfOrgSubmPrefilledform(TestBase):
         expected = {
             # fields below are pre-filled without accessing the website
             "url": "http://nonexistent-url/",
-            "curricula": [Curriculum.objects.get(mix_match=True)],
+            "curricula": Curriculum.objects.filter(mix_match=True),
             "host": self.org_alpha,
             "administrator": Organization.objects.get(domain="self-organized"),
-            "tags": [Tag.objects.get(name="Circuits")],
+            "tags": Tag.objects.filter(name="Circuits"),
             # fields below are pre-filled from the website meta tags
             "slug": "2020-04-04-test",
             "language": Language.objects.get(subtag="en"),
@@ -650,6 +656,9 @@ class TestAcceptingSelfOrgSubmPrefilledform(TestBase):
         }
         for key, value in expected.items():
             init = form[key].initial
+            if isinstance(value, QuerySet):
+                init = list(init)
+                value = list(value)
             self.assertEqual(init, value, f"Issue with {key}")
 
 

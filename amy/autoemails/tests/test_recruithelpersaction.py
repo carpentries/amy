@@ -191,7 +191,6 @@ class TestRecruitHelpersAction(TestCase):
         # retest to make sure it's back to normal
         self.assertEqual(RecruitHelpersAction.check(e), True)
 
-
     def testContext(self):
         """Make sure `get_additional_context` works correctly."""
         a = RecruitHelpersAction(
@@ -269,7 +268,7 @@ class TestRecruitHelpersAction(TestCase):
         trigger = Trigger.objects.create(
             action="week-after-workshop-completion", template=template,
         )
-        a = RecruitHelpersAction(trigger=trigger, objects=dict(event=e),)
+        a = RecruitHelpersAction(trigger=trigger, objects=dict(event=e))
         email = a._email()
         self.assertEqual(email.to, [self.person1.email, self.person2.email])
 

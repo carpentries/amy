@@ -202,8 +202,8 @@ bootstrap_helper_inline_formsets = BootstrapHelperFormsetInline()
 class PrivacyConsentMixin(forms.Form):
     privacy_consent = forms.BooleanField(
         label="*I have read and agree to <a href="
-        '"https://docs.carpentries.org/topic_folders/policies/'
-        'privacy.html" target="_blank">'
+        '"https://docs.carpentries.org/topic_folders/policies/privacy.html"'
+        ' target="_blank" rel="noreferrer">'
         "the data privacy policy of The Carpentries</a>.",
         required=True,
     )
@@ -452,6 +452,7 @@ class EventForm(forms.ModelForm):
             "longitude": TextInput,
             "invoice_status": RadioSelect,
             "tags": SelectMultiple(attrs={"size": Tag.ITEMS_VISIBLE_IN_SELECT_WIDGET}),
+            # "tags": CheckboxSelectMultiple(),
             "curricula": CheckboxSelectMultiple(),
             "lessons": CheckboxSelectMultiple(),
             "contact": Select2TagWidget,
@@ -477,6 +478,7 @@ class EventForm(forms.ModelForm):
             Field("start", placeholder="YYYY-MM-DD"),
             Field("end", placeholder="YYYY-MM-DD"),
             "host",
+            "public_status",
             "administrator",
             "assigned_to",
             "tags",
@@ -487,7 +489,6 @@ class EventForm(forms.ModelForm):
             "reg_key",
             "manual_attendance",
             "contact",
-            "public_status",
             Div(
                 Div(HTML("Location details"), css_class="card-header"),
                 Div(
@@ -1044,8 +1045,8 @@ class EventsMergeForm(forms.Form):
 class ActionRequiredPrivacyForm(forms.ModelForm):
     data_privacy_agreement = forms.BooleanField(
         label="*I have read and agree to <a href="
-        '"https://docs.carpentries.org/topic_folders/policies/'
-        'privacy.html" target="_blank">'
+        '"https://docs.carpentries.org/topic_folders/policies/privacy.html"'
+        ' target="_blank" rel="noreferrer">'
         "the data privacy policy of The Carpentries</a>.",
         required=True,
     )

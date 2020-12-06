@@ -158,9 +158,16 @@ class Membership(models.Model):
         blank=True,
         unique=True,
         verbose_name="Registration Code",
-        help_text="Unique registration code used for Eventbrite and trainee application."
-        )
+        help_text="Unique registration code used for Eventbrite and trainee "
+        "application.",
+    )
 
+    agreement_link = models.URLField(
+        blank=True,
+        default="",
+        verbose_name="Link to member agreement",
+        help_text="Link to member agreement document or folder in Google Drive",
+    )
 
 
     def __str__(self):
@@ -181,10 +188,9 @@ class Membership(models.Model):
             administrator__domain="self-organized"
         )
         no_fee = Q(admin_fee=0) | Q(admin_fee=None)
-        date_started = (
-            Q(start__gte=self.agreement_start, start__lt=self.agreement_end)
-            & Q(start__lt=datetime.date.today())
-        )
+        date_started = Q(
+            start__gte=self.agreement_start, start__lt=self.agreement_end
+        ) & Q(start__lt=datetime.date.today())
         cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
 
         return (
@@ -203,10 +209,9 @@ class Membership(models.Model):
             administrator__domain="self-organized"
         )
         no_fee = Q(admin_fee=0) | Q(admin_fee=None)
-        date_started = (
-            Q(start__gte=self.agreement_start, start__lt=self.agreement_end)
-            & Q(start__gte=datetime.date.today())
-        )
+        date_started = Q(
+            start__gte=self.agreement_start, start__lt=self.agreement_end
+        ) & Q(start__gte=datetime.date.today())
         cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
 
         return (
@@ -235,10 +240,9 @@ class Membership(models.Model):
         self_organized = Q(administrator=None) | Q(
             administrator__domain="self-organized"
         )
-        date_started = (
-            Q(start__gte=self.agreement_start, start__lt=self.agreement_end)
-            & Q(start__lt=datetime.date.today())
-        )
+        date_started = Q(
+            start__gte=self.agreement_start, start__lt=self.agreement_end
+        ) & Q(start__lt=datetime.date.today())
         cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
 
         return (
@@ -256,10 +260,9 @@ class Membership(models.Model):
         self_organized = Q(administrator=None) | Q(
             administrator__domain="self-organized"
         )
-        date_started = (
-            Q(start__gte=self.agreement_start, start__lt=self.agreement_end)
-            & Q(start__gte=datetime.date.today())
-        )
+        date_started = Q(
+            start__gte=self.agreement_start, start__lt=self.agreement_end
+        ) & Q(start__gte=datetime.date.today())
         cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
 
         return (
@@ -529,9 +532,8 @@ class Person(
     may_contact = models.BooleanField(
         default=True,
         help_text="Allow to contact from The Carpentries according to the "
-        '<a href="https://docs.carpentries.org/'
-        'topic_folders/policies/privacy.html" target="_blank">'
-        "Privacy Policy</a>.",
+        '<a href="https://docs.carpentries.org/topic_folders/policies/privacy.html" '
+        'target="_blank" rel="noreferrer">Privacy Policy</a>.',
     )
     publish_profile = models.BooleanField(
         default=False,
@@ -813,7 +815,7 @@ class TagQuerySet(models.query.QuerySet):
 class Tag(models.Model):
     """Label for grouping events."""
 
-    ITEMS_VISIBLE_IN_SELECT_WIDGET = 15
+    ITEMS_VISIBLE_IN_SELECT_WIDGET = 19
 
     name = models.CharField(max_length=STR_MED, unique=True)
     details = models.CharField(max_length=STR_LONG)
@@ -1050,8 +1052,8 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
     sponsors = models.ManyToManyField(
         Organization, related_name="sponsored_events", blank=True, through=Sponsorship,
     )
-    start = models.DateField(null=True, blank=True, help_text=PUBLISHED_HELP_TEXT,)
-    end = models.DateField(null=True, blank=True,)
+    start = models.DateField(null=True, blank=True, help_text=PUBLISHED_HELP_TEXT)
+    end = models.DateField(null=True, blank=True)
     slug = models.SlugField(
         max_length=STR_LONG,
         unique=True,
@@ -1122,7 +1124,8 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         max_length=STR_LONGEST,
         default="",
         blank=True,
-        verbose_name="Additional people to contact")
+        verbose_name="Additional people to contact",
+    )
     country = CountryField(
         null=True,
         blank=True,
@@ -1372,7 +1375,7 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
             self.latitude = -48.876667
             self.longitude = -123.393333
 
-        super(Event, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
 
 # ------------------------------------------------------------
@@ -1485,6 +1488,13 @@ class Task(RQJobsMixin, models.Model):
                 "Cannot mark this person as open applicant, because the TTT "
                 "event is not marked as open applications.",
                 code="invalid",
+            )
+
+        if (
+            self.seat_membership or self.seat_open_training
+        ) and self.role.name != "learner":
+            errors["role"] = ValidationError(
+                "Seat (open / membership) can be assigned only to a workshop learner."
             )
 
         if errors:
@@ -2447,16 +2457,35 @@ class CommonRequest(SecondaryEmailMixin, models.Model):
     )
 
     ONLINE_INPERSON_CHOICES = (
-        ('online', 'Online'),
-        ('inperson', 'In-person'),
-        ('unsure', 'Not sure'),
+        ("online", "Online"),
+        ("inperson", "In-person"),
+        ("unsure", "Not sure"),
     )
     online_inperson = models.CharField(
         max_length=15,
         choices=ONLINE_INPERSON_CHOICES,
-        blank=False, null=False, default="",
-        verbose_name="Will this workshop be held online or in-person?")
+        blank=False,
+        null=False,
+        default="",
+        verbose_name="Will this workshop be held online or in-person?",
+    )
 
+    WORKSHOP_LISTED_CHOICES = (
+        (True, "Yes"),
+        (False, "No"),
+    )
+    workshop_listed = models.BooleanField(
+        null=False,
+        default=True,
+        blank=True,
+        choices=WORKSHOP_LISTED_CHOICES,
+        verbose_name="Would you like to have this workshop listed on our websites?",
+        help_text='If selected "Yes", the workshop will be published on following '
+        'websites: <a href="https://carpentries.org/">The Carpentries</a>,'
+        ' <a href="https://datacarpentry.org/">Data Carpentry</a>,'
+        ' <a href="https://software-carpentry.org/">Software Carpentry</a>,'
+        ' <a href="https://librarycarpentry.org/">Library Carpentry</a>.',
+    )
     PUBLIC_EVENT_CHOICES = (
         ("public", "This event is open to the public."),
         (
@@ -2527,6 +2556,7 @@ class WorkshopRequest(
     HostResponsibilitiesMixin,
     InstructorAvailabilityMixin,
     EventLinkMixin,
+    RQJobsMixin,
     models.Model,
 ):
     location = models.CharField(
@@ -2640,8 +2670,7 @@ class WorkshopRequest(
         "For online Carpentries workshops, we recommend a maximum of "
         "20 learners per class. If your workshop attendance will "
         "exceed 20 learners please be sure to include a note in the "
-        "comments section below. "
-        ,
+        "comments section below. ",
     )
     # MISSING
     # This field is no longer needed, and should be hidden in the form and

@@ -123,21 +123,21 @@
       }
     });
 
-    $("#bulk-add-results").delegate(':text', 'keypress', function(e) {
-      var key = e.keyCode || e.which;
+    $("#bulk-add-results").delegate('input', 'keydown', function(e) {
+      var key = e.key;
       var cell = $(e.currentTarget).parent();
       var span = $(cell).find("span");
       var input = $(e.currentTarget);
 
-      if (key == 13) {
-        span.html(input.val());  // save input value to the span element
+      if (key == "Enter") {
+        span.text(input.val());  // save input value to the span element
         input.addClass("d-none");
         span.removeClass("d-none");
         cell.addClass("table-warning");
 
         return false;
 
-      } else if (key == 27) {
+      } else if (key == "Escape") {
         input.val(span.html());  // revert initial value
         input.addClass("d-none");
         span.removeClass("d-none");

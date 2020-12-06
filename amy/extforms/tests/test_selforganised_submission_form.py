@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.core import mail
 from django.conf import settings
 from django.urls import reverse
@@ -30,6 +32,8 @@ class TestSelfOrganisedSubmissionExternalForm(TestBase):
                 "institution_department",
                 "workshop_format",
                 "workshop_format_other",
+                "start",
+                "end",
                 "workshop_url",
                 "workshop_types",
                 "workshop_types_other_explain",
@@ -41,6 +45,7 @@ class TestSelfOrganisedSubmissionExternalForm(TestBase):
                 "data_privacy_agreement",
                 "code_of_conduct_agreement",
                 "host_responsibilities",
+                "workshop_listed",
                 "online_inperson",
                 "captcha",
             ]
@@ -58,6 +63,8 @@ class TestSelfOrganisedSubmissionExternalForm(TestBase):
             "institution_other_URL": "magic.gov.uk",
             "workshop_format": "periodic",
             "workshop_format_other": "",
+            "start": date(2020, 11, 7),
+            "end": date(2020, 11, 8),
             "workshop_url": "",
             "workshop_types": [
                 Curriculum.objects.filter(active=True)

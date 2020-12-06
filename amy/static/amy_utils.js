@@ -256,4 +256,55 @@ $(document).ready(function() {
       $("#preferred_dates_warning").addClass("d-none");
     }
   })
+
+  // load template by the slug when someone opens up the modal for editing template
+  // before its sent
+  $("#email_edit").on("show.bs.modal", function(e) {
+    let btn = $(e.relatedTarget);
+    let template_slug = btn.data("templateSlug");
+    let modal = $(this);
+
+    $.get("/api/v1/emailtemplates/" + template_slug, {}, function(data) {
+      modal.find(".modal-body #email_slug").text(data.slug);
+      modal.find(".modal-body #email_subject").text(data.subject);
+
+      // form below
+      modal.find(".modal-body #id_slug").val(data.slug);
+      modal.find(".modal-body #id_subject").val(data.subject);
+      modal.find(".modal-body #id_to_header").val(data.to_header);
+      modal.find(".modal-body #id_from_header").val(data.from_header);
+      modal.find(".modal-body #id_cc_header").val(data.cc_header);
+      modal.find(".modal-body #id_bcc_header").val(data.bcc_header);
+      modal.find(".modal-body #id_reply_to_header").val(data.reply_to_header);
+      modal.find(".modal-body #id_body_template").text(data.body_template);
+
+      // force reload of markdownx
+      modal.find(".modal-body #id_body_template").trigger("input");
+    });
+  })
+
+  $("#email_edit").on("hide.bs.modal", function(e) {
+    let modal = $(this);
+
+    modal.find(".modal-body #id_subject").val("");
+    modal.find(".modal-body #id_template").text("");
+  })
+
+  // when "TTT" tag is selected on new event form, automatically select
+  // "TTT Open applications" checkbox
+  $("#id_tags").on("change", function(event) {
+    const checkbox = $("#id_open_TTT_applications");
+    $.each(event.target.selectedOptions, function(idx, val) {
+      if (val.text == "TTT") {
+        checkbox.prop("checked", true);
+      }
+    })
+  })
+  // on page load, select the checkbox if "TTT" option was preselected
+  $("#id_tags").find(":selected").each(function(idx, val) {
+    const checkbox = $("#id_open_TTT_applications");
+    if (val.text == "TTT") {
+      checkbox.prop("checked", true);
+    }
+  })
  });

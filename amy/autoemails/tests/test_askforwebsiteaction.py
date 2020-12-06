@@ -100,7 +100,8 @@ class TestAskForWebsiteAction(TestCase):
             personal="Harry", family="Potter", email="hp@magic.uk"
         )
         r = Role.objects.create(name="instructor")
-        Task.objects.create(event=e, person=p, role=r)
+        s = Role.objects.create(name="supporting-instructor")
+        t = Task.objects.create(event=e, person=p, role=r)
 
         # 1st case: everything is good
         self.assertEqual(AskForWebsiteAction.check(e), True)
@@ -164,6 +165,12 @@ class TestAskForWebsiteAction(TestCase):
         # retest to make sure it's back to normal
         self.assertEqual(AskForWebsiteAction.check(e), True)
 
+        # 8th case: supporting role used
+        # result: OK
+        t.role = s
+        t.save()
+        self.assertEqual(AskForWebsiteAction.check(e), True)
+
     def testContext(self):
         """Make sure `get_additional_context` works correctly."""
         a = AskForWebsiteAction(
@@ -190,8 +197,16 @@ class TestAskForWebsiteAction(TestCase):
         p1 = Person.objects.create(
             personal="Harry", family="Potter", username="hpotter", email="hp@magic.uk"
         )
+        p2 = Person.objects.create(
+            personal="Hermione",
+            family="Granger",
+            username="hgranger",
+            email="hg@magic.uk",
+        )
         instructor = Role.objects.create(name="instructor")
+        supporting = Role.objects.create(name="supporting-instructor")
         Task.objects.create(event=e, person=p1, role=instructor)
+        Task.objects.create(event=e, person=p2, role=supporting)
 
         ctx = a.get_additional_context(objects=dict(event=e))
         self.assertEqual(
@@ -202,8 +217,8 @@ class TestAskForWebsiteAction(TestCase):
                 dates=e.human_readable_date,
                 workshop_host=Organization.objects.first(),
                 regional_coordinator_email=["admin-uk@carpentries.org"],
-                instructors=[p1],
-                all_emails=["hp@magic.uk"],
+                instructors=[p1, p2],
+                all_emails=["hp@magic.uk", "hg@magic.uk"],
                 assignee="Regional Coordinator",
                 tags=["SWC", "TTT"],
             ),
@@ -233,10 +248,11 @@ class TestAskForWebsiteAction(TestCase):
             email="hg@magic.uk",
         )
         instructor = Role.objects.create(name="instructor")
+        supporting = Role.objects.create(name="supporting-instructor")
         Task.objects.bulk_create(
             [
                 Task(event=e, person=p1, role=instructor),
-                Task(event=e, person=p2, role=instructor),
+                Task(event=e, person=p2, role=supporting),
             ]
         )
 
@@ -300,10 +316,11 @@ class TestAskForWebsiteAction(TestCase):
             email="hg@magic.uk",
         )
         instructor = Role.objects.create(name="instructor")
+        supporting = Role.objects.create(name="supporting-instructor")
         Task.objects.bulk_create(
             [
                 Task(event=e, person=p1, role=instructor),
-                Task(event=e, person=p2, role=instructor),
+                Task(event=e, person=p2, role=supporting),
             ]
         )
 
