@@ -163,7 +163,6 @@ class Membership(models.Model):
     )
 
     agreement_link = models.URLField(
-        null=True,
         blank=True,
         default="",
         verbose_name="Link to member agreement",

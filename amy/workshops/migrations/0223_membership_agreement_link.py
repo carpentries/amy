@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='membership',
             name='agreement_link',
-            field=models.URLField(blank=True, default='', help_text='Link to member agreement document or folder in Google Drive', null=True, verbose_name='Link to member agreement'),
+            field=models.URLField(blank=True, default='', help_text='Link to member agreement document or folder in Google Drive', verbose_name='Link to member agreement'),
         ),
     ]
