@@ -44,8 +44,8 @@ $ cd /webapps/amy.carpentries.org/repo/ && sqlite3 db.sqlite3  ".backup newest_b
 Prepare data dump with Django:
 
 ```shell
-$ DATABASE_URL=sqlite:///newest_backup.sqlite3 python manage.py dumpdata contenttypes auth.permissions sites --indent 1 > data_others.json
-$ DATABASE_URL=sqlite:///newest_backup.sqlite3 python manage.py dumpdata -e contenttypes -e auth.permissions -e sites --indent 1 > data.json
+$ DATABASE_URL=sqlite:///newest_backup.sqlite3 python manage.py dumpdata contenttypes auth.permission sites --indent 1 > data_others.json
+$ DATABASE_URL=sqlite:///newest_backup.sqlite3 python manage.py dumpdata -e contenttypes -e auth.permission -e sites --indent 1 > data.json
 ```
 
 Load the first dump into PostgreSQL:
@@ -59,7 +59,7 @@ $ DATABASE_URL=postgresql://amy:...@.../amy python manage.py loaddata data_other
 Load the second dump into PostgreSQL:
 
 ```shell
-$ DATABASE_URL=postgresql://amy:...@.../amy python manage.py loaddata data_others.json
+$ DATABASE_URL=postgresql://amy:...@.../amy python manage.py loaddata data.json
 ```
 
 **Verify the number of objects installed: 353514 (or more).**
