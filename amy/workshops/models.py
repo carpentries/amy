@@ -552,7 +552,7 @@ class Person(
         help_text="Please put only a single username here.",
     )
     twitter = models.CharField(
-        max_length=STR_MED,
+        max_length=STR_LONG,
         unique=True,
         null=True,
         blank=True,
@@ -562,7 +562,7 @@ class Person(
         max_length=STR_LONG, blank=True, verbose_name="Personal website",
     )
     username = models.CharField(
-        max_length=STR_MED,
+        max_length=STR_LONG,
         unique=True,
         validators=[RegexValidator(r"^[\w\-_]+$", flags=re.A)],
     )
@@ -1089,7 +1089,7 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         max_length=STR_LONGEST, default="", blank=True, help_text=PUBLISHED_HELP_TEXT,
     )
     address = models.CharField(
-        max_length=STR_LONGEST, default="", blank=True, help_text=PUBLISHED_HELP_TEXT,
+        max_length=350, default="", blank=True, help_text=PUBLISHED_HELP_TEXT,
     )
     latitude = models.FloatField(null=True, blank=True, help_text=PUBLISHED_HELP_TEXT,)
     longitude = models.FloatField(null=True, blank=True, help_text=PUBLISHED_HELP_TEXT,)
