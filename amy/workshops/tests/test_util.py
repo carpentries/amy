@@ -1150,27 +1150,27 @@ class TestMatchingNotificationEmail(TestBase):
         # Online
         self.request.country = 'W3'
         results = list(match_notification_email(self.request))
-        self.assertEqual(results, ['team@carpentries.org'])
+        self.assertEqual(results, ['workshops@carpentries.org'])
 
         # European Union
         self.request.country = 'EU'
         results = list(match_notification_email(self.request))
-        self.assertEqual(results, ['team@carpentries.org'])
+        self.assertEqual(results, ['workshops@carpentries.org'])
 
         # United States
         self.request.country = 'US'
         results = list(match_notification_email(self.request))
-        self.assertEqual(results, ['team@carpentries.org'])
+        self.assertEqual(results, ['workshops@carpentries.org'])
 
         # Poland
         self.request.country = 'PL'
         results = list(match_notification_email(self.request))
-        self.assertEqual(results, ['team@carpentries.org'])
+        self.assertEqual(results, ['workshops@carpentries.org'])
 
         # unknown country code
         self.request.country = 'XY'
         results = list(match_notification_email(self.request))
-        self.assertEqual(results, ['team@carpentries.org'])
+        self.assertEqual(results, ['workshops@carpentries.org'])
 
     def test_matching_Africa(self):
         """Testing just a subset of countries in Africa."""
@@ -1222,11 +1222,11 @@ class TestMatchingNotificationEmail(TestBase):
     def test_object_no_criteria(self):
         self.assertFalse(hasattr(self, 'country'))
         results = match_notification_email(self)
-        self.assertEqual(results, ['team@carpentries.org'])
+        self.assertEqual(results, ['workshops@carpentries.org'])
 
         self.country = None
         results = match_notification_email(self)
-        self.assertEqual(results, ['team@carpentries.org'])
+        self.assertEqual(results, ['workshops@carpentries.org'])
 
 
 class TestReportsLink(TestBase):

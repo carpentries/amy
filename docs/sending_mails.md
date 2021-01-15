@@ -23,7 +23,7 @@ UNIX command.  See [Sending](#sending) for more information.
 
 `-s SENDER`
 `--sender SENDER`
-: Set "From: " field value.  Default is `team@carpentries.org`.
+: Set "From: " field value.  Default is `workshops@carpentries.org`.
 
 ## Sending
 

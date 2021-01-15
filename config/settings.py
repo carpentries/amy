@@ -436,7 +436,7 @@ if not DEBUG and (not ANYMAIL['MAILGUN_API_KEY'] or
 
 # NOTIFICATIONS
 # -----------------------------------------------------------------------------
-ADMIN_NOTIFICATION_CRITERIA_DEFAULT = 'team@carpentries.org'
+ADMIN_NOTIFICATION_CRITERIA_DEFAULT = 'workshops@carpentries.org'
 
 # ADMIN
 # ------------------------------------------------------------------------------
