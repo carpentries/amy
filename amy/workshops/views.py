@@ -3,7 +3,6 @@ import datetime
 from functools import partial
 import io
 import logging
-import re
 
 import requests
 from django.conf import settings
@@ -39,8 +38,6 @@ from django.http import Http404, HttpResponse, JsonResponse
 from django.http import HttpResponseBadRequest
 from django.shortcuts import redirect, render, get_object_or_404
 from django.urls import reverse, reverse_lazy
-from django.views.decorators.csrf import csrf_exempt
-from django_comments.models import Comment
 import django_rq
 from github.GithubException import GithubException
 from reversion.models import Version, Revision
@@ -76,7 +73,6 @@ from workshops.filters import (
     WorkshopStaffFilter,
 )
 from workshops.forms import (
-    SearchForm,
     WorkshopStaffForm,
     PersonForm,
     BulkUploadCSVForm,
@@ -105,12 +101,10 @@ from workshops.models import (
     Qualification,
     Person,
     Role,
-    Organization,
     Membership,
     Sponsorship,
     Tag,
     Task,
-    TrainingRequest,
 )
 from workshops.signals import create_comment_signal
 from workshops.util import (
@@ -2278,128 +2272,6 @@ def workshop_staff_csv(request):
             ]
         )
     return response
-
-
-# ------------------------------------------------------------
-
-
-@csrf_exempt
-@admin_required
-def search(request):
-    """Search the database by term."""
-
-    term = ""
-    organizations = events = persons = airports = training_requests = None
-    comments = None
-
-    if request.method == "GET" and "term" in request.GET:
-        form = SearchForm(request.GET)
-        if form.is_valid():
-            term = form.cleaned_data["term"]
-            tokens = re.split(r"\s+", term)
-            results = list()
-
-            if form.cleaned_data["in_organizations"]:
-                organizations = Organization.objects.filter(
-                    Q(domain__icontains=term) | Q(fullname__icontains=term)
-                ).order_by("fullname")
-                results += list(organizations)
-
-            if form.cleaned_data["in_events"]:
-                events = Event.objects.filter(
-                    Q(slug__icontains=term)
-                    | Q(host__domain__icontains=term)
-                    | Q(host__fullname__icontains=term)
-                    | Q(url__icontains=term)
-                    | Q(contact__icontains=term)
-                    | Q(venue__icontains=term)
-                    | Q(address__icontains=term)
-                ).order_by("-slug")
-                results += list(events)
-
-            if form.cleaned_data["in_persons"]:
-                # if user searches for two words, assume they mean a person
-                # name
-                if len(tokens) == 2:
-                    name1, name2 = tokens
-                    complex_q = (
-                        (Q(personal__icontains=name1) & Q(family__icontains=name2))
-                        | (Q(personal__icontains=name2) & Q(family__icontains=name1))
-                        | Q(email__icontains=term)
-                        | Q(secondary_email__icontains=term)
-                        | Q(github__icontains=term)
-                    )
-                    persons = Person.objects.filter(complex_q)
-                else:
-                    persons = Person.objects.filter(
-                        Q(personal__icontains=term)
-                        | Q(family__icontains=term)
-                        | Q(email__icontains=term)
-                        | Q(secondary_email__icontains=term)
-                        | Q(github__icontains=term)
-                    ).order_by("family")
-                results += list(persons)
-
-            if form.cleaned_data["in_airports"]:
-                airports = Airport.objects.filter(
-                    Q(iata__icontains=term) | Q(fullname__icontains=term)
-                ).order_by("iata")
-                results += list(airports)
-
-            if form.cleaned_data["in_training_requests"]:
-                training_requests = TrainingRequest.objects.filter(
-                    Q(group_name__icontains=term)
-                    | Q(family__icontains=term)
-                    | Q(email__icontains=term)
-                    | Q(github__icontains=term)
-                    | Q(affiliation__icontains=term)
-                    | Q(location__icontains=term)
-                    | Q(user_notes__icontains=term)
-                )
-                results += list(training_requests)
-
-            if form.cleaned_data["in_comments"]:
-                comments = Comment.objects.filter(
-                    Q(comment__icontains=term)
-                    | Q(user_name__icontains=term)
-                    | Q(user_email__icontains=term)
-                    | Q(user__personal__icontains=term)
-                    | Q(user__family__icontains=term)
-                    | Q(user__email__icontains=term)
-                    | Q(user__github__icontains=term)
-                ).prefetch_related("content_object")
-                results += list(comments)
-
-            # only 1 record found? Let's move to it immediately
-            if len(results) == 1:
-                result = results[0]
-                if isinstance(result, Comment):
-                    return redirect(
-                        result.content_object.get_absolute_url()
-                        + "#c{}".format(result.id)
-                    )
-                else:
-                    return redirect(result.get_absolute_url())
-
-        else:
-            messages.error(request, "Fix errors below.")
-
-    # if empty GET, we'll create a blank form
-    else:
-        form = SearchForm()
-
-    context = {
-        "title": "Search",
-        "form": form,
-        "term": term,
-        "organizations": organizations,
-        "events": events,
-        "persons": persons,
-        "airports": airports,
-        "comments": comments,
-        "training_requests": training_requests,
-    }
-    return render(request, "workshops/search.html", context)
 
 
 # ------------------------------------------------------------
