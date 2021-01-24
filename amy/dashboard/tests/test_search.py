@@ -1,11 +1,11 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date, timedelta
 
 from django.contrib.sites.models import Site
 from django.urls import reverse
 from django_comments.models import Comment
 
 from workshops.tests.base import TestBase
-from workshops.models import Organization, Person, TrainingRequest
+from workshops.models import Organization, Person, TrainingRequest, Membership
 
 
 class TestSearch(TestBase):
@@ -129,8 +129,6 @@ class TestSearch(TestBase):
         response = self.search_for("Lorem")
         self.assertEqual(len(response.context["training_requests"]), 1)
 
-        # do not search in_persons, otherwise it'd redirect to Harry Potter's
-        # profile
         response = self.search_for("Potter")
         self.assertEqual(len(response.context["training_requests"]), 0)
 
@@ -145,12 +143,32 @@ class TestSearch(TestBase):
             site=Site.objects.get_current(),
         )
 
-        # search for "Alpha" in organisations and comments
         response = self.search_for("Alpha")
 
         self.assertEqual(len(response.context["comments"]), 1)
         self.assertEqual(len(response.context["organisations"]), 1)
 
-        # search for "Alpha" only in comments + check redirect
+    def test_search_redirect(self):
+        # search for "Alpha" (should yield 1 organisation)
         response = self.search_for("Alpha", no_redirect=False, follow=True)
         self.assertEqual(response.request.path, self.org_alpha.get_absolute_url())
+
+    def test_search_for_memberships(self):
+        """Make sure that finding memberships works."""
+        Membership.objects.create(
+            variant="partner",
+            registration_code="test-beta-code-test",
+            agreement_start=date.today(),
+            agreement_end=date.today() + timedelta(days=365),
+            contribution_type="financial",
+            workshops_without_admin_fee_per_agreement=10,
+            self_organized_workshops_per_agreement=20,
+            seats_instructor_training=25,
+            additional_instructor_training_seats=3,
+            organization=self.org_beta,
+        )
+
+        response = self.search_for("beta-code")
+
+        self.assertEqual(len(response.context["memberships"]), 1)
+        self.assertEqual(len(response.context["organisations"]), 0)
