@@ -1,6 +1,15 @@
 version: '3'
 
 services:
+  database:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: amy
+      POSTGRES_PASSWORD: amypostgresql
+      POSTGRES_DB: amy
+    ports:
+      - "5432:5432"
+
   redis_cache:
     command: redis-server --appendonly yes
     image: redis:latest

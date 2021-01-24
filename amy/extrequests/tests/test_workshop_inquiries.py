@@ -447,7 +447,6 @@ class TestWorkshopInquiryViews(TestBase):
             "host": Organization.objects.first().pk,
             "administrator": Organization.objects.administrators().first().id,
             "tags": [1],
-            "invoice_status": "unknown",
         }
         rv = self.client.post(
             reverse("workshopinquiry_accept_event", args=[self.wi1.pk]), data
@@ -609,11 +608,11 @@ class TestAcceptWorkshopInquiryAddsEmailAction(FakeRedisTestCaseMixin, TestBase)
         # we're missing some tags
         Tag.objects.bulk_create(
             [
-                Tag(name="SWC"),
-                Tag(name="DC"),
-                Tag(name="LC"),
-                Tag(name="TTT"),
-                Tag(name="automated-email"),
+                Tag(name="automated-email", priority=0),
+                Tag(name="SWC", priority=10),
+                Tag(name="DC", priority=20),
+                Tag(name="LC", priority=30),
+                Tag(name="TTT", priority=40),
             ]
         )
 

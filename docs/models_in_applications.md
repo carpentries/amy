@@ -2,8 +2,7 @@
 
 For a long time, AMY was almost single-application project: most of the logic,
 models and views was contained in `workshops` application; there was also `api`
-application and `pydata` for PyData integration, and `extforms` for showing
-forms to the external users.
+application and `extforms` for showing forms to the external users.
 
 In the meantime, `workshops` grew to a massive size and needed splitting into
 smaller applications. However, some previous design decisions made the split
@@ -24,7 +23,6 @@ The new application structure contains:
 ~~`InvoiceRequest`~~ - by the way all these models are deprecated and to be
 removed in future - `WorkshopRequest`, and `TrainingRequest`),
 * `fiscal` - for organizations, memberships, and sponsorships,
-* `pydata` - as previously for PyData integration,
 * `reports` - for reports,
 * `trainings` - for managing trainees and trainings,
 * `workshops` - for persons and workshops management, including tasks and

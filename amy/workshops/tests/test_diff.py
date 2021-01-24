@@ -34,18 +34,18 @@ class TestRevisions(TestBase):
     def test_showing_diff_event(self):
         # get newer revision page
         rv = self.client.get(reverse('object_changes',
-                                     args=[self.newer.revision.pk]))
-        # test returned context
-        context = rv.context
-        assert context['version1'] == self.older
-        assert context['version2'] == self.newer
-        assert context['revision'] == self.newer.revision
-        assert context['object'] == self.event
+                                     args=[self.newer.pk]))
+
+        self.assertEqual(rv.status_code, 200)
+        assert rv.context['version1'] == self.older
+        assert rv.context['version2'] == self.newer
+        assert rv.context['revision'] == self.newer.revision
+        assert rv.context['object'] == self.event
 
     def test_diff_shows_coloured_labels(self):
         # get newer revision page
         rv = self.client.get(reverse('object_changes',
-                                     args=[self.newer.revision.pk]))
+                                     args=[self.newer.pk]))
         # Red label for removed host
         self.assertContains(rv,
             '<a class="label label-danger" href="{}">-{}</a>'.format(
@@ -83,7 +83,7 @@ class TestRevisions(TestBase):
         self.tag2.delete()
         # get newer revision page
         rv = self.client.get(reverse('object_changes',
-                                     args=[self.newer.revision.pk]))
+                                     args=[self.newer.pk]))
         self.assertContains(rv,
             '<a class="label label-default" href="#">1</a>',
             html=True

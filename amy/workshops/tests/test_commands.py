@@ -8,6 +8,7 @@ import unittest
 from unittest.mock import MagicMock
 
 from django.core.management import call_command
+from faker import Faker
 import requests_mock
 
 from workshops.tests.base import TestBase
@@ -144,7 +145,7 @@ class TestWebsiteUpdatesCommand(TestBase):
         self.cmd = WebsiteUpdatesCommand()
         self.fake_cmd = FakeDatabaseCommand()
         self.seed = 12345
-        self.fake_cmd.faker.seed(self.seed)
+        Faker.seed(self.seed)
         self.fake_cmd.stdout = StringIO()
 
         self.fake_cmd.fake_organizations()
@@ -211,9 +212,9 @@ class TestWebsiteUpdatesCommand(TestBase):
         self.fake_cmd.fake_current_events(count=6, add_tags=False)
 
         Event.objects.all().update(start=date.today())
+        e1, e2, e3, e4, e5, e6 = Event.objects.all()
 
         # one active event with URL and one without
-        e1, e2 = Event.objects.all()[0:2]
         e1.completed = False  # completed == !active
         e1.url = 'https://swcarpentry.github.io/workshop-template/'
         e1.save()
@@ -222,7 +223,6 @@ class TestWebsiteUpdatesCommand(TestBase):
         e2.save()
 
         # one inactive event with URL and one without
-        e3, e4 = Event.objects.all()[2:4]
         e3.completed = True
         e3.url = 'https://datacarpentry.github.io/workshop-template/'
         e3.save()
@@ -231,7 +231,6 @@ class TestWebsiteUpdatesCommand(TestBase):
         e4.save()
 
         # both active but one very old
-        e5, e6 = Event.objects.all()[4:6]
         e5.completed = False
         e5.url = 'https://swcarpentry.github.io/workshop-template2/'
         e5.start = date(2014, 1, 1)

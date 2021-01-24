@@ -2,9 +2,6 @@
 Django settings for AMY project.
 """
 
-import os
-import sys
-
 import environ
 
 from django.core.exceptions import ImproperlyConfigured
@@ -61,15 +58,12 @@ if DEBUG:
 # https://docs.djangoproject.com/en/dev/ref/settings/#databases
 
 DATABASES = {
-    'default': env.db('DATABASE_URL', default='sqlite:///db.sqlite3'),
+    'default': env.db(
+        'DATABASE_URL',
+        default='postgres://amy:amypostgresql@localhost/amy'
+    ),
 }
 DATABASES['default']['ATOMIC_REQUESTS'] = True
-if '--keepdb' in sys.argv:
-    # By default, Django uses in-memory sqlite3 database, which is much
-    # faster than sqlite3 database in a file. However, we may want to keep
-    # database between test launches, so that we avoid the overhead of
-    # applying migrations on each test launch.
-    DATABASES['default'].update(dict(TEST=dict(NAME='test_db.sqlite3')))
 
 # URLS
 # -----------------------------------------------------------------------------
@@ -80,21 +74,20 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 # ReCaptcha
 # -----------------------------------------------------------------------------
-RECAPTCHA_PUBLIC_KEY = env.str('AMY_RECAPTCHA_PUBLIC_KEY', default='')
-RECAPTCHA_PRIVATE_KEY = env.str('AMY_RECAPTCHA_PRIVATE_KEY', default='')
+RECAPTCHA_PUBLIC_KEY = env.str(
+    'AMY_RECAPTCHA_PUBLIC_KEY',
+    default='6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI',
+)
+RECAPTCHA_PRIVATE_KEY = env.str(
+    'AMY_RECAPTCHA_PRIVATE_KEY',
+    default='6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe',
+)
 RECAPTCHA_USE_SSL = True
 NOCAPTCHA = True
 if DEBUG:
-    os.environ['RECAPTCHA_TESTING'] = 'True'
-    if not RECAPTCHA_PUBLIC_KEY:
-        RECAPTCHA_PUBLIC_KEY = '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'
-    if not RECAPTCHA_PRIVATE_KEY:
-        RECAPTCHA_PRIVATE_KEY = '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'
-else:
-    # ensure the keys are present on production
-    if not RECAPTCHA_PUBLIC_KEY or not RECAPTCHA_PRIVATE_KEY:
-        raise ImproperlyConfigured(
-            "Both ReCaptcha keys (public and private) must be present.")
+    SILENCED_SYSTEM_CHECKS = [
+        'captcha.recaptcha_test_key_error'
+    ]
 
 # APPS
 # -----------------------------------------------------------------------------
@@ -477,12 +470,10 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.JSONParser',
         'rest_framework.parsers.FormParser',
         'rest_framework.parsers.MultiPartParser',
-        'rest_framework_yaml.parsers.YAMLParser',
     ),
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
-        'rest_framework_yaml.renderers.YAMLRenderer',
     ),
 
     'DEFAULT_THROTTLE_CLASSES': (

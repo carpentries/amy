@@ -909,9 +909,6 @@ def event_details(request, slug):
             Event.objects.attendance()
             .prefetch_related(sponsorship_prefetch, task_prefetch)
             .select_related(
-                "eventrequest",
-                "eventsubmission",
-                "dcselforganizedeventrequest",
                 "assigned_to",
                 "host",
                 "administrator",
@@ -1059,9 +1056,6 @@ class EventUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
         "assigned_to",
         "administrator",
         "language",
-        "eventrequest",
-        "eventsubmission",
-        "dcselforganizedeventrequest",
     ).prefetch_related("sponsorship_set")
     slug_field = "slug"
     template_name = "workshops/event_edit_form.html"
@@ -1371,8 +1365,6 @@ def events_merge(request):
                 "url",
                 "language",
                 "reg_key",
-                "admin_fee",
-                "invoice_status",
                 "attendance",
                 "contact",
                 "country",
@@ -2408,62 +2400,6 @@ def search(request):
         "training_requests": training_requests,
     }
     return render(request, "workshops/search.html", context)
-
-
-# ------------------------------------------------------------
-
-
-@admin_required
-def export_badges(request):
-    title = "Export Badges"
-
-    badges_api_link = reverse("api:export-badges")
-    badges_json_link = reverse("api:export-badges", kwargs={"format": "json"})
-    badges_yaml_link = reverse("api:export-badges", kwargs={"format": "yaml"})
-
-    by_person_api_link = reverse("api:export-badges-by-person")
-    by_person_json_link = reverse(
-        "api:export-badges-by-person", kwargs={"format": "json"}
-    )
-    by_person_yaml_link = reverse(
-        "api:export-badges-by-person", kwargs={"format": "yaml"}
-    )
-    context = {
-        "title": title,
-        "badges_api_link": badges_api_link,
-        "badges_json_link": badges_json_link,
-        "badges_yaml_link": badges_yaml_link,
-        "by_person_api_link": by_person_api_link,
-        "by_person_json_link": by_person_json_link,
-        "by_person_yaml_link": by_person_yaml_link,
-    }
-    return render(request, "workshops/export_badges.html", context)
-
-
-@admin_required
-def export_instructors(request):
-    title = "Instructor Locations"
-    json_link = reverse("api:export-instructors", kwargs={"format": "json"})
-    yaml_link = reverse("api:export-instructors", kwargs={"format": "yaml"})
-    context = {
-        "title": title,
-        "json_link": json_link,
-        "yaml_link": yaml_link,
-    }
-    return render(request, "workshops/export.html", context)
-
-
-@admin_required
-def export_members(request):
-    title = "SCF Members"
-    json_link = reverse("api:export-members", kwargs={"format": "json"})
-    yaml_link = reverse("api:export-members", kwargs={"format": "yaml"})
-    context = {
-        "title": title,
-        "json_link": json_link,
-        "yaml_link": yaml_link,
-    }
-    return render(request, "workshops/export.html", context)
 
 
 # ------------------------------------------------------------

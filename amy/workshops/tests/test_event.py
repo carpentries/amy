@@ -80,17 +80,6 @@ class TestEvent(TestBase):
         self.assertIsNone(e.latitude)
         self.assertIsNone(e.longitude)
 
-    def test_get_uninvoiced_events(self):
-        """Test that the events manager can find events that owe money"""
-
-        uninvoiced_events = Event.objects.uninvoiced_events()
-
-        # There should be as many as there are strictly future events.
-        assert len(uninvoiced_events) == self.num_uninvoiced_events
-
-        # Check that events with a fee of zero or None are still on this list
-        assert any([x for x in uninvoiced_events if not x.admin_fee])
-
     def test_get_upcoming_events(self):
         """Test that the events manager can find upcoming events"""
 
@@ -162,7 +151,7 @@ class TestEvent(TestBase):
 
     def test_cancelled_events(self):
         """Regression test: make sure that cancelled events don't show up in
-        the unpublished, published or uninvoiced events."""
+        the unpublished, or published events."""
         cancelled_event = Event.objects.create(
             slug="2017-01-07-cancelled",
             start=date(2017, 1, 7),
@@ -173,9 +162,7 @@ class TestEvent(TestBase):
         cancelled_event.tags.set(Tag.objects.filter(name="cancelled"))
 
         published = Event.objects.published_events().select_related("host")
-        uninvoiced = Event.objects.uninvoiced_events().select_related("host")
         unpublished = Event.objects.unpublished_events().select_related("host")
-        self.assertNotIn(cancelled_event, uninvoiced)
         self.assertNotIn(cancelled_event, published)
         self.assertNotIn(cancelled_event, unpublished)
 
@@ -355,7 +342,6 @@ class TestEventViews(TestBase):
                 start=event_start,
                 slug="test_event_{0}".format(i),
                 host=self.test_host,
-                admin_fee=0,
             )
 
     def test_events_view_paginated(self):
@@ -436,7 +422,6 @@ class TestEventViews(TestBase):
                 "host": host.id,
                 "tags": [self.test_tag.id],
                 "administrator": admin.id,
-                "invoice_status": "unknown",
             },
         )
 
@@ -474,7 +459,6 @@ class TestEventViews(TestBase):
             "administrator": Organization.objects.administrators().first().id,
             "tags": [self.test_tag.id],
             "assigned_to": self.admin.pk,
-            "invoice_status": "unknown",
         }
         response = self.client.post(reverse("event_add"), data, follow=True)
         event = Event.objects.get(slug="2016-07-09-test")
@@ -490,7 +474,6 @@ class TestEventViews(TestBase):
             "host": self.test_host.id,
             "tags": [self.test_tag.id],
             "slug": "",
-            "invoice_status": "unknown",
         }
         response = self.client.post(reverse("event_add"), data)
         assert response.status_code == 200
@@ -507,7 +490,6 @@ class TestEventViews(TestBase):
             "slug": "2016-06-30-test-event",
             "start": date(2015, 7, 20),
             "end": date(2015, 7, 19),
-            "invoice_status": "unknown",
         }
         response = self.client.post(reverse("event_add"), data)
         assert response.status_code == 200
@@ -521,7 +503,6 @@ class TestEventViews(TestBase):
             "slug": "2016-06-30-test-event",
             "start": date(2015, 7, 20),
             "end": date(2015, 7, 20),
-            "invoice_status": "unknown",
         }
         response = self.client.post(reverse("event_add"), data)
         assert response.status_code == 302
@@ -533,7 +514,6 @@ class TestEventViews(TestBase):
             "slug": "2016-06-30-test-event2",
             "start": date(2015, 7, 20),
             "end": date(2015, 7, 21),
-            "invoice_status": "unknown",
         }
         response = self.client.post(reverse("event_add"), data)
         assert response.status_code == 302
@@ -542,11 +522,7 @@ class TestEventViews(TestBase):
         """Ensure we disallow negative manual attendance.
 
         This is a regression test for
-        https://github.com/swcarpentry/amy/issues/435.
-
-        Warning: this used to test `admin_fee` for negative value, but since
-        #1411 (https://github.com/swcarpentry/amy/pull/1411) we don't have
-        `admin_fee` in the form nor on Event Details page."""
+        https://github.com/swcarpentry/amy/issues/435."""
         error_str = "Ensure this value is greater than or equal to 0."
 
         data = {
@@ -555,7 +531,6 @@ class TestEventViews(TestBase):
             "tags": [self.test_tag.id],
             "slug": "2016-06-30-test-event",
             "manual_attendance": -36,
-            "invoice_status": "unknown",
         }
 
         data["manual_attendance"] = -36
@@ -620,7 +595,6 @@ class TestEventViews(TestBase):
             "slug": "",
             "host": Organization.objects.all()[0].pk,
             "tags": Tag.objects.all(),
-            "invoice_status": "unknown",
         }
 
         # disallow illegal characters
@@ -640,7 +614,6 @@ class TestEventViews(TestBase):
             "slug": "",
             "host": Organization.objects.all()[0].pk,
             "tags": [Tag.objects.first().pk],
-            "invoice_status": "unknown",
         }
 
         # disallow invalid formats
@@ -677,7 +650,6 @@ class TestEventViews(TestBase):
             "host": Organization.objects.all()[0].pk,
             "administrator": Organization.objects.administrators().first().id,
             "tags": [Tag.objects.first().pk],
-            "invoice_status": "unknown",
         }
 
         # allow correct formats
@@ -723,7 +695,6 @@ class TestEventViews(TestBase):
             "host": self.org_alpha.pk,
             "administrator": Organization.objects.administrators().first().id,
             "tags": [Tag.objects.get(name="SWC").pk],
-            "invoice_status": "unknown",
             "open_TTT_applications": True,
         }
         form = EventForm(data)
@@ -828,8 +799,6 @@ class TestEventMerging(TestBase):
             url="http://reichel.com/event-a",
             language=self.french,
             reg_key="123456",
-            admin_fee=2500,
-            invoice_status="not-invoiced",
             manual_attendance=30,
             contact="moore.buna@schuppe.info",
             country="US",
@@ -867,8 +836,6 @@ class TestEventMerging(TestBase):
             url="http://www.cummings.biz/event-b",
             language=self.english,
             reg_key="654321",
-            admin_fee=2500,
-            invoice_status="not-invoiced",
             manual_attendance=40,
             contact="haleigh.schneider@hotmail.com",
             country="GB",
@@ -908,8 +875,6 @@ class TestEventMerging(TestBase):
             "url": "obj_b",
             "language": "obj_b",
             "reg_key": "obj_a",
-            "admin_fee": "obj_b",
-            "invoice_status": "obj_a",
             "manual_attendance": "obj_b",
             "country": "obj_a",
             "latitude": "obj_b",
@@ -949,8 +914,6 @@ class TestEventMerging(TestBase):
             "url": "combine",
             "language": "combine",
             "reg_key": "combine",
-            "admin_fee": "combine",
-            "invoice_status": "combine",
             "manual_attendance": "combine",
             "country": "combine",
             "latitude": "combine",
@@ -1014,8 +977,6 @@ class TestEventMerging(TestBase):
             "url": self.event_b.url,
             "language": self.event_b.language,
             "reg_key": self.event_a.reg_key,
-            "admin_fee": self.event_b.admin_fee,
-            "invoice_status": self.event_a.invoice_status,
             "manual_attendance": self.event_b.manual_attendance,
             "country": self.event_a.country,
             "latitude": self.event_b.latitude,
@@ -1250,10 +1211,6 @@ class TestEventAttendance(TestBase):
         )
         self.event.tags.set(Tag.objects.filter(name__in=["LC", "DC"]))
 
-    @unittest.skipIf(
-        _db_engine == "django.db.backends.sqlite3",
-        "SQLite drops integer field validation",
-    )
     def test_correct_values_for_manual_attendance(self):
         # `manual_attendance` doesn't accept anything below 0
         with self.assertRaises(ValidationError):

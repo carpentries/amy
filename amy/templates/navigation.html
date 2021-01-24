@@ -29,10 +29,6 @@
               {% navbar_element_permed "Merge training requests" "trainingrequests_merge" "workshops.change_trainingrequest,workshops.delete_trainingrequest" True %}
               {% navbar_element "Find Workshop Staff" "workshop_staff" True %}
               <div class="dropdown-divider"></div>
-              {% url "export_badges" as export_badges_url %}
-              {% url "export_instructors" as export_instructors_url %}
-              {% navbar_element_url "Export badges" export_badges_url True %}
-              {% navbar_element_url "Export instructors" export_instructors_url True %}
               {% navbar_element "Search" "search" True %}
               {% navbar_element "Recently changed" "changes_log" True %}
             </div>
@@ -40,12 +36,6 @@
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="reportsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Reports</a>
             <div class="dropdown-menu" aria-labelledby="reportsDropdown">
-              {% navbar_element "List of instructors by time period" "instructors_by_date" True %}
-              {% navbar_element "Workshops over time" "workshops_over_time" True %}
-              {% navbar_element "Learners over time" "learners_over_time" True %}
-              {% navbar_element "Instructors over time" "instructors_over_time" True %}
-              {% navbar_element "How often instructors have taught" "instructor_num_taught" True %}
-              {% navbar_element "All activity over time" "all_activity_over_time" True %}
               {% navbar_element "Membership trainings statistics" "membership_trainings_stats" True %}
               <div class="dropdown-divider"></div>
               {% navbar_element "Workshop issues" "workshop_issues" True %}
@@ -63,10 +53,6 @@
               {% navbar_element "Workshop requests" "all_workshoprequests" True False %}
               {% navbar_element "Workshop inquiries" "all_workshopinquiries" True False %}
               {% navbar_element "Self-Organised submissions" "all_selforganisedsubmissions" True False %}
-              <div class="dropdown-divider"></div>
-              {% navbar_element "SWC/DC Event requests" "all_eventrequests" True True %}
-              {% navbar_element "DC self-organized workshop requests" "all_dcselforganizedeventrequests" True True %}
-              {% navbar_element "Workshop submissions" "all_eventsubmissions" True True %}
             </div>
           </li>
         </ul>

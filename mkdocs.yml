@@ -7,7 +7,6 @@ nav:
     - 'Procedures': 'procedures.md'
     - 'Database Structure': 'amy_database_structure.md'
     - 'Sending Mails': 'sending_mails.md'
-    - 'PyData Deploy': 'PyData_deploy.md'
     - 'Design':
         - 'Design': 'design/index.md'
         - 'Database Models': 'design/database_models.md'

@@ -26,7 +26,7 @@ def populate_languages(apps, schema_editor):
             # skip others until we need them
             # https://github.com/swcarpentry/amy/issues/582#issuecomment-159506884
             Language.objects.get_or_create(
-                name=' '.join(language['Description']),
+                name=' '.join(language['Description'])[:40],
                 subtag=language['Subtag']
             )
 

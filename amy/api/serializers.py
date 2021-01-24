@@ -6,7 +6,6 @@ from workshops.models import (
     Airport,
     Person,
     Event,
-    Tag,
     Organization,
     Task,
     Award,
@@ -14,35 +13,6 @@ from workshops.models import (
     TrainingRequirement,
     TrainingProgress,
 )
-
-
-class AwardPersonSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source="person.full_name")
-    user = serializers.CharField(source="person.username")
-
-    class Meta:
-        model = Award
-        fields = ("name", "user", "awarded")
-
-
-class PersonUsernameSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source="full_name")
-    user = serializers.CharField(source="username")
-
-    class Meta:
-        model = Person
-        fields = (
-            "name",
-            "user",
-        )
-
-
-class PersonNameEmailUsernameSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source="full_name")
-
-    class Meta:
-        model = Person
-        fields = ("name", "email", "username")
 
 
 class PersonNameSerializer(serializers.ModelSerializer):
@@ -53,108 +23,10 @@ class PersonNameSerializer(serializers.ModelSerializer):
         fields = ("name",)
 
 
-class ExportBadgesSerializer(serializers.ModelSerializer):
-    persons = AwardPersonSerializer(many=True, source="award_set")
-
-    class Meta:
-        model = Badge
-        fields = ("name", "persons")
-
-
 class BadgeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Badge
         fields = ("name", "title", "criteria")
-
-
-class ExportBadgesByPersonSerializer(serializers.ModelSerializer):
-    badges = BadgeSerializer(many=True)
-
-    class Meta:
-        model = Person
-        fields = ("username", "personal", "middle", "family", "email", "badges")
-
-
-class ExportInstructorLocationsSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source="fullname")
-    instructors = PersonUsernameSerializer(many=True, source="public_instructor_set")
-
-    class Meta:
-        model = Airport
-        fields = ("name", "latitude", "longitude", "instructors", "country")
-
-
-class TagSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Tag
-        fields = ("name",)
-
-
-class ExportEventSerializer(serializers.ModelSerializer):
-    humandate = serializers.CharField(source="human_readable_date")
-    country = serializers.CharField()
-    start = serializers.DateField(format=None)
-    end = serializers.DateField(format=None)
-    url = serializers.URLField(source="website_url")
-    eventbrite_id = serializers.CharField(source="reg_key")
-    tags = TagSerializer(many=True)
-
-    class Meta:
-        model = Event
-        fields = (
-            "slug",
-            "start",
-            "end",
-            "url",
-            "humandate",
-            "contact",
-            "country",
-            "venue",
-            "address",
-            "latitude",
-            "longitude",
-            "eventbrite_id",
-            "tags",
-        )
-
-
-class WorkshopsOverTimeSerializer(serializers.Serializer):
-    date = serializers.DateField(format=None, source="start")
-    count = serializers.IntegerField()
-
-
-class InstructorsOverTimeSerializer(serializers.Serializer):
-    date = serializers.DateField(format=None)
-    count = serializers.IntegerField()
-
-
-class InstructorNumTaughtSerializer(serializers.Serializer):
-    person = serializers.HyperlinkedRelatedField(
-        read_only=True, view_name="api:person-detail", lookup_field="pk", source="*"
-    )
-    name = serializers.CharField(source="full_name")
-    country = serializers.CharField()
-    num_taught_SWC = serializers.IntegerField()
-    num_taught_DC = serializers.IntegerField()
-    num_taught_LC = serializers.IntegerField()
-    num_taught_TTT = serializers.IntegerField()
-    num_taught_total = serializers.IntegerField()
-
-
-class InstructorsByTimePeriodSerializer(serializers.ModelSerializer):
-    event_slug = serializers.CharField(source="event.slug")
-    person_name = serializers.CharField(source="person.full_name")
-    person_email = serializers.EmailField(source="person.email")
-    num_taught = serializers.IntegerField()
-
-    class Meta:
-        model = Task
-        fields = (
-            "event_slug",
-            "person_name",
-            "person_email",
-            "num_taught",
-        )
 
 
 # ----------------------
