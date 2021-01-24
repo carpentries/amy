@@ -133,3 +133,10 @@ class SendHomeworkForm(forms.ModelForm):
             'requirement',
             'url',
         ]
+
+
+class SearchForm(forms.Form):
+    """Represent general searching form."""
+
+    term = forms.CharField(label="Term", max_length=100)
+    helper = BootstrapHelper(add_cancel_button=False, use_get_method=True)
