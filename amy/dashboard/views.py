@@ -317,7 +317,7 @@ def search(request):
                 only_result = comments[0]
 
             # only 1 record found? Let's move to it immediately
-            if only_result:
+            if only_result and not form.cleaned_data["no_redirect"]:
                 msg = format_html(
                     "You were moved to this page, because your search <i>{}</i> "
                     "yields only this result.", term
