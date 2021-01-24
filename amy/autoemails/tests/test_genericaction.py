@@ -80,7 +80,7 @@ class TestGenericAction(TestCase):
                 "workshop_main_type": "SWC",
                 "dates": "Oct 30 - Nov 01, 2020",
                 "workshop_host": Organization.objects.first(),
-                "regional_coordinator_email": ["team@carpentries.org"],
+                "regional_coordinator_email": ["workshops@carpentries.org"],
                 "all_emails": [],
                 "assignee": "Regional Coordinator",
                 "tags": ["SWC"],

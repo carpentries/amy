@@ -29,7 +29,7 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             '-s', '--sender', action='store',
-            default='team@carpentries.org',
+            default='workshops@carpentries.org',
             help='E-mail used in "from:" field.',
         )
 
