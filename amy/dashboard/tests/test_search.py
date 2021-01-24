@@ -168,7 +168,7 @@ class TestSearch(TestBase):
             organization=self.org_beta,
         )
 
-        response = self.search_for("beta-code")
+        response = self.search_for("BETA-code")  # case-insensitive
 
         self.assertEqual(len(response.context["memberships"]), 1)
         self.assertEqual(len(response.context["organisations"]), 0)
