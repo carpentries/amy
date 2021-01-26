@@ -1,4 +1,5 @@
 from django import forms
+from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.dispatch import receiver
 from markdownx.fields import MarkdownxFormField
@@ -93,6 +94,24 @@ class MembershipForm(forms.ModelForm):
             'seats_instructor_training',
             'additional_instructor_training_seats',
         ]
+
+    def clean(self):
+        super().clean()
+        errors = dict()
+
+        # validate agreement end date is no sooner than start date
+        agreement_start = self.cleaned_data.get('agreement_start')
+        agreement_end = self.cleaned_data.get('agreement_end')
+        try:
+            if agreement_end < agreement_start:
+                errors["agreement_end"] = ValidationError(
+                    "Agreement end date can't be sooner than the start date."
+                )
+        except TypeError:
+            pass
+
+        if errors:
+            raise ValidationError(errors)
 
 
 class MembershipCreateForm(MembershipForm):
