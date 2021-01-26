@@ -216,6 +216,7 @@ class TestInstructorsHostIntroductionAction(TestCase):
             ],
             supporting_instructor1=supporting_instructor1.person,
             supporting_instructor2=supporting_instructor2.person,
+            hosts=[host.person],
             all_emails=[
                 "hp@magic.uk",
                 "rw@magic.uk",

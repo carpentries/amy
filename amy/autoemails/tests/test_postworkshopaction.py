@@ -234,6 +234,7 @@ class TestPostWorkshopAction(TestCase):
                 instructors=[p2],
                 supporting_instructors=[p4],
                 helpers=[p1, p3],
+                hosts=[p1],
                 all_emails=[
                     "hg@magic.uk",
                     "draco@malfoy.com",
@@ -375,4 +376,7 @@ class TestPostWorkshopAction(TestCase):
             objects=dict(event=e),
         )
 
-        self.assertEqual(a.all_recipients(), "hg@magic.uk, draco@malfoy.com, hp@magic.uk, rw@magic.uk")
+        self.assertEqual(
+            a.all_recipients(),
+            "hg@magic.uk, draco@malfoy.com, hp@magic.uk, rw@magic.uk"
+        )

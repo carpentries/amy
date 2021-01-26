@@ -515,6 +515,11 @@ class PostWorkshopAction(BaseAction):
         context["helpers"] = list(
             Person.objects.filter(task__in=event.task_set.filter(role__name="helper"))
         )
+        context["hosts"] = list(
+            Person.objects.filter(
+                task__in=event.task_set.filter(role__name="host")
+            )
+        )
 
         # querying over Person.objects lets us get rid of duplicates
         person_emails = list(
@@ -756,6 +761,7 @@ class InstructorsHostIntroductionAction(BaseAction):
         context["instructors"] = [instr.person for instr in instructors]
         context["supporting_instructors"] = [instr.person for instr in support]
         context["host"] = hosts[0].person
+        context["hosts"] = [host.person for host in hosts]
         context["instructor1"] = instructors[0].person
         context["instructor2"] = instructors[1].person
 
@@ -902,6 +908,8 @@ class AskForWebsiteAction(BaseAction):
         # people
         instructors = event.task_set.filter(role__name__in=self.role_names)
         context["instructors"] = [instr.person for instr in instructors]
+        hosts = event.task_set.filter(role__name="host")
+        context["hosts"] = [host.person for host in hosts]
 
         task_emails = [task.person.email for task in instructors]
         context["all_emails"] = list(filter(bool, task_emails))
