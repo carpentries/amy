@@ -231,7 +231,7 @@ class NewInstructorAction(BaseAction):
             return ""
 
     @staticmethod
-    def check(task: Task):
+    def check(task: Task):  # type: ignore
         """Conditions for creating a NewInstructorAction."""
         return bool(
             # 2019-11-01: we accept instructors without `may_contact` agreement
@@ -327,7 +327,7 @@ class NewSupportingInstructorAction(BaseAction):
             return ""
 
     @staticmethod
-    def check(task: Task):
+    def check(task: Task):  # type: ignore
         """Conditions for creating a NewSupportingInstructorAction."""
         return bool(
             task.role.name == "supporting-instructor"
@@ -457,7 +457,7 @@ class PostWorkshopAction(BaseAction):
             return ""
 
     @staticmethod
-    def check(event: Event):
+    def check(event: Event):  # type: ignore
         """Conditions for creating a PostWorkshopAction."""
         return bool(
             # end date is required and in future
@@ -585,7 +585,7 @@ class SelfOrganisedRequestAction(BaseAction):
             return ""
 
     @staticmethod
-    def check(event: Event):
+    def check(event: Event):  # type: ignore
         """Conditions for creating a SelfOrganisedRequestAction."""
         try:
             return bool(
@@ -697,7 +697,7 @@ class InstructorsHostIntroductionAction(BaseAction):
             return None
 
     @staticmethod
-    def check(event: Event):
+    def check(event: Event):  # type: ignore
         """Conditions for creating a SelfOrganisedRequestAction."""
         # there is 1 host task and 2 instructor tasks
         try:
@@ -858,7 +858,7 @@ class AskForWebsiteAction(BaseAction):
             return ""
 
     @staticmethod
-    def check(event: Event):
+    def check(event: Event):  # type: ignore
         """Conditions for creating a AskForWebsiteAction."""
         instructors = event.task_set.filter(
             role__name__in=AskForWebsiteAction.role_names
@@ -988,7 +988,7 @@ class RecruitHelpersAction(BaseAction):
             return ""
 
     @staticmethod
-    def check(event: Event):
+    def check(event: Event):  # type: ignore
         """Conditions for creating a RecruitHelpersAction."""
         hosts = event.task_set.filter(role__name="host")
         instructors = event.task_set.filter(role__name="instructor")
