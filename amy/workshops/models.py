@@ -107,10 +107,10 @@ class Membership(models.Model):
         max_length=STR_MED, null=False, blank=False, choices=MEMBERSHIP_CHOICES,
     )
     agreement_start = models.DateField(
-        default=timezone.now, null=True, blank=True, editable=True,
+        null=True, blank=True, editable=True,
     )
     agreement_end = models.DateField(
-        default=timezone.now, null=True, blank=True, editable=True,
+        null=True, blank=True, editable=True,
     )
     CONTRIBUTION_CHOICES = (
         ("financial", "Financial"),
