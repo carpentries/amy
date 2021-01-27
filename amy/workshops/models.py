@@ -1,6 +1,5 @@
 import datetime
 import re
-from urllib.parse import urlencode
 
 from django.contrib.auth.models import (
     AbstractBaseUser,
@@ -164,7 +163,6 @@ class Membership(models.Model):
         verbose_name="Link to member agreement",
         help_text="Link to member agreement document or folder in Google Drive",
     )
-
 
     def __str__(self):
         from workshops.util import human_daterange
@@ -719,7 +717,24 @@ class Person(
 
     @property
     def is_admin(self):
-        return is_admin(self)
+        return self._is_admin()
+
+    def _is_admin(self) -> bool:
+        try:
+            if self.is_anonymous:
+                return False
+            else:
+                return (
+                    self.is_superuser
+                    or self.groups.filter(
+                        Q(name="administrators")
+                        | Q(name="steering committee")
+                        | Q(name="invoicing")
+                        | Q(name="trainers")
+                    ).exists()
+                )
+        except AttributeError:
+            return False
 
     def get_missing_instructor_requirements(self):
         """Returns set of requirements' names (list of strings) that are not
@@ -771,21 +786,6 @@ class Person(
         self.github = self.github or None
         self.twitter = self.twitter or None
         super().save(*args, **kwargs)
-
-
-def is_admin(user):
-    if user is None or user.is_anonymous:
-        return False
-    else:
-        return (
-            user.is_superuser
-            or user.groups.filter(
-                Q(name="administrators")
-                | Q(name="steering committee")
-                | Q(name="invoicing")
-                | Q(name="trainers")
-            ).exists()
-        )
 
 
 # ------------------------------------------------------------

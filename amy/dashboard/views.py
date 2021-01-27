@@ -31,7 +31,6 @@ from workshops.models import (
 from workshops.util import (
     login_required,
     admin_required,
-    is_admin,
     assignment_selection,
 )
 from dashboard.forms import (
@@ -45,7 +44,7 @@ from dashboard.forms import (
 def dispatch(request):
     """If user is admin, then show them admin dashboard; otherwise redirect
     them to trainee dashboard."""
-    if is_admin(request.user):
+    if request.user.is_admin:
         return redirect(reverse('admin-dashboard'))
     else:
         return redirect(reverse('trainee-dashboard'))

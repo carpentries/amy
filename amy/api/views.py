@@ -24,7 +24,6 @@ from workshops.models import (
     Award,
     Person,
     TrainingRequest,
-    is_admin,
 )
 
 from api.serializers import (
@@ -56,7 +55,7 @@ from api.renderers import (
 class IsAdmin(BasePermission):
     """This permission allows only admin users to view the API content."""
     def has_permission(self, request, view):
-        return is_admin(request.user)
+        return request.user.is_admin
 
 
 class HasRestrictedPermission(BasePermission):

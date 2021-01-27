@@ -7,7 +7,7 @@ from hashlib import sha1
 from itertools import chain
 import logging
 import re
-from typing import Optional, Union
+from typing import Optional, Union, Tuple
 
 import requests
 import yaml
@@ -44,7 +44,6 @@ from workshops.models import (
     Person,
     Task,
     Badge,
-    is_admin,
     STR_MED,
     STR_LONG,
 )
@@ -1204,7 +1203,7 @@ def access_control_decorator(decorator):
 
 @access_control_decorator
 def admin_required(view):
-    return user_passes_test(is_admin)(view)
+    return user_passes_test(lambda u: u.is_authenticated and u.is_admin)(view)
 
 
 @access_control_decorator
@@ -1221,7 +1220,7 @@ def login_not_required(view):
 
 class OnlyForAdminsMixin(UserPassesTestMixin):
     def test_func(self):
-        return is_admin(self.request.user)
+        return self.request.user.is_authenticated and self.request.user.is_admin
 
 
 class OnlyForAdminsNoRedirectMixin(OnlyForAdminsMixin):
