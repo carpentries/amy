@@ -176,6 +176,8 @@ class TestMembership(TestBase):
         comment content is saved."""
         self.assertEqual(Comment.objects.count(), 0)
         data = {
+            "agreement_start": date(2021, 1, 28),
+            "agreement_end": date(2022, 1, 28),
             "organization": self.org_alpha.pk,
             "variant": "partner",
             "contribution_type": "financial",
@@ -187,11 +189,38 @@ class TestMembership(TestBase):
         form.save()
         self.assertEqual(Comment.objects.count(), 0)
 
+
+class TestMembershipForms(TestBase):
+    def setUp(self):
+        super().setUp()
+        self._setUpUsersAndLogin()
+        self._setUpRoles()
+        self._setUpTags()
+
+        # parametrize membership creation
+        self.agreement_start = date.today() - timedelta(days=180)
+        self.agreement_end = date.today() + timedelta(days=180)
+
+        # let's add a membership for one of the organizations
+        self.current = Membership.objects.create(
+            variant="partner",
+            agreement_start=self.agreement_start,
+            agreement_end=self.agreement_end,
+            contribution_type="financial",
+            workshops_without_admin_fee_per_agreement=10,
+            self_organized_workshops_per_agreement=20,
+            seats_instructor_training=25,
+            additional_instructor_training_seats=3,
+            organization=self.org_beta,
+        )
+
     def test_creating_membership_with_comment(self):
         """Ensure that a comment is added when MembershipCreateForm with
         comment content is saved."""
         self.assertEqual(Comment.objects.count(), 0)
         data = {
+            "agreement_start": date(2021, 1, 28),
+            "agreement_end": date(2022, 1, 28),
             "organization": self.org_alpha.pk,
             "variant": "partner",
             "contribution_type": "financial",
@@ -216,6 +245,8 @@ class TestMembership(TestBase):
 
         self.assertEqual(Comment.objects.count(), 0)
         data = {
+            "agreement_start": date(2021, 1, 28),
+            "agreement_end": date(2022, 1, 28),
             "organization": self.org_alpha.pk,
             "variant": "partner",
             "contribution_type": "financial",
@@ -225,3 +256,21 @@ class TestMembership(TestBase):
         form = MembershipForm(data, instance=self.current)
         form.save()
         self.assertEqual(Comment.objects.count(), 0)
+
+    def test_membership_agreement_dates_validation(self):
+        """Validate invalid agreement end date (can't be sooner than start date)."""
+        data = {
+            "agreement_start": date(2021, 1, 26),
+            "agreement_end": date(2020, 1, 26),
+            "organization": self.org_alpha.pk,
+            "variant": "partner",
+            "contribution_type": "financial",
+            "additional_instructor_training_seats": 0,
+            "seats_instructor_training": 0,
+        }
+        form = MembershipForm(data)
+        self.assertFalse(form.is_valid())
+        self.assertEqual(
+            form.errors["agreement_end"],
+            ["Agreement end date can't be sooner than the start date."]
+        )

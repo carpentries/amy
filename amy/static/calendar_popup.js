@@ -34,4 +34,12 @@ $(document).ready(function() {
         // earlier than start date
         first_startdate_selected = true;
     });
+
+    $('#id_agreement_start').on('changeDate', function(e) {
+        if (e.date && !$('#id_agreement_end').val()) {
+            d = e.date;
+            d.setFullYear(d.getFullYear() + 1);
+            $('#id_agreement_end').datepicker('update', d);
+        }
+    });
 });

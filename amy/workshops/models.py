@@ -106,12 +106,8 @@ class Membership(models.Model):
     variant = models.CharField(
         max_length=STR_MED, null=False, blank=False, choices=MEMBERSHIP_CHOICES,
     )
-    agreement_start = models.DateField(
-        default=timezone.now, null=True, blank=True, editable=True,
-    )
-    agreement_end = models.DateField(
-        default=timezone.now, null=True, blank=True, editable=True,
-    )
+    agreement_start = models.DateField()
+    agreement_end = models.DateField()
     CONTRIBUTION_CHOICES = (
         ("financial", "Financial"),
         ("person-days", "Person-days"),
