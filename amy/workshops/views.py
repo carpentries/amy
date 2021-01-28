@@ -1,3 +1,5 @@
+from typing import Optional
+
 import csv
 import datetime
 from functools import partial
@@ -53,6 +55,7 @@ from autoemails.actions import (
 )
 from autoemails.models import Trigger
 from autoemails.base_views import ActionManageMixin
+from dashboard.forms import AssignmentForm
 from fiscal.forms import SponsorshipForm
 from workshops.base_views import (
     AMYCreateView,
@@ -116,7 +119,6 @@ from workshops.util import (
     fetch_workshop_metadata,
     parse_workshop_metadata,
     validate_workshop_metadata,
-    assignment_selection,
     get_pagination_items,
     failed_to_delete,
     merge_objects,
@@ -1416,28 +1418,21 @@ def events_merge(request):
 @admin_required
 def events_metadata_changed(request):
     """List events with metadata changed."""
+
+    assignment_form = AssignmentForm(request.GET)
+    assigned_to: Optional[Person] = None
+    if assignment_form.is_valid():
+        assigned_to = assignment_form.cleaned_data["assigned_to"]
+
     events = Event.objects.active().filter(metadata_changed=True)
 
-    assigned_to, is_admin = assignment_selection(request)
-
-    if assigned_to == "me":
-        events = events.filter(assigned_to=request.user)
-
-    elif assigned_to == "noone":
-        events = events.filter(assigned_to=None)
-
-    elif assigned_to == "all":
-        # no filtering
-        pass
-
-    else:
-        # no filtering
-        pass
+    if assigned_to is not None:
+        events = events.filter(assigned_to=assigned_to)
 
     context = {
         "title": "Events with metadata changed",
         "events": events,
-        "is_admin": is_admin,
+        'assignment_form': assignment_form,
         "assigned_to": assigned_to,
     }
     return render(request, "workshops/events_metadata_changed.html", context)

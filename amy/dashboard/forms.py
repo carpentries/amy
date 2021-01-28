@@ -1,5 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 from django_countries.fields import CountryField
 
 from workshops.models import (
@@ -18,6 +19,24 @@ from workshops.fields import (
     ModelSelect2MultipleWidget,
     RadioSelectWithOther,
 )
+
+
+class AssignmentForm(forms.Form):
+    assigned_to = forms.ModelChoiceField(
+        label="Assigned to:",
+        required=False,
+        queryset=Person.objects.filter(
+            Q(is_superuser=True) | Q(groups__name="administrators")
+        ),
+        widget=Select2Widget(),
+    )
+    helper = BootstrapHelper(
+        add_submit_button=False,
+        add_cancel_button=False,
+        wider_labels=True,
+        use_get_method=True,
+        form_id="assignment-form"
+    )
 
 
 class AutoUpdateProfileForm(forms.ModelForm):

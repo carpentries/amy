@@ -1,4 +1,5 @@
 import re
+from typing import Optional
 
 from django.contrib import messages
 from django.db.models import (
@@ -31,10 +32,9 @@ from workshops.models import (
 from workshops.util import (
     login_required,
     admin_required,
-    is_admin,
-    assignment_selection,
 )
 from dashboard.forms import (
+    AssignmentForm,
     AutoUpdateProfileForm,
     SendHomeworkForm,
     SearchForm,
@@ -45,7 +45,7 @@ from dashboard.forms import (
 def dispatch(request):
     """If user is admin, then show them admin dashboard; otherwise redirect
     them to trainee dashboard."""
-    if is_admin(request.user):
+    if request.user.is_admin:
         return redirect(reverse('admin-dashboard'))
     else:
         return redirect(reverse('trainee-dashboard'))
@@ -55,6 +55,11 @@ def dispatch(request):
 def admin_dashboard(request):
     """Home page for admins."""
 
+    assignment_form = AssignmentForm(request.GET)
+    assigned_to: Optional[Person] = None
+    if assignment_form.is_valid():
+        assigned_to = assignment_form.cleaned_data["assigned_to"]
+
     current_events = (
         Event.objects.upcoming_events() | Event.objects.ongoing_events()
     ).active().prefetch_related('tags')
@@ -62,8 +67,8 @@ def admin_dashboard(request):
     # This annotation may produce wrong number of instructors when
     # `unpublished_events` filters out events that contain a specific tag.
     # The bug was fixed in #1130.
-    unpublished_events = Event.objects \
-        .active().unpublished_events().select_related('host').annotate(
+    unpublished_events = (
+        Event.objects.active().unpublished_events().select_related('host').annotate(
             num_instructors=Count(
                 Case(
                     When(task__role__name='instructor', then=Value(1)),
@@ -71,40 +76,23 @@ def admin_dashboard(request):
                 )
             ),
         ).order_by('-start')
-
-    assigned_to, is_admin = assignment_selection(request)
-
-    if assigned_to == 'me':
-        current_events = current_events.filter(assigned_to=request.user)
-        unpublished_events = unpublished_events.filter(
-            assigned_to=request.user)
-
-    elif assigned_to == 'noone':
-        current_events = current_events.filter(assigned_to__isnull=True)
-        unpublished_events = unpublished_events.filter(
-            assigned_to__isnull=True)
-
-    elif assigned_to == 'all':
-        # no filtering
-        pass
-
-    else:
-        # no filtering
-        pass
+    )
 
     # assigned events that have unaccepted changes
-    updated_metadata = Event.objects.active() \
-                                    .filter(assigned_to=request.user) \
-                                    .filter(metadata_changed=True) \
-                                    .count()
+    updated_metadata = Event.objects.active().filter(metadata_changed=True)
+
+    if assigned_to is not None:
+        current_events = current_events.filter(assigned_to=assigned_to)
+        unpublished_events = unpublished_events.filter(assigned_to=assigned_to)
+        updated_metadata = updated_metadata.filter(assigned_to=assigned_to)
 
     context = {
         'title': None,
-        'is_admin': is_admin,
+        'assignment_form': assignment_form,
         'assigned_to': assigned_to,
         'current_events': current_events,
         'unpublished_events': unpublished_events,
-        'updated_metadata': updated_metadata,
+        'updated_metadata': updated_metadata.count(),
         'main_tags': Tag.objects.main_tags(),
     }
     return render(request, 'dashboard/admin_dashboard.html', context)
