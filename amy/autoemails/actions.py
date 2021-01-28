@@ -231,7 +231,7 @@ class NewInstructorAction(BaseAction):
             return ""
 
     @staticmethod
-    def check(task: Task):
+    def check(task: Task):  # type: ignore
         """Conditions for creating a NewInstructorAction."""
         return bool(
             # 2019-11-01: we accept instructors without `may_contact` agreement
@@ -327,7 +327,7 @@ class NewSupportingInstructorAction(BaseAction):
             return ""
 
     @staticmethod
-    def check(task: Task):
+    def check(task: Task):  # type: ignore
         """Conditions for creating a NewSupportingInstructorAction."""
         return bool(
             task.role.name == "supporting-instructor"
@@ -457,7 +457,7 @@ class PostWorkshopAction(BaseAction):
             return ""
 
     @staticmethod
-    def check(event: Event):
+    def check(event: Event):  # type: ignore
         """Conditions for creating a PostWorkshopAction."""
         return bool(
             # end date is required and in future
@@ -514,6 +514,11 @@ class PostWorkshopAction(BaseAction):
         )
         context["helpers"] = list(
             Person.objects.filter(task__in=event.task_set.filter(role__name="helper"))
+        )
+        context["hosts"] = list(
+            Person.objects.filter(
+                task__in=event.task_set.filter(role__name="host")
+            )
         )
 
         # querying over Person.objects lets us get rid of duplicates
@@ -585,7 +590,7 @@ class SelfOrganisedRequestAction(BaseAction):
             return ""
 
     @staticmethod
-    def check(event: Event):
+    def check(event: Event):  # type: ignore
         """Conditions for creating a SelfOrganisedRequestAction."""
         try:
             return bool(
@@ -697,7 +702,7 @@ class InstructorsHostIntroductionAction(BaseAction):
             return None
 
     @staticmethod
-    def check(event: Event):
+    def check(event: Event):  # type: ignore
         """Conditions for creating a SelfOrganisedRequestAction."""
         # there is 1 host task and 2 instructor tasks
         try:
@@ -756,6 +761,7 @@ class InstructorsHostIntroductionAction(BaseAction):
         context["instructors"] = [instr.person for instr in instructors]
         context["supporting_instructors"] = [instr.person for instr in support]
         context["host"] = hosts[0].person
+        context["hosts"] = [host.person for host in hosts]
         context["instructor1"] = instructors[0].person
         context["instructor2"] = instructors[1].person
 
@@ -858,7 +864,7 @@ class AskForWebsiteAction(BaseAction):
             return ""
 
     @staticmethod
-    def check(event: Event):
+    def check(event: Event):  # type: ignore
         """Conditions for creating a AskForWebsiteAction."""
         instructors = event.task_set.filter(
             role__name__in=AskForWebsiteAction.role_names
@@ -902,6 +908,8 @@ class AskForWebsiteAction(BaseAction):
         # people
         instructors = event.task_set.filter(role__name__in=self.role_names)
         context["instructors"] = [instr.person for instr in instructors]
+        hosts = event.task_set.filter(role__name="host")
+        context["hosts"] = [host.person for host in hosts]
 
         task_emails = [task.person.email for task in instructors]
         context["all_emails"] = list(filter(bool, task_emails))
@@ -988,7 +996,7 @@ class RecruitHelpersAction(BaseAction):
             return ""
 
     @staticmethod
-    def check(event: Event):
+    def check(event: Event):  # type: ignore
         """Conditions for creating a RecruitHelpersAction."""
         hosts = event.task_set.filter(role__name="host")
         instructors = event.task_set.filter(role__name="instructor")
