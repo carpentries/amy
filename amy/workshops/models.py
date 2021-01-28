@@ -712,12 +712,14 @@ class Person(
 
     @property
     def is_staff(self):
-        """Required for logging into admin panel at '/admin/'."""
+        """Required for logging into admin panel."""
         return self.is_superuser
 
     @property
     def is_admin(self):
         return self._is_admin()
+
+    ADMIN_GROUPS = ("administrators", "steering committee", "invoicing", "trainers")
 
     def _is_admin(self) -> bool:
         try:
@@ -726,12 +728,7 @@ class Person(
             else:
                 return (
                     self.is_superuser
-                    or self.groups.filter(
-                        Q(name="administrators")
-                        | Q(name="steering committee")
-                        | Q(name="invoicing")
-                        | Q(name="trainers")
-                    ).exists()
+                    or self.groups.filter(name__in=self.ADMIN_GROUPS).exists()
                 )
         except AttributeError:
             return False

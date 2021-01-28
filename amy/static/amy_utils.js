@@ -336,4 +336,10 @@ $(document).ready(function() {
     $(this).datepicker("update");
     duration_warning(agreement_start, agreement_end, agreement_duration_warning);
   });
+
+  // assignment form autosubmit
+  $("#id_assigned_to").on("change", function(e) {
+    e.preventDefault();
+    $("#assignment-form").trigger("submit");
+  })
  });

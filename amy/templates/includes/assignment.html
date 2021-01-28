@@ -1,12 +1,6 @@
-<div class="btn-group" role="group" aria-label="Assignment of workshops">
-  <div class="btn-group" role="group">
-    <button id="assignmentDropdown" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-      Assignment: {% if assigned_to == 'all' %}all{% elif assigned_to == 'noone' %}unassigned{% elif assigned_to == 'me' %}me{% endif %}
-    </button>
-    <div class="dropdown-menu" aria-labelledby="assignmentDropdown">
-      <a class="dropdown-item" href="?assigned_to=all">Assign all</a>
-      <a class="dropdown-item" href="?assigned_to=noone">Assign unassigned</a>
-      <a class="dropdown-item" href="?assigned_to=me">Assign mine</a>
-    </div>
+{% load crispy_forms_tags %}
+<div class="row">
+  <div class="col-4">
+    {% crispy assignment_form %}
   </div>
 </div>

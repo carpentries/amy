@@ -12,7 +12,6 @@ from django.forms import (
     SelectMultiple,
     CheckboxSelectMultiple,
     TextInput,
-    RadioSelect,
 )
 from django_comments.models import Comment
 from django_countries import Countries
@@ -241,7 +240,7 @@ class WorkshopStaffForm(forms.Form):
         label="Airport",
         required=False,
         queryset=Airport.objects.all(),
-        widget=ModelSelect2Widget(data_view="airport-lookup", attrs=SELECT2_SIDEBAR,),
+        widget=ModelSelect2Widget(data_view="airport-lookup", attrs=SELECT2_SIDEBAR),
     )
     languages = forms.ModelMultipleChoiceField(
         label="Languages",

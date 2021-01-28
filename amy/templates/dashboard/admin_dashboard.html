@@ -17,13 +17,7 @@
 </div>
 {% endif %}
 
-{% if is_admin or user.is_superuser %}
-<div class="row">
-  <div class="col-12">
-    {% include "includes/assignment.html" %}
-  </div>
-</div>
-{% endif %}
+{% include "includes/assignment.html" %}
 
 <div class="row">
   <div class="col-lg-4 col-12">

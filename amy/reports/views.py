@@ -1,3 +1,5 @@
+from typing import Optional
+
 from django.contrib import messages
 from django.db.models import (
     Case,
@@ -13,6 +15,7 @@ from django.shortcuts import render, redirect
 from django.utils import timezone
 from django.urls import reverse
 
+from dashboard.forms import AssignmentForm
 from fiscal.filters import MembershipTrainingsFilter
 from workshops.models import (
     Badge,
@@ -25,7 +28,6 @@ from workshops.models import (
     TrainingRequest,
 )
 from workshops.util import (
-    assignment_selection,
     get_pagination_items,
     admin_required,
 )
@@ -71,6 +73,11 @@ def membership_trainings_stats(request):
 def workshop_issues(request):
     '''Display workshops in the database whose records need attention.'''
 
+    assignment_form = AssignmentForm(request.GET)
+    assigned_to: Optional[Person] = None
+    if assignment_form.is_valid():
+        assigned_to = assignment_form.cleaned_data["assigned_to"]
+
     events = Event.objects.active().past_events().annotate(
         num_instructors=Count(
             Case(
@@ -108,21 +115,8 @@ def workshop_issues(request):
         .exclude(Q(person__email='') | Q(person__email=None))
     ))
 
-    assigned_to, is_admin = assignment_selection(request)
-
-    if assigned_to == 'me':
-        events = events.filter(assigned_to=request.user)
-
-    elif assigned_to == 'noone':
-        events = events.filter(assigned_to=None)
-
-    elif assigned_to == 'all':
-        # no filtering
-        pass
-
-    else:
-        # no filtering
-        pass
+    if assigned_to is not None:
+        events = events.filter(assigned_to=assigned_to)
 
     events = events.annotate(
         missing_attendance=Case(
@@ -145,7 +139,7 @@ def workshop_issues(request):
     context = {
         'title': 'Workshops with Issues',
         'events': events,
-        'is_admin': is_admin,
+        'assignment_form': assignment_form,
         'assigned_to': assigned_to,
     }
     return render(request, 'reports/workshop_issues.html', context)
