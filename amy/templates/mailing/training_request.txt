@@ -1,12 +1,13 @@
 
-Dear {{object.personal}} {{object.middle}} {{object.family}},
+Dear {{object.personal}} {{object.family}},
 
+Thank you for applying for The Carpentries Instructor Training program. We’re excited to have you as part of our community! If you selected "Pre-approved Registration" in your application, you will receive more information approximately one week before your scheduled training. You may disregard the remainder of this email. If you selected Open Training Application, please read on.
 
-Thank you for applying for The Carpentries Instructor Training program. We’re excited to have you as part of our community.   If you submitted your application for a specific instructor training workshop or through a Carpentries institutional membership, please contact checkout@carpentries.org to be sure we are associating your application with the correct membership and disregard the two paragraphs below. If you are not affiliated with a member site, please read below. 
+Open Training applications are placed in an application queue to be considered for Instructor Training sponsorship by The Carpentries. We rank applications on a rolling basis. We are working to increase our capacity and reduce wait times, but at present expect a delay of at least 1-3 months. If your application is accepted, you will be given a registration code and invited to join an upcoming online instructor training event. 
 
-We receive hundreds of applications, and we cannot provide no-cost training for every applicant. Please, don't let that discourage you! We'd like to help you bring workshops and instructor training to your organization. We’re working on ways to increase our capacity to offer trainings to individuals not affiliated with member institutions, and hope to be able to offer more of these trainings soon. Your application has been placed on our waiting list while we grow our capacity.
+If you have a specific need to be trained sooner (e.g. an upcoming workshop) please let us know. Multiple applicants from a single institution generally will not be invited at once, but may be accepted individually over time. To more rapidly build an Instructor community at your institution, consider becoming a Member. For more information see: https://carpentries.org/membership/ or get in touch with memberships@carpentries.org to learn more about how we can help you make the case at your organisation. 
 
-We rank applications on a rolling basis. WSe are working to reduce wait times, but at present expect a delay of at least 1 month. If you have a specific need to be trained sooner (e.g. an upcoming workshop) please let us know. Multiple applicants from a single institution generally will not be invited at once, but may be accepted individually over time. To more rapidly build an Instructor community at your institution, consider becoming a Member. For more information see: https://carpentries.org/membership/ or get in touch with memberships@carpentries.org to learn more about how we can help you make the case at your organisation. 
+We receive hundreds of applications, and we cannot provide no-cost training for every applicant. Please, don't let that discourage you! We'd like to help you bring workshops and instructor training to your organisation. In the meantime, please get involved! 
 
 In the meantime, please get involved! 
 Join our discussion email list: https://carpentries.topicbox.com/groups/discuss 
