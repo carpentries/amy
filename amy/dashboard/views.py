@@ -1,3 +1,5 @@
+import re
+
 from django.contrib import messages
 from django.db.models import (
     Case,
@@ -6,17 +8,24 @@ from django.db.models import (
     IntegerField,
     Count,
     Prefetch,
+    Q,
 )
 from django.shortcuts import render, redirect
+from django.utils.html import format_html
 from django.urls import reverse
+from django.views.decorators.http import require_GET
+from django_comments.models import Comment
 
 from workshops.models import (
+    Airport,
     Badge,
     Event,
-    Tag,
     Qualification,
     Person,
-    TrainingRequirement,
+    Organization,
+    Membership,
+    Tag,
+    TrainingRequest,
     TrainingProgress,
 )
 from workshops.util import (
@@ -28,6 +37,7 @@ from workshops.util import (
 from dashboard.forms import (
     AutoUpdateProfileForm,
     SendHomeworkForm,
+    SearchForm,
 )
 
 
@@ -202,3 +212,143 @@ def training_progress(request):
         'homework_form': homework_form,
     }
     return render(request, 'dashboard/training_progress.html', context)
+
+
+# ------------------------------------------------------------
+
+
+@require_GET
+@admin_required
+def search(request):
+    """Search the database by term."""
+
+    term = ""
+    organizations = None
+    memberships = None
+    events = None
+    persons = None
+    airports = None
+    training_requests = None
+    comments = None
+    only_result = None
+
+    if request.method == "GET" and "term" in request.GET:
+        form = SearchForm(request.GET)
+        if form.is_valid():
+            term = form.cleaned_data.get("term", "")
+            tokens = re.split(r"\s+", term)
+
+            organizations = Organization.objects.filter(
+                Q(domain__icontains=term) | Q(fullname__icontains=term)
+            ).order_by("fullname")
+            if len(organizations) == 1 and not only_result:
+                only_result = organizations[0]
+
+            memberships = Membership.objects.filter(
+                registration_code__icontains=term
+            ).order_by("-agreement_start")
+            if len(memberships) == 1 and not only_result:
+                only_result = memberships[0]
+
+            events = Event.objects.filter(
+                Q(slug__icontains=term)
+                | Q(host__domain__icontains=term)
+                | Q(host__fullname__icontains=term)
+                | Q(url__icontains=term)
+                | Q(contact__icontains=term)
+                | Q(venue__icontains=term)
+                | Q(address__icontains=term)
+            ).order_by("-slug")
+            if len(events) == 1 and not only_result:
+                only_result = events[0]
+
+            # if user searches for two words, assume they mean a person
+            # name
+            if len(tokens) == 2:
+                name1, name2 = tokens
+                complex_q = (
+                    (Q(personal__icontains=name1) & Q(family__icontains=name2))
+                    | (Q(personal__icontains=name2) & Q(family__icontains=name1))
+                    | Q(email__icontains=term)
+                    | Q(secondary_email__icontains=term)
+                    | Q(github__icontains=term)
+                )
+                persons = Person.objects.filter(complex_q)
+            else:
+                persons = Person.objects.filter(
+                    Q(personal__icontains=term)
+                    | Q(family__icontains=term)
+                    | Q(email__icontains=term)
+                    | Q(secondary_email__icontains=term)
+                    | Q(github__icontains=term)
+                ).order_by("family")
+
+            if len(persons) == 1 and not only_result:
+                only_result = persons[0]
+
+            airports = Airport.objects.filter(
+                Q(iata__icontains=term) | Q(fullname__icontains=term)
+            ).order_by("iata")
+            if len(airports) == 1 and not only_result:
+                only_result = airports[0]
+
+            training_requests = TrainingRequest.objects.filter(
+                Q(group_name__icontains=term)
+                | Q(family__icontains=term)
+                | Q(email__icontains=term)
+                | Q(github__icontains=term)
+                | Q(affiliation__icontains=term)
+                | Q(location__icontains=term)
+                | Q(user_notes__icontains=term)
+            )
+            if len(training_requests) == 1 and not only_result:
+                only_result = training_requests[0]
+
+            comments = Comment.objects.filter(
+                Q(comment__icontains=term)
+                | Q(user_name__icontains=term)
+                | Q(user_email__icontains=term)
+                | Q(user__personal__icontains=term)
+                | Q(user__family__icontains=term)
+                | Q(user__email__icontains=term)
+                | Q(user__github__icontains=term)
+            ).prefetch_related("content_object")
+            if len(comments) == 1 and not only_result:
+                only_result = comments[0]
+
+            # only 1 record found? Let's move to it immediately
+            if only_result and not form.cleaned_data["no_redirect"]:
+                msg = format_html(
+                    "You were moved to this page, because your search <i>{}</i> "
+                    "yields only this result.", term
+                )
+                if isinstance(only_result, Comment):
+                    messages.success(request, msg)
+                    return redirect(
+                        only_result.content_object.get_absolute_url()
+                        + "#c{}".format(only_result.id)
+                    )
+                elif hasattr(only_result, "get_absolute_url"):
+                    messages.success(request, msg)
+                    return redirect(only_result.get_absolute_url())
+
+        else:
+            messages.error(request, "Fix errors below.")
+
+    # if empty GET, we'll create a blank form
+    else:
+        form = SearchForm()
+
+    context = {
+        "title": "Search",
+        "form": form,
+        "term": term,
+        "organisations": organizations,
+        "memberships": memberships,
+        "events": events,
+        "persons": persons,
+        "airports": airports,
+        "comments": comments,
+        "training_requests": training_requests,
+    }
+    return render(request, "dashboard/search.html", context)

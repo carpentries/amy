@@ -4,7 +4,6 @@ from workshops import views
 
 urlpatterns = [
     # utility views
-    path('search/', views.search, name='search'),
     path('log/', views.changes_log, name='changes_log'),
     path('version/<int:version_id>/', views.object_changes, name='object_changes'),
     path('workshop_staff/', views.workshop_staff, name='workshop_staff'),

@@ -353,25 +353,6 @@ class BulkUploadCSVForm(forms.Form):
     file = forms.FileField()
 
 
-class SearchForm(forms.Form):
-    """Represent general searching form."""
-
-    term = forms.CharField(label="Term", max_length=100)
-    in_organizations = forms.BooleanField(
-        label="in organizations", required=False, initial=True
-    )
-    in_events = forms.BooleanField(label="in events", required=False, initial=True)
-    in_persons = forms.BooleanField(label="in persons", required=False, initial=True)
-    in_airports = forms.BooleanField(label="in airports", required=False, initial=True)
-    in_training_requests = forms.BooleanField(
-        label="in training requests", required=False, initial=True
-    )
-
-    in_comments = forms.BooleanField(label="in comments", required=False, initial=True)
-
-    helper = BootstrapHelper(add_cancel_button=False, use_get_method=True,)
-
-
 class EventForm(forms.ModelForm):
     host = forms.ModelChoiceField(
         label="Host",
