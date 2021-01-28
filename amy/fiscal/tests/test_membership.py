@@ -176,6 +176,8 @@ class TestMembership(TestBase):
         comment content is saved."""
         self.assertEqual(Comment.objects.count(), 0)
         data = {
+            "agreement_start": date(2021, 1, 28),
+            "agreement_end": date(2022, 1, 28),
             "organization": self.org_alpha.pk,
             "variant": "partner",
             "contribution_type": "financial",
@@ -217,6 +219,8 @@ class TestMembershipForms(TestBase):
         comment content is saved."""
         self.assertEqual(Comment.objects.count(), 0)
         data = {
+            "agreement_start": date(2021, 1, 28),
+            "agreement_end": date(2022, 1, 28),
             "organization": self.org_alpha.pk,
             "variant": "partner",
             "contribution_type": "financial",
@@ -241,6 +245,8 @@ class TestMembershipForms(TestBase):
 
         self.assertEqual(Comment.objects.count(), 0)
         data = {
+            "agreement_start": date(2021, 1, 28),
+            "agreement_end": date(2022, 1, 28),
             "organization": self.org_alpha.pk,
             "variant": "partner",
             "contribution_type": "financial",

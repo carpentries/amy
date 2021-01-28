@@ -13,11 +13,11 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='membership',
             name='agreement_end',
-            field=models.DateField(blank=True, null=True),
+            field=models.DateField(),
         ),
         migrations.AlterField(
             model_name='membership',
             name='agreement_start',
-            field=models.DateField(blank=True, null=True),
+            field=models.DateField(),
         ),
     ]
