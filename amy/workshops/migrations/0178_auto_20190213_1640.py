@@ -22,7 +22,7 @@ def update_language_names(apps, schema_editor):
     Language = apps.get_model('workshops', 'Language')
 
     # read list of languages
-    with open('data/registry.json', encoding='utf-8') as f:
+    with open('amy/workshops/migrations/data/registry.json', encoding='utf-8') as f:
         languages_json = json.load(f)
 
     for language in languages_json:
