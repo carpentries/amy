@@ -16,9 +16,9 @@ other things thrown in.  If you would like to help, please read:
 
 *   the setup instructions below,
 
-*   the [contributor guidelines](CONTRIBUTING.md), and
+*   the [contributor guidelines](.github/CONTRIBUTING.md), and
 
-*   our [contributor code of conduct](CODE_OF_CONDUCT.md).
+*   our [contributor code of conduct](.github/CODE_OF_CONDUCT.md).
 
 Please [check with us][contact-address] or open an [issue][issues]
 before starting work on new features.
@@ -28,7 +28,7 @@ before starting work on new features.
 1.  Clone the repository:
 
     ~~~
-    $ git clone https://github.com/swcarpentry/amy.git
+    $ git clone https://github.com/carpentries/amy.git
     $ cd amy
     ~~~
 
@@ -76,7 +76,7 @@ before starting work on new features.
     $ make serve
     ~~~
 
-    **Note**:  this also installs front-end dependencies for AMY, including [jQuery][jquery] and [Bootstrap][bootstrap] ([full list here](https://github.com/swcarpentry/amy/blob/develop/package.json)).
+    **Note**:  this also installs front-end dependencies for AMY, including [jQuery][jquery] and [Bootstrap][bootstrap] ([full list here](https://github.com/carpentries/amy/blob/develop/package.json)).
 
 1.  Open <http://127.0.0.1:8000/workshops/> in your browser and start clicking.
 
@@ -177,8 +177,7 @@ before starting work on new features.
 [contact-address]: mailto:team@carpentries.org
 [django]: https://www.djangoproject.com
 [jquery]: https://jquery.com/
-[fixing-npm-permissions]: https://docs.npmjs.com/getting-started/fixing-npm-permissions#option-2-change-npm-s-default-directory-to-another-directory
-[issues]: https://github.com/swcarpentry/amy/issues
+[issues]: https://github.com/carpentries/amy/issues
 [tc]: https://carpentries.org/
 [virtualenv]: https://virtualenv.pypa.io/en/latest/userguide.html
 [venv]: https://docs.python.org/3/library/venv.html

@@ -3,7 +3,7 @@
   "version": "v2.16.0",
   "description": "A web-based workshop administration application for The Carpentries",
   "main": "index.js",
-  "repository": "git@github.com:swcarpentry/amy.git",
+  "repository": "git@github.com:carpentries/amy.git",
   "author": "The Carpentries Team <team@carpentries.org>",
   "license": "MIT",
   "dependencies": {
