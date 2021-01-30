@@ -7,7 +7,7 @@ from hashlib import sha1
 from itertools import chain
 import logging
 import re
-from typing import Optional, Union
+from typing import Optional, Union, Tuple
 
 import requests
 import yaml
@@ -44,7 +44,6 @@ from workshops.models import (
     Person,
     Task,
     Badge,
-    is_admin,
     STR_MED,
     STR_LONG,
 )
@@ -953,30 +952,6 @@ def find_emails(text):
     return emails
 
 
-def assignment_selection(request):
-    """Parse `assigned_to` query param depending on the logged-in user."""
-    user = request.user
-    is_admin = user.groups.filter(name="administrators").exists()
-
-    # it's always possible to assign something entirely else
-    # in the `?assigned_to` query param
-
-    if is_admin:
-        # One of the administrators.
-        # They should be presented with their events by default.
-        assigned_to = request.GET.get("assigned_to", "me")
-
-    elif user.is_superuser:
-        # A superuser.  Should see all events by default
-        assigned_to = request.GET.get("assigned_to", "all")
-
-    else:
-        # Normal user (for example subcommittee members).
-        assigned_to = "all"
-
-    return assigned_to, is_admin
-
-
 def failed_to_delete(request, object, protected_objects, back=None):
     context = {
         "title": "Failed to delete",
@@ -1204,7 +1179,7 @@ def access_control_decorator(decorator):
 
 @access_control_decorator
 def admin_required(view):
-    return user_passes_test(is_admin)(view)
+    return user_passes_test(lambda u: u.is_authenticated and u.is_admin)(view)
 
 
 @access_control_decorator
@@ -1221,7 +1196,7 @@ def login_not_required(view):
 
 class OnlyForAdminsMixin(UserPassesTestMixin):
     def test_func(self):
-        return is_admin(self.request.user)
+        return self.request.user.is_authenticated and self.request.user.is_admin
 
 
 class OnlyForAdminsNoRedirectMixin(OnlyForAdminsMixin):

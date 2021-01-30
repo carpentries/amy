@@ -26,6 +26,10 @@ class TestMembership(TestBase):
         self.agreement_end = date.today() + timedelta(days=180)
         self.workshop_interval = timedelta(days=30)
 
+        self.dc = Organization.objects.create(
+            domain="datacarpentry.org", fullname="Data Carpentry",
+        )
+
         # let's add a membership for one of the organizations
         self.current = Membership.objects.create(
             variant="partner",
@@ -43,12 +47,12 @@ class TestMembership(TestBase):
 
         # create a couple of workshops that span outside of agreement duration
         data = [
-            [self.agreement_start - timedelta(days=180), self_organized_admin, None],
-            [self.agreement_start - timedelta(days=1), self.org_beta, 500],
-            [self.agreement_start - timedelta(days=1), self_organized_admin, None],
-            [self.agreement_end + timedelta(days=1), self.org_beta, 500],
+            [self.agreement_start - timedelta(days=180), self_organized_admin],
+            [self.agreement_start - timedelta(days=1), self.dc],
+            [self.agreement_start - timedelta(days=1), self_organized_admin],
+            [self.agreement_end + timedelta(days=1), self.dc],
         ]
-        for i, (start_date, admin, fee) in enumerate(data):
+        for i, (start_date, admin) in enumerate(data):
             Event.objects.create(
                 slug="event-outside-agreement-range-{}".format(i),
                 host=self.org_beta,
@@ -56,7 +60,6 @@ class TestMembership(TestBase):
                 start=start_date,
                 end=start_date + timedelta(days=1),
                 administrator=admin,
-                admin_fee=fee,
             )
 
         # let's add a few events for that organization
@@ -80,8 +83,7 @@ class TestMembership(TestBase):
                 start=self.agreement_start + i * self.workshop_interval,
                 end=self.agreement_start_next_day + i * self.workshop_interval,
                 # just to satisfy the criteria
-                administrator=self.org_beta,
-                admin_fee=0,
+                administrator=self.dc,
             )
             e2.tags.set([self.TTT])
 
@@ -93,8 +95,7 @@ class TestMembership(TestBase):
                 start=self.agreement_start + i * self.workshop_interval,
                 end=self.agreement_start_next_day + i * self.workshop_interval,
                 # just to satisfy the criteria
-                administrator=self.org_beta,
-                admin_fee=0,
+                administrator=self.dc,
             )
             e3.tags.set([self.cancelled])
 
@@ -175,6 +176,8 @@ class TestMembership(TestBase):
         comment content is saved."""
         self.assertEqual(Comment.objects.count(), 0)
         data = {
+            "agreement_start": date(2021, 1, 28),
+            "agreement_end": date(2022, 1, 28),
             "organization": self.org_alpha.pk,
             "variant": "partner",
             "contribution_type": "financial",
@@ -186,11 +189,38 @@ class TestMembership(TestBase):
         form.save()
         self.assertEqual(Comment.objects.count(), 0)
 
+
+class TestMembershipForms(TestBase):
+    def setUp(self):
+        super().setUp()
+        self._setUpUsersAndLogin()
+        self._setUpRoles()
+        self._setUpTags()
+
+        # parametrize membership creation
+        self.agreement_start = date.today() - timedelta(days=180)
+        self.agreement_end = date.today() + timedelta(days=180)
+
+        # let's add a membership for one of the organizations
+        self.current = Membership.objects.create(
+            variant="partner",
+            agreement_start=self.agreement_start,
+            agreement_end=self.agreement_end,
+            contribution_type="financial",
+            workshops_without_admin_fee_per_agreement=10,
+            self_organized_workshops_per_agreement=20,
+            seats_instructor_training=25,
+            additional_instructor_training_seats=3,
+            organization=self.org_beta,
+        )
+
     def test_creating_membership_with_comment(self):
         """Ensure that a comment is added when MembershipCreateForm with
         comment content is saved."""
         self.assertEqual(Comment.objects.count(), 0)
         data = {
+            "agreement_start": date(2021, 1, 28),
+            "agreement_end": date(2022, 1, 28),
             "organization": self.org_alpha.pk,
             "variant": "partner",
             "contribution_type": "financial",
@@ -215,6 +245,8 @@ class TestMembership(TestBase):
 
         self.assertEqual(Comment.objects.count(), 0)
         data = {
+            "agreement_start": date(2021, 1, 28),
+            "agreement_end": date(2022, 1, 28),
             "organization": self.org_alpha.pk,
             "variant": "partner",
             "contribution_type": "financial",
@@ -224,3 +256,21 @@ class TestMembership(TestBase):
         form = MembershipForm(data, instance=self.current)
         form.save()
         self.assertEqual(Comment.objects.count(), 0)
+
+    def test_membership_agreement_dates_validation(self):
+        """Validate invalid agreement end date (can't be sooner than start date)."""
+        data = {
+            "agreement_start": date(2021, 1, 26),
+            "agreement_end": date(2020, 1, 26),
+            "organization": self.org_alpha.pk,
+            "variant": "partner",
+            "contribution_type": "financial",
+            "additional_instructor_training_seats": 0,
+            "seats_instructor_training": 0,
+        }
+        form = MembershipForm(data)
+        self.assertFalse(form.is_valid())
+        self.assertEqual(
+            form.errors["agreement_end"],
+            ["Agreement end date can't be sooner than the start date."]
+        )

@@ -52,13 +52,6 @@ class TrainingRequestCreate(
         """Don't display a success message."""
         return ''
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        # replace empty string with None
-        group_name = self.request.GET.get('group', None) or None
-        kwargs['initial_group_name'] = group_name
-        return kwargs
-
 
 class TrainingRequestConfirm(LoginNotRequiredMixin, TemplateView):
     template_name = 'forms/trainingrequest_confirm.html'
@@ -340,41 +333,3 @@ class SelfOrganisedSubmissionConfirm(LoginNotRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Thank you for submitting self-organised workshop'
         return context
-
-
-# ------------------------------------------------------------
-# Deprecated views
-
-class RedirectToWorkshopLandingPage(LoginNotRequiredMixin, RedirectView):
-    """A single class for handling redirect to new, unified workshop request
-    form, which replaces all other event-request(-kinda) forms."""
-    permanent = False
-    query_string = False
-    url = reverse_lazy('workshop_landing')
-
-
-# This form is disabled
-class SWCEventRequest(RedirectToWorkshopLandingPage):
-    pass
-
-
-# This form is disabled
-class DCEventRequest(RedirectToWorkshopLandingPage):
-    pass
-
-
-# This form is disabled
-class EventSubmission(RedirectToWorkshopLandingPage):
-    pass
-
-
-# This form is disabled
-class DCSelfOrganizedEventRequest(RedirectToWorkshopLandingPage):
-    pass
-
-
-# This form is disabled
-class ProfileUpdateRequestView(LoginNotRequiredMixin, RedirectView):
-    permanent = False
-    query_string = False
-    url = 'https://static.carpentries.org/instructors/'

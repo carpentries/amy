@@ -44,11 +44,6 @@ class TestViewsFor404ing(TestBase):
         rv = self.client.get(url)
         self.assertEqual(rv.status_code, 404)
 
-    def test_eventrequest_assign(self):
-        url = reverse('eventrequest_assign', args=[404, 404])
-        rv = self.client.get(url)
-        self.assertEqual(rv.status_code, 404)
-
     def test_revision_details(self):
         url = reverse('object_changes', args=[1234])
         rv = self.client.get(url)

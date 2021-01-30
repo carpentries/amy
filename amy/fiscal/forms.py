@@ -1,4 +1,6 @@
+from crispy_forms.layout import Layout, Div, HTML
 from django import forms
+from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.dispatch import receiver
 from markdownx.fields import MarkdownxFormField
@@ -93,6 +95,47 @@ class MembershipForm(forms.ModelForm):
             'seats_instructor_training',
             'additional_instructor_training_seats',
         ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # set up a layout object for the helper
+        self.helper.layout = self.helper.build_default_layout(self)
+
+        # add warning alert for dates falling within next 2-3 months
+        INVALID_AGREEMENT_DURATION_WARNING = (
+            "The selected agreement dates fall out of the typical 1-year long duration."
+        )
+        pos_index = self.helper.layout.fields.index("agreement_end")
+        self.helper.layout.insert(
+            pos_index + 1,
+            Div(
+                Div(
+                    HTML(INVALID_AGREEMENT_DURATION_WARNING),
+                    css_class="alert alert-warning offset-lg-2 col-lg-8 col-12",
+                ),
+                id="agreement_duration_warning",
+                css_class="form-group row d-none",
+            ),
+        )
+
+    def clean(self):
+        super().clean()
+        errors = dict()
+
+        # validate agreement end date is no sooner than start date
+        agreement_start = self.cleaned_data.get('agreement_start')
+        agreement_end = self.cleaned_data.get('agreement_end')
+        try:
+            if agreement_end < agreement_start:
+                errors["agreement_end"] = ValidationError(
+                    "Agreement end date can't be sooner than the start date."
+                )
+        except TypeError:
+            pass
+
+        if errors:
+            raise ValidationError(errors)
 
 
 class MembershipCreateForm(MembershipForm):

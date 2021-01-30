@@ -1,3 +1,6 @@
+import re
+from typing import Optional
+
 from django.contrib import messages
 from django.db.models import (
     Case,
@@ -6,28 +9,35 @@ from django.db.models import (
     IntegerField,
     Count,
     Prefetch,
+    Q,
 )
 from django.shortcuts import render, redirect
+from django.utils.html import format_html
 from django.urls import reverse
+from django.views.decorators.http import require_GET
+from django_comments.models import Comment
 
 from workshops.models import (
+    Airport,
     Badge,
     Event,
-    Tag,
     Qualification,
     Person,
-    TrainingRequirement,
+    Organization,
+    Membership,
+    Tag,
+    TrainingRequest,
     TrainingProgress,
 )
 from workshops.util import (
     login_required,
     admin_required,
-    is_admin,
-    assignment_selection,
 )
 from dashboard.forms import (
+    AssignmentForm,
     AutoUpdateProfileForm,
     SendHomeworkForm,
+    SearchForm,
 )
 
 
@@ -35,7 +45,7 @@ from dashboard.forms import (
 def dispatch(request):
     """If user is admin, then show them admin dashboard; otherwise redirect
     them to trainee dashboard."""
-    if is_admin(request.user):
+    if request.user.is_admin:
         return redirect(reverse('admin-dashboard'))
     else:
         return redirect(reverse('trainee-dashboard'))
@@ -45,6 +55,11 @@ def dispatch(request):
 def admin_dashboard(request):
     """Home page for admins."""
 
+    assignment_form = AssignmentForm(request.GET)
+    assigned_to: Optional[Person] = None
+    if assignment_form.is_valid():
+        assigned_to = assignment_form.cleaned_data["assigned_to"]
+
     current_events = (
         Event.objects.upcoming_events() | Event.objects.ongoing_events()
     ).active().prefetch_related('tags')
@@ -52,8 +67,8 @@ def admin_dashboard(request):
     # This annotation may produce wrong number of instructors when
     # `unpublished_events` filters out events that contain a specific tag.
     # The bug was fixed in #1130.
-    unpublished_events = Event.objects \
-        .active().unpublished_events().select_related('host').annotate(
+    unpublished_events = (
+        Event.objects.active().unpublished_events().select_related('host').annotate(
             num_instructors=Count(
                 Case(
                     When(task__role__name='instructor', then=Value(1)),
@@ -61,40 +76,23 @@ def admin_dashboard(request):
                 )
             ),
         ).order_by('-start')
-
-    assigned_to, is_admin = assignment_selection(request)
-
-    if assigned_to == 'me':
-        current_events = current_events.filter(assigned_to=request.user)
-        unpublished_events = unpublished_events.filter(
-            assigned_to=request.user)
-
-    elif assigned_to == 'noone':
-        current_events = current_events.filter(assigned_to__isnull=True)
-        unpublished_events = unpublished_events.filter(
-            assigned_to__isnull=True)
-
-    elif assigned_to == 'all':
-        # no filtering
-        pass
-
-    else:
-        # no filtering
-        pass
+    )
 
     # assigned events that have unaccepted changes
-    updated_metadata = Event.objects.active() \
-                                    .filter(assigned_to=request.user) \
-                                    .filter(metadata_changed=True) \
-                                    .count()
+    updated_metadata = Event.objects.active().filter(metadata_changed=True)
+
+    if assigned_to is not None:
+        current_events = current_events.filter(assigned_to=assigned_to)
+        unpublished_events = unpublished_events.filter(assigned_to=assigned_to)
+        updated_metadata = updated_metadata.filter(assigned_to=assigned_to)
 
     context = {
         'title': None,
-        'is_admin': is_admin,
+        'assignment_form': assignment_form,
         'assigned_to': assigned_to,
         'current_events': current_events,
         'unpublished_events': unpublished_events,
-        'updated_metadata': updated_metadata,
+        'updated_metadata': updated_metadata.count(),
         'main_tags': Tag.objects.main_tags(),
     }
     return render(request, 'dashboard/admin_dashboard.html', context)
@@ -202,3 +200,143 @@ def training_progress(request):
         'homework_form': homework_form,
     }
     return render(request, 'dashboard/training_progress.html', context)
+
+
+# ------------------------------------------------------------
+
+
+@require_GET
+@admin_required
+def search(request):
+    """Search the database by term."""
+
+    term = ""
+    organizations = None
+    memberships = None
+    events = None
+    persons = None
+    airports = None
+    training_requests = None
+    comments = None
+    only_result = None
+
+    if request.method == "GET" and "term" in request.GET:
+        form = SearchForm(request.GET)
+        if form.is_valid():
+            term = form.cleaned_data.get("term", "")
+            tokens = re.split(r"\s+", term)
+
+            organizations = Organization.objects.filter(
+                Q(domain__icontains=term) | Q(fullname__icontains=term)
+            ).order_by("fullname")
+            if len(organizations) == 1 and not only_result:
+                only_result = organizations[0]
+
+            memberships = Membership.objects.filter(
+                registration_code__icontains=term
+            ).order_by("-agreement_start")
+            if len(memberships) == 1 and not only_result:
+                only_result = memberships[0]
+
+            events = Event.objects.filter(
+                Q(slug__icontains=term)
+                | Q(host__domain__icontains=term)
+                | Q(host__fullname__icontains=term)
+                | Q(url__icontains=term)
+                | Q(contact__icontains=term)
+                | Q(venue__icontains=term)
+                | Q(address__icontains=term)
+            ).order_by("-slug")
+            if len(events) == 1 and not only_result:
+                only_result = events[0]
+
+            # if user searches for two words, assume they mean a person
+            # name
+            if len(tokens) == 2:
+                name1, name2 = tokens
+                complex_q = (
+                    (Q(personal__icontains=name1) & Q(family__icontains=name2))
+                    | (Q(personal__icontains=name2) & Q(family__icontains=name1))
+                    | Q(email__icontains=term)
+                    | Q(secondary_email__icontains=term)
+                    | Q(github__icontains=term)
+                )
+                persons = Person.objects.filter(complex_q)
+            else:
+                persons = Person.objects.filter(
+                    Q(personal__icontains=term)
+                    | Q(family__icontains=term)
+                    | Q(email__icontains=term)
+                    | Q(secondary_email__icontains=term)
+                    | Q(github__icontains=term)
+                ).order_by("family")
+
+            if len(persons) == 1 and not only_result:
+                only_result = persons[0]
+
+            airports = Airport.objects.filter(
+                Q(iata__icontains=term) | Q(fullname__icontains=term)
+            ).order_by("iata")
+            if len(airports) == 1 and not only_result:
+                only_result = airports[0]
+
+            training_requests = TrainingRequest.objects.filter(
+                Q(group_name__icontains=term)
+                | Q(family__icontains=term)
+                | Q(email__icontains=term)
+                | Q(github__icontains=term)
+                | Q(affiliation__icontains=term)
+                | Q(location__icontains=term)
+                | Q(user_notes__icontains=term)
+            )
+            if len(training_requests) == 1 and not only_result:
+                only_result = training_requests[0]
+
+            comments = Comment.objects.filter(
+                Q(comment__icontains=term)
+                | Q(user_name__icontains=term)
+                | Q(user_email__icontains=term)
+                | Q(user__personal__icontains=term)
+                | Q(user__family__icontains=term)
+                | Q(user__email__icontains=term)
+                | Q(user__github__icontains=term)
+            ).prefetch_related("content_object")
+            if len(comments) == 1 and not only_result:
+                only_result = comments[0]
+
+            # only 1 record found? Let's move to it immediately
+            if only_result and not form.cleaned_data["no_redirect"]:
+                msg = format_html(
+                    "You were moved to this page, because your search <i>{}</i> "
+                    "yields only this result.", term
+                )
+                if isinstance(only_result, Comment):
+                    messages.success(request, msg)
+                    return redirect(
+                        only_result.content_object.get_absolute_url()
+                        + "#c{}".format(only_result.id)
+                    )
+                elif hasattr(only_result, "get_absolute_url"):
+                    messages.success(request, msg)
+                    return redirect(only_result.get_absolute_url())
+
+        else:
+            messages.error(request, "Fix errors below.")
+
+    # if empty GET, we'll create a blank form
+    else:
+        form = SearchForm()
+
+    context = {
+        "title": "Search",
+        "form": form,
+        "term": term,
+        "organisations": organizations,
+        "memberships": memberships,
+        "events": events,
+        "persons": persons,
+        "airports": airports,
+        "comments": comments,
+        "training_requests": training_requests,
+    }
+    return render(request, "dashboard/search.html", context)

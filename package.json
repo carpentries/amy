@@ -12,7 +12,7 @@
     "@ttskch/select2-bootstrap4-theme": "^1.0.5",
     "bootstrap": "^4.5.3",
     "bootstrap-datepicker": "^1.9.0",
-    "datatables.net": "^1.10.19",
+    "datatables.net": "^1.10.22",
     "datatables.net-bs4": "^1.10.19",
     "datatables.net-dt": "^1.10.19",
     "jquery": "^3.5.0",
@@ -20,6 +20,6 @@
     "metrics-graphics": "^2.15.6",
     "popper.js": "^1.16.1",
     "select2": "^4.0.10",
-    "urijs": "^1.19.1"
+    "urijs": "^1.19.4"
   }
 }

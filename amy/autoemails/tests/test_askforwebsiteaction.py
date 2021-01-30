@@ -12,11 +12,11 @@ class TestAskForWebsiteAction(TestCase):
         # we're missing some tags
         Tag.objects.bulk_create(
             [
-                Tag(name="SWC"),
-                Tag(name="DC"),
-                Tag(name="LC"),
-                Tag(name="TTT"),
-                Tag(name="automated-email"),
+                Tag(name="automated-email", priority=0),
+                Tag(name="SWC", priority=10),
+                Tag(name="DC", priority=20),
+                Tag(name="LC", priority=30),
+                Tag(name="TTT", priority=40),
             ]
         )
         # by default there's only self-organized organization, but it can't be
@@ -203,10 +203,18 @@ class TestAskForWebsiteAction(TestCase):
             username="hgranger",
             email="hg@magic.uk",
         )
+        p3 = Person.objects.create(
+            personal="Ron",
+            family="Weasley",
+            username="rweasley",
+            email="rw@magic.uk",
+        )
         instructor = Role.objects.create(name="instructor")
         supporting = Role.objects.create(name="supporting-instructor")
+        host = Role.objects.create(name="host")
         Task.objects.create(event=e, person=p1, role=instructor)
         Task.objects.create(event=e, person=p2, role=supporting)
+        Task.objects.create(event=e, person=p3, role=host)
 
         ctx = a.get_additional_context(objects=dict(event=e))
         self.assertEqual(
@@ -218,6 +226,7 @@ class TestAskForWebsiteAction(TestCase):
                 workshop_host=Organization.objects.first(),
                 regional_coordinator_email=["admin-uk@carpentries.org"],
                 instructors=[p1, p2],
+                hosts=[p3],
                 all_emails=["hp@magic.uk", "hg@magic.uk"],
                 assignee="Regional Coordinator",
                 tags=["SWC", "TTT"],

@@ -10,60 +10,10 @@ def extend_current_Curricula(apps, schema_editor):
     Curriculum = apps.get_model('workshops', 'Curriculum')
 
     data = {
-        'swc-python': dict(
-            carpentry='SWC',
-            description='Software Carpentry (shell, git, Python)',
-            other=False,
-        ),
-        'swc-r': dict(
-            carpentry='SWC',
-            description='Software Carpentry (shell, git, R)',
-            other=False,
-        ),
-        'swc-es-python': dict(
-            carpentry='SWC',
-            description='Software Carpentry in Spanish (shell, git, Python)',
-            other=False,
-        ),
-        'swc-es-r': dict(
-            carpentry='SWC',
-            description='Software Carpentry in Spanish (shell, git, R)',
-            other=False,
-        ),
         'swc-other': dict(
             carpentry='SWC',
             description='Software Carpentry (other)',
             other=True,
-        ),
-        'dc-ecology-python': dict(
-            carpentry='DC',
-            description='Data Carpentry (Ecology with Python)',
-            other=False,
-        ),
-        'dc-ecology-r': dict(
-            carpentry='DC',
-            description='Data Carpentry (Ecology with R)',
-            other=False,
-        ),
-        'dc-genomics': dict(
-            carpentry='DC',
-            description='Data Carpentry (Genomics)',
-            other=False,
-        ),
-        'dc-geospatial': dict(
-            carpentry='DC',
-            description='Data Carpentry (Geospatial)',
-            other=False,
-        ),
-        'dc-socsci-python': dict(
-            carpentry='DC',
-            description='Data Carpentry (Social Sciences with Python)',
-            other=False,
-        ),
-        'dc-socsci-r': dict(
-            carpentry='DC',
-            description='Data Carpentry (Social Sciences with R)',
-            other=False,
         ),
         'dc-other': dict(
             carpentry='DC',
@@ -75,15 +25,65 @@ def extend_current_Curricula(apps, schema_editor):
             description='Library Carpentry (Intro to Data, Unix Shell, Git, and/or OpenRefine)',
             other=False,
         ),
-        'lc-other': dict(
-            carpentry='LC',
-            description='Library Carpentry (other)',
-            other=True,
+        'dc-geospatial': dict(
+            carpentry='DC',
+            description='Data Carpentry (Geospatial)',
+            other=False,
+        ),
+        'swc-python': dict(
+            carpentry='SWC',
+            description='Software Carpentry (shell, git, Python)',
+            other=False,
+        ),
+        'dc-genomics': dict(
+            carpentry='DC',
+            description='Data Carpentry (Genomics)',
+            other=False,
+        ),
+        'dc-socsci-r': dict(
+            carpentry='DC',
+            description='Data Carpentry (Social Sciences with R)',
+            other=False,
+        ),
+        'dc-ecology-r': dict(
+            carpentry='DC',
+            description='Data Carpentry (Ecology with R)',
+            other=False,
+        ),
+        'swc-es-r': dict(
+            carpentry='SWC',
+            description='Software Carpentry in Spanish (shell, git, R)',
+            other=False,
+        ),
+        'dc-socsci-python': dict(
+            carpentry='DC',
+            description='Data Carpentry (Social Sciences with Python)',
+            other=False,
         ),
         'unknown': dict(
             carpentry='',
             description="Don't know yet",
             other=False,
+        ),
+        'dc-ecology-python': dict(
+            carpentry='DC',
+            description='Data Carpentry (Ecology with Python)',
+            other=False,
+        ),
+        'swc-es-python': dict(
+            carpentry='SWC',
+            description='Software Carpentry in Spanish (shell, git, Python)',
+            other=False,
+        ),
+        'swc-r': dict(
+            carpentry='SWC',
+            description='Software Carpentry (shell, git, R)',
+            other=False,
+        ),
+        'lc-other': dict(
+            carpentry='LC',
+            description='Library Carpentry (other)',
+            other=True,
         ),
     }
 

@@ -41,7 +41,7 @@
       {% block main %}
       <div class="row">
         {% block leftcolumn %}{% endblock leftcolumn %}
-        <div class="{% block maincolumn %}col-sm-12 col-md-12{% endblock maincolumn %} main pb-4">
+        <div class="{% block maincolumn %}col-sm-12 col-md-12{% endblock maincolumn %} main pb-5">
         {% if messages %}
           {% for message in messages %}
           <div class="alert {{ message.tags }} alert-dismissible fade show" role="alert">
@@ -68,7 +68,7 @@
       </div>
       {% endblock main %}
 
-      <div class="row mt-5">
+      <div class="row">
         <footer class="col-sm-12 text-center text-muted border-top pt-3">
           <p>
             Powered by <a href="https://github.com/carpentries/amy">AMY</a> version {{ amy_version }}.

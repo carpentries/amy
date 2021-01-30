@@ -8,6 +8,7 @@ cache: pip
 # used for caching purposes
 services:
   - redis-server
+  - postgresql
 
 python:
   # After upgrading to Ubuntu 18.04 we lost ability to test against Py3.5
@@ -19,18 +20,17 @@ python:
   - 3.8
 
 env:
-  - CHECK_MIGRATION=true
+  - DATABASE_URL=postgres://postgres:@localhost/test_amy
 
 install:
   - pip install -r requirements.txt
 
 before_script:
-  - if [[ $CHECK_MIGRATION == true ]]; then
-      python manage.py makemigrations --dry-run --check;
-      export STATUS_CODE=$?;
-      if [[ "$STATUS_CODE" != "0" ]]; then
-        exit 1;
-      fi;
+  - psql -c 'create database test_amy;' -U postgres
+  - python manage.py makemigrations --dry-run --check;
+    export STATUS_CODE=$?;
+    if [[ "$STATUS_CODE" != "0" ]]; then
+      exit 1;
     fi;
 
 script:

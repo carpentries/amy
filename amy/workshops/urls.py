@@ -4,7 +4,6 @@ from workshops import views
 
 urlpatterns = [
     # utility views
-    path('search/', views.search, name='search'),
     path('log/', views.changes_log, name='changes_log'),
     path('version/<int:version_id>/', views.object_changes, name='object_changes'),
     path('workshop_staff/', views.workshop_staff, name='workshop_staff'),
@@ -82,13 +81,6 @@ urlpatterns = [
     # badges
     path('badges/', views.AllBadges.as_view(), name='all_badges'),
     path('badge/<slug:badge_name>/', views.BadgeDetails.as_view(), name='badge_details'),
-
-    # exporting views
-    path('export/', include([
-        path('badges/', views.export_badges, name='export_badges'),
-        path('instructors/', views.export_instructors, name='export_instructors'),
-        path('members/', views.export_members, name='export_members'),
-    ])),
 
     # action-required views
     path('action_required/privacy/',

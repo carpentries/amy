@@ -136,7 +136,6 @@ class Select2NoMinimumInputLength:
         return attrs
 
 
-
 class Select2Widget(FakeRequiredMixin, Select2BootstrapMixin,
                     DS2_Select2Widget):
     pass

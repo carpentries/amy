@@ -12,7 +12,6 @@ from django.forms import (
     SelectMultiple,
     CheckboxSelectMultiple,
     TextInput,
-    RadioSelect,
 )
 from django_comments.models import Comment
 from django_countries import Countries
@@ -241,7 +240,7 @@ class WorkshopStaffForm(forms.Form):
         label="Airport",
         required=False,
         queryset=Airport.objects.all(),
-        widget=ModelSelect2Widget(data_view="airport-lookup", attrs=SELECT2_SIDEBAR,),
+        widget=ModelSelect2Widget(data_view="airport-lookup", attrs=SELECT2_SIDEBAR),
     )
     languages = forms.ModelMultipleChoiceField(
         label="Languages",
@@ -353,25 +352,6 @@ class BulkUploadCSVForm(forms.Form):
     file = forms.FileField()
 
 
-class SearchForm(forms.Form):
-    """Represent general searching form."""
-
-    term = forms.CharField(label="Term", max_length=100)
-    in_organizations = forms.BooleanField(
-        label="in organizations", required=False, initial=True
-    )
-    in_events = forms.BooleanField(label="in events", required=False, initial=True)
-    in_persons = forms.BooleanField(label="in persons", required=False, initial=True)
-    in_airports = forms.BooleanField(label="in airports", required=False, initial=True)
-    in_training_requests = forms.BooleanField(
-        label="in training requests", required=False, initial=True
-    )
-
-    in_comments = forms.BooleanField(label="in comments", required=False, initial=True)
-
-    helper = BootstrapHelper(add_cancel_button=False, use_get_method=True,)
-
-
 class EventForm(forms.ModelForm):
     host = forms.ModelChoiceField(
         label="Host",
@@ -450,7 +430,6 @@ class EventForm(forms.ModelForm):
             "manual_attendance": TextInput,
             "latitude": TextInput,
             "longitude": TextInput,
-            "invoice_status": RadioSelect,
             "tags": SelectMultiple(attrs={"size": Tag.ITEMS_VISIBLE_IN_SELECT_WIDGET}),
             # "tags": CheckboxSelectMultiple(),
             "curricula": CheckboxSelectMultiple(),
@@ -972,40 +951,34 @@ class EventsMergeForm(forms.Form):
         queryset=Event.objects.all(), widget=forms.HiddenInput
     )
 
-    id = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,)
-    slug = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,)
+    id = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
+    slug = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     completed = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
     assigned_to = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
-    start = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,)
-    end = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,)
-    host = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,)
+    start = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
+    end = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
+    host = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     administrator = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
-    tags = forms.ChoiceField(choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,)
-    url = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,)
+    tags = forms.ChoiceField(choices=THREE, initial=DEFAULT, widget=forms.RadioSelect)
+    url = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     language = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
-    reg_key = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,)
-    admin_fee = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
-    )
-    invoice_status = forms.ChoiceField(
-        choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
-    )
+    reg_key = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
     manual_attendance = forms.ChoiceField(
         choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,
     )
     contact = forms.ChoiceField(
         choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
     )
-    country = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect,)
-    venue = forms.ChoiceField(choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,)
+    country = forms.ChoiceField(choices=TWO, initial=DEFAULT, widget=forms.RadioSelect)
+    venue = forms.ChoiceField(choices=THREE, initial=DEFAULT, widget=forms.RadioSelect)
     address = forms.ChoiceField(
         choices=THREE, initial=DEFAULT, widget=forms.RadioSelect,
     )

@@ -1,0 +1,134 @@
+{% extends "base_nav.html" %}
+
+{% load crispy_forms_tags %}
+{% block content %}
+  <div class="row">
+    <div class="col-sm-8 col-12 mx-auto">
+      {% crispy form %}
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-8 mx-auto">
+      <div class="card">
+        <div class="card-header">
+          <ul class="nav nav-tabs card-header-tabs" id="searchTab" role="tablist">
+            <li class="nav-item" role="presentation">
+              <a class="nav-link active" id="organisations-tab" data-toggle="tab" role="tab" aria-controls="Organisations" aria-selected="true" href="#organisations">
+                Organisations ({{ organisations|length }})
+              </a>
+            </li>
+            <li class="nav-item" role="presentation">
+              <a class="nav-link" id="memberships-tab" data-toggle="tab" role="tab" aria-controls="Memberships" aria-selected="false" href="#memberships">
+                Memberships ({{ memberships|length }})
+              </a>
+            </li>
+            <li class="nav-item" role="presentation">
+              <a class="nav-link" id="events-tab" data-toggle="tab" role="tab" aria-controls="Events" aria-selected="false" href="#events">
+                Events ({{ events|length }})
+              </a>
+            </li>
+            <li class="nav-item" role="presentation">
+              <a class="nav-link" id="persons-tab" data-toggle="tab" role="tab" aria-controls="Persons" aria-selected="false" href="#persons">
+                Persons ({{ persons|length }})
+              </a>
+            </li>
+            <li class="nav-item" role="presentation">
+              <a class="nav-link" id="airports-tab" data-toggle="tab" role="tab" aria-controls="Airports" aria-selected="false" href="#airports">
+                Airports ({{ airports|length }})
+              </a>
+            </li>
+            <li class="nav-item" role="presentation">
+              <a class="nav-link" id="training-requests-tab" data-toggle="tab" role="tab" aria-controls="Training requests" aria-selected="false" href="#training-requests">
+                Training requests ({{ training_requests|length }})
+              </a>
+            </li>
+            <li class="nav-item" role="presentation">
+              <a class="nav-link" id="comments-tab" data-toggle="tab" role="tab" aria-controls="Comments" aria-selected="false" href="#comments">
+                Comments ({{ comments|length }})
+              </a>
+            </li>
+          </ul>
+        </div>
+        <div class="tab-content" id="searchTabContent">
+          <div class="tab-pane fade show active card-body" id="organisations" role="tabpanel" aria-labelledby="organisations-tab">
+            {% if organisations %}
+            <ul>
+              {% for organisation in organisations %}
+              <li><a class="searchresult" href="{% url 'organization_details' organisation.domain %}">{{ organisation.domain }}</a></li>
+              {% endfor %}
+            </ul>
+            {% else %}
+            <p>No matches.</p>
+            {% endif %}
+          </div>
+          <div class="tab-pane fade card-body" id="memberships" role="tabpanel" aria-labelledby="memberships-tab">
+            {% if memberships %}
+            <ul>
+              {% for membership in memberships %}
+              <li><a class="searchresult" href="{% url 'membership_details' membership.pk %}">{{ membership }}</a></li>
+              {% endfor %}
+            </ul>
+            {% else %}
+            <p>No matches.</p>
+            {% endif %}
+          </div>
+          <div class="tab-pane fade card-body" id="events" role="tabpanel" aria-labelledby="events-tab">
+            {% if events %}
+            <ul>
+              {% for event in events %}
+              <li><a class="searchresult" href="{% url 'event_details' event.slug %}">{{ event.slug }}</a></li>
+              {% endfor %}
+            </ul>
+            {% else %}
+            <p>No matches.</p>
+            {% endif %}
+          </div>
+          <div class="tab-pane fade card-body" id="persons" role="tabpanel" aria-labelledby="persons-tab">
+            {% if persons %}
+            <ul>
+              {% for person in persons %}
+              <li><a class="searchresult" href="{% url 'person_details' person.id %}">{{ person }}</a></li>
+              {% endfor %}
+            </ul>
+            {% else %}
+            <p>No matches.</p>
+            {% endif %}
+          </div>
+          <div class="tab-pane fade card-body" id="airports" role="tabpanel" aria-labelledby="airports-tab">
+            {% if airports %}
+            <ul>
+              {% for a in airports %}
+              <li><a class="searchresult" href="{% url 'airport_details' a.iata %}">{{ a }}</a></li>
+              {% endfor %}
+            </ul>
+            {% else %}
+            <p>No matches.</p>
+            {% endif %}
+          </div>
+          <div class="tab-pane fade card-body" id="training-requests" role="tabpanel" aria-labelledby="training-requests-tab">
+            {% if training_requests %}
+            <ul>
+              {% for r in training_requests %}
+              <li><a class="searchresult" href="{{ r.get_absolute_url }}">{{ r }}</a></li>
+              {% endfor %}
+            </ul>
+            {% else %}
+            <p>No matches.</p>
+            {% endif %}
+          </div>
+          <div class="tab-pane fade card-body" id="comments" role="tabpanel" aria-labelledby="comments-tab">
+            {% if comments %}
+            <ul>
+              {% for comment in comments %}
+              <li><a class="searchresult" href="{{ comment.content_object.get_absolute_url }}#c{{ comment.id }}">{{ comment.content_object }}</a></li>
+              {% endfor %}
+            </ul>
+            {% else %}
+            <p>No matches.</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

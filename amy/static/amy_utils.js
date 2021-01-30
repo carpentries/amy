@@ -307,4 +307,39 @@ $(document).ready(function() {
       checkbox.prop("checked", true);
     }
   })
+
+  // warning for membership agreement duration != 1 year
+  const agreement_duration_warning = $("#agreement_duration_warning");
+  const agreement_start = $("#id_agreement_start");
+  const agreement_end = $("#id_agreement_end");
+  const duration_warning = function(start_element, end_element, warning_element) {
+    const next_year = start_element.datepicker("getDate");
+    const end_date = end_element.datepicker("getDate");
+    next_year.setFullYear(next_year.getFullYear() + 1);
+
+    if (next_year.getTime() != end_date.getTime()) {
+      warning_element.removeClass("d-none");
+    } else {
+      warning_element.addClass("d-none");
+    }
+  }
+  if (!!agreement_start.val() && !!agreement_end.val()) {
+    duration_warning(agreement_start, agreement_end, agreement_duration_warning);
+  }
+  agreement_start.on("changeDate input", function(e) {
+    // update datepicker with current input value
+    $(this).datepicker("update");
+    duration_warning(agreement_start, agreement_end, agreement_duration_warning);
+  });
+  agreement_end.on("changeDate input", function(e) {
+    // update datepicker with current input value
+    $(this).datepicker("update");
+    duration_warning(agreement_start, agreement_end, agreement_duration_warning);
+  });
+
+  // assignment form autosubmit
+  $("#id_assigned_to").on("change", function(e) {
+    e.preventDefault();
+    $("#assignment-form").trigger("submit");
+  })
  });

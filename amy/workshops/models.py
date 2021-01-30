@@ -1,6 +1,5 @@
 import datetime
 import re
-from urllib.parse import urlencode
 
 from django.contrib.auth.models import (
     AbstractBaseUser,
@@ -106,12 +105,8 @@ class Membership(models.Model):
     variant = models.CharField(
         max_length=STR_MED, null=False, blank=False, choices=MEMBERSHIP_CHOICES,
     )
-    agreement_start = models.DateField(
-        default=timezone.now, null=True, blank=True, editable=True,
-    )
-    agreement_end = models.DateField(
-        default=timezone.now, null=True, blank=True, editable=True,
-    )
+    agreement_start = models.DateField()
+    agreement_end = models.DateField()
     CONTRIBUTION_CHOICES = (
         ("financial", "Financial"),
         ("person-days", "Person-days"),
@@ -169,7 +164,6 @@ class Membership(models.Model):
         help_text="Link to member agreement document or folder in Google Drive",
     )
 
-
     def __str__(self):
         from workshops.util import human_daterange
 
@@ -183,11 +177,7 @@ class Membership(models.Model):
 
     @cached_property
     def workshops_without_admin_fee_completed(self):
-        """Count workshops without admin fee hosted the during agreement."""
-        self_organized = Q(administrator=None) | Q(
-            administrator__domain="self-organized"
-        )
-        no_fee = Q(admin_fee=0) | Q(admin_fee=None)
+        """Count centrally-organised workshops already hosted during the agreement."""
         date_started = Q(
             start__gte=self.agreement_start, start__lt=self.agreement_end
         ) & Q(start__lt=datetime.date.today())
@@ -196,19 +186,15 @@ class Membership(models.Model):
         return (
             Event.objects.filter(host=self.organization)
             .filter(date_started)
-            .filter(no_fee)
-            .exclude(self_organized)
+            .filter(administrator__in=Organization.objects.administrators())
+            .exclude(administrator__domain="self-organized")
             .exclude(cancelled)
             .count()
         )
 
     @cached_property
     def workshops_without_admin_fee_planned(self):
-        """Count workshops without admin fee hosted in future during the agreement."""
-        self_organized = Q(administrator=None) | Q(
-            administrator__domain="self-organized"
-        )
-        no_fee = Q(admin_fee=0) | Q(admin_fee=None)
+        """Count centrally-organised workshops hosted in future during the agreement."""
         date_started = Q(
             start__gte=self.agreement_start, start__lt=self.agreement_end
         ) & Q(start__gte=datetime.date.today())
@@ -217,15 +203,15 @@ class Membership(models.Model):
         return (
             Event.objects.filter(host=self.organization)
             .filter(date_started)
-            .filter(no_fee)
-            .exclude(self_organized)
+            .filter(administrator__in=Organization.objects.administrators())
+            .exclude(administrator__domain="self-organized")
             .exclude(cancelled)
             .count()
         )
 
     @cached_property
     def workshops_without_admin_fee_remaining(self):
-        """Count remaining workshops w/o admin fee for the agreement."""
+        """Count remaining centrally-organised workshops for the agreement."""
         if not self.workshops_without_admin_fee_per_agreement:
             return None
         a = self.workshops_without_admin_fee_per_agreement
@@ -560,7 +546,7 @@ class Person(
         help_text="Please put only a single username here.",
     )
     twitter = models.CharField(
-        max_length=STR_MED,
+        max_length=STR_LONG,
         unique=True,
         null=True,
         blank=True,
@@ -570,7 +556,7 @@ class Person(
         max_length=STR_LONG, blank=True, verbose_name="Personal website",
     )
     username = models.CharField(
-        max_length=STR_MED,
+        max_length=STR_LONG,
         unique=True,
         validators=[RegexValidator(r"^[\w\-_]+$", flags=re.A)],
     )
@@ -726,12 +712,26 @@ class Person(
 
     @property
     def is_staff(self):
-        """Required for logging into admin panel at '/admin/'."""
+        """Required for logging into admin panel."""
         return self.is_superuser
 
     @property
     def is_admin(self):
-        return is_admin(self)
+        return self._is_admin()
+
+    ADMIN_GROUPS = ("administrators", "steering committee", "invoicing", "trainers")
+
+    def _is_admin(self) -> bool:
+        try:
+            if self.is_anonymous:
+                return False
+            else:
+                return (
+                    self.is_superuser
+                    or self.groups.filter(name__in=self.ADMIN_GROUPS).exists()
+                )
+        except AttributeError:
+            return False
 
     def get_missing_instructor_requirements(self):
         """Returns set of requirements' names (list of strings) that are not
@@ -783,21 +783,6 @@ class Person(
         self.github = self.github or None
         self.twitter = self.twitter or None
         super().save(*args, **kwargs)
-
-
-def is_admin(user):
-    if user is None or user.is_anonymous:
-        return False
-    else:
-        return (
-            user.is_superuser
-            or user.groups.filter(
-                Q(name="administrators")
-                | Q(name="steering committee")
-                | Q(name="invoicing")
-                | Q(name="trainers")
-            ).exists()
-        )
 
 
 # ------------------------------------------------------------
@@ -972,19 +957,6 @@ class EventQuerySet(models.query.QuerySet):
             .distinct()
         )
 
-    def uninvoiced_events(self):
-        """Return a queryset for events that have not yet been invoiced.
-
-        These are marked as uninvoiced, and have occurred.
-        Events are sorted oldest first."""
-
-        return (
-            self.not_cancelled()
-            .past_events()
-            .filter(invoice_status="not-invoiced")
-            .order_by("start")
-        )
-
     def metadata_changed(self):
         """Return events for which remote metatags have been updated."""
         return self.filter(metadata_changed=True)
@@ -1095,31 +1067,6 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         "number is compared with number of Learner tasks, and the "
         "higher value is shown.",
     )
-    admin_fee = models.DecimalField(
-        max_digits=6,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        validators=[MinValueValidator(0)],
-    )
-    INVOICED_CHOICES = (
-        ("unknown", "Unknown"),
-        ("invoiced", "Invoice requested"),
-        ("not-invoiced", "Invoice not requested"),
-        ("na-historic", "Not applicable for historical reasons"),
-        ("na-member", "Not applicable because of membership"),
-        ("na-self-org", "Not applicable because self-organized"),
-        ("na-waiver", "Not applicable because waiver granted"),
-        ("na-other", "Not applicable because other arrangements made"),
-        ("paid", "Paid"),
-    )
-    invoice_status = models.CharField(
-        max_length=STR_MED,
-        choices=INVOICED_CHOICES,
-        verbose_name="Invoice status",
-        default="not-invoiced",
-        blank=False,
-    )
     contact = models.CharField(
         max_length=STR_LONGEST,
         default="",
@@ -1135,7 +1082,7 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         max_length=STR_LONGEST, default="", blank=True, help_text=PUBLISHED_HELP_TEXT,
     )
     address = models.CharField(
-        max_length=STR_LONGEST, default="", blank=True, help_text=PUBLISHED_HELP_TEXT,
+        max_length=350, default="", blank=True, help_text=PUBLISHED_HELP_TEXT,
     )
     latitude = models.FloatField(null=True, blank=True, help_text=PUBLISHED_HELP_TEXT,)
     longitude = models.FloatField(null=True, blank=True, help_text=PUBLISHED_HELP_TEXT,)
@@ -1279,11 +1226,6 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
             return self.url
 
     @cached_property
-    def uninvoiced(self):
-        """Indicate if the event has been invoiced or not."""
-        return self.invoice_status == "not-invoiced"
-
-    @cached_property
     def contacts(self):
         return (
             self.task_set.filter(
@@ -1305,27 +1247,6 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
 
         emails = find_emails(self.contact)
         return emails
-
-    def get_invoice_form_url(self):
-        from workshops.util import universal_date_format
-
-        query = {
-            "entry.823772951": self.venue,  # Organization to invoice
-            "entry.351294200": "Workshop administrative fee",  # Reason
-            # Date of event
-            "entry.1749215879": (
-                universal_date_format(self.start) if self.start else ""
-            ),
-            "entry.508035854": self.slug,  # Event or item ID
-            "entry.821460022": self.admin_fee,  # Total invoice amount
-            "entry.1316946828": "US dollars",  # Currency
-        }
-        url = (
-            "https://docs.google.com/forms/d/"
-            "1XljyEam4LERRXW0ebyh5eoZXjT1xR4bHkPxITLWiIyA/viewform?"
-        )
-        url += urlencode(query)
-        return url
 
     @property
     def human_readable_date(self):

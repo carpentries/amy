@@ -29,7 +29,6 @@ from workshops.util import (
     validate_workshop_metadata,
     get_members,
     default_membership_cutoff,
-    assignment_selection,
     create_username,
     InternalError,
     Paginator,
@@ -832,69 +831,6 @@ class TestMembership(TestBase):
         self.assertEqual(len(members), 1)
 
 
-class TestAssignmentSelection(TestBase):
-    def setUp(self):
-        """Set up RequestFactory and some users with different levels of
-        privileges."""
-        self.factory = RequestFactory()
-        self.superuser = Person.objects.create_superuser(
-            username='superuser', personal='admin', family='admin',
-            email='superuser@superuser', password='superuser')
-        self.admin = Person.objects.create_user(
-            username='admin', personal='admin', family='admin',
-            email='admin@admin', password='admin')
-        self.admin.groups.set([Group.objects.get(name='administrators')])
-        self.normal_user = Person.objects.create_user(
-            username='user', personal='typical', family='user',
-            email='typical@user', password='user')
-
-    def test_no_selection_superuser(self):
-        """User is superuser and they selected nothing. The result should be
-        default value for this kind of a user."""
-        request = self.factory.get('/')
-        request.user = self.superuser
-        assignment, is_admin = assignment_selection(request)
-        self.assertEqual(assignment, 'all')
-        self.assertFalse(is_admin)
-
-    def test_no_selection_admin(self):
-        """User is admin and they selected nothing. The result should be
-        default value for this kind of a user."""
-        request = self.factory.get('/')
-        request.user = self.admin
-        assignment, is_admin = assignment_selection(request)
-        self.assertEqual(assignment, 'me')
-        self.assertTrue(is_admin)
-
-    def test_no_selection_normal_user(self):
-        """User is normal user and they selected nothing. The result should be
-        default value for this kind of a user."""
-        request = self.factory.get('/')
-        request.user = self.normal_user
-        assignment, is_admin = assignment_selection(request)
-        self.assertEqual(assignment, 'all')
-        self.assertFalse(is_admin)
-
-    def test_selection_normal_user(self):
-        """User is normal user and they selected self-assigned. This is invalid
-        selection (normal user cannot select anything), so the default option
-        should be returned."""
-        request = self.factory.get('/', {'assigned_to': 'me'})
-        request.user = self.normal_user
-        assignment, is_admin = assignment_selection(request)
-        self.assertEqual(assignment, 'all')
-        self.assertFalse(is_admin)
-
-    def test_selection_privileged_user(self):
-        """User is admin and they selected "not assigned to anyone". Actually
-        for privileged user any selection should make through."""
-        request = self.factory.get('/', {'assigned_to': 'noone'})
-        request.user = self.admin
-        assignment, is_admin = assignment_selection(request)
-        self.assertEqual(assignment, 'noone')
-        self.assertTrue(is_admin)
-
-
 class TestUsernameGeneration(TestBase):
     def setUp(self):
         Person.objects.create_user(username='potter_harry', personal='Harry',
@@ -1150,27 +1086,27 @@ class TestMatchingNotificationEmail(TestBase):
         # Online
         self.request.country = 'W3'
         results = list(match_notification_email(self.request))
-        self.assertEqual(results, ['team@carpentries.org'])
+        self.assertEqual(results, ['workshops@carpentries.org'])
 
         # European Union
         self.request.country = 'EU'
         results = list(match_notification_email(self.request))
-        self.assertEqual(results, ['team@carpentries.org'])
+        self.assertEqual(results, ['workshops@carpentries.org'])
 
         # United States
         self.request.country = 'US'
         results = list(match_notification_email(self.request))
-        self.assertEqual(results, ['team@carpentries.org'])
+        self.assertEqual(results, ['workshops@carpentries.org'])
 
         # Poland
         self.request.country = 'PL'
         results = list(match_notification_email(self.request))
-        self.assertEqual(results, ['team@carpentries.org'])
+        self.assertEqual(results, ['workshops@carpentries.org'])
 
         # unknown country code
         self.request.country = 'XY'
         results = list(match_notification_email(self.request))
-        self.assertEqual(results, ['team@carpentries.org'])
+        self.assertEqual(results, ['workshops@carpentries.org'])
 
     def test_matching_Africa(self):
         """Testing just a subset of countries in Africa."""
@@ -1222,11 +1158,11 @@ class TestMatchingNotificationEmail(TestBase):
     def test_object_no_criteria(self):
         self.assertFalse(hasattr(self, 'country'))
         results = match_notification_email(self)
-        self.assertEqual(results, ['team@carpentries.org'])
+        self.assertEqual(results, ['workshops@carpentries.org'])
 
         self.country = None
         results = match_notification_email(self)
-        self.assertEqual(results, ['team@carpentries.org'])
+        self.assertEqual(results, ['workshops@carpentries.org'])
 
 
 class TestReportsLink(TestBase):

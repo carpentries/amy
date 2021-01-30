@@ -1,4 +1,5 @@
-Copyright (c) 2014-2015 Software Carpentry and contributors
+Copyright (c) 2014-2018 Software Carpentry and Contributors
+Copyright (c) 2018-2021 The Carpentries and Contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

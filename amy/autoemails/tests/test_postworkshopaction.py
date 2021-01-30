@@ -13,11 +13,11 @@ class TestPostWorkshopAction(TestCase):
         # we're missing some tags
         Tag.objects.bulk_create(
             [
-                Tag(name="SWC"),
-                Tag(name="DC"),
-                Tag(name="LC"),
-                Tag(name="TTT"),
-                Tag(name="automated-email"),
+                Tag(name="automated-email", priority=0),
+                Tag(name="SWC", priority=10),
+                Tag(name="DC", priority=20),
+                Tag(name="LC", priority=30),
+                Tag(name="TTT", priority=40),
             ]
         )
         # by default there's only self-organized organization, but it can't be
@@ -234,6 +234,7 @@ class TestPostWorkshopAction(TestCase):
                 instructors=[p2],
                 supporting_instructors=[p4],
                 helpers=[p1, p3],
+                hosts=[p1],
                 all_emails=[
                     "hg@magic.uk",
                     "draco@malfoy.com",
@@ -375,4 +376,7 @@ class TestPostWorkshopAction(TestCase):
             objects=dict(event=e),
         )
 
-        self.assertEqual(a.all_recipients(), "hg@magic.uk, draco@malfoy.com, hp@magic.uk, rw@magic.uk")
+        self.assertEqual(
+            a.all_recipients(),
+            "hg@magic.uk, draco@malfoy.com, hp@magic.uk, rw@magic.uk"
+        )

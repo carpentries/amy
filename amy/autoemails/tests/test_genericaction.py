@@ -20,11 +20,11 @@ class TestGenericAction(TestCase):
         # we're missing some tags
         Tag.objects.bulk_create(
             [
-                Tag(name="SWC"),
-                Tag(name="DC"),
-                Tag(name="LC"),
-                Tag(name="TTT"),
-                Tag(name="automated-email"),
+                Tag(name="automated-email", priority=0),
+                Tag(name="SWC", priority=10),
+                Tag(name="DC", priority=20),
+                Tag(name="LC", priority=30),
+                Tag(name="TTT", priority=40),
             ]
         )
 
@@ -80,7 +80,7 @@ class TestGenericAction(TestCase):
                 "workshop_main_type": "SWC",
                 "dates": "Oct 30 - Nov 01, 2020",
                 "workshop_host": Organization.objects.first(),
-                "regional_coordinator_email": ["team@carpentries.org"],
+                "regional_coordinator_email": ["workshops@carpentries.org"],
                 "all_emails": [],
                 "assignee": "Regional Coordinator",
                 "tags": ["SWC"],

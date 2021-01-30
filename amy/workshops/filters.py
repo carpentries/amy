@@ -188,15 +188,10 @@ class EventFilter(AMYFilterSet):
         ('upcoming_events', 'Upcoming'),
         ('unpublished_events', 'Unpublished'),
         ('published_events', 'Published'),
-        ('uninvoiced_events', 'Uninvoiced'),
         ('metadata_changed', 'Detected changes in metadata'),
     ]
     state = EventStateFilter(choices=STATUS_CHOICES, label='Status',
                              widget=Select2Widget)
-
-    invoice_status = django_filters.ChoiceFilter(
-        choices=Event.INVOICED_CHOICES,
-    )
 
     tags = django_filters.ModelMultipleChoiceFilter(
         queryset=Tag.objects.all(), label='Tags',
@@ -223,7 +218,6 @@ class EventFilter(AMYFilterSet):
             'tags',
             'host',
             'administrator',
-            'invoice_status',
             'completed',
             'country',
             'continent',

@@ -1,7 +1,5 @@
-import contextlib
 import datetime
 import itertools
-import sys
 
 from django.contrib.auth.models import Group, Permission
 from django.contrib.sites.models import Site
@@ -22,21 +20,6 @@ from workshops.models import (
     Language,
 )
 from workshops.util import universal_date_format
-
-
-@contextlib.contextmanager
-def dummy_subTest():
-    yield
-
-
-class DummySubTestWhenTestsLaunchedInParallelMixin:
-    def subTest(self, *args, **kwargs):
-        # If you launch tests in parallel, subTest is not supported yet. To
-        # fix that, we provide a dummy subTest implementation in that case.
-        if "--parallel" in sys.argv:
-            return dummy_subTest()
-        else:
-            return super().subTest(*args, **kwargs)
 
 
 class SuperuserMixin:
@@ -60,7 +43,7 @@ class SuperuserMixin:
 
 
 class TestBase(
-    SuperuserMixin, DummySubTestWhenTestsLaunchedInParallelMixin, WebTest
+    SuperuserMixin, WebTest
 ):  # Support for functional tests (django-webtest)
     """Base class for AMY test cases."""
 
@@ -104,11 +87,11 @@ class TestBase(
         """Set up organization objects."""
 
         self.org_alpha = Organization.objects.create(
-            domain="alpha.edu", fullname="Alpha Organization", country="Azerbaijan"
+            domain="alpha.edu", fullname="Alpha Organization", country="AZ"
         )
 
         self.org_beta = Organization.objects.create(
-            domain="beta.com", fullname="Beta Organization", country="Brazil"
+            domain="beta.com", fullname="Beta Organization", country="BR"
         )
 
     def _setUpAirports(self):
@@ -346,9 +329,7 @@ class TestBase(
                 start=event_start,
                 slug=slug,
                 host=test_host,
-                admin_fee=100,
                 url=url,
-                invoice_status="not-invoiced",
                 country="US",
                 venue="School",
                 address="Overthere",
@@ -356,9 +337,7 @@ class TestBase(
                 longitude=2,
             )
 
-        # Create one new event for each day from 10 days ago to
-        # 3 days ago, half invoiced
-        invoice = itertools.cycle(["invoiced", "not-invoiced"])
+        # Create one new event for each day from 10 days ago to 3 days ago
         for t in range(3, 11):
             event_start = today + datetime.timedelta(days=-t)
             date_string = universal_date_format(event_start)
@@ -366,25 +345,19 @@ class TestBase(
                 start=event_start,
                 slug="{0}-past".format(date_string),
                 host=test_host,
-                admin_fee=100,
-                invoice_status=next(invoice),
             )
 
-        # create a past event that has no admin fee specified, yet it needs
-        # invoice
+        # create a past event that has no admin fee specified
         event_start = today + datetime.timedelta(days=-4)
         Event.objects.create(
             start=event_start,
             end=today + datetime.timedelta(days=-1),
             slug="{}-past-uninvoiced".format(universal_date_format(event_start)),
             host=test_host,
-            admin_fee=None,
-            invoice_status="not-invoiced",
         )
 
         # Create an event that started yesterday and ends tomorrow
-        # with no fee, and without specifying whether they've been
-        # invoiced.
+        # with no fee
         event_start = today + datetime.timedelta(days=-1)
         event_end = today + datetime.timedelta(days=1)
         Event.objects.create(
@@ -392,7 +365,6 @@ class TestBase(
             end=event_end,
             slug="ends-tomorrow-ongoing",
             host=test_host,
-            admin_fee=0,
             url="http://example.org/ends-tomorrow-ongoing",
             country="US",
             venue="School",
@@ -401,8 +373,7 @@ class TestBase(
             longitude=2,
         )
 
-        # Create an event that ends today with no fee, and without
-        # specifying whether the fee has been invoiced.
+        # Create an event that ends today with no fee
         event_start = today + datetime.timedelta(days=-1)
         event_end = today
         Event.objects.create(
@@ -410,7 +381,6 @@ class TestBase(
             end=event_end,
             slug="ends-today-ongoing",
             host=test_host,
-            admin_fee=0,
             url="http://example.org/ends-today-ongoing",
             country="US",
             venue="School",
@@ -419,8 +389,7 @@ class TestBase(
             longitude=2,
         )
 
-        # Create an event that starts today with a fee, and without
-        # specifying whether the fee has been invoiced.
+        # Create an event that starts today with a fee
         event_start = today
         event_end = today + datetime.timedelta(days=1)
         Event.objects.create(
@@ -428,7 +397,6 @@ class TestBase(
             end=event_end,
             slug="starts-today-ongoing",
             host=test_host,
-            admin_fee=100,
         )
 
         # create a full-blown event that got cancelled
@@ -448,12 +416,9 @@ class TestBase(
         e.tags.set(tags)
 
         # Record some statistics about events.
-        self.num_uninvoiced_events = 0
         self.num_upcoming = 0
         for e in Event.objects.all():
             e.is_past_event = e.start < today and (e.end is None or e.end < today)
-            if e.invoice_status == "not-invoiced" and e.is_past_event:
-                self.num_uninvoiced_events += 1
             if e.url and (e.start > today):
                 self.num_upcoming += 1
 

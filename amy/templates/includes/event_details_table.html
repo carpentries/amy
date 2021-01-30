@@ -87,24 +87,4 @@
         {% endif %}
       {% endwith %}
     </td></tr>
-  <tr>
-    <th><span class="badge badge-secondary">deprecated</span> Invoice requests:</th>
-    <td colspan="2">
-      {% if event.invoicerequest_set.all %}
-      <ul>
-        {% for request in event.invoicerequest_set.all %}
-        <li><a href="{{ request.get_absolute_url }}" target="_blank" rel="noreferrer">{{ request }}</a> (status: {{ request.long_status }})</li>
-        {% endfor %}
-      </ul>
-      {% else %}
-      &mdash;
-      {% endif %}
-    </td>
-  </tr>
-  <tr><th><span class="badge badge-secondary">deprecated</span> Related event request:</th>
-      <td colspan="2">{% if event|one2one_exists:"eventrequest" %}<a href="{{ event.eventrequest.get_absolute_url }}">{{ event.eventrequest }}</a>{% else %}&mdash;{% endif %}</td></tr>
-  <tr><th><span class="badge badge-secondary">deprecated</span> Related workshop submission:</th>
-      <td colspan="2">{% if event|one2one_exists:"eventsubmission" %}<a href="{{ event.eventsubmission.get_absolute_url }}">{{ event.eventsubmission }}</a>{% else %}&mdash;{% endif %}</td></tr>
-  <tr><th><span class="badge badge-secondary">deprecated</span> Related DC self-organized workshop request:</th>
-      <td colspan="2">{% if event|one2one_exists:"dcselforganizedeventrequest" %}<a href="{{ event.dcselforganizedeventrequest.get_absolute_url }}">{{ event.dcselforganizedeventrequest }}</a>{% else %}&mdash;{% endif %}</td></tr>
 </table>

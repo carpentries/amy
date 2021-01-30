@@ -19,10 +19,4 @@ urlpatterns = [
     path('self-organised/confirm/', views.SelfOrganisedSubmissionConfirm.as_view(), name='selforganised_submission_confirm'),
     path('self-organized/', RedirectView.as_view(url=reverse_lazy('selforganised_submission'))),
     path('self-organized/confirm/', RedirectView.as_view(url=reverse_lazy('selforganised_submission_confirm'))),
-    # forms below have been turned off - they redirect to workshop landing page:
-    path('swc/request/', views.SWCEventRequest.as_view(), name='swc_workshop_request'),
-    path('dc/request/', views.DCEventRequest.as_view(), name='dc_workshop_request'),
-    path('submit/', views.EventSubmission.as_view(), name='event_submit'),
-    path('dc/request_selforganized/', views.DCSelfOrganizedEventRequest.as_view(), name='dc_workshop_selforganized_request'),
-    path('update_profile/', views.ProfileUpdateRequestView.as_view(), name='profileupdate_request'),
 ]
