@@ -1,4 +1,4 @@
-FROM python:3.7-alpine
+FROM python:3.8-alpine
 
 RUN apk update && apk add build-base python3-dev \
     # argon2 dependency
@@ -13,14 +13,15 @@ RUN apk update && apk add build-base python3-dev \
     tk-dev \
     tcl-dev \
     harfbuzz-dev \
-    fribidi-dev
+    fribidi-dev \
+    postgresql-dev
 
 ENV INSTALL_PATH /amy
 RUN mkdir -p $INSTALL_PATH
 
 WORKDIR $INSTALL_PATH
 
-COPY requirements.txt requirements.txt
+COPY ./requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 
 COPY . .
