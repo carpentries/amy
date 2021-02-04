@@ -19,15 +19,19 @@ services:
     #   - ./redis:/data
 
   amy:
-    build: .
+    # building with docker-compose didn't work on my machine,
+    # so perhaps it's better to build with Docker itself
+    build:
+      context: .
+      dockerfile: Dockerfile
     image: amy:latest
     environment:
-      - AMY_REDIS_URL=redis://redis_cache:6379/
-    command: python manage.py runserver 0.0.0.0:8000
-    volumes:
-      - .:/amy
+      - AMY_REDIS_URL=redis://redis:6379/
+      - AMY_DATABASE_URL=postgres://amy:amypostgresql@postgres:5432/amy
+    # volumes:
+    #   - .:/amy
     ports:
-      - "8080:8000"
+      - "8000:80"
     depends_on:
       - redis_cache
 
@@ -49,3 +53,7 @@ services:
       - redis_cache
       - amy
       - redis_worker
+
+networks:
+  default:
+    name: amy_network
