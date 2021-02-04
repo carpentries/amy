@@ -164,6 +164,24 @@ class Membership(models.Model):
         help_text="Link to member agreement document or folder in Google Drive",
     )
 
+    STATUS_CHOICES = (
+        ("public", "Public"),
+        ("private", "Private"),
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_CHOICES[0][0],
+    )
+
+    emergency_contact = models.TextField(blank=True)
+
+    consortium = models.BooleanField(
+        default=False,
+        help_text="Determines whether this is a group of organisations working "
+                  "together under a consortium."
+    )
+
     def __str__(self):
         from workshops.util import human_daterange
 

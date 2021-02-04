@@ -88,12 +88,16 @@ class MembershipForm(forms.ModelForm):
     class Meta:
         model = Membership
         fields = [
-            'organization', 'variant', 'agreement_start', 'agreement_end',
+            'consortium',
+            'organization',
+            'status',
+            'variant', 'agreement_start', 'agreement_end',
             'contribution_type', 'registration_code', 'agreement_link',
             'workshops_without_admin_fee_per_agreement',
             'self_organized_workshops_per_agreement',
             'seats_instructor_training',
             'additional_instructor_training_seats',
+            'emergency_contact',
         ]
 
     def __init__(self, *args, **kwargs):
