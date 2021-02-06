@@ -30,6 +30,7 @@ GRANT ALL ON DATABASE amy TO postgres;
 GRANT amy TO postgres;
 GRANT amy_ro TO postgres;
 
+-- run in `amy` database
 GRANT ALL ON SCHEMA public TO amy;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES to amy;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES to amy;

@@ -2,10 +2,9 @@
 Django settings for AMY project.
 """
 
-import environ
-
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import ugettext_lazy as _
+import environ
 
 
 ROOT_DIR = environ.Path(__file__) - 2  # (amy/config/settings.py - 2 = amy/)
@@ -446,7 +445,7 @@ MANAGERS = ADMINS
 
 # messages
 # -----------------------------------------------------------------------------
-from django.contrib.messages import constants as message_constants
+from django.contrib.messages import constants as message_constants  # noqa
 MESSAGE_TAGS = {
     message_constants.INFO: 'alert-info',
     message_constants.SUCCESS: 'alert-success',
@@ -497,6 +496,7 @@ REST_FRAMEWORK = {
 
 # logging
 # -----------------------------------------------------------------------------
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,  # merge with default configuration
@@ -525,21 +525,21 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'formatter': 'verbose',
             'filename': env.path('AMY_SERVER_LOGFILE',
-                                 default=ROOT_DIR('amy.log')),
+                                 default=ROOT_DIR('logs/amy.log')),
         },
         'debug_log_file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'formatter': 'verbose',
             'filename': env.path('AMY_DEBUG_LOGFILE',
-                                 default=ROOT_DIR('amy_debug.log')),
+                                 default=ROOT_DIR('logs/amy_debug.log')),
         },
         'worker_log_file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'formatter': 'verbose',
             'filename': env.path('AMY_WORKER_LOGFILE',
-                                 default=ROOT_DIR('worker_debug.log')),
+                                 default=ROOT_DIR('logs/worker_debug.log')),
         },
     },
     'loggers': {
@@ -549,21 +549,21 @@ LOGGING = {
             'propagate': False,
         },
         'amy': {
-            'handlers': ['null', ],
+            'handlers': ['null'],
             'level': 'WARNING',
         },
         'amy.signals': {
-            'handlers': ['debug_log_file', ],
+            'handlers': ['debug_log_file'],
             'level': 'DEBUG',
             'propagate': True,
         },
         'amy.server_logs': {
-            'handlers': ['log_file', ],
+            'handlers': ['log_file'],
             'level': 'ERROR',
             'propagate': True,
         },
         'rq.worker': {
-            'handlers': ['worker_log_file', ],
+            'handlers': ['worker_log_file'],
             'level': 'DEBUG',
         },
     },

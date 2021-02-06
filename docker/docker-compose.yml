@@ -1,0 +1,62 @@
+version: '3'
+
+services:
+  database:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: amy
+      POSTGRES_PASSWORD: amypostgresql
+      POSTGRES_DB: amy
+    ports:
+      - "5432:5432"
+    # volumes:
+    #   - ../docker/database:/var/lib/postgresql/data
+
+  redis:
+    command: redis-server --appendonly yes
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    # volumes:
+    #   - ../docker/redis:/data
+
+  amy:
+    # building with docker-compose didn't work on my machine,
+    # so perhaps it's better to build with Docker itself
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: amy:latest
+    environment:
+      - AMY_REDIS_URL=redis://redis:6379/
+      - AMY_DATABASE_URL=postgres://amy:amypostgresql@postgres:5432/amy
+    # volumes:
+    #   - .:/amy
+    ports:
+      - "8000:80"
+    depends_on:
+      - database
+      - redis
+
+  rqworker:
+    image: amy:latest
+    environment:
+      - AMY_REDIS_URL=redis://redis:6379/
+    command: python manage.py rqworker -v 2
+    depends_on:
+      - redis
+      - amy
+
+  rqscheduler:
+    image: amy:latest
+    environment:
+      - AMY_REDIS_URL=redis://redis:6379/
+    command: python manage.py rqscheduler -v 2
+    depends_on:
+      - redis
+      - amy
+      - rqworker
+
+networks:
+  default:
+    name: amy_network
