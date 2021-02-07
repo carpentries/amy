@@ -1,0 +1,24 @@
+{% extends "base_nav.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+  <form method="POST">
+    {% csrf_token %}
+    {{ formset.management_form }}
+    {% for form in formset %}
+    <div class="bird-form">
+      {% crispy form %}
+      {% comment %} {{ form.as_p }} {% endcomment %}
+    </div>
+    {% endfor %}
+    <button type="submit">Create Birds</button>
+  </form>
+  {% crispy form form.form.helper %}
+  {% crispy form.empty_form form.form.helper %}
+  {% comment %} <table>
+  {{ form.as_table }}
+  </table> {% endcomment %}
+
+{% endblock %}

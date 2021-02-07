@@ -11,7 +11,10 @@ from django.db.models import (
     Prefetch,
 )
 from django.db.models.functions import Now
+from django.forms import formset_factory
+from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
+from django.views.generic import FormView
 
 from fiscal.filters import (
     OrganizationFilter,
@@ -22,6 +25,7 @@ from fiscal.forms import (
     OrganizationCreateForm,
     MembershipForm,
     MembershipCreateForm,
+    MemberForm,
     SponsorshipForm,
 )
 from workshops.base_views import (
@@ -30,11 +34,11 @@ from workshops.base_views import (
     AMYDeleteView,
     AMYListView,
     RedirectSupportMixin,
-    PrepopulationSupportMixin,
     AMYDetailView,
 )
 from workshops.models import (
     Organization,
+    Member,
     Membership,
     Sponsorship,
     Task,
@@ -142,13 +146,16 @@ class MembershipDetails(OnlyForAdminsMixin, AMYDetailView):
     prefetch_awards = Prefetch(
         "person__award_set", queryset=Award.objects.select_related("badge")
     )
-    queryset = Membership.objects.select_related("organization").prefetch_related(
+    queryset = Membership.objects.prefetch_related(
+        Prefetch(
+            "member_set", queryset=Member.objects.select_related("organization", "role")
+        ),
         Prefetch(
             "task_set",
             queryset=Task.objects.select_related("event", "person").prefetch_related(
                 prefetch_awards
             ),
-        )
+        ),
     )
     context_object_name = "membership"
     template_name = "fiscal/membership.html"
@@ -163,7 +170,6 @@ class MembershipDetails(OnlyForAdminsMixin, AMYDetailView):
 class MembershipCreate(
     OnlyForAdminsMixin,
     PermissionRequiredMixin,
-    PrepopulationSupportMixin,
     AMYCreateView,
 ):
     permission_required = [
@@ -172,7 +178,6 @@ class MembershipCreate(
     ]
     model = Membership
     form_class = MembershipCreateForm
-    populate_fields = ["organization"]
 
     def form_valid(self, form):
         start: date = form.cleaned_data["agreement_start"]
@@ -185,6 +190,9 @@ class MembershipCreate(
             )
 
         return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse("membership_members", self.object.pk)
 
 
 class MembershipUpdate(
@@ -206,6 +214,25 @@ class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteVie
         return reverse(
             "organization_details", args=[self.get_object().organization.domain]
         )
+
+
+class MembershipMembers(OnlyForAdminsMixin, FormView):
+    template_name = "fiscal/membership_members.html"
+    form_class = formset_factory(MemberForm)
+
+    def get_context_data(self, **kwargs):
+        membership = get_object_or_404(Membership, pk=self.kwargs["membership_id"])
+        kwargs["membership"] = membership
+
+        kwargs["formset"] = self.get_form()
+
+        if "title" not in kwargs:
+            kwargs["title"] = "Change members for {}".format(membership)
+
+        return super().get_context_data(**kwargs)
+
+    # def form_valid(self, form):
+    #     return
 
 
 # ------------------------------------------------------------

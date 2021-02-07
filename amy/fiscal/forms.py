@@ -1,4 +1,4 @@
-from crispy_forms.layout import Layout, Div, HTML
+from crispy_forms.layout import Div, HTML
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
@@ -13,9 +13,11 @@ from workshops.forms import (
 )
 from workshops.models import (
     Organization,
+    Member,
     Membership,
     Sponsorship,
 )
+
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330: https://github.com/swcarpentry/amy/issues/1330
 from workshops.fields import (
@@ -27,50 +29,53 @@ from workshops.signals import create_comment_signal
 # settings for Select2
 # this makes it possible for autocomplete widget to fit in low-width sidebar
 SIDEBAR_DAL_WIDTH = {
-    'data-width': '100%',
-    'width': 'style',
+    "data-width": "100%",
+    "width": "style",
 }
 
 
 class OrganizationForm(forms.ModelForm):
     domain = forms.CharField(
-        max_length=Organization._meta.get_field('domain').max_length,
+        max_length=Organization._meta.get_field("domain").max_length,
         validators=[
             RegexValidator(
-                r'[^\w\.-]+', inverse_match=True,
+                r"[^\w\.-]+",
+                inverse_match=True,
                 message='Please enter only the domain (such as "math.esu.edu")'
-                        ' without a leading "http://" or a trailing "/".')
+                ' without a leading "http://" or a trailing "/".',
+            )
         ],
     )
 
-    helper = BootstrapHelper(add_cancel_button=False,
-                             duplicate_buttons_on_top=True)
+    helper = BootstrapHelper(add_cancel_button=False, duplicate_buttons_on_top=True)
 
     class Meta:
         model = Organization
-        fields = ['domain', 'fullname', 'country']
+        fields = ["domain", "fullname", "country"]
 
 
 class OrganizationCreateForm(OrganizationForm):
     comment = MarkdownxFormField(
-        label='Comment',
-        help_text='This will be added to comments after the organization '
-                  'is created.',
+        label="Comment",
+        help_text="This will be added to comments after the organization "
+        "is created.",
         widget=forms.Textarea,
         required=False,
     )
 
     class Meta(OrganizationForm.Meta):
         fields = OrganizationForm.Meta.fields.copy()
-        fields.append('comment')
+        fields.append("comment")
 
     def save(self, *args, **kwargs):
         res = super().save(*args, **kwargs)
 
-        create_comment_signal.send(sender=self.__class__,
-                                   content_object=res,
-                                   comment=self.cleaned_data['comment'],
-                                   timestamp=None)
+        create_comment_signal.send(
+            sender=self.__class__,
+            content_object=res,
+            comment=self.cleaned_data["comment"],
+            timestamp=None,
+        )
 
         return res
 
@@ -78,26 +83,22 @@ class OrganizationCreateForm(OrganizationForm):
 class MembershipForm(forms.ModelForm):
     helper = BootstrapHelper(add_cancel_button=False)
 
-    organization = forms.ModelChoiceField(
-        label='Organization',
-        required=True,
-        queryset=Organization.objects.all(),
-        widget=ModelSelect2Widget(data_view='organization-lookup')
-    )
-
     class Meta:
         model = Membership
         fields = [
-            'consortium',
-            'organization',
-            'public_status',
-            'variant', 'agreement_start', 'agreement_end',
-            'contribution_type', 'registration_code', 'agreement_link',
-            'workshops_without_admin_fee_per_agreement',
-            'self_organized_workshops_per_agreement',
-            'seats_instructor_training',
-            'additional_instructor_training_seats',
-            'emergency_contact',
+            "consortium",
+            "public_status",
+            "variant",
+            "agreement_start",
+            "agreement_end",
+            "contribution_type",
+            "registration_code",
+            "agreement_link",
+            "workshops_without_admin_fee_per_agreement",
+            "self_organized_workshops_per_agreement",
+            "seats_instructor_training",
+            "additional_instructor_training_seats",
+            "emergency_contact",
         ]
 
     def __init__(self, *args, **kwargs):
@@ -128,8 +129,8 @@ class MembershipForm(forms.ModelForm):
         errors = dict()
 
         # validate agreement end date is no sooner than start date
-        agreement_start = self.cleaned_data.get('agreement_start')
-        agreement_end = self.cleaned_data.get('agreement_end')
+        agreement_start = self.cleaned_data.get("agreement_start")
+        agreement_end = self.cleaned_data.get("agreement_end")
         try:
             if agreement_end < agreement_start:
                 errors["agreement_end"] = ValidationError(
@@ -144,46 +145,87 @@ class MembershipForm(forms.ModelForm):
 
 class MembershipCreateForm(MembershipForm):
     comment = MarkdownxFormField(
-        label='Comment',
-        help_text='This will be added to comments after the membership is '
-                  'created.',
+        label="Comment",
+        help_text="This will be added to comments after the membership is " "created.",
         widget=forms.Textarea,
         required=False,
     )
 
+    helper = BootstrapHelper(
+        submit_label="Save membership and go to next screen", add_cancel_button=True
+    )
+
     class Meta(MembershipForm.Meta):
         fields = MembershipForm.Meta.fields.copy()
-        fields.append('comment')
+        fields.append("comment")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        ORGANIZATIONS_FORMSET_WARNING = (
+            "You will be able to select organisations for this membership on the "
+            "next screen."
+        )
+        self.helper.layout.insert(
+            0,
+            Div(
+                Div(
+                    HTML(ORGANIZATIONS_FORMSET_WARNING),
+                    css_class="alert alert-info offset-lg-2 col-lg-8 col-12",
+                ),
+                css_class="form-group row",
+            ),
+        )
 
     def save(self, *args, **kwargs):
         res = super().save(*args, **kwargs)
 
-        create_comment_signal.send(sender=self.__class__,
-                                   content_object=res,
-                                   comment=self.cleaned_data['comment'],
-                                   timestamp=None)
+        create_comment_signal.send(
+            sender=self.__class__,
+            content_object=res,
+            comment=self.cleaned_data["comment"],
+            timestamp=None,
+        )
 
         return res
 
 
+class MemberForm(forms.ModelForm):
+    helper = BootstrapHelper(add_cancel_button=False)
+
+    class Meta:
+        model = Member
+        fields = [
+            "organization",
+            "role",
+        ]
+        widgets = {
+            "organization": ModelSelect2Widget(data_view="organization-lookup"),
+            "role": ModelSelect2Widget(data_view="memberrole-lookup"),
+        }
+
+
 class SponsorshipForm(WidgetOverrideMixin, forms.ModelForm):
 
-    helper = BootstrapHelper(submit_label='Add')
+    helper = BootstrapHelper(submit_label="Add")
 
     class Meta:
         model = Sponsorship
-        fields = '__all__'
+        fields = "__all__"
         widgets = {
-            'organization': ModelSelect2Widget(data_view='organization-lookup',
-                                               attrs=SELECT2_SIDEBAR),
-            'event': ModelSelect2Widget(data_view='event-lookup',
-                                        attrs=SELECT2_SIDEBAR),
-            'contact': ModelSelect2Widget(data_view='person-lookup',
-                                          attrs=SELECT2_SIDEBAR),
+            "organization": ModelSelect2Widget(
+                data_view="organization-lookup", attrs=SELECT2_SIDEBAR
+            ),
+            "event": ModelSelect2Widget(
+                data_view="event-lookup", attrs=SELECT2_SIDEBAR
+            ),
+            "contact": ModelSelect2Widget(
+                data_view="person-lookup", attrs=SELECT2_SIDEBAR
+            ),
         }
 
     def __init__(self, *args, **kwargs):
-        form_tag = kwargs.pop('form_tag', True)
+        form_tag = kwargs.pop("form_tag", True)
         super().__init__(*args, **kwargs)
         self.helper = BootstrapHelper(add_cancel_button=False, form_tag=form_tag)
 
