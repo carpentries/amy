@@ -207,13 +207,20 @@ class Membership(models.Model):
         from workshops.util import human_daterange
 
         dates = human_daterange(self.agreement_start, self.agreement_end)
-        return "{} membership: {} ({})".format(
-            self.variant.title(), self.organization, dates
-        )
+        variant = self.variant.title()
+        first_organization = self.organizations.first()
+
+        if self.consortium:
+            return (
+                f"{variant} membership {dates} (consortium incl. {first_organization})"
+            )
+        else:
+            return f"{variant} membership {dates} ({first_organization})"
 
     def get_absolute_url(self):
         return reverse("membership_details", args=[self.id])
 
+    # TODO: fix counting (currently it depends on self.organization)
     @cached_property
     def workshops_without_admin_fee_completed(self):
         """Count centrally-organised workshops already hosted during the agreement."""
@@ -231,6 +238,7 @@ class Membership(models.Model):
             .count()
         )
 
+    # TODO: fix counting (currently it depends on self.organization)
     @cached_property
     def workshops_without_admin_fee_planned(self):
         """Count centrally-organised workshops hosted in future during the agreement."""
@@ -258,6 +266,7 @@ class Membership(models.Model):
         c = self.workshops_without_admin_fee_planned
         return a - b - c
 
+    # TODO: fix counting (currently it depends on self.organization)
     @cached_property
     def self_organized_workshops_completed(self):
         """Count self-organized workshops hosted the year agreement started (completed,
@@ -278,6 +287,7 @@ class Membership(models.Model):
             .count()
         )
 
+    # TODO: fix counting (currently it depends on self.organization)
     @cached_property
     def self_organized_workshops_planned(self):
         """Count self-organized workshops hosted the year agreement started (planned,

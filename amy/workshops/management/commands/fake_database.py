@@ -461,17 +461,16 @@ class Command(BaseCommand):
 
         for _ in range(count):
             start = self.faker.date_time_between(start_date="-5y").date()
+            organization_count = randint(1, 4)
             membership = Membership.objects.create(
-                consortium=False,
+                consortium=organization_count > 1,
                 variant=choice(Membership.MEMBERSHIP_CHOICES)[0],
                 agreement_start=start,
                 agreement_end=start + timedelta(days=365),
                 contribution_type=choice(Membership.CONTRIBUTION_CHOICES)[0],
                 workshops_without_admin_fee_per_agreement=randint(5, 15),
                 self_organized_workshops_per_agreement=randint(5, 15),
-                organization=choice(Organization.objects.all()),
             )
-            organization_count = randint(1, 4)
             members = [
                 Member(
                     membership=membership,
