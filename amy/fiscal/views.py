@@ -49,80 +49,80 @@ from workshops.util import (
 # Organization related views
 # ------------------------------------------------------------
 
+
 class AllOrganizations(OnlyForAdminsMixin, AMYListView):
-    context_object_name = 'all_organizations'
-    template_name = 'fiscal/all_organizations.html'
+    context_object_name = "all_organizations"
+    template_name = "fiscal/all_organizations.html"
     filter_class = OrganizationFilter
-    queryset = Organization.objects.prefetch_related(Prefetch(
-        'membership_set',
-        to_attr='current_memberships',
-        queryset=Membership.objects.filter(
-            agreement_start__lte=Now(),
-            agreement_end__gte=Now(),
+    queryset = Organization.objects.prefetch_related(
+        Prefetch(
+            "membership_set",
+            to_attr="current_memberships",
+            queryset=Membership.objects.filter(
+                agreement_start__lte=Now(),
+                agreement_end__gte=Now(),
+            ),
         )
-    ))
-    title = 'All Organizations'
+    )
+    title = "All Organizations"
 
 
 class OrganizationDetails(OnlyForAdminsMixin, AMYDetailView):
     queryset = Organization.objects.all()
-    context_object_name = 'organization'
-    template_name = 'fiscal/organization.html'
-    slug_field = 'domain'
-    slug_url_kwarg = 'org_domain'
+    context_object_name = "organization"
+    template_name = "fiscal/organization.html"
+    slug_field = "domain"
+    slug_url_kwarg = "org_domain"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Organization {0}'.format(self.object)
+        context["title"] = "Organization {0}".format(self.object)
         return context
 
 
-class OrganizationCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                         AMYCreateView):
-    permission_required = 'workshops.add_organization'
+class OrganizationCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView):
+    permission_required = "workshops.add_organization"
     model = Organization
     form_class = OrganizationCreateForm
 
     def get_initial(self):
         initial = {
-            'domain': self.request.GET.get('domain', ''),
-            'fullname': self.request.GET.get('fullname', ''),
-            'comment': self.request.GET.get('comment', ''),
+            "domain": self.request.GET.get("domain", ""),
+            "fullname": self.request.GET.get("fullname", ""),
+            "comment": self.request.GET.get("comment", ""),
         }
         return initial
 
 
-class OrganizationUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                         AMYUpdateView):
-    permission_required = 'workshops.change_organization'
+class OrganizationUpdate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYUpdateView):
+    permission_required = "workshops.change_organization"
     model = Organization
     form_class = OrganizationForm
-    slug_field = 'domain'
-    slug_url_kwarg = 'org_domain'
-    template_name = 'generic_form_with_comments.html'
+    slug_field = "domain"
+    slug_url_kwarg = "org_domain"
+    template_name = "generic_form_with_comments.html"
 
 
-class OrganizationDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
-                         AMYDeleteView):
+class OrganizationDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
     model = Organization
-    slug_field = 'domain'
-    slug_url_kwarg = 'org_domain'
-    permission_required = 'workshops.delete_organization'
-    success_url = reverse_lazy('all_organizations')
+    slug_field = "domain"
+    slug_url_kwarg = "org_domain"
+    permission_required = "workshops.delete_organization"
+    success_url = reverse_lazy("all_organizations")
 
 
 # ------------------------------------------------------------
 # Membership related views
 # ------------------------------------------------------------
 
+
 class AllMemberships(OnlyForAdminsMixin, AMYListView):
-    context_object_name = 'all_memberships'
-    template_name = 'fiscal/all_memberships.html'
+    context_object_name = "all_memberships"
+    template_name = "fiscal/all_memberships.html"
     filter_class = MembershipFilter
     queryset = Membership.objects.annotate(
         instructor_training_seats_total=(
-            F('seats_instructor_training') +
-            F('additional_instructor_training_seats')
+            F("seats_instructor_training") + F("additional_instructor_training_seats")
         ),
         # for future reference, in case someone would want to implement
         # this annotation
@@ -130,44 +130,49 @@ class AllMemberships(OnlyForAdminsMixin, AMYListView):
         #     Count('task', filter=Q(task__role__name='learner'))
         # ),
         instructor_training_seats_remaining=(
-            F('seats_instructor_training') +
-            F('additional_instructor_training_seats') -
-            Count('task', filter=Q(task__role__name='learner'))
+            F("seats_instructor_training")
+            + F("additional_instructor_training_seats")
+            - Count("task", filter=Q(task__role__name="learner"))
         ),
-    )
-    title = 'All Memberships'
+    ).prefetch_related("organizations")
+    title = "All Memberships"
 
 
 class MembershipDetails(OnlyForAdminsMixin, AMYDetailView):
-    prefetch_awards = Prefetch('person__award_set',
-                               queryset=Award.objects.select_related('badge'))
-    queryset = Membership.objects.select_related('organization') \
-        .prefetch_related(
-            Prefetch(
-                'task_set',
-                queryset=Task.objects.select_related('event', 'person')
-                                     .prefetch_related(prefetch_awards)
-            )
+    prefetch_awards = Prefetch(
+        "person__award_set", queryset=Award.objects.select_related("badge")
+    )
+    queryset = Membership.objects.select_related("organization").prefetch_related(
+        Prefetch(
+            "task_set",
+            queryset=Task.objects.select_related("event", "person").prefetch_related(
+                prefetch_awards
+            ),
         )
-    context_object_name = 'membership'
-    template_name = 'fiscal/membership.html'
-    pk_url_kwarg = 'membership_id'
+    )
+    context_object_name = "membership"
+    template_name = "fiscal/membership.html"
+    pk_url_kwarg = "membership_id"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = '{0}'.format(self.object)
+        context["title"] = "{0}".format(self.object)
         return context
 
 
-class MembershipCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                       PrepopulationSupportMixin, AMYCreateView):
+class MembershipCreate(
+    OnlyForAdminsMixin,
+    PermissionRequiredMixin,
+    PrepopulationSupportMixin,
+    AMYCreateView,
+):
     permission_required = [
-        'workshops.add_membership',
-        'workshops.change_organization',
+        "workshops.add_membership",
+        "workshops.change_organization",
     ]
     model = Membership
     form_class = MembershipCreateForm
-    populate_fields = ['organization']
+    populate_fields = ["organization"]
 
     def form_valid(self, form):
         start: date = form.cleaned_data["agreement_start"]
@@ -182,46 +187,44 @@ class MembershipCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
         return super().form_valid(form)
 
 
-class MembershipUpdate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                       RedirectSupportMixin, AMYUpdateView):
-    permission_required = 'workshops.change_membership'
+class MembershipUpdate(
+    OnlyForAdminsMixin, PermissionRequiredMixin, RedirectSupportMixin, AMYUpdateView
+):
+    permission_required = "workshops.change_membership"
     model = Membership
     form_class = MembershipForm
-    pk_url_kwarg = 'membership_id'
-    template_name = 'generic_form_with_comments.html'
+    pk_url_kwarg = "membership_id"
+    template_name = "generic_form_with_comments.html"
 
 
-class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
-                       AMYDeleteView):
+class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
     model = Membership
-    permission_required = 'workshops.delete_membership'
-    pk_url_kwarg = 'membership_id'
+    permission_required = "workshops.delete_membership"
+    pk_url_kwarg = "membership_id"
 
     def get_success_url(self):
-        return reverse('organization_details', args=[
-            self.get_object().organization.domain])
+        return reverse(
+            "organization_details", args=[self.get_object().organization.domain]
+        )
 
 
 # ------------------------------------------------------------
 # Sponsorship related views
 # ------------------------------------------------------------
 
-class SponsorshipCreate(OnlyForAdminsMixin, PermissionRequiredMixin,
-                        AMYCreateView):
+
+class SponsorshipCreate(OnlyForAdminsMixin, PermissionRequiredMixin, AMYCreateView):
     model = Sponsorship
-    permission_required = 'workshops.add_sponsorship'
+    permission_required = "workshops.add_sponsorship"
     form_class = SponsorshipForm
 
     def get_success_url(self):
-        return reverse('event_edit', args=[self.object.event.slug]) + \
-            '#sponsors'
+        return reverse("event_edit", args=[self.object.event.slug]) + "#sponsors"
 
 
-class SponsorshipDelete(OnlyForAdminsMixin, PermissionRequiredMixin,
-                        AMYDeleteView):
+class SponsorshipDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteView):
     model = Sponsorship
-    permission_required = 'workshops.delete_sponsorship'
+    permission_required = "workshops.delete_sponsorship"
 
     def get_success_url(self):
-        return reverse('event_edit', args=[self.get_object().event.slug]) + \
-            '#sponsors'
+        return reverse("event_edit", args=[self.get_object().event.slug]) + "#sponsors"
