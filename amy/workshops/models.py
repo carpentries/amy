@@ -92,6 +92,9 @@ class MemberRole(models.Model):
     name = models.CharField(max_length=STR_MED)
     verbose_name = models.CharField(max_length=STR_LONG, blank=True, default="")
 
+    def __str__(self):
+        return self.verbose_name if self.verbose_name else self.name
+
 
 class Member(models.Model):
     membership = models.ForeignKey("Membership", on_delete=models.PROTECT)
@@ -208,14 +211,13 @@ class Membership(models.Model):
 
         dates = human_daterange(self.agreement_start, self.agreement_end)
         variant = self.variant.title()
-        first_organization = self.organizations.first()
+        first_org = self.organizations.first()
+        org_name = first_org.fullname if first_org else "n/a"
 
         if self.consortium:
-            return (
-                f"{variant} membership {dates} (consortium incl. {first_organization})"
-            )
+            return f"{variant} membership {dates} (consortium incl. {org_name})"
         else:
-            return f"{variant} membership {dates} ({first_organization})"
+            return f"{variant} membership {dates} ({org_name})"
 
     def get_absolute_url(self):
         return reverse("membership_details", args=[self.id])
@@ -230,8 +232,7 @@ class Membership(models.Model):
         cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
 
         return (
-            Event.objects.filter(host=self.organization)
-            .filter(date_started)
+            Event.objects.filter(date_started)  # .filter(host=self.organization)
             .filter(administrator__in=Organization.objects.administrators())
             .exclude(administrator__domain="self-organized")
             .exclude(cancelled)
@@ -248,8 +249,7 @@ class Membership(models.Model):
         cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
 
         return (
-            Event.objects.filter(host=self.organization)
-            .filter(date_started)
+            Event.objects.filter(date_started)  # .filter(host=self.organization)
             .filter(administrator__in=Organization.objects.administrators())
             .exclude(administrator__domain="self-organized")
             .exclude(cancelled)
@@ -280,8 +280,7 @@ class Membership(models.Model):
         cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
 
         return (
-            Event.objects.filter(host=self.organization)
-            .filter(date_started)
+            Event.objects.filter(date_started)  # .filter(host=self.organization)
             .filter(self_organized)
             .exclude(cancelled)
             .count()
@@ -301,8 +300,7 @@ class Membership(models.Model):
         cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
 
         return (
-            Event.objects.filter(host=self.organization)
-            .filter(date_started)
+            Event.objects.filter(date_started)  # .filter(host=self.organization)
             .filter(self_organized)
             .exclude(cancelled)
             .count()
