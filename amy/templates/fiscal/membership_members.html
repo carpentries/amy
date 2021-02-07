@@ -1,24 +1,48 @@
 {% extends "base_nav.html" %}
 
-{% load crispy_forms_tags %}
+{% load crispy_forms_tags formset_tags %}
 
 {% block content %}
 
   <form method="POST">
-    {% csrf_token %}
-    {{ formset.management_form }}
-    {% for form in formset %}
-    <div class="bird-form">
-      {% crispy form %}
-      {% comment %} {{ form.as_p }} {% endcomment %}
+    <div id="formset" data-formset-prefix="{{ formset.prefix }}">
+      {% csrf_token %}
+      {{ formset.media }}
+      {{ formset.management_form }}
+
+      <div data-formset-body>
+        {% for form in formset %}
+            <div data-formset-form>
+                {% crispy form %}
+                <button type="button" data-formset-move-up-button>Move up</button>
+                <button type="button" data-formset-move-down-button>Move down</button>
+                <button type="button" data-formset-delete-button>Delete form</button>
+            </div>
+        {% endfor %}
+      </div>
+
+      <!-- The empty form template. By wrapping this in a <script> tag, the
+      __prefix__ placeholder can easily be replaced in both attributes and
+      any scripts -->
+      <script type="form-template" data-formset-empty-form>
+        {% escapescript %}
+        <div data-formset-form>
+          {% crispy formset.empty_form %}
+          <button type="button" data-formset-move-up-button>Move up</button>
+          <button type="button" data-formset-move-down-button>Move down</button>
+          <button type="button" data-formset-delete-button>Delete form</button>
+        </div>
+        {% endescapescript %}
+      </script>
+
+      <!-- This button will add a new form when clicked -->
+      <input type="button" value="Add another" data-formset-add>
+
+      <input type="submit" value="Save" class="btn btn-primary">
     </div>
-    {% endfor %}
-    <button type="submit">Create Birds</button>
   </form>
-  {% crispy form form.form.helper %}
-  {% crispy form.empty_form form.form.helper %}
-  {% comment %} <table>
-  {{ form.as_table }}
-  </table> {% endcomment %}
+
+
+<script src="{{ STATIC_URL }}js/jquery.formset.js"></script>
 
 {% endblock %}

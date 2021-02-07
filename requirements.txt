@@ -40,3 +40,4 @@ rq-scheduler==0.9.1
 rq==1.2.2
 social-auth-app-django==4.0.0
 social-auth-core==3.3.3
+django-formset-js-improved==0.5.0.2

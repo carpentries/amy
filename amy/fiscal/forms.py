@@ -3,6 +3,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.dispatch import receiver
+from djangoformsetjs.utils import formset_media_js
 from markdownx.fields import MarkdownxFormField
 
 from workshops.forms import (
@@ -191,7 +192,9 @@ class MembershipCreateForm(MembershipForm):
 
 
 class MemberForm(forms.ModelForm):
-    helper = BootstrapHelper(add_cancel_button=False)
+    helper = BootstrapHelper(
+        add_cancel_button=False, form_tag=False, add_submit_button=False
+    )
 
     class Meta:
         model = Member

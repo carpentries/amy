@@ -342,4 +342,10 @@ $(document).ready(function() {
     e.preventDefault();
     $("#assignment-form").trigger("submit");
   })
+
+  // formset
+  $("#formset").formset({
+    animateForms: false,
+    reorderMode: 'dom',
+  })
  });
