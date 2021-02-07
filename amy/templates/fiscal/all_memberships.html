@@ -25,9 +25,13 @@
             <a href="{{ membership.get_absolute_url }}">{{ membership.get_variant_display }}</a>
           </td>
           <td>
-            {% for organization in membership.organizations.all %}
-            <a href="{{ organization.get_absolute_url }}">{{ organization.fullname }}</a>{% if not forloop.last %},<br>{% endif %}
-            {% endfor %}
+            {% if membership.organizations.all %}
+              {% for organization in membership.organizations.all %}
+              <a href="{{ organization.get_absolute_url }}">{{ organization.fullname }}</a>{% if not forloop.last %},<br>{% endif %}
+              {% endfor %}
+            {% else %}
+              <em>No organisation added.</em>
+            {% endif %}
           </td>
           <td>{{ membership.consortium|yesno|title }}</td>
           <td>{{ membership.agreement_start|date:"Y-m-d" }} &mdash; {{ membership.agreement_end|date:"Y-m-d" }}</td>
