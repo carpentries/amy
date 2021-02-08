@@ -164,14 +164,16 @@ class Membership(models.Model):
         help_text="Link to member agreement document or folder in Google Drive",
     )
 
-    STATUS_CHOICES = (
+    PUBLIC_STATUS_CHOICES = (
         ("public", "Public"),
         ("private", "Private"),
     )
-    status = models.CharField(
+    public_status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
         default=STATUS_CHOICES[0][0],
+        verbose_name="Can this membership be publicized on The carpentries websites?",        
+        help_text="Public memberships may be listed on any of The Carpentries websites.",
     )
 
     emergency_contact = models.TextField(blank=True)
