@@ -170,8 +170,8 @@ class Membership(models.Model):
     )
     public_status = models.CharField(
         max_length=20,
-        choices=STATUS_CHOICES,
-        default=STATUS_CHOICES[0][0],
+        choices=PUBLIC_STATUS_CHOICES,
+        default=PUBLIC_STATUS_CHOICES[0][0],
         verbose_name="Can this membership be publicized on The carpentries websites?",        
         help_text="Public memberships may be listed on any of The Carpentries websites.",
     )
