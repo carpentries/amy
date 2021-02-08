@@ -12,31 +12,27 @@
 
       <div data-formset-body>
         {% for form in formset %}
-            <div data-formset-form>
-                {% crispy form %}
-                <button type="button" data-formset-move-up-button>Move up</button>
-                <button type="button" data-formset-move-down-button>Move down</button>
-                <button type="button" data-formset-delete-button>Delete form</button>
-            </div>
+        <fieldset data-formset-form>
+          {% crispy form %}
+        </fieldset>
         {% endfor %}
       </div>
 
-      <!-- The empty form template. By wrapping this in a <script> tag, the
-      __prefix__ placeholder can easily be replaced in both attributes and
-      any scripts -->
       <script type="form-template" data-formset-empty-form>
         {% escapescript %}
-        <div data-formset-form>
+        <hr>
+        <fieldset data-formset-form>
           {% crispy formset.empty_form %}
-          <button type="button" data-formset-move-up-button>Move up</button>
-          <button type="button" data-formset-move-down-button>Move down</button>
-          <button type="button" data-formset-delete-button>Delete form</button>
-        </div>
+          <div class="form-group row">
+            <div class="offset-12 offset-lg-2 col-12 col-lg-10">
+              <button type="button" class="btn btn-danger" data-formset-delete-button>Discard</button>
+            </div>
+          </div>
+        </fieldset>
         {% endescapescript %}
       </script>
 
-      <!-- This button will add a new form when clicked -->
-      <input type="button" value="Add another" data-formset-add>
+      <input type="button" value="Add another" class="btn btn-secondary" data-formset-add>
 
       <input type="submit" value="Save" class="btn btn-primary">
     </div>

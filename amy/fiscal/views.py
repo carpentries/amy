@@ -218,7 +218,7 @@ class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteVie
 
 class MembershipMembers(OnlyForAdminsMixin, FormView):
     template_name = "fiscal/membership_members.html"
-    form_class = formset_factory(MemberForm)
+    form_class = formset_factory(MemberForm, can_delete=True)
 
     def get_context_data(self, **kwargs):
         membership = get_object_or_404(Membership, pk=self.kwargs["membership_id"])

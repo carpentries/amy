@@ -344,8 +344,21 @@ $(document).ready(function() {
   })
 
   // formset
-  $("#formset").formset({
-    animateForms: false,
-    reorderMode: 'dom',
-  })
- });
+  $("#formset").formset();
+  let formsetBody = document.querySelector('#formset [data-formset-body]');
+  if (formsetBody) {
+    new MutationObserver((mutations) => {
+      mutations.forEach(mutation => {
+        mutation.addedNodes.forEach(element => {
+          if (element.tagName == "FIELDSET") {
+            console.log(element);
+            // add mutation observer to watch for data attributes
+            // and disable form when button clicked
+          }
+        })
+      })
+    }).observe(formsetBody, {
+      childList: true,
+    });
+  }
+});

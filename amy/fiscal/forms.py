@@ -1,9 +1,8 @@
-from crispy_forms.layout import Div, HTML
+from crispy_forms.layout import Div, HTML, Field
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.dispatch import receiver
-from djangoformsetjs.utils import formset_media_js
 from markdownx.fields import MarkdownxFormField
 
 from workshops.forms import (
@@ -206,6 +205,13 @@ class MemberForm(forms.ModelForm):
             "organization": ModelSelect2Widget(data_view="organization-lookup"),
             "role": ModelSelect2Widget(data_view="memberrole-lookup"),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # set up a layout object for the helper
+        self.helper.layout = self.helper.build_default_layout(self)
+        self.helper.layout.append(Div(Field("DELETE"), css_class="d-none"))
 
 
 class SponsorshipForm(WidgetOverrideMixin, forms.ModelForm):
