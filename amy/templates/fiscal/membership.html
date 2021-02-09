@@ -14,20 +14,24 @@
   {% endif %}
 </p>
 <table class="table table-striped">
-  <tr><th colspan="2">Organization:</th>
-      <td width="60%"><a href="{% url 'organization_details' membership.organization.domain %}">{{ membership.organization.fullname }}</a><br />
+  <tr><th width="30%">Consortium:</th><td colspan="2">{{ membership.consortium|yesno|title }}</td></tr>
+  <tr><th>Organization:</th>
+      <td colspan="2">
+        <a href="{% url 'organization_details' membership.organization.domain %}">{{ membership.organization.fullname }}</a><br />
           &lt;{{ membership.organization.domain|urlize }}&gt;</td></tr>
-  <tr><th colspan="2">Variant:</th><td>{{ membership.get_variant_display }}</td></tr>
-  <tr><th colspan="2">Start date:</th><td>{{ membership.agreement_start }}</td></tr>
-  <tr><th colspan="2">End date:</th><td>{{ membership.agreement_end }}</td></tr>
-  <tr><th colspan="2">Contribution type:</th><td>{{ membership.get_contribution_type_display }}</td></tr>
-  <tr><th colspan="2">Registration Code:</th><td>{{ membership.registration_code }}</td></tr> 
-  <tr><th colspan="2">Agreement Document:</th><td><a href="{{ membership.agreement_link }}">{{ membership.agreement_link }}</a></td></tr>
+  <tr><th>Status:</th><td colspan="2">{{ membership.get_public_status_display }}</td></tr>
+  <tr><th>Variant:</th><td colspan="2">{{ membership.get_variant_display }}</td></tr>
+  <tr><th>Start date:</th><td colspan="2">{{ membership.agreement_start }}</td></tr>
+  <tr><th>End date:</th><td colspan="2">{{ membership.agreement_end }}</td></tr>
+  <tr><th>Contribution type:</th><td colspan="2">{{ membership.get_contribution_type_display }}</td></tr>
+  <tr><th>Registration Code:</th><td colspan="2">{{ membership.registration_code }}</td></tr>
+  <tr><th>Agreement Document:</th>
+      <td colspan="2">{% if membership.agreement_link %}{{ membership.agreement_link|urlize }}{% else %}&mdash;{% endif %}</td></tr>
 
   <tr>
-    <th rowspan="4" width="30%">Workshops without fee per agreement duration</th>
+    <th rowspan="4">Workshops without fee per agreement duration</th>
     <th>Allowed:</th>
-    <td>{{ membership.workshops_without_admin_fee_per_agreement|default:"—" }}</td>
+    <td width="60%">{{ membership.workshops_without_admin_fee_per_agreement|default:"—" }}</td>
   </tr>
   <tr>
     <th>Completed:</th>
@@ -91,6 +95,8 @@
       {% endif %}
     </td>
   </tr>
+  <tr><th>Emergency contact:</th>
+      <td colspan="2">{% if membership.emergency_contact %}<pre>{{ membership.emergency_contact }}</pre>{% else %}&mdash;{% endif %}</td></tr>
 </table>
 
 <div class="clearfix">

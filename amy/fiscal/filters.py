@@ -103,6 +103,8 @@ class MembershipFilter(AMYFilterSet):
         model = Membership
         fields = [
             'organization_name',
+            'consortium',
+            'public_status',
             'variant',
             'contribution_type',
         ]

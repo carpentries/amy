@@ -164,6 +164,26 @@ class Membership(models.Model):
         help_text="Link to member agreement document or folder in Google Drive",
     )
 
+    PUBLIC_STATUS_CHOICES = (
+        ("public", "Public"),
+        ("private", "Private"),
+    )
+    public_status = models.CharField(
+        max_length=20,
+        choices=PUBLIC_STATUS_CHOICES,
+        default=PUBLIC_STATUS_CHOICES[0][0],
+        verbose_name="Can this membership be publicized on The carpentries websites?",
+        help_text="Public memberships may be listed on any of The Carpentries websites.",
+    )
+
+    emergency_contact = models.TextField(blank=True)
+
+    consortium = models.BooleanField(
+        default=False,
+        help_text="Determines whether this is a group of organisations working "
+                  "together under a consortium."
+    )
+
     def __str__(self):
         from workshops.util import human_daterange
 

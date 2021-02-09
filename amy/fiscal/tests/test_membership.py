@@ -10,6 +10,9 @@ from workshops.models import Membership, Organization, Event, Role, Tag, Task
 
 class TestMembership(TestBase):
     def setUp(self):
+        # TODO: This setUp() method is quite slow (cProfile proved this).
+        #       Perhaps we can improve it?
+
         super().setUp()
         self._setUpUsersAndLogin()
         self._setUpRoles()
@@ -176,6 +179,7 @@ class TestMembership(TestBase):
         comment content is saved."""
         self.assertEqual(Comment.objects.count(), 0)
         data = {
+            "public_status": "public",
             "agreement_start": date(2021, 1, 28),
             "agreement_end": date(2022, 1, 28),
             "organization": self.org_alpha.pk,
@@ -219,6 +223,7 @@ class TestMembershipForms(TestBase):
         comment content is saved."""
         self.assertEqual(Comment.objects.count(), 0)
         data = {
+            "public_status": "public",
             "agreement_start": date(2021, 1, 28),
             "agreement_end": date(2022, 1, 28),
             "organization": self.org_alpha.pk,
@@ -245,6 +250,7 @@ class TestMembershipForms(TestBase):
 
         self.assertEqual(Comment.objects.count(), 0)
         data = {
+            "public_status": "public",
             "agreement_start": date(2021, 1, 28),
             "agreement_end": date(2022, 1, 28),
             "organization": self.org_alpha.pk,
@@ -260,6 +266,7 @@ class TestMembershipForms(TestBase):
     def test_membership_agreement_dates_validation(self):
         """Validate invalid agreement end date (can't be sooner than start date)."""
         data = {
+            "public_status": "public",
             "agreement_start": date(2021, 1, 26),
             "agreement_end": date(2020, 1, 26),
             "organization": self.org_alpha.pk,
