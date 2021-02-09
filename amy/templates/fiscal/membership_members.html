@@ -5,7 +5,6 @@
 {% block content %}
 
   <form method="POST">
-    {{ formset.errors }}
     <div id="formset" data-formset-prefix="{{ formset.prefix }}">
       {% csrf_token %}
       {{ formset.media }}
@@ -14,13 +13,10 @@
       <div data-formset-body>
         {% for form in formset %}
         <fieldset data-formset-form>
+          {% if form.errors %}<p class="text-danger">Errors in the form.</p>{% endif %}
           {% crispy form %}
-          <div class="form-group row">
-            <div class="offset-12 offset-lg-2 col-12 col-lg-10">
-              <button type="button" class="btn btn-danger" data-formset-delete-button>Discard</button>
-            </div>
-          </div>
         </fieldset>
+        {% if not forloop.last %}<hr>{% endif %}
         {% endfor %}
       </div>
 
@@ -28,17 +24,17 @@
         {% escapescript %}
         <hr>
         <fieldset data-formset-form>
-          {% crispy formset.empty_form %}
+          {% crispy formset.empty_form formset.empty_form.helper_empty_form %}
           <div class="form-group row">
             <div class="offset-12 offset-lg-2 col-12 col-lg-10">
-              <button type="button" class="btn btn-danger" data-formset-delete-button>Discard</button>
+              <button type="button" class="btn btn-secondary" data-formset-delete-button>Discard</button>
             </div>
           </div>
         </fieldset>
         {% endescapescript %}
       </script>
 
-      <input type="button" value="Add another" class="btn btn-secondary" data-formset-add>
+      <input type="button" value="Add another" class="btn btn-success" data-formset-add>
 
       <input type="submit" value="Save" class="btn btn-primary">
     </div>

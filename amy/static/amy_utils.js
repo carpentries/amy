@@ -357,19 +357,17 @@ $(document).ready(function() {
       mutations.forEach(mutation => {
         if (mutation.type == "attributes" && mutation.attributeName == attrName) {
           const fieldset = mutation.target;
-          // disable fieldset and all select2 widgets inside it
-          fieldset.setAttribute("disabled", "");
-          fieldset.querySelectorAll("select.django-select2").forEach((element) => {
-            element.setAttribute("disabled", "");
-          })
+          // indicate fieldset is discarded, but don't disable it
+          // (disabled fields aren't sent by the browsers)
+          fieldset.classList.add("bg-light");
         }
       })
     };
 
-    // handle existing fieldsets
-    formsetBody.querySelectorAll("fieldset[data-formset-form]").forEach((element) => {
-      new MutationObserver(formDeletedHandler).observe(element, formDeletedObserverConfig);
-    })
+    // don't existing fieldsets -> they're using the default, built-in "Delete" checkbox
+    // formsetBody.querySelectorAll("fieldset[data-formset-form]").forEach((element) => {
+    //   new MutationObserver(formDeletedHandler).observe(element, formDeletedObserverConfig);
+    // })
 
     // handle new fieldsets
     new MutationObserver((mutations) => {
