@@ -179,7 +179,7 @@ class TestMembership(TestBase):
         comment content is saved."""
         self.assertEqual(Comment.objects.count(), 0)
         data = {
-            "status": "public",
+            "public_status": "public",
             "agreement_start": date(2021, 1, 28),
             "agreement_end": date(2022, 1, 28),
             "organization": self.org_alpha.pk,
@@ -223,7 +223,7 @@ class TestMembershipForms(TestBase):
         comment content is saved."""
         self.assertEqual(Comment.objects.count(), 0)
         data = {
-            "status": "public",
+            "public_status": "public",
             "agreement_start": date(2021, 1, 28),
             "agreement_end": date(2022, 1, 28),
             "organization": self.org_alpha.pk,
@@ -250,7 +250,7 @@ class TestMembershipForms(TestBase):
 
         self.assertEqual(Comment.objects.count(), 0)
         data = {
-            "status": "public",
+            "public_status": "public",
             "agreement_start": date(2021, 1, 28),
             "agreement_end": date(2022, 1, 28),
             "organization": self.org_alpha.pk,
@@ -266,7 +266,7 @@ class TestMembershipForms(TestBase):
     def test_membership_agreement_dates_validation(self):
         """Validate invalid agreement end date (can't be sooner than start date)."""
         data = {
-            "status": "public",
+            "public_status": "public",
             "agreement_start": date(2021, 1, 26),
             "agreement_end": date(2020, 1, 26),
             "organization": self.org_alpha.pk,

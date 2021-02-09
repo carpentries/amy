@@ -90,7 +90,7 @@ class MembershipForm(forms.ModelForm):
         fields = [
             'consortium',
             'organization',
-            'status',
+            'public_status',
             'variant', 'agreement_start', 'agreement_end',
             'contribution_type', 'registration_code', 'agreement_link',
             'workshops_without_admin_fee_per_agreement',

@@ -19,7 +19,7 @@
       <td colspan="2">
         <a href="{% url 'organization_details' membership.organization.domain %}">{{ membership.organization.fullname }}</a><br />
           &lt;{{ membership.organization.domain|urlize }}&gt;</td></tr>
-  <tr><th>Status:</th><td colspan="2">{{ membership.get_status_display }}</td></tr>
+  <tr><th>Status:</th><td colspan="2">{{ membership.get_public_status_display }}</td></tr>
   <tr><th>Variant:</th><td colspan="2">{{ membership.get_variant_display }}</td></tr>
   <tr><th>Start date:</th><td colspan="2">{{ membership.agreement_start }}</td></tr>
   <tr><th>End date:</th><td colspan="2">{{ membership.agreement_end }}</td></tr>

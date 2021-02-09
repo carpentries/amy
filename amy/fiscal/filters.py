@@ -104,7 +104,7 @@ class MembershipFilter(AMYFilterSet):
         fields = [
             'organization_name',
             'consortium',
-            'status',
+            'public_status',
             'variant',
             'contribution_type',
         ]

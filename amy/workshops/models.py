@@ -172,7 +172,7 @@ class Membership(models.Model):
         max_length=20,
         choices=PUBLIC_STATUS_CHOICES,
         default=PUBLIC_STATUS_CHOICES[0][0],
-        verbose_name="Can this membership be publicized on The carpentries websites?",        
+        verbose_name="Can this membership be publicized on The carpentries websites?",
         help_text="Public memberships may be listed on any of The Carpentries websites.",
     )
 
