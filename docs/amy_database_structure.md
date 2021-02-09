@@ -86,6 +86,8 @@ The primary tables used in AMY (that will likely appear in every query) are thos
 * `organization_id` An integer representing the Member organization.  This is linked to the `workshops_organization` table
 * `seats_instructor_training` Integer; number of seats allowed in instructor training events in the original contract.
 * `additional_instructor_training_seats`  Integer; number of additional seats allowed in instructor training events beyond the original contract.
+* `agreement_link` A link to the Member agreement in Google Drive
+* `registration_code` A string representing the code used by the Member site for Eventbrite registration and the instructor training application
 
 ## Organizations
 
