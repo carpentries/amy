@@ -11,7 +11,7 @@ from django.db.models import (
     Prefetch,
 )
 from django.db.models.functions import Now
-from django.forms import formset_factory
+from django.forms import modelformset_factory
 from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.views.generic import FormView
@@ -218,21 +218,26 @@ class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteVie
 
 class MembershipMembers(OnlyForAdminsMixin, FormView):
     template_name = "fiscal/membership_members.html"
-    form_class = formset_factory(MemberForm, can_delete=True)
+    form_class = modelformset_factory(Member, MemberForm, extra=0, can_delete=True)
+
+    def dispatch(self, request, *args, **kwargs):
+        self.membership = get_object_or_404(Membership, pk=self.kwargs["membership_id"])
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["queryset"] = self.membership.member_set.all()
+        return kwargs
 
     def get_context_data(self, **kwargs):
-        membership = get_object_or_404(Membership, pk=self.kwargs["membership_id"])
-        kwargs["membership"] = membership
-
+        kwargs["membership"] = self.membership
         kwargs["formset"] = self.get_form()
-
         if "title" not in kwargs:
-            kwargs["title"] = "Change members for {}".format(membership)
-
+            kwargs["title"] = "Change members for {}".format(self.membership)
         return super().get_context_data(**kwargs)
 
-    # def form_valid(self, form):
-    #     return
+    def get_success_url(self):
+        return self.membership.get_absolute_url()
 
 
 # ------------------------------------------------------------

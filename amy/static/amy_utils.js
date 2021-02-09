@@ -344,16 +344,41 @@ $(document).ready(function() {
   })
 
   // formset
-  $("#formset").formset();
   let formsetBody = document.querySelector('#formset [data-formset-body]');
   if (formsetBody) {
+    $("#formset").formset();
+
+    const attrName = "data-formset-form-deleted";
+    const formDeletedObserverConfig = {
+      attributes: true,
+      attributeFilter: [attrName]
+    };
+    const formDeletedHandler = (mutations) => {
+      mutations.forEach(mutation => {
+        if (mutation.type == "attributes" && mutation.attributeName == attrName) {
+          const fieldset = mutation.target;
+          // disable fieldset and all select2 widgets inside it
+          fieldset.setAttribute("disabled", "");
+          fieldset.querySelectorAll("select.django-select2").forEach((element) => {
+            element.setAttribute("disabled", "");
+          })
+        }
+      })
+    };
+
+    // handle existing fieldsets
+    formsetBody.querySelectorAll("fieldset[data-formset-form]").forEach((element) => {
+      new MutationObserver(formDeletedHandler).observe(element, formDeletedObserverConfig);
+    })
+
+    // handle new fieldsets
     new MutationObserver((mutations) => {
       mutations.forEach(mutation => {
         mutation.addedNodes.forEach(element => {
           if (element.tagName == "FIELDSET") {
-            console.log(element);
-            // add mutation observer to watch for data attributes
-            // and disable form when button clicked
+            // mutation observer to watch for data attributes
+            // added for each new fieldset
+            new MutationObserver(formDeletedHandler).observe(element, formDeletedObserverConfig);
           }
         })
       })

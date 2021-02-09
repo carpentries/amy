@@ -198,10 +198,12 @@ class MemberForm(forms.ModelForm):
     class Meta:
         model = Member
         fields = [
+            "id",
             "organization",
             "role",
         ]
         widgets = {
+            "id": forms.HiddenInput(),
             "organization": ModelSelect2Widget(data_view="organization-lookup"),
             "role": ModelSelect2Widget(data_view="memberrole-lookup"),
         }
