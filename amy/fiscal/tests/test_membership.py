@@ -5,7 +5,16 @@ from django_comments.models import Comment
 
 from fiscal.forms import MembershipCreateForm, MembershipForm
 from workshops.tests.base import TestBase
-from workshops.models import Membership, Organization, Event, Role, Tag, Task
+from workshops.models import (
+    Membership,
+    Organization,
+    Event,
+    Role,
+    Tag,
+    Task,
+    MemberRole,
+    Member,
+)
 
 
 class TestMembership(TestBase):
@@ -30,7 +39,8 @@ class TestMembership(TestBase):
         self.workshop_interval = timedelta(days=30)
 
         self.dc = Organization.objects.create(
-            domain="datacarpentry.org", fullname="Data Carpentry",
+            domain="datacarpentry.org",
+            fullname="Data Carpentry",
         )
 
         # let's add a membership for one of the organizations
@@ -43,7 +53,11 @@ class TestMembership(TestBase):
             self_organized_workshops_per_agreement=20,
             seats_instructor_training=25,
             additional_instructor_training_seats=3,
+        )
+        Member.objects.create(
+            membership=self.current,
             organization=self.org_beta,
+            role=MemberRole.objects.first(),
         )
 
         self_organized_admin = Organization.objects.get(domain="self-organized")
@@ -130,11 +144,15 @@ class TestMembership(TestBase):
             contribution_type="financial",
             workshops_without_admin_fee_per_agreement=10,
             self_organized_workshops_per_agreement=20,
+        )
+        Member.objects.create(
+            membership=overlapping,
             organization=self.org_beta,
+            role=MemberRole.objects.first(),
         )
 
-        self.assertIn(self.current, self.org_beta.membership_set.all())
-        self.assertIn(overlapping, self.org_beta.membership_set.all())
+        self.assertIn(self.current, self.org_beta.memberships.all())
+        self.assertIn(overlapping, self.org_beta.memberships.all())
 
     def test_workshops_without_admin_fee(self):
         """Ensure we calculate properly number of workshops per year."""
@@ -155,14 +173,11 @@ class TestMembership(TestBase):
         # first we need to remove all tasks refering to the membership
         Task.objects.all().delete()
         response = self.client.post(
-            reverse("membership_delete", args=[self.current.pk]), follow=True
+            reverse("membership_delete", args=[self.current.pk])
         )
-        self.assertRedirects(
-            response,
-            reverse("organization_details", args=[self.current.organization.domain]),
-        )
-        self.assertFalse(response.context["organization"].membership_set.all())
-        self.assertEqual(response.context["organization"].membership_set.count(), 0)
+        self.assertRedirects(response, reverse("all_memberships"))
+
+        # self.assertEqual(self.org_beta.memberships.count(), 0)
         with self.assertRaises(Membership.DoesNotExist):
             self.current.refresh_from_db()
 
@@ -182,7 +197,6 @@ class TestMembership(TestBase):
             "public_status": "public",
             "agreement_start": date(2021, 1, 28),
             "agreement_end": date(2022, 1, 28),
-            "organization": self.org_alpha.pk,
             "variant": "partner",
             "contribution_type": "financial",
             "additional_instructor_training_seats": 0,
@@ -201,23 +215,6 @@ class TestMembershipForms(TestBase):
         self._setUpRoles()
         self._setUpTags()
 
-        # parametrize membership creation
-        self.agreement_start = date.today() - timedelta(days=180)
-        self.agreement_end = date.today() + timedelta(days=180)
-
-        # let's add a membership for one of the organizations
-        self.current = Membership.objects.create(
-            variant="partner",
-            agreement_start=self.agreement_start,
-            agreement_end=self.agreement_end,
-            contribution_type="financial",
-            workshops_without_admin_fee_per_agreement=10,
-            self_organized_workshops_per_agreement=20,
-            seats_instructor_training=25,
-            additional_instructor_training_seats=3,
-            organization=self.org_beta,
-        )
-
     def test_creating_membership_with_comment(self):
         """Ensure that a comment is added when MembershipCreateForm with
         comment content is saved."""
@@ -226,7 +223,6 @@ class TestMembershipForms(TestBase):
             "public_status": "public",
             "agreement_start": date(2021, 1, 28),
             "agreement_end": date(2022, 1, 28),
-            "organization": self.org_alpha.pk,
             "variant": "partner",
             "contribution_type": "financial",
             "additional_instructor_training_seats": 0,
@@ -246,6 +242,27 @@ class TestMembershipForms(TestBase):
         This is a regression test against #1437:
         https://github.com/swcarpentry/amy/issues/1437
         """
+        # parametrize membership creation
+        agreement_start = date.today() - timedelta(days=180)
+        agreement_end = date.today() + timedelta(days=180)
+
+        # let's add a membership for one of the organizations
+        membership = Membership.objects.create(
+            variant="partner",
+            agreement_start=agreement_start,
+            agreement_end=agreement_end,
+            contribution_type="financial",
+            workshops_without_admin_fee_per_agreement=10,
+            self_organized_workshops_per_agreement=20,
+            seats_instructor_training=25,
+            additional_instructor_training_seats=3,
+        )
+        Member.objects.create(
+            membership=membership,
+            organization=self.org_beta,
+            role=MemberRole.objects.first(),
+        )
+
         self.assertNotIn("comment", MembershipForm.Meta.fields)
 
         self.assertEqual(Comment.objects.count(), 0)
@@ -253,13 +270,12 @@ class TestMembershipForms(TestBase):
             "public_status": "public",
             "agreement_start": date(2021, 1, 28),
             "agreement_end": date(2022, 1, 28),
-            "organization": self.org_alpha.pk,
             "variant": "partner",
             "contribution_type": "financial",
             "additional_instructor_training_seats": 0,
             "seats_instructor_training": 0,
         }
-        form = MembershipForm(data, instance=self.current)
+        form = MembershipForm(data, instance=membership)
         form.save()
         self.assertEqual(Comment.objects.count(), 0)
 
@@ -269,7 +285,6 @@ class TestMembershipForms(TestBase):
             "public_status": "public",
             "agreement_start": date(2021, 1, 26),
             "agreement_end": date(2020, 1, 26),
-            "organization": self.org_alpha.pk,
             "variant": "partner",
             "contribution_type": "financial",
             "additional_instructor_training_seats": 0,
@@ -279,5 +294,5 @@ class TestMembershipForms(TestBase):
         self.assertFalse(form.is_valid())
         self.assertEqual(
             form.errors["agreement_end"],
-            ["Agreement end date can't be sooner than the start date."]
+            ["Agreement end date can't be sooner than the start date."],
         )

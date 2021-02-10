@@ -5,7 +5,14 @@ from django.urls import reverse
 from django_comments.models import Comment
 
 from workshops.tests.base import TestBase
-from workshops.models import Organization, Person, TrainingRequest, Membership
+from workshops.models import (
+    Organization,
+    Person,
+    TrainingRequest,
+    Membership,
+    MemberRole,
+    Member,
+)
 
 
 class TestSearch(TestBase):
@@ -155,7 +162,7 @@ class TestSearch(TestBase):
 
     def test_search_for_memberships(self):
         """Make sure that finding memberships works."""
-        Membership.objects.create(
+        membership = Membership.objects.create(
             variant="partner",
             registration_code="test-beta-code-test",
             agreement_start=date.today(),
@@ -165,7 +172,11 @@ class TestSearch(TestBase):
             self_organized_workshops_per_agreement=20,
             seats_instructor_training=25,
             additional_instructor_training_seats=3,
+        )
+        Member.objects.create(
+            membership=membership,
             organization=self.org_beta,
+            role=MemberRole.objects.first(),
         )
 
         response = self.search_for("BETA-code")  # case-insensitive

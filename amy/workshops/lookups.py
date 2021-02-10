@@ -60,7 +60,7 @@ class TTTEventLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
 
 class OrganizationLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
     def get_queryset(self):
-        results = models.Organization.objects.all()
+        results = models.Organization.objects.order_by("fullname")
 
         if self.term:
             results = results.filter(

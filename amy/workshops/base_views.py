@@ -7,7 +7,7 @@ from django.contrib.auth.mixins import (
 )
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ImproperlyConfigured
-from django.core.mail import EmailMultiAlternatives, EmailMessage
+from django.core.mail import EmailMultiAlternatives
 from django.db.models import Model, ProtectedError
 from django.http import HttpResponseRedirect, Http404
 from django.utils.http import is_safe_url
@@ -38,7 +38,8 @@ class FormInvalidMessageMixin:
     """
     Add an error message on invalid form submission.
     """
-    form_invalid_message = ''
+
+    form_invalid_message = ""
 
     def form_invalid(self, form):
         response = super().form_invalid(form)
@@ -60,28 +61,29 @@ class AMYCreateView(SuccessMessageMixin, FormInvalidMessageMixin, CreateView):
     Class-based view for creating objects that extends default template context
     by adding model class used in objects creation.
     """
-    success_message = '{name} was created successfully.'
-    form_invalid_message = 'Please fix errors in the form below.'
 
-    template_name = 'generic_form.html'
+    success_message = "{name} was created successfully."
+    form_invalid_message = "Please fix errors in the form below."
+
+    template_name = "generic_form.html"
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class=form_class)
-        if not hasattr(form, 'helper'):
+        if not hasattr(form, "helper"):
             # This is a default helper if no other is available.
-            form.helper = BootstrapHelper(submit_label='Add')
+            form.helper = BootstrapHelper(submit_label="Add")
         return form
 
     def get_context_data(self, **kwargs):
         # self.model is available in CreateView as the model class being
         # used to create new model instance
-        kwargs['model'] = self.model
+        kwargs["model"] = self.model
 
-        if 'title' not in kwargs:
+        if "title" not in kwargs:
             if self.model and issubclass(self.model, Model):
-                kwargs['title'] = 'New {}'.format(self.model._meta.verbose_name)
+                kwargs["title"] = "New {}".format(self.model._meta.verbose_name)
             else:
-                kwargs['title'] = 'New object'
+                kwargs["title"] = "New object"
 
         return super().get_context_data(**kwargs)
 
@@ -95,28 +97,29 @@ class AMYUpdateView(SuccessMessageMixin, UpdateView):
     Class-based view for updating objects that extends default template context
     by adding proper page title.
     """
-    success_message = '{name} was updated successfully.'
 
-    template_name = 'generic_form.html'
+    success_message = "{name} was updated successfully."
+
+    template_name = "generic_form.html"
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class=form_class)
-        if not hasattr(form, 'helper'):
+        if not hasattr(form, "helper"):
             # This is a default helper if no other is available.
-            form.helper = BootstrapHelper(submit_label='Update')
+            form.helper = BootstrapHelper(submit_label="Update")
         return form
 
     def get_context_data(self, **kwargs):
         # self.model is available in UpdateView as the model class being
         # used to update model instance
-        kwargs['model'] = self.model
+        kwargs["model"] = self.model
 
-        kwargs['view'] = self
+        kwargs["view"] = self
 
         # self.object is available in UpdateView as the object being currently
         # edited
-        if 'title' not in kwargs:
-            kwargs['title'] = str(self.object)
+        if "title" not in kwargs:
+            kwargs["title"] = str(self.object)
 
         return super().get_context_data(**kwargs)
 
@@ -134,7 +137,8 @@ class AMYDeleteView(DeleteView):
     Allows for custom redirection based on `next` param in POST
     ProtectedErrors are handled.
     """
-    success_message = '{} was deleted successfully.'
+
+    success_message = "{} was deleted successfully."
 
     def before_delete(self, *args, **kwargs):
         return None
@@ -146,19 +150,16 @@ class AMYDeleteView(DeleteView):
         # Workaround for https://code.djangoproject.com/ticket/21926
         # Replicates the `delete` method of DeleteMixin
         self.object = self.get_object()
+        object_str = str(self.object)
         success_url = self.get_success_url()
         try:
             self.before_delete()
             self.object.delete()
             self.after_delete()
-            messages.success(
-                self.request,
-                self.success_message.format(self.object)
-            )
+            messages.success(self.request, self.success_message.format(object_str))
             return HttpResponseRedirect(success_url)
         except ProtectedError as e:
-            return failed_to_delete(self.request, self.object,
-                                    e.protected_objects)
+            return failed_to_delete(self.request, self.object, e.protected_objects)
 
     def get(self, request, *args, **kwargs):
         return self.http_method_not_allowed(request, *args, **kwargs)
@@ -171,7 +172,7 @@ class AMYFormView(FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = self.title
+        context["title"] = self.title
         return context
 
 
@@ -192,8 +193,9 @@ class AMYListView(ListView):
             self.filter = None
             self.qs = super().get_queryset()
         else:
-            self.filter = self.filter_class(self.get_filter_data(),
-                                            super().get_queryset())
+            self.filter = self.filter_class(
+                self.get_filter_data(), super().get_queryset()
+            )
             self.qs = self.filter.qs
         paginated = get_pagination_items(self.request, self.qs)
         return paginated
@@ -201,10 +203,10 @@ class AMYListView(ListView):
     def get_context_data(self, **kwargs):
         """Enhance context by adding a filter to it. Add `title` to context."""
         context = super().get_context_data(**kwargs)
-        context['filter'] = self.filter
+        context["filter"] = self.filter
         if self.title is None:
-            raise ImproperlyConfigured('No title attribute.')
-        context['title'] = self.title
+            raise ImproperlyConfigured("No title attribute.")
+        context["title"] = self.title
         return context
 
 
@@ -233,7 +235,7 @@ class EmailSendMixin:
         body_txt, body_html = self.get_body()
         kwargs = self.get_email_kwargs()
         email = EmailMultiAlternatives(subject, body_txt, **kwargs)
-        email.attach_alternative(body_html, 'text/html')
+        email.attach_alternative(body_html, "text/html")
         return email
 
     def send_email(self, email):
@@ -251,20 +253,18 @@ class EmailSendMixin:
 class RedirectSupportMixin:
     def get_success_url(self):
         default_url = super().get_success_url()
-        next_url = self.request.GET.get('next', None)
-        if next_url is not None and is_safe_url(next_url,
-                                                allowed_hosts=settings.ALLOWED_HOSTS):
+        next_url = self.request.GET.get("next", None)
+        if next_url is not None and is_safe_url(
+            next_url, allowed_hosts=settings.ALLOWED_HOSTS
+        ):
             return next_url
         else:
             return default_url
 
 
 class PrepopulationSupportMixin:
-
     def get_initial(self):
-        return {
-            field: self.request.GET.get(field) for field in self.populate_fields
-        }
+        return {field: self.request.GET.get(field) for field in self.populate_fields}
 
     def get_form(self, *args, **kwargs):
         """Disable fields that are pre-populated."""
@@ -296,7 +296,7 @@ class AutoresponderMixin:
     @property
     def autoresponder_form_field(self):
         """Form field's name that contains autoresponder recipient email."""
-        return 'email'
+        return "email"
 
     def autoresponder_email_context(self, form):
         """Context for """
@@ -307,9 +307,7 @@ class AutoresponderMixin:
 
     def autoresponder_kwargs(self, form):
         """Arguments passed to EmailMultiAlternatives."""
-        recipient = (
-            form.cleaned_data.get(self.autoresponder_form_field, None) or ""
-        )
+        recipient = form.cleaned_data.get(self.autoresponder_form_field, None) or ""
         return dict(to=[recipient])
 
     def autoresponder_prepare_email(self, form):
@@ -330,7 +328,7 @@ class AutoresponderMixin:
         kwargs = self.autoresponder_kwargs(form)
 
         email = EmailMultiAlternatives(subject, body_txt, **kwargs)
-        email.attach_alternative(body_html, 'text/html')
+        email.attach_alternative(body_html, "text/html")
         return email
 
     def autoresponder(self, form, fail_silently=True):
@@ -355,34 +353,34 @@ class StateFilterMixin:
         """Enhance filter default data by setting the initial value for the
         `state` field filter."""
         data = super().get_filter_data().copy()
-        data['state'] = data.get('state', 'p')
+        data["state"] = data.get("state", "p")
         return data
 
 
-class ChangeRequestStateView(PermissionRequiredMixin, SingleObjectMixin,
-                             RedirectView):
+class ChangeRequestStateView(PermissionRequiredMixin, SingleObjectMixin, RedirectView):
 
     # State URL argument to state model value mapping.
     # Here 'a' and 'accepted' both match to 'a' (recognizable by model's state
     # field), similarly for 'd' (discarded) and 'p' (pending).
     states = {
-        'a': 'a',
-        'accepted': 'a',
-        'd': 'd',
-        'discarded': 'd',
-        'p': 'p',
-        'pending': 'p',
+        "a": "a",
+        "accepted": "a",
+        "d": "d",
+        "discarded": "d",
+        "p": "p",
+        "pending": "p",
     }
 
     # Message shown when requested state is not found in `states` dictionary.
-    incorrect_state_message = 'Incorrect state value.'
+    incorrect_state_message = "Incorrect state value."
 
     # URL keyword argument for requested state.
-    state_url_kwarg = 'state'
+    state_url_kwarg = "state"
 
     # Message shown upon successful state change
-    success_message = ('%(name)s state was changed to "%(requested_state)s" '
-                       'successfully.')
+    success_message = (
+        '%(name)s state was changed to "%(requested_state)s" ' "successfully."
+    )
 
     def get_states(self):
         """Return state-state mapping; keys are URL values, and items are
@@ -428,7 +426,7 @@ class ChangeRequestStateView(PermissionRequiredMixin, SingleObjectMixin,
 class AssignView(PermissionRequiredMixin, SingleObjectMixin, RedirectView):
     # URL keyword argument for requested person.
     permanent = False
-    person_url_kwarg = 'person_id'
+    person_url_kwarg = "person_id"
 
     def get_redirect_url(self, *args, **kwargs):
         return self.object.get_absolute_url()
