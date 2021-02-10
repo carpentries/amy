@@ -200,7 +200,7 @@ class MembershipCreate(
         return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse("membership_members", self.object.pk)
+        return reverse("membership_members", args=[self.object.pk])
 
 
 class MembershipUpdate(
@@ -224,25 +224,16 @@ class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteVie
 
 class MembershipMembers(OnlyForAdminsMixin, FormView):
     template_name = "fiscal/membership_members.html"
-    form_class = modelformset_factory(Member, MemberForm, extra=0, can_delete=True)
 
     def dispatch(self, request, *args, **kwargs):
         self.membership = get_object_or_404(Membership, pk=self.kwargs["membership_id"])
         return super().dispatch(request, *args, **kwargs)
 
-    def form_valid(self, form):
-        instances = form.save(commit=False)
-
-        # assign membership to any new/changed instance
-        for instance in instances:
-            instance.membership = self.membership
-            instance.save()
-
-        # remove deleted objects
-        for instance in form.deleted_objects:
-            instance.delete()
-
-        return super().form_valid(form)
+    def get_form_class(self):
+        extra = 0
+        if not self.membership.organizations.all():
+            extra = 1
+        return modelformset_factory(Member, MemberForm, extra=extra, can_delete=True)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -257,6 +248,20 @@ class MembershipMembers(OnlyForAdminsMixin, FormView):
         if "title" not in kwargs:
             kwargs["title"] = "Change members for {}".format(self.membership)
         return super().get_context_data(**kwargs)
+
+    def form_valid(self, form):
+        instances = form.save(commit=False)
+
+        # assign membership to any new/changed instance
+        for instance in instances:
+            instance.membership = self.membership
+            instance.save()
+
+        # remove deleted objects
+        for instance in form.deleted_objects:
+            instance.delete()
+
+        return super().form_valid(form)
 
     def get_success_url(self):
         return self.membership.get_absolute_url()
