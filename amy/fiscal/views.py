@@ -124,21 +124,26 @@ class AllMemberships(OnlyForAdminsMixin, AMYListView):
     context_object_name = "all_memberships"
     template_name = "fiscal/all_memberships.html"
     filter_class = MembershipFilter
-    queryset = Membership.objects.annotate(
-        instructor_training_seats_total=(
-            F("seats_instructor_training") + F("additional_instructor_training_seats")
-        ),
-        # for future reference, in case someone would want to implement
-        # this annotation
-        # instructor_training_seats_utilized=(
-        #     Count('task', filter=Q(task__role__name='learner'))
-        # ),
-        instructor_training_seats_remaining=(
-            F("seats_instructor_training")
-            + F("additional_instructor_training_seats")
-            - Count("task", filter=Q(task__role__name="learner"))
-        ),
-    ).prefetch_related("organizations")
+    queryset = (
+        Membership.objects.annotate(
+            instructor_training_seats_total=(
+                F("seats_instructor_training")
+                + F("additional_instructor_training_seats")
+            ),
+            # for future reference, in case someone would want to implement
+            # this annotation
+            # instructor_training_seats_utilized=(
+            #     Count('task', filter=Q(task__role__name='learner'))
+            # ),
+            instructor_training_seats_remaining=(
+                F("seats_instructor_training")
+                + F("additional_instructor_training_seats")
+                - Count("task", filter=Q(task__role__name="learner"))
+            ),
+        )
+        .prefetch_related("organizations")
+        .order_by("id")
+    )
     title = "All Memberships"
 
 
@@ -148,7 +153,10 @@ class MembershipDetails(OnlyForAdminsMixin, AMYDetailView):
     )
     queryset = Membership.objects.prefetch_related(
         Prefetch(
-            "member_set", queryset=Member.objects.select_related("organization", "role")
+            "member_set",
+            queryset=Member.objects.select_related(
+                "organization", "role", "membership"
+            ).order_by("organization__fullname"),
         ),
         Prefetch(
             "task_set",
@@ -211,9 +219,7 @@ class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteVie
     pk_url_kwarg = "membership_id"
 
     def get_success_url(self):
-        return reverse(
-            "organization_details", args=[self.get_object().organization.domain]
-        )
+        return reverse("all_memberships")
 
 
 class MembershipMembers(OnlyForAdminsMixin, FormView):
@@ -224,9 +230,25 @@ class MembershipMembers(OnlyForAdminsMixin, FormView):
         self.membership = get_object_or_404(Membership, pk=self.kwargs["membership_id"])
         return super().dispatch(request, *args, **kwargs)
 
+    def form_valid(self, form):
+        instances = form.save(commit=False)
+
+        # assign membership to any new/changed instance
+        for instance in instances:
+            instance.membership = self.membership
+            instance.save()
+
+        # remove deleted objects
+        for instance in form.deleted_objects:
+            instance.delete()
+
+        return super().form_valid(form)
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs["queryset"] = self.membership.member_set.all()
+        kwargs["queryset"] = self.membership.member_set.select_related(
+            "organization", "role", "membership"
+        ).order_by("organization__fullname")
         return kwargs
 
     def get_context_data(self, **kwargs):
