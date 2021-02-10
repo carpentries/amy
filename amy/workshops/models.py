@@ -97,7 +97,7 @@ class MemberRole(models.Model):
 
 
 class Member(models.Model):
-    membership = models.ForeignKey("Membership", on_delete=models.PROTECT)
+    membership = models.ForeignKey("Membership", on_delete=models.CASCADE)
     organization = models.ForeignKey(Organization, on_delete=models.PROTECT)
     role = models.ForeignKey(MemberRole, on_delete=models.PROTECT)
 
@@ -195,7 +195,8 @@ class Membership(models.Model):
         choices=PUBLIC_STATUS_CHOICES,
         default=PUBLIC_STATUS_CHOICES[0][0],
         verbose_name="Can this membership be publicized on The carpentries websites?",
-        help_text="Public memberships may be listed on any of The Carpentries websites.",
+        help_text="Public memberships may be listed on any of The Carpentries "
+        "websites.",
     )
 
     emergency_contact = models.TextField(blank=True)

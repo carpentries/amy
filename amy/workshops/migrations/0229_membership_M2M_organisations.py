@@ -94,7 +94,7 @@ class Migration(migrations.Migration):
                 (
                     "membership",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.PROTECT,
+                        on_delete=django.db.models.deletion.CASCADE,
                         to="workshops.Membership",
                     ),
                 ),
