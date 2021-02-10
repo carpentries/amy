@@ -1,7 +1,7 @@
 argon2-cffi==20.1.0
 click==7.1.2
 croniter==0.3.36
-cryptography==3.2.1
+cryptography==3.3.2
 diff-match-patch==20200713
 django-anymail==7.2.1
 django-compressor==2.4
