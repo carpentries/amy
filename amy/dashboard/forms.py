@@ -27,7 +27,7 @@ class AssignmentForm(forms.Form):
         required=False,
         queryset=Person.objects.filter(
             Q(is_superuser=True) | Q(groups__name="administrators")
-        ),
+        ).distinct(),
         widget=Select2Widget(),
     )
     helper = BootstrapHelper(
