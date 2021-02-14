@@ -207,6 +207,13 @@ class Membership(models.Model):
         "together under a consortium.",
     )
 
+    persons = models.ManyToManyField(
+        "Person",
+        blank=True,
+        related_name="memberships",
+        through="fiscal.MembershipTask",
+    )
+
     def __str__(self):
         from workshops.util import human_daterange
 

@@ -373,3 +373,75 @@ class TestNewMembershipWorkflow(TestBase):
         self.assertEqual(
             list(self.membership.organizations.all()), [self.org_alpha, self.org_beta]
         )
+
+    def test_removing_members(self):
+        self.setUpMembership()
+        m1 = Member.objects.create(
+            organization=self.org_alpha,
+            membership=self.membership,
+            role=self.member_role,
+        )
+        m2 = Member.objects.create(
+            organization=self.org_beta,
+            membership=self.membership,
+            role=self.member_role,
+        )
+
+        data = {
+            "form-TOTAL_FORMS": 2,
+            "form-INITIAL_FORMS": 2,
+            "form-MIN_NUM_FORMS": 0,
+            "form-MAX_NUM_FORMS": 1000,
+            "form-0-organization": m1.organization.pk,
+            "form-0-role": m1.role.pk,
+            "form-0-id": m1.pk,
+            "form-0-DELETE": "on",
+            "form-1-organization": m2.organization.pk,
+            "form-1-role": m2.role.pk,
+            "form-1-id": m2.pk,
+            "form-1-DELETE": "on",
+        }
+        response = self.client.post(
+            reverse("membership_members", args=[self.membership.pk]),
+            data=data,
+            follow=True,
+        )
+
+        self.assertRedirects(
+            response, reverse("membership_details", args=[self.membership.pk])
+        )
+
+        self.assertEqual(list(self.membership.organizations.all()), [])
+
+    def test_mix_adding_removing_members(self):
+        self.setUpMembership()
+        m1 = Member.objects.create(
+            organization=self.org_alpha,
+            membership=self.membership,
+            role=self.member_role,
+        )
+
+        data = {
+            "form-TOTAL_FORMS": 2,
+            "form-INITIAL_FORMS": 1,
+            "form-MIN_NUM_FORMS": 0,
+            "form-MAX_NUM_FORMS": 1000,
+            "form-0-organization": m1.organization.pk,
+            "form-0-role": m1.role.pk,
+            "form-0-id": m1.pk,
+            "form-0-DELETE": "on",
+            "form-1-organization": self.org_beta.pk,
+            "form-1-role": self.member_role.pk,
+            "form-1-id": "",
+        }
+        response = self.client.post(
+            reverse("membership_members", args=[self.membership.pk]),
+            data=data,
+            follow=True,
+        )
+
+        self.assertRedirects(
+            response, reverse("membership_details", args=[self.membership.pk])
+        )
+
+        self.assertEqual(list(self.membership.organizations.all()), [self.org_beta])
