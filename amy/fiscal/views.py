@@ -26,8 +26,10 @@ from fiscal.forms import (
     MembershipForm,
     MembershipCreateForm,
     MemberForm,
+    MembershipTaskForm,
     SponsorshipForm,
 )
+from fiscal.models import MembershipTask
 from workshops.base_views import (
     AMYCreateView,
     AMYUpdateView,
@@ -159,6 +161,12 @@ class MembershipDetails(OnlyForAdminsMixin, AMYDetailView):
             ).order_by("organization__fullname"),
         ),
         Prefetch(
+            "membershiptask_set",
+            queryset=MembershipTask.objects.select_related(
+                "person", "role", "membership"
+            ).order_by("person__family", "person__personal", "role__name"),
+        ),
+        Prefetch(
             "task_set",
             queryset=Task.objects.select_related("event", "person").prefetch_related(
                 prefetch_awards
@@ -222,8 +230,8 @@ class MembershipDelete(OnlyForAdminsMixin, PermissionRequiredMixin, AMYDeleteVie
         return reverse("all_memberships")
 
 
-class MembershipMembers(OnlyForAdminsMixin, FormView):
-    template_name = "fiscal/membership_members.html"
+class MembershipFormsetView(FormView):
+    template_name = "fiscal/membership_formset.html"
 
     def dispatch(self, request, *args, **kwargs):
         self.membership = get_object_or_404(Membership, pk=self.kwargs["membership_id"])
@@ -231,22 +239,18 @@ class MembershipMembers(OnlyForAdminsMixin, FormView):
 
     def get_form_class(self):
         extra = 0
-        if not self.membership.organizations.all():
+        if not self.membership.persons.all():
             extra = 1
-        return modelformset_factory(Member, MemberForm, extra=extra, can_delete=True)
+        return self.get_formset(extra=extra, can_delete=True)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs["queryset"] = self.membership.member_set.select_related(
-            "organization", "role", "membership"
-        ).order_by("organization__fullname")
+        kwargs["queryset"] = self.get_formset_queryset(self.membership)
         return kwargs
 
     def get_context_data(self, **kwargs):
         kwargs["membership"] = self.membership
         kwargs["formset"] = self.get_form()
-        if "title" not in kwargs:
-            kwargs["title"] = "Change members for {}".format(self.membership)
         return super().get_context_data(**kwargs)
 
     def form_valid(self, form):
@@ -265,6 +269,36 @@ class MembershipMembers(OnlyForAdminsMixin, FormView):
 
     def get_success_url(self):
         return self.membership.get_absolute_url()
+
+
+class MembershipMembers(OnlyForAdminsMixin, MembershipFormsetView):
+    def get_formset(self, *args, **kwargs):
+        return modelformset_factory(Member, MemberForm, *args, **kwargs)
+
+    def get_formset_queryset(self, object):
+        return object.member_set.select_related(
+            "organization", "role", "membership"
+        ).order_by("organization__fullname")
+
+    def get_context_data(self, **kwargs):
+        if "title" not in kwargs:
+            kwargs["title"] = "Change person roles for {}".format(self.membership)
+        return super().get_context_data(**kwargs)
+
+
+class MembershipTasks(OnlyForAdminsMixin, MembershipFormsetView):
+    def get_formset(self, *args, **kwargs):
+        return modelformset_factory(MembershipTask, MembershipTaskForm, *args, **kwargs)
+
+    def get_formset_queryset(self, object):
+        return object.membershiptask_set.select_related(
+            "person", "role", "membership"
+        ).order_by("person__family", "person__personal", "role__name")
+
+    def get_context_data(self, **kwargs):
+        if "title" not in kwargs:
+            kwargs["title"] = "Change person roles for {}".format(self.membership)
+        return super().get_context_data(**kwargs)
 
 
 # ------------------------------------------------------------

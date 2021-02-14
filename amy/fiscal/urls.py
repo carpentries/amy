@@ -23,6 +23,7 @@ urlpatterns = [
         path("", views.MembershipDetails.as_view(), name="membership_details"),
         path("edit/", views.MembershipUpdate.as_view(), name="membership_edit"),
         path("members/", views.MembershipMembers.as_view(), name="membership_members"),
+        path("tasks/", views.MembershipTasks.as_view(), name="membership_tasks"),
         path("delete/", views.MembershipDelete.as_view(), name="membership_delete"),
     ])),
     # sponsorships
