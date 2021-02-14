@@ -191,6 +191,8 @@ class MembershipCreateForm(MembershipForm):
 
 
 class MemberForm(forms.ModelForm):
+    """Form intended to use in formset for creating multiple membership members."""
+
     helper = BootstrapHelper(
         add_cancel_button=False, form_tag=False, add_submit_button=False
     )
