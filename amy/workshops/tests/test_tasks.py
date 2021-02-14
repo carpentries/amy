@@ -24,6 +24,8 @@ from workshops.models import (
     Organization,
     Tag,
     Membership,
+    Member,
+    MemberRole,
 )
 import workshops.views
 
@@ -50,15 +52,21 @@ class TestTask(TestBase):
         )
 
         test_event_1 = Event.objects.create(
-            start=datetime.now(), slug="test_event_1", host=test_host,
+            start=datetime.now(),
+            slug="test_event_1",
+            host=test_host,
         )
 
         test_event_2 = Event.objects.create(
-            start=datetime.now(), slug="test_event_2", host=test_host,
+            start=datetime.now(),
+            slug="test_event_2",
+            host=test_host,
         )
 
         test_event_3 = Event.objects.create(
-            start=datetime.now(), slug="test_event_3", host=test_host,
+            start=datetime.now(),
+            slug="test_event_3",
+            host=test_host,
         )
 
         self.instructor = Role.objects.get(name="instructor")
@@ -87,7 +95,9 @@ class TestTask(TestBase):
         # create 3 events: one without TTT tag, and two with; out of the two,
         # one is allowed to have open applications, the other is not.
         self.non_ttt_event = Event.objects.create(
-            start=datetime.now(), slug="non-ttt-event", host=test_host,
+            start=datetime.now(),
+            slug="non-ttt-event",
+            host=test_host,
         )
         self.non_ttt_event.tags.set(Tag.objects.filter(name__in=["SWC", "DC"]))
         self.ttt_event_open = Event.objects.create(
@@ -111,7 +121,11 @@ class TestTask(TestBase):
             agreement_start=datetime.now() - timedelta(weeks=4),
             agreement_end=datetime.now() + timedelta(weeks=4),
             contribution_type="financial",
+        )
+        Member.objects.create(
+            membership=self.membership,
             organization=test_host,
+            role=MemberRole.objects.first(),
         )
 
         self._setUpUsersAndLogin()
@@ -153,7 +167,8 @@ class TestTask(TestBase):
             "url": "htp://example.org",
         }
         response = self.client.post(
-            reverse("task_edit", kwargs={"task_id": task.pk}), payload,
+            reverse("task_edit", kwargs={"task_id": task.pk}),
+            payload,
         )
         self.assertEqual(response.status_code, 200)
         task.refresh_from_db()
@@ -164,7 +179,9 @@ class TestTask(TestBase):
         task_1 = self.fixtures["test_task_1"]
         with self.assertRaises(IntegrityError):
             Task.objects.create(
-                event=task_1.event, person=task_1.person, role=task_1.role,
+                event=task_1.event,
+                person=task_1.person,
+                role=task_1.role,
             )
 
     def test_add_duplicate_task_with_url(self):
@@ -450,7 +467,8 @@ class TestTaskCreateNewInstructor(FakeRedisTestCaseMixin, SuperuserMixin, TestCa
         #     f.write(response.content.decode('utf-8'))
 
         self.assertContains(
-            response, "New email (Instructor is added to the workshop) was scheduled",
+            response,
+            "New email (Instructor is added to the workshop) was scheduled",
         )
 
         # new task appeared
@@ -552,7 +570,9 @@ class TestTaskUpdateNewInstructor(FakeRedisTestCaseMixin, SuperuserMixin, TestCa
 
         # this task shouldn't trigger action
         task = Task.objects.create(
-            role=self.helper, person=self.person_1, event=self.event_1,
+            role=self.helper,
+            person=self.person_1,
+            event=self.event_1,
         )
         self.assertFalse(NewInstructorAction.check(task))
 
@@ -575,7 +595,8 @@ class TestTaskUpdateNewInstructor(FakeRedisTestCaseMixin, SuperuserMixin, TestCa
         #     f.write(response.content.decode('utf-8'))
 
         self.assertContains(
-            response, "New email (Instructor is added to the workshop) was scheduled",
+            response,
+            "New email (Instructor is added to the workshop) was scheduled",
         )
 
         task.refresh_from_db()
@@ -598,7 +619,9 @@ class TestTaskUpdateNewInstructor(FakeRedisTestCaseMixin, SuperuserMixin, TestCa
 
         # this task won't trigger an action if we created it via a view
         task = Task.objects.create(
-            role=self.helper, person=self.person_1, event=self.event_1,
+            role=self.helper,
+            person=self.person_1,
+            event=self.event_1,
         )
         self.assertFalse(NewInstructorAction.check(task))
         # no jobs - again, due to not creating via WWW
@@ -617,7 +640,8 @@ class TestTaskUpdateNewInstructor(FakeRedisTestCaseMixin, SuperuserMixin, TestCa
             reverse("task_edit", args=[task.pk]), data, follow=True
         )
         self.assertContains(
-            response, "New email (Instructor is added to the workshop) was scheduled",
+            response,
+            "New email (Instructor is added to the workshop) was scheduled",
         )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
@@ -751,7 +775,8 @@ class TestTaskDeleteNewInstructor(FakeRedisTestCaseMixin, SuperuserMixin, TestCa
         }
         response = self.client.post(reverse("task_add"), data, follow=True)
         self.assertContains(
-            response, "New email (Instructor is added to the workshop) was scheduled",
+            response,
+            "New email (Instructor is added to the workshop) was scheduled",
         )
         # with open('test.html', 'w', encoding='utf-8') as f:
         #     f.write(response.content.decode('utf-8'))
@@ -995,7 +1020,9 @@ class TestTaskUpdateNewSupportingInstructor(
 
         # this task shouldn't trigger action
         task = Task.objects.create(
-            role=self.helper, person=self.person_1, event=self.event_1,
+            role=self.helper,
+            person=self.person_1,
+            event=self.event_1,
         )
         self.assertFalse(NewSupportingInstructorAction.check(task))
 
@@ -1042,7 +1069,9 @@ class TestTaskUpdateNewSupportingInstructor(
 
         # this task won't trigger an action if we created it via a view
         task = Task.objects.create(
-            role=self.helper, person=self.person_1, event=self.event_1,
+            role=self.helper,
+            person=self.person_1,
+            event=self.event_1,
         )
         self.assertFalse(NewSupportingInstructorAction.check(task))
         # no jobs - again, due to not creating via WWW
@@ -1453,13 +1482,19 @@ class TestTaskUpdateInstructorsHostIntroduction(
         )
 
         self.instructor1_task = Task.objects.create(
-            event=self.test_event, person=self.instructor1, role=self.instructor,
+            event=self.test_event,
+            person=self.instructor1,
+            role=self.instructor,
         )
         self.instructor2_task = Task.objects.create(
-            event=self.test_event, person=self.instructor2, role=self.instructor,
+            event=self.test_event,
+            person=self.instructor2,
+            role=self.instructor,
         )
         self.host1_task = Task.objects.create(
-            event=self.test_event, person=self.host1, role=self.helper,  # intentionally
+            event=self.test_event,
+            person=self.host1,
+            role=self.helper,  # intentionally
         )
 
     def test_job_scheduled(self):
@@ -1640,13 +1675,19 @@ class TestTaskDeleteInstructorsHostIntroduction(
         )
 
         self.instructor1_task = Task.objects.create(
-            event=self.test_event, person=self.instructor1, role=self.instructor,
+            event=self.test_event,
+            person=self.instructor1,
+            role=self.instructor,
         )
         self.instructor2_task = Task.objects.create(
-            event=self.test_event, person=self.instructor2, role=self.instructor,
+            event=self.test_event,
+            person=self.instructor2,
+            role=self.instructor,
         )
         self.host1_task = Task.objects.create(
-            event=self.test_event, person=self.host1, role=self.helper,  # intentionally
+            event=self.test_event,
+            person=self.host1,
+            role=self.helper,  # intentionally
         )
 
     def test_job_unscheduled(self):
@@ -1850,7 +1891,9 @@ class TestTaskUpdateAskForWebsite(FakeRedisTestCaseMixin, SuperuserMixin, TestCa
         Trigger.objects.create(action="ask-for-website", template=template)
 
         self.instructor_task = Task.objects.create(
-            event=self.test_event, person=self.instructor, role=self.host_role,
+            event=self.test_event,
+            person=self.instructor,
+            role=self.host_role,
         )
 
     def test_job_scheduled(self):
@@ -1953,7 +1996,6 @@ class TestTaskUpdateAskForWebsite(FakeRedisTestCaseMixin, SuperuserMixin, TestCa
 
 
 class TestTaskDeleteAskForWebsite(FakeRedisTestCaseMixin, SuperuserMixin, TestCase):
-
     def setUp(self):
         super().setUp()
 
@@ -2006,7 +2048,9 @@ class TestTaskDeleteAskForWebsite(FakeRedisTestCaseMixin, SuperuserMixin, TestCa
         Trigger.objects.create(action="ask-for-website", template=template)
 
         self.instructor_task = Task.objects.create(
-            event=self.test_event, person=self.instructor, role=self.host_role,
+            event=self.test_event,
+            person=self.instructor,
+            role=self.host_role,
         )
 
     def test_job_unscheduled(self):

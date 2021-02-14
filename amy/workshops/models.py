@@ -20,7 +20,6 @@ from django.db.models import (
     Count,
 )
 from django.db.models.functions import Greatest
-from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.text import format_lazy
 from django.urls import reverse, reverse_lazy
@@ -89,6 +88,20 @@ class Organization(models.Model):
         ordering = ("domain",)
 
 
+class MemberRole(models.Model):
+    name = models.CharField(max_length=STR_MED)
+    verbose_name = models.CharField(max_length=STR_LONG, blank=True, default="")
+
+    def __str__(self):
+        return self.verbose_name if self.verbose_name else self.name
+
+
+class Member(models.Model):
+    membership = models.ForeignKey("Membership", on_delete=models.CASCADE)
+    organization = models.ForeignKey(Organization, on_delete=models.PROTECT)
+    role = models.ForeignKey(MemberRole, on_delete=models.PROTECT)
+
+
 @reversion.register
 class Membership(models.Model):
     """Represent a details of Organization's membership."""
@@ -103,7 +116,10 @@ class Membership(models.Model):
         ("platinum", "Platinum"),
     )
     variant = models.CharField(
-        max_length=STR_MED, null=False, blank=False, choices=MEMBERSHIP_CHOICES,
+        max_length=STR_MED,
+        null=False,
+        blank=False,
+        choices=MEMBERSHIP_CHOICES,
     )
     agreement_start = models.DateField()
     agreement_end = models.DateField()
@@ -113,7 +129,10 @@ class Membership(models.Model):
         ("other", "Other"),
     )
     contribution_type = models.CharField(
-        max_length=STR_MED, null=False, blank=False, choices=CONTRIBUTION_CHOICES,
+        max_length=STR_MED,
+        null=False,
+        blank=False,
+        choices=CONTRIBUTION_CHOICES,
     )
     workshops_without_admin_fee_per_agreement = models.PositiveIntegerField(
         null=True,
@@ -143,8 +162,11 @@ class Membership(models.Model):
         help_text="Use this field if you want to grant more seats than "
         "the agreement provides for.",
     )
-    organization = models.ForeignKey(
-        Organization, null=False, blank=False, on_delete=models.PROTECT
+    organizations = models.ManyToManyField(
+        Organization,
+        blank=False,
+        related_name="memberships",
+        through=Member,
     )
 
     registration_code = models.CharField(
@@ -173,7 +195,8 @@ class Membership(models.Model):
         choices=PUBLIC_STATUS_CHOICES,
         default=PUBLIC_STATUS_CHOICES[0][0],
         verbose_name="Can this membership be publicized on The carpentries websites?",
-        help_text="Public memberships may be listed on any of The Carpentries websites.",
+        help_text="Public memberships may be listed on any of The Carpentries "
+        "websites.",
     )
 
     emergency_contact = models.TextField(blank=True)
@@ -181,20 +204,26 @@ class Membership(models.Model):
     consortium = models.BooleanField(
         default=False,
         help_text="Determines whether this is a group of organisations working "
-                  "together under a consortium."
+        "together under a consortium.",
     )
 
     def __str__(self):
         from workshops.util import human_daterange
 
         dates = human_daterange(self.agreement_start, self.agreement_end)
-        return "{} membership: {} ({})".format(
-            self.variant.title(), self.organization, dates
-        )
+        variant = self.variant.title()
+        first_org = self.organizations.first()
+        org_name = first_org.fullname if first_org else "n/a"
+
+        if self.consortium:
+            return f"{variant} membership {dates} (consortium incl. {org_name})"
+        else:
+            return f"{variant} membership {dates} ({org_name})"
 
     def get_absolute_url(self):
         return reverse("membership_details", args=[self.id])
 
+    # TODO: fix counting (currently it depends on self.organization)
     @cached_property
     def workshops_without_admin_fee_completed(self):
         """Count centrally-organised workshops already hosted during the agreement."""
@@ -204,14 +233,14 @@ class Membership(models.Model):
         cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
 
         return (
-            Event.objects.filter(host=self.organization)
-            .filter(date_started)
+            Event.objects.filter(date_started)  # .filter(host=self.organization)
             .filter(administrator__in=Organization.objects.administrators())
             .exclude(administrator__domain="self-organized")
             .exclude(cancelled)
             .count()
         )
 
+    # TODO: fix counting (currently it depends on self.organization)
     @cached_property
     def workshops_without_admin_fee_planned(self):
         """Count centrally-organised workshops hosted in future during the agreement."""
@@ -221,8 +250,7 @@ class Membership(models.Model):
         cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
 
         return (
-            Event.objects.filter(host=self.organization)
-            .filter(date_started)
+            Event.objects.filter(date_started)  # .filter(host=self.organization)
             .filter(administrator__in=Organization.objects.administrators())
             .exclude(administrator__domain="self-organized")
             .exclude(cancelled)
@@ -239,6 +267,7 @@ class Membership(models.Model):
         c = self.workshops_without_admin_fee_planned
         return a - b - c
 
+    # TODO: fix counting (currently it depends on self.organization)
     @cached_property
     def self_organized_workshops_completed(self):
         """Count self-organized workshops hosted the year agreement started (completed,
@@ -252,13 +281,13 @@ class Membership(models.Model):
         cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
 
         return (
-            Event.objects.filter(host=self.organization)
-            .filter(date_started)
+            Event.objects.filter(date_started)  # .filter(host=self.organization)
             .filter(self_organized)
             .exclude(cancelled)
             .count()
         )
 
+    # TODO: fix counting (currently it depends on self.organization)
     @cached_property
     def self_organized_workshops_planned(self):
         """Count self-organized workshops hosted the year agreement started (planned,
@@ -272,8 +301,7 @@ class Membership(models.Model):
         cancelled = Q(tags__name="cancelled") | Q(tags__name="stalled")
 
         return (
-            Event.objects.filter(host=self.organization)
-            .filter(date_started)
+            Event.objects.filter(date_started)  # .filter(host=self.organization)
             .filter(self_organized)
             .exclude(cancelled)
             .count()
@@ -317,7 +345,10 @@ class Sponsorship(models.Model):
         on_delete=models.CASCADE,
         help_text="Organization sponsoring the event",
     )
-    event = models.ForeignKey("Event", on_delete=models.CASCADE,)
+    event = models.ForeignKey(
+        "Event",
+        on_delete=models.CASCADE,
+    )
     amount = models.DecimalField(
         max_digits=8,
         decimal_places=2,
@@ -328,7 +359,10 @@ class Sponsorship(models.Model):
         help_text="e.g. 1992.33",
     )
     contact = models.ForeignKey(
-        "Person", on_delete=models.SET_NULL, null=True, blank=True,
+        "Person",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
     )
 
     class Meta:
@@ -519,13 +553,20 @@ class Person(
     ]
 
     personal = models.CharField(
-        max_length=STR_LONG, verbose_name="Personal (first) name",
+        max_length=STR_LONG,
+        verbose_name="Personal (first) name",
     )
     middle = models.CharField(
-        max_length=STR_LONG, blank=True, default="", verbose_name="Middle name",
+        max_length=STR_LONG,
+        blank=True,
+        default="",
+        verbose_name="Middle name",
     )
     family = models.CharField(
-        max_length=STR_LONG, blank=True, default="", verbose_name="Family (last) name",
+        max_length=STR_LONG,
+        blank=True,
+        default="",
+        verbose_name="Family (last) name",
     )
     email = models.CharField(  # emailfield?
         max_length=STR_LONG,
@@ -549,7 +590,10 @@ class Person(
         " not be posted.",
     )
     country = CountryField(
-        null=False, blank=True, default="", help_text="Person's country of residence.",
+        null=False,
+        blank=True,
+        default="",
+        help_text="Person's country of residence.",
     )
     airport = models.ForeignKey(
         Airport,
@@ -573,7 +617,9 @@ class Person(
         verbose_name="Twitter username",
     )
     url = models.CharField(
-        max_length=STR_LONG, blank=True, verbose_name="Personal website",
+        max_length=STR_LONG,
+        blank=True,
+        verbose_name="Personal website",
     )
     username = models.CharField(
         max_length=STR_LONG,
@@ -610,7 +656,10 @@ class Person(
         help_text="Please check all that apply.",
         blank=True,
     )
-    languages = models.ManyToManyField("Language", blank=True,)
+    languages = models.ManyToManyField(
+        "Language",
+        blank=True,
+    )
 
     # new people will be inactive by default
     is_active = models.BooleanField(default=False)
@@ -622,7 +671,10 @@ class Person(
         default="",
     )
     orcid = models.CharField(
-        max_length=STR_LONG, verbose_name="ORCID ID", blank=True, default="",
+        max_length=STR_LONG,
+        verbose_name="ORCID ID",
+        blank=True,
+        default="",
     )
 
     LESSON_PUBLICATION_CHOICES = (
@@ -1001,7 +1053,9 @@ class EventQuerySet(models.query.QuerySet):
         """
         return self.annotate(
             learner_tasks_count=Count("task", filter=Q(task__role__name="learner"))
-        ).annotate(attendance=Greatest("manual_attendance", "learner_tasks_count"),)
+        ).annotate(
+            attendance=Greatest("manual_attendance", "learner_tasks_count"),
+        )
 
 
 @reversion.register
@@ -1042,7 +1096,10 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         help_text="Lesson Program administered for this workshop.",
     )
     sponsors = models.ManyToManyField(
-        Organization, related_name="sponsored_events", blank=True, through=Sponsorship,
+        Organization,
+        related_name="sponsored_events",
+        blank=True,
+        through=Sponsorship,
     )
     start = models.DateField(null=True, blank=True, help_text=PUBLISHED_HELP_TEXT)
     end = models.DateField(null=True, blank=True)
@@ -1099,13 +1156,27 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         help_text=PUBLISHED_HELP_TEXT + "<br />Use <b>Online</b> for online events.",
     )
     venue = models.CharField(
-        max_length=STR_LONGEST, default="", blank=True, help_text=PUBLISHED_HELP_TEXT,
+        max_length=STR_LONGEST,
+        default="",
+        blank=True,
+        help_text=PUBLISHED_HELP_TEXT,
     )
     address = models.CharField(
-        max_length=350, default="", blank=True, help_text=PUBLISHED_HELP_TEXT,
+        max_length=350,
+        default="",
+        blank=True,
+        help_text=PUBLISHED_HELP_TEXT,
     )
-    latitude = models.FloatField(null=True, blank=True, help_text=PUBLISHED_HELP_TEXT,)
-    longitude = models.FloatField(null=True, blank=True, help_text=PUBLISHED_HELP_TEXT,)
+    latitude = models.FloatField(
+        null=True,
+        blank=True,
+        help_text=PUBLISHED_HELP_TEXT,
+    )
+    longitude = models.FloatField(
+        null=True,
+        blank=True,
+        help_text=PUBLISHED_HELP_TEXT,
+    )
 
     completed = models.BooleanField(
         default=False,
@@ -1638,16 +1709,25 @@ class TrainingRequest(
     )
 
     personal = models.CharField(
-        max_length=STR_LONG, verbose_name="Personal (given) name", blank=False,
+        max_length=STR_LONG,
+        verbose_name="Personal (given) name",
+        blank=False,
     )
     middle = models.CharField(
-        max_length=STR_LONG, verbose_name="Middle name", blank=True,
+        max_length=STR_LONG,
+        verbose_name="Middle name",
+        blank=True,
     )
     family = models.CharField(
-        max_length=STR_LONG, verbose_name="Family name (surname)", blank=False,
+        max_length=STR_LONG,
+        verbose_name="Family name (surname)",
+        blank=False,
     )
 
-    email = models.EmailField(verbose_name="Email address", blank=False,)
+    email = models.EmailField(
+        verbose_name="Email address",
+        blank=False,
+    )
     github = NullableGithubUsernameField(
         verbose_name="GitHub username",
         help_text="Please put only a single username here.",
@@ -1683,7 +1763,10 @@ class TrainingRequest(
     )
 
     affiliation = models.CharField(
-        max_length=STR_LONG, verbose_name="Affiliation", null=False, blank=False,
+        max_length=STR_LONG,
+        verbose_name="Affiliation",
+        null=False,
+        blank=False,
     )
 
     location = models.CharField(
@@ -2361,7 +2444,11 @@ class CommonRequest(SecondaryEmailMixin, models.Model):
         default="",
         verbose_name="Family (last) name",
     )
-    email = models.EmailField(blank=False, null=False, verbose_name="Email address",)
+    email = models.EmailField(
+        blank=False,
+        null=False,
+        verbose_name="Email address",
+    )
     institution = models.ForeignKey(
         Organization,
         on_delete=models.PROTECT,
@@ -2508,7 +2595,11 @@ class WorkshopRequest(
         verbose_name="Workshop location",
         help_text="City, state, or province.",
     )
-    country = CountryField(null=False, blank=False, verbose_name="Country",)
+    country = CountryField(
+        null=False,
+        blank=False,
+        verbose_name="Country",
+    )
     # This field is no longer needed, and is hidden in the form and templates.
     conference_details = models.CharField(
         max_length=STR_LONGEST,
@@ -2626,7 +2717,10 @@ class WorkshopRequest(
     # This field is no longer needed, and should be hidden in the form and
     # templates.
     domains_other = models.CharField(
-        max_length=STR_LONGEST, blank=True, default="", verbose_name="Other domains",
+        max_length=STR_LONGEST,
+        blank=True,
+        default="",
+        verbose_name="Other domains",
     )
     # MISSING
     # This field is no longer needed, and should be hidden in the form and

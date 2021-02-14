@@ -342,4 +342,46 @@ $(document).ready(function() {
     e.preventDefault();
     $("#assignment-form").trigger("submit");
   })
- });
+
+  // formset
+  let formsetBody = document.querySelector('#formset [data-formset-body]');
+  if (formsetBody) {
+    $("#formset").formset();
+
+    const attrName = "data-formset-form-deleted";
+    const formDeletedObserverConfig = {
+      attributes: true,
+      attributeFilter: [attrName]
+    };
+    const formDeletedHandler = (mutations) => {
+      mutations.forEach(mutation => {
+        if (mutation.type == "attributes" && mutation.attributeName == attrName) {
+          const fieldset = mutation.target;
+          // indicate fieldset is discarded, but don't disable it
+          // (disabled fields aren't sent by the browsers)
+          fieldset.classList.add("bg-light");
+        }
+      })
+    };
+
+    // don't existing fieldsets -> they're using the default, built-in "Delete" checkbox
+    // formsetBody.querySelectorAll("fieldset[data-formset-form]").forEach((element) => {
+    //   new MutationObserver(formDeletedHandler).observe(element, formDeletedObserverConfig);
+    // })
+
+    // handle new fieldsets
+    new MutationObserver((mutations) => {
+      mutations.forEach(mutation => {
+        mutation.addedNodes.forEach(element => {
+          if (element.tagName == "FIELDSET") {
+            // mutation observer to watch for data attributes
+            // added for each new fieldset
+            new MutationObserver(formDeletedHandler).observe(element, formDeletedObserverConfig);
+          }
+        })
+      })
+    }).observe(formsetBody, {
+      childList: true,
+    });
+  }
+});

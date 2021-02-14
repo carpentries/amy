@@ -15,10 +15,19 @@
 </p>
 <table class="table table-striped">
   <tr><th width="30%">Consortium:</th><td colspan="2">{{ membership.consortium|yesno|title }}</td></tr>
-  <tr><th>Organization:</th>
+  <tr><th>Organisations:</th>
       <td colspan="2">
-        <a href="{% url 'organization_details' membership.organization.domain %}">{{ membership.organization.fullname }}</a><br />
-          &lt;{{ membership.organization.domain|urlize }}&gt;</td></tr>
+        {% if membership.member_set.all %}
+          <ul>
+          {% for member in membership.member_set.all %}
+            <li><a href="{{ member.organization.get_absolute_url }}">{{ member.organization }}</a> (role: {{ member.role }})</li>
+          {% endfor %}
+          </ul>
+        {% else %}
+          <em>No organisation added.</em>
+        {% endif %}
+        <a href="{% url 'membership_members' membership.pk %}">Edit</a>
+      </td></tr>
   <tr><th>Status:</th><td colspan="2">{{ membership.get_public_status_display }}</td></tr>
   <tr><th>Variant:</th><td colspan="2">{{ membership.get_variant_display }}</td></tr>
   <tr><th>Start date:</th><td colspan="2">{{ membership.agreement_start }}</td></tr>
