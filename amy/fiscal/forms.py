@@ -5,6 +5,7 @@ from django.core.validators import RegexValidator
 from django.dispatch import receiver
 from markdownx.fields import MarkdownxFormField
 
+from fiscal.models import MembershipTask
 from workshops.forms import (
     BootstrapHelper,
     WidgetOverrideMixin,
@@ -208,6 +209,42 @@ class MemberForm(forms.ModelForm):
         ]
         widgets = {
             "organization": ModelSelect2Widget(data_view="organization-lookup"),
+            "role": ModelSelect2Widget(data_view="memberrole-lookup"),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # set up layout objects for the helpers - they're identical except for
+        # visibility of the delete checkbox
+        self.helper.layout = self.helper.build_default_layout(self)
+        self.helper_empty_form.layout = self.helper.build_default_layout(self)
+        self.helper.layout.append(Field("id"))
+        self.helper.layout.append(Field("DELETE"))  # visible; formset adds it
+        self.helper_empty_form.layout.append(Field("id"))
+        self.helper_empty_form.layout.append(
+            Div(Field("DELETE"), css_class="d-none")  # hidden
+        )
+
+
+class MembershipTaskForm(forms.ModelForm):
+    """Form intended to use in formset for creating multiple membership members."""
+
+    helper = BootstrapHelper(
+        add_cancel_button=False, form_tag=False, add_submit_button=False
+    )
+    helper_empty_form = BootstrapHelper(
+        add_cancel_button=False, form_tag=False, add_submit_button=False
+    )
+
+    class Meta:
+        model = MembershipTask
+        fields = [
+            "person",
+            "role",
+        ]
+        widgets = {
+            "person": ModelSelect2Widget(data_view="person-lookup"),
             "role": ModelSelect2Widget(data_view="memberrole-lookup"),
         }
 
