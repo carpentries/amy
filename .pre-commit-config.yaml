@@ -9,3 +9,4 @@ repos:
     rev: 3.8.4
     hooks:
     -   id: flake8
+        exclude: (migrations/|urls\.py)
