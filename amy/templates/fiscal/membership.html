@@ -36,7 +36,19 @@
   <tr><th>Registration Code:</th><td colspan="2">{{ membership.registration_code }}</td></tr>
   <tr><th>Agreement Document:</th>
       <td colspan="2">{% if membership.agreement_link %}{{ membership.agreement_link|urlize }}{% else %}&mdash;{% endif %}</td></tr>
-
+  <tr><th>Persons:</th>
+      <td colspan="2">
+        {% if membership.membershiptask_set.all %}
+          <ul>
+          {% for person_task in membership.membershiptask_set.all %}
+            <li><a href="{{ person_task.person.get_absolute_url }}">{{ person_task.person }}</a> (role: {{ person_task.role }})</li>
+          {% endfor %}
+          </ul>
+        {% else %}
+          <em>No persons added.</em>
+        {% endif %}
+        <a href="{% url 'membership_tasks' membership.pk %}">Edit</a>
+      </td></tr>
   <tr>
     <th rowspan="4">Workshops without fee per agreement duration</th>
     <th>Allowed:</th>
