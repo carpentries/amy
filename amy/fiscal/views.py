@@ -282,7 +282,7 @@ class MembershipMembers(OnlyForAdminsMixin, MembershipFormsetView):
 
     def get_context_data(self, **kwargs):
         if "title" not in kwargs:
-            kwargs["title"] = "Change person roles for {}".format(self.membership)
+            kwargs["title"] = "Change members for {}".format(self.membership)
         return super().get_context_data(**kwargs)
 
 

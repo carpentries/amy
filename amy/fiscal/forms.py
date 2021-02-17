@@ -245,7 +245,7 @@ class MembershipTaskForm(forms.ModelForm):
         ]
         widgets = {
             "person": ModelSelect2Widget(data_view="person-lookup"),
-            "role": ModelSelect2Widget(data_view="memberrole-lookup"),
+            "role": ModelSelect2Widget(data_view="membershippersonrole-lookup"),
         }
 
     def __init__(self, *args, **kwargs):
