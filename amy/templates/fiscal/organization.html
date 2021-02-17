@@ -69,7 +69,7 @@
 
 <hr>
 
-{% if organization.membership_set.all %}
+{% if organization.memberships.all %}
 <h2>Memberships</h2>
 <table class="table table-striped">
   <tr>
@@ -88,7 +88,7 @@
     <th><small>Allowed</small></th><th><small>Utilized</small></th><th><small>Remaining</small></th>
     <th></th>
   </tr>
-  {% for membership in organization.membership_set.all %}
+  {% for membership in organization.memberships.all %}
   <tr>
     <td><a href="{{ membership.get_absolute_url }}">{{ membership.get_variant_display }}</a></td>
     <td>{{ membership.agreement_start }}</td>

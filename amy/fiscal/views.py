@@ -62,7 +62,7 @@ class AllOrganizations(OnlyForAdminsMixin, AMYListView):
     filter_class = OrganizationFilter
     queryset = Organization.objects.prefetch_related(
         Prefetch(
-            "membership_set",
+            "memberships",
             to_attr="current_memberships",
             queryset=Membership.objects.filter(
                 agreement_start__lte=Now(),
