@@ -38,15 +38,15 @@ Execute the following commands on your local machine, not production.
         upstream	git@github.com:carpentries/amy.git (fetch)
         upstream	git@github.com:carpentries/amy.git (push)
 
-3.  Make sure your local `develop` and `master` branches are up to date:
+3.  Make sure your local `develop` and `main` branches are up to date:
 
         $ git checkout develop
         $ git pull upstream develop
         $ git push origin develop
 
-        $ git checkout master
-        $ git pull upstream master
-        $ git push origin master
+        $ git checkout main
+        $ git pull upstream main
+        $ git push origin main
 
     Pushes to your `origin` remote are optional.
 
@@ -56,12 +56,12 @@ Execute the following commands on your local machine, not production.
         $ AMY_VERSION=v2.X.Y
         $ AMY_NEXT_VERSION=v2.X+1.0-dev
 
-5.  Merge `develop` into `master` branch (be careful, as there are sometimes conflicts that need to be manually resolved):
+5.  Merge `develop` into `main` branch (be careful, as there are sometimes conflicts that need to be manually resolved):
 
-        $ git checkout master
+        $ git checkout main
         $ git merge --no-ff develop
 
-6.  Bump version on `master`:
+6.  Bump version on `main`:
 
         $ make bumpversion CURRENT=$AMY_CURRENT NEXT=$AMY_VERSION
         $ git add amy/workshops/__init__.py package.json
@@ -78,10 +78,10 @@ Execute the following commands on your local machine, not production.
     Omit `-s` flag if you cannot create signed tags.
     See [Git documentation](https://git-scm.com/book/tr/v2/Git-Tools-Signing-Your-Work) for more info about signed tags.
 
-9.  Push `master` and the new tag everywhere:
+9.  Push `main` and the new tag everywhere:
 
-        $ git push origin master --tags
-        $ git push upstream master --tags
+        $ git push origin main --tags
+        $ git push upstream main --tags
 
 10. Bump version on `develop`:
 
