@@ -8,6 +8,7 @@ from django.contrib.auth.models import Group
 from django.conf.urls import url
 from django.db.models import Q, Count
 
+from fiscal.models import MembershipPersonRole
 from workshops import models
 from workshops.util import OnlyForAdminsNoRedirectMixin, LoginNotRequiredMixin
 
@@ -117,6 +118,16 @@ class MembershipLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
 class MemberRoleLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
     def get_queryset(self):
         q = models.MemberRole.objects.all()
+        if self.term:
+            return q.filter(
+                Q(name__icontains=self.term) | Q(verbose_name__icontains=self.term)
+            )
+        return q
+
+
+class MembershipPersonRoleLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
+    def get_queryset(self):
+        q = MembershipPersonRole.objects.all()
         if self.term:
             return q.filter(
                 Q(name__icontains=self.term) | Q(verbose_name__icontains=self.term)
@@ -260,6 +271,11 @@ urlpatterns = [
     ),
     url(r"^memberships/$", MembershipLookupView.as_view(), name="membership-lookup"),
     url(r"^member-roles/$", MemberRoleLookupView.as_view(), name="memberrole-lookup"),
+    url(
+        r"^membership-person-roles/$",
+        MembershipPersonRoleLookupView.as_view(),
+        name="membershippersonrole-lookup",
+    ),
     url(r"^persons/$", PersonLookupView.as_view(), name="person-lookup"),
     url(r"^admins/$", AdminLookupView.as_view(), name="admin-lookup"),
     url(r"^airports/$", AirportLookupView.as_view(), name="airport-lookup"),
