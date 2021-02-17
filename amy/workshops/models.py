@@ -1160,7 +1160,12 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
     country = CountryField(
         null=True,
         blank=True,
-        help_text=PUBLISHED_HELP_TEXT + "<br />Use <b>Online</b> for online events.",
+        help_text=PUBLISHED_HELP_TEXT
+        + "<br />For Data, Library, or Software Carpentry workshops, always "
+        +"use the country of the host organisation. <br />For Instructor "
+        +"Training, use the country only for in-person events, and use "
+        +"<b>Online</b> for online events. <br />Be sure to use the "
+        +"<b>online tag</b> above for all online events."
     )
     venue = models.CharField(
         max_length=STR_LONGEST,
