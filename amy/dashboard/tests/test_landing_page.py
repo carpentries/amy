@@ -21,11 +21,18 @@ class TestAdminDashboard(TestBase):
         """Test that the admin dashboard is passed some
         upcoming_events in the context."""
 
-        response = self.client.get(reverse('admin-dashboard'))
+        # clear out assigned_to to avoid the default filtering
+        response = self.client.get(f"{reverse('admin-dashboard')}?assigned_to=")
 
         # This will fail if the context variable doesn't exist
         events = response.context['current_events']
 
+        # all current events should be shown
+        num_current_events = (
+            Event.objects.upcoming_events() | Event.objects.ongoing_events()
+        ).active().count()
+        self.assertEqual(len(events), num_current_events)
+        
         # They should all be labeled 'upcoming'.
         assert all([('upcoming' in e.slug or 'ongoing' in e.slug)
                     for e in events])
@@ -67,7 +74,29 @@ class TestAdminDashboard(TestBase):
         self.assertNotIn(unresponsive, response.context['unpublished_events'])
         self.assertNotIn(cancelled, response.context['unpublished_events'])
         self.assertNotIn(completed, response.context['unpublished_events'])
+    
+    def test_default_events(self):
+        """The admin dashboard shows the events assigned to the current logged in 
+        user by default."""
+        upcoming_event = Event.objects.upcoming_events().first()
+        upcoming_event.assigned_to = self.admin
+        upcoming_event.save()
 
+        unpublished_event = Event.objects.active().unpublished_events().first()
+        unpublished_event.assigned_to = self.admin
+        unpublished_event.save()
+
+        
+        response = self.client.get(reverse('admin-dashboard'))
+
+        # This will fail if the context variable doesn't exist
+        current_events = response.context['current_events']
+        unpublished_events = response.context['unpublished_events']
+        assigned_to = response.context['assigned_to']
+
+        self.assertEqual(list(current_events), [upcoming_event])
+        self.assertEqual(list(unpublished_events), [unpublished_event])
+        self.assertEqual(assigned_to, self.admin) 
 
 class TestDispatch(TestBase):
     """Test that the right dashboard (trainee or admin dashboard) is displayed

@@ -55,7 +55,10 @@ def dispatch(request):
 def admin_dashboard(request):
     """Home page for admins."""
 
-    assignment_form = AssignmentForm(request.GET)
+    data = request.GET.copy()
+    if "assigned_to" not in data:
+        data["assigned_to"] = request.user.id
+    assignment_form = AssignmentForm(data)
     assigned_to: Optional[Person] = None
     if assignment_form.is_valid():
         assigned_to = assignment_form.cleaned_data["assigned_to"]
@@ -81,10 +84,9 @@ def admin_dashboard(request):
     # assigned events that have unaccepted changes
     updated_metadata = Event.objects.active().filter(metadata_changed=True)
 
-    if assigned_to is not None:
-        current_events = current_events.filter(assigned_to=assigned_to)
-        unpublished_events = unpublished_events.filter(assigned_to=assigned_to)
-        updated_metadata = updated_metadata.filter(assigned_to=assigned_to)
+    current_events = current_events.filter(assigned_to=assigned_to)
+    unpublished_events = unpublished_events.filter(assigned_to=assigned_to)
+    updated_metadata = updated_metadata.filter(assigned_to=assigned_to)
 
     context = {
         'title': None,
