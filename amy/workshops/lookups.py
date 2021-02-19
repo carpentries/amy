@@ -253,6 +253,31 @@ class LanguageLookupView(LoginNotRequiredMixin, AutoResponseView):
         return results
 
 
+
+class KnowledgeDomainLookupView(LoginNotRequiredMixin, AutoResponseView):
+    def dispatch(self, request, *args, **kwargs):
+        self.subtag = "subtag" in request.GET.keys()
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+        results = models.KnowledgeDomain.objects.all()
+
+        if self.term:
+            results = results.filter(
+                Q(name__icontains=self.term) | Q(subtag__icontains=self.term)
+            )
+
+            if self.subtag:
+                return results.filter(subtag__iexact=self.term)
+
+        results = results.annotate(person_count=Count("person")).order_by(
+            "-person_count"
+        )
+
+        return results
+
+
+
 class TrainingRequestLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
     """The same as PersonLookup, but allows only to select administrators.
 
@@ -311,6 +336,7 @@ urlpatterns = [
     url(r"^admins/$", AdminLookupView.as_view(), name="admin-lookup"),
     url(r"^airports/$", AirportLookupView.as_view(), name="airport-lookup"),
     url(r"^languages/$", LanguageLookupView.as_view(), name="language-lookup"),
+    url(r"^knowledge_domains/$", KnowledgeDomainLookupView.as_view(), name="knowledge-domains-lookup"),
     url(
         r"^training_requests/$",
         TrainingRequestLookupView.as_view(),

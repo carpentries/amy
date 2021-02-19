@@ -17,6 +17,7 @@ from workshops.models import (
     Role,
     Tag,
     Language,
+    KnowledgeDomain
 )
 from workshops.util import universal_date_format
 
@@ -143,6 +144,16 @@ class TestBase(
         self.latin, _ = Language.objects.get_or_create(
             name="Latin",
         )
+        self.english, _ = Language.objects.get_or_create(name="English",)
+        self.french, _ = Language.objects.get_or_create(name="French",)
+        self.latin, _ = Language.objects.get_or_create(name="Latin",)
+    
+    def _setUpDomains(self):
+        """Set up knowledge domain objects."""
+
+        self.chemistry, _ = KnowledgeDomain.objects.get_or_create(name="Chemistry",)
+        self.medicine, _ = KnowledgeDomain.objects.get_or_create(name="Medicine",)
+        self.humanities, _ = KnowledgeDomain.objects.get_or_create(name="Humanities",)
 
     def _setUpBadges(self):
         """Set up badge objects."""
