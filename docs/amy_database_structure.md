@@ -105,7 +105,7 @@ The primary tables used in AMY (that will likely appear in every query) are thos
 * `workshops_badge` Lists all available badges (SWC/DC/LC Instructor, Trainer, etc.)
     * `id` Sequential, automatically assigned integer. This is used by `badge_id` in the `workshops_award` table.
     * `criteria` Description of what this badge is
-    * `title` Verbose name of badge (e.g., *Software Carpentry Instructor* or *Trainer*)
+    * `title` Verbose, human friendly name of badge (e.g., *Software Carpentry Instructor* or *Trainer*)
     * `name` "back-end" badge name (e.g., *swc-instructor*, *trainer*)
 
 * `workshops_award` Connects `workshops_badge` and `workshops_person` tables to show what Badges have been awarded to what Persons
@@ -119,9 +119,21 @@ The primary tables used in AMY (that will likely appear in every query) are thos
 ## Roles
 
 * `workshops_role` Lists all available roles (Instructor, Helper, Learner, etc.)
-* `workshops_task` Connects `workshops_role`, `workshops_event`, and `workshops_person` tables to show what what Persons have served in what Roles at what Events
+    * `id`  Sequential, automatically assigned integer.
+    * `verbose_name`  Verbose, human friendly name of role (e.g., *Workshop host*, *Supporting Instructor*)
+    * `name`  "back end" task name (e.g., *workshop-host*, *supporting-instructor*)
 
-More information to come
+* `workshops_task` Connects `workshops_role`, `workshops_event`, and `workshops_person` tables to show what what Persons have served in what Roles at what Events
+    * `id`  Sequential, automatically assigned integer.
+    * `event_id` An integer representing the event the person was at.  This is linked to the `workshops_event` table
+    * `person_id` An integer representing the person who was at the event.  This is linked to the `workshops_person` table
+    * `role_id` An integer representing the person's role.  This is linked to the `workshops_person` table
+    * `seat_membership_id` Used for Instructor Training Learner role only.  An integer representing the membership this seat was assigned to.
+    * `seat_open_training` Used for Instructor Training Learner role only. Boolean field noting whether this was an open (non-member) training seat.
+
+    ** Unused fields ** 
+    * `title` 
+    * `url`
 
 ## Tags
 
