@@ -103,10 +103,18 @@ The primary tables used in AMY (that will likely appear in every query) are thos
 ## Badges
 
 * `workshops_badge` Lists all available badges (SWC/DC/LC Instructor, Trainer, etc.)
+    * `id` Sequential, automatically assigned integer. This is used by `badge_id` in the `workshops_award` table.
+    * `criteria` Description of what this badge is
+    * `title` Verbose name of badge (e.g., *Software Carpentry Instructor* or *Trainer*)
+    * `name` "back-end" badge name (e.g., *swc-instructor*, *trainer*)
+
 * `workshops_award` Connects `workshops_badge` and `workshops_person` tables to show what Badges have been awarded to what Persons
-
-More information to come
-
+    * `id` Sequential, automatically assigned integer.
+    * `awarded` Date the badge was awarded. This is usually the date it was recorded in AMY, not the date the person completed all requirements.
+    * `badge_id` An integer representing the badge.  This is linked to the `workshops_badge` table
+    * `event_id` An integer representing the event the badge came from.  This is linked to the `workshops_event` table
+    * `person_id` An integer representing the person who got the badge.  This is linked to the `workshops_person` table
+    * `awarded_by_id` An integer representing the person who awarded the badge (entered it in AMY).  This is linked to the `workshops_person` table
 
 ## Roles
 
