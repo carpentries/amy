@@ -138,9 +138,15 @@ The primary tables used in AMY (that will likely appear in every query) are thos
 ## Tags
 
 * `workshops_tag` Lists all availabe tags for an Event (SWC, DC, LC, Online, Pilot, Circuits, etc.)
-* `workshops_event_tags` Connects `workshops_tag` and `workshops_event` to show what Tags have been applied to what Events
+    * `id`  Sequential, automatically assigned integer.
+    * `name`  "back end" tag name 
+    * `details` Description of what tag is used for
+    * `priority` Used to control the sort order in the AMY web interface. Not relevant for any other queries.
 
-More information to come
+* `workshops_event_tags` Connects `workshops_tag` and `workshops_event` to show what Tags have been applied to what Events
+    * `id`  Sequential, automatically assigned integer.
+    * `event_id` An integer representing the event that got that tag.  This is linked to the `workshops_event` table
+    * `tag_id` An integer representing the tag that was assigned to that event.  This is linked to the `workshops_tag` table.
 
 
 ## Training progress
