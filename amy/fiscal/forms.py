@@ -148,35 +148,35 @@ class MembershipForm(forms.ModelForm):
 class MembershipCreateForm(MembershipForm):
     comment = MarkdownxFormField(
         label="Comment",
-        help_text="This will be added to comments after the membership is " "created.",
+        help_text="This will be added to comments after the membership is created.",
         widget=forms.Textarea,
         required=False,
     )
 
-    helper = BootstrapHelper(
-        submit_label="Save membership and go to next screen", add_cancel_button=True
+    helper = BootstrapHelper(add_cancel_button=True)
+
+    main_organization = forms.ModelChoiceField(
+        Organization.objects.all(),
+        label="Main organisation",
+        required=True,
+        widget=ModelSelect2Widget(data_view="organization-lookup"),
+        help_text="Select main organisation (e.g. Signatory in case of consortium).",
     )
 
     class Meta(MembershipForm.Meta):
         fields = MembershipForm.Meta.fields.copy()
+        fields.insert(0, "main_organization")
         fields.append("comment")
+
+    class Media:
+        js = ("membership_create.js",)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        ORGANIZATIONS_FORMSET_WARNING = (
-            "You will be able to select organisations for this membership on the "
-            "next screen."
-        )
-        self.helper.layout.insert(
-            0,
-            Div(
-                Div(
-                    HTML(ORGANIZATIONS_FORMSET_WARNING),
-                    css_class="alert alert-info offset-lg-2 col-lg-8 col-12",
-                ),
-                css_class="form-group row",
-            ),
+        self.fields["consortium"].help_text += (
+            "<br>If you select this option, you'll be taken to the next screen to "
+            "select organisations engaged in consortium."
         )
 
     def save(self, *args, **kwargs):
