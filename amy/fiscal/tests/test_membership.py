@@ -199,6 +199,9 @@ class TestMembershipForms(TestBase):
         comment content is saved."""
         self.assertEqual(Comment.objects.count(), 0)
         data = {
+            "main_organization": self.org_alpha.pk,
+            "name": "Test Membership",
+            "consortium": False,
             "public_status": "public",
             "agreement_start": date(2021, 1, 28),
             "agreement_end": date(2022, 1, 28),
@@ -217,6 +220,9 @@ class TestMembershipForms(TestBase):
         comment content is saved."""
         self.assertEqual(Comment.objects.count(), 0)
         data = {
+            "main_organization": self.org_alpha.pk,
+            "name": "Test Membership",
+            "consortium": False,
             "public_status": "public",
             "agreement_start": date(2021, 1, 28),
             "agreement_end": date(2022, 1, 28),
@@ -245,6 +251,8 @@ class TestMembershipForms(TestBase):
 
         # let's add a membership for one of the organizations
         membership = Membership.objects.create(
+            name="Test Membership",
+            consortium=False,
             variant="partner",
             agreement_start=agreement_start,
             agreement_end=agreement_end,
@@ -264,6 +272,9 @@ class TestMembershipForms(TestBase):
 
         self.assertEqual(Comment.objects.count(), 0)
         data = {
+            "main_organization": self.org_alpha.pk,
+            "name": "Test Membership",
+            "consortium": False,
             "public_status": "public",
             "agreement_start": date(2021, 1, 28),
             "agreement_end": date(2022, 1, 28),
@@ -279,6 +290,9 @@ class TestMembershipForms(TestBase):
     def test_membership_agreement_dates_validation(self):
         """Validate invalid agreement end date (can't be sooner than start date)."""
         data = {
+            "main_organization": self.org_alpha.pk,
+            "name": "Test Membership",
+            "consortium": False,
             "public_status": "public",
             "agreement_start": date(2021, 1, 26),
             "agreement_end": date(2020, 1, 26),
@@ -300,8 +314,10 @@ class TestNewMembershipWorkflow(TestBase):
         super().setUp()
         self._setUpUsersAndLogin()
 
-    def setUpMembership(self):
+    def setUpMembership(self, consortium: bool):
         self.membership = Membership.objects.create(
+            name="Test Membership",
+            consortium=consortium,
             public_status="public",
             variant="partner",
             agreement_start="2021-02-14",
@@ -312,8 +328,31 @@ class TestNewMembershipWorkflow(TestBase):
         )
         self.member_role = MemberRole.objects.first()
 
-    def test_new_membership_redirects_to_members(self):
+    def test_new_nonconsortium_membership_redirects_to_details(self):
         data = {
+            "main_organization": self.org_alpha.pk,
+            "name": "Test Membership",
+            "consortium": False,
+            "public_status": "public",
+            "variant": "partner",
+            "agreement_start": "2021-02-14",
+            "agreement_end": "2022-02-14",
+            "contribution_type": "financial",
+            "seats_instructor_training": 0,
+            "additional_instructor_training_seats": 0,
+        }
+        response = self.client.post(reverse("membership_add"), data=data)
+        latest_membership = Membership.objects.order_by("-id").first()
+
+        self.assertRedirects(
+            response, reverse("membership_details", args=[latest_membership.pk])
+        )
+
+    def test_new_consortium_membership_redirects_to_members(self):
+        data = {
+            "main_organization": self.org_alpha.pk,
+            "name": "Test Membership",
+            "consortium": True,
             "public_status": "public",
             "variant": "partner",
             "agreement_start": "2021-02-14",
@@ -329,8 +368,11 @@ class TestNewMembershipWorkflow(TestBase):
             response, reverse("membership_members", args=[latest_membership.pk])
         )
 
-    def test_new_membership_has_no_members(self):
+    def test_new_nonconsortium_membership_has_main_member(self):
         data = {
+            "main_organization": self.org_alpha.pk,
+            "name": "Test Membership",
+            "consortium": False,
             "public_status": "public",
             "variant": "partner",
             "agreement_start": "2021-02-14",
@@ -343,10 +385,79 @@ class TestNewMembershipWorkflow(TestBase):
 
         latest_membership = Membership.objects.order_by("-id").first()
         self.assertEqual(response.context["membership"], latest_membership)
-        self.assertEqual(latest_membership.member_set.count(), 0)
+        self.assertEqual(latest_membership.member_set.count(), 1)
+        member = latest_membership.member_set.first()
+        self.assertEqual(member.role.name, "main")
+        self.assertEqual(member.organization, self.org_alpha)
 
-    def test_adding_new_members(self):
-        self.setUpMembership()
+    def test_new_consortium_membership_has_main_member(self):
+        data = {
+            "main_organization": self.org_alpha.pk,
+            "name": "Test Membership",
+            "consortium": True,
+            "public_status": "public",
+            "variant": "partner",
+            "agreement_start": "2021-02-14",
+            "agreement_end": "2022-02-14",
+            "contribution_type": "financial",
+            "seats_instructor_training": 0,
+            "additional_instructor_training_seats": 0,
+        }
+        response = self.client.post(reverse("membership_add"), data=data, follow=True)
+
+        latest_membership = Membership.objects.order_by("-id").first()
+        self.assertEqual(response.context["membership"], latest_membership)
+        self.assertEqual(latest_membership.member_set.count(), 1)
+        member = latest_membership.member_set.first()
+        self.assertEqual(member.role.name, "contract_signatory")
+        self.assertEqual(member.organization, self.org_alpha)
+
+    def test_adding_new_member_to_nonconsortium(self):
+        self.setUpMembership(consortium=False)
+        self.assertEqual(self.membership.member_set.count(), 0)
+        # only 1 member allowed
+        data = {
+            "form-TOTAL_FORMS": 1,
+            "form-INITIAL_FORMS": 0,
+            "form-MIN_NUM_FORMS": 0,
+            "form-MAX_NUM_FORMS": 1000,
+            "form-0-organization": self.org_alpha.pk,
+            "form-0-role": self.member_role.pk,
+            "form-0-id": "",
+        }
+        response = self.client.post(
+            reverse("membership_members", args=[self.membership.pk]),
+            data=data,
+            follow=True,
+        )
+
+        self.assertRedirects(
+            response, reverse("membership_details", args=[self.membership.pk])
+        )
+        self.assertEqual(self.membership.member_set.count(), 1)
+        self.assertEqual(list(self.membership.organizations.all()), [self.org_alpha])
+
+        # posting this will fail
+        data = {
+            "form-TOTAL_FORMS": 2,
+            "form-INITIAL_FORMS": 0,
+            "form-MIN_NUM_FORMS": 0,
+            "form-MAX_NUM_FORMS": 1000,
+            "form-0-organization": self.org_alpha.pk,
+            "form-0-role": self.member_role.pk,
+            "form-0-id": "",
+            "form-1-organization": self.org_beta.pk,
+            "form-1-role": self.member_role.pk,
+            "form-1-id": "",
+        }
+        response = self.client.post(
+            reverse("membership_members", args=[self.membership.pk]),
+            data=data,
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_adding_new_members_to_consortium(self):
+        self.setUpMembership(consortium=True)
         self.assertEqual(self.membership.member_set.count(), 0)
         data = {
             "form-TOTAL_FORMS": 2,
@@ -374,8 +485,34 @@ class TestNewMembershipWorkflow(TestBase):
             list(self.membership.organizations.all()), [self.org_alpha, self.org_beta]
         )
 
-    def test_removing_members(self):
-        self.setUpMembership()
+    def test_removing_members_from_nonconsortium(self):
+        self.setUpMembership(consortium=False)
+        m1 = Member.objects.create(
+            organization=self.org_alpha,
+            membership=self.membership,
+            role=self.member_role,
+        )
+
+        data = {
+            "form-TOTAL_FORMS": 1,
+            "form-INITIAL_FORMS": 1,
+            "form-MIN_NUM_FORMS": 0,
+            "form-MAX_NUM_FORMS": 1000,
+            "form-0-organization": m1.organization.pk,
+            "form-0-role": m1.role.pk,
+            "form-0-id": m1.pk,
+            "form-0-DELETE": "on",
+        }
+        response = self.client.post(
+            reverse("membership_members", args=[self.membership.pk]),
+            data=data,
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)  # response failed
+        self.assertEqual(list(self.membership.organizations.all()), [self.org_alpha])
+
+    def test_removing_members_from_consortium(self):
+        self.setUpMembership(consortium=True)
         m1 = Member.objects.create(
             organization=self.org_alpha,
             membership=self.membership,
@@ -410,11 +547,10 @@ class TestNewMembershipWorkflow(TestBase):
         self.assertRedirects(
             response, reverse("membership_details", args=[self.membership.pk])
         )
-
         self.assertEqual(list(self.membership.organizations.all()), [])
 
-    def test_mix_adding_removing_members(self):
-        self.setUpMembership()
+    def test_mix_adding_removing_members_from_consortium(self):
+        self.setUpMembership(consortium=True)
         m1 = Member.objects.create(
             organization=self.org_alpha,
             membership=self.membership,
