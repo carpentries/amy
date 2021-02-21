@@ -46,15 +46,14 @@ def dispatch(request):
     """If user is admin, then show them admin dashboard; otherwise redirect
     them to trainee dashboard."""
     if request.user.is_admin:
-        return redirect(reverse('admin-dashboard'))
+        return redirect(reverse("admin-dashboard"))
     else:
-        return redirect(reverse('trainee-dashboard'))
+        return redirect(reverse("trainee-dashboard"))
 
 
 @admin_required
 def admin_dashboard(request):
     """Home page for admins."""
-
     data = request.GET.copy()
     if "assigned_to" not in data:
         data["assigned_to"] = request.user.id
@@ -63,22 +62,24 @@ def admin_dashboard(request):
     if assignment_form.is_valid():
         assigned_to = assignment_form.cleaned_data["assigned_to"]
 
-    current_events = (
-        Event.objects.upcoming_events() | Event.objects.ongoing_events()
-    ).active().prefetch_related('tags')
+    current_events = Event.objects.current_events().prefetch_related("tags")
 
     # This annotation may produce wrong number of instructors when
     # `unpublished_events` filters out events that contain a specific tag.
     # The bug was fixed in #1130.
     unpublished_events = (
-        Event.objects.active().unpublished_events().select_related('host').annotate(
+        Event.objects.active()
+        .unpublished_events()
+        .select_related("host")
+        .annotate(
             num_instructors=Count(
                 Case(
-                    When(task__role__name='instructor', then=Value(1)),
-                    output_field=IntegerField()
+                    When(task__role__name="instructor", then=Value(1)),
+                    output_field=IntegerField(),
                 )
             ),
-        ).order_by('-start')
+        )
+        .order_by("-start")
     )
 
     # assigned events that have unaccepted changes
@@ -89,15 +90,15 @@ def admin_dashboard(request):
     updated_metadata = updated_metadata.filter(assigned_to=assigned_to)
 
     context = {
-        'title': None,
-        'assignment_form': assignment_form,
-        'assigned_to': assigned_to,
-        'current_events': current_events,
-        'unpublished_events': unpublished_events,
-        'updated_metadata': updated_metadata.count(),
-        'main_tags': Tag.objects.main_tags(),
+        "title": None,
+        "assignment_form": assignment_form,
+        "assigned_to": assigned_to,
+        "current_events": current_events,
+        "unpublished_events": unpublished_events,
+        "updated_metadata": updated_metadata.count(),
+        "main_tags": Tag.objects.main_tags(),
     }
-    return render(request, 'dashboard/admin_dashboard.html', context)
+    return render(request, "dashboard/admin_dashboard.html", context)
 
 
 # ------------------------------------------------------------
@@ -107,13 +108,13 @@ def admin_dashboard(request):
 @login_required
 def trainee_dashboard(request):
     # Workshops person taught at
-    workshops = request.user.task_set.select_related('role', 'event')
+    workshops = request.user.task_set.select_related("role", "event")
 
     context = {
-        'title': 'Your profile',
-        'workshops': workshops,
+        "title": "Your profile",
+        "workshops": workshops,
     }
-    return render(request, 'dashboard/trainee_dashboard.html', context)
+    return render(request, "dashboard/trainee_dashboard.html", context)
 
 
 @login_required
@@ -121,32 +122,32 @@ def autoupdate_profile(request):
     person = request.user
     form = AutoUpdateProfileForm(instance=person)
 
-    if request.method == 'POST':
+    if request.method == "POST":
         form = AutoUpdateProfileForm(request.POST, instance=person)
 
         if form.is_valid() and form.instance == person:
             # save lessons
             person.lessons.clear()
-            for lesson in form.cleaned_data['lessons']:
+            for lesson in form.cleaned_data["lessons"]:
                 q = Qualification(lesson=lesson, person=person)
                 q.save()
 
             # don't save related lessons
-            del form.cleaned_data['lessons']
+            del form.cleaned_data["lessons"]
 
             person = form.save()
 
-            messages.success(request, 'Your profile was updated.')
+            messages.success(request, "Your profile was updated.")
 
-            return redirect(reverse('trainee-dashboard'))
+            return redirect(reverse("trainee-dashboard"))
         else:
-            messages.error(request, 'Fix errors below.')
+            messages.error(request, "Fix errors below.")
 
     context = {
-        'title': 'Update Your Profile',
-        'form': form,
+        "title": "Update Your Profile",
+        "form": form,
     }
-    return render(request, 'dashboard/autoupdate_profile.html', context)
+    return render(request, "dashboard/autoupdate_profile.html", context)
 
 
 @login_required
@@ -154,38 +155,54 @@ def training_progress(request):
     homework_form = SendHomeworkForm()
 
     # Add information about instructor training progress to request.user.
-    request.user = Person.objects \
-        .annotate_with_instructor_eligibility() \
-        .prefetch_related(Prefetch(
-            'badges',
-            to_attr='instructor_badges',
-            queryset=Badge.objects.instructor_badges()),
-        ).get(pk=request.user.pk)
+    request.user = (
+        Person.objects.annotate_with_instructor_eligibility()
+        .prefetch_related(
+            Prefetch(
+                "badges",
+                to_attr="instructor_badges",
+                queryset=Badge.objects.instructor_badges(),
+            ),
+        )
+        .get(pk=request.user.pk)
+    )
 
     progresses = request.user.trainingprogress_set.filter(discarded=False)
-    last_swc_homework = progresses.filter(
-        requirement__name='SWC Homework').order_by('-created_at').first()
+    last_swc_homework = (
+        progresses.filter(requirement__name="SWC Homework")
+        .order_by("-created_at")
+        .first()
+    )
     request.user.swc_homework_in_evaluation = (
-        last_swc_homework is not None and last_swc_homework.state == 'n')
-    last_dc_homework = progresses.filter(
-        requirement__name='DC Homework').order_by('-created_at').first()
+        last_swc_homework is not None and last_swc_homework.state == "n"
+    )
+    last_dc_homework = (
+        progresses.filter(requirement__name="DC Homework")
+        .order_by("-created_at")
+        .first()
+    )
     request.user.dc_homework_in_evaluation = (
-        last_dc_homework is not None and last_dc_homework.state == 'n')
-    last_lc_homework = progresses.filter(
-        requirement__name='LC Homework').order_by('-created_at').first()
+        last_dc_homework is not None and last_dc_homework.state == "n"
+    )
+    last_lc_homework = (
+        progresses.filter(requirement__name="LC Homework")
+        .order_by("-created_at")
+        .first()
+    )
     request.user.lc_homework_in_evaluation = (
-        last_lc_homework is not None and last_lc_homework.state == 'n')
+        last_lc_homework is not None and last_lc_homework.state == "n"
+    )
 
-    if request.method == 'POST':
+    if request.method == "POST":
         homework_form = SendHomeworkForm(data=request.POST)
         if homework_form.is_valid():
             # read homework type from POST
-            hw_type = homework_form.cleaned_data['requirement']
+            hw_type = homework_form.cleaned_data["requirement"]
 
             # create "empty" progress object and fill out
             progress = TrainingProgress(
                 trainee=request.user,
-                state='n',  # not evaluated yet
+                state="n",  # not evaluated yet
                 requirement=hw_type,
             )
 
@@ -193,15 +210,16 @@ def training_progress(request):
             form = SendHomeworkForm(data=request.POST, instance=progress)
             if form.is_valid():
                 form.save()
-                messages.success(request, "Your homework submission will be "
-                                          "evaluated soon.")
-                return redirect(reverse('training-progress'))
+                messages.success(
+                    request, "Your homework submission will be " "evaluated soon."
+                )
+                return redirect(reverse("training-progress"))
 
     context = {
-        'title': 'Your training progress',
-        'homework_form': homework_form,
+        "title": "Your training progress",
+        "homework_form": homework_form,
     }
-    return render(request, 'dashboard/training_progress.html', context)
+    return render(request, "dashboard/training_progress.html", context)
 
 
 # ------------------------------------------------------------
@@ -310,7 +328,8 @@ def search(request):
             if only_result and not form.cleaned_data["no_redirect"]:
                 msg = format_html(
                     "You were moved to this page, because your search <i>{}</i> "
-                    "yields only this result.", term
+                    "yields only this result.",
+                    term,
                 )
                 if isinstance(only_result, Comment):
                     messages.success(request, msg)
