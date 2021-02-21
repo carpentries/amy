@@ -4,7 +4,12 @@ from django.db import migrations, models
 import django.db.models.deletion
 
 
-DEFAULT_ROLES = (("default", "Default"),)
+DEFAULT_ROLES = (
+    # ("default", "Default"),
+    ("main", "Main Organisation"),
+    ("contract_signatory", "Contract Signatory"),
+    ("workshop_coordinator", "Workshop Coordinator"),
+)
 
 
 def create_default_member_roles(apps, schema_editor):
@@ -34,23 +39,22 @@ def copy_organisation_to_organisations(apps, schema_editor):
     Membership = apps.get_model("workshops", "Membership")
 
     for membership in Membership.objects.all():
-        Member.objects.create(
-            membership=membership,
-            organization=membership.organization,
-            role=default_role,
-        )
+        if membership.organization:
+            Member.objects.create(
+                membership=membership,
+                organization=membership.organization,
+                role=default_role,
+            )
 
 
 def copy_default_organisations_to_organisation(apps, schema_editor):
     """Reverse `copy_organisation_to_organisations`."""
-    Member = apps.get_model("workshops", "Member")
-    MemberRole = apps.get_model("workshops", "MemberRole")
-    default_role = MemberRole.objects.get(name=DEFAULT_ROLES[0][0])
-
-    for member in Member.objects.filter(role=default_role):
-        membership = member.membership
-        membership.organization = member.organization
-        membership.save()
+    Membership = apps.get_model("workshops", "Membership")
+    for membership in Membership.objects.all():
+        if not membership.organization:
+            first_member = membership.member_set.order_by("role__id").first()
+            membership.organization = first_member.organization
+            membership.save()
 
 
 class Migration(migrations.Migration):
