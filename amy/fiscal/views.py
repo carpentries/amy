@@ -41,6 +41,7 @@ from workshops.base_views import (
 from workshops.models import (
     Organization,
     Member,
+    MemberRole,
     Membership,
     Sponsorship,
     Task,
@@ -205,10 +206,29 @@ class MembershipCreate(
                 f"It should be: {next_year:%Y-%m-%d}.",
             )
 
-        return super().form_valid(form)
+        main_organization: Organization = form.cleaned_data["main_organization"]
+        self.consortium: bool = form.cleaned_data["consortium"]
+
+        return_data = super().form_valid(form)
+
+        if self.consortium:
+            self.object.member_set.create(
+                organization=main_organization,
+                role=MemberRole.objects.get(name="contract_signatory"),
+                membership=self.object,
+            )
+        else:
+            self.object.member_set.create(
+                organization=main_organization,
+                role=MemberRole.objects.get(name="main"),
+                membership=self.object,
+            )
+
+        return return_data
 
     def get_success_url(self):
-        return reverse("membership_members", args=[self.object.pk])
+        path = "membership_members" if self.consortium else "membership_details"
+        return reverse(path, args=[self.object.pk])
 
 
 class MembershipUpdate(
@@ -237,11 +257,14 @@ class MembershipFormsetView(FormView):
         self.membership = get_object_or_404(Membership, pk=self.kwargs["membership_id"])
         return super().dispatch(request, *args, **kwargs)
 
+    def get_formset_kwargs(self):
+        return {
+            "extra": 0,
+            "can_delete": True,
+        }
+
     def get_form_class(self):
-        extra = 0
-        if not self.membership.persons.all():
-            extra = 1
-        return self.get_formset(extra=extra, can_delete=True)
+        return self.get_formset(**self.get_formset_kwargs())
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -272,6 +295,14 @@ class MembershipFormsetView(FormView):
 
 
 class MembershipMembers(OnlyForAdminsMixin, MembershipFormsetView):
+    def get_formset_kwargs(self):
+        kwargs = super().get_formset_kwargs()
+        if not self.membership.consortium:
+            kwargs["can_delete"] = False
+            kwargs["max_num"] = 1
+            kwargs["validate_max"] = True
+        return kwargs
+
     def get_formset(self, *args, **kwargs):
         return modelformset_factory(Member, MemberForm, *args, **kwargs)
 
