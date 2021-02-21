@@ -106,6 +106,7 @@ class Member(models.Model):
 class Membership(models.Model):
     """Represent a details of Organization's membership."""
 
+    name = models.CharField(max_length=STR_LONG)
     MEMBERSHIP_CHOICES = (
         ("partner", "Partner"),
         ("affiliate", "Affiliate"),
@@ -219,13 +220,11 @@ class Membership(models.Model):
 
         dates = human_daterange(self.agreement_start, self.agreement_end)
         variant = self.variant.title()
-        first_org = self.organizations.first()
-        org_name = first_org.fullname if first_org else "n/a"
 
         if self.consortium:
-            return f"{variant} membership {dates} (consortium incl. {org_name})"
+            return f"{self.name} {variant} membership {dates} (consortium)"
         else:
-            return f"{variant} membership {dates} ({org_name})"
+            return f"{self.name} {variant} membership {dates}"
 
     def get_absolute_url(self):
         return reverse("membership_details", args=[self.id])
@@ -1162,10 +1161,10 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         blank=True,
         help_text=PUBLISHED_HELP_TEXT
         + "<br />For Data, Library, or Software Carpentry workshops, always "
-        +"use the country of the host organisation. <br />For Instructor "
-        +"Training, use the country only for in-person events, and use "
-        +"<b>Online</b> for online events. <br />Be sure to use the "
-        +"<b>online tag</b> above for all online events."
+        + "use the country of the host organisation. <br />For Instructor "
+        + "Training, use the country only for in-person events, and use "
+        + "<b>Online</b> for online events. <br />Be sure to use the "
+        + "<b>online tag</b> above for all online events.",
     )
     venue = models.CharField(
         max_length=STR_LONGEST,

@@ -87,6 +87,7 @@ class MembershipForm(forms.ModelForm):
     class Meta:
         model = Membership
         fields = [
+            "name",
             "consortium",
             "public_status",
             "variant",

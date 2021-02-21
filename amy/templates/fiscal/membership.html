@@ -14,8 +14,9 @@
   {% endif %}
 </p>
 <table class="table table-striped">
-  <tr><th width="30%">Consortium:</th><td colspan="2">{{ membership.consortium|yesno|title }}</td></tr>
-  <tr><th>Organisations:</th>
+  <tr><th width="30%">Name:</th><td colspan="2">{{ membership.name }}</td></tr>
+  <tr><th>Consortium:</th><td colspan="2">{{ membership.consortium|yesno|title }}</td></tr>
+  <tr><th>Organisations (members):</th>
       <td colspan="2">
         {% if membership.member_set.all %}
           <ul>
