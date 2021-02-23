@@ -240,10 +240,8 @@ class TestLocateWorkshopStaff(TestBase):
         self._setUpDomains()
         # Ron has a humanities knowledge domain
         self.ron.domains.add(self.humanities)
-        self.ron.save()
         # Harry has a chemistry knowledge domain
         self.harry.domains.add(self.chemistry)
-        self.harry.save()
 
         response = self.client.get(
             self.url,
@@ -263,10 +261,8 @@ class TestLocateWorkshopStaff(TestBase):
         self._setUpDomains()
         # Ron has a humanities and chemistry knowledge domain
         self.ron.domains.add(self.humanities, self.chemistry)
-        self.ron.save()
         # Harry has a chemistry knowledge domain
         self.harry.domains.add(self.chemistry)
-        self.harry.save()
 
         response = self.client.get(
             self.url,
