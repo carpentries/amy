@@ -257,7 +257,8 @@ class WorkshopStaffForm(forms.Form):
         required=False,
         queryset=KnowledgeDomain.objects.all(),
         widget=ModelSelect2MultipleWidget(
-            data_view="knowledge-domains-lookup", attrs=SELECT2_SIDEBAR,
+            data_view="knowledge-domains-lookup",
+            attrs=SELECT2_SIDEBAR,
         ),
     )
     country = forms.MultipleChoiceField(

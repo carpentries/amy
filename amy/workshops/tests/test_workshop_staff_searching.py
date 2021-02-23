@@ -232,6 +232,7 @@ class TestLocateWorkshopStaff(TestBase):
         self.assertIn(self.ron, response.context['persons'])
         self.assertNotIn(self.harry, response.context['persons'])
     
+
     def test_match_on_one_domain(self):
         """Ensure people with one particular knowledge domain preference
         are returned by search."""
@@ -247,13 +248,13 @@ class TestLocateWorkshopStaff(TestBase):
         response = self.client.get(
             self.url,
             {
-                'domains': [self.chemistry.pk],
-            }
+                "domains": [self.chemistry.pk],
+            },
         )
         self.assertEqual(response.status_code, 200)
 
-        self.assertIn(self.harry, response.context['persons'])
-        self.assertNotIn(self.ron, response.context['persons'])
+        self.assertIn(self.harry, response.context["persons"])
+        self.assertNotIn(self.ron, response.context["persons"])
 
     def test_match_on_many_domains(self):
         """Ensure people with a set of knowledge domain preferences
@@ -270,13 +271,13 @@ class TestLocateWorkshopStaff(TestBase):
         response = self.client.get(
             self.url,
             {
-                'domains': [self.chemistry.pk, self.humanities.pk],
-            }
+                "domains": [self.chemistry.pk, self.humanities.pk],
+            },
         )
         self.assertEqual(response.status_code, 200)
 
-        self.assertIn(self.ron, response.context['persons'])
-        self.assertNotIn(self.harry, response.context['persons'])
+        self.assertIn(self.ron, response.context["persons"])
+        self.assertNotIn(self.harry, response.context["persons"])
 
     def test_roles(self):
         """Ensure people with at least one helper/organizer roles are returned

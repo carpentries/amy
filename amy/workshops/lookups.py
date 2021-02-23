@@ -253,7 +253,6 @@ class LanguageLookupView(LoginNotRequiredMixin, AutoResponseView):
         return results
 
 
-
 class KnowledgeDomainLookupView(LoginNotRequiredMixin, AutoResponseView):
     def dispatch(self, request, *args, **kwargs):
         self.subtag = "subtag" in request.GET.keys()
@@ -275,7 +274,6 @@ class KnowledgeDomainLookupView(LoginNotRequiredMixin, AutoResponseView):
         )
 
         return results
-
 
 
 class TrainingRequestLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
@@ -336,7 +334,11 @@ urlpatterns = [
     url(r"^admins/$", AdminLookupView.as_view(), name="admin-lookup"),
     url(r"^airports/$", AirportLookupView.as_view(), name="airport-lookup"),
     url(r"^languages/$", LanguageLookupView.as_view(), name="language-lookup"),
-    url(r"^knowledge_domains/$", KnowledgeDomainLookupView.as_view(), name="knowledge-domains-lookup"),
+    url(
+        r"^knowledge_domains/$",
+        KnowledgeDomainLookupView.as_view(),
+        name="knowledge-domains-lookup",
+    ),
     url(
         r"^training_requests/$",
         TrainingRequestLookupView.as_view(),

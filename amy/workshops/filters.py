@@ -387,7 +387,7 @@ class WorkshopStaffFilter(AMYFilterSet):
         conjoined=True,  # `AND`
     )
     domains = django_filters.ModelMultipleChoiceFilter(
-        label='Knowledge Domains',
+        label="Knowledge Domains",
         queryset=KnowledgeDomain.objects.all(),
         conjoined=True,  # `AND`
     )
