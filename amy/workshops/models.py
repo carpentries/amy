@@ -998,6 +998,15 @@ class EventQuerySet(models.query.QuerySet):
 
         return queryset
 
+    def current_events(self):
+        """Return current events.
+
+        Current events are active ongoing events and active upcoming events
+        (see `ongoing_events` and `upcoming_events` above).
+        """
+        queryset = (self.upcoming_events() | self.ongoing_events()).active()
+        return queryset
+
     def unpublished_conditional(self):
         """Return conditional for events without: start OR country OR venue OR
         url OR are marked as 'cancelled' (ie. unpublished events). This will be
