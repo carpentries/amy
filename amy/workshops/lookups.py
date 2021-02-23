@@ -253,7 +253,7 @@ class LanguageLookupView(LoginNotRequiredMixin, AutoResponseView):
         return results
 
 
-class KnowledgeDomainLookupView(LoginNotRequiredMixin, AutoResponseView):
+class KnowledgeDomainLookupView(OnlyForAdminsNoRedirectMixin, AutoResponseView):
     def dispatch(self, request, *args, **kwargs):
         self.subtag = "subtag" in request.GET.keys()
         return super().dispatch(request, *args, **kwargs)
