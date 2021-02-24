@@ -1171,10 +1171,10 @@ class Event(AssignmentMixin, RQJobsMixin, models.Model):
         blank=True,
         help_text=PUBLISHED_HELP_TEXT
         + "<br />For Data, Library, or Software Carpentry workshops, always "
-        +"use the country of the host organisation. <br />For Instructor "
-        +"Training, use the country only for in-person events, and use "
-        +"<b>Online</b> for online events. <br />Be sure to use the "
-        +"<b>online tag</b> above for all online events."
+        + "use the country of the host organisation. <br />For Instructor "
+        + "Training, use the country only for in-person events, and use "
+        + "<b>Online</b> for online events. <br />Be sure to use the "
+        + "<b>online tag</b> above for all online events.",
     )
     venue = models.CharField(
         max_length=STR_LONGEST,
@@ -1703,11 +1703,21 @@ class TrainingRequest(
         ("open", "Open Training Application"),
     )
     REVIEW_CHOICES_NOTES = {
-        "preapproved": "If you have been invited to apply through an "
-        "institutional membership or other agreement "
-        "with The Carpentries.",
-        "open": "Submit application for review to receive a scholarship for "
-        "Instructor Training through our Open Application Program.",
+        "preapproved": (
+            "Use this if you have been invited to apply through an"
+            " institutional membership or other agreement with The"
+            " Carpentries. Please note your application materials and"
+            " information about your progress towards The Carpentries"
+            " Instructor certification may be shared with our contacts at your"
+            " member site."
+        ),
+        "open": (
+            "Submit application for review to receive a scholarship for"
+            " Instructor Training through our Open Application Program. Please"
+            " note your application materials may be shared with The"
+            " Carpentries Trainers in order to review and accept your"
+            " application."
+        ),
     }
     review_process = models.CharField(
         blank=False,
