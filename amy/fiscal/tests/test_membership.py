@@ -329,6 +329,8 @@ class TestNewMembershipWorkflow(TestBase):
         self.member_role = MemberRole.objects.first()
 
     def test_new_nonconsortium_membership_redirects_to_details(self):
+        """Ensure once created, new non-consortium membership redirects to it's details
+        page."""
         data = {
             "main_organization": self.org_alpha.pk,
             "name": "Test Membership",
@@ -349,6 +351,8 @@ class TestNewMembershipWorkflow(TestBase):
         )
 
     def test_new_consortium_membership_redirects_to_members(self):
+        """Ensure once created, new consortium membership redirects to member page
+        to edit the members."""
         data = {
             "main_organization": self.org_alpha.pk,
             "name": "Test Membership",
@@ -369,6 +373,8 @@ class TestNewMembershipWorkflow(TestBase):
         )
 
     def test_new_nonconsortium_membership_has_main_member(self):
+        """Ensure once created, new non-consortium membership will have a default member
+        organisation."""
         data = {
             "main_organization": self.org_alpha.pk,
             "name": "Test Membership",
@@ -391,6 +397,8 @@ class TestNewMembershipWorkflow(TestBase):
         self.assertEqual(member.organization, self.org_alpha)
 
     def test_new_consortium_membership_has_main_member(self):
+        """Ensure once created, new consortium membership will have a default member
+        organisation."""
         data = {
             "main_organization": self.org_alpha.pk,
             "name": "Test Membership",
@@ -413,8 +421,10 @@ class TestNewMembershipWorkflow(TestBase):
         self.assertEqual(member.organization, self.org_alpha)
 
     def test_adding_new_member_to_nonconsortium(self):
+        """Ensure only 1 member can be added to non-consortium membership."""
         self.setUpMembership(consortium=False)
         self.assertEqual(self.membership.member_set.count(), 0)
+
         # only 1 member allowed
         data = {
             "form-TOTAL_FORMS": 1,
@@ -437,7 +447,7 @@ class TestNewMembershipWorkflow(TestBase):
         self.assertEqual(self.membership.member_set.count(), 1)
         self.assertEqual(list(self.membership.organizations.all()), [self.org_alpha])
 
-        # posting this will fail
+        # posting this will fail because only 1 form in the formset is allowed
         data = {
             "form-TOTAL_FORMS": 2,
             "form-INITIAL_FORMS": 0,
@@ -455,8 +465,10 @@ class TestNewMembershipWorkflow(TestBase):
             data=data,
         )
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.membership.member_set.count(), 1)  # number didn't change
 
     def test_adding_new_members_to_consortium(self):
+        """Ensure 1+ members can be added to consortium membership."""
         self.setUpMembership(consortium=True)
         self.assertEqual(self.membership.member_set.count(), 0)
         data = {
@@ -486,6 +498,8 @@ class TestNewMembershipWorkflow(TestBase):
         )
 
     def test_removing_members_from_nonconsortium(self):
+        """Ensure removing the only member from non-consortium membership is not
+        allowed."""
         self.setUpMembership(consortium=False)
         m1 = Member.objects.create(
             organization=self.org_alpha,
@@ -512,6 +526,7 @@ class TestNewMembershipWorkflow(TestBase):
         self.assertEqual(list(self.membership.organizations.all()), [self.org_alpha])
 
     def test_removing_members_from_consortium(self):
+        """Ensure removing all members from consortium membership is allowed."""
         self.setUpMembership(consortium=True)
         m1 = Member.objects.create(
             organization=self.org_alpha,
@@ -550,6 +565,8 @@ class TestNewMembershipWorkflow(TestBase):
         self.assertEqual(list(self.membership.organizations.all()), [])
 
     def test_mix_adding_removing_members_from_consortium(self):
+        """Ensure a mixed-content formset for consortium membership members works
+        fine (e.g. a new member is added, and an old one is removed)."""
         self.setUpMembership(consortium=True)
         m1 = Member.objects.create(
             organization=self.org_alpha,
