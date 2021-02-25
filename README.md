@@ -32,6 +32,12 @@ before starting work on new features.
     $ cd amy
     ~~~
 
+1.   Configure git to automatically ignore revisions in the `.git-blame-ignore-revs`:
+
+    ~~~
+    $ git config blame.ignoreRevsFile .git-blame-ignore-revs
+    ~~~  
+
 1.  Install Django and other dependencies:
 
     ~~~
