@@ -1,8 +1,7 @@
 import sys
 import os
 import csv
-from django.core.exceptions import ObjectDoesNotExist
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from workshops.models import Award, Badge, Person
 
 
@@ -77,8 +76,8 @@ class Command(BaseCommand):
         for uid in usernames:
             try:
                 receiver = Person.objects.get(username=uid)
-            except Person.DoesNotExist as e:
-                self.stderr.write("{0} does not exist".format(username))
+            except Person.DoesNotExist:
+                self.stderr.write("{0} does not exist".format(uid))
             else:
                 name = receiver.full_name
 
@@ -88,7 +87,7 @@ class Command(BaseCommand):
                     username = records[uid]["awarded_by"]
                     try:
                         awarded_by = Person.objects.get(username=username).full_name
-                    except Person.DoesNotExist as e:
+                    except Person.DoesNotExist:
                         self.stderr.write(
                             "Person with username={0} who awarded {1} "
                             "does not exist".format(username, uid)

@@ -3,7 +3,7 @@ from django.db import IntegrityError
 from django.urls import reverse
 
 from workshops.tests.base import TestBase
-from workshops.models import Event, Organization, Sponsorship
+from workshops.models import Event, Sponsorship
 
 
 class TestSponsorshipModel(TestBase):
@@ -46,13 +46,13 @@ class TestSponsorshipModel(TestBase):
 
     def test_unique_together_constraint(self):
         """Check that no two sponsorships with same values can exist"""
-        sponsorship = Sponsorship.objects.create(
+        Sponsorship.objects.create(
             organization=self.org_beta,
             event=self.event,
             amount=500,
         )
         with self.assertRaises(IntegrityError):
-            sponsorship = Sponsorship.objects.create(
+            Sponsorship.objects.create(
                 organization=self.org_beta,
                 event=self.event,
                 amount=500,
@@ -163,7 +163,10 @@ class TestSponsorshipViews(TestBase):
             response,
             form="form",
             field=None,
-            errors="Sponsorship with this Organization, Event and Sponsorship amount already exists.",
+            errors=(
+                "Sponsorship with this Organization, Event and Sponsorship amount"
+                " already exists."
+            ),
         )
 
     def test_delete_sponsor(self):

@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import timedelta
 
 from django.utils import timezone
 from django.urls import reverse
@@ -290,9 +290,7 @@ class TestFindingReviewedDuplicates(TestBase):
         self.assertFalse(self.harry.duplication_reviewed_on)
         self.assertFalse(self.ron.duplication_reviewed_on)
 
-        rv = self.client.post(
-            self.review_url, {"person_id": [self.harry.pk, self.ron.pk]}
-        )
+        self.client.post(self.review_url, {"person_id": [self.harry.pk, self.ron.pk]})
 
         self.harry.refresh_from_db()
         self.ron.refresh_from_db()

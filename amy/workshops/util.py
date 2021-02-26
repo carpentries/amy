@@ -7,7 +7,7 @@ from hashlib import sha1
 from itertools import chain
 import logging
 import re
-from typing import Optional, Union, Tuple
+from typing import Optional, Union
 
 import requests
 import yaml
@@ -567,12 +567,16 @@ class Paginator(DjangoPaginator):
 
         L = items[0:5]
 
+        four_after_index = index + 4
+        one_after_index = index + 1
         if index - 3 == 5:
             # Fix when two sets, L_s and M_s, are disjoint but make a sequence
             # [... 3 4, 5 6 ...], then there should not be dots between them
-            M = items[index - 4 : index + 4] or items[0 : index + 1]
+            four_before_index = index - 4
+            M = items[four_before_index:four_after_index] or items[0:one_after_index]
         else:
-            M = items[index - 3 : index + 4] or items[0 : index + 1]
+            three_before_index = index - 3
+            M = items[three_before_index:four_after_index] or items[0:one_after_index]
 
         if index + 4 == length - 5:
             # Fix when two sets, M_s and R_s, are disjoint but make a sequence

@@ -1,7 +1,6 @@
 # coding: utf-8
 import datetime
 
-from django.contrib.auth.models import Group
 from django.http import Http404
 from django.test import RequestFactory
 
@@ -116,17 +115,13 @@ Other content.
     def test_fetching_event_metadata_timeout(self, mock):
         "Ensure 'fetch_workshop_metadata' reacts to timeout."
         website_url = "https://pbanaszkiewicz.github.io/workshop"
-        repo_url = (
-            "https://raw.githubusercontent.com/pbanaszkiewicz/"
-            "workshop/gh-pages/index.html"
-        )
         mock.register_uri(
             "GET",
             website_url,
             exc=requests.exceptions.ConnectTimeout,
         )
         with self.assertRaises(requests.exceptions.ConnectTimeout):
-            metadata = fetch_workshop_metadata(website_url)
+            fetch_workshop_metadata(website_url)
 
     def test_generating_url_to_index(self):
         tests = [

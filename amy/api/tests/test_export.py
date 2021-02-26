@@ -1,10 +1,7 @@
 import datetime
-import json
-from unittest.mock import patch
 
 from django.urls import reverse
-from rest_framework import status
-from rest_framework.test import APITestCase, APIRequestFactory
+from rest_framework.test import APITestCase
 
 from workshops.models import (
     Badge,
@@ -20,7 +17,6 @@ from workshops.models import (
     TrainingRequirement,
     TrainingProgress,
 )
-from workshops.util import universal_date_format
 
 
 class BaseExportingTest(APITestCase):
@@ -108,14 +104,14 @@ class TestExportingPersonData(BaseExportingTest):
 
         # award user some badges via awards (intermediary model)
         # one badge was awarded for the event
-        award1 = Award.objects.create(
+        Award.objects.create(
             person=self.user,
             badge=Badge.objects.get(name="swc-instructor"),
             event=event,
             awarded=datetime.date(2018, 6, 16),
         )
         # second badge was awarded without any connected event
-        award2 = Award.objects.create(
+        Award.objects.create(
             person=self.user,
             badge=Badge.objects.get(name="dc-instructor"),
             awarded=datetime.date(2018, 6, 16),

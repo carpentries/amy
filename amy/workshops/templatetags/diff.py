@@ -1,5 +1,4 @@
 from django import template
-from django.db.models import Q
 from django.utils.safestring import mark_safe
 
 from reversion_compare.helpers import html_diff, SEMANTIC

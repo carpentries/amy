@@ -1,5 +1,3 @@
-import re
-
 import django_filters
 from django.db.models import Q
 from django.forms import widgets
@@ -8,7 +6,6 @@ from django_countries import Countries
 from dashboard.models import Continent
 from workshops.fields import (
     Select2Widget,
-    Select2MultipleWidget,
     ModelSelect2Widget,
     ModelSelect2MultipleWidget,
 )

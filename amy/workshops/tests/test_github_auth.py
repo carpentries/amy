@@ -15,4 +15,4 @@ class TestGithubUsernameToUid(TestBase):
         get_user_mock.side_effect = ConnectionResetError
 
         with self.assertRaises(ValueError):
-            got = github_username_to_uid("asdf qwer")
+            github_username_to_uid("asdf qwer")

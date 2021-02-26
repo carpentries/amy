@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.contrib import messages
-from django.core.exceptions import ValidationError
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.deprecation import MiddlewareMixin

@@ -1,7 +1,6 @@
 from django import template
 from django.utils.safestring import mark_safe
 
-from workshops.models import TrainingRequest
 
 register = template.Library()
 

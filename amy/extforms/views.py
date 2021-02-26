@@ -1,7 +1,7 @@
 from django.contrib.sites.shortcuts import get_current_site
 from django.template.loader import get_template
 from django.urls import reverse_lazy
-from django.views.generic import TemplateView, RedirectView
+from django.views.generic import TemplateView
 
 from extforms.forms import (
     TrainingRequestForm,

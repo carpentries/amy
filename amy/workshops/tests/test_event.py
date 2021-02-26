@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta, date, timezone
 from urllib.parse import urlencode
-import unittest
 import sys
 
 from django.contrib.sites.models import Site

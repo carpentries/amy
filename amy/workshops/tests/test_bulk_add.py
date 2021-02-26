@@ -603,7 +603,7 @@ class TestBulkUploadAddsEmailAction(FakeRedisTestCaseMixin, CSVBulkUploadTestBas
             reply_to_header="",
             body_template="# Welcome",
         )
-        trigger = Trigger.objects.create(action="new-instructor", template=template)
+        Trigger.objects.create(action="new-instructor", template=template)
 
         # save scheduler and connection data
         self._saved_scheduler = workshops.views.scheduler

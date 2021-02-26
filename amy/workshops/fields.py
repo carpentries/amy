@@ -194,7 +194,7 @@ class Select2TagWidget(Select2BootstrapMixin, DS2_Select2TagWidget):
 
     def optgroups(self, name, value, attrs=None):
         """Example from
-        https://django-select2.readthedocs.io/en/latest/django_select2.html#django_select2.forms.Select2TagWidget"""
+        https://django-select2.readthedocs.io/en/latest/django_select2.html#django_select2.forms.Select2TagWidget"""  # noqa
         try:
             values = value[0].split(TAG_SEPARATOR)
         except (IndexError, AttributeError):

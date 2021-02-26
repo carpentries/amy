@@ -2,7 +2,7 @@ from datetime import datetime
 
 from django.urls import reverse
 
-from workshops.models import Person, Award, Badge, TrainingProgress, TrainingRequirement
+from workshops.models import Person, Award, TrainingProgress, TrainingRequirement
 from workshops.tests.base import TestBase
 
 
@@ -224,7 +224,7 @@ class TestSWCHomeworkStatus(TestBase):
         rv = self.client.get(self.progress_url)
         self.assertContains(rv, "SWC Homework not submitted yet")
 
-    def test_homework_is_accepted_when_last_homework_is_discarded_but_other_one_is_passed(
+    def test_homework_is_accepted_when_last_homework_is_discarded_but_other_one_is_passed(  # noqa: line too long
         self,
     ):
         TrainingProgress.objects.create(trainee=self.admin, requirement=self.homework)
@@ -291,7 +291,7 @@ class TestDCHomeworkStatus(TestBase):
         rv = self.client.get(self.progress_url)
         self.assertContains(rv, "DC Homework not submitted yet")
 
-    def test_homework_is_accepted_when_last_homework_is_discarded_but_other_one_is_passed(
+    def test_homework_is_accepted_when_last_homework_is_discarded_but_other_one_is_passed(  # noqa: line too long
         self,
     ):
         TrainingProgress.objects.create(trainee=self.admin, requirement=self.homework)
@@ -358,7 +358,7 @@ class TestLCHomeworkStatus(TestBase):
         rv = self.client.get(self.progress_url)
         self.assertContains(rv, "LC Homework not submitted yet")
 
-    def test_homework_is_accepted_when_last_homework_is_discarded_but_other_one_is_passed(
+    def test_homework_is_accepted_when_last_homework_is_discarded_but_other_one_is_passed(  # noqa: line too long
         self,
     ):
         TrainingProgress.objects.create(trainee=self.admin, requirement=self.homework)

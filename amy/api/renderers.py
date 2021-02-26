@@ -43,7 +43,7 @@ class TrainingRequestCSVColumns:
         "previous_experience_explanation": "Previous Experience (explanation)",
         "programming_language_usage_frequency": "Programming Language Usage",
         "teaching_frequency_expectation": "Teaching Frequency Expectation",
-        "teaching_frequency_expectation_other": "Teaching Frequency Expectation (other)",
+        "teaching_frequency_expectation_other": "Teaching Frequency Expectation (other)",  # noqa: line too long
         "max_travelling_frequency": "Max Travelling Frequency",
         "max_travelling_frequency_other": "Max Travelling Frequency (other)",
         "reason": "Reason for undertaking training",

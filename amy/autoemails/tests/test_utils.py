@@ -1,7 +1,6 @@
 from datetime import timedelta, datetime
 
-from django.test import TestCase, override_settings
-from django_rq import get_scheduler
+from django.test import TestCase
 import pytz
 from rq.queue import Queue
 from rq.worker import SimpleWorker

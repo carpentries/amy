@@ -638,7 +638,8 @@ class TestMatchingTrainingRequestAndDetailedView(TestBase):
             family="smith",
             email="john@smith.com",
         )
-        duplicate = Person.objects.create(
+        # duplicate
+        Person.objects.create(
             username="jonny_smith",
             personal="jonny",
             family="smith",
@@ -937,21 +938,21 @@ class TestTrainingRequestMerging(TestBase):
             "underresourced": self.first_req.underresourced,
             "domains_other": self.first_req.domains_other,
             "underrepresented": self.first_req.underrepresented,
-            "nonprofit_teaching_experience": self.first_req.nonprofit_teaching_experience,
+            "nonprofit_teaching_experience": self.first_req.nonprofit_teaching_experience,  # noqa: line too long
             "previous_training": self.first_req.previous_training,
             "previous_training_other": self.first_req.previous_training_other,
-            "previous_training_explanation": self.first_req.previous_training_explanation,
+            "previous_training_explanation": self.first_req.previous_training_explanation,  # noqa: line too long
             "previous_experience": self.first_req.previous_experience,
             "previous_experience_other": self.first_req.previous_experience_other,
-            "previous_experience_explanation": self.first_req.previous_experience_explanation,
-            "programming_language_usage_frequency": self.first_req.programming_language_usage_frequency,
-            "teaching_frequency_expectation": self.first_req.teaching_frequency_expectation,
-            "teaching_frequency_expectation_other": self.first_req.teaching_frequency_expectation_other,
+            "previous_experience_explanation": self.first_req.previous_experience_explanation,  # noqa: line too long
+            "programming_language_usage_frequency": self.first_req.programming_language_usage_frequency,  # noqa: line too long
+            "teaching_frequency_expectation": self.first_req.teaching_frequency_expectation,  # noqa: line too long
+            "teaching_frequency_expectation_other": self.first_req.teaching_frequency_expectation_other,  # noqa: line too long
             "max_travelling_frequency": self.first_req.max_travelling_frequency,
-            "max_travelling_frequency_other": self.first_req.max_travelling_frequency_other,
+            "max_travelling_frequency_other": self.first_req.max_travelling_frequency_other,  # noqa: line too long
             "reason": self.first_req.reason,
             "user_notes": self.first_req.user_notes,
-            "training_completion_agreement": self.first_req.training_completion_agreement,
+            "training_completion_agreement": self.first_req.training_completion_agreement,  # noqa: line too long
             "workshop_teaching_agreement": self.first_req.workshop_teaching_agreement,
             "data_privacy_agreement": self.first_req.data_privacy_agreement,
             "code_of_conduct_agreement": self.first_req.code_of_conduct_agreement,

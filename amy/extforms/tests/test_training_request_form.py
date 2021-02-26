@@ -1,6 +1,5 @@
 from django.core import mail
 from django.urls import reverse
-from webtest import forms
 
 from extforms.views import TrainingRequestCreate
 from workshops.models import Role, TrainingRequest

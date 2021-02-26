@@ -86,7 +86,7 @@ def navbar_element_permed(context, title, url_name, perms, dropdown=False):
     perms = perms.split(",")
     # True for every perm (from perms_ctx) that's granted to the user
     perms = map(lambda x: x in perms_ctx, perms)
-    disabled = not all(perms)  # or: enabled = all(perms)
+    not all(perms)  # or: enabled = all(perms)
 
     return mark_safe(navbar_template(title, url, active=active, dropdown=dropdown))
 
