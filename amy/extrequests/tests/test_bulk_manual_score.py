@@ -32,7 +32,7 @@ class UploadTrainingRequestManualScoreCSVTestCase(TestBase):
         # ensure data has correct format
         self.assertEqual(
             set(data[0].keys()),
-            set(TrainingRequest.MANUAL_SCORE_UPLOAD_FIELDS + ("errors", ))
+            set(TrainingRequest.MANUAL_SCORE_UPLOAD_FIELDS + ("errors",)),
         )
 
     def test_csv_without_required_field(self):
@@ -42,8 +42,8 @@ class UploadTrainingRequestManualScoreCSVTestCase(TestBase):
 1,123,"This person exceeded at receiving big manual score."
 2,-321,They did bad at our survey"""
         data = self.compute_from_string(bad_csv)
-        self.assertTrue(data[0]['score_manual'] is None)
-        self.assertTrue(data[1]['score_manual'] is None)
+        self.assertTrue(data[0]["score_manual"] is None)
+        self.assertTrue(data[1]["score_manual"] is None)
 
     def test_csv_with_empty_lines(self):
         csv = """request_id,score_manual,score_notes
@@ -58,7 +58,7 @@ class UploadTrainingRequestManualScoreCSVTestCase(TestBase):
 1,,'This person exceeded at receiving big manual score.'"""
         data = self.compute_from_string(csv)
         entry = data[0]
-        self.assertEqual(entry['score_manual'], '')
+        self.assertEqual(entry["score_manual"], "")
 
     def test_serializability_of_parsed(self):
         csv = """request_id,score_manual,score_notes
@@ -70,17 +70,19 @@ class UploadTrainingRequestManualScoreCSVTestCase(TestBase):
             serializer = JSONSerializer()
             serializer.dumps(data)
         except TypeError:
-            self.fail('Dumping manual scores for Training Requests into JSON '
-                      'unexpectedly failed!')
+            self.fail(
+                "Dumping manual scores for Training Requests into JSON "
+                "unexpectedly failed!"
+            )
 
     def test_malformed_CSV_with_proper_header_row(self):
         csv = """request_id,score_manual,score_notes
 This is a malformed CSV"""
         data = self.compute_from_string(csv)
         self.assertEqual(len(data), 1)
-        self.assertEqual(data[0]['request_id'], 'This is a malformed CSV')
-        self.assertEqual(data[0]['score_manual'], None)
-        self.assertEqual(data[0]['score_notes'], None)
+        self.assertEqual(data[0]["request_id"], "This is a malformed CSV")
+        self.assertEqual(data[0]["score_manual"], None)
+        self.assertEqual(data[0]["score_notes"], None)
 
 
 class CSVBulkUploadTestBase(TestBase):
@@ -88,22 +90,22 @@ class CSVBulkUploadTestBase(TestBase):
 
     def setUp(self):
         """Prepare some existing Training Requests."""
-        self.tr1 = create_training_request(state='p', person=None)
+        self.tr1 = create_training_request(state="p", person=None)
         self.tr1.score_manual = 10
         self.tr1.score_notes = "This request received positive manual score"
         self.tr1.save()
 
-        self.tr2 = create_training_request(state='p', person=None)
+        self.tr2 = create_training_request(state="p", person=None)
         self.tr2.score_manual = -10
         self.tr2.score_notes = "This request received negative manual score"
         self.tr2.save()
 
-        self.tr3 = create_training_request(state='p', person=None)
+        self.tr3 = create_training_request(state="p", person=None)
         self.tr3.score_manual = 0
         self.tr3.score_notes = "This request was manually scored to zero"
         self.tr3.save()
 
-        self.tr4 = create_training_request(state='p', person=None)
+        self.tr4 = create_training_request(state="p", person=None)
         self.tr4.score_manual = None
         self.tr4.score_notes = "This request hasn't been scored manually"
         self.tr4.save()
@@ -137,92 +139,93 @@ class CleanUploadTrainingRequestManualScore(CSVBulkUploadTestBase):
         has_errors, cleaned = clean_upload_trainingrequest_manual_score(data)
         self.assertFalse(has_errors)
         # empty list evaluates to False
-        self.assertFalse(cleaned[0]['errors'])
-        self.assertFalse(cleaned[1]['errors'])
-        self.assertFalse(cleaned[2]['errors'])
-        self.assertFalse(cleaned[3]['errors'])
+        self.assertFalse(cleaned[0]["errors"])
+        self.assertFalse(cleaned[1]["errors"])
+        self.assertFalse(cleaned[2]["errors"])
+        self.assertFalse(cleaned[3]["errors"])
 
     def test_missing_request_ID(self):
         data = self.make_data()
-        data[1]['request_id'] = ''
+        data[1]["request_id"] = ""
 
         has_errors, cleaned = clean_upload_trainingrequest_manual_score(data)
         self.assertTrue(has_errors)
-        self.assertFalse(cleaned[0]['errors'])
-        self.assertTrue(cleaned[1]['errors'])
-        self.assertFalse(cleaned[2]['errors'])
-        self.assertFalse(cleaned[3]['errors'])
+        self.assertFalse(cleaned[0]["errors"])
+        self.assertTrue(cleaned[1]["errors"])
+        self.assertFalse(cleaned[2]["errors"])
+        self.assertFalse(cleaned[3]["errors"])
 
-        self.assertIn('Request ID is missing.', cleaned[1]['errors'])
+        self.assertIn("Request ID is missing.", cleaned[1]["errors"])
 
     def test_missing_score_manual(self):
         data = self.make_data()
-        data[1]['score_manual'] = ''
+        data[1]["score_manual"] = ""
 
         has_errors, cleaned = clean_upload_trainingrequest_manual_score(data)
         self.assertTrue(has_errors)
-        self.assertFalse(cleaned[0]['errors'])
-        self.assertTrue(cleaned[1]['errors'])
-        self.assertFalse(cleaned[2]['errors'])
-        self.assertFalse(cleaned[3]['errors'])
+        self.assertFalse(cleaned[0]["errors"])
+        self.assertTrue(cleaned[1]["errors"])
+        self.assertFalse(cleaned[2]["errors"])
+        self.assertFalse(cleaned[3]["errors"])
 
-        self.assertIn('Manual score is missing.', cleaned[1]['errors'])
+        self.assertIn("Manual score is missing.", cleaned[1]["errors"])
 
     def test_missing_score_notes(self):
         """Missing notes should not trigger any errors."""
         data = self.make_data()
-        data[1]['score_notes'] = ''
+        data[1]["score_notes"] = ""
 
         has_errors, cleaned = clean_upload_trainingrequest_manual_score(data)
         self.assertFalse(has_errors)
-        self.assertFalse(cleaned[0]['errors'])
-        self.assertFalse(cleaned[1]['errors'])
-        self.assertFalse(cleaned[2]['errors'])
-        self.assertFalse(cleaned[3]['errors'])
+        self.assertFalse(cleaned[0]["errors"])
+        self.assertFalse(cleaned[1]["errors"])
+        self.assertFalse(cleaned[2]["errors"])
+        self.assertFalse(cleaned[3]["errors"])
 
     def test_request_ID_wrong_format(self):
         data = self.make_data()
-        data[0]['request_id'] = '1.23.4'
-        data[1]['request_id'] = ' '
-        data[2]['request_id'] = '-123'
-        data[3]['request_id'] = '.0'
+        data[0]["request_id"] = "1.23.4"
+        data[1]["request_id"] = " "
+        data[2]["request_id"] = "-123"
+        data[3]["request_id"] = ".0"
 
         has_errors, cleaned = clean_upload_trainingrequest_manual_score(data)
         self.assertTrue(has_errors)
         for i in range(4):
-            self.assertTrue(cleaned[i]['errors'])
-            self.assertIn('Request ID is not an integer value.',
-                          cleaned[i]['errors'], i)
+            self.assertTrue(cleaned[i]["errors"])
+            self.assertIn(
+                "Request ID is not an integer value.", cleaned[i]["errors"], i
+            )
 
     def test_score_manual_wrong_format(self):
         data = self.make_data()
-        data[0]['score_manual'] = '1.23.4'
-        data[1]['score_manual'] = ' '
-        data[2]['score_manual'] = '.0'
-        data[3]['score_manual'] = '-123'
+        data[0]["score_manual"] = "1.23.4"
+        data[1]["score_manual"] = " "
+        data[2]["score_manual"] = ".0"
+        data[3]["score_manual"] = "-123"
 
         has_errors, cleaned = clean_upload_trainingrequest_manual_score(data)
         self.assertTrue(has_errors)
         for i in range(3):
-            self.assertTrue(cleaned[i]['errors'])
-            self.assertIn('Manual score is not an integer value.',
-                          cleaned[i]['errors'], i)
+            self.assertTrue(cleaned[i]["errors"])
+            self.assertIn(
+                "Manual score is not an integer value.", cleaned[i]["errors"], i
+            )
 
         # last entry should be valid
-        self.assertFalse(cleaned[3]['errors'])
+        self.assertFalse(cleaned[3]["errors"])
 
     def test_request_ID_not_matching(self):
         data = self.make_data()
-        data[0]['request_id'] = '3333'
+        data[0]["request_id"] = "3333"
 
         has_errors, cleaned = clean_upload_trainingrequest_manual_score(data)
         self.assertTrue(has_errors)
-        self.assertTrue(cleaned[0]['errors'])
-        self.assertIn('Request ID doesn\'t match any request.',
-                      cleaned[0]['errors'])
-        self.assertFalse(cleaned[1]['errors'])
-        self.assertFalse(cleaned[2]['errors'])
-        self.assertFalse(cleaned[3]['errors'])
+        self.assertTrue(cleaned[0]["errors"])
+        self.assertIn("Request ID doesn't match any request.", cleaned[0]["errors"])
+        self.assertFalse(cleaned[1]["errors"])
+        self.assertFalse(cleaned[2]["errors"])
+        self.assertFalse(cleaned[3]["errors"])
 
 
 class UpdateTrainingRequestManualScore(CSVBulkUploadTestBase):

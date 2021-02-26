@@ -28,10 +28,10 @@ class TestAdminJobRetry(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
 
         # fake RQJob
         self.email = EmailTemplate.objects.create(slug="test-1")
-        self.trigger = Trigger.objects.create(action="new-instructor",
-                                              template=self.email)
-        self.rqjob = RQJob.objects.create(job_id="fake-id",
-                                          trigger=self.trigger)
+        self.trigger = Trigger.objects.create(
+            action="new-instructor", template=self.email
+        )
+        self.rqjob = RQJob.objects.create(job_id="fake-id", trigger=self.trigger)
 
     def tearDown(self):
         super().tearDown()
@@ -42,28 +42,29 @@ class TestAdminJobRetry(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         # log admin user
         self._logSuperuserIn()
 
-        url = reverse('admin:autoemails_rqjob_retry', args=[self.rqjob.pk])
+        url = reverse("admin:autoemails_rqjob_retry", args=[self.rqjob.pk])
         rv = self.client.get(url)
         self.assertEqual(rv.status_code, 405)  # Method not allowed
 
     def test_view_access_by_anonymous(self):
-        url = reverse('admin:autoemails_rqjob_retry', args=[self.rqjob.pk])
+        url = reverse("admin:autoemails_rqjob_retry", args=[self.rqjob.pk])
         rv = self.client.post(url)
         self.assertEqual(rv.status_code, 302)
         # cannot check by assertRedirect because there's additional `?next`
         # parameter
-        self.assertTrue(rv.url.startswith(reverse('login')))
+        self.assertTrue(rv.url.startswith(reverse("login")))
 
     def test_view_access_by_admin(self):
         # log admin user
         self._logSuperuserIn()
 
         # try accessing the view again
-        url = reverse('admin:autoemails_rqjob_retry', args=[self.rqjob.pk])
+        url = reverse("admin:autoemails_rqjob_retry", args=[self.rqjob.pk])
         rv = self.client.post(url)
         self.assertEqual(rv.status_code, 302)
-        self.assertRedirects(rv, reverse('admin:autoemails_rqjob_preview',
-                                         args=[self.rqjob.pk]))
+        self.assertRedirects(
+            rv, reverse("admin:autoemails_rqjob_preview", args=[self.rqjob.pk])
+        )
 
     def test_no_such_job(self):
         # log admin user
@@ -72,11 +73,11 @@ class TestAdminJobRetry(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         with self.assertRaises(NoSuchJobError):
             Job.fetch(self.rqjob.job_id, connection=self.scheduler.connection)
 
-        url = reverse('admin:autoemails_rqjob_retry', args=[self.rqjob.pk])
+        url = reverse("admin:autoemails_rqjob_retry", args=[self.rqjob.pk])
         rv = self.client.post(url, follow=True)
         self.assertIn(
-            'The corresponding job in Redis was probably already executed',
-            rv.content.decode('utf-8'),
+            "The corresponding job in Redis was probably already executed",
+            rv.content.decode("utf-8"),
         )
 
     def test_job_not_failed(self):
@@ -89,16 +90,12 @@ class TestAdminJobRetry(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         Job.fetch(job1.id, connection=self.scheduler.connection)  # no error
         with self.connection.pipeline() as pipe:
             pipe.watch(self.scheduler.scheduled_jobs_key)
-            self.assertIsNone(
-                pipe.zscore(
-                    self.scheduler.scheduled_jobs_key, job1.id
-                )
-            )
-        url = reverse('admin:autoemails_rqjob_retry', args=[rqjob1.pk])
+            self.assertIsNone(pipe.zscore(self.scheduler.scheduled_jobs_key, job1.id))
+        url = reverse("admin:autoemails_rqjob_retry", args=[rqjob1.pk])
         rv = self.client.post(url, follow=True)
         self.assertIn(
             "You cannot re-try a non-failed job.",
-            rv.content.decode('utf-8'),
+            rv.content.decode("utf-8"),
         )
 
         # case 2: job is no longer in the RQ-Scheduler queue, but it was there!
@@ -111,11 +108,11 @@ class TestAdminJobRetry(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         # move job to the queue so it's executed
         self.scheduler.enqueue_job(job2)
         Job.fetch(job2.id, connection=self.scheduler.connection)  # no error
-        url = reverse('admin:autoemails_rqjob_retry', args=[rqjob2.pk])
+        url = reverse("admin:autoemails_rqjob_retry", args=[rqjob2.pk])
         rv = self.client.post(url, follow=True)
         self.assertIn(
             "You cannot re-try a non-failed job.",
-            rv.content.decode('utf-8'),
+            rv.content.decode("utf-8"),
         )
 
     def test_job_retried_correctly(self):
@@ -124,7 +121,7 @@ class TestAdminJobRetry(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
         # Create an asynchronous queue.
         # The name `separate_queue` used here is to ensure the queue isn't used
         # anywhere else.
-        queue = Queue('separate_queue', connection=self.connection)
+        queue = Queue("separate_queue", connection=self.connection)
         worker = SimpleWorker([queue], connection=queue.connection)
 
         # log admin user
@@ -132,20 +129,20 @@ class TestAdminJobRetry(SuperuserMixin, FakeRedisTestCaseMixin, TestCase):
 
         # this job will fail
         job = queue.enqueue(dummy_fail_job)
-        self.assertEqual(job.get_status(), 'queued')
+        self.assertEqual(job.get_status(), "queued")
 
         # log the job in our system as RQJob
         rqjob = RQJob.objects.create(job_id=job.id, trigger=self.trigger)
 
         # run the worker
         worker.work(burst=True)
-        self.assertEqual(job.get_status(), 'failed')
+        self.assertEqual(job.get_status(), "failed")
 
-        url = reverse('admin:autoemails_rqjob_retry', args=[rqjob.pk])
+        url = reverse("admin:autoemails_rqjob_retry", args=[rqjob.pk])
         rv = self.client.post(url, follow=True)
         self.assertIn(
-            f'The job {job.id} was requeued. It will be run shortly.',
-            rv.content.decode('utf-8'),
+            f"The job {job.id} was requeued. It will be run shortly.",
+            rv.content.decode("utf-8"),
         )
 
-        self.assertEqual(job.get_status(refresh=True), 'queued')
+        self.assertEqual(job.get_status(refresh=True), "queued")

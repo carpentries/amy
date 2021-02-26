@@ -5,7 +5,7 @@ from reversion.models import Version
 register = template.Library()
 
 
-@register.inclusion_tag('includes/last_modified.html')
+@register.inclusion_tag("includes/last_modified.html")
 def last_modified(obj):
     """Get all versions for specific object, display:
 
@@ -13,7 +13,8 @@ def last_modified(obj):
     "Last modified on ASD by DSA."
     """
     versions = Version.objects.get_for_object(obj).select_related(
-        'revision','revision__user')
+        "revision", "revision__user"
+    )
 
     try:
         last, *_, created = versions
@@ -26,6 +27,6 @@ def last_modified(obj):
             last = None
 
     return {
-        'created': created,
-        'last_modified': last,
+        "created": created,
+        "last_modified": last,
     }

@@ -119,7 +119,8 @@ class TestSelfOrganisedSubmissionExternalForm(TestBase):
         # test email for admins
         msg = mail.outbox[1]
         self.assertEqual(
-            msg.subject, "New self-organised submission: Ministry of Magic",
+            msg.subject,
+            "New self-organised submission: Ministry of Magic",
         )
         self.assertEqual(msg.recipients(), ["admin-uk@carpentries.org"])
         self.assertNotIn(

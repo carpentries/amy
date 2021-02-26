@@ -11,10 +11,14 @@ class TestActionRequiredPrivacy(TestBase):
         super()._setUpAirports()
         super()._setUpBadges()
         self.neville = Person.objects.create(
-            personal='Neville', family='Longbottom',
-            email='neville@longbottom.com', gender='M', may_contact=True,
-            publish_profile=False, airport=self.airport_0_0,
-            username='longbottom_neville',
+            personal="Neville",
+            family="Longbottom",
+            email="neville@longbottom.com",
+            gender="M",
+            may_contact=True,
+            publish_profile=False,
+            airport=self.airport_0_0,
+            username="longbottom_neville",
             data_privacy_agreement=False,
             is_active=True,
         )
@@ -26,7 +30,7 @@ class TestActionRequiredPrivacy(TestBase):
         # force login Neville
         self.client.force_login(self.neville)
 
-        url = reverse('action_required_privacy')
+        url = reverse("action_required_privacy")
 
         # form renders
         rv = self.client.get(url)
@@ -44,9 +48,9 @@ class TestActionRequiredPrivacy(TestBase):
         "Make sure the form passes only when `data_agreement_policy` is set."
         # setup sample data
         data = {
-            'data_privacy_agreement': False,
-            'may_contact': False,
-            'publish_profile': False,
+            "data_privacy_agreement": False,
+            "may_contact": False,
+            "publish_profile": False,
         }
 
         # make sure it doesn't pass without the privacy policy consent
@@ -54,7 +58,7 @@ class TestActionRequiredPrivacy(TestBase):
         self.assertFalse(form.is_valid())
 
         # let's try with consent for privacy policy
-        data.update({'data_privacy_agreement': True})
+        data.update({"data_privacy_agreement": True})
         form = ActionRequiredPrivacyForm(data, instance=self.neville)
         self.assertTrue(form.is_valid())
 
@@ -64,25 +68,29 @@ class TestActionRequiredPrivacyMiddleware(TestBase):
         super()._setUpAirports()
         super()._setUpBadges()
         self.neville = Person.objects.create(
-            personal='Neville', family='Longbottom',
-            email='neville@longbottom.com', gender='M', may_contact=True,
-            publish_profile=False, airport=self.airport_0_0,
-            username='longbottom_neville',
+            personal="Neville",
+            family="Longbottom",
+            email="neville@longbottom.com",
+            gender="M",
+            may_contact=True,
+            publish_profile=False,
+            airport=self.airport_0_0,
+            username="longbottom_neville",
             data_privacy_agreement=False,
             is_active=True,
         )
         self.neville.save()
-        self.form_url = reverse('action_required_privacy')
+        self.form_url = reverse("action_required_privacy")
 
     def test_anonymous_user(self):
         """Ensure anonymous user can reach anything."""
         urls = [
-            reverse('login'),
-            reverse('api:root'),
-            reverse('training_request'),
-            reverse('training_request_confirm'),
-            reverse('workshop_request'),
-            reverse('workshop_request_confirm'),
+            reverse("login"),
+            reverse("api:root"),
+            reverse("training_request"),
+            reverse("training_request_confirm"),
+            reverse("workshop_request"),
+            reverse("workshop_request_confirm"),
         ]
         # ensure we're not logged in
         self.client.logout()
@@ -98,11 +106,11 @@ class TestActionRequiredPrivacyMiddleware(TestBase):
         """Ensure logged-in user w/o privacy policy agreement is redirected
         to the form."""
         urls = [
-            reverse('admin-dashboard'),
-            reverse('trainee-dashboard'),
+            reverse("admin-dashboard"),
+            reverse("trainee-dashboard"),
         ]
 
-        form_url = reverse('action_required_privacy')
+        form_url = reverse("action_required_privacy")
 
         # ensure we're logged in
         self.client.force_login(self.neville)
@@ -112,13 +120,13 @@ class TestActionRequiredPrivacyMiddleware(TestBase):
             rv = self.client.get(url)
             # redirects to the form
             self.assertEqual(rv.status_code, 302)
-            self.assertTrue(rv['Location'].startswith(form_url))
+            self.assertTrue(rv["Location"].startswith(form_url))
 
     def test_no_more_redirects_after_agreement(self):
         """Ensure user is no longer forcefully redirected to accept the
         privacy policy."""
-        url = reverse('trainee-dashboard')
-        form_url = reverse('action_required_privacy')
+        url = reverse("trainee-dashboard")
+        form_url = reverse("action_required_privacy")
 
         # ensure we're logged in
         self.client.force_login(self.neville)
@@ -127,7 +135,7 @@ class TestActionRequiredPrivacyMiddleware(TestBase):
         # we can't get to the url because we're redirected to the form
         rv = self.client.get(url)
         self.assertEqual(rv.status_code, 302)
-        self.assertTrue(rv['Location'].startswith(form_url))
+        self.assertTrue(rv["Location"].startswith(form_url))
 
         # agree on the privacy policy
         self.neville.data_privacy_agreement = True
@@ -138,9 +146,9 @@ class TestActionRequiredPrivacyMiddleware(TestBase):
         self.assertEqual(rv.status_code, 200)
 
     def test_allowed_urls(self):
-        form_url = reverse('action_required_privacy')
+        form_url = reverse("action_required_privacy")
         urls = [
-            reverse('logout'),
+            reverse("logout"),
         ]
         # ensure we're logged in
         self.client.force_login(self.neville)
@@ -149,16 +157,16 @@ class TestActionRequiredPrivacyMiddleware(TestBase):
             rv = self.client.get(url)
             # doesn't redirect to the form
             self.assertIn(rv.status_code, [200, 302])
-            if 'Location' in rv:
-                self.assertNotEqual(rv['Location'], form_url)
+            if "Location" in rv:
+                self.assertNotEqual(rv["Location"], form_url)
 
     def test_next_param(self):
         """Ensure a non-dispatch URL is reachable through `?next` query
         string."""
 
-        url = reverse('autoupdate_profile')
-        form_url = reverse('action_required_privacy')
-        form_url += '?{}'.format(urlencode({'next': url}))
+        url = reverse("autoupdate_profile")
+        form_url = reverse("action_required_privacy")
+        form_url += "?{}".format(urlencode({"next": url}))
 
         # ensure we're logged in
         self.client.force_login(self.neville)
@@ -167,4 +175,4 @@ class TestActionRequiredPrivacyMiddleware(TestBase):
         # submit form
         rv = self.client.post(form_url, data=dict(data_privacy_agreement=True))
         self.assertEqual(rv.status_code, 302)
-        self.assertEqual(rv['Location'], url)
+        self.assertEqual(rv["Location"], url)

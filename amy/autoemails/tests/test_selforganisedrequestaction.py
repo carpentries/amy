@@ -223,10 +223,12 @@ class TestSelfOrganisedRequestAction(TestCase):
             body_template="Sample text.",
         )
         trigger = Trigger.objects.create(
-            action="self-organised-request-form", template=template,
+            action="self-organised-request-form",
+            template=template,
         )
         a = SelfOrganisedRequestAction(
-            trigger=trigger, objects=dict(event=e, request=r),
+            trigger=trigger,
+            objects=dict(event=e, request=r),
         )
         email = a._email()
         self.assertEqual(email.to, ["harry@hogwarts.edu", "hg@magic.uk", "rw@magic.uk"])

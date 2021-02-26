@@ -20,16 +20,20 @@ class InitialWRFTestMixin:
         self.view.other_object = self.setUpOther()
         self.expected = {
             "public_status": "public",
-            "curricula": Curriculum.objects.filter(slug__in=[
-                "swc-other",
-                "dc-other",
-                "lc-other",
-                "",  # mix & match
-            ]),
-            "tags": Tag.objects.filter(name__in=[
-                "Circuits",
-                "online",
-            ]),
+            "curricula": Curriculum.objects.filter(
+                slug__in=[
+                    "swc-other",
+                    "dc-other",
+                    "lc-other",
+                    "",  # mix & match
+                ]
+            ),
+            "tags": Tag.objects.filter(
+                name__in=[
+                    "Circuits",
+                    "online",
+                ]
+            ),
             "contact": "test@example.org;test2@example.org",
             "host": Organization.objects.first(),
             "start": date(2020, 11, 11),
@@ -67,10 +71,11 @@ class TestInitialWorkshopRequestAccept(InitialWRFTestMixin, TestCase):
             online_inperson="online",
         )
         # add "(swc|dc|lc)-other" and "mix & match" curricula
-        other_object.requested_workshop_types.set(Curriculum.objects.filter(
-            Q(carpentry__in=["SWC", "DC", "LC"], other=True)
-            | Q(mix_match=True)
-        ))
+        other_object.requested_workshop_types.set(
+            Curriculum.objects.filter(
+                Q(carpentry__in=["SWC", "DC", "LC"], other=True) | Q(mix_match=True)
+            )
+        )
         return other_object
 
 
@@ -93,10 +98,11 @@ class TestInitialWorkshopInquiryAccept(InitialWRFTestMixin, TestCase):
             online_inperson="online",
         )
         # add "(swc|dc|lc)-other" and "mix & match" curricula
-        other_object.requested_workshop_types.set(Curriculum.objects.filter(
-            Q(carpentry__in=["SWC", "DC", "LC"], other=True)
-            | Q(mix_match=True)
-        ))
+        other_object.requested_workshop_types.set(
+            Curriculum.objects.filter(
+                Q(carpentry__in=["SWC", "DC", "LC"], other=True) | Q(mix_match=True)
+            )
+        )
         return other_object
 
 
@@ -121,8 +127,9 @@ class TestInitialSelfOrganisedSubmissionAccept(InitialWRFTestMixin, TestCase):
             online_inperson="online",
         )
         # add "(swc|dc|lc)-other" and "mix & match" curricula
-        other_object.workshop_types.set(Curriculum.objects.filter(
-            Q(carpentry__in=["SWC", "DC", "LC"], other=True)
-            | Q(mix_match=True)
-        ))
+        other_object.workshop_types.set(
+            Curriculum.objects.filter(
+                Q(carpentry__in=["SWC", "DC", "LC"], other=True) | Q(mix_match=True)
+            )
+        )
         return other_object

@@ -79,7 +79,8 @@ Sincerely,
     def prepare_trigger(self):
         """Create a sample trigger using our sample template."""
         self.trigger = Trigger.objects.create(
-            action="new-instructor", template=self.template,
+            action="new-instructor",
+            template=self.template,
         )
 
     def prepare_context(self):

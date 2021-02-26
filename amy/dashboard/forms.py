@@ -12,6 +12,7 @@ from workshops.models import (
 )
 
 from workshops.forms import BootstrapHelper
+
 # this is used instead of Django Autocomplete Light widgets
 # see issue #1330: https://github.com/swcarpentry/amy/issues/1330
 from workshops.fields import (
@@ -35,34 +36,37 @@ class AssignmentForm(forms.Form):
         add_cancel_button=False,
         wider_labels=True,
         use_get_method=True,
-        form_id="assignment-form"
+        form_id="assignment-form",
     )
 
 
 class AutoUpdateProfileForm(forms.ModelForm):
     username = forms.CharField(disabled=True, required=False)
     email = forms.CharField(
-        disabled=True, required=False,
-        label=Person._meta.get_field('email').verbose_name,
-        help_text=Person._meta.get_field('email').help_text,
+        disabled=True,
+        required=False,
+        label=Person._meta.get_field("email").verbose_name,
+        help_text=Person._meta.get_field("email").help_text,
     )
     github = forms.CharField(
-        disabled=True, required=False,
-        help_text='If you want to change your github username, please email '
-                  'us at <a href="mailto:team@carpentries.org">'
-                  'team@carpentries.org</a>.')
+        disabled=True,
+        required=False,
+        help_text="If you want to change your github username, please email "
+        'us at <a href="mailto:team@carpentries.org">'
+        "team@carpentries.org</a>.",
+    )
 
     country = CountryField().formfield(
         required=False,
-        help_text='Your country of residence.',
+        help_text="Your country of residence.",
         widget=Select2Widget,
     )
 
     languages = forms.ModelMultipleChoiceField(
-        label='Languages',
+        label="Languages",
         required=False,
         queryset=Language.objects.all(),
-        widget=ModelSelect2MultipleWidget(data_view='language-lookup')
+        widget=ModelSelect2MultipleWidget(data_view="language-lookup"),
     )
 
     helper = BootstrapHelper(add_cancel_button=False)
@@ -70,38 +74,38 @@ class AutoUpdateProfileForm(forms.ModelForm):
     class Meta:
         model = Person
         fields = [
-            'personal',
-            'middle',
-            'family',
-            'email',
-            'secondary_email',
-            'gender',
-            'gender_other',
-            'may_contact',
-            'publish_profile',
-            'lesson_publication_consent',
-            'country',
-            'airport',
-            'github',
-            'twitter',
-            'url',
-            'username',
-            'affiliation',
-            'domains',
-            'lessons',
-            'languages',
-            'occupation',
-            'orcid',
+            "personal",
+            "middle",
+            "family",
+            "email",
+            "secondary_email",
+            "gender",
+            "gender_other",
+            "may_contact",
+            "publish_profile",
+            "lesson_publication_consent",
+            "country",
+            "airport",
+            "github",
+            "twitter",
+            "url",
+            "username",
+            "affiliation",
+            "domains",
+            "lessons",
+            "languages",
+            "occupation",
+            "orcid",
         ]
         readonly_fields = (
-            'username',
-            'github',
+            "username",
+            "github",
         )
         widgets = {
-            'gender': RadioSelectWithOther('gender_other'),
-            'domains': forms.CheckboxSelectMultiple(),
-            'lessons': forms.CheckboxSelectMultiple(),
-            'airport': Select2Widget,
+            "gender": RadioSelectWithOther("gender_other"),
+            "domains": forms.CheckboxSelectMultiple(),
+            "lessons": forms.CheckboxSelectMultiple(),
+            "airport": Select2Widget,
         }
 
     def __init__(self, *args, **kwargs):
@@ -112,10 +116,10 @@ class AutoUpdateProfileForm(forms.ModelForm):
 
         # set up `*WithOther` widgets so that they can display additional
         # fields inline
-        self['gender'].field.widget.other_field = self['gender_other']
+        self["gender"].field.widget.other_field = self["gender_other"]
 
         # remove additional fields
-        self.helper.layout.fields.remove('gender_other')
+        self.helper.layout.fields.remove("gender_other")
 
     def clean(self):
         super().clean()
@@ -123,14 +127,14 @@ class AutoUpdateProfileForm(forms.ModelForm):
 
         # 1: require "other gender" field if "other" was selected in
         # "gender" field
-        gender = self.cleaned_data.get('gender', '')
-        gender_other = self.cleaned_data.get('gender_other', '')
+        gender = self.cleaned_data.get("gender", "")
+        gender_other = self.cleaned_data.get("gender_other", "")
         if gender == GenderMixin.OTHER and not gender_other:
-            errors['gender'] = ValidationError("This field is required.")
+            errors["gender"] = ValidationError("This field is required.")
         elif gender != GenderMixin.OTHER and gender_other:
-            errors['gender'] = ValidationError(
-                'If you entered data in "Other" field, please select that '
-                "option.")
+            errors["gender"] = ValidationError(
+                'If you entered data in "Other" field, please select that ' "option."
+            )
 
         # raise errors if any present
         if errors:
@@ -138,10 +142,11 @@ class AutoUpdateProfileForm(forms.ModelForm):
 
 
 class SendHomeworkForm(forms.ModelForm):
-    url = forms.URLField(label='URL')
+    url = forms.URLField(label="URL")
     requirement = forms.ModelChoiceField(
         queryset=TrainingRequirement.objects.filter(name__endswith="Homework"),
-        label="Type", required=True,
+        label="Type",
+        required=True,
     )
 
     helper = BootstrapHelper(add_cancel_button=False)
@@ -149,8 +154,8 @@ class SendHomeworkForm(forms.ModelForm):
     class Meta:
         model = TrainingProgress
         fields = [
-            'requirement',
-            'url',
+            "requirement",
+            "url",
         ]
 
 
@@ -158,5 +163,7 @@ class SearchForm(forms.Form):
     """Represent general searching form."""
 
     term = forms.CharField(label="Term", max_length=100)
-    no_redirect = forms.BooleanField(required=False, initial=False, widget=forms.HiddenInput)
+    no_redirect = forms.BooleanField(
+        required=False, initial=False, widget=forms.HiddenInput
+    )
     helper = BootstrapHelper(add_cancel_button=False, use_get_method=True)

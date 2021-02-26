@@ -18,13 +18,17 @@ class RescheduleForm(forms.Form):
 
 class TemplateForm(forms.Form):
     template = MarkdownxFormField(
-        label="Markdown body", widget=AdminMarkdownxWidget, required=True,
+        label="Markdown body",
+        widget=AdminMarkdownxWidget,
+        required=True,
     )
 
 
 class GenericEmailScheduleForm(forms.ModelForm):
     body_template = MarkdownxFormField(
-        label="Markdown body", widget=AdminMarkdownxWidget, required=True,
+        label="Markdown body",
+        widget=AdminMarkdownxWidget,
+        required=True,
     )
     helper = BootstrapHelper(
         wider_labels=True,

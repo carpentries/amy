@@ -26,7 +26,7 @@ class FakeRedisTestCaseMixin:
         self.connection = connection
         # self.connection = Redis()
         self.queue = Queue(is_async=False, connection=self.connection, job_class=Job)
-        self.scheduler = django_rq.get_scheduler('testing', queue=self.queue)
+        self.scheduler = django_rq.get_scheduler("testing", queue=self.queue)
         self.scheduler.connection = self.connection
 
     def tearDown(self):

@@ -56,7 +56,7 @@ class TestPerson(TestBase):
         self.assertEqual(p2.family, "")
 
     def test_login_with_email(self):
-        """ Make sure we can login with user's email too, not only with the
+        """Make sure we can login with user's email too, not only with the
         username."""
         self.client.logout()
         email = "sudo@example.org"  # admin's email
@@ -176,7 +176,8 @@ class TestPerson(TestBase):
         }
 
         response = self.client.post(
-            reverse("person_permissions", args=[self.hermione.id]), data,
+            reverse("person_permissions", args=[self.hermione.id]),
+            data,
         )
 
         assert response.status_code == 302
@@ -239,8 +240,8 @@ class TestPerson(TestBase):
         assert set(self.hermione.lessons.all()) == {self.git}
 
     def test_person_add_lessons(self):
-        """ Check if it's still possible to add lessons via PersonCreate
-        view. """
+        """Check if it's still possible to add lessons via PersonCreate
+        view."""
         data = {
             "username": "test",
             "personal": "Test",
@@ -283,7 +284,9 @@ class TestPerson(TestBase):
         for username in invalid_usernames:
             with self.subTest(username=username):
                 person = Person.objects.create(
-                    personal="Testing", family="Testing", username=username,
+                    personal="Testing",
+                    family="Testing",
+                    username=username,
                 )
                 with self.assertRaises(ValidationError) as cm:
                     person.clean_fields(exclude=["password"])
@@ -291,7 +294,9 @@ class TestPerson(TestBase):
 
         valid_username = "blanking-crush_andy"
         person = Person.objects.create(
-            personal="Andy", family="Blanking-Crush", username=valid_username,
+            personal="Andy",
+            family="Blanking-Crush",
+            username=valid_username,
         )
         person.clean_fields(exclude=["password"])
 
@@ -352,7 +357,8 @@ class TestPerson(TestBase):
         }
 
         response = self.client.post(
-            reverse("person_permissions", args=[str(p.id)]), data,
+            reverse("person_permissions", args=[str(p.id)]),
+            data,
         )
         assert response.status_code == 302
 
@@ -1280,14 +1286,16 @@ class TestPersonUpdateViewPermissions(TestBase):
 
     def test_trainer_can_edit_self_profile(self):
         profile_edit = self.app.get(
-            reverse("person_edit", args=[self.trainer.pk]), user=self.trainer,
+            reverse("person_edit", args=[self.trainer.pk]),
+            user=self.trainer,
         )
         self.assertEqual(profile_edit.status_code, 200)
 
     def test_trainer_cannot_edit_stray_profile(self):
         with self.assertRaises(webtest.app.AppError):
             self.app.get(
-                reverse("person_edit", args=[self.trainee.pk]), user=self.trainer,
+                reverse("person_edit", args=[self.trainee.pk]),
+                user=self.trainer,
             )
 
 

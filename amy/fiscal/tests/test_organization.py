@@ -15,19 +15,33 @@ class TestOrganization(TestBase):
         """Make sure deleted organization is longer accessible.
 
         Additionally check on_delete behavior for Event."""
-        Event.objects.create(host=self.org_alpha,
-                             administrator=self.org_beta,
-                             slug='test-event')
+        Event.objects.create(
+            host=self.org_alpha, administrator=self.org_beta, slug="test-event"
+        )
 
         for org_domain in [self.org_alpha.domain, self.org_beta.domain]:
-            rv = self.client.post(reverse('organization_delete', args=[org_domain, ]))
-            content = rv.content.decode('utf-8')
-            assert 'Failed to delete' in content
+            rv = self.client.post(
+                reverse(
+                    "organization_delete",
+                    args=[
+                        org_domain,
+                    ],
+                )
+            )
+            content = rv.content.decode("utf-8")
+            assert "Failed to delete" in content
 
-        Event.objects.get(slug='test-event').delete()
+        Event.objects.get(slug="test-event").delete()
 
         for org_domain in [self.org_alpha.domain, self.org_beta.domain]:
-            rv = self.client.post(reverse('organization_delete', args=[org_domain, ]))
+            rv = self.client.post(
+                reverse(
+                    "organization_delete",
+                    args=[
+                        org_domain,
+                    ],
+                )
+            )
             assert rv.status_code == 302
 
             with self.assertRaises(Organization.DoesNotExist):
@@ -44,11 +58,11 @@ class TestOrganization(TestBase):
         for the organization_details URL has `[\w\.-]+` matching...
         """
         data = {
-            'domain': 'http://beta.com/',
-            'fullname': self.org_beta.fullname,
-            'country': self.org_beta.country,
+            "domain": "http://beta.com/",
+            "fullname": self.org_beta.fullname,
+            "country": self.org_beta.country,
         }
-        url = reverse('organization_edit', args=[self.org_beta.domain])
+        url = reverse("organization_edit", args=[self.org_beta.domain])
         rv = self.client.post(url, data=data)
         # make sure we're not updating to good values
         assert rv.status_code == 200
@@ -58,9 +72,9 @@ class TestOrganization(TestBase):
         comment content is saved."""
         self.assertEqual(Comment.objects.count(), 0)
         data = {
-            'fullname': 'Test Organization',
-            'domain': 'test.org',
-            'comment': '',
+            "fullname": "Test Organization",
+            "domain": "test.org",
+            "comment": "",
         }
         form = OrganizationCreateForm(data)
         form.save()
@@ -71,13 +85,13 @@ class TestOrganization(TestBase):
         comment content is saved."""
         self.assertEqual(Comment.objects.count(), 0)
         data = {
-            'fullname': 'Test Organization',
-            'domain': 'test.org',
-            'comment': 'This is a test comment.',
+            "fullname": "Test Organization",
+            "domain": "test.org",
+            "comment": "This is a test comment.",
         }
         form = OrganizationCreateForm(data)
         obj = form.save()
         self.assertEqual(Comment.objects.count(), 1)
         comment = Comment.objects.first()
-        self.assertEqual(comment.comment, 'This is a test comment.')
+        self.assertEqual(comment.comment, "This is a test comment.")
         self.assertIn(comment, Comment.objects.for_model(obj))

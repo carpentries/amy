@@ -11,8 +11,7 @@ from .utils import (
 
 
 class ActionManageMixin:
-    """Mixin used for adding/removing Actions related to an object.
-    """
+    """Mixin used for adding/removing Actions related to an object."""
 
     def get_logger(self):
         raise NotImplementedError()
@@ -96,12 +95,12 @@ class ActionManageMixin:
                 messages.info(
                     request,
                     format_html(
-                        'New email ({}) was scheduled to run '
+                        "New email ({}) was scheduled to run "
                         '<relative-time datetime="{}">{}</relative-time>: '
                         '<a href="{}">{}</a>.',
                         trigger.get_action_display(),
                         scheduled_at.isoformat(),
-                        '{:%Y-%m-%d %H:%M}'.format(scheduled_at),
+                        "{:%Y-%m-%d %H:%M}".format(scheduled_at),
                         reverse("admin:autoemails_rqjob_preview", args=[rqj.pk]),
                         job.id,
                     ),
@@ -112,7 +111,13 @@ class ActionManageMixin:
 
     @staticmethod
     def remove(
-        action_class, logger, scheduler, connection, jobs, object_, request=None,
+        action_class,
+        logger,
+        scheduler,
+        connection,
+        jobs,
+        object_,
+        request=None,
     ):
         Action = action_class
         action_name = Action.__name__

@@ -491,7 +491,8 @@ def update_manual_score(cleaned_data):
                 score_manual = item["score_manual"]
                 score_notes = item["score_notes"]
                 records += TrainingRequest.objects.filter(pk=obj.pk).update(
-                    score_manual=score_manual, score_notes=score_notes,
+                    score_manual=score_manual,
+                    score_notes=score_notes,
                 )
             except (IntegrityError, ValueError, TypeError, ObjectDoesNotExist) as e:
                 raise e
@@ -569,9 +570,9 @@ class Paginator(DjangoPaginator):
         if index - 3 == 5:
             # Fix when two sets, L_s and M_s, are disjoint but make a sequence
             # [... 3 4, 5 6 ...], then there should not be dots between them
-            M = items[index - 4:index + 4] or items[0:index + 1]
+            M = items[index - 4 : index + 4] or items[0 : index + 1]
         else:
-            M = items[index - 3:index + 4] or items[0:index + 1]
+            M = items[index - 3 : index + 4] or items[0 : index + 1]
 
         if index + 4 == length - 5:
             # Fix when two sets, M_s and R_s, are disjoint but make a sequence
@@ -825,7 +826,8 @@ def validate_workshop_metadata(metadata):
     warnings = []
 
     Requirement = namedtuple(
-        "Requirement", ["name", "display", "required", "match_format"],
+        "Requirement",
+        ["name", "display", "required", "match_format"],
     )
 
     DATE_FMT = r"^\d{4}-\d{2}-\d{2}$"
@@ -1135,7 +1137,8 @@ def merge_objects(
                 # WARNING: sequence of operations is important here!
                 comments_b.update(is_removed=True)
                 comments_a.update(
-                    content_type=base_obj_ct, object_pk=base_obj.pk,
+                    content_type=base_obj_ct,
+                    object_pk=base_obj.pk,
                 )
 
             elif value == "obj_b":
@@ -1144,17 +1147,20 @@ def merge_objects(
                 # WARNING: sequence of operations is important here!
                 comments_a.update(is_removed=True)
                 comments_b.update(
-                    content_type=base_obj_ct, object_pk=base_obj.pk,
+                    content_type=base_obj_ct,
+                    object_pk=base_obj.pk,
                 )
 
             elif value == "combine":
                 # we're making comments from either of the objects point to
                 # the new base object
                 comments_a.update(
-                    content_type=base_obj_ct, object_pk=base_obj.pk,
+                    content_type=base_obj_ct,
+                    object_pk=base_obj.pk,
                 )
                 comments_b.update(
-                    content_type=base_obj_ct, object_pk=base_obj.pk,
+                    content_type=base_obj_ct,
+                    object_pk=base_obj.pk,
                 )
 
         merging_obj.delete()
@@ -1211,7 +1217,7 @@ def redirect_with_next_support(request, *args, **kwargs):
     """Works in the same way as `redirect` except when there is GET parameter
     named "next". In that case, user is redirected to the URL from that
     parameter. If you have a class-based view, use RedirectSupportMixin that
-    does the same. """
+    does the same."""
 
     next_url = request.GET.get("next", None)
     if next_url is not None and is_safe_url(
@@ -1257,7 +1263,11 @@ def choice_field_with_other(choices, default, verbose_name=None, help_text=None)
         default=default,
     )
     other_field = models.CharField(
-        max_length=STR_LONG, verbose_name=" ", null=False, blank=True, default="",
+        max_length=STR_LONG,
+        verbose_name=" ",
+        null=False,
+        blank=True,
+        default="",
     )
     return field, other_field
 

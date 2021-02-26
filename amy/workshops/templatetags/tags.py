@@ -1,4 +1,5 @@
 from django import template
+
 # from django.template.defaultfilters import stringfilter
 from django.utils.safestring import mark_safe
 
@@ -9,19 +10,19 @@ register = template.Library()
 def bootstrap_tag_class(name):
     name_low = name.lower()
 
-    class_ = 'badge-secondary'
-    if name_low.startswith('swc'):
-        class_ = 'badge-primary'
-    elif name_low.startswith('dc'):
-        class_ = 'badge-success'
-    elif name_low.startswith('online'):
-        class_ = 'badge-info'
-    elif name_low.startswith('lc'):
-        class_ = 'badge-warning'
-    elif name_low.startswith('ttt'):
-        class_ = 'badge-danger'
-    elif name_low.startswith('itt'):
-        class_ = 'badge-danger'
+    class_ = "badge-secondary"
+    if name_low.startswith("swc"):
+        class_ = "badge-primary"
+    elif name_low.startswith("dc"):
+        class_ = "badge-success"
+    elif name_low.startswith("online"):
+        class_ = "badge-info"
+    elif name_low.startswith("lc"):
+        class_ = "badge-warning"
+    elif name_low.startswith("ttt"):
+        class_ = "badge-danger"
+    elif name_low.startswith("itt"):
+        class_ = "badge-danger"
 
     return mark_safe(class_)
 

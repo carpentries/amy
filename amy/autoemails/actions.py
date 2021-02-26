@@ -516,9 +516,7 @@ class PostWorkshopAction(BaseAction):
             Person.objects.filter(task__in=event.task_set.filter(role__name="helper"))
         )
         context["hosts"] = list(
-            Person.objects.filter(
-                task__in=event.task_set.filter(role__name="host")
-            )
+            Person.objects.filter(task__in=event.task_set.filter(role__name="host"))
         )
 
         # querying over Person.objects lets us get rid of duplicates

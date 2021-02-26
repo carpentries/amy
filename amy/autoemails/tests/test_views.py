@@ -129,10 +129,7 @@ class TestGenericScheduleEmail(FakeRedisTestCaseMixin, SuperuserMixin, TestCase)
         self._setUpTemplateTrigger()
         self._setUpWorkshopRequest(create_event=False)
         data = self._formData()
-        data.update({
-            "slug": self.template_slug,
-            "next": "/dashboard"
-        })
+        data.update({"slug": self.template_slug, "next": "/dashboard"})
         url = reverse("autoemails:email_response", args=[self.wr.pk])
 
         # no jobs

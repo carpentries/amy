@@ -35,13 +35,22 @@ class TestRecruitHelpersAction(TestCase):
         self.helper_role = Role.objects.create(name="helper")
 
         self.person1 = Person.objects.create(
-            personal="Harry", family="Potter", email="hp@magic.uk", username="hp",
+            personal="Harry",
+            family="Potter",
+            email="hp@magic.uk",
+            username="hp",
         )
         self.person2 = Person.objects.create(
-            personal="Ron", family="Weasley", email="rw@magic.uk", username="rw",
+            personal="Ron",
+            family="Weasley",
+            email="rw@magic.uk",
+            username="rw",
         )
         self.person3 = Person.objects.create(
-            personal="Hermione", family="Granger", email="hg@magic.uk", username="hg",
+            personal="Hermione",
+            family="Granger",
+            email="hg@magic.uk",
+            username="hg",
         )
 
     def testLaunchAt(self):
@@ -266,7 +275,8 @@ class TestRecruitHelpersAction(TestCase):
             body_template="Sample text.",
         )
         trigger = Trigger.objects.create(
-            action="week-after-workshop-completion", template=template,
+            action="week-after-workshop-completion",
+            template=template,
         )
         a = RecruitHelpersAction(trigger=trigger, objects=dict(event=e))
         email = a._email()
@@ -314,5 +324,6 @@ class TestRecruitHelpersAction(TestCase):
         )
 
         self.assertEqual(
-            a.all_recipients(), "hp@magic.uk, rw@magic.uk",
+            a.all_recipients(),
+            "hp@magic.uk, rw@magic.uk",
         )

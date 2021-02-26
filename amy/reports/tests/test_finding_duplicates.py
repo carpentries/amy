@@ -9,28 +9,41 @@ from workshops.tests.base import TestBase
 
 class TestEmptyDuplicates(TestBase):
     """Tests to return empty context variables when no matches found."""
+
     def setUp(self):
         self._setUpUsersAndLogin()
 
         self.harry = Person.objects.create(
-            personal='Harry', family='Potter', username='potter_harry',
-            email='hp@hogwart.edu')
+            personal="Harry",
+            family="Potter",
+            username="potter_harry",
+            email="hp@hogwart.edu",
+        )
         self.kira = Person.objects.create(
-            personal='Light', family='Yagami', username='light_yagami',
-            email='ly@hogwart.edu')
+            personal="Light",
+            family="Yagami",
+            username="light_yagami",
+            email="ly@hogwart.edu",
+        )
         self.batman = Person.objects.create(
-            personal='Bruce', family='Wayne', username='bruce_wayne',
-            email='batman@waynecorp.com')
+            personal="Bruce",
+            family="Wayne",
+            username="bruce_wayne",
+            email="batman@waynecorp.com",
+        )
         self.ironman = Person.objects.create(
-            personal='Tony', family='Stark', username='tony_stark',
-            email='ironman@starkindustries.com')
+            personal="Tony",
+            family="Stark",
+            username="tony_stark",
+            email="ironman@starkindustries.com",
+        )
 
-        self.url = reverse('duplicate_persons')
+        self.url = reverse("duplicate_persons")
 
     def test_switched_names_persons(self):
         """Ensure none of the above persons are in `switched_persons`."""
         rv = self.client.get(self.url)
-        switched = rv.context['switched_persons']
+        switched = rv.context["switched_persons"]
         self.assertNotIn(self.harry, switched)
         self.assertNotIn(self.kira, switched)
         self.assertNotIn(self.batman, switched)
@@ -39,7 +52,7 @@ class TestEmptyDuplicates(TestBase):
     def test_duplicate_persons(self):
         """Ensure none of the above persons are in `duplicate_persons`."""
         rv = self.client.get(self.url)
-        switched = rv.context['duplicate_persons']
+        switched = rv.context["duplicate_persons"]
         self.assertNotIn(self.harry, switched)
         self.assertNotIn(self.kira, switched)
         self.assertNotIn(self.batman, switched)
@@ -51,23 +64,35 @@ class TestFindingDuplicates(TestBase):
         self._setUpUsersAndLogin()
 
         self.harry = Person.objects.create(
-            personal='Harry', family='Potter', username='potter_harry',
-            email='hp@hogwart.edu')
+            personal="Harry",
+            family="Potter",
+            username="potter_harry",
+            email="hp@hogwart.edu",
+        )
         self.potter = Person.objects.create(
-            personal='Potter', family='Harry', username='harry_potter',
-            email='hp+1@hogwart.edu')
+            personal="Potter",
+            family="Harry",
+            username="harry_potter",
+            email="hp+1@hogwart.edu",
+        )
         self.ron = Person.objects.create(
-            personal='Ron', family='Weasley', username='weasley_ron',
-            email='rw@hogwart.edu')
+            personal="Ron",
+            family="Weasley",
+            username="weasley_ron",
+            email="rw@hogwart.edu",
+        )
         self.ron2 = Person.objects.create(
-            personal='Ron', family='Weasley', username='weasley_ron_2',
-            email='rw+1@hogwart.edu')
+            personal="Ron",
+            family="Weasley",
+            username="weasley_ron_2",
+            email="rw+1@hogwart.edu",
+        )
 
-        self.url = reverse('duplicate_persons')
+        self.url = reverse("duplicate_persons")
 
     def test_switched_names_persons(self):
         rv = self.client.get(self.url)
-        switched = rv.context['switched_persons']
+        switched = rv.context["switched_persons"]
         self.assertIn(self.harry, switched)
         self.assertIn(self.potter, switched)
         self.assertNotIn(self.ron, switched)
@@ -75,7 +100,7 @@ class TestFindingDuplicates(TestBase):
 
     def test_duplicate_persons(self):
         rv = self.client.get(self.url)
-        duplicated = rv.context['duplicate_persons']
+        duplicated = rv.context["duplicate_persons"]
         self.assertIn(self.ron, duplicated)
         self.assertIn(self.ron2, duplicated)
         self.assertNotIn(self.harry, duplicated)
@@ -87,25 +112,37 @@ class TestFindingReviewedDuplicates(TestBase):
         self._setUpUsersAndLogin()
 
         self.harry = Person.objects.create(
-            personal='Harry', family='Potter', username='potter_harry',
-            email='hp@hogwart.edu')
+            personal="Harry",
+            family="Potter",
+            username="potter_harry",
+            email="hp@hogwart.edu",
+        )
         self.potter = Person.objects.create(
-            personal='Potter', family='Harry', username='harry_potter',
-            email='hp+1@hogwart.edu')
+            personal="Potter",
+            family="Harry",
+            username="harry_potter",
+            email="hp+1@hogwart.edu",
+        )
         self.ron = Person.objects.create(
-            personal='Ron', family='Weasley', username='weasley_ron',
-            email='rw@hogwart.edu')
+            personal="Ron",
+            family="Weasley",
+            username="weasley_ron",
+            email="rw@hogwart.edu",
+        )
         self.ron2 = Person.objects.create(
-            personal='Ron', family='Weasley', username='weasley_ron_2',
-            email='rw+1@hogwart.edu')
+            personal="Ron",
+            family="Weasley",
+            username="weasley_ron_2",
+            email="rw+1@hogwart.edu",
+        )
 
-        self.url = reverse('duplicate_persons')
-        self.review_url = reverse('review_duplicate_persons')
+        self.url = reverse("duplicate_persons")
+        self.review_url = reverse("review_duplicate_persons")
 
     def test_finding_unreviewed_duplicates(self):
         rv = self.client.get(self.url)
-        switched = rv.context['switched_persons']
-        duplicates = rv.context['duplicate_persons']
+        switched = rv.context["switched_persons"]
+        duplicates = rv.context["duplicate_persons"]
 
         self.assertEqual(self.harry.duplication_reviewed_on, None)
         self.assertEqual(self.potter.duplication_reviewed_on, None)
@@ -141,9 +178,9 @@ class TestFindingReviewedDuplicates(TestBase):
         self.ron2.save()
 
         rv = self.client.get(self.url)
-        switched = rv.context['switched_persons']
-        duplicates = rv.context['duplicate_persons']
-        
+        switched = rv.context["switched_persons"]
+        duplicates = rv.context["duplicate_persons"]
+
         self.assertNotIn(self.harry, switched)
         self.assertNotIn(self.potter, switched)
         self.assertNotIn(self.ron, switched)
@@ -170,9 +207,9 @@ class TestFindingReviewedDuplicates(TestBase):
         self.ron2.save()
 
         rv = self.client.get(self.url)
-        switched = rv.context['switched_persons']
-        duplicates = rv.context['duplicate_persons']
-        
+        switched = rv.context["switched_persons"]
+        duplicates = rv.context["duplicate_persons"]
+
         self.assertIn(self.harry, switched)
         self.assertIn(self.potter, switched)
         self.assertNotIn(self.ron, switched)
@@ -203,9 +240,9 @@ class TestFindingReviewedDuplicates(TestBase):
         self.ron2.save()
 
         rv = self.client.get(self.url)
-        switched = rv.context['switched_persons']
-        duplicates = rv.context['duplicate_persons']
-        
+        switched = rv.context["switched_persons"]
+        duplicates = rv.context["duplicate_persons"]
+
         self.assertIn(self.harry, switched)
         self.assertIn(self.potter, switched)
         self.assertNotIn(self.ron, switched)
@@ -228,17 +265,17 @@ class TestFindingReviewedDuplicates(TestBase):
 
         self.harry.duplication_reviewed_on = review_date
         self.harry.save()
-        #self.potter.duplication_reviewed_on = review_date
-        #self.potter.save()
+        # self.potter.duplication_reviewed_on = review_date
+        # self.potter.save()
         self.ron.duplication_reviewed_on = review_date
         self.ron.save()
-        #self.ron2.duplication_reviewed_on = review_date
-        #self.ron2.save()
+        # self.ron2.duplication_reviewed_on = review_date
+        # self.ron2.save()
 
         rv = self.client.get(self.url)
-        switched = rv.context['switched_persons']
-        duplicates = rv.context['duplicate_persons']
-        
+        switched = rv.context["switched_persons"]
+        duplicates = rv.context["duplicate_persons"]
+
         self.assertNotIn(self.harry, switched)
         self.assertNotIn(self.potter, switched)
         self.assertNotIn(self.ron, switched)
@@ -254,7 +291,7 @@ class TestFindingReviewedDuplicates(TestBase):
         self.assertFalse(self.ron.duplication_reviewed_on)
 
         rv = self.client.post(
-            self.review_url, {'person_id': [self.harry.pk, self.ron.pk]}
+            self.review_url, {"person_id": [self.harry.pk, self.ron.pk]}
         )
 
         self.harry.refresh_from_db()

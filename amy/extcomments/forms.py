@@ -5,7 +5,4 @@ from django.utils.translation import ugettext_lazy as _
 
 
 class CommentForm(DjCF):
-    comment = MarkdownxFormField(
-        label=_("Comment"),
-        max_length=COMMENT_MAX_LENGTH
-    )
+    comment = MarkdownxFormField(label=_("Comment"), max_length=COMMENT_MAX_LENGTH)
